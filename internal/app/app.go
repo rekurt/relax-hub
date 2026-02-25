@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/database"
+	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	repopostgres "github.com/nikitaaldaev/bani/internal/repository/postgres"
 	"github.com/nikitaaldaev/bani/internal/server"
@@ -18,6 +19,7 @@ func New(cfg *config.Config) *fx.App {
 		middleware.CORSModule,
 		repopostgres.Module,
 		service.Module,
+		handler.Module,
 		server.Module,
 	)
 }

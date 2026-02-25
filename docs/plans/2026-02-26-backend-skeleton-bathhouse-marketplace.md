@@ -574,7 +574,7 @@ type CityService interface {
 - Create: `internal/handler/admin_handler.go`
 - Create: `internal/handler/response.go`
 
-- [ ] response.go: единый формат ответа:
+- [x] response.go: единый формат ответа:
 ```go
 type APIResponse struct {
     Success bool        `json:"success"`
@@ -596,12 +596,12 @@ type Meta struct {
 }
 ```
 
-- [ ] Auth endpoints (public):
+- [x] Auth endpoints (public):
   - POST /api/v1/auth/register - регистрация (role: client или owner)
   - POST /api/v1/auth/login - вход -> token
   - GET /api/v1/auth/me - текущий пользователь (RequireAuth)
 
-- [ ] Bathhouse endpoints:
+- [x] Bathhouse endpoints:
   - GET /api/v1/bathhouses - список с фильтрами (public, только active бани)
   - GET /api/v1/bathhouses/:id - детали (public, только active или свои)
   - POST /api/v1/bathhouses - создание (RequireRole: owner)
@@ -610,7 +610,7 @@ type Meta struct {
   - GET /api/v1/bathhouses/:id/available-slots?date=YYYY-MM-DD - свободные слоты (public)
   - GET /api/v1/my/bathhouses - бани текущего owner/representative (RequireRole: owner, representative)
 
-- [ ] Booking endpoints (RequireAuth):
+- [x] Booking endpoints (RequireAuth):
   - POST /api/v1/bookings - создание бронирования (RequireRole: client)
   - GET /api/v1/bookings - список бронирований текущего пользователя
   - PATCH /api/v1/bookings/:id/cancel - отмена (client свою, owner/representative свою баню)
@@ -618,19 +618,19 @@ type Meta struct {
   - PATCH /api/v1/bookings/:id/reject - отклонение (RequireRole: owner, representative + AccessChecker)
   - GET /api/v1/bathhouses/:id/bookings - бронирования бани (RequireRole: owner, representative, admin + AccessChecker)
 
-- [ ] Review endpoints:
+- [x] Review endpoints:
   - POST /api/v1/bathhouses/:id/reviews - создание отзыва (RequireRole: client)
   - GET /api/v1/bathhouses/:id/reviews - список отзывов (public)
 
-- [ ] Representative endpoints (RequireRole: owner):
+- [x] Representative endpoints (RequireRole: owner):
   - POST /api/v1/bathhouses/:id/representatives - пригласить представителя
   - GET /api/v1/bathhouses/:id/representatives - список представителей
   - DELETE /api/v1/representatives/:id - отозвать представителя
 
-- [ ] City endpoints:
+- [x] City endpoints:
   - GET /api/v1/cities - список городов (public)
 
-- [ ] Admin endpoints (RequireRole: admin):
+- [x] Admin endpoints (RequireRole: admin):
   - GET /api/v1/admin/users - список пользователей с пагинацией
   - PATCH /api/v1/admin/users/:id/block - заблокировать
   - PATCH /api/v1/admin/users/:id/unblock - разблокировать
@@ -641,9 +641,9 @@ type Meta struct {
   - PUT /api/v1/admin/cities/:id - обновить город
   - DELETE /api/v1/admin/cities/:id - удалить город
 
-- [ ] Зарегистрировать хэндлеры как fx-провайдеры, привязать к роутеру с RBAC middleware
-- [ ] Написать тесты для хэндлеров (httptest), включая проверку RBAC (403 при неправильной роли)
-- [ ] Запустить тесты - должны проходить
+- [x] Зарегистрировать хэндлеры как fx-провайдеры, привязать к роутеру с RBAC middleware
+- [x] Написать тесты для хэндлеров (httptest), включая проверку RBAC (403 при неправильной роли)
+- [x] Запустить тесты - должны проходить
 
 ### Task 8: Docker и docker-compose для разработки
 
