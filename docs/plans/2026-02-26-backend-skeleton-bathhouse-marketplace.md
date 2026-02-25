@@ -652,13 +652,13 @@ type Meta struct {
 - Create: `docker-compose.yml`
 - Create: `Makefile`
 
-- [ ] Multi-stage Dockerfile для Go-приложения
-- [ ] docker-compose: app, postgres (с PostGIS), redis
-- [ ] Makefile: build, run, test, migrate-up, migrate-down, lint, docker-up, docker-down, seed-admin
-- [ ] seed-admin: cobra subcommand для создания первого admin-пользователя
-- [ ] Обновить .gitignore
-- [ ] Проверить что docker-compose.yml валиден
-- [ ] Запустить go vet и тесты - должны проходить
+- [x] Multi-stage Dockerfile для Go-приложения
+- [x] docker-compose: app, postgres (с PostGIS), redis
+- [x] Makefile: build, run, test, migrate-up, migrate-down, lint, docker-up, docker-down, seed-admin
+- [x] seed-admin: cobra subcommand для создания первого admin-пользователя
+- [x] Обновить .gitignore
+- [x] Проверить что docker-compose.yml валиден
+- [x] Запустить go vet и тесты - должны проходить
 
 ### Task 9: Verify acceptance criteria
 
