@@ -82,8 +82,15 @@ func (s *representativeService) Invite(ctx context.Context, ownerID uuid.UUID, i
 }
 
 func (s *representativeService) Revoke(ctx context.Context, ownerID uuid.UUID, representativeID uuid.UUID) error {
-	// Delete the representative assignment.
-	// Ownership verification is done at the handler layer via RBAC middleware.
+	rep, err := s.repRepo.GetByID(ctx, representativeID)
+	if err != nil {
+		return err
+	}
+
+	if rep.OwnerID != ownerID {
+		return domain.ErrForbidden
+	}
+
 	return s.repRepo.Delete(ctx, representativeID)
 }
 

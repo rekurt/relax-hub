@@ -119,7 +119,13 @@ func (h *AdminHandler) ListBathhouses(w http.ResponseWriter, r *http.Request) {
 
 	if v := r.URL.Query().Get("status"); v != "" {
 		status := domain.BathhouseStatus(v)
+		if !status.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid status value")
+			return
+		}
 		filter.Status = &status
+	} else {
+		filter.ShowAllStatuses = true
 	}
 
 	result, err := h.bathhouseService.Search(r.Context(), filter)

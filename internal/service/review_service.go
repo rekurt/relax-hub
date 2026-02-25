@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -78,8 +79,10 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 		return nil, err
 	}
 
-	// Update bathhouse rating
-	_ = s.bhRepo.UpdateRating(ctx, booking.BathhouseID)
+	// Update bathhouse rating (non-fatal: review is already saved)
+	if err := s.bhRepo.UpdateRating(ctx, booking.BathhouseID); err != nil {
+		log.Printf("WARNING: failed to update bathhouse rating for %s: %v", booking.BathhouseID, err)
+	}
 
 	return review, nil
 }

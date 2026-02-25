@@ -16,8 +16,9 @@ type BathhouseFilter struct {
 	Latitude     *float64
 	Longitude    *float64
 	RadiusKm     *float64
-	Status       *BathhouseStatus
-	SortBy       string // "price", "rating", "distance"
+	Status          *BathhouseStatus
+	ShowAllStatuses bool   // when true, don't filter by status even if Status is nil
+	SortBy          string // "price", "rating", "distance"
 	SortOrder    string // "asc", "desc"
 	Page         int
 	PageSize     int

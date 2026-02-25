@@ -182,7 +182,7 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	}
 	if filter.Status != nil {
 		conditions = append(conditions, fmt.Sprintf("status = %s", addArg(string(*filter.Status))))
-	} else {
+	} else if !filter.ShowAllStatuses {
 		conditions = append(conditions, fmt.Sprintf("status = %s", addArg(string(domain.BathhouseStatusActive))))
 	}
 

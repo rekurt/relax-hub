@@ -127,12 +127,7 @@ func TestRequireOwnerOrRepresentative(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 			}))
 
-			var req *http.Request
-			if tt.role == domain.RoleClient {
-				req = requestWithAuth(tt.role)
-			} else {
-				req = requestWithAuth(tt.role)
-			}
+			req := requestWithAuth(tt.role)
 			rec := httptest.NewRecorder()
 
 			handler.ServeHTTP(rec, req)

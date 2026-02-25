@@ -43,6 +43,24 @@ func (r *representativeRepo) Create(ctx context.Context, rep *domain.Representat
 	return nil
 }
 
+func (r *representativeRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Representative, error) {
+	query := `
+		SELECT id, user_id, bathhouse_id, owner_id, created_at
+		FROM representatives WHERE id = $1`
+
+	var rep domain.Representative
+	err := r.pool.QueryRow(ctx, query, id).Scan(
+		&rep.ID, &rep.UserID, &rep.BathhouseID, &rep.OwnerID, &rep.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("get representative by id: %w", err)
+	}
+	return &rep, nil
+}
+
 func (r *representativeRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	tag, err := r.pool.Exec(ctx, `DELETE FROM representatives WHERE id = $1`, id)
 	if err != nil {

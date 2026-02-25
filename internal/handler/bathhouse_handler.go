@@ -453,6 +453,8 @@ func (h *BathhouseHandler) MyBathhouses(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, items)
 }
 
+const maxPageSize = 100
+
 func getIntParam(s string, defaultVal int) int {
 	if s == "" {
 		return defaultVal
@@ -460,6 +462,9 @@ func getIntParam(s string, defaultVal int) int {
 	v, err := strconv.Atoi(s)
 	if err != nil || v < 1 {
 		return defaultVal
+	}
+	if v > maxPageSize {
+		return maxPageSize
 	}
 	return v
 }

@@ -69,7 +69,8 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	}
 
 	duration := input.EndTime.Sub(input.StartTime)
-	if int(duration.Hours()) < bh.MinDuration {
+	durationHours := int(duration / time.Hour)
+	if duration%time.Hour != 0 || durationHours < bh.MinDuration {
 		return nil, domain.ErrInvalidInput
 	}
 
@@ -81,7 +82,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, domain.ErrSlotUnavailable
 	}
 
-	totalPrice := bh.PricePerHour * int64(duration.Hours())
+	totalPrice := bh.PricePerHour * int64(durationHours)
 
 	now := time.Now()
 	booking := &domain.Booking{
@@ -209,8 +210,14 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 		return nil, nil // closed on this day
 	}
 
-	openHour, openMin := parseTime(wh.OpenTime)
-	closeHour, closeMin := parseTime(wh.CloseTime)
+	openHour, openMin, err := parseTime(wh.OpenTime)
+	if err != nil {
+		return nil, fmt.Errorf("invalid open time: %w", err)
+	}
+	closeHour, closeMin, err := parseTime(wh.CloseTime)
+	if err != nil {
+		return nil, fmt.Errorf("invalid close time: %w", err)
+	}
 
 	dayStart := time.Date(date.Year(), date.Month(), date.Day(), openHour, openMin, 0, 0, date.Location())
 	dayEnd := time.Date(date.Year(), date.Month(), date.Day(), closeHour, closeMin, 0, 0, date.Location())
@@ -228,9 +235,6 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 		}
 		avail := true
 		for _, b := range overlapping {
-			if b.Status == domain.BookingCancelled || b.Status == domain.BookingRejected {
-				continue
-			}
 			if t.Before(b.EndTime) && slotEnd.After(b.StartTime) {
 				avail = false
 				break
@@ -246,8 +250,11 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 	return slots, nil
 }
 
-func parseTime(s string) (int, int) {
+func parseTime(s string) (int, int, error) {
 	var h, m int
-	fmt.Sscanf(s, "%d:%d", &h, &m)
-	return h, m
+	n, _ := fmt.Sscanf(s, "%d:%d", &h, &m)
+	if n != 2 {
+		return 0, 0, fmt.Errorf("invalid time format: %q", s)
+	}
+	return h, m, nil
 }

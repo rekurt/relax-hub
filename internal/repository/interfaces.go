@@ -55,6 +55,7 @@ type ReviewRepository interface {
 
 type RepresentativeRepository interface {
 	Create(ctx context.Context, rep *domain.Representative) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Representative, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByUserAndBathhouse(ctx context.Context, userID, bathhouseID uuid.UUID) (*domain.Representative, error)
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.Representative, error)

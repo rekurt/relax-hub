@@ -75,6 +75,10 @@ Domain errors (domain/errors.go) map to HTTP status codes in handler/response.go
 - ErrInvalidInput -> 400
 - ErrUnauthorized -> 401
 - ErrForbidden -> 403
+- ErrSlotUnavailable -> 409
+- ErrBookingCancelLate -> 400
+- ErrUserBlocked -> 403
+- ErrBathhouseNotActive -> 400
 
 ### Testing
 

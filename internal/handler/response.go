@@ -83,10 +83,13 @@ func handleServiceError(w http.ResponseWriter, err error) {
 	}
 }
 
+const maxBodySize = 1 << 20 // 1 MB
+
 func readJSON(r *http.Request, v interface{}) error {
 	if r.Body == nil {
 		return domain.ErrInvalidInput
 	}
+	r.Body = http.MaxBytesReader(nil, r.Body, maxBodySize)
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
 		return domain.ErrInvalidInput

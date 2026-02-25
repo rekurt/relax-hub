@@ -361,6 +361,17 @@ func (r *RepresentativeRepo) Create(_ context.Context, rep *domain.Representativ
 	return nil
 }
 
+func (r *RepresentativeRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Representative, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	rep, ok := r.reps[id]
+	if !ok {
+		return nil, domain.ErrNotFound
+	}
+	cp := *rep
+	return &cp, nil
+}
+
 func (r *RepresentativeRepo) Delete(_ context.Context, id uuid.UUID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -569,7 +580,7 @@ func (r *BathhouseRepo) List(_ context.Context, filter domain.BathhouseFilter) (
 			if bh.Status != *filter.Status {
 				continue
 			}
-		} else if bh.Status != domain.BathhouseStatusActive {
+		} else if !filter.ShowAllStatuses && bh.Status != domain.BathhouseStatusActive {
 			continue
 		}
 		if filter.CityID != nil && bh.CityID != *filter.CityID {
