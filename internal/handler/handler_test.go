@@ -1148,6 +1148,670 @@ func TestHandleServiceError_MapsCorrectly(t *testing.T) {
 	}
 }
 
+// --- Bathhouse Handler Update/Delete/AvailableSlots/MyBathhouses Tests ---
+
+func TestBathhouseHandler_Update(t *testing.T) {
+	ownerID := uuid.New()
+	bhID := uuid.New()
+	bhSvc := &mockBathhouseService{
+		updateFn: func(_ context.Context, userID uuid.UUID, role domain.UserRole, id uuid.UUID, input service.UpdateBathhouseInput) (*domain.Bathhouse, error) {
+			return &domain.Bathhouse{
+				ID: id, OwnerID: userID, Name: *input.Name,
+				Status: domain.BathhouseStatusActive, CityID: 1, PricePerHour: 5000,
+				MaxGuests: 10, MinDuration: 1, Address: "Test",
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative)).Put("/bathhouses/{id}", h.Update)
+
+	body := jsonBody(map[string]interface{}{"name": "Updated Name"})
+	req := httptest.NewRequest(http.MethodPut, "/bathhouses/"+bhID.String(), body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBathhouseHandler_Delete(t *testing.T) {
+	ownerID := uuid.New()
+	bhID := uuid.New()
+	bhSvc := &mockBathhouseService{
+		deleteFn: func(_ context.Context, oID uuid.UUID, id uuid.UUID) error {
+			return nil
+		},
+	}
+
+	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Delete("/bathhouses/{id}", h.Delete)
+
+	req := httptest.NewRequest(http.MethodDelete, "/bathhouses/"+bhID.String(), nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
+func TestBathhouseHandler_GetAvailableSlots(t *testing.T) {
+	bhID := uuid.New()
+	bookingSvc := &mockBookingService{
+		getAvailSlotsFn: func(_ context.Context, id uuid.UUID, date time.Time) ([]service.TimeSlot, error) {
+			return []service.TimeSlot{
+				{StartTime: time.Now(), EndTime: time.Now().Add(time.Hour), Available: true},
+			}, nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(nil, bookingSvc, nil)
+
+	router := chi.NewRouter()
+	router.Get("/bathhouses/{id}/available-slots", h.GetAvailableSlots)
+
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/bathhouses/%s/available-slots?date=2026-03-01", bhID), nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBathhouseHandler_GetAvailableSlots_NoDate(t *testing.T) {
+	bhID := uuid.New()
+	h := handler.NewBathhouseHandler(nil, nil, nil)
+
+	router := chi.NewRouter()
+	router.Get("/bathhouses/{id}/available-slots", h.GetAvailableSlots)
+
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/bathhouses/%s/available-slots", bhID), nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", rec.Code)
+	}
+}
+
+func TestBathhouseHandler_MyBathhouses_Owner(t *testing.T) {
+	ownerID := uuid.New()
+	bhSvc := &mockBathhouseService{
+		listByOwnerFn: func(_ context.Context, oID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error) {
+			return &domain.PaginatedResult[domain.Bathhouse]{
+				Items:      []domain.Bathhouse{{ID: uuid.New(), Name: "My Bath", OwnerID: oID, Status: domain.BathhouseStatusActive, CityID: 1, PricePerHour: 5000, MaxGuests: 10, MinDuration: 1, Address: "Test"}},
+				TotalCount: 1, Page: 1, PageSize: 20, TotalPages: 1,
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative)).Get("/my/bathhouses", h.MyBathhouses)
+
+	req := httptest.NewRequest(http.MethodGet, "/my/bathhouses", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBathhouseHandler_MyBathhouses_Representative(t *testing.T) {
+	repID := uuid.New()
+	repSvc := &mockRepService{
+		getMyBathhousesFn: func(_ context.Context, userID uuid.UUID) ([]domain.Bathhouse, error) {
+			return []domain.Bathhouse{
+				{ID: uuid.New(), Name: "Rep Bath", Status: domain.BathhouseStatusActive, CityID: 1, PricePerHour: 5000, MaxGuests: 10, MinDuration: 1, Address: "Test"},
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(repID, domain.RoleRepresentative)
+	h := handler.NewBathhouseHandler(nil, nil, repSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative)).Get("/my/bathhouses", h.MyBathhouses)
+
+	req := httptest.NewRequest(http.MethodGet, "/my/bathhouses", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+// --- Booking Handler Additional Tests ---
+
+func TestBookingHandler_ListByUser(t *testing.T) {
+	clientID := uuid.New()
+	bookingSvc := &mockBookingService{
+		listByUserFn: func(_ context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {
+			return &domain.PaginatedResult[domain.Booking]{
+				Items: []domain.Booking{}, TotalCount: 0, Page: 1, PageSize: 20,
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(clientID, domain.RoleClient)
+	h := handler.NewBookingHandler(bookingSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Get("/bookings", h.ListByUser)
+
+	req := httptest.NewRequest(http.MethodGet, "/bookings", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
+func TestBookingHandler_Confirm(t *testing.T) {
+	ownerID := uuid.New()
+	bookingID := uuid.New()
+	bookingSvc := &mockBookingService{
+		confirmFn: func(_ context.Context, userID uuid.UUID, role domain.UserRole, bID uuid.UUID) error {
+			return nil
+		},
+	}
+
+	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
+	h := handler.NewBookingHandler(bookingSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Patch("/bookings/{id}/confirm", h.Confirm)
+
+	req := httptest.NewRequest(http.MethodPatch, "/bookings/"+bookingID.String()+"/confirm", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBookingHandler_Reject(t *testing.T) {
+	ownerID := uuid.New()
+	bookingID := uuid.New()
+	bookingSvc := &mockBookingService{
+		rejectFn: func(_ context.Context, userID uuid.UUID, role domain.UserRole, bID uuid.UUID) error {
+			return nil
+		},
+	}
+
+	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
+	h := handler.NewBookingHandler(bookingSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Patch("/bookings/{id}/reject", h.Reject)
+
+	req := httptest.NewRequest(http.MethodPatch, "/bookings/"+bookingID.String()+"/reject", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBookingHandler_ListByBathhouse(t *testing.T) {
+	ownerID := uuid.New()
+	bhID := uuid.New()
+	bookingSvc := &mockBookingService{
+		listByBathhouseFn: func(_ context.Context, userID uuid.UUID, role domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {
+			return &domain.PaginatedResult[domain.Booking]{
+				Items: []domain.Booking{}, TotalCount: 0, Page: 1, PageSize: 20,
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
+	h := handler.NewBookingHandler(bookingSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Get("/bathhouses/{id}/bookings", h.ListByBathhouse)
+
+	req := httptest.NewRequest(http.MethodGet, "/bathhouses/"+bhID.String()+"/bookings", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+// --- Admin Handler Additional Tests ---
+
+func TestAdminHandler_UnblockUser(t *testing.T) {
+	adminID := uuid.New()
+	targetID := uuid.New()
+	authSvc := makeAuthToken(adminID, domain.RoleAdmin)
+
+	userSvc := &mockUserService{
+		unblockFn: func(_ context.Context, id uuid.UUID) error {
+			return nil
+		},
+	}
+	adminH := handler.NewAdminHandler(userSvc, nil, nil)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/users/{id}/unblock", adminH.UnblockUser)
+
+	req := httptest.NewRequest(http.MethodPatch, "/admin/users/"+targetID.String()+"/unblock", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
+func TestAdminHandler_RejectBathhouse(t *testing.T) {
+	adminID := uuid.New()
+	bhID := uuid.New()
+	authSvc := makeAuthToken(adminID, domain.RoleAdmin)
+
+	bhSvc := &mockBathhouseService{
+		rejectFn: func(_ context.Context, id uuid.UUID) error {
+			return nil
+		},
+	}
+	adminH := handler.NewAdminHandler(nil, bhSvc, nil)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/bathhouses/{id}/reject", adminH.RejectBathhouse)
+
+	req := httptest.NewRequest(http.MethodPatch, "/admin/bathhouses/"+bhID.String()+"/reject", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
+func TestAdminHandler_ListBathhouses(t *testing.T) {
+	adminID := uuid.New()
+	authSvc := makeAuthToken(adminID, domain.RoleAdmin)
+
+	bhSvc := &mockBathhouseService{
+		searchFn: func(_ context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
+			return &domain.PaginatedResult[domain.Bathhouse]{
+				Items: []domain.Bathhouse{}, TotalCount: 0, Page: 1, PageSize: 20,
+			}, nil
+		},
+	}
+	adminH := handler.NewAdminHandler(nil, bhSvc, nil)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Get("/admin/bathhouses", adminH.ListBathhouses)
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/bathhouses?status=pending", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
+func TestAdminHandler_UpdateCity(t *testing.T) {
+	adminID := uuid.New()
+	authSvc := makeAuthToken(adminID, domain.RoleAdmin)
+
+	citySvc := &mockCityService{
+		updateFn: func(_ context.Context, id int64, input service.UpdateCityInput) (*domain.City, error) {
+			name := "Updated"
+			if input.Name != nil {
+				name = *input.Name
+			}
+			return &domain.City{ID: id, Name: name, Slug: "moscow"}, nil
+		},
+	}
+	adminH := handler.NewAdminHandler(nil, nil, citySvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Put("/admin/cities/{id}", adminH.UpdateCity)
+
+	body := jsonBody(map[string]interface{}{"name": "Updated Moscow"})
+	req := httptest.NewRequest(http.MethodPut, "/admin/cities/1", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestAdminHandler_DeleteCity(t *testing.T) {
+	adminID := uuid.New()
+	authSvc := makeAuthToken(adminID, domain.RoleAdmin)
+
+	citySvc := &mockCityService{
+		deleteFn: func(_ context.Context, id int64) error {
+			return nil
+		},
+	}
+	adminH := handler.NewAdminHandler(nil, nil, citySvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Delete("/admin/cities/{id}", adminH.DeleteCity)
+
+	req := httptest.NewRequest(http.MethodDelete, "/admin/cities/1", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
+// --- Representative Handler Additional Tests ---
+
+func TestRepresentativeHandler_ListByBathhouse(t *testing.T) {
+	ownerID := uuid.New()
+	bhID := uuid.New()
+	repSvc := &mockRepService{
+		listByBathhouseFn: func(_ context.Context, oID uuid.UUID, bathhouseID uuid.UUID) ([]domain.Representative, error) {
+			return []domain.Representative{}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
+	h := handler.NewRepresentativeHandler(repSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Get("/bathhouses/{id}/representatives", h.ListByBathhouse)
+
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/bathhouses/%s/representatives", bhID), nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
+func TestRepresentativeHandler_Revoke(t *testing.T) {
+	ownerID := uuid.New()
+	repID := uuid.New()
+	repSvc := &mockRepService{
+		revokeFn: func(_ context.Context, oID uuid.UUID, rID uuid.UUID) error {
+			return nil
+		},
+	}
+
+	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
+	h := handler.NewRepresentativeHandler(repSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Delete("/representatives/{id}", h.Revoke)
+
+	req := httptest.NewRequest(http.MethodDelete, "/representatives/"+repID.String(), nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
+// --- Search with various filters ---
+
+func TestBathhouseHandler_Search_WithAllFilters(t *testing.T) {
+	bhSvc := &mockBathhouseService{
+		searchFn: func(_ context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
+			return &domain.PaginatedResult[domain.Bathhouse]{
+				Items: []domain.Bathhouse{}, TotalCount: 0, Page: 1, PageSize: 10, TotalPages: 0,
+			}, nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?page=2&page_size=10&city_slug=moscow&price_min=1000&price_max=10000&min_guests=5&has_sauna=true&has_steam_room=true&has_hot_tub=true&has_bbq=true&has_karaoke=true&min_rating=4.0&lat=55.75&lng=37.62&radius_km=10&sort_by=price&sort_order=asc", nil)
+	rec := httptest.NewRecorder()
+
+	h.Search(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
+func TestBathhouseHandler_Search_InvalidPage(t *testing.T) {
+	bhSvc := &mockBathhouseService{
+		searchFn: func(_ context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
+			return &domain.PaginatedResult[domain.Bathhouse]{
+				Items: []domain.Bathhouse{}, TotalCount: 0, Page: 1, PageSize: 20,
+			}, nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?page=invalid&page_size=-1", nil)
+	rec := httptest.NewRecorder()
+
+	h.Search(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200 (defaults should apply), got %d", rec.Code)
+	}
+}
+
+// --- Invalid ID error paths ---
+
+func TestBathhouseHandler_GetByID_InvalidUUID(t *testing.T) {
+	h := handler.NewBathhouseHandler(nil, nil, nil)
+	router := chi.NewRouter()
+	router.Get("/bathhouses/{id}", h.GetByID)
+
+	req := httptest.NewRequest(http.MethodGet, "/bathhouses/not-a-uuid", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid UUID, got %d", rec.Code)
+	}
+}
+
+func TestBookingHandler_Cancel_InvalidUUID(t *testing.T) {
+	h := handler.NewBookingHandler(nil)
+	router := chi.NewRouter()
+	authSvc := makeAuthToken(uuid.New(), domain.RoleClient)
+	router.With(middleware.RequireAuth(authSvc)).Patch("/bookings/{id}/cancel", h.Cancel)
+
+	req := httptest.NewRequest(http.MethodPatch, "/bookings/not-a-uuid/cancel", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid UUID, got %d", rec.Code)
+	}
+}
+
+func TestBookingHandler_Confirm_InvalidUUID(t *testing.T) {
+	h := handler.NewBookingHandler(nil)
+	router := chi.NewRouter()
+	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
+	router.With(middleware.RequireAuth(authSvc)).Patch("/bookings/{id}/confirm", h.Confirm)
+
+	req := httptest.NewRequest(http.MethodPatch, "/bookings/not-a-uuid/confirm", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid UUID, got %d", rec.Code)
+	}
+}
+
+func TestBookingHandler_Reject_InvalidUUID(t *testing.T) {
+	h := handler.NewBookingHandler(nil)
+	router := chi.NewRouter()
+	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
+	router.With(middleware.RequireAuth(authSvc)).Patch("/bookings/{id}/reject", h.Reject)
+
+	req := httptest.NewRequest(http.MethodPatch, "/bookings/not-a-uuid/reject", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid UUID, got %d", rec.Code)
+	}
+}
+
+func TestBookingHandler_ListByBathhouse_InvalidUUID(t *testing.T) {
+	h := handler.NewBookingHandler(nil)
+	router := chi.NewRouter()
+	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
+	router.With(middleware.RequireAuth(authSvc)).Get("/bathhouses/{id}/bookings", h.ListByBathhouse)
+
+	req := httptest.NewRequest(http.MethodGet, "/bathhouses/not-a-uuid/bookings", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid UUID, got %d", rec.Code)
+	}
+}
+
+func TestAdminHandler_BlockUser_InvalidUUID(t *testing.T) {
+	authSvc := makeAuthToken(uuid.New(), domain.RoleAdmin)
+	adminH := handler.NewAdminHandler(nil, nil, nil)
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/users/{id}/block", adminH.BlockUser)
+
+	req := httptest.NewRequest(http.MethodPatch, "/admin/users/not-a-uuid/block", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid UUID, got %d", rec.Code)
+	}
+}
+
+func TestAdminHandler_UpdateCity_InvalidID(t *testing.T) {
+	authSvc := makeAuthToken(uuid.New(), domain.RoleAdmin)
+	adminH := handler.NewAdminHandler(nil, nil, nil)
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Put("/admin/cities/{id}", adminH.UpdateCity)
+
+	body := jsonBody(map[string]interface{}{"name": "Test"})
+	req := httptest.NewRequest(http.MethodPut, "/admin/cities/abc", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", rec.Code)
+	}
+}
+
+func TestBathhouseHandler_GetAvailableSlots_InvalidDate(t *testing.T) {
+	bhID := uuid.New()
+	h := handler.NewBathhouseHandler(nil, nil, nil)
+	router := chi.NewRouter()
+	router.Get("/bathhouses/{id}/available-slots", h.GetAvailableSlots)
+
+	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/bathhouses/%s/available-slots?date=not-a-date", bhID), nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", rec.Code)
+	}
+}
+
+func TestBathhouseHandler_Update_InvalidUUID(t *testing.T) {
+	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
+	h := handler.NewBathhouseHandler(nil, nil, nil)
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Put("/bathhouses/{id}", h.Update)
+
+	body := jsonBody(map[string]interface{}{"name": "Test"})
+	req := httptest.NewRequest(http.MethodPut, "/bathhouses/not-a-uuid", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid UUID, got %d", rec.Code)
+	}
+}
+
+func TestBathhouseHandler_Delete_InvalidUUID(t *testing.T) {
+	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
+	h := handler.NewBathhouseHandler(nil, nil, nil)
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Delete("/bathhouses/{id}", h.Delete)
+
+	req := httptest.NewRequest(http.MethodDelete, "/bathhouses/not-a-uuid", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid UUID, got %d", rec.Code)
+	}
+}
+
 // --- Unauthenticated access tests ---
 
 func TestProtectedEndpoints_RequireAuth(t *testing.T) {

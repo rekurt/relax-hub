@@ -662,13 +662,13 @@ type Meta struct {
 
 ### Task 9: Verify acceptance criteria
 
-- [ ] go build ./... компилируется без ошибок
-- [ ] go test ./... все тесты проходят
-- [ ] go vet ./... без предупреждений
-- [ ] Проверить что cobra CLI работает: help, serve --help, migrate --help
-- [ ] Проверить структуру проекта соответствует плану
-- [ ] Проверить тестовое покрытие >= 80%
-- [ ] Проверить RBAC: admin endpoints недоступны для client/owner, owner endpoints недоступны для client
+- [x] go build ./... компилируется без ошибок
+- [x] go test ./... все тесты проходят
+- [x] go vet ./... без предупреждений
+- [x] Проверить что cobra CLI работает: help, serve --help, migrate --help
+- [x] Проверить структуру проекта соответствует плану
+- [x] Проверить тестовое покрытие >= 80%
+- [x] Проверить RBAC: admin endpoints недоступны для client/owner, owner endpoints недоступны для client
 
 ### Task 10: Update documentation
 

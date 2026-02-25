@@ -138,3 +138,28 @@ func TestReviewService_Create_InvalidRating(t *testing.T) {
 		t.Errorf("should fail for invalid rating, got: %v", err)
 	}
 }
+
+func TestReviewService_ListByBathhouse(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newReviewService()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, uuid.New())
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: time.Now().Add(-24 * time.Hour), EndTime: time.Now().Add(-22 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingCompleted,
+	}
+	_ = bookingRepo.Create(context.Background(), booking)
+
+	_, _ = svc.Create(context.Background(), clientID, service.CreateReviewInput{
+		BookingID: booking.ID, Rating: 5, Text: "Great!",
+	})
+
+	result, err := svc.ListByBathhouse(context.Background(), bh.ID, 1, 10)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("totalCount = %d, want 1", result.TotalCount)
+	}
+}

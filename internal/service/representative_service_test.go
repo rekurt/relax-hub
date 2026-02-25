@@ -114,3 +114,65 @@ func TestRepresentativeService_ListByBathhouse_OtherOwnerForbidden(t *testing.T)
 		t.Errorf("non-owner should be forbidden, got: %v", err)
 	}
 }
+
+func TestRepresentativeService_Revoke(t *testing.T) {
+	svc, bhRepo, _, repRepo := newRepresentativeService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	rep := &domain.Representative{
+		ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID, OwnerID: ownerID,
+	}
+	_ = repRepo.Create(context.Background(), rep)
+
+	err := svc.Revoke(context.Background(), ownerID, rep.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRepresentativeService_GetMyBathhouses(t *testing.T) {
+	svc, bhRepo, _, repRepo := newRepresentativeService()
+	ownerID := uuid.New()
+	repUserID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	rep := &domain.Representative{
+		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
+	}
+	_ = repRepo.Create(context.Background(), rep)
+
+	bathhouses, err := svc.GetMyBathhouses(context.Background(), repUserID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(bathhouses) != 1 {
+		t.Errorf("expected 1 bathhouse, got %d", len(bathhouses))
+	}
+	if len(bathhouses) > 0 && bathhouses[0].ID != bh.ID {
+		t.Errorf("expected bathhouse ID %v, got %v", bh.ID, bathhouses[0].ID)
+	}
+}
+
+func TestRepresentativeService_Invite_AlreadyRepresentative(t *testing.T) {
+	svc, bhRepo, userRepo, _ := newRepresentativeService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	targetUser := &domain.User{
+		ID: uuid.New(), Email: "rep@example.com", Name: "Rep User",
+		Role: domain.RoleRepresentative, IsActive: true,
+	}
+	_ = userRepo.Create(context.Background(), targetUser)
+
+	rep, err := svc.Invite(context.Background(), ownerID, service.InviteRepresentativeInput{
+		UserEmail:   "rep@example.com",
+		BathhouseID: bh.ID,
+	})
+	if err != nil {
+		t.Fatalf("should allow inviting existing representative: %v", err)
+	}
+	if rep == nil {
+		t.Fatal("representative should not be nil")
+	}
+}
