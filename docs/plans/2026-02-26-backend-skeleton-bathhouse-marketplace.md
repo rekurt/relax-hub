@@ -58,12 +58,12 @@
 - Create: `config/config.yaml`
 - Create: `.env.example`
 
-- [ ] Инициализировать go module
-- [ ] Настроить Cobra CLI: root command + serve subcommand
-- [ ] Настроить Viper для чтения config.yaml и env-переменных
-- [ ] Конфиг: server (host, port), database (DSN), redis (addr, password, db), jwt (secret, token_ttl)
-- [ ] Написать тесты для парсинга конфигурации
-- [ ] Запустить тесты - должны проходить
+- [x] Инициализировать go module
+- [x] Настроить Cobra CLI: root command + serve subcommand
+- [x] Настроить Viper для чтения config.yaml и env-переменных
+- [x] Конфиг: server (host, port), database (DSN), redis (addr, password, db), jwt (secret, token_ttl)
+- [x] Написать тесты для парсинга конфигурации
+- [x] Запустить тесты - должны проходить
 
 ### Task 2: DI-контейнер (Uber fx) и подключение к БД
 
