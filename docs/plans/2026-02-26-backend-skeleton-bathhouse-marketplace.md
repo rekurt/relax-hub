@@ -89,11 +89,11 @@
 - Create: `internal/middleware/auth.go`
 - Create: `internal/middleware/rbac.go`
 
-- [ ] Создать HTTP-сервер на chi с graceful shutdown
-- [ ] Добавить fx.Module для HTTP-сервера
-- [ ] Middleware: structured logging, CORS, recovery, request ID
-- [ ] Middleware auth.go: JWT-аутентификация - парсинг токена, извлечение user_id и role в context
-- [ ] Middleware rbac.go: RBAC middleware с функцией RequireRole(roles ...domain.UserRole) - проверяет роль из контекста:
+- [x] Создать HTTP-сервер на chi с graceful shutdown
+- [x] Добавить fx.Module для HTTP-сервера
+- [x] Middleware: structured logging, CORS, recovery, request ID
+- [x] Middleware auth.go: JWT-аутентификация - парсинг токена, извлечение user_id и role в context
+- [x] Middleware rbac.go: RBAC middleware с функцией RequireRole(roles ...domain.UserRole) - проверяет роль из контекста:
 ```go
 // Извлечение данных из контекста
 func GetUserID(ctx context.Context) uuid.UUID
@@ -104,9 +104,9 @@ func RequireAuth(authService service.AuthService) func(http.Handler) http.Handle
 func RequireRole(roles ...domain.UserRole) func(http.Handler) http.Handler
 func RequireOwnerOrRepresentative() func(http.Handler) http.Handler
 ```
-- [ ] Роутер: /api/v1 группа, healthcheck endpoint GET /health
-- [ ] Написать тесты для middleware: auth, rbac (проверка доступа по ролям, запрет для неавторизованных)
-- [ ] Запустить тесты - должны проходить
+- [x] Роутер: /api/v1 группа, healthcheck endpoint GET /health
+- [x] Написать тесты для middleware: auth, rbac (проверка доступа по ролям, запрет для неавторизованных)
+- [x] Запустить тесты - должны проходить
 
 ### Task 4: Domain models и миграции
 
