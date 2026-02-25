@@ -1,0 +1,116 @@
+package service_test
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/repository/mock"
+	"github.com/nikitaaldaev/bani/internal/service"
+)
+
+func newRepresentativeService() (service.RepresentativeService, *mock.BathhouseRepo, *mock.UserRepo, *mock.RepresentativeRepo) {
+	bhRepo := mock.NewBathhouseRepo()
+	userRepo := mock.NewUserRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	svc := service.NewRepresentativeService(repRepo, userRepo, bhRepo)
+	return svc, bhRepo, userRepo, repRepo
+}
+
+func TestRepresentativeService_Invite_Success(t *testing.T) {
+	svc, bhRepo, userRepo, _ := newRepresentativeService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	targetUser := &domain.User{
+		ID: uuid.New(), Email: "rep@example.com", Name: "Rep User",
+		Role: domain.RoleClient, IsActive: true,
+	}
+	_ = userRepo.Create(context.Background(), targetUser)
+
+	rep, err := svc.Invite(context.Background(), ownerID, service.InviteRepresentativeInput{
+		UserEmail:   "rep@example.com",
+		BathhouseID: bh.ID,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if rep.UserID != targetUser.ID {
+		t.Errorf("rep userID = %v, want %v", rep.UserID, targetUser.ID)
+	}
+
+	// Verify user role changed to representative
+	updated, _ := userRepo.GetByID(context.Background(), targetUser.ID)
+	if updated.Role != domain.RoleRepresentative {
+		t.Errorf("user role should change to representative, got: %v", updated.Role)
+	}
+}
+
+func TestRepresentativeService_Invite_NotOwnerForbidden(t *testing.T) {
+	svc, bhRepo, userRepo, _ := newRepresentativeService()
+	ownerID := uuid.New()
+	otherOwnerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	targetUser := &domain.User{
+		ID: uuid.New(), Email: "rep@example.com", Name: "Rep User",
+		Role: domain.RoleClient, IsActive: true,
+	}
+	_ = userRepo.Create(context.Background(), targetUser)
+
+	_, err := svc.Invite(context.Background(), otherOwnerID, service.InviteRepresentativeInput{
+		UserEmail:   "rep@example.com",
+		BathhouseID: bh.ID,
+	})
+
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("non-owner should be forbidden from inviting, got: %v", err)
+	}
+}
+
+func TestRepresentativeService_Invite_CantInviteOwnerOrAdmin(t *testing.T) {
+	svc, bhRepo, userRepo, _ := newRepresentativeService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	adminUser := &domain.User{
+		ID: uuid.New(), Email: "admin@example.com", Name: "Admin",
+		Role: domain.RoleAdmin, IsActive: true,
+	}
+	_ = userRepo.Create(context.Background(), adminUser)
+
+	_, err := svc.Invite(context.Background(), ownerID, service.InviteRepresentativeInput{
+		UserEmail:   "admin@example.com",
+		BathhouseID: bh.ID,
+	})
+
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("should fail for admin user, got: %v", err)
+	}
+}
+
+func TestRepresentativeService_ListByBathhouse_OwnerAllowed(t *testing.T) {
+	svc, bhRepo, _, _ := newRepresentativeService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	_, err := svc.ListByBathhouse(context.Background(), ownerID, bh.ID)
+	if err != nil {
+		t.Errorf("owner should list representatives: %v", err)
+	}
+}
+
+func TestRepresentativeService_ListByBathhouse_OtherOwnerForbidden(t *testing.T) {
+	svc, bhRepo, _, _ := newRepresentativeService()
+	ownerID := uuid.New()
+	otherID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	_, err := svc.ListByBathhouse(context.Background(), otherID, bh.ID)
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("non-owner should be forbidden, got: %v", err)
+	}
+}

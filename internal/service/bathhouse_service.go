@@ -1,0 +1,234 @@
+package service
+
+import (
+	"context"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/repository"
+)
+
+type CreateBathhouseInput struct {
+	Name         string
+	Description  string
+	Address      string
+	CityID       int64
+	Latitude     float64
+	Longitude    float64
+	PricePerHour int64
+	MinDuration  int
+	MaxGuests    int
+	HasPool      bool
+	HasSauna     bool
+	HasSteamRoom bool
+	HasHotTub    bool
+	HasBBQ       bool
+	HasKaraoke   bool
+	Images       []string
+	WorkingHours []domain.WorkingHours
+}
+
+type UpdateBathhouseInput struct {
+	Name         *string
+	Description  *string
+	Address      *string
+	CityID       *int64
+	Latitude     *float64
+	Longitude    *float64
+	PricePerHour *int64
+	MinDuration  *int
+	MaxGuests    *int
+	HasPool      *bool
+	HasSauna     *bool
+	HasSteamRoom *bool
+	HasHotTub    *bool
+	HasBBQ       *bool
+	HasKaraoke   *bool
+	Images       []string
+	WorkingHours []domain.WorkingHours
+}
+
+type BathhouseService interface {
+	Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
+	Update(ctx context.Context, userID uuid.UUID, role domain.UserRole, id uuid.UUID, input UpdateBathhouseInput) (*domain.Bathhouse, error)
+	Delete(ctx context.Context, ownerID uuid.UUID, id uuid.UUID) error
+	Search(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)
+	ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error)
+	// Admin moderation:
+	Approve(ctx context.Context, id uuid.UUID) error
+	Reject(ctx context.Context, id uuid.UUID) error
+}
+
+type bathhouseService struct {
+	bhRepo  repository.BathhouseRepository
+	access  *AccessChecker
+}
+
+func NewBathhouseService(bhRepo repository.BathhouseRepository, access *AccessChecker) BathhouseService {
+	return &bathhouseService{bhRepo: bhRepo, access: access}
+}
+
+func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error) {
+	now := time.Now()
+	bh := &domain.Bathhouse{
+		ID:           uuid.New(),
+		OwnerID:      ownerID,
+		Name:         input.Name,
+		Description:  input.Description,
+		Address:      input.Address,
+		CityID:       input.CityID,
+		Latitude:     input.Latitude,
+		Longitude:    input.Longitude,
+		PricePerHour: input.PricePerHour,
+		MinDuration:  input.MinDuration,
+		MaxGuests:    input.MaxGuests,
+		HasPool:      input.HasPool,
+		HasSauna:     input.HasSauna,
+		HasSteamRoom: input.HasSteamRoom,
+		HasHotTub:    input.HasHotTub,
+		HasBBQ:       input.HasBBQ,
+		HasKaraoke:   input.HasKaraoke,
+		Images:       input.Images,
+		WorkingHours: input.WorkingHours,
+		Status:       domain.BathhouseStatusPending,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+
+	if err := bh.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := s.bhRepo.Create(ctx, bh); err != nil {
+		return nil, err
+	}
+
+	return bh, nil
+}
+
+func (s *bathhouseService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
+	return s.bhRepo.GetByID(ctx, id)
+}
+
+func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role domain.UserRole, id uuid.UUID, input UpdateBathhouseInput) (*domain.Bathhouse, error) {
+	if err := s.access.CanManageBathhouse(ctx, userID, role, id); err != nil {
+		return nil, err
+	}
+
+	bh, err := s.bhRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if input.Name != nil {
+		bh.Name = *input.Name
+	}
+	if input.Description != nil {
+		bh.Description = *input.Description
+	}
+	if input.Address != nil {
+		bh.Address = *input.Address
+	}
+	if input.CityID != nil {
+		bh.CityID = *input.CityID
+	}
+	if input.Latitude != nil {
+		bh.Latitude = *input.Latitude
+	}
+	if input.Longitude != nil {
+		bh.Longitude = *input.Longitude
+	}
+	if input.PricePerHour != nil {
+		bh.PricePerHour = *input.PricePerHour
+	}
+	if input.MinDuration != nil {
+		bh.MinDuration = *input.MinDuration
+	}
+	if input.MaxGuests != nil {
+		bh.MaxGuests = *input.MaxGuests
+	}
+	if input.HasPool != nil {
+		bh.HasPool = *input.HasPool
+	}
+	if input.HasSauna != nil {
+		bh.HasSauna = *input.HasSauna
+	}
+	if input.HasSteamRoom != nil {
+		bh.HasSteamRoom = *input.HasSteamRoom
+	}
+	if input.HasHotTub != nil {
+		bh.HasHotTub = *input.HasHotTub
+	}
+	if input.HasBBQ != nil {
+		bh.HasBBQ = *input.HasBBQ
+	}
+	if input.HasKaraoke != nil {
+		bh.HasKaraoke = *input.HasKaraoke
+	}
+	if input.Images != nil {
+		bh.Images = input.Images
+	}
+	if input.WorkingHours != nil {
+		bh.WorkingHours = input.WorkingHours
+	}
+	bh.UpdatedAt = time.Now()
+
+	if err := bh.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := s.bhRepo.Update(ctx, bh); err != nil {
+		return nil, err
+	}
+
+	return bh, nil
+}
+
+func (s *bathhouseService) Delete(ctx context.Context, ownerID uuid.UUID, id uuid.UUID) error {
+	bh, err := s.bhRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if bh.OwnerID != ownerID {
+		return domain.ErrForbidden
+	}
+
+	return s.bhRepo.Delete(ctx, id)
+}
+
+func (s *bathhouseService) Search(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
+	return s.bhRepo.List(ctx, filter)
+}
+
+func (s *bathhouseService) ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error) {
+	return s.bhRepo.ListByOwner(ctx, ownerID, page, pageSize)
+}
+
+func (s *bathhouseService) Approve(ctx context.Context, id uuid.UUID) error {
+	bh, err := s.bhRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if bh.Status != domain.BathhouseStatusPending {
+		return domain.ErrInvalidInput
+	}
+
+	return s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusActive)
+}
+
+func (s *bathhouseService) Reject(ctx context.Context, id uuid.UUID) error {
+	bh, err := s.bhRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if bh.Status != domain.BathhouseStatusPending {
+		return domain.ErrInvalidInput
+	}
+
+	return s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusRejected)
+}

@@ -399,7 +399,7 @@ type RepresentativeRepository interface {
 - Create: `internal/service/representative_service.go`
 - Create: `internal/service/access.go`
 
-- [ ] AccessChecker (access.go) - централизованная проверка доступа:
+- [x] AccessChecker (access.go) - централизованная проверка доступа:
 ```go
 type AccessChecker struct {
     repRepo repository.RepresentativeRepository
@@ -417,7 +417,7 @@ func (a *AccessChecker) CanManageBathhouse(ctx context.Context, userID uuid.UUID
 func (a *AccessChecker) CanViewBathhouseBookings(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
 ```
 
-- [ ] AuthService:
+- [x] AuthService:
 ```go
 type AuthService interface {
     Register(ctx context.Context, input RegisterInput) (*domain.User, string, error)
@@ -435,7 +435,7 @@ type RegisterInput struct {
 ```
 Логика: хэширование пароля bcrypt, генерация JWT с claims {user_id, role, exp}, валидация email уникальности, регистрация только как client или owner, проверка IsActive при логине
 
-- [ ] UserService:
+- [x] UserService:
 ```go
 type UserService interface {
     GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error)
@@ -447,7 +447,7 @@ type UserService interface {
 }
 ```
 
-- [ ] BathhouseService:
+- [x] BathhouseService:
 ```go
 type BathhouseService interface {
     Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error)
@@ -483,7 +483,7 @@ type CreateBathhouseInput struct {
 ```
 Логика: при Create статус = pending, Update проверяет доступ через AccessChecker (owner или representative), Delete только owner, Approve/Reject только admin
 
-- [ ] BookingService:
+- [x] BookingService:
 ```go
 type BookingService interface {
     Create(ctx context.Context, userID uuid.UUID, input CreateBookingInput) (*domain.Booking, error)
@@ -511,7 +511,7 @@ type TimeSlot struct {
 ```
 Логика: Cancel - клиент отменяет свою бронь (минимум за 2ч) или owner/representative отменяет бронь своей бани, Confirm/Reject - только owner/representative бани через AccessChecker, проверка что баня active
 
-- [ ] RepresentativeService:
+- [x] RepresentativeService:
 ```go
 type RepresentativeService interface {
     Invite(ctx context.Context, ownerID uuid.UUID, input InviteRepresentativeInput) (*domain.Representative, error)
@@ -527,7 +527,7 @@ type InviteRepresentativeInput struct {
 ```
 Логика: только owner может invite/revoke, при invite меняем роль пользователя на representative (если был client), проверяем что баня принадлежит owner
 
-- [ ] ReviewService:
+- [x] ReviewService:
 ```go
 type ReviewService interface {
     Create(ctx context.Context, userID uuid.UUID, input CreateReviewInput) (*domain.Review, error)
@@ -542,7 +542,7 @@ type CreateReviewInput struct {
 ```
 Логика: только клиент с completed booking, один отзыв на бронирование
 
-- [ ] CityService:
+- [x] CityService:
 ```go
 type CityService interface {
     GetAll(ctx context.Context) ([]domain.City, error)
@@ -554,13 +554,13 @@ type CityService interface {
 }
 ```
 
-- [ ] Зарегистрировать все сервисы и AccessChecker как fx-провайдеры
-- [ ] Написать unit-тесты для каждого сервиса (мокаем репозитории), особенно RBAC-проверки:
+- [x] Зарегистрировать все сервисы и AccessChecker как fx-провайдеры
+- [x] Написать unit-тесты для каждого сервиса (мокаем репозитории), особенно RBAC-проверки:
   - admin может approve/reject бани, block/unblock пользователей
   - owner может CRUD своих бань, invite/revoke представителей
   - representative может update бани и manage бронирования только привязанных бань
   - client не может выполнять owner/admin действия
-- [ ] Запустить тесты - должны проходить
+- [x] Запустить тесты - должны проходить
 
 ### Task 7: HTTP handlers (API endpoints с RBAC)
 
