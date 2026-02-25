@@ -122,7 +122,7 @@ func RequireOwnerOrRepresentative() func(http.Handler) http.Handler
 - Create: `migrations/000001_init.up.sql`
 - Create: `migrations/000001_init.down.sql`
 
-- [ ] Модель User:
+- [x] Модель User:
 ```go
 type UserRole string
 const (
@@ -145,7 +145,7 @@ type User struct {
 }
 ```
 
-- [ ] Модель Representative (связь представителя с баней):
+- [x] Модель Representative (связь представителя с баней):
 ```go
 type Representative struct {
     ID          uuid.UUID
@@ -156,7 +156,7 @@ type Representative struct {
 }
 ```
 
-- [ ] Модель City:
+- [x] Модель City:
 ```go
 type City struct {
     ID        int64
@@ -167,7 +167,7 @@ type City struct {
 }
 ```
 
-- [ ] Модель Bathhouse:
+- [x] Модель Bathhouse:
 ```go
 type BathhouseStatus string
 const (
@@ -211,7 +211,7 @@ type Bathhouse struct {
 }
 ```
 
-- [ ] Модель Booking:
+- [x] Модель Booking:
 ```go
 type BookingStatus string
 const (
@@ -237,7 +237,7 @@ type Booking struct {
 }
 ```
 
-- [ ] Модель Review:
+- [x] Модель Review:
 ```go
 type Review struct {
     ID          uuid.UUID
@@ -250,7 +250,7 @@ type Review struct {
 }
 ```
 
-- [ ] Фильтры и пагинация (filter.go):
+- [x] Фильтры и пагинация (filter.go):
 ```go
 type BathhouseFilter struct {
     CityID       *int64
@@ -284,7 +284,7 @@ type PaginatedResult[T any] struct {
 }
 ```
 
-- [ ] Domain errors:
+- [x] Domain errors:
 ```go
 var (
     ErrNotFound          = errors.New("not found")
@@ -299,15 +299,15 @@ var (
 )
 ```
 
-- [ ] SQL-миграция:
+- [x] SQL-миграция:
   - таблицы: users, cities, bathhouses, bookings, reviews, representatives
   - PostGIS extension для гео-поиска
   - representatives: unique constraint на (user_id, bathhouse_id)
   - индексы: city_id, coordinates (GIST), status, user_id, bathhouse_id, owner_id
   - reviews: unique constraint на (user_id, booking_id)
-- [ ] Настроить golang-migrate для запуска миграций из CLI (cobra subcommand migrate)
-- [ ] Написать тесты для валидации доменных моделей
-- [ ] Запустить тесты - должны проходить
+- [x] Настроить golang-migrate для запуска миграций из CLI (cobra subcommand migrate)
+- [x] Написать тесты для валидации доменных моделей
+- [x] Запустить тесты - должны проходить
 
 ### Task 5: Repository layer (интерфейсы и PostgreSQL-реализация)
 
