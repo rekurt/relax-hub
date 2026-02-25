@@ -320,7 +320,7 @@ var (
 - Create: `internal/repository/postgres/city_repo.go`
 - Create: `internal/repository/postgres/representative_repo.go`
 
-- [ ] Интерфейсы репозиториев в interfaces.go:
+- [x] Интерфейсы репозиториев в interfaces.go:
 ```go
 type UserRepository interface {
     Create(ctx context.Context, user *domain.User) error
@@ -377,15 +377,15 @@ type RepresentativeRepository interface {
 }
 ```
 
-- [ ] Реализация UserRepository: SQL-запросы через pgx, List для админки с пагинацией, SetActive для блокировки
-- [ ] Реализация CityRepository: полный CRUD для справочника городов (admin)
-- [ ] Реализация BathhouseRepository: List с динамическим построением WHERE-условий из BathhouseFilter, гео-запрос через ST_DWithin/ST_Distance (PostGIS), сортировка по distance/price/rating, фильтрация по status для админа
-- [ ] Реализация BookingRepository: CheckAvailability через проверку пересечения интервалов OVERLAPS, GetOverlapping для показа занятых слотов
-- [ ] Реализация ReviewRepository: Create с пересчётом рейтинга бани, листинг с пагинацией
-- [ ] Реализация RepresentativeRepository: CRUD для привязки представителей к баням, ListBathhouseIDsByUser для быстрой проверки доступа
-- [ ] Зарегистрировать все репозитории как fx-провайдеры
-- [ ] Написать тесты для репозиториев (мокаем через интерфейсы)
-- [ ] Запустить тесты - должны проходить
+- [x] Реализация UserRepository: SQL-запросы через pgx, List для админки с пагинацией, SetActive для блокировки
+- [x] Реализация CityRepository: полный CRUD для справочника городов (admin)
+- [x] Реализация BathhouseRepository: List с динамическим построением WHERE-условий из BathhouseFilter, гео-запрос через ST_DWithin/ST_Distance (PostGIS), сортировка по distance/price/rating, фильтрация по status для админа
+- [x] Реализация BookingRepository: CheckAvailability через проверку пересечения интервалов OVERLAPS, GetOverlapping для показа занятых слотов
+- [x] Реализация ReviewRepository: Create с пересчётом рейтинга бани, листинг с пагинацией
+- [x] Реализация RepresentativeRepository: CRUD для привязки представителей к баням, ListBathhouseIDsByUser для быстрой проверки доступа
+- [x] Зарегистрировать все репозитории как fx-провайдеры
+- [x] Написать тесты для репозиториев (мокаем через интерфейсы)
+- [x] Запустить тесты - должны проходить
 
 ### Task 6: Service layer (бизнес-логика + RBAC)
 
