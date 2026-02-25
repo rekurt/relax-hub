@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/nikitaaldaev/bani/config"
+	"github.com/nikitaaldaev/bani/internal/app"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +19,9 @@ var serveCmd = &cobra.Command{
 
 		fmt.Printf("Starting server on %s:%d\n", cfg.Server.Host, cfg.Server.Port)
 
-		// TODO: start fx app with HTTP server
+		fxApp := app.New(cfg)
+		fxApp.Run()
+
 		return nil
 	},
 }

@@ -72,12 +72,12 @@
 - Create: `internal/database/postgres.go`
 - Create: `internal/database/redis.go`
 
-- [ ] Создать fx.Module для PostgreSQL (pgxpool)
-- [ ] Создать fx.Module для Redis (go-redis client)
-- [ ] Собрать основной fx.App в internal/app/app.go
-- [ ] Интегрировать fx.App в Cobra serve command
-- [ ] Написать тесты для создания провайдеров (с моками)
-- [ ] Запустить тесты - должны проходить
+- [x] Создать fx.Module для PostgreSQL (pgxpool)
+- [x] Создать fx.Module для Redis (go-redis client)
+- [x] Собрать основной fx.App в internal/app/app.go
+- [x] Интегрировать fx.App в Cobra serve command
+- [x] Написать тесты для создания провайдеров (с моками)
+- [x] Запустить тесты - должны проходить
 
 ### Task 3: HTTP-сервер, middleware и RBAC
 
