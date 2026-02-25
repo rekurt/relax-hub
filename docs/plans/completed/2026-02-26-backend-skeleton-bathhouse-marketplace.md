@@ -672,6 +672,6 @@ type Meta struct {
 
 ### Task 10: Update documentation
 
-- [ ] Обновить README.md: описание проекта, структура, роли и RBAC, запуск, API endpoints
-- [ ] Создать CLAUDE.md с паттернами проекта
-- [ ] Переместить план в docs/plans/completed/
+- [x] Обновить README.md: описание проекта, структура, роли и RBAC, запуск, API endpoints
+- [x] Создать CLAUDE.md с паттернами проекта
+- [x] Переместить план в docs/plans/completed/
