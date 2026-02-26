@@ -156,8 +156,8 @@ Create comprehensive hurl test suite covering all main API endpoints (auth, bath
 
 ### Task 10: Documentation and Cleanup
 
-- [ ] update tests/hurl/README.md with complete hurl testing guide
-- [ ] document test data setup and teardown procedures
-- [ ] document how to run individual test suites
-- [ ] document environment variables and configuration
-- [ ] move this plan to docs/plans/completed/
+- [x] update tests/hurl/README.md with complete hurl testing guide
+- [x] document test data setup and teardown procedures
+- [x] document how to run individual test suites
+- [x] document environment variables and configuration
+- [x] move this plan to docs/plans/completed/

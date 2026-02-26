@@ -185,9 +185,91 @@ Tests can be integrated into CI/CD pipelines by:
 3. Running `make test-hurl` or individual hurl commands
 4. Collecting test results and artifacts
 
+## Test Data Setup and Teardown
+
+### Test Database Initialization
+
+The `setup.sh` script handles all test database operations:
+
+1. **Database Creation** - Creates `bani_test` database if needed
+2. **Schema Reset** - Drops and recreates the public schema
+3. **Migrations** - Runs all database migrations in order
+4. **Seed Data** - Inserts test users, cities, bathhouses, bookings, and reviews
+
+### Teardown
+
+To reset the test database between test runs:
+
+```bash
+cd tests/hurl
+./setup.sh
+```
+
+This safely clears all test data and re-seeds from scratch.
+
+### Test User Credentials
+
+Use these credentials in hurl tests to authenticate:
+
+```
+admin@test.com / admin-password (admin role)
+owner@test.com / owner-password (owner role)
+representative@test.com / rep-password (representative role)
+client@test.com / client-password (client role)
+client2@test.com / client2-password (client role, for multi-user tests)
+blocked@test.com / blocked-password (client role, blocked status)
+```
+
+## Running Individual Test Suites
+
+Each test module can be run independently after setup:
+
+### Authentication Tests
+```bash
+hurl --env-file tests/hurl/.env.test tests/hurl/auth.hurl
+hurl --env-file tests/hurl/.env.test tests/hurl/auth_negative.hurl
+```
+
+### Bathhouse Tests
+```bash
+hurl --env-file tests/hurl/.env.test tests/hurl/bathhouses.hurl
+hurl --env-file tests/hurl/.env.test tests/hurl/bathhouses_admin.hurl
+```
+
+### Booking Tests
+```bash
+hurl --env-file tests/hurl/.env.test tests/hurl/bookings.hurl
+hurl --env-file tests/hurl/.env.test tests/hurl/bookings_negative.hurl
+```
+
+### Review Tests
+```bash
+hurl --env-file tests/hurl/.env.test tests/hurl/reviews.hurl
+hurl --env-file tests/hurl/.env.test tests/hurl/reviews_negative.hurl
+```
+
+### Favorite and Representative Tests
+```bash
+hurl --env-file tests/hurl/.env.test tests/hurl/favorites.hurl
+hurl --env-file tests/hurl/.env.test tests/hurl/representatives.hurl
+```
+
+### Admin Tests
+```bash
+hurl --env-file tests/hurl/.env.test tests/hurl/admin_users.hurl
+hurl --env-file tests/hurl/.env.test tests/hurl/admin_bathhouses.hurl
+hurl --env-file tests/hurl/.env.test tests/hurl/admin_cities.hurl
+```
+
+### Public Endpoint Tests
+```bash
+hurl --env-file tests/hurl/.env.test tests/hurl/cities.hurl
+hurl --env-file tests/hurl/.env.test tests/hurl/health.hurl
+```
+
 ## Test Execution Order
 
-Tests should be executed in this order to ensure dependencies are satisfied:
+For a complete test run, execute tests in this order to ensure dependencies are satisfied:
 
 1. Task 1: Setup (setup.sh)
 2. Task 2: Auth endpoints
@@ -198,4 +280,43 @@ Tests should be executed in this order to ensure dependencies are satisfied:
 7. Task 7: Admin endpoints
 8. Task 8: Cities and Health endpoints
 
-Each task must pass completely before moving to the next.
+Each task must pass completely before moving to the next. Use `make test-hurl` to run the complete suite in order.
+
+## Test Data Dependencies
+
+Tests have implicit dependencies on test data state:
+
+- Auth tests create and validate new users
+- Bathhouse tests depend on users created by auth tests
+- Booking tests depend on bathhouses created by bathhouse tests
+- Review tests depend on bookings created by booking tests
+- Favorite tests can run independently once users exist
+- Representative tests depend on bathhouses existing
+- Admin tests can run independently (they operate on any data)
+- Health and Cities tests have no dependencies
+
+The `run_all_tests.sh` script manages these dependencies by executing tests in the correct order and capturing IDs that are passed between test files.
+
+## Common Issues and Solutions
+
+### "Connection refused" error
+- Ensure PostgreSQL is running: `pg_isready`
+- Ensure Redis is running: `redis-cli ping`
+- Check that the test database exists: `psql -l | grep bani_test`
+
+### "Permission denied" on setup.sh
+- Make script executable: `chmod +x tests/hurl/setup.sh`
+
+### Tests fail after code changes
+- Re-run setup to reset test data: `./setup.sh`
+- Verify server is running: `curl http://localhost:8080/health`
+
+### "Assertion failed" errors
+- Run with verbose output: `hurl --verbose ...`
+- Check that expected HTTP status codes are returned
+- Verify response format matches API contract
+
+### Token expiration
+- Tokens are generated during test execution
+- Tests login and capture tokens for immediate use
+- No token expiration issues during a single test run
