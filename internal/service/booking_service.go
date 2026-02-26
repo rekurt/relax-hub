@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -65,8 +66,8 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, domain.ErrBathhouseNotActive
 	}
 
-	if input.StartTime.Before(time.Now()) {
-		return nil, fmt.Errorf("%w: start time must be in the future", domain.ErrInvalidInput)
+	if input.StartTime.Before(time.Now().Add(5 * time.Minute)) {
+		return nil, fmt.Errorf("%w: start time must be at least 5 minutes in the future", domain.ErrInvalidInput)
 	}
 
 	if input.GuestCount <= 0 || input.GuestCount > bh.MaxGuests {
@@ -77,6 +78,14 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	durationHours := int(duration / time.Hour)
 	if duration%time.Hour != 0 || durationHours < bh.MinDuration {
 		return nil, domain.ErrInvalidInput
+	}
+
+	// Validate price is positive and won't overflow
+	if bh.PricePerHour <= 0 {
+		return nil, fmt.Errorf("%w: invalid bathhouse price", domain.ErrInvalidInput)
+	}
+	if durationHours > 0 && bh.PricePerHour > math.MaxInt64/int64(durationHours) {
+		return nil, fmt.Errorf("%w: price calculation overflow", domain.ErrInvalidInput)
 	}
 
 	// Validate booking falls within working hours

@@ -25,12 +25,65 @@ log_warn() {
     echo -e "${YELLOW}[WARN]${NC} $1"
 }
 
+# Cleanup function to ensure server is stopped
+cleanup() {
+    if [ -n "$SERVER_PID" ] && kill -0 "$SERVER_PID" 2>/dev/null; then
+        log_info "Stopping server (PID: $SERVER_PID)..."
+        kill "$SERVER_PID" 2>/dev/null || true
+        wait "$SERVER_PID" 2>/dev/null || true
+    fi
+}
+
+trap cleanup EXIT
+
 # Setup test database
 log_info "Setting up test database..."
 bash "$(dirname "$0")/setup.sh" || {
     log_error "Database setup failed"
     exit 1
 }
+
+# Build the server
+log_info "Building server..."
+go build -o "$(dirname "$0")/../../bin/bani-server" "$(dirname "$0")/../../cmd/server" || {
+    log_error "Failed to build server"
+    exit 1
+}
+
+# Start the server in the background
+log_info "Starting server on localhost:8080..."
+BANI_ENVIRONMENT="$BANI_ENVIRONMENT" \
+BANI_SERVER_HOST="$BANI_SERVER_HOST" \
+BANI_SERVER_PORT="$BANI_SERVER_PORT" \
+BANI_DATABASE_DSN="$BANI_DATABASE_DSN" \
+BANI_REDIS_ADDR="$BANI_REDIS_ADDR" \
+BANI_REDIS_PASSWORD="$BANI_REDIS_PASSWORD" \
+BANI_REDIS_DB="$BANI_REDIS_DB" \
+BANI_JWT_SECRET="$BANI_JWT_SECRET" \
+BANI_JWT_TOKEN_TTL="$BANI_JWT_TOKEN_TTL" \
+BANI_LOGGER_LEVEL="$BANI_LOGGER_LEVEL" \
+"$(dirname "$0")/../../bin/bani-server" serve > /tmp/bani-server.log 2>&1 &
+SERVER_PID=$!
+
+# Wait for server to be ready
+log_info "Waiting for server to be ready..."
+max_attempts=30
+attempt=0
+while [ $attempt -lt $max_attempts ]; do
+    if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+        log_info "Server is ready"
+        break
+    fi
+    attempt=$((attempt + 1))
+    sleep 0.5
+done
+
+if [ $attempt -eq $max_attempts ]; then
+    log_error "Server did not become ready in time"
+    log_error "Server logs:"
+    cat /tmp/bani-server.log
+    exit 1
+fi
 
 # Run auth tests first to capture tokens by making API calls directly
 log_info "Running auth tests..."

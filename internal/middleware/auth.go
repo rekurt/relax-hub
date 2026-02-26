@@ -108,11 +108,13 @@ func writeAuthError(w http.ResponseWriter, status int, message string) {
 		errorCode = "error"
 	}
 
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	if err := json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": false,
 		"error": map[string]string{
 			"code":    errorCode,
 			"message": message,
 		},
-	})
+	}); err != nil {
+		_ = err // Headers already sent, cannot write error response
+	}
 }

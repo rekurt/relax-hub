@@ -30,20 +30,24 @@ type Meta struct {
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(APIResponse{
+	if err := json.NewEncoder(w).Encode(APIResponse{
 		Success: true,
 		Data:    data,
-	})
+	}); err != nil {
+		_ = err // Headers already sent, cannot write error response
+	}
 }
 
 func writeJSONWithMeta(w http.ResponseWriter, status int, data interface{}, meta *Meta) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(APIResponse{
+	if err := json.NewEncoder(w).Encode(APIResponse{
 		Success: true,
 		Data:    data,
 		Meta:    meta,
-	})
+	}); err != nil {
+		_ = err // Headers already sent, cannot write error response
+	}
 }
 
 func writeError(w http.ResponseWriter, status int, code, message string) {
@@ -54,13 +58,15 @@ func writeErrorWithContext(w http.ResponseWriter, _ *http.Request, status int, c
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	_ = json.NewEncoder(w).Encode(APIResponse{
+	if err := json.NewEncoder(w).Encode(APIResponse{
 		Success: false,
 		Error: &APIError{
 			Code:    code,
 			Message: message,
 		},
-	})
+	}); err != nil {
+		_ = err // Headers already sent, cannot write error response
+	}
 }
 
 func handleServiceError(w http.ResponseWriter, err error) {
