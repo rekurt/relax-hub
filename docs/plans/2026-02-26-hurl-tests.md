@@ -41,13 +41,13 @@ Create comprehensive hurl test suite covering all main API endpoints (auth, bath
 - Create: tests/hurl/auth.hurl
 - Create: tests/hurl/auth_negative.hurl
 
-- [ ] test POST /auth/register (valid user, email already exists)
-- [ ] test POST /auth/login (valid credentials, wrong password, user not found)
-- [ ] test GET /auth/me (with valid token, without token, with invalid token)
-- [ ] verify JWT token structure in responses
-- [ ] test token expiration scenarios if applicable
-- [ ] write integration tests for auth
-- [ ] run hurl tests - must pass before task 3
+- [x] test POST /auth/register (valid user, email already exists)
+- [x] test POST /auth/login (valid credentials, wrong password, user not found)
+- [x] test GET /auth/me (with valid token, without token, with invalid token)
+- [x] verify JWT token structure in responses
+- [x] test token expiration scenarios if applicable
+- [x] write integration tests for auth
+- [x] run hurl tests - must pass before task 3
 
 ### Task 3: Bathhouses Endpoints Tests
 

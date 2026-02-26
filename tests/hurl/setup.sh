@@ -71,12 +71,12 @@ log_info "Seeding test data..."
 PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" << 'EOF'
 -- Create test users
 INSERT INTO users (email, password_hash, name, phone, role, is_active) VALUES
-  ('admin@test.com', '$2a$10$' || encode(digest('admin-password', 'sha256'), 'hex'), 'Admin User', '+1234567890', 'admin', true),
-  ('owner@test.com', '$2a$10$' || encode(digest('owner-password', 'sha256'), 'hex'), 'Owner User', '+1234567891', 'owner', true),
-  ('representative@test.com', '$2a$10$' || encode(digest('rep-password', 'sha256'), 'hex'), 'Representative User', '+1234567892', 'representative', true),
-  ('client@test.com', '$2a$10$' || encode(digest('client-password', 'sha256'), 'hex'), 'Client User', '+1234567893', 'client', true),
-  ('client2@test.com', '$2a$10$' || encode(digest('client2-password', 'sha256'), 'hex'), 'Client Two', '+1234567894', 'client', true),
-  ('blocked@test.com', '$2a$10$' || encode(digest('blocked-password', 'sha256'), 'hex'), 'Blocked User', '+1234567895', 'client', false);
+  ('admin@test.com', '$2a$10$2R./p9GTXF/325PJnx/tvOXaxMjJZhC/mEaAZJ3FRGQiZ4U6f/JBy', 'Admin User', '+1234567890', 'admin', true),
+  ('owner@test.com', '$2a$10$WiOza7gHYyBIT2dfFJsW9eo.7hS8.kuwt05VdT3tQI2Mz8BwCoBX6', 'Owner User', '+1234567891', 'owner', true),
+  ('representative@test.com', '$2a$10$5etUHu7KX4g4nel2jxrXgO06z.QkkqAGC25dCGPDcTZplJz3CXFY6', 'Representative User', '+1234567892', 'representative', true),
+  ('client@test.com', '$2a$10$xh7pDp6sitliSK6TJLzXj.O7dwHd8FoA.aN2B3KX6UxThvmySPvNu', 'Client User', '+1234567893', 'client', true),
+  ('client2@test.com', '$2a$10$zrLx8jTPUlADKRGqWjlRM.A95yOBZnoM6LdE/eW9tMhfiZKeNoGve', 'Client Two', '+1234567894', 'client', true),
+  ('blocked@test.com', '$2a$10$m5SaOpY7.Xm0/kIYrxVPhu0CsgEq2yi9dMKUsco37j0rYgDNFs/Hi', 'Blocked User', '+1234567895', 'client', false);
 
 -- Create test cities
 INSERT INTO cities (name, slug, latitude, longitude) VALUES
