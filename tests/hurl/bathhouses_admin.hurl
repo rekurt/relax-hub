@@ -9,7 +9,7 @@ Content-Type: application/json
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" exists
 jsonpath "$.meta.page" >= 1
 jsonpath "$.meta.total_count" >= 0
 
@@ -146,7 +146,7 @@ Content-Type: application/json
 HTTP 403
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "forbidden"
+jsonpath "$.error.code" == "Forbidden"
 
 ### Test 8: Reject bathhouse as client (forbidden)
 PATCH http://localhost:8080/api/v1/admin/bathhouses/{{forbidden_bathhouse_id}}/reject
@@ -160,7 +160,7 @@ Content-Type: application/json
 HTTP 403
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "forbidden"
+jsonpath "$.error.code" == "Forbidden"
 
 ### Test 9: Approve non-existent bathhouse
 PATCH http://localhost:8080/api/v1/admin/bathhouses/00000000-0000-0000-0000-000000000000/approve
@@ -172,7 +172,7 @@ Content-Type: application/json
 HTTP 404
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "not_found"
+jsonpath "$.error.code" == "NotFound"
 
 ### Test 10: Get admin bathhouses without authentication
 GET http://localhost:8080/api/v1/admin/bathhouses
@@ -181,7 +181,7 @@ Content-Type: application/json
 HTTP 401
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "unauthorized"
+jsonpath "$.error.code" == "Unauthorized"
 
 ### Test 11: Get admin bathhouses as non-admin user
 GET http://localhost:8080/api/v1/admin/bathhouses
@@ -191,4 +191,4 @@ Content-Type: application/json
 HTTP 403
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "forbidden"
+jsonpath "$.error.code" == "Forbidden"

@@ -55,15 +55,15 @@ Create comprehensive hurl test suite covering all main API endpoints (auth, bath
 - Create: tests/hurl/bathhouses.hurl
 - Create: tests/hurl/bathhouses_admin.hurl
 
-- [ ] test GET /bathhouses (search with filters, pagination, is_favorite enrichment with/without auth)
-- [ ] test GET /bathhouses/{id} (existing bathhouse, non-existent, with/without auth for is_favorite)
-- [ ] test GET /bathhouses/{id}/available-slots (date range, available slots response format)
-- [ ] test POST /bathhouses (owner creates bathhouse, invalid role, missing fields)
-- [ ] test PUT /bathhouses/{id} (owner/representative updates, forbidden access)
-- [ ] test DELETE /bathhouses/{id} (owner deletes, forbidden, bathhouse with bookings)
-- [ ] test GET /my/bathhouses (owner/representative lists, client forbidden)
-- [ ] write integration tests for bathhouses
-- [ ] run hurl tests - must pass before task 4
+- [x] test GET /bathhouses (search with filters, pagination, is_favorite enrichment with/without auth)
+- [x] test GET /bathhouses/{id} (existing bathhouse, non-existent, with/without auth for is_favorite)
+- [x] test GET /bathhouses/{id}/available-slots (date range, available slots response format)
+- [x] test POST /bathhouses (owner creates bathhouse, invalid role, missing fields)
+- [x] test PUT /bathhouses/{id} (owner/representative updates, forbidden access)
+- [x] test DELETE /bathhouses/{id} (owner deletes, forbidden, bathhouse with bookings)
+- [x] test GET /my/bathhouses (owner/representative lists, client forbidden)
+- [x] write integration tests for bathhouses
+- [x] run hurl tests - must pass before task 4
 
 ### Task 4: Bookings Endpoints Tests
 

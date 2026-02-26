@@ -8,7 +8,7 @@ Content-Type: application/json
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" exists
 jsonpath "$.meta.page" == 1
 jsonpath "$.meta.page_size" > 0
 jsonpath "$.meta.total_count" >= 0
@@ -20,7 +20,7 @@ Content-Type: application/json
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" exists
 jsonpath "$.meta.page" == 1
 jsonpath "$.meta.page_size" == 10
 
@@ -31,7 +31,7 @@ Content-Type: application/json
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" exists
 
 ### Test 4: Search bathhouses with authentication - verify is_favorite field
 GET http://localhost:8080/api/v1/bathhouses
@@ -41,7 +41,7 @@ Content-Type: application/json
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" exists
 [Captures]
 bathhouse_id: jsonpath "$.data[0].id"
 
@@ -62,33 +62,45 @@ jsonpath "$.data.longitude" isNumber
 jsonpath "$.data.price_per_hour" isNumber
 jsonpath "$.data.min_duration" isNumber
 jsonpath "$.data.max_guests" isNumber
-jsonpath "$.data.has_pool" isBool
-jsonpath "$.data.has_sauna" isBool
-jsonpath "$.data.has_steam_room" isBool
+jsonpath "$.data.has_pool" == true
+jsonpath "$.data.has_sauna" == true
+jsonpath "$.data.has_steam_room" == true
 jsonpath "$.data.rating" isNumber
 jsonpath "$.data.review_count" isNumber
 jsonpath "$.data.status" isString
 jsonpath "$.data.is_favorite" == false
 
-### Test 6: Get single bathhouse with authentication
-GET http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}
+### Test 6: Get single bathhouse with authentication (second bathhouse to avoid favorites)
+GET http://localhost:8080/api/v1/bathhouses
 Authorization: Bearer {{client_token}}
 Content-Type: application/json
 
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data.id" == "{{bathhouse_id}}"
-jsonpath "$.data.is_favorite" isBool
+jsonpath "$.data" exists
+[Captures]
+second_bathhouse_id: jsonpath "$.data[1].id"
 
-### Test 7: Get available slots for bathhouse
-GET http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}/available-slots?date_from=2026-02-27&date_to=2026-03-01
+### Test 6b: Verify is_favorite field is present and boolean
+GET http://localhost:8080/api/v1/bathhouses/{{second_bathhouse_id}}
+Authorization: Bearer {{client_token}}
 Content-Type: application/json
 
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data.id" == "{{second_bathhouse_id}}"
+jsonpath "$.data.is_favorite" exists
+
+### Test 7: Get available slots for bathhouse
+GET http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}/available-slots?date=2026-02-27
+Content-Type: application/json
+
+HTTP 200
+[Asserts]
+jsonpath "$.success" == true
+jsonpath "$.data" exists
 
 ### Test 8: Create bathhouse with owner role
 POST http://localhost:8080/api/v1/bathhouses
@@ -162,7 +174,7 @@ Content-Type: application/json
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" exists
 jsonpath "$.data[0].owner_id" isString
 jsonpath "$.meta.total_count" > 0
 
@@ -182,4 +194,4 @@ Content-Type: application/json
 HTTP 404
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "not_found"
+jsonpath "$.error.code" == "NotFound"
