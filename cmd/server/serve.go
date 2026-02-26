@@ -1,7 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/app"
@@ -22,8 +27,36 @@ var serveCmd = &cobra.Command{
 		log.Info("Starting server", "host", cfg.Server.Host, "port", cfg.Server.Port)
 
 		fxApp := app.New(cfg)
-		fxApp.Run()
 
+		// Create a channel to listen for interrupt signals
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+		// Start the app in a goroutine
+		go func() {
+			if err := fxApp.Start(context.Background()); err != nil {
+				log.Error("Failed to start application", "error", err)
+				sigChan <- syscall.SIGINT
+			}
+		}()
+
+		// Wait for shutdown signal
+		sig := <-sigChan
+		log.Info("Received shutdown signal", "signal", sig.String())
+
+		// Create a context with 30-second timeout for graceful shutdown
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		log.Info("Starting graceful shutdown", "timeout_seconds", 30)
+
+		// Stop the application with the timeout context
+		if err := fxApp.Stop(shutdownCtx); err != nil {
+			log.Error("Error during graceful shutdown", "error", err)
+			return err
+		}
+
+		log.Info("Graceful shutdown completed successfully")
 		return nil
 	},
 }

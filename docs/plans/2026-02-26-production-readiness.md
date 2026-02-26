@@ -62,12 +62,12 @@
 - Modify: `cmd/server/root.go`
 - Modify: `internal/app/app.go`
 
-- [ ] Добавить обработку SIGINT и SIGTERM в serve command
-- [ ] Обеспечить graceful shutdown с таймаутом 30 сек для завершения активных запросов
-- [ ] Логировать получение сигнала shutdown
-- [ ] Выполнить корректное закрытие database connections и redis connections
-- [ ] Написать интеграционные тесты для shutdown сценария
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить обработку SIGINT и SIGTERM в serve command
+- [x] Обеспечить graceful shutdown с таймаутом 30 сек для завершения активных запросов
+- [x] Логировать получение сигнала shutdown
+- [x] Выполнить корректное закрытие database connections и redis connections
+- [x] Написать интеграционные тесты для shutdown сценария
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Улучшение обработки ошибок в handlers
 
