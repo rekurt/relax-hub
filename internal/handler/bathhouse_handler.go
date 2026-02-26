@@ -268,7 +268,7 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 func (h *BathhouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createBathhouseRequest
-	if err := readJSON(r, &req); err != nil {
+	if err := readJSON(w, r, &req); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -319,7 +319,7 @@ func (h *BathhouseHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req updateBathhouseRequest
-	if err := readJSON(r, &req); err != nil {
+	if err := readJSON(w, r, &req); err != nil {
 		handleServiceError(w, err)
 		return
 	}

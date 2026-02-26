@@ -170,7 +170,7 @@ type updateCityRequest struct {
 
 func (h *AdminHandler) CreateCity(w http.ResponseWriter, r *http.Request) {
 	var req createCityRequest
-	if err := readJSON(r, &req); err != nil {
+	if err := readJSON(w, r, &req); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -203,7 +203,7 @@ func (h *AdminHandler) UpdateCity(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req updateCityRequest
-	if err := readJSON(r, &req); err != nil {
+	if err := readJSON(w, r, &req); err != nil {
 		handleServiceError(w, err)
 		return
 	}

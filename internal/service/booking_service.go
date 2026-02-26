@@ -221,6 +221,10 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 		return nil, err
 	}
 
+	if bh.Status != domain.BathhouseStatusActive {
+		return nil, domain.ErrBathhouseNotActive
+	}
+
 	dayOfWeek := toDayOfWeek(date.Weekday())
 
 	var wh *domain.WorkingHours

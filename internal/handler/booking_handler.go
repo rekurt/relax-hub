@@ -59,7 +59,7 @@ func toBookingResponse(b *domain.Booking) bookingResponse {
 
 func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createBookingRequest
-	if err := readJSON(r, &req); err != nil {
+	if err := readJSON(w, r, &req); err != nil {
 		handleServiceError(w, err)
 		return
 	}
