@@ -225,8 +225,12 @@ func (m *mockBookingService) GetAvailableSlots(ctx context.Context, bathhouseID 
 }
 
 type mockReviewService struct {
-	createFn          func(ctx context.Context, userID uuid.UUID, input service.CreateReviewInput) (*domain.Review, error)
-	listByBathhouseFn func(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Review], error)
+	createFn           func(ctx context.Context, userID uuid.UUID, input service.CreateReviewInput) (*domain.Review, error)
+	getByIDFn          func(ctx context.Context, id uuid.UUID) (*domain.Review, error)
+	updateFn           func(ctx context.Context, userID uuid.UUID, reviewID uuid.UUID, input service.UpdateReviewInput) (*domain.Review, error)
+	deleteFn           func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, reviewID uuid.UUID) error
+	listByBathhouseFn  func(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Review], error)
+	addOwnerResponseFn func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, reviewID uuid.UUID, response string) (*domain.Review, error)
 }
 
 func (m *mockReviewService) Create(ctx context.Context, userID uuid.UUID, input service.CreateReviewInput) (*domain.Review, error) {
@@ -236,11 +240,39 @@ func (m *mockReviewService) Create(ctx context.Context, userID uuid.UUID, input 
 	return nil, nil
 }
 
+func (m *mockReviewService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Review, error) {
+	if m.getByIDFn != nil {
+		return m.getByIDFn(ctx, id)
+	}
+	return nil, nil
+}
+
+func (m *mockReviewService) Update(ctx context.Context, userID uuid.UUID, reviewID uuid.UUID, input service.UpdateReviewInput) (*domain.Review, error) {
+	if m.updateFn != nil {
+		return m.updateFn(ctx, userID, reviewID, input)
+	}
+	return nil, nil
+}
+
+func (m *mockReviewService) Delete(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, reviewID uuid.UUID) error {
+	if m.deleteFn != nil {
+		return m.deleteFn(ctx, userID, userRole, reviewID)
+	}
+	return nil
+}
+
 func (m *mockReviewService) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Review], error) {
 	if m.listByBathhouseFn != nil {
 		return m.listByBathhouseFn(ctx, bathhouseID, page, pageSize)
 	}
 	return &domain.PaginatedResult[domain.Review]{}, nil
+}
+
+func (m *mockReviewService) AddOwnerResponse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, reviewID uuid.UUID, response string) (*domain.Review, error) {
+	if m.addOwnerResponseFn != nil {
+		return m.addOwnerResponseFn(ctx, userID, userRole, reviewID, response)
+	}
+	return nil, nil
 }
 
 type mockRepService struct {

@@ -52,12 +52,12 @@
 - Modify: `internal/service/review.go`
 - Modify: `internal/service/interfaces.go`
 
-- [ ] Расширить ReviewRepository: Update, Delete, GetByID, ListByBathhouse(с фильтром), UpdateStatus, AddOwnerResponse
-- [ ] Реализовать новые методы в postgres и mock репозиториях
-- [ ] Расширить ReviewService: Update (автор в течение 24ч), Delete (автор или админ), GetByID, AddOwnerResponse (владелец/представитель бани)
-- [ ] Добавить RBAC-проверки для ответов владельцев через AccessChecker
-- [ ] Написать unit-тесты для сервиса с mock-репозиторием
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Расширить ReviewRepository: Update, Delete, GetByID, ListByBathhouse(с фильтром), UpdateStatus, AddOwnerResponse
+- [x] Реализовать новые методы в postgres и mock репозиториях
+- [x] Расширить ReviewService: Update (автор в течение 24ч), Delete (автор или админ), GetByID, AddOwnerResponse (владелец/представитель бани)
+- [x] Добавить RBAC-проверки для ответов владельцев через AccessChecker
+- [x] Написать unit-тесты для сервиса с mock-репозиторием
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Хендлеры отзывов - новые эндпоинты
 

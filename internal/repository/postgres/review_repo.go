@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -21,10 +23,48 @@ func NewReviewRepository(pool *pgxpool.Pool) repository.ReviewRepository {
 	return &reviewRepo{pool: pool}
 }
 
+var reviewColumns = `id, user_id, bathhouse_id, booking_id, rating, text, status, owner_response, owner_response_at, images, created_at, updated_at`
+
+func scanReview(row pgx.Row) (*domain.Review, error) {
+	var rev domain.Review
+	var images []string
+	err := row.Scan(
+		&rev.ID, &rev.UserID, &rev.BathhouseID, &rev.BookingID,
+		&rev.Rating, &rev.Text, &rev.Status, &rev.OwnerResponse,
+		&rev.OwnerResponseAt, &images, &rev.CreatedAt, &rev.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	rev.Images = images
+	return &rev, nil
+}
+
+func scanReviews(rows pgx.Rows) ([]domain.Review, error) {
+	var reviews []domain.Review
+	for rows.Next() {
+		var rev domain.Review
+		var images []string
+		if err := rows.Scan(
+			&rev.ID, &rev.UserID, &rev.BathhouseID, &rev.BookingID,
+			&rev.Rating, &rev.Text, &rev.Status, &rev.OwnerResponse,
+			&rev.OwnerResponseAt, &images, &rev.CreatedAt, &rev.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan review: %w", err)
+		}
+		rev.Images = images
+		reviews = append(reviews, rev)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate review rows: %w", err)
+	}
+	return reviews, nil
+}
+
 func (r *reviewRepo) Create(ctx context.Context, review *domain.Review) error {
 	query := `
-		INSERT INTO reviews (id, user_id, bathhouse_id, booking_id, rating, text, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`
+		INSERT INTO reviews (id, user_id, bathhouse_id, booking_id, rating, text, status, images, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 
 	if review.ID == uuid.Nil {
 		review.ID = uuid.New()
@@ -32,13 +72,55 @@ func (r *reviewRepo) Create(ctx context.Context, review *domain.Review) error {
 
 	_, err := r.pool.Exec(ctx, query,
 		review.ID, review.UserID, review.BathhouseID, review.BookingID,
-		review.Rating, review.Text, review.CreatedAt,
+		review.Rating, review.Text, review.Status, review.Images,
+		review.CreatedAt, review.UpdatedAt,
 	)
 	if err != nil {
 		if isDuplicateKeyError(err) {
 			return domain.ErrAlreadyExists
 		}
 		return fmt.Errorf("create review: %w", err)
+	}
+	return nil
+}
+
+func (r *reviewRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Review, error) {
+	query := `SELECT ` + reviewColumns + ` FROM reviews WHERE id = $1`
+
+	rev, err := scanReview(r.pool.QueryRow(ctx, query, id))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrReviewNotFound
+		}
+		return nil, fmt.Errorf("get review by id: %w", err)
+	}
+	return rev, nil
+}
+
+func (r *reviewRepo) Update(ctx context.Context, review *domain.Review) error {
+	query := `
+		UPDATE reviews SET rating = $2, text = $3, images = $4, updated_at = $5
+		WHERE id = $1`
+
+	result, err := r.pool.Exec(ctx, query,
+		review.ID, review.Rating, review.Text, review.Images, review.UpdatedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("update review: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrReviewNotFound
+	}
+	return nil
+}
+
+func (r *reviewRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	result, err := r.pool.Exec(ctx, `DELETE FROM reviews WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("delete review: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrReviewNotFound
 	}
 	return nil
 }
@@ -58,9 +140,7 @@ func (r *reviewRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID,
 	}
 
 	offset := (page - 1) * pageSize
-	query := `
-		SELECT id, user_id, bathhouse_id, booking_id, rating, text, created_at
-		FROM reviews WHERE bathhouse_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+	query := `SELECT ` + reviewColumns + ` FROM reviews WHERE bathhouse_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, query, bathhouseID, pageSize, offset)
 	if err != nil {
@@ -68,19 +148,9 @@ func (r *reviewRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID,
 	}
 	defer rows.Close()
 
-	var reviews []domain.Review
-	for rows.Next() {
-		var rev domain.Review
-		if err := rows.Scan(
-			&rev.ID, &rev.UserID, &rev.BathhouseID, &rev.BookingID,
-			&rev.Rating, &rev.Text, &rev.CreatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("scan review: %w", err)
-		}
-		reviews = append(reviews, rev)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate review rows: %w", err)
+	reviews, err := scanReviews(rows)
+	if err != nil {
+		return nil, err
 	}
 
 	return &domain.PaginatedResult[domain.Review]{
@@ -92,21 +162,104 @@ func (r *reviewRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID,
 	}, nil
 }
 
-func (r *reviewRepo) GetByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.Review, error) {
-	query := `
-		SELECT id, user_id, bathhouse_id, booking_id, rating, text, created_at
-		FROM reviews WHERE booking_id = $1`
+func (r *reviewRepo) ListByBathhouseFiltered(ctx context.Context, filter domain.ReviewFilter) (*domain.PaginatedResult[domain.Review], error) {
+	if filter.Page < 1 {
+		filter.Page = 1
+	}
+	if filter.PageSize < 1 {
+		filter.PageSize = 20
+	}
 
-	var rev domain.Review
-	err := r.pool.QueryRow(ctx, query, bookingID).Scan(
-		&rev.ID, &rev.UserID, &rev.BathhouseID, &rev.BookingID,
-		&rev.Rating, &rev.Text, &rev.CreatedAt,
-	)
+	var conditions []string
+	var args []interface{}
+	argIdx := 1
+
+	if filter.BathhouseID != nil {
+		conditions = append(conditions, fmt.Sprintf("bathhouse_id = $%d", argIdx))
+		args = append(args, *filter.BathhouseID)
+		argIdx++
+	}
+	if filter.Status != nil {
+		conditions = append(conditions, fmt.Sprintf("status = $%d", argIdx))
+		args = append(args, string(*filter.Status))
+		argIdx++
+	}
+	if filter.MinRating != nil {
+		conditions = append(conditions, fmt.Sprintf("rating >= $%d", argIdx))
+		args = append(args, *filter.MinRating)
+		argIdx++
+	}
+
+	where := ""
+	if len(conditions) > 0 {
+		where = " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	var totalCount int64
+	countQuery := `SELECT COUNT(*) FROM reviews` + where
+	err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&totalCount)
+	if err != nil {
+		return nil, fmt.Errorf("count filtered reviews: %w", err)
+	}
+
+	offset := (filter.Page - 1) * filter.PageSize
+	args = append(args, filter.PageSize, offset)
+	query := fmt.Sprintf(`SELECT %s FROM reviews%s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+		reviewColumns, where, argIdx, argIdx+1)
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list filtered reviews: %w", err)
+	}
+	defer rows.Close()
+
+	reviews, err := scanReviews(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.PaginatedResult[domain.Review]{
+		Items:      reviews,
+		TotalCount: totalCount,
+		Page:       filter.Page,
+		PageSize:   filter.PageSize,
+		TotalPages: int(math.Ceil(float64(totalCount) / float64(filter.PageSize))),
+	}, nil
+}
+
+func (r *reviewRepo) GetByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.Review, error) {
+	query := `SELECT ` + reviewColumns + ` FROM reviews WHERE booking_id = $1`
+
+	rev, err := scanReview(r.pool.QueryRow(ctx, query, bookingID))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("get review by booking id: %w", err)
 	}
-	return &rev, nil
+	return rev, nil
+}
+
+func (r *reviewRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReviewStatus) error {
+	query := `UPDATE reviews SET status = $2, updated_at = $3 WHERE id = $1`
+	result, err := r.pool.Exec(ctx, query, id, string(status), time.Now())
+	if err != nil {
+		return fmt.Errorf("update review status: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrReviewNotFound
+	}
+	return nil
+}
+
+func (r *reviewRepo) AddOwnerResponse(ctx context.Context, id uuid.UUID, response string, respondedAt time.Time) error {
+	query := `UPDATE reviews SET owner_response = $2, owner_response_at = $3, updated_at = $4 WHERE id = $1`
+	result, err := r.pool.Exec(ctx, query, id, response, respondedAt, respondedAt)
+	if err != nil {
+		return fmt.Errorf("add owner response: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrReviewNotFound
+	}
+	return nil
 }

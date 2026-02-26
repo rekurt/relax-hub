@@ -464,9 +464,44 @@ func (r *ReviewRepo) Create(_ context.Context, review *domain.Review) error {
 			return domain.ErrAlreadyExists
 		}
 	}
-	review.CreatedAt = time.Now()
+	now := time.Now()
+	review.CreatedAt = now
+	review.UpdatedAt = now
 	cp := *review
 	r.reviews[review.ID] = &cp
+	return nil
+}
+
+func (r *ReviewRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Review, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	rev, ok := r.reviews[id]
+	if !ok {
+		return nil, domain.ErrReviewNotFound
+	}
+	cp := *rev
+	return &cp, nil
+}
+
+func (r *ReviewRepo) Update(_ context.Context, review *domain.Review) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.reviews[review.ID]; !ok {
+		return domain.ErrReviewNotFound
+	}
+	review.UpdatedAt = time.Now()
+	cp := *review
+	r.reviews[review.ID] = &cp
+	return nil
+}
+
+func (r *ReviewRepo) Delete(_ context.Context, id uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.reviews[id]; !ok {
+		return domain.ErrReviewNotFound
+	}
+	delete(r.reviews, id)
 	return nil
 }
 
@@ -507,6 +542,50 @@ func (r *ReviewRepo) ListByBathhouse(_ context.Context, bathhouseID uuid.UUID, p
 	}, nil
 }
 
+func (r *ReviewRepo) ListByBathhouseFiltered(_ context.Context, filter domain.ReviewFilter) (*domain.PaginatedResult[domain.Review], error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if filter.Page < 1 {
+		filter.Page = 1
+	}
+	if filter.PageSize < 1 {
+		filter.PageSize = 20
+	}
+
+	var items []domain.Review
+	for _, rev := range r.reviews {
+		if filter.BathhouseID != nil && rev.BathhouseID != *filter.BathhouseID {
+			continue
+		}
+		if filter.Status != nil && rev.Status != *filter.Status {
+			continue
+		}
+		if filter.MinRating != nil && rev.Rating < *filter.MinRating {
+			continue
+		}
+		items = append(items, *rev)
+	}
+
+	total := int64(len(items))
+	start := (filter.Page - 1) * filter.PageSize
+	if start >= len(items) {
+		return &domain.PaginatedResult[domain.Review]{
+			Items: nil, TotalCount: total, Page: filter.Page, PageSize: filter.PageSize,
+			TotalPages: int((total + int64(filter.PageSize) - 1) / int64(filter.PageSize)),
+		}, nil
+	}
+	end := start + filter.PageSize
+	if end > len(items) {
+		end = len(items)
+	}
+
+	return &domain.PaginatedResult[domain.Review]{
+		Items: items[start:end], TotalCount: total, Page: filter.Page, PageSize: filter.PageSize,
+		TotalPages: int((total + int64(filter.PageSize) - 1) / int64(filter.PageSize)),
+	}, nil
+}
+
 func (r *ReviewRepo) GetByBookingID(_ context.Context, bookingID uuid.UUID) (*domain.Review, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -517,6 +596,31 @@ func (r *ReviewRepo) GetByBookingID(_ context.Context, bookingID uuid.UUID) (*do
 		}
 	}
 	return nil, domain.ErrNotFound
+}
+
+func (r *ReviewRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domain.ReviewStatus) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	rev, ok := r.reviews[id]
+	if !ok {
+		return domain.ErrReviewNotFound
+	}
+	rev.Status = status
+	rev.UpdatedAt = time.Now()
+	return nil
+}
+
+func (r *ReviewRepo) AddOwnerResponse(_ context.Context, id uuid.UUID, response string, respondedAt time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	rev, ok := r.reviews[id]
+	if !ok {
+		return domain.ErrReviewNotFound
+	}
+	rev.OwnerResponse = response
+	rev.OwnerResponseAt = &respondedAt
+	rev.UpdatedAt = respondedAt
+	return nil
 }
 
 // BathhouseRepo is an in-memory mock implementation of repository.BathhouseRepository.

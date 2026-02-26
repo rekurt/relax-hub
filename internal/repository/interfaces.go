@@ -50,8 +50,14 @@ type BookingRepository interface {
 
 type ReviewRepository interface {
 	Create(ctx context.Context, review *domain.Review) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Review, error)
+	Update(ctx context.Context, review *domain.Review) error
+	Delete(ctx context.Context, id uuid.UUID) error
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Review], error)
+	ListByBathhouseFiltered(ctx context.Context, filter domain.ReviewFilter) (*domain.PaginatedResult[domain.Review], error)
 	GetByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.Review, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReviewStatus) error
+	AddOwnerResponse(ctx context.Context, id uuid.UUID, response string, respondedAt time.Time) error
 }
 
 type RepresentativeRepository interface {
