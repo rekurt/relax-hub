@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/handler"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/server"
 	"github.com/nikitaaldaev/bani/internal/service"
@@ -31,8 +32,10 @@ func (m *mockAuthServiceForRouter) Login(_ context.Context, _, _ string) (*domai
 func testRouterParams() server.RouterParams {
 	cors := middleware.NewCORSMiddleware()
 	authSvc := &mockAuthServiceForRouter{}
+	log := logger.New(logger.LevelWarn)
 
 	return server.RouterParams{
+		Log:            log,
 		CORS:           cors,
 		AuthService:    authSvc,
 		AuthHandler:    handler.NewAuthHandler(authSvc, nil),
