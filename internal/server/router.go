@@ -14,17 +14,17 @@ import (
 type RouterParams struct {
 	fx.In
 
-	CORS            *middleware.CORSMiddleware
-	AuthService     middleware.AuthService
-	AuthHandler     *handler.AuthHandler
-	BHHandler       *handler.BathhouseHandler
-	BookingHandler  *handler.BookingHandler
-	ReviewHandler   *handler.ReviewHandler
-	FavHandler      *handler.FavoriteHandler
-	RepHandler      *handler.RepresentativeHandler
-	CityHandler     *handler.CityHandler
-	AdminHandler    *handler.AdminHandler
-	HealthHandler   *handler.HealthHandler
+	CORS           *middleware.CORSMiddleware
+	AuthService    middleware.AuthService
+	AuthHandler    *handler.AuthHandler
+	BHHandler      *handler.BathhouseHandler
+	BookingHandler *handler.BookingHandler
+	ReviewHandler  *handler.ReviewHandler
+	FavHandler     *handler.FavoriteHandler
+	RepHandler     *handler.RepresentativeHandler
+	CityHandler    *handler.CityHandler
+	AdminHandler   *handler.AdminHandler
+	HealthHandler  *handler.HealthHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {

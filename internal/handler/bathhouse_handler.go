@@ -34,31 +34,31 @@ func NewBathhouseHandler(
 }
 
 type bathhouseResponse struct {
-	ID           string                `json:"id"`
-	OwnerID      string                `json:"owner_id"`
-	Name         string                `json:"name"`
-	Description  string                `json:"description"`
-	Address      string                `json:"address"`
-	CityID       int64                 `json:"city_id"`
-	Latitude     float64               `json:"latitude"`
-	Longitude    float64               `json:"longitude"`
-	PricePerHour int64                 `json:"price_per_hour"`
-	MinDuration  int                   `json:"min_duration"`
-	MaxGuests    int                   `json:"max_guests"`
-	HasPool      bool                  `json:"has_pool"`
-	HasSauna     bool                  `json:"has_sauna"`
-	HasSteamRoom bool                  `json:"has_steam_room"`
-	HasHotTub    bool                  `json:"has_hot_tub"`
-	HasBBQ       bool                  `json:"has_bbq"`
-	HasKaraoke   bool                  `json:"has_karaoke"`
-	Rating       float64               `json:"rating"`
-	ReviewCount  int                   `json:"review_count"`
-	Images       []string              `json:"images"`
-	WorkingHours []workingHoursResp    `json:"working_hours"`
-	Status       string                `json:"status"`
-	IsFavorite   bool                  `json:"is_favorite"`
-	CreatedAt    time.Time             `json:"created_at"`
-	UpdatedAt    time.Time             `json:"updated_at"`
+	ID           string             `json:"id"`
+	OwnerID      string             `json:"owner_id"`
+	Name         string             `json:"name"`
+	Description  string             `json:"description"`
+	Address      string             `json:"address"`
+	CityID       int64              `json:"city_id"`
+	Latitude     float64            `json:"latitude"`
+	Longitude    float64            `json:"longitude"`
+	PricePerHour int64              `json:"price_per_hour"`
+	MinDuration  int                `json:"min_duration"`
+	MaxGuests    int                `json:"max_guests"`
+	HasPool      bool               `json:"has_pool"`
+	HasSauna     bool               `json:"has_sauna"`
+	HasSteamRoom bool               `json:"has_steam_room"`
+	HasHotTub    bool               `json:"has_hot_tub"`
+	HasBBQ       bool               `json:"has_bbq"`
+	HasKaraoke   bool               `json:"has_karaoke"`
+	Rating       float64            `json:"rating"`
+	ReviewCount  int                `json:"review_count"`
+	Images       []string           `json:"images"`
+	WorkingHours []workingHoursResp `json:"working_hours"`
+	Status       string             `json:"status"`
+	IsFavorite   bool               `json:"is_favorite"`
+	CreatedAt    time.Time          `json:"created_at"`
+	UpdatedAt    time.Time          `json:"updated_at"`
 }
 
 type workingHoursResp struct {
@@ -157,9 +157,9 @@ type updateBathhouseRequest struct {
 func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	filter := domain.BathhouseFilter{
-		Page:     getPage(q.Get("page")),
-		PageSize: getPageSize(q.Get("page_size"), 20),
-		SortBy:   q.Get("sort_by"),
+		Page:      getPage(q.Get("page")),
+		PageSize:  getPageSize(q.Get("page_size"), 20),
+		SortBy:    q.Get("sort_by"),
 		SortOrder: q.Get("sort_order"),
 	}
 

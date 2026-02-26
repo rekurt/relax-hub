@@ -10,9 +10,9 @@ import (
 )
 
 type favoriteTestEnv struct {
-	svc      service.FavoriteService
-	bhRepo   *mock.BathhouseRepo
-	favRepo  *mock.FavoriteRepo
+	svc     service.FavoriteService
+	bhRepo  *mock.BathhouseRepo
+	favRepo *mock.FavoriteRepo
 }
 
 func newFavoriteTestEnv() *favoriteTestEnv {

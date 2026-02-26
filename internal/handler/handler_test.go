@@ -91,14 +91,14 @@ func (m *mockUserService) Unblock(ctx context.Context, id uuid.UUID) error {
 }
 
 type mockBathhouseService struct {
-	searchFn     func(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)
-	getByIDFn    func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
-	createFn     func(ctx context.Context, ownerID uuid.UUID, input service.CreateBathhouseInput) (*domain.Bathhouse, error)
-	updateFn     func(ctx context.Context, userID uuid.UUID, role domain.UserRole, id uuid.UUID, input service.UpdateBathhouseInput) (*domain.Bathhouse, error)
-	deleteFn     func(ctx context.Context, ownerID uuid.UUID, id uuid.UUID) error
+	searchFn      func(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)
+	getByIDFn     func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
+	createFn      func(ctx context.Context, ownerID uuid.UUID, input service.CreateBathhouseInput) (*domain.Bathhouse, error)
+	updateFn      func(ctx context.Context, userID uuid.UUID, role domain.UserRole, id uuid.UUID, input service.UpdateBathhouseInput) (*domain.Bathhouse, error)
+	deleteFn      func(ctx context.Context, ownerID uuid.UUID, id uuid.UUID) error
 	listByOwnerFn func(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error)
-	approveFn    func(ctx context.Context, id uuid.UUID) error
-	rejectFn     func(ctx context.Context, id uuid.UUID) error
+	approveFn     func(ctx context.Context, id uuid.UUID) error
+	rejectFn      func(ctx context.Context, id uuid.UUID) error
 }
 
 func (m *mockBathhouseService) Search(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
@@ -311,11 +311,11 @@ func (m *mockRepService) GetMyBathhouses(ctx context.Context, userID uuid.UUID) 
 }
 
 type mockCityService struct {
-	getAllFn   func(ctx context.Context) ([]domain.City, error)
+	getAllFn    func(ctx context.Context) ([]domain.City, error)
 	getBySlugFn func(ctx context.Context, slug string) (*domain.City, error)
-	createFn  func(ctx context.Context, input service.CreateCityInput) (*domain.City, error)
-	updateFn  func(ctx context.Context, id int64, input service.UpdateCityInput) (*domain.City, error)
-	deleteFn  func(ctx context.Context, id int64) error
+	createFn    func(ctx context.Context, input service.CreateCityInput) (*domain.City, error)
+	updateFn    func(ctx context.Context, id int64, input service.UpdateCityInput) (*domain.City, error)
+	deleteFn    func(ctx context.Context, id int64) error
 }
 
 func (m *mockCityService) GetAll(ctx context.Context) ([]domain.City, error) {
@@ -2204,7 +2204,7 @@ func TestReviewHandler_AddOwnerResponse(t *testing.T) {
 			return &domain.Review{
 				ID: rID, UserID: uuid.New(), BathhouseID: bhID,
 				BookingID: bookingID, Rating: 5, Text: "Great!",
-				Status: domain.ReviewStatusApproved,
+				Status:        domain.ReviewStatusApproved,
 				OwnerResponse: response, OwnerResponseAt: &now,
 			}, nil
 		},
