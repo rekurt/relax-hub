@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
@@ -38,6 +38,7 @@ type reviewService struct {
 	bookingRepo   repository.BookingRepository
 	bhRepo        repository.BathhouseRepository
 	accessChecker *AccessChecker
+	logger        logger.Logger
 }
 
 func NewReviewService(
@@ -45,12 +46,14 @@ func NewReviewService(
 	bookingRepo repository.BookingRepository,
 	bhRepo repository.BathhouseRepository,
 	accessChecker *AccessChecker,
+	log logger.Logger,
 ) ReviewService {
 	return &reviewService{
 		reviewRepo:    reviewRepo,
 		bookingRepo:   bookingRepo,
 		bhRepo:        bhRepo,
 		accessChecker: accessChecker,
+		logger:        log,
 	}
 }
 
@@ -102,7 +105,7 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 	}
 
 	if err := s.bhRepo.UpdateRating(ctx, booking.BathhouseID); err != nil {
-		log.Printf("WARNING: failed to update bathhouse rating for %s: %v", booking.BathhouseID, err)
+		s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", booking.BathhouseID, "error", err)
 	}
 
 	return review, nil
@@ -147,7 +150,7 @@ func (s *reviewService) Update(ctx context.Context, userID uuid.UUID, reviewID u
 
 	if input.Rating != nil {
 		if err := s.bhRepo.UpdateRating(ctx, review.BathhouseID); err != nil {
-			log.Printf("WARNING: failed to update bathhouse rating for %s: %v", review.BathhouseID, err)
+			s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", review.BathhouseID, "error", err)
 		}
 	}
 
@@ -173,7 +176,7 @@ func (s *reviewService) Delete(ctx context.Context, userID uuid.UUID, userRole d
 	}
 
 	if err := s.bhRepo.UpdateRating(ctx, review.BathhouseID); err != nil {
-		log.Printf("WARNING: failed to update bathhouse rating for %s: %v", review.BathhouseID, err)
+		s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", review.BathhouseID, "error", err)
 	}
 
 	return nil

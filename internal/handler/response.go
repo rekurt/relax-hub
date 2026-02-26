@@ -5,9 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/logger"
 )
 
 type APIResponse struct {
@@ -52,19 +50,9 @@ func writeError(w http.ResponseWriter, status int, code, message string) {
 	writeErrorWithContext(w, nil, status, code, message)
 }
 
-func writeErrorWithContext(w http.ResponseWriter, r *http.Request, status int, code, message string) {
+func writeErrorWithContext(w http.ResponseWriter, _ *http.Request, status int, code, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-
-	// Log 5xx errors
-	if status >= 500 {
-		log := logger.New(logger.LevelError)
-		var reqID string
-		if r != nil {
-			reqID = chiMiddleware.GetReqID(r.Context())
-		}
-		log.Error("HTTP error", "status", status, "code", code, "message", message, "request_id", reqID)
-	}
 
 	_ = json.NewEncoder(w).Encode(APIResponse{
 		Success: false,

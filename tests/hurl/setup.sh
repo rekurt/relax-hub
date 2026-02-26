@@ -26,49 +26,95 @@ log_warn() {
 }
 
 # Extract database connection info from DSN
-# Format: postgres://user:password@host:port/dbname?sslmode=disable
+# Format: postgres://user:password@host:port/dbname?sslmode=disable or postgres://user@host/dbname
 DB_URL="$BANI_DATABASE_DSN"
+# Extract user (before : or @)
 POSTGRES_USER="${DB_URL##*://}"
-POSTGRES_USER="${POSTGRES_USER%%:*}"
-POSTGRES_PASSWORD="${DB_URL##*:}"
-POSTGRES_PASSWORD="${POSTGRES_PASSWORD%%@*}"
+POSTGRES_USER="${POSTGRES_USER%%[:@]*}"
+# Extract password (if present, between : and @)
+if [[ "$POSTGRES_USER" != "${DB_URL##*://}" ]]; then
+  if [[ "${DB_URL##*://}" == *":"* ]]; then
+    POSTGRES_PASSWORD="${DB_URL##*:}"
+    POSTGRES_PASSWORD="${POSTGRES_PASSWORD%%@*}"
+  else
+    POSTGRES_PASSWORD=""
+  fi
+else
+  POSTGRES_PASSWORD=""
+fi
+# Extract host (after @ before : or /)
 POSTGRES_HOST="${DB_URL##*@}"
-POSTGRES_HOST="${POSTGRES_HOST%%:*}"
-POSTGRES_PORT="${DB_URL##*:}"
-POSTGRES_PORT="${POSTGRES_PORT%%/*}"
+POSTGRES_HOST="${POSTGRES_HOST%%[:/*]*}"
+# Extract port (after host: before /)
+if [[ "${DB_URL##*@}" == *":"* ]]; then
+  POSTGRES_PORT="${DB_URL##*:}"
+  POSTGRES_PORT="${POSTGRES_PORT%%/*}"
+else
+  POSTGRES_PORT="5432"
+fi
+# Extract database name
 POSTGRES_DB="${DB_URL##*/}"
-POSTGRES_DB="${POSTGRES_DB%%?*}"
+POSTGRES_DB="${POSTGRES_DB%%\?*}"
 
 log_info "Connecting to PostgreSQL at $POSTGRES_HOST:$POSTGRES_PORT"
 
 # Create test database if it doesn't exist
 log_info "Creating test database '$POSTGRES_DB'..."
-PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -tc "SELECT 1 FROM pg_database WHERE datname = '$POSTGRES_DB'" | grep -q 1 || \
-  PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -c "CREATE DATABASE \"$POSTGRES_DB\";"
+if [ -z "$POSTGRES_PASSWORD" ]; then
+  psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '$POSTGRES_DB'" | grep -q 1 || \
+    psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres -c "CREATE DATABASE \"$POSTGRES_DB\";"
+else
+  PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = '$POSTGRES_DB'" | grep -q 1 || \
+    PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres -c "CREATE DATABASE \"$POSTGRES_DB\";"
+fi
 
 log_info "Resetting test database schema..."
 # Drop all tables and extensions
-PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" << 'EOF'
+if [ -z "$POSTGRES_PASSWORD" ]; then
+  psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" << 'EOF'
 DROP SCHEMA IF EXISTS public CASCADE;
 CREATE SCHEMA public;
-GRANT ALL ON SCHEMA public TO postgres;
 EOF
+else
+  PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" << 'EOF'
+DROP SCHEMA IF EXISTS public CASCADE;
+CREATE SCHEMA public;
+EOF
+fi
+
+log_info "Installing PostGIS extension..."
+# Try to install PostGIS (may fail if not available)
+if [ -z "$POSTGRES_PASSWORD" ]; then
+  psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS postgis;" > /dev/null 2>&1 || true
+else
+  PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS postgis;" > /dev/null 2>&1 || true
+fi
 
 log_info "Running migrations..."
-# Apply migrations
+# Apply migrations (use no_postgis version for init)
 MIGRATION_DIR="$(cd "$(dirname "$0")"/../../migrations && pwd)"
-for migration in "$MIGRATION_DIR"/*.up.sql; do
+# Apply init_no_postgis.sql first, then other migrations
+for migration in "$MIGRATION_DIR"/000001_init_no_postgis.up.sql "$MIGRATION_DIR"/000002_*.up.sql "$MIGRATION_DIR"/000003_*.up.sql; do
+    [ -f "$migration" ] || continue
     log_info "Applying $(basename "$migration")..."
-    PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f "$migration" > /dev/null 2>&1 || {
-        log_error "Failed to apply migration: $(basename "$migration")"
-        exit 1
-    }
+    if [ -z "$POSTGRES_PASSWORD" ]; then
+      psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f "$migration" > /dev/null 2>&1 || {
+          log_error "Failed to apply migration: $(basename "$migration")"
+          exit 1
+      }
+    else
+      PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f "$migration" > /dev/null 2>&1 || {
+          log_error "Failed to apply migration: $(basename "$migration")"
+          exit 1
+      }
+    fi
 done
 
 log_info "Seeding test data..."
 
-# Seed test data using SQL
-PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" << 'EOF'
+# Create temporary SQL file for test data
+TEST_DATA_FILE=$(mktemp)
+cat > "$TEST_DATA_FILE" << 'EOF'
 -- Create test users
 INSERT INTO users (email, password_hash, name, phone, role, is_active) VALUES
   ('admin@test.com', '$2a$10$2R./p9GTXF/325PJnx/tvOXaxMjJZhC/mEaAZJ3FRGQiZ4U6f/JBy', 'Admin User', '+1234567890', 'admin', true),
@@ -120,5 +166,15 @@ INSERT INTO favorites (user_id, bathhouse_id) VALUES
   ((SELECT id FROM users WHERE email = 'client@test.com' LIMIT 1),
    (SELECT id FROM bathhouses WHERE name = 'Premium Bathhouse' LIMIT 1));
 EOF
+
+# Execute test data SQL
+if [ -z "$POSTGRES_PASSWORD" ]; then
+  psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f "$TEST_DATA_FILE"
+else
+  PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f "$TEST_DATA_FILE"
+fi
+
+# Clean up temporary file
+rm -f "$TEST_DATA_FILE"
 
 log_info "Test database setup completed successfully!"

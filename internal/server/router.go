@@ -33,7 +33,7 @@ func NewRouter(p RouterParams) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(chiMiddleware.RequestID)
-	r.Use(middleware.Logging)
+	r.Use(middleware.Logging(*p.Log))
 	r.Use(middleware.RecoveryMiddleware(middleware.IsDevEnvironment(), p.Log))
 	r.Use(p.CORS.Handler)
 

@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -26,7 +27,8 @@ func newReviewTestEnv() *reviewTestEnv {
 	reviewRepo := mock.NewReviewRepo()
 	repRepo := mock.NewRepresentativeRepo()
 	ac := service.NewAccessChecker(repRepo, bhRepo)
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac)
+	log := logger.New(logger.LevelWarn) // Use Warn level to suppress debug output during tests
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, *log)
 	return &reviewTestEnv{
 		svc:         svc,
 		bhRepo:      bhRepo,
@@ -41,6 +43,8 @@ func newReviewService() (service.ReviewService, *mock.BathhouseRepo, *mock.Booki
 	env := newReviewTestEnv()
 	return env.svc, env.bhRepo, env.bookingRepo, env.reviewRepo
 }
+
+// Note: logger is imported but only used indirectly in newReviewTestEnv
 
 func createCompletedBooking(t *testing.T, bookingRepo *mock.BookingRepo, clientID, bathhouseID uuid.UUID) *domain.Booking {
 	t.Helper()
