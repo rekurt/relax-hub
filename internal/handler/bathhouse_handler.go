@@ -16,17 +16,20 @@ type BathhouseHandler struct {
 	bathhouseService      service.BathhouseService
 	bookingService        service.BookingService
 	representativeService service.RepresentativeService
+	favoriteService       service.FavoriteService
 }
 
 func NewBathhouseHandler(
 	bathhouseService service.BathhouseService,
 	bookingService service.BookingService,
 	representativeService service.RepresentativeService,
+	favoriteService service.FavoriteService,
 ) *BathhouseHandler {
 	return &BathhouseHandler{
 		bathhouseService:      bathhouseService,
 		bookingService:        bookingService,
 		representativeService: representativeService,
+		favoriteService:       favoriteService,
 	}
 }
 
@@ -53,6 +56,7 @@ type bathhouseResponse struct {
 	Images       []string              `json:"images"`
 	WorkingHours []workingHoursResp    `json:"working_hours"`
 	Status       string                `json:"status"`
+	IsFavorite   bool                  `json:"is_favorite"`
 	CreatedAt    time.Time             `json:"created_at"`
 	UpdatedAt    time.Time             `json:"updated_at"`
 }
@@ -269,6 +273,16 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 		items[i] = toBathhouseResponse(&result.Items[i])
 	}
 
+	userID := middleware.GetUserID(r.Context())
+	if userID != uuid.Nil && h.favoriteService != nil {
+		for i := range result.Items {
+			fav, err := h.favoriteService.IsFavorite(r.Context(), userID, result.Items[i].ID)
+			if err == nil {
+				items[i].IsFavorite = fav
+			}
+		}
+	}
+
 	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
 		Page:       result.Page,
 		PageSize:   result.PageSize,
@@ -290,7 +304,17 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toBathhouseResponse(bh))
+	resp := toBathhouseResponse(bh)
+
+	userID := middleware.GetUserID(r.Context())
+	if userID != uuid.Nil && h.favoriteService != nil {
+		fav, err := h.favoriteService.IsFavorite(r.Context(), userID, bh.ID)
+		if err == nil {
+			resp.IsFavorite = fav
+		}
+	}
+
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *BathhouseHandler) Create(w http.ResponseWriter, r *http.Request) {

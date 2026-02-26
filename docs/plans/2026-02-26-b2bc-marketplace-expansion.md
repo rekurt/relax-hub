@@ -120,10 +120,10 @@
 - Modify: `internal/service/bathhouse.go`
 - Modify: `internal/handler/bathhouse.go`
 
-- [ ] Добавить в ответ BathhouseResponse поле IsFavorite bool
-- [ ] При авторизованном запросе GET /api/v1/bathhouses и GET /api/v1/bathhouses/{id} проверять через FavoriteRepository
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить в ответ BathhouseResponse поле IsFavorite bool
+- [x] При авторизованном запросе GET /api/v1/bathhouses и GET /api/v1/bathhouses/{id} проверять через FavoriteRepository
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 7: Верификация и финализация Фазы 1
 

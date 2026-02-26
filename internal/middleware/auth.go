@@ -64,6 +64,35 @@ func RequireAuth(authService AuthService) func(http.Handler) http.Handler {
 	}
 }
 
+func OptionalAuth(authService AuthService) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			header := r.Header.Get("Authorization")
+			if header == "" {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			parts := strings.SplitN(header, " ", 2)
+			if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			token := parts[1]
+			userID, role, err := authService.ParseToken(r.Context(), token)
+			if err != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), userIDKey, userID)
+			ctx = context.WithValue(ctx, roleKey, role)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
 func writeAuthError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

@@ -38,6 +38,7 @@ func NewRouter(p RouterParams) http.Handler {
 	r.Get("/health", healthCheck)
 
 	auth := middleware.RequireAuth(p.AuthService)
+	optionalAuth := middleware.OptionalAuth(p.AuthService)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// Auth (public)
@@ -45,9 +46,9 @@ func NewRouter(p RouterParams) http.Handler {
 		r.Post("/auth/login", p.AuthHandler.Login)
 		r.With(auth).Get("/auth/me", p.AuthHandler.Me)
 
-		// Bathhouses (public)
-		r.Get("/bathhouses", p.BHHandler.Search)
-		r.Get("/bathhouses/{id}", p.BHHandler.GetByID)
+		// Bathhouses (public, with optional auth for is_favorite)
+		r.With(optionalAuth).Get("/bathhouses", p.BHHandler.Search)
+		r.With(optionalAuth).Get("/bathhouses/{id}", p.BHHandler.GetByID)
 		r.Get("/bathhouses/{id}/available-slots", p.BHHandler.GetAvailableSlots)
 
 		// Bathhouses (authenticated)
