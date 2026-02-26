@@ -71,6 +71,9 @@ func NewRouter(p RouterParams) http.Handler {
 		// Reviews
 		r.Get("/bathhouses/{id}/reviews", p.ReviewHandler.ListByBathhouse)
 		r.With(auth, middleware.RequireRole(domain.RoleClient)).Post("/bathhouses/{id}/reviews", p.ReviewHandler.Create)
+		r.With(auth).Put("/reviews/{id}", p.ReviewHandler.Update)
+		r.With(auth).Delete("/reviews/{id}", p.ReviewHandler.Delete)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", p.ReviewHandler.AddOwnerResponse)
 
 		// Representatives (owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses/{id}/representatives", p.RepHandler.Invite)

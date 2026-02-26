@@ -1833,6 +1833,326 @@ func TestBathhouseHandler_Delete_InvalidUUID(t *testing.T) {
 
 // --- Unauthenticated access tests ---
 
+// --- Review Handler Extended Tests ---
+
+func TestReviewHandler_Update(t *testing.T) {
+	clientID := uuid.New()
+	reviewID := uuid.New()
+	bhID := uuid.New()
+	bookingID := uuid.New()
+
+	reviewSvc := &mockReviewService{
+		updateFn: func(_ context.Context, userID uuid.UUID, rID uuid.UUID, input service.UpdateReviewInput) (*domain.Review, error) {
+			rating := 4
+			if input.Rating != nil {
+				rating = *input.Rating
+			}
+			return &domain.Review{
+				ID: rID, UserID: userID, BathhouseID: bhID,
+				BookingID: bookingID, Rating: rating, Text: "Updated text",
+				Status: domain.ReviewStatusPending,
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(clientID, domain.RoleClient)
+	h := handler.NewReviewHandler(reviewSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Put("/reviews/{id}", h.Update)
+
+	newRating := 4
+	newText := "Updated text"
+	body := jsonBody(map[string]interface{}{
+		"rating": newRating,
+		"text":   newText,
+	})
+
+	req := httptest.NewRequest(http.MethodPut, "/reviews/"+reviewID.String(), body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	resp := parseResponse(t, rec)
+	if !resp.Success {
+		t.Error("expected success=true")
+	}
+}
+
+func TestReviewHandler_Update_InvalidUUID(t *testing.T) {
+	authSvc := makeAuthToken(uuid.New(), domain.RoleClient)
+	h := handler.NewReviewHandler(nil)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Put("/reviews/{id}", h.Update)
+
+	body := jsonBody(map[string]interface{}{"rating": 3})
+	req := httptest.NewRequest(http.MethodPut, "/reviews/not-a-uuid", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", rec.Code)
+	}
+}
+
+func TestReviewHandler_Update_Forbidden(t *testing.T) {
+	clientID := uuid.New()
+	reviewID := uuid.New()
+
+	reviewSvc := &mockReviewService{
+		updateFn: func(_ context.Context, userID uuid.UUID, rID uuid.UUID, input service.UpdateReviewInput) (*domain.Review, error) {
+			return nil, domain.ErrForbidden
+		},
+	}
+
+	authSvc := makeAuthToken(clientID, domain.RoleClient)
+	h := handler.NewReviewHandler(reviewSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Put("/reviews/{id}", h.Update)
+
+	body := jsonBody(map[string]interface{}{"rating": 3})
+	req := httptest.NewRequest(http.MethodPut, "/reviews/"+reviewID.String(), body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("expected status 403, got %d", rec.Code)
+	}
+}
+
+func TestReviewHandler_Delete(t *testing.T) {
+	clientID := uuid.New()
+	reviewID := uuid.New()
+
+	reviewSvc := &mockReviewService{
+		deleteFn: func(_ context.Context, userID uuid.UUID, role domain.UserRole, rID uuid.UUID) error {
+			return nil
+		},
+	}
+
+	authSvc := makeAuthToken(clientID, domain.RoleClient)
+	h := handler.NewReviewHandler(reviewSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Delete("/reviews/{id}", h.Delete)
+
+	req := httptest.NewRequest(http.MethodDelete, "/reviews/"+reviewID.String(), nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestReviewHandler_Delete_AdminCanDelete(t *testing.T) {
+	adminID := uuid.New()
+	reviewID := uuid.New()
+
+	reviewSvc := &mockReviewService{
+		deleteFn: func(_ context.Context, userID uuid.UUID, role domain.UserRole, rID uuid.UUID) error {
+			if role != domain.RoleAdmin {
+				t.Error("expected admin role")
+			}
+			return nil
+		},
+	}
+
+	authSvc := makeAuthToken(adminID, domain.RoleAdmin)
+	h := handler.NewReviewHandler(reviewSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Delete("/reviews/{id}", h.Delete)
+
+	req := httptest.NewRequest(http.MethodDelete, "/reviews/"+reviewID.String(), nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
+func TestReviewHandler_Delete_InvalidUUID(t *testing.T) {
+	authSvc := makeAuthToken(uuid.New(), domain.RoleClient)
+	h := handler.NewReviewHandler(nil)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Delete("/reviews/{id}", h.Delete)
+
+	req := httptest.NewRequest(http.MethodDelete, "/reviews/not-a-uuid", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", rec.Code)
+	}
+}
+
+func TestReviewHandler_Delete_Forbidden(t *testing.T) {
+	clientID := uuid.New()
+	reviewID := uuid.New()
+
+	reviewSvc := &mockReviewService{
+		deleteFn: func(_ context.Context, userID uuid.UUID, role domain.UserRole, rID uuid.UUID) error {
+			return domain.ErrForbidden
+		},
+	}
+
+	authSvc := makeAuthToken(clientID, domain.RoleClient)
+	h := handler.NewReviewHandler(reviewSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Delete("/reviews/{id}", h.Delete)
+
+	req := httptest.NewRequest(http.MethodDelete, "/reviews/"+reviewID.String(), nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("expected status 403, got %d", rec.Code)
+	}
+}
+
+func TestReviewHandler_AddOwnerResponse(t *testing.T) {
+	ownerID := uuid.New()
+	reviewID := uuid.New()
+	bhID := uuid.New()
+	bookingID := uuid.New()
+	now := time.Now()
+
+	reviewSvc := &mockReviewService{
+		addOwnerResponseFn: func(_ context.Context, userID uuid.UUID, role domain.UserRole, rID uuid.UUID, response string) (*domain.Review, error) {
+			return &domain.Review{
+				ID: rID, UserID: uuid.New(), BathhouseID: bhID,
+				BookingID: bookingID, Rating: 5, Text: "Great!",
+				Status: domain.ReviewStatusApproved,
+				OwnerResponse: response, OwnerResponseAt: &now,
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
+	h := handler.NewReviewHandler(reviewSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", h.AddOwnerResponse)
+
+	body := jsonBody(map[string]string{"response": "Thank you for your review!"})
+	req := httptest.NewRequest(http.MethodPost, "/reviews/"+reviewID.String()+"/response", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	resp := parseResponse(t, rec)
+	if !resp.Success {
+		t.Error("expected success=true")
+	}
+}
+
+func TestReviewHandler_AddOwnerResponse_InvalidUUID(t *testing.T) {
+	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
+	h := handler.NewReviewHandler(nil)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", h.AddOwnerResponse)
+
+	body := jsonBody(map[string]string{"response": "test"})
+	req := httptest.NewRequest(http.MethodPost, "/reviews/not-a-uuid/response", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", rec.Code)
+	}
+}
+
+func TestReviewHandler_AddOwnerResponse_ForbiddenForClient(t *testing.T) {
+	clientID := uuid.New()
+	authSvc := makeAuthToken(clientID, domain.RoleClient)
+	h := handler.NewReviewHandler(nil)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", h.AddOwnerResponse)
+
+	body := jsonBody(map[string]string{"response": "test"})
+	req := httptest.NewRequest(http.MethodPost, "/reviews/"+uuid.New().String()+"/response", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("expected status 403, got %d", rec.Code)
+	}
+}
+
+func TestReviewHandler_AddOwnerResponse_AlreadyResponded(t *testing.T) {
+	ownerID := uuid.New()
+	reviewID := uuid.New()
+
+	reviewSvc := &mockReviewService{
+		addOwnerResponseFn: func(_ context.Context, userID uuid.UUID, role domain.UserRole, rID uuid.UUID, response string) (*domain.Review, error) {
+			return nil, domain.ErrReviewAlreadyResponded
+		},
+	}
+
+	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
+	h := handler.NewReviewHandler(reviewSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", h.AddOwnerResponse)
+
+	body := jsonBody(map[string]string{"response": "test"})
+	req := httptest.NewRequest(http.MethodPost, "/reviews/"+reviewID.String()+"/response", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusConflict {
+		t.Errorf("expected status 409, got %d", rec.Code)
+	}
+
+	resp := parseResponse(t, rec)
+	if resp.Error == nil || resp.Error.Code != "review_already_responded" {
+		t.Errorf("expected error code review_already_responded, got %v", resp.Error)
+	}
+}
+
 func TestProtectedEndpoints_RequireAuth(t *testing.T) {
 	authSvc := &mockAuthService{} // ParseToken returns error by default
 

@@ -80,6 +80,8 @@ func handleServiceError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "bathhouse_not_active", err.Error())
 	case errors.Is(err, domain.ErrBathhouseHasBookings):
 		writeError(w, http.StatusConflict, "bathhouse_has_bookings", err.Error())
+	case errors.Is(err, domain.ErrReviewAlreadyResponded):
+		writeError(w, http.StatusConflict, "review_already_responded", err.Error())
 	default:
 		writeError(w, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

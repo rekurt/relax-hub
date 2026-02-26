@@ -65,12 +65,12 @@
 - Modify: `internal/handler/review.go`
 - Modify: `internal/server/router.go`
 
-- [ ] PUT /api/v1/reviews/{id} - редактирование отзыва (автор, 24ч)
-- [ ] DELETE /api/v1/reviews/{id} - удаление (автор или админ)
-- [ ] POST /api/v1/reviews/{id}/response - ответ владельца
-- [ ] Зарегистрировать новые маршруты в роутере
-- [ ] Написать handler-тесты с httptest
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] PUT /api/v1/reviews/{id} - редактирование отзыва (автор, 24ч)
+- [x] DELETE /api/v1/reviews/{id} - удаление (автор или админ)
+- [x] POST /api/v1/reviews/{id}/response - ответ владельца
+- [x] Зарегистрировать новые маршруты в роутере
+- [x] Написать handler-тесты с httptest
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Система избранного (Favorites)
 
