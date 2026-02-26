@@ -5,6 +5,7 @@ import (
 
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/app"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +18,8 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to load config: %w", err)
 		}
 
-		fmt.Printf("Starting server on %s:%d\n", cfg.Server.Host, cfg.Server.Port)
+		log := logger.New(logger.ParseLogLevel(cfg.Logger.Level))
+		log.Info("Starting server", "host", cfg.Server.Host, "port", cfg.Server.Port)
 
 		fxApp := app.New(cfg)
 		fxApp.Run()

@@ -4,6 +4,7 @@ import (
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/database"
 	"github.com/nikitaaldaev/bani/internal/handler"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	repopostgres "github.com/nikitaaldaev/bani/internal/repository/postgres"
 	"github.com/nikitaaldaev/bani/internal/server"
@@ -14,6 +15,7 @@ import (
 func New(cfg *config.Config) *fx.App {
 	return fx.New(
 		fx.Supply(cfg),
+		logger.Module,
 		database.PostgresModule,
 		database.RedisModule,
 		middleware.CORSModule,

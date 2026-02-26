@@ -13,6 +13,7 @@ type Config struct {
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
 	JWT      JWTConfig      `mapstructure:"jwt"`
+	Logger   LoggerConfig   `mapstructure:"logger"`
 }
 
 type ServerConfig struct {
@@ -33,6 +34,10 @@ type RedisConfig struct {
 type JWTConfig struct {
 	Secret   string        `mapstructure:"secret"`
 	TokenTTL time.Duration `mapstructure:"token_ttl"`
+}
+
+type LoggerConfig struct {
+	Level string `mapstructure:"level"`
 }
 
 func Load(cfgFile string) (*Config, error) {
@@ -59,6 +64,7 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("redis.db", 0)
 	v.SetDefault("jwt.secret", "change-me-in-production")
 	v.SetDefault("jwt.token_ttl", "24h")
+	v.SetDefault("logger.level", "info")
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
