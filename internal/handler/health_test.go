@@ -41,27 +41,19 @@ func TestHealthHandler_Health_Success(t *testing.T) {
 }
 
 func TestHealthHandler_Ready_AllServicesUp(t *testing.T) {
-	// Note: Testing Ready endpoint with actual services requires
-	// either mock implementations or test infrastructure setup.
-	// The Ready() method implementation is verified in integration tests.
+	t.Skip("Requires test database and Redis setup - use integration tests instead")
 }
 
 func TestHealthHandler_Ready_PostgresDown(t *testing.T) {
-	// Note: Testing Ready endpoint with actual database failures requires
-	// either mock implementations or test database setup.
-	// The Ready() method implementation is verified in integration tests.
+	t.Skip("Requires test database setup - use integration tests instead")
 }
 
 func TestHealthHandler_Ready_RedisDown(t *testing.T) {
-	// Note: Testing Ready endpoint with actual Redis failures requires
-	// either mock implementations or test Redis setup.
-	// The Ready() method implementation is verified in integration tests.
+	t.Skip("Requires test Redis setup - use integration tests instead")
 }
 
 func TestHealthHandler_Ready_BothDown(t *testing.T) {
-	// Note: Testing Ready endpoint with both services down requires
-	// either mock implementations or test infrastructure setup.
-	// The Ready() method implementation is verified in integration tests.
+	t.Skip("Requires test infrastructure setup - use integration tests instead")
 }
 
 // TestHealthEndpointResponse tests the health endpoint returns correct JSON
@@ -89,9 +81,7 @@ func TestHealthEndpointResponse(t *testing.T) {
 
 // TestReadyEndpointResponseStructure verifies the response structure
 func TestReadyEndpointResponseStructure(t *testing.T) {
-	// This test verifies that when the Ready endpoint is called,
-	// it returns the correct JSON structure with services map
-	// The Ready() method implementation is verified in integration tests.
+	t.Skip("Requires test infrastructure setup - use integration tests instead")
 }
 
 // TestHealthHandlerCreation tests that the handler is properly initialized

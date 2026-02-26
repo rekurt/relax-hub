@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/nikitaaldaev/bani/internal/logger"
 )
 
 func TestRecoveryMiddleware_DevMode(t *testing.T) {
-	handler := RecoveryMiddleware(true)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	log := logger.New(logger.LevelError)
+	handler := RecoveryMiddleware(true, log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		panic("test panic")
 	}))
 
@@ -34,7 +37,8 @@ func TestRecoveryMiddleware_DevMode(t *testing.T) {
 }
 
 func TestRecoveryMiddleware_ProdMode(t *testing.T) {
-	handler := RecoveryMiddleware(false)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	log := logger.New(logger.LevelError)
+	handler := RecoveryMiddleware(false, log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		panic("test panic")
 	}))
 
@@ -59,7 +63,8 @@ func TestRecoveryMiddleware_ProdMode(t *testing.T) {
 }
 
 func TestRecoveryMiddleware_RequestID(t *testing.T) {
-	handler := RecoveryMiddleware(true)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	log := logger.New(logger.LevelError)
+	handler := RecoveryMiddleware(true, log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		panic("test panic")
 	}))
 
@@ -75,7 +80,8 @@ func TestRecoveryMiddleware_RequestID(t *testing.T) {
 }
 
 func TestRecoveryMiddleware_NoPanic(t *testing.T) {
-	handler := RecoveryMiddleware(true)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	log := logger.New(logger.LevelError)
+	handler := RecoveryMiddleware(true, log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "OK")
 	}))
@@ -95,7 +101,8 @@ func TestRecoveryMiddleware_NoPanic(t *testing.T) {
 }
 
 func TestRecoveryMiddleware_ErrorFormatting(t *testing.T) {
-	handler := RecoveryMiddleware(true)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	log := logger.New(logger.LevelError)
+	handler := RecoveryMiddleware(true, log)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		panic("test panic")
 	}))
 

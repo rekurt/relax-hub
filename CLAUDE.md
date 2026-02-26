@@ -120,8 +120,9 @@ logger.Warn("warning", "key", value)
 
 HTTP server timeouts configured in internal/server/server.go:
 - ReadHeaderTimeout: 5 seconds
-- ReadTimeout: 15 seconds
-- WriteTimeout: 15 seconds
+- ReadTimeout: 10 seconds
+- WriteTimeout: 30 seconds
+- IdleTimeout: 120 seconds
 
 Context timeouts:
 - Database queries: 30 seconds (via context.WithTimeout in handlers)

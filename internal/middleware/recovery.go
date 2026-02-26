@@ -13,13 +13,12 @@ import (
 
 // RecoveryMiddleware recovers from panics and logs the error with stack trace
 // Stack traces are only shown in dev mode (via environment detection)
-func RecoveryMiddleware(isDev bool) func(next http.Handler) http.Handler {
+func RecoveryMiddleware(isDev bool, log *logger.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				if rvr := recover(); rvr != nil {
 					reqID := chiMiddleware.GetReqID(r.Context())
-					log := logger.New(logger.LevelError)
 
 					if isDev {
 						// In dev mode, log full stack trace
@@ -44,13 +43,15 @@ func RecoveryMiddleware(isDev bool) func(next http.Handler) http.Handler {
 					// Send generic error response
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusInternalServerError)
-					_ = json.NewEncoder(w).Encode(map[string]interface{}{
+					if err := json.NewEncoder(w).Encode(map[string]interface{}{
 						"success": false,
 						"error": map[string]string{
 							"code":    "internal_error",
 							"message": "internal server error",
 						},
-					})
+					}); err != nil {
+						log.Error("Failed to encode panic response", "error", err)
+					}
 				}
 			}()
 

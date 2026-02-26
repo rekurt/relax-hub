@@ -48,7 +48,9 @@ type ReadyResponse struct {
 func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(HealthResponse{Status: "ok"})
+	if err := json.NewEncoder(w).Encode(HealthResponse{Status: "ok"}); err != nil {
+		h.log.Error("Failed to encode health response", "error", err)
+	}
 }
 
 // Ready returns readiness status after checking external dependencies
@@ -60,41 +62,45 @@ func (h *HealthHandler) Ready(w http.ResponseWriter, r *http.Request) {
 	allReady := true
 
 	// Check PostgreSQL
-	pingCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
-	if err := h.db.Ping(pingCtx); err != nil {
+	pgCtx, pgCancel := context.WithTimeout(ctx, 3*time.Second)
+	if err := h.db.Ping(pgCtx); err != nil {
 		h.log.Error("Readiness check failed: PostgreSQL unavailable", "error", err)
 		services["postgres"] = "down"
 		allReady = false
 	} else {
 		services["postgres"] = "up"
 	}
-	cancel()
+	pgCancel()
 
 	// Check Redis
-	pingCtx, cancel = context.WithTimeout(ctx, database.RedisOperationTimeout)
-	if err := h.redis.Ping(pingCtx).Err(); err != nil {
+	redisCtx, redisCancel := context.WithTimeout(ctx, database.RedisOperationTimeout)
+	if err := h.redis.Ping(redisCtx).Err(); err != nil {
 		h.log.Error("Readiness check failed: Redis unavailable", "error", err)
 		services["redis"] = "down"
 		allReady = false
 	} else {
 		services["redis"] = "up"
 	}
-	cancel()
+	redisCancel()
 
 	w.Header().Set("Content-Type", "application/json")
 
 	if !allReady {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		_ = json.NewEncoder(w).Encode(ReadyResponse{
+		if err := json.NewEncoder(w).Encode(ReadyResponse{
 			Status:   "not_ready",
 			Services: services,
-		})
+		}); err != nil {
+			h.log.Error("Failed to encode ready response", "error", err)
+		}
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(ReadyResponse{
+	if err := json.NewEncoder(w).Encode(ReadyResponse{
 		Status:   "ready",
 		Services: services,
-	})
+	}); err != nil {
+		h.log.Error("Failed to encode ready response", "error", err)
+	}
 }
