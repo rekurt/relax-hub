@@ -117,12 +117,12 @@ TEST_DATA_FILE=$(mktemp)
 cat > "$TEST_DATA_FILE" << 'EOF'
 -- Create test users
 INSERT INTO users (email, password_hash, name, phone, role, is_active) VALUES
-  ('admin@test.com', '$2a$10$2R./p9GTXF/325PJnx/tvOXaxMjJZhC/mEaAZJ3FRGQiZ4U6f/JBy', 'Admin User', '+1234567890', 'admin', true),
-  ('owner@test.com', '$2a$10$WiOza7gHYyBIT2dfFJsW9eo.7hS8.kuwt05VdT3tQI2Mz8BwCoBX6', 'Owner User', '+1234567891', 'owner', true),
-  ('representative@test.com', '$2a$10$5etUHu7KX4g4nel2jxrXgO06z.QkkqAGC25dCGPDcTZplJz3CXFY6', 'Representative User', '+1234567892', 'representative', true),
-  ('client@test.com', '$2a$10$xh7pDp6sitliSK6TJLzXj.O7dwHd8FoA.aN2B3KX6UxThvmySPvNu', 'Client User', '+1234567893', 'client', true),
-  ('client2@test.com', '$2a$10$zrLx8jTPUlADKRGqWjlRM.A95yOBZnoM6LdE/eW9tMhfiZKeNoGve', 'Client Two', '+1234567894', 'client', true),
-  ('blocked@test.com', '$2a$10$m5SaOpY7.Xm0/kIYrxVPhu0CsgEq2yi9dMKUsco37j0rYgDNFs/Hi', 'Blocked User', '+1234567895', 'client', false);
+  ('admin@test.com', '$2a$10$NRS4H03YKQL9G2KoyY4zw.oIXq5vqNQj4wfpnP/GYvhkgceu0.yeK', 'Admin User', '+1234567890', 'admin', true),
+  ('owner@test.com', '$2a$10$mAffhAaeFVl7rpMFczBL2.GDpRnTl6I5vtO/4YYgB7PxccM.fRccy', 'Owner User', '+1234567891', 'owner', true),
+  ('representative@test.com', '$2a$10$TWjDuQTbH7y7dljRLlclL.EQfiVeMdGDyvD63kdzkX8A259Hoqa/2', 'Representative User', '+1234567892', 'representative', true),
+  ('client@test.com', '$2a$10$82uUfQOC6dpaScPBkHMnh.1wpoWFJGvbm7ifytGfvA7XcgMECsOuO', 'Client User', '+1234567893', 'client', true),
+  ('client2@test.com', '$2a$10$UtSAAbzTiV5bXhBeUmKpaOdTEE4e9oR88zPayWjDYTLKGYgTyw4G.', 'Client Two', '+1234567894', 'client', true),
+  ('blocked@test.com', '$2a$10$3X44eRGJuVqNcO5NWC799u7wueyI5XNe7NmGuswp1ApQ751uruRRq', 'Blocked User', '+1234567895', 'client', false);
 
 -- Create test cities
 INSERT INTO cities (name, slug, latitude, longitude) VALUES
@@ -144,13 +144,27 @@ INSERT INTO bookings (user_id, bathhouse_id, start_time, end_time, guest_count, 
    now() + interval '1 day 2 hours',
    4,
    1000000,
-   'pending');
+   'pending'),
+  ((SELECT id FROM users WHERE email = 'client@test.com' LIMIT 1),
+   (SELECT id FROM bathhouses WHERE name = 'Cozy Sauna' LIMIT 1),
+   now() + interval '5 days',
+   now() + interval '5 days 3 hours',
+   3,
+   900000,
+   'confirmed'),
+  ((SELECT id FROM users WHERE email = 'client@test.com' LIMIT 1),
+   (SELECT id FROM bathhouses WHERE name = 'Cozy Sauna' LIMIT 1),
+   now() - interval '10 days 2 hours',
+   now() - interval '10 days',
+   2,
+   600000,
+   'completed');
 
--- Create test review
+-- Create test review (using first booking created)
 INSERT INTO reviews (user_id, bathhouse_id, booking_id, rating, text, status) VALUES
   ((SELECT id FROM users WHERE email = 'client@test.com' LIMIT 1),
    (SELECT id FROM bathhouses WHERE name = 'Premium Bathhouse' LIMIT 1),
-   (SELECT id FROM bookings LIMIT 1),
+   (SELECT id FROM bookings WHERE bathhouse_id = (SELECT id FROM bathhouses WHERE name = 'Premium Bathhouse' LIMIT 1) LIMIT 1),
    5,
    'Great bathhouse!',
    'approved');

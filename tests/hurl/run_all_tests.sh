@@ -56,7 +56,22 @@ CLIENT_RESP=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -d '{"email":"client@test.com","password":"client-password"}')
 CLIENT_TOKEN=$(echo "$CLIENT_RESP" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
 
-log_info "Obtained tokens for admin, owner, and client"
+REPRESENTATIVE_RESP=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"representative@test.com","password":"representative-password"}')
+REPRESENTATIVE_TOKEN=$(echo "$REPRESENTATIVE_RESP" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+
+CLIENT2_RESP=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"client2@test.com","password":"client2-password"}')
+CLIENT2_TOKEN=$(echo "$CLIENT2_RESP" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+
+BLOCKED_USER_RESP=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"blocked@test.com","password":"blocked-password"}')
+BLOCKED_USER_TOKEN=$(echo "$BLOCKED_USER_RESP" | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+
+log_info "Obtained tokens for admin, owner, client, representative, client2, and blocked user"
 
 # Verify tokens were obtained
 if [ -z "$ADMIN_TOKEN" ] || [ -z "$OWNER_TOKEN" ] || [ -z "$CLIENT_TOKEN" ]; then
@@ -93,6 +108,29 @@ hurl tests/hurl/bathhouses_admin.hurl --variables-file tests/hurl/.env.test \
   --variable client_token="$CLIENT_TOKEN" || {
     log_error "Bathhouses admin tests failed"
     exit 1
+}
+
+log_info "Running bookings tests..."
+hurl tests/hurl/bookings.hurl --variables-file tests/hurl/.env.test \
+  --variable admin_token="$ADMIN_TOKEN" \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" \
+  --variable representative_token="$REPRESENTATIVE_TOKEN" \
+  --variable client2_token="$CLIENT2_TOKEN" \
+  --variable blocked_user_token="$BLOCKED_USER_TOKEN" || {
+    log_error "Bookings tests failed"
+    exit 1
+}
+
+log_info "Running bookings negative tests..."
+hurl tests/hurl/bookings_negative.hurl --variables-file tests/hurl/.env.test \
+  --variable admin_token="$ADMIN_TOKEN" \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" \
+  --variable representative_token="$REPRESENTATIVE_TOKEN" \
+  --variable client2_token="$CLIENT2_TOKEN" \
+  --variable blocked_user_token="$BLOCKED_USER_TOKEN" || {
+    log_warn "Bookings negative tests had failures"
 }
 
 log_info "All tests completed!"

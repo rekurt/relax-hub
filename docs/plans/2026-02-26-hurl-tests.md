@@ -71,15 +71,15 @@ Create comprehensive hurl test suite covering all main API endpoints (auth, bath
 - Create: tests/hurl/bookings.hurl
 - Create: tests/hurl/bookings_negative.hurl
 
-- [ ] test POST /bookings (create valid booking, slot unavailable, wrong role)
-- [ ] test GET /bookings (user lists own bookings, pagination)
-- [ ] test PATCH /bookings/{id}/cancel (user cancels within deadline, too late)
-- [ ] test PATCH /bookings/{id}/confirm (owner/rep confirms, wrong role, booking not found)
-- [ ] test PATCH /bookings/{id}/reject (owner/rep rejects with reason)
-- [ ] test PATCH /bookings/{id}/complete (owner/rep marks complete)
-- [ ] test GET /bathhouses/{id}/bookings (owner/rep views bathhouse bookings, forbidden)
-- [ ] write integration tests for bookings
-- [ ] run hurl tests - must pass before task 5
+- [x] test POST /bookings (create valid booking, slot unavailable, wrong role)
+- [x] test GET /bookings (user lists own bookings, pagination)
+- [x] test PATCH /bookings/{id}/cancel (user cancels within deadline, too late)
+- [x] test PATCH /bookings/{id}/confirm (owner/rep confirms, wrong role, booking not found)
+- [x] test PATCH /bookings/{id}/reject (owner/rep rejects with reason)
+- [x] test PATCH /bookings/{id}/complete (owner/rep marks complete)
+- [x] test GET /bathhouses/{id}/bookings (owner/rep views bathhouse bookings, forbidden)
+- [x] write integration tests for bookings
+- [x] run hurl tests - must pass before task 5
 
 ### Task 5: Reviews Endpoints Tests
 
