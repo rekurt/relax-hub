@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/nikitaaldaev/bani/config"
 	"go.uber.org/fx"
@@ -18,8 +19,12 @@ var Module = fx.Module("server",
 
 func RegisterServer(lc fx.Lifecycle, cfg *config.Config, router http.Handler) {
 	srv := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
-		Handler: router,
+		Addr:              fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	lc.Append(fx.Hook{

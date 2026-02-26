@@ -352,27 +352,6 @@ func parseResponse(t *testing.T, rec *httptest.ResponseRecorder) apiResp {
 	return resp
 }
 
-// setupAuthRouter creates a chi router with auth middleware using our mock
-func setupAuthRouter(authSvc middleware.AuthService, handler http.HandlerFunc, roles ...domain.UserRole) *chi.Mux {
-	r := chi.NewRouter()
-	if len(roles) > 0 {
-		r.With(middleware.RequireAuth(authSvc), middleware.RequireRole(roles...)).Post("/test", handler)
-		r.With(middleware.RequireAuth(authSvc), middleware.RequireRole(roles...)).Get("/test", handler)
-		r.With(middleware.RequireAuth(authSvc), middleware.RequireRole(roles...)).Patch("/test", handler)
-		r.With(middleware.RequireAuth(authSvc), middleware.RequireRole(roles...)).Delete("/test", handler)
-		r.With(middleware.RequireAuth(authSvc), middleware.RequireRole(roles...)).Put("/test", handler)
-		r.With(middleware.RequireAuth(authSvc), middleware.RequireRole(roles...)).Get("/test/{id}", handler)
-		r.With(middleware.RequireAuth(authSvc), middleware.RequireRole(roles...)).Patch("/test/{id}", handler)
-		r.With(middleware.RequireAuth(authSvc), middleware.RequireRole(roles...)).Delete("/test/{id}", handler)
-		r.With(middleware.RequireAuth(authSvc), middleware.RequireRole(roles...)).Put("/test/{id}", handler)
-	} else {
-		r.With(middleware.RequireAuth(authSvc)).Post("/test", handler)
-		r.With(middleware.RequireAuth(authSvc)).Get("/test", handler)
-		r.With(middleware.RequireAuth(authSvc)).Patch("/test/{id}", handler)
-	}
-	return r
-}
-
 func makeAuthToken(userID uuid.UUID, role domain.UserRole) *mockAuthService {
 	return &mockAuthService{
 		parseTokenFn: func(_ context.Context, token string) (uuid.UUID, domain.UserRole, error) {

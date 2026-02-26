@@ -254,6 +254,9 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		}
 		bathhouses = append(bathhouses, *bh)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate bathhouse rows: %w", err)
+	}
 
 	return &domain.PaginatedResult[domain.Bathhouse]{
 		Items:      bathhouses,
@@ -299,6 +302,9 @@ func (r *bathhouseRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 			return nil, err
 		}
 		bathhouses = append(bathhouses, *bh)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate bathhouse rows: %w", err)
 	}
 
 	return &domain.PaginatedResult[domain.Bathhouse]{

@@ -105,6 +105,9 @@ func (r *bookingRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pa
 		}
 		bookings = append(bookings, b)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate booking rows: %w", err)
+	}
 
 	return &domain.PaginatedResult[domain.Booking]{
 		Items:      bookings,
@@ -152,6 +155,9 @@ func (r *bookingRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID
 			return nil, fmt.Errorf("scan booking: %w", err)
 		}
 		bookings = append(bookings, b)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate booking rows: %w", err)
 	}
 
 	return &domain.PaginatedResult[domain.Booking]{
@@ -221,5 +227,21 @@ func (r *bookingRepo) GetOverlapping(ctx context.Context, bathhouseID uuid.UUID,
 		}
 		bookings = append(bookings, b)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate overlapping booking rows: %w", err)
+	}
 	return bookings, nil
+}
+
+func (r *bookingRepo) CountActiveByBathhouse(ctx context.Context, bathhouseID uuid.UUID) (int64, error) {
+	query := `
+		SELECT COUNT(*) FROM bookings
+		WHERE bathhouse_id = $1 AND status IN ('pending', 'confirmed')`
+
+	var count int64
+	err := r.pool.QueryRow(ctx, query, bathhouseID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count active bookings: %w", err)
+	}
+	return count, nil
 }

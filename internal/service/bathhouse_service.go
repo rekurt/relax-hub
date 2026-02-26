@@ -208,11 +208,11 @@ func (s *bathhouseService) Delete(ctx context.Context, ownerID uuid.UUID, id uui
 	}
 
 	// Check for active bookings (pending or confirmed)
-	result, err := s.bookingRepo.ListByBathhouse(ctx, id, 1, 1)
+	activeCount, err := s.bookingRepo.CountActiveByBathhouse(ctx, id)
 	if err != nil {
 		return err
 	}
-	if result.TotalCount > 0 {
+	if activeCount > 0 {
 		return domain.ErrBathhouseHasBookings
 	}
 

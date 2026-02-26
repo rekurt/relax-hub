@@ -539,8 +539,8 @@ func TestBathhouseRepo_ListWithFilters(t *testing.T) {
 		Address: "addr2", Status: domain.BathhouseStatusActive,
 	}
 
-	repo.Create(ctx, bh1)
-	repo.Create(ctx, bh2)
+	_ = repo.Create(ctx, bh1)
+	_ = repo.Create(ctx, bh2)
 
 	// Filter by city
 	cityID := int64(1)

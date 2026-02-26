@@ -111,6 +111,9 @@ func (r *representativeRepo) ListByBathhouse(ctx context.Context, bathhouseID uu
 		}
 		reps = append(reps, rep)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate representative rows: %w", err)
+	}
 	return reps, nil
 }
 
@@ -135,6 +138,9 @@ func (r *representativeRepo) ListByUser(ctx context.Context, userID uuid.UUID) (
 		}
 		reps = append(reps, rep)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate representative rows: %w", err)
+	}
 	return reps, nil
 }
 
@@ -154,6 +160,9 @@ func (r *representativeRepo) ListBathhouseIDsByUser(ctx context.Context, userID 
 			return nil, fmt.Errorf("scan bathhouse id: %w", err)
 		}
 		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate bathhouse id rows: %w", err)
 	}
 	return ids, nil
 }

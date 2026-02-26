@@ -54,6 +54,9 @@ func (r *cityRepo) GetAll(ctx context.Context) ([]domain.City, error) {
 		}
 		cities = append(cities, c)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate city rows: %w", err)
+	}
 	return cities, nil
 }
 

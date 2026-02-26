@@ -81,6 +81,9 @@ func (r *reviewRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID,
 		}
 		reviews = append(reviews, rev)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate review rows: %w", err)
+	}
 
 	return &domain.PaginatedResult[domain.Review]{
 		Items:      reviews,

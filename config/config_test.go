@@ -8,11 +8,6 @@ import (
 )
 
 func TestLoad_Defaults(t *testing.T) {
-	// Load from a non-existent path to test defaults
-	cfg, err := Load("/nonexistent/path/config.yaml")
-	if err == nil {
-		t.Log("No config file found, defaults should apply")
-	}
 	// When file not found, we get an error - let's test with empty dir
 	tmpDir := t.TempDir()
 	cfgPath := filepath.Join(tmpDir, "config.yaml")
@@ -20,7 +15,7 @@ func TestLoad_Defaults(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cfg, err = Load(cfgPath)
+	cfg, err := Load(cfgPath)
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}

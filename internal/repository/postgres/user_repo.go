@@ -139,6 +139,9 @@ func (r *userRepo) List(ctx context.Context, page, pageSize int) (*domain.Pagina
 		}
 		users = append(users, u)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate user rows: %w", err)
+	}
 
 	return &domain.PaginatedResult[domain.User]{
 		Items:      users,

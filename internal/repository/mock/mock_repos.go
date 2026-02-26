@@ -309,6 +309,19 @@ func (r *BookingRepo) GetOverlapping(_ context.Context, bathhouseID uuid.UUID, s
 	return result, nil
 }
 
+func (r *BookingRepo) CountActiveByBathhouse(_ context.Context, bathhouseID uuid.UUID) (int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var count int64
+	for _, b := range r.bookings {
+		if b.BathhouseID == bathhouseID &&
+			(b.Status == domain.BookingPending || b.Status == domain.BookingConfirmed) {
+			count++
+		}
+	}
+	return count, nil
+}
+
 func paginateBookings(items []domain.Booking, page, pageSize int) *domain.PaginatedResult[domain.Booking] {
 	if page < 1 {
 		page = 1

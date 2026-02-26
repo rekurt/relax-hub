@@ -45,6 +45,7 @@ type BookingRepository interface {
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BookingStatus) error
 	CheckAvailability(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) (bool, error)
 	GetOverlapping(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) ([]domain.Booking, error)
+	CountActiveByBathhouse(ctx context.Context, bathhouseID uuid.UUID) (int64, error)
 }
 
 type ReviewRepository interface {

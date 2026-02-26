@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -62,7 +63,10 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 	}
 
 	// Check if review already exists for this booking
-	existing, _ := s.reviewRepo.GetByBookingID(ctx, input.BookingID)
+	existing, err := s.reviewRepo.GetByBookingID(ctx, input.BookingID)
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		return nil, err
+	}
 	if existing != nil {
 		return nil, domain.ErrAlreadyExists
 	}

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -50,7 +51,10 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 		return nil, "", domain.ErrInvalidInput
 	}
 
-	existing, _ := s.userRepo.GetByEmail(ctx, input.Email)
+	existing, err := s.userRepo.GetByEmail(ctx, input.Email)
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		return nil, "", err
+	}
 	if existing != nil {
 		return nil, "", domain.ErrAlreadyExists
 	}
