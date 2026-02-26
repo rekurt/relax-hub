@@ -507,7 +507,6 @@ func (h *BathhouseHandler) MyBathhouses(w http.ResponseWriter, r *http.Request) 
 	}
 
 	total := int64(len(items))
-	pageSize := 20
 	totalPages := 1
 	if int(total) > pageSize {
 		totalPages = (int(total) + pageSize - 1) / pageSize
