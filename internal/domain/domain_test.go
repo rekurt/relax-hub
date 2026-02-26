@@ -166,6 +166,26 @@ func TestBooking_Validate(t *testing.T) {
 	}
 }
 
+func TestReviewStatus_IsValid(t *testing.T) {
+	tests := []struct {
+		status ReviewStatus
+		valid  bool
+	}{
+		{ReviewStatusPending, true},
+		{ReviewStatusApproved, true},
+		{ReviewStatusRejected, true},
+		{ReviewStatusHidden, true},
+		{"unknown", false},
+		{"", false},
+	}
+
+	for _, tt := range tests {
+		if got := tt.status.IsValid(); got != tt.valid {
+			t.Errorf("ReviewStatus(%q).IsValid() = %v, want %v", tt.status, got, tt.valid)
+		}
+	}
+}
+
 func TestReview_Validate(t *testing.T) {
 	valid := &Review{
 		BookingID: uuid.New(),
@@ -173,6 +193,15 @@ func TestReview_Validate(t *testing.T) {
 	}
 	if err := valid.Validate(); err != nil {
 		t.Errorf("valid review returned error: %v", err)
+	}
+
+	validWithStatus := &Review{
+		BookingID: uuid.New(),
+		Rating:    4,
+		Status:    ReviewStatusApproved,
+	}
+	if err := validWithStatus.Validate(); err != nil {
+		t.Errorf("valid review with status returned error: %v", err)
 	}
 
 	tests := []struct {
@@ -183,6 +212,7 @@ func TestReview_Validate(t *testing.T) {
 		{"zero rating", Review{BookingID: uuid.New(), Rating: 0}},
 		{"rating too high", Review{BookingID: uuid.New(), Rating: 6}},
 		{"negative rating", Review{BookingID: uuid.New(), Rating: -1}},
+		{"invalid status", Review{BookingID: uuid.New(), Rating: 3, Status: "invalid"}},
 	}
 
 	for _, tt := range tests {
@@ -191,6 +221,36 @@ func TestReview_Validate(t *testing.T) {
 				t.Error("expected error for invalid review")
 			}
 		})
+	}
+}
+
+func TestReviewFilter(t *testing.T) {
+	bathhouseID := uuid.New()
+	status := ReviewStatusApproved
+	minRating := 3
+
+	filter := ReviewFilter{
+		BathhouseID: &bathhouseID,
+		Status:      &status,
+		MinRating:   &minRating,
+		Page:        1,
+		PageSize:    20,
+	}
+
+	if *filter.BathhouseID != bathhouseID {
+		t.Error("BathhouseID mismatch")
+	}
+	if *filter.Status != ReviewStatusApproved {
+		t.Error("Status mismatch")
+	}
+	if *filter.MinRating != 3 {
+		t.Error("MinRating mismatch")
+	}
+	if filter.Page != 1 {
+		t.Error("Page mismatch")
+	}
+	if filter.PageSize != 20 {
+		t.Error("PageSize mismatch")
 	}
 }
 
@@ -231,6 +291,8 @@ func TestDomainErrors(t *testing.T) {
 		ErrBookingCancelLate,
 		ErrUserBlocked,
 		ErrBathhouseNotActive,
+		ErrReviewAlreadyResponded,
+		ErrReviewNotFound,
 	}
 
 	for _, err := range errors {

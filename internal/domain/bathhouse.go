@@ -99,12 +99,20 @@ func (wh WorkingHours) Validate() error {
 	if !isValidTimeFormat(wh.CloseTime) {
 		return ErrInvalidInput
 	}
+	if wh.OpenTime == wh.CloseTime {
+		return ErrInvalidInput
+	}
 	return nil
 }
 
 func isValidTimeFormat(s string) bool {
 	if len(s) != 5 || s[2] != ':' {
 		return false
+	}
+	for _, i := range []int{0, 1, 3, 4} {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
 	}
 	h := (int(s[0]-'0') * 10) + int(s[1]-'0')
 	m := (int(s[3]-'0') * 10) + int(s[4]-'0')
