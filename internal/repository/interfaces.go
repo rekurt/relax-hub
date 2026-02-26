@@ -60,6 +60,14 @@ type ReviewRepository interface {
 	AddOwnerResponse(ctx context.Context, id uuid.UUID, response string, respondedAt time.Time) error
 }
 
+type FavoriteRepository interface {
+	Add(ctx context.Context, favorite *domain.Favorite) error
+	Remove(ctx context.Context, userID, bathhouseID uuid.UUID) error
+	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Favorite], error)
+	IsFavorite(ctx context.Context, userID, bathhouseID uuid.UUID) (bool, error)
+	CountByUser(ctx context.Context, userID uuid.UUID) (int64, error)
+}
+
 type RepresentativeRepository interface {
 	Create(ctx context.Context, rep *domain.Representative) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Representative, error)

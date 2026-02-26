@@ -21,6 +21,7 @@ type RouterParams struct {
 	BHHandler      *handler.BathhouseHandler
 	BookingHandler *handler.BookingHandler
 	ReviewHandler  *handler.ReviewHandler
+	FavHandler     *handler.FavoriteHandler
 	RepHandler     *handler.RepresentativeHandler
 	CityHandler    *handler.CityHandler
 	AdminHandler   *handler.AdminHandler
@@ -74,6 +75,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Put("/reviews/{id}", p.ReviewHandler.Update)
 		r.With(auth).Delete("/reviews/{id}", p.ReviewHandler.Delete)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", p.ReviewHandler.AddOwnerResponse)
+
+		// Favorites (authenticated)
+		r.With(auth).Post("/bathhouses/{id}/favorite", p.FavHandler.Toggle)
+		r.With(auth).Get("/my/favorites", p.FavHandler.List)
 
 		// Representatives (owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses/{id}/representatives", p.RepHandler.Invite)

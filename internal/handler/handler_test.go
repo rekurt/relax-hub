@@ -353,6 +353,33 @@ func (m *mockCityService) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
+type mockFavoriteService struct {
+	toggleFn     func(ctx context.Context, userID, bathhouseID uuid.UUID) (bool, error)
+	listFn       func(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Favorite], error)
+	isFavoriteFn func(ctx context.Context, userID, bathhouseID uuid.UUID) (bool, error)
+}
+
+func (m *mockFavoriteService) Toggle(ctx context.Context, userID, bathhouseID uuid.UUID) (bool, error) {
+	if m.toggleFn != nil {
+		return m.toggleFn(ctx, userID, bathhouseID)
+	}
+	return false, nil
+}
+
+func (m *mockFavoriteService) List(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Favorite], error) {
+	if m.listFn != nil {
+		return m.listFn(ctx, userID, page, pageSize)
+	}
+	return &domain.PaginatedResult[domain.Favorite]{}, nil
+}
+
+func (m *mockFavoriteService) IsFavorite(ctx context.Context, userID, bathhouseID uuid.UUID) (bool, error) {
+	if m.isFavoriteFn != nil {
+		return m.isFavoriteFn(ctx, userID, bathhouseID)
+	}
+	return false, nil
+}
+
 // --- Helpers ---
 
 func jsonBody(v interface{}) *bytes.Buffer {
@@ -2193,5 +2220,178 @@ func TestProtectedEndpoints_RequireAuth(t *testing.T) {
 				t.Errorf("expected 401 for unauthenticated %s %s, got %d", ep.method, ep.path, rec.Code)
 			}
 		})
+	}
+}
+
+// --- Favorite Handler Tests ---
+
+func TestFavoriteHandler_Toggle_Add(t *testing.T) {
+	userID := uuid.New()
+	bhID := uuid.New()
+
+	favSvc := &mockFavoriteService{
+		toggleFn: func(_ context.Context, uID, bID uuid.UUID) (bool, error) {
+			return true, nil
+		},
+	}
+
+	authSvc := makeAuthToken(userID, domain.RoleClient)
+	h := handler.NewFavoriteHandler(favSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Post("/bathhouses/{id}/favorite", h.Toggle)
+
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/bathhouses/%s/favorite", bhID), nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestFavoriteHandler_Toggle_Remove(t *testing.T) {
+	userID := uuid.New()
+	bhID := uuid.New()
+
+	favSvc := &mockFavoriteService{
+		toggleFn: func(_ context.Context, uID, bID uuid.UUID) (bool, error) {
+			return false, nil
+		},
+	}
+
+	authSvc := makeAuthToken(userID, domain.RoleClient)
+	h := handler.NewFavoriteHandler(favSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Post("/bathhouses/{id}/favorite", h.Toggle)
+
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/bathhouses/%s/favorite", bhID), nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestFavoriteHandler_Toggle_InvalidUUID(t *testing.T) {
+	userID := uuid.New()
+
+	favSvc := &mockFavoriteService{}
+	authSvc := makeAuthToken(userID, domain.RoleClient)
+	h := handler.NewFavoriteHandler(favSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Post("/bathhouses/{id}/favorite", h.Toggle)
+
+	req := httptest.NewRequest(http.MethodPost, "/bathhouses/invalid-uuid/favorite", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", rec.Code)
+	}
+}
+
+func TestFavoriteHandler_Toggle_BathhouseNotFound(t *testing.T) {
+	userID := uuid.New()
+	bhID := uuid.New()
+
+	favSvc := &mockFavoriteService{
+		toggleFn: func(_ context.Context, uID, bID uuid.UUID) (bool, error) {
+			return false, domain.ErrNotFound
+		},
+	}
+
+	authSvc := makeAuthToken(userID, domain.RoleClient)
+	h := handler.NewFavoriteHandler(favSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Post("/bathhouses/{id}/favorite", h.Toggle)
+
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/bathhouses/%s/favorite", bhID), nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected status 404, got %d", rec.Code)
+	}
+}
+
+func TestFavoriteHandler_List(t *testing.T) {
+	userID := uuid.New()
+
+	favSvc := &mockFavoriteService{
+		listFn: func(_ context.Context, uID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Favorite], error) {
+			return &domain.PaginatedResult[domain.Favorite]{
+				Items:      []domain.Favorite{},
+				TotalCount: 0,
+				Page:       page,
+				PageSize:   pageSize,
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(userID, domain.RoleClient)
+	h := handler.NewFavoriteHandler(favSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Get("/my/favorites", h.List)
+
+	req := httptest.NewRequest(http.MethodGet, "/my/favorites", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestFavoriteHandler_List_WithPagination(t *testing.T) {
+	userID := uuid.New()
+
+	favSvc := &mockFavoriteService{
+		listFn: func(_ context.Context, uID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Favorite], error) {
+			if page != 2 {
+				t.Errorf("expected page=2, got %d", page)
+			}
+			if pageSize != 5 {
+				t.Errorf("expected pageSize=5, got %d", pageSize)
+			}
+			return &domain.PaginatedResult[domain.Favorite]{
+				Items:      []domain.Favorite{},
+				TotalCount: 10,
+				Page:       page,
+				PageSize:   pageSize,
+				TotalPages: 2,
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(userID, domain.RoleClient)
+	h := handler.NewFavoriteHandler(favSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Get("/my/favorites", h.List)
+
+	req := httptest.NewRequest(http.MethodGet, "/my/favorites?page=2&page_size=5", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
 	}
 }

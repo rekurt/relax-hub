@@ -86,16 +86,16 @@
 - Create: `migrations/000003_favorites.up.sql`
 - Create: `migrations/000003_favorites.down.sql`
 
-- [ ] Создать модель Favorite (ID, UserID, BathhouseID, CreatedAt) + миграцию с UNIQUE(user_id, bathhouse_id)
-- [ ] Создать FavoriteRepository: Add, Remove, ListByUser (paginated), IsFavorite, CountByUser
-- [ ] Реализовать postgres и mock репозитории
-- [ ] Создать FavoriteService: Toggle, List, IsFavorite
-- [ ] Создать FavoriteHandler с эндпоинтами:
+- [x] Создать модель Favorite (ID, UserID, BathhouseID, CreatedAt) + миграцию с UNIQUE(user_id, bathhouse_id)
+- [x] Создать FavoriteRepository: Add, Remove, ListByUser (paginated), IsFavorite, CountByUser
+- [x] Реализовать postgres и mock репозитории
+- [x] Создать FavoriteService: Toggle, List, IsFavorite
+- [x] Создать FavoriteHandler с эндпоинтами:
   - POST /api/v1/bathhouses/{id}/favorite - добавить/убрать из избранного (toggle)
   - GET /api/v1/my/favorites - список избранного (paginated)
-- [ ] Добавить fx.Module в DI-контейнер
-- [ ] Написать тесты для всех слоев
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить fx.Module в DI-контейнер
+- [x] Написать тесты для всех слоев
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Расширенные фильтры для бань
 

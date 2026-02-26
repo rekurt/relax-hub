@@ -12,6 +12,7 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewBathhouseRepository, fx.As(new(repository.BathhouseRepository))),
 		fx.Annotate(NewBookingRepository, fx.As(new(repository.BookingRepository))),
 		fx.Annotate(NewReviewRepository, fx.As(new(repository.ReviewRepository))),
+		fx.Annotate(NewFavoriteRepository, fx.As(new(repository.FavoriteRepository))),
 		fx.Annotate(NewRepresentativeRepository, fx.As(new(repository.RepresentativeRepository))),
 	),
 )
