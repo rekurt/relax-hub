@@ -264,4 +264,16 @@ hurl tests/hurl/admin_negative.hurl --variables-file tests/hurl/.env.test \
     log_warn "Admin negative tests had failures"
 }
 
+log_info "Running cities tests..."
+hurl tests/hurl/cities.hurl --variables-file tests/hurl/.env.test || {
+    log_error "Cities tests failed"
+    exit 1
+}
+
+log_info "Running health tests..."
+hurl tests/hurl/health.hurl --variables-file tests/hurl/.env.test || {
+    log_error "Health tests failed"
+    exit 1
+}
+
 log_info "All tests completed!"

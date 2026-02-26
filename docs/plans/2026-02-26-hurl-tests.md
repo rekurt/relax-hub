@@ -137,11 +137,11 @@ Create comprehensive hurl test suite covering all main API endpoints (auth, bath
 - Create: tests/hurl/cities.hurl
 - Create: tests/hurl/health.hurl
 
-- [ ] test GET /cities (public list of cities)
-- [ ] test GET /health (health check, expect OK)
-- [ ] test GET /ready (readiness check, expect ready or not ready)
-- [ ] write integration tests for cities and health
-- [ ] run hurl tests - must pass before task 9
+- [x] test GET /cities (public list of cities)
+- [x] test GET /health (health check, expect OK)
+- [x] test GET /ready (readiness check, expect ready or not ready)
+- [x] write integration tests for cities and health
+- [x] run hurl tests - must pass before task 9
 
 ### Task 9: Complete Integration Test Suite
 
