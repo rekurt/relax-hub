@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -49,6 +50,17 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 
 	if input.Email == "" || input.Password == "" || input.Name == "" {
 		return nil, "", domain.ErrInvalidInput
+	}
+
+	if !isValidEmail(input.Email) {
+		return nil, "", fmt.Errorf("%w: invalid email format", domain.ErrInvalidInput)
+	}
+
+	if len(input.Password) < 8 {
+		return nil, "", fmt.Errorf("%w: password must be at least 8 characters", domain.ErrInvalidInput)
+	}
+	if len(input.Password) > 72 {
+		return nil, "", fmt.Errorf("%w: password must be at most 72 characters", domain.ErrInvalidInput)
 	}
 
 	existing, err := s.userRepo.GetByEmail(ctx, input.Email)
@@ -159,4 +171,14 @@ func (s *authService) generateToken(userID uuid.UUID, role domain.UserRole) (str
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(s.jwtSecret)
+}
+
+func isValidEmail(email string) bool {
+	at := strings.LastIndex(email, "@")
+	if at < 1 {
+		return false
+	}
+	domain := email[at+1:]
+	dot := strings.LastIndex(domain, ".")
+	return dot > 0 && dot < len(domain)-1
 }

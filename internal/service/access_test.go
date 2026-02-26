@@ -13,6 +13,10 @@ import (
 
 func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID) *domain.Bathhouse {
 	t.Helper()
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
 	bh := &domain.Bathhouse{
 		ID:           uuid.New(),
 		OwnerID:      ownerID,
@@ -22,6 +26,7 @@ func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID
 		PricePerHour: 5000,
 		MinDuration:  1,
 		MaxGuests:    10,
+		WorkingHours: wh,
 		Status:       domain.BathhouseStatusActive,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),

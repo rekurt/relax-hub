@@ -8,12 +8,27 @@ import (
 )
 
 func TestLoad_Defaults(t *testing.T) {
-	// When file not found, we get an error - let's test with empty dir
 	tmpDir := t.TempDir()
 	cfgPath := filepath.Join(tmpDir, "config.yaml")
 	if err := os.WriteFile(cfgPath, []byte(""), 0644); err != nil {
 		t.Fatal(err)
 	}
+
+	// Default JWT secret is insecure, so Load should return an error
+	_, err := Load(cfgPath)
+	if err == nil {
+		t.Fatal("expected error for default JWT secret, got nil")
+	}
+}
+
+func TestLoad_DefaultsWithJWTSecret(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfgPath := filepath.Join(tmpDir, "config.yaml")
+	if err := os.WriteFile(cfgPath, []byte(""), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("BANI_JWT_SECRET", "a-secure-secret-for-testing")
 
 	cfg, err := Load(cfgPath)
 	if err != nil {
@@ -31,9 +46,6 @@ func TestLoad_Defaults(t *testing.T) {
 	}
 	if cfg.Redis.DB != 0 {
 		t.Errorf("expected redis.db = 0, got %d", cfg.Redis.DB)
-	}
-	if cfg.JWT.Secret != "change-me-in-production" {
-		t.Errorf("expected jwt.secret = change-me-in-production, got %s", cfg.JWT.Secret)
 	}
 	if cfg.JWT.TokenTTL != 24*time.Hour {
 		t.Errorf("expected jwt.token_ttl = 24h, got %s", cfg.JWT.TokenTTL)

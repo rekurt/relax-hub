@@ -79,6 +79,11 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, domain.ErrInvalidInput
 	}
 
+	// Validate booking falls within working hours
+	if err := validateWithinWorkingHours(bh, input.StartTime, input.EndTime); err != nil {
+		return nil, err
+	}
+
 	available, err := s.bookingRepo.CheckAvailability(ctx, input.BathhouseID, input.StartTime, input.EndTime)
 	if err != nil {
 		return nil, err
@@ -216,13 +221,7 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 		return nil, err
 	}
 
-	dayOfWeek := int(date.Weekday())
-	// Convert Go's Sunday=0 to our Monday=0 format
-	if dayOfWeek == 0 {
-		dayOfWeek = 6
-	} else {
-		dayOfWeek--
-	}
+	dayOfWeek := toDayOfWeek(date.Weekday())
 
 	var wh *domain.WorkingHours
 	for i := range bh.WorkingHours {
@@ -288,4 +287,51 @@ func parseTime(s string) (int, int, error) {
 		return 0, 0, fmt.Errorf("invalid time format: %q", s)
 	}
 	return h, m, nil
+}
+
+func toDayOfWeek(wd time.Weekday) int {
+	if wd == time.Sunday {
+		return 6
+	}
+	return int(wd) - 1
+}
+
+func validateWithinWorkingHours(bh *domain.Bathhouse, startTime, endTime time.Time) error {
+	dayOfWeek := toDayOfWeek(startTime.Weekday())
+
+	var wh *domain.WorkingHours
+	for i := range bh.WorkingHours {
+		if bh.WorkingHours[i].DayOfWeek == dayOfWeek {
+			wh = &bh.WorkingHours[i]
+			break
+		}
+	}
+
+	if wh == nil {
+		return fmt.Errorf("%w: bathhouse is closed on this day", domain.ErrInvalidInput)
+	}
+
+	openH, openM, err := parseTime(wh.OpenTime)
+	if err != nil {
+		return fmt.Errorf("invalid open time: %w", err)
+	}
+	closeH, closeM, err := parseTime(wh.CloseTime)
+	if err != nil {
+		return fmt.Errorf("invalid close time: %w", err)
+	}
+
+	loc := startTime.Location()
+	dayOpen := time.Date(startTime.Year(), startTime.Month(), startTime.Day(), openH, openM, 0, 0, loc)
+	dayClose := time.Date(startTime.Year(), startTime.Month(), startTime.Day(), closeH, closeM, 0, 0, loc)
+
+	// Handle overnight working hours (e.g., 18:00 - 06:00)
+	if !dayClose.After(dayOpen) {
+		dayClose = dayClose.Add(24 * time.Hour)
+	}
+
+	if startTime.Before(dayOpen) || endTime.After(dayClose) {
+		return fmt.Errorf("%w: booking must be within working hours (%s-%s)", domain.ErrInvalidInput, wh.OpenTime, wh.CloseTime)
+	}
+
+	return nil
 }

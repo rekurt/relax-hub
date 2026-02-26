@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -68,6 +69,10 @@ func Load(cfgFile string) (*Config, error) {
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, err
+	}
+
+	if cfg.JWT.Secret == "" || cfg.JWT.Secret == "change-me-in-production" {
+		return nil, fmt.Errorf("jwt.secret must be configured with a secure value (set BANI_JWT_SECRET)")
 	}
 
 	return &cfg, nil

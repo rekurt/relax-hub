@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
@@ -55,6 +56,12 @@ func (h *AdminHandler) BlockUser(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_input", "invalid user id")
+		return
+	}
+
+	adminID := middleware.GetUserID(r.Context())
+	if id == adminID {
+		writeError(w, http.StatusBadRequest, "invalid_input", "cannot block yourself")
 		return
 	}
 
