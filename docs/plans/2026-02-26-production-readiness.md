@@ -103,11 +103,11 @@
 - Modify: `internal/handler/health.go` (если есть или создать)
 - Modify: `internal/server/router.go`
 
-- [ ] Создать /health endpoint для liveness probe (простой 200 OK)
-- [ ] Создать /ready endpoint для readiness probe (проверка DB и Redis доступности)
-- [ ] Логировать неудачные health checks
-- [ ] Написать тесты для health endpoints
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать /health endpoint для liveness probe (простой 200 OK)
+- [x] Создать /ready endpoint для readiness probe (проверка DB и Redis доступности)
+- [x] Логировать неудачные health checks
+- [x] Написать тесты для health endpoints
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 7: Пересмотр Dockerfile и CI/CD конфигурации
 

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -15,16 +14,17 @@ import (
 type RouterParams struct {
 	fx.In
 
-	CORS           *middleware.CORSMiddleware
-	AuthService    middleware.AuthService
-	AuthHandler    *handler.AuthHandler
-	BHHandler      *handler.BathhouseHandler
-	BookingHandler *handler.BookingHandler
-	ReviewHandler  *handler.ReviewHandler
-	FavHandler     *handler.FavoriteHandler
-	RepHandler     *handler.RepresentativeHandler
-	CityHandler    *handler.CityHandler
-	AdminHandler   *handler.AdminHandler
+	CORS            *middleware.CORSMiddleware
+	AuthService     middleware.AuthService
+	AuthHandler     *handler.AuthHandler
+	BHHandler       *handler.BathhouseHandler
+	BookingHandler  *handler.BookingHandler
+	ReviewHandler   *handler.ReviewHandler
+	FavHandler      *handler.FavoriteHandler
+	RepHandler      *handler.RepresentativeHandler
+	CityHandler     *handler.CityHandler
+	AdminHandler    *handler.AdminHandler
+	HealthHandler   *handler.HealthHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -35,7 +35,8 @@ func NewRouter(p RouterParams) http.Handler {
 	r.Use(middleware.RecoveryMiddleware(middleware.IsDevEnvironment()))
 	r.Use(p.CORS.Handler)
 
-	r.Get("/health", healthCheck)
+	r.Get("/health", p.HealthHandler.Health)
+	r.Get("/ready", p.HealthHandler.Ready)
 
 	auth := middleware.RequireAuth(p.AuthService)
 	optionalAuth := middleware.OptionalAuth(p.AuthService)
@@ -109,10 +110,4 @@ func NewRouter(p RouterParams) http.Handler {
 	})
 
 	return r
-}
-
-func healthCheck(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
