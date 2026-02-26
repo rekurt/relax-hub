@@ -130,12 +130,12 @@
 - Create: `docs/DEPLOYMENT.md`
 - Modify: `README.md`
 
-- [ ] Документировать все API endpoints с примерами запросов и ответов
-- [ ] Написать deployment guide для Kubernetes или Docker Compose в продакшене
-- [ ] Описать требования к переменным окружения для разных окружений
-- [ ] Добавить примеры для health checks и monitoring
-- [ ] Обновить README с информацией о production deployment
-- [ ] Не требует тестов, чисто документирование
+- [x] Документировать все API endpoints с примерами запросов и ответов
+- [x] Написать deployment guide для Kubernetes или Docker Compose в продакшене
+- [x] Описать требования к переменным окружения для разных окружений
+- [x] Добавить примеры для health checks и monitoring
+- [x] Обновить README с информацией о production deployment
+- [x] Не требует тестов, чисто документирование
 
 ### Task 9: Финальная верификация и оптимизация
 
