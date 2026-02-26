@@ -32,26 +32,20 @@ type Meta struct {
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(APIResponse{
+	_ = json.NewEncoder(w).Encode(APIResponse{
 		Success: true,
 		Data:    data,
-	}); err != nil {
-		log := logger.New(logger.LevelError)
-		log.Error("Failed to encode JSON response", "error", err)
-	}
+	})
 }
 
 func writeJSONWithMeta(w http.ResponseWriter, status int, data interface{}, meta *Meta) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(APIResponse{
+	_ = json.NewEncoder(w).Encode(APIResponse{
 		Success: true,
 		Data:    data,
 		Meta:    meta,
-	}); err != nil {
-		log := logger.New(logger.LevelError)
-		log.Error("Failed to encode JSON response with meta", "error", err)
-	}
+	})
 }
 
 func writeError(w http.ResponseWriter, status int, code, message string) {
@@ -62,10 +56,9 @@ func writeErrorWithContext(w http.ResponseWriter, r *http.Request, status int, c
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	log := logger.New(logger.LevelError)
-
 	// Log 5xx errors
 	if status >= 500 {
+		log := logger.New(logger.LevelError)
 		var reqID string
 		if r != nil {
 			reqID = chiMiddleware.GetReqID(r.Context())
@@ -73,15 +66,13 @@ func writeErrorWithContext(w http.ResponseWriter, r *http.Request, status int, c
 		log.Error("HTTP error", "status", status, "code", code, "message", message, "request_id", reqID)
 	}
 
-	if err := json.NewEncoder(w).Encode(APIResponse{
+	_ = json.NewEncoder(w).Encode(APIResponse{
 		Success: false,
 		Error: &APIError{
 			Code:    code,
 			Message: message,
 		},
-	}); err != nil {
-		log.Error("Failed to encode error response", "error", err)
-	}
+	})
 }
 
 func handleServiceError(w http.ResponseWriter, err error) {

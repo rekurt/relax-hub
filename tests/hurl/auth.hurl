@@ -2,7 +2,7 @@
 # Tests for user registration, login, and me endpoint
 
 ### Test 1: Register new user with valid data
-POST http://localhost:8080/auth/register
+POST http://localhost:8080/api/v1/auth/register
 Content-Type: application/json
 
 {
@@ -28,7 +28,7 @@ user_id: jsonpath "$.data.user.id"
 registration_token: jsonpath "$.data.token"
 
 ### Test 2: Login with existing user credentials (admin)
-POST http://localhost:8080/auth/login
+POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
 
 {
@@ -49,7 +49,7 @@ admin_id: jsonpath "$.data.user.id"
 admin_token: jsonpath "$.data.token"
 
 ### Test 3: Login with owner credentials
-POST http://localhost:8080/auth/login
+POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
 
 {
@@ -68,7 +68,7 @@ owner_id: jsonpath "$.data.user.id"
 owner_token: jsonpath "$.data.token"
 
 ### Test 4: Login with client credentials
-POST http://localhost:8080/auth/login
+POST http://localhost:8080/api/v1/auth/login
 Content-Type: application/json
 
 {
@@ -87,7 +87,7 @@ client_id: jsonpath "$.data.user.id"
 client_token: jsonpath "$.data.token"
 
 ### Test 5: Get current user profile with valid token (admin)
-GET http://localhost:8080/auth/me
+GET http://localhost:8080/api/v1/auth/me
 Authorization: Bearer {{admin_token}}
 
 HTTP 200
@@ -99,7 +99,7 @@ jsonpath "$.data.role" == "admin"
 jsonpath "$.data.is_active" == true
 
 ### Test 6: Get current user profile with valid token (owner)
-GET http://localhost:8080/auth/me
+GET http://localhost:8080/api/v1/auth/me
 Authorization: Bearer {{owner_token}}
 
 HTTP 200
@@ -111,7 +111,7 @@ jsonpath "$.data.role" == "owner"
 jsonpath "$.data.is_active" == true
 
 ### Test 7: Get current user profile with valid token (client)
-GET http://localhost:8080/auth/me
+GET http://localhost:8080/api/v1/auth/me
 Authorization: Bearer {{client_token}}
 
 HTTP 200
@@ -123,7 +123,7 @@ jsonpath "$.data.role" == "client"
 jsonpath "$.data.is_active" == true
 
 ### Test 8: Verify JWT token structure - check bearer format
-GET http://localhost:8080/auth/me
+GET http://localhost:8080/api/v1/auth/me
 Authorization: Bearer {{admin_token}}
 
 HTTP 200
