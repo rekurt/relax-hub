@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -117,7 +118,10 @@ func (s *representativeService) GetMyBathhouses(ctx context.Context, userID uuid
 	for _, id := range bhIDs {
 		bh, err := s.bhRepo.GetByID(ctx, id)
 		if err != nil {
-			continue // skip if not found
+			if errors.Is(err, domain.ErrNotFound) {
+				continue // skip deleted bathhouses
+			}
+			return nil, err
 		}
 		bathhouses = append(bathhouses, *bh)
 	}

@@ -35,6 +35,12 @@ type reviewResponse struct {
 }
 
 func (h *ReviewHandler) Create(w http.ResponseWriter, r *http.Request) {
+	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
 	var req createReviewRequest
 	if err := readJSON(r, &req); err != nil {
 		handleServiceError(w, err)
@@ -50,9 +56,10 @@ func (h *ReviewHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
 	review, err := h.reviewService.Create(r.Context(), userID, service.CreateReviewInput{
-		BookingID: bookingID,
-		Rating:    req.Rating,
-		Text:      req.Text,
+		BookingID:   bookingID,
+		BathhouseID: bathhouseID,
+		Rating:      req.Rating,
+		Text:        req.Text,
 	})
 	if err != nil {
 		handleServiceError(w, err)
@@ -77,8 +84,8 @@ func (h *ReviewHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	page := getIntParam(r.URL.Query().Get("page"), 1)
-	pageSize := getIntParam(r.URL.Query().Get("page_size"), 20)
+	page := getPage(r.URL.Query().Get("page"))
+	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)
 
 	result, err := h.reviewService.ListByBathhouse(r.Context(), bathhouseID, page, pageSize)
 	if err != nil {

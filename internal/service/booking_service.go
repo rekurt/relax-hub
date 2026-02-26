@@ -64,6 +64,10 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, domain.ErrBathhouseNotActive
 	}
 
+	if input.StartTime.Before(time.Now()) {
+		return nil, fmt.Errorf("%w: start time must be in the future", domain.ErrInvalidInput)
+	}
+
 	if input.GuestCount > bh.MaxGuests {
 		return nil, domain.ErrInvalidInput
 	}

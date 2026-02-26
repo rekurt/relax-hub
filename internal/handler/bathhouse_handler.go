@@ -153,8 +153,8 @@ type updateBathhouseRequest struct {
 func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	filter := domain.BathhouseFilter{
-		Page:     getIntParam(q.Get("page"), 1),
-		PageSize: getIntParam(q.Get("page_size"), 20),
+		Page:     getPage(q.Get("page")),
+		PageSize: getPageSize(q.Get("page_size"), 20),
 		SortBy:   q.Get("sort_by"),
 		SortOrder: q.Get("sort_order"),
 	}
@@ -414,8 +414,13 @@ func (h *BathhouseHandler) MyBathhouses(w http.ResponseWriter, r *http.Request) 
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
 
-	page := getIntParam(r.URL.Query().Get("page"), 1)
-	pageSize := getIntParam(r.URL.Query().Get("page_size"), 20)
+	page := getPage(r.URL.Query().Get("page"))
+	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)
+
+	if role == domain.RoleAdmin {
+		writeError(w, http.StatusBadRequest, "invalid_input", "admin does not have personal bathhouses")
+		return
+	}
 
 	if role == domain.RoleOwner {
 		result, err := h.bathhouseService.ListByOwner(r.Context(), userID, page, pageSize)
@@ -455,7 +460,18 @@ func (h *BathhouseHandler) MyBathhouses(w http.ResponseWriter, r *http.Request) 
 
 const maxPageSize = 100
 
-func getIntParam(s string, defaultVal int) int {
+func getPage(s string) int {
+	if s == "" {
+		return 1
+	}
+	v, err := strconv.Atoi(s)
+	if err != nil || v < 1 {
+		return 1
+	}
+	return v
+}
+
+func getPageSize(s string, defaultVal int) int {
 	if s == "" {
 		return defaultVal
 	}

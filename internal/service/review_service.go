@@ -11,9 +11,10 @@ import (
 )
 
 type CreateReviewInput struct {
-	BookingID uuid.UUID
-	Rating    int
-	Text      string
+	BookingID   uuid.UUID
+	BathhouseID uuid.UUID
+	Rating      int
+	Text        string
 }
 
 type ReviewService interface {
@@ -48,6 +49,11 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 
 	if booking.UserID != userID {
 		return nil, domain.ErrForbidden
+	}
+
+	// Validate that the booking belongs to the specified bathhouse
+	if input.BathhouseID != uuid.Nil && booking.BathhouseID != input.BathhouseID {
+		return nil, domain.ErrInvalidInput
 	}
 
 	// Only completed bookings can be reviewed

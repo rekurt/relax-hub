@@ -101,8 +101,8 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *BookingHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
-	page := getIntParam(r.URL.Query().Get("page"), 1)
-	pageSize := getIntParam(r.URL.Query().Get("page_size"), 20)
+	page := getPage(r.URL.Query().Get("page"))
+	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)
 
 	result, err := h.bookingService.ListByUser(r.Context(), userID, page, pageSize)
 	if err != nil {
@@ -186,8 +186,8 @@ func (h *BookingHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request)
 
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
-	page := getIntParam(r.URL.Query().Get("page"), 1)
-	pageSize := getIntParam(r.URL.Query().Get("page_size"), 20)
+	page := getPage(r.URL.Query().Get("page"))
+	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)
 
 	result, err := h.bookingService.ListByBathhouse(r.Context(), userID, role, bathhouseID, page, pageSize)
 	if err != nil {

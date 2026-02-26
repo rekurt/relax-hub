@@ -29,8 +29,8 @@ func NewAdminHandler(
 }
 
 func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	page := getIntParam(r.URL.Query().Get("page"), 1)
-	pageSize := getIntParam(r.URL.Query().Get("page_size"), 20)
+	page := getPage(r.URL.Query().Get("page"))
+	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)
 
 	result, err := h.userService.List(r.Context(), page, pageSize)
 	if err != nil {
@@ -113,8 +113,8 @@ func (h *AdminHandler) RejectBathhouse(w http.ResponseWriter, r *http.Request) {
 
 func (h *AdminHandler) ListBathhouses(w http.ResponseWriter, r *http.Request) {
 	filter := domain.BathhouseFilter{
-		Page:     getIntParam(r.URL.Query().Get("page"), 1),
-		PageSize: getIntParam(r.URL.Query().Get("page_size"), 20),
+		Page:     getPage(r.URL.Query().Get("page")),
+		PageSize: getPageSize(r.URL.Query().Get("page_size"), 20),
 	}
 
 	if v := r.URL.Query().Get("status"); v != "" {

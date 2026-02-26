@@ -59,7 +59,7 @@ var seedAdminCmd = &cobra.Command{
 			UpdatedAt:    now,
 		}
 
-		_, err = pool.Exec(ctx,
+		tag, err := pool.Exec(ctx,
 			`INSERT INTO users (id, email, password_hash, name, phone, role, is_active, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			ON CONFLICT (email) DO NOTHING`,
@@ -70,7 +70,11 @@ var seedAdminCmd = &cobra.Command{
 			return fmt.Errorf("failed to create admin user: %w", err)
 		}
 
-		log.Printf("Admin user created: %s (%s)\n", user.Email, user.ID)
+		if tag.RowsAffected() == 0 {
+			log.Printf("Admin user with email %s already exists, skipping\n", user.Email)
+		} else {
+			log.Printf("Admin user created: %s (%s)\n", user.Email, user.ID)
+		}
 		return nil
 	},
 }
