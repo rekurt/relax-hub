@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*.iml
+.DS_Store
+.project
+.classpath
+*.sublime-project
+*.sublime-workspace
+
+# Test and build artifacts
+*.test
+*.out
+coverage.out
+dist/
+build/
+vendor/
+
+# Documentation
+docs/
+README.md
+CHANGELOG.md
+LICENSE
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+Makefile
+
+# Environment
+.env
+.env.*.local
+.env.production
+.env.staging
+
+# Dependencies (keep go.mod and go.sum for build)
+node_modules/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.pid
+
+# Development files
+.ralphex/
+.claude/

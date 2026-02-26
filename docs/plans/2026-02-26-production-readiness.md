@@ -116,12 +116,12 @@
 - Create: `.dockerignore`
 - Create: `.github/workflows/deploy.yml` (опционально, если используется GH Actions)
 
-- [ ] Убедиться, что Dockerfile использует multi-stage build (уже реализовано, проверить)
-- [ ] Добавить healthcheck в Dockerfile для автоматических перезагрузок
-- [ ] Добавить .dockerignore для уменьшения размера образа
-- [ ] Убедиться, что используется non-root user в контейнере (опционально, для максимальной безопасности)
-- [ ] Создать документацию для deployment процесса
-- [ ] Запустить docker build и docker run локально для проверки
+- [x] Убедиться, что Dockerfile использует multi-stage build (уже реализовано, проверить)
+- [x] Добавить healthcheck в Dockerfile для автоматических перезагрузок
+- [x] Добавить .dockerignore для уменьшения размера образа
+- [x] Убедиться, что используется non-root user в контейнере (опционально, для максимальной безопасности)
+- [x] Создать документацию для deployment процесса
+- [x] Запустить docker build и docker run локально для проверки
 
 ### Task 8: Документация API и deployment guide
 

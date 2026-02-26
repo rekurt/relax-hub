@@ -214,3 +214,42 @@ make test
 - Бизнес-логика сервисов с моками репозиториев
 - HTTP-хэндлеры через httptest
 - Доменные модели и валидация
+
+## Production Deployment
+
+Приложение готово к развёртыванию в продакшене. Для развёртывания смотрите [DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+### Healthcheck Endpoints
+
+Приложение предоставляет два healthcheck endpoint для оркестрации контейнеров:
+
+| Endpoint | Описание |
+|----------|----------|
+| `GET /health` | Liveness probe — проверяет, работает ли приложение |
+| `GET /ready` | Readiness probe — проверяет доступность БД и Redis |
+
+### Docker
+
+```bash
+# Собрать образ
+docker build -t bani-api:latest .
+
+# Запустить с Docker Compose
+docker-compose up -d
+```
+
+Docker образ:
+- Использует multi-stage build для минимизации размера
+- Включает healthcheck директиву для автоматических перезагрузок
+- Запускается от непривилегированного пользователя (app:app)
+- Содержит конфиг и миграции
+
+### Переменные окружения для продакшена
+
+Обязательные переменные в production должны быть установлены:
+- `BANI_ENVIRONMENT=production`
+- `BANI_JWT_SECRET` (минимум 32 символа)
+- `BANI_DATABASE_DSN` (с `sslmode=require`)
+- `BANI_REDIS_ADDR`
+
+Для подробной информации смотрите `.env.production.example`.
