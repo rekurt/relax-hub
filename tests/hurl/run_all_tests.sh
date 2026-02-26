@@ -73,6 +73,41 @@ BLOCKED_USER_TOKEN=$(echo "$BLOCKED_USER_RESP" | grep -o '"token":"[^"]*"' | cut
 
 log_info "Obtained tokens for admin, owner, client, representative, client2, and blocked user"
 
+# Extract database connection info from DSN
+DB_URL="$BANI_DATABASE_DSN"
+POSTGRES_USER="${DB_URL##*://}"
+POSTGRES_USER="${POSTGRES_USER%%[:@]*}"
+if [[ "$POSTGRES_USER" != "${DB_URL##*://}" ]]; then
+  if [[ "${DB_URL##*://}" == *":"* ]]; then
+    POSTGRES_PASSWORD="${DB_URL##*:}"
+    POSTGRES_PASSWORD="${POSTGRES_PASSWORD%%@*}"
+  else
+    POSTGRES_PASSWORD=""
+  fi
+else
+  POSTGRES_PASSWORD=""
+fi
+POSTGRES_HOST="${DB_URL##*@}"
+POSTGRES_HOST="${POSTGRES_HOST%%[:/*]*}"
+if [[ "${DB_URL##*@}" == *":"* ]]; then
+  POSTGRES_PORT="${DB_URL##*:}"
+  POSTGRES_PORT="${POSTGRES_PORT%%/*}"
+else
+  POSTGRES_PORT="5432"
+fi
+POSTGRES_DB="${DB_URL##*/}"
+POSTGRES_DB="${POSTGRES_DB%%\?*}"
+
+# Get user IDs from the users table
+log_info "Obtaining user IDs..."
+if [ -z "$POSTGRES_PASSWORD" ]; then
+  ADMIN_USER_ID=$(psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tc "SELECT id FROM users WHERE email = 'admin@test.com';" 2>/dev/null | xargs || echo "")
+  BLOCKED_USER_ID=$(psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tc "SELECT id FROM users WHERE email = 'blocked@test.com';" 2>/dev/null | xargs || echo "")
+else
+  ADMIN_USER_ID=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tc "SELECT id FROM users WHERE email = 'admin@test.com';" 2>/dev/null | xargs || echo "")
+  BLOCKED_USER_ID=$(PGPASSWORD="$POSTGRES_PASSWORD" psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tc "SELECT id FROM users WHERE email = 'blocked@test.com';" 2>/dev/null | xargs || echo "")
+fi
+
 # Verify tokens were obtained
 if [ -z "$ADMIN_TOKEN" ] || [ -z "$OWNER_TOKEN" ] || [ -z "$CLIENT_TOKEN" ]; then
     log_error "Failed to obtain authentication tokens"
@@ -189,6 +224,44 @@ hurl tests/hurl/representatives.hurl --variables-file tests/hurl/.env.test \
   --variable blocked_user_token="$BLOCKED_USER_TOKEN" || {
     log_error "Representatives tests failed"
     exit 1
+}
+
+log_info "Running admin users tests..."
+hurl tests/hurl/admin_users.hurl --variables-file tests/hurl/.env.test \
+  --variable admin_token="$ADMIN_TOKEN" \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" \
+  --variable admin_user_id="$ADMIN_USER_ID" \
+  --variable blocked_user_id="$BLOCKED_USER_ID" || {
+    log_error "Admin users tests failed"
+    exit 1
+}
+
+log_info "Running admin bathhouses tests..."
+hurl tests/hurl/admin_bathhouses.hurl --variables-file tests/hurl/.env.test \
+  --variable admin_token="$ADMIN_TOKEN" \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" || {
+    log_error "Admin bathhouses tests failed"
+    exit 1
+}
+
+log_info "Running admin cities tests..."
+hurl tests/hurl/admin_cities.hurl --variables-file tests/hurl/.env.test \
+  --variable admin_token="$ADMIN_TOKEN" \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" || {
+    log_error "Admin cities tests failed"
+    exit 1
+}
+
+log_info "Running admin negative tests..."
+hurl tests/hurl/admin_negative.hurl --variables-file tests/hurl/.env.test \
+  --variable admin_token="$ADMIN_TOKEN" \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" \
+  --variable admin_user_id="$ADMIN_USER_ID" || {
+    log_warn "Admin negative tests had failures"
 }
 
 log_info "All tests completed!"

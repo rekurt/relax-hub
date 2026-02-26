@@ -118,18 +118,18 @@ Create comprehensive hurl test suite covering all main API endpoints (auth, bath
 - Create: tests/hurl/admin_bathhouses.hurl
 - Create: tests/hurl/admin_cities.hurl
 
-- [ ] test GET /admin/users (admin lists users, non-admin forbidden)
-- [ ] test PATCH /admin/users/{id}/block (admin blocks user, user already blocked)
-- [ ] test PATCH /admin/users/{id}/unblock (admin unblocks user)
-- [ ] test GET /admin/bathhouses (admin lists pending bathhouses)
-- [ ] test PATCH /admin/bathhouses/{id}/approve (admin approves bathhouse)
-- [ ] test PATCH /admin/bathhouses/{id}/reject (admin rejects with reason)
-- [ ] test POST /admin/cities (admin creates city)
-- [ ] test PUT /admin/cities/{id} (admin updates city)
-- [ ] test DELETE /admin/cities/{id} (admin deletes city)
-- [ ] verify non-admin access is forbidden
-- [ ] write integration tests for admin endpoints
-- [ ] run hurl tests - must pass before task 8
+- [x] test GET /admin/users (admin lists users, non-admin forbidden)
+- [x] test PATCH /admin/users/{id}/block (admin blocks user, user already blocked)
+- [x] test PATCH /admin/users/{id}/unblock (admin unblocks user)
+- [x] test GET /admin/bathhouses (admin lists pending bathhouses)
+- [x] test PATCH /admin/bathhouses/{id}/approve (admin approves bathhouse)
+- [x] test PATCH /admin/bathhouses/{id}/reject (admin rejects with reason)
+- [x] test POST /admin/cities (admin creates city)
+- [x] test PUT /admin/cities/{id} (admin updates city)
+- [x] test DELETE /admin/cities/{id} (admin deletes city)
+- [x] verify non-admin access is forbidden
+- [x] write integration tests for admin endpoints
+- [x] run hurl tests - must pass before task 8
 
 ### Task 8: Cities and Health Endpoints Tests
 
