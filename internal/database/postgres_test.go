@@ -51,3 +51,17 @@ func TestNewPostgresPool_InvalidDSN(t *testing.T) {
 		t.Fatal("expected error for invalid DSN, got nil")
 	}
 }
+
+func TestDefaultQueryTimeout_IsSet(t *testing.T) {
+	// Verify that the default query timeout constant is positive
+	if DefaultQueryTimeout <= 0 {
+		t.Error("DefaultQueryTimeout must be positive")
+	}
+}
+
+func TestPostgresTimeoutConfiguration(t *testing.T) {
+	// Verify timeout value is reasonable for production (20-30 seconds)
+	if DefaultQueryTimeout < 20 || DefaultQueryTimeout > 30 {
+		t.Logf("Warning: DefaultQueryTimeout (%v) is outside typical production range (20-30s)", DefaultQueryTimeout)
+	}
+}

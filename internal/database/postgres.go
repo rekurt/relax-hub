@@ -3,11 +3,17 @@ package database
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"go.uber.org/fx"
+)
+
+const (
+	// DefaultQueryTimeout is the default timeout for database queries in production
+	DefaultQueryTimeout = 30 * time.Second
 )
 
 var PostgresModule = fx.Module("postgres",
@@ -31,11 +37,15 @@ func NewPostgresPool(lc fx.Lifecycle, cfg *config.Config, log *logger.Logger) (*
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			if err := pool.Ping(ctx); err != nil {
+			// Create a context with timeout for the health check ping
+			pingCtx, cancel := context.WithTimeout(ctx, DefaultQueryTimeout)
+			defer cancel()
+
+			if err := pool.Ping(pingCtx); err != nil {
 				log.Error("Failed to ping PostgreSQL", "error", err)
 				return err
 			}
-			log.Info("PostgreSQL connection established")
+			log.Info("PostgreSQL connection established", "query_timeout", DefaultQueryTimeout)
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {

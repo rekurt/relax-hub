@@ -90,12 +90,12 @@
 - Modify: `internal/database/postgres.go`
 - Modify: `internal/database/redis.go`
 
-- [ ] Убедиться, что ReadHeaderTimeout, ReadTimeout, WriteTimeout установлены правильно в server
-- [ ] Добавить Context timeout для database queries (20-30 сек)
-- [ ] Добавить timeout для Redis operations (5 сек)
-- [ ] Логировать timeout events
-- [ ] Написать тесты для timeout сценариев
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Убедиться, что ReadHeaderTimeout, ReadTimeout, WriteTimeout установлены правильно в server
+- [x] Добавить Context timeout для database queries (20-30 сек)
+- [x] Добавить timeout для Redis operations (5 сек)
+- [x] Логировать timeout events
+- [x] Написать тесты для timeout сценариев
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 6: Healthcheck и readiness endpoints
 

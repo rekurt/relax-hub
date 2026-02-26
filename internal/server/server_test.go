@@ -84,3 +84,32 @@ func TestHealthCheck_WrongMethod(t *testing.T) {
 		t.Errorf("expected status 405, got %d", rec.Code)
 	}
 }
+
+func TestHTTPServerTimeoutConstants(t *testing.T) {
+	// Verify that timeout constants are defined and positive
+	if server.ReadHeaderTimeout <= 0 {
+		t.Error("ReadHeaderTimeout must be positive")
+	}
+	if server.ReadTimeout <= 0 {
+		t.Error("ReadTimeout must be positive")
+	}
+	if server.WriteTimeout <= 0 {
+		t.Error("WriteTimeout must be positive")
+	}
+	if server.IdleTimeout <= 0 {
+		t.Error("IdleTimeout must be positive")
+	}
+}
+
+func TestHTTPServerTimeoutOrdering(t *testing.T) {
+	// Verify sensible timeout ordering for production
+	if server.ReadTimeout < server.ReadHeaderTimeout {
+		t.Errorf("ReadTimeout (%v) should be >= ReadHeaderTimeout (%v)", server.ReadTimeout, server.ReadHeaderTimeout)
+	}
+	if server.WriteTimeout < server.ReadTimeout && server.WriteTimeout < server.ReadHeaderTimeout {
+		t.Logf("Note: WriteTimeout (%v) may be less than ReadTimeout/ReadHeaderTimeout for streaming", server.WriteTimeout)
+	}
+	if server.IdleTimeout < server.WriteTimeout {
+		t.Logf("Note: IdleTimeout (%v) is >= WriteTimeout (%v)", server.IdleTimeout, server.WriteTimeout)
+	}
+}

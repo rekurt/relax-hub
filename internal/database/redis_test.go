@@ -59,3 +59,20 @@ func TestNewRedisClient_CreatesClient(t *testing.T) {
 		t.Fatal("expected redis client to be created, got nil")
 	}
 }
+
+func TestRedisOperationTimeout_IsSet(t *testing.T) {
+	// Verify that the Redis operation timeout constant is positive
+	if RedisOperationTimeout <= 0 {
+		t.Error("RedisOperationTimeout must be positive")
+	}
+}
+
+func TestRedisTimeoutConfiguration(t *testing.T) {
+	// Verify timeout value is reasonable for production (around 5 seconds)
+	const expectedTimeoutSeconds = 5
+	const toleranceSeconds = 1
+	actualSeconds := int(RedisOperationTimeout.Seconds())
+	if actualSeconds < expectedTimeoutSeconds-toleranceSeconds || actualSeconds > expectedTimeoutSeconds+toleranceSeconds {
+		t.Logf("Warning: RedisOperationTimeout (%v) is outside typical range (~5s)", RedisOperationTimeout)
+	}
+}

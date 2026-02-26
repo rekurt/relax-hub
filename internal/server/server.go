@@ -17,15 +17,24 @@ var Module = fx.Module("server",
 	fx.Invoke(RegisterServer),
 )
 
+// HTTP server timeout constants for production
+const (
+	ReadHeaderTimeout = 5 * time.Second
+	ReadTimeout       = 10 * time.Second
+	WriteTimeout      = 30 * time.Second
+	IdleTimeout       = 120 * time.Second
+)
+
 func RegisterServer(lc fx.Lifecycle, cfg *config.Config, router http.Handler, log *logger.Logger) {
 	srv := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
 		Handler:           router,
-		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       120 * time.Second,
+		ReadHeaderTimeout: ReadHeaderTimeout,
+		ReadTimeout:       ReadTimeout,
+		WriteTimeout:      WriteTimeout,
+		IdleTimeout:       IdleTimeout,
 	}
+	log.Info("HTTP server configured", "read_header_timeout", ReadHeaderTimeout, "read_timeout", ReadTimeout, "write_timeout", WriteTimeout, "idle_timeout", IdleTimeout)
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
