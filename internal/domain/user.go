@@ -26,7 +26,7 @@ func (r UserRole) IsValid() bool {
 type User struct {
 	ID           uuid.UUID
 	Email        string
-	PasswordHash string
+	PasswordHash string `json:"-"`
 	Name         string
 	Phone        string
 	Role         UserRole

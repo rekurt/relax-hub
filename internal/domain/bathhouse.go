@@ -75,6 +75,12 @@ func (b *Bathhouse) Validate() error {
 	if b.MinDuration <= 0 {
 		return ErrInvalidInput
 	}
+	if b.Latitude < -90 || b.Latitude > 90 {
+		return ErrInvalidInput
+	}
+	if b.Longitude < -180 || b.Longitude > 180 {
+		return ErrInvalidInput
+	}
 	for _, wh := range b.WorkingHours {
 		if err := wh.Validate(); err != nil {
 			return err

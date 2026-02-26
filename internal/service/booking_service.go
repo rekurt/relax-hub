@@ -257,11 +257,16 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 		return nil, err
 	}
 
+	now := time.Now()
 	var slots []TimeSlot
 	for t := dayStart; t.Before(dayEnd); t = t.Add(time.Hour) {
 		slotEnd := t.Add(time.Hour)
 		if slotEnd.After(dayEnd) {
 			break
+		}
+		// Skip slots that have already passed
+		if slotEnd.Before(now) {
+			continue
 		}
 		avail := true
 		for _, b := range overlapping {

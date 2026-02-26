@@ -99,6 +99,8 @@ func TestBathhouse_Validate(t *testing.T) {
 		{"zero price", Bathhouse{Name: "name", Address: "addr", CityID: 1, PricePerHour: 0, MaxGuests: 5, MinDuration: 1}},
 		{"zero guests", Bathhouse{Name: "name", Address: "addr", CityID: 1, PricePerHour: 100, MaxGuests: 0, MinDuration: 1}},
 		{"zero duration", Bathhouse{Name: "name", Address: "addr", CityID: 1, PricePerHour: 100, MaxGuests: 5, MinDuration: 0}},
+		{"invalid latitude", Bathhouse{Name: "name", Address: "addr", CityID: 1, PricePerHour: 100, MaxGuests: 5, MinDuration: 1, Latitude: 91}},
+		{"invalid longitude", Bathhouse{Name: "name", Address: "addr", CityID: 1, PricePerHour: 100, MaxGuests: 5, MinDuration: 1, Longitude: 181}},
 	}
 
 	for _, tt := range tests {
