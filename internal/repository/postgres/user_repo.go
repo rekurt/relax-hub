@@ -27,12 +27,9 @@ func (r *userRepo) Create(ctx context.Context, user *domain.User) error {
 		INSERT INTO users (id, email, password_hash, name, phone, role, is_active, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
-	now := time.Now()
 	if user.ID == uuid.Nil {
 		user.ID = uuid.New()
 	}
-	user.CreatedAt = now
-	user.UpdatedAt = now
 
 	_, err := r.pool.Exec(ctx, query,
 		user.ID, user.Email, user.PasswordHash, user.Name, user.Phone,
@@ -118,7 +115,7 @@ func (r *userRepo) List(ctx context.Context, page, pageSize int) (*domain.Pagina
 	}
 
 	query := `
-		SELECT id, email, password_hash, name, phone, role, is_active, created_at, updated_at
+		SELECT id, email, name, phone, role, is_active, created_at, updated_at
 		FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`
 
 	offset := (page - 1) * pageSize
@@ -132,7 +129,7 @@ func (r *userRepo) List(ctx context.Context, page, pageSize int) (*domain.Pagina
 	for rows.Next() {
 		var u domain.User
 		if err := rows.Scan(
-			&u.ID, &u.Email, &u.PasswordHash, &u.Name, &u.Phone,
+			&u.ID, &u.Email, &u.Name, &u.Phone,
 			&u.Role, &u.IsActive, &u.CreatedAt, &u.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan user: %w", err)

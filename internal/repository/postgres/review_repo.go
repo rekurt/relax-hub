@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -30,7 +29,6 @@ func (r *reviewRepo) Create(ctx context.Context, review *domain.Review) error {
 	if review.ID == uuid.Nil {
 		review.ID = uuid.New()
 	}
-	review.CreatedAt = time.Now()
 
 	_, err := r.pool.Exec(ctx, query,
 		review.ID, review.UserID, review.BathhouseID, review.BookingID,

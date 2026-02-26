@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -29,7 +28,6 @@ func (r *representativeRepo) Create(ctx context.Context, rep *domain.Representat
 	if rep.ID == uuid.Nil {
 		rep.ID = uuid.New()
 	}
-	rep.CreatedAt = time.Now()
 
 	_, err := r.pool.Exec(ctx, query,
 		rep.ID, rep.UserID, rep.BathhouseID, rep.OwnerID, rep.CreatedAt,

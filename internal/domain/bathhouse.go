@@ -75,5 +75,32 @@ func (b *Bathhouse) Validate() error {
 	if b.MinDuration <= 0 {
 		return ErrInvalidInput
 	}
+	for _, wh := range b.WorkingHours {
+		if err := wh.Validate(); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func (wh WorkingHours) Validate() error {
+	if wh.DayOfWeek < 0 || wh.DayOfWeek > 6 {
+		return ErrInvalidInput
+	}
+	if !isValidTimeFormat(wh.OpenTime) {
+		return ErrInvalidInput
+	}
+	if !isValidTimeFormat(wh.CloseTime) {
+		return ErrInvalidInput
+	}
+	return nil
+}
+
+func isValidTimeFormat(s string) bool {
+	if len(s) != 5 || s[2] != ':' {
+		return false
+	}
+	h := (int(s[0]-'0') * 10) + int(s[1]-'0')
+	m := (int(s[3]-'0') * 10) + int(s[4]-'0')
+	return h >= 0 && h <= 23 && m >= 0 && m <= 59
 }

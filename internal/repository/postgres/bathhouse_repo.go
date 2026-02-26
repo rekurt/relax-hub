@@ -38,12 +38,9 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 			$18, $19, $20, $21, $22, $23, $24
 		)`
 
-	now := time.Now()
 	if bh.ID == uuid.Nil {
 		bh.ID = uuid.New()
 	}
-	bh.CreatedAt = now
-	bh.UpdatedAt = now
 
 	imagesJSON, err := json.Marshal(bh.Images)
 	if err != nil {

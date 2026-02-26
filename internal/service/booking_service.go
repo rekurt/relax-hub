@@ -69,7 +69,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, fmt.Errorf("%w: start time must be in the future", domain.ErrInvalidInput)
 	}
 
-	if input.GuestCount > bh.MaxGuests {
+	if input.GuestCount <= 0 || input.GuestCount > bh.MaxGuests {
 		return nil, domain.ErrInvalidInput
 	}
 

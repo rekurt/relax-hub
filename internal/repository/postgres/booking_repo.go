@@ -27,12 +27,9 @@ func (r *bookingRepo) Create(ctx context.Context, booking *domain.Booking) error
 		INSERT INTO bookings (id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, status, comment, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 
-	now := time.Now()
 	if booking.ID == uuid.Nil {
 		booking.ID = uuid.New()
 	}
-	booking.CreatedAt = now
-	booking.UpdatedAt = now
 
 	_, err := r.pool.Exec(ctx, query,
 		booking.ID, booking.UserID, booking.BathhouseID,
