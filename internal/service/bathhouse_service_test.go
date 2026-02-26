@@ -11,16 +11,17 @@ import (
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
-func newBathhouseService() (service.BathhouseService, *mock.BathhouseRepo, *mock.RepresentativeRepo) {
+func newBathhouseService() (service.BathhouseService, *mock.BathhouseRepo, *mock.RepresentativeRepo, *mock.BookingRepo) {
 	bhRepo := mock.NewBathhouseRepo()
 	repRepo := mock.NewRepresentativeRepo()
+	bookingRepo := mock.NewBookingRepo()
 	access := service.NewAccessChecker(repRepo, bhRepo)
-	svc := service.NewBathhouseService(bhRepo, access)
-	return svc, bhRepo, repRepo
+	svc := service.NewBathhouseService(bhRepo, bookingRepo, access)
+	return svc, bhRepo, repRepo, bookingRepo
 }
 
 func TestBathhouseService_Create_PendingStatus(t *testing.T) {
-	svc, _, _ := newBathhouseService()
+	svc, _, _, _ := newBathhouseService()
 	ownerID := uuid.New()
 
 	bh, err := svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
@@ -44,7 +45,7 @@ func TestBathhouseService_Create_PendingStatus(t *testing.T) {
 }
 
 func TestBathhouseService_Create_InvalidInput(t *testing.T) {
-	svc, _, _ := newBathhouseService()
+	svc, _, _, _ := newBathhouseService()
 
 	_, err := svc.Create(context.Background(), uuid.New(), service.CreateBathhouseInput{
 		Name: "", // empty name
@@ -56,7 +57,7 @@ func TestBathhouseService_Create_InvalidInput(t *testing.T) {
 }
 
 func TestBathhouseService_Update_OwnerAllowed(t *testing.T) {
-	svc, bhRepo, _ := newBathhouseService()
+	svc, bhRepo, _, _ := newBathhouseService()
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
@@ -74,7 +75,7 @@ func TestBathhouseService_Update_OwnerAllowed(t *testing.T) {
 }
 
 func TestBathhouseService_Update_RepresentativeAllowed(t *testing.T) {
-	svc, bhRepo, repRepo := newBathhouseService()
+	svc, bhRepo, repRepo, _ := newBathhouseService()
 	ownerID := uuid.New()
 	repUserID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
@@ -95,7 +96,7 @@ func TestBathhouseService_Update_RepresentativeAllowed(t *testing.T) {
 }
 
 func TestBathhouseService_Update_ClientForbidden(t *testing.T) {
-	svc, bhRepo, _ := newBathhouseService()
+	svc, bhRepo, _, _ := newBathhouseService()
 	ownerID := uuid.New()
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
@@ -111,7 +112,7 @@ func TestBathhouseService_Update_ClientForbidden(t *testing.T) {
 }
 
 func TestBathhouseService_Delete_OwnerOnly(t *testing.T) {
-	svc, bhRepo, _ := newBathhouseService()
+	svc, bhRepo, _, _ := newBathhouseService()
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
@@ -127,7 +128,7 @@ func TestBathhouseService_Delete_OwnerOnly(t *testing.T) {
 }
 
 func TestBathhouseService_Delete_OtherOwnerForbidden(t *testing.T) {
-	svc, bhRepo, _ := newBathhouseService()
+	svc, bhRepo, _, _ := newBathhouseService()
 	ownerID := uuid.New()
 	otherOwnerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
@@ -139,7 +140,7 @@ func TestBathhouseService_Delete_OtherOwnerForbidden(t *testing.T) {
 }
 
 func TestBathhouseService_Approve_AdminOnly(t *testing.T) {
-	svc, bhRepo, _ := newBathhouseService()
+	svc, bhRepo, _, _ := newBathhouseService()
 	ownerID := uuid.New()
 
 	bh := &domain.Bathhouse{
@@ -161,7 +162,7 @@ func TestBathhouseService_Approve_AdminOnly(t *testing.T) {
 }
 
 func TestBathhouseService_Approve_NotPendingFails(t *testing.T) {
-	svc, bhRepo, _ := newBathhouseService()
+	svc, bhRepo, _, _ := newBathhouseService()
 	bh := createBathhouse(t, bhRepo, uuid.New()) // active status
 
 	err := svc.Approve(context.Background(), bh.ID)
@@ -171,7 +172,7 @@ func TestBathhouseService_Approve_NotPendingFails(t *testing.T) {
 }
 
 func TestBathhouseService_Reject(t *testing.T) {
-	svc, bhRepo, _ := newBathhouseService()
+	svc, bhRepo, _, _ := newBathhouseService()
 	ownerID := uuid.New()
 
 	bh := &domain.Bathhouse{
@@ -186,7 +187,14 @@ func TestBathhouseService_Reject(t *testing.T) {
 		t.Fatalf("reject should work: %v", err)
 	}
 
-	updated, _ := svc.GetByID(context.Background(), bh.ID)
+	// After rejection, public GetByID should not find the bathhouse
+	_, err = svc.GetByID(context.Background(), bh.ID)
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("rejected bathhouse should not be visible via GetByID, got: %v", err)
+	}
+
+	// Verify the status was actually changed in the repo
+	updated, _ := bhRepo.GetByID(context.Background(), bh.ID)
 	if updated.Status != domain.BathhouseStatusRejected {
 		t.Errorf("status = %q, want %q", updated.Status, domain.BathhouseStatusRejected)
 	}

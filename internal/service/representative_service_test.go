@@ -116,18 +116,31 @@ func TestRepresentativeService_ListByBathhouse_OtherOwnerForbidden(t *testing.T)
 }
 
 func TestRepresentativeService_Revoke(t *testing.T) {
-	svc, bhRepo, _, repRepo := newRepresentativeService()
+	svc, bhRepo, userRepo, repRepo := newRepresentativeService()
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
+	repUserID := uuid.New()
+	repUser := &domain.User{
+		ID: repUserID, Email: "rep@example.com", Name: "Rep",
+		Role: domain.RoleRepresentative, IsActive: true,
+	}
+	_ = userRepo.Create(context.Background(), repUser)
+
 	rep := &domain.Representative{
-		ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID, OwnerID: ownerID,
+		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
 	}
 	_ = repRepo.Create(context.Background(), rep)
 
 	err := svc.Revoke(context.Background(), ownerID, rep.ID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify user role reverted to client since no remaining assignments
+	updated, _ := userRepo.GetByID(context.Background(), repUserID)
+	if updated.Role != domain.RoleClient {
+		t.Errorf("user role should revert to client after last revoke, got: %v", updated.Role)
 	}
 }
 

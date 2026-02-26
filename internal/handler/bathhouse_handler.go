@@ -455,7 +455,13 @@ func (h *BathhouseHandler) MyBathhouses(w http.ResponseWriter, r *http.Request) 
 		items[i] = toBathhouseResponse(&bathhouses[i])
 	}
 
-	writeJSON(w, http.StatusOK, items)
+	total := int64(len(items))
+	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
+		Page:       1,
+		PageSize:   int(total),
+		TotalCount: total,
+		TotalPages: 1,
+	})
 }
 
 const maxPageSize = 100

@@ -11,5 +11,6 @@ var (
 	ErrSlotUnavailable    = errors.New("time slot is unavailable")
 	ErrBookingCancelLate  = errors.New("too late to cancel booking")
 	ErrUserBlocked        = errors.New("user is blocked")
-	ErrBathhouseNotActive = errors.New("bathhouse is not active")
+	ErrBathhouseNotActive   = errors.New("bathhouse is not active")
+	ErrBathhouseHasBookings = errors.New("cannot delete bathhouse with active bookings")
 )

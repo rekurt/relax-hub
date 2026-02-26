@@ -92,7 +92,29 @@ func (s *representativeService) Revoke(ctx context.Context, ownerID uuid.UUID, r
 		return domain.ErrForbidden
 	}
 
-	return s.repRepo.Delete(ctx, representativeID)
+	if err := s.repRepo.Delete(ctx, representativeID); err != nil {
+		return err
+	}
+
+	// If the user has no remaining representative assignments, revert role to client
+	remaining, err := s.repRepo.ListByUser(ctx, rep.UserID)
+	if err != nil {
+		return err
+	}
+	if len(remaining) == 0 {
+		user, err := s.userRepo.GetByID(ctx, rep.UserID)
+		if err != nil {
+			return err
+		}
+		if user.Role == domain.RoleRepresentative {
+			user.Role = domain.RoleClient
+			if err := s.userRepo.Update(ctx, user); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *representativeService) ListByBathhouse(ctx context.Context, ownerID uuid.UUID, bathhouseID uuid.UUID) ([]domain.Representative, error) {

@@ -62,12 +62,13 @@ type BathhouseService interface {
 }
 
 type bathhouseService struct {
-	bhRepo  repository.BathhouseRepository
-	access  *AccessChecker
+	bhRepo      repository.BathhouseRepository
+	bookingRepo repository.BookingRepository
+	access      *AccessChecker
 }
 
-func NewBathhouseService(bhRepo repository.BathhouseRepository, access *AccessChecker) BathhouseService {
-	return &bathhouseService{bhRepo: bhRepo, access: access}
+func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, access *AccessChecker) BathhouseService {
+	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, access: access}
 }
 
 func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error) {
@@ -109,7 +110,17 @@ func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input 
 }
 
 func (s *bathhouseService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
-	return s.bhRepo.GetByID(ctx, id)
+	bh, err := s.bhRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Public endpoint: only return active bathhouses
+	if bh.Status != domain.BathhouseStatusActive {
+		return nil, domain.ErrNotFound
+	}
+
+	return bh, nil
 }
 
 func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role domain.UserRole, id uuid.UUID, input UpdateBathhouseInput) (*domain.Bathhouse, error) {
@@ -194,6 +205,15 @@ func (s *bathhouseService) Delete(ctx context.Context, ownerID uuid.UUID, id uui
 
 	if bh.OwnerID != ownerID {
 		return domain.ErrForbidden
+	}
+
+	// Check for active bookings (pending or confirmed)
+	result, err := s.bookingRepo.ListByBathhouse(ctx, id, 1, 1)
+	if err != nil {
+		return err
+	}
+	if result.TotalCount > 0 {
+		return domain.ErrBathhouseHasBookings
 	}
 
 	return s.bhRepo.Delete(ctx, id)
