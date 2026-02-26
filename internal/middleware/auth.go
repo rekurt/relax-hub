@@ -3,7 +3,9 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -115,6 +117,6 @@ func writeAuthError(w http.ResponseWriter, status int, message string) {
 			"message": message,
 		},
 	}); err != nil {
-		_ = err // Headers already sent, cannot write error response
+		fmt.Fprintf(os.Stderr, "failed to encode auth error response: %v\n", err)
 	}
 }

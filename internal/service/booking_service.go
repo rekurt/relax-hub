@@ -351,5 +351,42 @@ func validateWithinWorkingHours(bh *domain.Bathhouse, startTime, endTime time.Ti
 		return fmt.Errorf("%w: booking must be within working hours (%s-%s)", domain.ErrInvalidInput, wh.OpenTime, wh.CloseTime)
 	}
 
+	// For multi-day bookings, validate end date doesn't exceed the end day's closing hours
+	if endTime.Day() != startTime.Day() {
+		endDayOfWeek := toDayOfWeek(endTime.Weekday())
+		var endWh *domain.WorkingHours
+		for i := range bh.WorkingHours {
+			if bh.WorkingHours[i].DayOfWeek == endDayOfWeek {
+				endWh = &bh.WorkingHours[i]
+				break
+			}
+		}
+
+		if endWh == nil {
+			return fmt.Errorf("%w: bathhouse is closed on end day", domain.ErrInvalidInput)
+		}
+
+		endOpenH, endOpenM, err := parseTime(endWh.OpenTime)
+		if err != nil {
+			return fmt.Errorf("invalid open time: %w", err)
+		}
+		endCloseH, endCloseM, err := parseTime(endWh.CloseTime)
+		if err != nil {
+			return fmt.Errorf("invalid close time: %w", err)
+		}
+
+		endDayOpen := time.Date(endTime.Year(), endTime.Month(), endTime.Day(), endOpenH, endOpenM, 0, 0, loc)
+		endDayClose := time.Date(endTime.Year(), endTime.Month(), endTime.Day(), endCloseH, endCloseM, 0, 0, loc)
+
+		// Handle overnight hours on end day
+		if !endDayClose.After(endDayOpen) {
+			endDayClose = endDayClose.Add(24 * time.Hour)
+		}
+
+		if endTime.After(endDayClose) {
+			return fmt.Errorf("%w: booking must be within working hours (%s-%s)", domain.ErrInvalidInput, endWh.OpenTime, endWh.CloseTime)
+		}
+	}
+
 	return nil
 }

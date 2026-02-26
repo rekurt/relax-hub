@@ -3,7 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/nikitaaldaev/bani/internal/domain"
 )
@@ -34,7 +36,7 @@ func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 		Success: true,
 		Data:    data,
 	}); err != nil {
-		_ = err // Headers already sent, cannot write error response
+		fmt.Fprintf(os.Stderr, "failed to encode JSON response: %v\n", err)
 	}
 }
 
@@ -46,7 +48,7 @@ func writeJSONWithMeta(w http.ResponseWriter, status int, data interface{}, meta
 		Data:    data,
 		Meta:    meta,
 	}); err != nil {
-		_ = err // Headers already sent, cannot write error response
+		fmt.Fprintf(os.Stderr, "failed to encode JSON response with meta: %v\n", err)
 	}
 }
 
@@ -65,7 +67,7 @@ func writeErrorWithContext(w http.ResponseWriter, _ *http.Request, status int, c
 			Message: message,
 		},
 	}); err != nil {
-		_ = err // Headers already sent, cannot write error response
+		fmt.Fprintf(os.Stderr, "failed to encode error response: %v\n", err)
 	}
 }
 
