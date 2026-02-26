@@ -41,6 +41,7 @@ Four roles: client, owner, representative, admin.
 
 Middleware layer:
 - `RequireAuth` — extracts user_id and role from JWT into context
+- `OptionalAuth` — extracts user_id and role from JWT if present, but allows unauthenticated requests (used for is_favorite enrichment on public endpoints)
 - `RequireRole(roles...)` — checks role from context
 - `RequireOwnerOrRepresentative()` — allows owner or representative roles
 
@@ -79,6 +80,8 @@ Domain errors (domain/errors.go) map to HTTP status codes in handler/response.go
 - ErrBookingCancelLate -> 400
 - ErrUserBlocked -> 403
 - ErrBathhouseNotActive -> 400
+- ErrBathhouseHasBookings -> 409
+- ErrReviewAlreadyResponded -> 409
 
 ### Testing
 

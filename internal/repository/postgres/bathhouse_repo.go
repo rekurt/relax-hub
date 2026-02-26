@@ -181,13 +181,21 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		conditions = append(conditions, fmt.Sprintf("max_guests >= %s", addArg(*filter.GuestCount)))
 	}
 	if filter.SearchQuery != nil && *filter.SearchQuery != "" {
-		likePattern := "%" + *filter.SearchQuery + "%"
+		escaped := strings.ReplaceAll(*filter.SearchQuery, "\\", "\\\\")
+		escaped = strings.ReplaceAll(escaped, "%", "\\%")
+		escaped = strings.ReplaceAll(escaped, "_", "\\_")
+		likePattern := "%" + escaped + "%"
 		conditions = append(conditions, fmt.Sprintf("(name ILIKE %s OR description ILIKE %s)", addArg(likePattern), addArg(likePattern)))
 	}
 	if filter.OpenNow != nil && *filter.OpenNow {
+		dayArg := addArg(currentDayOfWeek())
+		timeArg1 := addArg(currentTimeHHMM())
+		timeArg2 := addArg(currentTimeHHMM())
+		timeArg3 := addArg(currentTimeHHMM())
+		timeArg4 := addArg(currentTimeHHMM())
 		conditions = append(conditions, fmt.Sprintf(
-			"EXISTS (SELECT 1 FROM jsonb_array_elements(working_hours) wh WHERE (wh->>'day_of_week')::int = %s AND wh->>'open_time' <= %s AND wh->>'close_time' > %s)",
-			addArg(currentDayOfWeek()), addArg(currentTimeHHMM()), addArg(currentTimeHHMM()),
+			"EXISTS (SELECT 1 FROM jsonb_array_elements(working_hours) wh WHERE (wh->>'day_of_week')::int = %s AND ((wh->>'open_time' <= wh->>'close_time' AND wh->>'open_time' <= %s AND wh->>'close_time' > %s) OR (wh->>'open_time' > wh->>'close_time' AND (wh->>'open_time' <= %s OR wh->>'close_time' > %s))))",
+			dayArg, timeArg1, timeArg2, timeArg3, timeArg4,
 		))
 	}
 	if filter.AvailableDate != nil {
@@ -344,8 +352,8 @@ func (r *bathhouseRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 func (r *bathhouseRepo) UpdateRating(ctx context.Context, bathhouseID uuid.UUID) error {
 	query := `
 		UPDATE bathhouses SET
-			rating = COALESCE((SELECT AVG(rating)::double precision FROM reviews WHERE bathhouse_id = $1), 0),
-			review_count = (SELECT COUNT(*) FROM reviews WHERE bathhouse_id = $1),
+			rating = COALESCE((SELECT AVG(rating)::double precision FROM reviews WHERE bathhouse_id = $1 AND status = 'approved'), 0),
+			review_count = (SELECT COUNT(*) FROM reviews WHERE bathhouse_id = $1 AND status = 'approved'),
 			updated_at = $2
 		WHERE id = $1`
 

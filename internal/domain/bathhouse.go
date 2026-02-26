@@ -93,10 +93,10 @@ func (wh WorkingHours) Validate() error {
 	if wh.DayOfWeek < 0 || wh.DayOfWeek > 6 {
 		return ErrInvalidInput
 	}
-	if !isValidTimeFormat(wh.OpenTime) {
+	if !IsValidTimeFormat(wh.OpenTime) {
 		return ErrInvalidInput
 	}
-	if !isValidTimeFormat(wh.CloseTime) {
+	if !IsValidTimeFormat(wh.CloseTime) {
 		return ErrInvalidInput
 	}
 	if wh.OpenTime == wh.CloseTime {
@@ -105,7 +105,7 @@ func (wh WorkingHours) Validate() error {
 	return nil
 }
 
-func isValidTimeFormat(s string) bool {
+func IsValidTimeFormat(s string) bool {
 	if len(s) != 5 || s[2] != ':' {
 		return false
 	}

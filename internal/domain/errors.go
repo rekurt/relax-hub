@@ -14,5 +14,4 @@ var (
 	ErrBathhouseNotActive      = errors.New("bathhouse is not active")
 	ErrBathhouseHasBookings    = errors.New("cannot delete bathhouse with active bookings")
 	ErrReviewAlreadyResponded  = errors.New("review already has owner response")
-	ErrReviewNotFound          = errors.New("review not found")
 )

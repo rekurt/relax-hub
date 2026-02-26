@@ -208,8 +208,8 @@ func TestReviewService_GetByID_NotFound(t *testing.T) {
 	env := newReviewTestEnv()
 
 	_, err := env.svc.GetByID(context.Background(), uuid.New())
-	if !errors.Is(err, domain.ErrReviewNotFound) {
-		t.Errorf("should be ErrReviewNotFound, got: %v", err)
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("should be ErrNotFound, got: %v", err)
 	}
 }
 
@@ -288,7 +288,7 @@ func TestReviewService_Delete_ByAuthor(t *testing.T) {
 	}
 
 	_, err = env.svc.GetByID(context.Background(), review.ID)
-	if !errors.Is(err, domain.ErrReviewNotFound) {
+	if !errors.Is(err, domain.ErrNotFound) {
 		t.Errorf("review should be deleted, got: %v", err)
 	}
 }
@@ -307,7 +307,7 @@ func TestReviewService_Delete_ByAdmin(t *testing.T) {
 	}
 
 	_, err = env.svc.GetByID(context.Background(), review.ID)
-	if !errors.Is(err, domain.ErrReviewNotFound) {
+	if !errors.Is(err, domain.ErrNotFound) {
 		t.Errorf("review should be deleted, got: %v", err)
 	}
 }

@@ -479,7 +479,7 @@ func (r *ReviewRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Review, e
 	defer r.mu.RUnlock()
 	rev, ok := r.reviews[id]
 	if !ok {
-		return nil, domain.ErrReviewNotFound
+		return nil, domain.ErrNotFound
 	}
 	cp := *rev
 	return &cp, nil
@@ -489,7 +489,7 @@ func (r *ReviewRepo) Update(_ context.Context, review *domain.Review) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.reviews[review.ID]; !ok {
-		return domain.ErrReviewNotFound
+		return domain.ErrNotFound
 	}
 	review.UpdatedAt = time.Now()
 	cp := *review
@@ -501,7 +501,7 @@ func (r *ReviewRepo) Delete(_ context.Context, id uuid.UUID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.reviews[id]; !ok {
-		return domain.ErrReviewNotFound
+		return domain.ErrNotFound
 	}
 	delete(r.reviews, id)
 	return nil
@@ -605,7 +605,7 @@ func (r *ReviewRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domain
 	defer r.mu.Unlock()
 	rev, ok := r.reviews[id]
 	if !ok {
-		return domain.ErrReviewNotFound
+		return domain.ErrNotFound
 	}
 	rev.Status = status
 	rev.UpdatedAt = time.Now()
@@ -617,7 +617,7 @@ func (r *ReviewRepo) AddOwnerResponse(_ context.Context, id uuid.UUID, response 
 	defer r.mu.Unlock()
 	rev, ok := r.reviews[id]
 	if !ok {
-		return domain.ErrReviewNotFound
+		return domain.ErrNotFound
 	}
 	rev.OwnerResponse = response
 	rev.OwnerResponseAt = &respondedAt
@@ -909,8 +909,19 @@ func isBathhouseOpenNow(bh *domain.Bathhouse) bool {
 	}
 	currentTime := fmt.Sprintf("%02d:%02d", now.Hour(), now.Minute())
 	for _, wh := range bh.WorkingHours {
-		if wh.DayOfWeek == dayOfWeek && wh.OpenTime <= currentTime && wh.CloseTime > currentTime {
-			return true
+		if wh.DayOfWeek != dayOfWeek {
+			continue
+		}
+		if wh.OpenTime <= wh.CloseTime {
+			// Normal schedule: e.g. 09:00 - 22:00
+			if wh.OpenTime <= currentTime && wh.CloseTime > currentTime {
+				return true
+			}
+		} else {
+			// Overnight schedule: e.g. 20:00 - 06:00
+			if wh.OpenTime <= currentTime || wh.CloseTime > currentTime {
+				return true
+			}
 		}
 	}
 	return false

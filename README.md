@@ -38,8 +38,8 @@ migrations/          — SQL-миграции (PostGIS, таблицы, инде
 | Роль | Возможности |
 |------|-------------|
 | **admin** | Модерация бань (approve/reject), управление пользователями (block/unblock), CRUD городов, просмотр всех данных |
-| **client** | Поиск бань, бронирование, отмена своих бронирований, отзывы на завершённые бронирования |
-| **owner** | CRUD своих бань, просмотр бронирований, подтверждение/отклонение бронирований, управление представителями (invite/revoke) |
+| **client** | Поиск бань, бронирование, отмена своих бронирований, отзывы на завершённые бронирования (редактирование в течение 24ч, удаление), избранное |
+| **owner** | CRUD своих бань, просмотр бронирований, подтверждение/отклонение бронирований, управление представителями (invite/revoke), ответы на отзывы |
 | **representative** | Те же права что у owner, но только для бань, к которым привязан. Не может удалять бани и управлять другими представителями |
 
 Регистрация доступна только как client или owner. Admin создаётся через `seed-admin`. Representative назначается через invite от owner.
@@ -114,7 +114,7 @@ make run
 
 | Метод | Путь | Доступ | Описание |
 |-------|------|--------|----------|
-| GET | `/bathhouses` | public | Поиск с фильтрами (город, цена, удобства, гео-радиус) |
+| GET | `/bathhouses` | public | Поиск с фильтрами (город, цена, удобства, гео-радиус, кол-во гостей, доступность по дате/времени, открыто сейчас, текстовый поиск). При наличии JWT в ответе добавляется `is_favorite` |
 | GET | `/bathhouses/{id}` | public | Детали бани |
 | GET | `/bathhouses/{id}/available-slots?date=YYYY-MM-DD` | public | Свободные слоты |
 | POST | `/bathhouses` | owner | Создание бани (статус: pending) |
@@ -131,6 +131,7 @@ make run
 | PATCH | `/bookings/{id}/cancel` | auth | Отмена (клиент за 2ч, owner/rep — всегда) |
 | PATCH | `/bookings/{id}/confirm` | owner, representative | Подтверждение |
 | PATCH | `/bookings/{id}/reject` | owner, representative | Отклонение |
+| PATCH | `/bookings/{id}/complete` | owner, representative | Завершение бронирования |
 | GET | `/bathhouses/{id}/bookings` | owner, representative | Бронирования бани |
 
 ### Отзывы
@@ -138,7 +139,17 @@ make run
 | Метод | Путь | Доступ | Описание |
 |-------|------|--------|----------|
 | POST | `/bathhouses/{id}/reviews` | client | Создание отзыва (только completed booking) |
-| GET | `/bathhouses/{id}/reviews` | public | Список отзывов |
+| GET | `/bathhouses/{id}/reviews` | public | Список отзывов (только одобренные) |
+| PUT | `/reviews/{id}` | client | Редактирование отзыва (автор, в течение 24ч) |
+| DELETE | `/reviews/{id}` | auth | Удаление отзыва (автор или админ) |
+| POST | `/reviews/{id}/response` | owner, representative | Ответ владельца на отзыв |
+
+### Избранное
+
+| Метод | Путь | Доступ | Описание |
+|-------|------|--------|----------|
+| POST | `/bathhouses/{id}/favorite` | auth | Добавить/убрать из избранного (toggle) |
+| GET | `/my/favorites` | auth | Список избранного (paginated) |
 
 ### Представители
 

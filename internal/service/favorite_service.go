@@ -43,6 +43,9 @@ func (s *favoriteService) Toggle(ctx context.Context, userID, bathhouseID uuid.U
 
 	if isFav {
 		if err := s.favoriteRepo.Remove(ctx, userID, bathhouseID); err != nil {
+			if errors.Is(err, domain.ErrNotFound) {
+				return false, nil
+			}
 			return false, err
 		}
 		return false, nil

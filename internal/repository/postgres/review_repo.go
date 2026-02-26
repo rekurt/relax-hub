@@ -90,7 +90,7 @@ func (r *reviewRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Review,
 	rev, err := scanReview(r.pool.QueryRow(ctx, query, id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domain.ErrReviewNotFound
+			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("get review by id: %w", err)
 	}
@@ -109,7 +109,7 @@ func (r *reviewRepo) Update(ctx context.Context, review *domain.Review) error {
 		return fmt.Errorf("update review: %w", err)
 	}
 	if result.RowsAffected() == 0 {
-		return domain.ErrReviewNotFound
+		return domain.ErrNotFound
 	}
 	return nil
 }
@@ -120,7 +120,7 @@ func (r *reviewRepo) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete review: %w", err)
 	}
 	if result.RowsAffected() == 0 {
-		return domain.ErrReviewNotFound
+		return domain.ErrNotFound
 	}
 	return nil
 }
@@ -134,13 +134,13 @@ func (r *reviewRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID,
 	}
 
 	var totalCount int64
-	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM reviews WHERE bathhouse_id = $1`, bathhouseID).Scan(&totalCount)
+	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM reviews WHERE bathhouse_id = $1 AND status = 'approved'`, bathhouseID).Scan(&totalCount)
 	if err != nil {
 		return nil, fmt.Errorf("count reviews: %w", err)
 	}
 
 	offset := (page - 1) * pageSize
-	query := `SELECT ` + reviewColumns + ` FROM reviews WHERE bathhouse_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+	query := `SELECT ` + reviewColumns + ` FROM reviews WHERE bathhouse_id = $1 AND status = 'approved' ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, query, bathhouseID, pageSize, offset)
 	if err != nil {
@@ -247,7 +247,7 @@ func (r *reviewRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status doma
 		return fmt.Errorf("update review status: %w", err)
 	}
 	if result.RowsAffected() == 0 {
-		return domain.ErrReviewNotFound
+		return domain.ErrNotFound
 	}
 	return nil
 }
@@ -259,7 +259,7 @@ func (r *reviewRepo) AddOwnerResponse(ctx context.Context, id uuid.UUID, respons
 		return fmt.Errorf("add owner response: %w", err)
 	}
 	if result.RowsAffected() == 0 {
-		return domain.ErrReviewNotFound
+		return domain.ErrNotFound
 	}
 	return nil
 }
