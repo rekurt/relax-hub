@@ -96,10 +96,22 @@ func OptionalAuth(authService AuthService) func(http.Handler) http.Handler {
 func writeAuthError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
+	// Map HTTP status codes to standard error codes
+	var errorCode string
+	switch status {
+	case http.StatusUnauthorized:
+		errorCode = "unauthorized"
+	case http.StatusForbidden:
+		errorCode = "forbidden"
+	default:
+		errorCode = "error"
+	}
+
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": false,
 		"error": map[string]string{
-			"code":    http.StatusText(status),
+			"code":    errorCode,
 			"message": message,
 		},
 	})

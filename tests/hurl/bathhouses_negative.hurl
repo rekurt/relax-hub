@@ -27,7 +27,7 @@ Content-Type: application/json
 HTTP 403
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "Forbidden"
+jsonpath "$.error.code" == "forbidden"
 
 ### Test 2: Create bathhouse without authentication
 POST http://localhost:8080/api/v1/bathhouses
@@ -54,7 +54,7 @@ Content-Type: application/json
 HTTP 401
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "Unauthorized"
+jsonpath "$.error.code" == "unauthorized"
 
 ### Test 3: Create bathhouse with invalid city_id
 POST http://localhost:8080/api/v1/bathhouses
@@ -82,7 +82,7 @@ Content-Type: application/json
 HTTP 400
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "InvalidInput"
+jsonpath "$.error.code" == "invalid_input"
 
 ### Test 4: Create bathhouse with missing required field
 POST http://localhost:8080/api/v1/bathhouses
@@ -109,7 +109,7 @@ Content-Type: application/json
 HTTP 400
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "InvalidInput"
+jsonpath "$.error.code" == "invalid_input"
 
 ### Test 5: Get non-existent bathhouse
 GET http://localhost:8080/api/v1/bathhouses/00000000-0000-0000-0000-000000000000
@@ -118,7 +118,7 @@ Content-Type: application/json
 HTTP 404
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "NotFound"
+jsonpath "$.error.code" == "not_found"
 
 ### Test 6: Update bathhouse as client (forbidden)
 PUT http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}
@@ -132,7 +132,7 @@ Content-Type: application/json
 HTTP 403
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "Forbidden"
+jsonpath "$.error.code" == "forbidden"
 
 ### Test 7: Update bathhouse without authentication
 PUT http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}
@@ -145,7 +145,7 @@ Content-Type: application/json
 HTTP 401
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "Unauthorized"
+jsonpath "$.error.code" == "unauthorized"
 
 ### Test 8: Delete bathhouse as client (forbidden)
 DELETE http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}
@@ -155,7 +155,7 @@ Content-Type: application/json
 HTTP 403
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "Forbidden"
+jsonpath "$.error.code" == "forbidden"
 
 ### Test 9: Delete bathhouse without authentication
 DELETE http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}
@@ -164,7 +164,7 @@ Content-Type: application/json
 HTTP 401
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "Unauthorized"
+jsonpath "$.error.code" == "unauthorized"
 
 ### Test 10: Delete non-existent bathhouse
 DELETE http://localhost:8080/api/v1/bathhouses/00000000-0000-0000-0000-000000000000
@@ -174,7 +174,7 @@ Content-Type: application/json
 HTTP 404
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "NotFound"
+jsonpath "$.error.code" == "not_found"
 
 ### Test 11: Get available slots with invalid date format
 GET http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}/available-slots?date=invalid-date
@@ -183,7 +183,7 @@ Content-Type: application/json
 HTTP 400
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "InvalidInput"
+jsonpath "$.error.code" == "invalid_input"
 
 ### Test 12: Get my bathhouses as client (forbidden)
 GET http://localhost:8080/api/v1/my/bathhouses
@@ -193,7 +193,7 @@ Content-Type: application/json
 HTTP 403
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "Forbidden"
+jsonpath "$.error.code" == "forbidden"
 
 ### Test 13: Get my bathhouses without authentication
 GET http://localhost:8080/api/v1/my/bathhouses
@@ -202,7 +202,7 @@ Content-Type: application/json
 HTTP 401
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "Unauthorized"
+jsonpath "$.error.code" == "unauthorized"
 
 ### Test 14: Delete bathhouse with existing bookings (should fail)
 # First create a booking for the bathhouse

@@ -194,4 +194,4 @@ Content-Type: application/json
 HTTP 404
 [Asserts]
 jsonpath "$.success" == false
-jsonpath "$.error.code" == "NotFound"
+jsonpath "$.error.code" == "not_found"

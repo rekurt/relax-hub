@@ -34,8 +34,10 @@ bash "$(dirname "$0")/setup.sh" || {
 
 # Run auth tests first to capture tokens by making API calls directly
 log_info "Running auth tests..."
-hurl tests/hurl/auth.hurl --variables-file tests/hurl/.env.test > /dev/null 2>&1 || {
+AUTH_OUTPUT=$(hurl tests/hurl/auth.hurl --variables-file tests/hurl/.env.test 2>&1) || {
     log_error "Auth tests failed"
+    log_warn "Auth output:"
+    log_warn "$AUTH_OUTPUT"
     exit 1
 }
 
@@ -79,8 +81,11 @@ POSTGRES_USER="${DB_URL##*://}"
 POSTGRES_USER="${POSTGRES_USER%%[:@]*}"
 if [[ "$POSTGRES_USER" != "${DB_URL##*://}" ]]; then
   if [[ "${DB_URL##*://}" == *":"* ]]; then
-    POSTGRES_PASSWORD="${DB_URL##*:}"
-    POSTGRES_PASSWORD="${POSTGRES_PASSWORD%%@*}"
+    # Remove everything before first colon after protocol
+    AFTER_USER="${DB_URL##*://}"
+    AFTER_USER="${AFTER_USER#*:}"
+    # Remove everything after @ to get just password
+    POSTGRES_PASSWORD="${AFTER_USER%%@*}"
   else
     POSTGRES_PASSWORD=""
   fi
@@ -119,11 +124,14 @@ fi
 
 log_info "Running bathhouses tests..."
 
-# Now run all subsequent tests with the captured variables
+# Run bathhouses and capture bathhouse_id for later tests
 hurl tests/hurl/bathhouses.hurl --variables-file tests/hurl/.env.test \
   --variable admin_token="$ADMIN_TOKEN" \
   --variable owner_token="$OWNER_TOKEN" \
-  --variable client_token="$CLIENT_TOKEN" || {
+  --variable client_token="$CLIENT_TOKEN" \
+  --variable representative_token="$REPRESENTATIVE_TOKEN" \
+  --variable client2_token="$CLIENT2_TOKEN" \
+  --variable blocked_user_token="$BLOCKED_USER_TOKEN" || {
     log_error "Bathhouses tests failed"
     exit 1
 }

@@ -34,8 +34,11 @@ POSTGRES_USER="${POSTGRES_USER%%[:@]*}"
 # Extract password (if present, between : and @)
 if [[ "$POSTGRES_USER" != "${DB_URL##*://}" ]]; then
   if [[ "${DB_URL##*://}" == *":"* ]]; then
-    POSTGRES_PASSWORD="${DB_URL##*:}"
-    POSTGRES_PASSWORD="${POSTGRES_PASSWORD%%@*}"
+    # Remove everything before first colon after protocol
+    AFTER_USER="${DB_URL##*://}"
+    AFTER_USER="${AFTER_USER#*:}"
+    # Remove everything after @ to get just password
+    POSTGRES_PASSWORD="${AFTER_USER%%@*}"
   else
     POSTGRES_PASSWORD=""
   fi
