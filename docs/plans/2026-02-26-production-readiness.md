@@ -47,13 +47,13 @@
 - Create: `.env.production.example`
 - Modify: `config/config.yaml`
 
-- [ ] Добавить обязательную валидацию переменных: DSN, JWT Secret, Redis Addr
-- [ ] Добавить поле Environment (dev/staging/production) в Config
-- [ ] Валидировать, что JWT Secret в продакшене не содержит "change-me" и имеет минимальную длину 32 символа
-- [ ] Проверить, что DSN использует sslmode=require в продакшене (или производная от Environment)
-- [ ] Создать `.env.production.example` с правильными параметрами и комментариями
-- [ ] Написать тесты для валидации конфигурации
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить обязательную валидацию переменных: DSN, JWT Secret, Redis Addr
+- [x] Добавить поле Environment (dev/staging/production) в Config
+- [x] Валидировать, что JWT Secret в продакшене не содержит "change-me" и имеет минимальную длину 32 символа
+- [x] Проверить, что DSN использует sslmode=require в продакшене (или производная от Environment)
+- [x] Создать `.env.production.example` с правильными параметрами и комментариями
+- [x] Написать тесты для валидации конфигурации
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Graceful shutdown и обработка сигналов
 

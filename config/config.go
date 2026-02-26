@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	JWT      JWTConfig      `mapstructure:"jwt"`
-	Logger   LoggerConfig   `mapstructure:"logger"`
+	Environment string         `mapstructure:"environment"`
+	Server      ServerConfig   `mapstructure:"server"`
+	Database    DatabaseConfig `mapstructure:"database"`
+	Redis       RedisConfig    `mapstructure:"redis"`
+	JWT         JWTConfig      `mapstructure:"jwt"`
+	Logger      LoggerConfig   `mapstructure:"logger"`
 }
 
 type ServerConfig struct {
@@ -56,6 +57,7 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
 
+	v.SetDefault("environment", "dev")
 	v.SetDefault("server.host", "0.0.0.0")
 	v.SetDefault("server.port", 8080)
 	v.SetDefault("database.dsn", "postgres://postgres:postgres@localhost:5432/bani?sslmode=disable")
@@ -77,9 +79,39 @@ func Load(cfgFile string) (*Config, error) {
 		return nil, err
 	}
 
-	if cfg.JWT.Secret == "" || cfg.JWT.Secret == "change-me-in-production" {
-		return nil, fmt.Errorf("jwt.secret must be configured with a secure value (set BANI_JWT_SECRET)")
+	if err := cfg.Validate(); err != nil {
+		return nil, err
 	}
 
 	return &cfg, nil
+}
+
+// Validate checks configuration for required fields and production-specific constraints
+func (c *Config) Validate() error {
+	// Validate DSN is set
+	if c.Database.DSN == "" {
+		return fmt.Errorf("database.dsn is required (set BANI_DATABASE_DSN)")
+	}
+
+	// Validate JWT Secret
+	if c.JWT.Secret == "" || c.JWT.Secret == "change-me-in-production" {
+		return fmt.Errorf("jwt.secret must be configured with a secure value (set BANI_JWT_SECRET)")
+	}
+
+	// Validate Redis Addr
+	if c.Redis.Addr == "" {
+		return fmt.Errorf("redis.addr is required (set BANI_REDIS_ADDR)")
+	}
+
+	// Production-specific validation
+	if c.Environment == "production" {
+		if len(c.JWT.Secret) < 32 {
+			return fmt.Errorf("jwt.secret must be at least 32 characters long in production (current length: %d)", len(c.JWT.Secret))
+		}
+		if !strings.Contains(c.Database.DSN, "sslmode=require") {
+			return fmt.Errorf("database.dsn must use sslmode=require in production")
+		}
+	}
+
+	return nil
 }

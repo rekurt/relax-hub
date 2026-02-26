@@ -141,3 +141,164 @@ func TestLoad_InvalidYAML(t *testing.T) {
 		t.Error("expected error for invalid YAML, got nil")
 	}
 }
+
+func TestValidate_MissingDSN(t *testing.T) {
+	cfg := &Config{
+		Environment: "dev",
+		Database:    DatabaseConfig{DSN: ""},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: "test-secret"},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for missing database.dsn, got nil")
+	}
+	if err.Error() != "database.dsn is required (set BANI_DATABASE_DSN)" {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestValidate_MissingJWTSecret(t *testing.T) {
+	cfg := &Config{
+		Environment: "dev",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db"},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: ""},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for missing jwt.secret, got nil")
+	}
+}
+
+func TestValidate_ChangeMe(t *testing.T) {
+	cfg := &Config{
+		Environment: "dev",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db"},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: "change-me-in-production"},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for placeholder jwt.secret, got nil")
+	}
+}
+
+func TestValidate_MissingRedisAddr(t *testing.T) {
+	cfg := &Config{
+		Environment: "dev",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db"},
+		Redis:       RedisConfig{Addr: ""},
+		JWT:         JWTConfig{Secret: "test-secret"},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for missing redis.addr, got nil")
+	}
+	if err.Error() != "redis.addr is required (set BANI_REDIS_ADDR)" {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestValidate_ProductionShortSecret(t *testing.T) {
+	cfg := &Config{
+		Environment: "production",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db?sslmode=require"},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: "short-secret"},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for short jwt.secret in production, got nil")
+	}
+	if len(err.Error()) == 0 || !contains(err.Error(), "32 characters") {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestValidate_ProductionNoSSLMode(t *testing.T) {
+	secret := "this-is-a-very-long-secret-that-is-definitely-over-32-chars"
+	cfg := &Config{
+		Environment: "production",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db?sslmode=disable"},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: secret},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for missing sslmode=require in production, got nil")
+	}
+	if err.Error() != "database.dsn must use sslmode=require in production" {
+		t.Errorf("unexpected error message: %v", err)
+	}
+}
+
+func TestValidate_ProductionValid(t *testing.T) {
+	secret := "this-is-a-very-long-secret-that-is-definitely-over-32-chars"
+	cfg := &Config{
+		Environment: "production",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db?sslmode=require"},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: secret},
+	}
+
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("expected nil error for valid production config, got %v", err)
+	}
+}
+
+func TestValidate_DevValid(t *testing.T) {
+	cfg := &Config{
+		Environment: "dev",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db"},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: "short-secret"},
+	}
+
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("expected nil error for valid dev config, got %v", err)
+	}
+}
+
+func TestLoad_ProductionEnvironment(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfgPath := filepath.Join(tmpDir, "config.yaml")
+	if err := os.WriteFile(cfgPath, []byte(""), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	secret := "this-is-a-very-long-secret-that-is-definitely-over-32-chars"
+	t.Setenv("BANI_ENVIRONMENT", "production")
+	t.Setenv("BANI_JWT_SECRET", secret)
+	t.Setenv("BANI_DATABASE_DSN", "postgres://user:pass@db:5432/testdb?sslmode=require")
+
+	cfg, err := Load(cfgPath)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Environment != "production" {
+		t.Errorf("expected environment = production, got %s", cfg.Environment)
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(s) > 0 && len(substr) > 0 && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || index(s, substr) >= 0))
+}
+
+func index(s, substr string) int {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return i
+		}
+	}
+	return -1
+}
