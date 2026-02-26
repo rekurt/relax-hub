@@ -1,4 +1,4 @@
-.PHONY: build run test lint vet migrate-up migrate-down docker-up docker-down seed-admin clean
+.PHONY: build run test test-hurl lint vet migrate-up migrate-down docker-up docker-down seed-admin clean
 
 APP_NAME := bani-server
 BUILD_DIR := ./bin
@@ -11,6 +11,9 @@ run: build
 
 test:
 	go test ./... -v
+
+test-hurl:
+	bash tests/hurl/run_all_tests.sh
 
 lint:
 	golangci-lint run ./...

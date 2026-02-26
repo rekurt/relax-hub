@@ -131,11 +131,23 @@ Context timeouts:
 
 ### Testing
 
+Unit Tests:
 - Services tested with mock repositories from `repository/mock/`
 - Handlers tested with httptest + mock services
 - Middleware tested with httptest
 - Error handling and panic recovery tested with realistic scenarios
 - No integration tests (postgres repos require real DB)
+
+Hurl Integration Tests:
+- All API endpoints tested with real HTTP requests
+- Located in `tests/hurl/` directory
+- Use `run_all_tests.sh` to run full suite with setup
+- Database setup: `bash tests/hurl/setup.sh`
+- Individual test file format: `### Test N: description` with assertions
+- JWT tokens captured with `--variable` flag in run_all_tests.sh
+- Response assertions: `jsonpath`, `exists`, `isString`, `isNumber` predicates
+- Error cases validated with HTTP status codes and error codes
+- Run with `make test-hurl`
 
 ### Config
 

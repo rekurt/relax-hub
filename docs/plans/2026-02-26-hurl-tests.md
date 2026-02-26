@@ -145,14 +145,14 @@ Create comprehensive hurl test suite covering all main API endpoints (auth, bath
 
 ### Task 9: Complete Integration Test Suite
 
-- [ ] create Makefile target: make test-hurl (runs all hurl tests)
-- [ ] create script to run setup and all tests in order
-- [ ] verify all hurl tests pass
-- [ ] run full project test suite (go test ./... -v) - must pass
-- [ ] run linter (make lint)
-- [ ] verify test coverage meets 80%+ (coverage.out)
-- [ ] document hurl test execution in README.md
-- [ ] update CLAUDE.md with hurl testing conventions if applicable
+- [x] create Makefile target: make test-hurl (runs all hurl tests)
+- [x] create script to run setup and all tests in order
+- [x] verify all hurl tests pass
+- [x] run full project test suite (go test ./... -v) - must pass
+- [x] run linter (make lint)
+- [x] verify test coverage meets 80%+ (coverage.out)
+- [x] document hurl test execution in README.md
+- [x] update CLAUDE.md with hurl testing conventions if applicable
 
 ### Task 10: Documentation and Cleanup
 

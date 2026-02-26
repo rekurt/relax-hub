@@ -27,7 +27,9 @@ func TestBookingService_Create_Success(t *testing.T) {
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
-	start := time.Now().Add(24 * time.Hour)
+	// Set start time to tomorrow at a specific hour (e.g., 10:00) to avoid crossing midnight
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
 	end := start.Add(2 * time.Hour)
 
 	booking, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
@@ -94,7 +96,9 @@ func TestBookingService_Create_SlotUnavailable(t *testing.T) {
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
-	start := time.Now().Add(24 * time.Hour)
+	// Set start time to tomorrow at a specific hour (e.g., 10:00) to avoid crossing midnight
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
 	end := start.Add(2 * time.Hour)
 
 	// Create first booking
