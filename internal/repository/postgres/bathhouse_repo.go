@@ -177,6 +177,34 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	if filter.MinRating != nil {
 		conditions = append(conditions, fmt.Sprintf("rating >= %s", addArg(*filter.MinRating)))
 	}
+	if filter.GuestCount != nil {
+		conditions = append(conditions, fmt.Sprintf("max_guests >= %s", addArg(*filter.GuestCount)))
+	}
+	if filter.SearchQuery != nil && *filter.SearchQuery != "" {
+		likePattern := "%" + *filter.SearchQuery + "%"
+		conditions = append(conditions, fmt.Sprintf("(name ILIKE %s OR description ILIKE %s)", addArg(likePattern), addArg(likePattern)))
+	}
+	if filter.OpenNow != nil && *filter.OpenNow {
+		conditions = append(conditions, fmt.Sprintf(
+			"EXISTS (SELECT 1 FROM jsonb_array_elements(working_hours) wh WHERE (wh->>'day_of_week')::int = %s AND wh->>'open_time' <= %s AND wh->>'close_time' > %s)",
+			addArg(currentDayOfWeek()), addArg(currentTimeHHMM()), addArg(currentTimeHHMM()),
+		))
+	}
+	if filter.AvailableDate != nil {
+		dateStr := filter.AvailableDate.Format("2006-01-02")
+		subConditions := fmt.Sprintf(
+			"NOT EXISTS (SELECT 1 FROM bookings b WHERE b.bathhouse_id = bathhouses.id AND b.status IN ('pending','confirmed') AND b.start_time::date = %s",
+			addArg(dateStr),
+		)
+		if filter.AvailableTimeFrom != nil {
+			subConditions += fmt.Sprintf(" AND b.end_time::time > %s", addArg(*filter.AvailableTimeFrom+":00"))
+		}
+		if filter.AvailableTimeTo != nil {
+			subConditions += fmt.Sprintf(" AND b.start_time::time < %s", addArg(*filter.AvailableTimeTo+":00"))
+		}
+		subConditions += ")"
+		conditions = append(conditions, subConditions)
+	}
 	if filter.Status != nil {
 		conditions = append(conditions, fmt.Sprintf("status = %s", addArg(string(*filter.Status))))
 	} else if !filter.ShowAllStatuses {

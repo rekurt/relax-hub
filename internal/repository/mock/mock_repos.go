@@ -2,6 +2,8 @@ package mock
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -809,6 +811,20 @@ func (r *BathhouseRepo) List(_ context.Context, filter domain.BathhouseFilter) (
 		if filter.PriceMax != nil && bh.PricePerHour > *filter.PriceMax {
 			continue
 		}
+		if filter.GuestCount != nil && bh.MaxGuests < *filter.GuestCount {
+			continue
+		}
+		if filter.SearchQuery != nil && *filter.SearchQuery != "" {
+			q := strings.ToLower(*filter.SearchQuery)
+			if !strings.Contains(strings.ToLower(bh.Name), q) && !strings.Contains(strings.ToLower(bh.Description), q) {
+				continue
+			}
+		}
+		if filter.OpenNow != nil && *filter.OpenNow {
+			if !isBathhouseOpenNow(bh) {
+				continue
+			}
+		}
 		items = append(items, *bh)
 	}
 
@@ -882,4 +898,20 @@ func (r *BathhouseRepo) UpdateStatus(_ context.Context, id uuid.UUID, status dom
 	bh.Status = status
 	bh.UpdatedAt = time.Now()
 	return nil
+}
+
+func isBathhouseOpenNow(bh *domain.Bathhouse) bool {
+	now := time.Now()
+	d := now.Weekday()
+	dayOfWeek := int(d) - 1
+	if d == time.Sunday {
+		dayOfWeek = 6
+	}
+	currentTime := fmt.Sprintf("%02d:%02d", now.Hour(), now.Minute())
+	for _, wh := range bh.WorkingHours {
+		if wh.DayOfWeek == dayOfWeek && wh.OpenTime <= currentTime && wh.CloseTime > currentTime {
+			return true
+		}
+	}
+	return false
 }

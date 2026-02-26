@@ -1674,6 +1674,135 @@ func TestBathhouseHandler_Search_WithAllFilters(t *testing.T) {
 	}
 }
 
+func TestBathhouseHandler_Search_WithExtendedFilters(t *testing.T) {
+	var capturedFilter domain.BathhouseFilter
+	bhSvc := &mockBathhouseService{
+		searchFn: func(_ context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
+			capturedFilter = filter
+			return &domain.PaginatedResult[domain.Bathhouse]{
+				Items: []domain.Bathhouse{}, TotalCount: 0, Page: 1, PageSize: 20, TotalPages: 0,
+			}, nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?guest_count=8&available_date=2026-03-15&available_time_from=10:00&available_time_to=14:00&open_now=true&q=русская+баня", nil)
+	rec := httptest.NewRecorder()
+
+	h.Search(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+
+	if capturedFilter.GuestCount == nil || *capturedFilter.GuestCount != 8 {
+		t.Error("expected GuestCount=8")
+	}
+	if capturedFilter.AvailableDate == nil {
+		t.Error("expected AvailableDate to be set")
+	} else if capturedFilter.AvailableDate.Format("2006-01-02") != "2026-03-15" {
+		t.Errorf("expected AvailableDate=2026-03-15, got %s", capturedFilter.AvailableDate.Format("2006-01-02"))
+	}
+	if capturedFilter.AvailableTimeFrom == nil || *capturedFilter.AvailableTimeFrom != "10:00" {
+		t.Error("expected AvailableTimeFrom=10:00")
+	}
+	if capturedFilter.AvailableTimeTo == nil || *capturedFilter.AvailableTimeTo != "14:00" {
+		t.Error("expected AvailableTimeTo=14:00")
+	}
+	if capturedFilter.OpenNow == nil || !*capturedFilter.OpenNow {
+		t.Error("expected OpenNow=true")
+	}
+	if capturedFilter.SearchQuery == nil || *capturedFilter.SearchQuery != "русская баня" {
+		t.Errorf("expected SearchQuery='русская баня', got %v", capturedFilter.SearchQuery)
+	}
+}
+
+func TestBathhouseHandler_Search_InvalidTimeParams(t *testing.T) {
+	var capturedFilter domain.BathhouseFilter
+	bhSvc := &mockBathhouseService{
+		searchFn: func(_ context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
+			capturedFilter = filter
+			return &domain.PaginatedResult[domain.Bathhouse]{
+				Items: []domain.Bathhouse{}, TotalCount: 0, Page: 1, PageSize: 20, TotalPages: 0,
+			}, nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?available_time_from=invalid&available_time_to=25:00&available_date=bad-date", nil)
+	rec := httptest.NewRecorder()
+
+	h.Search(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200 (invalid params ignored), got %d", rec.Code)
+	}
+
+	if capturedFilter.AvailableTimeFrom != nil {
+		t.Error("expected AvailableTimeFrom to be nil for invalid value")
+	}
+	if capturedFilter.AvailableTimeTo != nil {
+		t.Error("expected AvailableTimeTo to be nil for invalid value")
+	}
+	if capturedFilter.AvailableDate != nil {
+		t.Error("expected AvailableDate to be nil for invalid value")
+	}
+}
+
+func TestBathhouseHandler_Search_GuestCountOnly(t *testing.T) {
+	var capturedFilter domain.BathhouseFilter
+	bhSvc := &mockBathhouseService{
+		searchFn: func(_ context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
+			capturedFilter = filter
+			return &domain.PaginatedResult[domain.Bathhouse]{
+				Items: []domain.Bathhouse{}, TotalCount: 0, Page: 1, PageSize: 20, TotalPages: 0,
+			}, nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?guest_count=5", nil)
+	rec := httptest.NewRecorder()
+
+	h.Search(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+	if capturedFilter.GuestCount == nil || *capturedFilter.GuestCount != 5 {
+		t.Error("expected GuestCount=5")
+	}
+}
+
+func TestBathhouseHandler_Search_SearchQueryOnly(t *testing.T) {
+	var capturedFilter domain.BathhouseFilter
+	bhSvc := &mockBathhouseService{
+		searchFn: func(_ context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
+			capturedFilter = filter
+			return &domain.PaginatedResult[domain.Bathhouse]{
+				Items: []domain.Bathhouse{}, TotalCount: 0, Page: 1, PageSize: 20, TotalPages: 0,
+			}, nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?q=sauna", nil)
+	rec := httptest.NewRecorder()
+
+	h.Search(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+	if capturedFilter.SearchQuery == nil || *capturedFilter.SearchQuery != "sauna" {
+		t.Errorf("expected SearchQuery='sauna', got %v", capturedFilter.SearchQuery)
+	}
+}
+
 func TestBathhouseHandler_Search_InvalidPage(t *testing.T) {
 	bhSvc := &mockBathhouseService{
 		searchFn: func(_ context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {

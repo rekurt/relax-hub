@@ -104,15 +104,15 @@
 - Modify: `internal/repository/postgres/bathhouse.go`
 - Modify: `internal/handler/bathhouse.go`
 
-- [ ] Расширить BathhouseFilter: AvailableDate (*time.Time), AvailableTimeFrom/To (*string), GuestCount (*int), OpenNow (*bool), SearchQuery (*string - полнотекстовый поиск по названию и описанию)
-- [ ] Реализовать фильтрацию в postgres-репозитории:
+- [x] Расширить BathhouseFilter: AvailableDate (*time.Time), AvailableTimeFrom/To (*string), GuestCount (*int), OpenNow (*bool), SearchQuery (*string - полнотекстовый поиск по названию и описанию)
+- [x] Реализовать фильтрацию в postgres-репозитории:
   - AvailableDate: JOIN с bookings, исключить занятые слоты
   - OpenNow: сравнение с working_hours текущего дня/времени
   - SearchQuery: ILIKE по name и description
   - GuestCount: max_guests >= filter.GuestCount
-- [ ] Обновить handler для парсинга новых query-параметров
-- [ ] Написать тесты для новых фильтров
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Обновить handler для парсинга новых query-параметров
+- [x] Написать тесты для новых фильтров
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 6: Флаг "в избранном" в выдаче бань
 

@@ -562,3 +562,124 @@ func TestBathhouseRepo_ListWithFilters(t *testing.T) {
 		t.Errorf("Filter by priceMax: TotalCount = %d, want 1", result.TotalCount)
 	}
 }
+
+func TestBathhouseRepo_ListWithGuestCount(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBathhouseRepo()
+
+	ownerID := uuid.New()
+	_ = repo.Create(ctx, &domain.Bathhouse{
+		OwnerID: ownerID, Name: "Small", CityID: 1,
+		PricePerHour: 2000, MinDuration: 1, MaxGuests: 4,
+		Address: "a1", Status: domain.BathhouseStatusActive,
+	})
+	_ = repo.Create(ctx, &domain.Bathhouse{
+		OwnerID: ownerID, Name: "Large", CityID: 1,
+		PricePerHour: 5000, MinDuration: 1, MaxGuests: 12,
+		Address: "a2", Status: domain.BathhouseStatusActive,
+	})
+
+	gc := 10
+	result, err := repo.List(ctx, domain.BathhouseFilter{GuestCount: &gc, Page: 1, PageSize: 10})
+	if err != nil {
+		t.Fatalf("List with GuestCount: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("GuestCount filter: TotalCount = %d, want 1", result.TotalCount)
+	}
+	if len(result.Items) == 1 && result.Items[0].Name != "Large" {
+		t.Errorf("Expected Large bathhouse, got %q", result.Items[0].Name)
+	}
+}
+
+func TestBathhouseRepo_ListWithSearchQuery(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBathhouseRepo()
+
+	ownerID := uuid.New()
+	_ = repo.Create(ctx, &domain.Bathhouse{
+		OwnerID: ownerID, Name: "Русская баня", Description: "Традиционная парная",
+		CityID: 1, PricePerHour: 3000, MinDuration: 1, MaxGuests: 6,
+		Address: "a1", Status: domain.BathhouseStatusActive,
+	})
+	_ = repo.Create(ctx, &domain.Bathhouse{
+		OwnerID: ownerID, Name: "Финская сауна", Description: "Современная финская",
+		CityID: 1, PricePerHour: 5000, MinDuration: 1, MaxGuests: 8,
+		Address: "a2", Status: domain.BathhouseStatusActive,
+	})
+
+	// Search by name
+	q := "сауна"
+	result, err := repo.List(ctx, domain.BathhouseFilter{SearchQuery: &q, Page: 1, PageSize: 10})
+	if err != nil {
+		t.Fatalf("List with SearchQuery: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("SearchQuery by name: TotalCount = %d, want 1", result.TotalCount)
+	}
+
+	// Search by description
+	q2 := "парная"
+	result, err = repo.List(ctx, domain.BathhouseFilter{SearchQuery: &q2, Page: 1, PageSize: 10})
+	if err != nil {
+		t.Fatalf("List with SearchQuery desc: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("SearchQuery by description: TotalCount = %d, want 1", result.TotalCount)
+	}
+
+	// Search with no match
+	q3 := "хаммам"
+	result, err = repo.List(ctx, domain.BathhouseFilter{SearchQuery: &q3, Page: 1, PageSize: 10})
+	if err != nil {
+		t.Fatalf("List with SearchQuery no match: %v", err)
+	}
+	if result.TotalCount != 0 {
+		t.Errorf("SearchQuery no match: TotalCount = %d, want 0", result.TotalCount)
+	}
+}
+
+func TestBathhouseRepo_ListWithOpenNow(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBathhouseRepo()
+
+	ownerID := uuid.New()
+	now := time.Now()
+	d := now.Weekday()
+	dayOfWeek := int(d) - 1
+	if d == time.Sunday {
+		dayOfWeek = 6
+	}
+
+	// Bathhouse that is open now
+	_ = repo.Create(ctx, &domain.Bathhouse{
+		OwnerID: ownerID, Name: "Open Now", CityID: 1,
+		PricePerHour: 3000, MinDuration: 1, MaxGuests: 6,
+		Address: "a1", Status: domain.BathhouseStatusActive,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: dayOfWeek, OpenTime: "00:00", CloseTime: "23:59"},
+		},
+	})
+	// Bathhouse that is closed now (different day)
+	closedDay := (dayOfWeek + 1) % 7
+	_ = repo.Create(ctx, &domain.Bathhouse{
+		OwnerID: ownerID, Name: "Closed Now", CityID: 1,
+		PricePerHour: 5000, MinDuration: 1, MaxGuests: 8,
+		Address: "a2", Status: domain.BathhouseStatusActive,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: closedDay, OpenTime: "00:00", CloseTime: "23:59"},
+		},
+	})
+
+	openNow := true
+	result, err := repo.List(ctx, domain.BathhouseFilter{OpenNow: &openNow, Page: 1, PageSize: 10})
+	if err != nil {
+		t.Fatalf("List with OpenNow: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("OpenNow filter: TotalCount = %d, want 1", result.TotalCount)
+	}
+	if len(result.Items) == 1 && result.Items[0].Name != "Open Now" {
+		t.Errorf("Expected 'Open Now', got %q", result.Items[0].Name)
+	}
+}

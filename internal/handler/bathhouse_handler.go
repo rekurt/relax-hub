@@ -230,6 +230,33 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 			filter.RadiusKm = &val
 		}
 	}
+	if v := q.Get("guest_count"); v != "" {
+		if val, err := strconv.Atoi(v); err == nil {
+			filter.GuestCount = &val
+		}
+	}
+	if v := q.Get("available_date"); v != "" {
+		if d, err := time.Parse("2006-01-02", v); err == nil {
+			filter.AvailableDate = &d
+		}
+	}
+	if v := q.Get("available_time_from"); v != "" {
+		if isValidTimeParam(v) {
+			filter.AvailableTimeFrom = &v
+		}
+	}
+	if v := q.Get("available_time_to"); v != "" {
+		if isValidTimeParam(v) {
+			filter.AvailableTimeTo = &v
+		}
+	}
+	if v := q.Get("open_now"); v != "" {
+		val := v == "true"
+		filter.OpenNow = &val
+	}
+	if v := q.Get("q"); v != "" {
+		filter.SearchQuery = &v
+	}
 
 	result, err := h.bathhouseService.Search(r.Context(), filter)
 	if err != nil {
@@ -462,6 +489,21 @@ func (h *BathhouseHandler) MyBathhouses(w http.ResponseWriter, r *http.Request) 
 		TotalCount: total,
 		TotalPages: 1,
 	})
+}
+
+// isValidTimeParam validates "HH:MM" format for time parameters.
+func isValidTimeParam(s string) bool {
+	if len(s) != 5 || s[2] != ':' {
+		return false
+	}
+	for _, i := range []int{0, 1, 3, 4} {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	h := (int(s[0]-'0') * 10) + int(s[1]-'0')
+	m := (int(s[3]-'0') * 10) + int(s[4]-'0')
+	return h >= 0 && h <= 23 && m >= 0 && m <= 59
 }
 
 const maxPageSize = 100
