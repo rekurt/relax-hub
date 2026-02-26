@@ -162,6 +162,7 @@ type mockBookingService struct {
 	cancelFn          func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	confirmFn         func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	rejectFn          func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
+	completeFn        func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	listByUserFn      func(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	listByBathhouseFn func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	getAvailSlotsFn   func(ctx context.Context, bathhouseID uuid.UUID, date time.Time) ([]service.TimeSlot, error)
@@ -191,6 +192,13 @@ func (m *mockBookingService) Confirm(ctx context.Context, userID uuid.UUID, role
 func (m *mockBookingService) Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
 	if m.rejectFn != nil {
 		return m.rejectFn(ctx, userID, role, bookingID)
+	}
+	return nil
+}
+
+func (m *mockBookingService) Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+	if m.completeFn != nil {
+		return m.completeFn(ctx, userID, role, bookingID)
 	}
 	return nil
 }

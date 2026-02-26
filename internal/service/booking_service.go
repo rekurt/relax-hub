@@ -31,6 +31,7 @@ type BookingService interface {
 	Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	Confirm(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
+	Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	ListByBathhouse(ctx context.Context, userID uuid.UUID, role domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	GetAvailableSlots(ctx context.Context, bathhouseID uuid.UUID, date time.Time) ([]TimeSlot, error)
@@ -177,6 +178,27 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 	return s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingRejected)
 }
 
+func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	if booking.Status != domain.BookingConfirmed {
+		return fmt.Errorf("%w: only confirmed bookings can be completed", domain.ErrInvalidInput)
+	}
+
+	if time.Now().Before(booking.EndTime) {
+		return fmt.Errorf("%w: booking can only be completed after end time", domain.ErrInvalidInput)
+	}
+
+	if err := s.access.CanManageBathhouse(ctx, userID, role, booking.BathhouseID); err != nil {
+		return err
+	}
+
+	return s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCompleted)
+}
+
 func (s *bookingService) ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {
 	return s.bookingRepo.ListByUser(ctx, userID, page, pageSize)
 }
@@ -225,6 +247,11 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 
 	dayStart := time.Date(date.Year(), date.Month(), date.Day(), openHour, openMin, 0, 0, date.Location())
 	dayEnd := time.Date(date.Year(), date.Month(), date.Day(), closeHour, closeMin, 0, 0, date.Location())
+
+	// Handle overnight working hours (e.g., 18:00 - 06:00)
+	if !dayEnd.After(dayStart) {
+		dayEnd = dayEnd.Add(24 * time.Hour)
+	}
 
 	overlapping, err := s.bookingRepo.GetOverlapping(ctx, bathhouseID, dayStart, dayEnd)
 	if err != nil {
