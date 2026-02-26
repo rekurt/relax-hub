@@ -83,11 +83,57 @@ Domain errors (domain/errors.go) map to HTTP status codes in handler/response.go
 - ErrBathhouseHasBookings -> 409
 - ErrReviewAlreadyResponded -> 409
 
+### Structured Logging
+
+All logging uses the `internal/logger` package with structured log levels (debug/info/warn/error).
+Configure via `BANI_LOGGER_LEVEL` environment variable. Logger is injected via Uber fx:
+
+```go
+logger.Info("message", "key", value)
+logger.Error("error", "key", value)
+logger.Debug("debug info", "key", value)
+logger.Warn("warning", "key", value)
+```
+
+### Error Handling and Recovery
+
+- `internal/middleware/recovery.go` — panic recovery with stack traces in dev mode
+- Stack traces logged with request ID for tracing
+- Production mode hides implementation details
+- Use `IsDevEnvironment()` to check BANI_ENVIRONMENT value
+
+### Production Configuration
+
+- Environment field in config (dev/staging/production)
+- `Validate()` method ensures required fields: DSN, JWT Secret, Redis Addr
+- Production constraints: JWT Secret 32+ chars, DSN uses sslmode=require
+- Config validation happens on application startup
+
+### Health Checks
+
+- `/health` — liveness probe (simple 200 OK)
+- `/ready` — readiness probe (checks DB and Redis connectivity)
+- Returns 503 Service Unavailable if dependencies down
+- Structured logging for failed checks
+
+### Timeouts
+
+HTTP server timeouts configured in internal/server/server.go:
+- ReadHeaderTimeout: 5 seconds
+- ReadTimeout: 15 seconds
+- WriteTimeout: 15 seconds
+
+Context timeouts:
+- Database queries: 30 seconds (via context.WithTimeout in handlers)
+- Redis operations: 5 seconds (client-level timeout)
+- Use `context.WithTimeout()` for queries exceeding base timeout
+
 ### Testing
 
 - Services tested with mock repositories from `repository/mock/`
 - Handlers tested with httptest + mock services
 - Middleware tested with httptest
+- Error handling and panic recovery tested with realistic scenarios
 - No integration tests (postgres repos require real DB)
 
 ### Config
