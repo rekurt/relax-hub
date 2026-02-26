@@ -87,14 +87,14 @@ Create comprehensive hurl test suite covering all main API endpoints (auth, bath
 - Create: tests/hurl/reviews.hurl
 - Create: tests/hurl/reviews_negative.hurl
 
-- [ ] test GET /bathhouses/{id}/reviews (public access, pagination)
-- [ ] test POST /bathhouses/{id}/reviews (client creates review, wrong role, duplicate)
-- [ ] test PUT /reviews/{id} (update own review, update others forbidden)
-- [ ] test DELETE /reviews/{id} (delete own review, forbidden)
-- [ ] test POST /reviews/{id}/response (owner responds to review, wrong role, already responded)
-- [ ] verify review response structure and metadata
-- [ ] write integration tests for reviews
-- [ ] run hurl tests - must pass before task 6
+- [x] test GET /bathhouses/{id}/reviews (public access, pagination)
+- [x] test POST /bathhouses/{id}/reviews (client creates review, wrong role, duplicate)
+- [x] test PUT /reviews/{id} (update own review, update others forbidden)
+- [x] test DELETE /reviews/{id} (delete own review, forbidden)
+- [x] test POST /reviews/{id}/response (owner responds to review, wrong role, already responded)
+- [x] verify review response structure and metadata
+- [x] write integration tests for reviews
+- [x] run hurl tests - must pass before task 6
 
 ### Task 6: Favorites and Representatives Endpoints Tests
 

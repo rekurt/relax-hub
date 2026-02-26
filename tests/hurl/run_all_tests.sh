@@ -133,4 +133,27 @@ hurl tests/hurl/bookings_negative.hurl --variables-file tests/hurl/.env.test \
     log_warn "Bookings negative tests had failures"
 }
 
+log_info "Running reviews tests..."
+hurl tests/hurl/reviews.hurl --variables-file tests/hurl/.env.test \
+  --variable admin_token="$ADMIN_TOKEN" \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" \
+  --variable representative_token="$REPRESENTATIVE_TOKEN" \
+  --variable client2_token="$CLIENT2_TOKEN" \
+  --variable blocked_user_token="$BLOCKED_USER_TOKEN" || {
+    log_error "Reviews tests failed"
+    exit 1
+}
+
+log_info "Running reviews negative tests..."
+hurl tests/hurl/reviews_negative.hurl --variables-file tests/hurl/.env.test \
+  --variable admin_token="$ADMIN_TOKEN" \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" \
+  --variable representative_token="$REPRESENTATIVE_TOKEN" \
+  --variable client2_token="$CLIENT2_TOKEN" \
+  --variable blocked_user_token="$BLOCKED_USER_TOKEN" || {
+    log_warn "Reviews negative tests had failures"
+}
+
 log_info "All tests completed!"
