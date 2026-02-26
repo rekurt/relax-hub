@@ -28,7 +28,7 @@ func newReviewTestEnv() *reviewTestEnv {
 	repRepo := mock.NewRepresentativeRepo()
 	ac := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn) // Use Warn level to suppress debug output during tests
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, *log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, log)
 	return &reviewTestEnv{
 		svc:         svc,
 		bhRepo:      bhRepo,

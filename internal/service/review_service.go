@@ -38,7 +38,7 @@ type reviewService struct {
 	bookingRepo   repository.BookingRepository
 	bhRepo        repository.BathhouseRepository
 	accessChecker *AccessChecker
-	logger        logger.Logger
+	logger        *logger.Logger
 }
 
 func NewReviewService(
@@ -46,7 +46,7 @@ func NewReviewService(
 	bookingRepo repository.BookingRepository,
 	bhRepo repository.BathhouseRepository,
 	accessChecker *AccessChecker,
-	log logger.Logger,
+	log *logger.Logger,
 ) ReviewService {
 	return &reviewService{
 		reviewRepo:    reviewRepo,

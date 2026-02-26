@@ -156,4 +156,39 @@ hurl tests/hurl/reviews_negative.hurl --variables-file tests/hurl/.env.test \
     log_warn "Reviews negative tests had failures"
 }
 
+log_info "Running favorites tests..."
+hurl tests/hurl/favorites.hurl --variables-file tests/hurl/.env.test \
+  --variable admin_token="$ADMIN_TOKEN" \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" \
+  --variable representative_token="$REPRESENTATIVE_TOKEN" \
+  --variable client2_token="$CLIENT2_TOKEN" \
+  --variable blocked_user_token="$BLOCKED_USER_TOKEN" || {
+    log_error "Favorites tests failed"
+    exit 1
+}
+
+log_info "Running favorites negative tests..."
+hurl tests/hurl/favorites_negative.hurl --variables-file tests/hurl/.env.test \
+  --variable admin_token="$ADMIN_TOKEN" \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" \
+  --variable representative_token="$REPRESENTATIVE_TOKEN" \
+  --variable client2_token="$CLIENT2_TOKEN" \
+  --variable blocked_user_token="$BLOCKED_USER_TOKEN" || {
+    log_warn "Favorites negative tests had failures"
+}
+
+log_info "Running representatives tests..."
+hurl tests/hurl/representatives.hurl --variables-file tests/hurl/.env.test \
+  --variable admin_token="$ADMIN_TOKEN" \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" \
+  --variable representative_token="$REPRESENTATIVE_TOKEN" \
+  --variable client2_token="$CLIENT2_TOKEN" \
+  --variable blocked_user_token="$BLOCKED_USER_TOKEN" || {
+    log_error "Representatives tests failed"
+    exit 1
+}
+
 log_info "All tests completed!"

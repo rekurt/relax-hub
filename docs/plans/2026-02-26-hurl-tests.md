@@ -102,14 +102,14 @@ Create comprehensive hurl test suite covering all main API endpoints (auth, bath
 - Create: tests/hurl/favorites.hurl
 - Create: tests/hurl/representatives.hurl
 
-- [ ] test POST /bathhouses/{id}/favorite (toggle favorite, non-existent bathhouse)
-- [ ] test GET /my/favorites (list user favorites with pagination)
-- [ ] test POST /bathhouses/{id}/representatives (owner invites representative)
-- [ ] test GET /bathhouses/{id}/representatives (owner lists representatives)
-- [ ] test DELETE /representatives/{id} (owner revokes, forbidden)
-- [ ] verify favorite toggle state
-- [ ] write integration tests for favorites and representatives
-- [ ] run hurl tests - must pass before task 7
+- [x] test POST /bathhouses/{id}/favorite (toggle favorite, non-existent bathhouse)
+- [x] test GET /my/favorites (list user favorites with pagination)
+- [x] test POST /bathhouses/{id}/representatives (owner invites representative)
+- [x] test GET /bathhouses/{id}/representatives (owner lists representatives)
+- [x] test DELETE /representatives/{id} (owner revokes, forbidden)
+- [x] verify favorite toggle state
+- [x] write integration tests for favorites and representatives
+- [x] run hurl tests - must pass before task 7
 
 ### Task 7: Admin Endpoints Tests
 
