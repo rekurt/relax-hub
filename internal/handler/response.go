@@ -5,7 +5,9 @@ import (
 	"errors"
 	"net/http"
 
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 )
 
 type APIResponse struct {
@@ -47,8 +49,23 @@ func writeJSONWithMeta(w http.ResponseWriter, status int, data interface{}, meta
 }
 
 func writeError(w http.ResponseWriter, status int, code, message string) {
+	writeErrorWithContext(w, nil, status, code, message)
+}
+
+func writeErrorWithContext(w http.ResponseWriter, r *http.Request, status int, code, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
+	// Log 5xx errors
+	if status >= 500 {
+		var reqID string
+		if r != nil {
+			reqID = chiMiddleware.GetReqID(r.Context())
+		}
+		log := logger.New(logger.LevelError)
+		log.Error("HTTP error", "status", status, "code", code, "message", message, "request_id", reqID)
+	}
+
 	_ = json.NewEncoder(w).Encode(APIResponse{
 		Success: false,
 		Error: &APIError{
@@ -59,31 +76,35 @@ func writeError(w http.ResponseWriter, status int, code, message string) {
 }
 
 func handleServiceError(w http.ResponseWriter, err error) {
+	handleServiceErrorWithRequest(w, nil, err)
+}
+
+func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, domain.ErrNotFound):
-		writeError(w, http.StatusNotFound, "not_found", err.Error())
+		writeErrorWithContext(w, r, http.StatusNotFound, "not_found", err.Error())
 	case errors.Is(err, domain.ErrAlreadyExists):
-		writeError(w, http.StatusConflict, "already_exists", err.Error())
+		writeErrorWithContext(w, r, http.StatusConflict, "already_exists", err.Error())
 	case errors.Is(err, domain.ErrInvalidInput):
-		writeError(w, http.StatusBadRequest, "invalid_input", err.Error())
+		writeErrorWithContext(w, r, http.StatusBadRequest, "invalid_input", err.Error())
 	case errors.Is(err, domain.ErrUnauthorized):
-		writeError(w, http.StatusUnauthorized, "unauthorized", err.Error())
+		writeErrorWithContext(w, r, http.StatusUnauthorized, "unauthorized", err.Error())
 	case errors.Is(err, domain.ErrForbidden):
-		writeError(w, http.StatusForbidden, "forbidden", err.Error())
+		writeErrorWithContext(w, r, http.StatusForbidden, "forbidden", err.Error())
 	case errors.Is(err, domain.ErrSlotUnavailable):
-		writeError(w, http.StatusConflict, "slot_unavailable", err.Error())
+		writeErrorWithContext(w, r, http.StatusConflict, "slot_unavailable", err.Error())
 	case errors.Is(err, domain.ErrBookingCancelLate):
-		writeError(w, http.StatusBadRequest, "cancel_too_late", err.Error())
+		writeErrorWithContext(w, r, http.StatusBadRequest, "cancel_too_late", err.Error())
 	case errors.Is(err, domain.ErrUserBlocked):
-		writeError(w, http.StatusForbidden, "user_blocked", err.Error())
+		writeErrorWithContext(w, r, http.StatusForbidden, "user_blocked", err.Error())
 	case errors.Is(err, domain.ErrBathhouseNotActive):
-		writeError(w, http.StatusBadRequest, "bathhouse_not_active", err.Error())
+		writeErrorWithContext(w, r, http.StatusBadRequest, "bathhouse_not_active", err.Error())
 	case errors.Is(err, domain.ErrBathhouseHasBookings):
-		writeError(w, http.StatusConflict, "bathhouse_has_bookings", err.Error())
+		writeErrorWithContext(w, r, http.StatusConflict, "bathhouse_has_bookings", err.Error())
 	case errors.Is(err, domain.ErrReviewAlreadyResponded):
-		writeError(w, http.StatusConflict, "review_already_responded", err.Error())
+		writeErrorWithContext(w, r, http.StatusConflict, "review_already_responded", err.Error())
 	default:
-		writeError(w, http.StatusInternalServerError, "internal_error", "internal server error")
+		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
 }
 

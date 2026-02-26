@@ -32,7 +32,7 @@ func NewRouter(p RouterParams) http.Handler {
 
 	r.Use(chiMiddleware.RequestID)
 	r.Use(middleware.Logging)
-	r.Use(chiMiddleware.Recoverer)
+	r.Use(middleware.RecoveryMiddleware(middleware.IsDevEnvironment()))
 	r.Use(p.CORS.Handler)
 
 	r.Get("/health", healthCheck)
