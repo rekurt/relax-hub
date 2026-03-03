@@ -60,18 +60,18 @@
 - Create: `internal/storage/provider.go` (интерфейс)
 - Modify: `config/config.go`
 
-- [ ] Создать интерфейс FileStorage:
+- [x] Создать интерфейс FileStorage:
   ```go
   type FileStorage interface {
     Upload(ctx context.Context, filename string, data io.Reader, contentType string) (url string, err error)
     Delete(ctx context.Context, filename string) error
   }
   ```
-- [ ] Реализовать S3Storage (совместим с MinIO и AWS S3)
-- [ ] Конфигурация: BANI_STORAGE_ENDPOINT, BANI_STORAGE_BUCKET, BANI_STORAGE_ACCESS_KEY, BANI_STORAGE_SECRET_KEY
-- [ ] Ресайз аватаров: 200x200 и 50x50 (thumbnail)
-- [ ] Написать тесты с моковым хранилищем
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Реализовать S3Storage (совместим с MinIO и AWS S3)
+- [x] Конфигурация: BANI_STORAGE_ENDPOINT, BANI_STORAGE_BUCKET, BANI_STORAGE_ACCESS_KEY, BANI_STORAGE_SECRET_KEY
+- [x] Ресайз аватаров: 200x200 и 50x50 (thumbnail)
+- [x] Написать тесты с моковым хранилищем
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Расширение сервиса и хендлера пользователей
 

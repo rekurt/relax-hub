@@ -15,6 +15,7 @@ type Config struct {
 	Redis       RedisConfig    `mapstructure:"redis"`
 	JWT         JWTConfig      `mapstructure:"jwt"`
 	Logger      LoggerConfig   `mapstructure:"logger"`
+	Storage     StorageConfig  `mapstructure:"storage"`
 }
 
 type ServerConfig struct {
@@ -39,6 +40,15 @@ type JWTConfig struct {
 
 type LoggerConfig struct {
 	Level string `mapstructure:"level"`
+}
+
+type StorageConfig struct {
+	Endpoint  string `mapstructure:"endpoint"`
+	Bucket    string `mapstructure:"bucket"`
+	AccessKey string `mapstructure:"access_key"`
+	SecretKey string `mapstructure:"secret_key"`
+	Region    string `mapstructure:"region"`
+	UseSSL    bool   `mapstructure:"use_ssl"`
 }
 
 func Load(cfgFile string) (*Config, error) {
@@ -67,6 +77,12 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("jwt.secret", "change-me-in-production")
 	v.SetDefault("jwt.token_ttl", "24h")
 	v.SetDefault("logger.level", "info")
+	v.SetDefault("storage.endpoint", "localhost:9000")
+	v.SetDefault("storage.bucket", "bani-avatars")
+	v.SetDefault("storage.access_key", "minioadmin")
+	v.SetDefault("storage.secret_key", "minioadmin")
+	v.SetDefault("storage.region", "us-east-1")
+	v.SetDefault("storage.use_ssl", false)
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
