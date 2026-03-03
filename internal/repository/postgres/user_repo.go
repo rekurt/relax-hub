@@ -180,11 +180,11 @@ func (r *userRepo) GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.
 		LEFT JOIN cities c ON u.city_id = c.id
 		LEFT JOIN (
 			SELECT user_id, COUNT(*) AS review_count, AVG(rating) AS avg_rating
-			FROM reviews WHERE status = 'approved' GROUP BY user_id
+			FROM reviews WHERE status = 'approved' AND user_id = $1 GROUP BY user_id
 		) rev_stats ON rev_stats.user_id = u.id
 		LEFT JOIN (
 			SELECT user_id, COUNT(*) AS visit_count
-			FROM bookings WHERE status = 'completed' GROUP BY user_id
+			FROM bookings WHERE status = 'completed' AND user_id = $1 GROUP BY user_id
 		) booking_stats ON booking_stats.user_id = u.id
 		WHERE u.id = $1 AND u.is_active = true`
 

@@ -255,6 +255,6 @@ func (r *bookingRepo) GetUserStats(ctx context.Context, userID uuid.UUID) (*doma
 	if err != nil {
 		return nil, fmt.Errorf("get user booking stats: %w", err)
 	}
-	stats.AvgCheck = int64(avgCheck)
+	stats.AvgCheck = int64(math.Round(avgCheck))
 	return &stats, nil
 }
