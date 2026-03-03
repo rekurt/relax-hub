@@ -221,8 +221,12 @@ func (h *AuthHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	// Detect actual content type from file bytes (not trusting client headers)
 	buf := make([]byte, 512)
 	n, err := file.Read(buf)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		writeError(w, http.StatusBadRequest, "invalid_input", "failed to read avatar file")
+		return
+	}
+	if n == 0 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "empty avatar file")
 		return
 	}
 	detectedType := http.DetectContentType(buf[:n])

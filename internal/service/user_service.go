@@ -105,24 +105,30 @@ func (s *userService) UploadAvatar(ctx context.Context, userID uuid.UUID, input 
 		return nil, err
 	}
 
-	// Delete old avatar if exists
-	if user.AvatarURL != "" {
-		oldKey := extractS3Key(user.AvatarURL)
-		if err := s.storage.Delete(ctx, oldKey); err != nil {
-			s.log.Warn("failed to delete old avatar", "key", oldKey, "error", err)
-		}
-	}
-
+	// Upload new avatar first, before modifying any existing state
 	filename := fmt.Sprintf("avatars/%s%s", uuid.New().String(), input.Ext)
 	avatarURL, err := s.storage.Upload(ctx, filename, input.Data, input.ContentType)
 	if err != nil {
 		return nil, fmt.Errorf("upload avatar: %w", err)
 	}
 
+	oldAvatarURL := user.AvatarURL
 	user.AvatarURL = avatarURL
 
 	if err := s.userRepo.Update(ctx, user); err != nil {
+		// Clean up newly uploaded file since DB update failed
+		if delErr := s.storage.Delete(ctx, filename); delErr != nil {
+			s.log.Warn("failed to clean up avatar after db error", "key", filename, "error", delErr)
+		}
 		return nil, err
+	}
+
+	// Delete old avatar only after successful DB update
+	if oldAvatarURL != "" {
+		oldKey := extractS3Key(oldAvatarURL)
+		if err := s.storage.Delete(ctx, oldKey); err != nil {
+			s.log.Warn("failed to delete old avatar", "key", oldKey, "error", err)
+		}
 	}
 
 	return user, nil
