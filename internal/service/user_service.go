@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/url"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
@@ -82,7 +83,7 @@ func (s *userService) Update(ctx context.Context, id uuid.UUID, input UpdateUser
 		user.Phone = *input.Phone
 	}
 	if input.Bio != nil {
-		if len(*input.Bio) > maxBioLength {
+		if utf8.RuneCountInString(*input.Bio) > maxBioLength {
 			return nil, domain.ErrInvalidInput
 		}
 		user.Bio = *input.Bio

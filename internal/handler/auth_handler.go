@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -56,10 +57,26 @@ type userResponse struct {
 }
 
 type updateProfileRequest struct {
-	Name   *string `json:"name,omitempty"`
-	Phone  *string `json:"phone,omitempty"`
-	Bio    *string `json:"bio,omitempty"`
-	CityID **int64 `json:"city_id,omitempty"`
+	Name   *string            `json:"name,omitempty"`
+	Phone  *string            `json:"phone,omitempty"`
+	Bio    *string            `json:"bio,omitempty"`
+	CityID nullableInt64Field `json:"city_id"`
+}
+
+// nullableInt64Field distinguishes three JSON states: absent, null, and value.
+// Absent: Set=false. Null: Set=true, Value=nil. Value: Set=true, Value=&v.
+type nullableInt64Field struct {
+	Value *int64
+	Set   bool
+}
+
+func (n *nullableInt64Field) UnmarshalJSON(data []byte) error {
+	n.Set = true
+	if string(data) == "null" {
+		return nil
+	}
+	n.Value = new(int64)
+	return json.Unmarshal(data, n.Value)
 }
 
 type publicProfileResponse struct {
@@ -173,12 +190,16 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	userID := middleware.GetUserID(r.Context())
 
-	user, err := h.userService.Update(r.Context(), userID, service.UpdateUserInput{
-		Name:   req.Name,
-		Phone:  req.Phone,
-		Bio:    req.Bio,
-		CityID: req.CityID,
-	})
+	input := service.UpdateUserInput{
+		Name:  req.Name,
+		Phone: req.Phone,
+		Bio:   req.Bio,
+	}
+	if req.CityID.Set {
+		input.CityID = &req.CityID.Value
+	}
+
+	user, err := h.userService.Update(r.Context(), userID, input)
 	if err != nil {
 		handleServiceError(w, err)
 		return
