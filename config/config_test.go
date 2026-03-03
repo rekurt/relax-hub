@@ -246,6 +246,7 @@ func TestValidate_ProductionValid(t *testing.T) {
 		Database:    DatabaseConfig{DSN: "postgres://localhost/db?sslmode=require"},
 		Redis:       RedisConfig{Addr: "localhost:6379"},
 		JWT:         JWTConfig{Secret: secret},
+		Storage:     StorageConfig{AccessKey: "prod-key", SecretKey: "prod-secret", UseSSL: true},
 	}
 
 	err := cfg.Validate()
@@ -281,6 +282,7 @@ func TestLoad_ProductionEnvironment(t *testing.T) {
 	t.Setenv("BANI_DATABASE_DSN", "postgres://user:pass@db:5432/testdb?sslmode=require")
 	t.Setenv("BANI_STORAGE_ACCESS_KEY", "prod-access-key")
 	t.Setenv("BANI_STORAGE_SECRET_KEY", "prod-secret-key")
+	t.Setenv("BANI_STORAGE_USE_SSL", "true")
 
 	cfg, err := Load(cfgPath)
 	if err != nil {

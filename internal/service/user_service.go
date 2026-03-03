@@ -140,17 +140,19 @@ func (s *userService) DeleteAvatar(ctx context.Context, userID uuid.UUID) (*doma
 		return nil, err
 	}
 
-	if user.AvatarURL != "" {
-		oldKey := extractS3Key(user.AvatarURL)
-		if err := s.storage.Delete(ctx, oldKey); err != nil {
-			s.log.Warn("failed to delete avatar", "key", oldKey, "error", err)
-		}
-	}
-
+	oldAvatarURL := user.AvatarURL
 	user.AvatarURL = ""
 
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		return nil, err
+	}
+
+	// Delete from storage only after successful DB update
+	if oldAvatarURL != "" {
+		oldKey := extractS3Key(oldAvatarURL)
+		if err := s.storage.Delete(ctx, oldKey); err != nil {
+			s.log.Warn("failed to delete avatar from storage", "key", oldKey, "error", err)
+		}
 	}
 
 	return user, nil
