@@ -94,11 +94,11 @@
 - Modify: `internal/repository/postgres/booking.go`
 - Modify: `internal/repository/postgres/review.go`
 
-- [ ] Добавить в BookingRepository: GetUserStats(ctx, userID) — количество визитов, средний чек, общая сумма
-- [ ] Добавить в ReviewRepository: GetUserReviewStats(ctx, userID) — кол-во отзывов, средний рейтинг
-- [ ] GET /api/v1/my/stats — персональная статистика
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить в BookingRepository: GetUserStats(ctx, userID) — количество визитов, средний чек, общая сумма
+- [x] Добавить в ReviewRepository: GetUserReviewStats(ctx, userID) — кол-во отзывов, средний рейтинг
+- [x] GET /api/v1/my/stats — персональная статистика
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Верификация
 

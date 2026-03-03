@@ -13,9 +13,14 @@ import (
 	"github.com/nikitaaldaev/bani/internal/storage"
 )
 
+// newUserService is a test helper that creates a UserService with mock repos.
+func newUserService(userRepo *mock.UserRepo, fileStorage storage.FileStorage) service.UserService {
+	return service.NewUserService(userRepo, mock.NewBookingRepo(), mock.NewReviewRepo(), fileStorage)
+}
+
 func TestUserService_GetByID(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+	svc := newUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -34,7 +39,7 @@ func TestUserService_GetByID(t *testing.T) {
 
 func TestUserService_Update(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+	svc := newUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -61,7 +66,7 @@ func TestUserService_Update(t *testing.T) {
 
 func TestUserService_Update_Bio(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+	svc := newUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -83,7 +88,7 @@ func TestUserService_Update_Bio(t *testing.T) {
 
 func TestUserService_Update_CityID(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+	svc := newUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -118,7 +123,7 @@ func TestUserService_Update_CityID(t *testing.T) {
 
 func TestUserService_Update_EmptyName(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+	svc := newUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -138,7 +143,7 @@ func TestUserService_Update_EmptyName(t *testing.T) {
 func TestUserService_UploadAvatar(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	mockStore := storage.NewMockStorage()
-	svc := service.NewUserService(userRepo, mockStore)
+	svc := newUserService(userRepo, mockStore)
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -166,7 +171,7 @@ func TestUserService_UploadAvatar(t *testing.T) {
 func TestUserService_UploadAvatar_ReplacesOld(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	mockStore := storage.NewMockStorage()
-	svc := service.NewUserService(userRepo, mockStore)
+	svc := newUserService(userRepo, mockStore)
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -191,7 +196,7 @@ func TestUserService_UploadAvatar_ReplacesOld(t *testing.T) {
 func TestUserService_DeleteAvatar(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	mockStore := storage.NewMockStorage()
-	svc := service.NewUserService(userRepo, mockStore)
+	svc := newUserService(userRepo, mockStore)
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -210,7 +215,7 @@ func TestUserService_DeleteAvatar(t *testing.T) {
 
 func TestUserService_GetPublicProfile(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+	svc := newUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test User",
@@ -232,7 +237,7 @@ func TestUserService_GetPublicProfile(t *testing.T) {
 
 func TestUserService_GetPublicProfile_NotFound(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+	svc := newUserService(userRepo, storage.NewMockStorage())
 
 	_, err := svc.GetPublicProfile(context.Background(), uuid.New())
 	if !errors.Is(err, domain.ErrNotFound) {
@@ -242,7 +247,7 @@ func TestUserService_GetPublicProfile_NotFound(t *testing.T) {
 
 func TestUserService_Block(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+	svc := newUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -263,7 +268,7 @@ func TestUserService_Block(t *testing.T) {
 
 func TestUserService_Unblock(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+	svc := newUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -284,7 +289,7 @@ func TestUserService_Unblock(t *testing.T) {
 
 func TestUserService_List(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+	svc := newUserService(userRepo, storage.NewMockStorage())
 
 	for i := 0; i < 5; i++ {
 		_ = userRepo.Create(context.Background(), &domain.User{
@@ -307,10 +312,108 @@ func TestUserService_List(t *testing.T) {
 
 func TestUserService_GetByID_NotFound(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+	svc := newUserService(userRepo, storage.NewMockStorage())
 
 	_, err := svc.GetByID(context.Background(), uuid.New())
 	if !errors.Is(err, domain.ErrNotFound) {
 		t.Errorf("should return ErrNotFound, got: %v", err)
+	}
+}
+
+func TestUserService_GetMyStats(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	bookingRepo := mock.NewBookingRepo()
+	reviewRepo := mock.NewReviewRepo()
+	svc := service.NewUserService(userRepo, bookingRepo, reviewRepo, storage.NewMockStorage())
+
+	userID := uuid.New()
+	bathhouseID := uuid.New()
+
+	_ = userRepo.Create(context.Background(), &domain.User{
+		ID: userID, Email: "stats@example.com", Name: "Stats User",
+		Role: domain.RoleClient, IsActive: true,
+	})
+
+	// Create completed bookings
+	for i := 0; i < 3; i++ {
+		b := &domain.Booking{
+			UserID: userID, BathhouseID: bathhouseID,
+			GuestCount: 2, TotalPrice: 300000, // 3000 rubles in kopecks
+			Status: domain.BookingCompleted,
+		}
+		_ = bookingRepo.Create(context.Background(), b)
+	}
+	// Create a cancelled booking (should not count)
+	_ = bookingRepo.Create(context.Background(), &domain.Booking{
+		UserID: userID, BathhouseID: bathhouseID,
+		GuestCount: 2, TotalPrice: 500000,
+		Status: domain.BookingCancelled,
+	})
+
+	// Create approved reviews
+	for i := 0; i < 2; i++ {
+		bookingID := uuid.New()
+		_ = reviewRepo.Create(context.Background(), &domain.Review{
+			UserID: userID, BathhouseID: bathhouseID, BookingID: bookingID,
+			Rating: 4 + i, Text: "Great", Status: domain.ReviewStatusApproved,
+		})
+	}
+	// Create a pending review (should not count)
+	_ = reviewRepo.Create(context.Background(), &domain.Review{
+		UserID: userID, BathhouseID: bathhouseID, BookingID: uuid.New(),
+		Rating: 1, Text: "Bad", Status: domain.ReviewStatusPending,
+	})
+
+	stats, err := svc.GetMyStats(context.Background(), userID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if stats.TotalVisits != 3 {
+		t.Errorf("total_visits = %d, want 3", stats.TotalVisits)
+	}
+	if stats.TotalSpent != 900000 {
+		t.Errorf("total_spent = %d, want 900000", stats.TotalSpent)
+	}
+	if stats.AvgCheck != 300000 {
+		t.Errorf("avg_check = %d, want 300000", stats.AvgCheck)
+	}
+	if stats.ReviewCount != 2 {
+		t.Errorf("review_count = %d, want 2", stats.ReviewCount)
+	}
+	if stats.AvgRating != 4.5 {
+		t.Errorf("avg_rating = %f, want 4.5", stats.AvgRating)
+	}
+}
+
+func TestUserService_GetMyStats_Empty(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	bookingRepo := mock.NewBookingRepo()
+	reviewRepo := mock.NewReviewRepo()
+	svc := service.NewUserService(userRepo, bookingRepo, reviewRepo, storage.NewMockStorage())
+
+	userID := uuid.New()
+	_ = userRepo.Create(context.Background(), &domain.User{
+		ID: userID, Email: "empty@example.com", Name: "Empty User",
+		Role: domain.RoleClient, IsActive: true,
+	})
+
+	stats, err := svc.GetMyStats(context.Background(), userID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if stats.TotalVisits != 0 {
+		t.Errorf("total_visits = %d, want 0", stats.TotalVisits)
+	}
+	if stats.TotalSpent != 0 {
+		t.Errorf("total_spent = %d, want 0", stats.TotalSpent)
+	}
+	if stats.AvgCheck != 0 {
+		t.Errorf("avg_check = %d, want 0", stats.AvgCheck)
+	}
+	if stats.ReviewCount != 0 {
+		t.Errorf("review_count = %d, want 0", stats.ReviewCount)
+	}
+	if stats.AvgRating != 0 {
+		t.Errorf("avg_rating = %f, want 0", stats.AvgRating)
 	}
 }

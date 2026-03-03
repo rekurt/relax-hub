@@ -51,6 +51,19 @@ type UserProfile struct {
 	AvgRating   float64
 }
 
+// UserBookingStats holds aggregate booking statistics for a user.
+type UserBookingStats struct {
+	TotalVisits int
+	TotalSpent  int64   // in kopecks
+	AvgCheck    int64   // in kopecks
+}
+
+// UserReviewStats holds aggregate review statistics for a user.
+type UserReviewStats struct {
+	ReviewCount int
+	AvgRating   float64
+}
+
 func (u *User) Validate() error {
 	if u.Email == "" {
 		return ErrInvalidInput

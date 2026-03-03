@@ -242,3 +242,19 @@ func (r *bookingRepo) CountActiveByBathhouse(ctx context.Context, bathhouseID uu
 	}
 	return count, nil
 }
+
+func (r *bookingRepo) GetUserStats(ctx context.Context, userID uuid.UUID) (*domain.UserBookingStats, error) {
+	query := `
+		SELECT COUNT(*), COALESCE(SUM(total_price), 0), COALESCE(AVG(total_price), 0)
+		FROM bookings
+		WHERE user_id = $1 AND status = 'completed'`
+
+	var stats domain.UserBookingStats
+	var avgCheck float64
+	err := r.pool.QueryRow(ctx, query, userID).Scan(&stats.TotalVisits, &stats.TotalSpent, &avgCheck)
+	if err != nil {
+		return nil, fmt.Errorf("get user booking stats: %w", err)
+	}
+	stats.AvgCheck = int64(avgCheck)
+	return &stats, nil
+}

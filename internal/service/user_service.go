@@ -32,19 +32,30 @@ type UserService interface {
 	UploadAvatar(ctx context.Context, userID uuid.UUID, input UploadAvatarInput) (*domain.User, error)
 	DeleteAvatar(ctx context.Context, userID uuid.UUID) (*domain.User, error)
 	GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.UserProfile, error)
+	GetMyStats(ctx context.Context, userID uuid.UUID) (*MyStatsOutput, error)
 	// Admin methods:
 	List(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.User], error)
 	Block(ctx context.Context, id uuid.UUID) error
 	Unblock(ctx context.Context, id uuid.UUID) error
 }
 
-type userService struct {
-	userRepo repository.UserRepository
-	storage  storage.FileStorage
+type MyStatsOutput struct {
+	TotalVisits int     `json:"total_visits"`
+	TotalSpent  int64   `json:"total_spent"`
+	AvgCheck    int64   `json:"avg_check"`
+	ReviewCount int     `json:"review_count"`
+	AvgRating   float64 `json:"avg_rating"`
 }
 
-func NewUserService(userRepo repository.UserRepository, fileStorage storage.FileStorage) UserService {
-	return &userService{userRepo: userRepo, storage: fileStorage}
+type userService struct {
+	userRepo    repository.UserRepository
+	bookingRepo repository.BookingRepository
+	reviewRepo  repository.ReviewRepository
+	storage     storage.FileStorage
+}
+
+func NewUserService(userRepo repository.UserRepository, bookingRepo repository.BookingRepository, reviewRepo repository.ReviewRepository, fileStorage storage.FileStorage) UserService {
+	return &userService{userRepo: userRepo, bookingRepo: bookingRepo, reviewRepo: reviewRepo, storage: fileStorage}
 }
 
 func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
@@ -144,4 +155,24 @@ func (s *userService) Block(ctx context.Context, id uuid.UUID) error {
 
 func (s *userService) Unblock(ctx context.Context, id uuid.UUID) error {
 	return s.userRepo.SetActive(ctx, id, true)
+}
+
+func (s *userService) GetMyStats(ctx context.Context, userID uuid.UUID) (*MyStatsOutput, error) {
+	bookingStats, err := s.bookingRepo.GetUserStats(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get booking stats: %w", err)
+	}
+
+	reviewStats, err := s.reviewRepo.GetUserReviewStats(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get review stats: %w", err)
+	}
+
+	return &MyStatsOutput{
+		TotalVisits: bookingStats.TotalVisits,
+		TotalSpent:  bookingStats.TotalSpent,
+		AvgCheck:    bookingStats.AvgCheck,
+		ReviewCount: reviewStats.ReviewCount,
+		AvgRating:   reviewStats.AvgRating,
+	}, nil
 }

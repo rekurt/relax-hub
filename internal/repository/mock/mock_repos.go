@@ -340,6 +340,22 @@ func (r *BookingRepo) CountActiveByBathhouse(_ context.Context, bathhouseID uuid
 	return count, nil
 }
 
+func (r *BookingRepo) GetUserStats(_ context.Context, userID uuid.UUID) (*domain.UserBookingStats, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var stats domain.UserBookingStats
+	for _, b := range r.bookings {
+		if b.UserID == userID && b.Status == domain.BookingCompleted {
+			stats.TotalVisits++
+			stats.TotalSpent += b.TotalPrice
+		}
+	}
+	if stats.TotalVisits > 0 {
+		stats.AvgCheck = stats.TotalSpent / int64(stats.TotalVisits)
+	}
+	return &stats, nil
+}
+
 func paginateBookings(items []domain.Booking, page, pageSize int) *domain.PaginatedResult[domain.Booking] {
 	if page < 1 {
 		page = 1
@@ -639,6 +655,23 @@ func (r *ReviewRepo) AddOwnerResponse(_ context.Context, id uuid.UUID, response 
 	rev.OwnerResponseAt = &respondedAt
 	rev.UpdatedAt = respondedAt
 	return nil
+}
+
+func (r *ReviewRepo) GetUserReviewStats(_ context.Context, userID uuid.UUID) (*domain.UserReviewStats, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var stats domain.UserReviewStats
+	var totalRating int
+	for _, rev := range r.reviews {
+		if rev.UserID == userID && rev.Status == domain.ReviewStatusApproved {
+			stats.ReviewCount++
+			totalRating += rev.Rating
+		}
+	}
+	if stats.ReviewCount > 0 {
+		stats.AvgRating = float64(totalRating) / float64(stats.ReviewCount)
+	}
+	return &stats, nil
 }
 
 // FavoriteRepo is an in-memory mock implementation of repository.FavoriteRepository.

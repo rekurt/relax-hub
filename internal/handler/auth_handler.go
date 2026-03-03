@@ -264,3 +264,15 @@ func (h *AuthHandler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, toPublicProfileResponse(profile))
 }
+
+func (h *AuthHandler) GetMyStats(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+
+	stats, err := h.userService.GetMyStats(r.Context(), userID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, stats)
+}

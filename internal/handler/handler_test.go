@@ -48,14 +48,15 @@ func (m *mockAuthService) ParseToken(ctx context.Context, token string) (uuid.UU
 }
 
 type mockUserService struct {
-	getByIDFn         func(ctx context.Context, id uuid.UUID) (*domain.User, error)
-	updateFn          func(ctx context.Context, id uuid.UUID, input service.UpdateUserInput) (*domain.User, error)
-	uploadAvatarFn    func(ctx context.Context, userID uuid.UUID, input service.UploadAvatarInput) (*domain.User, error)
-	deleteAvatarFn    func(ctx context.Context, userID uuid.UUID) (*domain.User, error)
+	getByIDFn          func(ctx context.Context, id uuid.UUID) (*domain.User, error)
+	updateFn           func(ctx context.Context, id uuid.UUID, input service.UpdateUserInput) (*domain.User, error)
+	uploadAvatarFn     func(ctx context.Context, userID uuid.UUID, input service.UploadAvatarInput) (*domain.User, error)
+	deleteAvatarFn     func(ctx context.Context, userID uuid.UUID) (*domain.User, error)
 	getPublicProfileFn func(ctx context.Context, id uuid.UUID) (*domain.UserProfile, error)
-	listFn            func(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.User], error)
-	blockFn           func(ctx context.Context, id uuid.UUID) error
-	unblockFn         func(ctx context.Context, id uuid.UUID) error
+	getMyStatsFn       func(ctx context.Context, userID uuid.UUID) (*service.MyStatsOutput, error)
+	listFn             func(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.User], error)
+	blockFn            func(ctx context.Context, id uuid.UUID) error
+	unblockFn          func(ctx context.Context, id uuid.UUID) error
 }
 
 func (m *mockUserService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
@@ -112,6 +113,13 @@ func (m *mockUserService) Unblock(ctx context.Context, id uuid.UUID) error {
 		return m.unblockFn(ctx, id)
 	}
 	return nil
+}
+
+func (m *mockUserService) GetMyStats(ctx context.Context, userID uuid.UUID) (*service.MyStatsOutput, error) {
+	if m.getMyStatsFn != nil {
+		return m.getMyStatsFn(ctx, userID)
+	}
+	return &service.MyStatsOutput{}, nil
 }
 
 type mockBathhouseService struct {
@@ -769,6 +777,45 @@ func TestAuthHandler_GetPublicProfile_InvalidID(t *testing.T) {
 
 	if rec.Code != http.StatusBadRequest {
 		t.Errorf("expected status 400, got %d", rec.Code)
+	}
+}
+
+func TestAuthHandler_GetMyStats(t *testing.T) {
+	userID := uuid.New()
+	userSvc := &mockUserService{
+		getMyStatsFn: func(_ context.Context, id uuid.UUID) (*service.MyStatsOutput, error) {
+			if id != userID {
+				return nil, domain.ErrNotFound
+			}
+			return &service.MyStatsOutput{
+				TotalVisits: 5,
+				TotalSpent:  1500000,
+				AvgCheck:    300000,
+				ReviewCount: 3,
+				AvgRating:   4.5,
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(userID, domain.RoleClient)
+	h := handler.NewAuthHandler(authSvc, userSvc)
+
+	r := chi.NewRouter()
+	r.With(middleware.RequireAuth(authSvc)).Get("/my/stats", h.GetMyStats)
+
+	req := httptest.NewRequest(http.MethodGet, "/my/stats", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+
+	resp := parseResponse(t, rec)
+	if !resp.Success {
+		t.Errorf("expected success=true, body: %s", rec.Body.String())
 	}
 }
 

@@ -263,3 +263,17 @@ func (r *reviewRepo) AddOwnerResponse(ctx context.Context, id uuid.UUID, respons
 	}
 	return nil
 }
+
+func (r *reviewRepo) GetUserReviewStats(ctx context.Context, userID uuid.UUID) (*domain.UserReviewStats, error) {
+	query := `
+		SELECT COUNT(*), COALESCE(AVG(rating), 0)
+		FROM reviews
+		WHERE user_id = $1 AND status = 'approved'`
+
+	var stats domain.UserReviewStats
+	err := r.pool.QueryRow(ctx, query, userID).Scan(&stats.ReviewCount, &stats.AvgRating)
+	if err != nil {
+		return nil, fmt.Errorf("get user review stats: %w", err)
+	}
+	return &stats, nil
+}

@@ -90,6 +90,9 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Post("/bathhouses/{id}/favorite", p.FavHandler.Toggle)
 		r.With(auth).Get("/my/favorites", p.FavHandler.List)
 
+		// User stats (authenticated)
+		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)
+
 		// Representatives (owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses/{id}/representatives", p.RepHandler.Invite)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/bathhouses/{id}/representatives", p.RepHandler.ListByBathhouse)
