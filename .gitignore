@@ -1,5 +1,7 @@
 # Binaries
 bin/
+bani
+bani-server
 *.exe
 *.exe~
 *.dll

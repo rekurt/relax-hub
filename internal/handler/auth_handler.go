@@ -162,7 +162,6 @@ const maxAvatarSize = 5 << 20 // 5 MB
 var allowedAvatarTypes = map[string]string{
 	"image/jpeg": ".jpg",
 	"image/png":  ".png",
-	"image/webp": ".webp",
 }
 
 func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
@@ -213,7 +212,7 @@ func (h *AuthHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if !found {
-			writeError(w, http.StatusBadRequest, "invalid_input", "unsupported image format, use JPEG, PNG or WebP")
+			writeError(w, http.StatusBadRequest, "invalid_input", "unsupported image format, use JPEG or PNG")
 			return
 		}
 	}

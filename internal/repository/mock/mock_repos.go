@@ -136,6 +136,9 @@ func (r *UserRepo) GetPublicProfile(_ context.Context, id uuid.UUID) (*domain.Us
 	if !ok {
 		return nil, domain.ErrNotFound
 	}
+	if !u.IsActive {
+		return nil, domain.ErrNotFound
+	}
 	return &domain.UserProfile{
 		ID:          u.ID,
 		Name:        u.Name,
