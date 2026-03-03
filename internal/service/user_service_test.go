@@ -8,14 +8,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 	"github.com/nikitaaldaev/bani/internal/storage"
 )
 
+var testLogger = logger.New(logger.LevelError)
+
 // newUserService is a test helper that creates a UserService with mock repos.
 func newUserService(userRepo *mock.UserRepo, fileStorage storage.FileStorage) service.UserService {
-	return service.NewUserService(userRepo, mock.NewBookingRepo(), mock.NewReviewRepo(), fileStorage)
+	return service.NewUserService(userRepo, mock.NewBookingRepo(), mock.NewReviewRepo(), fileStorage, testLogger)
 }
 
 func TestUserService_GetByID(t *testing.T) {
@@ -324,7 +327,7 @@ func TestUserService_GetMyStats(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	bookingRepo := mock.NewBookingRepo()
 	reviewRepo := mock.NewReviewRepo()
-	svc := service.NewUserService(userRepo, bookingRepo, reviewRepo, storage.NewMockStorage())
+	svc := service.NewUserService(userRepo, bookingRepo, reviewRepo, storage.NewMockStorage(), testLogger)
 
 	userID := uuid.New()
 	bathhouseID := uuid.New()
@@ -389,7 +392,7 @@ func TestUserService_GetMyStats_Empty(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	bookingRepo := mock.NewBookingRepo()
 	reviewRepo := mock.NewReviewRepo()
-	svc := service.NewUserService(userRepo, bookingRepo, reviewRepo, storage.NewMockStorage())
+	svc := service.NewUserService(userRepo, bookingRepo, reviewRepo, storage.NewMockStorage(), testLogger)
 
 	userID := uuid.New()
 	_ = userRepo.Create(context.Background(), &domain.User{

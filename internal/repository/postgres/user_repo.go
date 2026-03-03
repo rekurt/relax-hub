@@ -178,9 +178,9 @@ func (r *userRepo) GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.
 			COALESCE(AVG(rev.rating), 0) AS avg_rating
 		FROM users u
 		LEFT JOIN cities c ON u.city_id = c.id
-		LEFT JOIN reviews rev ON rev.user_id = u.id AND rev.status = 'published'
+		LEFT JOIN reviews rev ON rev.user_id = u.id AND rev.status = 'approved'
 		LEFT JOIN bookings b ON b.user_id = u.id
-		WHERE u.id = $1
+		WHERE u.id = $1 AND u.is_active = true
 		GROUP BY u.id, u.name, u.avatar_url, u.bio, c.name, u.created_at`
 
 	var p domain.UserProfile

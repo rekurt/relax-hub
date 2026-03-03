@@ -9,6 +9,7 @@ import (
 	repopostgres "github.com/nikitaaldaev/bani/internal/repository/postgres"
 	"github.com/nikitaaldaev/bani/internal/server"
 	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/nikitaaldaev/bani/internal/storage"
 	"go.uber.org/fx"
 )
 
@@ -20,6 +21,7 @@ func New(cfg *config.Config) *fx.App {
 		database.RedisModule,
 		middleware.CORSModule,
 		repopostgres.Module,
+		storage.Module,
 		service.Module,
 		handler.Module,
 		server.Module,

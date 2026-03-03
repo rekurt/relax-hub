@@ -279,6 +279,8 @@ func TestLoad_ProductionEnvironment(t *testing.T) {
 	t.Setenv("BANI_ENVIRONMENT", "production")
 	t.Setenv("BANI_JWT_SECRET", secret)
 	t.Setenv("BANI_DATABASE_DSN", "postgres://user:pass@db:5432/testdb?sslmode=require")
+	t.Setenv("BANI_STORAGE_ACCESS_KEY", "prod-access-key")
+	t.Setenv("BANI_STORAGE_SECRET_KEY", "prod-secret-key")
 
 	cfg, err := Load(cfgPath)
 	if err != nil {

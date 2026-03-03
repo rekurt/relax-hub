@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"path"
-	"time"
+	"net/url"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/storage"
 )
+
+const maxBioLength = 1000
 
 type UpdateUserInput struct {
 	Name   *string
@@ -52,10 +55,11 @@ type userService struct {
 	bookingRepo repository.BookingRepository
 	reviewRepo  repository.ReviewRepository
 	storage     storage.FileStorage
+	log         *logger.Logger
 }
 
-func NewUserService(userRepo repository.UserRepository, bookingRepo repository.BookingRepository, reviewRepo repository.ReviewRepository, fileStorage storage.FileStorage) UserService {
-	return &userService{userRepo: userRepo, bookingRepo: bookingRepo, reviewRepo: reviewRepo, storage: fileStorage}
+func NewUserService(userRepo repository.UserRepository, bookingRepo repository.BookingRepository, reviewRepo repository.ReviewRepository, fileStorage storage.FileStorage, log *logger.Logger) UserService {
+	return &userService{userRepo: userRepo, bookingRepo: bookingRepo, reviewRepo: reviewRepo, storage: fileStorage, log: log}
 }
 
 func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
@@ -78,12 +82,14 @@ func (s *userService) Update(ctx context.Context, id uuid.UUID, input UpdateUser
 		user.Phone = *input.Phone
 	}
 	if input.Bio != nil {
+		if len(*input.Bio) > maxBioLength {
+			return nil, domain.ErrInvalidInput
+		}
 		user.Bio = *input.Bio
 	}
 	if input.CityID != nil {
 		user.CityID = *input.CityID
 	}
-	user.UpdatedAt = time.Now()
 
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		return nil, err
@@ -100,18 +106,19 @@ func (s *userService) UploadAvatar(ctx context.Context, userID uuid.UUID, input 
 
 	// Delete old avatar if exists
 	if user.AvatarURL != "" {
-		oldFilename := path.Base(user.AvatarURL)
-		_ = s.storage.Delete(ctx, oldFilename)
+		oldKey := extractS3Key(user.AvatarURL)
+		if err := s.storage.Delete(ctx, oldKey); err != nil {
+			s.log.Warn("failed to delete old avatar", "key", oldKey, "error", err)
+		}
 	}
 
 	filename := fmt.Sprintf("avatars/%s%s", uuid.New().String(), input.Ext)
-	url, err := s.storage.Upload(ctx, filename, input.Data, input.ContentType)
+	avatarURL, err := s.storage.Upload(ctx, filename, input.Data, input.ContentType)
 	if err != nil {
 		return nil, fmt.Errorf("upload avatar: %w", err)
 	}
 
-	user.AvatarURL = url
-	user.UpdatedAt = time.Now()
+	user.AvatarURL = avatarURL
 
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		return nil, err
@@ -127,12 +134,13 @@ func (s *userService) DeleteAvatar(ctx context.Context, userID uuid.UUID) (*doma
 	}
 
 	if user.AvatarURL != "" {
-		oldFilename := path.Base(user.AvatarURL)
-		_ = s.storage.Delete(ctx, oldFilename)
+		oldKey := extractS3Key(user.AvatarURL)
+		if err := s.storage.Delete(ctx, oldKey); err != nil {
+			s.log.Warn("failed to delete avatar", "key", oldKey, "error", err)
+		}
 	}
 
 	user.AvatarURL = ""
-	user.UpdatedAt = time.Now()
 
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		return nil, err
@@ -175,4 +183,19 @@ func (s *userService) GetMyStats(ctx context.Context, userID uuid.UUID) (*MyStat
 		ReviewCount: reviewStats.ReviewCount,
 		AvgRating:   reviewStats.AvgRating,
 	}, nil
+}
+
+// extractS3Key extracts the S3 object key from a full URL.
+// URL format: scheme://host/bucket/key -> returns "key"
+func extractS3Key(avatarURL string) string {
+	u, err := url.Parse(avatarURL)
+	if err != nil {
+		return avatarURL
+	}
+	// Path is /bucket/key, trim leading / and split on first /
+	parts := strings.SplitN(strings.TrimPrefix(u.Path, "/"), "/", 2)
+	if len(parts) == 2 {
+		return parts[1]
+	}
+	return avatarURL
 }

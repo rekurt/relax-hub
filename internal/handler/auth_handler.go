@@ -199,10 +199,6 @@ func (h *AuthHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	defer file.Close()
 
 	contentType := header.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = "application/octet-stream"
-	}
-	// Also try to detect from extension
 	ext, ok := allowedAvatarTypes[contentType]
 	if !ok {
 		// Try by file extension

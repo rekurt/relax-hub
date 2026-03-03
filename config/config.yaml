@@ -13,3 +13,11 @@ redis:
 jwt:
   secret: "change-me-in-production"
   token_ttl: "24h"
+
+storage:
+  endpoint: "localhost:9000"
+  bucket: "bani-avatars"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  region: "us-east-1"
+  use_ssl: false

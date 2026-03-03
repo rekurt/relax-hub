@@ -127,6 +127,9 @@ func (c *Config) Validate() error {
 		if !strings.Contains(c.Database.DSN, "sslmode=require") {
 			return fmt.Errorf("database.dsn must use sslmode=require in production")
 		}
+		if c.Storage.AccessKey == "minioadmin" || c.Storage.SecretKey == "minioadmin" {
+			return fmt.Errorf("storage credentials must not use default values in production (set BANI_STORAGE_ACCESS_KEY and BANI_STORAGE_SECRET_KEY)")
+		}
 	}
 
 	return nil
