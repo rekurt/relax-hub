@@ -79,13 +79,13 @@
 - Modify: `internal/service/user_service.go`
 - Modify: `internal/handler/auth.go`
 
-- [ ] Расширить UserService: UpdateProfile, UploadAvatar, GetPublicProfile, GetUserStats
-- [ ] PUT /api/v1/auth/me — обновить профиль (name, bio, phone, city_id)
-- [ ] POST /api/v1/auth/me/avatar — загрузить аватар (multipart/form-data)
-- [ ] DELETE /api/v1/auth/me/avatar — удалить аватар
-- [ ] GET /api/v1/users/{id}/profile — публичный профиль (имя, аватар, bio, кол-во отзывов)
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Расширить UserService: UpdateProfile, UploadAvatar, GetPublicProfile, GetUserStats
+- [x] PUT /api/v1/auth/me — обновить профиль (name, bio, phone, city_id)
+- [x] POST /api/v1/auth/me/avatar — загрузить аватар (multipart/form-data)
+- [x] DELETE /api/v1/auth/me/avatar — удалить аватар
+- [x] GET /api/v1/users/{id}/profile — публичный профиль (имя, аватар, bio, кол-во отзывов)
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Статистика пользователя
 

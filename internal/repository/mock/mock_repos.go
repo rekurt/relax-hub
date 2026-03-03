@@ -129,6 +129,22 @@ func (r *UserRepo) SetActive(_ context.Context, id uuid.UUID, active bool) error
 	return nil
 }
 
+func (r *UserRepo) GetPublicProfile(_ context.Context, id uuid.UUID) (*domain.UserProfile, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	u, ok := r.users[id]
+	if !ok {
+		return nil, domain.ErrNotFound
+	}
+	return &domain.UserProfile{
+		ID:          u.ID,
+		Name:        u.Name,
+		AvatarURL:   u.AvatarURL,
+		Bio:         u.Bio,
+		MemberSince: u.CreatedAt,
+	}, nil
+}
+
 // CityRepo is an in-memory mock implementation of repository.CityRepository.
 type CityRepo struct {
 	mu     sync.RWMutex

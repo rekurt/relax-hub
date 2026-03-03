@@ -1,6 +1,7 @@
 package service_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"testing"
@@ -9,11 +10,12 @@ import (
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/nikitaaldaev/bani/internal/storage"
 )
 
 func TestUserService_GetByID(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo)
+	svc := service.NewUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -32,7 +34,7 @@ func TestUserService_GetByID(t *testing.T) {
 
 func TestUserService_Update(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo)
+	svc := service.NewUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -57,9 +59,190 @@ func TestUserService_Update(t *testing.T) {
 	}
 }
 
+func TestUserService_Update_Bio(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+
+	user := &domain.User{
+		ID: uuid.New(), Email: "test@example.com", Name: "Test",
+		Role: domain.RoleClient, IsActive: true,
+	}
+	_ = userRepo.Create(context.Background(), user)
+
+	bio := "Люблю русскую баню"
+	updated, err := svc.Update(context.Background(), user.ID, service.UpdateUserInput{
+		Bio: &bio,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.Bio != bio {
+		t.Errorf("bio = %q, want %q", updated.Bio, bio)
+	}
+}
+
+func TestUserService_Update_CityID(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+
+	user := &domain.User{
+		ID: uuid.New(), Email: "test@example.com", Name: "Test",
+		Role: domain.RoleClient, IsActive: true,
+	}
+	_ = userRepo.Create(context.Background(), user)
+
+	cityID := int64(1)
+	cityIDPtr := &cityID
+	updated, err := svc.Update(context.Background(), user.ID, service.UpdateUserInput{
+		CityID: &cityIDPtr,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.CityID == nil || *updated.CityID != cityID {
+		t.Errorf("city_id = %v, want %d", updated.CityID, cityID)
+	}
+
+	// Clear city_id
+	var nilCityID *int64
+	updated2, err := svc.Update(context.Background(), user.ID, service.UpdateUserInput{
+		CityID: &nilCityID,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error clearing city: %v", err)
+	}
+	if updated2.CityID != nil {
+		t.Errorf("city_id should be nil after clearing, got %v", updated2.CityID)
+	}
+}
+
+func TestUserService_Update_EmptyName(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+
+	user := &domain.User{
+		ID: uuid.New(), Email: "test@example.com", Name: "Test",
+		Role: domain.RoleClient, IsActive: true,
+	}
+	_ = userRepo.Create(context.Background(), user)
+
+	emptyName := ""
+	_, err := svc.Update(context.Background(), user.ID, service.UpdateUserInput{
+		Name: &emptyName,
+	})
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput for empty name, got: %v", err)
+	}
+}
+
+func TestUserService_UploadAvatar(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	mockStore := storage.NewMockStorage()
+	svc := service.NewUserService(userRepo, mockStore)
+
+	user := &domain.User{
+		ID: uuid.New(), Email: "test@example.com", Name: "Test",
+		Role: domain.RoleClient, IsActive: true,
+	}
+	_ = userRepo.Create(context.Background(), user)
+
+	data := bytes.NewReader([]byte("fake image data"))
+	updated, err := svc.UploadAvatar(context.Background(), user.ID, service.UploadAvatarInput{
+		Data:        data,
+		ContentType: "image/jpeg",
+		Ext:         ".jpg",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.AvatarURL == "" {
+		t.Error("avatar_url should not be empty after upload")
+	}
+	if mockStore.Len() != 1 {
+		t.Errorf("expected 1 file in storage, got %d", mockStore.Len())
+	}
+}
+
+func TestUserService_UploadAvatar_ReplacesOld(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	mockStore := storage.NewMockStorage()
+	svc := service.NewUserService(userRepo, mockStore)
+
+	user := &domain.User{
+		ID: uuid.New(), Email: "test@example.com", Name: "Test",
+		Role: domain.RoleClient, IsActive: true, AvatarURL: "http://mock-storage/old-avatar.jpg",
+	}
+	_ = userRepo.Create(context.Background(), user)
+
+	data := bytes.NewReader([]byte("new image data"))
+	updated, err := svc.UploadAvatar(context.Background(), user.ID, service.UploadAvatarInput{
+		Data:        data,
+		ContentType: "image/png",
+		Ext:         ".png",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.AvatarURL == "" {
+		t.Error("avatar_url should not be empty")
+	}
+}
+
+func TestUserService_DeleteAvatar(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	mockStore := storage.NewMockStorage()
+	svc := service.NewUserService(userRepo, mockStore)
+
+	user := &domain.User{
+		ID: uuid.New(), Email: "test@example.com", Name: "Test",
+		Role: domain.RoleClient, IsActive: true, AvatarURL: "http://mock-storage/avatar.jpg",
+	}
+	_ = userRepo.Create(context.Background(), user)
+
+	updated, err := svc.DeleteAvatar(context.Background(), user.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.AvatarURL != "" {
+		t.Errorf("avatar_url should be empty after delete, got %q", updated.AvatarURL)
+	}
+}
+
+func TestUserService_GetPublicProfile(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+
+	user := &domain.User{
+		ID: uuid.New(), Email: "test@example.com", Name: "Test User",
+		Bio: "Hello", Role: domain.RoleClient, IsActive: true,
+	}
+	_ = userRepo.Create(context.Background(), user)
+
+	profile, err := svc.GetPublicProfile(context.Background(), user.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if profile.Name != "Test User" {
+		t.Errorf("name = %q, want %q", profile.Name, "Test User")
+	}
+	if profile.Bio != "Hello" {
+		t.Errorf("bio = %q, want %q", profile.Bio, "Hello")
+	}
+}
+
+func TestUserService_GetPublicProfile_NotFound(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	svc := service.NewUserService(userRepo, storage.NewMockStorage())
+
+	_, err := svc.GetPublicProfile(context.Background(), uuid.New())
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("expected ErrNotFound, got: %v", err)
+	}
+}
+
 func TestUserService_Block(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo)
+	svc := service.NewUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -80,7 +263,7 @@ func TestUserService_Block(t *testing.T) {
 
 func TestUserService_Unblock(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo)
+	svc := service.NewUserService(userRepo, storage.NewMockStorage())
 
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test",
@@ -101,7 +284,7 @@ func TestUserService_Unblock(t *testing.T) {
 
 func TestUserService_List(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo)
+	svc := service.NewUserService(userRepo, storage.NewMockStorage())
 
 	for i := 0; i < 5; i++ {
 		_ = userRepo.Create(context.Background(), &domain.User{
@@ -124,7 +307,7 @@ func TestUserService_List(t *testing.T) {
 
 func TestUserService_GetByID_NotFound(t *testing.T) {
 	userRepo := mock.NewUserRepo()
-	svc := service.NewUserService(userRepo)
+	svc := service.NewUserService(userRepo, storage.NewMockStorage())
 
 	_, err := svc.GetByID(context.Background(), uuid.New())
 	if !errors.Is(err, domain.ErrNotFound) {

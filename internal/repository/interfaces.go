@@ -15,6 +15,7 @@ type UserRepository interface {
 	Update(ctx context.Context, user *domain.User) error
 	List(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.User], error)
 	SetActive(ctx context.Context, id uuid.UUID, active bool) error
+	GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.UserProfile, error)
 }
 
 type CityRepository interface {

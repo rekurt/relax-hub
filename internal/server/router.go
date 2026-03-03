@@ -48,6 +48,12 @@ func NewRouter(p RouterParams) http.Handler {
 		r.Post("/auth/register", p.AuthHandler.Register)
 		r.Post("/auth/login", p.AuthHandler.Login)
 		r.With(auth).Get("/auth/me", p.AuthHandler.Me)
+		r.With(auth).Put("/auth/me", p.AuthHandler.UpdateProfile)
+		r.With(auth).Post("/auth/me/avatar", p.AuthHandler.UploadAvatar)
+		r.With(auth).Delete("/auth/me/avatar", p.AuthHandler.DeleteAvatar)
+
+		// User profiles (public)
+		r.Get("/users/{id}/profile", p.AuthHandler.GetPublicProfile)
 
 		// Bathhouses (public, with optional auth for is_favorite)
 		r.With(optionalAuth).Get("/bathhouses", p.BHHandler.Search)

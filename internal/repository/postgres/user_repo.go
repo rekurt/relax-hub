@@ -166,3 +166,34 @@ func (r *userRepo) SetActive(ctx context.Context, id uuid.UUID, active bool) err
 	}
 	return nil
 }
+
+func (r *userRepo) GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.UserProfile, error) {
+	query := `
+		SELECT
+			u.id, u.name, u.avatar_url, u.bio,
+			COALESCE(c.name, '') AS city_name,
+			u.created_at,
+			COUNT(DISTINCT rev.id) AS review_count,
+			COUNT(DISTINCT CASE WHEN b.status = 'completed' THEN b.id END) AS visit_count,
+			COALESCE(AVG(rev.rating), 0) AS avg_rating
+		FROM users u
+		LEFT JOIN cities c ON u.city_id = c.id
+		LEFT JOIN reviews rev ON rev.user_id = u.id AND rev.status = 'published'
+		LEFT JOIN bookings b ON b.user_id = u.id
+		WHERE u.id = $1
+		GROUP BY u.id, u.name, u.avatar_url, u.bio, c.name, u.created_at`
+
+	var p domain.UserProfile
+	err := r.pool.QueryRow(ctx, query, id).Scan(
+		&p.ID, &p.Name, &p.AvatarURL, &p.Bio,
+		&p.CityName, &p.MemberSince,
+		&p.ReviewCount, &p.VisitCount, &p.AvgRating,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("get public profile: %w", err)
+	}
+	return &p, nil
+}

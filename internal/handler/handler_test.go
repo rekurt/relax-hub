@@ -48,11 +48,14 @@ func (m *mockAuthService) ParseToken(ctx context.Context, token string) (uuid.UU
 }
 
 type mockUserService struct {
-	getByIDFn func(ctx context.Context, id uuid.UUID) (*domain.User, error)
-	updateFn  func(ctx context.Context, id uuid.UUID, input service.UpdateUserInput) (*domain.User, error)
-	listFn    func(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.User], error)
-	blockFn   func(ctx context.Context, id uuid.UUID) error
-	unblockFn func(ctx context.Context, id uuid.UUID) error
+	getByIDFn         func(ctx context.Context, id uuid.UUID) (*domain.User, error)
+	updateFn          func(ctx context.Context, id uuid.UUID, input service.UpdateUserInput) (*domain.User, error)
+	uploadAvatarFn    func(ctx context.Context, userID uuid.UUID, input service.UploadAvatarInput) (*domain.User, error)
+	deleteAvatarFn    func(ctx context.Context, userID uuid.UUID) (*domain.User, error)
+	getPublicProfileFn func(ctx context.Context, id uuid.UUID) (*domain.UserProfile, error)
+	listFn            func(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.User], error)
+	blockFn           func(ctx context.Context, id uuid.UUID) error
+	unblockFn         func(ctx context.Context, id uuid.UUID) error
 }
 
 func (m *mockUserService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
@@ -67,6 +70,27 @@ func (m *mockUserService) Update(ctx context.Context, id uuid.UUID, input servic
 		return m.updateFn(ctx, id, input)
 	}
 	return nil, nil
+}
+
+func (m *mockUserService) UploadAvatar(ctx context.Context, userID uuid.UUID, input service.UploadAvatarInput) (*domain.User, error) {
+	if m.uploadAvatarFn != nil {
+		return m.uploadAvatarFn(ctx, userID, input)
+	}
+	return nil, nil
+}
+
+func (m *mockUserService) DeleteAvatar(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+	if m.deleteAvatarFn != nil {
+		return m.deleteAvatarFn(ctx, userID)
+	}
+	return nil, nil
+}
+
+func (m *mockUserService) GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.UserProfile, error) {
+	if m.getPublicProfileFn != nil {
+		return m.getPublicProfileFn(ctx, id)
+	}
+	return nil, domain.ErrNotFound
 }
 
 func (m *mockUserService) List(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.User], error) {
@@ -597,6 +621,154 @@ func TestAuthHandler_Me_Unauthenticated(t *testing.T) {
 
 	if rec.Code != http.StatusUnauthorized {
 		t.Errorf("expected status 401, got %d", rec.Code)
+	}
+}
+
+func TestAuthHandler_UpdateProfile(t *testing.T) {
+	userID := uuid.New()
+	userSvc := &mockUserService{
+		updateFn: func(_ context.Context, id uuid.UUID, input service.UpdateUserInput) (*domain.User, error) {
+			name := "Updated"
+			if input.Name != nil {
+				name = *input.Name
+			}
+			return &domain.User{
+				ID: id, Email: "test@example.com", Name: name,
+				Role: domain.RoleClient, IsActive: true,
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(userID, domain.RoleClient)
+	h := handler.NewAuthHandler(authSvc, userSvc)
+
+	r := chi.NewRouter()
+	r.With(middleware.RequireAuth(authSvc)).Put("/auth/me", h.UpdateProfile)
+
+	body := `{"name":"New Name","bio":"Hello world"}`
+	req := httptest.NewRequest(http.MethodPut, "/auth/me", bytes.NewBufferString(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	resp := parseResponse(t, rec)
+	if !resp.Success {
+		t.Errorf("expected success=true, body: %s", rec.Body.String())
+	}
+}
+
+func TestAuthHandler_DeleteAvatar(t *testing.T) {
+	userID := uuid.New()
+	userSvc := &mockUserService{
+		deleteAvatarFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
+			return &domain.User{
+				ID: id, Email: "test@example.com", Name: "Test",
+				Role: domain.RoleClient, IsActive: true, AvatarURL: "",
+			}, nil
+		},
+	}
+
+	authSvc := makeAuthToken(userID, domain.RoleClient)
+	h := handler.NewAuthHandler(authSvc, userSvc)
+
+	r := chi.NewRouter()
+	r.With(middleware.RequireAuth(authSvc)).Delete("/auth/me/avatar", h.DeleteAvatar)
+
+	req := httptest.NewRequest(http.MethodDelete, "/auth/me/avatar", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	resp := parseResponse(t, rec)
+	if !resp.Success {
+		t.Errorf("expected success=true, body: %s", rec.Body.String())
+	}
+}
+
+func TestAuthHandler_GetPublicProfile(t *testing.T) {
+	profileID := uuid.New()
+	userSvc := &mockUserService{
+		getPublicProfileFn: func(_ context.Context, id uuid.UUID) (*domain.UserProfile, error) {
+			return &domain.UserProfile{
+				ID:          id,
+				Name:        "Test User",
+				AvatarURL:   "http://example.com/avatar.jpg",
+				Bio:         "Bio text",
+				CityName:    "Moscow",
+				MemberSince: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				ReviewCount: 5,
+				VisitCount:  10,
+				AvgRating:   4.5,
+			}, nil
+		},
+	}
+
+	h := handler.NewAuthHandler(&mockAuthService{}, userSvc)
+
+	r := chi.NewRouter()
+	r.Get("/users/{id}/profile", h.GetPublicProfile)
+
+	req := httptest.NewRequest(http.MethodGet, "/users/"+profileID.String()+"/profile", nil)
+	rec := httptest.NewRecorder()
+
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	resp := parseResponse(t, rec)
+	if !resp.Success {
+		t.Errorf("expected success=true, body: %s", rec.Body.String())
+	}
+}
+
+func TestAuthHandler_GetPublicProfile_NotFound(t *testing.T) {
+	userSvc := &mockUserService{
+		getPublicProfileFn: func(_ context.Context, id uuid.UUID) (*domain.UserProfile, error) {
+			return nil, domain.ErrNotFound
+		},
+	}
+
+	h := handler.NewAuthHandler(&mockAuthService{}, userSvc)
+
+	r := chi.NewRouter()
+	r.Get("/users/{id}/profile", h.GetPublicProfile)
+
+	req := httptest.NewRequest(http.MethodGet, "/users/"+uuid.New().String()+"/profile", nil)
+	rec := httptest.NewRecorder()
+
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected status 404, got %d", rec.Code)
+	}
+}
+
+func TestAuthHandler_GetPublicProfile_InvalidID(t *testing.T) {
+	h := handler.NewAuthHandler(&mockAuthService{}, &mockUserService{})
+
+	r := chi.NewRouter()
+	r.Get("/users/{id}/profile", h.GetPublicProfile)
+
+	req := httptest.NewRequest(http.MethodGet, "/users/invalid-uuid/profile", nil)
+	rec := httptest.NewRecorder()
+
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", rec.Code)
 	}
 }
 
