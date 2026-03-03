@@ -17,6 +17,7 @@ import (
 type S3Storage struct {
 	client *minio.Client
 	bucket string
+	region string
 	useSSL bool
 	logger *logger.Logger
 }
@@ -34,6 +35,7 @@ func NewS3Storage(cfg *config.Config, log *logger.Logger) (*S3Storage, error) {
 	s := &S3Storage{
 		client: client,
 		bucket: cfg.Storage.Bucket,
+		region: cfg.Storage.Region,
 		useSSL: cfg.Storage.UseSSL,
 		logger: log,
 	}
@@ -85,7 +87,7 @@ func (s *S3Storage) ensureBucket(ctx context.Context) error {
 	}
 	if !exists {
 		err = s.client.MakeBucket(ctx, s.bucket, minio.MakeBucketOptions{
-			Region: s.client.EndpointURL().Query().Get("region"),
+			Region: s.region,
 		})
 		if err != nil {
 			return fmt.Errorf("create bucket: %w", err)

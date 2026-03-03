@@ -173,15 +173,20 @@ func (r *userRepo) GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.
 			u.id, u.name, u.avatar_url, u.bio,
 			COALESCE(c.name, '') AS city_name,
 			u.created_at,
-			COUNT(DISTINCT rev.id) AS review_count,
-			COUNT(DISTINCT CASE WHEN b.status = 'completed' THEN b.id END) AS visit_count,
-			COALESCE(AVG(rev.rating), 0) AS avg_rating
+			COALESCE(rev_stats.review_count, 0) AS review_count,
+			COALESCE(booking_stats.visit_count, 0) AS visit_count,
+			COALESCE(rev_stats.avg_rating, 0) AS avg_rating
 		FROM users u
 		LEFT JOIN cities c ON u.city_id = c.id
-		LEFT JOIN reviews rev ON rev.user_id = u.id AND rev.status = 'approved'
-		LEFT JOIN bookings b ON b.user_id = u.id
-		WHERE u.id = $1 AND u.is_active = true
-		GROUP BY u.id, u.name, u.avatar_url, u.bio, c.name, u.created_at`
+		LEFT JOIN (
+			SELECT user_id, COUNT(*) AS review_count, AVG(rating) AS avg_rating
+			FROM reviews WHERE status = 'approved' GROUP BY user_id
+		) rev_stats ON rev_stats.user_id = u.id
+		LEFT JOIN (
+			SELECT user_id, COUNT(*) AS visit_count
+			FROM bookings WHERE status = 'completed' GROUP BY user_id
+		) booking_stats ON booking_stats.user_id = u.id
+		WHERE u.id = $1 AND u.is_active = true`
 
 	var p domain.UserProfile
 	err := r.pool.QueryRow(ctx, query, id).Scan(

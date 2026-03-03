@@ -1,10 +1,10 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -211,38 +211,35 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxAvatarSize)
 
-	file, header, err := r.FormFile("avatar")
+	file, _, err := r.FormFile("avatar")
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_input", "avatar file is required")
 		return
 	}
 	defer file.Close()
 
-	contentType := header.Header.Get("Content-Type")
-	ext, ok := allowedAvatarTypes[contentType]
-	if !ok {
-		// Try by file extension
-		fileExt := strings.ToLower(filepath.Ext(header.Filename))
-		found := false
-		for ct, e := range allowedAvatarTypes {
-			if e == fileExt {
-				contentType = ct
-				ext = e
-				found = true
-				break
-			}
-		}
-		if !found {
-			writeError(w, http.StatusBadRequest, "invalid_input", "unsupported image format, use JPEG or PNG")
-			return
-		}
+	// Detect actual content type from file bytes (not trusting client headers)
+	buf := make([]byte, 512)
+	n, err := file.Read(buf)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "failed to read avatar file")
+		return
 	}
+	detectedType := http.DetectContentType(buf[:n])
+	ext, ok := allowedAvatarTypes[detectedType]
+	if !ok {
+		writeError(w, http.StatusBadRequest, "invalid_input", "unsupported image format, use JPEG or PNG")
+		return
+	}
+
+	// Reconstruct the reader with the already-read bytes prepended
+	data := io.MultiReader(bytes.NewReader(buf[:n]), file)
 
 	userID := middleware.GetUserID(r.Context())
 
 	user, err := h.userService.UploadAvatar(r.Context(), userID, service.UploadAvatarInput{
-		Data:        file,
-		ContentType: contentType,
+		Data:        data,
+		ContentType: detectedType,
 		Ext:         ext,
 	})
 	if err != nil {
