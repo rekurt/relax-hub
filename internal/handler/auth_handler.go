@@ -39,22 +39,28 @@ type authResponse struct {
 }
 
 type userResponse struct {
-	ID       string `json:"id"`
-	Email    string `json:"email"`
-	Name     string `json:"name"`
-	Phone    string `json:"phone"`
-	Role     string `json:"role"`
-	IsActive bool   `json:"is_active"`
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	Name      string `json:"name"`
+	Phone     string `json:"phone"`
+	Role      string `json:"role"`
+	IsActive  bool   `json:"is_active"`
+	AvatarURL string `json:"avatar_url"`
+	Bio       string `json:"bio"`
+	CityID    *int64 `json:"city_id"`
 }
 
 func toUserResponse(u *domain.User) userResponse {
 	return userResponse{
-		ID:       u.ID.String(),
-		Email:    u.Email,
-		Name:     u.Name,
-		Phone:    u.Phone,
-		Role:     string(u.Role),
-		IsActive: u.IsActive,
+		ID:        u.ID.String(),
+		Email:     u.Email,
+		Name:      u.Name,
+		Phone:     u.Phone,
+		Role:      string(u.Role),
+		IsActive:  u.IsActive,
+		AvatarURL: u.AvatarURL,
+		Bio:       u.Bio,
+		CityID:    u.CityID,
 	}
 }
 

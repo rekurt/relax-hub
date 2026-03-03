@@ -38,6 +38,20 @@ func TestUser_Validate(t *testing.T) {
 		t.Errorf("valid user returned error: %v", err)
 	}
 
+	cityID := int64(1)
+	validWithProfile := &User{
+		ID:        uuid.New(),
+		Email:     "profile@example.com",
+		Name:      "Profile User",
+		Role:      RoleClient,
+		AvatarURL: "https://example.com/avatar.jpg",
+		Bio:       "Hello world",
+		CityID:    &cityID,
+	}
+	if err := validWithProfile.Validate(); err != nil {
+		t.Errorf("valid user with profile fields returned error: %v", err)
+	}
+
 	tests := []struct {
 		name string
 		user User
@@ -53,6 +67,69 @@ func TestUser_Validate(t *testing.T) {
 				t.Error("expected error for invalid user")
 			}
 		})
+	}
+}
+
+func TestUser_ProfileFields(t *testing.T) {
+	cityID := int64(42)
+	user := User{
+		ID:        uuid.New(),
+		Email:     "test@example.com",
+		Name:      "Test User",
+		Role:      RoleClient,
+		AvatarURL: "https://example.com/avatar.jpg",
+		Bio:       "I love saunas",
+		CityID:    &cityID,
+	}
+
+	if user.AvatarURL != "https://example.com/avatar.jpg" {
+		t.Errorf("AvatarURL = %q, want %q", user.AvatarURL, "https://example.com/avatar.jpg")
+	}
+	if user.Bio != "I love saunas" {
+		t.Errorf("Bio = %q, want %q", user.Bio, "I love saunas")
+	}
+	if user.CityID == nil || *user.CityID != 42 {
+		t.Errorf("CityID = %v, want 42", user.CityID)
+	}
+
+	// CityID can be nil (optional)
+	userNilCity := User{
+		Email: "test2@example.com",
+		Name:  "Test",
+		Role:  RoleClient,
+	}
+	if userNilCity.CityID != nil {
+		t.Errorf("CityID should be nil by default, got %v", userNilCity.CityID)
+	}
+}
+
+func TestUserProfile(t *testing.T) {
+	profile := UserProfile{
+		ID:          uuid.New(),
+		Name:        "Test User",
+		AvatarURL:   "https://example.com/avatar.jpg",
+		Bio:         "Bio text",
+		CityName:    "Moscow",
+		MemberSince: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		ReviewCount: 5,
+		VisitCount:  10,
+		AvgRating:   4.2,
+	}
+
+	if profile.Name != "Test User" {
+		t.Errorf("Name = %q, want %q", profile.Name, "Test User")
+	}
+	if profile.ReviewCount != 5 {
+		t.Errorf("ReviewCount = %d, want 5", profile.ReviewCount)
+	}
+	if profile.VisitCount != 10 {
+		t.Errorf("VisitCount = %d, want 10", profile.VisitCount)
+	}
+	if profile.AvgRating != 4.2 {
+		t.Errorf("AvgRating = %f, want 4.2", profile.AvgRating)
+	}
+	if profile.CityName != "Moscow" {
+		t.Errorf("CityName = %q, want %q", profile.CityName, "Moscow")
 	}
 }
 

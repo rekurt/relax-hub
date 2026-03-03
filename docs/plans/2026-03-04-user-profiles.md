@@ -29,13 +29,13 @@
 - Create: `migrations/000014_user_profiles.up.sql`
 - Create: `migrations/000014_user_profiles.down.sql`
 
-- [ ] Расширить модель User:
+- [x] Расширить модель User:
   ```
   + AvatarURL     string
   + Bio           string
   + CityID        *int64
   ```
-- [ ] Создать модель UserProfile (агрегат для публичного профиля):
+- [x] Создать модель UserProfile (агрегат для публичного профиля):
   ```
   UserProfile {
     ID          uuid.UUID
@@ -49,9 +49,9 @@
     AvgRating   float64   // средний рейтинг оставленных отзывов
   }
   ```
-- [ ] Создать миграцию: ALTER users ADD COLUMN avatar_url, bio, city_id
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать миграцию: ALTER users ADD COLUMN avatar_url, bio, city_id
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Загрузка аватаров (File Storage)
 

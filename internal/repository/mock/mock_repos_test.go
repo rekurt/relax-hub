@@ -101,6 +101,84 @@ func TestUserRepo_CRUD(t *testing.T) {
 	}
 }
 
+func TestUserRepo_ProfileFields(t *testing.T) {
+	ctx := context.Background()
+	repo := NewUserRepo()
+
+	cityID := int64(42)
+	user := &domain.User{
+		Email:        "profile@example.com",
+		PasswordHash: "hash",
+		Name:         "Profile User",
+		Phone:        "+7999111111",
+		Role:         domain.RoleClient,
+		IsActive:     true,
+		AvatarURL:    "https://example.com/avatar.jpg",
+		Bio:          "I love saunas",
+		CityID:       &cityID,
+	}
+
+	if err := repo.Create(ctx, user); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	got, err := repo.GetByID(ctx, user.ID)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if got.AvatarURL != "https://example.com/avatar.jpg" {
+		t.Errorf("AvatarURL = %q, want %q", got.AvatarURL, "https://example.com/avatar.jpg")
+	}
+	if got.Bio != "I love saunas" {
+		t.Errorf("Bio = %q, want %q", got.Bio, "I love saunas")
+	}
+	if got.CityID == nil || *got.CityID != 42 {
+		t.Errorf("CityID = %v, want 42", got.CityID)
+	}
+
+	// Update profile fields
+	user.Bio = "Updated bio"
+	user.AvatarURL = "https://example.com/new-avatar.jpg"
+	newCityID := int64(99)
+	user.CityID = &newCityID
+	if err := repo.Update(ctx, user); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	got, _ = repo.GetByID(ctx, user.ID)
+	if got.Bio != "Updated bio" {
+		t.Errorf("Bio after update = %q, want %q", got.Bio, "Updated bio")
+	}
+	if got.AvatarURL != "https://example.com/new-avatar.jpg" {
+		t.Errorf("AvatarURL after update = %q, want %q", got.AvatarURL, "https://example.com/new-avatar.jpg")
+	}
+	if got.CityID == nil || *got.CityID != 99 {
+		t.Errorf("CityID after update = %v, want 99", got.CityID)
+	}
+
+	// User without profile fields (nil CityID)
+	user2 := &domain.User{
+		Email:        "noprofile@example.com",
+		PasswordHash: "hash",
+		Name:         "No Profile",
+		Role:         domain.RoleClient,
+		IsActive:     true,
+	}
+	if err := repo.Create(ctx, user2); err != nil {
+		t.Fatalf("Create user2: %v", err)
+	}
+	got2, _ := repo.GetByID(ctx, user2.ID)
+	if got2.CityID != nil {
+		t.Errorf("CityID should be nil, got %v", got2.CityID)
+	}
+	if got2.AvatarURL != "" {
+		t.Errorf("AvatarURL should be empty, got %q", got2.AvatarURL)
+	}
+	if got2.Bio != "" {
+		t.Errorf("Bio should be empty, got %q", got2.Bio)
+	}
+}
+
 func TestCityRepo_CRUD(t *testing.T) {
 	ctx := context.Background()
 	repo := NewCityRepo()
