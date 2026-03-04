@@ -181,7 +181,7 @@ Social login via VK, Yandex ID, Google OAuth 2.0. Multiple providers per account
 - **auth/** — OAuth provider implementations (VK, Yandex, Google), each with `GetAuthURL` and `Exchange` methods
 - **domain/oauth.go** — SocialAccount model, linked to User via UserID
 - **repository/postgres/social_account.go** — CRUD for social_accounts table
-- **service/auth_service.go** — OAuthCallback (find/create user + JWT), LinkSocialAccount, UnlinkSocialAccount
+- **service/oauth_service.go** — OAuthCallback (find/create user + JWT), LinkSocialAccount, UnlinkSocialAccount
 
 Routes:
 - `GET /api/v1/auth/oauth/{provider}` — redirect to provider auth page

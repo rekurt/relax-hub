@@ -70,6 +70,15 @@ func (h *OAuthHandler) OAuthRedirect(w http.ResponseWriter, r *http.Request) {
 func (h *OAuthHandler) OAuthCallback(w http.ResponseWriter, r *http.Request) {
 	provider := domain.OAuthProvider(chi.URLParam(r, "provider"))
 
+	if errParam := r.URL.Query().Get("error"); errParam != "" {
+		desc := r.URL.Query().Get("error_description")
+		if desc == "" {
+			desc = errParam
+		}
+		writeError(w, http.StatusBadRequest, "oauth_error", desc)
+		return
+	}
+
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		writeError(w, http.StatusBadRequest, "invalid_input", "authorization code is required")

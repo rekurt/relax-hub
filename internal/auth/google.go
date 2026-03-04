@@ -83,6 +83,10 @@ func (p *GoogleProvider) fetchUserInfo(ctx context.Context, accessToken string) 
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("google: API returned status %d", resp.StatusCode)
+	}
+
 	var user googleUserInfo
 	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
 		return nil, fmt.Errorf("google: decode response: %w", err)

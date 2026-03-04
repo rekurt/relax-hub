@@ -163,14 +163,7 @@ func (s *authService) ParseToken(_ context.Context, tokenString string) (uuid.UU
 }
 
 func (s *authService) generateToken(userID uuid.UUID, role domain.UserRole) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id": userID.String(),
-		"role":    string(role),
-		"exp":     time.Now().Add(s.tokenTTL).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(s.jwtSecret)
+	return generateJWT(userID, role, s.jwtSecret, s.tokenTTL)
 }
 
 func isValidEmail(email string) bool {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/auth"
@@ -137,9 +136,13 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 	if user == nil {
 		// Create new user without password
 		now := time.Now()
+		email := info.Email
+		if email == "" {
+			email = fmt.Sprintf("oauth_%s@noemail.local", uuid.New().String())
+		}
 		user = &domain.User{
 			ID:        uuid.New(),
-			Email:     info.Email,
+			Email:     email,
 			Name:      info.Name,
 			AvatarURL: info.AvatarURL,
 			Role:      domain.RoleClient,
@@ -165,6 +168,10 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 		LinkedAt:   time.Now(),
 	}
 
+	if err := socialAccount.Validate(); err != nil {
+		return nil, "", fmt.Errorf("validate social account: %w", err)
+	}
+
 	if err := s.socialRepo.Create(ctx, socialAccount); err != nil {
 		return nil, "", fmt.Errorf("link social account: %w", err)
 	}
@@ -188,12 +195,9 @@ func (s *oauthService) LinkSocialAccount(ctx context.Context, userID uuid.UUID, 
 		return fmt.Errorf("oauth exchange: %w", err)
 	}
 
-	// Check if this social account is already linked to another user
-	existing, err := s.socialRepo.GetByProviderAndID(ctx, provider, info.ProviderID)
-	if err == nil && existing.UserID != userID {
-		return domain.ErrSocialAccountAlreadyLinked
-	}
-	if err == nil && existing.UserID == userID {
+	// Check if this social account is already linked
+	_, err = s.socialRepo.GetByProviderAndID(ctx, provider, info.ProviderID)
+	if err == nil {
 		return domain.ErrSocialAccountAlreadyLinked
 	}
 	if err != nil && !errors.Is(err, domain.ErrSocialAccountNotFound) {
@@ -209,6 +213,10 @@ func (s *oauthService) LinkSocialAccount(ctx context.Context, userID uuid.UUID, 
 		Name:       info.Name,
 		AvatarURL:  info.AvatarURL,
 		LinkedAt:   time.Now(),
+	}
+
+	if err := socialAccount.Validate(); err != nil {
+		return fmt.Errorf("validate social account: %w", err)
 	}
 
 	if err := s.socialRepo.Create(ctx, socialAccount); err != nil {
@@ -267,12 +275,5 @@ func (s *oauthService) getProvider(provider domain.OAuthProvider) (auth.OAuthPro
 }
 
 func (s *oauthService) generateToken(userID uuid.UUID, role domain.UserRole) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id": userID.String(),
-		"role":    string(role),
-		"exp":     time.Now().Add(s.tokenTTL).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(s.jwtSecret)
+	return generateJWT(userID, role, s.jwtSecret, s.tokenTTL)
 }

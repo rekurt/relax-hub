@@ -53,35 +53,3 @@ func TestSocialAccount_Validate(t *testing.T) {
 		})
 	}
 }
-
-func TestSocialAccount_Fields(t *testing.T) {
-	account := SocialAccount{
-		ID:          uuid.New(),
-		UserID:      uuid.New(),
-		Provider:    OAuthProviderYandex,
-		ProviderID:  "yandex-user-42",
-		Email:       "user@yandex.ru",
-		Name:        "Yandex User",
-		AvatarURL:   "https://avatars.yandex.net/photo.jpg",
-		AccessToken: "secret-token",
-	}
-
-	if account.Provider != OAuthProviderYandex {
-		t.Errorf("Provider = %q, want %q", account.Provider, OAuthProviderYandex)
-	}
-	if account.ProviderID != "yandex-user-42" {
-		t.Errorf("ProviderID = %q, want %q", account.ProviderID, "yandex-user-42")
-	}
-	if account.Email != "user@yandex.ru" {
-		t.Errorf("Email = %q, want %q", account.Email, "user@yandex.ru")
-	}
-	if account.Name != "Yandex User" {
-		t.Errorf("Name = %q, want %q", account.Name, "Yandex User")
-	}
-	if account.AvatarURL != "https://avatars.yandex.net/photo.jpg" {
-		t.Errorf("AvatarURL = %q, want %q", account.AvatarURL, "https://avatars.yandex.net/photo.jpg")
-	}
-	if account.AccessToken != "secret-token" {
-		t.Errorf("AccessToken = %q, want %q", account.AccessToken, "secret-token")
-	}
-}

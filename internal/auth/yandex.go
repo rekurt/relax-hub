@@ -85,6 +85,10 @@ func (p *YandexProvider) fetchUserInfo(ctx context.Context, accessToken string) 
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("yandex: API returned status %d", resp.StatusCode)
+	}
+
 	var user yandexUserInfo
 	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
 		return nil, fmt.Errorf("yandex: decode response: %w", err)

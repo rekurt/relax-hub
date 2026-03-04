@@ -108,6 +108,10 @@ func (p *VKProvider) fetchUserInfo(ctx context.Context, accessToken string, user
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("vk: API returned status %d", resp.StatusCode)
+	}
+
 	var result vkUsersGetResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("vk: decode response: %w", err)
