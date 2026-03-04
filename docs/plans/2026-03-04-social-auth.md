@@ -30,7 +30,7 @@
 - Create: `migrations/000018_social_auth.up.sql`
 - Create: `migrations/000018_social_auth.down.sql`
 
-- [ ] Создать модель SocialAccount:
+- [x] Создать модель SocialAccount:
   ```
   SocialAccount {
     ID          uuid.UUID
@@ -44,10 +44,10 @@
     LinkedAt    time.Time
   }
   ```
-- [ ] Добавить domain-ошибки: ErrSocialAccountAlreadyLinked, ErrSocialAccountNotFound
-- [ ] Создать миграцию с UNIQUE(provider, provider_id)
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить domain-ошибки: ErrSocialAccountAlreadyLinked, ErrSocialAccountNotFound
+- [x] Создать миграцию с UNIQUE(provider, provider_id)
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: OAuth-провайдеры
 

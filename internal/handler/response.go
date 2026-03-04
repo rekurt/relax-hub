@@ -99,6 +99,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusConflict, "bathhouse_has_bookings", err.Error())
 	case errors.Is(err, domain.ErrReviewAlreadyResponded):
 		writeErrorWithContext(w, r, http.StatusConflict, "review_already_responded", err.Error())
+	case errors.Is(err, domain.ErrSocialAccountAlreadyLinked):
+		writeErrorWithContext(w, r, http.StatusConflict, "social_account_already_linked", err.Error())
+	case errors.Is(err, domain.ErrSocialAccountNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "social_account_not_found", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

@@ -369,6 +369,8 @@ func TestDomainErrors(t *testing.T) {
 		ErrUserBlocked,
 		ErrBathhouseNotActive,
 		ErrReviewAlreadyResponded,
+		ErrSocialAccountAlreadyLinked,
+		ErrSocialAccountNotFound,
 	}
 
 	for _, err := range errors {

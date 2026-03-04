@@ -13,5 +13,7 @@ var (
 	ErrUserBlocked            = errors.New("user is blocked")
 	ErrBathhouseNotActive     = errors.New("bathhouse is not active")
 	ErrBathhouseHasBookings   = errors.New("cannot delete bathhouse with active bookings")
-	ErrReviewAlreadyResponded = errors.New("review already has owner response")
+	ErrReviewAlreadyResponded     = errors.New("review already has owner response")
+	ErrSocialAccountAlreadyLinked = errors.New("social account already linked")
+	ErrSocialAccountNotFound      = errors.New("social account not found")
 )
