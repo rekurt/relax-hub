@@ -14,5 +14,6 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewReviewRepository, fx.As(new(repository.ReviewRepository))),
 		fx.Annotate(NewFavoriteRepository, fx.As(new(repository.FavoriteRepository))),
 		fx.Annotate(NewRepresentativeRepository, fx.As(new(repository.RepresentativeRepository))),
+		fx.Annotate(NewNotificationRepository, fx.As(new(repository.NotificationRepository))),
 	),
 )

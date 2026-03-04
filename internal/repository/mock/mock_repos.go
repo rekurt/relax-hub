@@ -978,3 +978,161 @@ func isBathhouseOpenNow(bh *domain.Bathhouse) bool {
 	}
 	return false
 }
+
+// NotificationRepo is an in-memory mock implementation of repository.NotificationRepository.
+type NotificationRepo struct {
+	mu            sync.RWMutex
+	notifications map[uuid.UUID]*domain.Notification
+	preferences   map[uuid.UUID]*domain.NotificationPreferences
+}
+
+func NewNotificationRepo() *NotificationRepo {
+	return &NotificationRepo{
+		notifications: make(map[uuid.UUID]*domain.Notification),
+		preferences:   make(map[uuid.UUID]*domain.NotificationPreferences),
+	}
+}
+
+func (r *NotificationRepo) Create(_ context.Context, notification *domain.Notification) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if notification.ID == uuid.Nil {
+		notification.ID = uuid.New()
+	}
+	if notification.CreatedAt.IsZero() {
+		notification.CreatedAt = time.Now()
+	}
+	if notification.Data == nil {
+		notification.Data = make(map[string]string)
+	}
+
+	cp := *notification
+	cpData := make(map[string]string, len(notification.Data))
+	for k, v := range notification.Data {
+		cpData[k] = v
+	}
+	cp.Data = cpData
+	r.notifications[notification.ID] = &cp
+	return nil
+}
+
+func (r *NotificationRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Notification, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	n, ok := r.notifications[id]
+	if !ok {
+		return nil, domain.ErrNotFound
+	}
+	cp := *n
+	cpData := make(map[string]string, len(n.Data))
+	for k, v := range n.Data {
+		cpData[k] = v
+	}
+	cp.Data = cpData
+	return &cp, nil
+}
+
+func (r *NotificationRepo) ListByUser(_ context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Notification], error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	var items []domain.Notification
+	for _, n := range r.notifications {
+		if n.UserID == userID {
+			items = append(items, *n)
+		}
+	}
+
+	total := int64(len(items))
+	start := (page - 1) * pageSize
+	if start >= len(items) {
+		return &domain.PaginatedResult[domain.Notification]{
+			Items: nil, TotalCount: total, Page: page, PageSize: pageSize,
+			TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
+		}, nil
+	}
+	end := start + pageSize
+	if end > len(items) {
+		end = len(items)
+	}
+
+	return &domain.PaginatedResult[domain.Notification]{
+		Items: items[start:end], TotalCount: total, Page: page, PageSize: pageSize,
+		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
+	}, nil
+}
+
+func (r *NotificationRepo) MarkAsRead(_ context.Context, id uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	n, ok := r.notifications[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	if n.IsRead {
+		return domain.ErrNotFound
+	}
+	now := time.Now()
+	n.IsRead = true
+	n.ReadAt = &now
+	return nil
+}
+
+func (r *NotificationRepo) MarkAllAsRead(_ context.Context, userID uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	now := time.Now()
+	for _, n := range r.notifications {
+		if n.UserID == userID && !n.IsRead {
+			n.IsRead = true
+			n.ReadAt = &now
+		}
+	}
+	return nil
+}
+
+func (r *NotificationRepo) CountUnread(_ context.Context, userID uuid.UUID) (int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var count int64
+	for _, n := range r.notifications {
+		if n.UserID == userID && !n.IsRead {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (r *NotificationRepo) GetPreferences(_ context.Context, userID uuid.UUID) (*domain.NotificationPreferences, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	p, ok := r.preferences[userID]
+	if !ok {
+		defaults := domain.DefaultNotificationPreferences(userID)
+		return &defaults, nil
+	}
+	cp := *p
+	return &cp, nil
+}
+
+func (r *NotificationRepo) UpdatePreferences(_ context.Context, prefs *domain.NotificationPreferences) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	cp := *prefs
+	r.preferences[prefs.UserID] = &cp
+	return nil
+}

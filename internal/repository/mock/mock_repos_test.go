@@ -3,6 +3,7 @@ package mock
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -19,6 +20,7 @@ var (
 	_ repository.BookingRepository        = (*BookingRepo)(nil)
 	_ repository.ReviewRepository         = (*ReviewRepo)(nil)
 	_ repository.RepresentativeRepository = (*RepresentativeRepo)(nil)
+	_ repository.NotificationRepository   = (*NotificationRepo)(nil)
 )
 
 func TestUserRepo_CRUD(t *testing.T) {
@@ -759,5 +761,263 @@ func TestBathhouseRepo_ListWithOpenNow(t *testing.T) {
 	}
 	if len(result.Items) == 1 && result.Items[0].Name != "Open Now" {
 		t.Errorf("Expected 'Open Now', got %q", result.Items[0].Name)
+	}
+}
+
+func TestNotificationRepo_CRUD(t *testing.T) {
+	ctx := context.Background()
+	repo := NewNotificationRepo()
+
+	userID := uuid.New()
+
+	notif := &domain.Notification{
+		UserID: userID,
+		Type:   domain.NotifBookingConfirmed,
+		Title:  "Booking Confirmed",
+		Body:   "Your booking has been confirmed",
+		Data:   map[string]string{"booking_id": uuid.New().String()},
+	}
+
+	// Create
+	if err := repo.Create(ctx, notif); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if notif.ID == uuid.Nil {
+		t.Fatal("ID should be assigned after Create")
+	}
+	if notif.CreatedAt.IsZero() {
+		t.Fatal("CreatedAt should be set after Create")
+	}
+
+	// GetByID
+	got, err := repo.GetByID(ctx, notif.ID)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if got.Title != "Booking Confirmed" {
+		t.Errorf("Title = %q, want %q", got.Title, "Booking Confirmed")
+	}
+	if got.IsRead {
+		t.Error("New notification should not be read")
+	}
+	if got.Data["booking_id"] == "" {
+		t.Error("Data should contain booking_id")
+	}
+
+	// GetByID not found
+	_, err = repo.GetByID(ctx, uuid.New())
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("GetByID not found: want ErrNotFound, got %v", err)
+	}
+
+	// ListByUser
+	result, err := repo.ListByUser(ctx, userID, 1, 10)
+	if err != nil {
+		t.Fatalf("ListByUser: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("TotalCount = %d, want 1", result.TotalCount)
+	}
+
+	// ListByUser other user should get 0
+	result, err = repo.ListByUser(ctx, uuid.New(), 1, 10)
+	if err != nil {
+		t.Fatalf("ListByUser other: %v", err)
+	}
+	if result.TotalCount != 0 {
+		t.Errorf("TotalCount for other user = %d, want 0", result.TotalCount)
+	}
+
+	// CountUnread
+	count, err := repo.CountUnread(ctx, userID)
+	if err != nil {
+		t.Fatalf("CountUnread: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("CountUnread = %d, want 1", count)
+	}
+
+	// MarkAsRead
+	if err := repo.MarkAsRead(ctx, notif.ID); err != nil {
+		t.Fatalf("MarkAsRead: %v", err)
+	}
+	got, _ = repo.GetByID(ctx, notif.ID)
+	if !got.IsRead {
+		t.Error("Notification should be read after MarkAsRead")
+	}
+	if got.ReadAt == nil {
+		t.Error("ReadAt should be set after MarkAsRead")
+	}
+
+	// MarkAsRead on already read -> not found
+	if err := repo.MarkAsRead(ctx, notif.ID); !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("MarkAsRead already read: want ErrNotFound, got %v", err)
+	}
+
+	// MarkAsRead not found
+	if err := repo.MarkAsRead(ctx, uuid.New()); !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("MarkAsRead not found: want ErrNotFound, got %v", err)
+	}
+
+	// CountUnread after marking as read
+	count, err = repo.CountUnread(ctx, userID)
+	if err != nil {
+		t.Fatalf("CountUnread after read: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("CountUnread after read = %d, want 0", count)
+	}
+}
+
+func TestNotificationRepo_MarkAllAsRead(t *testing.T) {
+	ctx := context.Background()
+	repo := NewNotificationRepo()
+
+	userID := uuid.New()
+
+	// Create 3 notifications
+	for i := range 3 {
+		n := &domain.Notification{
+			UserID: userID,
+			Type:   domain.NotifSystem,
+			Title:  fmt.Sprintf("Notif %d", i),
+			Body:   "Body",
+		}
+		if err := repo.Create(ctx, n); err != nil {
+			t.Fatalf("Create %d: %v", i, err)
+		}
+	}
+
+	// All should be unread
+	count, _ := repo.CountUnread(ctx, userID)
+	if count != 3 {
+		t.Errorf("CountUnread = %d, want 3", count)
+	}
+
+	// Mark all as read
+	if err := repo.MarkAllAsRead(ctx, userID); err != nil {
+		t.Fatalf("MarkAllAsRead: %v", err)
+	}
+
+	// All should be read
+	count, _ = repo.CountUnread(ctx, userID)
+	if count != 0 {
+		t.Errorf("CountUnread after MarkAllAsRead = %d, want 0", count)
+	}
+}
+
+func TestNotificationRepo_Pagination(t *testing.T) {
+	ctx := context.Background()
+	repo := NewNotificationRepo()
+
+	userID := uuid.New()
+
+	// Create 5 notifications
+	for i := range 5 {
+		n := &domain.Notification{
+			UserID:    userID,
+			Type:      domain.NotifSystem,
+			Title:     fmt.Sprintf("Notif %d", i),
+			Body:      "Body",
+			CreatedAt: time.Now().Add(time.Duration(i) * time.Minute),
+		}
+		if err := repo.Create(ctx, n); err != nil {
+			t.Fatalf("Create %d: %v", i, err)
+		}
+	}
+
+	// Page 1, size 2
+	result, err := repo.ListByUser(ctx, userID, 1, 2)
+	if err != nil {
+		t.Fatalf("ListByUser page 1: %v", err)
+	}
+	if result.TotalCount != 5 {
+		t.Errorf("TotalCount = %d, want 5", result.TotalCount)
+	}
+	if len(result.Items) != 2 {
+		t.Errorf("Items len = %d, want 2", len(result.Items))
+	}
+	if result.TotalPages != 3 {
+		t.Errorf("TotalPages = %d, want 3", result.TotalPages)
+	}
+
+	// Page beyond range
+	result, err = repo.ListByUser(ctx, userID, 10, 2)
+	if err != nil {
+		t.Fatalf("ListByUser page 10: %v", err)
+	}
+	if len(result.Items) != 0 {
+		t.Errorf("Items len for out-of-range page = %d, want 0", len(result.Items))
+	}
+}
+
+func TestNotificationRepo_Preferences(t *testing.T) {
+	ctx := context.Background()
+	repo := NewNotificationRepo()
+
+	userID := uuid.New()
+
+	// GetPreferences should return defaults when no custom prefs exist
+	prefs, err := repo.GetPreferences(ctx, userID)
+	if err != nil {
+		t.Fatalf("GetPreferences defaults: %v", err)
+	}
+	if !prefs.InApp {
+		t.Error("Default InApp should be true")
+	}
+	if !prefs.Email {
+		t.Error("Default Email should be true")
+	}
+	if prefs.Push {
+		t.Error("Default Push should be false")
+	}
+	if !prefs.BookingEvents {
+		t.Error("Default BookingEvents should be true")
+	}
+
+	// UpdatePreferences
+	prefs.Push = true
+	prefs.PromoEvents = false
+	if err := repo.UpdatePreferences(ctx, prefs); err != nil {
+		t.Fatalf("UpdatePreferences: %v", err)
+	}
+
+	// GetPreferences should return updated values
+	got, err := repo.GetPreferences(ctx, userID)
+	if err != nil {
+		t.Fatalf("GetPreferences after update: %v", err)
+	}
+	if !got.Push {
+		t.Error("Push should be true after update")
+	}
+	if got.PromoEvents {
+		t.Error("PromoEvents should be false after update")
+	}
+	if !got.InApp {
+		t.Error("InApp should still be true")
+	}
+}
+
+func TestNotificationRepo_DataIsolation(t *testing.T) {
+	ctx := context.Background()
+	repo := NewNotificationRepo()
+
+	notif := &domain.Notification{
+		UserID: uuid.New(),
+		Type:   domain.NotifPromo,
+		Title:  "Promo",
+		Body:   "Special offer",
+		Data:   map[string]string{"promo_id": "123"},
+	}
+	if err := repo.Create(ctx, notif); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// Modify the original data - should not affect stored copy
+	notif.Data["promo_id"] = "modified"
+
+	got, _ := repo.GetByID(ctx, notif.ID)
+	if got.Data["promo_id"] != "123" {
+		t.Errorf("Data should be isolated, got promo_id=%q, want %q", got.Data["promo_id"], "123")
 	}
 }

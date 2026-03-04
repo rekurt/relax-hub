@@ -71,6 +71,17 @@ type FavoriteRepository interface {
 	CountByUser(ctx context.Context, userID uuid.UUID) (int64, error)
 }
 
+type NotificationRepository interface {
+	Create(ctx context.Context, notification *domain.Notification) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Notification, error)
+	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Notification], error)
+	MarkAsRead(ctx context.Context, id uuid.UUID) error
+	MarkAllAsRead(ctx context.Context, userID uuid.UUID) error
+	CountUnread(ctx context.Context, userID uuid.UUID) (int64, error)
+	GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.NotificationPreferences, error)
+	UpdatePreferences(ctx context.Context, prefs *domain.NotificationPreferences) error
+}
+
 type RepresentativeRepository interface {
 	Create(ctx context.Context, rep *domain.Representative) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Representative, error)

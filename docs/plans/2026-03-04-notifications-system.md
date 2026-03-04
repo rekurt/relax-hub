@@ -67,10 +67,10 @@ In-app уведомления + email + push. Типы событий: стат�
 - Create: `internal/repository/postgres/notification.go`
 - Create: `internal/repository/mock/notification.go`
 
-- [ ] NotificationRepository: Create, GetByID, ListByUser (paginated), MarkAsRead, MarkAllAsRead, CountUnread, GetPreferences, UpdatePreferences
-- [ ] Реализовать postgres и mock репозитории
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] NotificationRepository: Create, GetByID, ListByUser (paginated), MarkAsRead, MarkAllAsRead, CountUnread, GetPreferences, UpdatePreferences
+- [x] Реализовать postgres и mock репозитории
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Сервис уведомлений и каналы доставки
 
