@@ -25,7 +25,9 @@ func mockTokenServer(t *testing.T, extraFields map[string]any) *httptest.Server 
 			resp[k] = v
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("failed to encode token response: %v", err)
+		}
 	}))
 }
 
@@ -54,7 +56,9 @@ func TestVKProvider_Exchange(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("failed to encode VK API response: %v", err)
+		}
 	}))
 	defer apiServer.Close()
 
@@ -102,7 +106,9 @@ func TestVKProvider_Exchange_EmptyResponse(t *testing.T) {
 	apiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := vkUsersGetResponse{Response: []vkUser{}}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("failed to encode VK empty response: %v", err)
+		}
 	}))
 	defer apiServer.Close()
 
@@ -144,7 +150,9 @@ func TestYandexProvider_Exchange(t *testing.T) {
 			DefaultAvatarID: "abc123",
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("failed to encode response: %v", err)
+		}
 	}))
 	defer userinfoServer.Close()
 
@@ -175,7 +183,9 @@ func TestYandexProvider_Exchange_NoAvatar(t *testing.T) {
 			IsAvatarEmpty: true,
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("failed to encode response: %v", err)
+		}
 	}))
 	defer userinfoServer.Close()
 
@@ -200,7 +210,9 @@ func TestYandexProvider_Exchange_EmptyID(t *testing.T) {
 	userinfoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := yandexUserInfo{DisplayName: "Test"}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("failed to encode response: %v", err)
+		}
 	}))
 	defer userinfoServer.Close()
 
@@ -239,7 +251,9 @@ func TestGoogleProvider_Exchange(t *testing.T) {
 			Picture: "https://google.com/photo.jpg",
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("failed to encode response: %v", err)
+		}
 	}))
 	defer userinfoServer.Close()
 
@@ -265,7 +279,9 @@ func TestGoogleProvider_Exchange_EmptyID(t *testing.T) {
 	userinfoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := googleUserInfo{Email: "user@gmail.com", Name: "John"}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("failed to encode response: %v", err)
+		}
 	}))
 	defer userinfoServer.Close()
 

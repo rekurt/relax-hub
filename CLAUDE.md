@@ -83,6 +83,8 @@ Domain errors (domain/errors.go) map to HTTP status codes in handler/response.go
 - ErrBathhouseNotActive -> 400
 - ErrBathhouseHasBookings -> 409
 - ErrReviewAlreadyResponded -> 409
+- ErrSocialAccountAlreadyLinked -> 409
+- ErrSocialAccountNotFound -> 404
 
 ### Structured Logging
 
@@ -171,6 +173,24 @@ Event-driven notifications with multi-channel delivery:
 - **Preferences**: per-user channel/event-type settings in NotificationPreferences model
 
 WebSocket endpoint: `GET /api/v1/ws/notifications?token=<JWT>` with ping/pong heartbeat.
+
+### OAuth / Social Auth
+
+Social login via VK, Yandex ID, Google OAuth 2.0. Multiple providers per account.
+
+- **auth/** — OAuth provider implementations (VK, Yandex, Google), each with `GetAuthURL` and `Exchange` methods
+- **domain/oauth.go** — SocialAccount model, linked to User via UserID
+- **repository/postgres/social_account.go** — CRUD for social_accounts table
+- **service/auth_service.go** — OAuthCallback (find/create user + JWT), LinkSocialAccount, UnlinkSocialAccount
+
+Routes:
+- `GET /api/v1/auth/oauth/{provider}` — redirect to provider auth page
+- `GET /api/v1/auth/oauth/{provider}/callback` — handle callback, return JWT
+- `POST /api/v1/auth/link/{provider}` — link social account (auth required)
+- `DELETE /api/v1/auth/link/{provider}` — unlink social account (auth required)
+- `GET /api/v1/auth/me/social-accounts` — list linked accounts (auth required)
+
+Config: `BANI_OAUTH_VK_CLIENT_ID`, `BANI_OAUTH_VK_CLIENT_SECRET`, `BANI_OAUTH_VK_REDIRECT_URL` (same pattern for YANDEX, GOOGLE)
 
 ### Code Style
 
