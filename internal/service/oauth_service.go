@@ -131,6 +131,9 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 		if err != nil && !errors.Is(err, domain.ErrNotFound) {
 			return nil, "", fmt.Errorf("lookup user by email: %w", err)
 		}
+		if user != nil && !user.IsActive {
+			return nil, "", domain.ErrUserBlocked
+		}
 	}
 
 	if user == nil {

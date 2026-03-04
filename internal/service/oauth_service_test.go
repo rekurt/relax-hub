@@ -248,6 +248,38 @@ func TestOAuthService_OAuthCallback_ExistingEmailLinksAccount(t *testing.T) {
 	}
 }
 
+func TestOAuthService_OAuthCallback_BlockedUser_EmailMatch(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	socialRepo := mock.NewSocialAccountRepo()
+
+	// User exists with email but is blocked, no social account linked
+	blockedUser := &domain.User{
+		ID:       uuid.New(),
+		Email:    "blocked@example.com",
+		Name:     "Blocked User",
+		Role:     domain.RoleClient,
+		IsActive: true,
+	}
+	_ = userRepo.Create(context.Background(), blockedUser)
+	_ = userRepo.SetActive(context.Background(), blockedUser.ID, false)
+
+	providers := map[domain.OAuthProvider]auth.OAuthProvider{
+		domain.OAuthProviderGoogle: &mockOAuthProvider{
+			userInfo: &auth.OAuthUserInfo{
+				ProviderID: "new-google-id",
+				Email:      "blocked@example.com",
+				Name:       "Google User",
+			},
+		},
+	}
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
+
+	_, _, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderGoogle, "test-code")
+	if !errors.Is(err, domain.ErrUserBlocked) {
+		t.Errorf("expected ErrUserBlocked for blocked user via email match, got: %v", err)
+	}
+}
+
 func TestOAuthService_LinkSocialAccount_Success(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	socialRepo := mock.NewSocialAccountRepo()
