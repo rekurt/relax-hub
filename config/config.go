@@ -16,6 +16,19 @@ type Config struct {
 	JWT         JWTConfig      `mapstructure:"jwt"`
 	Logger      LoggerConfig   `mapstructure:"logger"`
 	Storage     StorageConfig  `mapstructure:"storage"`
+	OAuth       OAuthConfig    `mapstructure:"oauth"`
+}
+
+type OAuthConfig struct {
+	VK     OAuthProviderConfig `mapstructure:"vk"`
+	Yandex OAuthProviderConfig `mapstructure:"yandex"`
+	Google OAuthProviderConfig `mapstructure:"google"`
+}
+
+type OAuthProviderConfig struct {
+	ClientID     string `mapstructure:"client_id"`
+	ClientSecret string `mapstructure:"client_secret"`
+	RedirectURL  string `mapstructure:"redirect_url"`
 }
 
 type ServerConfig struct {

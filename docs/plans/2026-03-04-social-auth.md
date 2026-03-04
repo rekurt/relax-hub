@@ -58,7 +58,7 @@
 - Create: `internal/auth/google.go`
 - Modify: `config/config.go`
 
-- [ ] Создать интерфейс OAuthProvider:
+- [x] Создать интерфейс OAuthProvider:
   ```go
   type OAuthProvider interface {
     GetAuthURL(state string) string
@@ -71,10 +71,10 @@
     AvatarURL  string
   }
   ```
-- [ ] Реализовать для VK, Yandex, Google (каждый со своей спецификой API)
-- [ ] Конфигурация: BANI_OAUTH_VK_CLIENT_ID, BANI_OAUTH_VK_CLIENT_SECRET, etc.
-- [ ] Написать тесты с моковыми провайдерами
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Реализовать для VK, Yandex, Google (каждый со своей спецификой API)
+- [x] Конфигурация: BANI_OAUTH_VK_CLIENT_ID, BANI_OAUTH_VK_CLIENT_SECRET, etc.
+- [x] Написать тесты с моковыми провайдерами
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Репозиторий и сервис OAuth
 
