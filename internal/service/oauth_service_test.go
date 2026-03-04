@@ -494,6 +494,32 @@ func TestOAuthService_ListSocialAccounts(t *testing.T) {
 	}
 }
 
+func TestOAuthService_OAuthCallback_EmptyName_UsesFallback(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	socialRepo := mock.NewSocialAccountRepo()
+	providers := map[domain.OAuthProvider]auth.OAuthProvider{
+		domain.OAuthProviderVK: &mockOAuthProvider{
+			userInfo: &auth.OAuthUserInfo{
+				ProviderID: "vk-no-name",
+				Email:      "noname@example.com",
+				Name:       "",
+			},
+		},
+	}
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
+
+	user, token, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderVK, "test-code")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if token == "" {
+		t.Fatal("token should not be empty")
+	}
+	if user.Name != "User" {
+		t.Errorf("name = %q, want fallback %q", user.Name, "User")
+	}
+}
+
 func TestOAuthService_OAuthCallback_ExchangeError(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	socialRepo := mock.NewSocialAccountRepo()

@@ -143,15 +143,23 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 		if email == "" {
 			email = fmt.Sprintf("oauth_%s@noemail.local", uuid.New().String())
 		}
+		name := info.Name
+		if name == "" {
+			name = "User"
+		}
 		user = &domain.User{
 			ID:        uuid.New(),
 			Email:     email,
-			Name:      info.Name,
+			Name:      name,
 			AvatarURL: info.AvatarURL,
 			Role:      domain.RoleClient,
 			IsActive:  true,
 			CreatedAt: now,
 			UpdatedAt: now,
+		}
+
+		if err := user.Validate(); err != nil {
+			return nil, "", fmt.Errorf("validate user: %w", err)
 		}
 
 		if err := s.userRepo.Create(ctx, user); err != nil {
