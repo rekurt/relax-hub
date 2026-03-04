@@ -11,6 +11,30 @@ import (
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
+// noopNotifService is a no-op NotificationService for tests that don't verify notifications.
+type noopNotifService struct{}
+
+func (n *noopNotifService) Send(_ context.Context, _ uuid.UUID, _ domain.NotificationType, _, _ string, _ map[string]string) error {
+	return nil
+}
+func (n *noopNotifService) List(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Notification], error) {
+	return &domain.PaginatedResult[domain.Notification]{}, nil
+}
+func (n *noopNotifService) MarkAsRead(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
+	return nil
+}
+func (n *noopNotifService) MarkAllAsRead(_ context.Context, _ uuid.UUID) error { return nil }
+func (n *noopNotifService) GetUnreadCount(_ context.Context, _ uuid.UUID) (int64, error) {
+	return 0, nil
+}
+func (n *noopNotifService) GetPreferences(_ context.Context, _ uuid.UUID) (*domain.NotificationPreferences, error) {
+	prefs := domain.DefaultNotificationPreferences(uuid.Nil)
+	return &prefs, nil
+}
+func (n *noopNotifService) UpdatePreferences(_ context.Context, _ uuid.UUID, _ *domain.NotificationPreferences) error {
+	return nil
+}
+
 func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID) *domain.Bathhouse {
 	t.Helper()
 	wh := make([]domain.WorkingHours, 7)

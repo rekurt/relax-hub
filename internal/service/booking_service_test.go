@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -17,7 +18,8 @@ func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.Boo
 	bookingRepo := mock.NewBookingRepo()
 	repRepo := mock.NewRepresentativeRepo()
 	access := service.NewAccessChecker(repRepo, bhRepo)
-	svc := service.NewBookingService(bookingRepo, bhRepo, access)
+	log := logger.New(logger.LevelWarn)
+	svc := service.NewBookingService(bookingRepo, bhRepo, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, repRepo
 }
 

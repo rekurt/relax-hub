@@ -112,16 +112,16 @@ In-app уведомления + email + push. Типы событий: стат�
 - Modify: `internal/service/booking_service.go`
 - Modify: `internal/service/review_service.go`
 
-- [ ] GET /api/v1/my/notifications — список уведомлений (paginated)
-- [ ] GET /api/v1/my/notifications/unread-count — счетчик непрочитанных
-- [ ] PATCH /api/v1/my/notifications/{id}/read — прочитать
-- [ ] PATCH /api/v1/my/notifications/read-all — прочитать все
-- [ ] GET /api/v1/my/notification-preferences — текущие настройки
-- [ ] PUT /api/v1/my/notification-preferences — обновить настройки
-- [ ] Интегрировать отправку уведомлений: при подтверждении/отмене бронирования, при новом отзыве, при ответе на отзыв
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] GET /api/v1/my/notifications — список уведомлений (paginated)
+- [x] GET /api/v1/my/notifications/unread-count — счетчик непрочитанных
+- [x] PATCH /api/v1/my/notifications/{id}/read — прочитать
+- [x] PATCH /api/v1/my/notifications/read-all — прочитать все
+- [x] GET /api/v1/my/notification-preferences — текущие настройки
+- [x] PUT /api/v1/my/notification-preferences — обновить настройки
+- [x] Интегрировать отправку уведомлений: при подтверждении/отмене бронирования, при новом отзыве, при ответе на отзыв
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 6: Верификация
 

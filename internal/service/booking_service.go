@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
@@ -42,17 +43,23 @@ type bookingService struct {
 	bookingRepo repository.BookingRepository
 	bhRepo      repository.BathhouseRepository
 	access      *AccessChecker
+	notifSvc    NotificationService
+	logger      *logger.Logger
 }
 
 func NewBookingService(
 	bookingRepo repository.BookingRepository,
 	bhRepo repository.BathhouseRepository,
 	access *AccessChecker,
+	notifSvc NotificationService,
+	log *logger.Logger,
 ) BookingService {
 	return &bookingService{
 		bookingRepo: bookingRepo,
 		bhRepo:      bhRepo,
 		access:      access,
+		notifSvc:    notifSvc,
+		logger:      log,
 	}
 }
 
@@ -147,7 +154,11 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		if time.Until(booking.StartTime) < cancelDeadline {
 			return domain.ErrBookingCancelLate
 		}
-		return s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled)
+		if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); err != nil {
+			return err
+		}
+		s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
+		return nil
 	}
 
 	// Owner/representative cancels booking for their bathhouse
@@ -155,7 +166,11 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 
-	return s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled)
+	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); err != nil {
+		return err
+	}
+	s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
+	return nil
 }
 
 func (s *bookingService) Confirm(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
@@ -172,7 +187,11 @@ func (s *bookingService) Confirm(ctx context.Context, userID uuid.UUID, role dom
 		return err
 	}
 
-	return s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingConfirmed)
+	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingConfirmed); err != nil {
+		return err
+	}
+	s.sendBookingNotification(ctx, booking, domain.NotifBookingConfirmed)
+	return nil
 }
 
 func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
@@ -389,4 +408,27 @@ func validateWithinWorkingHours(bh *domain.Bathhouse, startTime, endTime time.Ti
 	}
 
 	return nil
+}
+
+func (s *bookingService) sendBookingNotification(ctx context.Context, booking *domain.Booking, notifType domain.NotificationType) {
+	var title, body string
+	switch notifType {
+	case domain.NotifBookingConfirmed:
+		title = "Бронирование подтверждено"
+		body = fmt.Sprintf("Ваше бронирование на %s подтверждено", booking.StartTime.Format("02.01.2006 15:04"))
+	case domain.NotifBookingCancelled:
+		title = "Бронирование отменено"
+		body = fmt.Sprintf("Ваше бронирование на %s отменено", booking.StartTime.Format("02.01.2006 15:04"))
+	default:
+		return
+	}
+
+	data := map[string]string{
+		"booking_id":   booking.ID.String(),
+		"bathhouse_id": booking.BathhouseID.String(),
+	}
+
+	if err := s.notifSvc.Send(ctx, booking.UserID, notifType, title, body, data); err != nil {
+		s.logger.Warn("failed to send booking notification", "booking_id", booking.ID, "type", notifType, "error", err)
+	}
 }

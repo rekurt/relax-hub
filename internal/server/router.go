@@ -28,6 +28,7 @@ type RouterParams struct {
 	AdminHandler   *handler.AdminHandler
 	HealthHandler  *handler.HealthHandler
 	WSHandler      *handler.WSHandler
+	NotifHandler   *handler.NotificationHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -96,6 +97,14 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// User stats (authenticated)
 		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)
+
+		// Notifications (authenticated)
+		r.With(auth).Get("/my/notifications", p.NotifHandler.List)
+		r.With(auth).Get("/my/notifications/unread-count", p.NotifHandler.UnreadCount)
+		r.With(auth).Patch("/my/notifications/{id}/read", p.NotifHandler.MarkAsRead)
+		r.With(auth).Patch("/my/notifications/read-all", p.NotifHandler.MarkAllAsRead)
+		r.With(auth).Get("/my/notification-preferences", p.NotifHandler.GetPreferences)
+		r.With(auth).Put("/my/notification-preferences", p.NotifHandler.UpdatePreferences)
 
 		// Representatives (owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses/{id}/representatives", p.RepHandler.Invite)

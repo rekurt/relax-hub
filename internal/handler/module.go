@@ -14,5 +14,6 @@ var Module = fx.Module("handler",
 		NewAdminHandler,
 		NewHealthHandler,
 		NewWSHandler,
+		NewNotificationHandler,
 	),
 )

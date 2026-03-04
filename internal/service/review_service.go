@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,6 +39,7 @@ type reviewService struct {
 	bookingRepo   repository.BookingRepository
 	bhRepo        repository.BathhouseRepository
 	accessChecker *AccessChecker
+	notifSvc      NotificationService
 	logger        *logger.Logger
 }
 
@@ -46,6 +48,7 @@ func NewReviewService(
 	bookingRepo repository.BookingRepository,
 	bhRepo repository.BathhouseRepository,
 	accessChecker *AccessChecker,
+	notifSvc NotificationService,
 	log *logger.Logger,
 ) ReviewService {
 	return &reviewService{
@@ -53,6 +56,7 @@ func NewReviewService(
 		bookingRepo:   bookingRepo,
 		bhRepo:        bhRepo,
 		accessChecker: accessChecker,
+		notifSvc:      notifSvc,
 		logger:        log,
 	}
 }
@@ -106,6 +110,25 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 
 	if err := s.bhRepo.UpdateRating(ctx, booking.BathhouseID); err != nil {
 		s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", booking.BathhouseID, "error", err)
+	}
+
+	// Notify bathhouse owner about new review
+	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+	if err != nil {
+		s.logger.Warn("failed to get bathhouse for review notification", "bathhouse_id", booking.BathhouseID, "error", err)
+	} else {
+		data := map[string]string{
+			"review_id":    review.ID.String(),
+			"bathhouse_id": booking.BathhouseID.String(),
+		}
+		notifErr := s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifNewReview,
+			"Новый отзыв",
+			fmt.Sprintf("Получен новый отзыв с оценкой %d для %s", review.Rating, bh.Name),
+			data,
+		)
+		if notifErr != nil {
+			s.logger.Warn("failed to send review notification", "review_id", review.ID, "error", notifErr)
+		}
 	}
 
 	return review, nil
@@ -212,6 +235,19 @@ func (s *reviewService) AddOwnerResponse(ctx context.Context, userID uuid.UUID, 
 	review.OwnerResponse = response
 	review.OwnerResponseAt = &now
 	review.UpdatedAt = now
+
+	// Notify review author about owner response
+	data := map[string]string{
+		"review_id":    review.ID.String(),
+		"bathhouse_id": review.BathhouseID.String(),
+	}
+	if notifErr := s.notifSvc.Send(ctx, review.UserID, domain.NotifReviewResponse,
+		"Ответ на ваш отзыв",
+		"Владелец бани ответил на ваш отзыв",
+		data,
+	); notifErr != nil {
+		s.logger.Warn("failed to send review response notification", "review_id", review.ID, "error", notifErr)
+	}
 
 	return review, nil
 }
