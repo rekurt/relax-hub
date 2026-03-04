@@ -12,6 +12,7 @@ import (
 type Dispatcher struct {
 	notifRepo   repository.NotificationRepository
 	emailSender EmailSender
+	hub         *Hub
 	logger      *logger.Logger
 }
 
@@ -19,11 +20,13 @@ type Dispatcher struct {
 func NewDispatcher(
 	notifRepo repository.NotificationRepository,
 	emailSender EmailSender,
+	hub *Hub,
 	log *logger.Logger,
 ) *Dispatcher {
 	return &Dispatcher{
 		notifRepo:   notifRepo,
 		emailSender: emailSender,
+		hub:         hub,
 		logger:      log,
 	}
 }
@@ -40,6 +43,8 @@ func (d *Dispatcher) Dispatch(ctx context.Context, notif *domain.Notification, p
 	if prefs.InApp {
 		if err := d.notifRepo.Create(ctx, notif); err != nil {
 			d.logger.Error("failed to create in-app notification", "user_id", notif.UserID, "error", err)
+		} else if d.hub != nil {
+			d.hub.SendToUser(notif.UserID, notif)
 		}
 	}
 

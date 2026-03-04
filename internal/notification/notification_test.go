@@ -30,7 +30,8 @@ func TestDispatcher_Dispatch_AllChannelsEnabled(t *testing.T) {
 	notifRepo := mock.NewNotificationRepo()
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
-	d := notification.NewDispatcher(notifRepo, emailSender, log)
+	hub := notification.NewHub(log)
+	d := notification.NewDispatcher(notifRepo, emailSender, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -74,7 +75,8 @@ func TestDispatcher_Dispatch_InAppOnly(t *testing.T) {
 	notifRepo := mock.NewNotificationRepo()
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
-	d := notification.NewDispatcher(notifRepo, emailSender, log)
+	hub := notification.NewHub(log)
+	d := notification.NewDispatcher(notifRepo, emailSender, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -110,7 +112,8 @@ func TestDispatcher_Dispatch_UserOptedOutOfEventType(t *testing.T) {
 	notifRepo := mock.NewNotificationRepo()
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
-	d := notification.NewDispatcher(notifRepo, emailSender, log)
+	hub := notification.NewHub(log)
+	d := notification.NewDispatcher(notifRepo, emailSender, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -146,7 +149,8 @@ func TestDispatcher_Dispatch_EmailWithoutAddress(t *testing.T) {
 	notifRepo := mock.NewNotificationRepo()
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
-	d := notification.NewDispatcher(notifRepo, emailSender, log)
+	hub := notification.NewHub(log)
+	d := notification.NewDispatcher(notifRepo, emailSender, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{

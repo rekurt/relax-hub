@@ -27,6 +27,7 @@ type RouterParams struct {
 	CityHandler    *handler.CityHandler
 	AdminHandler   *handler.AdminHandler
 	HealthHandler  *handler.HealthHandler
+	WSHandler      *handler.WSHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -44,6 +45,9 @@ func NewRouter(p RouterParams) http.Handler {
 	optionalAuth := middleware.OptionalAuth(p.AuthService)
 
 	r.Route("/api/v1", func(r chi.Router) {
+		// WebSocket (auth via query parameter)
+		r.Get("/ws/notifications", p.WSHandler.HandleWS)
+
 		// Auth (public)
 		r.Post("/auth/register", p.AuthHandler.Register)
 		r.Post("/auth/login", p.AuthHandler.Login)

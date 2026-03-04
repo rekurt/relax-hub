@@ -7,6 +7,7 @@ import (
 var Module = fx.Module("notification",
 	fx.Provide(
 		NewDispatcher,
+		NewHub,
 		func() EmailSender { return NewNoopEmailSender() },
 	),
 )

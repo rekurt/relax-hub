@@ -13,5 +13,6 @@ var Module = fx.Module("handler",
 		NewCityHandler,
 		NewAdminHandler,
 		NewHealthHandler,
+		NewWSHandler,
 	),
 )
