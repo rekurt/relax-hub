@@ -244,6 +244,30 @@ func TestReadJSON_NilBody(t *testing.T) {
 	}
 }
 
+func TestHandleServiceError_OAuthExchangeFailed_NoInternalDetails(t *testing.T) {
+	w := httptest.NewRecorder()
+	// Wrap with internal details that should NOT be exposed
+	err := errors.Join(domain.ErrOAuthExchangeFailed, errors.New("Post \"https://accounts.google.com/o/oauth2/token\": 400 Bad Request"))
+	handleServiceError(w, err)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected status %d, got %d", http.StatusBadRequest, w.Code)
+	}
+
+	var resp APIResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("Failed to decode response: %v", err)
+	}
+
+	if resp.Error == nil || resp.Error.Code != "oauth_exchange_failed" {
+		t.Error("Expected error code 'oauth_exchange_failed'")
+	}
+
+	if resp.Error.Message != "oauth code exchange failed" {
+		t.Errorf("Expected static message 'oauth code exchange failed', got '%s'", resp.Error.Message)
+	}
+}
+
 func TestWriteJSONWithMeta(t *testing.T) {
 	w := httptest.NewRecorder()
 	data := []int{1, 2, 3}
