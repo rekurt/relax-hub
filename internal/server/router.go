@@ -29,6 +29,7 @@ type RouterParams struct {
 	HealthHandler  *handler.HealthHandler
 	WSHandler      *handler.WSHandler
 	NotifHandler   *handler.NotificationHandler
+	OAuthHandler   *handler.OAuthHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -56,6 +57,15 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Put("/auth/me", p.AuthHandler.UpdateProfile)
 		r.With(auth).Post("/auth/me/avatar", p.AuthHandler.UploadAvatar)
 		r.With(auth).Delete("/auth/me/avatar", p.AuthHandler.DeleteAvatar)
+
+		// OAuth (public)
+		r.Get("/auth/oauth/{provider}", p.OAuthHandler.OAuthRedirect)
+		r.Get("/auth/oauth/{provider}/callback", p.OAuthHandler.OAuthCallback)
+
+		// OAuth (authenticated)
+		r.With(auth).Post("/auth/link/{provider}", p.OAuthHandler.LinkSocialAccount)
+		r.With(auth).Delete("/auth/link/{provider}", p.OAuthHandler.UnlinkSocialAccount)
+		r.With(auth).Get("/auth/me/social-accounts", p.OAuthHandler.ListSocialAccounts)
 
 		// User profiles (public)
 		r.Get("/users/{id}/profile", p.AuthHandler.GetPublicProfile)

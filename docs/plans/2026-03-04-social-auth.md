@@ -101,14 +101,14 @@
 - Modify: `internal/handler/auth.go`
 - Modify: `internal/server/router.go`
 
-- [ ] GET /api/v1/auth/oauth/{provider} — редирект на провайдера (provider: vk, yandex, google)
-- [ ] GET /api/v1/auth/oauth/{provider}/callback — обработка callback, возврат JWT
-- [ ] POST /api/v1/auth/link/{provider} — привязать соцсеть к аккаунту (auth)
-- [ ] DELETE /api/v1/auth/link/{provider} — отвязать соцсеть (auth)
-- [ ] GET /api/v1/auth/me/social-accounts — список привязанных соцсетей (auth)
-- [ ] Зарегистрировать маршруты
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] GET /api/v1/auth/oauth/{provider} — редирект на провайдера (provider: vk, yandex, google)
+- [x] GET /api/v1/auth/oauth/{provider}/callback — обработка callback, возврат JWT
+- [x] POST /api/v1/auth/link/{provider} — привязать соцсеть к аккаунту (auth)
+- [x] DELETE /api/v1/auth/link/{provider} — отвязать соцсеть (auth)
+- [x] GET /api/v1/auth/me/social-accounts — список привязанных соцсетей (auth)
+- [x] Зарегистрировать маршруты
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Верификация
 
