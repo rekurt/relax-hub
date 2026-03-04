@@ -85,6 +85,7 @@ Domain errors (domain/errors.go) map to HTTP status codes in handler/response.go
 - ErrReviewAlreadyResponded -> 409
 - ErrSocialAccountAlreadyLinked -> 409
 - ErrSocialAccountNotFound -> 404
+- ErrOAuthExchangeFailed -> 400
 
 ### Structured Logging
 

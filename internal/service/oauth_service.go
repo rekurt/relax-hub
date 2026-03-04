@@ -96,7 +96,7 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 
 	info, err := p.Exchange(ctx, code)
 	if err != nil {
-		return nil, "", fmt.Errorf("oauth exchange: %w", err)
+		return nil, "", fmt.Errorf("%w: %v", domain.ErrOAuthExchangeFailed, err)
 	}
 
 	// Try to find existing social account
@@ -195,7 +195,7 @@ func (s *oauthService) LinkSocialAccount(ctx context.Context, userID uuid.UUID, 
 
 	info, err := p.Exchange(ctx, code)
 	if err != nil {
-		return fmt.Errorf("oauth exchange: %w", err)
+		return fmt.Errorf("%w: %v", domain.ErrOAuthExchangeFailed, err)
 	}
 
 	// Check if this social account is already linked

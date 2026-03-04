@@ -16,4 +16,5 @@ var (
 	ErrReviewAlreadyResponded     = errors.New("review already has owner response")
 	ErrSocialAccountAlreadyLinked = errors.New("social account already linked")
 	ErrSocialAccountNotFound      = errors.New("social account not found")
+	ErrOAuthExchangeFailed        = errors.New("oauth code exchange failed")
 )

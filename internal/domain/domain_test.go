@@ -371,6 +371,7 @@ func TestDomainErrors(t *testing.T) {
 		ErrReviewAlreadyResponded,
 		ErrSocialAccountAlreadyLinked,
 		ErrSocialAccountNotFound,
+		ErrOAuthExchangeFailed,
 	}
 
 	for _, err := range errors {

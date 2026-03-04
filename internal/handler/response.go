@@ -103,6 +103,8 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusConflict, "social_account_already_linked", err.Error())
 	case errors.Is(err, domain.ErrSocialAccountNotFound):
 		writeErrorWithContext(w, r, http.StatusNotFound, "social_account_not_found", err.Error())
+	case errors.Is(err, domain.ErrOAuthExchangeFailed):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "oauth_exchange_failed", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
