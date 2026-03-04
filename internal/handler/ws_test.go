@@ -107,7 +107,9 @@ func TestWSHandler_ValidConnection(t *testing.T) {
 		t.Error("SendToUser should return true")
 	}
 
-	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	if err := conn.SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
+		t.Fatalf("set read deadline failed: %v", err)
+	}
 	_, msg, err := conn.ReadMessage()
 	if err != nil {
 		t.Fatalf("read message failed: %v", err)

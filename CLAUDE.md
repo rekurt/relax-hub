@@ -22,6 +22,7 @@ Clean architecture: handler -> service -> repository
 - **handler/** — HTTP handlers, one file per entity, uses service interfaces
 - **middleware/** — auth (JWT), RBAC (role-based), CORS, logging
 - **server/** — chi router, HTTP server with graceful shutdown
+- **notification/** — delivery channels: dispatcher, email sender, WebSocket hub
 - **app/** — Uber fx DI container, assembles all modules
 
 ## Key Patterns
@@ -158,6 +159,18 @@ Viper with env prefix `BANI_`. Nested keys use `_` separator:
 
 PostgreSQL with PostGIS for geo-queries. Migrations in `migrations/` folder.
 Geo-search uses `ST_DWithin` and `ST_Distance` with `geography` type.
+
+### Notification System
+
+Event-driven notifications with multi-channel delivery:
+- **Types**: booking_confirmed, booking_cancelled, new_review, review_response, promo, reminder, system
+- **Channels**: in-app (DB + WebSocket), email (SMTP/SendGrid)
+- **Dispatcher** (`internal/notification/dispatcher.go`): routes to channels based on user preferences
+- **WebSocket Hub** (`internal/notification/hub.go`): Hub pattern for real-time delivery to connected clients
+- **Integration**: BookingService and ReviewService call NotificationService.Send() on key events
+- **Preferences**: per-user channel/event-type settings in NotificationPreferences model
+
+WebSocket endpoint: `GET /api/v1/ws/notifications?token=<JWT>` with ping/pong heartbeat.
 
 ### Code Style
 

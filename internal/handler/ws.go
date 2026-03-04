@@ -130,7 +130,7 @@ func (h *WSHandler) writePump(conn *websocket.Conn, client *notification.Client)
 			}
 			if !ok {
 				// Hub closed the channel
-				conn.WriteMessage(websocket.CloseMessage, []byte{})
+				_ = conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
