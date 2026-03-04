@@ -29,7 +29,7 @@ In-app уведомления + email + push. Типы событий: стат�
 - Create: `migrations/000010_notifications.up.sql`
 - Create: `migrations/000010_notifications.down.sql`
 
-- [ ] Создать модель Notification:
+- [x] Создать модель Notification:
   ```
   Notification {
     ID          uuid.UUID
@@ -43,7 +43,7 @@ In-app уведомления + email + push. Типы событий: стат�
     CreatedAt   time.Time
   }
   ```
-- [ ] Создать модель NotificationPreferences:
+- [x] Создать модель NotificationPreferences:
   ```
   NotificationPreferences {
     UserID        uuid.UUID
@@ -56,9 +56,9 @@ In-app уведомления + email + push. Типы событий: стат�
     Reminders     bool  // default true
   }
   ```
-- [ ] Создать миграции
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать миграции
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий уведомлений
 
