@@ -20,5 +20,6 @@ var Module = fx.Module("service",
 		fx.Annotate(NewReviewService, fx.As(new(ReviewService))),
 		fx.Annotate(NewFavoriteService, fx.As(new(FavoriteService))),
 		fx.Annotate(NewCityService, fx.As(new(CityService))),
+		fx.Annotate(NewNotificationService, fx.As(new(NotificationService))),
 	),
 )

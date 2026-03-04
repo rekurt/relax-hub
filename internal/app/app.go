@@ -6,6 +6,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/notification"
 	repopostgres "github.com/nikitaaldaev/bani/internal/repository/postgres"
 	"github.com/nikitaaldaev/bani/internal/server"
 	"github.com/nikitaaldaev/bani/internal/service"
@@ -22,6 +23,7 @@ func New(cfg *config.Config) *fx.App {
 		middleware.CORSModule,
 		repopostgres.Module,
 		storage.Module,
+		notification.Module,
 		service.Module,
 		handler.Module,
 		server.Module,

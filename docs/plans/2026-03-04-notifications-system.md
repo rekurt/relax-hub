@@ -79,17 +79,17 @@ In-app уведомления + email + push. Типы событий: стат�
 - Create: `internal/notification/email.go`
 - Create: `internal/notification/dispatcher.go`
 
-- [ ] NotificationService:
+- [x] NotificationService:
   - Send(ctx, userID, type, title, body, data) — создать уведомление и отправить по настроенным каналам
   - List(ctx, userID, page, pageSize) — список уведомлений
   - MarkAsRead(ctx, userID, notificationID) — прочитать
   - MarkAllAsRead(ctx, userID) — прочитать все
   - GetUnreadCount(ctx, userID) — счетчик непрочитанных
   - UpdatePreferences(ctx, userID, prefs) — настройки каналов
-- [ ] Dispatcher: маршрутизация по каналам (in-app, email) с учетом preferences
-- [ ] EmailSender: отправка email через SMTP/SendGrid
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Dispatcher: маршрутизация по каналам (in-app, email) с учетом preferences
+- [x] EmailSender: отправка email через SMTP/SendGrid
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: WebSocket для real-time уведомлений
 
