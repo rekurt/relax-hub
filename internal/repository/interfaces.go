@@ -82,6 +82,13 @@ type NotificationRepository interface {
 	UpdatePreferences(ctx context.Context, prefs *domain.NotificationPreferences) error
 }
 
+type SocialAccountRepository interface {
+	Create(ctx context.Context, account *domain.SocialAccount) error
+	GetByProviderAndID(ctx context.Context, provider domain.OAuthProvider, providerID string) (*domain.SocialAccount, error)
+	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.SocialAccount, error)
+	Delete(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider) error
+}
+
 type RepresentativeRepository interface {
 	Create(ctx context.Context, rep *domain.Representative) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Representative, error)

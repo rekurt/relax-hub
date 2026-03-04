@@ -21,6 +21,7 @@ var (
 	_ repository.ReviewRepository         = (*ReviewRepo)(nil)
 	_ repository.RepresentativeRepository = (*RepresentativeRepo)(nil)
 	_ repository.NotificationRepository   = (*NotificationRepo)(nil)
+	_ repository.SocialAccountRepository  = (*SocialAccountRepo)(nil)
 )
 
 func TestUserRepo_CRUD(t *testing.T) {
@@ -1019,5 +1020,79 @@ func TestNotificationRepo_DataIsolation(t *testing.T) {
 	got, _ := repo.GetByID(ctx, notif.ID)
 	if got.Data["promo_id"] != "123" {
 		t.Errorf("Data should be isolated, got promo_id=%q, want %q", got.Data["promo_id"], "123")
+	}
+}
+
+func TestSocialAccountRepo_CRUD(t *testing.T) {
+	ctx := context.Background()
+	repo := NewSocialAccountRepo()
+
+	userID := uuid.New()
+
+	account := &domain.SocialAccount{
+		UserID:     userID,
+		Provider:   domain.OAuthProviderVK,
+		ProviderID: "vk-123",
+		Email:      "test@vk.com",
+		Name:       "VK User",
+		AvatarURL:  "https://vk.com/photo.jpg",
+		LinkedAt:   time.Now(),
+	}
+
+	// Create
+	if err := repo.Create(ctx, account); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if account.ID == uuid.Nil {
+		t.Fatal("ID should be assigned after Create")
+	}
+
+	// GetByProviderAndID
+	got, err := repo.GetByProviderAndID(ctx, domain.OAuthProviderVK, "vk-123")
+	if err != nil {
+		t.Fatalf("GetByProviderAndID: %v", err)
+	}
+	if got.Email != "test@vk.com" {
+		t.Errorf("Email = %q, want %q", got.Email, "test@vk.com")
+	}
+
+	// GetByProviderAndID not found
+	_, err = repo.GetByProviderAndID(ctx, domain.OAuthProviderGoogle, "nonexistent")
+	if !errors.Is(err, domain.ErrSocialAccountNotFound) {
+		t.Errorf("GetByProviderAndID not found: want ErrSocialAccountNotFound, got %v", err)
+	}
+
+	// Duplicate provider+provider_id
+	dup := &domain.SocialAccount{
+		UserID:     uuid.New(),
+		Provider:   domain.OAuthProviderVK,
+		ProviderID: "vk-123",
+		LinkedAt:   time.Now(),
+	}
+	if err := repo.Create(ctx, dup); !errors.Is(err, domain.ErrSocialAccountAlreadyLinked) {
+		t.Errorf("Create duplicate: want ErrSocialAccountAlreadyLinked, got %v", err)
+	}
+
+	// ListByUser
+	accounts, err := repo.ListByUser(ctx, userID)
+	if err != nil {
+		t.Fatalf("ListByUser: %v", err)
+	}
+	if len(accounts) != 1 {
+		t.Errorf("ListByUser len = %d, want 1", len(accounts))
+	}
+
+	// Delete
+	if err := repo.Delete(ctx, userID, domain.OAuthProviderVK); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	accounts, _ = repo.ListByUser(ctx, userID)
+	if len(accounts) != 0 {
+		t.Errorf("ListByUser after delete: len = %d, want 0", len(accounts))
+	}
+
+	// Delete not found
+	if err := repo.Delete(ctx, userID, domain.OAuthProviderVK); !errors.Is(err, domain.ErrSocialAccountNotFound) {
+		t.Errorf("Delete not found: want ErrSocialAccountNotFound, got %v", err)
 	}
 }

@@ -84,16 +84,16 @@
 - Create: `internal/repository/mock/social_account.go`
 - Modify: `internal/service/auth_service.go`
 
-- [ ] SocialAccountRepository: Create, GetByProviderAndID, ListByUser, Delete
-- [ ] Расширить AuthService:
+- [x] SocialAccountRepository: Create, GetByProviderAndID, ListByUser, Delete
+- [x] Расширить AuthService:
   - GetOAuthURL(provider) — URL для авторизации
   - OAuthCallback(provider, code) — обработка callback: найти/создать пользователя, вернуть JWT
   - LinkSocialAccount(userID, provider, code) — привязать соцсеть к существующему аккаунту
   - UnlinkSocialAccount(userID, provider) — отвязать (только если есть пароль или другая соцсеть)
-- [ ] При первом входе: создать пользователя без пароля, заполнить name, email, avatar из провайдера
-- [ ] При повторном входе: найти по provider+provider_id, вернуть JWT
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] При первом входе: создать пользователя без пароля, заполнить name, email, avatar из провайдера
+- [x] При повторном входе: найти по provider+provider_id, вернуть JWT
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Хендлеры OAuth
 
