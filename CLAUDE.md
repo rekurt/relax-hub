@@ -261,6 +261,41 @@ Three-tier subscription model for bathhouse monetization:
 
 Database migrations in `migrations/000005_subscriptions.up.sql` create subscriptions and promotions tables with indexes on bathhouse_id, owner_id, and status for efficient queries.
 
+### Dynamic Pricing System
+
+Flexible pricing rules allow bathhouse owners to set different prices for different times/days:
+
+**Models:**
+- **PricingRule** (`internal/domain/pricing.go`): ID, BathhouseID, Name, Type (weekday/weekend/holiday/time_range/season), Multiplier (1.5 = +50%, 0.8 = -20%), DaysOfWeek, TimeFrom/TimeTo (HH:MM format), DateFrom/DateTo, Priority (higher wins on conflict), IsActive, CreatedAt
+
+**Repository:**
+- `internal/repository/postgres/pricing.go` — Create, Update, Delete, ListByBathhouse, GetActiveRules
+- Mock implementation for testing in `internal/repository/mock/`
+
+**Service:**
+- `internal/service/pricing_service.go` — CalculatePrice, CreateRule, UpdateRule, DeleteRule, ListRules
+- Algorithm: Split booking interval into hourly slots, find highest-priority applicable rule for each hour, apply multiplier to base price
+- Day-of-week convention: 0=Monday, 6=Sunday (matches WorkingHours)
+- Handles wraparound time ranges (e.g., 22:00-06:00 overnight shifts)
+
+**Integration:**
+- BookingService.CreateBooking uses PricingService.CalculatePrice instead of fixed multiplier
+- GetAvailableSlots returns calculated price per slot from pricing rules
+- Database migration `migrations/000008_dynamic_pricing.up.sql` creates pricing_rules table with indexes
+
+**Handlers:**
+- `POST /api/v1/my/bathhouses/{id}/pricing-rules` — create rule (owner/rep auth required)
+- `GET /api/v1/my/bathhouses/{id}/pricing-rules` — list rules (owner/rep auth)
+- `PUT /api/v1/pricing-rules/{id}` — update rule (owner/rep auth)
+- `DELETE /api/v1/pricing-rules/{id}` — delete rule (owner/rep auth)
+- `GET /api/v1/bathhouses/{id}/price-calculator?start=...&end=...` — public price quote calculator
+
+**Critical Details:**
+- Time format validation: HH:MM (00:00-23:59)
+- Day-of-week uses app convention (0=Monday), not Go's native (0=Sunday)
+- Wraparound times supported: from > to means rule spans midnight
+- String comparison works for HH:MM format (e.g., "09:00" < "14:30")
+
 ### Code Style
 
 - Module path: `github.com/nikitaaldaev/bani`
