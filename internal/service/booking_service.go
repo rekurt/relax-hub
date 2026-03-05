@@ -208,7 +208,11 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 
-	return s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingRejected)
+	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingRejected); err != nil {
+		return err
+	}
+	s.sendBookingNotification(ctx, booking, domain.NotifBookingRejected)
+	return nil
 }
 
 func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {

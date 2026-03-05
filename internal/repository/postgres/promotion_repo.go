@@ -32,12 +32,12 @@ func (r *promotionRepo) Create(ctx context.Context, promo *domain.Promotion) err
 	promo.UpdatedAt = now
 
 	query := `
-		INSERT INTO promotions (id, bathhouse_id, budget_kopecks, spent_kopecks, start_date, end_date, target_city_id, status, impression_count, click_count, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		INSERT INTO promotions (id, bathhouse_id, budget_kopecks, spent_kopecks, start_date, end_date, target_city_id, status, impression_count, click_count, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 	`
 
 	_, err := r.pool.Exec(ctx, query,
-		promo.ID, promo.BathhouseID, promo.BudgetKopecks, promo.SpentKopecks, promo.StartDate, promo.EndDate, promo.TargetCityID, promo.Status, promo.ImpressionCount, promo.ClickCount, promo.CreatedAt,
+		promo.ID, promo.BathhouseID, promo.BudgetKopecks, promo.SpentKopecks, promo.StartDate, promo.EndDate, promo.TargetCityID, promo.Status, promo.ImpressionCount, promo.ClickCount, promo.CreatedAt, promo.UpdatedAt,
 	)
 	if err != nil {
 		if isDuplicateKeyError(err) {

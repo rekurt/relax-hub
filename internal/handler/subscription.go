@@ -59,6 +59,7 @@ type promotionResponse struct {
 	ImpressionCount int64     `json:"impression_count"`
 	ClickCount      int64     `json:"click_count"`
 	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 type subscribeRequest struct {
@@ -100,6 +101,7 @@ func toPromotionResponse(p *domain.Promotion) promotionResponse {
 		ImpressionCount: p.ImpressionCount,
 		ClickCount:      p.ClickCount,
 		CreatedAt:       p.CreatedAt,
+		UpdatedAt:       p.UpdatedAt,
 	}
 }
 
@@ -124,9 +126,10 @@ func (h *SubscriptionHandler) Subscribe(w http.ResponseWriter, r *http.Request) 
 	}
 
 	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
 
 	// Verify user has access to manage this bathhouse
-	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, domain.RoleOwner, bathhouseID); err != nil {
+	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, userRole, bathhouseID); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -149,9 +152,10 @@ func (h *SubscriptionHandler) GetSubscription(w http.ResponseWriter, r *http.Req
 	}
 
 	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
 
 	// Verify user has access to this bathhouse
-	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, domain.RoleOwner, bathhouseID); err != nil {
+	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, userRole, bathhouseID); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -174,9 +178,10 @@ func (h *SubscriptionHandler) CancelSubscription(w http.ResponseWriter, r *http.
 	}
 
 	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
 
 	// Verify user has access to manage this bathhouse
-	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, domain.RoleOwner, bathhouseID); err != nil {
+	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, userRole, bathhouseID); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -247,9 +252,10 @@ func (h *SubscriptionHandler) CreatePromotion(w http.ResponseWriter, r *http.Req
 	}
 
 	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
 
 	// Verify user has access to manage this bathhouse
-	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, domain.RoleOwner, bathhouseID); err != nil {
+	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, userRole, bathhouseID); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -313,9 +319,10 @@ func (h *SubscriptionHandler) GetPromotion(w http.ResponseWriter, r *http.Reques
 	}
 
 	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
 
 	// Verify user has access to this bathhouse
-	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, domain.RoleOwner, bathhouseID); err != nil {
+	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, userRole, bathhouseID); err != nil {
 		handleServiceError(w, err)
 		return
 	}

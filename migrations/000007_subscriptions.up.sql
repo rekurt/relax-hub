@@ -17,6 +17,7 @@ CREATE INDEX idx_subscriptions_bathhouse_id ON subscriptions (bathhouse_id);
 CREATE INDEX idx_subscriptions_owner_id ON subscriptions (owner_id);
 CREATE INDEX idx_subscriptions_status ON subscriptions (status);
 CREATE INDEX idx_subscriptions_end_date ON subscriptions (end_date);
+CREATE UNIQUE INDEX idx_subscriptions_bathhouse_active ON subscriptions(bathhouse_id) WHERE status = 'active';
 
 -- Promotions table
 CREATE TABLE promotions (

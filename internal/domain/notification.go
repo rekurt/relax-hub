@@ -11,6 +11,7 @@ type NotificationType string
 const (
 	NotifBookingConfirmed NotificationType = "booking_confirmed"
 	NotifBookingCancelled NotificationType = "booking_cancelled"
+	NotifBookingRejected  NotificationType = "booking_rejected"
 	NotifNewReview        NotificationType = "new_review"
 	NotifReviewResponse   NotificationType = "review_response"
 	NotifPromo            NotificationType = "promo"
@@ -20,7 +21,7 @@ const (
 
 func (t NotificationType) IsValid() bool {
 	switch t {
-	case NotifBookingConfirmed, NotifBookingCancelled, NotifNewReview,
+	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected, NotifNewReview,
 		NotifReviewResponse, NotifPromo, NotifReminder, NotifSystem:
 		return true
 	}
@@ -89,7 +90,7 @@ func (p *NotificationPreferences) Validate() error {
 // WantsEventType checks if the user wants notifications for the given event type.
 func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 	switch t {
-	case NotifBookingConfirmed, NotifBookingCancelled:
+	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected:
 		return p.BookingEvents
 	case NotifNewReview, NotifReviewResponse:
 		return p.ReviewEvents
