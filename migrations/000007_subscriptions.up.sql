@@ -30,7 +30,8 @@ CREATE TABLE promotions (
     status VARCHAR(30) NOT NULL,
     impression_count BIGINT NOT NULL DEFAULT 0,
     click_count BIGINT NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_promotions_bathhouse_id ON promotions (bathhouse_id);

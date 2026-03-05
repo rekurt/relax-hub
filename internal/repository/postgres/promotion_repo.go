@@ -92,7 +92,7 @@ func (r *promotionRepo) GetActiveBybathhouse(ctx context.Context, bathhouseID uu
 func (r *promotionRepo) Update(ctx context.Context, promo *domain.Promotion) error {
 	query := `
 		UPDATE promotions
-		SET budget_kopecks = $1, spent_kopecks = $2, start_date = $3, end_date = $4, target_city_id = $5, status = $6, impression_count = $7, click_count = $8
+		SET budget_kopecks = $1, spent_kopecks = $2, start_date = $3, end_date = $4, target_city_id = $5, status = $6, impression_count = $7, click_count = $8, updated_at = now()
 		WHERE id = $9
 	`
 
@@ -167,7 +167,7 @@ func (r *promotionRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 func (r *promotionRepo) RecordImpression(ctx context.Context, promotionID uuid.UUID) error {
 	query := `
 		UPDATE promotions
-		SET impression_count = impression_count + 1
+		SET impression_count = impression_count + 1, updated_at = now()
 		WHERE id = $1
 	`
 	result, err := r.pool.Exec(ctx, query, promotionID)
@@ -183,7 +183,7 @@ func (r *promotionRepo) RecordImpression(ctx context.Context, promotionID uuid.U
 func (r *promotionRepo) RecordClick(ctx context.Context, promotionID uuid.UUID) error {
 	query := `
 		UPDATE promotions
-		SET click_count = click_count + 1
+		SET click_count = click_count + 1, updated_at = now()
 		WHERE id = $1
 	`
 	result, err := r.pool.Exec(ctx, query, promotionID)

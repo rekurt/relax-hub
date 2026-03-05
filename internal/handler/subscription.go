@@ -125,6 +125,12 @@ func (h *SubscriptionHandler) Subscribe(w http.ResponseWriter, r *http.Request) 
 
 	userID := middleware.GetUserID(r.Context())
 
+	// Verify user has access to manage this bathhouse
+	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, domain.RoleOwner, bathhouseID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
 	sub, err := h.subService.Subscribe(r.Context(), userID, bathhouseID, plan)
 	if err != nil {
 		handleServiceError(w, err)

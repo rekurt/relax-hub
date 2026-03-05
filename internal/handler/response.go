@@ -105,6 +105,12 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusNotFound, "social_account_not_found", err.Error())
 	case errors.Is(err, domain.ErrOAuthExchangeFailed):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "oauth_exchange_failed", "oauth code exchange failed")
+	case errors.Is(err, domain.ErrSubscriptionNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "subscription_not_found", err.Error())
+	case errors.Is(err, domain.ErrSubscriptionAlreadyActive):
+		writeErrorWithContext(w, r, http.StatusConflict, "subscription_already_active", err.Error())
+	case errors.Is(err, domain.ErrPromotionBudgetExhausted):
+		writeErrorWithContext(w, r, http.StatusConflict, "promotion_budget_exhausted", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

@@ -115,7 +115,6 @@ func (m *mockPromotionRepository) RecordClick(ctx context.Context, promotionID u
 func TestSubscriptionHandler_Subscribe(t *testing.T) {
 	userID := uuid.New()
 	bathhouseID := uuid.New()
-	ownerID := uuid.New()
 	subID := uuid.New()
 
 	subSvc := &mockSubscriptionService{
@@ -124,7 +123,7 @@ func TestSubscriptionHandler_Subscribe(t *testing.T) {
 				return &domain.Subscription{
 					ID:           subID,
 					BathhouseID:  bhid,
-					OwnerID:      ownerID,
+					OwnerID:      userID,
 					Plan:         plan,
 					Status:       domain.SubscriptionActive,
 					StartDate:    time.Now(),
@@ -141,7 +140,7 @@ func TestSubscriptionHandler_Subscribe(t *testing.T) {
 
 	promoRepo := &mockPromotionRepository{}
 	bhRepo := &mockBathhouseRepository{}
-	accessCheck := newTestAccessChecker(ownerID, bathhouseID)
+	accessCheck := newTestAccessChecker(userID, bathhouseID)
 
 	h := NewSubscriptionHandler(subSvc, promoRepo, bhRepo, accessCheck)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
