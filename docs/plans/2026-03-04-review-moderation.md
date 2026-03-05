@@ -28,15 +28,15 @@
 - Create: `internal/moderation/filter.go`
 - Create: `internal/moderation/stopwords.go`
 
-- [ ] Создать ContentFilter:
+- [x] Создать ContentFilter:
   - CheckText(text string) (isClean bool, reasons []string) — проверка текста
   - Стоп-слова: список нецензурных слов и вариаций (транслит, замена символов)
   - Спам-паттерны: повторяющиеся символы (ааааа), CAPS LOCK, ссылки, телефоны конкурентов
   - Минимальная длина отзыва: 10 символов
   - Максимальная длина: 5000 символов
-- [ ] Configurable через BANI_MODERATION_ENABLED, BANI_MODERATION_AUTO_APPROVE (bool)
-- [ ] Написать тесты (важно: edge cases с обходом фильтров)
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Configurable через BANI_MODERATION_ENABLED, BANI_MODERATION_AUTO_APPROVE (bool)
+- [x] Написать тесты (важно: edge cases с обходом фильтров)
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Интеграция автомодерации с отзывами
 

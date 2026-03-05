@@ -9,14 +9,15 @@ import (
 )
 
 type Config struct {
-	Environment string         `mapstructure:"environment"`
-	Server      ServerConfig   `mapstructure:"server"`
-	Database    DatabaseConfig `mapstructure:"database"`
-	Redis       RedisConfig    `mapstructure:"redis"`
-	JWT         JWTConfig      `mapstructure:"jwt"`
-	Logger      LoggerConfig   `mapstructure:"logger"`
-	Storage     StorageConfig  `mapstructure:"storage"`
-	OAuth       OAuthConfig    `mapstructure:"oauth"`
+	Environment string           `mapstructure:"environment"`
+	Server      ServerConfig     `mapstructure:"server"`
+	Database    DatabaseConfig   `mapstructure:"database"`
+	Redis       RedisConfig      `mapstructure:"redis"`
+	JWT         JWTConfig        `mapstructure:"jwt"`
+	Logger      LoggerConfig     `mapstructure:"logger"`
+	Storage     StorageConfig    `mapstructure:"storage"`
+	OAuth       OAuthConfig      `mapstructure:"oauth"`
+	Moderation  ModerationConfig `mapstructure:"moderation"`
 }
 
 type OAuthConfig struct {
@@ -29,6 +30,11 @@ type OAuthProviderConfig struct {
 	ClientID     string `mapstructure:"client_id"`
 	ClientSecret string `mapstructure:"client_secret"`
 	RedirectURL  string `mapstructure:"redirect_url"`
+}
+
+type ModerationConfig struct {
+	Enabled     bool `mapstructure:"enabled"`
+	AutoApprove bool `mapstructure:"auto_approve"`
 }
 
 type ServerConfig struct {
@@ -96,6 +102,8 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("storage.secret_key", "minioadmin")
 	v.SetDefault("storage.region", "us-east-1")
 	v.SetDefault("storage.use_ssl", false)
+	v.SetDefault("moderation.enabled", true)
+	v.SetDefault("moderation.auto_approve", false)
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
