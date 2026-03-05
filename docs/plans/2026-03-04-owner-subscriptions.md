@@ -30,7 +30,7 @@
 - Create: `migrations/000005_subscriptions.up.sql`
 - Create: `migrations/000005_subscriptions.down.sql`
 
-- [ ] Создать модель Subscription:
+- [x] Создать модель Subscription:
   ```
   Subscription {
     ID            uuid.UUID
@@ -46,7 +46,7 @@
     UpdatedAt     time.Time
   }
   ```
-- [ ] Создать модель Promotion (для Promoted плана):
+- [x] Создать модель Promotion (для Promoted плана):
   ```
   Promotion {
     ID              uuid.UUID
@@ -62,10 +62,10 @@
     CreatedAt       time.Time
   }
   ```
-- [ ] Добавить domain-ошибки: ErrSubscriptionNotFound, ErrSubscriptionAlreadyActive, ErrPromotionBudgetExhausted
-- [ ] Создать миграцию с таблицами subscriptions и promotions
-- [ ] Написать тесты валидации моделей
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить domain-ошибки: ErrSubscriptionNotFound, ErrSubscriptionAlreadyActive, ErrPromotionBudgetExhausted
+- [x] Создать миграцию с таблицами subscriptions и promotions
+- [x] Написать тесты валидации моделей
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий подписок и промо
 
