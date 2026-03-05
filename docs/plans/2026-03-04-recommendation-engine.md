@@ -29,7 +29,7 @@
 - Create: `migrations/000013_user_preferences.up.sql`
 - Create: `migrations/000013_user_preferences.down.sql`
 
-- [ ] Создать модель UserPreferences:
+- [x] Создать модель UserPreferences:
   ```
   UserPreferences {
     UserID          uuid.UUID
@@ -45,10 +45,10 @@
     UpdatedAt       time.Time
   }
   ```
-- [ ] Создать модель UserActivity (UserID, BathhouseID, Type view/book/favorite, CreatedAt) — для трекинга
-- [ ] Создать миграции
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать модель UserActivity (UserID, BathhouseID, Type view/book/favorite, CreatedAt) — для трекинга
+- [x] Создать миграции
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий рекомендаций
 
