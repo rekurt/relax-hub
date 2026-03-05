@@ -109,6 +109,8 @@ type RecommendationRepository interface {
 
 	// Booking history
 	GetUserBookedBathhouses(ctx context.Context, userID uuid.UUID, limit int) ([]uuid.UUID, error)
+	// GetUserBookedBathhousesWithDates returns booked bathhouses with their booking dates for recency calculation
+	GetUserBookedBathhousesWithDates(ctx context.Context, userID uuid.UUID, limit int) ([]domain.BookedBathhouseWithDate, error)
 
 	// Collaborative filtering
 	GetSimilarUsers(ctx context.Context, userID uuid.UUID, limit int) ([]uuid.UUID, error)

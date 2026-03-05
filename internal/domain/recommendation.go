@@ -6,6 +6,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// BookedBathhouseWithDate represents a booked bathhouse with booking date for recency calculation
+type BookedBathhouseWithDate struct {
+	BathhouseID uuid.UUID
+	BookedAt    time.Time
+}
+
 // UserActivityType represents the type of user activity
 type UserActivityType string
 

@@ -322,3 +322,94 @@ func TestRecommendationHandler_UpdatePreferences(t *testing.T) {
 		t.Error("expected success=true")
 	}
 }
+
+func TestRecommendationHandler_GetPreferences(t *testing.T) {
+	userID := uuid.New()
+	cityID := int64(1)
+	priceMin := int64(1000)
+	priceMax := int64(5000)
+
+	recSvc := &mockRecommendationService{
+		getUserPreferencesFn: func(ctx context.Context, uid uuid.UUID) (*domain.UserPreferences, error) {
+			if uid == userID {
+				return &domain.UserPreferences{
+					UserID:          uid,
+					PreferredCityID: &cityID,
+					PriceRangeMin:   &priceMin,
+					PriceRangeMax:   &priceMax,
+					PreferPool:      true,
+					PreferSauna:     false,
+					PreferSteamRoom: true,
+					PreferHotTub:    false,
+					PreferBBQ:       true,
+					PreferKaraoke:   false,
+				}, nil
+			}
+			return nil, domain.ErrNotFound
+		},
+	}
+
+	bhRepo := &mockBathhouseRepository{}
+	h := NewRecommendationHandler(recSvc, bhRepo)
+	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Get("/preferences", h.GetPreferences)
+
+	req := httptest.NewRequest(http.MethodGet, "/preferences", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+		return
+	}
+
+	var apiResp APIResponse
+	if err := json.NewDecoder(rec.Body).Decode(&apiResp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	// Extract the userPreferencesResponse from Data
+	var resp userPreferencesResponse
+	respBytes, _ := json.Marshal(apiResp.Data)
+	if err := json.Unmarshal(respBytes, &resp); err != nil {
+		t.Fatalf("failed to unmarshal preferences: %v", err)
+	}
+
+	if resp.PreferredCityID == nil || *resp.PreferredCityID != cityID {
+		t.Errorf("expected city id %d, got %v", cityID, resp.PreferredCityID)
+	}
+	if !resp.PreferPool {
+		t.Error("expected prefer_pool to be true")
+	}
+}
+
+func TestRecommendationHandler_GetPreferencesNotFound(t *testing.T) {
+	userID := uuid.New()
+
+	recSvc := &mockRecommendationService{
+		getUserPreferencesFn: func(ctx context.Context, uid uuid.UUID) (*domain.UserPreferences, error) {
+			return nil, domain.ErrNotFound
+		},
+	}
+
+	bhRepo := &mockBathhouseRepository{}
+	h := NewRecommendationHandler(recSvc, bhRepo)
+	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Get("/preferences", h.GetPreferences)
+
+	req := httptest.NewRequest(http.MethodGet, "/preferences", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected status 404, got %d", rec.Code)
+	}
+}

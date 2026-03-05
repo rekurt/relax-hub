@@ -1283,6 +1283,35 @@ func (r *RecommendationRepo) GetUserBookedBathhouses(_ context.Context, userID u
 	return booked, nil
 }
 
+func (r *RecommendationRepo) GetUserBookedBathhousesWithDates(_ context.Context, userID uuid.UUID, limit int) ([]domain.BookedBathhouseWithDate, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	booked, ok := r.bookings[userID]
+	if !ok {
+		return []domain.BookedBathhouseWithDate{}, nil
+	}
+
+	if limit <= 0 {
+		limit = 50
+	}
+
+	// For mock, we return with current time as booking date
+	// In reality, this would come from booking timestamps
+	var results []domain.BookedBathhouseWithDate
+	end := limit
+	if len(booked) < limit {
+		end = len(booked)
+	}
+	for i := 0; i < end; i++ {
+		results = append(results, domain.BookedBathhouseWithDate{
+			BathhouseID: booked[i],
+			BookedAt:    time.Now().AddDate(0, 0, -i), // Mock data: each booking is 1 day older
+		})
+	}
+	return results, nil
+}
+
 func (r *RecommendationRepo) GetSimilarUsers(_ context.Context, userID uuid.UUID, limit int) ([]uuid.UUID, error) {
 	r.mu.RLock()
 

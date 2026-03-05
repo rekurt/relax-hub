@@ -139,6 +139,43 @@ func (r *recommendationRepo) GetUserBookedBathhouses(ctx context.Context, userID
 	return bathhouseIDs, nil
 }
 
+func (r *recommendationRepo) GetUserBookedBathhousesWithDates(ctx context.Context, userID uuid.UUID, limit int) ([]domain.BookedBathhouseWithDate, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+
+	query := `
+		SELECT DISTINCT ON (bathhouse_id) bathhouse_id, created_at
+		FROM bookings
+		WHERE user_id = $1 AND status IN ('confirmed', 'completed')
+		ORDER BY bathhouse_id, created_at DESC
+		LIMIT $2`
+
+	rows, err := r.pool.Query(ctx, query, userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("get user booked bathhouses with dates: %w", err)
+	}
+	defer rows.Close()
+
+	var results []domain.BookedBathhouseWithDate
+	for rows.Next() {
+		var bathID uuid.UUID
+		var bookedAt time.Time
+		if err := rows.Scan(&bathID, &bookedAt); err != nil {
+			return nil, fmt.Errorf("scan bathhouse id and date: %w", err)
+		}
+		results = append(results, domain.BookedBathhouseWithDate{
+			BathhouseID: bathID,
+			BookedAt:    bookedAt,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate booked bathhouses: %w", err)
+	}
+
+	return results, nil
+}
+
 func (r *recommendationRepo) GetSimilarUsers(ctx context.Context, userID uuid.UUID, limit int) ([]uuid.UUID, error) {
 	if limit <= 0 {
 		limit = 20
