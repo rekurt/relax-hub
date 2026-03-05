@@ -144,9 +144,10 @@ func (s *recommendationService) GetPersonalized(ctx context.Context, userID uuid
 			recencyBonus = 1.0 / (1.0 + daysSince/30.0)
 		}
 
-		// Enhance score with rating
+		// Enhance score with rating, similarity, and recency
+		// Scoring formula: rating × similarity_weight × recency_bonus
 		ratingBonus := bh.Rating / 5.0 // normalize rating 0-1
-		finalScore := item.score * (1.0 + ratingBonus) * recencyBonus
+		finalScore := ratingBonus * item.score * recencyBonus
 
 		filtered = append(filtered, scoreItem{item.bathhouseID, finalScore})
 	}

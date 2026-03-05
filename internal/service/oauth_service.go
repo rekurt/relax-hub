@@ -94,7 +94,7 @@ func (s *oauthService) GetOAuthURL(provider domain.OAuthProvider) (string, error
 	// Store state in Redis with 10-minute expiration for CSRF protection
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err = s.redisClient.Set(ctx, "oauth_state:"+state, provider, 10*time.Minute).Err()
+	err = s.redisClient.Set(ctx, "oauth_state:"+state, string(provider), 10*time.Minute).Err()
 	if err != nil {
 		return "", fmt.Errorf("failed to store OAuth state: %w", err)
 	}
@@ -119,6 +119,7 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 	}
 
 	// Delete the state from Redis (one-time use only)
+	// Ignore delete errors - state is already validated so this is just cleanup
 	_ = s.redisClient.Del(redisCtx, "oauth_state:"+state).Err()
 
 	// Verify the state matches the requested provider

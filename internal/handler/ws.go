@@ -56,10 +56,8 @@ var upgrader = websocket.Upgrader{
 		// Build expected origin with matching scheme
 		expectedOrigin := scheme + "://" + host
 
-		// For localhost development, also allow http
-		if scheme == "https" && origin == "http://"+host {
-			// Allow HTTP origin for HTTPS requests only in development
-			// TODO: For production, read allowed origins from config and validate against them
+		// For localhost development, also allow http->https mismatch
+		if scheme == "https" && origin == "http://"+host && middleware.IsDevEnvironment() {
 			return true
 		}
 
