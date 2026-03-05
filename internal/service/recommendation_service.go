@@ -15,6 +15,7 @@ type RecommendationService interface {
 	GetPersonalized(ctx context.Context, userID uuid.UUID, page, pageSize int) ([]uuid.UUID, int64, error)
 	GetSimilar(ctx context.Context, bathhouseID uuid.UUID, limit int) ([]uuid.UUID, error)
 	GetPopular(ctx context.Context, cityID int64, limit int) ([]uuid.UUID, error)
+	GetUserPreferences(ctx context.Context, userID uuid.UUID) (*domain.UserPreferences, error)
 	UpdatePreferences(ctx context.Context, userID uuid.UUID, prefs *domain.UserPreferences) error
 	RecordView(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) error
 }
@@ -163,6 +164,15 @@ func (s *recommendationService) GetPopular(ctx context.Context, cityID int64, li
 	}
 
 	return s.recRepo.GetPopularBathhouses(ctx, cityID, limit)
+}
+
+// GetUserPreferences returns the user's current preferences
+func (s *recommendationService) GetUserPreferences(ctx context.Context, userID uuid.UUID) (*domain.UserPreferences, error) {
+	if userID == uuid.Nil {
+		return nil, domain.ErrInvalidInput
+	}
+
+	return s.recRepo.GetUserPreferences(ctx, userID)
 }
 
 // UpdatePreferences updates user's explicit preferences

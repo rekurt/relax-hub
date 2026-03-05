@@ -96,15 +96,15 @@
 - Modify: `internal/server/router.go`
 - Modify: `internal/handler/bathhouse.go`
 
-- [ ] GET /api/v1/recommendations — персональные рекомендации (auth)
-- [ ] GET /api/v1/bathhouses/{id}/similar — похожие бани (public)
-- [ ] GET /api/v1/popular?city_id=1 — популярные бани в городе (public)
-- [ ] GET /api/v1/my/preferences — текущие предпочтения
-- [ ] PUT /api/v1/my/preferences — обновить предпочтения
-- [ ] При просмотре бани (GetByID) — записать активность для авторизованных
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] GET /api/v1/recommendations — персональные рекомендации (auth)
+- [x] GET /api/v1/bathhouses/{id}/similar — похожие бани (public)
+- [x] GET /api/v1/popular?city_id=1 — популярные бани в городе (public)
+- [x] GET /api/v1/my/preferences — текущие предпочтения
+- [x] PUT /api/v1/my/preferences — обновить предпочтения
+- [x] При просмотре бани (GetByID) — записать активность для авторизованных
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Верификация
 

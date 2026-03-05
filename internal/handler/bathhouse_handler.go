@@ -17,6 +17,7 @@ type BathhouseHandler struct {
 	bookingService        service.BookingService
 	representativeService service.RepresentativeService
 	favoriteService       service.FavoriteService
+	recommendationService service.RecommendationService
 }
 
 func NewBathhouseHandler(
@@ -24,12 +25,14 @@ func NewBathhouseHandler(
 	bookingService service.BookingService,
 	representativeService service.RepresentativeService,
 	favoriteService service.FavoriteService,
+	recommendationService service.RecommendationService,
 ) *BathhouseHandler {
 	return &BathhouseHandler{
 		bathhouseService:      bathhouseService,
 		bookingService:        bookingService,
 		representativeService: representativeService,
 		favoriteService:       favoriteService,
+		recommendationService: recommendationService,
 	}
 }
 
@@ -312,6 +315,11 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			resp.IsFavorite = fav
 		}
+	}
+
+	// Record activity for authenticated users
+	if userID != uuid.Nil && h.recommendationService != nil {
+		_ = h.recommendationService.RecordView(r.Context(), userID, bh.ID)
 	}
 
 	writeJSON(w, http.StatusOK, resp)

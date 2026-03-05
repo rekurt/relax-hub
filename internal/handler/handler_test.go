@@ -836,7 +836,7 @@ func TestBathhouseHandler_Search(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?city_id=1&has_pool=true", nil)
 	rec := httptest.NewRecorder()
@@ -870,7 +870,7 @@ func TestBathhouseHandler_GetByID(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}", h.GetByID)
@@ -892,7 +892,7 @@ func TestBathhouseHandler_GetByID_NotFound(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}", h.GetByID)
@@ -921,7 +921,7 @@ func TestBathhouseHandler_Create_RequiresOwnerRole(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses", h.Create)
@@ -946,7 +946,7 @@ func TestBathhouseHandler_Create_RequiresOwnerRole(t *testing.T) {
 func TestBathhouseHandler_Create_ForbiddenForClient(t *testing.T) {
 	clientID := uuid.New()
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil)
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil)
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses", h.Create)
@@ -1429,7 +1429,7 @@ func TestBathhouseHandler_Update(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative)).Put("/bathhouses/{id}", h.Update)
@@ -1457,7 +1457,7 @@ func TestBathhouseHandler_Delete(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Delete("/bathhouses/{id}", h.Delete)
@@ -1483,7 +1483,7 @@ func TestBathhouseHandler_GetAvailableSlots(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(nil, bookingSvc, nil, nil)
+	h := handler.NewBathhouseHandler(nil, bookingSvc, nil, nil, nil)
 
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}/available-slots", h.GetAvailableSlots)
@@ -1500,7 +1500,7 @@ func TestBathhouseHandler_GetAvailableSlots(t *testing.T) {
 
 func TestBathhouseHandler_GetAvailableSlots_NoDate(t *testing.T) {
 	bhID := uuid.New()
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil)
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil)
 
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}/available-slots", h.GetAvailableSlots)
@@ -1527,7 +1527,7 @@ func TestBathhouseHandler_MyBathhouses_Owner(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative)).Get("/my/bathhouses", h.MyBathhouses)
@@ -1554,7 +1554,7 @@ func TestBathhouseHandler_MyBathhouses_Representative(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(repID, domain.RoleRepresentative)
-	h := handler.NewBathhouseHandler(nil, nil, repSvc, nil)
+	h := handler.NewBathhouseHandler(nil, nil, repSvc, nil, nil)
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative)).Get("/my/bathhouses", h.MyBathhouses)
@@ -1881,7 +1881,7 @@ func TestBathhouseHandler_Search_WithAllFilters(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?page=2&page_size=10&city_slug=moscow&price_min=1000&price_max=10000&min_guests=5&has_sauna=true&has_steam_room=true&has_hot_tub=true&has_bbq=true&has_karaoke=true&min_rating=4.0&lat=55.75&lng=37.62&radius_km=10&sort_by=price&sort_order=asc", nil)
 	rec := httptest.NewRecorder()
@@ -1904,7 +1904,7 @@ func TestBathhouseHandler_Search_WithExtendedFilters(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?guest_count=8&available_date=2026-03-15&available_time_from=10:00&available_time_to=14:00&open_now=true&q=русская+баня", nil)
 	rec := httptest.NewRecorder()
@@ -1948,7 +1948,7 @@ func TestBathhouseHandler_Search_InvalidTimeParams(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?available_time_from=invalid&available_time_to=25:00&available_date=bad-date", nil)
 	rec := httptest.NewRecorder()
@@ -1981,7 +1981,7 @@ func TestBathhouseHandler_Search_GuestCountOnly(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?guest_count=5", nil)
 	rec := httptest.NewRecorder()
@@ -2007,7 +2007,7 @@ func TestBathhouseHandler_Search_SearchQueryOnly(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?q=sauna", nil)
 	rec := httptest.NewRecorder()
@@ -2031,7 +2031,7 @@ func TestBathhouseHandler_Search_InvalidPage(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?page=invalid&page_size=-1", nil)
 	rec := httptest.NewRecorder()
@@ -2046,7 +2046,7 @@ func TestBathhouseHandler_Search_InvalidPage(t *testing.T) {
 // --- Invalid ID error paths ---
 
 func TestBathhouseHandler_GetByID_InvalidUUID(t *testing.T) {
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil)
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil)
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}", h.GetByID)
 
@@ -2159,7 +2159,7 @@ func TestAdminHandler_UpdateCity_InvalidID(t *testing.T) {
 
 func TestBathhouseHandler_GetAvailableSlots_InvalidDate(t *testing.T) {
 	bhID := uuid.New()
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil)
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil)
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}/available-slots", h.GetAvailableSlots)
 
@@ -2174,7 +2174,7 @@ func TestBathhouseHandler_GetAvailableSlots_InvalidDate(t *testing.T) {
 
 func TestBathhouseHandler_Update_InvalidUUID(t *testing.T) {
 	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil)
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil)
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Put("/bathhouses/{id}", h.Update)
 
@@ -2192,7 +2192,7 @@ func TestBathhouseHandler_Update_InvalidUUID(t *testing.T) {
 
 func TestBathhouseHandler_Delete_InvalidUUID(t *testing.T) {
 	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil)
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil)
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Delete("/bathhouses/{id}", h.Delete)
 
@@ -2536,7 +2536,7 @@ func TestProtectedEndpoints_RequireAuth(t *testing.T) {
 	auth := middleware.RequireAuth(authSvc)
 
 	bookingH := handler.NewBookingHandler(nil)
-	bhH := handler.NewBathhouseHandler(nil, nil, nil, nil)
+	bhH := handler.NewBathhouseHandler(nil, nil, nil, nil, nil)
 
 	router.With(auth).Get("/bookings", bookingH.ListByUser)
 	router.With(auth, middleware.RequireRole(domain.RoleClient)).Post("/bookings", bookingH.Create)
@@ -2770,7 +2770,7 @@ func TestBathhouseHandler_Search_IsFavorite_Authenticated(t *testing.T) {
 	}
 	authSvc := makeAuthToken(userID, domain.RoleClient)
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, favSvc)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, favSvc, nil)
 
 	router := chi.NewRouter()
 	router.With(middleware.OptionalAuth(authSvc)).Get("/bathhouses", h.Search)
@@ -2810,7 +2810,7 @@ func TestBathhouseHandler_Search_IsFavorite_Unauthenticated(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/bathhouses", nil)
 	rec := httptest.NewRecorder()
@@ -2856,7 +2856,7 @@ func TestBathhouseHandler_GetByID_IsFavorite_Authenticated(t *testing.T) {
 	}
 	authSvc := makeAuthToken(userID, domain.RoleClient)
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, favSvc)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, favSvc, nil)
 
 	router := chi.NewRouter()
 	router.With(middleware.OptionalAuth(authSvc)).Get("/bathhouses/{id}", h.GetByID)
@@ -2893,7 +2893,7 @@ func TestBathhouseHandler_GetByID_IsFavorite_Unauthenticated(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil)
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil)
 
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}", h.GetByID)

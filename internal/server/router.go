@@ -15,21 +15,22 @@ import (
 type RouterParams struct {
 	fx.In
 
-	Log            *logger.Logger
-	CORS           *middleware.CORSMiddleware
-	AuthService    middleware.AuthService
-	AuthHandler    *handler.AuthHandler
-	BHHandler      *handler.BathhouseHandler
-	BookingHandler *handler.BookingHandler
-	ReviewHandler  *handler.ReviewHandler
-	FavHandler     *handler.FavoriteHandler
-	RepHandler     *handler.RepresentativeHandler
-	CityHandler    *handler.CityHandler
-	AdminHandler   *handler.AdminHandler
-	HealthHandler  *handler.HealthHandler
-	WSHandler      *handler.WSHandler
-	NotifHandler   *handler.NotificationHandler
-	OAuthHandler   *handler.OAuthHandler
+	Log                    *logger.Logger
+	CORS                   *middleware.CORSMiddleware
+	AuthService            middleware.AuthService
+	AuthHandler            *handler.AuthHandler
+	BHHandler              *handler.BathhouseHandler
+	BookingHandler         *handler.BookingHandler
+	ReviewHandler          *handler.ReviewHandler
+	FavHandler             *handler.FavoriteHandler
+	RepHandler             *handler.RepresentativeHandler
+	CityHandler            *handler.CityHandler
+	AdminHandler           *handler.AdminHandler
+	HealthHandler          *handler.HealthHandler
+	WSHandler              *handler.WSHandler
+	NotifHandler           *handler.NotificationHandler
+	OAuthHandler           *handler.OAuthHandler
+	RecommendationHandler  *handler.RecommendationHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -104,6 +105,13 @@ func NewRouter(p RouterParams) http.Handler {
 		// Favorites (authenticated)
 		r.With(auth).Post("/bathhouses/{id}/favorite", p.FavHandler.Toggle)
 		r.With(auth).Get("/my/favorites", p.FavHandler.List)
+
+		// Recommendations
+		r.With(auth).Get("/recommendations", p.RecommendationHandler.GetPersonalized)
+		r.Get("/bathhouses/{id}/similar", p.RecommendationHandler.GetSimilar)
+		r.Get("/popular", p.RecommendationHandler.GetPopular)
+		r.With(auth).Get("/my/preferences", p.RecommendationHandler.GetPreferences)
+		r.With(auth).Put("/my/preferences", p.RecommendationHandler.UpdatePreferences)
 
 		// User stats (authenticated)
 		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)
