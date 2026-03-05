@@ -427,6 +427,9 @@ func (s *bookingService) sendBookingNotification(ctx context.Context, booking *d
 	case domain.NotifBookingCancelled:
 		title = "Бронирование отменено"
 		body = fmt.Sprintf("Ваше бронирование на %s отменено", booking.StartTime.Format("02.01.2006 15:04"))
+	case domain.NotifBookingRejected:
+		title = "Бронирование отклонено"
+		body = fmt.Sprintf("Ваше бронирование на %s отклонено", booking.StartTime.Format("02.01.2006 15:04"))
 	default:
 		return
 	}

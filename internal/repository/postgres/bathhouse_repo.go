@@ -65,13 +65,28 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 
 func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
 	query := `
-		SELECT id, owner_id, name, description, address, city_id,
-			latitude, longitude, price_per_hour, min_duration, max_guests,
-			has_pool, has_sauna, has_steam_room, has_hot_tub, has_bbq, has_karaoke,
-			rating, review_count, images, working_hours, status, created_at, updated_at
-		FROM bathhouses WHERE id = $1`
+		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.description, bathhouses.address, bathhouses.city_id,
+			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
+			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
+			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
+			bathhouses.created_at, bathhouses.updated_at,
+			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
+		FROM bathhouses
+		LEFT JOIN subscriptions s ON bathhouses.id = s.bathhouse_id AND s.status = 'active'
+		LEFT JOIN promotions p ON bathhouses.id = p.bathhouse_id AND p.status = 'active'
+		WHERE bathhouses.id = $1`
 
-	return r.scanBathhouse(r.pool.QueryRow(ctx, query, id))
+	rows, err := r.pool.Query(ctx, query, id)
+	if err != nil {
+		return nil, fmt.Errorf("get bathhouse by id: %w", err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		return r.scanBathhouseFromRowWithSubscription(rows)
+	}
+
+	return nil, domain.ErrNotFound
 }
 
 func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error {
