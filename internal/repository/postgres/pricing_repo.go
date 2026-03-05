@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/lib/pq"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
@@ -36,7 +35,7 @@ func (r *pricingRuleRepo) Create(ctx context.Context, rule *domain.PricingRule) 
 
 	_, err := r.pool.Exec(ctx, query,
 		rule.ID, rule.BathhouseID, rule.Name, rule.Type, rule.Multiplier,
-		pq.Array(rule.DaysOfWeek), rule.TimeFrom, rule.TimeTo, rule.DateFrom, rule.DateTo,
+		rule.DaysOfWeek, rule.TimeFrom, rule.TimeTo, rule.DateFrom, rule.DateTo,
 		rule.Priority, rule.IsActive, rule.CreatedAt,
 	)
 	if err != nil {
@@ -58,7 +57,7 @@ func (r *pricingRuleRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Pr
 
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&rule.ID, &rule.BathhouseID, &rule.Name, &rule.Type, &rule.Multiplier,
-		pq.Array(&rule.DaysOfWeek), &rule.TimeFrom, &rule.TimeTo, &rule.DateFrom, &rule.DateTo,
+		&rule.DaysOfWeek, &rule.TimeFrom, &rule.TimeTo, &rule.DateFrom, &rule.DateTo,
 		&rule.Priority, &rule.IsActive, &rule.CreatedAt,
 	)
 	if err != nil {
@@ -78,7 +77,7 @@ func (r *pricingRuleRepo) Update(ctx context.Context, rule *domain.PricingRule) 
 	`
 
 	result, err := r.pool.Exec(ctx, query,
-		rule.Name, rule.Type, rule.Multiplier, pq.Array(rule.DaysOfWeek),
+		rule.Name, rule.Type, rule.Multiplier, rule.DaysOfWeek,
 		rule.TimeFrom, rule.TimeTo, rule.DateFrom, rule.DateTo, rule.Priority, rule.IsActive, rule.ID,
 	)
 	if err != nil {
@@ -120,7 +119,7 @@ func (r *pricingRuleRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.
 		var rule domain.PricingRule
 		if err := rows.Scan(
 			&rule.ID, &rule.BathhouseID, &rule.Name, &rule.Type, &rule.Multiplier,
-			pq.Array(&rule.DaysOfWeek), &rule.TimeFrom, &rule.TimeTo, &rule.DateFrom, &rule.DateTo,
+			&rule.DaysOfWeek, &rule.TimeFrom, &rule.TimeTo, &rule.DateFrom, &rule.DateTo,
 			&rule.Priority, &rule.IsActive, &rule.CreatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan pricing rule: %w", err)
@@ -153,7 +152,7 @@ func (r *pricingRuleRepo) GetActiveRules(ctx context.Context, bathhouseID uuid.U
 		var rule domain.PricingRule
 		if err := rows.Scan(
 			&rule.ID, &rule.BathhouseID, &rule.Name, &rule.Type, &rule.Multiplier,
-			pq.Array(&rule.DaysOfWeek), &rule.TimeFrom, &rule.TimeTo, &rule.DateFrom, &rule.DateTo,
+			&rule.DaysOfWeek, &rule.TimeFrom, &rule.TimeTo, &rule.DateFrom, &rule.DateTo,
 			&rule.Priority, &rule.IsActive, &rule.CreatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan pricing rule: %w", err)

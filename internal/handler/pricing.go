@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"math"
 	"net/http"
 	"time"
 
@@ -13,20 +14,17 @@ import (
 )
 
 type PricingHandler struct {
-	pricingService  service.PricingService
-	bathhouseRepo   repository.BathhouseRepository
-	accessCheck     *service.AccessChecker
+	pricingService service.PricingService
+	bathhouseRepo  repository.BathhouseRepository
 }
 
 func NewPricingHandler(
 	pricingService service.PricingService,
 	bathhouseRepo repository.BathhouseRepository,
-	accessCheck *service.AccessChecker,
 ) *PricingHandler {
 	return &PricingHandler{
-		pricingService:  pricingService,
-		bathhouseRepo:   bathhouseRepo,
-		accessCheck:     accessCheck,
+		pricingService: pricingService,
+		bathhouseRepo:  bathhouseRepo,
 	}
 }
 
@@ -114,12 +112,6 @@ func (h *PricingHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
 
-	// Verify user has access to manage this bathhouse
-	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, userRole, bathhouseID); err != nil {
-		handleServiceError(w, err)
-		return
-	}
-
 	rule := &domain.PricingRule{
 		ID:          uuid.New(),
 		BathhouseID: bathhouseID,
@@ -136,7 +128,7 @@ func (h *PricingHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:   time.Now(),
 	}
 
-	createdRule, err := h.pricingService.CreateRule(r.Context(), userID, rule)
+	createdRule, err := h.pricingService.CreateRule(r.Context(), userID, userRole, rule)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -150,15 +142,6 @@ func (h *PricingHandler) ListRules(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
-		return
-	}
-
-	userID := middleware.GetUserID(r.Context())
-	userRole := middleware.GetUserRole(r.Context())
-
-	// Verify user has access to manage this bathhouse
-	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, userRole, bathhouseID); err != nil {
-		handleServiceError(w, err)
 		return
 	}
 
@@ -191,6 +174,7 @@ func (h *PricingHandler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
 
 	rule := &domain.PricingRule{
 		ID:          ruleID,
@@ -206,7 +190,7 @@ func (h *PricingHandler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 		IsActive:    req.IsActive,
 	}
 
-	if err := h.pricingService.UpdateRule(r.Context(), userID, rule); err != nil {
+	if err := h.pricingService.UpdateRule(r.Context(), userID, userRole, rule); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -223,8 +207,9 @@ func (h *PricingHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
 
-	if err := h.pricingService.DeleteRule(r.Context(), userID, ruleID); err != nil {
+	if err := h.pricingService.DeleteRule(r.Context(), userID, userRole, ruleID); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -261,6 +246,12 @@ func (h *PricingHandler) CalculatePrice(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Validate that start time is before end time
+	if !startTime.Before(endTime) {
+		writeError(w, http.StatusBadRequest, "invalid_input", "start must be before end")
+		return
+	}
+
 	// Get bathhouse to get base price
 	bathhouse, err := h.bathhouseRepo.GetByID(r.Context(), bathhouseID)
 	if err != nil {
@@ -275,9 +266,9 @@ func (h *PricingHandler) CalculatePrice(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Calculate base price (without multipliers)
+	// Calculate base price (without multipliers) - match service algorithm using ceil
 	duration := endTime.Sub(startTime)
-	hours := int64((duration.Hours() * 10) + 0.5) / 10 // Round to nearest 0.1
+	hours := int64(math.Ceil(duration.Hours()))
 	if hours == 0 {
 		hours = 1
 	}

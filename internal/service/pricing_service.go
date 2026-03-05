@@ -14,9 +14,9 @@ import (
 
 type PricingService interface {
 	CalculatePrice(ctx context.Context, bathhouseID uuid.UUID, basePrice int64, startTime, endTime time.Time) (int64, error)
-	CreateRule(ctx context.Context, userID uuid.UUID, rule *domain.PricingRule) (*domain.PricingRule, error)
-	UpdateRule(ctx context.Context, userID uuid.UUID, rule *domain.PricingRule) error
-	DeleteRule(ctx context.Context, userID uuid.UUID, ruleID uuid.UUID) error
+	CreateRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) (*domain.PricingRule, error)
+	UpdateRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) error
+	DeleteRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, ruleID uuid.UUID) error
 	ListRules(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
 	GetActiveRules(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
 }
@@ -97,9 +97,9 @@ func (s *pricingService) CalculatePrice(ctx context.Context, bathhouseID uuid.UU
 }
 
 // CreateRule creates a new pricing rule for a bathhouse
-func (s *pricingService) CreateRule(ctx context.Context, userID uuid.UUID, rule *domain.PricingRule) (*domain.PricingRule, error) {
+func (s *pricingService) CreateRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) (*domain.PricingRule, error) {
 	// Verify user has access to manage the bathhouse
-	if err := s.access.CanManageBathhouse(ctx, userID, domain.RoleOwner, rule.BathhouseID); err != nil {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, rule.BathhouseID); err != nil {
 		return nil, err
 	}
 
@@ -124,7 +124,7 @@ func (s *pricingService) CreateRule(ctx context.Context, userID uuid.UUID, rule 
 }
 
 // UpdateRule updates an existing pricing rule
-func (s *pricingService) UpdateRule(ctx context.Context, userID uuid.UUID, rule *domain.PricingRule) error {
+func (s *pricingService) UpdateRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) error {
 	// Get the rule first
 	existing, err := s.priceRuleRepo.GetByID(ctx, rule.ID)
 	if err != nil {
@@ -132,9 +132,12 @@ func (s *pricingService) UpdateRule(ctx context.Context, userID uuid.UUID, rule 
 	}
 
 	// Verify user has access to manage the bathhouse
-	if err := s.access.CanManageBathhouse(ctx, userID, domain.RoleOwner, existing.BathhouseID); err != nil {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, existing.BathhouseID); err != nil {
 		return err
 	}
+
+	// Preserve bathhouse ID from the existing rule
+	rule.BathhouseID = existing.BathhouseID
 
 	// Validate rule
 	if err := rule.Validate(); err != nil {
@@ -151,7 +154,7 @@ func (s *pricingService) UpdateRule(ctx context.Context, userID uuid.UUID, rule 
 }
 
 // DeleteRule deletes a pricing rule
-func (s *pricingService) DeleteRule(ctx context.Context, userID uuid.UUID, ruleID uuid.UUID) error {
+func (s *pricingService) DeleteRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, ruleID uuid.UUID) error {
 	// Get the rule first
 	existing, err := s.priceRuleRepo.GetByID(ctx, ruleID)
 	if err != nil {
@@ -159,7 +162,7 @@ func (s *pricingService) DeleteRule(ctx context.Context, userID uuid.UUID, ruleI
 	}
 
 	// Verify user has access to manage the bathhouse
-	if err := s.access.CanManageBathhouse(ctx, userID, domain.RoleOwner, existing.BathhouseID); err != nil {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, existing.BathhouseID); err != nil {
 		return err
 	}
 

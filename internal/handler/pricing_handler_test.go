@@ -14,15 +14,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
-	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 // Mock PricingService for testing
 type mockPricingService struct {
 	calculatePriceFn func(ctx context.Context, bathhouseID uuid.UUID, basePrice int64, startTime, endTime time.Time) (int64, error)
-	createRuleFn     func(ctx context.Context, userID uuid.UUID, rule *domain.PricingRule) (*domain.PricingRule, error)
-	updateRuleFn     func(ctx context.Context, userID uuid.UUID, rule *domain.PricingRule) error
-	deleteRuleFn     func(ctx context.Context, userID uuid.UUID, ruleID uuid.UUID) error
+	createRuleFn     func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) (*domain.PricingRule, error)
+	updateRuleFn     func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) error
+	deleteRuleFn     func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, ruleID uuid.UUID) error
 	listRulesFn      func(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
 	getActiveRulesFn func(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
 }
@@ -34,23 +33,23 @@ func (m *mockPricingService) CalculatePrice(ctx context.Context, bathhouseID uui
 	return basePrice * int64(endTime.Sub(startTime).Hours()), nil
 }
 
-func (m *mockPricingService) CreateRule(ctx context.Context, userID uuid.UUID, rule *domain.PricingRule) (*domain.PricingRule, error) {
+func (m *mockPricingService) CreateRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) (*domain.PricingRule, error) {
 	if m.createRuleFn != nil {
-		return m.createRuleFn(ctx, userID, rule)
+		return m.createRuleFn(ctx, userID, userRole, rule)
 	}
 	return rule, nil
 }
 
-func (m *mockPricingService) UpdateRule(ctx context.Context, userID uuid.UUID, rule *domain.PricingRule) error {
+func (m *mockPricingService) UpdateRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) error {
 	if m.updateRuleFn != nil {
-		return m.updateRuleFn(ctx, userID, rule)
+		return m.updateRuleFn(ctx, userID, userRole, rule)
 	}
 	return nil
 }
 
-func (m *mockPricingService) DeleteRule(ctx context.Context, userID uuid.UUID, ruleID uuid.UUID) error {
+func (m *mockPricingService) DeleteRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, ruleID uuid.UUID) error {
 	if m.deleteRuleFn != nil {
-		return m.deleteRuleFn(ctx, userID, ruleID)
+		return m.deleteRuleFn(ctx, userID, userRole, ruleID)
 	}
 	return nil
 }
@@ -75,7 +74,7 @@ func TestPricingHandler_CreateRule(t *testing.T) {
 	ruleID := uuid.New()
 
 	pricingSvc := &mockPricingService{
-		createRuleFn: func(ctx context.Context, uid uuid.UUID, rule *domain.PricingRule) (*domain.PricingRule, error) {
+		createRuleFn: func(ctx context.Context, uid uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) (*domain.PricingRule, error) {
 			if uid == userID && rule.BathhouseID == bathhouseID {
 				rule.ID = ruleID
 				rule.CreatedAt = time.Now()
@@ -94,8 +93,7 @@ func TestPricingHandler_CreateRule(t *testing.T) {
 		},
 	}
 
-	accessCheck := newTestAccessChecker(userID, bathhouseID)
-	h := NewPricingHandler(pricingSvc, bhRepo, accessCheck)
+	h := NewPricingHandler(pricingSvc, bhRepo)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -160,8 +158,7 @@ func TestPricingHandler_ListRules(t *testing.T) {
 		},
 	}
 
-	accessCheck := newTestAccessChecker(userID, bathhouseID)
-	h := NewPricingHandler(pricingSvc, bhRepo, accessCheck)
+	h := NewPricingHandler(pricingSvc, bhRepo)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -193,7 +190,7 @@ func TestPricingHandler_UpdateRule(t *testing.T) {
 	ruleID := uuid.New()
 
 	pricingSvc := &mockPricingService{
-		updateRuleFn: func(ctx context.Context, uid uuid.UUID, rule *domain.PricingRule) error {
+		updateRuleFn: func(ctx context.Context, uid uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) error {
 			if uid == userID && rule.ID == ruleID {
 				return nil
 			}
@@ -202,8 +199,7 @@ func TestPricingHandler_UpdateRule(t *testing.T) {
 	}
 
 	bhRepo := &mockBathhouseRepository{}
-	accessCheck := &service.AccessChecker{}
-	h := NewPricingHandler(pricingSvc, bhRepo, accessCheck)
+	h := NewPricingHandler(pricingSvc, bhRepo)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -236,7 +232,7 @@ func TestPricingHandler_DeleteRule(t *testing.T) {
 	ruleID := uuid.New()
 
 	pricingSvc := &mockPricingService{
-		deleteRuleFn: func(ctx context.Context, uid uuid.UUID, rid uuid.UUID) error {
+		deleteRuleFn: func(ctx context.Context, uid uuid.UUID, userRole domain.UserRole, rid uuid.UUID) error {
 			if uid == userID && rid == ruleID {
 				return nil
 			}
@@ -245,8 +241,7 @@ func TestPricingHandler_DeleteRule(t *testing.T) {
 	}
 
 	bhRepo := &mockBathhouseRepository{}
-	accessCheck := &service.AccessChecker{}
-	h := NewPricingHandler(pricingSvc, bhRepo, accessCheck)
+	h := NewPricingHandler(pricingSvc, bhRepo)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -297,8 +292,7 @@ func TestPricingHandler_CalculatePrice(t *testing.T) {
 		},
 	}
 
-	accessCheck := &service.AccessChecker{}
-	h := NewPricingHandler(pricingSvc, bhRepo, accessCheck)
+	h := NewPricingHandler(pricingSvc, bhRepo)
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}/price-calculator", h.CalculatePrice)
@@ -330,8 +324,7 @@ func TestPricingHandler_CalculatePrice_MissingParams(t *testing.T) {
 
 	pricingSvc := &mockPricingService{}
 	bhRepo := &mockBathhouseRepository{}
-	accessCheck := &service.AccessChecker{}
-	h := NewPricingHandler(pricingSvc, bhRepo, accessCheck)
+	h := NewPricingHandler(pricingSvc, bhRepo)
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}/price-calculator", h.CalculatePrice)

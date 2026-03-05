@@ -214,7 +214,7 @@ func TestPricingService_CreateRule_InvalidInput(t *testing.T) {
 		IsActive:    true,
 	}
 
-	_, err := service.CreateRule(context.Background(), bh.OwnerID, rule)
+	_, err := service.CreateRule(context.Background(), bh.OwnerID, domain.RoleOwner, rule)
 	if err == nil {
 		t.Error("expected validation error, got nil")
 	}
@@ -246,7 +246,7 @@ func TestPricingService_CreateRule_UnauthorizedUser(t *testing.T) {
 		IsActive:    true,
 	}
 
-	_, err := service.CreateRule(context.Background(), unauthorizedID, rule)
+	_, err := service.CreateRule(context.Background(), unauthorizedID, domain.RoleOwner, rule)
 	if err == nil {
 		t.Error("expected authorization error, got nil")
 	}
