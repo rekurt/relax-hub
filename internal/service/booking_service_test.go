@@ -13,18 +13,20 @@ import (
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
-func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.BookingRepo, *mock.RepresentativeRepo) {
+func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.BookingRepo, *mock.RepresentativeRepo, service.PricingService, *mock.PricingRuleRepo) {
 	bhRepo := mock.NewBathhouseRepo()
 	bookingRepo := mock.NewBookingRepo()
 	repRepo := mock.NewRepresentativeRepo()
+	pricingRepo := mock.NewPricingRuleRepo()
 	access := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewBookingService(bookingRepo, bhRepo, access, &noopNotifService{}, log)
-	return svc, bhRepo, bookingRepo, repRepo
+	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingRepo, pricingSvc, access, &noopNotifService{}, log)
+	return svc, bhRepo, bookingRepo, repRepo, pricingSvc, pricingRepo
 }
 
 func TestBookingService_Create_Success(t *testing.T) {
-	svc, bhRepo, _, _ := newBookingService()
+	svc, bhRepo, _, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
@@ -53,7 +55,7 @@ func TestBookingService_Create_Success(t *testing.T) {
 }
 
 func TestBookingService_Create_InactiveBathhouse(t *testing.T) {
-	svc, bhRepo, _, _ := newBookingService()
+	svc, bhRepo, _, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 
 	bh := &domain.Bathhouse{
@@ -77,7 +79,7 @@ func TestBookingService_Create_InactiveBathhouse(t *testing.T) {
 }
 
 func TestBookingService_Create_TooManyGuests(t *testing.T) {
-	svc, bhRepo, _, _ := newBookingService()
+	svc, bhRepo, _, _, _, _ := newBookingService()
 	bh := createBathhouse(t, bhRepo, uuid.New()) // MaxGuests = 10
 
 	start := time.Now().Add(24 * time.Hour)
@@ -94,7 +96,7 @@ func TestBookingService_Create_TooManyGuests(t *testing.T) {
 }
 
 func TestBookingService_Create_SlotUnavailable(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
@@ -125,7 +127,7 @@ func TestBookingService_Create_SlotUnavailable(t *testing.T) {
 }
 
 func TestBookingService_Cancel_ClientOwnBooking(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	bh := createBathhouse(t, bhRepo, uuid.New())
 	clientID := uuid.New()
 
@@ -144,7 +146,7 @@ func TestBookingService_Cancel_ClientOwnBooking(t *testing.T) {
 }
 
 func TestBookingService_Cancel_ClientOtherBookingForbidden(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	bh := createBathhouse(t, bhRepo, uuid.New())
 	otherClientID := uuid.New()
 
@@ -163,7 +165,7 @@ func TestBookingService_Cancel_ClientOtherBookingForbidden(t *testing.T) {
 }
 
 func TestBookingService_Cancel_ClientTooLate(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	bh := createBathhouse(t, bhRepo, uuid.New())
 	clientID := uuid.New()
 
@@ -182,7 +184,7 @@ func TestBookingService_Cancel_ClientTooLate(t *testing.T) {
 }
 
 func TestBookingService_Cancel_OwnerCanCancelAnytime(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
@@ -201,7 +203,7 @@ func TestBookingService_Cancel_OwnerCanCancelAnytime(t *testing.T) {
 }
 
 func TestBookingService_Confirm_OwnerAllowed(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
@@ -220,7 +222,7 @@ func TestBookingService_Confirm_OwnerAllowed(t *testing.T) {
 }
 
 func TestBookingService_Confirm_RepresentativeAllowed(t *testing.T) {
-	svc, bhRepo, bookingRepo, repRepo := newBookingService()
+	svc, bhRepo, bookingRepo, repRepo, _, _ := newBookingService()
 	ownerID := uuid.New()
 	repUserID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
@@ -245,7 +247,7 @@ func TestBookingService_Confirm_RepresentativeAllowed(t *testing.T) {
 }
 
 func TestBookingService_Confirm_ClientForbidden(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	bh := createBathhouse(t, bhRepo, uuid.New())
 	clientID := uuid.New()
 
@@ -264,7 +266,7 @@ func TestBookingService_Confirm_ClientForbidden(t *testing.T) {
 }
 
 func TestBookingService_Reject_OwnerAllowed(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
@@ -283,7 +285,7 @@ func TestBookingService_Reject_OwnerAllowed(t *testing.T) {
 }
 
 func TestBookingService_ListByBathhouse_OwnerAllowed(t *testing.T) {
-	svc, bhRepo, _, _ := newBookingService()
+	svc, bhRepo, _, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
@@ -294,7 +296,7 @@ func TestBookingService_ListByBathhouse_OwnerAllowed(t *testing.T) {
 }
 
 func TestBookingService_ListByBathhouse_ClientForbidden(t *testing.T) {
-	svc, bhRepo, _, _ := newBookingService()
+	svc, bhRepo, _, _, _, _ := newBookingService()
 	bh := createBathhouse(t, bhRepo, uuid.New())
 	clientID := uuid.New()
 
@@ -305,7 +307,7 @@ func TestBookingService_ListByBathhouse_ClientForbidden(t *testing.T) {
 }
 
 func TestBookingService_ListByUser(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	bh := createBathhouse(t, bhRepo, uuid.New())
 	clientID := uuid.New()
 
@@ -327,7 +329,7 @@ func TestBookingService_ListByUser(t *testing.T) {
 }
 
 func TestBookingService_GetAvailableSlots(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 
 	bh := &domain.Bathhouse{
@@ -378,7 +380,7 @@ func TestBookingService_GetAvailableSlots(t *testing.T) {
 }
 
 func TestBookingService_GetAvailableSlots_ClosedDay(t *testing.T) {
-	svc, bhRepo, _, _ := newBookingService()
+	svc, bhRepo, _, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 
 	bh := &domain.Bathhouse{
@@ -409,7 +411,7 @@ func TestBookingService_GetAvailableSlots_ClosedDay(t *testing.T) {
 }
 
 func TestBookingService_Cancel_AlreadyCancelled(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	bh := createBathhouse(t, bhRepo, uuid.New())
 	clientID := uuid.New()
 
@@ -428,7 +430,7 @@ func TestBookingService_Cancel_AlreadyCancelled(t *testing.T) {
 }
 
 func TestBookingService_Confirm_AlreadyConfirmed(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newBookingService()
+	svc, bhRepo, bookingRepo, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
@@ -447,7 +449,7 @@ func TestBookingService_Confirm_AlreadyConfirmed(t *testing.T) {
 }
 
 func TestBookingService_Create_ShortDuration(t *testing.T) {
-	svc, bhRepo, _, _ := newBookingService()
+	svc, bhRepo, _, _, _, _ := newBookingService()
 	bh := createBathhouse(t, bhRepo, uuid.New()) // MinDuration = 1
 
 	start := time.Now().Add(24 * time.Hour)
@@ -461,4 +463,96 @@ func TestBookingService_Create_ShortDuration(t *testing.T) {
 	if !errors.Is(err, domain.ErrInvalidInput) {
 		t.Errorf("should fail for too short duration, got: %v", err)
 	}
+}
+
+func TestBookingService_Create_WithDynamicPricing(t *testing.T) {
+	svc, bhRepo, _, _, _, pricingRepo := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Create a pricing rule: 1.5x multiplier for the booking time
+	basePrice := bh.PricePerHour
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 18, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	// Create a pricing rule that applies to 18:00-20:00
+	rule := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bh.ID,
+		Name:        "Evening Boost",
+		Type:        domain.RuleTypeTimeRange,
+		Multiplier:  1.5,
+		TimeFrom:    toPtr("18:00"),
+		TimeTo:      toPtr("20:00"),
+		Priority:    10,
+		IsActive:    true,
+	}
+
+	_ = pricingRepo.Create(context.Background(), rule)
+
+	booking, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Expected: basePrice * 2 hours * 1.5 multiplier = basePrice * 3
+	expectedPrice := int64(float64(basePrice*2) * 1.5)
+	if booking.TotalPrice != expectedPrice {
+		t.Errorf("totalPrice = %d, want %d (basePrice=%d, multiplier=1.5)", booking.TotalPrice, expectedPrice, basePrice)
+	}
+}
+
+func TestBookingService_GetAvailableSlots_WithPricing(t *testing.T) {
+	svc, bhRepo, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Test Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, Status: domain.BathhouseStatusActive,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: 0, OpenTime: "09:00", CloseTime: "13:00"}, // Monday
+		},
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Find next Monday
+	now := time.Now()
+	daysUntilMonday := (8 - int(now.Weekday())) % 7
+	if daysUntilMonday == 0 {
+		daysUntilMonday = 7
+	}
+	monday := time.Date(now.Year(), now.Month(), now.Day()+daysUntilMonday, 0, 0, 0, 0, time.UTC)
+
+	slots, err := svc.GetAvailableSlots(context.Background(), bh.ID, monday)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(slots) == 0 {
+		t.Errorf("expected at least one slot, got 0")
+	}
+
+	// Verify each slot has a price
+	for i, slot := range slots {
+		if slot.Price <= 0 {
+			t.Errorf("slot %d: price should be positive, got %d", i, slot.Price)
+		}
+		// Without pricing rules, price should equal base price
+		if slot.Price != bh.PricePerHour {
+			t.Errorf("slot %d: price = %d, want %d (base price)", i, slot.Price, bh.PricePerHour)
+		}
+	}
+}
+
+func toPtr(s string) *string {
+	return &s
 }

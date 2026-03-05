@@ -26,6 +26,7 @@ type TimeSlot struct {
 	StartTime time.Time
 	EndTime   time.Time
 	Available bool
+	Price     int64 // Price in kopecks for this hour slot
 }
 
 type BookingService interface {
@@ -40,26 +41,32 @@ type BookingService interface {
 }
 
 type bookingService struct {
-	bookingRepo repository.BookingRepository
-	bhRepo      repository.BathhouseRepository
-	access      *AccessChecker
-	notifSvc    NotificationService
-	logger      *logger.Logger
+	bookingRepo   repository.BookingRepository
+	bhRepo        repository.BathhouseRepository
+	pricingRepo   repository.PricingRuleRepository
+	pricingSvc    PricingService
+	access        *AccessChecker
+	notifSvc      NotificationService
+	logger        *logger.Logger
 }
 
 func NewBookingService(
 	bookingRepo repository.BookingRepository,
 	bhRepo repository.BathhouseRepository,
+	pricingRepo repository.PricingRuleRepository,
+	pricingSvc PricingService,
 	access *AccessChecker,
 	notifSvc NotificationService,
 	log *logger.Logger,
 ) BookingService {
 	return &bookingService{
-		bookingRepo: bookingRepo,
-		bhRepo:      bhRepo,
-		access:      access,
-		notifSvc:    notifSvc,
-		logger:      log,
+		bookingRepo:   bookingRepo,
+		bhRepo:        bhRepo,
+		pricingRepo:   pricingRepo,
+		pricingSvc:    pricingSvc,
+		access:        access,
+		notifSvc:      notifSvc,
+		logger:        log,
 	}
 }
 
@@ -108,7 +115,11 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, domain.ErrSlotUnavailable
 	}
 
-	totalPrice := bh.PricePerHour * int64(durationHours)
+	// Calculate price using pricing service (which applies any dynamic pricing rules)
+	totalPrice, err := s.pricingSvc.CalculatePrice(ctx, input.BathhouseID, bh.PricePerHour, input.StartTime, input.EndTime)
+	if err != nil {
+		return nil, err
+	}
 
 	now := time.Now()
 	booking := &domain.Booking{
@@ -311,10 +322,20 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 				break
 			}
 		}
+
+		// Calculate price for this hour slot using pricing service
+		slotPrice, err := s.pricingSvc.CalculatePrice(ctx, bathhouseID, bh.PricePerHour, t, slotEnd)
+		if err != nil {
+			s.logger.Warn("failed to calculate price for slot", "error", err, "slot_start", t)
+			// Fall back to base price if calculation fails
+			slotPrice = bh.PricePerHour
+		}
+
 		slots = append(slots, TimeSlot{
 			StartTime: t,
 			EndTime:   slotEnd,
 			Available: avail,
+			Price:     slotPrice,
 		})
 	}
 
