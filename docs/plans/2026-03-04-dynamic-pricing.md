@@ -29,7 +29,7 @@
 - Create: `migrations/000008_dynamic_pricing.up.sql`
 - Create: `migrations/000008_dynamic_pricing.down.sql`
 
-- [ ] Создать модель PricingRule:
+- [x] Создать модель PricingRule:
   ```
   PricingRule {
     ID            uuid.UUID
@@ -47,9 +47,9 @@
     CreatedAt     time.Time
   }
   ```
-- [ ] Создать миграцию с таблицей pricing_rules
-- [ ] Написать тесты валидации
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать миграцию с таблицей pricing_rules
+- [x] Написать тесты валидации
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий и сервис ценообразования
 
