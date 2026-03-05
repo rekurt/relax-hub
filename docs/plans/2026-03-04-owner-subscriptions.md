@@ -97,14 +97,14 @@
 **Files:**
 - Create: `internal/service/subscription_service.go`
 
-- [ ] Создать SubscriptionService:
+- [x] Создать SubscriptionService:
   - Subscribe(ctx, bathhouseID, plan) — создать подписку, списать оплату
   - Cancel(ctx, subscriptionID) — отменить автопродление
   - GetActive(ctx, bathhouseID) — текущая активная подписка
   - ListByOwner(ctx, ownerID, page, pageSize) — все подписки владельца
-- [ ] RBAC: только owner бани может управлять подписками
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] RBAC: только owner бани может управлять подписками
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Влияние подписки на выдачу
 
