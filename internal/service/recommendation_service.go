@@ -64,48 +64,45 @@ func (s *recommendationService) GetPersonalized(ctx context.Context, userID uuid
 		bookedSet[id] = true
 	}
 
-	// Get user's booking history with dates for recency calculation
-	bookedWithDates, err := s.recRepo.GetUserBookedBathhousesWithDates(ctx, userID, 1000)
-	if err != nil {
-		return nil, 0, err
-	}
-	// Create recency map: bathhouse -> booking dates
-	recencyMap := make(map[uuid.UUID][]time.Time)
-	for _, booking := range bookedWithDates {
-		recencyMap[booking.BathhouseID] = append(recencyMap[booking.BathhouseID], booking.BookedAt)
-	}
-
 	// Find similar users
 	similarUsers, err := s.recRepo.GetSimilarUsers(ctx, userID, 10)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Collect bathhouses booked by similar users
+	// Collect bathhouses booked by similar users with recency tracking
 	type scoreItem struct {
 		bathhouseID uuid.UUID
 		score       float64
 	}
 
 	bathhouseScores := make(map[uuid.UUID]float64)
+	// Track the most recent booking date for each bathhouse across similar users
+	bathhouseRecentDates := make(map[uuid.UUID]time.Time)
 
 	for i, similarUserID := range similarUsers {
 		// Weight by similarity rank (first similar user has highest weight)
 		similarity := 1.0 / (1.0 + float64(i)*0.1)
 
-		booked, err := s.recRepo.GetUserBookedBathhouses(ctx, similarUserID, 100)
+		// Get similar user's bookings with dates to track recency
+		bookedWithDates, err := s.recRepo.GetUserBookedBathhousesWithDates(ctx, similarUserID, 100)
 		if err != nil {
 			continue
 		}
 
-		for _, bathID := range booked {
-			// Skip if user already booked this bathhouse
-			if bookedSet[bathID] {
+		for _, booking := range bookedWithDates {
+			// Skip if current user already booked this bathhouse
+			if bookedSet[booking.BathhouseID] {
 				continue
 			}
 
 			// Accumulate score
-			bathhouseScores[bathID] += similarity
+			bathhouseScores[booking.BathhouseID] += similarity
+
+			// Track the most recent booking date across all similar users
+			if recent, exists := bathhouseRecentDates[booking.BathhouseID]; !exists || booking.BookedAt.After(recent) {
+				bathhouseRecentDates[booking.BathhouseID] = booking.BookedAt
+			}
 		}
 	}
 
@@ -129,18 +126,11 @@ func (s *recommendationService) GetPersonalized(ctx context.Context, userID uuid
 			continue
 		}
 
-		// Calculate recency bonus (similar bathhouses booked recently are weighted higher)
+		// Calculate recency bonus (similar users' recent bookings are weighted higher)
 		recencyBonus := 1.0
-		if dates, exists := recencyMap[bh.ID]; exists && len(dates) > 0 {
-			// Get the most recent booking date
-			mostRecent := dates[0]
-			for _, d := range dates {
-				if d.After(mostRecent) {
-					mostRecent = d
-				}
-			}
+		if mostRecentDate, exists := bathhouseRecentDates[bh.ID]; exists {
 			// Decay bonus: 30 days = 1.0, 60 days = 0.5, 90 days = 0.25
-			daysSince := now.Sub(mostRecent).Hours() / 24
+			daysSince := now.Sub(mostRecentDate).Hours() / 24
 			recencyBonus = 1.0 / (1.0 + daysSince/30.0)
 		}
 

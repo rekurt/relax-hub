@@ -66,9 +66,18 @@ func (p *VKProvider) Exchange(ctx context.Context, code string) (*OAuthUserInfo,
 	// VK returns email in the token response extra fields
 	email, _ := token.Extra("email").(string)
 
-	userID, _ := token.Extra("user_id").(float64)
-	if userID == 0 {
+	userIDRaw := token.Extra("user_id")
+	if userIDRaw == nil {
 		return nil, fmt.Errorf("vk: user_id not found in token response")
+	}
+
+	userID, ok := userIDRaw.(float64)
+	if !ok {
+		return nil, fmt.Errorf("vk: user_id is not a number: %T", userIDRaw)
+	}
+
+	if userID == 0 {
+		return nil, fmt.Errorf("vk: user_id is zero")
 	}
 
 	info, err := p.fetchUserInfo(ctx, token.AccessToken, int64(userID))
@@ -93,14 +102,17 @@ type vkUser struct {
 
 func (p *VKProvider) fetchUserInfo(ctx context.Context, accessToken string, userID int64) (*OAuthUserInfo, error) {
 	url := fmt.Sprintf(
-		"%s/method/users.get?user_ids=%d&fields=photo_200&access_token=%s&v=%s",
-		p.apiBase, userID, accessToken, vkAPIVersion,
+		"%s/method/users.get?user_ids=%d&fields=photo_200&v=%s",
+		p.apiBase, userID, vkAPIVersion,
 	)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("vk: create request: %w", err)
 	}
+
+	// Include access token in Authorization header instead of URL query
+	req.Header.Set("Authorization", "Bearer "+accessToken)
 
 	resp, err := p.client.Do(req)
 	if err != nil {

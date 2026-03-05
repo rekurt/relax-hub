@@ -122,8 +122,14 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 	// Ignore delete errors - state is already validated so this is just cleanup
 	_ = s.redisClient.Del(redisCtx, "oauth_state:"+state).Err()
 
+	// Verify the stored provider is valid
+	providerFromState := domain.OAuthProvider(storedProvider)
+	if !providerFromState.IsValid() {
+		return nil, "", fmt.Errorf("%w: invalid provider in OAuth state", domain.ErrUnauthorized)
+	}
+
 	// Verify the state matches the requested provider
-	if domain.OAuthProvider(storedProvider) != provider {
+	if providerFromState != provider {
 		return nil, "", fmt.Errorf("%w: provider mismatch in OAuth state", domain.ErrUnauthorized)
 	}
 
