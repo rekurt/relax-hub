@@ -30,3 +30,7 @@ func TestNewReviewRepository_ImplementsInterface(t *testing.T) {
 func TestNewRepresentativeRepository_ImplementsInterface(t *testing.T) {
 	var _ repository.RepresentativeRepository = NewRepresentativeRepository(&pgxpool.Pool{})
 }
+
+func TestNewRecommendationRepository_ImplementsInterface(t *testing.T) {
+	var _ repository.RecommendationRepository = NewRecommendationRepository(&pgxpool.Pool{})
+}

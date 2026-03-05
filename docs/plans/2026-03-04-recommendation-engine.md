@@ -57,7 +57,7 @@
 - Create: `internal/repository/postgres/recommendation.go`
 - Create: `internal/repository/mock/recommendation.go`
 
-- [ ] RecommendationRepository:
+- [x] RecommendationRepository:
   - GetUserPreferences(ctx, userID) — явные предпочтения
   - SaveUserPreferences(ctx, prefs) — сохранить предпочтения
   - RecordActivity(ctx, activity) — записать активность
@@ -65,9 +65,9 @@
   - GetSimilarUsers(ctx, userID, limit) — пользователи с похожими бронированиями
   - GetPopularBathhouses(ctx, cityID, limit) — популярные бани в городе
   - GetSimilarBathhouses(ctx, bathhouseID, limit) — похожие бани (по удобствам, городу, цене)
-- [ ] Реализовать postgres и mock
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Реализовать postgres и mock
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Сервис рекомендаций
 

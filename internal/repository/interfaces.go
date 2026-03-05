@@ -98,3 +98,24 @@ type RepresentativeRepository interface {
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.Representative, error)
 	ListBathhouseIDsByUser(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 }
+
+type RecommendationRepository interface {
+	// User preferences
+	GetUserPreferences(ctx context.Context, userID uuid.UUID) (*domain.UserPreferences, error)
+	SaveUserPreferences(ctx context.Context, prefs *domain.UserPreferences) error
+
+	// Activity tracking
+	RecordActivity(ctx context.Context, activity *domain.UserActivity) error
+
+	// Booking history
+	GetUserBookedBathhouses(ctx context.Context, userID uuid.UUID, limit int) ([]uuid.UUID, error)
+
+	// Collaborative filtering
+	GetSimilarUsers(ctx context.Context, userID uuid.UUID, limit int) ([]uuid.UUID, error)
+
+	// Popularity
+	GetPopularBathhouses(ctx context.Context, cityID int64, limit int) ([]uuid.UUID, error)
+
+	// Similarity based on amenities and location
+	GetSimilarBathhouses(ctx context.Context, bathhouseID uuid.UUID, limit int) ([]uuid.UUID, error)
+}

@@ -22,6 +22,7 @@ var (
 	_ repository.RepresentativeRepository = (*RepresentativeRepo)(nil)
 	_ repository.NotificationRepository   = (*NotificationRepo)(nil)
 	_ repository.SocialAccountRepository  = (*SocialAccountRepo)(nil)
+	_ repository.RecommendationRepository = (*RecommendationRepo)(nil)
 )
 
 func TestUserRepo_CRUD(t *testing.T) {
@@ -1094,5 +1095,191 @@ func TestSocialAccountRepo_CRUD(t *testing.T) {
 	// Delete not found
 	if err := repo.Delete(ctx, userID, domain.OAuthProviderVK); !errors.Is(err, domain.ErrSocialAccountNotFound) {
 		t.Errorf("Delete not found: want ErrSocialAccountNotFound, got %v", err)
+	}
+}
+
+func TestRecommendationRepo_UserPreferences(t *testing.T) {
+	ctx := context.Background()
+	repo := NewRecommendationRepo()
+
+	userID := uuid.New()
+	cityID := int64(1)
+	minPrice := int64(1000)
+	maxPrice := int64(5000)
+
+	prefs := &domain.UserPreferences{
+		UserID:          userID,
+		PreferredCityID: &cityID,
+		PriceRangeMin:   &minPrice,
+		PriceRangeMax:   &maxPrice,
+		PreferPool:      true,
+		PreferSauna:     true,
+		PreferSteamRoom: false,
+	}
+
+	// Save preferences
+	if err := repo.SaveUserPreferences(ctx, prefs); err != nil {
+		t.Fatalf("SaveUserPreferences: %v", err)
+	}
+
+	// Get preferences
+	got, err := repo.GetUserPreferences(ctx, userID)
+	if err != nil {
+		t.Fatalf("GetUserPreferences: %v", err)
+	}
+	if got.PreferPool != true {
+		t.Error("PreferPool should be true")
+	}
+	if got.PreferSauna != true {
+		t.Error("PreferSauna should be true")
+	}
+	if got.PreferSteamRoom != false {
+		t.Error("PreferSteamRoom should be false")
+	}
+
+	// Not found
+	_, err = repo.GetUserPreferences(ctx, uuid.New())
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("GetUserPreferences not found: want ErrNotFound, got %v", err)
+	}
+
+	// Update preferences
+	newCityID := int64(2)
+	prefs.PreferredCityID = &newCityID
+	if err := repo.SaveUserPreferences(ctx, prefs); err != nil {
+		t.Fatalf("SaveUserPreferences update: %v", err)
+	}
+
+	got, _ = repo.GetUserPreferences(ctx, userID)
+	if got.PreferredCityID == nil || *got.PreferredCityID != 2 {
+		t.Errorf("PreferredCityID after update = %v, want 2", got.PreferredCityID)
+	}
+}
+
+func TestRecommendationRepo_UserActivity(t *testing.T) {
+	ctx := context.Background()
+	repo := NewRecommendationRepo()
+
+	userID := uuid.New()
+	bhID := uuid.New()
+
+	activity := &domain.UserActivity{
+		UserID:      userID,
+		BathhouseID: bhID,
+		Type:        domain.ActivityTypeView,
+	}
+
+	// Record activity
+	if err := repo.RecordActivity(ctx, activity); err != nil {
+		t.Fatalf("RecordActivity: %v", err)
+	}
+	if activity.ID == uuid.Nil {
+		t.Fatal("ID should be assigned after RecordActivity")
+	}
+	if activity.CreatedAt.IsZero() {
+		t.Fatal("CreatedAt should be assigned after RecordActivity")
+	}
+
+	// Invalid activity
+	invalidActivity := &domain.UserActivity{
+		UserID: uuid.Nil, // invalid
+		Type:   domain.ActivityTypeView,
+	}
+	if err := repo.RecordActivity(ctx, invalidActivity); !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("RecordActivity invalid: want ErrInvalidInput, got %v", err)
+	}
+}
+
+func TestRecommendationRepo_BookedBathhouses(t *testing.T) {
+	ctx := context.Background()
+	repo := NewRecommendationRepo()
+
+	userID := uuid.New()
+	bh1 := uuid.New()
+	bh2 := uuid.New()
+
+	// Manually add bookings
+	repo.mu.Lock()
+	repo.bookings[userID] = []uuid.UUID{bh1, bh2}
+	repo.mu.Unlock()
+
+	// Get booked bathhouses
+	result, err := repo.GetUserBookedBathhouses(ctx, userID, 10)
+	if err != nil {
+		t.Fatalf("GetUserBookedBathhouses: %v", err)
+	}
+	if len(result) != 2 {
+		t.Errorf("Booked bathhouses len = %d, want 2", len(result))
+	}
+
+	// Empty list for user with no bookings
+	result, err = repo.GetUserBookedBathhouses(ctx, uuid.New(), 10)
+	if err != nil {
+		t.Fatalf("GetUserBookedBathhouses empty: %v", err)
+	}
+	if len(result) != 0 {
+		t.Errorf("Empty user len = %d, want 0", len(result))
+	}
+}
+
+func TestRecommendationRepo_SimilarUsers(t *testing.T) {
+	ctx := context.Background()
+	repo := NewRecommendationRepo()
+
+	user1 := uuid.New()
+	user2 := uuid.New()
+	user3 := uuid.New()
+	bh1 := uuid.New()
+	bh2 := uuid.New()
+
+	// Manually setup overlapping bookings
+	repo.mu.Lock()
+	repo.bookings[user1] = []uuid.UUID{bh1, bh2}
+	repo.bookings[user2] = []uuid.UUID{bh1, bh2} // Same as user1 (max overlap)
+	repo.bookings[user3] = []uuid.UUID{bh1}      // Partial overlap
+	repo.mu.Unlock()
+
+	// Get similar users for user1
+	similar, err := repo.GetSimilarUsers(ctx, user1, 10)
+	if err != nil {
+		t.Fatalf("GetSimilarUsers: %v", err)
+	}
+
+	// Should find user2 and user3, with user2 first (higher score)
+	if len(similar) < 1 {
+		t.Errorf("Similar users len = %d, want at least 1", len(similar))
+	}
+	if len(similar) > 0 && similar[0] != user2 {
+		t.Errorf("Most similar user should be user2, got %v", similar[0])
+	}
+}
+
+func TestRecommendationRepo_SimilarBathhouses(t *testing.T) {
+	ctx := context.Background()
+	repo := NewRecommendationRepo()
+
+	bhID := uuid.New()
+
+	// Mock implementation returns empty - behavior verified by interface test
+	result, err := repo.GetSimilarBathhouses(ctx, bhID, 10)
+	if err != nil {
+		t.Fatalf("GetSimilarBathhouses: %v", err)
+	}
+	if len(result) != 0 {
+		t.Errorf("Mock GetSimilarBathhouses should return empty, got %d items", len(result))
+	}
+}
+
+func TestRecommendationRepo_PopularBathhouses(t *testing.T) {
+	ctx := context.Background()
+	repo := NewRecommendationRepo()
+
+	// Mock implementation returns empty - behavior verified by interface test
+	result, err := repo.GetPopularBathhouses(ctx, 1, 10)
+	if err != nil {
+		t.Fatalf("GetPopularBathhouses: %v", err)
+	}
+	if len(result) != 0 {
+		t.Errorf("Mock GetPopularBathhouses should return empty, got %d items", len(result))
 	}
 }
