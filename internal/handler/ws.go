@@ -36,8 +36,12 @@ var upgrader = websocket.Upgrader{
 		// must be explicitly performed here.
 		origin := r.Header.Get("Origin")
 		if origin == "" {
-			// Reject requests without Origin header to prevent non-browser clients
-			// from establishing WebSocket connections
+			// In development, allow requests without Origin header (e.g., from test clients)
+			// In production, require Origin header for security
+			if middleware.IsDevEnvironment() {
+				return true
+			}
+			// Reject requests without Origin header in production
 			return false
 		}
 
