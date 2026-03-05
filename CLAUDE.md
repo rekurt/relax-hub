@@ -242,9 +242,14 @@ Three-tier subscription model for bathhouse monetization:
 
 **Feed Impact:**
 - Premium subscriptions: bathhousses get +10 points in sort scoring
-- Promoted subscriptions: separate "is_promoted" flag in response, ordered in dedicated block
+- Promoted subscriptions: appear first in all results regardless of sort order, includes "is_promoted" flag in response
 - Impression tracking: recorded when promoted bathhouses appear in List results
 - Click tracking: recorded when promoted bathhouses are viewed via GetByID
+
+**Promotion Management:**
+- Promotions can only be created for bathhouses with active Promoted subscription
+- Promotions have budget tracking with impression/click counting
+- Budget model: tracks budget_kopecks and spent_kopecks for campaign management
 
 **Handlers:**
 - `POST /api/v1/my/bathhouses/{id}/subscription` — subscribe to plan (owner auth required)
