@@ -296,6 +296,70 @@ func TestSubscriptionHandler_ListSubscriptions(t *testing.T) {
 	}
 }
 
+func TestSubscriptionHandler_CancelSubscription(t *testing.T) {
+	userID := uuid.New()
+	bathhouseID := uuid.New()
+	subID := uuid.New()
+	now := time.Now()
+
+	subSvc := &mockSubscriptionService{
+		getActiveFn: func(ctx context.Context, bhid uuid.UUID) (*domain.Subscription, error) {
+			if bhid == bathhouseID {
+				return &domain.Subscription{
+					ID:           subID,
+					BathhouseID:  bathhouseID,
+					OwnerID:      userID,
+					Plan:         domain.PlanPremium,
+					Status:       domain.SubscriptionActive,
+					StartDate:    now,
+					EndDate:      nil,
+					AutoRenew:    true,
+					PriceKopecks: 5000,
+					CreatedAt:    now,
+					UpdatedAt:    now,
+				}, nil
+			}
+			return nil, domain.ErrNotFound
+		},
+		cancelFn: func(ctx context.Context, uid uuid.UUID, sid uuid.UUID) error {
+			if uid == userID && sid == subID {
+				return nil
+			}
+			return domain.ErrForbidden
+		},
+	}
+
+	promoRepo := &mockPromotionRepository{}
+	bhRepo := &mockBathhouseRepository{}
+	accessCheck := newTestAccessChecker(userID, bathhouseID)
+
+	h := NewSubscriptionHandler(subSvc, promoRepo, bhRepo, accessCheck)
+	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Delete("/my/bathhouses/{id}/subscription", h.CancelSubscription)
+
+	req := httptest.NewRequest(http.MethodDelete, "/my/bathhouses/"+bathhouseID.String()+"/subscription", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+		return
+	}
+
+	var resp APIResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if !resp.Success {
+		t.Error("expected success=true")
+	}
+}
+
 func TestSubscriptionHandler_CreatePromotion(t *testing.T) {
 	userID := uuid.New()
 	bathhouseID := uuid.New()
@@ -314,7 +378,26 @@ func TestSubscriptionHandler_CreatePromotion(t *testing.T) {
 		},
 	}
 
-	subSvc := &mockSubscriptionService{}
+	subSvc := &mockSubscriptionService{
+		getActiveFn: func(ctx context.Context, bhid uuid.UUID) (*domain.Subscription, error) {
+			if bhid == bathhouseID {
+				return &domain.Subscription{
+					ID:           uuid.New(),
+					BathhouseID:  bathhouseID,
+					OwnerID:      userID,
+					Plan:         domain.PlanPromoted,
+					Status:       domain.SubscriptionActive,
+					StartDate:    time.Now(),
+					EndDate:      nil,
+					AutoRenew:    true,
+					PriceKopecks: 10000,
+					CreatedAt:    time.Now(),
+					UpdatedAt:    time.Now(),
+				}, nil
+			}
+			return nil, domain.ErrNotFound
+		},
+	}
 	bhRepo := &mockBathhouseRepository{}
 	accessCheck := newTestAccessChecker(userID, bathhouseID)
 

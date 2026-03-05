@@ -242,6 +242,17 @@ func (h *SubscriptionHandler) CreatePromotion(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// Verify bathhouse has a Promoted subscription
+	sub, err := h.subService.GetActive(r.Context(), bathhouseID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	if sub.Plan != domain.PlanPromoted {
+		writeError(w, http.StatusBadRequest, "no_promoted_subscription", "bathhouse must have an active Promoted subscription to create a promotion")
+		return
+	}
+
 	// Check if there's already an active promotion
 	existing, err := h.promoRepo.GetActiveBybathhouse(r.Context(), bathhouseID)
 	if err != nil && err != domain.ErrNotFound {
