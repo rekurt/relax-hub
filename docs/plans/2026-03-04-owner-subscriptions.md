@@ -126,15 +126,15 @@
 - Create: `internal/handler/subscription.go`
 - Modify: `internal/server/router.go`
 
-- [ ] POST /api/v1/my/bathhouses/{id}/subscription - оформить подписку
-- [ ] GET /api/v1/my/bathhouses/{id}/subscription - текущая подписка
-- [ ] DELETE /api/v1/my/bathhouses/{id}/subscription - отменить автопродление
-- [ ] GET /api/v1/my/subscriptions - все подписки владельца
-- [ ] POST /api/v1/my/bathhouses/{id}/promotion - создать рекламную кампанию
-- [ ] GET /api/v1/my/bathhouses/{id}/promotion - статистика промо
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] POST /api/v1/my/bathhouses/{id}/subscription - оформить подписку
+- [x] GET /api/v1/my/bathhouses/{id}/subscription - текущая подписка
+- [x] DELETE /api/v1/my/bathhouses/{id}/subscription - отменить автопродление
+- [x] GET /api/v1/my/subscriptions - все подписки владельца
+- [x] POST /api/v1/my/bathhouses/{id}/promotion - создать рекламную кампанию
+- [x] GET /api/v1/my/bathhouses/{id}/promotion - статистика промо
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 6: Верификация
 

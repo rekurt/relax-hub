@@ -31,6 +31,7 @@ type RouterParams struct {
 	NotifHandler           *handler.NotificationHandler
 	OAuthHandler           *handler.OAuthHandler
 	RecommendationHandler  *handler.RecommendationHandler
+	SubscriptionHandler    *handler.SubscriptionHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -112,6 +113,16 @@ func NewRouter(p RouterParams) http.Handler {
 		r.Get("/popular", p.RecommendationHandler.GetPopular)
 		r.With(auth).Get("/my/preferences", p.RecommendationHandler.GetPreferences)
 		r.With(auth).Put("/my/preferences", p.RecommendationHandler.UpdatePreferences)
+
+		// Subscriptions (authenticated owner)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/subscription", p.SubscriptionHandler.Subscribe)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/subscription", p.SubscriptionHandler.GetSubscription)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/bathhouses/{id}/subscription", p.SubscriptionHandler.CancelSubscription)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/subscriptions", p.SubscriptionHandler.ListSubscriptions)
+
+		// Promotions (authenticated owner)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/promotion", p.SubscriptionHandler.CreatePromotion)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/promotion", p.SubscriptionHandler.GetPromotion)
 
 		// User stats (authenticated)
 		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)
