@@ -43,14 +43,14 @@
 **Files:**
 - Modify: `internal/service/review_service.go`
 
-- [ ] При создании отзыва:
+- [x] При создании отзыва:
   - Если MODERATION_ENABLED=true: status = pending, пропустить через ContentFilter
   - Если ContentFilter нашел нарушения: status = rejected, сохранить причины
   - Если MODERATION_AUTO_APPROVE=true и ContentFilter чистый: status = approved
   - Иначе: status = pending (ждет ручной модерации)
-- [ ] Фильтрация в выдаче: показывать только approved отзывы (для публичных endpoint)
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Фильтрация в выдаче: показывать только approved отзывы (для публичных endpoint)
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Админ-хендлеры модерации отзывов
 

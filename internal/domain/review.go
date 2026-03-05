@@ -24,18 +24,19 @@ func (s ReviewStatus) IsValid() bool {
 }
 
 type Review struct {
-	ID              uuid.UUID
-	UserID          uuid.UUID
-	BathhouseID     uuid.UUID
-	BookingID       uuid.UUID
-	Rating          int
-	Text            string
-	Status          ReviewStatus
-	OwnerResponse   string
-	OwnerResponseAt *time.Time
-	Images          []string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID               uuid.UUID
+	UserID           uuid.UUID
+	BathhouseID      uuid.UUID
+	BookingID        uuid.UUID
+	Rating           int
+	Text             string
+	Status           ReviewStatus
+	RejectionReasons []string
+	OwnerResponse    string
+	OwnerResponseAt  *time.Time
+	Images           []string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 func (r *Review) Validate() error {

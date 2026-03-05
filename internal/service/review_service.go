@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/nikitaaldaev/bani/internal/moderation"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
@@ -35,12 +36,13 @@ type ReviewService interface {
 }
 
 type reviewService struct {
-	reviewRepo    repository.ReviewRepository
-	bookingRepo   repository.BookingRepository
-	bhRepo        repository.BathhouseRepository
-	accessChecker *AccessChecker
-	notifSvc      NotificationService
-	logger        *logger.Logger
+	reviewRepo     repository.ReviewRepository
+	bookingRepo    repository.BookingRepository
+	bhRepo         repository.BathhouseRepository
+	accessChecker  *AccessChecker
+	notifSvc       NotificationService
+	contentFilter  *moderation.ContentFilter
+	logger         *logger.Logger
 }
 
 func NewReviewService(
@@ -49,6 +51,7 @@ func NewReviewService(
 	bhRepo repository.BathhouseRepository,
 	accessChecker *AccessChecker,
 	notifSvc NotificationService,
+	contentFilter *moderation.ContentFilter,
 	log *logger.Logger,
 ) ReviewService {
 	return &reviewService{
@@ -57,6 +60,7 @@ func NewReviewService(
 		bhRepo:        bhRepo,
 		accessChecker: accessChecker,
 		notifSvc:      notifSvc,
+		contentFilter: contentFilter,
 		logger:        log,
 	}
 }
@@ -95,9 +99,23 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 		BookingID:   input.BookingID,
 		Rating:      input.Rating,
 		Text:        input.Text,
-		Status:      domain.ReviewStatusPending,
 		CreatedAt:   now,
 		UpdatedAt:   now,
+	}
+
+	// Apply content filtering if moderation is enabled
+	if s.contentFilter.IsEnabled() {
+		filterResult := s.contentFilter.CheckText(input.Text)
+		if !filterResult.IsClean {
+			review.Status = domain.ReviewStatusRejected
+			review.RejectionReasons = filterResult.Reasons
+		} else if s.contentFilter.ShouldAutoApprove() {
+			review.Status = domain.ReviewStatusApproved
+		} else {
+			review.Status = domain.ReviewStatusPending
+		}
+	} else {
+		review.Status = domain.ReviewStatusApproved
 	}
 
 	if err := review.Validate(); err != nil {
@@ -112,7 +130,7 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 		s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", booking.BathhouseID, "error", err)
 	}
 
-	// Notify bathhouse owner about new review
+	// Notify bathhouse owner about new review (regardless of status)
 	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
 	if err != nil {
 		s.logger.Warn("failed to get bathhouse for review notification", "bathhouse_id", booking.BathhouseID, "error", err)
@@ -206,7 +224,26 @@ func (s *reviewService) Delete(ctx context.Context, userID uuid.UUID, userRole d
 }
 
 func (s *reviewService) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Review], error) {
-	return s.reviewRepo.ListByBathhouse(ctx, bathhouseID, page, pageSize)
+	result, err := s.reviewRepo.ListByBathhouse(ctx, bathhouseID, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter out non-approved reviews for public endpoint
+	var approvedReviews []domain.Review
+	for _, review := range result.Items {
+		if review.Status == domain.ReviewStatusApproved {
+			approvedReviews = append(approvedReviews, review)
+		}
+	}
+
+	// Update result with filtered reviews
+	approvedCount := int64(len(approvedReviews))
+	result.Items = approvedReviews
+	result.TotalCount = approvedCount
+	result.TotalPages = int((approvedCount + int64(pageSize) - 1) / int64(pageSize))
+
+	return result, nil
 }
 
 func (s *reviewService) AddOwnerResponse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, reviewID uuid.UUID, response string) (*domain.Review, error) {

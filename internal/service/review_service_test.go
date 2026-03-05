@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/nikitaaldaev/bani/internal/moderation"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -28,7 +29,9 @@ func newReviewTestEnv() *reviewTestEnv {
 	repRepo := mock.NewRepresentativeRepo()
 	ac := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn) // Use Warn level to suppress debug output during tests
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, &noopNotifService{}, log)
+	// ContentFilter with moderation disabled (so reviews default to pending)
+	contentFilter := moderation.NewContentFilter(false, false)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, &noopNotifService{}, contentFilter, log)
 	return &reviewTestEnv{
 		svc:         svc,
 		bhRepo:      bhRepo,
@@ -90,8 +93,9 @@ func TestReviewService_Create_Success(t *testing.T) {
 	if review.Rating != 5 {
 		t.Errorf("rating = %d, want 5", review.Rating)
 	}
-	if review.Status != domain.ReviewStatusPending {
-		t.Errorf("status = %s, want pending", review.Status)
+	// When moderation is disabled, reviews are auto-approved
+	if review.Status != domain.ReviewStatusApproved {
+		t.Errorf("status = %s, want approved", review.Status)
 	}
 }
 
@@ -418,5 +422,133 @@ func TestReviewService_AddOwnerResponse_ByRepresentative(t *testing.T) {
 	}
 	if updated.OwnerResponse != "Thanks from rep!" {
 		t.Errorf("owner_response = %s, want 'Thanks from rep!'", updated.OwnerResponse)
+	}
+}
+
+// Test moderation integration
+func TestReviewService_Create_WithModeration_CleanText(t *testing.T) {
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	reviewRepo := mock.NewReviewRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	ac := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	// ContentFilter with moderation enabled and auto-approve enabled
+	contentFilter := moderation.NewContentFilter(true, true)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, &noopNotifService{}, contentFilter, log)
+
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, uuid.New())
+	booking := createCompletedBooking(t, bookingRepo, clientID, bh.ID)
+
+	review, err := svc.Create(context.Background(), clientID, service.CreateReviewInput{
+		BookingID: booking.ID,
+		Rating:    5,
+		Text:      "This is a great bathhouse experience, highly recommended!",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if review.Status != domain.ReviewStatusApproved {
+		t.Errorf("status = %s, want approved", review.Status)
+	}
+}
+
+func TestReviewService_Create_WithModeration_AutoRejectProfanity(t *testing.T) {
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	reviewRepo := mock.NewReviewRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	ac := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	// ContentFilter with moderation enabled but auto-approve disabled
+	contentFilter := moderation.NewContentFilter(true, false)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, &noopNotifService{}, contentFilter, log)
+
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, uuid.New())
+	booking := createCompletedBooking(t, bookingRepo, clientID, bh.ID)
+
+	review, err := svc.Create(context.Background(), clientID, service.CreateReviewInput{
+		BookingID: booking.ID,
+		Rating:    1,
+		Text:      "This place is хуйня and I hate it",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if review.Status != domain.ReviewStatusRejected {
+		t.Errorf("status = %s, want rejected", review.Status)
+	}
+	if len(review.RejectionReasons) == 0 {
+		t.Error("rejection_reasons should not be empty")
+	}
+}
+
+func TestReviewService_Create_WithModeration_PendingCleanText(t *testing.T) {
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	reviewRepo := mock.NewReviewRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	ac := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	// ContentFilter with moderation enabled but auto-approve disabled
+	contentFilter := moderation.NewContentFilter(true, false)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, &noopNotifService{}, contentFilter, log)
+
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, uuid.New())
+	booking := createCompletedBooking(t, bookingRepo, clientID, bh.ID)
+
+	review, err := svc.Create(context.Background(), clientID, service.CreateReviewInput{
+		BookingID: booking.ID,
+		Rating:    4,
+		Text:      "Good bathhouse with nice facilities and friendly staff",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if review.Status != domain.ReviewStatusPending {
+		t.Errorf("status = %s, want pending", review.Status)
+	}
+	if len(review.RejectionReasons) > 0 {
+		t.Errorf("rejection_reasons should be empty, got %v", review.RejectionReasons)
+	}
+}
+
+func TestReviewService_ListByBathhouse_FiltersNonApprovedReviews(t *testing.T) {
+	env := newReviewTestEnv()
+	clientID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, uuid.New())
+
+	// Create multiple reviews
+	booking1 := createCompletedBooking(t, env.bookingRepo, clientID, bh.ID)
+	review1 := createReview(t, env.svc, clientID, booking1.ID)
+
+	// Manually set one review to pending (simulating a review that hasn't been auto-approved)
+	review1.Status = domain.ReviewStatusPending
+	_ = env.reviewRepo.Update(context.Background(), review1)
+
+	// Create another booking and review
+	user2 := uuid.New()
+	booking2 := createCompletedBooking(t, env.bookingRepo, user2, bh.ID)
+	review2 := createReview(t, env.svc, user2, booking2.ID)
+
+	result, err := env.svc.ListByBathhouse(context.Background(), bh.ID, 1, 10)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Should only include approved reviews
+	if result.TotalCount != 1 {
+		t.Errorf("totalCount = %d, want 1 (only approved reviews)", result.TotalCount)
+	}
+	if len(result.Items) > 0 && result.Items[0].ID == review1.ID {
+		t.Error("pending review should not be in results")
+	}
+	if len(result.Items) > 0 && result.Items[0].ID != review2.ID {
+		t.Errorf("expected review2 in results, got %v", result.Items[0].ID)
 	}
 }
