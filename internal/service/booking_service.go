@@ -41,32 +41,29 @@ type BookingService interface {
 }
 
 type bookingService struct {
-	bookingRepo   repository.BookingRepository
-	bhRepo        repository.BathhouseRepository
-	pricingRepo   repository.PricingRuleRepository
-	pricingSvc    PricingService
-	access        *AccessChecker
-	notifSvc      NotificationService
-	logger        *logger.Logger
+	bookingRepo repository.BookingRepository
+	bhRepo      repository.BathhouseRepository
+	pricingSvc  PricingService
+	access      *AccessChecker
+	notifSvc    NotificationService
+	logger      *logger.Logger
 }
 
 func NewBookingService(
 	bookingRepo repository.BookingRepository,
 	bhRepo repository.BathhouseRepository,
-	pricingRepo repository.PricingRuleRepository,
 	pricingSvc PricingService,
 	access *AccessChecker,
 	notifSvc NotificationService,
 	log *logger.Logger,
 ) BookingService {
 	return &bookingService{
-		bookingRepo:   bookingRepo,
-		bhRepo:        bhRepo,
-		pricingRepo:   pricingRepo,
-		pricingSvc:    pricingSvc,
-		access:        access,
-		notifSvc:      notifSvc,
-		logger:        log,
+		bookingRepo: bookingRepo,
+		bhRepo:      bhRepo,
+		pricingSvc:  pricingSvc,
+		access:      access,
+		notifSvc:    notifSvc,
+		logger:      log,
 	}
 }
 
@@ -326,9 +323,7 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 		// Calculate price for this hour slot using pricing service
 		slotPrice, err := s.pricingSvc.CalculatePrice(ctx, bathhouseID, bh.PricePerHour, t, slotEnd)
 		if err != nil {
-			s.logger.Warn("failed to calculate price for slot", "error", err, "slot_start", t)
-			// Fall back to base price if calculation fails
-			slotPrice = bh.PricePerHour
+			return nil, err
 		}
 
 		slots = append(slots, TimeSlot{

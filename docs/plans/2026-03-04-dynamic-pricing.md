@@ -88,14 +88,14 @@
 - Create: `internal/handler/pricing.go`
 - Modify: `internal/server/router.go`
 
-- [ ] POST /api/v1/my/bathhouses/{id}/pricing-rules — создать правило
-- [ ] GET /api/v1/my/bathhouses/{id}/pricing-rules — список правил
-- [ ] PUT /api/v1/pricing-rules/{id} — обновить правило
-- [ ] DELETE /api/v1/pricing-rules/{id} — удалить правило
-- [ ] GET /api/v1/bathhouses/{id}/price-calculator?start=...&end=... — публичный калькулятор цены
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] POST /api/v1/my/bathhouses/{id}/pricing-rules — создать правило
+- [x] GET /api/v1/my/bathhouses/{id}/pricing-rules — список правил
+- [x] PUT /api/v1/pricing-rules/{id} — обновить правило
+- [x] DELETE /api/v1/pricing-rules/{id} — удалить правило
+- [x] GET /api/v1/bathhouses/{id}/price-calculator?start=...&end=... — публичный калькулятор цены
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Верификация
 

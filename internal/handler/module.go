@@ -18,5 +18,6 @@ var Module = fx.Module("handler",
 		NewOAuthHandler,
 		NewRecommendationHandler,
 		NewSubscriptionHandler,
+		NewPricingHandler,
 	),
 )

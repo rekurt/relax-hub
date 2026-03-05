@@ -32,6 +32,7 @@ type RouterParams struct {
 	OAuthHandler           *handler.OAuthHandler
 	RecommendationHandler  *handler.RecommendationHandler
 	SubscriptionHandler    *handler.SubscriptionHandler
+	PricingHandler         *handler.PricingHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -124,7 +125,14 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/promotion", p.SubscriptionHandler.CreatePromotion)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/promotion", p.SubscriptionHandler.GetPromotion)
 
-		// User stats (authenticated)
+		// Pricing rules (authenticated owner)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/pricing-rules", p.PricingHandler.CreateRule)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/pricing-rules", p.PricingHandler.ListRules)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/pricing-rules/{id}", p.PricingHandler.UpdateRule)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/pricing-rules/{id}", p.PricingHandler.DeleteRule)
+
+		// Price calculator (public)
+		r.Get("/bathhouses/{id}/price-calculator", p.PricingHandler.CalculatePrice)
 		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)
 
 		// Notifications (authenticated)

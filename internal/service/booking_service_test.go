@@ -21,7 +21,7 @@ func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.Boo
 	access := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingRepo, pricingSvc, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, repRepo, pricingSvc, pricingRepo
 }
 
