@@ -469,6 +469,7 @@ func TestReviewRepo_CRUD(t *testing.T) {
 		BookingID:   bookingID,
 		Rating:      5,
 		Text:        "Excellent!",
+		Status:      domain.ReviewStatusApproved,
 	}
 
 	// Create

@@ -555,7 +555,7 @@ func (r *ReviewRepo) ListByBathhouse(_ context.Context, bathhouseID uuid.UUID, p
 
 	var items []domain.Review
 	for _, rev := range r.reviews {
-		if rev.BathhouseID == bathhouseID {
+		if rev.BathhouseID == bathhouseID && rev.Status == domain.ReviewStatusApproved {
 			items = append(items, *rev)
 		}
 	}
