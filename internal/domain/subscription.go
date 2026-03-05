@@ -103,6 +103,7 @@ type Promotion struct {
 	ImpressionCount int64
 	ClickCount      int64
 	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 func (p *Promotion) Validate() error {

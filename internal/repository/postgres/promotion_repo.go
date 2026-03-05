@@ -29,6 +29,7 @@ func (r *promotionRepo) Create(ctx context.Context, promo *domain.Promotion) err
 
 	now := time.Now()
 	promo.CreatedAt = now
+	promo.UpdatedAt = now
 
 	query := `
 		INSERT INTO promotions (id, bathhouse_id, budget_kopecks, spent_kopecks, start_date, end_date, target_city_id, status, impression_count, click_count, created_at)
@@ -50,13 +51,13 @@ func (r *promotionRepo) Create(ctx context.Context, promo *domain.Promotion) err
 func (r *promotionRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Promotion, error) {
 	promo := &domain.Promotion{}
 	query := `
-		SELECT id, bathhouse_id, budget_kopecks, spent_kopecks, start_date, end_date, target_city_id, status, impression_count, click_count, created_at
+		SELECT id, bathhouse_id, budget_kopecks, spent_kopecks, start_date, end_date, target_city_id, status, impression_count, click_count, created_at, updated_at
 		FROM promotions
 		WHERE id = $1
 	`
 
 	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&promo.ID, &promo.BathhouseID, &promo.BudgetKopecks, &promo.SpentKopecks, &promo.StartDate, &promo.EndDate, &promo.TargetCityID, &promo.Status, &promo.ImpressionCount, &promo.ClickCount, &promo.CreatedAt,
+		&promo.ID, &promo.BathhouseID, &promo.BudgetKopecks, &promo.SpentKopecks, &promo.StartDate, &promo.EndDate, &promo.TargetCityID, &promo.Status, &promo.ImpressionCount, &promo.ClickCount, &promo.CreatedAt, &promo.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -70,7 +71,7 @@ func (r *promotionRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Prom
 func (r *promotionRepo) GetActiveBybathhouse(ctx context.Context, bathhouseID uuid.UUID) (*domain.Promotion, error) {
 	promo := &domain.Promotion{}
 	query := `
-		SELECT id, bathhouse_id, budget_kopecks, spent_kopecks, start_date, end_date, target_city_id, status, impression_count, click_count, created_at
+		SELECT id, bathhouse_id, budget_kopecks, spent_kopecks, start_date, end_date, target_city_id, status, impression_count, click_count, created_at, updated_at
 		FROM promotions
 		WHERE bathhouse_id = $1 AND status = $2
 		ORDER BY created_at DESC
@@ -78,7 +79,7 @@ func (r *promotionRepo) GetActiveBybathhouse(ctx context.Context, bathhouseID uu
 	`
 
 	err := r.pool.QueryRow(ctx, query, bathhouseID, domain.PromotionActive).Scan(
-		&promo.ID, &promo.BathhouseID, &promo.BudgetKopecks, &promo.SpentKopecks, &promo.StartDate, &promo.EndDate, &promo.TargetCityID, &promo.Status, &promo.ImpressionCount, &promo.ClickCount, &promo.CreatedAt,
+		&promo.ID, &promo.BathhouseID, &promo.BudgetKopecks, &promo.SpentKopecks, &promo.StartDate, &promo.EndDate, &promo.TargetCityID, &promo.Status, &promo.ImpressionCount, &promo.ClickCount, &promo.CreatedAt, &promo.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -129,7 +130,7 @@ func (r *promotionRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 
 	offset := (page - 1) * pageSize
 	query := `
-		SELECT p.id, p.bathhouse_id, p.budget_kopecks, p.spent_kopecks, p.start_date, p.end_date, p.target_city_id, p.status, p.impression_count, p.click_count, p.created_at
+		SELECT p.id, p.bathhouse_id, p.budget_kopecks, p.spent_kopecks, p.start_date, p.end_date, p.target_city_id, p.status, p.impression_count, p.click_count, p.created_at, p.updated_at
 		FROM promotions p
 		JOIN bathhouses b ON p.bathhouse_id = b.id
 		WHERE b.owner_id = $1
@@ -146,7 +147,7 @@ func (r *promotionRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 	var promos []domain.Promotion
 	for rows.Next() {
 		var promo domain.Promotion
-		if err := rows.Scan(&promo.ID, &promo.BathhouseID, &promo.BudgetKopecks, &promo.SpentKopecks, &promo.StartDate, &promo.EndDate, &promo.TargetCityID, &promo.Status, &promo.ImpressionCount, &promo.ClickCount, &promo.CreatedAt); err != nil {
+		if err := rows.Scan(&promo.ID, &promo.BathhouseID, &promo.BudgetKopecks, &promo.SpentKopecks, &promo.StartDate, &promo.EndDate, &promo.TargetCityID, &promo.Status, &promo.ImpressionCount, &promo.ClickCount, &promo.CreatedAt, &promo.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan promotion: %w", err)
 		}
 		promos = append(promos, promo)

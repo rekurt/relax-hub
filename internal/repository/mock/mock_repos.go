@@ -1533,6 +1533,7 @@ func (r *PromotionRepo) Create(_ context.Context, promo *domain.Promotion) error
 
 	now := time.Now()
 	promo.CreatedAt = now
+	promo.UpdatedAt = now
 	cp := *promo
 	r.promotions[promo.ID] = &cp
 	return nil

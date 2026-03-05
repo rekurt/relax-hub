@@ -289,7 +289,6 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
 			bathhouses.created_at, bathhouses.updated_at,
-			COALESCE(s.plan, '')::text as subscription_plan,
 			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
 		FROM bathhouses %s %s ORDER BY %s LIMIT %s OFFSET %s`,
 		joinClause, whereClause, orderBy, addArg(filter.PageSize), addArg(offset),
@@ -459,18 +458,17 @@ func (r *bathhouseRepo) scanBathhouseFromRow(rows pgx.Rows) (*domain.Bathhouse, 
 
 func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*domain.Bathhouse, error) {
 	var (
-		bh                 domain.Bathhouse
-		imagesJSON         []byte
-		whJSON             []byte
-		subscriptionPlan   string
-		isPromoted         bool
+		bh         domain.Bathhouse
+		imagesJSON []byte
+		whJSON     []byte
+		isPromoted bool
 	)
 	err := rows.Scan(
 		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Description, &bh.Address, &bh.CityID,
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
 		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
-		&subscriptionPlan, &isPromoted,
+		&isPromoted,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan bathhouse row: %w", err)

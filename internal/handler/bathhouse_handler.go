@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/service"
@@ -20,6 +21,7 @@ type BathhouseHandler struct {
 	favoriteService       service.FavoriteService
 	recommendationService service.RecommendationService
 	promotionRepository   repository.PromotionRepository
+	log                   *logger.Logger
 }
 
 func NewBathhouseHandler(
@@ -29,6 +31,7 @@ func NewBathhouseHandler(
 	favoriteService service.FavoriteService,
 	recommendationService service.RecommendationService,
 	promotionRepository repository.PromotionRepository,
+	log *logger.Logger,
 ) *BathhouseHandler {
 	return &BathhouseHandler{
 		bathhouseService:      bathhouseService,
@@ -37,6 +40,7 @@ func NewBathhouseHandler(
 		favoriteService:       favoriteService,
 		recommendationService: recommendationService,
 		promotionRepository:   promotionRepository,
+		log:                   log,
 	}
 }
 
@@ -298,7 +302,11 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 			if bh.IsPromoted {
 				promo, err := h.promotionRepository.GetActiveBybathhouse(r.Context(), bh.ID)
 				if err == nil && promo != nil {
-					_ = h.promotionRepository.RecordImpression(r.Context(), promo.ID)
+					if err := h.promotionRepository.RecordImpression(r.Context(), promo.ID); err != nil {
+						if h.log != nil {
+							h.log.Warn("failed to record promotion impression", "promotion_id", promo.ID, "error", err)
+						}
+					}
 				}
 			}
 		}
@@ -346,7 +354,11 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		// If exists, record a click
 		promo, err := h.promotionRepository.GetActiveBybathhouse(r.Context(), id)
 		if err == nil && promo != nil {
-			_ = h.promotionRepository.RecordClick(r.Context(), promo.ID)
+			if err := h.promotionRepository.RecordClick(r.Context(), promo.ID); err != nil {
+				if h.log != nil {
+					h.log.Warn("failed to record promotion click", "promotion_id", promo.ID, "error", err)
+				}
+			}
 		}
 	}
 

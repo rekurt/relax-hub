@@ -56,7 +56,7 @@ func (s *subscriptionService) Subscribe(ctx context.Context, userID uuid.UUID, b
 	if err != nil && err != domain.ErrNotFound {
 		return nil, err
 	}
-	if existing != nil && existing.Status == domain.SubscriptionActive {
+	if existing != nil {
 		return nil, domain.ErrSubscriptionAlreadyActive
 	}
 
