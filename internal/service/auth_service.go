@@ -167,11 +167,43 @@ func (s *authService) generateToken(userID uuid.UUID, role domain.UserRole) (str
 }
 
 func isValidEmail(email string) bool {
-	at := strings.LastIndex(email, "@")
-	if at < 1 {
+	// Basic RFC 5322 compliant email validation
+	// Must have at least one character, then @, then domain with at least one dot
+	if len(email) > 254 {
 		return false
 	}
+
+	at := strings.LastIndex(email, "@")
+	if at < 1 || at == len(email)-1 {
+		return false
+	}
+
+	localPart := email[:at]
 	domain := email[at+1:]
-	dot := strings.LastIndex(domain, ".")
-	return dot > 0 && dot < len(domain)-1
+
+	// Local part validation (simplified - must not be empty or start/end with dot)
+	if localPart == "" || localPart[0] == '.' || localPart[len(localPart)-1] == '.' {
+		return false
+	}
+
+	// Domain validation (must contain at least one dot and end with valid TLD)
+	dotIdx := strings.LastIndex(domain, ".")
+	if dotIdx <= 0 || dotIdx >= len(domain)-1 {
+		return false
+	}
+
+	// Check TLD length (at least 2 characters, max 63)
+	tld := domain[dotIdx+1:]
+	if len(tld) < 2 || len(tld) > 63 {
+		return false
+	}
+
+	// Validate TLD contains only letters
+	for _, c := range tld {
+		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+			return false
+		}
+	}
+
+	return true
 }

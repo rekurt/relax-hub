@@ -66,7 +66,7 @@ func (h *OAuthHandler) OAuthRedirect(w http.ResponseWriter, r *http.Request) {
 }
 
 // OAuthCallback handles the OAuth provider callback with an authorization code.
-// GET /api/v1/auth/oauth/{provider}/callback?code=...
+// GET /api/v1/auth/oauth/{provider}/callback?code=...&state=...
 func (h *OAuthHandler) OAuthCallback(w http.ResponseWriter, r *http.Request) {
 	provider := domain.OAuthProvider(chi.URLParam(r, "provider"))
 
@@ -85,7 +85,13 @@ func (h *OAuthHandler) OAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, token, err := h.oauthService.OAuthCallback(r.Context(), provider, code)
+	state := r.URL.Query().Get("state")
+	if state == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "state parameter is required")
+		return
+	}
+
+	user, token, err := h.oauthService.OAuthCallback(r.Context(), provider, code, state)
 	if err != nil {
 		handleServiceError(w, err)
 		return

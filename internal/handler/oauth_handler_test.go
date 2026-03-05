@@ -20,7 +20,7 @@ import (
 
 type mockOAuthService struct {
 	getOAuthURLFn         func(provider domain.OAuthProvider) (string, error)
-	oauthCallbackFn       func(ctx context.Context, provider domain.OAuthProvider, code string) (*domain.User, string, error)
+	oauthCallbackFn       func(ctx context.Context, provider domain.OAuthProvider, code, state string) (*domain.User, string, error)
 	linkSocialAccountFn   func(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider, code string) error
 	unlinkSocialAccountFn func(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider) error
 	listSocialAccountsFn  func(ctx context.Context, userID uuid.UUID) ([]domain.SocialAccount, error)
@@ -33,9 +33,9 @@ func (m *mockOAuthService) GetOAuthURL(provider domain.OAuthProvider) (string, e
 	return "", nil
 }
 
-func (m *mockOAuthService) OAuthCallback(ctx context.Context, provider domain.OAuthProvider, code string) (*domain.User, string, error) {
+func (m *mockOAuthService) OAuthCallback(ctx context.Context, provider domain.OAuthProvider, code, state string) (*domain.User, string, error) {
 	if m.oauthCallbackFn != nil {
-		return m.oauthCallbackFn(ctx, provider, code)
+		return m.oauthCallbackFn(ctx, provider, code, state)
 	}
 	return nil, "", nil
 }
@@ -118,12 +118,15 @@ func TestOAuthHandler_OAuthRedirect_InvalidProvider(t *testing.T) {
 func TestOAuthHandler_OAuthCallback(t *testing.T) {
 	userID := uuid.New()
 	oauthSvc := &mockOAuthService{
-		oauthCallbackFn: func(_ context.Context, provider domain.OAuthProvider, code string) (*domain.User, string, error) {
+		oauthCallbackFn: func(_ context.Context, provider domain.OAuthProvider, code, state string) (*domain.User, string, error) {
 			if provider != domain.OAuthProviderVK {
 				t.Errorf("expected provider vk, got %s", provider)
 			}
 			if code != "test-code" {
 				t.Errorf("expected code test-code, got %s", code)
+			}
+			if state != "test-state" {
+				t.Errorf("expected state test-state, got %s", state)
 			}
 			return &domain.User{
 				ID:       userID,
@@ -140,7 +143,7 @@ func TestOAuthHandler_OAuthCallback(t *testing.T) {
 	router := chi.NewRouter()
 	router.Get("/auth/oauth/{provider}/callback", h.OAuthCallback)
 
-	req := httptest.NewRequest(http.MethodGet, "/auth/oauth/vk/callback?code=test-code", nil)
+	req := httptest.NewRequest(http.MethodGet, "/auth/oauth/vk/callback?code=test-code&state=test-state", nil)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)
@@ -189,7 +192,7 @@ func TestOAuthHandler_OAuthCallback_MissingCode(t *testing.T) {
 
 func TestOAuthHandler_OAuthCallback_ServiceError(t *testing.T) {
 	oauthSvc := &mockOAuthService{
-		oauthCallbackFn: func(_ context.Context, _ domain.OAuthProvider, _ string) (*domain.User, string, error) {
+		oauthCallbackFn: func(_ context.Context, _ domain.OAuthProvider, _ string, _ string) (*domain.User, string, error) {
 			return nil, "", domain.ErrUserBlocked
 		},
 	}
@@ -199,7 +202,7 @@ func TestOAuthHandler_OAuthCallback_ServiceError(t *testing.T) {
 	router := chi.NewRouter()
 	router.Get("/auth/oauth/{provider}/callback", h.OAuthCallback)
 
-	req := httptest.NewRequest(http.MethodGet, "/auth/oauth/vk/callback?code=test-code", nil)
+	req := httptest.NewRequest(http.MethodGet, "/auth/oauth/vk/callback?code=test-code&state=test-state", nil)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)

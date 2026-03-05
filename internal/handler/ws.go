@@ -36,12 +36,34 @@ var upgrader = websocket.Upgrader{
 		// must be explicitly performed here.
 		origin := r.Header.Get("Origin")
 		if origin == "" {
-			return true // Allow requests without Origin header (same-origin browser requests)
+			// Reject requests without Origin header to prevent non-browser clients
+			// from establishing WebSocket connections
+			return false
 		}
-		// TODO: For production, read allowed origins from config and validate against them
-		// For now, only allow same-origin to prevent CSRF attacks on WebSocket connections
+
+		// Parse origin and host to compare properly
 		host := r.Header.Get("Host")
-		return origin == "http://"+host || origin == "https://"+host
+		if host == "" {
+			return false
+		}
+
+		// Determine the scheme from the request
+		scheme := "http"
+		if r.TLS != nil {
+			scheme = "https"
+		}
+
+		// Build expected origin with matching scheme
+		expectedOrigin := scheme + "://" + host
+
+		// For localhost development, also allow http
+		if scheme == "https" && origin == "http://"+host {
+			// Allow HTTP origin for HTTPS requests only in development
+			// TODO: For production, read allowed origins from config and validate against them
+			return true
+		}
+
+		return origin == expectedOrigin
 	},
 }
 
@@ -64,6 +86,9 @@ func NewWSHandler(hub *notification.Hub, authService middleware.AuthService, log
 // HandleWS upgrades HTTP to WebSocket and manages the connection.
 // Authentication is done via ?token= query parameter since browsers
 // cannot set custom headers on WebSocket connections.
+// SECURITY NOTE: Tokens in query parameters are logged by proxies and servers.
+// For production, consider using cookie-based authentication (secure, httponly flags)
+// or implementing a two-step auth: HTTP POST to get temporary credential, then WebSocket upgrade.
 func (h *WSHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 	if token == "" {

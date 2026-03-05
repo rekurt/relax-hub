@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/auth"
 	"github.com/nikitaaldaev/bani/internal/domain"
@@ -15,7 +16,7 @@ import (
 
 type OAuthService interface {
 	GetOAuthURL(provider domain.OAuthProvider) (string, error)
-	OAuthCallback(ctx context.Context, provider domain.OAuthProvider, code string) (*domain.User, string, error)
+	OAuthCallback(ctx context.Context, provider domain.OAuthProvider, code, state string) (*domain.User, string, error)
 	LinkSocialAccount(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider, code string) error
 	UnlinkSocialAccount(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider) error
 	ListSocialAccounts(ctx context.Context, userID uuid.UUID) ([]domain.SocialAccount, error)
@@ -24,6 +25,7 @@ type OAuthService interface {
 type oauthService struct {
 	userRepo       repository.UserRepository
 	socialRepo     repository.SocialAccountRepository
+	redisClient    *redis.Client
 	providers      map[domain.OAuthProvider]auth.OAuthProvider
 	jwtSecret      []byte
 	tokenTTL       time.Duration
@@ -32,6 +34,7 @@ type oauthService struct {
 func NewOAuthService(
 	userRepo repository.UserRepository,
 	socialRepo repository.SocialAccountRepository,
+	redisClient *redis.Client,
 	cfg *config.Config,
 ) OAuthService {
 	providers := make(map[domain.OAuthProvider]auth.OAuthProvider)
@@ -53,11 +56,12 @@ func NewOAuthService(
 	}
 
 	return &oauthService{
-		userRepo:   userRepo,
-		socialRepo: socialRepo,
-		providers:  providers,
-		jwtSecret:  []byte(cfg.JWT.Secret),
-		tokenTTL:   cfg.JWT.TokenTTL,
+		userRepo:     userRepo,
+		socialRepo:   socialRepo,
+		redisClient:  redisClient,
+		providers:    providers,
+		jwtSecret:    []byte(cfg.JWT.Secret),
+		tokenTTL:     cfg.JWT.TokenTTL,
 	}
 }
 
@@ -65,16 +69,18 @@ func NewOAuthService(
 func NewOAuthServiceWithProviders(
 	userRepo repository.UserRepository,
 	socialRepo repository.SocialAccountRepository,
+	redisClient *redis.Client,
 	providers map[domain.OAuthProvider]auth.OAuthProvider,
 	jwtSecret string,
 	tokenTTL time.Duration,
 ) OAuthService {
 	return &oauthService{
-		userRepo:   userRepo,
-		socialRepo: socialRepo,
-		providers:  providers,
-		jwtSecret:  []byte(jwtSecret),
-		tokenTTL:   tokenTTL,
+		userRepo:    userRepo,
+		socialRepo:  socialRepo,
+		redisClient: redisClient,
+		providers:   providers,
+		jwtSecret:   []byte(jwtSecret),
+		tokenTTL:    tokenTTL,
 	}
 }
 
@@ -85,10 +91,41 @@ func (s *oauthService) GetOAuthURL(provider domain.OAuthProvider) (string, error
 	}
 
 	state := uuid.New().String()
+	// Store state in Redis with 10-minute expiration for CSRF protection
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err = s.redisClient.Set(ctx, "oauth_state:"+state, provider, 10*time.Minute).Err()
+	if err != nil {
+		return "", fmt.Errorf("failed to store OAuth state: %w", err)
+	}
 	return p.GetAuthURL(state), nil
 }
 
-func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthProvider, code string) (*domain.User, string, error) {
+func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthProvider, code, state string) (*domain.User, string, error) {
+	// Validate CSRF state token
+	if state == "" {
+		return nil, "", domain.ErrInvalidInput
+	}
+
+	// Check if state exists in Redis and retrieve the provider it was issued for
+	redisCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	storedProvider, err := s.redisClient.Get(redisCtx, "oauth_state:"+state).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, "", fmt.Errorf("%w: invalid or expired OAuth state", domain.ErrUnauthorized)
+		}
+		return nil, "", fmt.Errorf("failed to validate OAuth state: %w", err)
+	}
+
+	// Delete the state from Redis (one-time use only)
+	_ = s.redisClient.Del(redisCtx, "oauth_state:"+state).Err()
+
+	// Verify the state matches the requested provider
+	if domain.OAuthProvider(storedProvider) != provider {
+		return nil, "", fmt.Errorf("%w: provider mismatch in OAuth state", domain.ErrUnauthorized)
+	}
+
 	p, err := s.getProvider(provider)
 	if err != nil {
 		return nil, "", err

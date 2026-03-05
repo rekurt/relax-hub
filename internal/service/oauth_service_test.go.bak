@@ -34,8 +34,8 @@ func (m *mockOAuthProvider) Exchange(_ context.Context, _ string) (*auth.OAuthUs
 	return &cp, nil
 }
 
-func newTestOAuthService(t *testing.T, userRepo *mock.UserRepo, socialRepo *mock.SocialAccountRepo, providers map[domain.OAuthProvider]auth.OAuthProvider) (service.OAuthService, *miniredis.Miniredis) {
-	mr := miniredis.RunT(t)
+func newTestOAuthService(userRepo *mock.UserRepo, socialRepo *mock.SocialAccountRepo, providers map[domain.OAuthProvider]auth.OAuthProvider) (service.OAuthService, *miniredis.Miniredis) {
+	mr := miniredis.RunT(nil)
 	redisClient := redis.NewClient(&redis.Options{Addr: mr.Addr()})
 
 	// Pre-populate Redis with test state values for backward compatibility
@@ -58,8 +58,7 @@ func TestOAuthService_GetOAuthURL_Success(t *testing.T) {
 	providers := map[domain.OAuthProvider]auth.OAuthProvider{
 		domain.OAuthProviderVK: &mockOAuthProvider{authURL: "https://oauth.vk.com/authorize"},
 	}
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
 
 	url, err := svc.GetOAuthURL(domain.OAuthProviderVK)
 	if err != nil {
@@ -73,8 +72,7 @@ func TestOAuthService_GetOAuthURL_Success(t *testing.T) {
 func TestOAuthService_GetOAuthURL_InvalidProvider(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	socialRepo := mock.NewSocialAccountRepo()
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, nil)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, nil)
 
 	_, err := svc.GetOAuthURL("invalid")
 	if !errors.Is(err, domain.ErrInvalidInput) {
@@ -86,8 +84,7 @@ func TestOAuthService_GetOAuthURL_ProviderNotConfigured(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	socialRepo := mock.NewSocialAccountRepo()
 	providers := map[domain.OAuthProvider]auth.OAuthProvider{}
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
 
 	_, err := svc.GetOAuthURL(domain.OAuthProviderGoogle)
 	if !errors.Is(err, domain.ErrInvalidInput) {
@@ -108,10 +105,9 @@ func TestOAuthService_OAuthCallback_FirstLogin_CreatesUser(t *testing.T) {
 			},
 		},
 	}
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
 
-	user, token, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderVK, "test-code", "test-state-12345")
+	user, token, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderVK, "test-code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -176,10 +172,9 @@ func TestOAuthService_OAuthCallback_ReturningUser(t *testing.T) {
 			},
 		},
 	}
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
 
-	user, token, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderGoogle, "test-code", "test-state-12345")
+	user, token, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderGoogle, "test-code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -221,10 +216,9 @@ func TestOAuthService_OAuthCallback_BlockedUser(t *testing.T) {
 			},
 		},
 	}
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
 
-	_, _, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderVK, "test-code", "test-state-12345")
+	_, _, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderVK, "test-code")
 	if !errors.Is(err, domain.ErrUserBlocked) {
 		t.Errorf("expected ErrUserBlocked, got: %v", err)
 	}
@@ -254,10 +248,9 @@ func TestOAuthService_OAuthCallback_ExistingEmailLinksAccount(t *testing.T) {
 			},
 		},
 	}
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
 
-	user, _, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderYandex, "test-code", "test-state-12345")
+	user, _, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderYandex, "test-code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -291,10 +284,9 @@ func TestOAuthService_OAuthCallback_BlockedUser_EmailMatch(t *testing.T) {
 			},
 		},
 	}
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
 
-	_, _, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderGoogle, "test-code", "test-state-12345")
+	_, _, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderGoogle, "test-code")
 	if !errors.Is(err, domain.ErrUserBlocked) {
 		t.Errorf("expected ErrUserBlocked for blocked user via email match, got: %v", err)
 	}
@@ -323,8 +315,7 @@ func TestOAuthService_LinkSocialAccount_Success(t *testing.T) {
 			},
 		},
 	}
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
 
 	err := svc.LinkSocialAccount(context.Background(), user.ID, domain.OAuthProviderGoogle, "test-code")
 	if err != nil {
@@ -366,8 +357,7 @@ func TestOAuthService_LinkSocialAccount_AlreadyLinked(t *testing.T) {
 			},
 		},
 	}
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
 
 	err := svc.LinkSocialAccount(context.Background(), user.ID, domain.OAuthProviderVK, "test-code")
 	if !errors.Is(err, domain.ErrSocialAccountAlreadyLinked) {
@@ -397,8 +387,7 @@ func TestOAuthService_UnlinkSocialAccount_WithPassword(t *testing.T) {
 		LinkedAt:   time.Now(),
 	})
 
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, nil)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, nil)
 
 	err := svc.UnlinkSocialAccount(context.Background(), user.ID, domain.OAuthProviderVK)
 	if err != nil {
@@ -440,8 +429,7 @@ func TestOAuthService_UnlinkSocialAccount_WithOtherProvider(t *testing.T) {
 		LinkedAt:   time.Now(),
 	})
 
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, nil)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, nil)
 
 	err := svc.UnlinkSocialAccount(context.Background(), user.ID, domain.OAuthProviderVK)
 	if err != nil {
@@ -471,8 +459,7 @@ func TestOAuthService_UnlinkSocialAccount_LastAuthMethod(t *testing.T) {
 		LinkedAt:   time.Now(),
 	})
 
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, nil)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, nil)
 
 	err := svc.UnlinkSocialAccount(context.Background(), user.ID, domain.OAuthProviderVK)
 	if !errors.Is(err, domain.ErrInvalidInput) {
@@ -508,8 +495,7 @@ func TestOAuthService_ListSocialAccounts(t *testing.T) {
 		LinkedAt:   time.Now(),
 	})
 
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, nil)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, nil)
 
 	accounts, err := svc.ListSocialAccounts(context.Background(), user.ID)
 	if err != nil {
@@ -532,10 +518,9 @@ func TestOAuthService_OAuthCallback_EmptyName_UsesFallback(t *testing.T) {
 			},
 		},
 	}
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
 
-	user, token, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderVK, "test-code", "test-state-12345")
+	user, token, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderVK, "test-code")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -555,10 +540,9 @@ func TestOAuthService_OAuthCallback_ExchangeError(t *testing.T) {
 			err: errors.New("exchange failed"),
 		},
 	}
-	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
-	defer mr.Close()
+	svc := newTestOAuthService(userRepo, socialRepo, providers)
 
-	_, _, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderVK, "bad-code", "test-state-12345")
+	_, _, err := svc.OAuthCallback(context.Background(), domain.OAuthProviderVK, "bad-code")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

@@ -323,6 +323,10 @@ func parseTime(s string) (int, int, error) {
 	if n != 2 {
 		return 0, 0, fmt.Errorf("invalid time format: %q", s)
 	}
+	// Validate time ranges (hours: 0-23, minutes: 0-59)
+	if h < 0 || h > 23 || m < 0 || m > 59 {
+		return 0, 0, fmt.Errorf("invalid time values: hour=%d, minute=%d", h, m)
+	}
 	return h, m, nil
 }
 
