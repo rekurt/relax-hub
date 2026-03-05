@@ -59,8 +59,11 @@ type ReviewRepository interface {
 	ListByBathhouseFiltered(ctx context.Context, filter domain.ReviewFilter) (*domain.PaginatedResult[domain.Review], error)
 	GetByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.Review, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReviewStatus) error
+	UpdateStatusWithReasons(ctx context.Context, id uuid.UUID, status domain.ReviewStatus, reasons []string) error
 	AddOwnerResponse(ctx context.Context, id uuid.UUID, response string, respondedAt time.Time) error
 	GetUserReviewStats(ctx context.Context, userID uuid.UUID) (*domain.UserReviewStats, error)
+	CountPendingReviews(ctx context.Context) (int64, error)
+	ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error)
 }
 
 type FavoriteRepository interface {

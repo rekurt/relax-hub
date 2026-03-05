@@ -677,6 +677,84 @@ func (r *ReviewRepo) GetUserReviewStats(_ context.Context, userID uuid.UUID) (*d
 	return &stats, nil
 }
 
+func (r *ReviewRepo) UpdateStatusWithReasons(_ context.Context, id uuid.UUID, status domain.ReviewStatus, reasons []string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	rev, ok := r.reviews[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	rev.Status = status
+	rev.RejectionReasons = reasons
+	rev.UpdatedAt = time.Now()
+	return nil
+}
+
+func (r *ReviewRepo) CountPendingReviews(_ context.Context) (int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var count int64
+	for _, rev := range r.reviews {
+		if rev.Status == domain.ReviewStatusPending {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (r *ReviewRepo) ListAllReviews(_ context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if filter.Page < 1 {
+		filter.Page = 1
+	}
+	if filter.PageSize < 1 {
+		filter.PageSize = 20
+	}
+
+	var items []domain.Review
+	for _, rev := range r.reviews {
+		if filter.BathhouseID != nil && rev.BathhouseID != *filter.BathhouseID {
+			continue
+		}
+		if filter.Status != nil && rev.Status != *filter.Status {
+			continue
+		}
+		if filter.MinRating != nil && rev.Rating < *filter.MinRating {
+			continue
+		}
+		if filter.MaxRating != nil && rev.Rating > *filter.MaxRating {
+			continue
+		}
+		if filter.FromDate != nil && rev.CreatedAt.Before(*filter.FromDate) {
+			continue
+		}
+		if filter.ToDate != nil && rev.CreatedAt.After(*filter.ToDate) {
+			continue
+		}
+		items = append(items, *rev)
+	}
+
+	total := int64(len(items))
+	start := (filter.Page - 1) * filter.PageSize
+	if start >= len(items) {
+		return &domain.PaginatedResult[domain.Review]{
+			Items: nil, TotalCount: total, Page: filter.Page, PageSize: filter.PageSize,
+			TotalPages: int((total + int64(filter.PageSize) - 1) / int64(filter.PageSize)),
+		}, nil
+	}
+	end := start + filter.PageSize
+	if end > len(items) {
+		end = len(items)
+	}
+
+	return &domain.PaginatedResult[domain.Review]{
+		Items: items[start:end], TotalCount: total, Page: filter.Page, PageSize: filter.PageSize,
+		TotalPages: int((total + int64(filter.PageSize) - 1) / int64(filter.PageSize)),
+	}, nil
+}
+
 // FavoriteRepo is an in-memory mock implementation of repository.FavoriteRepository.
 type FavoriteRepo struct {
 	mu        sync.RWMutex

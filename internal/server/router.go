@@ -159,6 +159,14 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Post("/cities", p.AdminHandler.CreateCity)
 			r.Put("/cities/{id}", p.AdminHandler.UpdateCity)
 			r.Delete("/cities/{id}", p.AdminHandler.DeleteCity)
+
+			// Review moderation
+			r.Get("/reviews", p.AdminHandler.ListReviews)
+			r.Get("/reviews/pending-count", p.AdminHandler.GetPendingCount)
+			r.Patch("/reviews/{id}/approve", p.AdminHandler.ApproveReview)
+			r.Patch("/reviews/{id}/reject", p.AdminHandler.RejectReview)
+			r.Post("/reviews/batch-approve", p.AdminHandler.BatchApproveReviews)
+			r.Post("/reviews/batch-reject", p.AdminHandler.BatchRejectReviews)
 		})
 	})
 

@@ -58,14 +58,14 @@
 - Modify: `internal/handler/admin.go`
 - Modify: `internal/server/router.go`
 
-- [ ] GET /api/v1/admin/reviews — список отзывов с фильтрами (status, rating, date, bathhouse_id)
-- [ ] GET /api/v1/admin/reviews/pending-count — счетчик ожидающих модерации
-- [ ] PATCH /api/v1/admin/reviews/{id}/approve — одобрить
-- [ ] PATCH /api/v1/admin/reviews/{id}/reject — отклонить (с указанием причины)
-- [ ] POST /api/v1/admin/reviews/batch-approve — массовое одобрение (массив ID)
-- [ ] POST /api/v1/admin/reviews/batch-reject — массовое отклонение
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] GET /api/v1/admin/reviews — список отзывов с фильтрами (status, rating, date, bathhouse_id)
+- [x] GET /api/v1/admin/reviews/pending-count — счетчик ожидающих модерации
+- [x] PATCH /api/v1/admin/reviews/{id}/approve — одобрить
+- [x] PATCH /api/v1/admin/reviews/{id}/reject — отклонить (с указанием причины)
+- [x] POST /api/v1/admin/reviews/batch-approve — массовое одобрение (массив ID)
+- [x] POST /api/v1/admin/reviews/batch-reject — массовое отклонение
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Уведомления о модерации
 

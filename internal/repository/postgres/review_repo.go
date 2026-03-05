@@ -277,3 +277,105 @@ func (r *reviewRepo) GetUserReviewStats(ctx context.Context, userID uuid.UUID) (
 	}
 	return &stats, nil
 }
+
+func (r *reviewRepo) UpdateStatusWithReasons(ctx context.Context, id uuid.UUID, status domain.ReviewStatus, reasons []string) error {
+	query := `UPDATE reviews SET status = $2, rejection_reasons = $3, updated_at = $4 WHERE id = $1`
+	result, err := r.pool.Exec(ctx, query, id, string(status), reasons, time.Now())
+	if err != nil {
+		return fmt.Errorf("update review status with reasons: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *reviewRepo) CountPendingReviews(ctx context.Context) (int64, error) {
+	query := `SELECT COUNT(*) FROM reviews WHERE status = 'pending'`
+	var count int64
+	err := r.pool.QueryRow(ctx, query).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count pending reviews: %w", err)
+	}
+	return count, nil
+}
+
+func (r *reviewRepo) ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error) {
+	if filter.Page < 1 {
+		filter.Page = 1
+	}
+	if filter.PageSize < 1 {
+		filter.PageSize = 20
+	}
+
+	var conditions []string
+	var args []interface{}
+	argIdx := 1
+
+	if filter.BathhouseID != nil {
+		conditions = append(conditions, fmt.Sprintf("bathhouse_id = $%d", argIdx))
+		args = append(args, *filter.BathhouseID)
+		argIdx++
+	}
+	if filter.Status != nil {
+		conditions = append(conditions, fmt.Sprintf("status = $%d", argIdx))
+		args = append(args, string(*filter.Status))
+		argIdx++
+	}
+	if filter.MinRating != nil {
+		conditions = append(conditions, fmt.Sprintf("rating >= $%d", argIdx))
+		args = append(args, *filter.MinRating)
+		argIdx++
+	}
+	if filter.MaxRating != nil {
+		conditions = append(conditions, fmt.Sprintf("rating <= $%d", argIdx))
+		args = append(args, *filter.MaxRating)
+		argIdx++
+	}
+	if filter.FromDate != nil {
+		conditions = append(conditions, fmt.Sprintf("created_at >= $%d", argIdx))
+		args = append(args, *filter.FromDate)
+		argIdx++
+	}
+	if filter.ToDate != nil {
+		conditions = append(conditions, fmt.Sprintf("created_at <= $%d", argIdx))
+		args = append(args, *filter.ToDate)
+		argIdx++
+	}
+
+	where := ""
+	if len(conditions) > 0 {
+		where = " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	var totalCount int64
+	countQuery := `SELECT COUNT(*) FROM reviews` + where
+	err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&totalCount)
+	if err != nil {
+		return nil, fmt.Errorf("count all reviews: %w", err)
+	}
+
+	offset := (filter.Page - 1) * filter.PageSize
+	args = append(args, filter.PageSize, offset)
+	query := fmt.Sprintf(`SELECT %s FROM reviews%s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
+		reviewColumns, where, argIdx, argIdx+1)
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list all reviews: %w", err)
+	}
+	defer rows.Close()
+
+	reviews, err := scanReviews(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.PaginatedResult[domain.Review]{
+		Items:      reviews,
+		TotalCount: totalCount,
+		Page:       filter.Page,
+		PageSize:   filter.PageSize,
+		TotalPages: int(math.Ceil(float64(totalCount) / float64(filter.PageSize))),
+	}, nil
+}

@@ -59,3 +59,14 @@ type ReviewFilter struct {
 	Page        int
 	PageSize    int
 }
+
+type AdminReviewFilter struct {
+	BathhouseID *uuid.UUID
+	Status      *ReviewStatus
+	MinRating   *int
+	MaxRating   *int
+	FromDate    *time.Time
+	ToDate      *time.Time
+	Page        int
+	PageSize    int
+}
