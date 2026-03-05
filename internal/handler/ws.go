@@ -31,7 +31,17 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true // CORS is handled by middleware
+		// Enforce same-origin policy for WebSocket connections.
+		// WebSocket requests bypass standard CORS preflight checks, so origin validation
+		// must be explicitly performed here.
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true // Allow requests without Origin header (same-origin browser requests)
+		}
+		// TODO: For production, read allowed origins from config and validate against them
+		// For now, only allow same-origin to prevent CSRF attacks on WebSocket connections
+		host := r.Header.Get("Host")
+		return origin == "http://"+host || origin == "https://"+host
 	},
 }
 

@@ -151,6 +151,16 @@ make run
 | POST | `/bathhouses/{id}/favorite` | auth | Добавить/убрать из избранного (toggle) |
 | GET | `/my/favorites` | auth | Список избранного (paginated) |
 
+### Рекомендации
+
+| Метод | Путь | Доступ | Описание |
+|-------|------|--------|----------|
+| GET | `/recommendations` | auth | Персональные рекомендации (paginated) |
+| GET | `/bathhouses/{id}/similar` | public | Похожие бани (limit, по удобствам/цене/городу) |
+| GET | `/popular?city_id={id}` | public | Популярные бани в городе (limit) |
+| GET | `/my/preferences` | auth | Текущие предпочтения пользователя |
+| PUT | `/my/preferences` | auth | Обновить предпочтения (город, цена, удобства) |
+
 ### Представители
 
 | Метод | Путь | Доступ | Описание |

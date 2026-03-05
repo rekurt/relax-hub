@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/middleware"
 )
 
 // Mock RecommendationService for testing
@@ -106,6 +107,17 @@ func (m *mockBathhouseRepository) UpdateStatus(ctx context.Context, id uuid.UUID
 	return nil
 }
 
+// Mock AuthService for testing
+type mockAuthService struct {
+	userID uuid.UUID
+	role   domain.UserRole
+	err    error
+}
+
+func (m *mockAuthService) ParseToken(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error) {
+	return m.userID, m.role, m.err
+}
+
 func TestRecommendationHandler_GetPersonalized(t *testing.T) {
 	userID := uuid.New()
 	bathID1 := uuid.New()
@@ -130,21 +142,29 @@ func TestRecommendationHandler_GetPersonalized(t *testing.T) {
 	}
 
 	h := NewRecommendationHandler(recSvc, bhRepo)
+	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
 	r.Get("/recommendations", h.GetPersonalized)
 
 	req := httptest.NewRequest(http.MethodGet, "/recommendations?page=1&page_size=20", nil)
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, "user_id", userID)
-	req = req.WithContext(ctx)
-
+	req.Header.Set("Authorization", "Bearer valid-token")
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusUnauthorized {
-		// Without proper middleware, user_id won't be extracted correctly
-		// Test would require middleware setup
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+		return
+	}
+
+	var resp APIResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if !resp.Success {
+		t.Error("expected success=true")
 	}
 }
 
@@ -185,9 +205,14 @@ func TestRecommendationHandler_GetSimilar(t *testing.T) {
 		t.Errorf("expected status 200, got %d", rec.Code)
 	}
 
-	body, _ := io.ReadAll(rec.Body)
+	body, err := io.ReadAll(rec.Body)
+	if err != nil {
+		t.Fatalf("failed to read response body: %v", err)
+	}
 	var resp APIResponse
-	_ = json.Unmarshal(body, &resp)
+	if err := json.Unmarshal(body, &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
 
 	if !resp.Success {
 		t.Error("expected success=true")
@@ -271,20 +296,29 @@ func TestRecommendationHandler_UpdatePreferences(t *testing.T) {
 
 	bhRepo := &mockBathhouseRepository{}
 	h := NewRecommendationHandler(recSvc, bhRepo)
+	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
 	r.Put("/preferences", h.UpdatePreferences)
 
 	requestBody := `{"prefer_pool": true, "prefer_sauna": false}`
 	req := httptest.NewRequest(http.MethodPut, "/preferences", strings.NewReader(requestBody))
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, "user_id", userID)
-	req = req.WithContext(ctx)
-
+	req.Header.Set("Authorization", "Bearer valid-token")
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusUnauthorized {
-		// Would pass with proper middleware
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+		return
+	}
+
+	var resp APIResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if !resp.Success {
+		t.Error("expected success=true")
 	}
 }

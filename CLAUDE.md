@@ -193,6 +193,30 @@ Routes:
 
 Config: `BANI_OAUTH_VK_CLIENT_ID`, `BANI_OAUTH_VK_CLIENT_SECRET`, `BANI_OAUTH_VK_REDIRECT_URL` (same pattern for YANDEX, GOOGLE)
 
+### Recommendation Engine
+
+Personalized bathhouse recommendations using collaborative filtering and user preferences:
+
+- **Models**: UserPreferences (explicit preferences: city, price range, amenities), UserActivity (view/booking/favorite tracking)
+- **Repository** (`internal/repository/postgres/recommendation.go`): GetUserPreferences, SaveUserPreferences, RecordActivity, GetUserBookedBathhouses, GetSimilarUsers, GetPopularBathhouses, GetSimilarBathhouses
+- **Service** (`internal/service/recommendation_service.go`):
+  - GetPersonalized(userID, page, pageSize) — algorithm: get user preferences → find similar users (collaborative filtering) → get bathhouses booked by similar users but not current user → filter by preferences (city, price, amenities) → score by rating × similarity weight × recency bonus
+  - GetSimilar(bathhouseID, limit) — bathhouses with similar amenities/price/city
+  - GetPopular(cityID, limit) — highest-rated bathhouses in city
+  - UpdatePreferences(userID, prefs) — save explicit preferences
+  - RecordView(userID, bathhouseID) — track activity for recommendations
+
+Routes:
+- `GET /api/v1/recommendations?page=1&page_size=20` — personalized (auth required)
+- `GET /api/v1/bathhouses/{id}/similar?limit=10` — similar bathhouses (public)
+- `GET /api/v1/popular?city_id=1&limit=10` — popular in city (public)
+- `GET /api/v1/my/preferences` — get preferences (auth required)
+- `PUT /api/v1/my/preferences` — update preferences (auth required)
+
+Activity tracking: RecordView called on bathhouse detail retrieval for authenticated users.
+
+Recommendation scoring formula: rating × similarity_weight × recency_bonus
+
 ### Code Style
 
 - Module path: `github.com/nikitaaldaev/bani`

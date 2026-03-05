@@ -94,7 +94,7 @@ func (r *recommendationRepo) RecordActivity(ctx context.Context, activity *domai
 	}
 
 	query := `
-		INSERT INTO user_activities (id, user_id, bathhouse_id, type, created_at)
+		INSERT INTO user_activity (id, user_id, bathhouse_id, type, created_at)
 		VALUES ($1, $2, $3, $4, $5)`
 
 	_, err := r.pool.Exec(ctx, query,
