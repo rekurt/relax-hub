@@ -74,20 +74,20 @@
 **Files:**
 - Create: `internal/service/recommendation_service.go`
 
-- [ ] RecommendationService:
+- [x] RecommendationService:
   - GetPersonalized(ctx, userID, page, pageSize) — персональные рекомендации
   - GetSimilar(ctx, bathhouseID, limit) — похожие бани
   - GetPopular(ctx, cityID, limit) — популярные в городе
   - UpdatePreferences(ctx, userID, prefs) — обновить предпочтения
   - RecordView(ctx, userID, bathhouseID) — зафиксировать просмотр
-- [ ] Алгоритм персональных рекомендаций:
+- [x] Алгоритм персональных рекомендаций:
   1. Взять предпочтения пользователя (явные + из истории)
   2. Найти похожих пользователей (collaborative filtering по бронированиям)
   3. Взять бани, которые бронировали похожие пользователи, но не текущий
   4. Отфильтровать по предпочтениям (город, цена, удобства)
   5. Отсортировать по score (рейтинг * similarity * recency)
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Хендлеры рекомендаций
 
