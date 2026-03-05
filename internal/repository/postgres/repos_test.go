@@ -34,3 +34,12 @@ func TestNewRepresentativeRepository_ImplementsInterface(t *testing.T) {
 func TestNewRecommendationRepository_ImplementsInterface(t *testing.T) {
 	var _ repository.RecommendationRepository = NewRecommendationRepository(&pgxpool.Pool{})
 }
+
+func TestNewSubscriptionRepository_ImplementsInterface(t *testing.T) {
+	var _ repository.SubscriptionRepository = NewSubscriptionRepository(&pgxpool.Pool{})
+}
+
+func TestNewPromotionRepository_ImplementsInterface(t *testing.T) {
+	var _ repository.PromotionRepository = NewPromotionRepository(&pgxpool.Pool{})
+}
+

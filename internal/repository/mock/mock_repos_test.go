@@ -23,6 +23,8 @@ var (
 	_ repository.NotificationRepository   = (*NotificationRepo)(nil)
 	_ repository.SocialAccountRepository  = (*SocialAccountRepo)(nil)
 	_ repository.RecommendationRepository = (*RecommendationRepo)(nil)
+	_ repository.SubscriptionRepository   = (*SubscriptionRepo)(nil)
+	_ repository.PromotionRepository      = (*PromotionRepo)(nil)
 )
 
 func TestUserRepo_CRUD(t *testing.T) {
@@ -1283,3 +1285,215 @@ func TestRecommendationRepo_PopularBathhouses(t *testing.T) {
 		t.Errorf("Mock GetPopularBathhouses should return empty, got %d items", len(result))
 	}
 }
+
+func TestSubscriptionRepo_CRUD(t *testing.T) {
+	ctx := context.Background()
+	repo := NewSubscriptionRepo()
+
+	bathhouseID := uuid.New()
+	ownerID := uuid.New()
+
+	sub := &domain.Subscription{
+		BathhouseID:  bathhouseID,
+		OwnerID:      ownerID,
+		Plan:         domain.PlanPremium,
+		Status:       domain.SubscriptionActive,
+		StartDate:    time.Now(),
+		EndDate:      nil,
+		AutoRenew:    true,
+		PriceKopecks: 299900,
+	}
+
+	// Create
+	if err := repo.Create(ctx, sub); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if sub.ID == uuid.Nil {
+		t.Fatal("ID should be assigned after Create")
+	}
+
+	// GetByID
+	got, err := repo.GetByID(ctx, sub.ID)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if got.Plan != domain.PlanPremium {
+		t.Errorf("Got plan %v, want %v", got.Plan, domain.PlanPremium)
+	}
+
+	// GetActiveBybathhouse
+	active, err := repo.GetActiveBybathhouse(ctx, bathhouseID)
+	if err != nil {
+		t.Fatalf("GetActiveBybathhouse: %v", err)
+	}
+	if active.ID != sub.ID {
+		t.Errorf("Got subscription %v, want %v", active.ID, sub.ID)
+	}
+
+	// Update
+	sub.Plan = domain.PlanPromoted
+	if err := repo.Update(ctx, sub); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	updated, err := repo.GetByID(ctx, sub.ID)
+	if err != nil {
+		t.Fatalf("GetByID after Update: %v", err)
+	}
+	if updated.Plan != domain.PlanPromoted {
+		t.Errorf("After update, got plan %v, want %v", updated.Plan, domain.PlanPromoted)
+	}
+
+	// ListByOwner
+	result, err := repo.ListByOwner(ctx, ownerID, 1, 20)
+	if err != nil {
+		t.Fatalf("ListByOwner: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("Expected 1 subscription, got %d", result.TotalCount)
+	}
+}
+
+func TestSubscriptionRepo_GetExpiring(t *testing.T) {
+	ctx := context.Background()
+	repo := NewSubscriptionRepo()
+
+	now := time.Now()
+	bathhouseID := uuid.New()
+	ownerID := uuid.New()
+
+	// Create subscription that expires tomorrow
+	tomorrow := now.Add(24 * time.Hour)
+	sub := &domain.Subscription{
+		BathhouseID:  bathhouseID,
+		OwnerID:      ownerID,
+		Plan:         domain.PlanPremium,
+		Status:       domain.SubscriptionActive,
+		StartDate:    now,
+		EndDate:      &tomorrow,
+		AutoRenew:    false,
+		PriceKopecks: 299900,
+	}
+
+	if err := repo.Create(ctx, sub); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// Check with date before expiration - should not return
+	beforeExpiration := now.Add(12 * time.Hour)
+	result, err := repo.GetExpiring(ctx, beforeExpiration)
+	if err != nil {
+		t.Fatalf("GetExpiring: %v", err)
+	}
+	if len(result) > 0 {
+		t.Error("GetExpiring should not return subscriptions not yet expiring")
+	}
+
+	// Check with date after expiration - should return
+	afterExpiration := tomorrow.Add(1 * time.Hour)
+	result, err = repo.GetExpiring(ctx, afterExpiration)
+	if err != nil {
+		t.Fatalf("GetExpiring: %v", err)
+	}
+	if len(result) != 1 {
+		t.Errorf("GetExpiring should return 1 subscription, got %d", len(result))
+	}
+}
+
+func TestPromotionRepo_CRUD(t *testing.T) {
+	ctx := context.Background()
+	repo := NewPromotionRepo()
+
+	bathhouseID := uuid.New()
+	cityID := int64(1)
+
+	promo := &domain.Promotion{
+		BathhouseID:     bathhouseID,
+		BudgetKopecks:   100000,
+		SpentKopecks:    50000,
+		StartDate:       time.Now(),
+		EndDate:         time.Now().Add(30 * 24 * time.Hour),
+		TargetCityID:    &cityID,
+		Status:          domain.PromotionActive,
+		ImpressionCount: 1000,
+		ClickCount:      50,
+	}
+
+	// Create
+	if err := repo.Create(ctx, promo); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if promo.ID == uuid.Nil {
+		t.Fatal("ID should be assigned after Create")
+	}
+
+	// GetByID
+	got, err := repo.GetByID(ctx, promo.ID)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if got.BudgetKopecks != 100000 {
+		t.Errorf("Got budget %d, want 100000", got.BudgetKopecks)
+	}
+
+	// GetActiveBybathhouse
+	active, err := repo.GetActiveBybathhouse(ctx, bathhouseID)
+	if err != nil {
+		t.Fatalf("GetActiveBybathhouse: %v", err)
+	}
+	if active.ID != promo.ID {
+		t.Errorf("Got promotion %v, want %v", active.ID, promo.ID)
+	}
+
+	// Update
+	promo.SpentKopecks = 75000
+	promo.ImpressionCount = 1500
+	if err := repo.Update(ctx, promo); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	updated, err := repo.GetByID(ctx, promo.ID)
+	if err != nil {
+		t.Fatalf("GetByID after Update: %v", err)
+	}
+	if updated.SpentKopecks != 75000 {
+		t.Errorf("After update, got spent %d, want 75000", updated.SpentKopecks)
+	}
+}
+
+func TestSubscriptionRepo_DuplicateActive(t *testing.T) {
+	ctx := context.Background()
+	repo := NewSubscriptionRepo()
+
+	bathhouseID := uuid.New()
+	ownerID := uuid.New()
+
+	sub1 := &domain.Subscription{
+		BathhouseID:  bathhouseID,
+		OwnerID:      ownerID,
+		Plan:         domain.PlanPremium,
+		Status:       domain.SubscriptionActive,
+		StartDate:    time.Now(),
+		PriceKopecks: 299900,
+	}
+
+	// Create first subscription
+	if err := repo.Create(ctx, sub1); err != nil {
+		t.Fatalf("Create first: %v", err)
+	}
+
+	// Try to create another active subscription for same bathhouse
+	sub2 := &domain.Subscription{
+		BathhouseID:  bathhouseID,
+		OwnerID:      ownerID,
+		Plan:         domain.PlanPromoted,
+		Status:       domain.SubscriptionActive,
+		StartDate:    time.Now(),
+		PriceKopecks: 499900,
+	}
+
+	if err := repo.Create(ctx, sub2); !errors.Is(err, domain.ErrAlreadyExists) {
+		t.Errorf("Expected ErrAlreadyExists, got %v", err)
+	}
+}
+

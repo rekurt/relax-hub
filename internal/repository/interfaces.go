@@ -121,3 +121,20 @@ type RecommendationRepository interface {
 	// Similarity based on amenities and location
 	GetSimilarBathhouses(ctx context.Context, bathhouseID uuid.UUID, limit int) ([]uuid.UUID, error)
 }
+
+type SubscriptionRepository interface {
+	Create(ctx context.Context, sub *domain.Subscription) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Subscription, error)
+	GetActiveBybathhouse(ctx context.Context, bathhouseID uuid.UUID) (*domain.Subscription, error)
+	Update(ctx context.Context, sub *domain.Subscription) error
+	ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Subscription], error)
+	GetExpiring(ctx context.Context, before time.Time) ([]domain.Subscription, error)
+}
+
+type PromotionRepository interface {
+	Create(ctx context.Context, promo *domain.Promotion) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Promotion, error)
+	GetActiveBybathhouse(ctx context.Context, bathhouseID uuid.UUID) (*domain.Promotion, error)
+	Update(ctx context.Context, promo *domain.Promotion) error
+	ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Promotion], error)
+}
