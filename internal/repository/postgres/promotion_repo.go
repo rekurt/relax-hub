@@ -163,3 +163,35 @@ func (r *promotionRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
 	}, nil
 }
+
+func (r *promotionRepo) RecordImpression(ctx context.Context, promotionID uuid.UUID) error {
+	query := `
+		UPDATE promotions
+		SET impression_count = impression_count + 1
+		WHERE id = $1
+	`
+	result, err := r.pool.Exec(ctx, query, promotionID)
+	if err != nil {
+		return fmt.Errorf("record impression: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *promotionRepo) RecordClick(ctx context.Context, promotionID uuid.UUID) error {
+	query := `
+		UPDATE promotions
+		SET click_count = click_count + 1
+		WHERE id = $1
+	`
+	result, err := r.pool.Exec(ctx, query, promotionID)
+	if err != nil {
+		return fmt.Errorf("record click: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}

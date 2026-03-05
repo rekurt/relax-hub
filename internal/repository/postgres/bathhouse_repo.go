@@ -233,8 +233,14 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		whereClause = "WHERE " + strings.Join(conditions, " AND ")
 	}
 
+	// Build joins for subscriptions and promotions
+	joinClause := `
+		LEFT JOIN subscriptions s ON bathhouses.id = s.bathhouse_id AND s.status = 'active'
+		LEFT JOIN promotions p ON bathhouses.id = p.bathhouse_id AND p.status = 'active'
+	`
+
 	// Count query
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM bathhouses %s", whereClause)
+	countQuery := fmt.Sprintf("SELECT COUNT(DISTINCT bathhouses.id) FROM bathhouses %s %s", joinClause, whereClause)
 	var totalCount int64
 	err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&totalCount)
 	if err != nil {
@@ -250,9 +256,17 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 
 	switch filter.SortBy {
 	case "price":
-		orderBy = fmt.Sprintf("price_per_hour %s", sortOrder)
+		// Price sort: apply subscription score, free bathhouses get 0, premium gets 10
+		orderBy = fmt.Sprintf(
+			"CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END + CAST(price_per_hour AS FLOAT) %s",
+			sortOrder,
+		)
 	case "rating":
-		orderBy = fmt.Sprintf("rating %s", sortOrder)
+		// Rating sort: apply subscription score
+		orderBy = fmt.Sprintf(
+			"CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END + rating %s",
+			sortOrder,
+		)
 	case "distance":
 		if filter.Latitude != nil && filter.Longitude != nil {
 			orderBy = fmt.Sprintf(
@@ -260,17 +274,25 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 				addArg(*filter.Longitude), addArg(*filter.Latitude), sortOrder,
 			)
 		}
+	default:
+		// Default sort: apply subscription score
+		orderBy = fmt.Sprintf(
+			"CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, created_at DESC",
+		)
 	}
 
 	offset := (filter.Page - 1) * filter.PageSize
 
 	selectQuery := fmt.Sprintf(`
-		SELECT id, owner_id, name, description, address, city_id,
-			latitude, longitude, price_per_hour, min_duration, max_guests,
-			has_pool, has_sauna, has_steam_room, has_hot_tub, has_bbq, has_karaoke,
-			rating, review_count, images, working_hours, status, created_at, updated_at
-		FROM bathhouses %s ORDER BY %s LIMIT %s OFFSET %s`,
-		whereClause, orderBy, addArg(filter.PageSize), addArg(offset),
+		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.description, bathhouses.address, bathhouses.city_id,
+			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
+			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
+			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
+			bathhouses.created_at, bathhouses.updated_at,
+			COALESCE(s.plan, '')::text as subscription_plan,
+			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
+		FROM bathhouses %s %s ORDER BY %s LIMIT %s OFFSET %s`,
+		joinClause, whereClause, orderBy, addArg(filter.PageSize), addArg(offset),
 	)
 
 	rows, err := r.pool.Query(ctx, selectQuery, args...)
@@ -281,7 +303,7 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 
 	var bathhouses []domain.Bathhouse
 	for rows.Next() {
-		bh, err := r.scanBathhouseFromRow(rows)
+		bh, err := r.scanBathhouseFromRowWithSubscription(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -431,6 +453,37 @@ func (r *bathhouseRepo) scanBathhouseFromRow(rows pgx.Rows) (*domain.Bathhouse, 
 	if err := json.Unmarshal(whJSON, &bh.WorkingHours); err != nil {
 		return nil, fmt.Errorf("unmarshal working hours: %w", err)
 	}
+
+	return &bh, nil
+}
+
+func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*domain.Bathhouse, error) {
+	var (
+		bh                 domain.Bathhouse
+		imagesJSON         []byte
+		whJSON             []byte
+		subscriptionPlan   string
+		isPromoted         bool
+	)
+	err := rows.Scan(
+		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Description, &bh.Address, &bh.CityID,
+		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
+		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
+		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
+		&subscriptionPlan, &isPromoted,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("scan bathhouse row: %w", err)
+	}
+
+	if err := json.Unmarshal(imagesJSON, &bh.Images); err != nil {
+		return nil, fmt.Errorf("unmarshal images: %w", err)
+	}
+	if err := json.Unmarshal(whJSON, &bh.WorkingHours); err != nil {
+		return nil, fmt.Errorf("unmarshal working hours: %w", err)
+	}
+
+	bh.IsPromoted = isPromoted
 
 	return &bh, nil
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
@@ -18,6 +19,7 @@ type BathhouseHandler struct {
 	representativeService service.RepresentativeService
 	favoriteService       service.FavoriteService
 	recommendationService service.RecommendationService
+	promotionRepository   repository.PromotionRepository
 }
 
 func NewBathhouseHandler(
@@ -26,6 +28,7 @@ func NewBathhouseHandler(
 	representativeService service.RepresentativeService,
 	favoriteService service.FavoriteService,
 	recommendationService service.RecommendationService,
+	promotionRepository repository.PromotionRepository,
 ) *BathhouseHandler {
 	return &BathhouseHandler{
 		bathhouseService:      bathhouseService,
@@ -33,6 +36,7 @@ func NewBathhouseHandler(
 		representativeService: representativeService,
 		favoriteService:       favoriteService,
 		recommendationService: recommendationService,
+		promotionRepository:   promotionRepository,
 	}
 }
 
@@ -60,6 +64,7 @@ type bathhouseResponse struct {
 	WorkingHours []workingHoursResp `json:"working_hours"`
 	Status       string             `json:"status"`
 	IsFavorite   bool               `json:"is_favorite"`
+	IsPromoted   bool               `json:"is_promoted"`
 	CreatedAt    time.Time          `json:"created_at"`
 	UpdatedAt    time.Time          `json:"updated_at"`
 }
@@ -106,6 +111,7 @@ func toBathhouseResponse(b *domain.Bathhouse) bathhouseResponse {
 		Images:       images,
 		WorkingHours: wh,
 		Status:       string(b.Status),
+		IsPromoted:   b.IsPromoted,
 		CreatedAt:    b.CreatedAt,
 		UpdatedAt:    b.UpdatedAt,
 	}
@@ -286,6 +292,18 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Record impressions for promoted bathhouses
+	if h.promotionRepository != nil {
+		for _, bh := range result.Items {
+			if bh.IsPromoted {
+				promo, err := h.promotionRepository.GetActiveBybathhouse(r.Context(), bh.ID)
+				if err == nil && promo != nil {
+					_ = h.promotionRepository.RecordImpression(r.Context(), promo.ID)
+				}
+			}
+		}
+	}
+
 	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
 		Page:       result.Page,
 		PageSize:   result.PageSize,
@@ -320,6 +338,16 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// Record activity for authenticated users
 	if userID != uuid.Nil && h.recommendationService != nil {
 		_ = h.recommendationService.RecordView(r.Context(), userID, bh.ID)
+	}
+
+	// Record click for promoted bathhouses
+	if h.promotionRepository != nil {
+		// Try to get active promotion for this bathhouse
+		// If exists, record a click
+		promo, err := h.promotionRepository.GetActiveBybathhouse(r.Context(), id)
+		if err == nil && promo != nil {
+			_ = h.promotionRepository.RecordClick(r.Context(), promo.ID)
+		}
 	}
 
 	writeJSON(w, http.StatusOK, resp)

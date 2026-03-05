@@ -1617,3 +1617,27 @@ func (r *PromotionRepo) ListByOwner(_ context.Context, ownerID uuid.UUID, page, 
 		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
 	}, nil
 }
+
+func (r *PromotionRepo) RecordImpression(_ context.Context, promotionID uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	promo, ok := r.promotions[promotionID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	promo.ImpressionCount++
+	return nil
+}
+
+func (r *PromotionRepo) RecordClick(_ context.Context, promotionID uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	promo, ok := r.promotions[promotionID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	promo.ClickCount++
+	return nil
+}

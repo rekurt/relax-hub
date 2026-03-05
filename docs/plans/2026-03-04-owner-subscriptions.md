@@ -109,16 +109,16 @@
 ### Task 4: Влияние подписки на выдачу
 
 **Files:**
-- Modify: `internal/repository/postgres/bathhouse.go`
+- Modify: `internal/repository/postgres/bathhouse_repo.go`
 - Modify: `internal/domain/filter.go`
 
-- [ ] При выдаче бань (List) учитывать подписку:
+- [x] При выдаче бань (List) учитывать подписку:
   - Premium: +10 к sort score
   - Promoted: отдельный блок "Рекомендованные" (первые N результатов, помеченные is_promoted)
-- [ ] Трекинг показов (impression) для promoted бань
-- [ ] Трекинг кликов (при GetByID) для promoted бань
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Трекинг показов (impression) для promoted бань
+- [x] Трекинг кликов (при GetByID) для promoted бань
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Хендлеры подписок
 
