@@ -217,6 +217,45 @@ Activity tracking: RecordView called on bathhouse detail retrieval for authentic
 
 Recommendation scoring formula: rating × similarity_weight × recency_bonus
 
+### Subscriptions and Promotions
+
+Three-tier subscription model for bathhouse monetization:
+
+**Models:**
+- **Subscription** (`internal/domain/subscription.go`): tracks plan type (free/premium/promoted), status (active/expired/cancelled), dates, pricing, and auto-renewal
+- **Promotion** (`internal/domain/promotion.go`): tracks advertising campaigns with budget, impressions, clicks, target city, and status
+
+**Plans:**
+- Free: no charge, basic listing
+- Premium: 5000 kopecks/month, +10 sort score boost in feed
+- Promoted: 10000 kopecks/month, dedicated "Recommended" block, impression/click tracking
+
+**Repositories:**
+- `internal/repository/postgres/subscription.go` — CRUD operations, fetch active subscriptions, list by owner with pagination, find expiring subscriptions
+- `internal/repository/postgres/promotion.go` — budget/metrics tracking, impression/click counting
+- Mock implementations for testing in `internal/repository/mock/`
+
+**Service:**
+- `internal/service/subscription_service.go` — Subscribe (create + charge), Cancel (disable auto-renewal), GetActive, ListByOwner
+- RBAC: only bathhouse owners can manage their subscriptions
+- Error: `ErrSubscriptionNotFound`, `ErrSubscriptionAlreadyActive`, `ErrPromotionBudgetExhausted`
+
+**Feed Impact:**
+- Premium subscriptions: bathhousses get +10 points in sort scoring
+- Promoted subscriptions: separate "is_promoted" flag in response, ordered in dedicated block
+- Impression tracking: recorded when promoted bathhouses appear in List results
+- Click tracking: recorded when promoted bathhouses are viewed via GetByID
+
+**Handlers:**
+- `POST /api/v1/my/bathhouses/{id}/subscription` — subscribe to plan (owner auth required)
+- `GET /api/v1/my/bathhouses/{id}/subscription` — get current subscription (owner auth)
+- `DELETE /api/v1/my/bathhouses/{id}/subscription` — cancel auto-renewal (owner auth)
+- `GET /api/v1/my/subscriptions?page=1&page_size=20` — list all owner subscriptions (owner auth)
+- `POST /api/v1/my/bathhouses/{id}/promotion` — create promotion campaign (owner auth)
+- `GET /api/v1/my/bathhouses/{id}/promotion` — get promotion analytics (owner auth)
+
+Database migrations in `migrations/000005_subscriptions.up.sql` create subscriptions and promotions tables with indexes on bathhouse_id, owner_id, and status for efficient queries.
+
 ### Code Style
 
 - Module path: `github.com/nikitaaldaev/bani`
