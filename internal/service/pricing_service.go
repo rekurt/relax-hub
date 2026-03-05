@@ -203,8 +203,8 @@ func (s *pricingService) ruleAppliesAt(t time.Time, rule *domain.PricingRule) bo
 
 	switch rule.Type {
 	case domain.RuleTypeWeekday, domain.RuleTypeWeekend:
-		// Check day of week
-		dayOfWeek := int(t.Weekday())
+		// Check day of week using the app's convention (0=Monday, 6=Sunday)
+		dayOfWeek := s.getDayOfWeek(t.Weekday())
 		return slices.Contains(rule.DaysOfWeek, dayOfWeek)
 
 	case domain.RuleTypeHoliday:
@@ -221,7 +221,12 @@ func (s *pricingService) ruleAppliesAt(t time.Time, rule *domain.PricingRule) bo
 			fromStr := *rule.TimeFrom
 			toStr := *rule.TimeTo
 
-			// Simple string comparison works for HH:MM format
+			// Handle wraparound times (e.g., 22:00-06:00 for overnight)
+			if fromStr > toStr {
+				// Wraparound: rule applies if timeStr >= from OR timeStr < to
+				return timeStr >= fromStr || timeStr < toStr
+			}
+			// Non-wraparound: rule applies if from <= timeStr < to
 			return timeStr >= fromStr && timeStr < toStr
 		}
 		return false
@@ -236,4 +241,13 @@ func (s *pricingService) ruleAppliesAt(t time.Time, rule *domain.PricingRule) bo
 	default:
 		return false
 	}
+}
+
+// toDayOfWeek converts Go's time.Weekday to the app's convention (0=Monday, 6=Sunday).
+// This matches the convention used in BookingService and WorkingHours.
+func (s *pricingService) getDayOfWeek(wd time.Weekday) int {
+	if wd == time.Sunday {
+		return 6
+	}
+	return int(wd) - 1
 }
