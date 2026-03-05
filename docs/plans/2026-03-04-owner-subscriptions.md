@@ -76,7 +76,7 @@
 - Create: `internal/repository/mock/subscription.go`
 - Create: `internal/repository/mock/promotion.go`
 
-- [ ] Добавить SubscriptionRepository interface:
+- [x] Добавить SubscriptionRepository interface:
   ```go
   type SubscriptionRepository interface {
     Create(ctx context.Context, sub *domain.Subscription) error
@@ -87,10 +87,10 @@
     GetExpiring(ctx context.Context, before time.Time) ([]domain.Subscription, error)
   }
   ```
-- [ ] Добавить PromotionRepository interface
-- [ ] Реализовать postgres и mock репозитории
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить PromotionRepository interface
+- [x] Реализовать postgres и mock репозитории
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Сервис подписок
 
