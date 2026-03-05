@@ -23,20 +23,22 @@ func NewReviewRepository(pool *pgxpool.Pool) repository.ReviewRepository {
 	return &reviewRepo{pool: pool}
 }
 
-var reviewColumns = `id, user_id, bathhouse_id, booking_id, rating, text, status, owner_response, owner_response_at, images, created_at, updated_at`
+var reviewColumns = `id, user_id, bathhouse_id, booking_id, rating, text, status, rejection_reasons, owner_response, owner_response_at, images, created_at, updated_at`
 
 func scanReview(row pgx.Row) (*domain.Review, error) {
 	var rev domain.Review
 	var images []string
+	var rejectionReasons []string
 	err := row.Scan(
 		&rev.ID, &rev.UserID, &rev.BathhouseID, &rev.BookingID,
-		&rev.Rating, &rev.Text, &rev.Status, &rev.OwnerResponse,
+		&rev.Rating, &rev.Text, &rev.Status, &rejectionReasons, &rev.OwnerResponse,
 		&rev.OwnerResponseAt, &images, &rev.CreatedAt, &rev.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
 	rev.Images = images
+	rev.RejectionReasons = rejectionReasons
 	return &rev, nil
 }
 
@@ -45,14 +47,16 @@ func scanReviews(rows pgx.Rows) ([]domain.Review, error) {
 	for rows.Next() {
 		var rev domain.Review
 		var images []string
+		var rejectionReasons []string
 		if err := rows.Scan(
 			&rev.ID, &rev.UserID, &rev.BathhouseID, &rev.BookingID,
-			&rev.Rating, &rev.Text, &rev.Status, &rev.OwnerResponse,
+			&rev.Rating, &rev.Text, &rev.Status, &rejectionReasons, &rev.OwnerResponse,
 			&rev.OwnerResponseAt, &images, &rev.CreatedAt, &rev.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan review: %w", err)
 		}
 		rev.Images = images
+		rev.RejectionReasons = rejectionReasons
 		reviews = append(reviews, rev)
 	}
 	if err := rows.Err(); err != nil {
@@ -63,8 +67,8 @@ func scanReviews(rows pgx.Rows) ([]domain.Review, error) {
 
 func (r *reviewRepo) Create(ctx context.Context, review *domain.Review) error {
 	query := `
-		INSERT INTO reviews (id, user_id, bathhouse_id, booking_id, rating, text, status, images, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+		INSERT INTO reviews (id, user_id, bathhouse_id, booking_id, rating, text, status, rejection_reasons, images, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 
 	if review.ID == uuid.Nil {
 		review.ID = uuid.New()
@@ -72,7 +76,7 @@ func (r *reviewRepo) Create(ctx context.Context, review *domain.Review) error {
 
 	_, err := r.pool.Exec(ctx, query,
 		review.ID, review.UserID, review.BathhouseID, review.BookingID,
-		review.Rating, review.Text, review.Status, review.Images,
+		review.Rating, review.Text, review.Status, review.RejectionReasons, review.Images,
 		review.CreatedAt, review.UpdatedAt,
 	)
 	if err != nil {

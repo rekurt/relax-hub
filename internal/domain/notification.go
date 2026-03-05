@@ -94,7 +94,7 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 	switch t {
 	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected:
 		return p.BookingEvents
-	case NotifNewReview, NotifReviewResponse:
+	case NotifNewReview, NotifReviewResponse, NotifReviewApproved, NotifReviewRejected:
 		return p.ReviewEvents
 	case NotifPromo:
 		return p.PromoEvents
