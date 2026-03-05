@@ -75,12 +75,12 @@ func (s *subscriptionService) Subscribe(ctx context.Context, userID uuid.UUID, b
 		// Premium: 1 month, 5000 kopecks (50 rubles)
 		end := now.AddDate(0, 1, 0)
 		endDate = &end
-		priceKopecks = 500000 // 5000 rubles
+		priceKopecks = 5000 // 50 rubles
 	case domain.PlanPromoted:
 		// Promoted: 1 month, 10000 kopecks (100 rubles)
 		end := now.AddDate(0, 1, 0)
 		endDate = &end
-		priceKopecks = 1000000 // 10000 rubles
+		priceKopecks = 10000 // 100 rubles
 	default:
 		return nil, domain.ErrInvalidInput
 	}

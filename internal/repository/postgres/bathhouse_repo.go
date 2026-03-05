@@ -256,28 +256,28 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 
 	switch filter.SortBy {
 	case "price":
-		// Price sort: apply subscription score, free bathhouses get 0, premium gets 10
+		// Price sort: promoted first, then premium, then by price
 		orderBy = fmt.Sprintf(
-			"CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END + CAST(price_per_hour AS FLOAT) %s",
+			"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, CAST(price_per_hour AS FLOAT) %s",
 			sortOrder,
 		)
 	case "rating":
-		// Rating sort: apply subscription score
+		// Rating sort: promoted first, then premium, then by rating
 		orderBy = fmt.Sprintf(
-			"CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END + rating %s",
+			"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, rating %s",
 			sortOrder,
 		)
 	case "distance":
 		if filter.Latitude != nil && filter.Longitude != nil {
 			orderBy = fmt.Sprintf(
-				"ST_Distance(location, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) %s",
+				"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, ST_Distance(location, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) %s",
 				addArg(*filter.Longitude), addArg(*filter.Latitude), sortOrder,
 			)
 		}
 	default:
-		// Default sort: apply subscription score
+		// Default sort: promoted first, then premium, then by created_at
 		orderBy = fmt.Sprintf(
-			"CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, created_at DESC",
+			"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, created_at DESC",
 		)
 	}
 

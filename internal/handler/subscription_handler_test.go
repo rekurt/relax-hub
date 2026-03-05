@@ -130,7 +130,7 @@ func TestSubscriptionHandler_Subscribe(t *testing.T) {
 					StartDate:    time.Now(),
 					EndDate:      nil,
 					AutoRenew:    true,
-					PriceKopecks: 500000,
+					PriceKopecks: 5000,
 					CreatedAt:    time.Now(),
 					UpdatedAt:    time.Now(),
 				}, nil
@@ -189,7 +189,7 @@ func TestSubscriptionHandler_GetSubscription(t *testing.T) {
 					StartDate:    now,
 					EndDate:      nil,
 					AutoRenew:    true,
-					PriceKopecks: 500000,
+					PriceKopecks: 5000,
 					CreatedAt:    now,
 					UpdatedAt:    now,
 				}, nil
@@ -250,7 +250,7 @@ func TestSubscriptionHandler_ListSubscriptions(t *testing.T) {
 							StartDate:    now,
 							EndDate:      nil,
 							AutoRenew:    true,
-							PriceKopecks: 500000,
+							PriceKopecks: 5000,
 							CreatedAt:    now,
 							UpdatedAt:    now,
 						},

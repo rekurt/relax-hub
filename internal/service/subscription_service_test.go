@@ -253,8 +253,8 @@ func TestSubscriptionService_PricingByPlan(t *testing.T) {
 		expectedRenew bool
 	}{
 		{domain.PlanFree, 0, false},
-		{domain.PlanPremium, 500000, true},
-		{domain.PlanPromoted, 1000000, true},
+		{domain.PlanPremium, 5000, true},
+		{domain.PlanPromoted, 10000, true},
 	}
 
 	for _, tt := range tests {
