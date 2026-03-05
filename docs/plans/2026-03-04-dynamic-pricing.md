@@ -59,17 +59,17 @@
 - Create: `internal/repository/mock/pricing.go`
 - Create: `internal/service/pricing_service.go`
 
-- [ ] PricingRuleRepository: Create, Update, Delete, ListByBathhouse, GetActiveRules
-- [ ] PricingService:
+- [x] PricingRuleRepository: Create, Update, Delete, ListByBathhouse, GetActiveRules
+- [x] PricingService:
   - CalculatePrice(ctx, bathhouseID, startTime, endTime) — рассчитать цену с учетом правил
   - CreateRule(ctx, rule) — создать правило
   - UpdateRule(ctx, rule) — обновить правило
   - DeleteRule(ctx, ruleID) — удалить правило
   - ListRules(ctx, bathhouseID) — правила бани
-- [ ] Алгоритм расчета: разбить интервал на часы, для каждого часа найти правило с наивысшим приоритетом, применить множитель к базовой цене
-- [ ] RBAC: только owner/representative бани
-- [ ] Написать unit-тесты (важно: граничные случаи с перекрытием правил)
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Алгоритм расчета: разбить интервал на часы, для каждого часа найти правило с наивысшим приоритетом, применить множитель к базовой цене
+- [x] RBAC: только owner/representative бани
+- [x] Написать unit-тесты (важно: граничные случаи с перекрытием правил)
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Интеграция с бронированием и слотами
 
