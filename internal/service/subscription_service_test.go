@@ -28,7 +28,7 @@ func TestSubscriptionService_Subscribe_Success(t *testing.T) {
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
-	sub, err := svc.Subscribe(context.Background(), ownerID, bh.ID, domain.PlanPremium)
+	sub, err := svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, bh.ID, domain.PlanPremium)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -61,7 +61,7 @@ func TestSubscriptionService_Subscribe_FreeVersion(t *testing.T) {
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
-	sub, err := svc.Subscribe(context.Background(), ownerID, bh.ID, domain.PlanFree)
+	sub, err := svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, bh.ID, domain.PlanFree)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -86,13 +86,13 @@ func TestSubscriptionService_Subscribe_AlreadyActive(t *testing.T) {
 	bh := createBathhouse(t, bhRepo, ownerID)
 
 	// Create first subscription
-	_, err := svc.Subscribe(context.Background(), ownerID, bh.ID, domain.PlanPremium)
+	_, err := svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, bh.ID, domain.PlanPremium)
 	if err != nil {
 		t.Fatalf("first subscription failed: %v", err)
 	}
 
 	// Try to create second subscription
-	_, err = svc.Subscribe(context.Background(), ownerID, bh.ID, domain.PlanPromoted)
+	_, err = svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, bh.ID, domain.PlanPromoted)
 	if !errors.Is(err, domain.ErrSubscriptionAlreadyActive) {
 		t.Errorf("expected ErrSubscriptionAlreadyActive, got: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestSubscriptionService_Subscribe_NotOwner(t *testing.T) {
 	bh := createBathhouse(t, bhRepo, ownerID)
 
 	// Different user tries to subscribe
-	_, err := svc.Subscribe(context.Background(), otherUserID, bh.ID, domain.PlanPremium)
+	_, err := svc.Subscribe(context.Background(), otherUserID, domain.RoleClient, bh.ID, domain.PlanPremium)
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Errorf("expected ErrForbidden, got: %v", err)
 	}
@@ -124,7 +124,7 @@ func TestSubscriptionService_Subscribe_BathhouseNotFound(t *testing.T) {
 	svc, _, _ := newSubscriptionService()
 	ownerID := uuid.New()
 
-	_, err := svc.Subscribe(context.Background(), ownerID, uuid.New(), domain.PlanPremium)
+	_, err := svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, uuid.New(), domain.PlanPremium)
 	if !errors.Is(err, domain.ErrNotFound) {
 		t.Errorf("expected ErrNotFound, got: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestSubscriptionService_Cancel_Success(t *testing.T) {
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
-	sub, err := svc.Subscribe(context.Background(), ownerID, bh.ID, domain.PlanPremium)
+	sub, err := svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, bh.ID, domain.PlanPremium)
 	if err != nil {
 		t.Fatalf("subscription creation failed: %v", err)
 	}
@@ -152,7 +152,7 @@ func TestSubscriptionService_Cancel_NotOwner(t *testing.T) {
 	otherUserID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
-	sub, err := svc.Subscribe(context.Background(), ownerID, bh.ID, domain.PlanPremium)
+	sub, err := svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, bh.ID, domain.PlanPremium)
 	if err != nil {
 		t.Fatalf("subscription creation failed: %v", err)
 	}
@@ -169,7 +169,7 @@ func TestSubscriptionService_GetActive_Success(t *testing.T) {
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
-	sub, err := svc.Subscribe(context.Background(), ownerID, bh.ID, domain.PlanPremium)
+	sub, err := svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, bh.ID, domain.PlanPremium)
 	if err != nil {
 		t.Fatalf("subscription creation failed: %v", err)
 	}
@@ -205,12 +205,12 @@ func TestSubscriptionService_ListByOwner_Success(t *testing.T) {
 	bh1 := createBathhouse(t, bhRepo, ownerID)
 	bh2 := createBathhouse(t, bhRepo, ownerID)
 
-	_, err := svc.Subscribe(context.Background(), ownerID, bh1.ID, domain.PlanPremium)
+	_, err := svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, bh1.ID, domain.PlanPremium)
 	if err != nil {
 		t.Fatalf("first subscription failed: %v", err)
 	}
 
-	_, err = svc.Subscribe(context.Background(), ownerID, bh2.ID, domain.PlanPromoted)
+	_, err = svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, bh2.ID, domain.PlanPromoted)
 	if err != nil {
 		t.Fatalf("second subscription failed: %v", err)
 	}
@@ -263,7 +263,7 @@ func TestSubscriptionService_PricingByPlan(t *testing.T) {
 			ownerID := uuid.New()
 			bh := createBathhouse(t, bhRepo, ownerID)
 
-			sub, err := svc.Subscribe(context.Background(), ownerID, bh.ID, tt.plan)
+			sub, err := svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, bh.ID, tt.plan)
 			if err != nil {
 				t.Fatalf("subscription creation failed: %v", err)
 			}
@@ -294,7 +294,7 @@ func TestSubscriptionService_EndDateForPaidPlans(t *testing.T) {
 			ownerID := uuid.New()
 			bh := createBathhouse(t, bhRepo, ownerID)
 
-			sub, err := svc.Subscribe(context.Background(), ownerID, bh.ID, tt.plan)
+			sub, err := svc.Subscribe(context.Background(), ownerID, domain.RoleOwner, bh.ID, tt.plan)
 			if err != nil {
 				t.Fatalf("subscription creation failed: %v", err)
 			}

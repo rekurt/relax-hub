@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"image"
+	"image/color"
+	"image/jpeg"
+	"image/png"
 	"testing"
 
 	"github.com/google/uuid"
@@ -19,6 +23,38 @@ var testLogger = logger.New(logger.LevelError)
 // newUserService is a test helper that creates a UserService with mock repos.
 func newUserService(userRepo *mock.UserRepo, fileStorage storage.FileStorage) service.UserService {
 	return service.NewUserService(userRepo, mock.NewBookingRepo(), mock.NewReviewRepo(), fileStorage, testLogger)
+}
+
+// createTestJPEG creates a valid test JPEG image
+func createTestJPEG(t *testing.T, width, height int) *bytes.Buffer {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	for y := range height {
+		for x := range width {
+			img.Set(x, y, color.RGBA{R: uint8(x % 256), G: uint8(y % 256), B: 100, A: 255})
+		}
+	}
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 90}); err != nil {
+		t.Fatal(err)
+	}
+	return &buf
+}
+
+// createTestPNG creates a valid test PNG image
+func createTestPNG(t *testing.T, width, height int) *bytes.Buffer {
+	t.Helper()
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	for y := range height {
+		for x := range width {
+			img.Set(x, y, color.RGBA{R: 200, G: 100, B: 50, A: 255})
+		}
+	}
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		t.Fatal(err)
+	}
+	return &buf
 }
 
 func TestUserService_GetByID(t *testing.T) {
@@ -154,7 +190,7 @@ func TestUserService_UploadAvatar(t *testing.T) {
 	}
 	_ = userRepo.Create(context.Background(), user)
 
-	data := bytes.NewReader([]byte("fake image data"))
+	data := createTestJPEG(t, 200, 200)
 	updated, err := svc.UploadAvatar(context.Background(), user.ID, service.UploadAvatarInput{
 		Data:        data,
 		ContentType: "image/jpeg",
@@ -182,7 +218,7 @@ func TestUserService_UploadAvatar_ReplacesOld(t *testing.T) {
 	}
 	_ = userRepo.Create(context.Background(), user)
 
-	data := bytes.NewReader([]byte("new image data"))
+	data := createTestPNG(t, 300, 300)
 	updated, err := svc.UploadAvatar(context.Background(), user.ID, service.UploadAvatarInput{
 		Data:        data,
 		ContentType: "image/png",

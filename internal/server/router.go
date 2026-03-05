@@ -133,6 +133,8 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// Price calculator (public)
 		r.Get("/bathhouses/{id}/price-calculator", p.PricingHandler.CalculatePrice)
+
+		// User profile and statistics (authenticated)
 		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)
 
 		// Notifications (authenticated)

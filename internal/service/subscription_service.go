@@ -11,7 +11,7 @@ import (
 )
 
 type SubscriptionService interface {
-	Subscribe(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error)
+	Subscribe(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error)
 	Cancel(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error
 	GetActive(ctx context.Context, bathhouseID uuid.UUID) (*domain.Subscription, error)
 	ListByOwner(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Subscription], error)
@@ -39,9 +39,9 @@ func NewSubscriptionService(
 }
 
 // Subscribe creates a new subscription for a bathhouse
-func (s *subscriptionService) Subscribe(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error) {
+func (s *subscriptionService) Subscribe(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error) {
 	// Verify user has access to manage the bathhouse
-	if err := s.access.CanManageBathhouse(ctx, userID, domain.RoleOwner, bathhouseID); err != nil {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
 		return nil, err
 	}
 

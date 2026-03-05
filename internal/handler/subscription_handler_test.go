@@ -18,15 +18,15 @@ import (
 
 // Mock SubscriptionService for testing
 type mockSubscriptionService struct {
-	subscribeFn      func(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error)
+	subscribeFn      func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error)
 	cancelFn         func(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error
 	getActiveFn      func(ctx context.Context, bathhouseID uuid.UUID) (*domain.Subscription, error)
 	listByOwnerFn    func(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Subscription], error)
 }
 
-func (m *mockSubscriptionService) Subscribe(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error) {
+func (m *mockSubscriptionService) Subscribe(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error) {
 	if m.subscribeFn != nil {
-		return m.subscribeFn(ctx, userID, bathhouseID, plan)
+		return m.subscribeFn(ctx, userID, userRole, bathhouseID, plan)
 	}
 	return nil, nil
 }
@@ -118,7 +118,7 @@ func TestSubscriptionHandler_Subscribe(t *testing.T) {
 	subID := uuid.New()
 
 	subSvc := &mockSubscriptionService{
-		subscribeFn: func(ctx context.Context, uid uuid.UUID, bhid uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error) {
+		subscribeFn: func(ctx context.Context, uid uuid.UUID, role domain.UserRole, bhid uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error) {
 			if uid == userID && bhid == bathhouseID && plan == domain.PlanPremium {
 				return &domain.Subscription{
 					ID:           subID,

@@ -144,7 +144,11 @@ func (r *UserRepo) GetPublicProfile(_ context.Context, id uuid.UUID) (*domain.Us
 		Name:        u.Name,
 		AvatarURL:   u.AvatarURL,
 		Bio:         u.Bio,
+		CityName:    "", // Mock doesn't compute city name
 		MemberSince: u.CreatedAt,
+		ReviewCount: 0, // Mock doesn't compute review count - use integration tests for validation
+		VisitCount:  0, // Mock doesn't compute visit count - use integration tests for validation
+		AvgRating:   0, // Mock doesn't compute average rating - use integration tests for validation
 	}, nil
 }
 

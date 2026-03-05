@@ -105,9 +105,15 @@ func (s *userService) UploadAvatar(ctx context.Context, userID uuid.UUID, input 
 		return nil, err
 	}
 
-	// Upload new avatar first, before modifying any existing state
-	filename := fmt.Sprintf("avatars/%s%s", uuid.New().String(), input.Ext)
-	avatarURL, err := s.storage.Upload(ctx, filename, input.Data, input.ContentType)
+	// Resize avatar to required dimensions (200x200 and 50x50)
+	resized, err := storage.ResizeAvatar(input.Data)
+	if err != nil {
+		return nil, fmt.Errorf("resize avatar: %w", err)
+	}
+
+	// Upload full-size avatar (200x200)
+	fullFilename := fmt.Sprintf("avatars/%s_full%s", uuid.New().String(), input.Ext)
+	avatarURL, err := s.storage.Upload(ctx, fullFilename, resized[0].Data, input.ContentType)
 	if err != nil {
 		return nil, fmt.Errorf("upload avatar: %w", err)
 	}
@@ -117,8 +123,8 @@ func (s *userService) UploadAvatar(ctx context.Context, userID uuid.UUID, input 
 
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		// Clean up newly uploaded file since DB update failed
-		if delErr := s.storage.Delete(ctx, filename); delErr != nil {
-			s.log.Warn("failed to clean up avatar after db error", "key", filename, "error", delErr)
+		if delErr := s.storage.Delete(ctx, fullFilename); delErr != nil {
+			s.log.Warn("failed to clean up avatar after db error", "key", fullFilename, "error", delErr)
 		}
 		return nil, err
 	}

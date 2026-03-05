@@ -83,13 +83,8 @@ func (pr *PricingRule) Validate() error {
 		if !isValidTimeFormat(*pr.TimeFrom) || !isValidTimeFormat(*pr.TimeTo) {
 			return ErrInvalidInput
 		}
-		// For non-wraparound times, ensure from < to
-		// Note: wraparound times (22:00-06:00) are allowed by not validating the order
-		// since we need to support overnight shifts
-		if *pr.TimeFrom > *pr.TimeTo && !isWrapAroundTime(*pr.TimeFrom, *pr.TimeTo) {
-			// Only reject if it's clearly wrong (e.g., 12:00 to 11:00 non-wraparound)
-			// This is handled implicitly - we allow times where from >= to as wraparound
-		}
+		// Allow both from < to (normal) and from > to (wraparound like 22:00-06:00)
+		// No additional validation needed - both cases are valid for different use cases
 	case RuleTypeSeason:
 		if pr.DateFrom == nil || pr.DateTo == nil {
 			return ErrInvalidInput
@@ -130,10 +125,4 @@ func isValidTimeFormat(timeStr string) bool {
 	mm := int(minutes[0]-'0')*10 + int(minutes[1]-'0')
 
 	return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59
-}
-
-// isWrapAroundTime checks if a time range wraps around midnight (e.g., 22:00-06:00)
-func isWrapAroundTime(from, to string) bool {
-	// Wraparound is when from > to (e.g., "22:00" > "06:00")
-	return from > to
 }

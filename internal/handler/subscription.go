@@ -134,7 +134,7 @@ func (h *SubscriptionHandler) Subscribe(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	sub, err := h.subService.Subscribe(r.Context(), userID, bathhouseID, plan)
+	sub, err := h.subService.Subscribe(r.Context(), userID, userRole, bathhouseID, plan)
 	if err != nil {
 		handleServiceError(w, err)
 		return
