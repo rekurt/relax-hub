@@ -19,6 +19,7 @@ type AdminHandler struct {
 	cityService      service.CityService
 	reviewService    service.ReviewService
 	reviewRepo       repository.ReviewRepository
+	notifService     service.NotificationService
 }
 
 func NewAdminHandler(
@@ -27,6 +28,7 @@ func NewAdminHandler(
 	cityService service.CityService,
 	reviewService service.ReviewService,
 	reviewRepo repository.ReviewRepository,
+	notifService service.NotificationService,
 ) *AdminHandler {
 	return &AdminHandler{
 		userService:      userService,
@@ -34,6 +36,7 @@ func NewAdminHandler(
 		cityService:      cityService,
 		reviewService:    reviewService,
 		reviewRepo:       reviewRepo,
+		notifService:     notifService,
 	}
 }
 
@@ -392,6 +395,18 @@ func (h *AdminHandler) ApproveReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	review.Status = domain.ReviewStatusApproved
+
+	// Notify review author about approval
+	data := map[string]string{
+		"review_id":    review.ID.String(),
+		"bathhouse_id": review.BathhouseID.String(),
+	}
+	_ = h.notifService.Send(r.Context(), review.UserID, domain.NotifReviewApproved,
+		"Ваш отзыв одобрен",
+		"Ваш отзыв успешно прошел модерацию и опубликован",
+		data,
+	)
+
 	writeJSON(w, http.StatusOK, toAdminReviewResponse(review))
 }
 
@@ -426,6 +441,22 @@ func (h *AdminHandler) RejectReview(w http.ResponseWriter, r *http.Request) {
 
 	review.Status = domain.ReviewStatusRejected
 	review.RejectionReasons = reasons
+
+	// Notify review author about rejection with reason
+	data := map[string]string{
+		"review_id":    review.ID.String(),
+		"bathhouse_id": review.BathhouseID.String(),
+	}
+	reasonText := "Ваш отзыв не соответствует политике платформы"
+	if req.Reason != "" {
+		reasonText = req.Reason
+	}
+	_ = h.notifService.Send(r.Context(), review.UserID, domain.NotifReviewRejected,
+		"Ваш отзыв отклонен",
+		reasonText,
+		data,
+	)
+
 	writeJSON(w, http.StatusOK, toAdminReviewResponse(review))
 }
 
@@ -458,10 +489,28 @@ func (h *AdminHandler) BatchApproveReviews(w http.ResponseWriter, r *http.Reques
 			continue
 		}
 
+		review, err := h.reviewRepo.GetByID(r.Context(), id)
+		if err != nil {
+			result.Failed++
+			continue
+		}
+
 		if err := h.reviewRepo.UpdateStatus(r.Context(), id, domain.ReviewStatusApproved); err != nil {
 			result.Failed++
 			continue
 		}
+
+		// Notify review author about approval
+		data := map[string]string{
+			"review_id":    review.ID.String(),
+			"bathhouse_id": review.BathhouseID.String(),
+		}
+		_ = h.notifService.Send(r.Context(), review.UserID, domain.NotifReviewApproved,
+			"Ваш отзыв одобрен",
+			"Ваш отзыв успешно прошел модерацию и опубликован",
+			data,
+		)
+
 		result.Successful++
 	}
 
@@ -496,10 +545,32 @@ func (h *AdminHandler) BatchRejectReviews(w http.ResponseWriter, r *http.Request
 			continue
 		}
 
+		review, err := h.reviewRepo.GetByID(r.Context(), id)
+		if err != nil {
+			result.Failed++
+			continue
+		}
+
 		if err := h.reviewRepo.UpdateStatusWithReasons(r.Context(), id, domain.ReviewStatusRejected, reasons); err != nil {
 			result.Failed++
 			continue
 		}
+
+		// Notify review author about rejection
+		data := map[string]string{
+			"review_id":    review.ID.String(),
+			"bathhouse_id": review.BathhouseID.String(),
+		}
+		reasonText := "Ваш отзыв не соответствует политике платформы"
+		if req.Reason != "" {
+			reasonText = req.Reason
+		}
+		_ = h.notifService.Send(r.Context(), review.UserID, domain.NotifReviewRejected,
+			"Ваш отзыв отклонен",
+			reasonText,
+			data,
+		)
+
 		result.Successful++
 	}
 

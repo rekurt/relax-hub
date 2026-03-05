@@ -143,3 +143,12 @@ type PromotionRepository interface {
 	RecordImpression(ctx context.Context, promotionID uuid.UUID) error
 	RecordClick(ctx context.Context, promotionID uuid.UUID) error
 }
+
+type PricingRuleRepository interface {
+	Create(ctx context.Context, rule *domain.PricingRule) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.PricingRule, error)
+	Update(ctx context.Context, rule *domain.PricingRule) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
+	GetActiveRules(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
+}

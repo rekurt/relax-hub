@@ -1103,7 +1103,7 @@ func TestAdminHandler_ListUsers_RequiresAdmin(t *testing.T) {
 					}, nil
 				},
 			}
-			adminH := handler.NewAdminHandler(userSvc, nil, nil, nil, nil)
+			adminH := handler.NewAdminHandler(userSvc, nil, nil, nil, nil, &mockAdminNotificationService{})
 
 			router := chi.NewRouter()
 			router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Get("/admin/users", adminH.ListUsers)
@@ -1134,7 +1134,7 @@ func TestAdminHandler_BlockUser(t *testing.T) {
 			return nil
 		},
 	}
-	adminH := handler.NewAdminHandler(userSvc, nil, nil, nil, nil)
+	adminH := handler.NewAdminHandler(userSvc, nil, nil, nil, nil, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/users/{id}/block", adminH.BlockUser)
@@ -1163,7 +1163,7 @@ func TestAdminHandler_ApproveBathhouse(t *testing.T) {
 			return nil
 		},
 	}
-	adminH := handler.NewAdminHandler(nil, bhSvc, nil, nil, nil)
+	adminH := handler.NewAdminHandler(nil, bhSvc, nil, nil, nil, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/bathhouses/{id}/approve", adminH.ApproveBathhouse)
@@ -1188,7 +1188,7 @@ func TestAdminHandler_CreateCity(t *testing.T) {
 			return &domain.City{ID: 1, Name: input.Name, Slug: input.Slug}, nil
 		},
 	}
-	adminH := handler.NewAdminHandler(nil, nil, citySvc, nil, nil)
+	adminH := handler.NewAdminHandler(nil, nil, citySvc, nil, nil, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Post("/admin/cities", adminH.CreateCity)
@@ -1691,7 +1691,7 @@ func TestAdminHandler_UnblockUser(t *testing.T) {
 			return nil
 		},
 	}
-	adminH := handler.NewAdminHandler(userSvc, nil, nil, nil, nil)
+	adminH := handler.NewAdminHandler(userSvc, nil, nil, nil, nil, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/users/{id}/unblock", adminH.UnblockUser)
@@ -1717,7 +1717,7 @@ func TestAdminHandler_RejectBathhouse(t *testing.T) {
 			return nil
 		},
 	}
-	adminH := handler.NewAdminHandler(nil, bhSvc, nil, nil, nil)
+	adminH := handler.NewAdminHandler(nil, bhSvc, nil, nil, nil, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/bathhouses/{id}/reject", adminH.RejectBathhouse)
@@ -1744,7 +1744,7 @@ func TestAdminHandler_ListBathhouses(t *testing.T) {
 			}, nil
 		},
 	}
-	adminH := handler.NewAdminHandler(nil, bhSvc, nil, nil, nil)
+	adminH := handler.NewAdminHandler(nil, bhSvc, nil, nil, nil, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Get("/admin/bathhouses", adminH.ListBathhouses)
@@ -1773,7 +1773,7 @@ func TestAdminHandler_UpdateCity(t *testing.T) {
 			return &domain.City{ID: id, Name: name, Slug: "moscow"}, nil
 		},
 	}
-	adminH := handler.NewAdminHandler(nil, nil, citySvc, nil, nil)
+	adminH := handler.NewAdminHandler(nil, nil, citySvc, nil, nil, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Put("/admin/cities/{id}", adminH.UpdateCity)
@@ -1800,7 +1800,7 @@ func TestAdminHandler_DeleteCity(t *testing.T) {
 			return nil
 		},
 	}
-	adminH := handler.NewAdminHandler(nil, nil, citySvc, nil, nil)
+	adminH := handler.NewAdminHandler(nil, nil, citySvc, nil, nil, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Delete("/admin/cities/{id}", adminH.DeleteCity)
@@ -2125,7 +2125,7 @@ func TestBookingHandler_ListByBathhouse_InvalidUUID(t *testing.T) {
 
 func TestAdminHandler_BlockUser_InvalidUUID(t *testing.T) {
 	authSvc := makeAuthToken(uuid.New(), domain.RoleAdmin)
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, nil)
+	adminH := handler.NewAdminHandler(nil, nil, nil, nil, nil, &mockAdminNotificationService{})
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/users/{id}/block", adminH.BlockUser)
 
@@ -2141,7 +2141,7 @@ func TestAdminHandler_BlockUser_InvalidUUID(t *testing.T) {
 
 func TestAdminHandler_UpdateCity_InvalidID(t *testing.T) {
 	authSvc := makeAuthToken(uuid.New(), domain.RoleAdmin)
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, nil)
+	adminH := handler.NewAdminHandler(nil, nil, nil, nil, nil, &mockAdminNotificationService{})
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Put("/admin/cities/{id}", adminH.UpdateCity)
 

@@ -29,6 +29,36 @@ func (m *mockAuthServiceForRouter) Login(_ context.Context, _, _ string) (*domai
 	return nil, "", nil
 }
 
+type mockAdminNotificationService struct{}
+
+func (m *mockAdminNotificationService) Send(_ context.Context, _ uuid.UUID, _ domain.NotificationType, _, _ string, _ map[string]string) error {
+	return nil
+}
+
+func (m *mockAdminNotificationService) List(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Notification], error) {
+	return &domain.PaginatedResult[domain.Notification]{}, nil
+}
+
+func (m *mockAdminNotificationService) MarkAsRead(_ context.Context, _, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockAdminNotificationService) MarkAllAsRead(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockAdminNotificationService) GetUnreadCount(_ context.Context, _ uuid.UUID) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockAdminNotificationService) GetPreferences(_ context.Context, _ uuid.UUID) (*domain.NotificationPreferences, error) {
+	return &domain.NotificationPreferences{}, nil
+}
+
+func (m *mockAdminNotificationService) UpdatePreferences(_ context.Context, _ uuid.UUID, _ *domain.NotificationPreferences) error {
+	return nil
+}
+
 func testRouterParams() server.RouterParams {
 	cors := middleware.NewCORSMiddleware()
 	authSvc := &mockAuthServiceForRouter{}
@@ -45,7 +75,7 @@ func testRouterParams() server.RouterParams {
 		FavHandler:     handler.NewFavoriteHandler(nil),
 		RepHandler:     handler.NewRepresentativeHandler(nil),
 		CityHandler:    handler.NewCityHandler(nil),
-		AdminHandler:   handler.NewAdminHandler(nil, nil, nil, nil, nil),
+		AdminHandler:   handler.NewAdminHandler(nil, nil, nil, nil, nil, &mockAdminNotificationService{}),
 	}
 }
 

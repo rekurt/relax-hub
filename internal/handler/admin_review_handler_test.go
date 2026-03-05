@@ -17,6 +17,41 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 )
 
+type mockAdminNotificationService struct {
+	sendFn func(ctx context.Context, userID uuid.UUID, notifType domain.NotificationType, title, body string, data map[string]string) error
+}
+
+func (m *mockAdminNotificationService) Send(ctx context.Context, userID uuid.UUID, notifType domain.NotificationType, title, body string, data map[string]string) error {
+	if m.sendFn != nil {
+		return m.sendFn(ctx, userID, notifType, title, body, data)
+	}
+	return nil
+}
+
+func (m *mockAdminNotificationService) List(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Notification], error) {
+	return &domain.PaginatedResult[domain.Notification]{}, nil
+}
+
+func (m *mockAdminNotificationService) MarkAsRead(ctx context.Context, userID uuid.UUID, notificationID uuid.UUID) error {
+	return nil
+}
+
+func (m *mockAdminNotificationService) MarkAllAsRead(ctx context.Context, userID uuid.UUID) error {
+	return nil
+}
+
+func (m *mockAdminNotificationService) GetUnreadCount(ctx context.Context, userID uuid.UUID) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockAdminNotificationService) GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.NotificationPreferences, error) {
+	return &domain.NotificationPreferences{}, nil
+}
+
+func (m *mockAdminNotificationService) UpdatePreferences(ctx context.Context, userID uuid.UUID, prefs *domain.NotificationPreferences) error {
+	return nil
+}
+
 func TestAdminHandler_ListReviews(t *testing.T) {
 	adminID := uuid.New()
 	authSvc := makeAuthToken(adminID, domain.RoleAdmin)
@@ -49,7 +84,7 @@ func TestAdminHandler_ListReviews(t *testing.T) {
 	reviewRepo.Create(context.Background(), review1)
 	reviewRepo.Create(context.Background(), review2)
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo)
+	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Get("/admin/reviews", adminH.ListReviews)
@@ -116,7 +151,7 @@ func TestAdminHandler_GetPendingCount(t *testing.T) {
 		reviewRepo.Create(context.Background(), review)
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo)
+	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Get("/admin/reviews/pending-count", adminH.GetPendingCount)
@@ -170,7 +205,7 @@ func TestAdminHandler_ApproveReview(t *testing.T) {
 	reviewRepo := mock.NewReviewRepo()
 	reviewRepo.Create(context.Background(), review)
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo)
+	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/reviews/{id}/approve", adminH.ApproveReview)
@@ -228,7 +263,7 @@ func TestAdminHandler_RejectReview(t *testing.T) {
 	reviewRepo := mock.NewReviewRepo()
 	reviewRepo.Create(context.Background(), review)
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo)
+	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/reviews/{id}/reject", adminH.RejectReview)
@@ -294,7 +329,7 @@ func TestAdminHandler_BatchApproveReviews(t *testing.T) {
 		ids = append(ids, review.ID.String())
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo)
+	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Post("/admin/reviews/batch-approve", adminH.BatchApproveReviews)
@@ -349,7 +384,7 @@ func TestAdminHandler_BatchRejectReviews(t *testing.T) {
 		ids = append(ids, review.ID.String())
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo)
+	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Post("/admin/reviews/batch-reject", adminH.BatchRejectReviews)
@@ -379,5 +414,185 @@ func TestAdminHandler_BatchRejectReviews(t *testing.T) {
 	successful, ok := respData["successful"].(float64)
 	if !ok || int(successful) != 2 {
 		t.Errorf("expected successful=2, got %v", respData["successful"])
+	}
+}
+
+func TestAdminHandler_ApproveReview_SendsNotification(t *testing.T) {
+	adminID := uuid.New()
+	authSvc := makeAuthToken(adminID, domain.RoleAdmin)
+
+	reviewAuthorID := uuid.New()
+	review := &domain.Review{
+		ID:          uuid.New(),
+		UserID:      reviewAuthorID,
+		BathhouseID: uuid.New(),
+		BookingID:   uuid.New(),
+		Rating:      5,
+		Text:        "Great place!",
+		Status:      domain.ReviewStatusPending,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	reviewRepo := mock.NewReviewRepo()
+	reviewRepo.Create(context.Background(), review)
+
+	notificationSent := false
+	var notifUserID uuid.UUID
+	var notifType domain.NotificationType
+
+	notifService := &mockAdminNotificationService{
+		sendFn: func(ctx context.Context, userID uuid.UUID, nt domain.NotificationType, title, body string, data map[string]string) error {
+			notificationSent = true
+			notifUserID = userID
+			notifType = nt
+			return nil
+		},
+	}
+
+	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, notifService)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/reviews/{id}/approve", adminH.ApproveReview)
+
+	req := httptest.NewRequest(http.MethodPatch, "/admin/reviews/"+review.ID.String()+"/approve", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	if !notificationSent {
+		t.Error("expected notification to be sent, but it wasn't")
+	}
+
+	if notifUserID != reviewAuthorID {
+		t.Errorf("expected notification to be sent to review author %s, got %s", reviewAuthorID, notifUserID)
+	}
+
+	if notifType != domain.NotifReviewApproved {
+		t.Errorf("expected notification type %s, got %s", domain.NotifReviewApproved, notifType)
+	}
+}
+
+func TestAdminHandler_RejectReview_SendsNotification(t *testing.T) {
+	adminID := uuid.New()
+	authSvc := makeAuthToken(adminID, domain.RoleAdmin)
+
+	reviewAuthorID := uuid.New()
+	review := &domain.Review{
+		ID:          uuid.New(),
+		UserID:      reviewAuthorID,
+		BathhouseID: uuid.New(),
+		BookingID:   uuid.New(),
+		Rating:      1,
+		Text:        "Offensive content",
+		Status:      domain.ReviewStatusPending,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	reviewRepo := mock.NewReviewRepo()
+	reviewRepo.Create(context.Background(), review)
+
+	notificationSent := false
+	var notifUserID uuid.UUID
+	var notifType domain.NotificationType
+
+	notifService := &mockAdminNotificationService{
+		sendFn: func(ctx context.Context, userID uuid.UUID, nt domain.NotificationType, title, body string, data map[string]string) error {
+			notificationSent = true
+			notifUserID = userID
+			notifType = nt
+			return nil
+		},
+	}
+
+	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, notifService)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/reviews/{id}/reject", adminH.RejectReview)
+
+	body := bytes.NewBufferString(`{"reason":"offensive language"}`)
+	req := httptest.NewRequest(http.MethodPatch, "/admin/reviews/"+review.ID.String()+"/reject", body)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	if !notificationSent {
+		t.Error("expected notification to be sent, but it wasn't")
+	}
+
+	if notifUserID != reviewAuthorID {
+		t.Errorf("expected notification to be sent to review author %s, got %s", reviewAuthorID, notifUserID)
+	}
+
+	if notifType != domain.NotifReviewRejected {
+		t.Errorf("expected notification type %s, got %s", domain.NotifReviewRejected, notifType)
+	}
+}
+
+func TestAdminHandler_BatchApproveReviews_SendsNotifications(t *testing.T) {
+	adminID := uuid.New()
+	authSvc := makeAuthToken(adminID, domain.RoleAdmin)
+
+	reviewRepo := mock.NewReviewRepo()
+	var ids []string
+	var authorIDs []uuid.UUID
+
+	for i := 0; i < 2; i++ {
+		authorID := uuid.New()
+		review := &domain.Review{
+			ID:          uuid.New(),
+			UserID:      authorID,
+			BathhouseID: uuid.New(),
+			BookingID:   uuid.New(),
+			Rating:      5,
+			Text:        "Good!",
+			Status:      domain.ReviewStatusPending,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		}
+		reviewRepo.Create(context.Background(), review)
+		ids = append(ids, review.ID.String())
+		authorIDs = append(authorIDs, authorID)
+	}
+
+	notificationCount := 0
+	notifService := &mockAdminNotificationService{
+		sendFn: func(ctx context.Context, userID uuid.UUID, nt domain.NotificationType, title, body string, data map[string]string) error {
+			notificationCount++
+			return nil
+		},
+	}
+
+	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, notifService)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Post("/admin/reviews/batch-approve", adminH.BatchApproveReviews)
+
+	body := bytes.NewBufferString(`{"ids":["` + ids[0] + `","` + ids[1] + `"]}`)
+	req := httptest.NewRequest(http.MethodPost, "/admin/reviews/batch-approve", body)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	if notificationCount != 2 {
+		t.Errorf("expected 2 notifications to be sent, got %d", notificationCount)
 	}
 }
