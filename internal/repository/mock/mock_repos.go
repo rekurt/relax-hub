@@ -1896,7 +1896,7 @@ func (r *LoyaltyRepo) RefundPoints(_ context.Context, userID uuid.UUID, amount i
 		return domain.ErrNotFound
 	}
 	if acc.TotalSpent < amount {
-		return domain.ErrNotFound
+		return fmt.Errorf("%w: refund amount exceeds total spent", domain.ErrInvalidInput)
 	}
 	acc.Points += amount
 	acc.TotalSpent -= amount

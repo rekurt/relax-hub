@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
@@ -96,13 +95,11 @@ func (s *loyaltyService) EarnPoints(ctx context.Context, userID uuid.UUID, booki
 	}
 
 	tx := &domain.LoyaltyTransaction{
-		ID:          uuid.New(),
 		UserID:      userID,
 		Type:        domain.LoyaltyTransactionEarn,
 		Amount:      points,
 		BookingID:   &bookingID,
 		Description: fmt.Sprintf("Начисление за бронирование (%d коп.)", totalPrice),
-		CreatedAt:   time.Now(),
 	}
 	if err := s.loyaltyRepo.CreateTransaction(ctx, tx); err != nil {
 		return 0, err
@@ -132,13 +129,11 @@ func (s *loyaltyService) SpendPoints(ctx context.Context, userID uuid.UUID, amou
 	}
 
 	tx := &domain.LoyaltyTransaction{
-		ID:          uuid.New(),
 		UserID:      userID,
 		Type:        domain.LoyaltyTransactionSpend,
 		Amount:      amount,
 		BookingID:   &bookingID,
 		Description: "Списание при бронировании",
-		CreatedAt:   time.Now(),
 	}
 	if err := s.loyaltyRepo.CreateTransaction(ctx, tx); err != nil {
 		return err
@@ -159,13 +154,11 @@ func (s *loyaltyService) RefundPoints(ctx context.Context, userID uuid.UUID, amo
 	}
 
 	tx := &domain.LoyaltyTransaction{
-		ID:          uuid.New(),
 		UserID:      userID,
 		Type:        domain.LoyaltyTransactionRefund,
 		Amount:      amount,
 		BookingID:   &bookingID,
 		Description: "Возврат баллов за отменённое бронирование",
-		CreatedAt:   time.Now(),
 	}
 	if err := s.loyaltyRepo.CreateTransaction(ctx, tx); err != nil {
 		return err
