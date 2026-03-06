@@ -56,8 +56,8 @@ type BathhouseService interface {
 	Delete(ctx context.Context, ownerID uuid.UUID, id uuid.UUID) error
 	Search(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)
 	ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error)
-	GetWidgetKey(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error)
-	RegenerateWidgetKey(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error)
+	GetWidgetKey(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (string, error)
+	RegenerateWidgetKey(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (string, error)
 	// Admin moderation:
 	Approve(ctx context.Context, id uuid.UUID) error
 	Reject(ctx context.Context, id uuid.UUID) error
@@ -256,27 +256,29 @@ func (s *bathhouseService) Reject(ctx context.Context, id uuid.UUID) error {
 	return s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusRejected)
 }
 
-func (s *bathhouseService) GetWidgetKey(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error) {
-	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
-	if err != nil {
+func (s *bathhouseService) GetWidgetKey(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (string, error) {
+	// Use AccessChecker for proper authorization (supports owner and representative)
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
 		return "", err
 	}
 
-	if bh.OwnerID != userID {
-		return "", domain.ErrForbidden
+	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
+		return "", err
 	}
 
 	return bh.ApiKey, nil
 }
 
-func (s *bathhouseService) RegenerateWidgetKey(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error) {
-	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
-	if err != nil {
+func (s *bathhouseService) RegenerateWidgetKey(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (string, error) {
+	// Use AccessChecker for proper authorization (supports owner and representative)
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
 		return "", err
 	}
 
-	if bh.OwnerID != userID {
-		return "", domain.ErrForbidden
+	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
+		return "", err
 	}
 
 	bh.ApiKey = uuid.New().String()

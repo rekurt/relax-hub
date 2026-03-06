@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"html"
 	"net/http"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -588,6 +591,7 @@ type widgetCodeResponse struct {
 
 func (h *BathhouseHandler) GetWidgetKey(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
 	bathhouseID := chi.URLParam(r, "id")
 
 	id, err := uuid.Parse(bathhouseID)
@@ -596,7 +600,7 @@ func (h *BathhouseHandler) GetWidgetKey(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	apiKey, err := h.bathhouseService.GetWidgetKey(r.Context(), userID, id)
+	apiKey, err := h.bathhouseService.GetWidgetKey(r.Context(), userID, userRole, id)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -607,6 +611,7 @@ func (h *BathhouseHandler) GetWidgetKey(w http.ResponseWriter, r *http.Request) 
 
 func (h *BathhouseHandler) RegenerateWidgetKey(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
 	bathhouseID := chi.URLParam(r, "id")
 
 	id, err := uuid.Parse(bathhouseID)
@@ -615,7 +620,7 @@ func (h *BathhouseHandler) RegenerateWidgetKey(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	newKey, err := h.bathhouseService.RegenerateWidgetKey(r.Context(), userID, id)
+	newKey, err := h.bathhouseService.RegenerateWidgetKey(r.Context(), userID, userRole, id)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -626,6 +631,7 @@ func (h *BathhouseHandler) RegenerateWidgetKey(w http.ResponseWriter, r *http.Re
 
 func (h *BathhouseHandler) GetWidgetCode(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
 	bathhouseID := chi.URLParam(r, "id")
 
 	id, err := uuid.Parse(bathhouseID)
@@ -634,21 +640,8 @@ func (h *BathhouseHandler) GetWidgetCode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Get bathhouse to verify ownership
-	bathhouse, err := h.bathhouseService.GetByID(r.Context(), id)
-	if err != nil {
-		handleServiceError(w, err)
-		return
-	}
-
-	// Only owner can generate widget code
-	if bathhouse.OwnerID != userID {
-		writeError(w, http.StatusForbidden, "forbidden", "you don't have permission to access this bathhouse's widget")
-		return
-	}
-
-	// Get the API key
-	apiKey, err := h.bathhouseService.GetWidgetKey(r.Context(), userID, id)
+	// Get the API key (this verifies authorization via the service)
+	apiKey, err := h.bathhouseService.GetWidgetKey(r.Context(), userID, userRole, id)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -663,6 +656,16 @@ func (h *BathhouseHandler) GetWidgetCode(w http.ResponseWriter, r *http.Request)
 	req.Language = r.URL.Query().Get("language")
 	if req.Language == "" {
 		req.Language = "en"
+	}
+
+	// Validate parameters
+	if req.Color != "" && !isValidColor(req.Color) {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid color format")
+		return
+	}
+	if req.FontFamily != "" && !isValidFontFamily(req.FontFamily) {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid font family")
+		return
 	}
 
 	// Set defaults
@@ -707,11 +710,18 @@ func generateWidgetCode(apiKey string, req widgetCodeRequest, r *http.Request) s
 	}
 	apiBaseURL := scheme + "://" + host
 
-	return `<div id="bani-widget" data-api-key="` + apiKey + `" data-color="` + req.Color + `" data-font-family="` + req.FontFamily + `" data-language="` + req.Language + `" data-show-price="` + boolToString(req.ShowPrice) + `" data-show-rating="` + boolToString(req.ShowRating) + `"></div>
-<link rel="stylesheet" href="` + apiBaseURL + `/widget.css">
-<script src="` + apiBaseURL + `/widget.js"></script>
+	// Properly escape all user-supplied parameters to prevent injection
+	escapedApiKey := html.EscapeString(apiKey)
+	escapedColor := html.EscapeString(req.Color)
+	escapedFontFamily := html.EscapeString(req.FontFamily)
+	escapedLanguage := html.EscapeString(req.Language)
+	escapedApiBaseURL := html.EscapeString(apiBaseURL)
+
+	return `<div id="bani-widget" data-api-key="` + escapedApiKey + `" data-color="` + escapedColor + `" data-font-family="` + escapedFontFamily + `" data-language="` + escapedLanguage + `" data-show-price="` + boolToString(req.ShowPrice) + `" data-show-rating="` + boolToString(req.ShowRating) + `"></div>
+<link rel="stylesheet" href="` + escapedApiBaseURL + `/widget.css">
+<script src="` + escapedApiBaseURL + `/widget.js"></script>
 <script>
-  window.BANI_WIDGET_API_URL = '` + apiBaseURL + `';
+  window.BANI_WIDGET_API_URL = '` + escapedApiBaseURL + `';
 </script>`
 }
 
@@ -720,6 +730,29 @@ func boolToString(b bool) string {
 		return "true"
 	}
 	return "false"
+}
+
+// isValidColor validates that a color is in valid hex format (#RRGGBB)
+func isValidColor(color string) bool {
+	colorRegex := regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
+	return colorRegex.MatchString(color)
+}
+
+// isValidFontFamily validates font family to prevent CSS injection
+func isValidFontFamily(fontFamily string) bool {
+	// Allow comma-separated font families with basic validation
+	// Reject if it contains special CSS characters that could be injection vectors
+	forbidden := []string{";", "}", "{", "(", ")", "!", "@"}
+	for _, char := range forbidden {
+		if strings.Contains(fontFamily, char) {
+			return false
+		}
+	}
+	// Ensure it's not too long (reasonable max is 256 chars)
+	if len(fontFamily) > 256 {
+		return false
+	}
+	return true
 }
 
 const maxPageSize = 100

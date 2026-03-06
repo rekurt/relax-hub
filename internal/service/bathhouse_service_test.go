@@ -216,7 +216,7 @@ func TestBathhouseService_GetWidgetKey_Success(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	apiKey, err := svc.GetWidgetKey(context.Background(), ownerID, bh.ID)
+	apiKey, err := svc.GetWidgetKey(context.Background(), ownerID, domain.RoleOwner, bh.ID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -234,7 +234,7 @@ func TestBathhouseService_GetWidgetKey_OtherOwnerForbidden(t *testing.T) {
 	otherOwnerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
-	_, err := svc.GetWidgetKey(context.Background(), otherOwnerID, bh.ID)
+	_, err := svc.GetWidgetKey(context.Background(), otherOwnerID, domain.RoleOwner, bh.ID)
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Errorf("other owner should be forbidden, got: %v", err)
 	}
@@ -246,7 +246,7 @@ func TestBathhouseService_RegenerateWidgetKey_Success(t *testing.T) {
 	bh := createBathhouse(t, bhRepo, ownerID)
 	originalKey := bh.ApiKey
 
-	newKey, err := svc.RegenerateWidgetKey(context.Background(), ownerID, bh.ID)
+	newKey, err := svc.RegenerateWidgetKey(context.Background(), ownerID, domain.RoleOwner, bh.ID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -270,7 +270,7 @@ func TestBathhouseService_RegenerateWidgetKey_OtherOwnerForbidden(t *testing.T) 
 	otherOwnerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
-	_, err := svc.RegenerateWidgetKey(context.Background(), otherOwnerID, bh.ID)
+	_, err := svc.RegenerateWidgetKey(context.Background(), otherOwnerID, domain.RoleOwner, bh.ID)
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Errorf("other owner should be forbidden, got: %v", err)
 	}

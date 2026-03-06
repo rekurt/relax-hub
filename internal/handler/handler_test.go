@@ -139,8 +139,8 @@ type mockBathhouseService struct {
 	listByOwnerFn      func(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error)
 	approveFn          func(ctx context.Context, id uuid.UUID) error
 	rejectFn           func(ctx context.Context, id uuid.UUID) error
-	getWidgetKeyFn     func(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error)
-	regenerateKeyFn    func(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error)
+	getWidgetKeyFn     func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (string, error)
+	regenerateKeyFn    func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (string, error)
 }
 
 func (m *mockBathhouseService) Search(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
@@ -199,16 +199,16 @@ func (m *mockBathhouseService) Reject(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (m *mockBathhouseService) GetWidgetKey(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error) {
+func (m *mockBathhouseService) GetWidgetKey(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (string, error) {
 	if m.getWidgetKeyFn != nil {
-		return m.getWidgetKeyFn(ctx, userID, bathhouseID)
+		return m.getWidgetKeyFn(ctx, userID, userRole, bathhouseID)
 	}
 	return "", nil
 }
 
-func (m *mockBathhouseService) RegenerateWidgetKey(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error) {
+func (m *mockBathhouseService) RegenerateWidgetKey(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (string, error) {
 	if m.regenerateKeyFn != nil {
-		return m.regenerateKeyFn(ctx, userID, bathhouseID)
+		return m.regenerateKeyFn(ctx, userID, userRole, bathhouseID)
 	}
 	return "", nil
 }
@@ -2947,7 +2947,7 @@ func TestBathhouseHandler_GetWidgetKey_Success(t *testing.T) {
 	apiKey := "test-api-key-12345"
 
 	bhSvc := &mockBathhouseService{
-		getWidgetKeyFn: func(_ context.Context, userID, bathhouseID uuid.UUID) (string, error) {
+		getWidgetKeyFn: func(_ context.Context, userID uuid.UUID, _ domain.UserRole, bathhouseID uuid.UUID) (string, error) {
 			if userID != ownerID || bathhouseID != bhID {
 				return "", domain.ErrForbidden
 			}
@@ -2988,7 +2988,7 @@ func TestBathhouseHandler_GetWidgetKey_Forbidden(t *testing.T) {
 	bhID := uuid.New()
 
 	bhSvc := &mockBathhouseService{
-		getWidgetKeyFn: func(_ context.Context, userID, bathhouseID uuid.UUID) (string, error) {
+		getWidgetKeyFn: func(_ context.Context, userID uuid.UUID, _ domain.UserRole, bathhouseID uuid.UUID) (string, error) {
 			if userID != ownerID {
 				return "", domain.ErrForbidden
 			}
@@ -3020,7 +3020,7 @@ func TestBathhouseHandler_RegenerateWidgetKey_Success(t *testing.T) {
 	newKey := "new-api-key-67890"
 
 	bhSvc := &mockBathhouseService{
-		regenerateKeyFn: func(_ context.Context, userID, bathhouseID uuid.UUID) (string, error) {
+		regenerateKeyFn: func(_ context.Context, userID uuid.UUID, _ domain.UserRole, bathhouseID uuid.UUID) (string, error) {
 			if userID != ownerID || bathhouseID != bhID {
 				return "", domain.ErrForbidden
 			}
@@ -3062,7 +3062,7 @@ func TestBathhouseHandler_RegenerateWidgetKey_Forbidden(t *testing.T) {
 	bhID := uuid.New()
 
 	bhSvc := &mockBathhouseService{
-		regenerateKeyFn: func(_ context.Context, userID, bathhouseID uuid.UUID) (string, error) {
+		regenerateKeyFn: func(_ context.Context, userID uuid.UUID, _ domain.UserRole, bathhouseID uuid.UUID) (string, error) {
 			if userID != ownerID {
 				return "", domain.ErrForbidden
 			}
