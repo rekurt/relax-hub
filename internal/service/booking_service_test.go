@@ -602,14 +602,16 @@ func TestBookingService_Create_WithLoyaltyDiscount(t *testing.T) {
 	bh := createBathhouse(t, bhRepo, ownerID)
 
 	// Set up a Silver level account (3% discount)
-	loyaltyRepo.CreateAccount(context.Background(), &domain.LoyaltyAccount{
+	if err := loyaltyRepo.CreateAccount(context.Background(), &domain.LoyaltyAccount{
 		UserID:     clientID,
 		Level:      domain.LoyaltySilver,
 		Points:     500,
 		VisitCount: 5,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-	})
+	}); err != nil {
+		t.Fatalf("failed to create loyalty account: %v", err)
+	}
 
 	now := time.Now()
 	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
@@ -644,14 +646,16 @@ func TestBookingService_Create_WithPointsSpending(t *testing.T) {
 	bh := createBathhouse(t, bhRepo, ownerID)
 
 	// Set up account with some points
-	loyaltyRepo.CreateAccount(context.Background(), &domain.LoyaltyAccount{
+	if err := loyaltyRepo.CreateAccount(context.Background(), &domain.LoyaltyAccount{
 		UserID:     clientID,
 		Level:      domain.LoyaltyBronze,
 		Points:     2000,
 		VisitCount: 2,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-	})
+	}); err != nil {
+		t.Fatalf("failed to create loyalty account: %v", err)
+	}
 
 	now := time.Now()
 	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
@@ -685,14 +689,16 @@ func TestBookingService_Create_InsufficientPoints(t *testing.T) {
 	bh := createBathhouse(t, bhRepo, ownerID)
 
 	// Set up account with few points
-	loyaltyRepo.CreateAccount(context.Background(), &domain.LoyaltyAccount{
+	if err := loyaltyRepo.CreateAccount(context.Background(), &domain.LoyaltyAccount{
 		UserID:     clientID,
 		Level:      domain.LoyaltyBronze,
 		Points:     50,
 		VisitCount: 1,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-	})
+	}); err != nil {
+		t.Fatalf("failed to create loyalty account: %v", err)
+	}
 
 	now := time.Now()
 	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
@@ -718,14 +724,16 @@ func TestBookingService_Create_PointsExceedPrice(t *testing.T) {
 	bh := createBathhouse(t, bhRepo, ownerID)
 
 	// Set up account with a lot of points
-	loyaltyRepo.CreateAccount(context.Background(), &domain.LoyaltyAccount{
+	if err := loyaltyRepo.CreateAccount(context.Background(), &domain.LoyaltyAccount{
 		UserID:     clientID,
 		Level:      domain.LoyaltyBronze,
 		Points:     999999,
 		VisitCount: 1,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-	})
+	}); err != nil {
+		t.Fatalf("failed to create loyalty account: %v", err)
+	}
 
 	now := time.Now()
 	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
