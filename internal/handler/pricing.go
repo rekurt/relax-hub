@@ -263,12 +263,9 @@ func (h *PricingHandler) CalculatePrice(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Calculate base price (without multipliers) - match service algorithm using ceil
+	// Calculate base price for display - use ceil to handle potential floating-point rounding errors
 	duration := endTime.Sub(startTime)
 	hours := int64(math.Ceil(duration.Hours()))
-	if hours == 0 {
-		hours = 1
-	}
 	basePrice := bathhouse.PricePerHour * hours
 
 	resp := priceCalculatorResponse{
