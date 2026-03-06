@@ -17,6 +17,7 @@ type LoyaltyService interface {
 	GetAccount(ctx context.Context, userID uuid.UUID) (*domain.LoyaltyAccount, error)
 	EarnPoints(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) (int64, error)
 	SpendPoints(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
+	RefundPoints(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
 	GetDiscount(ctx context.Context, userID uuid.UUID) (int, error)
 	RecalculateLevel(ctx context.Context, userID uuid.UUID) error
 	ListTransactions(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.LoyaltyTransaction], error)
@@ -142,6 +143,33 @@ func (s *loyaltyService) SpendPoints(ctx context.Context, userID uuid.UUID, amou
 	}
 
 	s.logger.Info("spent loyalty points", "user_id", userID, "points", amount, "booking_id", bookingID)
+	return nil
+}
+
+// RefundPoints restores previously spent points to the user's balance.
+func (s *loyaltyService) RefundPoints(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error {
+	if amount <= 0 {
+		return fmt.Errorf("%w: amount must be positive", domain.ErrInvalidInput)
+	}
+
+	if err := s.loyaltyRepo.AddPoints(ctx, userID, amount); err != nil {
+		return err
+	}
+
+	tx := &domain.LoyaltyTransaction{
+		ID:          uuid.New(),
+		UserID:      userID,
+		Type:        domain.LoyaltyTransactionEarn,
+		Amount:      amount,
+		BookingID:   &bookingID,
+		Description: "Возврат баллов за отменённое бронирование",
+		CreatedAt:   time.Now(),
+	}
+	if err := s.loyaltyRepo.CreateTransaction(ctx, tx); err != nil {
+		return err
+	}
+
+	s.logger.Info("refunded loyalty points", "user_id", userID, "points", amount, "booking_id", bookingID)
 	return nil
 }
 

@@ -18,6 +18,7 @@ type mockLoyaltyService struct {
 	getAccountFn       func(ctx context.Context, userID uuid.UUID) (*domain.LoyaltyAccount, error)
 	earnPointsFn       func(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) (int64, error)
 	spendPointsFn      func(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
+	refundPointsFn     func(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
 	getDiscountFn      func(ctx context.Context, userID uuid.UUID) (int, error)
 	recalculateLevelFn func(ctx context.Context, userID uuid.UUID) error
 	listTransactionsFn func(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.LoyaltyTransaction], error)
@@ -40,6 +41,13 @@ func (m *mockLoyaltyService) EarnPoints(ctx context.Context, userID uuid.UUID, b
 func (m *mockLoyaltyService) SpendPoints(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error {
 	if m.spendPointsFn != nil {
 		return m.spendPointsFn(ctx, userID, amount, bookingID)
+	}
+	return nil
+}
+
+func (m *mockLoyaltyService) RefundPoints(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error {
+	if m.refundPointsFn != nil {
+		return m.refundPointsFn(ctx, userID, amount, bookingID)
 	}
 	return nil
 }
