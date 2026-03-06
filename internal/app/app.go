@@ -29,5 +29,9 @@ func New(cfg *config.Config) *fx.App {
 		service.Module,
 		handler.Module,
 		server.Module,
+		// Cross-package interface bindings
+		fx.Provide(
+			func(hub *notification.Hub) service.ChatBroadcaster { return hub },
+		),
 	)
 }

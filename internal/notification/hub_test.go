@@ -177,6 +177,184 @@ func TestHub_UnregisterUnknownClient(t *testing.T) {
 	hub.Unregister(client)
 }
 
+func TestHub_SubscribeToConversation(t *testing.T) {
+	log := logger.New(logger.LevelError)
+	hub := notification.NewHub(log)
+
+	convID := uuid.New()
+	client := &notification.Client{UserID: uuid.New(), Send: make(chan []byte, 256)}
+	hub.Register(client)
+	defer hub.Unregister(client)
+
+	hub.SubscribeToConversation(client, convID)
+
+	if hub.ConversationSubscriberCount(convID) != 1 {
+		t.Errorf("subscriber count = %d, want 1", hub.ConversationSubscriberCount(convID))
+	}
+}
+
+func TestHub_UnsubscribeFromConversation(t *testing.T) {
+	log := logger.New(logger.LevelError)
+	hub := notification.NewHub(log)
+
+	convID := uuid.New()
+	client := &notification.Client{UserID: uuid.New(), Send: make(chan []byte, 256)}
+	hub.Register(client)
+	defer hub.Unregister(client)
+
+	hub.SubscribeToConversation(client, convID)
+	hub.UnsubscribeFromConversation(client, convID)
+
+	if hub.ConversationSubscriberCount(convID) != 0 {
+		t.Errorf("subscriber count = %d, want 0", hub.ConversationSubscriberCount(convID))
+	}
+}
+
+func TestHub_SendToConversation(t *testing.T) {
+	log := logger.New(logger.LevelError)
+	hub := notification.NewHub(log)
+
+	convID := uuid.New()
+	client1 := &notification.Client{UserID: uuid.New(), Send: make(chan []byte, 256)}
+	client2 := &notification.Client{UserID: uuid.New(), Send: make(chan []byte, 256)}
+	hub.Register(client1)
+	hub.Register(client2)
+	defer hub.Unregister(client1)
+	defer hub.Unregister(client2)
+
+	hub.SubscribeToConversation(client1, convID)
+	hub.SubscribeToConversation(client2, convID)
+
+	msg := &notification.ChatWSMessage{
+		Type:           notification.ChatMsgNewMessage,
+		ConversationID: convID.String(),
+		MessageID:      uuid.New().String(),
+		SenderID:       client1.UserID.String(),
+		Text:           "Hello!",
+	}
+	hub.SendToConversation(convID, msg)
+
+	// Both clients should receive
+	for i, c := range []*notification.Client{client1, client2} {
+		select {
+		case data := <-c.Send:
+			if len(data) == 0 {
+				t.Errorf("client%d: received empty message", i+1)
+			}
+		case <-time.After(time.Second):
+			t.Errorf("client%d: did not receive chat message in time", i+1)
+		}
+	}
+}
+
+func TestHub_SendToConversation_NoSubscribers(t *testing.T) {
+	log := logger.New(logger.LevelError)
+	hub := notification.NewHub(log)
+
+	msg := &notification.ChatWSMessage{
+		Type:           notification.ChatMsgNewMessage,
+		ConversationID: uuid.New().String(),
+		Text:           "Nobody here",
+	}
+	// Should not panic
+	hub.SendToConversation(uuid.New(), msg)
+}
+
+func TestHub_BroadcastNewMessage(t *testing.T) {
+	log := logger.New(logger.LevelError)
+	hub := notification.NewHub(log)
+
+	convID := uuid.New()
+	client := &notification.Client{UserID: uuid.New(), Send: make(chan []byte, 256)}
+	hub.Register(client)
+	defer hub.Unregister(client)
+	hub.SubscribeToConversation(client, convID)
+
+	msg := &domain.Message{
+		ID:             uuid.New(),
+		ConversationID: convID,
+		SenderID:       uuid.New(),
+		Text:           "Broadcast test",
+		CreatedAt:      time.Now(),
+	}
+	hub.BroadcastNewMessage(convID, msg)
+
+	select {
+	case data := <-client.Send:
+		if len(data) == 0 {
+			t.Error("received empty message")
+		}
+	case <-time.After(time.Second):
+		t.Error("did not receive broadcast message in time")
+	}
+}
+
+func TestHub_BroadcastMessageRead(t *testing.T) {
+	log := logger.New(logger.LevelError)
+	hub := notification.NewHub(log)
+
+	convID := uuid.New()
+	userID := uuid.New()
+	client := &notification.Client{UserID: uuid.New(), Send: make(chan []byte, 256)}
+	hub.Register(client)
+	defer hub.Unregister(client)
+	hub.SubscribeToConversation(client, convID)
+
+	hub.BroadcastMessageRead(convID, userID)
+
+	select {
+	case data := <-client.Send:
+		if len(data) == 0 {
+			t.Error("received empty message")
+		}
+	case <-time.After(time.Second):
+		t.Error("did not receive read receipt in time")
+	}
+}
+
+func TestHub_BroadcastTypingIndicator(t *testing.T) {
+	log := logger.New(logger.LevelError)
+	hub := notification.NewHub(log)
+
+	convID := uuid.New()
+	userID := uuid.New()
+	client := &notification.Client{UserID: uuid.New(), Send: make(chan []byte, 256)}
+	hub.Register(client)
+	defer hub.Unregister(client)
+	hub.SubscribeToConversation(client, convID)
+
+	hub.BroadcastTypingIndicator(convID, userID)
+
+	select {
+	case data := <-client.Send:
+		if len(data) == 0 {
+			t.Error("received empty message")
+		}
+	case <-time.After(time.Second):
+		t.Error("did not receive typing indicator in time")
+	}
+}
+
+func TestHub_UnregisterCleansUpChatRooms(t *testing.T) {
+	log := logger.New(logger.LevelError)
+	hub := notification.NewHub(log)
+
+	convID := uuid.New()
+	client := &notification.Client{UserID: uuid.New(), Send: make(chan []byte, 256)}
+	hub.Register(client)
+	hub.SubscribeToConversation(client, convID)
+
+	if hub.ConversationSubscriberCount(convID) != 1 {
+		t.Fatalf("subscriber count = %d, want 1", hub.ConversationSubscriberCount(convID))
+	}
+
+	hub.Unregister(client)
+
+	if hub.ConversationSubscriberCount(convID) != 0 {
+		t.Errorf("subscriber count = %d after unregister, want 0", hub.ConversationSubscriberCount(convID))
+	}
+}
+
 func TestHub_Dispatch_SendsViaWebSocket(t *testing.T) {
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)

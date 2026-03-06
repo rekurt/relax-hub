@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
@@ -122,7 +124,7 @@ func (h *WSHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 }
 
 // readPump pumps messages from the WebSocket connection.
-// It only handles control frames (pong) -- we don't expect data from clients.
+// It handles chat client messages (subscribe, unsubscribe, typing) and control frames.
 func (h *WSHandler) readPump(conn *websocket.Conn, client *notification.Client) {
 	defer func() {
 		h.hub.Unregister(client)
@@ -139,13 +141,41 @@ func (h *WSHandler) readPump(conn *websocket.Conn, client *notification.Client) 
 	})
 
 	for {
-		_, _, err := conn.ReadMessage()
+		_, message, err := conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure) {
 				h.logger.Warn("ws unexpected close", "user_id", client.UserID, "error", err)
 			}
 			break
 		}
+
+		h.handleClientMessage(client, message)
+	}
+}
+
+// handleClientMessage processes an incoming chat message from a WebSocket client.
+func (h *WSHandler) handleClientMessage(client *notification.Client, raw []byte) {
+	var msg notification.ChatClientMessage
+	if err := json.Unmarshal(raw, &msg); err != nil {
+		h.logger.Debug("ws invalid client message", "user_id", client.UserID, "error", err)
+		return
+	}
+
+	convID, err := uuid.Parse(msg.ConversationID)
+	if err != nil {
+		h.logger.Debug("ws invalid conversation_id", "user_id", client.UserID, "value", msg.ConversationID)
+		return
+	}
+
+	switch msg.Action {
+	case notification.ChatActionSubscribe:
+		h.hub.SubscribeToConversation(client, convID)
+	case notification.ChatActionUnsubscribe:
+		h.hub.UnsubscribeFromConversation(client, convID)
+	case notification.ChatActionTyping:
+		h.hub.BroadcastTypingIndicator(convID, client.UserID)
+	default:
+		h.logger.Debug("ws unknown action", "user_id", client.UserID, "action", msg.Action)
 	}
 }
 

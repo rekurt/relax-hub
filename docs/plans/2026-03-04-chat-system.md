@@ -91,11 +91,11 @@ Real-time чат-система между клиентами и владель�
 **Files:**
 - Modify: `internal/handler/ws.go` (расширить существующий WebSocket hub)
 
-- [ ] Расширить WebSocket hub: подписка на чат-комнаты (conversation_id)
-- [ ] При отправке сообщения через REST — доставить через WebSocket если получатель онлайн
-- [ ] Типы WS-сообщений: new_message, message_read, typing_indicator
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Расширить WebSocket hub: подписка на чат-комнаты (conversation_id)
+- [x] При отправке сообщения через REST — доставить через WebSocket если получатель онлайн
+- [x] Типы WS-сообщений: new_message, message_read, typing_indicator
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Хендлеры чата
 

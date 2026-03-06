@@ -11,6 +11,12 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
+// ChatBroadcaster broadcasts real-time chat events via WebSocket.
+type ChatBroadcaster interface {
+	BroadcastNewMessage(conversationID uuid.UUID, msg *domain.Message)
+	BroadcastMessageRead(conversationID uuid.UUID, userID uuid.UUID)
+}
+
 type ChatService interface {
 	StartConversation(ctx context.Context, clientID uuid.UUID, bathhouseID uuid.UUID, bookingID *uuid.UUID) (*domain.Conversation, error)
 	SendMessage(ctx context.Context, senderID uuid.UUID, role domain.UserRole, conversationID uuid.UUID, text string) (*domain.Message, error)
@@ -21,13 +27,14 @@ type ChatService interface {
 }
 
 type chatService struct {
-	convRepo repository.ConversationRepository
-	msgRepo  repository.MessageRepository
-	bhRepo   repository.BathhouseRepository
-	repRepo  repository.RepresentativeRepository
-	access   *AccessChecker
-	notifSvc NotificationService
-	logger   *logger.Logger
+	convRepo    repository.ConversationRepository
+	msgRepo     repository.MessageRepository
+	bhRepo      repository.BathhouseRepository
+	repRepo     repository.RepresentativeRepository
+	access      *AccessChecker
+	notifSvc    NotificationService
+	broadcaster ChatBroadcaster
+	logger      *logger.Logger
 }
 
 func NewChatService(
@@ -37,16 +44,18 @@ func NewChatService(
 	repRepo repository.RepresentativeRepository,
 	access *AccessChecker,
 	notifSvc NotificationService,
+	broadcaster ChatBroadcaster,
 	log *logger.Logger,
 ) ChatService {
 	return &chatService{
-		convRepo: convRepo,
-		msgRepo:  msgRepo,
-		bhRepo:   bhRepo,
-		repRepo:  repRepo,
-		access:   access,
-		notifSvc: notifSvc,
-		logger:   log,
+		convRepo:    convRepo,
+		msgRepo:     msgRepo,
+		bhRepo:      bhRepo,
+		repRepo:     repRepo,
+		access:      access,
+		notifSvc:    notifSvc,
+		broadcaster: broadcaster,
+		logger:      log,
 	}
 }
 
@@ -105,6 +114,7 @@ func (s *chatService) SendMessage(ctx context.Context, senderID uuid.UUID, role 
 		s.logger.Warn("failed to update conversation last_message_at", "conversation_id", conversationID, "error", err)
 	}
 
+	s.broadcaster.BroadcastNewMessage(conversationID, msg)
 	s.sendMessageNotification(ctx, conv, senderID, text)
 
 	return msg, nil
@@ -142,7 +152,12 @@ func (s *chatService) MarkAsRead(ctx context.Context, userID uuid.UUID, role dom
 		return err
 	}
 
-	return s.msgRepo.MarkAsRead(ctx, conversationID, userID)
+	if err := s.msgRepo.MarkAsRead(ctx, conversationID, userID); err != nil {
+		return err
+	}
+
+	s.broadcaster.BroadcastMessageRead(conversationID, userID)
+	return nil
 }
 
 func (s *chatService) GetUnreadCount(ctx context.Context, userID uuid.UUID, role domain.UserRole) (int64, error) {

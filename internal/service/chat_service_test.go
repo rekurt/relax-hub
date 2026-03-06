@@ -21,6 +21,12 @@ type chatTestEnv struct {
 	repRepo  *mock.RepresentativeRepo
 }
 
+// noopChatBroadcaster is a no-op ChatBroadcaster for tests.
+type noopChatBroadcaster struct{}
+
+func (n *noopChatBroadcaster) BroadcastNewMessage(_ uuid.UUID, _ *domain.Message)  {}
+func (n *noopChatBroadcaster) BroadcastMessageRead(_ uuid.UUID, _ uuid.UUID)        {}
+
 func newChatTestEnv() *chatTestEnv {
 	convRepo := mock.NewConversationRepo()
 	msgRepo := mock.NewMessageRepo()
@@ -28,7 +34,7 @@ func newChatTestEnv() *chatTestEnv {
 	repRepo := mock.NewRepresentativeRepo()
 	ac := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewChatService(convRepo, msgRepo, bhRepo, repRepo, ac, &noopNotifService{}, log)
+	svc := service.NewChatService(convRepo, msgRepo, bhRepo, repRepo, ac, &noopNotifService{}, &noopChatBroadcaster{}, log)
 	return &chatTestEnv{
 		svc:      svc,
 		convRepo: convRepo,
