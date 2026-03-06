@@ -100,6 +100,23 @@ func (r *loyaltyRepo) SpendPoints(ctx context.Context, userID uuid.UUID, amount 
 	return nil
 }
 
+func (r *loyaltyRepo) RefundPoints(ctx context.Context, userID uuid.UUID, amount int64) error {
+	query := `
+		UPDATE loyalty_accounts
+		SET points = points + $1, total_spent = total_spent - $1, updated_at = $2
+		WHERE user_id = $3 AND total_spent >= $1
+	`
+
+	result, err := r.pool.Exec(ctx, query, amount, time.Now(), userID)
+	if err != nil {
+		return fmt.Errorf("refund loyalty points: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
 func (r *loyaltyRepo) IncrementVisitCount(ctx context.Context, userID uuid.UUID) error {
 	query := `
 		UPDATE loyalty_accounts

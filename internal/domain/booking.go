@@ -32,6 +32,7 @@ type Booking struct {
 	EndTime     time.Time
 	GuestCount  int
 	TotalPrice  int64
+	PointsSpent int64
 	Status      BookingStatus
 	Comment     string
 	CreatedAt   time.Time

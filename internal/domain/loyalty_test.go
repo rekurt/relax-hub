@@ -162,7 +162,8 @@ func TestLoyaltyTransactionTypeIsValid(t *testing.T) {
 	}{
 		{name: "earn is valid", txType: LoyaltyTransactionEarn, expected: true},
 		{name: "spend is valid", txType: LoyaltyTransactionSpend, expected: true},
-		{name: "invalid type", txType: LoyaltyTransactionType("refund"), expected: false},
+		{name: "refund is valid", txType: LoyaltyTransactionRefund, expected: true},
+		{name: "invalid type", txType: LoyaltyTransactionType("unknown"), expected: false},
 	}
 
 	for _, tt := range tests {
@@ -215,7 +216,7 @@ func TestLoyaltyTransactionValidate(t *testing.T) {
 			name: "invalid type",
 			tx: &LoyaltyTransaction{
 				UserID: userID,
-				Type:   LoyaltyTransactionType("refund"),
+				Type:   LoyaltyTransactionType("unknown"),
 				Amount: 100,
 			},
 			wantErr: true,

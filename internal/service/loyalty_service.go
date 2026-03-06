@@ -152,14 +152,14 @@ func (s *loyaltyService) RefundPoints(ctx context.Context, userID uuid.UUID, amo
 		return fmt.Errorf("%w: amount must be positive", domain.ErrInvalidInput)
 	}
 
-	if err := s.loyaltyRepo.AddPoints(ctx, userID, amount); err != nil {
+	if err := s.loyaltyRepo.RefundPoints(ctx, userID, amount); err != nil {
 		return err
 	}
 
 	tx := &domain.LoyaltyTransaction{
 		ID:          uuid.New(),
 		UserID:      userID,
-		Type:        domain.LoyaltyTransactionEarn,
+		Type:        domain.LoyaltyTransactionRefund,
 		Amount:      amount,
 		BookingID:   &bookingID,
 		Description: "Возврат баллов за отменённое бронирование",

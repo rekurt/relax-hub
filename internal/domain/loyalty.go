@@ -91,13 +91,14 @@ func (a *LoyaltyAccount) Validate() error {
 type LoyaltyTransactionType string
 
 const (
-	LoyaltyTransactionEarn  LoyaltyTransactionType = "earn"
-	LoyaltyTransactionSpend LoyaltyTransactionType = "spend"
+	LoyaltyTransactionEarn   LoyaltyTransactionType = "earn"
+	LoyaltyTransactionSpend  LoyaltyTransactionType = "spend"
+	LoyaltyTransactionRefund LoyaltyTransactionType = "refund"
 )
 
 func (t LoyaltyTransactionType) IsValid() bool {
 	switch t {
-	case LoyaltyTransactionEarn, LoyaltyTransactionSpend:
+	case LoyaltyTransactionEarn, LoyaltyTransactionSpend, LoyaltyTransactionRefund:
 		return true
 	}
 	return false

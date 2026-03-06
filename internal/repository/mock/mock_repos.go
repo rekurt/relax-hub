@@ -1887,6 +1887,23 @@ func (r *LoyaltyRepo) SpendPoints(_ context.Context, userID uuid.UUID, amount in
 	return nil
 }
 
+func (r *LoyaltyRepo) RefundPoints(_ context.Context, userID uuid.UUID, amount int64) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	acc, ok := r.accounts[userID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	if acc.TotalSpent < amount {
+		return domain.ErrNotFound
+	}
+	acc.Points += amount
+	acc.TotalSpent -= amount
+	acc.UpdatedAt = time.Now()
+	return nil
+}
+
 func (r *LoyaltyRepo) IncrementVisitCount(_ context.Context, userID uuid.UUID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

@@ -166,6 +166,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		EndTime:     input.EndTime,
 		GuestCount:  input.GuestCount,
 		TotalPrice:  totalPrice,
+		PointsSpent: pointsSpent,
 		Status:      domain.BookingPending,
 		Comment:     input.Comment,
 		CreatedAt:   now,
@@ -215,6 +216,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); err != nil {
 			return err
 		}
+		s.refundBookingPoints(ctx, booking)
 		s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 		return nil
 	}
@@ -227,6 +229,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); err != nil {
 		return err
 	}
+	s.refundBookingPoints(ctx, booking)
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 	return nil
 }
@@ -269,6 +272,7 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingRejected); err != nil {
 		return err
 	}
+	s.refundBookingPoints(ctx, booking)
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingRejected)
 	return nil
 }
@@ -501,6 +505,17 @@ func validateWithinWorkingHours(bh *domain.Bathhouse, startTime, endTime time.Ti
 	}
 
 	return nil
+}
+
+func (s *bookingService) refundBookingPoints(ctx context.Context, booking *domain.Booking) {
+	if booking.PointsSpent <= 0 {
+		return
+	}
+	if err := s.loyaltySvc.RefundPoints(ctx, booking.UserID, booking.PointsSpent, booking.ID); err != nil {
+		s.logger.Error("failed to refund loyalty points on booking cancellation",
+			"booking_id", booking.ID, "user_id", booking.UserID,
+			"points_spent", booking.PointsSpent, "error", err)
+	}
 }
 
 func (s *bookingService) sendBookingNotification(ctx context.Context, booking *domain.Booking, notifType domain.NotificationType) {
