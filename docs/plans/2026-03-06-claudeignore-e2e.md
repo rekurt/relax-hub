@@ -80,9 +80,9 @@
 - Create: `tests/hurl/subscriptions.hurl`
 - Create: `tests/hurl/subscriptions_negative.hurl`
 
-- [ ] Happy path: создать подписку (free/premium/promoted), получить, отменить, список подписок владельца
-- [ ] Создать промо-кампанию для bathhouse с promoted-подпиской
-- [ ] Негативные: подписка без авторизации, на чужую баню, дубликат active подписки, промо без promoted-плана
+- [x] Happy path: создать подписку (free/premium/promoted), получить, отменить, список подписок владельца
+- [x] Создать промо-кампанию для bathhouse с promoted-подпиской
+- [x] Негативные: подписка без авторизации, на чужую баню, дубликат active подписки, промо без promoted-плана
 
 ### Task 4: e2e тесты — Pricing Rules
 
