@@ -35,6 +35,8 @@ type Message struct {
 	CreatedAt      time.Time
 }
 
+const MaxMessageTextLength = 4000
+
 func (m *Message) Validate() error {
 	if m.ConversationID == uuid.Nil {
 		return ErrInvalidInput
@@ -43,6 +45,9 @@ func (m *Message) Validate() error {
 		return ErrInvalidInput
 	}
 	if m.Text == "" {
+		return ErrInvalidInput
+	}
+	if len(m.Text) > MaxMessageTextLength {
 		return ErrInvalidInput
 	}
 	return nil

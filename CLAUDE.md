@@ -167,7 +167,7 @@ Geo-search uses `ST_DWithin` and `ST_Distance` with `geography` type.
 ### Notification System
 
 Event-driven notifications with multi-channel delivery:
-- **Types**: booking_confirmed, booking_cancelled, new_review, review_response, promo, reminder, system
+- **Types**: booking_confirmed, booking_cancelled, booking_rejected, new_review, review_response, review_approved, review_rejected, new_message, promo, reminder, system
 - **Channels**: in-app (DB + WebSocket), email (SMTP/SendGrid)
 - **Dispatcher** (`internal/notification/dispatcher.go`): routes to channels based on user preferences
 - **WebSocket Hub** (`internal/notification/hub.go`): Hub pattern for real-time delivery to connected clients
@@ -329,6 +329,43 @@ Cumulative points system rewarding users for completed bookings with tiered bene
 - `GET /api/v1/my/loyalty/levels` — all levels with thresholds (auth required)
 
 Database migration: `migrations/000012_loyalty.up.sql`
+
+### Chat System
+
+Real-time messaging between clients and bathhouse owners/representatives:
+
+**Models:**
+- **Conversation** (`internal/domain/chat.go`): ID, BathhouseID, ClientID, BookingID (optional), LastMessageAt, CreatedAt. UNIQUE(bathhouse_id, client_id).
+- **Message** (`internal/domain/chat.go`): ID, ConversationID, SenderID, Text (max 4000 chars), IsRead, ReadAt, CreatedAt
+
+**Repository** (`internal/repository/postgres/chat_repo.go`): ConversationRepository and MessageRepository — CRUD, ListByUser, GetOrCreate (atomic upsert), MarkAsRead, CountUnread
+
+**Service** (`internal/service/chat_service.go`):
+- StartConversation — create/get conversation by bathhouse and client
+- SendMessage — send message with RBAC, broadcasts real-time via WebSocket, sends notification to owner + representatives
+- ListConversations — paginated list for client/owner/representative
+- ListMessages — paginated message history with access checks
+- MarkAsRead — mark all messages in conversation as read
+- GetUnreadCount — total unread message count across conversations
+- CanAccessConversation — WebSocket authorization check
+- RBAC: Clients see own conversations, owners/reps see conversations for their bathhouses, admins see all
+
+**WebSocket Integration** (`internal/notification/hub.go`):
+- Chat rooms: clients subscribe to conversation IDs for real-time delivery
+- BroadcastNewMessage, BroadcastMessageRead, BroadcastTypingIndicator
+- Authorization check on subscribe/typing via ConversationAccessChecker
+
+**Notification**: NotifNewMessage type — always enabled (like system notifications)
+
+**Handlers:**
+- `POST /api/v1/bathhouses/{id}/chat` — start conversation (auth required)
+- `GET /api/v1/my/conversations?page=1&page_size=20` — list conversations (auth required)
+- `GET /api/v1/conversations/{id}/messages?page=1&page_size=20` — list messages (auth required)
+- `POST /api/v1/conversations/{id}/messages` — send message (auth required)
+- `PATCH /api/v1/conversations/{id}/read` — mark as read (auth required)
+- `GET /api/v1/my/unread-messages-count` — unread count (auth required)
+
+Database migration: `migrations/000021_chat.up.sql`
 
 ### Code Style
 

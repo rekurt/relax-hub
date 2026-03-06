@@ -102,7 +102,7 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 		return p.PromoEvents
 	case NotifReminder:
 		return p.Reminders
-	case NotifSystem:
+	case NotifSystem, NotifNewMessage:
 		return true
 	}
 	return false

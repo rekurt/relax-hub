@@ -137,18 +137,35 @@ func (r *conversationRepo) ListByUser(ctx context.Context, userID uuid.UUID, bat
 }
 
 func (r *conversationRepo) GetOrCreate(ctx context.Context, conv *domain.Conversation) (*domain.Conversation, error) {
-	existing, err := r.GetByParticipants(ctx, conv.BathhouseID, conv.ClientID)
-	if err == nil {
-		return existing, nil
+	if conv.ID == uuid.Nil {
+		conv.ID = uuid.New()
 	}
-	if !errors.Is(err, domain.ErrNotFound) {
-		return nil, err
+	if conv.CreatedAt.IsZero() {
+		conv.CreatedAt = time.Now()
 	}
 
-	if err := r.Create(ctx, conv); err != nil {
-		return nil, err
+	// Use INSERT ... ON CONFLICT to atomically get-or-create
+	query := `
+		WITH inserted AS (
+			INSERT INTO conversations (id, bathhouse_id, client_id, booking_id, last_message_at, created_at)
+			VALUES ($1, $2, $3, $4, $5, $6)
+			ON CONFLICT (bathhouse_id, client_id) DO NOTHING
+			RETURNING ` + conversationColumns + `
+		)
+		SELECT ` + conversationColumns + ` FROM inserted
+		UNION ALL
+		SELECT ` + conversationColumns + ` FROM conversations
+		WHERE bathhouse_id = $2 AND client_id = $3
+		AND NOT EXISTS (SELECT 1 FROM inserted)
+		LIMIT 1`
+
+	c, err := scanConversation(r.pool.QueryRow(ctx, query,
+		conv.ID, conv.BathhouseID, conv.ClientID, conv.BookingID, conv.LastMessageAt, conv.CreatedAt,
+	))
+	if err != nil {
+		return nil, fmt.Errorf("get or create conversation: %w", err)
 	}
-	return conv, nil
+	return c, nil
 }
 
 func (r *conversationRepo) UpdateLastMessageAt(ctx context.Context, id uuid.UUID, t time.Time) error {

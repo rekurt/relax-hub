@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -71,19 +72,26 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// ConversationAccessChecker checks if a user can access a conversation.
+type ConversationAccessChecker interface {
+	CanAccessConversation(ctx context.Context, userID uuid.UUID, conversationID uuid.UUID) bool
+}
+
 // WSHandler handles WebSocket connections for real-time notifications.
 type WSHandler struct {
-	hub         *notification.Hub
-	authService middleware.AuthService
-	logger      *logger.Logger
+	hub            *notification.Hub
+	authService    middleware.AuthService
+	convAccessCheck ConversationAccessChecker
+	logger         *logger.Logger
 }
 
 // NewWSHandler creates a new WebSocket handler.
-func NewWSHandler(hub *notification.Hub, authService middleware.AuthService, log *logger.Logger) *WSHandler {
+func NewWSHandler(hub *notification.Hub, authService middleware.AuthService, convAccessCheck ConversationAccessChecker, log *logger.Logger) *WSHandler {
 	return &WSHandler{
-		hub:         hub,
-		authService: authService,
-		logger:      log,
+		hub:            hub,
+		authService:    authService,
+		convAccessCheck: convAccessCheck,
+		logger:         log,
 	}
 }
 
@@ -169,10 +177,17 @@ func (h *WSHandler) handleClientMessage(client *notification.Client, raw []byte)
 
 	switch msg.Action {
 	case notification.ChatActionSubscribe:
+		if !h.convAccessCheck.CanAccessConversation(context.Background(), client.UserID, convID) {
+			h.logger.Warn("ws unauthorized conversation subscribe attempt", "user_id", client.UserID, "conversation_id", convID)
+			return
+		}
 		h.hub.SubscribeToConversation(client, convID)
 	case notification.ChatActionUnsubscribe:
 		h.hub.UnsubscribeFromConversation(client, convID)
 	case notification.ChatActionTyping:
+		if !h.convAccessCheck.CanAccessConversation(context.Background(), client.UserID, convID) {
+			return
+		}
 		h.hub.BroadcastTypingIndicator(convID, client.UserID)
 	default:
 		h.logger.Debug("ws unknown action", "user_id", client.UserID, "action", msg.Action)

@@ -24,6 +24,7 @@ type ChatService interface {
 	ListMessages(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Message], error)
 	MarkAsRead(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) error
 	GetUnreadCount(ctx context.Context, userID uuid.UUID, role domain.UserRole) (int64, error)
+	CanAccessConversation(ctx context.Context, userID uuid.UUID, conversationID uuid.UUID) bool
 }
 
 type chatService struct {
@@ -238,17 +239,30 @@ func (s *chatService) getUserBathhouseIDs(ctx context.Context, userID uuid.UUID,
 	}
 }
 
-func (s *chatService) sendMessageNotification(ctx context.Context, conv *domain.Conversation, senderID uuid.UUID, text string) {
-	recipientID := conv.ClientID
-	if senderID == conv.ClientID {
-		bh, err := s.bhRepo.GetByID(ctx, conv.BathhouseID)
-		if err != nil {
-			s.logger.Warn("failed to get bathhouse for notification", "bathhouse_id", conv.BathhouseID, "error", err)
-			return
-		}
-		recipientID = bh.OwnerID
+// CanAccessConversation checks if a user can access a conversation (for WebSocket authorization).
+// It checks if the user is a participant (client) or manages the bathhouse (owner/rep/admin).
+func (s *chatService) CanAccessConversation(ctx context.Context, userID uuid.UUID, conversationID uuid.UUID) bool {
+	conv, err := s.convRepo.GetByID(ctx, conversationID)
+	if err != nil {
+		return false
 	}
 
+	if conv.ClientID == userID {
+		return true
+	}
+
+	// Check if user can manage the bathhouse (owner, representative, or admin)
+	if err := s.access.CanManageBathhouse(ctx, userID, domain.RoleOwner, conv.BathhouseID); err == nil {
+		return true
+	}
+	if err := s.access.CanManageBathhouse(ctx, userID, domain.RoleRepresentative, conv.BathhouseID); err == nil {
+		return true
+	}
+
+	return false
+}
+
+func (s *chatService) sendMessageNotification(ctx context.Context, conv *domain.Conversation, senderID uuid.UUID, text string) {
 	preview := text
 	if len(preview) > 100 {
 		preview = preview[:100] + "..."
@@ -260,11 +274,35 @@ func (s *chatService) sendMessageNotification(ctx context.Context, conv *domain.
 		"bathhouse_id":    conv.BathhouseID.String(),
 	}
 
-	if err := s.notifSvc.Send(ctx, recipientID, domain.NotifNewMessage,
-		"Новое сообщение",
-		fmt.Sprintf("У вас новое сообщение: %s", preview),
-		data,
-	); err != nil {
-		s.logger.Warn("failed to send message notification", "conversation_id", conv.ID, "error", err)
+	notifTitle := "Новое сообщение"
+	notifBody := fmt.Sprintf("У вас новое сообщение: %s", preview)
+
+	if senderID == conv.ClientID {
+		// Client sent message -> notify owner and representatives
+		bh, err := s.bhRepo.GetByID(ctx, conv.BathhouseID)
+		if err != nil {
+			s.logger.Warn("failed to get bathhouse for notification", "bathhouse_id", conv.BathhouseID, "error", err)
+			return
+		}
+
+		if err := s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifNewMessage, notifTitle, notifBody, data); err != nil {
+			s.logger.Warn("failed to send message notification to owner", "owner_id", bh.OwnerID, "error", err)
+		}
+
+		reps, err := s.repRepo.ListByBathhouse(ctx, conv.BathhouseID)
+		if err != nil {
+			s.logger.Warn("failed to list representatives for notification", "bathhouse_id", conv.BathhouseID, "error", err)
+		} else {
+			for _, rep := range reps {
+				if err := s.notifSvc.Send(ctx, rep.UserID, domain.NotifNewMessage, notifTitle, notifBody, data); err != nil {
+					s.logger.Warn("failed to send message notification to representative", "rep_user_id", rep.UserID, "error", err)
+				}
+			}
+		}
+	} else {
+		// Owner/representative sent message -> notify client
+		if err := s.notifSvc.Send(ctx, conv.ClientID, domain.NotifNewMessage, notifTitle, notifBody, data); err != nil {
+			s.logger.Warn("failed to send message notification to client", "client_id", conv.ClientID, "error", err)
+		}
 	}
 }

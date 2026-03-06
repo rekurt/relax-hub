@@ -83,13 +83,19 @@ func (h *ChatHandler) StartConversation(w http.ResponseWriter, r *http.Request) 
 
 	var bookingID *uuid.UUID
 	var req startConversationRequest
-	if err := readJSON(w, r, &req); err == nil && req.BookingID != nil {
-		id, err := uuid.Parse(*req.BookingID)
-		if err != nil {
-			writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking_id")
+	if r.ContentLength > 0 {
+		if err := readJSON(w, r, &req); err != nil {
+			handleServiceError(w, err)
 			return
 		}
-		bookingID = &id
+		if req.BookingID != nil {
+			id, err := uuid.Parse(*req.BookingID)
+			if err != nil {
+				writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking_id")
+				return
+			}
+			bookingID = &id
+		}
 	}
 
 	userID := middleware.GetUserID(r.Context())

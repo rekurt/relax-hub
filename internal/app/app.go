@@ -32,6 +32,7 @@ func New(cfg *config.Config) *fx.App {
 		// Cross-package interface bindings
 		fx.Provide(
 			func(hub *notification.Hub) service.ChatBroadcaster { return hub },
+			func(svc service.ChatService) handler.ConversationAccessChecker { return svc },
 		),
 	)
 }

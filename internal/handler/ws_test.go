@@ -27,11 +27,22 @@ func (m *mockWSAuthService) ParseToken(ctx context.Context, token string) (uuid.
 	return uuid.Nil, "", domain.ErrUnauthorized
 }
 
+type mockConvAccessChecker struct {
+	canAccessFn func(ctx context.Context, userID uuid.UUID, conversationID uuid.UUID) bool
+}
+
+func (m *mockConvAccessChecker) CanAccessConversation(ctx context.Context, userID uuid.UUID, conversationID uuid.UUID) bool {
+	if m.canAccessFn != nil {
+		return m.canAccessFn(ctx, userID, conversationID)
+	}
+	return true
+}
+
 func TestWSHandler_MissingToken(t *testing.T) {
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
 	auth := &mockWSAuthService{}
-	h := handler.NewWSHandler(hub, auth, log)
+	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/ws/notifications", nil)
 	w := httptest.NewRecorder()
@@ -50,7 +61,7 @@ func TestWSHandler_InvalidToken(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, log)
+	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/ws/notifications?token=invalid", nil)
 	w := httptest.NewRecorder()
@@ -74,7 +85,7 @@ func TestWSHandler_ValidConnection(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, log)
+	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
 
 	server := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer server.Close()
@@ -135,7 +146,7 @@ func TestWSHandler_DisconnectCleansUp(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, log)
+	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
 
 	server := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer server.Close()
@@ -174,7 +185,7 @@ func TestWSHandler_ChatSubscribe(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, log)
+	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
 
 	srv := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer srv.Close()
@@ -239,7 +250,7 @@ func TestWSHandler_ChatTypingIndicator(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, log)
+	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
 
 	srv := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer srv.Close()
