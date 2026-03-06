@@ -96,6 +96,13 @@ func (h *PricingHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate rule type
+	ruleType := domain.PricingRuleType(req.Type)
+	if !ruleType.IsValid() {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid rule type")
+		return
+	}
+
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
 
@@ -103,7 +110,7 @@ func (h *PricingHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 		ID:          uuid.New(),
 		BathhouseID: bathhouseID,
 		Name:        req.Name,
-		Type:        domain.PricingRuleType(req.Type),
+		Type:        ruleType,
 		Multiplier:  req.Multiplier,
 		DaysOfWeek:  req.DaysOfWeek,
 		TimeFrom:    req.TimeFrom,
@@ -159,13 +166,20 @@ func (h *PricingHandler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate rule type
+	ruleType := domain.PricingRuleType(req.Type)
+	if !ruleType.IsValid() {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid rule type")
+		return
+	}
+
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
 
 	rule := &domain.PricingRule{
 		ID:          ruleID,
 		Name:        req.Name,
-		Type:        domain.PricingRuleType(req.Type),
+		Type:        ruleType,
 		Multiplier:  req.Multiplier,
 		DaysOfWeek:  req.DaysOfWeek,
 		TimeFrom:    req.TimeFrom,
