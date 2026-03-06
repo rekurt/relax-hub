@@ -338,6 +338,33 @@ func TestPricingRuleValidate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "multiplier exceeds upper bound (999.99)",
+			rule: &PricingRule{
+				BathhouseID: bathhouseID,
+				Name:        "Too High",
+				Type:        RuleTypeWeekday,
+				Multiplier:  1000.0,
+				DaysOfWeek:  []int{0},
+				Priority:    1,
+				IsActive:    true,
+			},
+			wantErr: true,
+		},
+		{
+			name: "time_range rule with same from and to time",
+			rule: &PricingRule{
+				BathhouseID: bathhouseID,
+				Name:        "Same Time",
+				Type:        RuleTypeTimeRange,
+				Multiplier:  1.5,
+				TimeFrom:    &timeFrom,
+				TimeTo:      &timeFrom,
+				Priority:    1,
+				IsActive:    true,
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {

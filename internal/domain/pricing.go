@@ -50,7 +50,7 @@ func (pr *PricingRule) Validate() error {
 	if !pr.Type.IsValid() {
 		return ErrInvalidInput
 	}
-	if pr.Multiplier <= 0 {
+	if pr.Multiplier <= 0 || pr.Multiplier > 999.99 {
 		return ErrInvalidInput
 	}
 	if pr.Priority < 0 {
@@ -83,8 +83,11 @@ func (pr *PricingRule) Validate() error {
 		if !isValidTimeFormat(*pr.TimeFrom) || !isValidTimeFormat(*pr.TimeTo) {
 			return ErrInvalidInput
 		}
+		// Disallow same time for both boundaries - rule would never apply
+		if *pr.TimeFrom == *pr.TimeTo {
+			return ErrInvalidInput
+		}
 		// Allow both from < to (normal) and from > to (wraparound like 22:00-06:00)
-		// No additional validation needed - both cases are valid for different use cases
 	case RuleTypeSeason:
 		if pr.DateFrom == nil || pr.DateTo == nil {
 			return ErrInvalidInput

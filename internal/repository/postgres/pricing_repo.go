@@ -42,6 +42,9 @@ func (r *pricingRuleRepo) Create(ctx context.Context, rule *domain.PricingRule) 
 		if isDuplicateKeyError(err) {
 			return domain.ErrAlreadyExists
 		}
+		if isConstraintViolationError(err) {
+			return domain.ErrInvalidInput
+		}
 		return fmt.Errorf("create pricing rule: %w", err)
 	}
 	return nil
@@ -81,6 +84,9 @@ func (r *pricingRuleRepo) Update(ctx context.Context, rule *domain.PricingRule) 
 		rule.TimeFrom, rule.TimeTo, rule.DateFrom, rule.DateTo, rule.Priority, rule.IsActive, rule.ID,
 	)
 	if err != nil {
+		if isConstraintViolationError(err) {
+			return domain.ErrInvalidInput
+		}
 		return fmt.Errorf("update pricing rule: %w", err)
 	}
 	if result.RowsAffected() == 0 {

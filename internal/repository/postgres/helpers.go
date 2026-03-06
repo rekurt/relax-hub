@@ -11,6 +11,20 @@ func isDuplicateKeyError(err error) bool {
 		strings.Contains(err.Error(), "23505")
 }
 
+// isCheckConstraintError checks if error is from a CHECK constraint violation
+func isCheckConstraintError(err error) bool {
+	return strings.Contains(err.Error(), "check constraint") ||
+		strings.Contains(err.Error(), "23514")
+}
+
+// isConstraintViolationError checks for any constraint violation (check, numeric, etc.)
+func isConstraintViolationError(err error) bool {
+	return isCheckConstraintError(err) ||
+		strings.Contains(err.Error(), "value too") ||
+		strings.Contains(err.Error(), "numeric field overflow") ||
+		strings.Contains(err.Error(), "23000")
+}
+
 // currentDayOfWeek returns the current day of week as int (0=Mon, 6=Sun),
 // matching the WorkingHours.DayOfWeek convention.
 func currentDayOfWeek() int {

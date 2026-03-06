@@ -55,16 +55,10 @@ func (s *pricingService) CalculatePrice(ctx context.Context, bathhouseID uuid.UU
 		return 0, err
 	}
 
-	// If no rules, return base price * hours
-	if len(rules) == 0 {
-		hours := int64(math.Ceil(endTime.Sub(startTime).Hours()))
-		return basePrice * hours, nil
-	}
-
 	totalPrice := int64(0)
 	currentTime := startTime
 
-	// Process each hour in the interval
+	// Process each hour in the interval using consistent algorithm
 	for currentTime.Before(endTime) {
 		hourEnd := currentTime.Add(1 * time.Hour)
 		if hourEnd.After(endTime) {
