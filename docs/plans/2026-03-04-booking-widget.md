@@ -60,19 +60,19 @@ JavaScript-виджет для встраивания на сайт бани. П
 - Create: `widget/src/styles.css`
 - Create: `widget/build.sh`
 
-- [ ] Vanilla JS виджет (без фреймворков, минимальный размер):
+- [x] Vanilla JS виджет (без фреймворков, минимальный размер):
   - Календарь с доступными датами
   - Слоты на выбранную дату
   - Форма бронирования (имя, телефон, email, кол-во гостей)
   - Подтверждение бронирования
-- [ ] Настраиваемые параметры: primaryColor, fontFamily, language
-- [ ] Код встраивания:
+- [x] Настраиваемые параметры: primaryColor, fontFamily, language
+- [x] Код встраивания:
   ```html
   <div id="bani-widget" data-api-key="xxx" data-color="#4CAF50"></div>
   <script src="https://api.bani.ru/widget.js"></script>
   ```
-- [ ] Сборка: минификация, один файл widget.min.js + widget.min.css
-- [ ] Написать тесты
+- [x] Сборка: минификация, один файл widget.min.js + widget.min.css
+- [x] Написать тесты
 
 ### Task 4: Генератор кода виджета в ЛК
 

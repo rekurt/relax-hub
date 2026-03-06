@@ -18,19 +18,11 @@ import (
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
-// Context key types to match middleware implementation
-type testContextKey string
-
-const (
-	testUserIDKey   testContextKey = "user_id"
-	testUserRoleKey testContextKey = "user_role"
-)
-
 // Helper function to create a test context with user info
 func createTestContext(userID uuid.UUID, role domain.UserRole) context.Context {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, testUserIDKey, userID)
-	ctx = context.WithValue(ctx, testUserRoleKey, role)
+	ctx = middleware.SetUserIDForTesting(ctx, userID)
+	ctx = middleware.SetUserRoleForTesting(ctx, role)
 	return ctx
 }
 

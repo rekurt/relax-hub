@@ -33,6 +33,16 @@ func GetUserRole(ctx context.Context) domain.UserRole {
 	return ""
 }
 
+// SetUserIDForTesting sets the user ID in context for testing purposes
+func SetUserIDForTesting(ctx context.Context, userID uuid.UUID) context.Context {
+	return context.WithValue(ctx, userIDKey, userID)
+}
+
+// SetUserRoleForTesting sets the user role in context for testing purposes
+func SetUserRoleForTesting(ctx context.Context, role domain.UserRole) context.Context {
+	return context.WithValue(ctx, roleKey, role)
+}
+
 type AuthService interface {
 	ParseToken(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error)
 }

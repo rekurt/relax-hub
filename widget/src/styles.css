@@ -1,0 +1,311 @@
+/* Bani Widget Base Styles */
+
+.bani-widget {
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.bani-widget * {
+  box-sizing: border-box;
+}
+
+.bani-widget h2 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 24px;
+  text-align: center;
+}
+
+.bani-widget h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+}
+
+.bani-widget-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.bani-widget-error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+/* Calendar Styles */
+
+.bani-widget-calendar {
+  margin-bottom: 20px;
+}
+
+.bani-widget-calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.bani-widget-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.bani-widget-calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #999;
+  font-weight: bold;
+}
+
+.bani-widget-calendar-date {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 0;
+}
+
+.bani-widget-calendar-date:hover {
+  border-color: #4caf50;
+  background: #f0f0f0;
+}
+
+.bani-widget-calendar-date.selected {
+  background: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+
+.bani-widget-calendar-date.disabled {
+  background: #f5f5f5;
+  color: #ccc;
+  cursor: not-allowed;
+  border-color: #ddd;
+}
+
+/* Slots Styles */
+
+.bani-widget-slots {
+  margin-bottom: 20px;
+}
+
+.bani-widget-slot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  font-size: 14px;
+}
+
+.bani-widget-slot:hover {
+  border-color: #4caf50;
+  background: #f9f9f9;
+}
+
+.bani-widget-slot.selected {
+  background: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+
+.bani-widget-slot.disabled {
+  background: #f5f5f5;
+  color: #ccc;
+  cursor: not-allowed;
+  border-color: #ddd;
+}
+
+.bani-widget-slot-time {
+  font-weight: 500;
+}
+
+.bani-widget-slot-price {
+  text-align: right;
+  font-weight: 600;
+}
+
+/* Form Styles */
+
+.bani-widget-form-group {
+  margin-bottom: 16px;
+}
+
+.bani-widget-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.bani-widget-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.bani-widget-input:focus {
+  outline: none;
+  border-color: #4caf50;
+}
+
+.bani-widget-input::placeholder {
+  color: #ccc;
+}
+
+/* Button Styles */
+
+.bani-widget-button {
+  width: 100%;
+  padding: 12px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: inherit;
+}
+
+.bani-widget-button:hover {
+  background: #45a049;
+}
+
+.bani-widget-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.bani-widget-button-secondary {
+  background: #999;
+  margin-bottom: 8px;
+}
+
+.bani-widget-button-secondary:hover {
+  background: #777;
+}
+
+.bani-widget-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.bani-widget-nav button {
+  flex: 1;
+}
+
+/* Info Box */
+
+.bani-widget-bathhouse-info {
+  background: white;
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid #4caf50;
+}
+
+.bani-widget-bathhouse-name {
+  font-weight: 600;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.bani-widget-bathhouse-price {
+  color: #4caf50;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* Confirmation Styles */
+
+.bani-widget-confirmation {
+  text-align: center;
+  padding: 20px;
+}
+
+.bani-widget-confirmation-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.bani-widget-confirmation-message {
+  font-size: 18px;
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: 600;
+}
+
+.bani-widget-confirmation-details {
+  background: white;
+  padding: 16px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.bani-widget-confirmation-detail {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.bani-widget-confirmation-detail:last-child {
+  border-bottom: none;
+}
+
+.bani-widget-confirmation-detail strong {
+  font-weight: 600;
+}
+
+/* Responsive */
+
+@media (max-width: 600px) {
+  .bani-widget {
+    max-width: 100%;
+    padding: 12px;
+  }
+
+  .bani-widget h2 {
+    font-size: 20px;
+  }
+
+  .bani-widget-input,
+  .bani-widget-button {
+    font-size: 16px;
+  }
+}
