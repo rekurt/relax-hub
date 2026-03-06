@@ -25,6 +25,7 @@ var (
 	_ repository.RecommendationRepository = (*RecommendationRepo)(nil)
 	_ repository.SubscriptionRepository   = (*SubscriptionRepo)(nil)
 	_ repository.PromotionRepository      = (*PromotionRepo)(nil)
+	_ repository.LoyaltyRepository        = (*LoyaltyRepo)(nil)
 )
 
 func TestUserRepo_CRUD(t *testing.T) {
@@ -1495,6 +1496,167 @@ func TestSubscriptionRepo_DuplicateActive(t *testing.T) {
 
 	if err := repo.Create(ctx, sub2); !errors.Is(err, domain.ErrAlreadyExists) {
 		t.Errorf("Expected ErrAlreadyExists, got %v", err)
+	}
+}
+
+func TestLoyaltyRepo_CRUD(t *testing.T) {
+	ctx := context.Background()
+	repo := NewLoyaltyRepo()
+	userID := uuid.New()
+
+	// GetAccount not found
+	_, err := repo.GetAccount(ctx, userID)
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Fatalf("Expected ErrNotFound, got %v", err)
+	}
+
+	// CreateAccount
+	account := &domain.LoyaltyAccount{
+		UserID: userID,
+		Level:  domain.LoyaltyBronze,
+		Points: 0,
+	}
+	if err := repo.CreateAccount(ctx, account); err != nil {
+		t.Fatalf("CreateAccount: %v", err)
+	}
+
+	// GetAccount
+	got, err := repo.GetAccount(ctx, userID)
+	if err != nil {
+		t.Fatalf("GetAccount: %v", err)
+	}
+	if got.UserID != userID {
+		t.Errorf("UserID = %v, want %v", got.UserID, userID)
+	}
+	if got.Level != domain.LoyaltyBronze {
+		t.Errorf("Level = %v, want %v", got.Level, domain.LoyaltyBronze)
+	}
+
+	// Duplicate create
+	if err := repo.CreateAccount(ctx, account); !errors.Is(err, domain.ErrAlreadyExists) {
+		t.Errorf("Expected ErrAlreadyExists, got %v", err)
+	}
+
+	// AddPoints
+	if err := repo.AddPoints(ctx, userID, 100); err != nil {
+		t.Fatalf("AddPoints: %v", err)
+	}
+	got, _ = repo.GetAccount(ctx, userID)
+	if got.Points != 100 {
+		t.Errorf("Points = %d, want 100", got.Points)
+	}
+	if got.TotalEarned != 100 {
+		t.Errorf("TotalEarned = %d, want 100", got.TotalEarned)
+	}
+
+	// SpendPoints
+	if err := repo.SpendPoints(ctx, userID, 30); err != nil {
+		t.Fatalf("SpendPoints: %v", err)
+	}
+	got, _ = repo.GetAccount(ctx, userID)
+	if got.Points != 70 {
+		t.Errorf("Points = %d, want 70", got.Points)
+	}
+	if got.TotalSpent != 30 {
+		t.Errorf("TotalSpent = %d, want 30", got.TotalSpent)
+	}
+
+	// SpendPoints insufficient
+	if err := repo.SpendPoints(ctx, userID, 1000); !errors.Is(err, domain.ErrInsufficientPoints) {
+		t.Errorf("Expected ErrInsufficientPoints, got %v", err)
+	}
+
+	// UpdateLevel
+	if err := repo.UpdateLevel(ctx, userID, domain.LoyaltySilver, 5); err != nil {
+		t.Fatalf("UpdateLevel: %v", err)
+	}
+	got, _ = repo.GetAccount(ctx, userID)
+	if got.Level != domain.LoyaltySilver {
+		t.Errorf("Level = %v, want %v", got.Level, domain.LoyaltySilver)
+	}
+	if got.VisitCount != 5 {
+		t.Errorf("VisitCount = %d, want 5", got.VisitCount)
+	}
+
+	// AddPoints/SpendPoints on non-existent account
+	fakeID := uuid.New()
+	if err := repo.AddPoints(ctx, fakeID, 10); !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("AddPoints non-existent: expected ErrNotFound, got %v", err)
+	}
+	if err := repo.SpendPoints(ctx, fakeID, 10); !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("SpendPoints non-existent: expected ErrNotFound, got %v", err)
+	}
+	if err := repo.UpdateLevel(ctx, fakeID, domain.LoyaltyGold, 15); !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("UpdateLevel non-existent: expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestLoyaltyRepo_Transactions(t *testing.T) {
+	ctx := context.Background()
+	repo := NewLoyaltyRepo()
+	userID := uuid.New()
+	bookingID := uuid.New()
+
+	// Create some transactions
+	for i := 0; i < 5; i++ {
+		tx := &domain.LoyaltyTransaction{
+			UserID:      userID,
+			Type:        domain.LoyaltyTransactionEarn,
+			Amount:      int64(100 + i*10),
+			BookingID:   &bookingID,
+			Description: fmt.Sprintf("earn %d", i),
+		}
+		if err := repo.CreateTransaction(ctx, tx); err != nil {
+			t.Fatalf("CreateTransaction %d: %v", i, err)
+		}
+		if tx.ID == uuid.Nil {
+			t.Fatal("transaction ID should be assigned")
+		}
+	}
+
+	// Add a transaction for another user
+	otherUser := uuid.New()
+	otherTx := &domain.LoyaltyTransaction{
+		UserID:      otherUser,
+		Type:        domain.LoyaltyTransactionSpend,
+		Amount:      50,
+		Description: "other user",
+	}
+	if err := repo.CreateTransaction(ctx, otherTx); err != nil {
+		t.Fatalf("CreateTransaction other: %v", err)
+	}
+
+	// ListTransactions for userID
+	result, err := repo.ListTransactions(ctx, userID, 1, 3)
+	if err != nil {
+		t.Fatalf("ListTransactions: %v", err)
+	}
+	if result.TotalCount != 5 {
+		t.Errorf("TotalCount = %d, want 5", result.TotalCount)
+	}
+	if len(result.Items) != 3 {
+		t.Errorf("len(Items) = %d, want 3", len(result.Items))
+	}
+	if result.TotalPages != 2 {
+		t.Errorf("TotalPages = %d, want 2", result.TotalPages)
+	}
+
+	// Page 2
+	result, err = repo.ListTransactions(ctx, userID, 2, 3)
+	if err != nil {
+		t.Fatalf("ListTransactions page 2: %v", err)
+	}
+	if len(result.Items) != 2 {
+		t.Errorf("len(Items) page 2 = %d, want 2", len(result.Items))
+	}
+
+	// Other user has only 1 transaction
+	result, err = repo.ListTransactions(ctx, otherUser, 1, 20)
+	if err != nil {
+		t.Fatalf("ListTransactions other: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("TotalCount other = %d, want 1", result.TotalCount)
 	}
 }
 

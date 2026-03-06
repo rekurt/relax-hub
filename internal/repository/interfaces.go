@@ -145,6 +145,16 @@ type PromotionRepository interface {
 	RecordClick(ctx context.Context, promotionID uuid.UUID) error
 }
 
+type LoyaltyRepository interface {
+	GetAccount(ctx context.Context, userID uuid.UUID) (*domain.LoyaltyAccount, error)
+	CreateAccount(ctx context.Context, account *domain.LoyaltyAccount) error
+	AddPoints(ctx context.Context, userID uuid.UUID, amount int64) error
+	SpendPoints(ctx context.Context, userID uuid.UUID, amount int64) error
+	UpdateLevel(ctx context.Context, userID uuid.UUID, level domain.LoyaltyLevel, visitCount int) error
+	ListTransactions(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.LoyaltyTransaction], error)
+	CreateTransaction(ctx context.Context, tx *domain.LoyaltyTransaction) error
+}
+
 type PricingRuleRepository interface {
 	Create(ctx context.Context, rule *domain.PricingRule) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.PricingRule, error)

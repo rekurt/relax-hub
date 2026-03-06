@@ -61,10 +61,10 @@
 - Create: `internal/repository/postgres/loyalty.go`
 - Create: `internal/repository/mock/loyalty.go`
 
-- [ ] LoyaltyRepository: GetAccount, CreateAccount, AddPoints, SpendPoints, UpdateLevel, ListTransactions (paginated)
-- [ ] Реализовать postgres и mock репозитории
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] LoyaltyRepository: GetAccount, CreateAccount, AddPoints, SpendPoints, UpdateLevel, ListTransactions (paginated)
+- [x] Реализовать postgres и mock репозитории
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Сервис лояльности
 
