@@ -115,15 +115,12 @@ func (s *loyaltyService) SpendPoints(ctx context.Context, userID uuid.UUID, amou
 		return fmt.Errorf("%w: amount must be positive", domain.ErrInvalidInput)
 	}
 
-	account, err := s.GetAccount(ctx, userID)
-	if err != nil {
+	// Ensure account exists (auto-creates if needed)
+	if _, err := s.GetAccount(ctx, userID); err != nil {
 		return err
 	}
 
-	if account.Points < amount {
-		return domain.ErrInsufficientPoints
-	}
-
+	// Balance check is done atomically in the repository via WHERE points >= amount
 	if err := s.loyaltyRepo.SpendPoints(ctx, userID, amount); err != nil {
 		return err
 	}

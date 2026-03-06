@@ -30,15 +30,23 @@ type LoyaltyLevelInfo struct {
 	DiscountPercent int
 }
 
-var LoyaltyLevels = []LoyaltyLevelInfo{
+// loyaltyLevels is unexported to prevent accidental mutation. Use GetAllLoyaltyLevels() for a copy.
+var loyaltyLevels = []LoyaltyLevelInfo{
 	{Level: LoyaltyPlatinum, MinVisits: 30, PointMultiplier: 2.0, DiscountPercent: 10},
 	{Level: LoyaltyGold, MinVisits: 15, PointMultiplier: 1.5, DiscountPercent: 5},
 	{Level: LoyaltySilver, MinVisits: 5, PointMultiplier: 1.2, DiscountPercent: 3},
 	{Level: LoyaltyBronze, MinVisits: 0, PointMultiplier: 1.0, DiscountPercent: 0},
 }
 
+// GetAllLoyaltyLevels returns a copy of the loyalty levels (sorted from highest to lowest).
+func GetAllLoyaltyLevels() []LoyaltyLevelInfo {
+	result := make([]LoyaltyLevelInfo, len(loyaltyLevels))
+	copy(result, loyaltyLevels)
+	return result
+}
+
 func LevelForVisitCount(visitCount int) LoyaltyLevel {
-	for _, info := range LoyaltyLevels {
+	for _, info := range loyaltyLevels {
 		if visitCount >= info.MinVisits {
 			return info.Level
 		}
@@ -47,12 +55,12 @@ func LevelForVisitCount(visitCount int) LoyaltyLevel {
 }
 
 func GetLoyaltyLevelInfo(level LoyaltyLevel) LoyaltyLevelInfo {
-	for _, info := range LoyaltyLevels {
+	for _, info := range loyaltyLevels {
 		if info.Level == level {
 			return info
 		}
 	}
-	return LoyaltyLevels[len(LoyaltyLevels)-1]
+	return loyaltyLevels[len(loyaltyLevels)-1]
 }
 
 type LoyaltyAccount struct {

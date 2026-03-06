@@ -72,10 +72,11 @@ func toLoyaltyAccountResponse(a *domain.LoyaltyAccount) loyaltyAccountResponse {
 	}
 
 	// Calculate next level info
-	for i, lvl := range domain.LoyaltyLevels {
+	allLevels := domain.GetAllLoyaltyLevels()
+	for i, lvl := range allLevels {
 		if lvl.Level == a.Level && i > 0 {
-			nextLevel := string(domain.LoyaltyLevels[i-1].Level)
-			visitsToNext := domain.LoyaltyLevels[i-1].MinVisits - a.VisitCount
+			nextLevel := string(allLevels[i-1].Level)
+			visitsToNext := allLevels[i-1].MinVisits - a.VisitCount
 			if visitsToNext < 0 {
 				visitsToNext = 0
 			}
@@ -144,10 +145,11 @@ func (h *LoyaltyHandler) ListTransactions(w http.ResponseWriter, r *http.Request
 
 // GetLevels returns information about all loyalty levels and their privileges.
 func (h *LoyaltyHandler) GetLevels(w http.ResponseWriter, r *http.Request) {
-	levels := make([]loyaltyLevelResponse, len(domain.LoyaltyLevels))
+	allLevels := domain.GetAllLoyaltyLevels()
+	levels := make([]loyaltyLevelResponse, len(allLevels))
 	// Reverse order so bronze is first
-	for i, info := range domain.LoyaltyLevels {
-		levels[len(domain.LoyaltyLevels)-1-i] = loyaltyLevelResponse{
+	for i, info := range allLevels {
+		levels[len(allLevels)-1-i] = loyaltyLevelResponse{
 			Level:           string(info.Level),
 			MinVisits:       info.MinVisits,
 			PointMultiplier: info.PointMultiplier,
