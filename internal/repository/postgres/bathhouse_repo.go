@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -440,61 +439,6 @@ func (r *bathhouseRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status d
 		return domain.ErrNotFound
 	}
 	return nil
-}
-
-func (r *bathhouseRepo) scanBathhouse(row pgx.Row) (*domain.Bathhouse, error) {
-	var (
-		bh         domain.Bathhouse
-		imagesJSON []byte
-		whJSON     []byte
-	)
-	err := row.Scan(
-		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Description, &bh.Address, &bh.CityID,
-		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
-		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
-		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.ApiKey, &bh.CreatedAt, &bh.UpdatedAt,
-	)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domain.ErrNotFound
-		}
-		return nil, fmt.Errorf("scan bathhouse: %w", err)
-	}
-
-	if err := json.Unmarshal(imagesJSON, &bh.Images); err != nil {
-		return nil, fmt.Errorf("unmarshal images: %w", err)
-	}
-	if err := json.Unmarshal(whJSON, &bh.WorkingHours); err != nil {
-		return nil, fmt.Errorf("unmarshal working hours: %w", err)
-	}
-
-	return &bh, nil
-}
-
-func (r *bathhouseRepo) scanBathhouseFromRow(rows pgx.Rows) (*domain.Bathhouse, error) {
-	var (
-		bh         domain.Bathhouse
-		imagesJSON []byte
-		whJSON     []byte
-	)
-	err := rows.Scan(
-		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Description, &bh.Address, &bh.CityID,
-		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
-		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
-		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("scan bathhouse row: %w", err)
-	}
-
-	if err := json.Unmarshal(imagesJSON, &bh.Images); err != nil {
-		return nil, fmt.Errorf("unmarshal images: %w", err)
-	}
-	if err := json.Unmarshal(whJSON, &bh.WorkingHours); err != nil {
-		return nil, fmt.Errorf("unmarshal working hours: %w", err)
-	}
-
-	return &bh, nil
 }
 
 func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*domain.Bathhouse, error) {

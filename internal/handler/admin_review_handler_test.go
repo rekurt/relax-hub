@@ -81,8 +81,12 @@ func TestAdminHandler_ListReviews(t *testing.T) {
 	}
 
 	reviewRepo := mock.NewReviewRepo()
-	reviewRepo.Create(context.Background(), review1)
-	reviewRepo.Create(context.Background(), review2)
+	if err := reviewRepo.Create(context.Background(), review1); err != nil {
+		t.Fatalf("failed to create review1: %v", err)
+	}
+	if err := reviewRepo.Create(context.Background(), review2); err != nil {
+		t.Fatalf("failed to create review2: %v", err)
+	}
 
 	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
 
@@ -148,7 +152,9 @@ func TestAdminHandler_GetPendingCount(t *testing.T) {
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
-		reviewRepo.Create(context.Background(), review)
+		if err := reviewRepo.Create(context.Background(), review); err != nil {
+			t.Fatalf("failed to create review: %v", err)
+		}
 	}
 
 	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
@@ -203,7 +209,9 @@ func TestAdminHandler_ApproveReview(t *testing.T) {
 	}
 
 	reviewRepo := mock.NewReviewRepo()
-	reviewRepo.Create(context.Background(), review)
+	if err := reviewRepo.Create(context.Background(), review); err != nil {
+		t.Fatalf("failed to create review: %v", err)
+	}
 
 	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
 
@@ -261,7 +269,9 @@ func TestAdminHandler_RejectReview(t *testing.T) {
 	}
 
 	reviewRepo := mock.NewReviewRepo()
-	reviewRepo.Create(context.Background(), review)
+	if err := reviewRepo.Create(context.Background(), review); err != nil {
+		t.Fatalf("failed to create review: %v", err)
+	}
 
 	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
 
@@ -325,7 +335,9 @@ func TestAdminHandler_BatchApproveReviews(t *testing.T) {
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
-		reviewRepo.Create(context.Background(), review)
+		if err := reviewRepo.Create(context.Background(), review); err != nil {
+			t.Fatalf("failed to create review: %v", err)
+		}
 		ids = append(ids, review.ID.String())
 	}
 
@@ -380,7 +392,9 @@ func TestAdminHandler_BatchRejectReviews(t *testing.T) {
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
-		reviewRepo.Create(context.Background(), review)
+		if err := reviewRepo.Create(context.Background(), review); err != nil {
+			t.Fatalf("failed to create review: %v", err)
+		}
 		ids = append(ids, review.ID.String())
 	}
 
@@ -435,7 +449,9 @@ func TestAdminHandler_ApproveReview_SendsNotification(t *testing.T) {
 	}
 
 	reviewRepo := mock.NewReviewRepo()
-	reviewRepo.Create(context.Background(), review)
+	if err := reviewRepo.Create(context.Background(), review); err != nil {
+		t.Fatalf("failed to create review: %v", err)
+	}
 
 	notificationSent := false
 	var notifUserID uuid.UUID
@@ -496,7 +512,9 @@ func TestAdminHandler_RejectReview_SendsNotification(t *testing.T) {
 	}
 
 	reviewRepo := mock.NewReviewRepo()
-	reviewRepo.Create(context.Background(), review)
+	if err := reviewRepo.Create(context.Background(), review); err != nil {
+		t.Fatalf("failed to create review: %v", err)
+	}
 
 	notificationSent := false
 	var notifUserID uuid.UUID
@@ -562,7 +580,9 @@ func TestAdminHandler_BatchApproveReviews_SendsNotifications(t *testing.T) {
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
-		reviewRepo.Create(context.Background(), review)
+		if err := reviewRepo.Create(context.Background(), review); err != nil {
+			t.Fatalf("failed to create review: %v", err)
+		}
 		ids = append(ids, review.ID.String())
 		authorIDs = append(authorIDs, authorID)
 	}

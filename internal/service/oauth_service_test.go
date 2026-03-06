@@ -42,7 +42,9 @@ func newTestOAuthService(t *testing.T, userRepo *mock.UserRepo, socialRepo *mock
 	// Tests can use uuid.New().String() as the state parameter if needed
 	testState := "test-state-12345"
 	for provider := range providers {
-		mr.Set("oauth_state:"+testState, string(provider))
+		if err := mr.Set("oauth_state:"+testState, string(provider)); err != nil {
+			panic(err) // fail test setup
+		}
 	}
 
 	return service.NewOAuthServiceWithProviders(

@@ -258,27 +258,6 @@ func (s *recommendationService) matchesPreferences(bh *domain.Bathhouse, prefs *
 	if (prefs.PreferPool || prefs.PreferSauna || prefs.PreferSteamRoom ||
 		prefs.PreferHotTub || prefs.PreferBBQ || prefs.PreferKaraoke) {
 
-		// Count how many preferred amenities the user wants
-		preferredCount := 0
-		if prefs.PreferPool {
-			preferredCount++
-		}
-		if prefs.PreferSauna {
-			preferredCount++
-		}
-		if prefs.PreferSteamRoom {
-			preferredCount++
-		}
-		if prefs.PreferHotTub {
-			preferredCount++
-		}
-		if prefs.PreferBBQ {
-			preferredCount++
-		}
-		if prefs.PreferKaraoke {
-			preferredCount++
-		}
-
 		// Count how many preferences the bathhouse has
 		matchedCount := 0
 		if prefs.PreferPool && bh.HasPool {

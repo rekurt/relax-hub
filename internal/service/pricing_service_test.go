@@ -24,7 +24,9 @@ func TestPricingService_CalculatePrice_NoRules(t *testing.T) {
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
-	bhRepo.Create(context.Background(), bh)
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
 
 	startTime := time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC)
 	endTime := time.Date(2024, 3, 15, 13, 0, 0, 0, time.UTC) // 3 hours
@@ -51,7 +53,9 @@ func TestPricingService_CalculatePrice_SingleRule(t *testing.T) {
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
-	bhRepo.Create(context.Background(), bh)
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
 
 	// Create a weekend rule (1.5x multiplier)
 	rule := &domain.PricingRule{
@@ -65,7 +69,9 @@ func TestPricingService_CalculatePrice_SingleRule(t *testing.T) {
 		IsActive:    true,
 		CreatedAt:   time.Now(),
 	}
-	priceRepo.Create(context.Background(), rule)
+	if err := priceRepo.Create(context.Background(), rule); err != nil {
+		t.Fatalf("failed to create pricing rule: %v", err)
+	}
 
 	// Saturday, 10:00-13:00 (3 hours)
 	startTime := time.Date(2024, 3, 16, 10, 0, 0, 0, time.UTC) // Saturday
@@ -93,7 +99,9 @@ func TestPricingService_CalculatePrice_PriorityConflict(t *testing.T) {
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
-	bhRepo.Create(context.Background(), bh)
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
 
 	// Weekend rule: 1.5x (priority 10)
 	weekendRule := &domain.PricingRule{
@@ -107,7 +115,9 @@ func TestPricingService_CalculatePrice_PriorityConflict(t *testing.T) {
 		IsActive:    true,
 		CreatedAt:   time.Now(),
 	}
-	priceRepo.Create(context.Background(), weekendRule)
+	if err := priceRepo.Create(context.Background(), weekendRule); err != nil {
+		t.Fatalf("failed to create weekend rule: %v", err)
+	}
 
 	// Saturday Happy Hour: 0.8x (priority 20) - should win
 	from := "18:00"
@@ -124,7 +134,9 @@ func TestPricingService_CalculatePrice_PriorityConflict(t *testing.T) {
 		IsActive:    true,
 		CreatedAt:   time.Now(),
 	}
-	priceRepo.Create(context.Background(), happyHourRule)
+	if err := priceRepo.Create(context.Background(), happyHourRule); err != nil {
+		t.Fatalf("failed to create happy hour rule: %v", err)
+	}
 
 	// Saturday 18:00-20:00 (2 hours, during happy hour)
 	startTime := time.Date(2024, 3, 16, 18, 0, 0, 0, time.UTC)
@@ -153,7 +165,9 @@ func TestPricingService_CalculatePrice_PartialRuleApplication(t *testing.T) {
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
-	bhRepo.Create(context.Background(), bh)
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
 
 	// Happy hour 18:00-20:00 with 0.8x
 	from := "18:00"
@@ -170,7 +184,9 @@ func TestPricingService_CalculatePrice_PartialRuleApplication(t *testing.T) {
 		IsActive:    true,
 		CreatedAt:   time.Now(),
 	}
-	priceRepo.Create(context.Background(), rule)
+	if err := priceRepo.Create(context.Background(), rule); err != nil {
+		t.Fatalf("failed to create rule: %v", err)
+	}
 
 	// Book from 17:00-21:00 (4 hours)
 	// 17:00-18:00: base price (1000)
@@ -200,7 +216,9 @@ func TestPricingService_CreateRule_InvalidInput(t *testing.T) {
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
-	bhRepo.Create(context.Background(), bh)
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
 
 	// Create rule with invalid multiplier
 	rule := &domain.PricingRule{
@@ -233,7 +251,9 @@ func TestPricingService_CreateRule_UnauthorizedUser(t *testing.T) {
 	unauthorizedID := uuid.New()
 
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: ownerID}
-	bhRepo.Create(context.Background(), bh)
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
 
 	rule := &domain.PricingRule{
 		ID:          uuid.New(),
@@ -262,7 +282,9 @@ func TestPricingService_ListRules(t *testing.T) {
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
-	bhRepo.Create(context.Background(), bh)
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
 
 	// Create multiple rules
 	for i := 0; i < 3; i++ {
@@ -277,7 +299,9 @@ func TestPricingService_ListRules(t *testing.T) {
 			IsActive:    true,
 			CreatedAt:   time.Now(),
 		}
-		priceRepo.Create(context.Background(), rule)
+		if err := priceRepo.Create(context.Background(), rule); err != nil {
+			t.Fatalf("failed to create rule: %v", err)
+		}
 	}
 
 	rules, err := service.ListRules(context.Background(), bathhouseID)
@@ -301,7 +325,9 @@ func TestPricingService_CalculatePrice_HolidayRule(t *testing.T) {
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
-	bhRepo.Create(context.Background(), bh)
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
 
 	// New Year holidays: 2x multiplier
 	dateFrom := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -318,7 +344,9 @@ func TestPricingService_CalculatePrice_HolidayRule(t *testing.T) {
 		IsActive:    true,
 		CreatedAt:   time.Now(),
 	}
-	priceRepo.Create(context.Background(), holidayRule)
+	if err := priceRepo.Create(context.Background(), holidayRule); err != nil {
+		t.Fatalf("failed to create holiday rule: %v", err)
+	}
 
 	// Book on Jan 3, 10:00-13:00
 	startTime := time.Date(2024, 1, 3, 10, 0, 0, 0, time.UTC)
@@ -346,7 +374,9 @@ func TestPricingService_CalculatePrice_InactiveRule(t *testing.T) {
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
-	bhRepo.Create(context.Background(), bh)
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
 
 	// Create an inactive rule
 	rule := &domain.PricingRule{
@@ -360,7 +390,9 @@ func TestPricingService_CalculatePrice_InactiveRule(t *testing.T) {
 		IsActive:    false, // inactive
 		CreatedAt:   time.Now(),
 	}
-	priceRepo.Create(context.Background(), rule)
+	if err := priceRepo.Create(context.Background(), rule); err != nil {
+		t.Fatalf("failed to create rule: %v", err)
+	}
 
 	// Saturday booking should use base price, not the inactive rule
 	startTime := time.Date(2024, 3, 16, 10, 0, 0, 0, time.UTC)

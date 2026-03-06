@@ -65,21 +65,6 @@ type updateRecommendationPreferencesRequest struct {
 	PreferKaraoke   *bool  `json:"prefer_karaoke,omitempty"`
 }
 
-func toBathhouseRecommendation(bh *domain.Bathhouse) recommendationResponse {
-	return recommendationResponse{
-		ID:           bh.ID.String(),
-		Name:         bh.Name,
-		Description:  bh.Description,
-		Address:      bh.Address,
-		CityID:       bh.CityID,
-		Latitude:     bh.Latitude,
-		Longitude:    bh.Longitude,
-		PricePerHour: bh.PricePerHour,
-		Rating:       bh.Rating,
-		ReviewCount:  bh.ReviewCount,
-	}
-}
-
 // GetPersonalized returns personalized recommendations for the authenticated user
 func (h *RecommendationHandler) GetPersonalized(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())

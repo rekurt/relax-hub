@@ -1463,18 +1463,12 @@ func (r *RecommendationRepo) GetSimilarUsers(_ context.Context, userID uuid.UUID
 func (r *RecommendationRepo) GetPopularBathhouses(_ context.Context, cityID int64, limit int) ([]uuid.UUID, error) {
 	// Mock implementation returns empty list
 	// In real implementation would require bathhouse repo access
-	if limit <= 0 {
-		limit = 20
-	}
 	return []uuid.UUID{}, nil
 }
 
 func (r *RecommendationRepo) GetSimilarBathhouses(_ context.Context, bathhouseID uuid.UUID, limit int) ([]uuid.UUID, error) {
 	// Mock implementation returns empty list
 	// In real implementation would require bathhouse repo access
-	if limit <= 0 {
-		limit = 10
-	}
 	return []uuid.UUID{}, nil
 }
 

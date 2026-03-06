@@ -237,7 +237,9 @@ func TestRecommendationService_GetPersonalized(t *testing.T) {
 				Rating:       4.5,
 				HasPool:      true,
 			}
-			bhRepo.Create(context.Background(), bh)
+			if err := bhRepo.Create(context.Background(), bh); err != nil {
+				t.Fatalf("failed to create bathhouse: %v", err)
+			}
 		}
 
 		svc := NewRecommendationService(recRepo, bhRepo)
@@ -454,8 +456,12 @@ func TestRecommendationService_ScoringAndRanking(t *testing.T) {
 			Rating:       2.0,
 		}
 
-		bhRepo.Create(context.Background(), bh1)
-		bhRepo.Create(context.Background(), bh2)
+		if err := bhRepo.Create(context.Background(), bh1); err != nil {
+			t.Fatalf("failed to create bathhouse: %v", err)
+		}
+		if err := bhRepo.Create(context.Background(), bh2); err != nil {
+			t.Fatalf("failed to create bathhouse: %v", err)
+		}
 
 		svc := NewRecommendationService(recRepo, bhRepo)
 		userID := uuid.New()

@@ -268,7 +268,11 @@ func (h *WidgetHandler) ServeScript(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
 	w.Header().Set("Cache-Control", "public, max-age=31536000")
 	w.WriteHeader(http.StatusOK)
-	w.Write(content)
+	if _, err := w.Write(content); err != nil {
+		if h.log != nil {
+			h.log.Error("failed to write widget script response", "error", err)
+		}
+	}
 }
 
 func (h *WidgetHandler) ServeStyles(w http.ResponseWriter, r *http.Request) {
@@ -288,5 +292,9 @@ func (h *WidgetHandler) ServeStyles(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/css; charset=utf-8")
 	w.Header().Set("Cache-Control", "public, max-age=31536000")
 	w.WriteHeader(http.StatusOK)
-	w.Write(content)
+	if _, err := w.Write(content); err != nil {
+		if h.log != nil {
+			h.log.Error("failed to write widget styles response", "error", err)
+		}
+	}
 }
