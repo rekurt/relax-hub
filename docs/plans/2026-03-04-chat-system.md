@@ -29,7 +29,7 @@ Real-time чат-система между клиентами и владель�
 - Create: `migrations/000011_chat.up.sql`
 - Create: `migrations/000011_chat.down.sql`
 
-- [ ] Создать модель Conversation:
+- [x] Создать модель Conversation:
   ```
   Conversation {
     ID            uuid.UUID
@@ -40,7 +40,7 @@ Real-time чат-система между клиентами и владель�
     CreatedAt     time.Time
   }
   ```
-- [ ] Создать модель Message:
+- [x] Создать модель Message:
   ```
   Message {
     ID              uuid.UUID
@@ -52,9 +52,9 @@ Real-time чат-система между клиентами и владель�
     CreatedAt       time.Time
   }
   ```
-- [ ] Создать миграции с UNIQUE(bathhouse_id, client_id) на conversations
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать миграции с UNIQUE(bathhouse_id, client_id) на conversations
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий чата
 
