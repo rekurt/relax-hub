@@ -249,12 +249,12 @@ func (h *RecommendationHandler) UpdatePreferences(w http.ResponseWriter, r *http
 		return
 	}
 
+	defer r.Body.Close()
 	var req updateRecommendationPreferencesRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_input", "invalid request body")
 		return
 	}
-	defer r.Body.Close()
 
 	// Build preferences object
 	prefs := &domain.UserPreferences{

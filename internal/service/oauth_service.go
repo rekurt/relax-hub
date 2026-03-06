@@ -119,7 +119,7 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 	}
 
 	// Delete the state from Redis (one-time use only)
-	// Ignore delete errors - state is already validated so this is just cleanup
+	// State is already validated, so deletion failure is non-critical cleanup
 	_ = s.redisClient.Del(redisCtx, "oauth_state:"+state).Err()
 
 	// Verify the stored provider is valid
