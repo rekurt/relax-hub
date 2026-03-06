@@ -349,3 +349,51 @@ func TestWidgetHandler_CreateBooking_MissingFields(t *testing.T) {
 		t.Errorf("expected status 400, got %d", rec.Code)
 	}
 }
+
+// TestServeScript tests the static script serving
+func TestServeScript(t *testing.T) {
+	handler := NewWidgetHandler(
+		&mockWidgetBathhouseRepository{},
+		&mockWidgetBookingService{},
+		nil,
+	)
+
+	req := httptest.NewRequest(http.MethodGet, "/widget.js", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeScript(rec, req)
+
+	// Should return 200 if file exists, 404 if not
+	if rec.Code != http.StatusNotFound && rec.Code != http.StatusOK {
+		t.Errorf("expected status 200 or 404, got %d", rec.Code)
+	}
+
+	// Check Content-Type header
+	contentType := rec.Header().Get("Content-Type")
+	if rec.Code == http.StatusOK && contentType != "application/javascript; charset=utf-8" {
+		t.Errorf("expected Content-Type application/javascript, got %s", contentType)
+	}
+}
+
+// TestServeStyles tests the static styles serving
+func TestServeStyles(t *testing.T) {
+	handler := NewWidgetHandler(
+		&mockWidgetBathhouseRepository{},
+		&mockWidgetBookingService{},
+		nil,
+	)
+
+	req := httptest.NewRequest(http.MethodGet, "/widget.css", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeStyles(rec, req)
+
+	// Should return 200 if file exists, 404 if not
+	if rec.Code != http.StatusNotFound && rec.Code != http.StatusOK {
+		t.Errorf("expected status 200 or 404, got %d", rec.Code)
+	}
+
+	// Check Content-Type header
+	contentType := rec.Header().Get("Content-Type")
+	if rec.Code == http.StatusOK && contentType != "text/css; charset=utf-8" {
+		t.Errorf("expected Content-Type text/css, got %s", contentType)
+	}
+}

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -248,4 +249,44 @@ func (h *WidgetHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, toWidgetBookingResponse(booking))
+}
+
+func (h *WidgetHandler) ServeScript(w http.ResponseWriter, r *http.Request) {
+	scriptPath := "widget/dist/widget.min.js"
+
+	// Read the minified JavaScript file
+	content, err := os.ReadFile(scriptPath)
+	if err != nil {
+		if h.log != nil {
+			h.log.Error("failed to read widget script", "error", err)
+		}
+		writeError(w, http.StatusNotFound, "not_found", "widget script not found")
+		return
+	}
+
+	// Set appropriate headers
+	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=31536000")
+	w.WriteHeader(http.StatusOK)
+	w.Write(content)
+}
+
+func (h *WidgetHandler) ServeStyles(w http.ResponseWriter, r *http.Request) {
+	stylesPath := "widget/dist/widget.min.css"
+
+	// Read the minified CSS file
+	content, err := os.ReadFile(stylesPath)
+	if err != nil {
+		if h.log != nil {
+			h.log.Error("failed to read widget styles", "error", err)
+		}
+		writeError(w, http.StatusNotFound, "not_found", "widget styles not found")
+		return
+	}
+
+	// Set appropriate headers
+	w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=31536000")
+	w.WriteHeader(http.StatusOK)
+	w.Write(content)
 }

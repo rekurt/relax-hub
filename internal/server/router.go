@@ -139,6 +139,7 @@ func NewRouter(p RouterParams) http.Handler {
 		// Widget API keys (authenticated owner)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/widget-key", p.BHHandler.GetWidgetKey)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/widget-key/regenerate", p.BHHandler.RegenerateWidgetKey)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/widget-code", p.BHHandler.GetWidgetCode)
 
 		// Price calculator (public)
 		r.Get("/bathhouses/{id}/price-calculator", p.PricingHandler.CalculatePrice)
@@ -147,6 +148,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(widgetRateLimit).Get("/widget/{api_key}/bathhouse", p.WidgetHandler.GetBathhouse)
 		r.With(widgetRateLimit).Get("/widget/{api_key}/slots", p.WidgetHandler.GetAvailableSlots)
 		r.With(widgetRateLimit).Post("/widget/{api_key}/booking", p.WidgetHandler.CreateBooking)
+
+		// Widget static files (public)
+		r.Get("/widget.js", p.WidgetHandler.ServeScript)
+		r.Get("/widget.css", p.WidgetHandler.ServeStyles)
 
 		// User profile and statistics (authenticated)
 		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)

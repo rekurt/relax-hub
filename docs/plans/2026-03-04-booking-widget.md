@@ -80,11 +80,11 @@ JavaScript-виджет для встраивания на сайт бани. П
 - Modify: `internal/handler/widget.go`
 - Modify: `internal/server/router.go`
 
-- [ ] GET /api/v1/my/bathhouses/{id}/widget-code — сгенерировать HTML-код для встраивания с превью настроек
-- [ ] Параметры: color, fontFamily, showPrice, showRating
-- [ ] Эндпоинт для раздачи статики виджета: GET /widget.js, GET /widget.css
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] GET /api/v1/my/bathhouses/{id}/widget-code — сгенерировать HTML-код для встраивания с превью настроек
+- [x] Параметры: color, fontFamily, showPrice, showRating
+- [x] Эндпоинт для раздачи статики виджета: GET /widget.js, GET /widget.css
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Верификация
 

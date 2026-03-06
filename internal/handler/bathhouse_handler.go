@@ -571,6 +571,21 @@ type widgetKeyResponse struct {
 	ApiKey string `json:"api_key"`
 }
 
+type widgetCodeRequest struct {
+	Color      string `json:"color"`
+	FontFamily string `json:"font_family"`
+	ShowPrice  bool   `json:"show_price"`
+	ShowRating bool   `json:"show_rating"`
+	Language   string `json:"language"`
+}
+
+type widgetCodeResponse struct {
+	Code     string `json:"code"`
+	ApiKey   string `json:"api_key"`
+	ScriptURL string `json:"script_url"`
+	StyleURL string `json:"style_url"`
+}
+
 func (h *BathhouseHandler) GetWidgetKey(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	bathhouseID := chi.URLParam(r, "id")
@@ -607,6 +622,79 @@ func (h *BathhouseHandler) RegenerateWidgetKey(w http.ResponseWriter, r *http.Re
 	}
 
 	writeJSON(w, http.StatusOK, widgetKeyResponse{ApiKey: newKey})
+}
+
+func (h *BathhouseHandler) GetWidgetCode(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	bathhouseID := chi.URLParam(r, "id")
+
+	id, err := uuid.Parse(bathhouseID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	// Get bathhouse to verify ownership
+	bathhouse, err := h.bathhouseService.GetByID(r.Context(), id)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	// Only owner can generate widget code
+	if bathhouse.OwnerID != userID {
+		writeError(w, http.StatusForbidden, "forbidden", "you don't have permission to access this bathhouse's widget")
+		return
+	}
+
+	// Get the API key
+	apiKey, err := h.bathhouseService.GetWidgetKey(r.Context(), userID, id)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	// Parse optional request parameters
+	var req widgetCodeRequest
+	req.Color = r.URL.Query().Get("color")
+	req.FontFamily = r.URL.Query().Get("font_family")
+	req.ShowPrice = r.URL.Query().Get("show_price") == "true"
+	req.ShowRating = r.URL.Query().Get("show_rating") == "true"
+	req.Language = r.URL.Query().Get("language")
+	if req.Language == "" {
+		req.Language = "en"
+	}
+
+	// Set defaults
+	if req.Color == "" {
+		req.Color = "#4CAF50"
+	}
+	if req.FontFamily == "" {
+		req.FontFamily = "Helvetica, Arial, sans-serif"
+	}
+
+	// Generate HTML embed code
+	code := generateWidgetCode(apiKey, req)
+
+	writeJSON(w, http.StatusOK, widgetCodeResponse{
+		Code:      code,
+		ApiKey:    apiKey,
+		ScriptURL: "/widget.js",
+		StyleURL:  "/widget.css",
+	})
+}
+
+func generateWidgetCode(apiKey string, req widgetCodeRequest) string {
+	return `<div id="bani-widget" data-api-key="` + apiKey + `" data-color="` + req.Color + `" data-font-family="` + req.FontFamily + `" data-language="` + req.Language + `" data-show-price="` + boolToString(req.ShowPrice) + `" data-show-rating="` + boolToString(req.ShowRating) + `"></div>
+<link rel="stylesheet" href="/widget.css">
+<script src="/widget.js"></script>`
+}
+
+func boolToString(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
 }
 
 const maxPageSize = 100
