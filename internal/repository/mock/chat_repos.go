@@ -86,7 +86,8 @@ func (r *ConversationRepo) ListByUser(_ context.Context, userID uuid.UUID, bathh
 	var filtered []domain.Conversation
 	for _, c := range r.conversations {
 		if len(bathhouseIDs) > 0 {
-			if bhSet[c.BathhouseID] {
+			// Owner/representative: conversations for their bathhouses OR where they are a client
+			if bhSet[c.BathhouseID] || c.ClientID == userID {
 				filtered = append(filtered, *c)
 			}
 		} else {

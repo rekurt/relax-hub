@@ -225,15 +225,7 @@ func (s *chatService) getUserBathhouseIDs(ctx context.Context, userID uuid.UUID,
 		return ids, nil
 
 	case domain.RoleRepresentative:
-		reps, err := s.repRepo.ListByUser(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
-		ids := make([]uuid.UUID, len(reps))
-		for i, r := range reps {
-			ids[i] = r.BathhouseID
-		}
-		return ids, nil
+		return s.repRepo.ListBathhouseIDsByUser(ctx, userID)
 
 	case domain.RoleAdmin:
 		// Admin conversations are handled separately via ListAll.

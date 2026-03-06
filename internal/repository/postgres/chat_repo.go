@@ -92,10 +92,10 @@ func (r *conversationRepo) ListByUser(ctx context.Context, userID uuid.UUID, bat
 	var args []interface{}
 
 	if len(bathhouseIDs) > 0 {
-		// Owner/representative: conversations for their bathhouses
-		countQuery = `SELECT COUNT(*) FROM conversations WHERE bathhouse_id = ANY($1)`
-		args = append(args, bathhouseIDs)
-		listQuery = `SELECT ` + conversationColumns + ` FROM conversations WHERE bathhouse_id = ANY($1) ORDER BY last_message_at DESC NULLS LAST, created_at DESC LIMIT $2 OFFSET $3`
+		// Owner/representative: conversations for their bathhouses OR where they are a client
+		countQuery = `SELECT COUNT(*) FROM conversations WHERE bathhouse_id = ANY($1) OR client_id = $2`
+		args = append(args, bathhouseIDs, userID)
+		listQuery = `SELECT ` + conversationColumns + ` FROM conversations WHERE bathhouse_id = ANY($1) OR client_id = $2 ORDER BY last_message_at DESC NULLS LAST, created_at DESC LIMIT $3 OFFSET $4`
 	} else {
 		// Client: conversations where they are the client
 		countQuery = `SELECT COUNT(*) FROM conversations WHERE client_id = $1`
@@ -104,12 +104,24 @@ func (r *conversationRepo) ListByUser(ctx context.Context, userID uuid.UUID, bat
 	}
 
 	var totalCount int64
-	if err := r.pool.QueryRow(ctx, countQuery, args[0]).Scan(&totalCount); err != nil {
-		return nil, fmt.Errorf("count conversations: %w", err)
+	if len(bathhouseIDs) > 0 {
+		if err := r.pool.QueryRow(ctx, countQuery, args[0], args[1]).Scan(&totalCount); err != nil {
+			return nil, fmt.Errorf("count conversations: %w", err)
+		}
+	} else {
+		if err := r.pool.QueryRow(ctx, countQuery, args[0]).Scan(&totalCount); err != nil {
+			return nil, fmt.Errorf("count conversations: %w", err)
+		}
 	}
 
 	offset := (page - 1) * pageSize
-	rows, err := r.pool.Query(ctx, listQuery, args[0], pageSize, offset)
+	var rows pgx.Rows
+	var err error
+	if len(bathhouseIDs) > 0 {
+		rows, err = r.pool.Query(ctx, listQuery, args[0], args[1], pageSize, offset)
+	} else {
+		rows, err = r.pool.Query(ctx, listQuery, args[0], pageSize, offset)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("list conversations: %w", err)
 	}
