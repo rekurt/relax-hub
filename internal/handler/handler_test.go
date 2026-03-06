@@ -18,6 +18,22 @@ import (
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
+// Context key types to match middleware implementation
+type testContextKey string
+
+const (
+	testUserIDKey   testContextKey = "user_id"
+	testUserRoleKey testContextKey = "user_role"
+)
+
+// Helper function to create a test context with user info
+func createTestContext(userID uuid.UUID, role domain.UserRole) context.Context {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, testUserIDKey, userID)
+	ctx = context.WithValue(ctx, testUserRoleKey, role)
+	return ctx
+}
+
 // --- Mock services ---
 
 type mockAuthService struct {
@@ -123,14 +139,16 @@ func (m *mockUserService) GetMyStats(ctx context.Context, userID uuid.UUID) (*se
 }
 
 type mockBathhouseService struct {
-	searchFn      func(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)
-	getByIDFn     func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
-	createFn      func(ctx context.Context, ownerID uuid.UUID, input service.CreateBathhouseInput) (*domain.Bathhouse, error)
-	updateFn      func(ctx context.Context, userID uuid.UUID, role domain.UserRole, id uuid.UUID, input service.UpdateBathhouseInput) (*domain.Bathhouse, error)
-	deleteFn      func(ctx context.Context, ownerID uuid.UUID, id uuid.UUID) error
-	listByOwnerFn func(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error)
-	approveFn     func(ctx context.Context, id uuid.UUID) error
-	rejectFn      func(ctx context.Context, id uuid.UUID) error
+	searchFn           func(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)
+	getByIDFn          func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
+	createFn           func(ctx context.Context, ownerID uuid.UUID, input service.CreateBathhouseInput) (*domain.Bathhouse, error)
+	updateFn           func(ctx context.Context, userID uuid.UUID, role domain.UserRole, id uuid.UUID, input service.UpdateBathhouseInput) (*domain.Bathhouse, error)
+	deleteFn           func(ctx context.Context, ownerID uuid.UUID, id uuid.UUID) error
+	listByOwnerFn      func(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error)
+	approveFn          func(ctx context.Context, id uuid.UUID) error
+	rejectFn           func(ctx context.Context, id uuid.UUID) error
+	getWidgetKeyFn     func(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error)
+	regenerateKeyFn    func(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error)
 }
 
 func (m *mockBathhouseService) Search(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
@@ -187,6 +205,20 @@ func (m *mockBathhouseService) Reject(ctx context.Context, id uuid.UUID) error {
 		return m.rejectFn(ctx, id)
 	}
 	return nil
+}
+
+func (m *mockBathhouseService) GetWidgetKey(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error) {
+	if m.getWidgetKeyFn != nil {
+		return m.getWidgetKeyFn(ctx, userID, bathhouseID)
+	}
+	return "", nil
+}
+
+func (m *mockBathhouseService) RegenerateWidgetKey(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) (string, error) {
+	if m.regenerateKeyFn != nil {
+		return m.regenerateKeyFn(ctx, userID, bathhouseID)
+	}
+	return "", nil
 }
 
 type mockBookingService struct {
@@ -2914,5 +2946,152 @@ func TestBathhouseHandler_GetByID_IsFavorite_Unauthenticated(t *testing.T) {
 	}
 	if isFav, ok := item["is_favorite"].(bool); !ok || isFav {
 		t.Errorf("expected is_favorite=false, got %v", item["is_favorite"])
+	}
+}
+
+func TestBathhouseHandler_GetWidgetKey_Success(t *testing.T) {
+	ownerID := uuid.New()
+	bhID := uuid.New()
+	apiKey := "test-api-key-12345"
+
+	bhSvc := &mockBathhouseService{
+		getWidgetKeyFn: func(_ context.Context, userID, bathhouseID uuid.UUID) (string, error) {
+			if userID != ownerID || bathhouseID != bhID {
+				return "", domain.ErrForbidden
+			}
+			return apiKey, nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil)
+
+	ctx := createTestContext(ownerID, domain.RoleOwner)
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", bhID.String())
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/bathhouses/"+bhID.String()+"/widget-key", nil)
+	rec := httptest.NewRecorder()
+	h.GetWidgetKey(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d. Response: %s", rec.Code, rec.Body.String())
+	}
+
+	resp := parseResponse(t, rec)
+	var item map[string]interface{}
+	if err := json.Unmarshal(resp.Data, &item); err != nil {
+		t.Fatalf("failed to parse data: %v", err)
+	}
+
+	if item["api_key"] != apiKey {
+		t.Errorf("expected api_key=%s, got %v", apiKey, item["api_key"])
+	}
+}
+
+func TestBathhouseHandler_GetWidgetKey_Forbidden(t *testing.T) {
+	ownerID := uuid.New()
+	otherUserID := uuid.New()
+	bhID := uuid.New()
+
+	bhSvc := &mockBathhouseService{
+		getWidgetKeyFn: func(_ context.Context, userID, bathhouseID uuid.UUID) (string, error) {
+			if userID != ownerID {
+				return "", domain.ErrForbidden
+			}
+			return "", nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil)
+
+	ctx := createTestContext(otherUserID, domain.RoleOwner)
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", bhID.String())
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/bathhouses/"+bhID.String()+"/widget-key", nil)
+	rec := httptest.NewRecorder()
+
+	h.GetWidgetKey(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected status 403, got %d", rec.Code)
+	}
+}
+
+func TestBathhouseHandler_RegenerateWidgetKey_Success(t *testing.T) {
+	ownerID := uuid.New()
+	bhID := uuid.New()
+	newKey := "new-api-key-67890"
+
+	bhSvc := &mockBathhouseService{
+		regenerateKeyFn: func(_ context.Context, userID, bathhouseID uuid.UUID) (string, error) {
+			if userID != ownerID || bathhouseID != bhID {
+				return "", domain.ErrForbidden
+			}
+			return newKey, nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil)
+
+	ctx := createTestContext(ownerID, domain.RoleOwner)
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", bhID.String())
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	req := httptest.NewRequestWithContext(ctx, http.MethodPost, "/bathhouses/"+bhID.String()+"/widget-key/regenerate", nil)
+	rec := httptest.NewRecorder()
+
+	h.RegenerateWidgetKey(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d. Response: %s", rec.Code, rec.Body.String())
+	}
+
+	resp := parseResponse(t, rec)
+	var item map[string]interface{}
+	if err := json.Unmarshal(resp.Data, &item); err != nil {
+		t.Fatalf("failed to parse data: %v", err)
+	}
+
+	if item["api_key"] != newKey {
+		t.Errorf("expected api_key=%s, got %v", newKey, item["api_key"])
+	}
+}
+
+func TestBathhouseHandler_RegenerateWidgetKey_Forbidden(t *testing.T) {
+	ownerID := uuid.New()
+	otherUserID := uuid.New()
+	bhID := uuid.New()
+
+	bhSvc := &mockBathhouseService{
+		regenerateKeyFn: func(_ context.Context, userID, bathhouseID uuid.UUID) (string, error) {
+			if userID != ownerID {
+				return "", domain.ErrForbidden
+			}
+			return "", nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil)
+
+	ctx := createTestContext(otherUserID, domain.RoleOwner)
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", bhID.String())
+	ctx = context.WithValue(ctx, chi.RouteCtxKey, rctx)
+
+	req := httptest.NewRequestWithContext(ctx, http.MethodPost, "/bathhouses/"+bhID.String()+"/widget-key/regenerate", nil)
+	rec := httptest.NewRecorder()
+
+	h.RegenerateWidgetKey(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected status 403, got %d", rec.Code)
 	}
 }

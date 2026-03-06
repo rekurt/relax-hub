@@ -30,12 +30,12 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 			id, owner_id, name, description, address, city_id,
 			latitude, longitude, price_per_hour, min_duration, max_guests,
 			has_pool, has_sauna, has_steam_room, has_hot_tub, has_bbq, has_karaoke,
-			rating, review_count, images, working_hours, status, created_at, updated_at
+			rating, review_count, images, working_hours, status, api_key, created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, $5, $6,
 			$7, $8, $9, $10, $11,
 			$12, $13, $14, $15, $16, $17,
-			$18, $19, $20, $21, $22, $23, $24
+			$18, $19, $20, $21, $22, $23, $24, $25
 		)`
 
 	if bh.ID == uuid.Nil {
@@ -55,7 +55,7 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 		bh.ID, bh.OwnerID, bh.Name, bh.Description, bh.Address, bh.CityID,
 		bh.Latitude, bh.Longitude, bh.PricePerHour, bh.MinDuration, bh.MaxGuests,
 		bh.HasPool, bh.HasSauna, bh.HasSteamRoom, bh.HasHotTub, bh.HasBBQ, bh.HasKaraoke,
-		bh.Rating, bh.ReviewCount, imagesJSON, whJSON, bh.Status, bh.CreatedAt, bh.UpdatedAt,
+		bh.Rating, bh.ReviewCount, imagesJSON, whJSON, bh.Status, bh.ApiKey, bh.CreatedAt, bh.UpdatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("create bathhouse: %w", err)
@@ -121,7 +121,7 @@ func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error 
 			name = $2, description = $3, address = $4, city_id = $5,
 			latitude = $6, longitude = $7, price_per_hour = $8, min_duration = $9, max_guests = $10,
 			has_pool = $11, has_sauna = $12, has_steam_room = $13, has_hot_tub = $14, has_bbq = $15, has_karaoke = $16,
-			images = $17, working_hours = $18, updated_at = $19
+			images = $17, working_hours = $18, api_key = $19, updated_at = $20
 		WHERE id = $1`
 
 	bh.UpdatedAt = time.Now()
@@ -139,7 +139,7 @@ func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error 
 		bh.ID, bh.Name, bh.Description, bh.Address, bh.CityID,
 		bh.Latitude, bh.Longitude, bh.PricePerHour, bh.MinDuration, bh.MaxGuests,
 		bh.HasPool, bh.HasSauna, bh.HasSteamRoom, bh.HasHotTub, bh.HasBBQ, bh.HasKaraoke,
-		imagesJSON, whJSON, bh.UpdatedAt,
+		imagesJSON, whJSON, bh.ApiKey, bh.UpdatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("update bathhouse: %w", err)
@@ -381,7 +381,7 @@ func (r *bathhouseRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 		SELECT id, owner_id, name, description, address, city_id,
 			latitude, longitude, price_per_hour, min_duration, max_guests,
 			has_pool, has_sauna, has_steam_room, has_hot_tub, has_bbq, has_karaoke,
-			rating, review_count, images, working_hours, status, created_at, updated_at
+			rating, review_count, images, working_hours, status, api_key, created_at, updated_at
 		FROM bathhouses WHERE owner_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, query, ownerID, pageSize, offset)
@@ -392,7 +392,7 @@ func (r *bathhouseRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 
 	var bathhouses []domain.Bathhouse
 	for rows.Next() {
-		bh, err := r.scanBathhouseFromRow(rows)
+		bh, err := r.scanBathhouseFromRowWithAPIKeyOnly(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -452,7 +452,7 @@ func (r *bathhouseRepo) scanBathhouse(row pgx.Row) (*domain.Bathhouse, error) {
 		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Description, &bh.Address, &bh.CityID,
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
-		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
+		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.ApiKey, &bh.CreatedAt, &bh.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -553,6 +553,32 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKey(rows pgx.Rows) (*domain.B
 	}
 
 	bh.IsPromoted = isPromoted
+
+	return &bh, nil
+}
+
+func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKeyOnly(rows pgx.Rows) (*domain.Bathhouse, error) {
+	var (
+		bh         domain.Bathhouse
+		imagesJSON []byte
+		whJSON     []byte
+	)
+	err := rows.Scan(
+		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Description, &bh.Address, &bh.CityID,
+		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
+		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
+		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.ApiKey, &bh.CreatedAt, &bh.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("scan bathhouse row: %w", err)
+	}
+
+	if err := json.Unmarshal(imagesJSON, &bh.Images); err != nil {
+		return nil, fmt.Errorf("unmarshal images: %w", err)
+	}
+	if err := json.Unmarshal(whJSON, &bh.WorkingHours); err != nil {
+		return nil, fmt.Errorf("unmarshal working hours: %w", err)
+	}
 
 	return &bh, nil
 }

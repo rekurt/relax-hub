@@ -199,3 +199,79 @@ func TestBathhouseService_Reject(t *testing.T) {
 		t.Errorf("status = %q, want %q", updated.Status, domain.BathhouseStatusRejected)
 	}
 }
+
+func TestBathhouseService_GetWidgetKey_Success(t *testing.T) {
+	svc, _, _, _ := newBathhouseService()
+	ownerID := uuid.New()
+
+	bh, err := svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+		Name:         "Test Bath",
+		Address:      "123 St",
+		CityID:       1,
+		PricePerHour: 5000,
+		MinDuration:  1,
+		MaxGuests:    10,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	apiKey, err := svc.GetWidgetKey(context.Background(), ownerID, bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if apiKey == "" {
+		t.Errorf("expected non-empty API key")
+	}
+	if apiKey != bh.ApiKey {
+		t.Errorf("apiKey = %q, want %q", apiKey, bh.ApiKey)
+	}
+}
+
+func TestBathhouseService_GetWidgetKey_OtherOwnerForbidden(t *testing.T) {
+	svc, bhRepo, _, _ := newBathhouseService()
+	ownerID := uuid.New()
+	otherOwnerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	_, err := svc.GetWidgetKey(context.Background(), otherOwnerID, bh.ID)
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("other owner should be forbidden, got: %v", err)
+	}
+}
+
+func TestBathhouseService_RegenerateWidgetKey_Success(t *testing.T) {
+	svc, bhRepo, _, _ := newBathhouseService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+	originalKey := bh.ApiKey
+
+	newKey, err := svc.RegenerateWidgetKey(context.Background(), ownerID, bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if newKey == "" {
+		t.Errorf("expected non-empty API key")
+	}
+	if newKey == originalKey {
+		t.Errorf("new key should be different from old key")
+	}
+
+	// Verify the key was updated in the repository
+	updated, _ := bhRepo.GetByID(context.Background(), bh.ID)
+	if updated.ApiKey != newKey {
+		t.Errorf("stored apiKey = %q, want %q", updated.ApiKey, newKey)
+	}
+}
+
+func TestBathhouseService_RegenerateWidgetKey_OtherOwnerForbidden(t *testing.T) {
+	svc, bhRepo, _, _ := newBathhouseService()
+	ownerID := uuid.New()
+	otherOwnerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	_, err := svc.RegenerateWidgetKey(context.Background(), otherOwnerID, bh.ID)
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("other owner should be forbidden, got: %v", err)
+	}
+}

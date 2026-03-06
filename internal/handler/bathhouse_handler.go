@@ -567,6 +567,48 @@ func (h *BathhouseHandler) MyBathhouses(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+type widgetKeyResponse struct {
+	ApiKey string `json:"api_key"`
+}
+
+func (h *BathhouseHandler) GetWidgetKey(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	bathhouseID := chi.URLParam(r, "id")
+
+	id, err := uuid.Parse(bathhouseID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	apiKey, err := h.bathhouseService.GetWidgetKey(r.Context(), userID, id)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, widgetKeyResponse{ApiKey: apiKey})
+}
+
+func (h *BathhouseHandler) RegenerateWidgetKey(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	bathhouseID := chi.URLParam(r, "id")
+
+	id, err := uuid.Parse(bathhouseID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	newKey, err := h.bathhouseService.RegenerateWidgetKey(r.Context(), userID, id)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, widgetKeyResponse{ApiKey: newKey})
+}
+
 const maxPageSize = 100
 
 func getPage(s string) int {
