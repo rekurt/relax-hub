@@ -28,15 +28,15 @@ JavaScript-виджет для встраивания на сайт бани. П
 - Create: `internal/handler/widget.go`
 - Modify: `internal/server/router.go`
 
-- [ ] Создать публичные эндпоинты для виджета (без auth, с API key бани):
+- [x] Создать публичные эндпоинты для виджета (без auth, с API key бани):
   - GET /api/v1/widget/{api_key}/bathhouse — информация о бане (название, фото, цена)
   - GET /api/v1/widget/{api_key}/slots?date=... — доступные слоты на дату
   - POST /api/v1/widget/{api_key}/booking — создать бронирование (имя, телефон, email, дата, время, гости)
-- [ ] API key генерируется для каждой бани (UUID, хранится в БД)
-- [ ] Rate limiting для widget endpoints
-- [ ] CORS: разрешить встраивание с любого домена (отдельная CORS-политика)
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] API key генерируется для каждой бани (UUID, хранится в БД)
+- [x] Rate limiting для widget endpoints
+- [x] CORS: разрешить встраивание с любого домена (отдельная CORS-политика)
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Генерация API-ключей
 

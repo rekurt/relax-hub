@@ -79,6 +79,10 @@ func (m *mockBathhouseRepository) GetByID(ctx context.Context, id uuid.UUID) (*d
 	return nil, domain.ErrNotFound
 }
 
+func (m *mockBathhouseRepository) GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error) {
+	return nil, domain.ErrNotFound
+}
+
 func (m *mockBathhouseRepository) Create(ctx context.Context, bh *domain.Bathhouse) error {
 	return nil
 }

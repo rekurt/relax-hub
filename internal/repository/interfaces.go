@@ -30,6 +30,7 @@ type CityRepository interface {
 type BathhouseRepository interface {
 	Create(ctx context.Context, bh *domain.Bathhouse) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
+	GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error)
 	Update(ctx context.Context, bh *domain.Bathhouse) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)

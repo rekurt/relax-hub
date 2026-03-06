@@ -89,6 +89,32 @@ func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bath
 	return nil, domain.ErrNotFound
 }
 
+func (r *bathhouseRepo) GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error) {
+	query := `
+		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.description, bathhouses.address, bathhouses.city_id,
+			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
+			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
+			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
+			bathhouses.created_at, bathhouses.updated_at, bathhouses.api_key,
+			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
+		FROM bathhouses
+		LEFT JOIN subscriptions s ON bathhouses.id = s.bathhouse_id AND s.status = 'active'
+		LEFT JOIN promotions p ON bathhouses.id = p.bathhouse_id AND p.status = 'active'
+		WHERE bathhouses.api_key = $1`
+
+	rows, err := r.pool.Query(ctx, query, apiKey)
+	if err != nil {
+		return nil, fmt.Errorf("get bathhouse by api_key: %w", err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		return r.scanBathhouseFromRowWithAPIKey(rows)
+	}
+
+	return nil, domain.ErrNotFound
+}
+
 func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error {
 	query := `
 		UPDATE bathhouses SET
@@ -484,6 +510,36 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*do
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
 		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
 		&isPromoted,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("scan bathhouse row: %w", err)
+	}
+
+	if err := json.Unmarshal(imagesJSON, &bh.Images); err != nil {
+		return nil, fmt.Errorf("unmarshal images: %w", err)
+	}
+	if err := json.Unmarshal(whJSON, &bh.WorkingHours); err != nil {
+		return nil, fmt.Errorf("unmarshal working hours: %w", err)
+	}
+
+	bh.IsPromoted = isPromoted
+
+	return &bh, nil
+}
+
+func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKey(rows pgx.Rows) (*domain.Bathhouse, error) {
+	var (
+		bh         domain.Bathhouse
+		imagesJSON []byte
+		whJSON     []byte
+		isPromoted bool
+	)
+	err := rows.Scan(
+		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Description, &bh.Address, &bh.CityID,
+		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
+		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
+		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
+		&bh.ApiKey, &isPromoted,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan bathhouse row: %w", err)

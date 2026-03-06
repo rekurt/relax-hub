@@ -33,6 +33,7 @@ type RouterParams struct {
 	RecommendationHandler  *handler.RecommendationHandler
 	SubscriptionHandler    *handler.SubscriptionHandler
 	PricingHandler         *handler.PricingHandler
+	WidgetHandler          *handler.WidgetHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -48,6 +49,10 @@ func NewRouter(p RouterParams) http.Handler {
 
 	auth := middleware.RequireAuth(p.AuthService)
 	optionalAuth := middleware.OptionalAuth(p.AuthService)
+
+	// Create rate limiter for widget endpoints
+	widgetRateLimiter := middleware.NewRateLimiter()
+	widgetRateLimit := middleware.WidgetRateLimit(widgetRateLimiter, 10) // 10 requests per second per API key
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// WebSocket (auth via query parameter)
@@ -133,6 +138,11 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// Price calculator (public)
 		r.Get("/bathhouses/{id}/price-calculator", p.PricingHandler.CalculatePrice)
+
+		// Widget API (public, API key based)
+		r.With(widgetRateLimit).Get("/widget/{api_key}/bathhouse", p.WidgetHandler.GetBathhouse)
+		r.With(widgetRateLimit).Get("/widget/{api_key}/slots", p.WidgetHandler.GetAvailableSlots)
+		r.With(widgetRateLimit).Post("/widget/{api_key}/booking", p.WidgetHandler.CreateBooking)
 
 		// User profile and statistics (authenticated)
 		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)

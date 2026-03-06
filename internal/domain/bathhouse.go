@@ -53,6 +53,7 @@ type Bathhouse struct {
 	WorkingHours []WorkingHours
 	Status       BathhouseStatus
 	IsPromoted   bool // transient field, set during List queries
+	ApiKey       string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

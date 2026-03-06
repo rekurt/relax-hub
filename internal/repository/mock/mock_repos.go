@@ -894,6 +894,18 @@ func (r *BathhouseRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Bathho
 	return &cp, nil
 }
 
+func (r *BathhouseRepo) GetByAPIKey(_ context.Context, apiKey string) (*domain.Bathhouse, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, bh := range r.bathhouses {
+		if bh.ApiKey == apiKey {
+			cp := *bh
+			return &cp, nil
+		}
+	}
+	return nil, domain.ErrNotFound
+}
+
 func (r *BathhouseRepo) Update(_ context.Context, bh *domain.Bathhouse) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
