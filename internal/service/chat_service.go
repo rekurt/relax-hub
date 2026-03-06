@@ -116,7 +116,7 @@ func (s *chatService) SendMessage(ctx context.Context, senderID uuid.UUID, role 
 	}
 
 	s.broadcaster.BroadcastNewMessage(conversationID, msg)
-	s.sendMessageNotification(context.WithoutCancel(ctx), conv, senderID, text)
+	go s.sendMessageNotification(context.WithoutCancel(ctx), conv, senderID, text)
 
 	return msg, nil
 }
