@@ -103,15 +103,15 @@ Real-time чат-система между клиентами и владель�
 - Create: `internal/handler/chat.go`
 - Modify: `internal/server/router.go`
 
-- [ ] POST /api/v1/bathhouses/{id}/chat — начать беседу с баней
-- [ ] GET /api/v1/my/conversations — список бесед (paginated)
-- [ ] GET /api/v1/conversations/{id}/messages — сообщения (paginated)
-- [ ] POST /api/v1/conversations/{id}/messages — отправить сообщение
-- [ ] PATCH /api/v1/conversations/{id}/read — прочитать все сообщения
-- [ ] GET /api/v1/my/unread-messages-count — счетчик непрочитанных
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] POST /api/v1/bathhouses/{id}/chat — начать беседу с баней
+- [x] GET /api/v1/my/conversations — список бесед (paginated)
+- [x] GET /api/v1/conversations/{id}/messages — сообщения (paginated)
+- [x] POST /api/v1/conversations/{id}/messages — отправить сообщение
+- [x] PATCH /api/v1/conversations/{id}/read — прочитать все сообщения
+- [x] GET /api/v1/my/unread-messages-count — счетчик непрочитанных
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 6: Верификация
 

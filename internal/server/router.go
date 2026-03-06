@@ -35,6 +35,7 @@ type RouterParams struct {
 	PricingHandler         *handler.PricingHandler
 	WidgetHandler          *handler.WidgetHandler
 	LoyaltyHandler         *handler.LoyaltyHandler
+	ChatHandler            *handler.ChatHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -161,6 +162,14 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Get("/my/loyalty", p.LoyaltyHandler.GetAccount)
 		r.With(auth).Get("/my/loyalty/transactions", p.LoyaltyHandler.ListTransactions)
 		r.With(auth).Get("/my/loyalty/levels", p.LoyaltyHandler.GetLevels)
+
+		// Chat (authenticated)
+		r.With(auth).Post("/bathhouses/{id}/chat", p.ChatHandler.StartConversation)
+		r.With(auth).Get("/my/conversations", p.ChatHandler.ListConversations)
+		r.With(auth).Get("/conversations/{id}/messages", p.ChatHandler.ListMessages)
+		r.With(auth).Post("/conversations/{id}/messages", p.ChatHandler.SendMessage)
+		r.With(auth).Patch("/conversations/{id}/read", p.ChatHandler.MarkAsRead)
+		r.With(auth).Get("/my/unread-messages-count", p.ChatHandler.GetUnreadCount)
 
 		// Notifications (authenticated)
 		r.With(auth).Get("/my/notifications", p.NotifHandler.List)
