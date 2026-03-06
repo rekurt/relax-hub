@@ -114,23 +114,7 @@ func (r *pricingRuleRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.
 	}
 	defer rows.Close()
 
-	var rules []domain.PricingRule
-	for rows.Next() {
-		var rule domain.PricingRule
-		if err := rows.Scan(
-			&rule.ID, &rule.BathhouseID, &rule.Name, &rule.Type, &rule.Multiplier,
-			&rule.DaysOfWeek, &rule.TimeFrom, &rule.TimeTo, &rule.DateFrom, &rule.DateTo,
-			&rule.Priority, &rule.IsActive, &rule.CreatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("scan pricing rule: %w", err)
-		}
-		rules = append(rules, rule)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate pricing rule rows: %w", err)
-	}
-
-	return rules, nil
+	return r.scanRules(rows)
 }
 
 func (r *pricingRuleRepo) GetActiveRules(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error) {
@@ -147,6 +131,11 @@ func (r *pricingRuleRepo) GetActiveRules(ctx context.Context, bathhouseID uuid.U
 	}
 	defer rows.Close()
 
+	return r.scanRules(rows)
+}
+
+// scanRules extracts the common row scanning logic
+func (r *pricingRuleRepo) scanRules(rows pgx.Rows) ([]domain.PricingRule, error) {
 	var rules []domain.PricingRule
 	for rows.Next() {
 		var rule domain.PricingRule

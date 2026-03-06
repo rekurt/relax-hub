@@ -44,20 +44,7 @@ type pricingRuleResponse struct {
 	CreatedAt   time.Time  `json:"created_at"`
 }
 
-type createPricingRuleRequest struct {
-	Name       string     `json:"name"`
-	Type       string     `json:"type"`
-	Multiplier float64    `json:"multiplier"`
-	DaysOfWeek []int      `json:"days_of_week,omitempty"`
-	TimeFrom   *string    `json:"time_from,omitempty"`
-	TimeTo     *string    `json:"time_to,omitempty"`
-	DateFrom   *time.Time `json:"date_from,omitempty"`
-	DateTo     *time.Time `json:"date_to,omitempty"`
-	Priority   int        `json:"priority"`
-	IsActive   bool       `json:"is_active"`
-}
-
-type updatePricingRuleRequest struct {
+type pricingRuleRequest struct {
 	Name       string     `json:"name"`
 	Type       string     `json:"type"`
 	Multiplier float64    `json:"multiplier"`
@@ -103,7 +90,7 @@ func (h *PricingHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req createPricingRuleRequest
+	var req pricingRuleRequest
 	if err := readJSON(w, r, &req); err != nil {
 		handleServiceError(w, err)
 		return
@@ -167,7 +154,7 @@ func (h *PricingHandler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req updatePricingRuleRequest
+	var req pricingRuleRequest
 	if err := readJSON(w, r, &req); err != nil {
 		handleServiceError(w, err)
 		return
@@ -249,6 +236,16 @@ func (h *PricingHandler) CalculatePrice(w http.ResponseWriter, r *http.Request) 
 	// Validate that start time is before end time
 	if !startTime.Before(endTime) {
 		writeError(w, http.StatusBadRequest, "invalid_input", "start must be before end")
+		return
+	}
+
+	// Validate that times are hour-aligned (minute and second must be 0)
+	if startTime.Minute() != 0 || startTime.Second() != 0 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "start time must be hour-aligned (minutes and seconds must be 0)")
+		return
+	}
+	if endTime.Minute() != 0 || endTime.Second() != 0 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "end time must be hour-aligned (minutes and seconds must be 0)")
 		return
 	}
 

@@ -169,6 +169,16 @@ make run
 | GET | `/bathhouses/{id}/representatives` | owner | Список представителей |
 | DELETE | `/representatives/{id}` | owner | Отозвать представителя |
 
+### Динамическое ценообразование
+
+| Метод | Путь | Доступ | Описание |
+|-------|------|--------|----------|
+| POST | `/my/bathhouses/{id}/pricing-rules` | owner, representative | Создать ценовое правило |
+| GET | `/my/bathhouses/{id}/pricing-rules` | owner, representative | Список ценовых правил бани |
+| PUT | `/pricing-rules/{id}` | owner, representative | Обновить ценовое правило |
+| DELETE | `/pricing-rules/{id}` | owner, representative | Удалить ценовое правило |
+| GET | `/bathhouses/{id}/price-calculator?start=...&end=...` | public | Калькулятор цены с учетом правил |
+
 ### Города
 
 | Метод | Путь | Доступ | Описание |
@@ -241,6 +251,7 @@ make test-hurl
 - **Bookings** — создание, отмена, подтверждение, отклонение, завершение
 - **Reviews** — список отзывов, создание, редактирование, удаление, ответы владельца
 - **Favorites** — добавление в избранное, список избранного
+- **Pricing** — создание/обновление/удаление ценовых правил, расчет цены с учетом правил
 - **Representatives** — приглашение представителя, список, отзыв прав
 - **Admin** — управление пользователями, бронированиями, городами
 - **Health** — liveness и readiness probes

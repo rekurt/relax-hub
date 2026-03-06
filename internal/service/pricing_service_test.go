@@ -408,3 +408,272 @@ func TestPricingService_CalculatePrice_InactiveRule(t *testing.T) {
 		t.Errorf("expected price %d, got %d", expected, price)
 	}
 }
+
+func TestPricingService_CalculatePrice_WraparoundTimeRange(t *testing.T) {
+	// Test overnight wraparound times (e.g., 22:00-06:00)
+	priceRepo := mock.NewPricingRuleRepo()
+	bhRepo := mock.NewBathhouseRepo()
+	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
+	log := logger.New(logger.LevelError)
+
+	service := NewPricingService(priceRepo, bhRepo, access, log)
+
+	bathhouseID := uuid.New()
+	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	// Overnight rule: 22:00-06:00 with 1.5x multiplier
+	from := "22:00"
+	to := "06:00"
+	rule := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        "Overnight",
+		Type:        domain.RuleTypeTimeRange,
+		Multiplier:  1.5,
+		TimeFrom:    &from,
+		TimeTo:      &to,
+		Priority:    10,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+	}
+	if err := priceRepo.Create(context.Background(), rule); err != nil {
+		t.Fatalf("failed to create overnight rule: %v", err)
+	}
+
+	// Test 1: Booking at 23:00-01:00 (inside wraparound window)
+	startTime := time.Date(2024, 3, 15, 23, 0, 0, 0, time.UTC)
+	endTime := time.Date(2024, 3, 16, 1, 0, 0, 0, time.UTC)
+
+	price, err := service.CalculatePrice(context.Background(), bathhouseID, 1000, startTime, endTime)
+	if err != nil {
+		t.Fatalf("unexpected error in wraparound test: %v", err)
+	}
+
+	expected := int64(3000) // 1000 * 2 * 1.5
+	if price != expected {
+		t.Errorf("expected price %d for 23:00-01:00 booking, got %d", expected, price)
+	}
+
+	// Test 2: Booking at 05:00-06:00 (end of wraparound window)
+	startTime = time.Date(2024, 3, 15, 5, 0, 0, 0, time.UTC)
+	endTime = time.Date(2024, 3, 15, 6, 0, 0, 0, time.UTC)
+
+	price, err = service.CalculatePrice(context.Background(), bathhouseID, 1000, startTime, endTime)
+	if err != nil {
+		t.Fatalf("unexpected error in wraparound end test: %v", err)
+	}
+
+	expected = int64(1500) // 1000 * 1 * 1.5
+	if price != expected {
+		t.Errorf("expected price %d for 05:00-06:00 booking, got %d", expected, price)
+	}
+
+	// Test 3: Booking at 20:00-21:00 (outside wraparound window)
+	startTime = time.Date(2024, 3, 15, 20, 0, 0, 0, time.UTC)
+	endTime = time.Date(2024, 3, 15, 21, 0, 0, 0, time.UTC)
+
+	price, err = service.CalculatePrice(context.Background(), bathhouseID, 1000, startTime, endTime)
+	if err != nil {
+		t.Fatalf("unexpected error in non-wraparound test: %v", err)
+	}
+
+	expected = int64(1000) // 1000 * 1 * 1.0 (no multiplier)
+	if price != expected {
+		t.Errorf("expected price %d for 20:00-21:00 booking, got %d", expected, price)
+	}
+}
+
+func TestPricingService_UpdateRule(t *testing.T) {
+	// Test updating a pricing rule
+	priceRepo := mock.NewPricingRuleRepo()
+	bhRepo := mock.NewBathhouseRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	access := NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelError)
+
+	service := NewPricingService(priceRepo, bhRepo, access, log)
+
+	bathhouseID := uuid.New()
+	ownerID := uuid.New()
+	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: ownerID}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	// Create initial rule
+	rule := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        "Weekend",
+		Type:        domain.RuleTypeWeekend,
+		Multiplier:  1.5,
+		DaysOfWeek:  []int{5, 6},
+		Priority:    10,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+	}
+	if err := priceRepo.Create(context.Background(), rule); err != nil {
+		t.Fatalf("failed to create rule: %v", err)
+	}
+
+	// Update the rule
+	updatedRule := &domain.PricingRule{
+		ID:          rule.ID,
+		BathhouseID: bathhouseID,
+		Name:        "Weekend Updated",
+		Type:        domain.RuleTypeWeekend,
+		Multiplier:  2.0,
+		DaysOfWeek:  []int{5, 6},
+		Priority:    20,
+		IsActive:    true,
+	}
+
+	err := service.UpdateRule(context.Background(), ownerID, domain.RoleOwner, updatedRule)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify the update
+	retrieved, err := priceRepo.GetByID(context.Background(), rule.ID)
+	if err != nil {
+		t.Fatalf("failed to retrieve rule: %v", err)
+	}
+
+	if retrieved.Name != "Weekend Updated" {
+		t.Errorf("expected name 'Weekend Updated', got '%s'", retrieved.Name)
+	}
+	if retrieved.Multiplier != 2.0 {
+		t.Errorf("expected multiplier 2.0, got %f", retrieved.Multiplier)
+	}
+	if retrieved.Priority != 20 {
+		t.Errorf("expected priority 20, got %d", retrieved.Priority)
+	}
+}
+
+func TestPricingService_DeleteRule(t *testing.T) {
+	// Test deleting a pricing rule
+	priceRepo := mock.NewPricingRuleRepo()
+	bhRepo := mock.NewBathhouseRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	access := NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelError)
+
+	service := NewPricingService(priceRepo, bhRepo, access, log)
+
+	bathhouseID := uuid.New()
+	ownerID := uuid.New()
+	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: ownerID}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	// Create rule
+	rule := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        "Weekend",
+		Type:        domain.RuleTypeWeekend,
+		Multiplier:  1.5,
+		DaysOfWeek:  []int{5, 6},
+		Priority:    10,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+	}
+	if err := priceRepo.Create(context.Background(), rule); err != nil {
+		t.Fatalf("failed to create rule: %v", err)
+	}
+
+	// Delete the rule
+	err := service.DeleteRule(context.Background(), ownerID, domain.RoleOwner, rule.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify deletion
+	_, err = priceRepo.GetByID(context.Background(), rule.ID)
+	if err == nil {
+		t.Error("expected error after deletion, got nil")
+	}
+	if err != domain.ErrNotFound {
+		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestPricingService_GetActiveRules(t *testing.T) {
+	// Test getting only active rules
+	priceRepo := mock.NewPricingRuleRepo()
+	bhRepo := mock.NewBathhouseRepo()
+	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
+	log := logger.New(logger.LevelError)
+
+	service := NewPricingService(priceRepo, bhRepo, access, log)
+
+	bathhouseID := uuid.New()
+	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	// Create active rules
+	activeRule1 := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        "Active 1",
+		Type:        domain.RuleTypeWeekend,
+		Multiplier:  1.5,
+		DaysOfWeek:  []int{5},
+		Priority:    10,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+	}
+	activeRule2 := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        "Active 2",
+		Type:        domain.RuleTypeWeekday,
+		Multiplier:  1.2,
+		DaysOfWeek:  []int{0, 1, 2, 3, 4},
+		Priority:    5,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+	}
+
+	// Create inactive rule
+	inactiveRule := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        "Inactive",
+		Type:        domain.RuleTypeWeekend,
+		Multiplier:  2.0,
+		DaysOfWeek:  []int{6},
+		Priority:    15,
+		IsActive:    false,
+		CreatedAt:   time.Now(),
+	}
+
+	for _, rule := range []*domain.PricingRule{activeRule1, activeRule2, inactiveRule} {
+		if err := priceRepo.Create(context.Background(), rule); err != nil {
+			t.Fatalf("failed to create rule: %v", err)
+		}
+	}
+
+	// Get active rules
+	activeRules, err := service.GetActiveRules(context.Background(), bathhouseID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(activeRules) != 2 {
+		t.Errorf("expected 2 active rules, got %d", len(activeRules))
+	}
+
+	// Verify all returned rules are active
+	for _, rule := range activeRules {
+		if !rule.IsActive {
+			t.Errorf("returned inactive rule: %v", rule)
+		}
+	}
+}
