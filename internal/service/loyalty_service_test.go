@@ -79,9 +79,12 @@ func TestLoyaltyService_EarnPoints_BronzeLevel(t *testing.T) {
 
 	// totalPrice = 10000 kopecks (100 rubles), bronze multiplier = 1.0
 	// points = 10000 / 100 * 1.0 = 100
-	err := svc.EarnPoints(context.Background(), userID, bookingID, 10000)
+	earned, err := svc.EarnPoints(context.Background(), userID, bookingID, 10000)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if earned != 100 {
+		t.Errorf("earned = %d, want 100", earned)
 	}
 
 	account, err := repo.GetAccount(context.Background(), userID)
@@ -93,6 +96,9 @@ func TestLoyaltyService_EarnPoints_BronzeLevel(t *testing.T) {
 	}
 	if account.TotalEarned != 100 {
 		t.Errorf("total_earned = %d, want 100", account.TotalEarned)
+	}
+	if account.VisitCount != 1 {
+		t.Errorf("visit_count = %d, want 1", account.VisitCount)
 	}
 
 	// Verify transaction was created
@@ -129,9 +135,12 @@ func TestLoyaltyService_EarnPoints_GoldLevel(t *testing.T) {
 
 	// totalPrice = 10000 kopecks, gold multiplier = 1.5
 	// points = round(10000 / 100 * 1.5) = 150
-	err = svc.EarnPoints(context.Background(), userID, bookingID, 10000)
+	earned, err := svc.EarnPoints(context.Background(), userID, bookingID, 10000)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if earned != 150 {
+		t.Errorf("earned = %d, want 150", earned)
 	}
 
 	account, err := repo.GetAccount(context.Background(), userID)
@@ -148,9 +157,12 @@ func TestLoyaltyService_EarnPoints_ZeroPrice(t *testing.T) {
 	userID := uuid.New()
 	bookingID := uuid.New()
 
-	err := svc.EarnPoints(context.Background(), userID, bookingID, 0)
+	earned, err := svc.EarnPoints(context.Background(), userID, bookingID, 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if earned != 0 {
+		t.Errorf("earned = %d, want 0", earned)
 	}
 
 	account, err := repo.GetAccount(context.Background(), userID)
@@ -416,9 +428,12 @@ func TestLoyaltyService_EarnPoints_PlatinumMultiplier(t *testing.T) {
 
 	// totalPrice = 5000 kopecks, platinum multiplier = 2.0
 	// points = round(5000 / 100 * 2.0) = 100
-	err = svc.EarnPoints(context.Background(), userID, bookingID, 5000)
+	earned, err := svc.EarnPoints(context.Background(), userID, bookingID, 5000)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+	if earned != 100 {
+		t.Errorf("earned = %d, want 100", earned)
 	}
 
 	account, err := repo.GetAccount(context.Background(), userID)

@@ -24,7 +24,6 @@ type loyaltyAccountResponse struct {
 	TotalEarned int64               `json:"total_earned"`
 	TotalSpent int64                 `json:"total_spent"`
 	VisitCount int                   `json:"visit_count"`
-	Discount   int                   `json:"discount_percent"`
 	Privileges loyaltyPrivileges     `json:"privileges"`
 	UpdatedAt  time.Time             `json:"updated_at"`
 	CreatedAt  time.Time             `json:"created_at"`
@@ -64,7 +63,6 @@ func toLoyaltyAccountResponse(a *domain.LoyaltyAccount) loyaltyAccountResponse {
 		TotalEarned: a.TotalEarned,
 		TotalSpent:  a.TotalSpent,
 		VisitCount:  a.VisitCount,
-		Discount:    levelInfo.DiscountPercent,
 		Privileges: loyaltyPrivileges{
 			PointMultiplier: levelInfo.PointMultiplier,
 			DiscountPercent: levelInfo.DiscountPercent,
@@ -78,6 +76,9 @@ func toLoyaltyAccountResponse(a *domain.LoyaltyAccount) loyaltyAccountResponse {
 		if lvl.Level == a.Level && i > 0 {
 			nextLevel := string(domain.LoyaltyLevels[i-1].Level)
 			visitsToNext := domain.LoyaltyLevels[i-1].MinVisits - a.VisitCount
+			if visitsToNext < 0 {
+				visitsToNext = 0
+			}
 			resp.Privileges.NextLevel = &nextLevel
 			resp.Privileges.VisitsToNext = &visitsToNext
 			break

@@ -86,6 +86,7 @@ Domain errors (domain/errors.go) map to HTTP status codes in handler/response.go
 - ErrSocialAccountAlreadyLinked -> 409
 - ErrSocialAccountNotFound -> 404
 - ErrOAuthExchangeFailed -> 400
+- ErrInsufficientPoints -> 400
 
 ### Structured Logging
 
@@ -295,6 +296,39 @@ Flexible pricing rules allow bathhouse owners to set different prices for differ
 - Day-of-week uses app convention (0=Monday), not Go's native (0=Sunday)
 - Wraparound times supported: from > to means rule spans midnight
 - String comparison works for HH:MM format (e.g., "09:00" < "14:30")
+
+### Loyalty Program
+
+Cumulative points system rewarding users for completed bookings with tiered benefits:
+
+**Models:**
+- **LoyaltyAccount** (`internal/domain/loyalty.go`): UserID, Level (bronze/silver/gold/platinum), Points, TotalEarned, TotalSpent, VisitCount
+- **LoyaltyTransaction** (`internal/domain/loyalty.go`): ID, UserID, Type (earn/spend), Amount, BookingID, Description
+
+**Tiers:**
+- Bronze: 0+ visits (1x multiplier, 0% discount)
+- Silver: 5+ visits (1.2x multiplier, 3% discount)
+- Gold: 15+ visits (1.5x multiplier, 5% discount)
+- Platinum: 30+ visits (2x multiplier, 10% discount)
+
+**Repository** (`internal/repository/postgres/loyalty_repo.go`): GetAccount, CreateAccount, AddPoints, SpendPoints, IncrementVisitCount, UpdateLevel, ListTransactions
+
+**Service** (`internal/service/loyalty_service.go`):
+- GetAccount (auto-creates at Bronze if missing)
+- EarnPoints — returns points awarded; increments visit count
+- SpendPoints, GetDiscount, RecalculateLevel, ListTransactions
+- Points formula: TotalPrice / 100 * level multiplier
+
+**Integration with BookingService:**
+- On completion: EarnPoints + IncrementVisitCount + RecalculateLevel (non-blocking, logged on failure)
+- On creation: optional partial payment with loyalty points (use_points field), booking ID generated before spend
+
+**Handlers:**
+- `GET /api/v1/my/loyalty` — loyalty account with privileges (auth required)
+- `GET /api/v1/my/loyalty/transactions` — paginated transaction history (auth required)
+- `GET /api/v1/my/loyalty/levels` — all levels with thresholds (auth required)
+
+Database migration: `migrations/000012_loyalty.up.sql`
 
 ### Code Style
 

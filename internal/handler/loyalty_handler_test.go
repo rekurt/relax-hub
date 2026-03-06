@@ -16,7 +16,7 @@ import (
 
 type mockLoyaltyService struct {
 	getAccountFn       func(ctx context.Context, userID uuid.UUID) (*domain.LoyaltyAccount, error)
-	earnPointsFn       func(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) error
+	earnPointsFn       func(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) (int64, error)
 	spendPointsFn      func(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
 	getDiscountFn      func(ctx context.Context, userID uuid.UUID) (int, error)
 	recalculateLevelFn func(ctx context.Context, userID uuid.UUID) error
@@ -30,11 +30,11 @@ func (m *mockLoyaltyService) GetAccount(ctx context.Context, userID uuid.UUID) (
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockLoyaltyService) EarnPoints(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) error {
+func (m *mockLoyaltyService) EarnPoints(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) (int64, error) {
 	if m.earnPointsFn != nil {
 		return m.earnPointsFn(ctx, userID, bookingID, totalPrice)
 	}
-	return nil
+	return 0, nil
 }
 
 func (m *mockLoyaltyService) SpendPoints(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error {

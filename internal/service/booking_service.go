@@ -141,11 +141,12 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 
 	// Spend loyalty points if requested
 	var pointsSpent int64
+	bookingID := uuid.New()
 	if input.UsePoints > 0 {
 		if input.UsePoints > totalPrice {
 			return nil, fmt.Errorf("%w: points exceed total price", domain.ErrInvalidInput)
 		}
-		if err := s.loyaltySvc.SpendPoints(ctx, userID, input.UsePoints, uuid.Nil); err != nil {
+		if err := s.loyaltySvc.SpendPoints(ctx, userID, input.UsePoints, bookingID); err != nil {
 			return nil, err
 		}
 		pointsSpent = input.UsePoints
@@ -158,7 +159,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 
 	now := time.Now()
 	booking := &domain.Booking{
-		ID:          uuid.New(),
+		ID:          bookingID,
 		UserID:      userID,
 		BathhouseID: input.BathhouseID,
 		StartTime:   input.StartTime,
@@ -176,6 +177,10 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	}
 
 	if err := s.bookingRepo.Create(ctx, booking); err != nil {
+		if pointsSpent > 0 {
+			s.logger.Error("booking creation failed after spending loyalty points, manual refund may be needed",
+				"user_id", userID, "points_spent", pointsSpent, "booking_id", bookingID, "error", err)
+		}
 		return nil, err
 	}
 
@@ -289,17 +294,11 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 
 	// Earn loyalty points and recalculate level
 	var earnedPoints int64
-	account, err := s.loyaltySvc.GetAccount(ctx, booking.UserID)
+	earned, err := s.loyaltySvc.EarnPoints(ctx, booking.UserID, bookingID, booking.TotalPrice)
 	if err != nil {
-		s.logger.Warn("failed to get loyalty account on complete", "booking_id", bookingID, "error", err)
+		s.logger.Warn("failed to earn loyalty points", "booking_id", bookingID, "error", err)
 	} else {
-		levelInfo := domain.GetLoyaltyLevelInfo(account.Level)
-		earnedPoints = int64(math.Round(float64(booking.TotalPrice) / 100.0 * levelInfo.PointMultiplier))
-
-		if err := s.loyaltySvc.EarnPoints(ctx, booking.UserID, bookingID, booking.TotalPrice); err != nil {
-			s.logger.Warn("failed to earn loyalty points", "booking_id", bookingID, "error", err)
-			earnedPoints = 0
-		}
+		earnedPoints = earned
 		if err := s.loyaltySvc.RecalculateLevel(ctx, booking.UserID); err != nil {
 			s.logger.Warn("failed to recalculate loyalty level", "booking_id", bookingID, "error", err)
 		}

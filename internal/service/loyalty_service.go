@@ -15,7 +15,7 @@ import (
 
 type LoyaltyService interface {
 	GetAccount(ctx context.Context, userID uuid.UUID) (*domain.LoyaltyAccount, error)
-	EarnPoints(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) error
+	EarnPoints(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) (int64, error)
 	SpendPoints(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
 	GetDiscount(ctx context.Context, userID uuid.UUID) (int, error)
 	RecalculateLevel(ctx context.Context, userID uuid.UUID) error
@@ -65,20 +65,26 @@ func (s *loyaltyService) GetAccount(ctx context.Context, userID uuid.UUID) (*dom
 
 // EarnPoints awards points to a user for a completed booking.
 // Formula: (totalPrice / 100) * multiplier, where multiplier depends on loyalty level.
-func (s *loyaltyService) EarnPoints(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) error {
+// Returns the number of points awarded.
+func (s *loyaltyService) EarnPoints(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) (int64, error) {
 	account, err := s.GetAccount(ctx, userID)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	levelInfo := domain.GetLoyaltyLevelInfo(account.Level)
 	points := int64(math.Round(float64(totalPrice) / 100.0 * levelInfo.PointMultiplier))
 	if points <= 0 {
-		return nil
+		return 0, nil
 	}
 
 	if err := s.loyaltyRepo.AddPoints(ctx, userID, points); err != nil {
-		return err
+		return 0, err
+	}
+
+	// Increment visit count for level progression
+	if err := s.loyaltyRepo.IncrementVisitCount(ctx, userID); err != nil {
+		return 0, err
 	}
 
 	tx := &domain.LoyaltyTransaction{
@@ -91,11 +97,11 @@ func (s *loyaltyService) EarnPoints(ctx context.Context, userID uuid.UUID, booki
 		CreatedAt:   time.Now(),
 	}
 	if err := s.loyaltyRepo.CreateTransaction(ctx, tx); err != nil {
-		return err
+		return 0, err
 	}
 
 	s.logger.Info("earned loyalty points", "user_id", userID, "points", points, "booking_id", bookingID)
-	return nil
+	return points, nil
 }
 
 // SpendPoints deducts points from a user's balance for a booking payment.
@@ -123,7 +129,7 @@ func (s *loyaltyService) SpendPoints(ctx context.Context, userID uuid.UUID, amou
 		Type:        domain.LoyaltyTransactionSpend,
 		Amount:      amount,
 		BookingID:   &bookingID,
-		Description: fmt.Sprintf("Списание при бронировании"),
+		Description: "Списание при бронировании",
 		CreatedAt:   time.Now(),
 	}
 	if err := s.loyaltyRepo.CreateTransaction(ctx, tx); err != nil {

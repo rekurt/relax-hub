@@ -150,6 +150,7 @@ type LoyaltyRepository interface {
 	CreateAccount(ctx context.Context, account *domain.LoyaltyAccount) error
 	AddPoints(ctx context.Context, userID uuid.UUID, amount int64) error
 	SpendPoints(ctx context.Context, userID uuid.UUID, amount int64) error
+	IncrementVisitCount(ctx context.Context, userID uuid.UUID) error
 	UpdateLevel(ctx context.Context, userID uuid.UUID, level domain.LoyaltyLevel, visitCount int) error
 	ListTransactions(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.LoyaltyTransaction], error)
 	CreateTransaction(ctx context.Context, tx *domain.LoyaltyTransaction) error
