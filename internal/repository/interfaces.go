@@ -35,6 +35,7 @@ type BathhouseRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)
 	ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error)
+	ListIDsByOwner(ctx context.Context, ownerID uuid.UUID) ([]uuid.UUID, error)
 	UpdateRating(ctx context.Context, bathhouseID uuid.UUID) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BathhouseStatus) error
 }
@@ -181,4 +182,5 @@ type MessageRepository interface {
 	ListByConversation(ctx context.Context, conversationID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Message], error)
 	MarkAsRead(ctx context.Context, conversationID, userID uuid.UUID) error
 	CountUnread(ctx context.Context, userID uuid.UUID, conversationIDs []uuid.UUID) (int64, error)
+	CountUnreadByUser(ctx context.Context, userID uuid.UUID, bathhouseIDs []uuid.UUID) (int64, error)
 }

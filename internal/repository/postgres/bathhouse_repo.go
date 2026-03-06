@@ -410,6 +410,28 @@ func (r *bathhouseRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 	}, nil
 }
 
+func (r *bathhouseRepo) ListIDsByOwner(ctx context.Context, ownerID uuid.UUID) ([]uuid.UUID, error) {
+	query := `SELECT id FROM bathhouses WHERE owner_id = $1`
+	rows, err := r.pool.Query(ctx, query, ownerID)
+	if err != nil {
+		return nil, fmt.Errorf("list bathhouse IDs by owner: %w", err)
+	}
+	defer rows.Close()
+
+	var ids []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scan bathhouse ID: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate bathhouse ID rows: %w", err)
+	}
+	return ids, nil
+}
+
 func (r *bathhouseRepo) UpdateRating(ctx context.Context, bathhouseID uuid.UUID) error {
 	query := `
 		UPDATE bathhouses SET

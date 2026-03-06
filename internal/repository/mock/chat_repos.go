@@ -276,3 +276,24 @@ func (r *MessageRepo) CountUnread(_ context.Context, userID uuid.UUID, conversat
 	}
 	return count, nil
 }
+
+func (r *MessageRepo) CountUnreadByUser(_ context.Context, userID uuid.UUID, bathhouseIDs []uuid.UUID) (int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	bhSet := make(map[uuid.UUID]bool, len(bathhouseIDs))
+	for _, id := range bathhouseIDs {
+		bhSet[id] = true
+	}
+
+	// We need conversation data to filter. Access the conversation repo is not available here,
+	// so we count all unread messages from conversations matching the user criteria.
+	// This mock approximates the behavior: count unread messages not sent by the user.
+	var count int64
+	for _, m := range r.messages {
+		if m.SenderID != userID && !m.IsRead {
+			count++
+		}
+	}
+	return count, nil
+}

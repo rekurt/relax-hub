@@ -1046,6 +1046,19 @@ func (r *BathhouseRepo) UpdateStatus(_ context.Context, id uuid.UUID, status dom
 	return nil
 }
 
+func (r *BathhouseRepo) ListIDsByOwner(_ context.Context, ownerID uuid.UUID) ([]uuid.UUID, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var ids []uuid.UUID
+	for _, bh := range r.bathhouses {
+		if bh.OwnerID == ownerID {
+			ids = append(ids, bh.ID)
+		}
+	}
+	return ids, nil
+}
+
 func isBathhouseOpenNow(bh *domain.Bathhouse) bool {
 	now := time.Now()
 	d := now.Weekday()

@@ -103,6 +103,10 @@ func (m *mockBathhouseRepository) ListByOwner(ctx context.Context, ownerID uuid.
 	return nil, nil
 }
 
+func (m *mockBathhouseRepository) ListIDsByOwner(ctx context.Context, ownerID uuid.UUID) ([]uuid.UUID, error) {
+	return nil, nil
+}
+
 func (m *mockBathhouseRepository) UpdateRating(ctx context.Context, bathhouseID uuid.UUID) error {
 	return nil
 }

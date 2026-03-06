@@ -52,6 +52,10 @@ func (m *mockWidgetBathhouseRepository) ListByOwner(ctx context.Context, ownerID
 	return nil, nil
 }
 
+func (m *mockWidgetBathhouseRepository) ListIDsByOwner(ctx context.Context, ownerID uuid.UUID) ([]uuid.UUID, error) {
+	return nil, nil
+}
+
 func (m *mockWidgetBathhouseRepository) UpdateRating(ctx context.Context, bathhouseID uuid.UUID) error {
 	return nil
 }

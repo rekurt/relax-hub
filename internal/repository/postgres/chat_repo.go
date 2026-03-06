@@ -335,3 +335,35 @@ func (r *messageRepo) CountUnread(ctx context.Context, userID uuid.UUID, convers
 	}
 	return count, nil
 }
+
+func (r *messageRepo) CountUnreadByUser(ctx context.Context, userID uuid.UUID, bathhouseIDs []uuid.UUID) (int64, error) {
+	var query string
+	var args []interface{}
+
+	if len(bathhouseIDs) > 0 {
+		// Owner/representative: unread messages in conversations for their bathhouses or where they are a client
+		query = `
+			SELECT COUNT(*) FROM messages m
+			JOIN conversations c ON c.id = m.conversation_id
+			WHERE (c.bathhouse_id = ANY($1) OR c.client_id = $2)
+			AND m.sender_id != $2
+			AND m.is_read = false`
+		args = []interface{}{bathhouseIDs, userID}
+	} else {
+		// Client: unread messages in conversations where they are the client
+		query = `
+			SELECT COUNT(*) FROM messages m
+			JOIN conversations c ON c.id = m.conversation_id
+			WHERE c.client_id = $1
+			AND m.sender_id != $1
+			AND m.is_read = false`
+		args = []interface{}{userID}
+	}
+
+	var count int64
+	err := r.pool.QueryRow(ctx, query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count unread messages by user: %w", err)
+	}
+	return count, nil
+}

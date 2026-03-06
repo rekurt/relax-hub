@@ -178,21 +178,7 @@ func (s *chatService) GetUnreadCount(ctx context.Context, userID uuid.UUID, role
 		return 0, err
 	}
 
-	result, err := s.convRepo.ListByUser(ctx, userID, bathhouseIDs, 1, 10000)
-	if err != nil {
-		return 0, err
-	}
-
-	if len(result.Items) == 0 {
-		return 0, nil
-	}
-
-	convIDs := make([]uuid.UUID, len(result.Items))
-	for i, c := range result.Items {
-		convIDs[i] = c.ID
-	}
-
-	return s.msgRepo.CountUnread(ctx, userID, convIDs)
+	return s.msgRepo.CountUnreadByUser(ctx, userID, bathhouseIDs)
 }
 
 // checkConversationAccess verifies the user is a participant of the conversation.
@@ -216,15 +202,7 @@ func (s *chatService) checkConversationAccess(ctx context.Context, userID uuid.U
 func (s *chatService) getUserBathhouseIDs(ctx context.Context, userID uuid.UUID, role domain.UserRole) ([]uuid.UUID, error) {
 	switch role {
 	case domain.RoleOwner:
-		result, err := s.bhRepo.ListByOwner(ctx, userID, 1, 10000)
-		if err != nil {
-			return nil, err
-		}
-		ids := make([]uuid.UUID, len(result.Items))
-		for i, bh := range result.Items {
-			ids[i] = bh.ID
-		}
-		return ids, nil
+		return s.bhRepo.ListIDsByOwner(ctx, userID)
 
 	case domain.RoleRepresentative:
 		return s.repRepo.ListBathhouseIDsByUser(ctx, userID)
