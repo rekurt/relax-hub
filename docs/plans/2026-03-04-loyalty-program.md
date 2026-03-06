@@ -71,16 +71,16 @@
 **Files:**
 - Create: `internal/service/loyalty_service.go`
 
-- [ ] LoyaltyService:
+- [x] LoyaltyService:
   - GetAccount(ctx, userID) — аккаунт лояльности (создать если нет)
   - EarnPoints(ctx, userID, bookingID) — начислить баллы (вызывается при booking completed)
   - SpendPoints(ctx, userID, amount, bookingID) — списать баллы при бронировании
   - GetDiscount(ctx, userID) — текущая скидка по уровню
   - RecalculateLevel(ctx, userID) — пересчитать уровень по количеству визитов
   - ListTransactions(ctx, userID, page, pageSize) — история операций
-- [ ] Формула начисления: TotalPrice / 100 * multiplier (зависит от уровня)
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Формула начисления: TotalPrice / 100 * multiplier (зависит от уровня)
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Интеграция с бронированием
 
