@@ -123,7 +123,11 @@ func (s *chatService) SendMessage(ctx context.Context, senderID uuid.UUID, role 
 	}
 
 	s.broadcaster.BroadcastNewMessage(conversationID, msg)
-	go s.sendMessageNotification(context.WithoutCancel(ctx), conv, senderID, text)
+	notifCtx, notifCancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
+	go func() {
+		defer notifCancel()
+		s.sendMessageNotification(notifCtx, conv, senderID, text)
+	}()
 
 	return msg, nil
 }

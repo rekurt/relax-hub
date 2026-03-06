@@ -29,7 +29,7 @@ func (n *noopChatBroadcaster) BroadcastMessageRead(_ uuid.UUID, _ uuid.UUID)    
 
 func newChatTestEnv() *chatTestEnv {
 	convRepo := mock.NewConversationRepo()
-	msgRepo := mock.NewMessageRepo()
+	msgRepo := mock.NewMessageRepo(convRepo)
 	bhRepo := mock.NewBathhouseRepo()
 	repRepo := mock.NewRepresentativeRepo()
 	ac := service.NewAccessChecker(repRepo, bhRepo)

@@ -182,10 +182,14 @@ func (r *ConversationRepo) UpdateLastMessageAt(_ context.Context, id uuid.UUID, 
 type MessageRepo struct {
 	mu       sync.RWMutex
 	messages map[uuid.UUID]*domain.Message
+	convRepo *ConversationRepo
 }
 
-func NewMessageRepo() *MessageRepo {
-	return &MessageRepo{messages: make(map[uuid.UUID]*domain.Message)}
+func NewMessageRepo(convRepo *ConversationRepo) *MessageRepo {
+	return &MessageRepo{
+		messages: make(map[uuid.UUID]*domain.Message),
+		convRepo: convRepo,
+	}
 }
 
 func (r *MessageRepo) Create(_ context.Context, msg *domain.Message) error {
@@ -286,12 +290,19 @@ func (r *MessageRepo) CountUnreadByUser(_ context.Context, userID uuid.UUID, bat
 		bhSet[id] = true
 	}
 
-	// We need conversation data to filter. Access the conversation repo is not available here,
-	// so we count all unread messages from conversations matching the user criteria.
-	// This mock approximates the behavior: count unread messages not sent by the user.
+	// Build set of conversation IDs the user participates in
+	convIDs := make(map[uuid.UUID]bool)
+	r.convRepo.mu.RLock()
+	for _, c := range r.convRepo.conversations {
+		if c.ClientID == userID || bhSet[c.BathhouseID] {
+			convIDs[c.ID] = true
+		}
+	}
+	r.convRepo.mu.RUnlock()
+
 	var count int64
 	for _, m := range r.messages {
-		if m.SenderID != userID && !m.IsRead {
+		if convIDs[m.ConversationID] && m.SenderID != userID && !m.IsRead {
 			count++
 		}
 	}

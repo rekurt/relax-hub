@@ -122,7 +122,7 @@ func TestConversationRepo_CRUD(t *testing.T) {
 
 func TestMessageRepo_CRUD(t *testing.T) {
 	ctx := context.Background()
-	repo := NewMessageRepo()
+	repo := NewMessageRepo(NewConversationRepo())
 
 	convID := uuid.New()
 	senderID := uuid.New()
