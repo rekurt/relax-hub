@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -81,6 +82,7 @@ func (s *chatService) StartConversation(ctx context.Context, clientID uuid.UUID,
 }
 
 func (s *chatService) SendMessage(ctx context.Context, senderID uuid.UUID, role domain.UserRole, conversationID uuid.UUID, text string) (*domain.Message, error) {
+	text = strings.TrimSpace(text)
 	if text == "" {
 		return nil, domain.ErrInvalidInput
 	}
