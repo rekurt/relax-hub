@@ -90,9 +90,9 @@
 - Create: `tests/hurl/pricing_rules.hurl`
 - Create: `tests/hurl/pricing_rules_negative.hurl`
 
-- [ ] Happy path: создать правило (weekday/weekend/time_range), список, обновить, удалить
-- [ ] Публичный price calculator: расчет цены с правилами
-- [ ] Негативные: создание без авторизации, невалидное время, несуществующая баня
+- [x] Happy path: создать правило (weekday/weekend/time_range), список, обновить, удалить
+- [x] Публичный price calculator: расчет цены с правилами
+- [x] Негативные: создание без авторизации, невалидное время, несуществующая баня
 
 ### Task 5: e2e тесты — Recommendations
 
