@@ -264,8 +264,8 @@ func TestWSHandler_ChatTypingIndicator(t *testing.T) {
 
 	// Both subscribe to the conversation
 	subMsg := `{"action":"subscribe","conversation_id":"` + convID.String() + `"}`
-	conn1.WriteMessage(websocket.TextMessage, []byte(subMsg))
-	conn2.WriteMessage(websocket.TextMessage, []byte(subMsg))
+	_ = conn1.WriteMessage(websocket.TextMessage, []byte(subMsg))
+	_ = conn2.WriteMessage(websocket.TextMessage, []byte(subMsg))
 
 	time.Sleep(50 * time.Millisecond)
 

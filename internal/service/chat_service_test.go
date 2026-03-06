@@ -220,8 +220,8 @@ func TestChatService_ListConversations_Client(t *testing.T) {
 	bh1 := createBathhouse(t, env.bhRepo, ownerID)
 	bh2 := createBathhouse(t, env.bhRepo, ownerID)
 
-	env.svc.StartConversation(context.Background(), clientID, bh1.ID, nil)
-	env.svc.StartConversation(context.Background(), clientID, bh2.ID, nil)
+	_, _ = env.svc.StartConversation(context.Background(), clientID, bh1.ID, nil)
+	_, _ = env.svc.StartConversation(context.Background(), clientID, bh2.ID, nil)
 
 	result, err := env.svc.ListConversations(context.Background(), clientID, domain.RoleClient, 1, 20)
 	if err != nil {
@@ -239,8 +239,8 @@ func TestChatService_ListConversations_Owner(t *testing.T) {
 	client2 := uuid.New()
 	bh := createBathhouse(t, env.bhRepo, ownerID)
 
-	env.svc.StartConversation(context.Background(), client1, bh.ID, nil)
-	env.svc.StartConversation(context.Background(), client2, bh.ID, nil)
+	_, _ = env.svc.StartConversation(context.Background(), client1, bh.ID, nil)
+	_, _ = env.svc.StartConversation(context.Background(), client2, bh.ID, nil)
 
 	result, err := env.svc.ListConversations(context.Background(), ownerID, domain.RoleOwner, 1, 20)
 	if err != nil {
@@ -265,9 +265,9 @@ func TestChatService_ListConversations_Representative(t *testing.T) {
 		OwnerID:     ownerID,
 		CreatedAt:   time.Now(),
 	}
-	env.repRepo.Create(context.Background(), rep)
+	_ = env.repRepo.Create(context.Background(), rep)
 
-	env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
+	_, _ = env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
 
 	result, err := env.svc.ListConversations(context.Background(), repUserID, domain.RoleRepresentative, 1, 20)
 	if err != nil {
@@ -285,8 +285,8 @@ func TestChatService_ListMessages_Success(t *testing.T) {
 	bh := createBathhouse(t, env.bhRepo, ownerID)
 
 	conv, _ := env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
-	env.svc.SendMessage(context.Background(), clientID, domain.RoleClient, conv.ID, "msg1")
-	env.svc.SendMessage(context.Background(), clientID, domain.RoleClient, conv.ID, "msg2")
+	_, _ = env.svc.SendMessage(context.Background(), clientID, domain.RoleClient, conv.ID, "msg1")
+	_, _ = env.svc.SendMessage(context.Background(), clientID, domain.RoleClient, conv.ID, "msg2")
 
 	result, err := env.svc.ListMessages(context.Background(), clientID, domain.RoleClient, conv.ID, 1, 20)
 	if err != nil {
@@ -319,7 +319,7 @@ func TestChatService_MarkAsRead_Success(t *testing.T) {
 	bh := createBathhouse(t, env.bhRepo, ownerID)
 
 	conv, _ := env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
-	env.svc.SendMessage(context.Background(), ownerID, domain.RoleOwner, conv.ID, "Hey client!")
+	_, _ = env.svc.SendMessage(context.Background(), ownerID, domain.RoleOwner, conv.ID, "Hey client!")
 
 	err := env.svc.MarkAsRead(context.Background(), clientID, domain.RoleClient, conv.ID)
 	if err != nil {
@@ -357,8 +357,8 @@ func TestChatService_GetUnreadCount(t *testing.T) {
 	bh := createBathhouse(t, env.bhRepo, ownerID)
 
 	conv, _ := env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
-	env.svc.SendMessage(context.Background(), ownerID, domain.RoleOwner, conv.ID, "msg1")
-	env.svc.SendMessage(context.Background(), ownerID, domain.RoleOwner, conv.ID, "msg2")
+	_, _ = env.svc.SendMessage(context.Background(), ownerID, domain.RoleOwner, conv.ID, "msg1")
+	_, _ = env.svc.SendMessage(context.Background(), ownerID, domain.RoleOwner, conv.ID, "msg2")
 
 	count, err := env.svc.GetUnreadCount(context.Background(), clientID, domain.RoleClient)
 	if err != nil {
