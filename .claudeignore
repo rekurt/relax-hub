@@ -1,0 +1,29 @@
+# Compiled binaries
+bin/
+bani
+bani-server
+
+# Coverage and output files
+coverage.out
+*.out
+
+# Built widget assets
+widget/dist/
+
+# SQL migrations (rarely needed for code review)
+migrations/
+
+# Dependency lock file
+go.sum
+
+# Git internals
+.git/
+
+# OS files
+.DS_Store
+
+# Ralphex internals
+.ralphex/
+
+# Implementation plans (not code)
+docs/plans/

@@ -61,7 +61,7 @@
 **Files:**
 - Create: `.claudeignore`
 
-- [ ] Создать .claudeignore с исключениями:
+- [x] Создать .claudeignore с исключениями:
   - `bin/` — скомпилированные бинарники
   - `bani` и `bani-server` — бинарники в корне
   - `coverage.out` — файл покрытия
