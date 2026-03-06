@@ -116,7 +116,7 @@ func (s *chatService) SendMessage(ctx context.Context, senderID uuid.UUID, role 
 	}
 
 	s.broadcaster.BroadcastNewMessage(conversationID, msg)
-	s.sendMessageNotification(ctx, conv, senderID, text)
+	s.sendMessageNotification(context.WithoutCancel(ctx), conv, senderID, text)
 
 	return msg, nil
 }
@@ -252,11 +252,10 @@ func (s *chatService) CanAccessConversation(ctx context.Context, userID uuid.UUI
 	}
 
 	// Check if user can manage the bathhouse (owner, representative, or admin)
-	if err := s.access.CanManageBathhouse(ctx, userID, domain.RoleOwner, conv.BathhouseID); err == nil {
-		return true
-	}
-	if err := s.access.CanManageBathhouse(ctx, userID, domain.RoleRepresentative, conv.BathhouseID); err == nil {
-		return true
+	for _, role := range []domain.UserRole{domain.RoleAdmin, domain.RoleOwner, domain.RoleRepresentative} {
+		if err := s.access.CanManageBathhouse(ctx, userID, role, conv.BathhouseID); err == nil {
+			return true
+		}
 	}
 
 	return false
@@ -264,8 +263,9 @@ func (s *chatService) CanAccessConversation(ctx context.Context, userID uuid.UUI
 
 func (s *chatService) sendMessageNotification(ctx context.Context, conv *domain.Conversation, senderID uuid.UUID, text string) {
 	preview := text
-	if len(preview) > 100 {
-		preview = preview[:100] + "..."
+	runes := []rune(preview)
+	if len(runes) > 100 {
+		preview = string(runes[:100]) + "..."
 	}
 
 	data := map[string]string{

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 )
@@ -47,7 +48,7 @@ func (m *Message) Validate() error {
 	if m.Text == "" {
 		return ErrInvalidInput
 	}
-	if len(m.Text) > MaxMessageTextLength {
+	if utf8.RuneCountInString(m.Text) > MaxMessageTextLength {
 		return ErrInvalidInput
 	}
 	return nil
