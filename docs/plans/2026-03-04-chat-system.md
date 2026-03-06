@@ -63,11 +63,11 @@ Real-time чат-система между клиентами и владель�
 - Create: `internal/repository/postgres/chat.go`
 - Create: `internal/repository/mock/chat.go`
 
-- [ ] ConversationRepository: Create, GetByID, GetByParticipants, ListByUser (paginated), GetOrCreate
-- [ ] MessageRepository: Create, ListByConversation (paginated, reverse chronological), MarkAsRead, CountUnread
-- [ ] Реализовать postgres и mock репозитории
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] ConversationRepository: Create, GetByID, GetByParticipants, ListByUser (paginated), GetOrCreate
+- [x] MessageRepository: Create, ListByConversation (paginated, reverse chronological), MarkAsRead, CountUnread
+- [x] Реализовать postgres и mock репозитории
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Сервис чата
 

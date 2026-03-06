@@ -165,3 +165,19 @@ type PricingRuleRepository interface {
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
 	GetActiveRules(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
 }
+
+type ConversationRepository interface {
+	Create(ctx context.Context, conv *domain.Conversation) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Conversation, error)
+	GetByParticipants(ctx context.Context, bathhouseID, clientID uuid.UUID) (*domain.Conversation, error)
+	ListByUser(ctx context.Context, userID uuid.UUID, bathhouseIDs []uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Conversation], error)
+	GetOrCreate(ctx context.Context, conv *domain.Conversation) (*domain.Conversation, error)
+	UpdateLastMessageAt(ctx context.Context, id uuid.UUID, t time.Time) error
+}
+
+type MessageRepository interface {
+	Create(ctx context.Context, msg *domain.Message) error
+	ListByConversation(ctx context.Context, conversationID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Message], error)
+	MarkAsRead(ctx context.Context, conversationID, userID uuid.UUID) error
+	CountUnread(ctx context.Context, userID uuid.UUID, conversationIDs []uuid.UUID) (int64, error)
+}
