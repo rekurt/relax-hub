@@ -411,6 +411,113 @@ func TestLoyaltyService_ListTransactions(t *testing.T) {
 	}
 }
 
+func TestLoyaltyService_RefundPoints_Success(t *testing.T) {
+	svc, repo := newLoyaltyService()
+	userID := uuid.New()
+	bookingID := uuid.New()
+
+	// Pre-create account with spent points
+	err := repo.CreateAccount(context.Background(), &domain.LoyaltyAccount{
+		UserID:      userID,
+		Level:       domain.LoyaltySilver,
+		Points:      300,
+		TotalEarned: 500,
+		TotalSpent:  200,
+		VisitCount:  10,
+	})
+	if err != nil {
+		t.Fatalf("failed to create account: %v", err)
+	}
+
+	err = svc.RefundPoints(context.Background(), userID, 150, bookingID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	account, err := repo.GetAccount(context.Background(), userID)
+	if err != nil {
+		t.Fatalf("failed to get account: %v", err)
+	}
+	if account.Points != 450 {
+		t.Errorf("points = %d, want 450", account.Points)
+	}
+	if account.TotalSpent != 50 {
+		t.Errorf("total_spent = %d, want 50", account.TotalSpent)
+	}
+
+	// Verify refund transaction was created
+	txs, err := repo.ListTransactions(context.Background(), userID, 1, 10)
+	if err != nil {
+		t.Fatalf("failed to list transactions: %v", err)
+	}
+	if txs.TotalCount != 1 {
+		t.Fatalf("transaction count = %d, want 1", txs.TotalCount)
+	}
+	if txs.Items[0].Type != domain.LoyaltyTransactionRefund {
+		t.Errorf("transaction type = %q, want %q", txs.Items[0].Type, domain.LoyaltyTransactionRefund)
+	}
+	if txs.Items[0].Amount != 150 {
+		t.Errorf("transaction amount = %d, want 150", txs.Items[0].Amount)
+	}
+}
+
+func TestLoyaltyService_RefundPoints_ExceedsTotalSpent(t *testing.T) {
+	svc, repo := newLoyaltyService()
+	userID := uuid.New()
+	bookingID := uuid.New()
+
+	err := repo.CreateAccount(context.Background(), &domain.LoyaltyAccount{
+		UserID:     userID,
+		Level:      domain.LoyaltyBronze,
+		Points:     100,
+		TotalSpent: 50,
+		VisitCount: 2,
+	})
+	if err != nil {
+		t.Fatalf("failed to create account: %v", err)
+	}
+
+	err = svc.RefundPoints(context.Background(), userID, 100, bookingID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("error = %v, want ErrInvalidInput", err)
+	}
+}
+
+func TestLoyaltyService_RefundPoints_ZeroAmount(t *testing.T) {
+	svc, _ := newLoyaltyService()
+	userID := uuid.New()
+	bookingID := uuid.New()
+
+	err := svc.RefundPoints(context.Background(), userID, 0, bookingID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("error = %v, want ErrInvalidInput", err)
+	}
+}
+
+func TestLoyaltyService_RefundPoints_NegativeAmount(t *testing.T) {
+	svc, _ := newLoyaltyService()
+	userID := uuid.New()
+	bookingID := uuid.New()
+
+	err := svc.RefundPoints(context.Background(), userID, -50, bookingID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("error = %v, want ErrInvalidInput", err)
+	}
+}
+
+func TestLoyaltyService_RefundPoints_AccountNotFound(t *testing.T) {
+	svc, _ := newLoyaltyService()
+	userID := uuid.New()
+	bookingID := uuid.New()
+
+	// RefundPoints on a non-existent account - GetAccount auto-creates,
+	// but TotalSpent=0, so refund of any positive amount should fail
+	err := svc.RefundPoints(context.Background(), userID, 100, bookingID)
+	if err == nil {
+		t.Error("expected error for refund on new account with no spent points")
+	}
+}
+
 func TestLoyaltyService_EarnPoints_PlatinumMultiplier(t *testing.T) {
 	svc, repo := newLoyaltyService()
 	userID := uuid.New()
