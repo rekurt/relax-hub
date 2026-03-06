@@ -45,13 +45,13 @@ JavaScript-виджет для встраивания на сайт бани. П
 - Create: `migrations/000017_widget_api_keys.down.sql`
 - Modify: `internal/domain/bathhouse.go`
 
-- [ ] Добавить поле ApiKey string в Bathhouse
-- [ ] Миграция: ALTER bathhouses ADD COLUMN api_key VARCHAR(64) UNIQUE
-- [ ] Генерация ключа при создании бани или по запросу владельца
-- [ ] GET /api/v1/my/bathhouses/{id}/widget-key — получить API key
-- [ ] POST /api/v1/my/bathhouses/{id}/widget-key/regenerate — пересоздать ключ
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить поле ApiKey string в Bathhouse
+- [x] Миграция: ALTER bathhouses ADD COLUMN api_key VARCHAR(64) UNIQUE
+- [x] Генерация ключа при создании бани или по запросу владельца
+- [x] GET /api/v1/my/bathhouses/{id}/widget-key — получить API key
+- [x] POST /api/v1/my/bathhouses/{id}/widget-key/regenerate — пересоздать ключ
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: JavaScript виджет
 
