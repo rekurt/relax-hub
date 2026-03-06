@@ -139,15 +139,11 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		totalPrice -= loyaltyDiscount
 	}
 
-	// Spend loyalty points if requested
+	// Validate points before applying
 	var pointsSpent int64
-	bookingID := uuid.New()
 	if input.UsePoints > 0 {
 		if input.UsePoints > totalPrice {
 			return nil, fmt.Errorf("%w: points exceed total price", domain.ErrInvalidInput)
-		}
-		if err := s.loyaltySvc.SpendPoints(ctx, userID, input.UsePoints, bookingID); err != nil {
-			return nil, err
 		}
 		pointsSpent = input.UsePoints
 		totalPrice -= input.UsePoints
@@ -157,6 +153,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		totalPrice = 1 // Minimum price 1 kopeck
 	}
 
+	bookingID := uuid.New()
 	now := time.Now()
 	booking := &domain.Booking{
 		ID:          bookingID,
@@ -177,15 +174,21 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, err
 	}
 
+	// Create booking first so loyalty_transactions FK on booking_id is valid
 	if err := s.bookingRepo.Create(ctx, booking); err != nil {
-		if pointsSpent > 0 {
-			if refundErr := s.loyaltySvc.RefundPoints(ctx, userID, pointsSpent, bookingID); refundErr != nil {
-				s.logger.Error("failed to refund loyalty points after booking creation failure",
-					"user_id", userID, "points_spent", pointsSpent, "booking_id", bookingID,
-					"booking_error", err, "refund_error", refundErr)
-			}
-		}
 		return nil, err
+	}
+
+	// Spend loyalty points after booking exists in DB
+	if pointsSpent > 0 {
+		if err := s.loyaltySvc.SpendPoints(ctx, userID, pointsSpent, bookingID); err != nil {
+			// Roll back the booking since points couldn't be spent
+			if delErr := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); delErr != nil {
+				s.logger.Error("failed to cancel booking after loyalty spend failure",
+					"booking_id", bookingID, "spend_error", err, "cancel_error", delErr)
+			}
+			return nil, err
+		}
 	}
 
 	return &BookingResult{

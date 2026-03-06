@@ -56,6 +56,7 @@ func toBookingResponse(b *domain.Booking) bookingResponse {
 		TotalPrice:  b.TotalPrice,
 		Status:      string(b.Status),
 		Comment:     b.Comment,
+		PointsSpent: b.PointsSpent,
 		CreatedAt:   b.CreatedAt,
 		UpdatedAt:   b.UpdatedAt,
 	}
