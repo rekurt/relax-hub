@@ -54,6 +54,7 @@ const (
 // Client represents a connected WebSocket client.
 type Client struct {
 	UserID uuid.UUID
+	Role   string
 	Send   chan []byte
 }
 
@@ -149,13 +150,16 @@ func (h *Hub) SendToUser(userID uuid.UUID, notif *domain.Notification) bool {
 
 	sent := false
 	for _, c := range clients {
-		select {
-		case c.Send <- data:
-			sent = true
-		default:
-			// Client's send buffer is full, skip
-			h.logger.Warn("ws client send buffer full, skipping", "user_id", userID)
-		}
+		func() {
+			defer func() { _ = recover() }()
+			select {
+			case c.Send <- data:
+				sent = true
+			default:
+				// Client's send buffer is full, skip
+				h.logger.Warn("ws client send buffer full, skipping", "user_id", userID)
+			}
+		}()
 	}
 
 	return sent
@@ -224,11 +228,14 @@ func (h *Hub) SendToConversation(conversationID uuid.UUID, msg *ChatWSMessage) {
 	h.mu.RUnlock()
 
 	for _, c := range clients {
-		select {
-		case c.Send <- data:
-		default:
-			h.logger.Warn("chat ws client send buffer full, skipping", "user_id", c.UserID)
-		}
+		func() {
+			defer func() { _ = recover() }()
+			select {
+			case c.Send <- data:
+			default:
+				h.logger.Warn("chat ws client send buffer full, skipping", "user_id", c.UserID)
+			}
+		}()
 	}
 }
 

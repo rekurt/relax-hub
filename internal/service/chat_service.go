@@ -24,7 +24,7 @@ type ChatService interface {
 	ListMessages(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Message], error)
 	MarkAsRead(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) error
 	GetUnreadCount(ctx context.Context, userID uuid.UUID, role domain.UserRole) (int64, error)
-	CanAccessConversation(ctx context.Context, userID uuid.UUID, conversationID uuid.UUID) bool
+	CanAccessConversation(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) bool
 }
 
 type chatService struct {
@@ -241,7 +241,7 @@ func (s *chatService) getUserBathhouseIDs(ctx context.Context, userID uuid.UUID,
 
 // CanAccessConversation checks if a user can access a conversation (for WebSocket authorization).
 // It checks if the user is a participant (client) or manages the bathhouse (owner/rep/admin).
-func (s *chatService) CanAccessConversation(ctx context.Context, userID uuid.UUID, conversationID uuid.UUID) bool {
+func (s *chatService) CanAccessConversation(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) bool {
 	conv, err := s.convRepo.GetByID(ctx, conversationID)
 	if err != nil {
 		return false
@@ -251,14 +251,8 @@ func (s *chatService) CanAccessConversation(ctx context.Context, userID uuid.UUI
 		return true
 	}
 
-	// Check if user can manage the bathhouse (owner, representative, or admin)
-	for _, role := range []domain.UserRole{domain.RoleAdmin, domain.RoleOwner, domain.RoleRepresentative} {
-		if err := s.access.CanManageBathhouse(ctx, userID, role, conv.BathhouseID); err == nil {
-			return true
-		}
-	}
-
-	return false
+	// Use the user's actual role to check bathhouse management access
+	return s.access.CanManageBathhouse(ctx, userID, role, conv.BathhouseID) == nil
 }
 
 func (s *chatService) sendMessageNotification(ctx context.Context, conv *domain.Conversation, senderID uuid.UUID, text string) {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/notification"
@@ -74,7 +75,7 @@ var upgrader = websocket.Upgrader{
 
 // ConversationAccessChecker checks if a user can access a conversation.
 type ConversationAccessChecker interface {
-	CanAccessConversation(ctx context.Context, userID uuid.UUID, conversationID uuid.UUID) bool
+	CanAccessConversation(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) bool
 }
 
 // WSHandler handles WebSocket connections for real-time notifications.
@@ -108,7 +109,7 @@ func (h *WSHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, _, err := h.authService.ParseToken(r.Context(), token)
+	userID, role, err := h.authService.ParseToken(r.Context(), token)
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, "unauthorized", "invalid or expired token")
 		return
@@ -122,6 +123,7 @@ func (h *WSHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 
 	client := &notification.Client{
 		UserID: userID,
+		Role:   string(role),
 		Send:   make(chan []byte, sendBufSize),
 	}
 
@@ -177,7 +179,7 @@ func (h *WSHandler) handleClientMessage(client *notification.Client, raw []byte)
 
 	switch msg.Action {
 	case notification.ChatActionSubscribe:
-		if !h.convAccessCheck.CanAccessConversation(context.Background(), client.UserID, convID) {
+		if !h.convAccessCheck.CanAccessConversation(context.Background(), client.UserID, domain.UserRole(client.Role), convID) {
 			h.logger.Warn("ws unauthorized conversation subscribe attempt", "user_id", client.UserID, "conversation_id", convID)
 			return
 		}
@@ -185,7 +187,7 @@ func (h *WSHandler) handleClientMessage(client *notification.Client, raw []byte)
 	case notification.ChatActionUnsubscribe:
 		h.hub.UnsubscribeFromConversation(client, convID)
 	case notification.ChatActionTyping:
-		if !h.convAccessCheck.CanAccessConversation(context.Background(), client.UserID, convID) {
+		if !h.convAccessCheck.CanAccessConversation(context.Background(), client.UserID, domain.UserRole(client.Role), convID) {
 			return
 		}
 		h.hub.BroadcastTypingIndicator(convID, client.UserID)

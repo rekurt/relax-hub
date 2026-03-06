@@ -28,12 +28,12 @@ func (m *mockWSAuthService) ParseToken(ctx context.Context, token string) (uuid.
 }
 
 type mockConvAccessChecker struct {
-	canAccessFn func(ctx context.Context, userID uuid.UUID, conversationID uuid.UUID) bool
+	canAccessFn func(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) bool
 }
 
-func (m *mockConvAccessChecker) CanAccessConversation(ctx context.Context, userID uuid.UUID, conversationID uuid.UUID) bool {
+func (m *mockConvAccessChecker) CanAccessConversation(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) bool {
 	if m.canAccessFn != nil {
-		return m.canAccessFn(ctx, userID, conversationID)
+		return m.canAccessFn(ctx, userID, role, conversationID)
 	}
 	return true
 }

@@ -66,7 +66,7 @@ func (m *mockChatService) GetUnreadCount(ctx context.Context, userID uuid.UUID, 
 	return 0, nil
 }
 
-func (m *mockChatService) CanAccessConversation(_ context.Context, _ uuid.UUID, _ uuid.UUID) bool {
+func (m *mockChatService) CanAccessConversation(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) bool {
 	return true
 }
 
