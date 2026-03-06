@@ -1567,15 +1567,12 @@ func TestLoyaltyRepo_CRUD(t *testing.T) {
 	}
 
 	// UpdateLevel
-	if err := repo.UpdateLevel(ctx, userID, domain.LoyaltySilver, 5); err != nil {
+	if err := repo.UpdateLevel(ctx, userID, domain.LoyaltySilver); err != nil {
 		t.Fatalf("UpdateLevel: %v", err)
 	}
 	got, _ = repo.GetAccount(ctx, userID)
 	if got.Level != domain.LoyaltySilver {
 		t.Errorf("Level = %v, want %v", got.Level, domain.LoyaltySilver)
-	}
-	if got.VisitCount != 5 {
-		t.Errorf("VisitCount = %d, want 5", got.VisitCount)
 	}
 
 	// AddPoints/SpendPoints on non-existent account
@@ -1586,7 +1583,7 @@ func TestLoyaltyRepo_CRUD(t *testing.T) {
 	if err := repo.SpendPoints(ctx, fakeID, 10); !errors.Is(err, domain.ErrNotFound) {
 		t.Errorf("SpendPoints non-existent: expected ErrNotFound, got %v", err)
 	}
-	if err := repo.UpdateLevel(ctx, fakeID, domain.LoyaltyGold, 15); !errors.Is(err, domain.ErrNotFound) {
+	if err := repo.UpdateLevel(ctx, fakeID, domain.LoyaltyGold); !errors.Is(err, domain.ErrNotFound) {
 		t.Errorf("UpdateLevel non-existent: expected ErrNotFound, got %v", err)
 	}
 }

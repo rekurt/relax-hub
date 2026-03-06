@@ -117,14 +117,14 @@ func (r *loyaltyRepo) IncrementVisitCount(ctx context.Context, userID uuid.UUID)
 	return nil
 }
 
-func (r *loyaltyRepo) UpdateLevel(ctx context.Context, userID uuid.UUID, level domain.LoyaltyLevel, visitCount int) error {
+func (r *loyaltyRepo) UpdateLevel(ctx context.Context, userID uuid.UUID, level domain.LoyaltyLevel) error {
 	query := `
 		UPDATE loyalty_accounts
-		SET level = $1, visit_count = $2, updated_at = $3
-		WHERE user_id = $4
+		SET level = $1, updated_at = $2
+		WHERE user_id = $3
 	`
 
-	result, err := r.pool.Exec(ctx, query, level, visitCount, time.Now(), userID)
+	result, err := r.pool.Exec(ctx, query, level, time.Now(), userID)
 	if err != nil {
 		return fmt.Errorf("update loyalty level: %w", err)
 	}

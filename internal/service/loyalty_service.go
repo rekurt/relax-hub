@@ -56,6 +56,10 @@ func (s *loyaltyService) GetAccount(ctx context.Context, userID uuid.UUID) (*dom
 			UpdatedAt:  time.Now(),
 		}
 		if err := s.loyaltyRepo.CreateAccount(ctx, account); err != nil {
+			if errors.Is(err, domain.ErrAlreadyExists) {
+				// Another concurrent request created the account first, fetch it
+				return s.loyaltyRepo.GetAccount(ctx, userID)
+			}
 			return nil, err
 		}
 		s.logger.Info("created loyalty account", "user_id", userID)
@@ -74,16 +78,17 @@ func (s *loyaltyService) EarnPoints(ctx context.Context, userID uuid.UUID, booki
 
 	levelInfo := domain.GetLoyaltyLevelInfo(account.Level)
 	points := int64(math.Round(float64(totalPrice) / 100.0 * levelInfo.PointMultiplier))
+
+	// Always increment visit count for completed bookings, even if no points earned
+	if err := s.loyaltyRepo.IncrementVisitCount(ctx, userID); err != nil {
+		return 0, err
+	}
+
 	if points <= 0 {
 		return 0, nil
 	}
 
 	if err := s.loyaltyRepo.AddPoints(ctx, userID, points); err != nil {
-		return 0, err
-	}
-
-	// Increment visit count for level progression
-	if err := s.loyaltyRepo.IncrementVisitCount(ctx, userID); err != nil {
 		return 0, err
 	}
 
@@ -160,7 +165,7 @@ func (s *loyaltyService) RecalculateLevel(ctx context.Context, userID uuid.UUID)
 
 	newLevel := domain.LevelForVisitCount(account.VisitCount)
 	if newLevel != account.Level {
-		if err := s.loyaltyRepo.UpdateLevel(ctx, userID, newLevel, account.VisitCount); err != nil {
+		if err := s.loyaltyRepo.UpdateLevel(ctx, userID, newLevel); err != nil {
 			return err
 		}
 		s.logger.Info("loyalty level changed", "user_id", userID, "old_level", account.Level, "new_level", newLevel)

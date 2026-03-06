@@ -178,7 +178,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 
 	if err := s.bookingRepo.Create(ctx, booking); err != nil {
 		if pointsSpent > 0 {
-			s.logger.Error("booking creation failed after spending loyalty points, manual refund may be needed",
+			s.logger.Error("booking creation failed after spending loyalty points, manual refund needed",
 				"user_id", userID, "points_spent", pointsSpent, "booking_id", bookingID, "error", err)
 		}
 		return nil, err

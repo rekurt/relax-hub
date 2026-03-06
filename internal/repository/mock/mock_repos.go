@@ -1900,7 +1900,7 @@ func (r *LoyaltyRepo) IncrementVisitCount(_ context.Context, userID uuid.UUID) e
 	return nil
 }
 
-func (r *LoyaltyRepo) UpdateLevel(_ context.Context, userID uuid.UUID, level domain.LoyaltyLevel, visitCount int) error {
+func (r *LoyaltyRepo) UpdateLevel(_ context.Context, userID uuid.UUID, level domain.LoyaltyLevel) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -1909,7 +1909,6 @@ func (r *LoyaltyRepo) UpdateLevel(_ context.Context, userID uuid.UUID, level dom
 		return domain.ErrNotFound
 	}
 	acc.Level = level
-	acc.VisitCount = visitCount
 	acc.UpdatedAt = time.Now()
 	return nil
 }
