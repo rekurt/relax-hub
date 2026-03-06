@@ -34,6 +34,7 @@ type RouterParams struct {
 	SubscriptionHandler    *handler.SubscriptionHandler
 	PricingHandler         *handler.PricingHandler
 	WidgetHandler          *handler.WidgetHandler
+	LoyaltyHandler         *handler.LoyaltyHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -155,6 +156,11 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// User profile and statistics (authenticated)
 		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)
+
+		// Loyalty program (authenticated)
+		r.With(auth).Get("/my/loyalty", p.LoyaltyHandler.GetAccount)
+		r.With(auth).Get("/my/loyalty/transactions", p.LoyaltyHandler.ListTransactions)
+		r.With(auth).Get("/my/loyalty/levels", p.LoyaltyHandler.GetLevels)
 
 		// Notifications (authenticated)
 		r.With(auth).Get("/my/notifications", p.NotifHandler.List)

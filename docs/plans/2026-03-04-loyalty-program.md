@@ -100,12 +100,12 @@
 - Create: `internal/handler/loyalty.go`
 - Modify: `internal/server/router.go`
 
-- [ ] GET /api/v1/my/loyalty — аккаунт лояльности (уровень, баллы, привилегии)
-- [ ] GET /api/v1/my/loyalty/transactions — история операций (paginated)
-- [ ] GET /api/v1/my/loyalty/levels — описание всех уровней и привилегий
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] GET /api/v1/my/loyalty — аккаунт лояльности (уровень, баллы, привилегии)
+- [x] GET /api/v1/my/loyalty/transactions — история операций (paginated)
+- [x] GET /api/v1/my/loyalty/levels — описание всех уровней и привилегий
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 6: Верификация
 
