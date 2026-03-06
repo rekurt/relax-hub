@@ -49,6 +49,7 @@ func TestMessage_Validate(t *testing.T) {
 		{"nil conversation", Message{ConversationID: uuid.Nil, SenderID: uuid.New(), Text: "hi"}},
 		{"nil sender", Message{ConversationID: uuid.New(), SenderID: uuid.Nil, Text: "hi"}},
 		{"empty text", Message{ConversationID: uuid.New(), SenderID: uuid.New(), Text: ""}},
+		{"text too long", Message{ConversationID: uuid.New(), SenderID: uuid.New(), Text: string(make([]byte, MaxMessageTextLength+1))}},
 	}
 
 	for _, tt := range tests {

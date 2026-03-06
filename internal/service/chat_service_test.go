@@ -399,3 +399,98 @@ func TestChatService_SendMessage_Admin(t *testing.T) {
 		t.Errorf("sender_id = %v, want %v", msg.SenderID, adminID)
 	}
 }
+
+func TestChatService_SendMessage_WhitespaceOnly(t *testing.T) {
+	env := newChatTestEnv()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	conv, _ := env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
+
+	_, err := env.svc.SendMessage(context.Background(), clientID, domain.RoleClient, conv.ID, "   \n\t  ")
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Fatalf("expected ErrInvalidInput for whitespace-only text, got: %v", err)
+	}
+}
+
+func TestChatService_ListConversations_Admin(t *testing.T) {
+	env := newChatTestEnv()
+	ownerID := uuid.New()
+	adminID := uuid.New()
+	client1 := uuid.New()
+	client2 := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	_, _ = env.svc.StartConversation(context.Background(), client1, bh.ID, nil)
+	_, _ = env.svc.StartConversation(context.Background(), client2, bh.ID, nil)
+
+	result, err := env.svc.ListConversations(context.Background(), adminID, domain.RoleAdmin, 1, 20)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.TotalCount != 2 {
+		t.Errorf("total_count = %d, want 2", result.TotalCount)
+	}
+}
+
+func TestChatService_GetUnreadCount_Admin(t *testing.T) {
+	env := newChatTestEnv()
+	adminID := uuid.New()
+
+	count, err := env.svc.GetUnreadCount(context.Background(), adminID, domain.RoleAdmin)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("unread count = %d, want 0 for admin", count)
+	}
+}
+
+func TestChatService_CanAccessConversation_AsClient(t *testing.T) {
+	env := newChatTestEnv()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	conv, _ := env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
+
+	if !env.svc.CanAccessConversation(context.Background(), clientID, domain.RoleClient, conv.ID) {
+		t.Error("client should have access to own conversation")
+	}
+}
+
+func TestChatService_CanAccessConversation_AsOwner(t *testing.T) {
+	env := newChatTestEnv()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	conv, _ := env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
+
+	if !env.svc.CanAccessConversation(context.Background(), ownerID, domain.RoleOwner, conv.ID) {
+		t.Error("owner should have access to bathhouse conversation")
+	}
+}
+
+func TestChatService_CanAccessConversation_Forbidden(t *testing.T) {
+	env := newChatTestEnv()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	strangerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	conv, _ := env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
+
+	if env.svc.CanAccessConversation(context.Background(), strangerID, domain.RoleClient, conv.ID) {
+		t.Error("stranger should not have access to conversation")
+	}
+}
+
+func TestChatService_CanAccessConversation_NotFound(t *testing.T) {
+	env := newChatTestEnv()
+
+	if env.svc.CanAccessConversation(context.Background(), uuid.New(), domain.RoleClient, uuid.New()) {
+		t.Error("should return false for non-existent conversation")
+	}
+}

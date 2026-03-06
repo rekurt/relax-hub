@@ -256,6 +256,11 @@ func (s *chatService) CanAccessConversation(ctx context.Context, userID uuid.UUI
 }
 
 func (s *chatService) sendMessageNotification(ctx context.Context, conv *domain.Conversation, senderID uuid.UUID, text string) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.logger.Error("panic in sendMessageNotification", "error", r)
+		}
+	}()
 	preview := text
 	runes := []rune(preview)
 	if len(runes) > 100 {

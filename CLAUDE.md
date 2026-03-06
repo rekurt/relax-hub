@@ -358,7 +358,7 @@ Real-time messaging between clients and bathhouse owners/representatives:
 **Notification**: NotifNewMessage type — always enabled (like system notifications)
 
 **Handlers:**
-- `POST /api/v1/bathhouses/{id}/chat` — start conversation (auth required)
+- `POST /api/v1/bathhouses/{id}/chat` — start conversation (client/admin auth required)
 - `GET /api/v1/my/conversations?page=1&page_size=20` — list conversations (auth required)
 - `GET /api/v1/conversations/{id}/messages?page=1&page_size=20` — list messages (auth required)
 - `POST /api/v1/conversations/{id}/messages` — send message (auth required)
