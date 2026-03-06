@@ -112,7 +112,12 @@ func (r *loyaltyRepo) RefundPoints(ctx context.Context, userID uuid.UUID, amount
 		return fmt.Errorf("refund loyalty points: %w", err)
 	}
 	if result.RowsAffected() == 0 {
-		return domain.ErrNotFound
+		// Could be account not found or total_spent < amount
+		_, getErr := r.GetAccount(ctx, userID)
+		if getErr != nil {
+			return domain.ErrNotFound
+		}
+		return fmt.Errorf("%w: refund amount exceeds total spent", domain.ErrInvalidInput)
 	}
 	return nil
 }

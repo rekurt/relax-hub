@@ -47,14 +47,12 @@ func (s *loyaltyService) GetAccount(ctx context.Context, userID uuid.UUID) (*dom
 		}
 		// Auto-create account at Bronze level
 		account = &domain.LoyaltyAccount{
-			UserID:     userID,
-			Level:      domain.LoyaltyBronze,
-			Points:     0,
+			UserID:      userID,
+			Level:       domain.LoyaltyBronze,
+			Points:      0,
 			TotalEarned: 0,
-			TotalSpent: 0,
-			VisitCount: 0,
-			CreatedAt:  time.Now(),
-			UpdatedAt:  time.Now(),
+			TotalSpent:  0,
+			VisitCount:  0,
 		}
 		if err := s.loyaltyRepo.CreateAccount(ctx, account); err != nil {
 			if errors.Is(err, domain.ErrAlreadyExists) {
@@ -72,6 +70,10 @@ func (s *loyaltyService) GetAccount(ctx context.Context, userID uuid.UUID) (*dom
 // Formula: (totalPrice / 100) * multiplier, where multiplier depends on loyalty level.
 // Returns the number of points awarded.
 func (s *loyaltyService) EarnPoints(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) (int64, error) {
+	if totalPrice < 0 {
+		return 0, fmt.Errorf("%w: total price must not be negative", domain.ErrInvalidInput)
+	}
+
 	account, err := s.GetAccount(ctx, userID)
 	if err != nil {
 		return 0, err
