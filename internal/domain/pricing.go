@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -44,7 +45,7 @@ func (pr *PricingRule) Validate() error {
 	if pr.BathhouseID == uuid.Nil {
 		return ErrInvalidInput
 	}
-	if pr.Name == "" {
+	if pr.Name == "" || len(pr.Name) > 255 || strings.TrimSpace(pr.Name) == "" {
 		return ErrInvalidInput
 	}
 	if !pr.Type.IsValid() {
@@ -66,6 +67,22 @@ func (pr *PricingRule) Validate() error {
 		for _, day := range pr.DaysOfWeek {
 			if day < 0 || day > 6 {
 				return ErrInvalidInput
+			}
+		}
+		// For weekday rules, ensure only weekdays are included (0-4 = Monday-Friday)
+		if pr.Type == RuleTypeWeekday {
+			for _, day := range pr.DaysOfWeek {
+				if day > 4 { // 5=Saturday, 6=Sunday
+					return ErrInvalidInput
+				}
+			}
+		}
+		// For weekend rules, ensure only weekend days are included (5-6 = Saturday-Sunday)
+		if pr.Type == RuleTypeWeekend {
+			for _, day := range pr.DaysOfWeek {
+				if day < 5 {
+					return ErrInvalidInput
+				}
 			}
 		}
 	case RuleTypeHoliday:

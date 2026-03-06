@@ -112,7 +112,6 @@ func (h *PricingHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 		DateTo:      req.DateTo,
 		Priority:    req.Priority,
 		IsActive:    req.IsActive,
-		CreatedAt:   time.Now(),
 	}
 
 	createdRule, err := h.pricingService.CreateRule(r.Context(), userID, userRole, rule)

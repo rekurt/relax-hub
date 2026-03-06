@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -69,12 +70,13 @@ func (s *pricingService) CalculatePrice(ctx context.Context, bathhouseID uuid.UU
 		multiplier := 1.0
 		applicableRules := s.findApplicableRules(currentTime, rules)
 		if len(applicableRules) > 0 {
-			// Pick the rule with highest priority
+			// Pick the rule with highest priority, using ID as tiebreaker for deterministic ordering
 			slices.SortFunc(applicableRules, func(a, b *domain.PricingRule) int {
 				if a.Priority != b.Priority {
 					return b.Priority - a.Priority
 				}
-				return 0
+				// Deterministic tiebreaker by rule ID
+				return strings.Compare(a.ID.String(), b.ID.String())
 			})
 			multiplier = applicableRules[0].Multiplier
 		}
