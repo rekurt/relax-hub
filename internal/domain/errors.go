@@ -20,4 +20,5 @@ var (
 	ErrSubscriptionNotFound       = errors.New("subscription not found")
 	ErrSubscriptionAlreadyActive  = errors.New("subscription already active")
 	ErrPromotionBudgetExhausted   = errors.New("promotion budget exhausted")
+	ErrInsufficientPoints         = errors.New("insufficient loyalty points")
 )

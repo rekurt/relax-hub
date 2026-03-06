@@ -30,7 +30,7 @@
 - Create: `migrations/000012_loyalty.up.sql`
 - Create: `migrations/000012_loyalty.down.sql`
 
-- [ ] Создать модель LoyaltyAccount:
+- [x] Создать модель LoyaltyAccount:
   ```
   LoyaltyAccount {
     UserID        uuid.UUID
@@ -43,16 +43,16 @@
     CreatedAt     time.Time
   }
   ```
-- [ ] Уровни и пороги:
+- [x] Уровни и пороги:
   - Bronze: 0+ визитов (1 балл = 1 рубль, скидка 0%)
   - Silver: 5+ визитов (1.2 балла = 1 рубль, скидка 3%)
   - Gold: 15+ визитов (1.5 балла = 1 рубль, скидка 5%)
   - Platinum: 30+ визитов (2 балла = 1 рубль, скидка 10%)
-- [ ] Создать модель LoyaltyTransaction (ID, UserID, Type earn/spend, Amount, BookingID, Description, CreatedAt)
-- [ ] Добавить domain-ошибку: ErrInsufficientPoints
-- [ ] Создать миграции
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать модель LoyaltyTransaction (ID, UserID, Type earn/spend, Amount, BookingID, Description, CreatedAt)
+- [x] Добавить domain-ошибку: ErrInsufficientPoints
+- [x] Создать миграции
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий лояльности
 
