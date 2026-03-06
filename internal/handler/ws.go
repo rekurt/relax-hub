@@ -189,9 +189,7 @@ func (h *WSHandler) handleClientMessage(client *notification.Client, raw []byte)
 	case notification.ChatActionUnsubscribe:
 		h.hub.UnsubscribeFromConversation(client, convID)
 	case notification.ChatActionTyping:
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if !h.convAccessCheck.CanAccessConversation(ctx, client.UserID, domain.UserRole(client.Role), convID) {
+		if !h.hub.IsClientSubscribed(client, convID) {
 			return
 		}
 		h.hub.BroadcastTypingIndicator(convID, client.UserID)

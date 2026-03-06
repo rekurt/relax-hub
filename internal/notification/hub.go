@@ -192,6 +192,18 @@ func (h *Hub) SubscribeToConversation(client *Client, conversationID uuid.UUID) 
 	h.logger.Debug("client subscribed to conversation", "user_id", client.UserID, "conversation_id", conversationID)
 }
 
+// IsClientSubscribed checks if a client is subscribed to a conversation room.
+func (h *Hub) IsClientSubscribed(client *Client, conversationID uuid.UUID) bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	if members, ok := h.chatRooms[conversationID]; ok {
+		_, subscribed := members[client]
+		return subscribed
+	}
+	return false
+}
+
 // UnsubscribeFromConversation removes a client from a chat room.
 func (h *Hub) UnsubscribeFromConversation(client *Client, conversationID uuid.UUID) {
 	h.mu.Lock()

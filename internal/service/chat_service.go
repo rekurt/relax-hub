@@ -62,8 +62,13 @@ func NewChatService(
 }
 
 func (s *chatService) StartConversation(ctx context.Context, clientID uuid.UUID, bathhouseID uuid.UUID, bookingID *uuid.UUID) (*domain.Conversation, error) {
-	if _, err := s.bhRepo.GetByID(ctx, bathhouseID); err != nil {
+	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
 		return nil, err
+	}
+
+	if bh.Status != domain.BathhouseStatusActive {
+		return nil, domain.ErrBathhouseNotActive
 	}
 
 	conv := &domain.Conversation{
