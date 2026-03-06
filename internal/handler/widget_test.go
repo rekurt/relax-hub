@@ -362,15 +362,15 @@ func TestServeScript(t *testing.T) {
 	rec := httptest.NewRecorder()
 	handler.ServeScript(rec, req)
 
-	// Should return 200 if file exists, 404 if not
-	if rec.Code != http.StatusNotFound && rec.Code != http.StatusOK {
+	// If file exists (status 200), verify correct Content-Type
+	// If file doesn't exist in test environment (status 404), that's acceptable
+	if rec.Code == http.StatusOK {
+		contentType := rec.Header().Get("Content-Type")
+		if contentType != "application/javascript; charset=utf-8" {
+			t.Errorf("expected Content-Type application/javascript, got %s", contentType)
+		}
+	} else if rec.Code != http.StatusNotFound {
 		t.Errorf("expected status 200 or 404, got %d", rec.Code)
-	}
-
-	// Check Content-Type header
-	contentType := rec.Header().Get("Content-Type")
-	if rec.Code == http.StatusOK && contentType != "application/javascript; charset=utf-8" {
-		t.Errorf("expected Content-Type application/javascript, got %s", contentType)
 	}
 }
 
@@ -386,14 +386,14 @@ func TestServeStyles(t *testing.T) {
 	rec := httptest.NewRecorder()
 	handler.ServeStyles(rec, req)
 
-	// Should return 200 if file exists, 404 if not
-	if rec.Code != http.StatusNotFound && rec.Code != http.StatusOK {
+	// If file exists (status 200), verify correct Content-Type
+	// If file doesn't exist in test environment (status 404), that's acceptable
+	if rec.Code == http.StatusOK {
+		contentType := rec.Header().Get("Content-Type")
+		if contentType != "text/css; charset=utf-8" {
+			t.Errorf("expected Content-Type text/css, got %s", contentType)
+		}
+	} else if rec.Code != http.StatusNotFound {
 		t.Errorf("expected status 200 or 404, got %d", rec.Code)
-	}
-
-	// Check Content-Type header
-	contentType := rec.Header().Get("Content-Type")
-	if rec.Code == http.StatusOK && contentType != "text/css; charset=utf-8" {
-		t.Errorf("expected Content-Type text/css, got %s", contentType)
 	}
 }

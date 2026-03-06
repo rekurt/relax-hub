@@ -73,14 +73,22 @@ func (cf *ContentFilter) checkLength(text string) string {
 func (cf *ContentFilter) checkProfanity(text string) []string {
 	var violations []string
 	textLower := strings.ToLower(text)
+	foundProfanity := false
 
 	for _, word := range Stopwords {
 		for _, variation := range word.Variations() {
 			if strings.Contains(textLower, strings.ToLower(variation)) {
-				violations = append(violations, "contains_profanity")
-				return violations // Return early to avoid duplicate violations
+				foundProfanity = true
+				break
 			}
 		}
+		if foundProfanity {
+			break
+		}
+	}
+
+	if foundProfanity {
+		violations = append(violations, "contains_profanity")
 	}
 
 	return violations

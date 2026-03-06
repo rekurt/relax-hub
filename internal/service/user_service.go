@@ -112,10 +112,19 @@ func (s *userService) UploadAvatar(ctx context.Context, userID uuid.UUID, input 
 	}
 
 	// Upload full-size avatar (200x200)
-	fullFilename := fmt.Sprintf("avatars/%s_full%s", uuid.New().String(), input.Ext)
+	baseID := uuid.New().String()
+	fullFilename := fmt.Sprintf("avatars/%s_full%s", baseID, input.Ext)
 	avatarURL, err := s.storage.Upload(ctx, fullFilename, resized[0].Data, input.ContentType)
 	if err != nil {
 		return nil, fmt.Errorf("upload avatar: %w", err)
+	}
+
+	// Upload thumbnail (50x50)
+	thumbFilename := fmt.Sprintf("avatars/%s_thumb%s", baseID, input.Ext)
+	_, err = s.storage.Upload(ctx, thumbFilename, resized[1].Data, input.ContentType)
+	if err != nil {
+		// Log warning but continue - full avatar uploaded successfully
+		s.log.Warn("failed to upload avatar thumbnail", "filename", thumbFilename, "error", err)
 	}
 
 	oldAvatarURL := user.AvatarURL

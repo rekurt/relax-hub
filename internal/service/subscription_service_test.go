@@ -140,7 +140,7 @@ func TestSubscriptionService_Cancel_Success(t *testing.T) {
 		t.Fatalf("subscription creation failed: %v", err)
 	}
 
-	err = svc.Cancel(context.Background(), ownerID, sub.ID)
+	err = svc.Cancel(context.Background(), ownerID, domain.RoleOwner, sub.ID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -158,7 +158,7 @@ func TestSubscriptionService_Cancel_NotOwner(t *testing.T) {
 	}
 
 	// Different user tries to cancel
-	err = svc.Cancel(context.Background(), otherUserID, sub.ID)
+	err = svc.Cancel(context.Background(), otherUserID, domain.RoleOwner, sub.ID)
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Errorf("expected ErrForbidden, got: %v", err)
 	}

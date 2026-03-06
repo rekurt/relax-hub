@@ -31,7 +31,7 @@ func (m *mockSubscriptionService) Subscribe(ctx context.Context, userID uuid.UUI
 	return nil, nil
 }
 
-func (m *mockSubscriptionService) Cancel(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error {
+func (m *mockSubscriptionService) Cancel(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, subscriptionID uuid.UUID) error {
 	if m.cancelFn != nil {
 		return m.cancelFn(ctx, userID, subscriptionID)
 	}

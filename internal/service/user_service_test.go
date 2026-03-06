@@ -202,8 +202,8 @@ func TestUserService_UploadAvatar(t *testing.T) {
 	if updated.AvatarURL == "" {
 		t.Error("avatar_url should not be empty after upload")
 	}
-	if mockStore.Len() != 1 {
-		t.Errorf("expected 1 file in storage, got %d", mockStore.Len())
+	if mockStore.Len() != 2 {
+		t.Errorf("expected 2 files in storage (full + thumbnail), got %d", mockStore.Len())
 	}
 }
 

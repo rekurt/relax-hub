@@ -12,7 +12,7 @@ import (
 
 type SubscriptionService interface {
 	Subscribe(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error)
-	Cancel(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error
+	Cancel(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, subscriptionID uuid.UUID) error
 	GetActive(ctx context.Context, bathhouseID uuid.UUID) (*domain.Subscription, error)
 	ListByOwner(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Subscription], error)
 }
@@ -113,14 +113,14 @@ func (s *subscriptionService) Subscribe(ctx context.Context, userID uuid.UUID, u
 }
 
 // Cancel cancels auto-renewal for a subscription
-func (s *subscriptionService) Cancel(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error {
+func (s *subscriptionService) Cancel(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, subscriptionID uuid.UUID) error {
 	sub, err := s.subRepo.GetByID(ctx, subscriptionID)
 	if err != nil {
 		return err
 	}
 
-	// Verify user has access to manage the bathhouse (owns it)
-	if err := s.access.CanManageBathhouse(ctx, userID, domain.RoleOwner, sub.BathhouseID); err != nil {
+	// Verify user has access to manage the bathhouse (owner or representative)
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, sub.BathhouseID); err != nil {
 		return err
 	}
 

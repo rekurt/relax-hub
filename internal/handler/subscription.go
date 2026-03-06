@@ -194,7 +194,7 @@ func (h *SubscriptionHandler) CancelSubscription(w http.ResponseWriter, r *http.
 	}
 
 	// Cancel the subscription
-	if err := h.subService.Cancel(r.Context(), userID, sub.ID); err != nil {
+	if err := h.subService.Cancel(r.Context(), userID, userRole, sub.ID); err != nil {
 		handleServiceError(w, err)
 		return
 	}
