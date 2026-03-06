@@ -62,25 +62,27 @@ func (m *mockWidgetBathhouseRepository) UpdateStatus(ctx context.Context, id uui
 
 // Mock BookingService for widget testing
 type mockWidgetBookingService struct {
-	createFn              func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*domain.Booking, error)
+	createFn              func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error)
 	getAvailableSlotsFn   func(ctx context.Context, bathhouseID uuid.UUID, date time.Time) ([]service.TimeSlot, error)
 }
 
-func (m *mockWidgetBookingService) Create(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*domain.Booking, error) {
+func (m *mockWidgetBookingService) Create(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error) {
 	if m.createFn != nil {
 		return m.createFn(ctx, userID, input)
 	}
-	return &domain.Booking{
-		ID:          uuid.New(),
-		UserID:      userID,
-		BathhouseID: input.BathhouseID,
-		StartTime:   input.StartTime,
-		EndTime:     input.EndTime,
-		GuestCount:  input.GuestCount,
-		TotalPrice:  5000,
-		Status:      domain.BookingPending,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+	return &service.BookingResult{
+		Booking: &domain.Booking{
+			ID:          uuid.New(),
+			UserID:      userID,
+			BathhouseID: input.BathhouseID,
+			StartTime:   input.StartTime,
+			EndTime:     input.EndTime,
+			GuestCount:  input.GuestCount,
+			TotalPrice:  5000,
+			Status:      domain.BookingPending,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
 	}, nil
 }
 
@@ -96,8 +98,8 @@ func (m *mockWidgetBookingService) Reject(ctx context.Context, userID uuid.UUID,
 	return nil
 }
 
-func (m *mockWidgetBookingService) Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
-	return nil
+func (m *mockWidgetBookingService) Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*service.BookingResult, error) {
+	return &service.BookingResult{}, nil
 }
 
 func (m *mockWidgetBookingService) ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {

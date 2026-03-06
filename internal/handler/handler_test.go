@@ -214,17 +214,17 @@ func (m *mockBathhouseService) RegenerateWidgetKey(ctx context.Context, userID u
 }
 
 type mockBookingService struct {
-	createFn          func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*domain.Booking, error)
+	createFn          func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error)
 	cancelFn          func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	confirmFn         func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	rejectFn          func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
-	completeFn        func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
+	completeFn        func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*service.BookingResult, error)
 	listByUserFn      func(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	listByBathhouseFn func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	getAvailSlotsFn   func(ctx context.Context, bathhouseID uuid.UUID, date time.Time) ([]service.TimeSlot, error)
 }
 
-func (m *mockBookingService) Create(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*domain.Booking, error) {
+func (m *mockBookingService) Create(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error) {
 	if m.createFn != nil {
 		return m.createFn(ctx, userID, input)
 	}
@@ -252,11 +252,11 @@ func (m *mockBookingService) Reject(ctx context.Context, userID uuid.UUID, role 
 	return nil
 }
 
-func (m *mockBookingService) Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+func (m *mockBookingService) Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*service.BookingResult, error) {
 	if m.completeFn != nil {
 		return m.completeFn(ctx, userID, role, bookingID)
 	}
-	return nil
+	return &service.BookingResult{}, nil
 }
 
 func (m *mockBookingService) ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {
@@ -994,11 +994,13 @@ func TestBookingHandler_Create(t *testing.T) {
 	clientID := uuid.New()
 	bhID := uuid.New()
 	bookingSvc := &mockBookingService{
-		createFn: func(_ context.Context, userID uuid.UUID, input service.CreateBookingInput) (*domain.Booking, error) {
-			return &domain.Booking{
-				ID: uuid.New(), UserID: userID, BathhouseID: input.BathhouseID,
-				StartTime: input.StartTime, EndTime: input.EndTime,
-				GuestCount: input.GuestCount, TotalPrice: 10000, Status: domain.BookingPending,
+		createFn: func(_ context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error) {
+			return &service.BookingResult{
+				Booking: &domain.Booking{
+					ID: uuid.New(), UserID: userID, BathhouseID: input.BathhouseID,
+					StartTime: input.StartTime, EndTime: input.EndTime,
+					GuestCount: input.GuestCount, TotalPrice: 10000, Status: domain.BookingPending,
+				},
 			}, nil
 		},
 	}

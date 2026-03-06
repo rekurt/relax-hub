@@ -25,20 +25,24 @@ type createBookingRequest struct {
 	EndTime     string `json:"end_time"`
 	GuestCount  int    `json:"guest_count"`
 	Comment     string `json:"comment"`
+	UsePoints   int64  `json:"use_points,omitempty"`
 }
 
 type bookingResponse struct {
-	ID          string    `json:"id"`
-	UserID      string    `json:"user_id"`
-	BathhouseID string    `json:"bathhouse_id"`
-	StartTime   time.Time `json:"start_time"`
-	EndTime     time.Time `json:"end_time"`
-	GuestCount  int       `json:"guest_count"`
-	TotalPrice  int64     `json:"total_price"`
-	Status      string    `json:"status"`
-	Comment     string    `json:"comment"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID              string    `json:"id"`
+	UserID          string    `json:"user_id"`
+	BathhouseID     string    `json:"bathhouse_id"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+	GuestCount      int       `json:"guest_count"`
+	TotalPrice      int64     `json:"total_price"`
+	Status          string    `json:"status"`
+	Comment         string    `json:"comment"`
+	EarnedPoints    int64     `json:"earned_points,omitempty"`
+	LoyaltyDiscount int64     `json:"loyalty_discount,omitempty"`
+	PointsSpent     int64     `json:"points_spent,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 func toBookingResponse(b *domain.Booking) bookingResponse {
@@ -55,6 +59,14 @@ func toBookingResponse(b *domain.Booking) bookingResponse {
 		CreatedAt:   b.CreatedAt,
 		UpdatedAt:   b.UpdatedAt,
 	}
+}
+
+func toBookingResultResponse(r *service.BookingResult) bookingResponse {
+	resp := toBookingResponse(r.Booking)
+	resp.EarnedPoints = r.EarnedPoints
+	resp.LoyaltyDiscount = r.LoyaltyDiscount
+	resp.PointsSpent = r.PointsSpent
+	return resp
 }
 
 func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -84,19 +96,20 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	userID := middleware.GetUserID(r.Context())
 
-	booking, err := h.bookingService.Create(r.Context(), userID, service.CreateBookingInput{
+	result, err := h.bookingService.Create(r.Context(), userID, service.CreateBookingInput{
 		BathhouseID: bathhouseID,
 		StartTime:   startTime,
 		EndTime:     endTime,
 		GuestCount:  req.GuestCount,
 		Comment:     req.Comment,
+		UsePoints:   req.UsePoints,
 	})
 	if err != nil {
 		handleServiceError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toBookingResponse(booking))
+	writeJSON(w, http.StatusCreated, toBookingResultResponse(result))
 }
 
 func (h *BookingHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
@@ -187,12 +200,13 @@ func (h *BookingHandler) Complete(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
 
-	if err := h.bookingService.Complete(r.Context(), userID, role, bookingID); err != nil {
+	result, err := h.bookingService.Complete(r.Context(), userID, role, bookingID)
+	if err != nil {
 		handleServiceError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"message": "completed"})
+	writeJSON(w, http.StatusOK, toBookingResultResponse(result))
 }
 
 func (h *BookingHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {

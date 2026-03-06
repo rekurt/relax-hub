@@ -20,6 +20,14 @@ type CreateBookingInput struct {
 	EndTime     time.Time
 	GuestCount  int
 	Comment     string
+	UsePoints   int64 // Optional: loyalty points to spend (reduces total price)
+}
+
+type BookingResult struct {
+	Booking        *domain.Booking
+	EarnedPoints   int64 // Points earned (only on complete)
+	LoyaltyDiscount int64 // Discount from loyalty level in kopecks
+	PointsSpent    int64 // Points spent on this booking
 }
 
 type TimeSlot struct {
@@ -30,11 +38,11 @@ type TimeSlot struct {
 }
 
 type BookingService interface {
-	Create(ctx context.Context, userID uuid.UUID, input CreateBookingInput) (*domain.Booking, error)
+	Create(ctx context.Context, userID uuid.UUID, input CreateBookingInput) (*BookingResult, error)
 	Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	Confirm(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
-	Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
+	Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*BookingResult, error)
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	ListByBathhouse(ctx context.Context, userID uuid.UUID, role domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	GetAvailableSlots(ctx context.Context, bathhouseID uuid.UUID, date time.Time) ([]TimeSlot, error)
@@ -44,6 +52,7 @@ type bookingService struct {
 	bookingRepo repository.BookingRepository
 	bhRepo      repository.BathhouseRepository
 	pricingSvc  PricingService
+	loyaltySvc  LoyaltyService
 	access      *AccessChecker
 	notifSvc    NotificationService
 	logger      *logger.Logger
@@ -53,6 +62,7 @@ func NewBookingService(
 	bookingRepo repository.BookingRepository,
 	bhRepo repository.BathhouseRepository,
 	pricingSvc PricingService,
+	loyaltySvc LoyaltyService,
 	access *AccessChecker,
 	notifSvc NotificationService,
 	log *logger.Logger,
@@ -61,13 +71,14 @@ func NewBookingService(
 		bookingRepo: bookingRepo,
 		bhRepo:      bhRepo,
 		pricingSvc:  pricingSvc,
+		loyaltySvc:  loyaltySvc,
 		access:      access,
 		notifSvc:    notifSvc,
 		logger:      log,
 	}
 }
 
-func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input CreateBookingInput) (*domain.Booking, error) {
+func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input CreateBookingInput) (*BookingResult, error) {
 	bh, err := s.bhRepo.GetByID(ctx, input.BathhouseID)
 	if err != nil {
 		return nil, err
@@ -118,6 +129,33 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, err
 	}
 
+	// Apply loyalty discount
+	var loyaltyDiscount int64
+	discount, err := s.loyaltySvc.GetDiscount(ctx, userID)
+	if err != nil {
+		s.logger.Warn("failed to get loyalty discount", "user_id", userID, "error", err)
+	} else if discount > 0 {
+		loyaltyDiscount = totalPrice * int64(discount) / 100
+		totalPrice -= loyaltyDiscount
+	}
+
+	// Spend loyalty points if requested
+	var pointsSpent int64
+	if input.UsePoints > 0 {
+		if input.UsePoints > totalPrice {
+			return nil, fmt.Errorf("%w: points exceed total price", domain.ErrInvalidInput)
+		}
+		if err := s.loyaltySvc.SpendPoints(ctx, userID, input.UsePoints, uuid.Nil); err != nil {
+			return nil, err
+		}
+		pointsSpent = input.UsePoints
+		totalPrice -= input.UsePoints
+	}
+
+	if totalPrice <= 0 {
+		totalPrice = 1 // Minimum price 1 kopeck
+	}
+
 	now := time.Now()
 	booking := &domain.Booking{
 		ID:          uuid.New(),
@@ -141,7 +179,11 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, err
 	}
 
-	return booking, nil
+	return &BookingResult{
+		Booking:         booking,
+		LoyaltyDiscount: loyaltyDiscount,
+		PointsSpent:     pointsSpent,
+	}, nil
 }
 
 func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
@@ -223,25 +265,50 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 	return nil
 }
 
-func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*BookingResult, error) {
 	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if booking.Status != domain.BookingConfirmed {
-		return fmt.Errorf("%w: only confirmed bookings can be completed", domain.ErrInvalidInput)
+		return nil, fmt.Errorf("%w: only confirmed bookings can be completed", domain.ErrInvalidInput)
 	}
 
 	if time.Now().Before(booking.EndTime) {
-		return fmt.Errorf("%w: booking can only be completed after end time", domain.ErrInvalidInput)
+		return nil, fmt.Errorf("%w: booking can only be completed after end time", domain.ErrInvalidInput)
 	}
 
 	if err := s.access.CanManageBathhouse(ctx, userID, role, booking.BathhouseID); err != nil {
-		return err
+		return nil, err
 	}
 
-	return s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCompleted)
+	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCompleted); err != nil {
+		return nil, err
+	}
+
+	// Earn loyalty points and recalculate level
+	var earnedPoints int64
+	account, err := s.loyaltySvc.GetAccount(ctx, booking.UserID)
+	if err != nil {
+		s.logger.Warn("failed to get loyalty account on complete", "booking_id", bookingID, "error", err)
+	} else {
+		levelInfo := domain.GetLoyaltyLevelInfo(account.Level)
+		earnedPoints = int64(math.Round(float64(booking.TotalPrice) / 100.0 * levelInfo.PointMultiplier))
+
+		if err := s.loyaltySvc.EarnPoints(ctx, booking.UserID, bookingID, booking.TotalPrice); err != nil {
+			s.logger.Warn("failed to earn loyalty points", "booking_id", bookingID, "error", err)
+			earnedPoints = 0
+		}
+		if err := s.loyaltySvc.RecalculateLevel(ctx, booking.UserID); err != nil {
+			s.logger.Warn("failed to recalculate loyalty level", "booking_id", bookingID, "error", err)
+		}
+	}
+
+	return &BookingResult{
+		Booking:      booking,
+		EarnedPoints: earnedPoints,
+	}, nil
 }
 
 func (s *bookingService) ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {

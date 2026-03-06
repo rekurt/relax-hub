@@ -252,7 +252,7 @@ func (h *WidgetHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	booking, err := h.bookingService.Create(r.Context(), h.guestUserID, service.CreateBookingInput{
+	result, err := h.bookingService.Create(r.Context(), h.guestUserID, service.CreateBookingInput{
 		BathhouseID: bathhouse.ID,
 		StartTime:   startTime,
 		EndTime:     endTime,
@@ -264,7 +264,7 @@ func (h *WidgetHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, toWidgetBookingResponse(booking))
+	writeJSON(w, http.StatusCreated, toWidgetBookingResponse(result.Booking))
 }
 
 func (h *WidgetHandler) ServeScript(w http.ResponseWriter, r *http.Request) {
