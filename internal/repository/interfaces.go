@@ -171,6 +171,7 @@ type ConversationRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Conversation, error)
 	GetByParticipants(ctx context.Context, bathhouseID, clientID uuid.UUID) (*domain.Conversation, error)
 	ListByUser(ctx context.Context, userID uuid.UUID, bathhouseIDs []uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Conversation], error)
+	ListAll(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.Conversation], error)
 	GetOrCreate(ctx context.Context, conv *domain.Conversation) (*domain.Conversation, error)
 	UpdateLastMessageAt(ctx context.Context, id uuid.UUID, t time.Time) error
 }

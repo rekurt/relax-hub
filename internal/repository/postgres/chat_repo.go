@@ -136,6 +136,49 @@ func (r *conversationRepo) ListByUser(ctx context.Context, userID uuid.UUID, bat
 	}, nil
 }
 
+func (r *conversationRepo) ListAll(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.Conversation], error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	countQuery := `SELECT COUNT(*) FROM conversations`
+	var totalCount int64
+	if err := r.pool.QueryRow(ctx, countQuery).Scan(&totalCount); err != nil {
+		return nil, fmt.Errorf("count all conversations: %w", err)
+	}
+
+	offset := (page - 1) * pageSize
+	listQuery := `SELECT ` + conversationColumns + ` FROM conversations ORDER BY last_message_at DESC NULLS LAST, created_at DESC LIMIT $1 OFFSET $2`
+	rows, err := r.pool.Query(ctx, listQuery, pageSize, offset)
+	if err != nil {
+		return nil, fmt.Errorf("list all conversations: %w", err)
+	}
+	defer rows.Close()
+
+	var conversations []domain.Conversation
+	for rows.Next() {
+		var c domain.Conversation
+		if err := rows.Scan(&c.ID, &c.BathhouseID, &c.ClientID, &c.BookingID, &c.LastMessageAt, &c.CreatedAt); err != nil {
+			return nil, fmt.Errorf("scan conversation: %w", err)
+		}
+		conversations = append(conversations, c)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate conversation rows: %w", err)
+	}
+
+	return &domain.PaginatedResult[domain.Conversation]{
+		Items:      conversations,
+		TotalCount: totalCount,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
+	}, nil
+}
+
 func (r *conversationRepo) GetOrCreate(ctx context.Context, conv *domain.Conversation) (*domain.Conversation, error) {
 	if conv.ID == uuid.Nil {
 		conv.ID = uuid.New()

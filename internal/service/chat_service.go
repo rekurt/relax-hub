@@ -122,6 +122,10 @@ func (s *chatService) SendMessage(ctx context.Context, senderID uuid.UUID, role 
 }
 
 func (s *chatService) ListConversations(ctx context.Context, userID uuid.UUID, role domain.UserRole, page, pageSize int) (*domain.PaginatedResult[domain.Conversation], error) {
+	if role == domain.RoleAdmin {
+		return s.convRepo.ListAll(ctx, page, pageSize)
+	}
+
 	bathhouseIDs, err := s.getUserBathhouseIDs(ctx, userID, role)
 	if err != nil {
 		return nil, err
@@ -162,6 +166,11 @@ func (s *chatService) MarkAsRead(ctx context.Context, userID uuid.UUID, role dom
 }
 
 func (s *chatService) GetUnreadCount(ctx context.Context, userID uuid.UUID, role domain.UserRole) (int64, error) {
+	// Admin is not a conversation participant, so unread count is not applicable.
+	if role == domain.RoleAdmin {
+		return 0, nil
+	}
+
 	bathhouseIDs, err := s.getUserBathhouseIDs(ctx, userID, role)
 	if err != nil {
 		return 0, err
@@ -227,10 +236,7 @@ func (s *chatService) getUserBathhouseIDs(ctx context.Context, userID uuid.UUID,
 		return ids, nil
 
 	case domain.RoleAdmin:
-		// Admin sees all — pass nil to get all conversations
-		// ListByUser with nil bathhouseIDs will filter by clientID,
-		// which won't work for admin. For now, return empty slice
-		// meaning admin would need a separate admin endpoint.
+		// Admin conversations are handled separately via ListAll.
 		return nil, nil
 
 	default:

@@ -115,6 +115,41 @@ func (r *ConversationRepo) ListByUser(_ context.Context, userID uuid.UUID, bathh
 	}, nil
 }
 
+func (r *ConversationRepo) ListAll(_ context.Context, page, pageSize int) (*domain.PaginatedResult[domain.Conversation], error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	var all []domain.Conversation
+	for _, c := range r.conversations {
+		all = append(all, *c)
+	}
+
+	totalCount := int64(len(all))
+	offset := (page - 1) * pageSize
+	end := offset + pageSize
+	if offset > len(all) {
+		offset = len(all)
+	}
+	if end > len(all) {
+		end = len(all)
+	}
+
+	return &domain.PaginatedResult[domain.Conversation]{
+		Items:      all[offset:end],
+		TotalCount: totalCount,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
+	}, nil
+}
+
 func (r *ConversationRepo) GetOrCreate(ctx context.Context, conv *domain.Conversation) (*domain.Conversation, error) {
 	existing, err := r.GetByParticipants(ctx, conv.BathhouseID, conv.ClientID)
 	if err == nil {
