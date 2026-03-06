@@ -39,6 +39,14 @@ jsonpath "$.success" == false
 jsonpath "$.error.code" == "unauthorized"
 
 ### Test 5: Client tries to subscribe (forbidden - only owner/representative)
+# First get a real bathhouse ID
+GET http://localhost:8080/api/v1/bathhouses
+Authorization: Bearer {{owner_token}}
+
+HTTP 200
+[Captures]
+bathhouse_id: jsonpath "$.data[0].id"
+
 POST http://localhost:8080/api/v1/my/bathhouses/{{bathhouse_id}}/subscription
 Authorization: Bearer {{client_token}}
 Content-Type: application/json

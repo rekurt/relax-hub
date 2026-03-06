@@ -97,7 +97,7 @@ log_info "Running migrations..."
 # Apply migrations (use no_postgis version for init)
 MIGRATION_DIR="$(cd "$(dirname "$0")"/../../migrations && pwd)"
 # Apply init_no_postgis.sql first, then other migrations
-for migration in "$MIGRATION_DIR"/000001_init_no_postgis.up.sql "$MIGRATION_DIR"/000002_*.up.sql "$MIGRATION_DIR"/000003_*.up.sql; do
+for migration in "$MIGRATION_DIR"/000001_init_no_postgis.up.sql "$MIGRATION_DIR"/000002_*.up.sql "$MIGRATION_DIR"/000003_*.up.sql "$MIGRATION_DIR"/000004_*.up.sql "$MIGRATION_DIR"/000005_*.up.sql "$MIGRATION_DIR"/000006_*.up.sql "$MIGRATION_DIR"/000007_*.up.sql "$MIGRATION_DIR"/000008_*.up.sql "$MIGRATION_DIR"/000009_*.up.sql "$MIGRATION_DIR"/000013_*.up.sql "$MIGRATION_DIR"/000017_*.up.sql "$MIGRATION_DIR"/000018_*.up.sql; do
     [ -f "$migration" ] || continue
     log_info "Applying $(basename "$migration")..."
     if [ -z "$POSTGRES_PASSWORD" ]; then

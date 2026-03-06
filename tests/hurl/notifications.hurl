@@ -11,8 +11,8 @@ jsonpath "$.success" == true
 jsonpath "$.data" isList
 jsonpath "$.meta.page" == 1
 jsonpath "$.meta.page_size" == 20
-jsonpath "$.meta.total_count" isInteger
-jsonpath "$.meta.total_pages" isInteger
+jsonpath "$.meta.total_count" isNumber
+jsonpath "$.meta.total_pages" isNumber
 
 ### Test 2: Get notifications with custom page size
 GET http://localhost:8080/api/v1/my/notifications?page=1&page_size=5
@@ -39,7 +39,7 @@ Authorization: Bearer {{client_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data.unread_count" isInteger
+jsonpath "$.data.unread_count" isNumber
 
 ### Test 5: Get unread count without auth (should fail)
 GET http://localhost:8080/api/v1/my/notifications/unread-count

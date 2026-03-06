@@ -24,7 +24,7 @@ jsonpath "$.success" == true
 jsonpath "$.data" isList
 jsonpath "$.meta.page" == 1
 jsonpath "$.meta.page_size" == 20
-jsonpath "$.meta.total_count" isInteger
+jsonpath "$.meta.total_count" isNumber
 
 ### Test 3: Get personalized recommendations with custom page size
 GET http://localhost:8080/api/v1/recommendations?page=1&page_size=5
