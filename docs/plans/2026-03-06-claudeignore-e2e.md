@@ -128,8 +128,8 @@
 **Files:**
 - Modify: `tests/hurl/run_all_tests.sh`
 
-- [ ] Добавить новые hurl-файлы в скрипт запуска
-- [ ] Убедиться что порядок выполнения корректен (subscriptions после bathhouses, pricing после subscriptions и т.д.)
+- [x] Добавить новые hurl-файлы в скрипт запуска
+- [x] Убедиться что порядок выполнения корректен (subscriptions после bathhouses, pricing после subscriptions и т.д.)
 
 ### Task 9: Verify acceptance criteria
 

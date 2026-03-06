@@ -287,6 +287,57 @@ hurl tests/hurl/representatives.hurl --variables-file tests/hurl/.env.test \
     exit 1
 }
 
+log_info "Running subscriptions tests..."
+hurl tests/hurl/subscriptions.hurl --variables-file tests/hurl/.env.test \
+  --variable owner_token="$OWNER_TOKEN" || {
+    log_error "Subscriptions tests failed"
+    exit 1
+}
+
+log_info "Running subscriptions negative tests..."
+hurl tests/hurl/subscriptions_negative.hurl --variables-file tests/hurl/.env.test \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" || {
+    log_warn "Subscriptions negative tests had failures"
+}
+
+log_info "Running pricing rules tests..."
+hurl tests/hurl/pricing_rules.hurl --variables-file tests/hurl/.env.test \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable representative_token="$REPRESENTATIVE_TOKEN" || {
+    log_error "Pricing rules tests failed"
+    exit 1
+}
+
+log_info "Running pricing rules negative tests..."
+hurl tests/hurl/pricing_rules_negative.hurl --variables-file tests/hurl/.env.test \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" || {
+    log_warn "Pricing rules negative tests had failures"
+}
+
+log_info "Running recommendations tests..."
+hurl tests/hurl/recommendations.hurl --variables-file tests/hurl/.env.test \
+  --variable client_token="$CLIENT_TOKEN" || {
+    log_error "Recommendations tests failed"
+    exit 1
+}
+
+log_info "Running notifications tests..."
+hurl tests/hurl/notifications.hurl --variables-file tests/hurl/.env.test \
+  --variable client_token="$CLIENT_TOKEN" || {
+    log_error "Notifications tests failed"
+    exit 1
+}
+
+log_info "Running widget tests..."
+hurl tests/hurl/widget.hurl --variables-file tests/hurl/.env.test \
+  --variable owner_token="$OWNER_TOKEN" \
+  --variable client_token="$CLIENT_TOKEN" || {
+    log_error "Widget tests failed"
+    exit 1
+}
+
 log_info "Running admin users tests..."
 hurl tests/hurl/admin_users.hurl --variables-file tests/hurl/.env.test \
   --variable admin_token="$ADMIN_TOKEN" \
