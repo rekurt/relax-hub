@@ -187,7 +187,10 @@ describe('BaniWidget', () => {
       global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: true,
-          json: () => Promise.resolve(mockSlots)
+          json: () => Promise.resolve({
+            success: true,
+            data: mockSlots
+          })
         })
       );
 

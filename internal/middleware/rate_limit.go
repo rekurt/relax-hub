@@ -1,11 +1,25 @@
 package middleware
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 )
+
+// APIError represents an error response
+type APIError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+// APIResponse represents the standard API response
+type APIResponse struct {
+	Success bool      `json:"success"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   *APIError `json:"error,omitempty"`
+}
 
 type RateLimiter struct {
 	mu       sync.RWMutex
@@ -93,7 +107,15 @@ func WidgetRateLimit(rl *RateLimiter, ratePerSecond float64) func(http.Handler) 
 			}
 
 			if !rl.Allow(apiKey, ratePerSecond) {
-				http.Error(w, "rate limit exceeded", http.StatusTooManyRequests)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusTooManyRequests)
+				_ = json.NewEncoder(w).Encode(APIResponse{
+					Success: false,
+					Error: &APIError{
+						Code:    "rate_limit_exceeded",
+						Message: "rate limit exceeded",
+					},
+				})
 				return
 			}
 

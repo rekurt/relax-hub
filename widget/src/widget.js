@@ -176,7 +176,8 @@
           throw new Error('Failed to fetch bathhouse info');
         }
 
-        this.state.bathhouse = await response.json();
+        const res = await response.json();
+        this.state.bathhouse = res.data;
         this.state.error = null;
       } catch (error) {
         this.state.error = error.message;
@@ -201,8 +202,8 @@
           throw new Error('Failed to fetch available slots');
         }
 
-        const slots = await response.json();
-        this.state.slots = slots || [];
+        const res = await response.json();
+        this.state.slots = res.data || [];
         this.state.selectedDate = date;
         this.state.view = 'slot-selection';
         this.state.error = null;
@@ -245,8 +246,8 @@
           throw new Error(errorData.error?.message || 'Failed to create booking');
         }
 
-        const booking = await response.json();
-        this.state.selectedSlot = { ...slot, ...booking };
+        const res = await response.json();
+        this.state.selectedSlot = { ...slot, ...res.data };
         this.state.view = 'confirmation';
         this.state.error = null;
       } catch (error) {

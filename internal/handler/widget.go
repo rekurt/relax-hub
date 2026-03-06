@@ -209,6 +209,16 @@ func (h *WidgetHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.GuestCount <= 0 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "guest_count must be greater than 0")
+		return
+	}
+
+	if len(req.Comment) > 1000 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "comment must not exceed 1000 characters")
+		return
+	}
+
 	bathhouse, err := h.bathhouseRepo.GetByAPIKey(r.Context(), apiKey)
 	if err != nil {
 		if err == domain.ErrNotFound {
@@ -222,6 +232,11 @@ func (h *WidgetHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 
 	if bathhouse.Status != domain.BathhouseStatusActive {
 		writeError(w, http.StatusNotFound, "bathhouse_not_active", "bathhouse is not active")
+		return
+	}
+
+	if req.GuestCount > bathhouse.MaxGuests {
+		writeError(w, http.StatusBadRequest, "invalid_input", "guest_count exceeds maximum guests allowed")
 		return
 	}
 
