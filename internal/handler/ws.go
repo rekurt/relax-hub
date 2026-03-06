@@ -179,7 +179,9 @@ func (h *WSHandler) handleClientMessage(client *notification.Client, raw []byte)
 
 	switch msg.Action {
 	case notification.ChatActionSubscribe:
-		if !h.convAccessCheck.CanAccessConversation(context.Background(), client.UserID, domain.UserRole(client.Role), convID) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if !h.convAccessCheck.CanAccessConversation(ctx, client.UserID, domain.UserRole(client.Role), convID) {
 			h.logger.Warn("ws unauthorized conversation subscribe attempt", "user_id", client.UserID, "conversation_id", convID)
 			return
 		}
@@ -187,7 +189,9 @@ func (h *WSHandler) handleClientMessage(client *notification.Client, raw []byte)
 	case notification.ChatActionUnsubscribe:
 		h.hub.UnsubscribeFromConversation(client, convID)
 	case notification.ChatActionTyping:
-		if !h.convAccessCheck.CanAccessConversation(context.Background(), client.UserID, domain.UserRole(client.Role), convID) {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if !h.convAccessCheck.CanAccessConversation(ctx, client.UserID, domain.UserRole(client.Role), convID) {
 			return
 		}
 		h.hub.BroadcastTypingIndicator(convID, client.UserID)
