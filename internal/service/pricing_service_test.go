@@ -677,3 +677,81 @@ func TestPricingService_GetActiveRules(t *testing.T) {
 		}
 	}
 }
+
+func TestPricingService_CalculatePrice_DateRangeBoundary(t *testing.T) {
+	// Test that date range rules compare dates only, not timestamps
+	// This ensures rules with DateFrom/DateTo boundaries work correctly
+	priceRepo := mock.NewPricingRuleRepo()
+	bhRepo := mock.NewBathhouseRepo()
+	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
+	log := logger.New(logger.LevelError)
+
+	service := NewPricingService(priceRepo, bhRepo, access, log)
+
+	bathhouseID := uuid.New()
+	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	// Holiday rule: Jan 1 to Jan 8 with 2.0x multiplier
+	dateFrom := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	dateTo := time.Date(2024, 1, 8, 23, 59, 59, 0, time.UTC)
+	holidayRule := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        "Holiday",
+		Type:        domain.RuleTypeHoliday,
+		Multiplier:  2.0,
+		DateFrom:    &dateFrom,
+		DateTo:      &dateTo,
+		Priority:    20,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+	}
+	if err := priceRepo.Create(context.Background(), holidayRule); err != nil {
+		t.Fatalf("failed to create holiday rule: %v", err)
+	}
+
+	// Test 1: Booking on Jan 1 at 08:00 (within the range) - should apply rule
+	startTime := time.Date(2024, 1, 1, 8, 0, 0, 0, time.UTC)
+	endTime := time.Date(2024, 1, 1, 11, 0, 0, 0, time.UTC)
+
+	price, err := service.CalculatePrice(context.Background(), bathhouseID, 1000, startTime, endTime)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := int64(6000) // 1000 * 3 * 2.0
+	if price != expected {
+		t.Errorf("expected price %d for Jan 1 booking, got %d", expected, price)
+	}
+
+	// Test 2: Booking on Jan 8 at 20:00 (last day at evening) - should apply rule
+	startTime = time.Date(2024, 1, 8, 20, 0, 0, 0, time.UTC)
+	endTime = time.Date(2024, 1, 8, 23, 0, 0, 0, time.UTC)
+
+	price, err = service.CalculatePrice(context.Background(), bathhouseID, 1000, startTime, endTime)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected = int64(6000) // 1000 * 3 * 2.0
+	if price != expected {
+		t.Errorf("expected price %d for Jan 8 evening booking, got %d", expected, price)
+	}
+
+	// Test 3: Booking on Jan 9 (after range) - should NOT apply rule
+	startTime = time.Date(2024, 1, 9, 10, 0, 0, 0, time.UTC)
+	endTime = time.Date(2024, 1, 9, 13, 0, 0, 0, time.UTC)
+
+	price, err = service.CalculatePrice(context.Background(), bathhouseID, 1000, startTime, endTime)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected = int64(3000) // 1000 * 3 * 1.0 (no multiplier)
+	if price != expected {
+		t.Errorf("expected price %d for Jan 9 booking, got %d", expected, price)
+	}
+}

@@ -211,9 +211,12 @@ func (s *pricingService) ruleAppliesAt(t time.Time, rule *domain.PricingRule) bo
 		return slices.Contains(rule.DaysOfWeek, dayOfWeek)
 
 	case domain.RuleTypeHoliday:
-		// Check date range
+		// Check date range (comparing only dates, ignoring time)
 		if rule.DateFrom != nil && rule.DateTo != nil {
-			return !t.Before(*rule.DateFrom) && !t.After(*rule.DateTo)
+			tDate := t.Truncate(24 * time.Hour)
+			fromDate := rule.DateFrom.Truncate(24 * time.Hour)
+			toDate := rule.DateTo.Truncate(24 * time.Hour)
+			return !tDate.Before(fromDate) && !tDate.After(toDate)
 		}
 		return false
 
@@ -235,9 +238,12 @@ func (s *pricingService) ruleAppliesAt(t time.Time, rule *domain.PricingRule) bo
 		return false
 
 	case domain.RuleTypeSeason:
-		// Check date range
+		// Check date range (comparing only dates, ignoring time)
 		if rule.DateFrom != nil && rule.DateTo != nil {
-			return !t.Before(*rule.DateFrom) && !t.After(*rule.DateTo)
+			tDate := t.Truncate(24 * time.Hour)
+			fromDate := rule.DateFrom.Truncate(24 * time.Hour)
+			toDate := rule.DateTo.Truncate(24 * time.Hour)
+			return !tDate.Before(fromDate) && !tDate.After(toDate)
 		}
 		return false
 
