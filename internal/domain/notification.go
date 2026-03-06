@@ -19,12 +19,14 @@ const (
 	NotifPromo            NotificationType = "promo"
 	NotifReminder         NotificationType = "reminder"
 	NotifSystem           NotificationType = "system"
+	NotifNewMessage       NotificationType = "new_message"
 )
 
 func (t NotificationType) IsValid() bool {
 	switch t {
 	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected, NotifNewReview,
-		NotifReviewResponse, NotifReviewApproved, NotifReviewRejected, NotifPromo, NotifReminder, NotifSystem:
+		NotifReviewResponse, NotifReviewApproved, NotifReviewRejected, NotifPromo, NotifReminder, NotifSystem,
+		NotifNewMessage:
 		return true
 	}
 	return false

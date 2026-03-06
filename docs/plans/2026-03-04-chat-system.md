@@ -74,17 +74,17 @@ Real-time чат-система между клиентами и владель�
 **Files:**
 - Create: `internal/service/chat_service.go`
 
-- [ ] ChatService:
+- [x] ChatService:
   - StartConversation(ctx, bathhouseID, clientID, bookingID) — создать/получить беседу
   - SendMessage(ctx, conversationID, senderID, text) — отправить сообщение
   - ListConversations(ctx, userID, page, pageSize) — список бесед (для клиента и для владельца)
   - ListMessages(ctx, conversationID, userID, page, pageSize) — сообщения (с проверкой доступа)
   - MarkAsRead(ctx, conversationID, userID) — прочитать все сообщения в беседе
   - GetUnreadCount(ctx, userID) — общее число непрочитанных сообщений
-- [ ] RBAC: клиент видит только свои беседы, owner/representative — беседы по своим баням
-- [ ] При новом сообщении — отправить уведомление через NotificationService
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] RBAC: клиент видит только свои беседы, owner/representative — беседы по своим баням
+- [x] При новом сообщении — отправить уведомление через NotificationService
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: WebSocket для real-time чата
 
