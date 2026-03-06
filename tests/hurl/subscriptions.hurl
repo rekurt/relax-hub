@@ -6,12 +6,12 @@ GET http://localhost:8080/api/v1/bathhouses
 Authorization: Bearer {{owner_token}}
 
 HTTP 200
-[Asserts]
-jsonpath "$.success" == true
-jsonpath "$.data" isArray
-jsonpath "$.data[0].id" isString
 [Captures]
 bathhouse_id: jsonpath "$.data[0].id"
+[Asserts]
+jsonpath "$.success" == true
+jsonpath "$.data" isList
+jsonpath "$.data[0].id" isString
 
 ### Test 2: Subscribe to free plan
 POST http://localhost:8080/api/v1/my/bathhouses/{{bathhouse_id}}/subscription
@@ -110,7 +110,7 @@ Authorization: Bearer {{owner_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.meta.page" == 1
 jsonpath "$.meta.page_size" == 20
 jsonpath "$.meta.total_count" >= 1
@@ -121,11 +121,11 @@ GET http://localhost:8080/api/v1/bathhouses
 Authorization: Bearer {{owner_token}}
 
 HTTP 200
-[Asserts]
-jsonpath "$.success" == true
-jsonpath "$.data" isArray
 [Captures]
 bathhouse_id_2: jsonpath "$.data[1].id"
+[Asserts]
+jsonpath "$.success" == true
+jsonpath "$.data" isList
 
 ### Test 10: Create premium subscription on second bathhouse
 POST http://localhost:8080/api/v1/my/bathhouses/{{bathhouse_id_2}}/subscription
@@ -150,5 +150,5 @@ Authorization: Bearer {{owner_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.meta.total_count" >= 2

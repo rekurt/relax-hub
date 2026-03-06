@@ -29,7 +29,7 @@ Authorization: Bearer {{owner_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.data | length" >= 1
 jsonpath "$.data[0].id" isString
 jsonpath "$.data[0].user_id" isString
@@ -59,7 +59,7 @@ Authorization: Bearer {{owner_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.data | length" >= 2
 
 ### Test 5: Revoke a representative's access
@@ -78,7 +78,7 @@ Authorization: Bearer {{owner_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.data | length" >= 1
 
 ### Test 7: List representatives by second representative
@@ -88,4 +88,4 @@ Authorization: Bearer {{representative_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList

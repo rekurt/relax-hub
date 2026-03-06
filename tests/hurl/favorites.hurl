@@ -19,7 +19,7 @@ Authorization: Bearer {{client_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.meta.page" == 1
 jsonpath "$.meta.page_size" == 10
 jsonpath "$.meta.total_count" >= 1
@@ -62,7 +62,7 @@ Authorization: Bearer {{client2_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.meta.total_count" >= 1
 
 ### Test 7: Add multiple bathhouses to favorites for pagination test

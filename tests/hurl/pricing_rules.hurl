@@ -6,13 +6,13 @@ GET http://localhost:8080/api/v1/bathhouses
 Authorization: Bearer {{owner_token}}
 
 HTTP 200
-[Asserts]
-jsonpath "$.success" == true
-jsonpath "$.data" isArray
-jsonpath "$.data[0].id" isString
-jsonpath "$.data[0].price_per_hour" isNumber
 [Captures]
 bathhouse_id: jsonpath "$.data[0].id"
+[Asserts]
+jsonpath "$.success" == true
+jsonpath "$.data" isList
+jsonpath "$.data[0].id" isString
+jsonpath "$.data[0].price_per_hour" isNumber
 
 ### Test 2: Create weekday pricing rule (discount on weekdays)
 POST http://localhost:8080/api/v1/my/bathhouses/{{bathhouse_id}}/pricing-rules
@@ -29,6 +29,8 @@ Content-Type: application/json
 }
 
 HTTP 201
+[Captures]
+weekday_rule_id: jsonpath "$.data.id"
 [Asserts]
 jsonpath "$.success" == true
 jsonpath "$.data.bathhouse_id" == "{{bathhouse_id}}"
@@ -39,8 +41,6 @@ jsonpath "$.data.priority" == 1
 jsonpath "$.data.is_active" == true
 jsonpath "$.data.id" isString
 jsonpath "$.data.created_at" isString
-[Captures]
-weekday_rule_id: jsonpath "$.data.id"
 
 ### Test 3: Create weekend pricing rule (surcharge on weekends)
 POST http://localhost:8080/api/v1/my/bathhouses/{{bathhouse_id}}/pricing-rules
@@ -57,6 +57,8 @@ Content-Type: application/json
 }
 
 HTTP 201
+[Captures]
+weekend_rule_id: jsonpath "$.data.id"
 [Asserts]
 jsonpath "$.success" == true
 jsonpath "$.data.name" == "Weekend surcharge"
@@ -65,8 +67,6 @@ jsonpath "$.data.multiplier" == 1.5
 jsonpath "$.data.priority" == 2
 jsonpath "$.data.is_active" == true
 jsonpath "$.data.id" isString
-[Captures]
-weekend_rule_id: jsonpath "$.data.id"
 
 ### Test 4: Create time_range pricing rule (evening surcharge)
 POST http://localhost:8080/api/v1/my/bathhouses/{{bathhouse_id}}/pricing-rules
@@ -84,6 +84,8 @@ Content-Type: application/json
 }
 
 HTTP 201
+[Captures]
+time_range_rule_id: jsonpath "$.data.id"
 [Asserts]
 jsonpath "$.success" == true
 jsonpath "$.data.name" == "Evening surcharge"
@@ -93,8 +95,6 @@ jsonpath "$.data.time_from" == "18:00"
 jsonpath "$.data.time_to" == "23:00"
 jsonpath "$.data.priority" == 3
 jsonpath "$.data.id" isString
-[Captures]
-time_range_rule_id: jsonpath "$.data.id"
 
 ### Test 5: List all pricing rules for bathhouse
 GET http://localhost:8080/api/v1/my/bathhouses/{{bathhouse_id}}/pricing-rules
@@ -103,7 +103,7 @@ Authorization: Bearer {{owner_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.data" count >= 3
 
 ### Test 6: Update weekday rule (change multiplier)
@@ -149,7 +149,7 @@ Authorization: Bearer {{owner_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 
 ### Test 10: Representative can also create pricing rules
 POST http://localhost:8080/api/v1/my/bathhouses/{{bathhouse_id}}/pricing-rules
@@ -165,13 +165,13 @@ Content-Type: application/json
 }
 
 HTTP 201
+[Captures]
+holiday_rule_id: jsonpath "$.data.id"
 [Asserts]
 jsonpath "$.success" == true
 jsonpath "$.data.name" == "Holiday premium"
 jsonpath "$.data.type" == "holiday"
 jsonpath "$.data.multiplier" == 2.0
-[Captures]
-holiday_rule_id: jsonpath "$.data.id"
 
 ### Test 11: Cleanup - delete remaining test rules
 DELETE http://localhost:8080/api/v1/pricing-rules/{{weekday_rule_id}}

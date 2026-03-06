@@ -7,23 +7,23 @@ GET http://localhost:8080/api/v1/bathhouses
 Authorization: Bearer {{owner_token}}
 
 HTTP 200
-[Asserts]
-jsonpath "$.success" == true
-jsonpath "$.data" isArray
-jsonpath "$.data[0].id" isString
 [Captures]
 bathhouse_id: jsonpath "$.data[0].id"
+[Asserts]
+jsonpath "$.success" == true
+jsonpath "$.data" isList
+jsonpath "$.data[0].id" isString
 
 ### Test 2: Get widget API key for the bathhouse
 GET http://localhost:8080/api/v1/my/bathhouses/{{bathhouse_id}}/widget-key
 Authorization: Bearer {{owner_token}}
 
 HTTP 200
+[Captures]
+widget_api_key: jsonpath "$.data.api_key"
 [Asserts]
 jsonpath "$.success" == true
 jsonpath "$.data.api_key" isString
-[Captures]
-widget_api_key: jsonpath "$.data.api_key"
 
 ### Test 3: Get bathhouse data via widget API
 GET http://localhost:8080/api/v1/widget/{{widget_api_key}}/bathhouse
@@ -40,7 +40,7 @@ jsonpath "$.data.min_duration" isNumber
 jsonpath "$.data.max_guests" isNumber
 jsonpath "$.data.rating" isNumber
 jsonpath "$.data.review_count" isNumber
-jsonpath "$.data.images" isArray
+jsonpath "$.data.images" isList
 
 ### Test 4: Get bathhouse data with invalid API key (should fail)
 GET http://localhost:8080/api/v1/widget/invalid-api-key-12345/bathhouse
@@ -56,7 +56,7 @@ GET http://localhost:8080/api/v1/widget/{{widget_api_key}}/slots?date=2026-04-15
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 
 ### Test 6: Get available slots without date param (should fail)
 GET http://localhost:8080/api/v1/widget/{{widget_api_key}}/slots
@@ -185,11 +185,11 @@ POST http://localhost:8080/api/v1/my/bathhouses/{{bathhouse_id}}/widget-key/rege
 Authorization: Bearer {{owner_token}}
 
 HTTP 200
+[Captures]
+new_widget_api_key: jsonpath "$.data.api_key"
 [Asserts]
 jsonpath "$.success" == true
 jsonpath "$.data.api_key" isString
-[Captures]
-new_widget_api_key: jsonpath "$.data.api_key"
 
 ### Test 15: Old API key should no longer work after regeneration
 GET http://localhost:8080/api/v1/widget/{{widget_api_key}}/bathhouse

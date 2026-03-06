@@ -118,7 +118,7 @@ HTTP 200
 [Asserts]
 jsonpath "$.success" == true
 jsonpath "$.data" exists
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.meta.page" == 1
 jsonpath "$.meta.page_size" == 10
 jsonpath "$.meta.total_count" > 0
@@ -212,7 +212,7 @@ HTTP 200
 [Asserts]
 jsonpath "$.success" == true
 jsonpath "$.data" exists
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.meta.page" == 1
 jsonpath "$.meta.total_count" > 0
 
@@ -235,4 +235,4 @@ HTTP 200
 [Asserts]
 jsonpath "$.success" == true
 jsonpath "$.data" exists
-jsonpath "$.data" isArray
+jsonpath "$.data" isList

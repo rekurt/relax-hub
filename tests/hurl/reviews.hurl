@@ -7,7 +7,7 @@ GET http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}/reviews?page=1&page
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.meta.page" == 1
 jsonpath "$.meta.page_size" == 10
 jsonpath "$.meta.total_count" isNumber
@@ -82,7 +82,7 @@ GET http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}/reviews?page=1&page
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.meta.total_count" >= 1
 
 ### Test 6: Create review for update test

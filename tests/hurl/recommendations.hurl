@@ -6,13 +6,13 @@ GET http://localhost:8080/api/v1/bathhouses
 Authorization: Bearer {{client_token}}
 
 HTTP 200
-[Asserts]
-jsonpath "$.success" == true
-jsonpath "$.data" isArray
-jsonpath "$.data[0].id" isString
 [Captures]
 bathhouse_id: jsonpath "$.data[0].id"
 city_id: jsonpath "$.data[0].city_id"
+[Asserts]
+jsonpath "$.success" == true
+jsonpath "$.data" isList
+jsonpath "$.data[0].id" isString
 
 ### Test 2: Get personalized recommendations (auth required)
 GET http://localhost:8080/api/v1/recommendations?page=1&page_size=20
@@ -21,7 +21,7 @@ Authorization: Bearer {{client_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.meta.page" == 1
 jsonpath "$.meta.page_size" == 20
 jsonpath "$.meta.total_count" isInteger
@@ -33,7 +33,7 @@ Authorization: Bearer {{client_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.meta.page" == 1
 jsonpath "$.meta.page_size" == 5
 
@@ -50,7 +50,7 @@ GET http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}/similar?limit=10
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 
 ### Test 6: Get similar bathhouses with custom limit
 GET http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}/similar?limit=3
@@ -58,7 +58,7 @@ GET http://localhost:8080/api/v1/bathhouses/{{bathhouse_id}}/similar?limit=3
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 
 ### Test 7: Get similar bathhouses with invalid ID
 GET http://localhost:8080/api/v1/bathhouses/invalid-uuid/similar
@@ -73,7 +73,7 @@ GET http://localhost:8080/api/v1/popular?city_id={{city_id}}&limit=10
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 
 ### Test 9: Get popular bathhouses with custom limit
 GET http://localhost:8080/api/v1/popular?city_id={{city_id}}&limit=3
@@ -81,7 +81,7 @@ GET http://localhost:8080/api/v1/popular?city_id={{city_id}}&limit=3
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 
 ### Test 10: Get popular bathhouses without city_id (should fail)
 GET http://localhost:8080/api/v1/popular
@@ -192,5 +192,5 @@ Authorization: Bearer {{client_token}}
 HTTP 200
 [Asserts]
 jsonpath "$.success" == true
-jsonpath "$.data" isArray
+jsonpath "$.data" isList
 jsonpath "$.meta.page" == 1
