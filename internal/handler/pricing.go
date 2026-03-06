@@ -232,6 +232,10 @@ func (h *PricingHandler) CalculatePrice(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Normalize to UTC for consistent pricing calculation
+	startTime = startTime.UTC()
+	endTime = endTime.UTC()
+
 	// Validate that start time is before end time
 	if !startTime.Before(endTime) {
 		writeError(w, http.StatusBadRequest, "invalid_input", "start must be before end")
