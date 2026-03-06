@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -252,7 +253,14 @@ func (h *WidgetHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WidgetHandler) ServeScript(w http.ResponseWriter, r *http.Request) {
-	scriptPath := "widget/dist/widget.min.js"
+	// Use absolute path based on executable location
+	exePath, err := os.Executable()
+	if err != nil {
+		// Fallback to relative path for development
+		exePath, _ = os.Getwd()
+	}
+	execDir := filepath.Dir(exePath)
+	scriptPath := filepath.Join(execDir, "widget/dist/widget.min.js")
 
 	// Read the minified JavaScript file
 	content, err := os.ReadFile(scriptPath)
@@ -276,7 +284,14 @@ func (h *WidgetHandler) ServeScript(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WidgetHandler) ServeStyles(w http.ResponseWriter, r *http.Request) {
-	stylesPath := "widget/dist/widget.min.css"
+	// Use absolute path based on executable location
+	exePath, err := os.Executable()
+	if err != nil {
+		// Fallback to relative path for development
+		exePath, _ = os.Getwd()
+	}
+	execDir := filepath.Dir(exePath)
+	stylesPath := filepath.Join(execDir, "widget/dist/widget.min.css")
 
 	// Read the minified CSS file
 	content, err := os.ReadFile(stylesPath)

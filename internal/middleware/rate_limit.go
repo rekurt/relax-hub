@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -78,8 +79,14 @@ func (rl *RateLimiter) cleanup() {
 func WidgetRateLimit(rl *RateLimiter, ratePerSecond float64) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Use API key from URL for rate limiting
-			apiKey := r.URL.Query().Get(":api_key")
+			// Extract API key from URL path /widget/{api_key}/...
+			apiKey := ""
+			pathParts := strings.Split(r.URL.Path, "/")
+			// pathParts[0] = "", pathParts[1] = "widget", pathParts[2] = api_key
+			if len(pathParts) > 2 && pathParts[1] == "widget" && pathParts[2] != "" {
+				apiKey = pathParts[2]
+			}
+
 			if apiKey == "" {
 				// Fallback to IP address if API key not found
 				apiKey = r.RemoteAddr

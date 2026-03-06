@@ -673,21 +673,46 @@ func (h *BathhouseHandler) GetWidgetCode(w http.ResponseWriter, r *http.Request)
 		req.FontFamily = "Helvetica, Arial, sans-serif"
 	}
 
-	// Generate HTML embed code
-	code := generateWidgetCode(apiKey, req)
+	// Generate HTML embed code with absolute URLs
+	code := generateWidgetCode(apiKey, req, r)
+
+	// Get API base URL for response
+	scheme := "https"
+	if r.Header.Get("X-Forwarded-Proto") != "" {
+		scheme = r.Header.Get("X-Forwarded-Proto")
+	}
+	host := r.Header.Get("X-Forwarded-Host")
+	if host == "" {
+		host = r.Host
+	}
+	apiBaseURL := scheme + "://" + host
 
 	writeJSON(w, http.StatusOK, widgetCodeResponse{
 		Code:      code,
 		ApiKey:    apiKey,
-		ScriptURL: "/widget.js",
-		StyleURL:  "/widget.css",
+		ScriptURL: apiBaseURL + "/widget.js",
+		StyleURL:  apiBaseURL + "/widget.css",
 	})
 }
 
-func generateWidgetCode(apiKey string, req widgetCodeRequest) string {
+func generateWidgetCode(apiKey string, req widgetCodeRequest, r *http.Request) string {
+	// Calculate API base URL
+	scheme := "https"
+	if r.Header.Get("X-Forwarded-Proto") != "" {
+		scheme = r.Header.Get("X-Forwarded-Proto")
+	}
+	host := r.Header.Get("X-Forwarded-Host")
+	if host == "" {
+		host = r.Host
+	}
+	apiBaseURL := scheme + "://" + host
+
 	return `<div id="bani-widget" data-api-key="` + apiKey + `" data-color="` + req.Color + `" data-font-family="` + req.FontFamily + `" data-language="` + req.Language + `" data-show-price="` + boolToString(req.ShowPrice) + `" data-show-rating="` + boolToString(req.ShowRating) + `"></div>
-<link rel="stylesheet" href="/widget.css">
-<script src="/widget.js"></script>`
+<link rel="stylesheet" href="` + apiBaseURL + `/widget.css">
+<script src="` + apiBaseURL + `/widget.js"></script>
+<script>
+  window.BANI_WIDGET_API_URL = '` + apiBaseURL + `';
+</script>`
 }
 
 func boolToString(b bool) string {
