@@ -82,10 +82,6 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Normalize to UTC for consistent pricing calculation
-	startTime = startTime.UTC()
-	endTime = endTime.UTC()
-
 	userID := middleware.GetUserID(r.Context())
 
 	booking, err := h.bookingService.Create(r.Context(), userID, service.CreateBookingInput{
