@@ -1,37 +1,61 @@
-# CLAUDE.md — Project Patterns
+# CLAUDE.md
 
-## Build & Test Commands
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Build & Dev Commands
 
 ```bash
-go build ./...          # build
-go test ./... -v        # run tests
-go vet ./...            # vet
-make test               # shortcut for tests
-make lint               # golangci-lint
+# Build
+go build ./...                              # build all
+make build                                  # build server binary to ./bin/bani-server
+
+# Test
+go test ./... -v                            # all tests
+go test ./internal/service/ -v -run TestBooking  # single test
+make test                                   # shortcut
+make test-hurl                              # hurl integration tests (requires running server)
+
+# Lint & Vet
+make lint                                   # golangci-lint
+go vet ./...
+
+# Database
+make migrate-up                             # apply migrations
+make migrate-down                           # rollback last migration
+make seed-admin                             # create admin user (interactive)
+
+# Docker
+make docker-up                              # start postgres, redis, app
+make docker-down
+
+# Run
+make run                                    # build + run server
+go run ./cmd/bot run                        # run telegram bot
 ```
 
 ## Architecture
 
-Clean architecture: handler -> service -> repository
+Clean architecture: **handler → service → repository**
 
-- **domain/** — models, errors, filters. No external dependencies.
-- **repository/interfaces.go** — all repository interfaces in one file
-- **repository/postgres/** — pgx implementations, one file per entity
-- **repository/mock/** — in-memory mock implementations for testing
-- **service/** — business logic, RBAC checks via AccessChecker, one file per entity
-- **handler/** — HTTP handlers, one file per entity, uses service interfaces
-- **middleware/** — auth (JWT), RBAC (role-based), CORS, logging
-- **server/** — chi router, HTTP server with graceful shutdown
-- **notification/** — delivery channels: dispatcher, email sender, WebSocket hub, telegram sender
-- **bot/** — Telegram bot: commands, keyboards, notifications, booking wizard
-- **app/** — Uber fx DI container, assembles all modules
+- `internal/domain/` — models, errors, filters. No external dependencies.
+- `internal/repository/interfaces.go` — all repository interfaces in one file
+- `internal/repository/postgres/` — pgx implementations, one file per entity
+- `internal/repository/mock/` — in-memory mocks for testing
+- `internal/service/` — business logic, RBAC checks via AccessChecker
+- `internal/handler/` — HTTP handlers, one file per entity
+- `internal/middleware/` — auth (JWT), RBAC, CORS, logging, panic recovery
+- `internal/server/` — chi router setup
+- `internal/notification/` — dispatcher, email sender, WebSocket hub, telegram sender
+- `internal/bot/` — Telegram bot (separate binary: `cmd/bot/`)
+- `internal/app/` — Uber fx DI container
+
+Two binaries: `cmd/server` (HTTP API, Cobra CLI) and `cmd/bot` (Telegram bot).
 
 ## Key Patterns
 
 ### DI with Uber fx
 
-Every layer has a `module.go` with `fx.Module` that provides implementations.
-Use `fx.Annotate` + `fx.As` to bind implementations to interfaces:
+Every layer has a `module.go` with `fx.Module`. Bind implementations to interfaces:
 
 ```go
 fx.Annotate(postgres.NewUserRepo, fx.As(new(repository.UserRepository)))
@@ -41,17 +65,8 @@ fx.Annotate(postgres.NewUserRepo, fx.As(new(repository.UserRepository)))
 
 Four roles: client, owner, representative, admin.
 
-Middleware layer:
-- `RequireAuth` — extracts user_id and role from JWT into context
-- `OptionalAuth` — extracts user_id and role from JWT if present, but allows unauthenticated requests (used for is_favorite enrichment on public endpoints)
-- `RequireRole(roles...)` — checks role from context
-- `RequireOwnerOrRepresentative()` — allows owner or representative roles
-
-Service layer:
-- `AccessChecker.CanManageBathhouse()` — checks if user can manage a specific bathhouse
-- `AccessChecker.CanViewBathhouseBookings()` — checks if user can view bookings
-
-### Context Helpers
+Middleware: `RequireAuth`, `OptionalAuth`, `RequireRole(roles...)`, `RequireOwnerOrRepresentative()`
+Service: `AccessChecker.CanManageBathhouse()`, `AccessChecker.CanViewBathhouseBookings()`
 
 ```go
 middleware.GetUserID(ctx)   // uuid.UUID
@@ -60,354 +75,80 @@ middleware.GetUserRole(ctx) // domain.UserRole
 
 ### API Response Format
 
-All endpoints return:
-```json
-{
-  "success": true/false,
-  "data": { ... },
-  "error": { "code": "...", "message": "..." },
-  "meta": { "page": 1, "page_size": 20, "total_count": 100, "total_pages": 5 }
-}
-```
+All endpoints return `{ success, data, error: { code, message }, meta: { page, page_size, total_count, total_pages } }`.
 
 ### Error Mapping
 
-Domain errors (domain/errors.go) map to HTTP status codes in handler/response.go:
-- ErrNotFound -> 404
-- ErrAlreadyExists -> 409
-- ErrInvalidInput -> 400
-- ErrUnauthorized -> 401
-- ErrForbidden -> 403
-- ErrSlotUnavailable -> 409
-- ErrBookingCancelLate -> 400
-- ErrUserBlocked -> 403
-- ErrBathhouseNotActive -> 400
-- ErrBathhouseHasBookings -> 409
-- ErrReviewAlreadyResponded -> 409
-- ErrSocialAccountAlreadyLinked -> 409
-- ErrSocialAccountNotFound -> 404
-- ErrOAuthExchangeFailed -> 400
-- ErrInsufficientPoints -> 400
+Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`):
+- ErrNotFound→404, ErrAlreadyExists→409, ErrInvalidInput→400
+- ErrUnauthorized→401, ErrForbidden→403, ErrUserBlocked→403
+- ErrSlotUnavailable→409, ErrBookingCancelLate→400, ErrBathhouseNotActive→400
+- ErrBathhouseHasBookings→409, ErrReviewAlreadyResponded→409
+- ErrSocialAccountAlreadyLinked→409, ErrSocialAccountNotFound→404
+- ErrOAuthExchangeFailed→400, ErrInsufficientPoints→400
 
-### Structured Logging
-
-All logging uses the `internal/logger` package with structured log levels (debug/info/warn/error).
-Configure via `BANI_LOGGER_LEVEL` environment variable. Logger is injected via Uber fx:
+### Logging
 
 ```go
-logger.Info("message", "key", value)
-logger.Error("error", "key", value)
-logger.Debug("debug info", "key", value)
-logger.Warn("warning", "key", value)
+logger.Info("message", "key", value)  // also Error, Debug, Warn
 ```
 
-### Error Handling and Recovery
-
-- `internal/middleware/recovery.go` — panic recovery with stack traces in dev mode
-- Stack traces logged with request ID for tracing
-- Production mode hides implementation details
-- Use `IsDevEnvironment()` to check BANI_ENVIRONMENT value
-
-### Production Configuration
-
-- Environment field in config (dev/staging/production)
-- `Validate()` method ensures required fields: DSN, JWT Secret, Redis Addr
-- Production constraints: JWT Secret 32+ chars, DSN uses sslmode=require
-- Config validation happens on application startup
-
-### Health Checks
-
-- `/health` — liveness probe (simple 200 OK)
-- `/ready` — readiness probe (checks DB and Redis connectivity)
-- Returns 503 Service Unavailable if dependencies down
-- Structured logging for failed checks
-
-### Timeouts
-
-HTTP server timeouts configured in internal/server/server.go:
-- ReadHeaderTimeout: 5 seconds
-- ReadTimeout: 10 seconds
-- WriteTimeout: 30 seconds
-- IdleTimeout: 120 seconds
-
-Context timeouts:
-- Database queries: 30 seconds (via context.WithTimeout in handlers)
-- Redis operations: 5 seconds (client-level timeout)
-- Use `context.WithTimeout()` for queries exceeding base timeout
-
-### Testing
-
-Unit Tests:
-- Services tested with mock repositories from `repository/mock/`
-- Handlers tested with httptest + mock services
-- Middleware tested with httptest
-- Error handling and panic recovery tested with realistic scenarios
-- No integration tests (postgres repos require real DB)
-
-Hurl Integration Tests:
-- All API endpoints tested with real HTTP requests
-- Located in `tests/hurl/` directory
-- Use `run_all_tests.sh` to run full suite with setup
-- Database setup: `bash tests/hurl/setup.sh`
-- Individual test file format: `### Test N: description` with assertions
-- JWT tokens captured with `--variable` flag in run_all_tests.sh
-- Response assertions: `jsonpath`, `exists`, `isString`, `isNumber` predicates
-- Error cases validated with HTTP status codes and error codes
-- Run with `make test-hurl`
+Configured via `BANI_LOGGER_LEVEL`. Logger injected via fx.
 
 ### Config
 
-Viper with env prefix `BANI_`. Nested keys use `_` separator:
-`BANI_DATABASE_DSN`, `BANI_JWT_SECRET`, etc.
+Viper with env prefix `BANI_`. Nested keys use `_`: `BANI_DATABASE_DSN`, `BANI_JWT_SECRET`, etc.
 
 ### Database
 
-PostgreSQL with PostGIS for geo-queries. Migrations in `migrations/` folder.
-Geo-search uses `ST_DWithin` and `ST_Distance` with `geography` type.
+PostgreSQL with PostGIS. Migrations in `migrations/`. Geo-search uses `ST_DWithin`/`ST_Distance` with `geography` type.
 
-### Notification System
+### Testing
 
-Event-driven notifications with multi-channel delivery:
-- **Types**: booking_confirmed, booking_cancelled, booking_rejected, new_review, review_response, review_approved, review_rejected, new_message, promo, reminder, system
-- **Channels**: in-app (DB + WebSocket), email (SMTP/SendGrid), telegram (via bot API, requires linked account)
-- **Dispatcher** (`internal/notification/dispatcher.go`): routes to channels based on user preferences
-- **WebSocket Hub** (`internal/notification/hub.go`): Hub pattern for real-time delivery to connected clients
-- **Integration**: BookingService and ReviewService call NotificationService.Send() on key events
-- **Preferences**: per-user channel/event-type settings in NotificationPreferences model
+- Services: mock repos from `repository/mock/` + table-driven tests
+- Handlers: httptest + mock services
+- No integration tests for postgres repos (require real DB)
+- Hurl tests in `tests/hurl/` for full API endpoint testing
 
-WebSocket endpoint: `GET /api/v1/ws/notifications?token=<JWT>` with ping/pong heartbeat.
-
-### OAuth / Social Auth
-
-Social login via VK, Yandex ID, Google OAuth 2.0. Multiple providers per account.
-
-- **auth/** — OAuth provider implementations (VK, Yandex, Google), each with `GetAuthURL` and `Exchange` methods
-- **domain/oauth.go** — SocialAccount model, linked to User via UserID
-- **repository/postgres/social_account.go** — CRUD for social_accounts table
-- **service/oauth_service.go** — OAuthCallback (find/create user + JWT), LinkSocialAccount, UnlinkSocialAccount
-
-Routes:
-- `GET /api/v1/auth/oauth/{provider}` — redirect to provider auth page
-- `GET /api/v1/auth/oauth/{provider}/callback` — handle callback, return JWT
-- `POST /api/v1/auth/link/{provider}` — link social account (auth required)
-- `DELETE /api/v1/auth/link/{provider}` — unlink social account (auth required)
-- `GET /api/v1/auth/me/social-accounts` — list linked accounts (auth required)
-
-Config: `BANI_OAUTH_VK_CLIENT_ID`, `BANI_OAUTH_VK_CLIENT_SECRET`, `BANI_OAUTH_VK_REDIRECT_URL` (same pattern for YANDEX, GOOGLE)
-
-### Recommendation Engine
-
-Personalized bathhouse recommendations using collaborative filtering and user preferences:
-
-- **Models**: UserPreferences (explicit preferences: city, price range, amenities), UserActivity (view/booking/favorite tracking)
-- **Repository** (`internal/repository/postgres/recommendation.go`): GetUserPreferences, SaveUserPreferences, RecordActivity, GetUserBookedBathhouses, GetSimilarUsers, GetPopularBathhouses, GetSimilarBathhouses
-- **Service** (`internal/service/recommendation_service.go`):
-  - GetPersonalized(userID, page, pageSize) — algorithm: get user preferences → find similar users (collaborative filtering) → get bathhouses booked by similar users but not current user → filter by preferences (city, price, amenities) → score by rating × similarity weight × recency bonus
-  - GetSimilar(bathhouseID, limit) — bathhouses with similar amenities/price/city
-  - GetPopular(cityID, limit) — highest-rated bathhouses in city
-  - UpdatePreferences(userID, prefs) — save explicit preferences
-  - RecordView(userID, bathhouseID) — track activity for recommendations
-
-Routes:
-- `GET /api/v1/recommendations?page=1&page_size=20` — personalized (auth required)
-- `GET /api/v1/bathhouses/{id}/similar?limit=10` — similar bathhouses (public)
-- `GET /api/v1/popular?city_id=1&limit=10` — popular in city (public)
-- `GET /api/v1/my/preferences` — get preferences (auth required)
-- `PUT /api/v1/my/preferences` — update preferences (auth required)
-
-Activity tracking: RecordView called on bathhouse detail retrieval for authenticated users.
-
-Recommendation scoring formula: rating × similarity_weight × recency_bonus
-
-### Subscriptions and Promotions
-
-Three-tier subscription model for bathhouse monetization:
-
-**Models:**
-- **Subscription** (`internal/domain/subscription.go`): tracks plan type (free/premium/promoted), status (active/expired/cancelled), dates, pricing, and auto-renewal
-- **Promotion** (`internal/domain/promotion.go`): tracks advertising campaigns with budget, impressions, clicks, target city, and status
-
-**Plans:**
-- Free: no charge, basic listing
-- Premium: 5000 kopecks/month, +10 sort score boost in feed
-- Promoted: 10000 kopecks/month, dedicated "Recommended" block, impression/click tracking
-
-**Repositories:**
-- `internal/repository/postgres/subscription.go` — CRUD operations, fetch active subscriptions, list by owner with pagination, find expiring subscriptions
-- `internal/repository/postgres/promotion.go` — budget/metrics tracking, impression/click counting
-- Mock implementations for testing in `internal/repository/mock/`
-
-**Service:**
-- `internal/service/subscription_service.go` — Subscribe (create + charge), Cancel (disable auto-renewal), GetActive, ListByOwner
-- RBAC: only bathhouse owners can manage their subscriptions
-- Error: `ErrSubscriptionNotFound`, `ErrSubscriptionAlreadyActive`, `ErrPromotionBudgetExhausted`
-
-**Feed Impact:**
-- Premium subscriptions: bathhousses get +10 points in sort scoring
-- Promoted subscriptions: appear first in all results regardless of sort order, includes "is_promoted" flag in response
-- Impression tracking: recorded when promoted bathhouses appear in List results
-- Click tracking: recorded when promoted bathhouses are viewed via GetByID
-
-**Promotion Management:**
-- Promotions can only be created for bathhouses with active Promoted subscription
-- Promotions have budget tracking with impression/click counting
-- Budget model: tracks budget_kopecks and spent_kopecks for campaign management
-
-**Handlers:**
-- `POST /api/v1/my/bathhouses/{id}/subscription` — subscribe to plan (owner auth required)
-- `GET /api/v1/my/bathhouses/{id}/subscription` — get current subscription (owner auth)
-- `DELETE /api/v1/my/bathhouses/{id}/subscription` — cancel auto-renewal (owner auth)
-- `GET /api/v1/my/subscriptions?page=1&page_size=20` — list all owner subscriptions (owner auth)
-- `POST /api/v1/my/bathhouses/{id}/promotion` — create promotion campaign (owner auth)
-- `GET /api/v1/my/bathhouses/{id}/promotion` — get promotion analytics (owner auth)
-
-Database migrations in `migrations/000005_subscriptions.up.sql` create subscriptions and promotions tables with indexes on bathhouse_id, owner_id, and status for efficient queries.
-
-### Dynamic Pricing System
-
-Flexible pricing rules allow bathhouse owners to set different prices for different times/days:
-
-**Models:**
-- **PricingRule** (`internal/domain/pricing.go`): ID, BathhouseID, Name, Type (weekday/weekend/holiday/time_range/season), Multiplier (1.5 = +50%, 0.8 = -20%), DaysOfWeek, TimeFrom/TimeTo (HH:MM format), DateFrom/DateTo, Priority (higher wins on conflict), IsActive, CreatedAt
-
-**Repository:**
-- `internal/repository/postgres/pricing.go` — Create, Update, Delete, ListByBathhouse, GetActiveRules
-- Mock implementation for testing in `internal/repository/mock/`
-
-**Service:**
-- `internal/service/pricing_service.go` — CalculatePrice, CreateRule, UpdateRule, DeleteRule, ListRules
-- Algorithm: Split booking interval into hourly slots, find highest-priority applicable rule for each hour, apply multiplier to base price
-- Day-of-week convention: 0=Monday, 6=Sunday (matches WorkingHours)
-- Handles wraparound time ranges (e.g., 22:00-06:00 overnight shifts)
-
-**Integration:**
-- BookingService.CreateBooking uses PricingService.CalculatePrice instead of fixed multiplier
-- GetAvailableSlots returns calculated price per slot from pricing rules
-- Database migration `migrations/000008_dynamic_pricing.up.sql` creates pricing_rules table with indexes
-
-**Handlers:**
-- `POST /api/v1/my/bathhouses/{id}/pricing-rules` — create rule (owner/rep auth required)
-- `GET /api/v1/my/bathhouses/{id}/pricing-rules` — list rules (owner/rep auth)
-- `PUT /api/v1/pricing-rules/{id}` — update rule (owner/rep auth)
-- `DELETE /api/v1/pricing-rules/{id}` — delete rule (owner/rep auth)
-- `GET /api/v1/bathhouses/{id}/price-calculator?start=...&end=...` — public price quote calculator
-
-**Critical Details:**
-- Time format validation: HH:MM (00:00-23:59)
-- Day-of-week uses app convention (0=Monday), not Go's native (0=Sunday)
-- Wraparound times supported: from > to means rule spans midnight
-- String comparison works for HH:MM format (e.g., "09:00" < "14:30")
-
-### Loyalty Program
-
-Cumulative points system rewarding users for completed bookings with tiered benefits:
-
-**Models:**
-- **LoyaltyAccount** (`internal/domain/loyalty.go`): UserID, Level (bronze/silver/gold/platinum), Points, TotalEarned, TotalSpent, VisitCount
-- **LoyaltyTransaction** (`internal/domain/loyalty.go`): ID, UserID, Type (earn/spend), Amount, BookingID, Description
-
-**Tiers:**
-- Bronze: 0+ visits (1x multiplier, 0% discount)
-- Silver: 5+ visits (1.2x multiplier, 3% discount)
-- Gold: 15+ visits (1.5x multiplier, 5% discount)
-- Platinum: 30+ visits (2x multiplier, 10% discount)
-
-**Repository** (`internal/repository/postgres/loyalty_repo.go`): GetAccount, CreateAccount, AddPoints, SpendPoints, IncrementVisitCount, UpdateLevel, ListTransactions
-
-**Service** (`internal/service/loyalty_service.go`):
-- GetAccount (auto-creates at Bronze if missing)
-- EarnPoints — returns points awarded; increments visit count
-- SpendPoints, GetDiscount, RecalculateLevel, ListTransactions
-- Points formula: TotalPrice / 100 * level multiplier
-
-**Integration with BookingService:**
-- On completion: EarnPoints + IncrementVisitCount + RecalculateLevel (non-blocking, logged on failure)
-- On creation: optional partial payment with loyalty points (use_points field), booking ID generated before spend
-
-**Handlers:**
-- `GET /api/v1/my/loyalty` — loyalty account with privileges (auth required)
-- `GET /api/v1/my/loyalty/transactions` — paginated transaction history (auth required)
-- `GET /api/v1/my/loyalty/levels` — all levels with thresholds (auth required)
-
-Database migration: `migrations/000012_loyalty.up.sql`
-
-### Chat System
-
-Real-time messaging between clients and bathhouse owners/representatives:
-
-**Models:**
-- **Conversation** (`internal/domain/chat.go`): ID, BathhouseID, ClientID, BookingID (optional), LastMessageAt, CreatedAt. UNIQUE(bathhouse_id, client_id).
-- **Message** (`internal/domain/chat.go`): ID, ConversationID, SenderID, Text (max 4000 chars), IsRead, ReadAt, CreatedAt
-
-**Repository** (`internal/repository/postgres/chat_repo.go`): ConversationRepository and MessageRepository — CRUD, ListByUser, GetOrCreate (atomic upsert), MarkAsRead, CountUnread
-
-**Service** (`internal/service/chat_service.go`):
-- StartConversation — create/get conversation by bathhouse and client
-- SendMessage — send message with RBAC, broadcasts real-time via WebSocket, sends notification to owner + representatives
-- ListConversations — paginated list for client/owner/representative
-- ListMessages — paginated message history with access checks
-- MarkAsRead — mark all messages in conversation as read
-- GetUnreadCount — total unread message count across conversations
-- CanAccessConversation — WebSocket authorization check
-- RBAC: Clients see own conversations, owners/reps see conversations for their bathhouses, admins see all
-
-**WebSocket Integration** (`internal/notification/hub.go`):
-- Chat rooms: clients subscribe to conversation IDs for real-time delivery
-- BroadcastNewMessage, BroadcastMessageRead, BroadcastTypingIndicator
-- Authorization check on subscribe/typing via ConversationAccessChecker
-
-**Notification**: NotifNewMessage type — always enabled (like system notifications)
-
-**Handlers:**
-- `POST /api/v1/bathhouses/{id}/chat` — start conversation (client/admin auth required)
-- `GET /api/v1/my/conversations?page=1&page_size=20` — list conversations (auth required)
-- `GET /api/v1/conversations/{id}/messages?page=1&page_size=20` — list messages (auth required)
-- `POST /api/v1/conversations/{id}/messages` — send message (auth required)
-- `PATCH /api/v1/conversations/{id}/read` — mark as read (auth required)
-- `GET /api/v1/my/unread-messages-count` — unread count (auth required)
-
-Database migration: `migrations/000021_chat.up.sql`
-
-### Telegram Bot
-
-Telegram bot for bathhouse search, booking, and notifications:
-
-**Bot** (`internal/bot/bot.go`):
-- Separate binary: `cmd/bot/` (Cobra CLI, `bani-bot run`)
-- Long polling mode for dev, webhook for production
-- Dependencies: BathhouseService, BookingService, UserService, NotificationService, TelegramLinkService, FavoriteService, CityService
-- In-memory booking wizard state per chat (date -> time -> guests -> confirm)
-- Short ID cache for callback data (Telegram 64-byte callback limit)
-
-**Commands:**
-- `/start` — welcome message
-- `/search <city>` — search bathhouses (inline keyboard results)
-- `/book <id>` — step-by-step booking wizard
-- `/mybookings` — list user bookings with management buttons
-- `/cancel <id>` — cancel booking
-- `/favorites` — list favorites
-- `/link <token>` — link Telegram account via one-time token
-- Inline mode: `@bot_name <query>` — inline search results
-
-**Notifications** (`internal/bot/notifications.go`):
-- TelegramSender implements `notification.TelegramSender` interface
-- NoopTelegramSender used when bot is not configured
-
-**Models:**
-- **TelegramLink** (`internal/domain/telegram.go`): ID, UserID, TelegramID, TelegramUsername, LinkedAt
-
-**Repository:** `internal/repository/postgres/telegram_link_repo.go` — Create, GetByTelegramID, GetByUserID, Delete
-
-**Service:** `internal/service/telegram_link_service.go` — LinkAccount, GetByTelegramID, GetByUserID, UnlinkAccount
-
-Config: `BANI_TELEGRAM_BOT_TOKEN`, `BANI_TELEGRAM_WEBHOOK_URL`, `BANI_TELEGRAM_MODE` (polling/webhook)
-
-Database migration: `migrations/000023_telegram_links.up.sql`
-
-### Code Style
+## Critical Conventions
 
 - Module path: `github.com/nikitaaldaev/bani`
-- Standard Go project layout (cmd/, internal/, config/, migrations/)
-- chi for routing with URL params via `chi.URLParam(r, "id")`
-- UUID for entity IDs (google/uuid)
-- Prices in kopecks (int64)
+- chi router: `chi.URLParam(r, "id")` for URL params
+- UUID (google/uuid) for all entity IDs
+- Prices in **kopecks** (int64), not rubles
+- Day-of-week: **0=Monday, 6=Sunday** (not Go's native 0=Sunday)
+- Time format: HH:MM strings with string comparison (e.g., "09:00" < "14:30")
+- Wraparound times supported: TimeFrom > TimeTo means spans midnight
+
+## Admin Panel (GoAdmin)
+
+Built on GoAdmin framework, enabled via `--with-admin` flag on the serve command.
+
+- `internal/admin/` — GoAdmin engine, JWT auth bridge, fx module
+- `internal/admin/pages/` — custom pages: dashboard, moderation, analytics, health
+- Config: `BANI_ADMIN_DB_DSN` (defaults to main DSN), `BANI_ADMIN_PREFIX` (default `/admin`)
+
+```bash
+go run ./cmd/server serve --with-admin   # start server with admin panel
+```
+
+Custom pages:
+- **Dashboard**: KPI cards (users, bathhouses, bookings, revenue), status cards, recent activity feed
+- **Moderation Center**: review queue with approve/reject actions, batch operations, filtering
+- **Analytics**: Chart.js charts for bookings, revenue, users, top bathhouses, with date range and city filters
+- **Health Monitor**: service status checks (PostgreSQL, Redis, S3), moderation backlog, auto-refresh
+
+Auth bridges JWT tokens from the main app to GoAdmin sessions. Menu configured in `engine.go`.
+
+## Feature Subsystems
+
+Each subsystem follows the same handler→service→repository pattern:
+
+- **Notification system**: multi-channel (in-app/email/telegram), dispatcher routes by user preferences, WebSocket hub for real-time
+- **OAuth**: VK, Yandex, Google social login. Config: `BANI_OAUTH_{PROVIDER}_{CLIENT_ID,CLIENT_SECRET,REDIRECT_URL}`
+- **Recommendations**: collaborative filtering + user preferences scoring
+- **Subscriptions**: free/premium/promoted tiers, affects feed sorting (+10 boost for premium, promoted first)
+- **Dynamic pricing**: rules with priority, multipliers applied per hourly slot
+- **Loyalty**: bronze/silver/gold/platinum tiers based on visit count, points system
+- **Chat**: real-time via WebSocket, conversations tied to bathhouse+client pair
+- **Telegram bot**: booking wizard with in-memory state, short ID cache for callback data (64-byte limit)

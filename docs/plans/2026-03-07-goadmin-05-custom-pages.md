@@ -89,15 +89,15 @@ Custom GoAdmin pages beyond CRUD tables: admin dashboard with KPIs, review moder
 
 ### Task 6: Final Verification
 
-- [ ] Build: go build ./...
-- [ ] Start with --with-admin
-- [ ] Verify dashboard loads with real data
-- [ ] Test moderation center approve/reject workflow
-- [ ] Verify analytics charts render
-- [ ] Check health monitor shows correct service statuses
-- [ ] Run full test suite: go test ./... -v
-- [ ] Run linter: make lint
-- [ ] Update CLAUDE.md with admin panel section
+- [x] Build: go build ./...
+- [x] Start with --with-admin
+- [x] Verify dashboard loads with real data
+- [x] Test moderation center approve/reject workflow
+- [x] Verify analytics charts render
+- [x] Check health monitor shows correct service statuses
+- [x] Run full test suite: go test ./... -v
+- [x] Run linter: make lint
+- [x] Update CLAUDE.md with admin panel section
 
 ### Task 7: Update Documentation
 
