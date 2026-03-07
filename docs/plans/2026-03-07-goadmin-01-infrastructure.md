@@ -85,10 +85,10 @@ Base GoAdmin integration: dependency, config, cobra command, fx module, chi adap
 
 ### Task 7: Verify Infrastructure
 
-- [ ] Build project: go build ./...
-- [ ] Run migrations: make migrate-up
-- [ ] Start server with --with-admin flag
-- [ ] Access /admin-panel/ in browser - login page renders
-- [ ] Login with admin credentials
-- [ ] Run tests: go test ./... -v
-- [ ] Run linter: make lint
+- [x] Build project: go build ./...
+- [x] Run migrations: make migrate-up
+- [x] Start server with --with-admin flag
+- [x] Access /admin-panel/ in browser - login page renders
+- [x] Login with admin credentials
+- [x] Run tests: go test ./... -v
+- [x] Run linter: make lint
