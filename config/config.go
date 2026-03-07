@@ -20,6 +20,7 @@ type Config struct {
 	OAuth       OAuthConfig      `mapstructure:"oauth"`
 	Moderation  ModerationConfig `mapstructure:"moderation"`
 	Telegram    TelegramConfig   `mapstructure:"telegram"`
+	Admin       AdminConfig      `mapstructure:"admin"`
 }
 
 type OAuthConfig struct {
@@ -43,6 +44,13 @@ type TelegramConfig struct {
 	BotToken   string `mapstructure:"bot_token"`
 	WebhookURL string `mapstructure:"webhook_url"`
 	Mode       string `mapstructure:"mode"` // "polling" or "webhook"
+}
+
+type AdminConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	Prefix   string `mapstructure:"prefix"`
+	Language string `mapstructure:"language"`
+	Theme    string `mapstructure:"theme"`
 }
 
 type ServerConfig struct {
@@ -116,6 +124,10 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("moderation.enabled", true)
 	v.SetDefault("moderation.auto_approve", false)
 	v.SetDefault("telegram.mode", "polling")
+	v.SetDefault("admin.enabled", false)
+	v.SetDefault("admin.prefix", "/admin-panel")
+	v.SetDefault("admin.language", "ru")
+	v.SetDefault("admin.theme", "adminlte")
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {

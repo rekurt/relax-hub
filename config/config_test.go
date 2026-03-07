@@ -298,6 +298,102 @@ func contains(s, substr string) bool {
 	return len(s) > 0 && len(substr) > 0 && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || index(s, substr) >= 0))
 }
 
+func TestLoad_AdminDefaults(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfgPath := filepath.Join(tmpDir, "config.yaml")
+	if err := os.WriteFile(cfgPath, []byte(""), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("BANI_JWT_SECRET", "a-secure-secret-for-testing")
+
+	cfg, err := Load(cfgPath)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Admin.Enabled != false {
+		t.Errorf("expected admin.enabled = false, got %v", cfg.Admin.Enabled)
+	}
+	if cfg.Admin.Prefix != "/admin-panel" {
+		t.Errorf("expected admin.prefix = /admin-panel, got %s", cfg.Admin.Prefix)
+	}
+	if cfg.Admin.Language != "ru" {
+		t.Errorf("expected admin.language = ru, got %s", cfg.Admin.Language)
+	}
+	if cfg.Admin.Theme != "adminlte" {
+		t.Errorf("expected admin.theme = adminlte, got %s", cfg.Admin.Theme)
+	}
+}
+
+func TestLoad_AdminEnvOverride(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfgPath := filepath.Join(tmpDir, "config.yaml")
+	if err := os.WriteFile(cfgPath, []byte(""), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("BANI_JWT_SECRET", "a-secure-secret-for-testing")
+	t.Setenv("BANI_ADMIN_ENABLED", "true")
+	t.Setenv("BANI_ADMIN_PREFIX", "/custom-admin")
+	t.Setenv("BANI_ADMIN_LANGUAGE", "en")
+	t.Setenv("BANI_ADMIN_THEME", "sword")
+
+	cfg, err := Load(cfgPath)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Admin.Enabled != true {
+		t.Errorf("expected admin.enabled = true, got %v", cfg.Admin.Enabled)
+	}
+	if cfg.Admin.Prefix != "/custom-admin" {
+		t.Errorf("expected admin.prefix = /custom-admin, got %s", cfg.Admin.Prefix)
+	}
+	if cfg.Admin.Language != "en" {
+		t.Errorf("expected admin.language = en, got %s", cfg.Admin.Language)
+	}
+	if cfg.Admin.Theme != "sword" {
+		t.Errorf("expected admin.theme = sword, got %s", cfg.Admin.Theme)
+	}
+}
+
+func TestLoad_AdminFromYAML(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfgPath := filepath.Join(tmpDir, "config.yaml")
+
+	yamlContent := `
+jwt:
+  secret: "my-secret-key"
+admin:
+  enabled: true
+  prefix: "/my-admin"
+  language: "en"
+  theme: "sword"
+`
+	if err := os.WriteFile(cfgPath, []byte(yamlContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := Load(cfgPath)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Admin.Enabled != true {
+		t.Errorf("expected admin.enabled = true, got %v", cfg.Admin.Enabled)
+	}
+	if cfg.Admin.Prefix != "/my-admin" {
+		t.Errorf("expected admin.prefix = /my-admin, got %s", cfg.Admin.Prefix)
+	}
+	if cfg.Admin.Language != "en" {
+		t.Errorf("expected admin.language = en, got %s", cfg.Admin.Language)
+	}
+	if cfg.Admin.Theme != "sword" {
+		t.Errorf("expected admin.theme = sword, got %s", cfg.Admin.Theme)
+	}
+}
+
 func index(s, substr string) int {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {

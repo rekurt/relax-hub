@@ -36,9 +36,9 @@ Base GoAdmin integration: dependency, config, cobra command, fx module, chi adap
 **Files:**
 - Modify: `internal/config/config.go`
 
-- [ ] Add Admin section to Config struct: Enabled bool, Prefix string ("/admin-panel"), Language string ("ru"), Theme string
-- [ ] Add BANI_ADMIN_ENABLED, BANI_ADMIN_PREFIX, BANI_ADMIN_LANGUAGE, BANI_ADMIN_THEME env vars
-- [ ] Default: Enabled=false, Prefix="/admin-panel", Language="ru", Theme="adminlte"
+- [x] Add Admin section to Config struct: Enabled bool, Prefix string ("/admin-panel"), Language string ("ru"), Theme string
+- [x] Add BANI_ADMIN_ENABLED, BANI_ADMIN_PREFIX, BANI_ADMIN_LANGUAGE, BANI_ADMIN_THEME env vars
+- [x] Default: Enabled=false, Prefix="/admin-panel", Language="ru", Theme="adminlte"
 
 ### Task 3: GoAdmin Engine Module
 
