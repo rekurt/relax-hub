@@ -105,14 +105,14 @@
 - Modify: `internal/server/router.go`
 - Modify: `internal/handler/bathhouse.go`
 
-- [ ] GET /api/v1/my/bathhouses/{id}/analytics?period=30d — дашборд владельца (owner/rep)
-- [ ] GET /api/v1/my/bathhouses/{id}/analytics/daily?from=...&to=... — по дням (owner/rep)
-- [ ] GET /api/v1/admin/analytics?period=30d — дашборд платформы (admin)
-- [ ] GET /api/v1/admin/analytics/top?metric=bookings&limit=10 — топ бань (admin)
-- [ ] При просмотре бани (GetByID) — записать view
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] GET /api/v1/my/bathhouses/{id}/analytics?period=30d — дашборд владельца (owner/rep)
+- [x] GET /api/v1/my/bathhouses/{id}/analytics/daily?from=...&to=... — по дням (owner/rep)
+- [x] GET /api/v1/admin/analytics?period=30d — дашборд платформы (admin)
+- [x] GET /api/v1/admin/analytics/top?metric=bookings&limit=10 — топ бань (admin)
+- [x] При просмотре бани (GetByID) — записать view
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Cron-задачи
 

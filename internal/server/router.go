@@ -36,6 +36,7 @@ type RouterParams struct {
 	WidgetHandler          *handler.WidgetHandler
 	LoyaltyHandler         *handler.LoyaltyHandler
 	ChatHandler            *handler.ChatHandler
+	AnalyticsHandler       *handler.AnalyticsHandler
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -171,6 +172,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Patch("/conversations/{id}/read", p.ChatHandler.MarkAsRead)
 		r.With(auth).Get("/my/unread-messages-count", p.ChatHandler.GetUnreadCount)
 
+		// Analytics (authenticated owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/analytics", p.AnalyticsHandler.GetOwnerDashboard)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/analytics/daily", p.AnalyticsHandler.GetOwnerDailyStats)
+
 		// Notifications (authenticated)
 		r.With(auth).Get("/my/notifications", p.NotifHandler.List)
 		r.With(auth).Get("/my/notifications/unread-count", p.NotifHandler.UnreadCount)
@@ -211,6 +216,10 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Patch("/reviews/{id}/reject", p.AdminHandler.RejectReview)
 			r.Post("/reviews/batch-approve", p.AdminHandler.BatchApproveReviews)
 			r.Post("/reviews/batch-reject", p.AdminHandler.BatchRejectReviews)
+
+			// Analytics (admin only)
+			r.Get("/analytics", p.AnalyticsHandler.GetAdminDashboard)
+			r.Get("/analytics/top", p.AnalyticsHandler.GetTopBathhouses)
 		})
 	})
 

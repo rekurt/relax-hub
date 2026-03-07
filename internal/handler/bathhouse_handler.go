@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"crypto/md5"
+	"fmt"
 	"html"
 	"net/http"
 	"regexp"
@@ -23,6 +25,7 @@ type BathhouseHandler struct {
 	representativeService service.RepresentativeService
 	favoriteService       service.FavoriteService
 	recommendationService service.RecommendationService
+	analyticsService      service.AnalyticsService
 	promotionRepository   repository.PromotionRepository
 	log                   *logger.Logger
 }
@@ -33,6 +36,7 @@ func NewBathhouseHandler(
 	representativeService service.RepresentativeService,
 	favoriteService service.FavoriteService,
 	recommendationService service.RecommendationService,
+	analyticsService service.AnalyticsService,
 	promotionRepository repository.PromotionRepository,
 	log *logger.Logger,
 ) *BathhouseHandler {
@@ -42,9 +46,34 @@ func NewBathhouseHandler(
 		representativeService: representativeService,
 		favoriteService:       favoriteService,
 		recommendationService: recommendationService,
+		analyticsService:      analyticsService,
 		promotionRepository:   promotionRepository,
 		log:                   log,
 	}
+}
+
+// getIPHash extracts the client IP from the request and returns its hash
+func getIPHash(r *http.Request) string {
+	// Try X-Forwarded-For first (for proxied requests)
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip != "" {
+		// X-Forwarded-For can contain multiple IPs, take the first one
+		ip = strings.Split(ip, ",")[0]
+		ip = strings.TrimSpace(ip)
+	}
+
+	// Fallback to RemoteAddr
+	if ip == "" {
+		ip = r.RemoteAddr
+		// Remove port if present
+		if idx := strings.LastIndex(ip, ":"); idx != -1 {
+			ip = ip[:idx]
+		}
+	}
+
+	// Hash the IP
+	hash := md5.Sum([]byte(ip))
+	return fmt.Sprintf("%x", hash)
 }
 
 type bathhouseResponse struct {
@@ -349,6 +378,13 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// Record activity for authenticated users
 	if userID != uuid.Nil && h.recommendationService != nil {
 		_ = h.recommendationService.RecordView(r.Context(), userID, bh.ID)
+	}
+
+	// Record analytics view with IP-based deduplication
+	if h.analyticsService != nil {
+		ipHash := getIPHash(r)
+		source := domain.ViewSourceDirect // default source
+		_ = h.analyticsService.RecordView(r.Context(), id, &userID, source, ipHash)
 	}
 
 	// Record click for promoted bathhouses

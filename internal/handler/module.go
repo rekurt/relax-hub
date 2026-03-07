@@ -22,5 +22,6 @@ var Module = fx.Module("handler",
 		NewWidgetHandler,
 		NewLoyaltyHandler,
 		NewChatHandler,
+		NewAnalyticsHandler,
 	),
 )
