@@ -79,9 +79,9 @@ Base GoAdmin integration: dependency, config, cobra command, fx module, chi adap
 - Create: `migrations/000025_goadmin_tables.up.sql`
 - Create: `migrations/000025_goadmin_tables.down.sql`
 
-- [ ] Create GoAdmin system tables (goadmin_users, goadmin_roles, goadmin_permissions, goadmin_role_users, goadmin_user_permissions, goadmin_menu, goadmin_operation_log, goadmin_session)
-- [ ] Seed default admin role and menu structure
-- [ ] Bridge: create GoAdmin admin user linked to existing admin users in users table
+- [x] Create GoAdmin system tables (goadmin_users, goadmin_roles, goadmin_permissions, goadmin_role_users, goadmin_user_permissions, goadmin_menu, goadmin_operation_log, goadmin_session)
+- [x] Seed default admin role and menu structure
+- [x] Bridge: create GoAdmin admin user linked to existing admin users in users table
 
 ### Task 7: Verify Infrastructure
 
