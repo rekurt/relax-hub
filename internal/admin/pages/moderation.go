@@ -1,9 +1,11 @@
 package pages
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -196,20 +198,31 @@ func (p *PostgresModerationProvider) loadReviews(ctx context.Context, data *Mode
 	}
 
 	if data.Filter.BathhouseID != "" {
+		if _, err := uuid.Parse(data.Filter.BathhouseID); err != nil {
+			return fmt.Errorf("invalid bathhouse_id filter: %w", err)
+		}
 		where = append(where, "r.bathhouse_id = $"+strconv.Itoa(argIdx))
 		args = append(args, data.Filter.BathhouseID)
 		argIdx++
 	}
 
 	if data.Filter.MinRating != "" {
+		minRating, err := strconv.Atoi(data.Filter.MinRating)
+		if err != nil || minRating < 1 || minRating > 5 {
+			return fmt.Errorf("invalid min_rating filter")
+		}
 		where = append(where, "r.rating >= $"+strconv.Itoa(argIdx))
-		args = append(args, data.Filter.MinRating)
+		args = append(args, minRating)
 		argIdx++
 	}
 
 	if data.Filter.MaxRating != "" {
+		maxRating, err := strconv.Atoi(data.Filter.MaxRating)
+		if err != nil || maxRating < 1 || maxRating > 5 {
+			return fmt.Errorf("invalid max_rating filter")
+		}
 		where = append(where, "r.rating <= $"+strconv.Itoa(argIdx))
-		args = append(args, data.Filter.MaxRating)
+		args = append(args, maxRating)
 		argIdx++
 	}
 
@@ -294,24 +307,30 @@ func (p *PostgresModerationProvider) RejectReview(ctx context.Context, id uuid.U
 }
 
 func (p *PostgresModerationProvider) BatchApproveReviews(ctx context.Context, ids []uuid.UUID) (successful, failed int) {
-	for _, id := range ids {
-		if err := p.ApproveReview(ctx, id); err != nil {
-			failed++
-		} else {
-			successful++
-		}
+	if len(ids) == 0 {
+		return 0, 0
 	}
+	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'approved', updated_at = NOW() WHERE id = ANY($1)", ids)
+	if err != nil {
+		p.log.Error("moderation: batch approve", "error", err, "count", len(ids))
+		return 0, len(ids)
+	}
+	successful = int(result.RowsAffected())
+	failed = len(ids) - successful
 	return
 }
 
 func (p *PostgresModerationProvider) BatchRejectReviews(ctx context.Context, ids []uuid.UUID, reasons []string) (successful, failed int) {
-	for _, id := range ids {
-		if err := p.RejectReview(ctx, id, reasons); err != nil {
-			failed++
-		} else {
-			successful++
-		}
+	if len(ids) == 0 {
+		return 0, 0
 	}
+	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'rejected', rejection_reasons = $2, updated_at = NOW() WHERE id = ANY($1)", ids, reasons)
+	if err != nil {
+		p.log.Error("moderation: batch reject", "error", err, "count", len(ids))
+		return 0, len(ids)
+	}
+	successful = int(result.RowsAffected())
+	failed = len(ids) - successful
 	return
 }
 
@@ -361,10 +380,14 @@ func (h *ModerationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	data.PagesPrefix = h.pagesPrefix
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := moderationTmpl.ExecuteTemplate(w, "moderation.tmpl", data); err != nil {
+	var buf bytes.Buffer
+	if err := moderationTmpl.ExecuteTemplate(&buf, "moderation.tmpl", data); err != nil {
 		h.log.Error("moderation: render template", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	buf.WriteTo(w) //nolint:errcheck
 }
 
 type approveRejectRequest struct {
@@ -445,6 +468,11 @@ func (h *ModerationHandler) HandleBatchApprove(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	if len(ids) > 100 {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "batch size exceeds limit of 100"})
+		return
+	}
+
 	successful, failed := h.provider.BatchApproveReviews(r.Context(), ids)
 	writeJSON(w, http.StatusOK, batchResponse{Success: true, Successful: successful, Failed: failed})
 }
@@ -461,6 +489,11 @@ func (h *ModerationHandler) HandleBatchReject(w http.ResponseWriter, r *http.Req
 	ids, err := parseUUIDs(req.IDs)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid review IDs"})
+		return
+	}
+
+	if len(ids) > 100 {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "batch size exceeds limit of 100"})
 		return
 	}
 
