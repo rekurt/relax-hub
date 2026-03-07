@@ -69,9 +69,9 @@ Base GoAdmin integration: dependency, config, cobra command, fx module, chi adap
 **Files:**
 - Modify: `cmd/server/serve.go`
 
-- [ ] Add --with-admin flag to serve command
-- [ ] When flag is set, override BANI_ADMIN_ENABLED=true
-- [ ] Log admin panel URL on startup when enabled
+- [x] Add --with-admin flag to serve command
+- [x] When flag is set, override BANI_ADMIN_ENABLED=true
+- [x] Log admin panel URL on startup when enabled
 
 ### Task 6: GoAdmin Migration
 

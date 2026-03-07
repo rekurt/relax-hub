@@ -111,6 +111,32 @@ func TestSignalHandling(t *testing.T) {
 	}
 }
 
+// TestWithAdminFlag tests that --with-admin flag is registered on serve command
+func TestWithAdminFlag(t *testing.T) {
+	f := serveCmd.Flags().Lookup("with-admin")
+	if f == nil {
+		t.Fatal("expected --with-admin flag to be registered on serve command")
+	}
+	if f.DefValue != "false" {
+		t.Errorf("expected default value false, got %s", f.DefValue)
+	}
+}
+
+// TestWithAdminFlagSetsVar tests that --with-admin flag sets the withAdmin variable
+func TestWithAdminFlagSetsVar(t *testing.T) {
+	// Reset
+	withAdmin = false
+	if err := serveCmd.Flags().Set("with-admin", "true"); err != nil {
+		t.Fatalf("failed to set --with-admin flag: %v", err)
+	}
+	if !withAdmin {
+		t.Error("expected withAdmin to be true after setting flag")
+	}
+	// Cleanup
+	withAdmin = false
+	_ = serveCmd.Flags().Set("with-admin", "false")
+}
+
 // TestLoggerInitialization tests that logger is properly initialized
 func TestLoggerInitialization(t *testing.T) {
 	// Create logger with different log levels

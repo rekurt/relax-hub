@@ -14,6 +14,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var withAdmin bool
+
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start the HTTP server",
@@ -23,8 +25,17 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("failed to load config: %w", err)
 		}
 
+		if withAdmin {
+			cfg.Admin.Enabled = true
+		}
+
 		log := logger.New(logger.ParseLogLevel(cfg.Logger.Level))
 		log.Info("Starting server", "host", cfg.Server.Host, "port", cfg.Server.Port)
+
+		if cfg.Admin.Enabled {
+			adminURL := fmt.Sprintf("http://%s:%d%s", cfg.Server.Host, cfg.Server.Port, cfg.Admin.Prefix)
+			log.Info("Admin panel enabled", "url", adminURL)
+		}
 
 		fxApp := app.New(cfg)
 
@@ -62,5 +73,6 @@ var serveCmd = &cobra.Command{
 }
 
 func init() {
+	serveCmd.Flags().BoolVar(&withAdmin, "with-admin", false, "Enable admin panel")
 	rootCmd.AddCommand(serveCmd)
 }
