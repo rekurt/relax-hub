@@ -101,5 +101,5 @@ Custom GoAdmin pages beyond CRUD tables: admin dashboard with KPIs, review moder
 
 ### Task 7: Update Documentation
 
-- [ ] Add admin panel section to CLAUDE.md: commands, config vars, architecture
-- [ ] Move all 5 plan files to `docs/plans/completed/`
+- [x] Add admin panel section to CLAUDE.md: commands, config vars, architecture
+- [x] Move all 5 plan files to `docs/plans/completed/`
