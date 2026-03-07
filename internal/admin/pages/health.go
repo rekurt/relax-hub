@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"html/template"
@@ -172,8 +173,12 @@ func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := healthTmpl.ExecuteTemplate(w, "health.tmpl", data); err != nil {
+	var buf bytes.Buffer
+	if err := healthTmpl.ExecuteTemplate(&buf, "health.tmpl", data); err != nil {
 		h.log.Error("health: render template", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	buf.WriteTo(w) //nolint:errcheck
 }

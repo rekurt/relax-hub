@@ -12,7 +12,6 @@ import (
 
 	appconfig "github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/admin/pages"
-	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/notification"
@@ -78,11 +77,10 @@ func registerLifecycle(lc fx.Lifecycle, ga *GoAdmin, pool *pgxpool.Pool, cfg *ap
 				}
 				log.Info("GoAdmin panel mounted", "prefix", ga.Config.UrlPrefix)
 
-				// Mount custom admin pages with JWT auth
-				auth := middleware.RequireAuth(authService)
+				// Mount custom admin pages with auth that supports both
+				// Authorization header and admin_token cookie for browser access
 				ga.Mux.Route(pagesPrefix, func(r chi.Router) {
-					r.Use(auth)
-					r.Use(middleware.RequireRole(domain.RoleAdmin))
+					r.Use(RequireAdminAuth(authService))
 					r.Mount("/", ga.PagesRouter)
 				})
 				log.Info("Admin custom pages mounted", "prefix", pagesPrefix)

@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"fmt"
@@ -295,10 +296,14 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	data.AdminPrefix = h.adminPrefix
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := dashboardTmpl.ExecuteTemplate(w, "dashboard.tmpl", data); err != nil {
+	var buf bytes.Buffer
+	if err := dashboardTmpl.ExecuteTemplate(&buf, "dashboard.tmpl", data); err != nil {
 		h.log.Error("dashboard: render template", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	buf.WriteTo(w) //nolint:errcheck
 }
 
 // FormatKopecksToRubles converts kopecks to rubles string (e.g. 150050 -> "1 500.50").

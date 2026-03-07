@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"net/http"
 	"strings"
 
 	gacontext "github.com/GoAdminGroup/go-admin/context"
@@ -10,6 +11,55 @@ import (
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 )
+
+// RequireAdminAuth is a middleware that authenticates admin users by checking
+// both the Authorization header and the admin_token cookie. This is needed because
+// admin custom pages are accessed via browser navigation (which sends cookies),
+// unlike the main API which uses Authorization headers exclusively.
+func RequireAdminAuth(authService middleware.AuthService) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			token := extractToken(r)
+			if token == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			userID, role, err := authService.ParseToken(r.Context(), token)
+			if err != nil {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			if role != domain.RoleAdmin {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			}
+
+			ctx := middleware.SetUserIDForTesting(r.Context(), userID)
+			ctx = middleware.SetUserRoleForTesting(ctx, role)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// extractToken gets the JWT token from either the Authorization header or admin_token cookie.
+func extractToken(r *http.Request) string {
+	header := r.Header.Get("Authorization")
+	if header != "" {
+		parts := strings.SplitN(header, " ", 2)
+		if len(parts) == 2 && strings.EqualFold(parts[0], "bearer") {
+			return parts[1]
+		}
+	}
+
+	cookie, err := r.Cookie("admin_token")
+	if err == nil && cookie.Value != "" {
+		return cookie.Value
+	}
+
+	return ""
+}
 
 // NewAuthProcessor creates a GoAdmin auth.Processor that bridges the existing JWT auth system
 // to GoAdmin's session-based auth. It extracts the Bearer token from the request,
@@ -22,23 +72,15 @@ func NewAuthProcessor(authService middleware.AuthService, log *logger.Logger) fu
 			return empty, false, "no request"
 		}
 
-		// Extract Bearer token from Authorization header
-		header := ctx.Request.Header.Get("Authorization")
-		if header == "" {
-			// Also check for token in cookie (for browser-based admin access)
-			cookie, err := ctx.Request.Cookie("admin_token")
-			if err != nil || cookie.Value == "" {
-				return empty, false, "no authorization"
+		token := extractToken(ctx.Request)
+		if token == "" {
+			// Distinguish between no auth at all and wrong format
+			if ctx.Request.Header.Get("Authorization") != "" {
+				return empty, false, "invalid authorization format"
 			}
-			header = "Bearer " + cookie.Value
+			return empty, false, "no authorization"
 		}
 
-		parts := strings.SplitN(header, " ", 2)
-		if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
-			return empty, false, "invalid authorization format"
-		}
-
-		token := parts[1]
 		userID, role, err := authService.ParseToken(ctx.Request.Context(), token)
 		if err != nil {
 			log.Debug("GoAdmin auth: token parse failed", "error", err)

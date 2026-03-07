@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"html/template"
@@ -429,8 +430,12 @@ func (h *AnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	data.PagesPrefix = h.pagesPrefix
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := analyticsTmpl.ExecuteTemplate(w, "analytics.tmpl", data); err != nil {
+	var buf bytes.Buffer
+	if err := analyticsTmpl.ExecuteTemplate(&buf, "analytics.tmpl", data); err != nil {
 		h.log.Error("analytics: render template", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	buf.WriteTo(w) //nolint:errcheck
 }
