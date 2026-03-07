@@ -161,3 +161,23 @@ func (r *AnalyticsRepo) CreateSnapshot(ctx context.Context, snapshot *domain.Ana
 	r.snapshots[key] = &cp
 	return nil
 }
+
+// DeleteOldViews removes bathhouse view records older than the specified date
+func (r *AnalyticsRepo) DeleteOldViews(ctx context.Context, before time.Time) (int64, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var count int64
+	var newViews []domain.BathhouseView
+
+	for _, view := range r.views {
+		if view.ViewedAt.Before(before) {
+			count++
+		} else {
+			newViews = append(newViews, view)
+		}
+	}
+
+	r.views = newViews
+	return count, nil
+}

@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/nikitaaldaev/bani/config"
+	"github.com/nikitaaldaev/bani/internal/cron"
 	"github.com/nikitaaldaev/bani/internal/database"
 	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/logger"
@@ -28,6 +29,7 @@ func New(cfg *config.Config) *fx.App {
 		notification.Module,
 		service.Module,
 		handler.Module,
+		cron.Module,
 		server.Module,
 		// Cross-package interface bindings
 		fx.Provide(

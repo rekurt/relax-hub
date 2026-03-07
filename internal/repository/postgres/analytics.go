@@ -238,3 +238,15 @@ func (r *analyticsRepo) CreateSnapshot(ctx context.Context, snapshot *domain.Ana
 	}
 	return nil
 }
+
+// DeleteOldViews removes bathhouse view records older than the specified date
+func (r *analyticsRepo) DeleteOldViews(ctx context.Context, before time.Time) (int64, error) {
+	query := `DELETE FROM bathhouse_views WHERE viewed_at < $1`
+
+	result, err := r.pool.Exec(ctx, query, before)
+	if err != nil {
+		return 0, fmt.Errorf("delete old views: %w", err)
+	}
+
+	return result.RowsAffected(), nil
+}
