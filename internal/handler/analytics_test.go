@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
@@ -17,6 +18,7 @@ import (
 type mockAnalyticsService struct {
 	recordViewFn         func(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error
 	getOwnerDashboardFn  func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*service.OwnerDashboard, error)
+	getDailyStatsFn      func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error)
 	getAdminDashboardFn  func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.AdminDashboard, error)
 	aggregateDailyFn     func(ctx context.Context) error
 }
@@ -33,6 +35,13 @@ func (m *mockAnalyticsService) GetOwnerDashboard(ctx context.Context, userID uui
 		return m.getOwnerDashboardFn(ctx, userID, userRole, bathhouseID, period)
 	}
 	return &service.OwnerDashboard{}, nil
+}
+
+func (m *mockAnalyticsService) GetDailyStats(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error) {
+	if m.getDailyStatsFn != nil {
+		return m.getDailyStatsFn(ctx, userID, userRole, bathhouseID, from, to)
+	}
+	return []domain.AnalyticsSnapshot{}, nil
 }
 
 func (m *mockAnalyticsService) GetAdminDashboard(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.AdminDashboard, error) {

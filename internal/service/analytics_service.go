@@ -73,6 +73,7 @@ type TopBathhouseInfo struct {
 type AnalyticsService interface {
 	RecordView(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error
 	GetOwnerDashboard(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*OwnerDashboard, error)
+	GetDailyStats(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error)
 	GetAdminDashboard(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*AdminDashboard, error)
 	AggregateDaily(ctx context.Context) error
 }
@@ -116,8 +117,8 @@ func (s *analyticsService) RecordView(ctx context.Context, bathhouseID uuid.UUID
 
 	// Check IP-based deduplication: if same IP viewed same bathhouse in last 30 min, skip
 	now := time.Now()
-	// Create a bucket key for the 30-minute window
-	timeBucket := now.Add(-ipDeduplicationWindow).Unix()
+	// Create a time bucket for the 30-minute window (align to bucket boundaries)
+	timeBucket := (now.Unix() / int64(ipDeduplicationWindow.Seconds())) * int64(ipDeduplicationWindow.Seconds())
 	dedupeKey := fmt.Sprintf(cacheKeyIPDuplication, bathhouseID.String(), ipHash, fmt.Sprintf("%d", timeBucket))
 
 	// Try to get from Redis (if this IP+bathhouse was seen recently)
@@ -234,6 +235,22 @@ func (s *analyticsService) GetOwnerDashboard(ctx context.Context, userID uuid.UU
 	return dashboard, nil
 }
 
+// GetDailyStats returns daily analytics breakdown for a bathhouse owner
+func (s *analyticsService) GetDailyStats(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error) {
+	// RBAC check
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
+		return nil, err
+	}
+
+	// Get daily stats from repository
+	dailyStats, err := s.analyticsRepo.GetDailyStats(ctx, bathhouseID, from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	return dailyStats, nil
+}
+
 // GetAdminDashboard returns dashboard data for admin
 func (s *analyticsService) GetAdminDashboard(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*AdminDashboard, error) {
 	// Only admins can view platform analytics
@@ -323,21 +340,20 @@ func (s *analyticsService) AggregateDaily(ctx context.Context) error {
 	}
 
 	yesterday := time.Now().AddDate(0, 0, -1)
-	dayStart := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, yesterday.Location())
-	dayEnd := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 23, 59, 59, 999999999, yesterday.Location())
+	dayDate := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, yesterday.Location())
 
 	for _, bh := range allBhs.Items {
-		// Get views for this bathhouse yesterday
-		stats, err := s.analyticsRepo.GetBathhouseStats(ctx, bh.ID, dayStart, dayEnd)
+		// Get raw data aggregated from source tables for yesterday
+		stats, err := s.analyticsRepo.AggregateRawData(ctx, bh.ID, dayDate)
 		if err != nil {
-			s.logger.Warn("Failed to get bathhouse stats for aggregation", "bathhouse_id", bh.ID, "error", err)
+			s.logger.Warn("Failed to aggregate raw data for bathhouse", "bathhouse_id", bh.ID, "error", err)
 			continue
 		}
 
 		// Create snapshot
 		snapshot := &domain.AnalyticsSnapshot{
 			BathhouseID: bh.ID,
-			Date:        dayStart,
+			Date:        dayDate,
 			Views:       stats.Views,
 			UniqueViews: stats.UniqueViews,
 			Bookings:    stats.Bookings,
@@ -347,11 +363,11 @@ func (s *analyticsService) AggregateDaily(ctx context.Context) error {
 		}
 
 		if err := s.analyticsRepo.CreateSnapshot(ctx, snapshot); err != nil {
-			s.logger.Error("Failed to create analytics snapshot", "bathhouse_id", bh.ID, "date", dayStart, "error", err)
+			s.logger.Error("Failed to create analytics snapshot", "bathhouse_id", bh.ID, "date", dayDate, "error", err)
 			continue
 		}
 	}
 
-	s.logger.Info("Daily analytics aggregation completed", "date", dayStart)
+	s.logger.Info("Daily analytics aggregation completed", "date", dayDate)
 	return nil
 }

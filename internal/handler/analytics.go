@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -68,20 +69,39 @@ func (h *AnalyticsHandler) GetOwnerDailyStats(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// The RBAC check is done in the service layer via GetOwnerDashboard
-	// For now, we'll return the current period stats as a proxy for daily stats
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
 
-	dashboard, err := h.analyticsService.GetOwnerDashboard(r.Context(), userID, userRole, id, domain.PeriodMonth)
+	// Parse date parameters
+	fromStr := r.URL.Query().Get("from")
+	toStr := r.URL.Query().Get("to")
+
+	if fromStr == "" || toStr == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "from and to date parameters required")
+		return
+	}
+
+	from, err := time.Parse("2006-01-02", fromStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid from date format (use YYYY-MM-DD)")
+		return
+	}
+
+	to, err := time.Parse("2006-01-02", toStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid to date format (use YYYY-MM-DD)")
+		return
+	}
+
+	// Get daily stats from service (RBAC check is done in service layer)
+	dailyStats, err := h.analyticsService.GetDailyStats(r.Context(), userID, userRole, id, from, to)
 	if err != nil {
 		handleServiceError(w, err)
 		return
 	}
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"dashboards": []interface{}{dashboard},
-		"message":    "daily stats functionality requires additional repository implementation",
+		"data": dailyStats,
 	})
 }
 

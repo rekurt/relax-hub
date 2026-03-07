@@ -152,6 +152,46 @@ func (r *AnalyticsRepo) GetTopBathhouses(ctx context.Context, metric domain.TopM
 	return result, nil
 }
 
+// AggregateRawData aggregates analytics data from mock views/bookings/reviews for a specific date
+func (r *AnalyticsRepo) AggregateRawData(ctx context.Context, bathhouseID uuid.UUID, date time.Time) (*domain.AnalyticsSnapshot, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Normalize date
+	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
+	endOfDay := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 999999999, date.Location())
+
+	snapshot := &domain.AnalyticsSnapshot{
+		BathhouseID: bathhouseID,
+		Date:        startOfDay,
+	}
+
+	// Count views and unique views for the day
+	uniqueIPs := make(map[string]bool)
+	for _, view := range r.views {
+		if view.BathhouseID == bathhouseID && view.ViewedAt.After(startOfDay) && view.ViewedAt.Before(endOfDay) {
+			snapshot.Views++
+			uniqueIPs[view.IPHash] = true
+		}
+	}
+	snapshot.UniqueViews = int64(len(uniqueIPs))
+
+	// For mock: assume bookings and reviews are tracked separately
+	// In real implementation, these would come from booking and review repos
+	// For now, return what we have in snapshots
+	for _, s := range r.snapshots {
+		if s.BathhouseID == bathhouseID && s.Date.Equal(startOfDay) {
+			snapshot.Bookings = s.Bookings
+			snapshot.Revenue = s.Revenue
+			snapshot.ReviewCount = s.ReviewCount
+			snapshot.AvgRating = s.AvgRating
+			break
+		}
+	}
+
+	return snapshot, nil
+}
+
 func (r *AnalyticsRepo) CreateSnapshot(ctx context.Context, snapshot *domain.AnalyticsSnapshot) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

@@ -28,6 +28,10 @@ func (m *MockAnalyticsService) GetOwnerDashboard(ctx context.Context, userID uui
 	return nil, nil
 }
 
+func (m *MockAnalyticsService) GetDailyStats(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error) {
+	return nil, nil
+}
+
 func (m *MockAnalyticsService) GetAdminDashboard(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.AdminDashboard, error) {
 	return nil, nil
 }

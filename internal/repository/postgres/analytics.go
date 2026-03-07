@@ -77,7 +77,16 @@ func (r *analyticsRepo) GetBathhouseStats(ctx context.Context, bathhouseID uuid.
 		result.Bookings += snapshot.Bookings
 		result.Revenue += snapshot.Revenue
 		result.ReviewCount += snapshot.ReviewCount
-		// Average rating requires weighted average - not aggregated simply
+		// Weighted average for ratings
+		if snapshot.ReviewCount > 0 && result.AvgRating >= 0 {
+			// Update weighted average: (old_sum + new_weighted) / (old_count + new_count)
+			totalReviews := result.ReviewCount
+			if totalReviews > 0 {
+				result.AvgRating = (result.AvgRating*float64(totalReviews-snapshot.ReviewCount) + snapshot.AvgRating*float64(snapshot.ReviewCount)) / float64(totalReviews)
+			} else {
+				result.AvgRating = snapshot.AvgRating
+			}
+		}
 	}
 
 	if err = rows.Err(); err != nil {
@@ -177,26 +186,21 @@ func (r *analyticsRepo) GetTopBathhouses(ctx context.Context, metric domain.TopM
 		limit = 10
 	}
 
-	var orderBy string
-	switch metric {
-	case domain.MetricViews:
-		orderBy = "SUM(views)"
-	case domain.MetricBookings:
-		orderBy = "SUM(bookings)"
-	case domain.MetricRevenue:
-		orderBy = "SUM(revenue)"
-	case domain.MetricRating:
-		orderBy = "AVG(avg_rating)"
-	}
-
-	query := fmt.Sprintf(`
+	// Use CASE statement for safe metric-based ordering (no fmt.Sprintf string injection)
+	query := `
 		SELECT bathhouse_id
 		FROM analytics_snapshots
 		GROUP BY bathhouse_id
-		ORDER BY %s DESC
-		LIMIT $1`, orderBy)
+		ORDER BY CASE $1
+			WHEN 'views' THEN SUM(views)
+			WHEN 'bookings' THEN SUM(bookings)
+			WHEN 'revenue' THEN SUM(revenue)
+			WHEN 'rating' THEN AVG(avg_rating)
+			ELSE SUM(bookings)
+		END DESC
+		LIMIT $2`
 
-	rows, err := r.pool.Query(ctx, query, limit)
+	rows, err := r.pool.Query(ctx, query, string(metric), limit)
 	if err != nil {
 		return nil, fmt.Errorf("get top bathhouses: %w", err)
 	}
@@ -216,6 +220,60 @@ func (r *analyticsRepo) GetTopBathhouses(ctx context.Context, metric domain.TopM
 	}
 
 	return ids, nil
+}
+
+// AggregateRawData aggregates analytics data from source tables for a specific date
+func (r *analyticsRepo) AggregateRawData(ctx context.Context, bathhouseID uuid.UUID, date time.Time) (*domain.AnalyticsSnapshot, error) {
+	// Normalize to date only
+	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
+	endOfDay := time.Date(date.Year(), date.Month(), date.Day(), 23, 59, 59, 999999999, date.Location())
+
+	// Aggregate views from bathhouse_views
+	var views, uniqueViews int64
+	viewQuery := `
+		SELECT COUNT(*) as views, COUNT(DISTINCT ip_hash) as unique_views
+		FROM bathhouse_views
+		WHERE bathhouse_id = $1 AND viewed_at >= $2 AND viewed_at <= $3`
+	err := r.pool.QueryRow(ctx, viewQuery, bathhouseID, startOfDay, endOfDay).Scan(&views, &uniqueViews)
+	if err != nil && err != pgx.ErrNoRows {
+		return nil, fmt.Errorf("aggregate views: %w", err)
+	}
+
+	// Aggregate bookings and revenue from bookings table (only completed bookings)
+	var bookings, revenue sql.NullInt64
+	bookingQuery := `
+		SELECT COUNT(*) as bookings, COALESCE(SUM(total_price), 0) as revenue
+		FROM bookings
+		WHERE bathhouse_id = $1 AND status = 'completed' AND created_at >= $2 AND created_at <= $3`
+	err = r.pool.QueryRow(ctx, bookingQuery, bathhouseID, startOfDay, endOfDay).Scan(&bookings, &revenue)
+	if err != nil && err != pgx.ErrNoRows {
+		return nil, fmt.Errorf("aggregate bookings: %w", err)
+	}
+
+	// Aggregate reviews from reviews table
+	var reviewCount sql.NullInt64
+	var avgRating sql.NullFloat64
+	reviewQuery := `
+		SELECT COUNT(*) as review_count, COALESCE(AVG(rating), 0.0) as avg_rating
+		FROM reviews
+		WHERE bathhouse_id = $1 AND created_at >= $2 AND created_at <= $3`
+	err = r.pool.QueryRow(ctx, reviewQuery, bathhouseID, startOfDay, endOfDay).Scan(&reviewCount, &avgRating)
+	if err != nil && err != pgx.ErrNoRows {
+		return nil, fmt.Errorf("aggregate reviews: %w", err)
+	}
+
+	snapshot := &domain.AnalyticsSnapshot{
+		BathhouseID: bathhouseID,
+		Date:        startOfDay,
+		Views:       views,
+		UniqueViews: uniqueViews,
+		Bookings:    bookings.Int64,
+		Revenue:     revenue.Int64,
+		ReviewCount: int(reviewCount.Int64),
+		AvgRating:   avgRating.Float64,
+	}
+
+	return snapshot, nil
 }
 
 func (r *analyticsRepo) CreateSnapshot(ctx context.Context, snapshot *domain.AnalyticsSnapshot) error {

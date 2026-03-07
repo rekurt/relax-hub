@@ -191,6 +191,7 @@ type AnalyticsRepository interface {
 	GetDailyStats(ctx context.Context, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error)
 	GetPlatformStats(ctx context.Context, from, to time.Time) (*domain.AnalyticsSnapshot, error)
 	GetTopBathhouses(ctx context.Context, metric domain.TopMetric, limit int) ([]uuid.UUID, error)
+	AggregateRawData(ctx context.Context, bathhouseID uuid.UUID, date time.Time) (*domain.AnalyticsSnapshot, error)
 	CreateSnapshot(ctx context.Context, snapshot *domain.AnalyticsSnapshot) error
 	DeleteOldViews(ctx context.Context, before time.Time) (int64, error)
 }
