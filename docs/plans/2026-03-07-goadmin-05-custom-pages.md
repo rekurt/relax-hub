@@ -39,13 +39,13 @@ Custom GoAdmin pages beyond CRUD tables: admin dashboard with KPIs, review moder
 - Create: `internal/admin/pages/moderation.go`
 - Create: `internal/admin/pages/templates/moderation.tmpl`
 
-- [ ] Queue view: pending reviews listed with full text, rating, bathhouse name, user name, images
-- [ ] One-click approve/reject buttons per review
-- [ ] Reject with reason selection (checkboxes for common reasons)
-- [ ] Batch select and approve/reject
-- [ ] Filter by bathhouse, rating, date
-- [ ] Statistics: approved/rejected/pending counts today/this week
-- [ ] API endpoints for AJAX approve/reject actions
+- [x] Queue view: pending reviews listed with full text, rating, bathhouse name, user name, images
+- [x] One-click approve/reject buttons per review
+- [x] Reject with reason selection (checkboxes for common reasons)
+- [x] Batch select and approve/reject
+- [x] Filter by bathhouse, rating, date
+- [x] Statistics: approved/rejected/pending counts today/this week
+- [x] API endpoints for AJAX approve/reject actions
 
 ### Task 3: Analytics Dashboard
 

@@ -1,0 +1,470 @@
+package pages
+
+import (
+	"context"
+	"embed"
+	"encoding/json"
+	"html/template"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/nikitaaldaev/bani/internal/logger"
+)
+
+//go:embed templates/moderation.tmpl
+var moderationFS embed.FS
+
+var moderationFuncMap = template.FuncMap{
+	"stars": func(n int) string {
+		return strings.Repeat("★", n) + strings.Repeat("☆", 5-n)
+	},
+	"join": strings.Join,
+}
+
+var moderationTmpl = template.Must(
+	template.New("").Funcs(moderationFuncMap).ParseFS(moderationFS, "templates/moderation.tmpl"),
+)
+
+// ModerationReview represents a review in the moderation queue.
+type ModerationReview struct {
+	ID               string
+	UserName         string
+	BathhouseID      string
+	BathhouseName    string
+	Rating           int
+	Text             string
+	Status           string
+	RejectionReasons []string
+	Images           []string
+	CreatedAt        time.Time
+}
+
+// ModerationStats holds moderation statistics.
+type ModerationStats struct {
+	PendingTotal int64
+	ApprovedToday int64
+	RejectedToday int64
+	PendingWeek   int64
+}
+
+// ModerationFilter holds the current filter state for rendering.
+type ModerationFilter struct {
+	BathhouseID string
+	MinRating   string
+	MaxRating   string
+	FromDate    string
+	ToDate      string
+	Status      string
+}
+
+// BathhouseOption represents a bathhouse for the filter dropdown.
+type BathhouseOption struct {
+	ID   string
+	Name string
+}
+
+// ModerationData is the full data model for the moderation page.
+type ModerationData struct {
+	Reviews    []ModerationReview
+	Stats      ModerationStats
+	Filter     ModerationFilter
+	Bathhouses []BathhouseOption
+	TotalCount int64
+	Page       int
+	PageSize   int
+	TotalPages int
+}
+
+// ModerationDataProvider fetches moderation data from a data source.
+type ModerationDataProvider interface {
+	GetModerationData(ctx context.Context, filter ModerationFilter, page, pageSize int) (*ModerationData, error)
+	ApproveReview(ctx context.Context, id uuid.UUID) error
+	RejectReview(ctx context.Context, id uuid.UUID, reasons []string) error
+	BatchApproveReviews(ctx context.Context, ids []uuid.UUID) (successful, failed int)
+	BatchRejectReviews(ctx context.Context, ids []uuid.UUID, reasons []string) (successful, failed int)
+}
+
+// PostgresModerationProvider fetches moderation data from PostgreSQL.
+type PostgresModerationProvider struct {
+	pool *pgxpool.Pool
+	log  *logger.Logger
+}
+
+// NewPostgresModerationProvider creates a new PostgresModerationProvider.
+func NewPostgresModerationProvider(pool *pgxpool.Pool, log *logger.Logger) *PostgresModerationProvider {
+	return &PostgresModerationProvider{pool: pool, log: log}
+}
+
+func (p *PostgresModerationProvider) GetModerationData(ctx context.Context, filter ModerationFilter, page, pageSize int) (*ModerationData, error) {
+	data := &ModerationData{
+		Filter:   filter,
+		Page:     page,
+		PageSize: pageSize,
+	}
+
+	if err := p.loadStats(ctx, &data.Stats); err != nil {
+		return nil, err
+	}
+	if err := p.loadBathhouses(ctx, &data.Bathhouses); err != nil {
+		return nil, err
+	}
+	if err := p.loadReviews(ctx, data); err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func (p *PostgresModerationProvider) loadStats(ctx context.Context, stats *ModerationStats) error {
+	err := p.pool.QueryRow(ctx, "SELECT COUNT(*) FROM reviews WHERE status = 'pending'").Scan(&stats.PendingTotal)
+	if err != nil {
+		p.log.Error("moderation: count pending", "error", err)
+		return err
+	}
+
+	now := time.Now()
+	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+	err = p.pool.QueryRow(ctx, "SELECT COUNT(*) FROM reviews WHERE status = 'approved' AND updated_at >= $1", todayStart).Scan(&stats.ApprovedToday)
+	if err != nil {
+		p.log.Error("moderation: count approved today", "error", err)
+		return err
+	}
+
+	err = p.pool.QueryRow(ctx, "SELECT COUNT(*) FROM reviews WHERE status = 'rejected' AND updated_at >= $1", todayStart).Scan(&stats.RejectedToday)
+	if err != nil {
+		p.log.Error("moderation: count rejected today", "error", err)
+		return err
+	}
+
+	weekStart := todayStart.AddDate(0, 0, -int(now.Weekday()-time.Monday))
+	if now.Weekday() == time.Sunday {
+		weekStart = todayStart.AddDate(0, 0, -6)
+	}
+	err = p.pool.QueryRow(ctx, "SELECT COUNT(*) FROM reviews WHERE status = 'pending' AND created_at >= $1", weekStart).Scan(&stats.PendingWeek)
+	if err != nil {
+		p.log.Error("moderation: count pending week", "error", err)
+		return err
+	}
+
+	return nil
+}
+
+func (p *PostgresModerationProvider) loadBathhouses(ctx context.Context, bathhouses *[]BathhouseOption) error {
+	rows, err := p.pool.Query(ctx, "SELECT id, name FROM bathhouses ORDER BY name")
+	if err != nil {
+		p.log.Error("moderation: load bathhouses", "error", err)
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var b BathhouseOption
+		if err := rows.Scan(&b.ID, &b.Name); err != nil {
+			return err
+		}
+		*bathhouses = append(*bathhouses, b)
+	}
+	return rows.Err()
+}
+
+func (p *PostgresModerationProvider) loadReviews(ctx context.Context, data *ModerationData) error {
+	where := []string{"1=1"}
+	args := []interface{}{}
+	argIdx := 1
+
+	status := data.Filter.Status
+	if status == "" {
+		status = "pending"
+	}
+	if status != "all" {
+		where = append(where, "r.status = $"+intToStr(int64(argIdx)))
+		args = append(args, status)
+		argIdx++
+	}
+
+	if data.Filter.BathhouseID != "" {
+		where = append(where, "r.bathhouse_id = $"+intToStr(int64(argIdx)))
+		args = append(args, data.Filter.BathhouseID)
+		argIdx++
+	}
+
+	if data.Filter.MinRating != "" {
+		where = append(where, "r.rating >= $"+intToStr(int64(argIdx)))
+		args = append(args, data.Filter.MinRating)
+		argIdx++
+	}
+
+	if data.Filter.MaxRating != "" {
+		where = append(where, "r.rating <= $"+intToStr(int64(argIdx)))
+		args = append(args, data.Filter.MaxRating)
+		argIdx++
+	}
+
+	if data.Filter.FromDate != "" {
+		where = append(where, "r.created_at >= $"+intToStr(int64(argIdx)))
+		args = append(args, data.Filter.FromDate)
+		argIdx++
+	}
+
+	if data.Filter.ToDate != "" {
+		where = append(where, "r.created_at <= $"+intToStr(int64(argIdx))+"::date + interval '1 day'")
+		args = append(args, data.Filter.ToDate)
+		argIdx++
+	}
+
+	whereClause := strings.Join(where, " AND ")
+
+	// Count total
+	countQuery := "SELECT COUNT(*) FROM reviews r WHERE " + whereClause
+	err := p.pool.QueryRow(ctx, countQuery, args...).Scan(&data.TotalCount)
+	if err != nil {
+		p.log.Error("moderation: count reviews", "error", err)
+		return err
+	}
+
+	if data.PageSize <= 0 {
+		data.PageSize = 20
+	}
+	data.TotalPages = int(data.TotalCount+int64(data.PageSize)-1) / data.PageSize
+	if data.TotalPages == 0 {
+		data.TotalPages = 1
+	}
+
+	offset := (data.Page - 1) * data.PageSize
+	if offset < 0 {
+		offset = 0
+	}
+
+	// Fetch reviews
+	query := `
+		SELECT r.id, u.name, r.bathhouse_id, bh.name, r.rating, r.text, r.status, r.rejection_reasons, r.images, r.created_at
+		FROM reviews r
+		JOIN users u ON u.id = r.user_id
+		JOIN bathhouses bh ON bh.id = r.bathhouse_id
+		WHERE ` + whereClause + `
+		ORDER BY r.created_at DESC
+		LIMIT $` + intToStr(int64(argIdx)) + ` OFFSET $` + intToStr(int64(argIdx+1))
+
+	args = append(args, data.PageSize, offset)
+
+	rows, err := p.pool.Query(ctx, query, args...)
+	if err != nil {
+		p.log.Error("moderation: load reviews", "error", err)
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var mr ModerationReview
+		if err := rows.Scan(&mr.ID, &mr.UserName, &mr.BathhouseID, &mr.BathhouseName, &mr.Rating, &mr.Text, &mr.Status, &mr.RejectionReasons, &mr.Images, &mr.CreatedAt); err != nil {
+			return err
+		}
+		*&data.Reviews = append(data.Reviews, mr)
+	}
+	return rows.Err()
+}
+
+func (p *PostgresModerationProvider) ApproveReview(ctx context.Context, id uuid.UUID) error {
+	_, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'approved', updated_at = NOW() WHERE id = $1", id)
+	if err != nil {
+		p.log.Error("moderation: approve review", "error", err, "id", id)
+	}
+	return err
+}
+
+func (p *PostgresModerationProvider) RejectReview(ctx context.Context, id uuid.UUID, reasons []string) error {
+	_, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'rejected', rejection_reasons = $2, updated_at = NOW() WHERE id = $1", id, reasons)
+	if err != nil {
+		p.log.Error("moderation: reject review", "error", err, "id", id)
+	}
+	return err
+}
+
+func (p *PostgresModerationProvider) BatchApproveReviews(ctx context.Context, ids []uuid.UUID) (successful, failed int) {
+	for _, id := range ids {
+		if err := p.ApproveReview(ctx, id); err != nil {
+			failed++
+		} else {
+			successful++
+		}
+	}
+	return
+}
+
+func (p *PostgresModerationProvider) BatchRejectReviews(ctx context.Context, ids []uuid.UUID, reasons []string) (successful, failed int) {
+	for _, id := range ids {
+		if err := p.RejectReview(ctx, id, reasons); err != nil {
+			failed++
+		} else {
+			successful++
+		}
+	}
+	return
+}
+
+// ModerationHandler serves the moderation page and AJAX endpoints.
+type ModerationHandler struct {
+	provider ModerationDataProvider
+	log      *logger.Logger
+}
+
+// NewModerationHandler creates a new ModerationHandler.
+func NewModerationHandler(provider ModerationDataProvider, log *logger.Logger) *ModerationHandler {
+	return &ModerationHandler{provider: provider, log: log}
+}
+
+// ServeHTTP renders the moderation page.
+func (h *ModerationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+
+	filter := ModerationFilter{
+		BathhouseID: q.Get("bathhouse_id"),
+		MinRating:   q.Get("min_rating"),
+		MaxRating:   q.Get("max_rating"),
+		FromDate:    q.Get("from_date"),
+		ToDate:      q.Get("to_date"),
+		Status:      q.Get("status"),
+	}
+
+	page := 1
+	if p := q.Get("page"); p != "" {
+		parsed := 0
+		for _, c := range p {
+			if c >= '0' && c <= '9' {
+				parsed = parsed*10 + int(c-'0')
+			}
+		}
+		if parsed > 0 {
+			page = parsed
+		}
+	}
+
+	data, err := h.provider.GetModerationData(r.Context(), filter, page, 20)
+	if err != nil {
+		h.log.Error("moderation: get data", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := moderationTmpl.ExecuteTemplate(w, "moderation.tmpl", data); err != nil {
+		h.log.Error("moderation: render template", "error", err)
+	}
+}
+
+type approveRejectRequest struct {
+	Reasons []string `json:"reasons"`
+}
+
+type batchRequest struct {
+	IDs     []string `json:"ids"`
+	Reasons []string `json:"reasons"`
+}
+
+type actionResponse struct {
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
+}
+
+type batchResponse struct {
+	Success    bool `json:"success"`
+	Successful int  `json:"successful"`
+	Failed     int  `json:"failed"`
+}
+
+// HandleApprove handles AJAX approve request.
+func (h *ModerationHandler) HandleApprove(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid review ID"})
+		return
+	}
+
+	if err := h.provider.ApproveReview(r.Context(), id); err != nil {
+		writeJSON(w, http.StatusInternalServerError, actionResponse{Error: "failed to approve"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, actionResponse{Success: true})
+}
+
+// HandleReject handles AJAX reject request.
+func (h *ModerationHandler) HandleReject(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid review ID"})
+		return
+	}
+
+	var req approveRejectRequest
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+	}
+
+	if err := h.provider.RejectReview(r.Context(), id, req.Reasons); err != nil {
+		writeJSON(w, http.StatusInternalServerError, actionResponse{Error: "failed to reject"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, actionResponse{Success: true})
+}
+
+// HandleBatchApprove handles AJAX batch approve request.
+func (h *ModerationHandler) HandleBatchApprove(w http.ResponseWriter, r *http.Request) {
+	var req batchRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid request"})
+		return
+	}
+
+	ids, err := parseUUIDs(req.IDs)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid review IDs"})
+		return
+	}
+
+	successful, failed := h.provider.BatchApproveReviews(r.Context(), ids)
+	writeJSON(w, http.StatusOK, batchResponse{Success: true, Successful: successful, Failed: failed})
+}
+
+// HandleBatchReject handles AJAX batch reject request.
+func (h *ModerationHandler) HandleBatchReject(w http.ResponseWriter, r *http.Request) {
+	var req batchRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid request"})
+		return
+	}
+
+	ids, err := parseUUIDs(req.IDs)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid review IDs"})
+		return
+	}
+
+	successful, failed := h.provider.BatchRejectReviews(r.Context(), ids, req.Reasons)
+	writeJSON(w, http.StatusOK, batchResponse{Success: true, Successful: successful, Failed: failed})
+}
+
+func parseUUIDs(strs []string) ([]uuid.UUID, error) {
+	ids := make([]uuid.UUID, 0, len(strs))
+	for _, s := range strs {
+		id, err := uuid.Parse(s)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+func writeJSON(w http.ResponseWriter, status int, v interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(v) //nolint:errcheck
+}

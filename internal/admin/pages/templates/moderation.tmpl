@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Модерация отзывов — Бани</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f4f6f9; color: #333; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        h1 { font-size: 24px; margin-bottom: 20px; color: #1a1a1a; }
+        h2 { font-size: 18px; margin-bottom: 12px; color: #444; }
+
+        /* Stats Row */
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+        .stat-card .stat-value { font-size: 32px; font-weight: 700; }
+        .stat-card .stat-label { font-size: 13px; color: #888; margin-top: 4px; }
+        .stat-card .stat-value.warn { color: #e74c3c; }
+        .stat-card .stat-value.ok { color: #27ae60; }
+        .stat-card .stat-value.info { color: #3498db; }
+
+        /* Filter Bar */
+        .filter-bar { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px; }
+        .filter-bar form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 12px; color: #888; margin-bottom: 4px; text-transform: uppercase; }
+        .filter-group select, .filter-group input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .filter-group select { min-width: 160px; }
+        .btn { display: inline-block; padding: 8px 16px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; color: #fff; }
+        .btn-primary { background: #3498db; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #219a52; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-secondary { background: #95a5a6; }
+        .btn-secondary:hover { background: #7f8c8d; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+        /* Batch Actions */
+        .batch-actions { margin-bottom: 16px; display: flex; gap: 12px; align-items: center; }
+        .batch-actions .batch-count { font-size: 14px; color: #666; }
+
+        /* Review Cards */
+        .review-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+        .review-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #ffc107; }
+        .review-card.approved { border-left-color: #27ae60; }
+        .review-card.rejected { border-left-color: #e74c3c; }
+        .review-card.hidden { border-left-color: #95a5a6; }
+        .review-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .review-meta { display: flex; flex-direction: column; gap: 4px; }
+        .review-meta .user-name { font-weight: 600; font-size: 16px; }
+        .review-meta .bathhouse-name { font-size: 14px; color: #666; }
+        .review-meta .rating { font-size: 16px; color: #f39c12; }
+        .review-meta .date { font-size: 12px; color: #999; }
+        .review-actions { display: flex; gap: 8px; align-items: flex-start; }
+        .review-text { font-size: 14px; line-height: 1.6; margin-bottom: 12px; color: #444; }
+        .review-images { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .review-images img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; }
+        .review-footer { display: flex; justify-content: space-between; align-items: center; }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .badge.pending { background: #ffeaa7; color: #856404; }
+        .badge.approved { background: #d4edda; color: #155724; }
+        .badge.rejected { background: #f8d7da; color: #721c24; }
+        .badge.hidden { background: #e2e3e5; color: #383d41; }
+
+        /* Reject Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: #fff; border-radius: 8px; padding: 24px; width: 480px; max-width: 90vw; }
+        .modal h3 { margin-bottom: 16px; }
+        .modal .reason-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .modal .reason-list label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+        .modal .reason-list input[type="checkbox"] { width: 16px; height: 16px; }
+        .modal .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+        /* Checkbox */
+        .review-select { width: 18px; height: 18px; cursor: pointer; margin-right: 8px; flex-shrink: 0; }
+
+        /* Pagination */
+        .pagination { display: flex; justify-content: center; gap: 4px; margin-top: 24px; }
+        .pagination a, .pagination span { display: inline-block; padding: 8px 14px; border: 1px solid #ddd; border-radius: 4px; text-decoration: none; color: #333; font-size: 14px; }
+        .pagination a:hover { background: #e9ecef; }
+        .pagination .active { background: #3498db; color: #fff; border-color: #3498db; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Модерация отзывов</h1>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-value {{if gt .Stats.PendingTotal 0}}warn{{else}}ok{{end}}">{{.Stats.PendingTotal}}</div>
+            <div class="stat-label">Ожидают модерации</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value ok">{{.Stats.ApprovedToday}}</div>
+            <div class="stat-label">Одобрено сегодня</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value info">{{.Stats.RejectedToday}}</div>
+            <div class="stat-label">Отклонено сегодня</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value {{if gt .Stats.PendingWeek 0}}warn{{else}}ok{{end}}">{{.Stats.PendingWeek}}</div>
+            <div class="stat-label">Ожидают за неделю</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <form method="GET" action="/admin-panel/pages/moderation">
+            <div class="filter-group">
+                <label>Статус</label>
+                <select name="status">
+                    <option value="pending" {{if eq .Filter.Status "pending"}}selected{{end}}>Ожидает</option>
+                    <option value="approved" {{if eq .Filter.Status "approved"}}selected{{end}}>Одобрен</option>
+                    <option value="rejected" {{if eq .Filter.Status "rejected"}}selected{{end}}>Отклонён</option>
+                    <option value="all" {{if eq .Filter.Status "all"}}selected{{end}}>Все</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Баня</label>
+                <select name="bathhouse_id">
+                    <option value="">Все бани</option>
+                    {{range .Bathhouses}}
+                    <option value="{{.ID}}" {{if eq $.Filter.BathhouseID .ID}}selected{{end}}>{{.Name}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Мин. рейтинг</label>
+                <select name="min_rating">
+                    <option value="">—</option>
+                    <option value="1" {{if eq .Filter.MinRating "1"}}selected{{end}}>1</option>
+                    <option value="2" {{if eq .Filter.MinRating "2"}}selected{{end}}>2</option>
+                    <option value="3" {{if eq .Filter.MinRating "3"}}selected{{end}}>3</option>
+                    <option value="4" {{if eq .Filter.MinRating "4"}}selected{{end}}>4</option>
+                    <option value="5" {{if eq .Filter.MinRating "5"}}selected{{end}}>5</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Макс. рейтинг</label>
+                <select name="max_rating">
+                    <option value="">—</option>
+                    <option value="1" {{if eq .Filter.MaxRating "1"}}selected{{end}}>1</option>
+                    <option value="2" {{if eq .Filter.MaxRating "2"}}selected{{end}}>2</option>
+                    <option value="3" {{if eq .Filter.MaxRating "3"}}selected{{end}}>3</option>
+                    <option value="4" {{if eq .Filter.MaxRating "4"}}selected{{end}}>4</option>
+                    <option value="5" {{if eq .Filter.MaxRating "5"}}selected{{end}}>5</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Дата от</label>
+                <input type="date" name="from_date" value="{{.Filter.FromDate}}">
+            </div>
+            <div class="filter-group">
+                <label>Дата до</label>
+                <input type="date" name="to_date" value="{{.Filter.ToDate}}">
+            </div>
+            <button type="submit" class="btn btn-primary">Фильтр</button>
+            <a href="/admin-panel/pages/moderation" class="btn btn-secondary">Сброс</a>
+        </form>
+    </div>
+
+    <!-- Batch Actions -->
+    <div class="batch-actions">
+        <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)">
+        <label for="select-all" style="font-size:14px;cursor:pointer;">Выбрать все</label>
+        <button class="btn btn-success btn-sm" onclick="batchApprove()" id="btn-batch-approve" disabled>Одобрить выбранные</button>
+        <button class="btn btn-danger btn-sm" onclick="openBatchRejectModal()" id="btn-batch-reject" disabled>Отклонить выбранные</button>
+        <span class="batch-count" id="batch-count"></span>
+    </div>
+
+    <!-- Review List -->
+    <div class="review-list">
+        {{range .Reviews}}
+        <div class="review-card {{.Status}}" id="review-{{.ID}}">
+            <div class="review-header">
+                <div style="display:flex;align-items:flex-start;">
+                    <input type="checkbox" class="review-select" value="{{.ID}}" onchange="updateBatchCount()">
+                    <div class="review-meta">
+                        <span class="user-name">{{.UserName}}</span>
+                        <span class="bathhouse-name">{{.BathhouseName}}</span>
+                        <span class="rating">{{stars .Rating}}</span>
+                        <span class="date">{{.CreatedAt.Format "02.01.2006 15:04"}}</span>
+                    </div>
+                </div>
+                <div class="review-actions">
+                    <span class="badge {{.Status}}">{{.Status}}</span>
+                    {{if eq .Status "pending"}}
+                    <button class="btn btn-success btn-sm" onclick="approveReview('{{.ID}}')">Одобрить</button>
+                    <button class="btn btn-danger btn-sm" onclick="openRejectModal('{{.ID}}')">Отклонить</button>
+                    {{end}}
+                </div>
+            </div>
+            <div class="review-text">{{.Text}}</div>
+            {{if .Images}}
+            <div class="review-images">
+                {{range .Images}}
+                <img src="{{.}}" alt="Фото отзыва">
+                {{end}}
+            </div>
+            {{end}}
+            {{if .RejectionReasons}}
+            <div style="font-size:13px;color:#e74c3c;margin-top:8px;">
+                Причины отклонения: {{join .RejectionReasons ", "}}
+            </div>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="empty-state">
+            <div class="icon">&#10003;</div>
+            <p>Нет отзывов для отображения</p>
+        </div>
+        {{end}}
+    </div>
+
+    <!-- Pagination -->
+    {{if gt .TotalPages 1}}
+    <div class="pagination">
+        {{if gt .Page 1}}
+        <a href="?page={{.Page}}&status={{.Filter.Status}}&bathhouse_id={{.Filter.BathhouseID}}&min_rating={{.Filter.MinRating}}&max_rating={{.Filter.MaxRating}}&from_date={{.Filter.FromDate}}&to_date={{.Filter.ToDate}}">&#8592;</a>
+        {{end}}
+        {{range $i := .TotalPages}}
+        {{end}}
+        {{if gt .Page 0}}
+        <span class="active">{{.Page}}</span>
+        {{end}}
+        {{if lt .Page .TotalPages}}
+        <a href="?page={{.Page}}&status={{.Filter.Status}}&bathhouse_id={{.Filter.BathhouseID}}&min_rating={{.Filter.MinRating}}&max_rating={{.Filter.MaxRating}}&from_date={{.Filter.FromDate}}&to_date={{.Filter.ToDate}}">&#8594;</a>
+        {{end}}
+    </div>
+    {{end}}
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay" id="reject-modal">
+    <div class="modal">
+        <h3>Отклонить отзыв</h3>
+        <div class="reason-list">
+            <label><input type="checkbox" value="Нецензурная лексика"> Нецензурная лексика</label>
+            <label><input type="checkbox" value="Спам или реклама"> Спам или реклама</label>
+            <label><input type="checkbox" value="Не соответствует тематике"> Не соответствует тематике</label>
+            <label><input type="checkbox" value="Оскорбительное содержание"> Оскорбительное содержание</label>
+            <label><input type="checkbox" value="Фейковый отзыв"> Фейковый отзыв</label>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeRejectModal()">Отмена</button>
+            <button class="btn btn-danger" onclick="confirmReject()">Отклонить</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let rejectTargetId = null;
+let isBatchReject = false;
+
+function approveReview(id) {
+    fetch('/admin-panel/pages/moderation/api/approve?id=' + id, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+            }
+        })
+        .catch(() => alert('Ошибка сети'));
+}
+
+function openRejectModal(id) {
+    rejectTargetId = id;
+    isBatchReject = false;
+    document.querySelectorAll('#reject-modal input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.getElementById('reject-modal').classList.add('active');
+}
+
+function openBatchRejectModal() {
+    isBatchReject = true;
+    document.querySelectorAll('#reject-modal input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.getElementById('reject-modal').classList.add('active');
+}
+
+function closeRejectModal() {
+    document.getElementById('reject-modal').classList.remove('active');
+    rejectTargetId = null;
+    isBatchReject = false;
+}
+
+function getSelectedReasons() {
+    return Array.from(document.querySelectorAll('#reject-modal input[type="checkbox"]:checked'))
+        .map(cb => cb.value);
+}
+
+function confirmReject() {
+    const reasons = getSelectedReasons();
+    if (isBatchReject) {
+        const ids = getSelectedIds();
+        fetch('/admin-panel/pages/moderation/api/batch-reject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids, reasons: reasons })
+        })
+        .then(r => r.json())
+        .then(data => {
+            closeRejectModal();
+            if (data.success) location.reload();
+            else alert('Ошибка');
+        })
+        .catch(() => alert('Ошибка сети'));
+    } else {
+        fetch('/admin-panel/pages/moderation/api/reject?id=' + rejectTargetId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reasons: reasons })
+        })
+        .then(r => r.json())
+        .then(data => {
+            closeRejectModal();
+            if (data.success) location.reload();
+            else alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+        })
+        .catch(() => alert('Ошибка сети'));
+    }
+}
+
+function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.review-select:checked')).map(cb => cb.value);
+}
+
+function toggleSelectAll(el) {
+    document.querySelectorAll('.review-select').forEach(cb => cb.checked = el.checked);
+    updateBatchCount();
+}
+
+function updateBatchCount() {
+    const count = document.querySelectorAll('.review-select:checked').length;
+    document.getElementById('batch-count').textContent = count > 0 ? 'Выбрано: ' + count : '';
+    document.getElementById('btn-batch-approve').disabled = count === 0;
+    document.getElementById('btn-batch-reject').disabled = count === 0;
+}
+
+function batchApprove() {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return;
+    fetch('/admin-panel/pages/moderation/api/batch-approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: ids })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) location.reload();
+        else alert('Ошибка');
+    })
+    .catch(() => alert('Ошибка сети'));
+}
+</script>
+</body>
+</html>
