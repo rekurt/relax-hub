@@ -2,7 +2,9 @@ package bot
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -62,6 +64,12 @@ func NewBot(
 ) (*Bot, error) {
 	if cfg.BotToken == "" {
 		return nil, fmt.Errorf("telegram bot token is required")
+	}
+
+	// Validate required service dependencies
+	if bathhouseService == nil || bookingService == nil || userService == nil ||
+		telegramLinkService == nil || favoriteService == nil || cityService == nil {
+		return nil, fmt.Errorf("all service dependencies are required for the bot")
 	}
 
 	client, err := tgbotapi.NewBotAPI(cfg.BotToken)
@@ -142,7 +150,52 @@ func (b *Bot) startWebhook(ctx context.Context) error {
 		return fmt.Errorf("failed to set webhook: %w", err)
 	}
 
-	<-ctx.Done()
+	// Start HTTP server to receive webhook callbacks from Telegram
+	mux := http.NewServeMux()
+	mux.HandleFunc("/telegram/webhook", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var update tgbotapi.Update
+		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
+			b.logger.Error("failed to decode webhook update", "error", err)
+			http.Error(w, "bad request", http.StatusBadRequest)
+			return
+		}
+
+		go func(u tgbotapi.Update) {
+			defer func() {
+				if r := recover(); r != nil {
+					b.logger.Error("panic in handleUpdate", "recover", r)
+				}
+			}()
+			b.handleUpdate(ctx, u)
+		}(update)
+
+		w.WriteHeader(http.StatusOK)
+	})
+
+	srv := &http.Server{
+		Addr:              ":8443",
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			b.logger.Error("webhook server shutdown error", "error", err)
+		}
+	}()
+
+	b.logger.Info("Webhook server listening", "addr", srv.Addr)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("webhook server error: %w", err)
+	}
 	return nil
 }
 
@@ -698,10 +751,10 @@ func (b *Bot) doSelectGuests(ctx context.Context, chatID int64, count int) {
 }
 
 func (b *Bot) doConfirmBooking(ctx context.Context, chatID int64) {
-	b.wizardsMu.RLock()
+	b.wizardsMu.Lock()
 	wizard := b.wizards[chatID]
 	if wizard == nil {
-		b.wizardsMu.RUnlock()
+		b.wizardsMu.Unlock()
 		b.sendPlainMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
 		return
 	}
@@ -711,7 +764,9 @@ func (b *Bot) doConfirmBooking(ctx context.Context, chatID int64) {
 		EndTime:     wizard.EndTime,
 		GuestCount:  wizard.GuestCount,
 	}
-	b.wizardsMu.RUnlock()
+	// Delete wizard before releasing lock to prevent double-booking from concurrent confirms
+	delete(b.wizards, chatID)
+	b.wizardsMu.Unlock()
 
 	userID, ok := b.getUserID(ctx, chatID)
 	if !ok {
@@ -722,11 +777,8 @@ func (b *Bot) doConfirmBooking(ctx context.Context, chatID int64) {
 	if err != nil {
 		b.logger.Error("failed to create booking", "error", err, "chat_id", chatID)
 		b.sendPlainMessage(chatID, "Ошибка при бронировании. Попробуйте позже.")
-		b.clearWizard(chatID)
 		return
 	}
-
-	b.clearWizard(chatID)
 
 	text := fmt.Sprintf("\u2705 *Бронирование создано\\!*\n\n"+
 		"ID: `%s`\n"+
@@ -815,8 +867,14 @@ func (b *Bot) clearWizard(chatID int64) {
 	b.wizardsMu.Unlock()
 }
 
+const maxIDCacheSize = 10000
+
 func (b *Bot) cacheID(short string, full uuid.UUID) {
 	b.idCacheMu.Lock()
+	// Evict all entries when cache exceeds max size to prevent unbounded growth
+	if len(b.idCache) >= maxIDCacheSize {
+		b.idCache = make(map[string]uuid.UUID, maxIDCacheSize/2)
+	}
 	b.idCache[short] = full
 	b.idCacheMu.Unlock()
 }

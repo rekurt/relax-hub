@@ -22,6 +22,5 @@ var Module = fx.Module("notification",
 		NewDispatcher,
 		NewHub,
 		func() EmailSender { return NewNoopEmailSender() },
-		func() TelegramSender { return NewNoopTelegramSender() },
 	),
 )

@@ -35,6 +35,8 @@ func New(cfg *config.Config) *fx.App {
 		fx.Provide(
 			func(hub *notification.Hub) service.ChatBroadcaster { return hub },
 			func(svc service.ChatService) handler.ConversationAccessChecker { return svc },
+			// TelegramSender: noop by default, override with bot.Module when configured
+			func() notification.TelegramSender { return notification.NewNoopTelegramSender() },
 		),
 	)
 }
