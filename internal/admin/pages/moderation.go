@@ -426,6 +426,7 @@ func (h *ModerationHandler) HandleReject(w http.ResponseWriter, r *http.Request)
 
 // HandleBatchApprove handles AJAX batch approve request.
 func (h *ModerationHandler) HandleBatchApprove(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	var req batchRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid request"})
@@ -444,6 +445,7 @@ func (h *ModerationHandler) HandleBatchApprove(w http.ResponseWriter, r *http.Re
 
 // HandleBatchReject handles AJAX batch reject request.
 func (h *ModerationHandler) HandleBatchReject(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	var req batchRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid request"})
