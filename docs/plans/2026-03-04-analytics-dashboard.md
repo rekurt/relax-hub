@@ -29,7 +29,7 @@
 - Create: `migrations/000022_analytics.up.sql`
 - Create: `migrations/000022_analytics.down.sql`
 
-- [ ] Создать модель BathhouseView:
+- [x] Создать модель BathhouseView:
   ```
   BathhouseView {
     ID          uuid.UUID
@@ -40,7 +40,7 @@
     ViewedAt    time.Time
   }
   ```
-- [ ] Создать модель AnalyticsSnapshot (агрегированные данные за период):
+- [x] Создать модель AnalyticsSnapshot (агрегированные данные за период):
   ```
   AnalyticsSnapshot {
     BathhouseID   uuid.UUID
@@ -53,9 +53,9 @@
     AvgRating     float64
   }
   ```
-- [ ] Создать миграции
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать миграции
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий аналитики
 
