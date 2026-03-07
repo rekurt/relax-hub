@@ -1,12 +1,12 @@
 package bot
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/notification"
 	"github.com/nikitaaldaev/bani/internal/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,6 +30,11 @@ func TestEscapeMD(t *testing.T) {
 		{"[link]", "\\[link\\]"},
 		{"`code`", "\\`code\\`"},
 		{"mixed_*[`]", "mixed\\_\\*\\[\\`\\]"},
+		{"ул. Ленина, д. 1", "ул\\. Ленина, д\\. 1"},
+		{"(корп. 2)", "\\(корп\\. 2\\)"},
+		{"цена: 5000!", "цена: 5000\\!"},
+		{"a~b>c#d+e-f=g|h{i}j", "a\\~b\\>c\\#d\\+e\\-f\\=g\\|h\\{i\\}j"},
+		{"back\\slash", "back\\\\slash"},
 	}
 
 	for _, tt := range tests {
@@ -260,9 +265,9 @@ func TestFormatBathhouseDetail(t *testing.T) {
 
 	text := formatBathhouseDetail(bh)
 	assert.Contains(t, text, "Русская Баня")
-	assert.Contains(t, text, "ул. Ленина, 1")
+	assert.Contains(t, text, "ул\\. Ленина, 1")
 	assert.Contains(t, text, "5000")
-	assert.Contains(t, text, "4.5")
+	assert.Contains(t, text, "4\\.5")
 	assert.Contains(t, text, "10 отзывов")
 	assert.Contains(t, text, "8 гостей")
 	assert.Contains(t, text, "бассейн")
@@ -330,7 +335,6 @@ func TestWizardState(t *testing.T) {
 }
 
 func TestCallbackDataParsing(t *testing.T) {
-	// Test that callback data format is parseable
 	tests := []struct {
 		data     string
 		prefix   string
@@ -351,32 +355,14 @@ func TestCallbackDataParsing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.data, func(t *testing.T) {
-			parts := splitCallback(tt.data)
+			// Use the same parsing logic as production code (strings.SplitN)
+			parts := strings.SplitN(tt.data, ":", 3)
 			assert.Equal(t, tt.prefix, parts[0])
 			if tt.hasExtra {
 				assert.Greater(t, len(parts), 1)
 			}
 		})
 	}
-}
-
-// splitCallback mimics the callback parsing logic in handleCallbackQuery
-func splitCallback(data string) []string {
-	parts := make([]string, 0, 3)
-	idx := 0
-	for i := 0; i < len(data); i++ {
-		if data[i] == ':' {
-			parts = append(parts, data[idx:i])
-			idx = i + 1
-			if len(parts) == 2 {
-				// Remaining data is the last part
-				parts = append(parts, data[idx:])
-				return parts
-			}
-		}
-	}
-	parts = append(parts, data[idx:])
-	return parts
 }
 
 func TestFormatBathhouseDetailPlain(t *testing.T) {
@@ -431,10 +417,4 @@ func TestFormatBathhouseDetailPlain_NoAddress(t *testing.T) {
 
 	text := formatBathhouseDetailPlain(bh)
 	assert.NotContains(t, text, "📍")
-}
-
-func TestNoopTelegramSender(t *testing.T) {
-	sender := notification.NewNoopTelegramSender()
-	err := sender.Send(t.Context(), 12345, "Title", "Body")
-	assert.NoError(t, err)
 }

@@ -23,8 +23,5 @@ func (t *TelegramLink) Validate() error {
 	if t.TelegramID <= 0 {
 		return ErrInvalidInput
 	}
-	if t.TelegramUsername == "" {
-		return ErrInvalidInput
-	}
 	return nil
 }

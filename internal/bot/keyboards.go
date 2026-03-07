@@ -260,12 +260,12 @@ func formatBathhouseDetail(bh *domain.Bathhouse) string {
 
 	text := fmt.Sprintf("*%s*\n\n", escapeMD(bh.Name))
 	text += fmt.Sprintf("\U0001f4cd %s\n", escapeMD(bh.Address))
-	text += fmt.Sprintf("\U0001f4b0 %.0f \u20bd/ч\n", priceRub)
-	text += fmt.Sprintf("\u2b50 %.1f (%d отзывов)\n", bh.Rating, bh.ReviewCount)
+	text += fmt.Sprintf("\U0001f4b0 %s \u20bd/ч\n", escapeMD(fmt.Sprintf("%.0f", priceRub)))
+	text += fmt.Sprintf("\u2b50 %s \\(%d отзывов\\)\n", escapeMD(fmt.Sprintf("%.1f", bh.Rating)), bh.ReviewCount)
 	text += fmt.Sprintf("\U0001f465 до %d гостей\n", bh.MaxGuests)
 
 	if len(amenities) > 0 {
-		text += fmt.Sprintf("\n%s\n", strings.Join(amenities, " | "))
+		text += fmt.Sprintf("\n%s\n", escapeMD(strings.Join(amenities, " | ")))
 	}
 
 	if bh.Description != "" {
@@ -318,14 +318,12 @@ func formatBathhouseDetailPlain(bh domain.Bathhouse) string {
 	return text
 }
 
-// escapeMD escapes Markdown special characters for Telegram
+// escapeMD escapes all MarkdownV2 special characters for Telegram
 func escapeMD(s string) string {
-	replacer := strings.NewReplacer(
-		"_", "\\_",
-		"*", "\\*",
-		"[", "\\[",
-		"]", "\\]",
-		"`", "\\`",
-	)
-	return replacer.Replace(s)
+	special := []string{"\\", "_", "*", "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"}
+	r := s
+	for _, ch := range special {
+		r = strings.ReplaceAll(r, ch, "\\"+ch)
+	}
+	return r
 }

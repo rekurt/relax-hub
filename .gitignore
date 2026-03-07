@@ -2,6 +2,8 @@
 bin/
 bani
 bani-server
+bani-bot
+/bot
 *.exe
 *.exe~
 *.dll

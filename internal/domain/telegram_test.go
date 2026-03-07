@@ -23,6 +23,15 @@ func TestTelegramLinkValidate(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid telegram link without username",
+			link: &TelegramLink{
+				ID:         uuid.New(),
+				UserID:     uuid.New(),
+				TelegramID: 123456789,
+			},
+			wantErr: false,
+		},
+		{
 			name: "missing user id",
 			link: &TelegramLink{
 				ID:               uuid.New(),
@@ -32,7 +41,7 @@ func TestTelegramLinkValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid telegram id",
+			name: "zero telegram id",
 			link: &TelegramLink{
 				ID:               uuid.New(),
 				UserID:           uuid.New(),
@@ -42,11 +51,12 @@ func TestTelegramLinkValidate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "missing telegram username",
+			name: "negative telegram id",
 			link: &TelegramLink{
-				ID:         uuid.New(),
-				UserID:     uuid.New(),
-				TelegramID: 123456789,
+				ID:               uuid.New(),
+				UserID:           uuid.New(),
+				TelegramID:       -1,
+				TelegramUsername: "testuser",
 			},
 			wantErr: true,
 		},

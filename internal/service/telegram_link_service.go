@@ -29,16 +29,6 @@ func NewTelegramLinkService(telegramLinkRepo repository.TelegramLinkRepository) 
 }
 
 func (s *telegramLinkService) LinkAccount(ctx context.Context, userID uuid.UUID, telegramID int64, telegramUsername string) (*domain.TelegramLink, error) {
-	if userID == uuid.Nil {
-		return nil, fmt.Errorf("%w: invalid user id", domain.ErrInvalidInput)
-	}
-	if telegramID <= 0 {
-		return nil, fmt.Errorf("%w: invalid telegram id", domain.ErrInvalidInput)
-	}
-	if telegramUsername == "" {
-		return nil, fmt.Errorf("%w: invalid telegram username", domain.ErrInvalidInput)
-	}
-
 	link := &domain.TelegramLink{
 		ID:               uuid.New(),
 		UserID:           userID,
@@ -48,7 +38,7 @@ func (s *telegramLinkService) LinkAccount(ctx context.Context, userID uuid.UUID,
 	}
 
 	if err := link.Validate(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: invalid telegram link data", err)
 	}
 
 	if err := s.telegramLinkRepo.Create(ctx, link); err != nil {

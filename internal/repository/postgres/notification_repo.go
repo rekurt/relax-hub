@@ -178,12 +178,12 @@ func (r *notificationRepo) CountUnread(ctx context.Context, userID uuid.UUID) (i
 }
 
 func (r *notificationRepo) GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.NotificationPreferences, error) {
-	query := `SELECT user_id, in_app, email, push, booking_events, review_events, promo_events, reminders
+	query := `SELECT user_id, in_app, email, push, telegram, booking_events, review_events, promo_events, reminders
 		FROM notification_preferences WHERE user_id = $1`
 
 	var p domain.NotificationPreferences
 	err := r.pool.QueryRow(ctx, query, userID).Scan(
-		&p.UserID, &p.InApp, &p.Email, &p.Push,
+		&p.UserID, &p.InApp, &p.Email, &p.Push, &p.Telegram,
 		&p.BookingEvents, &p.ReviewEvents, &p.PromoEvents, &p.Reminders,
 	)
 	if err != nil {
@@ -198,19 +198,20 @@ func (r *notificationRepo) GetPreferences(ctx context.Context, userID uuid.UUID)
 
 func (r *notificationRepo) UpdatePreferences(ctx context.Context, prefs *domain.NotificationPreferences) error {
 	query := `
-		INSERT INTO notification_preferences (user_id, in_app, email, push, booking_events, review_events, promo_events, reminders)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO notification_preferences (user_id, in_app, email, push, telegram, booking_events, review_events, promo_events, reminders)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (user_id) DO UPDATE SET
 			in_app = EXCLUDED.in_app,
 			email = EXCLUDED.email,
 			push = EXCLUDED.push,
+			telegram = EXCLUDED.telegram,
 			booking_events = EXCLUDED.booking_events,
 			review_events = EXCLUDED.review_events,
 			promo_events = EXCLUDED.promo_events,
 			reminders = EXCLUDED.reminders`
 
 	_, err := r.pool.Exec(ctx, query,
-		prefs.UserID, prefs.InApp, prefs.Email, prefs.Push,
+		prefs.UserID, prefs.InApp, prefs.Email, prefs.Push, prefs.Telegram,
 		prefs.BookingEvents, prefs.ReviewEvents, prefs.PromoEvents, prefs.Reminders,
 	)
 	if err != nil {

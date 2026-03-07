@@ -22,7 +22,8 @@ Clean architecture: handler -> service -> repository
 - **handler/** — HTTP handlers, one file per entity, uses service interfaces
 - **middleware/** — auth (JWT), RBAC (role-based), CORS, logging
 - **server/** — chi router, HTTP server with graceful shutdown
-- **notification/** — delivery channels: dispatcher, email sender, WebSocket hub
+- **notification/** — delivery channels: dispatcher, email sender, WebSocket hub, telegram sender
+- **bot/** — Telegram bot: commands, keyboards, notifications, booking wizard
 - **app/** — Uber fx DI container, assembles all modules
 
 ## Key Patterns
@@ -168,7 +169,7 @@ Geo-search uses `ST_DWithin` and `ST_Distance` with `geography` type.
 
 Event-driven notifications with multi-channel delivery:
 - **Types**: booking_confirmed, booking_cancelled, booking_rejected, new_review, review_response, review_approved, review_rejected, new_message, promo, reminder, system
-- **Channels**: in-app (DB + WebSocket), email (SMTP/SendGrid)
+- **Channels**: in-app (DB + WebSocket), email (SMTP/SendGrid), telegram (via bot API, requires linked account)
 - **Dispatcher** (`internal/notification/dispatcher.go`): routes to channels based on user preferences
 - **WebSocket Hub** (`internal/notification/hub.go`): Hub pattern for real-time delivery to connected clients
 - **Integration**: BookingService and ReviewService call NotificationService.Send() on key events
@@ -366,6 +367,42 @@ Real-time messaging between clients and bathhouse owners/representatives:
 - `GET /api/v1/my/unread-messages-count` — unread count (auth required)
 
 Database migration: `migrations/000021_chat.up.sql`
+
+### Telegram Bot
+
+Telegram bot for bathhouse search, booking, and notifications:
+
+**Bot** (`internal/bot/bot.go`):
+- Separate binary: `cmd/bot/` (Cobra CLI, `bani-bot run`)
+- Long polling mode for dev, webhook for production
+- Dependencies: BathhouseService, BookingService, UserService, NotificationService, TelegramLinkService, FavoriteService, CityService
+- In-memory booking wizard state per chat (date -> time -> guests -> confirm)
+- Short ID cache for callback data (Telegram 64-byte callback limit)
+
+**Commands:**
+- `/start` — welcome message
+- `/search <city>` — search bathhouses (inline keyboard results)
+- `/book <id>` — step-by-step booking wizard
+- `/mybookings` — list user bookings with management buttons
+- `/cancel <id>` — cancel booking
+- `/favorites` — list favorites
+- `/link <token>` — link Telegram account via one-time token
+- Inline mode: `@bot_name <query>` — inline search results
+
+**Notifications** (`internal/bot/notifications.go`):
+- TelegramSender implements `notification.TelegramSender` interface
+- NoopTelegramSender used when bot is not configured
+
+**Models:**
+- **TelegramLink** (`internal/domain/telegram.go`): ID, UserID, TelegramID, TelegramUsername, LinkedAt
+
+**Repository:** `internal/repository/postgres/telegram_link_repo.go` — Create, GetByTelegramID, GetByUserID, Delete
+
+**Service:** `internal/service/telegram_link_service.go` — LinkAccount, GetByTelegramID, GetByUserID, UnlinkAccount
+
+Config: `BANI_TELEGRAM_BOT_TOKEN`, `BANI_TELEGRAM_WEBHOOK_URL`, `BANI_TELEGRAM_MODE` (polling/webhook)
+
+Database migration: `migrations/000023_telegram_links.up.sql`
 
 ### Code Style
 

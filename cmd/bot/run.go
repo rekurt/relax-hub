@@ -48,20 +48,30 @@ var runCmd = &cobra.Command{
 			return fmt.Errorf("failed to create bot: %w", err)
 		}
 
+		// Create a cancellable context for graceful shutdown
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
 		// Create a channel to listen for interrupt signals
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 		// Start the bot in a goroutine
+		errChan := make(chan error, 1)
 		go func() {
-			if err := botInstance.Start(context.Background()); err != nil {
-				log.Error("Bot error", "error", err)
-			}
+			errChan <- botInstance.Start(ctx)
 		}()
 
-		// Wait for shutdown signal
-		sig := <-sigChan
-		log.Info("Received shutdown signal", "signal", sig.String())
+		// Wait for shutdown signal or bot error
+		select {
+		case sig := <-sigChan:
+			log.Info("Received shutdown signal", "signal", sig.String())
+			cancel()
+		case err := <-errChan:
+			if err != nil && err != context.Canceled {
+				return fmt.Errorf("bot error: %w", err)
+			}
+		}
 
 		log.Info("Graceful shutdown completed successfully")
 		return nil

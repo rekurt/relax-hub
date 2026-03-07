@@ -60,13 +60,47 @@ func TestTelegramLinkService_LinkAccountInvalidUserID(t *testing.T) {
 	}
 }
 
+func TestTelegramLinkService_LinkAccountInvalidTelegramID(t *testing.T) {
+	repo := mock.NewTelegramLinkRepo()
+	service := NewTelegramLinkService(repo)
+	ctx := context.Background()
+
+	_, err := service.LinkAccount(ctx, uuid.New(), 0, "testuser")
+	if err == nil {
+		t.Fatal("Expected error for zero TelegramID")
+	}
+
+	_, err = service.LinkAccount(ctx, uuid.New(), -1, "testuser")
+	if err == nil {
+		t.Fatal("Expected error for negative TelegramID")
+	}
+}
+
+func TestTelegramLinkService_LinkAccountEmptyUsername(t *testing.T) {
+	repo := mock.NewTelegramLinkRepo()
+	service := NewTelegramLinkService(repo)
+	ctx := context.Background()
+
+	// Empty username should be allowed (Telegram usernames are optional)
+	link, err := service.LinkAccount(ctx, uuid.New(), 123456789, "")
+	if err != nil {
+		t.Fatalf("LinkAccount with empty username should succeed: %v", err)
+	}
+	if link.TelegramUsername != "" {
+		t.Fatalf("Expected empty TelegramUsername, got %v", link.TelegramUsername)
+	}
+}
+
 func TestTelegramLinkService_GetByTelegramID(t *testing.T) {
 	repo := mock.NewTelegramLinkRepo()
 	service := NewTelegramLinkService(repo)
 	ctx := context.Background()
 
 	userID := uuid.New()
-	link, _ := service.LinkAccount(ctx, userID, 123456789, "testuser")
+	link, err := service.LinkAccount(ctx, userID, 123456789, "testuser")
+	if err != nil {
+		t.Fatalf("LinkAccount failed: %v", err)
+	}
 
 	retrieved, err := service.GetByTelegramID(ctx, 123456789)
 	if err != nil {
@@ -84,7 +118,10 @@ func TestTelegramLinkService_GetByUserID(t *testing.T) {
 	ctx := context.Background()
 
 	userID := uuid.New()
-	link, _ := service.LinkAccount(ctx, userID, 123456789, "testuser")
+	link, err := service.LinkAccount(ctx, userID, 123456789, "testuser")
+	if err != nil {
+		t.Fatalf("LinkAccount failed: %v", err)
+	}
 
 	retrieved, err := service.GetByUserID(ctx, userID)
 	if err != nil {
@@ -102,9 +139,12 @@ func TestTelegramLinkService_UnlinkAccount(t *testing.T) {
 	ctx := context.Background()
 
 	userID := uuid.New()
-	_, _ = service.LinkAccount(ctx, userID, 123456789, "testuser")
+	_, err := service.LinkAccount(ctx, userID, 123456789, "testuser")
+	if err != nil {
+		t.Fatalf("LinkAccount failed: %v", err)
+	}
 
-	err := service.UnlinkAccount(ctx, userID)
+	err = service.UnlinkAccount(ctx, userID)
 	if err != nil {
 		t.Fatalf("UnlinkAccount failed: %v", err)
 	}

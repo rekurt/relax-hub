@@ -113,7 +113,14 @@ func (b *Bot) startPolling(ctx context.Context) error {
 			b.client.StopReceivingUpdates()
 			return ctx.Err()
 		case update := <-updates:
-			go b.handleUpdate(ctx, update)
+			go func(u tgbotapi.Update) {
+				defer func() {
+					if r := recover(); r != nil {
+						b.logger.Error("panic in handleUpdate", "recover", r)
+					}
+				}()
+				b.handleUpdate(ctx, u)
+			}(update)
 		}
 	}
 }
@@ -238,17 +245,20 @@ func (b *Bot) handleCommand(ctx context.Context, msg *tgbotapi.Message) {
 	case "favorites":
 		b.commandFavorites(ctx, chatID, 1)
 	default:
-		b.sendMessage(chatID, "Неизвестная команда. Используйте /help для справки.")
+		b.sendPlainMessage(chatID, "Неизвестная команда. Используйте /help для справки.")
 	}
 }
 
 // handleMessage processes regular text messages
 func (b *Bot) handleMessage(ctx context.Context, msg *tgbotapi.Message) {
-	b.sendMessage(msg.Chat.ID, "Используйте /help для списка команд.")
+	b.sendPlainMessage(msg.Chat.ID, "Используйте /help для списка команд.")
 }
 
 // handleCallbackQuery processes inline keyboard button presses
 func (b *Bot) handleCallbackQuery(ctx context.Context, cq *tgbotapi.CallbackQuery) {
+	if cq.Message == nil {
+		return
+	}
 	chatID := cq.Message.Chat.ID
 	data := cq.Data
 
@@ -348,16 +358,16 @@ func (b *Bot) commandHelp(ctx context.Context, chatID int64) {
 func (b *Bot) commandLink(ctx context.Context, chatID int64, msg *tgbotapi.Message) {
 	token := msg.CommandArguments()
 	if token == "" {
-		b.sendMessage(chatID, "Пожалуйста, укажите токен: /link <токен>")
+		b.sendPlainMessage(chatID, "Пожалуйста, укажите токен: /link <токен>")
 		return
 	}
 
-	b.sendMessage(chatID, "Функция привязки аккаунта находится в разработке. Пожалуйста, используйте веб-интерфейс.")
+	b.sendPlainMessage(chatID, "Функция привязки аккаунта находится в разработке. Пожалуйста, используйте веб-интерфейс.")
 }
 
 func (b *Bot) commandSearch(ctx context.Context, chatID int64, query string) {
 	if query == "" {
-		b.sendMessage(chatID, "Укажите город: /search _москва_")
+		b.sendPlainMessage(chatID, "Укажите город: /search <москва>")
 		return
 	}
 
@@ -366,13 +376,13 @@ func (b *Bot) commandSearch(ctx context.Context, chatID int64, query string) {
 
 func (b *Bot) commandBook(ctx context.Context, chatID int64, args string) {
 	if args == "" {
-		b.sendMessage(chatID, "Укажите ID бани: /book _id_\nНайдите баню через /search")
+		b.sendPlainMessage(chatID, "Укажите ID бани: /book <id>\nНайдите баню через /search")
 		return
 	}
 
 	bhID, err := uuid.Parse(args)
 	if err != nil {
-		b.sendMessage(chatID, "Неверный формат ID. Используйте /search для поиска бань.")
+		b.sendPlainMessage(chatID, "Неверный формат ID. Используйте /search для поиска бань.")
 		return
 	}
 
@@ -383,13 +393,13 @@ func (b *Bot) commandBook(ctx context.Context, chatID int64, args string) {
 
 func (b *Bot) commandCancel(ctx context.Context, chatID int64, args string) {
 	if args == "" {
-		b.sendMessage(chatID, "Укажите ID бронирования: /cancel _id_\nСписок бронирований: /mybookings")
+		b.sendPlainMessage(chatID, "Укажите ID бронирования: /cancel <id>\nСписок бронирований: /mybookings")
 		return
 	}
 
 	bkID, err := uuid.Parse(args)
 	if err != nil {
-		b.sendMessage(chatID, "Неверный формат ID.")
+		b.sendPlainMessage(chatID, "Неверный формат ID.")
 		return
 	}
 
@@ -407,12 +417,12 @@ func (b *Bot) commandMyBookings(ctx context.Context, chatID int64, page int) {
 	result, err := b.bookingService.ListByUser(ctx, userID, page, 5)
 	if err != nil {
 		b.logger.Error("failed to list bookings", "error", err, "chat_id", chatID)
-		b.sendMessage(chatID, "Ошибка при получении бронирований.")
+		b.sendPlainMessage(chatID, "Ошибка при получении бронирований.")
 		return
 	}
 
 	if result.TotalCount == 0 {
-		b.sendMessage(chatID, "У вас пока нет бронирований.\nИспользуйте /search для поиска бань.")
+		b.sendPlainMessage(chatID, "У вас пока нет бронирований.\nИспользуйте /search для поиска бань.")
 		return
 	}
 
@@ -435,12 +445,12 @@ func (b *Bot) commandFavorites(ctx context.Context, chatID int64, page int) {
 	result, err := b.favoriteService.List(ctx, userID, page, 5)
 	if err != nil {
 		b.logger.Error("failed to list favorites", "error", err, "chat_id", chatID)
-		b.sendMessage(chatID, "Ошибка при получении избранного.")
+		b.sendPlainMessage(chatID, "Ошибка при получении избранного.")
 		return
 	}
 
 	if result.TotalCount == 0 {
-		b.sendMessage(chatID, "Список избранного пуст.\nДобавляйте бани через поиск /search")
+		b.sendPlainMessage(chatID, "Список избранного пуст.\nДобавляйте бани через поиск /search")
 		return
 	}
 
@@ -483,12 +493,12 @@ func (b *Bot) doSearch(ctx context.Context, chatID int64, query string, page int
 	result, err := b.bathhouseService.Search(ctx, filter)
 	if err != nil {
 		b.logger.Error("failed to search bathhouses", "error", err, "query", query)
-		b.sendMessage(chatID, "Ошибка при поиске. Попробуйте позже.")
+		b.sendPlainMessage(chatID, "Ошибка при поиске. Попробуйте позже.")
 		return
 	}
 
 	if result.TotalCount == 0 {
-		b.sendMessage(chatID, fmt.Sprintf("По запросу \"%s\" ничего не найдено.", query))
+		b.sendPlainMessage(chatID, fmt.Sprintf("По запросу \"%s\" ничего не найдено.", query))
 		return
 	}
 
@@ -500,20 +510,20 @@ func (b *Bot) doSearch(ctx context.Context, chatID int64, query string, page int
 	slug := strings.ToLower(query)
 	kb := buildSearchResultsKeyboard(result.Items, slug, page, result.TotalPages)
 	text := fmt.Sprintf("Найдено %d бань:", result.TotalCount)
-	b.sendMessageWithKeyboard(chatID, text, kb)
+	b.sendMessageWithKeyboard(chatID, escapeMD(text), kb)
 }
 
 func (b *Bot) doViewBathhouse(ctx context.Context, chatID int64, sid string) {
 	bhID, ok := b.resolveID(sid)
 	if !ok {
-		b.sendMessage(chatID, "Баня не найдена. Попробуйте поиск заново.")
+		b.sendPlainMessage(chatID, "Баня не найдена. Попробуйте поиск заново.")
 		return
 	}
 
 	bh, err := b.bathhouseService.GetByID(ctx, bhID)
 	if err != nil {
 		b.logger.Error("failed to get bathhouse", "error", err, "id", bhID)
-		b.sendMessage(chatID, "Ошибка при загрузке информации о бане.")
+		b.sendPlainMessage(chatID, "Ошибка при загрузке информации о бане.")
 		return
 	}
 
@@ -524,7 +534,7 @@ func (b *Bot) doViewBathhouse(ctx context.Context, chatID int64, sid string) {
 func (b *Bot) doStartBookingWizard(ctx context.Context, chatID int64, sid string) {
 	bhID, ok := b.resolveID(sid)
 	if !ok {
-		b.sendMessage(chatID, "Баня не найдена. Попробуйте поиск заново.")
+		b.sendPlainMessage(chatID, "Баня не найдена. Попробуйте поиск заново.")
 		return
 	}
 
@@ -536,7 +546,7 @@ func (b *Bot) doStartBookingWizard(ctx context.Context, chatID int64, sid string
 	bh, err := b.bathhouseService.GetByID(ctx, bhID)
 	if err != nil {
 		b.logger.Error("failed to get bathhouse", "error", err, "id", bhID)
-		b.sendMessage(chatID, "Ошибка при загрузке данных бани.")
+		b.sendPlainMessage(chatID, "Ошибка при загрузке данных бани.")
 		return
 	}
 
@@ -554,22 +564,26 @@ func (b *Bot) doStartBookingWizard(ctx context.Context, chatID int64, sid string
 }
 
 func (b *Bot) doSelectDate(ctx context.Context, chatID int64, dateStr string) {
-	wizard := b.getWizard(chatID)
+	b.wizardsMu.RLock()
+	wizard := b.wizards[chatID]
 	if wizard == nil {
-		b.sendMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		b.wizardsMu.RUnlock()
+		b.sendPlainMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
 		return
 	}
+	bathhouseID := wizard.BathhouseID
+	b.wizardsMu.RUnlock()
 
 	date, err := time.Parse("20060102", dateStr)
 	if err != nil {
-		b.sendMessage(chatID, "Неверная дата.")
+		b.sendPlainMessage(chatID, "Неверная дата.")
 		return
 	}
 
-	slots, err := b.bookingService.GetAvailableSlots(ctx, wizard.BathhouseID, date)
+	slots, err := b.bookingService.GetAvailableSlots(ctx, bathhouseID, date)
 	if err != nil {
-		b.logger.Error("failed to get slots", "error", err, "bathhouse_id", wizard.BathhouseID)
-		b.sendMessage(chatID, "Ошибка при загрузке слотов.")
+		b.logger.Error("failed to get slots", "error", err, "bathhouse_id", bathhouseID)
+		b.sendPlainMessage(chatID, "Ошибка при загрузке слотов.")
 		return
 	}
 
@@ -581,7 +595,7 @@ func (b *Bot) doSelectDate(ctx context.Context, chatID int64, dateStr string) {
 	}
 
 	if availableCount == 0 {
-		b.sendMessage(chatID, "На эту дату нет свободных слотов. Выберите другую дату.")
+		b.sendPlainMessage(chatID, "На эту дату нет свободных слотов. Выберите другую дату.")
 		kb := buildDatePickerKeyboard()
 		b.sendMessageWithKeyboard(chatID, "Выберите дату:", kb)
 		return
@@ -601,33 +615,36 @@ func (b *Bot) doSelectDate(ctx context.Context, chatID int64, dateStr string) {
 }
 
 func (b *Bot) doSelectSlot(ctx context.Context, chatID int64, slotIdx int) {
-	wizard := b.getWizard(chatID)
+	b.wizardsMu.Lock()
+	wizard := b.wizards[chatID]
 	if wizard == nil {
-		b.sendMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		b.wizardsMu.Unlock()
+		b.sendPlainMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
 		return
 	}
 
 	if slotIdx < 0 || slotIdx >= len(wizard.Slots) {
-		b.sendMessage(chatID, "Неверный слот. Попробуйте ещё раз.")
+		b.wizardsMu.Unlock()
+		b.sendPlainMessage(chatID, "Неверный слот. Попробуйте ещё раз.")
 		return
 	}
 
 	slot := wizard.Slots[slotIdx]
 	if !slot.Available {
-		b.sendMessage(chatID, "Этот слот уже занят. Выберите другой.")
+		b.wizardsMu.Unlock()
+		b.sendPlainMessage(chatID, "Этот слот уже занят. Выберите другой.")
 		return
 	}
 
-	b.wizardsMu.Lock()
 	wizard.StartTime = slot.StartTime
 	wizard.EndTime = slot.EndTime
 	wizard.Step = "guests"
-	b.wizardsMu.Unlock()
 
 	maxGuests := 10
 	if wizard.Bathhouse != nil {
 		maxGuests = wizard.Bathhouse.MaxGuests
 	}
+	b.wizardsMu.Unlock()
 
 	kb := buildGuestCountKeyboard(maxGuests)
 	b.sendMessageWithKeyboard(chatID,
@@ -640,21 +657,22 @@ func (b *Bot) doSelectSlot(ctx context.Context, chatID int64, slotIdx int) {
 }
 
 func (b *Bot) doSelectGuests(ctx context.Context, chatID int64, count int) {
-	wizard := b.getWizard(chatID)
+	b.wizardsMu.Lock()
+	wizard := b.wizards[chatID]
 	if wizard == nil {
-		b.sendMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		b.wizardsMu.Unlock()
+		b.sendPlainMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
 		return
 	}
 
 	if wizard.Bathhouse != nil && count > wizard.Bathhouse.MaxGuests {
-		b.sendMessage(chatID, fmt.Sprintf("Максимум гостей: %d", wizard.Bathhouse.MaxGuests))
+		b.wizardsMu.Unlock()
+		b.sendPlainMessage(chatID, fmt.Sprintf("Максимум гостей: %d", wizard.Bathhouse.MaxGuests))
 		return
 	}
 
-	b.wizardsMu.Lock()
 	wizard.GuestCount = count
 	wizard.Step = "confirm"
-	b.wizardsMu.Unlock()
 
 	bhName := "Баня"
 	if wizard.Bathhouse != nil {
@@ -673,34 +691,37 @@ func (b *Bot) doSelectGuests(ctx context.Context, chatID int64, count int) {
 		wizard.EndTime.Format("15:04"),
 		wizard.GuestCount,
 	)
+	b.wizardsMu.Unlock()
 
 	kb := buildConfirmBookingKeyboard()
 	b.sendMessageWithKeyboard(chatID, text, kb)
 }
 
 func (b *Bot) doConfirmBooking(ctx context.Context, chatID int64) {
-	wizard := b.getWizard(chatID)
+	b.wizardsMu.RLock()
+	wizard := b.wizards[chatID]
 	if wizard == nil {
-		b.sendMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		b.wizardsMu.RUnlock()
+		b.sendPlainMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
 		return
 	}
-
-	userID, ok := b.getUserID(ctx, chatID)
-	if !ok {
-		return
-	}
-
 	input := service.CreateBookingInput{
 		BathhouseID: wizard.BathhouseID,
 		StartTime:   wizard.StartTime,
 		EndTime:     wizard.EndTime,
 		GuestCount:  wizard.GuestCount,
 	}
+	b.wizardsMu.RUnlock()
+
+	userID, ok := b.getUserID(ctx, chatID)
+	if !ok {
+		return
+	}
 
 	result, err := b.bookingService.Create(ctx, userID, input)
 	if err != nil {
 		b.logger.Error("failed to create booking", "error", err, "chat_id", chatID)
-		b.sendMessage(chatID, fmt.Sprintf("Ошибка при бронировании: %s", err.Error()))
+		b.sendPlainMessage(chatID, "Ошибка при бронировании. Попробуйте позже.")
 		b.clearWizard(chatID)
 		return
 	}
@@ -719,13 +740,13 @@ func (b *Bot) doConfirmBooking(ctx context.Context, chatID int64) {
 
 func (b *Bot) doCancelWizard(chatID int64) {
 	b.clearWizard(chatID)
-	b.sendMessage(chatID, "Бронирование отменено.")
+	b.sendPlainMessage(chatID, "Бронирование отменено.")
 }
 
 func (b *Bot) doCancelBooking(ctx context.Context, chatID int64, sid string) {
 	bkID, ok := b.resolveID(sid)
 	if !ok {
-		b.sendMessage(chatID, "Бронирование не найдено.")
+		b.sendPlainMessage(chatID, "Бронирование не найдено.")
 		return
 	}
 
@@ -737,17 +758,17 @@ func (b *Bot) doCancelBooking(ctx context.Context, chatID int64, sid string) {
 	err := b.bookingService.Cancel(ctx, userID, domain.RoleClient, bkID)
 	if err != nil {
 		b.logger.Error("failed to cancel booking", "error", err, "booking_id", bkID)
-		b.sendMessage(chatID, fmt.Sprintf("Ошибка при отмене: %s", err.Error()))
+		b.sendPlainMessage(chatID, "Ошибка при отмене бронирования. Попробуйте позже.")
 		return
 	}
 
-	b.sendMessage(chatID, "\u2705 Бронирование отменено.")
+	b.sendPlainMessage(chatID, "Бронирование отменено.")
 }
 
 func (b *Bot) doToggleFavorite(ctx context.Context, chatID int64, sid string) {
 	bhID, ok := b.resolveID(sid)
 	if !ok {
-		b.sendMessage(chatID, "Баня не найдена.")
+		b.sendPlainMessage(chatID, "Баня не найдена.")
 		return
 	}
 
@@ -759,14 +780,14 @@ func (b *Bot) doToggleFavorite(ctx context.Context, chatID int64, sid string) {
 	isFav, err := b.favoriteService.Toggle(ctx, userID, bhID)
 	if err != nil {
 		b.logger.Error("failed to toggle favorite", "error", err, "bathhouse_id", bhID)
-		b.sendMessage(chatID, "Ошибка при обновлении избранного.")
+		b.sendPlainMessage(chatID, "Ошибка при обновлении избранного.")
 		return
 	}
 
 	if isFav {
-		b.sendMessage(chatID, "\u2764\ufe0f Добавлено в избранное")
+		b.sendPlainMessage(chatID, "Добавлено в избранное")
 	} else {
-		b.sendMessage(chatID, "Удалено из избранного")
+		b.sendPlainMessage(chatID, "Удалено из избранного")
 	}
 }
 
@@ -776,7 +797,7 @@ func (b *Bot) doToggleFavorite(ctx context.Context, chatID int64, sid string) {
 func (b *Bot) getUserID(ctx context.Context, chatID int64) (uuid.UUID, bool) {
 	link, err := b.telegramLinkService.GetByTelegramID(ctx, chatID)
 	if err != nil {
-		b.sendMessage(chatID, "Ваш Telegram не привязан к аккаунту.\nИспользуйте /link _токен_ для привязки.")
+		b.sendPlainMessage(chatID, "Ваш Telegram не привязан к аккаунту.\nИспользуйте /link <токен> для привязки.")
 		return uuid.Nil, false
 	}
 	return link.UserID, true
@@ -811,6 +832,16 @@ func (b *Bot) resolveID(short string) (uuid.UUID, bool) {
 func (b *Bot) sendMessage(chatID int64, text string) {
 	msg := tgbotapi.NewMessage(chatID, text)
 	msg.ParseMode = tgbotapi.ModeMarkdownV2
+
+	_, err := b.client.Send(msg)
+	if err != nil {
+		b.logger.Error("failed to send message", "error", err, "chat_id", chatID)
+	}
+}
+
+// sendPlainMessage sends a text message without any parse mode
+func (b *Bot) sendPlainMessage(chatID int64, text string) {
+	msg := tgbotapi.NewMessage(chatID, text)
 
 	_, err := b.client.Send(msg)
 	if err != nil {
