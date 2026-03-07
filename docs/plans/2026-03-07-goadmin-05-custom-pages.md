@@ -53,7 +53,7 @@ Custom GoAdmin pages beyond CRUD tables: admin dashboard with KPIs, review moder
 - Create: `internal/admin/pages/analytics.go`
 - Create: `internal/admin/pages/templates/analytics.tmpl`
 
-- [ ] Platform-wide charts (GoAdmin supports Chart.js):
+- [x] Platform-wide charts (GoAdmin supports Chart.js):
   - Bookings per day (line chart, last 30 days)
   - Revenue per day (bar chart, last 30 days)
   - New users per day (line chart, last 30 days)
@@ -61,9 +61,9 @@ Custom GoAdmin pages beyond CRUD tables: admin dashboard with KPIs, review moder
   - Top 10 bathhouses by revenue (horizontal bar)
   - Booking status distribution (pie chart)
   - Review rating distribution (pie chart)
-- [ ] Date range picker for filtering
-- [ ] City filter for region-specific analytics
-- [ ] Data sourced from analytics_snapshots + aggregation queries
+- [x] Date range picker for filtering
+- [x] City filter for region-specific analytics
+- [x] Data sourced from analytics_snapshots + aggregation queries
 
 ### Task 4: Platform Health Monitor
 

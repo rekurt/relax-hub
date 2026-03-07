@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аналитика — Бани</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f4f6f9; color: #333; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        h1 { font-size: 24px; margin-bottom: 20px; color: #1a1a1a; }
+        h2 { font-size: 18px; margin-bottom: 12px; color: #444; }
+
+        /* Filter Bar */
+        .filter-bar { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px; }
+        .filter-bar form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 12px; color: #888; margin-bottom: 4px; text-transform: uppercase; }
+        .filter-group select, .filter-group input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .filter-group select { min-width: 160px; }
+        .btn { display: inline-block; padding: 8px 16px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; text-decoration: none; color: #fff; }
+        .btn-primary { background: #3498db; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-secondary { background: #95a5a6; }
+        .btn-secondary:hover { background: #7f8c8d; }
+
+        /* Chart Grid */
+        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .chart-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .chart-card canvas { width: 100% !important; max-height: 300px; }
+
+        .pie-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .pie-grid .chart-card canvas { max-height: 280px; }
+
+        .footer { text-align: center; color: #999; font-size: 12px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Аналитика платформы</h1>
+
+    <!-- Filters -->
+    <div class="filter-bar">
+        <form method="GET" action="/admin-panel/pages/analytics">
+            <div class="filter-group">
+                <label>Дата от</label>
+                <input type="date" name="date_from" value="{{.Filter.DateFrom}}">
+            </div>
+            <div class="filter-group">
+                <label>Дата до</label>
+                <input type="date" name="date_to" value="{{.Filter.DateTo}}">
+            </div>
+            <div class="filter-group">
+                <label>Город</label>
+                <select name="city_id">
+                    <option value="">Все города</option>
+                    {{range .Cities}}
+                    <option value="{{.ID}}" {{if eq $.Filter.CityID (itoa .ID)}}selected{{end}}>{{.Name}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Применить</button>
+            <a href="/admin-panel/pages/analytics" class="btn btn-secondary">Сброс</a>
+        </form>
+    </div>
+
+    <!-- Time-series Charts -->
+    <div class="chart-grid">
+        <div class="chart-card">
+            <h2>Бронирования по дням</h2>
+            <canvas id="bookingsChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h2>Выручка по дням</h2>
+            <canvas id="revenueChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h2>Новые пользователи по дням</h2>
+            <canvas id="usersChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Top-N Charts -->
+    <div class="chart-grid">
+        <div class="chart-card">
+            <h2>Топ-10 бань по бронированиям</h2>
+            <canvas id="topBookingsChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h2>Топ-10 бань по выручке</h2>
+            <canvas id="topRevenueChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Distribution Charts -->
+    <div class="pie-grid">
+        <div class="chart-card">
+            <h2>Распределение по статусам бронирований</h2>
+            <canvas id="bookingStatusChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h2>Распределение оценок отзывов</h2>
+            <canvas id="reviewRatingChart"></canvas>
+        </div>
+    </div>
+
+    <div class="footer">
+        Данные сформированы: {{.GeneratedAt.Format "02.01.2006 15:04:05"}}
+    </div>
+</div>
+
+<script>
+const chartColors = {
+    blue: 'rgba(52, 152, 219, 0.8)',
+    blueBg: 'rgba(52, 152, 219, 0.15)',
+    green: 'rgba(39, 174, 96, 0.8)',
+    greenBg: 'rgba(39, 174, 96, 0.15)',
+    orange: 'rgba(230, 126, 34, 0.8)',
+    orangeBg: 'rgba(230, 126, 34, 0.15)',
+    purple: 'rgba(142, 68, 173, 0.8)',
+    red: 'rgba(231, 76, 60, 0.8)',
+    pie: [
+        'rgba(52, 152, 219, 0.8)',
+        'rgba(39, 174, 96, 0.8)',
+        'rgba(230, 126, 34, 0.8)',
+        'rgba(142, 68, 173, 0.8)',
+        'rgba(231, 76, 60, 0.8)',
+        'rgba(241, 196, 15, 0.8)',
+        'rgba(26, 188, 156, 0.8)',
+    ]
+};
+
+// Bookings per day
+new Chart(document.getElementById('bookingsChart'), {
+    type: 'line',
+    data: {
+        labels: [{{range .BookingsPerDay}}"{{.Label}}",{{end}}],
+        datasets: [{
+            label: 'Бронирования',
+            data: [{{range .BookingsPerDay}}{{.Value}},{{end}}],
+            borderColor: chartColors.blue,
+            backgroundColor: chartColors.blueBg,
+            fill: true,
+            tension: 0.3
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+});
+
+// Revenue per day
+new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+        labels: [{{range .RevenuePerDay}}"{{.Label}}",{{end}}],
+        datasets: [{
+            label: 'Выручка (₽)',
+            data: [{{range .RevenuePerDay}}{{.Value}},{{end}}],
+            backgroundColor: chartColors.green,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: {
+                ticks: {
+                    callback: function(v) {
+                        return (v / 100).toLocaleString('ru-RU') + ' ₽';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// New users per day
+new Chart(document.getElementById('usersChart'), {
+    type: 'line',
+    data: {
+        labels: [{{range .NewUsersPerDay}}"{{.Label}}",{{end}}],
+        datasets: [{
+            label: 'Новые пользователи',
+            data: [{{range .NewUsersPerDay}}{{.Value}},{{end}}],
+            borderColor: chartColors.orange,
+            backgroundColor: chartColors.orangeBg,
+            fill: true,
+            tension: 0.3
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+});
+
+// Top bathhouses by bookings
+new Chart(document.getElementById('topBookingsChart'), {
+    type: 'bar',
+    data: {
+        labels: [{{range .TopByBookings}}"{{.Name}}",{{end}}],
+        datasets: [{
+            label: 'Бронирования',
+            data: [{{range .TopByBookings}}{{.Value}},{{end}}],
+            backgroundColor: chartColors.blue,
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } }
+    }
+});
+
+// Top bathhouses by revenue
+new Chart(document.getElementById('topRevenueChart'), {
+    type: 'bar',
+    data: {
+        labels: [{{range .TopByRevenue}}"{{.Name}}",{{end}}],
+        datasets: [{
+            label: 'Выручка (₽)',
+            data: [{{range .TopByRevenue}}{{.Value}},{{end}}],
+            backgroundColor: chartColors.green,
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: {
+                ticks: {
+                    callback: function(v) {
+                        return (v / 100).toLocaleString('ru-RU') + ' ₽';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Booking status distribution
+new Chart(document.getElementById('bookingStatusChart'), {
+    type: 'pie',
+    data: {
+        labels: [{{range .BookingStatusDist}}"{{.Label}}",{{end}}],
+        datasets: [{
+            data: [{{range .BookingStatusDist}}{{.Value}},{{end}}],
+            backgroundColor: chartColors.pie,
+        }]
+    },
+    options: { responsive: true }
+});
+
+// Review rating distribution
+new Chart(document.getElementById('reviewRatingChart'), {
+    type: 'pie',
+    data: {
+        labels: [{{range .ReviewRatingDist}}"★ {{.Label}}",{{end}}],
+        datasets: [{
+            data: [{{range .ReviewRatingDist}}{{.Value}},{{end}}],
+            backgroundColor: chartColors.pie,
+        }]
+    },
+    options: { responsive: true }
+});
+</script>
+</body>
+</html>
