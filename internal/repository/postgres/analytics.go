@@ -76,17 +76,17 @@ func (r *analyticsRepo) GetBathhouseStats(ctx context.Context, bathhouseID uuid.
 		result.UniqueViews += snapshot.UniqueViews
 		result.Bookings += snapshot.Bookings
 		result.Revenue += snapshot.Revenue
-		result.ReviewCount += snapshot.ReviewCount
-		// Weighted average for ratings
+		// Weighted average for ratings - calculate BEFORE incrementing count
 		if snapshot.ReviewCount > 0 && result.AvgRating >= 0 {
-			// Update weighted average: (old_sum + new_weighted) / (old_count + new_count)
-			totalReviews := result.ReviewCount
-			if totalReviews > 0 {
-				result.AvgRating = (result.AvgRating*float64(totalReviews-snapshot.ReviewCount) + snapshot.AvgRating*float64(snapshot.ReviewCount)) / float64(totalReviews)
+			oldCount := result.ReviewCount
+			newCount := oldCount + snapshot.ReviewCount
+			if newCount > 0 {
+				result.AvgRating = (result.AvgRating*float64(oldCount) + snapshot.AvgRating*float64(snapshot.ReviewCount)) / float64(newCount)
 			} else {
 				result.AvgRating = snapshot.AvgRating
 			}
 		}
+		result.ReviewCount += snapshot.ReviewCount
 	}
 
 	if err = rows.Err(); err != nil {

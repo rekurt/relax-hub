@@ -384,7 +384,12 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	if h.analyticsService != nil {
 		ipHash := getIPHash(r)
 		source := domain.ViewSourceDirect // default source
-		_ = h.analyticsService.RecordView(r.Context(), id, &userID, source, ipHash)
+		// Pass nil for viewer_id for anonymous users (uuid.Nil), non-nil only for authenticated users
+		var viewerID *uuid.UUID
+		if userID != uuid.Nil {
+			viewerID = &userID
+		}
+		_ = h.analyticsService.RecordView(r.Context(), id, viewerID, source, ipHash)
 	}
 
 	// Record click for promoted bathhouses

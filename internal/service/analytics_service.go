@@ -122,8 +122,11 @@ func (s *analyticsService) RecordView(ctx context.Context, bathhouseID uuid.UUID
 	dedupeKey := fmt.Sprintf(cacheKeyIPDuplication, bathhouseID.String(), ipHash, fmt.Sprintf("%d", timeBucket))
 
 	// Try to get from Redis (if this IP+bathhouse was seen recently)
-	exists := s.redis.Exists(ctx, dedupeKey).Val()
-	if exists > 0 {
+	exists := s.redis.Exists(ctx, dedupeKey)
+	if existsErr := exists.Err(); existsErr != nil && existsErr != redis.Nil {
+		s.logger.Warn("Redis deduplication check failed", "error", existsErr)
+	}
+	if exists.Val() > 0 {
 		// Already viewed recently, skip recording
 		return nil
 	}
@@ -165,11 +168,17 @@ func (s *analyticsService) GetOwnerDashboard(ctx context.Context, userID uuid.UU
 
 	// Check cache first
 	cacheKey := fmt.Sprintf(cacheKeyOwnerDashboard, bathhouseID.String(), period)
-	cached := s.redis.Get(ctx, cacheKey).Val()
+	cachedResult := s.redis.Get(ctx, cacheKey)
+	if cachedErr := cachedResult.Err(); cachedErr != nil && cachedErr != redis.Nil {
+		s.logger.Warn("Redis cache check failed", "error", cachedErr)
+	}
+	cached := cachedResult.Val()
 	if cached != "" {
 		var dashboard OwnerDashboard
 		if err := json.Unmarshal([]byte(cached), &dashboard); err == nil {
 			return &dashboard, nil
+		} else {
+			s.logger.Debug("Failed to unmarshal cached dashboard", "error", err)
 		}
 	}
 
@@ -178,6 +187,8 @@ func (s *analyticsService) GetOwnerDashboard(ctx context.Context, userID uuid.UU
 	periodDays := period.Days()
 	to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999999999, now.Location())
 	from := to.AddDate(0, 0, -periodDays)
+	// Fix off-by-one: from should be at 00:00:00 of the start day
+	from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
 
 	// Get current period stats
 	stats, err := s.analyticsRepo.GetBathhouseStats(ctx, bathhouseID, from, to)
@@ -229,7 +240,9 @@ func (s *analyticsService) GetOwnerDashboard(ctx context.Context, userID uuid.UU
 
 	// Cache the result
 	if data, err := json.Marshal(dashboard); err == nil {
-		_ = s.redis.Set(ctx, cacheKey, data, cacheTTL).Err()
+		if err := s.redis.Set(ctx, cacheKey, data, cacheTTL).Err(); err != nil {
+			s.logger.Warn("Failed to cache owner dashboard", "error", err)
+		}
 	}
 
 	return dashboard, nil
@@ -264,11 +277,17 @@ func (s *analyticsService) GetAdminDashboard(ctx context.Context, userRole domai
 
 	// Check cache
 	cacheKey := fmt.Sprintf(cacheKeyAdminDashboard, period)
-	cached := s.redis.Get(ctx, cacheKey).Val()
+	cachedResult := s.redis.Get(ctx, cacheKey)
+	if cachedErr := cachedResult.Err(); cachedErr != nil && cachedErr != redis.Nil {
+		s.logger.Warn("Redis admin dashboard cache check failed", "error", cachedErr)
+	}
+	cached := cachedResult.Val()
 	if cached != "" {
 		var dashboard AdminDashboard
 		if err := json.Unmarshal([]byte(cached), &dashboard); err == nil {
 			return &dashboard, nil
+		} else {
+			s.logger.Debug("Failed to unmarshal cached admin dashboard", "error", err)
 		}
 	}
 
@@ -277,6 +296,8 @@ func (s *analyticsService) GetAdminDashboard(ctx context.Context, userRole domai
 	periodDays := period.Days()
 	to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999999999, now.Location())
 	from := to.AddDate(0, 0, -periodDays)
+	// Fix off-by-one: from should be at 00:00:00 of the start day
+	from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
 
 	// Get platform stats
 	stats, err := s.analyticsRepo.GetPlatformStats(ctx, from, to)
@@ -325,7 +346,9 @@ func (s *analyticsService) GetAdminDashboard(ctx context.Context, userRole domai
 
 	// Cache the result
 	if data, err := json.Marshal(dashboard); err == nil {
-		_ = s.redis.Set(ctx, cacheKey, data, cacheTTL).Err()
+		if err := s.redis.Set(ctx, cacheKey, data, cacheTTL).Err(); err != nil {
+			s.logger.Warn("Failed to cache admin dashboard", "error", err)
+		}
 	}
 
 	return dashboard, nil

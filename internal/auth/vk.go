@@ -64,7 +64,10 @@ func (p *VKProvider) Exchange(ctx context.Context, code string) (*OAuthUserInfo,
 	}
 
 	// VK returns email in the token response extra fields
-	email, _ := token.Extra("email").(string)
+	var email string
+	if emailVal := token.Extra("email"); emailVal != nil {
+		email, _ = emailVal.(string)
+	}
 
 	userIDRaw := token.Extra("user_id")
 	if userIDRaw == nil {
