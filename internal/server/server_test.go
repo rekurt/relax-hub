@@ -87,6 +87,26 @@ func TestNewRouter(t *testing.T) {
 	}
 }
 
+func TestNewRouter_WithoutGoAdmin(t *testing.T) {
+	// Verify router works when GoAdmin is nil (admin disabled)
+	p := testRouterParams()
+	p.GoAdmin = nil
+
+	router := server.NewRouter(p)
+	if router == nil {
+		t.Fatal("expected non-nil router even without GoAdmin")
+	}
+
+	// Health endpoint should still work
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
 func TestHealthCheck(t *testing.T) {
 	router := server.NewRouter(testRouterParams())
 

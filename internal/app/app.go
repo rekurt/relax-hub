@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/nikitaaldaev/bani/config"
+	"github.com/nikitaaldaev/bani/internal/admin"
 	"github.com/nikitaaldaev/bani/internal/cron"
 	"github.com/nikitaaldaev/bani/internal/database"
 	"github.com/nikitaaldaev/bani/internal/handler"
@@ -31,6 +32,7 @@ func New(cfg *config.Config) *fx.App {
 		handler.Module,
 		cron.Module,
 		server.Module,
+		admin.ProvideConditionalModule(cfg),
 		// Cross-package interface bindings
 		fx.Provide(
 			func(hub *notification.Hub) service.ChatBroadcaster { return hub },

@@ -313,3 +313,17 @@ func TestProvideConditionalModule_Disabled(t *testing.T) {
 		t.Fatal("expected non-nil fx.Option even when disabled")
 	}
 }
+
+func TestProvideConditionalModule_Enabled(t *testing.T) {
+	cfg := &appconfig.Config{
+		Admin: appconfig.AdminConfig{Enabled: true},
+		Database: appconfig.DatabaseConfig{
+			DSN: "postgres://localhost/test",
+		},
+	}
+
+	opt := ProvideConditionalModule(cfg)
+	if opt == nil {
+		t.Fatal("expected non-nil fx.Option when enabled")
+	}
+}

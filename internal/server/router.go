@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/nikitaaldaev/bani/internal/admin"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/logger"
@@ -37,6 +38,7 @@ type RouterParams struct {
 	LoyaltyHandler         *handler.LoyaltyHandler
 	ChatHandler            *handler.ChatHandler
 	AnalyticsHandler       *handler.AnalyticsHandler
+	GoAdmin                *admin.GoAdmin `optional:"true"`
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -222,6 +224,15 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Get("/analytics/top", p.AnalyticsHandler.GetTopBathhouses)
 		})
 	})
+
+	// Mount GoAdmin panel routes when enabled
+	if p.GoAdmin != nil {
+		if err := p.GoAdmin.Engine.Use(r); err != nil {
+			p.Log.Error("Failed to mount GoAdmin engine", "error", err)
+		} else {
+			p.Log.Info("GoAdmin panel mounted", "prefix", p.GoAdmin.Config.UrlPrefix)
+		}
+	}
 
 	return r
 }

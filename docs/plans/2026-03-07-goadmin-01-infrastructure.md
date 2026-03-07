@@ -60,9 +60,9 @@ Base GoAdmin integration: dependency, config, cobra command, fx module, chi adap
 - Modify: `internal/server/router.go`
 - Modify: `internal/app/app.go`
 
-- [ ] Conditionally mount GoAdmin engine routes under config.Admin.Prefix when Admin.Enabled=true
-- [ ] Add admin fx.Module to app.go (conditional on config)
-- [ ] Ensure GoAdmin static assets are served correctly
+- [x] Conditionally mount GoAdmin engine routes under config.Admin.Prefix when Admin.Enabled=true
+- [x] Add admin fx.Module to app.go (conditional on config)
+- [x] Ensure GoAdmin static assets are served correctly
 
 ### Task 5: Cobra Flag Integration
 
