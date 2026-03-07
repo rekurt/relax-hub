@@ -43,3 +43,6 @@ func TestNewPromotionRepository_ImplementsInterface(t *testing.T) {
 	var _ repository.PromotionRepository = NewPromotionRepository(&pgxpool.Pool{})
 }
 
+func TestNewAnalyticsRepository_ImplementsInterface(t *testing.T) {
+	var _ repository.AnalyticsRepository = NewAnalyticsRepository(&pgxpool.Pool{})
+}

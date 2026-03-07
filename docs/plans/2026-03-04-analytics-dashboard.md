@@ -64,16 +64,16 @@
 - Create: `internal/repository/postgres/analytics.go`
 - Create: `internal/repository/mock/analytics.go`
 
-- [ ] AnalyticsRepository:
+- [x] AnalyticsRepository:
   - RecordView(ctx, view) — записать просмотр
   - GetBathhouseStats(ctx, bathhouseID, from, to) — агрегированная статистика за период
   - GetDailyStats(ctx, bathhouseID, from, to) — по дням
   - GetPlatformStats(ctx, from, to) — общая статистика платформы
   - GetTopBathhouses(ctx, metric, limit) — топ по метрике (views, bookings, revenue, rating)
   - CreateSnapshot(ctx, snapshot) — сохранить агрегированный снапшот
-- [ ] Реализовать postgres и mock
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Реализовать postgres и mock
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Сервис аналитики
 

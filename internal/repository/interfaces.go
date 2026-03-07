@@ -184,3 +184,12 @@ type MessageRepository interface {
 	CountUnread(ctx context.Context, userID uuid.UUID, conversationIDs []uuid.UUID) (int64, error)
 	CountUnreadByUser(ctx context.Context, userID uuid.UUID, bathhouseIDs []uuid.UUID) (int64, error)
 }
+
+type AnalyticsRepository interface {
+	RecordView(ctx context.Context, view *domain.BathhouseView) error
+	GetBathhouseStats(ctx context.Context, bathhouseID uuid.UUID, from, to time.Time) (*domain.AnalyticsSnapshot, error)
+	GetDailyStats(ctx context.Context, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error)
+	GetPlatformStats(ctx context.Context, from, to time.Time) (*domain.AnalyticsSnapshot, error)
+	GetTopBathhouses(ctx context.Context, metric domain.TopMetric, limit int) ([]uuid.UUID, error)
+	CreateSnapshot(ctx context.Context, snapshot *domain.AnalyticsSnapshot) error
+}
