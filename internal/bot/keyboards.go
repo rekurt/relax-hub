@@ -275,6 +275,49 @@ func formatBathhouseDetail(bh *domain.Bathhouse) string {
 	return text
 }
 
+// formatBathhouseDetailPlain formats bathhouse info as plain text (for inline results)
+func formatBathhouseDetailPlain(bh domain.Bathhouse) string {
+	priceRub := float64(bh.PricePerHour) / 100
+
+	var amenities []string
+	if bh.HasPool {
+		amenities = append(amenities, "бассейн")
+	}
+	if bh.HasSauna {
+		amenities = append(amenities, "сауна")
+	}
+	if bh.HasSteamRoom {
+		amenities = append(amenities, "парная")
+	}
+	if bh.HasHotTub {
+		amenities = append(amenities, "джакузи")
+	}
+	if bh.HasBBQ {
+		amenities = append(amenities, "мангал")
+	}
+	if bh.HasKaraoke {
+		amenities = append(amenities, "караоке")
+	}
+
+	text := bh.Name + "\n\n"
+	if bh.Address != "" {
+		text += "📍 " + bh.Address + "\n"
+	}
+	text += fmt.Sprintf("💰 %.0f ₽/ч\n", priceRub)
+	text += fmt.Sprintf("⭐ %.1f (%d отзывов)\n", bh.Rating, bh.ReviewCount)
+	text += fmt.Sprintf("👥 до %d гостей\n", bh.MaxGuests)
+
+	if len(amenities) > 0 {
+		text += "\n" + strings.Join(amenities, " | ") + "\n"
+	}
+
+	if bh.Description != "" {
+		text += "\n" + bh.Description
+	}
+
+	return text
+}
+
 // escapeMD escapes Markdown special characters for Telegram
 func escapeMD(s string) string {
 	replacer := strings.NewReplacer(

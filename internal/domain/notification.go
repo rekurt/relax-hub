@@ -65,6 +65,7 @@ type NotificationPreferences struct {
 	InApp         bool
 	Email         bool
 	Push          bool
+	Telegram      bool
 	BookingEvents bool
 	ReviewEvents  bool
 	PromoEvents   bool
@@ -77,6 +78,7 @@ func DefaultNotificationPreferences(userID uuid.UUID) NotificationPreferences {
 		InApp:         true,
 		Email:         true,
 		Push:          false,
+		Telegram:      true,
 		BookingEvents: true,
 		ReviewEvents:  true,
 		PromoEvents:   true,

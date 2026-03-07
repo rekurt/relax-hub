@@ -141,6 +141,11 @@ func (b *Bot) startWebhook(ctx context.Context) error {
 
 // handleUpdate processes incoming Telegram updates
 func (b *Bot) handleUpdate(ctx context.Context, update tgbotapi.Update) {
+	if update.InlineQuery != nil {
+		b.handleInlineQuery(ctx, update.InlineQuery)
+		return
+	}
+
 	if update.CallbackQuery != nil {
 		b.handleCallbackQuery(ctx, update.CallbackQuery)
 		return
@@ -154,6 +159,59 @@ func (b *Bot) handleUpdate(ctx context.Context, update tgbotapi.Update) {
 		b.handleCommand(ctx, update.Message)
 	} else {
 		b.handleMessage(ctx, update.Message)
+	}
+}
+
+// handleInlineQuery processes inline queries (@bot_name <query>)
+func (b *Bot) handleInlineQuery(ctx context.Context, iq *tgbotapi.InlineQuery) {
+	query := strings.TrimSpace(iq.Query)
+	if query == "" {
+		return
+	}
+
+	filter := domain.BathhouseFilter{
+		SearchQuery: &query,
+		Page:        1,
+		PageSize:    10,
+		SortBy:      "rating",
+		SortOrder:   "desc",
+	}
+
+	status := domain.BathhouseStatusActive
+	filter.Status = &status
+
+	result, err := b.bathhouseService.Search(ctx, filter)
+	if err != nil {
+		b.logger.Error("inline query search failed", "error", err, "query", query)
+		return
+	}
+
+	articles := make([]interface{}, 0, len(result.Items))
+	for _, bh := range result.Items {
+		priceRub := float64(bh.PricePerHour) / 100
+		description := fmt.Sprintf("%.0f ₽/ч | ⭐ %.1f (%d отзывов) | до %d гостей",
+			priceRub, bh.Rating, bh.ReviewCount, bh.MaxGuests)
+
+		if bh.Address != "" {
+			description = bh.Address + "\n" + description
+		}
+
+		msgText := formatBathhouseDetailPlain(bh)
+
+		article := tgbotapi.NewInlineQueryResultArticle(bh.ID.String(), bh.Name, msgText)
+		article.Description = description
+
+		articles = append(articles, article)
+	}
+
+	inlineConf := tgbotapi.InlineConfig{
+		InlineQueryID: iq.ID,
+		Results:       articles,
+		CacheTime:     60,
+	}
+
+	if _, err := b.client.Request(inlineConf); err != nil {
+		b.logger.Error("failed to answer inline query", "error", err, "query", query)
 	}
 }
 

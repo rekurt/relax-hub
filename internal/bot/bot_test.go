@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/notification"
 	"github.com/nikitaaldaev/bani/internal/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -376,4 +377,64 @@ func splitCallback(data string) []string {
 	}
 	parts = append(parts, data[idx:])
 	return parts
+}
+
+func TestFormatBathhouseDetailPlain(t *testing.T) {
+	bh := domain.Bathhouse{
+		Name:         "Русская Баня",
+		Address:      "ул. Ленина, 1",
+		PricePerHour: 500000,
+		Rating:       4.5,
+		ReviewCount:  10,
+		MaxGuests:    8,
+		HasPool:      true,
+		HasSauna:     true,
+		HasSteamRoom: false,
+		HasBBQ:       true,
+		Description:  "Лучшая баня в городе",
+	}
+
+	text := formatBathhouseDetailPlain(bh)
+	assert.Contains(t, text, "Русская Баня")
+	assert.Contains(t, text, "ул. Ленина, 1")
+	assert.Contains(t, text, "5000")
+	assert.Contains(t, text, "4.5")
+	assert.Contains(t, text, "10 отзывов")
+	assert.Contains(t, text, "8 гостей")
+	assert.Contains(t, text, "бассейн")
+	assert.Contains(t, text, "сауна")
+	assert.NotContains(t, text, "парная")
+	assert.Contains(t, text, "мангал")
+	assert.Contains(t, text, "Лучшая баня в городе")
+	// Should NOT contain markdown escapes (plain text)
+	assert.NotContains(t, text, "\\*")
+	assert.NotContains(t, text, "\\_")
+}
+
+func TestFormatBathhouseDetailPlain_NoAmenities(t *testing.T) {
+	bh := domain.Bathhouse{
+		Name:         "Простая Баня",
+		PricePerHour: 200000,
+	}
+
+	text := formatBathhouseDetailPlain(bh)
+	assert.Contains(t, text, "Простая Баня")
+	assert.NotContains(t, text, "бассейн")
+	assert.NotContains(t, text, "сауна")
+}
+
+func TestFormatBathhouseDetailPlain_NoAddress(t *testing.T) {
+	bh := domain.Bathhouse{
+		Name:         "Баня",
+		PricePerHour: 100000,
+	}
+
+	text := formatBathhouseDetailPlain(bh)
+	assert.NotContains(t, text, "📍")
+}
+
+func TestNoopTelegramSender(t *testing.T) {
+	sender := notification.NewNoopTelegramSender()
+	err := sender.Send(t.Context(), 12345, "Title", "Body")
+	assert.NoError(t, err)
 }

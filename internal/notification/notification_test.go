@@ -31,7 +31,7 @@ func TestDispatcher_Dispatch_AllChannelsEnabled(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -76,7 +76,7 @@ func TestDispatcher_Dispatch_InAppOnly(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -113,7 +113,7 @@ func TestDispatcher_Dispatch_UserOptedOutOfEventType(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -150,7 +150,7 @@ func TestDispatcher_Dispatch_EmailWithoutAddress(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -186,5 +186,144 @@ func TestNoopEmailSender_Send(t *testing.T) {
 	err := sender.Send(context.Background(), "test@example.com", "Subject", "Body")
 	if err != nil {
 		t.Errorf("NoopEmailSender should not return error, got: %v", err)
+	}
+}
+
+func TestNoopTelegramSender_Send(t *testing.T) {
+	sender := notification.NewNoopTelegramSender()
+	err := sender.Send(context.Background(), 12345, "Subject", "Body")
+	if err != nil {
+		t.Errorf("NoopTelegramSender should not return error, got: %v", err)
+	}
+}
+
+type recordingTelegramSender struct {
+	calls []telegramCall
+}
+
+type telegramCall struct {
+	chatID int64
+	title  string
+	body   string
+}
+
+func (r *recordingTelegramSender) Send(_ context.Context, chatID int64, title, body string) error {
+	r.calls = append(r.calls, telegramCall{chatID: chatID, title: title, body: body})
+	return nil
+}
+
+func TestDispatcher_Dispatch_TelegramEnabled(t *testing.T) {
+	notifRepo := mock.NewNotificationRepo()
+	emailSender := &recordingEmailSender{}
+	tgSender := &recordingTelegramSender{}
+	tgRepo := mock.NewTelegramLinkRepo()
+	log := logger.New(logger.LevelError)
+	hub := notification.NewHub(log)
+	d := notification.NewDispatcher(notifRepo, emailSender, tgSender, tgRepo, hub, log)
+
+	userID := uuid.New()
+	telegramID := int64(123456789)
+
+	// Create telegram link for user
+	link := &domain.TelegramLink{
+		UserID:           userID,
+		TelegramID:       telegramID,
+		TelegramUsername: "testuser",
+	}
+	if err := tgRepo.Create(context.Background(), link); err != nil {
+		t.Fatalf("create telegram link: %v", err)
+	}
+
+	notif := &domain.Notification{
+		ID:     uuid.New(),
+		UserID: userID,
+		Type:   domain.NotifBookingConfirmed,
+		Title:  "Booking Confirmed",
+		Body:   "Your booking has been confirmed",
+	}
+	prefs := &domain.NotificationPreferences{
+		UserID:        userID,
+		InApp:         true,
+		Email:         false,
+		Telegram:      true,
+		BookingEvents: true,
+	}
+
+	d.Dispatch(context.Background(), notif, prefs, "")
+
+	// Check telegram was sent
+	if len(tgSender.calls) != 1 {
+		t.Fatalf("telegram calls = %d, want 1", len(tgSender.calls))
+	}
+	if tgSender.calls[0].chatID != telegramID {
+		t.Errorf("telegram chatID = %d, want %d", tgSender.calls[0].chatID, telegramID)
+	}
+	if tgSender.calls[0].title != "Booking Confirmed" {
+		t.Errorf("telegram title = %s, want 'Booking Confirmed'", tgSender.calls[0].title)
+	}
+}
+
+func TestDispatcher_Dispatch_TelegramDisabled(t *testing.T) {
+	notifRepo := mock.NewNotificationRepo()
+	emailSender := &recordingEmailSender{}
+	tgSender := &recordingTelegramSender{}
+	tgRepo := mock.NewTelegramLinkRepo()
+	log := logger.New(logger.LevelError)
+	hub := notification.NewHub(log)
+	d := notification.NewDispatcher(notifRepo, emailSender, tgSender, tgRepo, hub, log)
+
+	userID := uuid.New()
+
+	notif := &domain.Notification{
+		ID:     uuid.New(),
+		UserID: userID,
+		Type:   domain.NotifBookingConfirmed,
+		Title:  "Booking Confirmed",
+		Body:   "Your booking has been confirmed",
+	}
+	prefs := &domain.NotificationPreferences{
+		UserID:        userID,
+		InApp:         true,
+		Telegram:      false, // Disabled
+		BookingEvents: true,
+	}
+
+	d.Dispatch(context.Background(), notif, prefs, "")
+
+	// Check telegram was NOT sent
+	if len(tgSender.calls) != 0 {
+		t.Errorf("telegram calls = %d, want 0 (telegram disabled)", len(tgSender.calls))
+	}
+}
+
+func TestDispatcher_Dispatch_TelegramNoLink(t *testing.T) {
+	notifRepo := mock.NewNotificationRepo()
+	emailSender := &recordingEmailSender{}
+	tgSender := &recordingTelegramSender{}
+	tgRepo := mock.NewTelegramLinkRepo()
+	log := logger.New(logger.LevelError)
+	hub := notification.NewHub(log)
+	d := notification.NewDispatcher(notifRepo, emailSender, tgSender, tgRepo, hub, log)
+
+	userID := uuid.New()
+
+	notif := &domain.Notification{
+		ID:     uuid.New(),
+		UserID: userID,
+		Type:   domain.NotifSystem,
+		Title:  "System Update",
+		Body:   "New features",
+	}
+	prefs := &domain.NotificationPreferences{
+		UserID:   userID,
+		InApp:    true,
+		Telegram: true,
+	}
+
+	d.Dispatch(context.Background(), notif, prefs, "")
+
+	// No telegram link exists, so no message should be sent
+	if len(tgSender.calls) != 0 {
+		t.Errorf("telegram calls = %d, want 0 (no telegram link)", len(tgSender.calls))
 	}
 }

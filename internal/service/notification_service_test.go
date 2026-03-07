@@ -24,7 +24,7 @@ func newNotifTestEnv() *notifTestEnv {
 	userRepo := mock.NewUserRepo()
 	log := logger.New(logger.LevelError)
 	emailSender := notification.NewNoopEmailSender()
-	dispatcher := notification.NewDispatcher(notifRepo, emailSender, notification.NewHub(log), log)
+	dispatcher := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), notification.NewHub(log), log)
 	svc := service.NewNotificationService(notifRepo, userRepo, dispatcher, log)
 	return &notifTestEnv{
 		svc:       svc,
@@ -236,6 +236,9 @@ func TestNotificationService_GetPreferences_Defaults(t *testing.T) {
 	}
 	if !prefs.BookingEvents {
 		t.Error("BookingEvents should default to true")
+	}
+	if !prefs.Telegram {
+		t.Error("Telegram should default to true")
 	}
 }
 

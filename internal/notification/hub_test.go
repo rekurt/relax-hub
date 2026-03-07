@@ -366,7 +366,7 @@ func TestHub_Dispatch_SendsViaWebSocket(t *testing.T) {
 
 	notifRepo := mock.NewNotificationRepo()
 	emailSender := notification.NewNoopEmailSender()
-	d := notification.NewDispatcher(notifRepo, emailSender, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), hub, log)
 
 	notif := &domain.Notification{
 		ID:        uuid.New(),
