@@ -27,10 +27,10 @@
 **Files:**
 - Create: `internal/domain/promo.go`
 - Modify: `internal/domain/errors.go`
-- Create: `migrations/000006_promo_codes.up.sql`
-- Create: `migrations/000006_promo_codes.down.sql`
+- Create: `migrations/000010_promo_codes.up.sql`
+- Create: `migrations/000010_promo_codes.down.sql`
 
-- [ ] Создать модель PromoCode:
+- [x] Создать модель PromoCode:
   ```
   PromoCode {
     ID              uuid.UUID
@@ -48,11 +48,11 @@
     CreatedAt       time.Time
   }
   ```
-- [ ] Создать модель PromoUsage (ID, PromoCodeID, UserID, BookingID, DiscountAmount, UsedAt)
-- [ ] Добавить domain-ошибки: ErrPromoNotFound, ErrPromoExpired, ErrPromoMaxUses, ErrPromoMinAmount, ErrPromoInvalid
-- [ ] Создать миграцию с таблицами promo_codes и promo_usages
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать модель PromoUsage (ID, PromoCodeID, UserID, BookingID, DiscountAmount, UsedAt)
+- [x] Добавить domain-ошибки: ErrPromoNotFound, ErrPromoExpired, ErrPromoMaxUses, ErrPromoMinAmount, ErrPromoInvalid
+- [x] Создать миграцию с таблицами promo_codes и promo_usages
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий промокодов
 
