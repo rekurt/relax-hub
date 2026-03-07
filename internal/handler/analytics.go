@@ -57,7 +57,9 @@ func (h *AnalyticsHandler) GetOwnerDashboard(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	writeJSON(w, http.StatusOK, dashboard)
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"data": dashboard,
+	})
 }
 
 // GetOwnerDailyStats returns daily analytics breakdown for a bathhouse
@@ -133,7 +135,9 @@ func (h *AnalyticsHandler) GetAdminDashboard(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	writeJSON(w, http.StatusOK, dashboard)
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"data": dashboard,
+	})
 }
 
 // GetTopBathhouses returns top bathhouses ranked by a metric

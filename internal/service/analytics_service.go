@@ -459,48 +459,50 @@ func (s *analyticsService) GetTopBathhousesByMetric(ctx context.Context, userRol
 
 // calculateUserActivity returns daily, weekly, and monthly active users
 func (s *analyticsService) calculateUserActivity(ctx context.Context, from, to time.Time) (dau, wau, mau int64) {
-	// Calculate active users from bookings in the period
-	// For simplicity, these metrics are estimated from booking data
-	// In a production system with high volume, these would be pre-calculated during aggregation
+	// Calculate active users from bookings in the period using database queries
+	// DAU = distinct users with completed bookings on the last day of the period
+	// WAU = distinct users with completed bookings in the last 7 days of the period
+	// MAU = distinct users with completed bookings in the entire period
 
-	// Get the actual time windows for calculation
-	now := time.Now()
-	yesterday := now.AddDate(0, 0, -1)
-	weekAgo := now.AddDate(0, 0, -7)
-	monthAgo := now.AddDate(0, 0, -30)
+	// DAU: last day of the period
+	dayStart := time.Date(to.Year(), to.Month(), to.Day(), 0, 0, 0, 0, to.Location())
+	dayEnd := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
 
-	// DAU: distinct users with completed bookings today
 	allBookingsToday, err := s.bookingRepo.ListByBathhouse(ctx, uuid.Nil, 1, 1000000)
 	if err == nil && allBookingsToday != nil {
-		dayStart := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, yesterday.Location())
-		dayEnd := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 23, 59, 59, 999999999, yesterday.Location())
 		distinctUsers := make(map[uuid.UUID]bool)
 		for _, booking := range allBookingsToday.Items {
-		if booking.StartTime.After(dayStart) && booking.StartTime.Before(dayEnd) && booking.Status == domain.BookingCompleted {
+			if booking.StartTime.After(dayStart) && booking.StartTime.Before(dayEnd) && booking.Status == domain.BookingCompleted {
 				distinctUsers[booking.UserID] = true
 			}
 		}
 		dau = int64(len(distinctUsers))
 	}
 
-	// WAU: distinct users with completed bookings in last 7 days
+	// WAU: last 7 days of the period
+	weekStart := to.AddDate(0, 0, -7)
+	weekStart = time.Date(weekStart.Year(), weekStart.Month(), weekStart.Day(), 0, 0, 0, 0, weekStart.Location())
+
 	allBookingsWeek, err := s.bookingRepo.ListByBathhouse(ctx, uuid.Nil, 1, 1000000)
 	if err == nil && allBookingsWeek != nil {
 		distinctUsers := make(map[uuid.UUID]bool)
 		for _, booking := range allBookingsWeek.Items {
-		if booking.StartTime.After(weekAgo) && booking.StartTime.Before(now) && booking.Status == domain.BookingCompleted {
+			if booking.StartTime.After(weekStart) && booking.StartTime.Before(dayEnd) && booking.Status == domain.BookingCompleted {
 				distinctUsers[booking.UserID] = true
 			}
 		}
 		wau = int64(len(distinctUsers))
 	}
 
-	// MAU: distinct users with completed bookings in last 30 days
+	// MAU: entire period from to
+	fromStart := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+	toEnd := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
+
 	allBookingsMonth, err := s.bookingRepo.ListByBathhouse(ctx, uuid.Nil, 1, 1000000)
 	if err == nil && allBookingsMonth != nil {
 		distinctUsers := make(map[uuid.UUID]bool)
 		for _, booking := range allBookingsMonth.Items {
-			if booking.StartTime.After(monthAgo) && booking.StartTime.Before(now) && booking.Status == domain.BookingCompleted {
+			if booking.StartTime.After(fromStart) && booking.StartTime.Before(toEnd) && booking.Status == domain.BookingCompleted {
 				distinctUsers[booking.UserID] = true
 			}
 		}

@@ -56,6 +56,16 @@ func (r *AnalyticsRepo) GetBathhouseStats(ctx context.Context, bathhouseID uuid.
 			result.Bookings += snapshot.Bookings
 			result.Revenue += snapshot.Revenue
 			result.ReviewCount += snapshot.ReviewCount
+			// Aggregate weighted average rating
+			if snapshot.ReviewCount > 0 {
+				if result.ReviewCount-snapshot.ReviewCount > 0 {
+					oldCount := result.ReviewCount - snapshot.ReviewCount
+					newCount := result.ReviewCount
+					result.AvgRating = (result.AvgRating*float64(oldCount) + snapshot.AvgRating*float64(snapshot.ReviewCount)) / float64(newCount)
+				} else {
+					result.AvgRating = snapshot.AvgRating
+				}
+			}
 		}
 	}
 
@@ -95,6 +105,16 @@ func (r *AnalyticsRepo) GetPlatformStats(ctx context.Context, from, to time.Time
 			result.Bookings += snapshot.Bookings
 			result.Revenue += snapshot.Revenue
 			result.ReviewCount += snapshot.ReviewCount
+			// Aggregate weighted average rating
+			if snapshot.ReviewCount > 0 {
+				if result.ReviewCount-snapshot.ReviewCount > 0 {
+					oldCount := result.ReviewCount - snapshot.ReviewCount
+					newCount := result.ReviewCount
+					result.AvgRating = (result.AvgRating*float64(oldCount) + snapshot.AvgRating*float64(snapshot.ReviewCount)) / float64(newCount)
+				} else {
+					result.AvgRating = snapshot.AvgRating
+				}
+			}
 		}
 	}
 
@@ -115,11 +135,12 @@ func (r *AnalyticsRepo) GetTopBathhouses(ctx context.Context, metric domain.TopM
 
 	// Build a map of bathhouse aggregates
 	type bathStats struct {
-		id       uuid.UUID
-		views    int64
-		bookings int64
-		revenue  int64
-		rating   float64
+		id          uuid.UUID
+		views       int64
+		bookings    int64
+		revenue     int64
+		rating      float64
+		reviewCount int
 	}
 
 	bathMap := make(map[uuid.UUID]*bathStats)
@@ -127,10 +148,22 @@ func (r *AnalyticsRepo) GetTopBathhouses(ctx context.Context, metric domain.TopM
 		if bathMap[snapshot.BathhouseID] == nil {
 			bathMap[snapshot.BathhouseID] = &bathStats{id: snapshot.BathhouseID}
 		}
-		bathMap[snapshot.BathhouseID].views += snapshot.Views
-		bathMap[snapshot.BathhouseID].bookings += snapshot.Bookings
-		bathMap[snapshot.BathhouseID].revenue += snapshot.Revenue
-		bathMap[snapshot.BathhouseID].rating = snapshot.AvgRating
+		bath := bathMap[snapshot.BathhouseID]
+		bath.views += snapshot.Views
+		bath.bookings += snapshot.Bookings
+		bath.revenue += snapshot.Revenue
+		// Aggregate weighted average rating
+		if snapshot.ReviewCount > 0 {
+			if bath.reviewCount > 0 {
+				oldCount := bath.reviewCount
+				newCount := oldCount + snapshot.ReviewCount
+				bath.rating = (bath.rating*float64(oldCount) + snapshot.AvgRating*float64(snapshot.ReviewCount)) / float64(newCount)
+				bath.reviewCount = newCount
+			} else {
+				bath.rating = snapshot.AvgRating
+				bath.reviewCount = snapshot.ReviewCount
+			}
+		}
 	}
 
 	// Sort by metric
