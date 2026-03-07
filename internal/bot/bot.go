@@ -3,22 +3,50 @@ package bot
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 
+	"github.com/google/uuid"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/nikitaaldaev/bani/config"
+	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
+// BookingWizardState tracks the booking wizard progress per chat
+type BookingWizardState struct {
+	BathhouseID uuid.UUID
+	Bathhouse   *domain.Bathhouse
+	Date        time.Time
+	Slots       []service.TimeSlot
+	StartTime   time.Time
+	EndTime     time.Time
+	GuestCount  int
+	Step        string // "date", "time", "guests", "confirm"
+}
+
 type Bot struct {
-	client                *tgbotapi.BotAPI
-	config                *config.TelegramConfig
-	logger                *logger.Logger
-	bathhouseService      service.BathhouseService
-	bookingService        service.BookingService
-	userService           service.UserService
-	notificationService   service.NotificationService
-	telegramLinkService   service.TelegramLinkService
+	client              *tgbotapi.BotAPI
+	config              *config.TelegramConfig
+	logger              *logger.Logger
+	bathhouseService    service.BathhouseService
+	bookingService      service.BookingService
+	userService         service.UserService
+	notificationService service.NotificationService
+	telegramLinkService service.TelegramLinkService
+	favoriteService     service.FavoriteService
+	cityService         service.CityService
+
+	// In-memory booking wizard state per chatID
+	wizards   map[int64]*BookingWizardState
+	wizardsMu sync.RWMutex
+
+	// Cache: short ID -> full UUID mapping for callback data
+	idCache   map[string]uuid.UUID
+	idCacheMu sync.RWMutex
 }
 
 func NewBot(
@@ -29,6 +57,8 @@ func NewBot(
 	userService service.UserService,
 	notificationService service.NotificationService,
 	telegramLinkService service.TelegramLinkService,
+	favoriteService service.FavoriteService,
+	cityService service.CityService,
 ) (*Bot, error) {
 	if cfg.BotToken == "" {
 		return nil, fmt.Errorf("telegram bot token is required")
@@ -48,6 +78,10 @@ func NewBot(
 		userService:         userService,
 		notificationService: notificationService,
 		telegramLinkService: telegramLinkService,
+		favoriteService:     favoriteService,
+		cityService:         cityService,
+		wizards:             make(map[int64]*BookingWizardState),
+		idCache:             make(map[string]uuid.UUID),
 	}
 
 	log.Info("Telegram bot initialized", "username", client.Self.UserName)
@@ -92,7 +126,6 @@ func (b *Bot) startWebhook(ctx context.Context) error {
 
 	b.logger.Info("Starting Telegram bot in webhook mode", "webhook_url", b.config.WebhookURL)
 
-	// For webhook mode, we set the webhook URL via the Telegram Bot API
 	whConfig, err := tgbotapi.NewWebhook(b.config.WebhookURL)
 	if err != nil {
 		return fmt.Errorf("failed to create webhook config: %w", err)
@@ -102,22 +135,24 @@ func (b *Bot) startWebhook(ctx context.Context) error {
 		return fmt.Errorf("failed to set webhook: %w", err)
 	}
 
-	// For webhook mode, the HTTP server will handle updates
-	// This is a placeholder - actual webhook handling happens in the HTTP server
 	<-ctx.Done()
 	return nil
 }
 
-// HandleUpdate processes incoming Telegram updates
+// handleUpdate processes incoming Telegram updates
 func (b *Bot) handleUpdate(ctx context.Context, update tgbotapi.Update) {
+	if update.CallbackQuery != nil {
+		b.handleCallbackQuery(ctx, update.CallbackQuery)
+		return
+	}
+
 	if update.Message == nil {
 		return
 	}
 
-	// Route message to appropriate handler
 	if update.Message.IsCommand() {
 		b.handleCommand(ctx, update.Message)
-	} else if update.Message.Text != "" {
+	} else {
 		b.handleMessage(ctx, update.Message)
 	}
 }
@@ -133,7 +168,17 @@ func (b *Bot) handleCommand(ctx context.Context, msg *tgbotapi.Message) {
 	case "help":
 		b.commandHelp(ctx, chatID)
 	case "link":
-		b.commandLink(ctx, chatID, msg.CommandArguments())
+		b.commandLink(ctx, chatID, msg)
+	case "search":
+		b.commandSearch(ctx, chatID, msg.CommandArguments())
+	case "book":
+		b.commandBook(ctx, chatID, msg.CommandArguments())
+	case "mybookings":
+		b.commandMyBookings(ctx, chatID, 1)
+	case "cancel":
+		b.commandCancel(ctx, chatID, msg.CommandArguments())
+	case "favorites":
+		b.commandFavorites(ctx, chatID, 1)
 	default:
 		b.sendMessage(chatID, "Неизвестная команда. Используйте /help для справки.")
 	}
@@ -141,52 +186,588 @@ func (b *Bot) handleCommand(ctx context.Context, msg *tgbotapi.Message) {
 
 // handleMessage processes regular text messages
 func (b *Bot) handleMessage(ctx context.Context, msg *tgbotapi.Message) {
-	b.sendMessage(msg.Chat.ID, "Я получил ваше сообщение. Используйте /help для справки.")
+	b.sendMessage(msg.Chat.ID, "Используйте /help для списка команд.")
 }
 
-// commandStart handles the /start command
+// handleCallbackQuery processes inline keyboard button presses
+func (b *Bot) handleCallbackQuery(ctx context.Context, cq *tgbotapi.CallbackQuery) {
+	chatID := cq.Message.Chat.ID
+	data := cq.Data
+
+	// Acknowledge the callback
+	callback := tgbotapi.NewCallback(cq.ID, "")
+	if _, err := b.client.Request(callback); err != nil {
+		b.logger.Error("failed to answer callback query", "error", err)
+	}
+
+	parts := strings.SplitN(data, ":", 3)
+	prefix := parts[0]
+
+	switch prefix {
+	case cbSearch:
+		if len(parts) >= 3 {
+			page, _ := strconv.Atoi(parts[2])
+			if page < 1 {
+				page = 1
+			}
+			b.doSearch(ctx, chatID, parts[1], page)
+		}
+	case cbView:
+		if len(parts) >= 2 {
+			b.doViewBathhouse(ctx, chatID, parts[1])
+		}
+	case cbBook:
+		if len(parts) >= 2 {
+			b.doStartBookingWizard(ctx, chatID, parts[1])
+		}
+	case cbDate:
+		if len(parts) >= 2 {
+			b.doSelectDate(ctx, chatID, parts[1])
+		}
+	case cbSlot:
+		if len(parts) >= 2 {
+			idx, _ := strconv.Atoi(parts[1])
+			b.doSelectSlot(ctx, chatID, idx)
+		}
+	case cbGuests:
+		if len(parts) >= 2 {
+			count, _ := strconv.Atoi(parts[1])
+			b.doSelectGuests(ctx, chatID, count)
+		}
+	case cbConfirm:
+		b.doConfirmBooking(ctx, chatID)
+	case "cancel_wizard":
+		b.doCancelWizard(chatID)
+	case cbCancelBk:
+		if len(parts) >= 2 {
+			b.doCancelBooking(ctx, chatID, parts[1])
+		}
+	case cbFavPage:
+		if len(parts) >= 2 {
+			page, _ := strconv.Atoi(parts[1])
+			b.commandFavorites(ctx, chatID, page)
+		}
+	case cbBkPage:
+		if len(parts) >= 2 {
+			page, _ := strconv.Atoi(parts[1])
+			b.commandMyBookings(ctx, chatID, page)
+		}
+	case cbFavToggle:
+		if len(parts) >= 2 {
+			b.doToggleFavorite(ctx, chatID, parts[1])
+		}
+	}
+}
+
+// --- Commands ---
+
 func (b *Bot) commandStart(ctx context.Context, chatID int64) {
-	text := "Добро пожаловать в Bани! 🛁\n\n" +
-		"Я помогу вам найти идеальную баню и забронировать сеанс.\n\n" +
-		"Доступные команды:\n" +
-		"/search <город> - поиск бань в городе\n" +
-		"/mybookings - мои бронирования\n" +
-		"/favorites - мое избранное\n" +
-		"/help - справка\n"
+	text := "\U0001f6c1 *Добро пожаловать в Бани\\!*\n\n" +
+		"Я помогу вам найти идеальную баню и забронировать сеанс\\.\n\n" +
+		"*Команды:*\n" +
+		"/search _город_ \\- поиск бань\n" +
+		"/book _id_ \\- забронировать\n" +
+		"/mybookings \\- мои бронирования\n" +
+		"/favorites \\- избранное\n" +
+		"/link _токен_ \\- привязать аккаунт\n" +
+		"/help \\- справка"
 	b.sendMessage(chatID, text)
 }
 
-// commandHelp handles the /help command
 func (b *Bot) commandHelp(ctx context.Context, chatID int64) {
-	text := "Справка по командам:\n\n" +
-		"/start - начать работу с ботом\n" +
-		"/search <город> - найти бани в городе\n" +
-		"/mybookings - посмотреть мои бронирования\n" +
-		"/favorites - мое избранное\n" +
-		"/link <токен> - привязать Telegram-аккаунт\n"
+	text := "*Справка по командам:*\n\n" +
+		"/start \\- начать работу с ботом\n" +
+		"/search _город_ \\- найти бани в городе\n" +
+		"/book _id_ \\- забронировать баню\n" +
+		"/mybookings \\- посмотреть мои бронирования\n" +
+		"/cancel _id_ \\- отменить бронирование\n" +
+		"/favorites \\- моё избранное\n" +
+		"/link _токен_ \\- привязать Telegram\\-аккаунт\n" +
+		"/help \\- эта справка"
 	b.sendMessage(chatID, text)
 }
 
-// commandLink handles the /link command for account linking
-func (b *Bot) commandLink(ctx context.Context, chatID int64, token string) {
+func (b *Bot) commandLink(ctx context.Context, chatID int64, msg *tgbotapi.Message) {
+	token := msg.CommandArguments()
 	if token == "" {
 		b.sendMessage(chatID, "Пожалуйста, укажите токен: /link <токен>")
 		return
 	}
 
-	// TODO: Implement token validation and linking logic
-	// This requires generating and validating one-time tokens on the web API side
-	// For now, provide placeholder feedback
 	b.sendMessage(chatID, "Функция привязки аккаунта находится в разработке. Пожалуйста, используйте веб-интерфейс.")
 }
 
-// sendMessage sends a text message to the user
+func (b *Bot) commandSearch(ctx context.Context, chatID int64, query string) {
+	if query == "" {
+		b.sendMessage(chatID, "Укажите город: /search _москва_")
+		return
+	}
+
+	b.doSearch(ctx, chatID, query, 1)
+}
+
+func (b *Bot) commandBook(ctx context.Context, chatID int64, args string) {
+	if args == "" {
+		b.sendMessage(chatID, "Укажите ID бани: /book _id_\nНайдите баню через /search")
+		return
+	}
+
+	bhID, err := uuid.Parse(args)
+	if err != nil {
+		b.sendMessage(chatID, "Неверный формат ID. Используйте /search для поиска бань.")
+		return
+	}
+
+	sid := shortID(bhID)
+	b.cacheID(sid, bhID)
+	b.doStartBookingWizard(ctx, chatID, sid)
+}
+
+func (b *Bot) commandCancel(ctx context.Context, chatID int64, args string) {
+	if args == "" {
+		b.sendMessage(chatID, "Укажите ID бронирования: /cancel _id_\nСписок бронирований: /mybookings")
+		return
+	}
+
+	bkID, err := uuid.Parse(args)
+	if err != nil {
+		b.sendMessage(chatID, "Неверный формат ID.")
+		return
+	}
+
+	sid := shortID(bkID)
+	b.cacheID(sid, bkID)
+	b.doCancelBooking(ctx, chatID, sid)
+}
+
+func (b *Bot) commandMyBookings(ctx context.Context, chatID int64, page int) {
+	userID, ok := b.getUserID(ctx, chatID)
+	if !ok {
+		return
+	}
+
+	result, err := b.bookingService.ListByUser(ctx, userID, page, 5)
+	if err != nil {
+		b.logger.Error("failed to list bookings", "error", err, "chat_id", chatID)
+		b.sendMessage(chatID, "Ошибка при получении бронирований.")
+		return
+	}
+
+	if result.TotalCount == 0 {
+		b.sendMessage(chatID, "У вас пока нет бронирований.\nИспользуйте /search для поиска бань.")
+		return
+	}
+
+	// Cache IDs for callback data
+	for _, bk := range result.Items {
+		b.cacheID(shortID(bk.ID), bk.ID)
+		b.cacheID(shortID(bk.BathhouseID), bk.BathhouseID)
+	}
+
+	kb := buildMyBookingsKeyboard(result.Items, page, result.TotalPages)
+	b.sendMessageWithKeyboard(chatID, fmt.Sprintf("*Мои бронирования* \\(стр\\. %d/%d\\):", page, result.TotalPages), kb)
+}
+
+func (b *Bot) commandFavorites(ctx context.Context, chatID int64, page int) {
+	userID, ok := b.getUserID(ctx, chatID)
+	if !ok {
+		return
+	}
+
+	result, err := b.favoriteService.List(ctx, userID, page, 5)
+	if err != nil {
+		b.logger.Error("failed to list favorites", "error", err, "chat_id", chatID)
+		b.sendMessage(chatID, "Ошибка при получении избранного.")
+		return
+	}
+
+	if result.TotalCount == 0 {
+		b.sendMessage(chatID, "Список избранного пуст.\nДобавляйте бани через поиск /search")
+		return
+	}
+
+	// Fetch bathhouse names
+	names := make(map[uuid.UUID]string)
+	for _, fav := range result.Items {
+		b.cacheID(shortID(fav.BathhouseID), fav.BathhouseID)
+		bh, err := b.bathhouseService.GetByID(ctx, fav.BathhouseID)
+		if err == nil {
+			names[fav.BathhouseID] = bh.Name
+		}
+	}
+
+	kb := buildFavoritesKeyboard(result.Items, names, page, result.TotalPages)
+	b.sendMessageWithKeyboard(chatID, fmt.Sprintf("*Избранное* \\(стр\\. %d/%d\\):", page, result.TotalPages), kb)
+}
+
+// --- Callback actions ---
+
+func (b *Bot) doSearch(ctx context.Context, chatID int64, query string, page int) {
+	// Try to find city by slug or search by name
+	filter := domain.BathhouseFilter{
+		SearchQuery: &query,
+		Page:        page,
+		PageSize:    5,
+		SortBy:      "rating",
+		SortOrder:   "desc",
+	}
+
+	// Try matching city by slug
+	city, err := b.cityService.GetBySlug(ctx, strings.ToLower(query))
+	if err == nil {
+		filter.CityID = &city.ID
+		filter.SearchQuery = nil
+	}
+
+	status := domain.BathhouseStatusActive
+	filter.Status = &status
+
+	result, err := b.bathhouseService.Search(ctx, filter)
+	if err != nil {
+		b.logger.Error("failed to search bathhouses", "error", err, "query", query)
+		b.sendMessage(chatID, "Ошибка при поиске. Попробуйте позже.")
+		return
+	}
+
+	if result.TotalCount == 0 {
+		b.sendMessage(chatID, fmt.Sprintf("По запросу \"%s\" ничего не найдено.", query))
+		return
+	}
+
+	// Cache IDs
+	for _, bh := range result.Items {
+		b.cacheID(shortID(bh.ID), bh.ID)
+	}
+
+	slug := strings.ToLower(query)
+	kb := buildSearchResultsKeyboard(result.Items, slug, page, result.TotalPages)
+	text := fmt.Sprintf("Найдено %d бань:", result.TotalCount)
+	b.sendMessageWithKeyboard(chatID, text, kb)
+}
+
+func (b *Bot) doViewBathhouse(ctx context.Context, chatID int64, sid string) {
+	bhID, ok := b.resolveID(sid)
+	if !ok {
+		b.sendMessage(chatID, "Баня не найдена. Попробуйте поиск заново.")
+		return
+	}
+
+	bh, err := b.bathhouseService.GetByID(ctx, bhID)
+	if err != nil {
+		b.logger.Error("failed to get bathhouse", "error", err, "id", bhID)
+		b.sendMessage(chatID, "Ошибка при загрузке информации о бане.")
+		return
+	}
+
+	kb := buildBathhouseDetailKeyboard(bh)
+	b.sendMessageWithKeyboard(chatID, formatBathhouseDetail(bh), kb)
+}
+
+func (b *Bot) doStartBookingWizard(ctx context.Context, chatID int64, sid string) {
+	bhID, ok := b.resolveID(sid)
+	if !ok {
+		b.sendMessage(chatID, "Баня не найдена. Попробуйте поиск заново.")
+		return
+	}
+
+	_, ok = b.getUserID(ctx, chatID)
+	if !ok {
+		return
+	}
+
+	bh, err := b.bathhouseService.GetByID(ctx, bhID)
+	if err != nil {
+		b.logger.Error("failed to get bathhouse", "error", err, "id", bhID)
+		b.sendMessage(chatID, "Ошибка при загрузке данных бани.")
+		return
+	}
+
+	// Store wizard state
+	b.wizardsMu.Lock()
+	b.wizards[chatID] = &BookingWizardState{
+		BathhouseID: bhID,
+		Bathhouse:   bh,
+		Step:        "date",
+	}
+	b.wizardsMu.Unlock()
+
+	kb := buildDatePickerKeyboard()
+	b.sendMessageWithKeyboard(chatID, fmt.Sprintf("*Бронирование: %s*\n\nВыберите дату:", escapeMD(bh.Name)), kb)
+}
+
+func (b *Bot) doSelectDate(ctx context.Context, chatID int64, dateStr string) {
+	wizard := b.getWizard(chatID)
+	if wizard == nil {
+		b.sendMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		return
+	}
+
+	date, err := time.Parse("20060102", dateStr)
+	if err != nil {
+		b.sendMessage(chatID, "Неверная дата.")
+		return
+	}
+
+	slots, err := b.bookingService.GetAvailableSlots(ctx, wizard.BathhouseID, date)
+	if err != nil {
+		b.logger.Error("failed to get slots", "error", err, "bathhouse_id", wizard.BathhouseID)
+		b.sendMessage(chatID, "Ошибка при загрузке слотов.")
+		return
+	}
+
+	availableCount := 0
+	for _, s := range slots {
+		if s.Available {
+			availableCount++
+		}
+	}
+
+	if availableCount == 0 {
+		b.sendMessage(chatID, "На эту дату нет свободных слотов. Выберите другую дату.")
+		kb := buildDatePickerKeyboard()
+		b.sendMessageWithKeyboard(chatID, "Выберите дату:", kb)
+		return
+	}
+
+	b.wizardsMu.Lock()
+	wizard.Date = date
+	wizard.Slots = slots
+	wizard.Step = "time"
+	b.wizardsMu.Unlock()
+
+	kb := buildTimeSlotsKeyboard(slots)
+	b.sendMessageWithKeyboard(chatID,
+		fmt.Sprintf("Дата: *%s*\nВыберите время:", date.Format("02\\.01\\.2006")),
+		kb,
+	)
+}
+
+func (b *Bot) doSelectSlot(ctx context.Context, chatID int64, slotIdx int) {
+	wizard := b.getWizard(chatID)
+	if wizard == nil {
+		b.sendMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		return
+	}
+
+	if slotIdx < 0 || slotIdx >= len(wizard.Slots) {
+		b.sendMessage(chatID, "Неверный слот. Попробуйте ещё раз.")
+		return
+	}
+
+	slot := wizard.Slots[slotIdx]
+	if !slot.Available {
+		b.sendMessage(chatID, "Этот слот уже занят. Выберите другой.")
+		return
+	}
+
+	b.wizardsMu.Lock()
+	wizard.StartTime = slot.StartTime
+	wizard.EndTime = slot.EndTime
+	wizard.Step = "guests"
+	b.wizardsMu.Unlock()
+
+	maxGuests := 10
+	if wizard.Bathhouse != nil {
+		maxGuests = wizard.Bathhouse.MaxGuests
+	}
+
+	kb := buildGuestCountKeyboard(maxGuests)
+	b.sendMessageWithKeyboard(chatID,
+		fmt.Sprintf("Время: *%s\\-%s*\nВыберите количество гостей:",
+			slot.StartTime.Format("15:04"),
+			slot.EndTime.Format("15:04"),
+		),
+		kb,
+	)
+}
+
+func (b *Bot) doSelectGuests(ctx context.Context, chatID int64, count int) {
+	wizard := b.getWizard(chatID)
+	if wizard == nil {
+		b.sendMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		return
+	}
+
+	if wizard.Bathhouse != nil && count > wizard.Bathhouse.MaxGuests {
+		b.sendMessage(chatID, fmt.Sprintf("Максимум гостей: %d", wizard.Bathhouse.MaxGuests))
+		return
+	}
+
+	b.wizardsMu.Lock()
+	wizard.GuestCount = count
+	wizard.Step = "confirm"
+	b.wizardsMu.Unlock()
+
+	bhName := "Баня"
+	if wizard.Bathhouse != nil {
+		bhName = wizard.Bathhouse.Name
+	}
+
+	text := fmt.Sprintf("*Подтверждение бронирования:*\n\n"+
+		"\U0001f6c1 %s\n"+
+		"\U0001f4c5 %s\n"+
+		"\U0001f552 %s \\- %s\n"+
+		"\U0001f465 %d гостей\n\n"+
+		"Всё верно?",
+		escapeMD(bhName),
+		wizard.Date.Format("02\\.01\\.2006"),
+		wizard.StartTime.Format("15:04"),
+		wizard.EndTime.Format("15:04"),
+		wizard.GuestCount,
+	)
+
+	kb := buildConfirmBookingKeyboard()
+	b.sendMessageWithKeyboard(chatID, text, kb)
+}
+
+func (b *Bot) doConfirmBooking(ctx context.Context, chatID int64) {
+	wizard := b.getWizard(chatID)
+	if wizard == nil {
+		b.sendMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		return
+	}
+
+	userID, ok := b.getUserID(ctx, chatID)
+	if !ok {
+		return
+	}
+
+	input := service.CreateBookingInput{
+		BathhouseID: wizard.BathhouseID,
+		StartTime:   wizard.StartTime,
+		EndTime:     wizard.EndTime,
+		GuestCount:  wizard.GuestCount,
+	}
+
+	result, err := b.bookingService.Create(ctx, userID, input)
+	if err != nil {
+		b.logger.Error("failed to create booking", "error", err, "chat_id", chatID)
+		b.sendMessage(chatID, fmt.Sprintf("Ошибка при бронировании: %s", err.Error()))
+		b.clearWizard(chatID)
+		return
+	}
+
+	b.clearWizard(chatID)
+
+	text := fmt.Sprintf("\u2705 *Бронирование создано\\!*\n\n"+
+		"ID: `%s`\n"+
+		"Статус: %s\n\n"+
+		"Вы получите уведомление при подтверждении\\.",
+		result.Booking.ID.String(),
+		translateBookingStatus(result.Booking.Status),
+	)
+	b.sendMessage(chatID, text)
+}
+
+func (b *Bot) doCancelWizard(chatID int64) {
+	b.clearWizard(chatID)
+	b.sendMessage(chatID, "Бронирование отменено.")
+}
+
+func (b *Bot) doCancelBooking(ctx context.Context, chatID int64, sid string) {
+	bkID, ok := b.resolveID(sid)
+	if !ok {
+		b.sendMessage(chatID, "Бронирование не найдено.")
+		return
+	}
+
+	userID, ok := b.getUserID(ctx, chatID)
+	if !ok {
+		return
+	}
+
+	err := b.bookingService.Cancel(ctx, userID, domain.RoleClient, bkID)
+	if err != nil {
+		b.logger.Error("failed to cancel booking", "error", err, "booking_id", bkID)
+		b.sendMessage(chatID, fmt.Sprintf("Ошибка при отмене: %s", err.Error()))
+		return
+	}
+
+	b.sendMessage(chatID, "\u2705 Бронирование отменено.")
+}
+
+func (b *Bot) doToggleFavorite(ctx context.Context, chatID int64, sid string) {
+	bhID, ok := b.resolveID(sid)
+	if !ok {
+		b.sendMessage(chatID, "Баня не найдена.")
+		return
+	}
+
+	userID, ok := b.getUserID(ctx, chatID)
+	if !ok {
+		return
+	}
+
+	isFav, err := b.favoriteService.Toggle(ctx, userID, bhID)
+	if err != nil {
+		b.logger.Error("failed to toggle favorite", "error", err, "bathhouse_id", bhID)
+		b.sendMessage(chatID, "Ошибка при обновлении избранного.")
+		return
+	}
+
+	if isFav {
+		b.sendMessage(chatID, "\u2764\ufe0f Добавлено в избранное")
+	} else {
+		b.sendMessage(chatID, "Удалено из избранного")
+	}
+}
+
+// --- Helpers ---
+
+// getUserID resolves the Telegram chat ID to a platform user ID via TelegramLink
+func (b *Bot) getUserID(ctx context.Context, chatID int64) (uuid.UUID, bool) {
+	link, err := b.telegramLinkService.GetByTelegramID(ctx, chatID)
+	if err != nil {
+		b.sendMessage(chatID, "Ваш Telegram не привязан к аккаунту.\nИспользуйте /link _токен_ для привязки.")
+		return uuid.Nil, false
+	}
+	return link.UserID, true
+}
+
+func (b *Bot) getWizard(chatID int64) *BookingWizardState {
+	b.wizardsMu.RLock()
+	defer b.wizardsMu.RUnlock()
+	return b.wizards[chatID]
+}
+
+func (b *Bot) clearWizard(chatID int64) {
+	b.wizardsMu.Lock()
+	delete(b.wizards, chatID)
+	b.wizardsMu.Unlock()
+}
+
+func (b *Bot) cacheID(short string, full uuid.UUID) {
+	b.idCacheMu.Lock()
+	b.idCache[short] = full
+	b.idCacheMu.Unlock()
+}
+
+func (b *Bot) resolveID(short string) (uuid.UUID, bool) {
+	b.idCacheMu.RLock()
+	id, ok := b.idCache[short]
+	b.idCacheMu.RUnlock()
+	return id, ok
+}
+
+// sendMessage sends a text message with MarkdownV2 parsing
 func (b *Bot) sendMessage(chatID int64, text string) {
 	msg := tgbotapi.NewMessage(chatID, text)
-	msg.ParseMode = tgbotapi.ModeMarkdown
+	msg.ParseMode = tgbotapi.ModeMarkdownV2
 
 	_, err := b.client.Send(msg)
 	if err != nil {
 		b.logger.Error("failed to send message", "error", err, "chat_id", chatID)
+	}
+}
+
+// sendMessageWithKeyboard sends a message with inline keyboard
+func (b *Bot) sendMessageWithKeyboard(chatID int64, text string, keyboard tgbotapi.InlineKeyboardMarkup) {
+	msg := tgbotapi.NewMessage(chatID, text)
+	msg.ParseMode = tgbotapi.ModeMarkdownV2
+	msg.ReplyMarkup = keyboard
+
+	_, err := b.client.Send(msg)
+	if err != nil {
+		b.logger.Error("failed to send message with keyboard", "error", err, "chat_id", chatID)
 	}
 }
