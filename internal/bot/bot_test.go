@@ -418,3 +418,17 @@ func TestFormatBathhouseDetailPlain_NoAddress(t *testing.T) {
 	text := formatBathhouseDetailPlain(bh)
 	assert.NotContains(t, text, "📍")
 }
+
+func TestDeriveWebhookSecret(t *testing.T) {
+	// Same token should produce same secret
+	s1 := deriveWebhookSecret("123456:ABC-DEF")
+	s2 := deriveWebhookSecret("123456:ABC-DEF")
+	assert.Equal(t, s1, s2)
+
+	// Different tokens produce different secrets
+	s3 := deriveWebhookSecret("654321:XYZ-GHI")
+	assert.NotEqual(t, s1, s3)
+
+	// Result is 32 hex characters (16 bytes)
+	assert.Len(t, s1, 32)
+}

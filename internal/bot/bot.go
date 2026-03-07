@@ -2,6 +2,8 @@ package bot
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -139,6 +141,9 @@ func (b *Bot) startWebhook(ctx context.Context) error {
 		return fmt.Errorf("webhook_url is required when mode is 'webhook'")
 	}
 
+	// Derive a secret path component from the bot token for webhook verification
+	webhookPath := "/telegram/webhook/" + deriveWebhookSecret(b.config.BotToken)
+
 	b.logger.Info("Starting Telegram bot in webhook mode", "webhook_url", b.config.WebhookURL)
 
 	whConfig, err := tgbotapi.NewWebhook(b.config.WebhookURL)
@@ -151,8 +156,9 @@ func (b *Bot) startWebhook(ctx context.Context) error {
 	}
 
 	// Start HTTP server to receive webhook callbacks from Telegram
+	// The path includes a secret derived from the bot token to prevent unauthorized access
 	mux := http.NewServeMux()
-	mux.HandleFunc("/telegram/webhook", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(webhookPath, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -917,4 +923,11 @@ func (b *Bot) sendMessageWithKeyboard(chatID int64, text string, keyboard tgbota
 	if err != nil {
 		b.logger.Error("failed to send message with keyboard", "error", err, "chat_id", chatID)
 	}
+}
+
+// deriveWebhookSecret creates a deterministic secret path component from the bot token.
+// This prevents unauthorized parties from sending fake updates to the webhook endpoint.
+func deriveWebhookSecret(botToken string) string {
+	h := sha256.Sum256([]byte(botToken))
+	return hex.EncodeToString(h[:16])
 }
