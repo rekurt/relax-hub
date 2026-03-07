@@ -112,6 +112,9 @@ func NewAnalyticsService(
 
 // RecordView records a bathhouse view with IP-based deduplication over 30 minutes
 func (s *analyticsService) RecordView(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error {
+	if bathhouseID == uuid.Nil {
+		return fmt.Errorf("invalid bathhouse_id")
+	}
 	if !source.IsValid() {
 		return fmt.Errorf("invalid view source: %s", source)
 	}
@@ -459,12 +462,16 @@ func (s *analyticsService) GetTopBathhousesByMetric(ctx context.Context, userRol
 
 // calculateUserActivity returns daily, weekly, and monthly active users
 func (s *analyticsService) calculateUserActivity(ctx context.Context, from, to time.Time) (dau, wau, mau int64) {
-	// Calculate active users from bookings in the period using database queries
+	// Calculate active users from bookings in the period
 	// DAU = distinct users with completed bookings on the last day of the period
 	// WAU = distinct users with completed bookings in the last 7 days of the period
 	// MAU = distinct users with completed bookings in the entire period
+	//
+	// NOTE: This implementation loads bookings in-memory which works for current scale.
+	// For production with 100k+ bookings, this should use dedicated database aggregation queries
+	// like GetDistinctUsersByDateRange(ctx, from, to) instead of ListByBathhouse.
 
-	// DAU: last day of the period
+	// DAU: last day of the period (inclusive bounds)
 	dayStart := time.Date(to.Year(), to.Month(), to.Day(), 0, 0, 0, 0, to.Location())
 	dayEnd := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
 
@@ -472,14 +479,15 @@ func (s *analyticsService) calculateUserActivity(ctx context.Context, from, to t
 	if err == nil && allBookingsToday != nil {
 		distinctUsers := make(map[uuid.UUID]bool)
 		for _, booking := range allBookingsToday.Items {
-			if booking.StartTime.After(dayStart) && booking.StartTime.Before(dayEnd) && booking.Status == domain.BookingCompleted {
+			// Use >= and <= for inclusive bounds to include bookings at exact boundary times
+			if !booking.StartTime.Before(dayStart) && !booking.StartTime.After(dayEnd) && booking.Status == domain.BookingCompleted {
 				distinctUsers[booking.UserID] = true
 			}
 		}
 		dau = int64(len(distinctUsers))
 	}
 
-	// WAU: last 7 days of the period
+	// WAU: last 7 days of the period (inclusive bounds)
 	weekStart := to.AddDate(0, 0, -7)
 	weekStart = time.Date(weekStart.Year(), weekStart.Month(), weekStart.Day(), 0, 0, 0, 0, weekStart.Location())
 
@@ -487,14 +495,15 @@ func (s *analyticsService) calculateUserActivity(ctx context.Context, from, to t
 	if err == nil && allBookingsWeek != nil {
 		distinctUsers := make(map[uuid.UUID]bool)
 		for _, booking := range allBookingsWeek.Items {
-			if booking.StartTime.After(weekStart) && booking.StartTime.Before(dayEnd) && booking.Status == domain.BookingCompleted {
+			// Use >= and <= for inclusive bounds
+			if !booking.StartTime.Before(weekStart) && !booking.StartTime.After(dayEnd) && booking.Status == domain.BookingCompleted {
 				distinctUsers[booking.UserID] = true
 			}
 		}
 		wau = int64(len(distinctUsers))
 	}
 
-	// MAU: entire period from to
+	// MAU: entire period (inclusive bounds)
 	fromStart := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
 	toEnd := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
 
@@ -502,7 +511,8 @@ func (s *analyticsService) calculateUserActivity(ctx context.Context, from, to t
 	if err == nil && allBookingsMonth != nil {
 		distinctUsers := make(map[uuid.UUID]bool)
 		for _, booking := range allBookingsMonth.Items {
-			if booking.StartTime.After(fromStart) && booking.StartTime.Before(toEnd) && booking.Status == domain.BookingCompleted {
+			// Use >= and <= for inclusive bounds
+			if !booking.StartTime.Before(fromStart) && !booking.StartTime.After(toEnd) && booking.Status == domain.BookingCompleted {
 				distinctUsers[booking.UserID] = true
 			}
 		}
@@ -527,7 +537,8 @@ func (s *analyticsService) countNewUsers(ctx context.Context, from, to time.Time
 
 	count := int64(0)
 	for _, user := range allUsers.Items {
-		if user.CreatedAt.After(from) && user.CreatedAt.Before(to) {
+		// Use >= and <= for inclusive bounds
+		if !user.CreatedAt.Before(from) && !user.CreatedAt.After(to) {
 			count++
 		}
 	}

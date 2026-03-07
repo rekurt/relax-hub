@@ -95,6 +95,19 @@ func (h *AnalyticsHandler) GetOwnerDailyStats(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// Validate date range: from must be before to
+	if from.After(to) {
+		writeError(w, http.StatusBadRequest, "invalid_input", "from date must be before to date")
+		return
+	}
+
+	// Prevent excessive date ranges (max 365 days) to prevent DoS
+	maxDays := 365 * time.Hour * 24
+	if to.Sub(from) > maxDays {
+		writeError(w, http.StatusBadRequest, "invalid_input", "date range cannot exceed 365 days")
+		return
+	}
+
 	// Get daily stats from service (RBAC check is done in service layer)
 	dailyStats, err := h.analyticsService.GetDailyStats(r.Context(), userID, userRole, id, from, to)
 	if err != nil {
