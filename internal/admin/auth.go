@@ -36,8 +36,8 @@ func RequireAdminAuth(authService middleware.AuthService) func(http.Handler) htt
 				return
 			}
 
-			ctx := middleware.SetUserIDForTesting(r.Context(), userID)
-			ctx = middleware.SetUserRoleForTesting(ctx, role)
+			ctx := middleware.SetUserID(r.Context(), userID)
+			ctx = middleware.SetUserRole(ctx, role)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

@@ -100,7 +100,7 @@ CREATE TABLE goadmin_operation_log (
     user_id    integer NOT NULL,
     path       varchar(255) NOT NULL,
     method     varchar(10)  NOT NULL,
-    ip         varchar(15)  NOT NULL,
+    ip         varchar(45)  NOT NULL,
     input      text         NOT NULL,
     created_at timestamp WITHOUT TIME ZONE DEFAULT now(),
     updated_at timestamp WITHOUT TIME ZONE DEFAULT now()

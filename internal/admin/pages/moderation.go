@@ -227,12 +227,18 @@ func (p *PostgresModerationProvider) loadReviews(ctx context.Context, data *Mode
 	}
 
 	if data.Filter.FromDate != "" {
+		if _, err := time.Parse("2006-01-02", data.Filter.FromDate); err != nil {
+			return fmt.Errorf("invalid from_date filter")
+		}
 		where = append(where, "r.created_at >= $"+strconv.Itoa(argIdx))
 		args = append(args, data.Filter.FromDate)
 		argIdx++
 	}
 
 	if data.Filter.ToDate != "" {
+		if _, err := time.Parse("2006-01-02", data.Filter.ToDate); err != nil {
+			return fmt.Errorf("invalid to_date filter")
+		}
 		where = append(where, "r.created_at <= $"+strconv.Itoa(argIdx)+"::date + interval '1 day'")
 		args = append(args, data.Filter.ToDate)
 		argIdx++

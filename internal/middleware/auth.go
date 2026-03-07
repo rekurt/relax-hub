@@ -33,14 +33,24 @@ func GetUserRole(ctx context.Context) domain.UserRole {
 	return ""
 }
 
-// SetUserIDForTesting sets the user ID in context for testing purposes
-func SetUserIDForTesting(ctx context.Context, userID uuid.UUID) context.Context {
+// SetUserID sets the user ID in context.
+func SetUserID(ctx context.Context, userID uuid.UUID) context.Context {
 	return context.WithValue(ctx, userIDKey, userID)
 }
 
-// SetUserRoleForTesting sets the user role in context for testing purposes
-func SetUserRoleForTesting(ctx context.Context, role domain.UserRole) context.Context {
+// SetUserRole sets the user role in context.
+func SetUserRole(ctx context.Context, role domain.UserRole) context.Context {
 	return context.WithValue(ctx, roleKey, role)
+}
+
+// SetUserIDForTesting is an alias for SetUserID, kept for test readability.
+func SetUserIDForTesting(ctx context.Context, userID uuid.UUID) context.Context {
+	return SetUserID(ctx, userID)
+}
+
+// SetUserRoleForTesting is an alias for SetUserRole, kept for test readability.
+func SetUserRoleForTesting(ctx context.Context, role domain.UserRole) context.Context {
+	return SetUserRole(ctx, role)
 }
 
 type AuthService interface {
