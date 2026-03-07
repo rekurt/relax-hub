@@ -225,22 +225,11 @@ func NewRouter(p RouterParams) http.Handler {
 		})
 	})
 
-	// Mount GoAdmin panel routes when enabled
+	// Pass mux reference to GoAdmin for deferred mounting in OnStart lifecycle.
+	// GoAdmin's Engine.Use() requires AddConfig to be called first (which happens in OnStart),
+	// so we cannot mount GoAdmin routes here during the fx Provide phase.
 	if p.GoAdmin != nil {
-		if err := p.GoAdmin.Engine.Use(r); err != nil {
-			p.Log.Error("Failed to mount GoAdmin engine", "error", err)
-		} else {
-			p.Log.Info("GoAdmin panel mounted", "prefix", p.GoAdmin.Config.UrlPrefix)
-		}
-
-		// Mount custom admin pages router with auth
-		pagesPrefix := p.GoAdmin.Config.UrlPrefix + "/pages"
-		r.Route(pagesPrefix, func(r chi.Router) {
-			r.Use(auth)
-			r.Use(middleware.RequireRole(domain.RoleAdmin))
-			r.Mount("/", p.GoAdmin.PagesRouter)
-		})
-		p.Log.Info("Admin custom pages mounted", "prefix", pagesPrefix)
+		p.GoAdmin.Mux = r
 	}
 
 	return r

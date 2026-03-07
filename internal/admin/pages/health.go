@@ -107,13 +107,17 @@ func (p *PlatformHealthProvider) checkServices(ctx context.Context) []ServiceSta
 	// Redis
 	redisStatus := ServiceStatus{Name: "Redis"}
 	start = time.Now()
-	redisCtx, redisCancel := context.WithTimeout(ctx, 3*time.Second)
-	defer redisCancel()
-	if err := p.redis.Ping(redisCtx).Err(); err != nil {
-		redisStatus.Status = "down"
-		redisStatus.Error = err.Error()
+	if p.redis != nil {
+		redisCtx, redisCancel := context.WithTimeout(ctx, 3*time.Second)
+		defer redisCancel()
+		if err := p.redis.Ping(redisCtx).Err(); err != nil {
+			redisStatus.Status = "down"
+			redisStatus.Error = err.Error()
+		} else {
+			redisStatus.Status = "up"
+		}
 	} else {
-		redisStatus.Status = "up"
+		redisStatus.Status = "unconfigured"
 	}
 	redisStatus.Latency = time.Since(start)
 	services = append(services, redisStatus)
