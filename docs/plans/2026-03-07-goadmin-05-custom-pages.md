@@ -71,11 +71,11 @@ Custom GoAdmin pages beyond CRUD tables: admin dashboard with KPIs, review moder
 - Create: `internal/admin/pages/health.go`
 - Create: `internal/admin/pages/templates/health.tmpl`
 
-- [ ] Service status: PostgreSQL connection, Redis connection, S3 storage
-- [ ] System metrics: active WebSocket connections, notification queue size
-- [ ] Subscription health: expiring subscriptions this week
-- [ ] Moderation backlog: reviews waiting > 24h, > 48h, > 72h
-- [ ] Auto-refresh every 30 seconds
+- [x] Service status: PostgreSQL connection, Redis connection, S3 storage
+- [x] System metrics: active WebSocket connections, notification queue size
+- [x] Subscription health: expiring subscriptions this week
+- [x] Moderation backlog: reviews waiting > 24h, > 48h, > 72h
+- [x] Auto-refresh every 30 seconds
 
 ### Task 5: Register Custom Pages and Menu
 
