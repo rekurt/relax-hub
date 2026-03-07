@@ -484,6 +484,11 @@ func (h *ModerationHandler) HandleBatchApprove(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	if len(ids) == 0 {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "no review IDs provided"})
+		return
+	}
+
 	if len(ids) > 100 {
 		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "batch size exceeds limit of 100"})
 		return
@@ -505,6 +510,11 @@ func (h *ModerationHandler) HandleBatchReject(w http.ResponseWriter, r *http.Req
 	ids, err := parseUUIDs(req.IDs)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid review IDs"})
+		return
+	}
+
+	if len(ids) == 0 {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "no review IDs provided"})
 		return
 	}
 

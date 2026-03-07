@@ -104,8 +104,8 @@
 
     <!-- Quick Actions -->
     <div class="actions">
-        <a href="{{.AdminPrefix}}/info/bathhouses?__goadmin_edit_pk=&status=pending" class="btn warn">Модерация бань ({{.Status.PendingBathhouses}})</a>
-        <a href="{{.AdminPrefix}}/info/reviews?__goadmin_edit_pk=&status=pending" class="btn warn">Модерация отзывов ({{.Status.PendingReviews}})</a>
+        <span class="btn warn" style="cursor:default;">Ожидают модерации: бани ({{.Status.PendingBathhouses}})</span>
+        <a href="{{.AdminPrefix}}/pages/moderation" class="btn warn">Модерация отзывов ({{.Status.PendingReviews}})</a>
     </div>
 
     <!-- Recent Activity -->
