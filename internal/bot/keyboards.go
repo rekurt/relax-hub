@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
@@ -35,9 +36,11 @@ func shortID(id uuid.UUID) string {
 func buildSearchResultsKeyboard(items []domain.Bathhouse, citySlug string, page, totalPages int) tgbotapi.InlineKeyboardMarkup {
 	// Truncate citySlug to fit within Telegram's 64-byte callback data limit
 	// Format: "s:<slug>:<page>" - reserve 10 bytes for prefix, separator, and page number
+	// Use rune-aware truncation to avoid splitting multi-byte UTF-8 characters (e.g. Cyrillic)
 	const maxSlugLen = 54
-	if len(citySlug) > maxSlugLen {
-		citySlug = citySlug[:maxSlugLen]
+	for len(citySlug) > maxSlugLen {
+		_, size := utf8.DecodeLastRuneInString(citySlug)
+		citySlug = citySlug[:len(citySlug)-size]
 	}
 
 	var rows [][]tgbotapi.InlineKeyboardButton
@@ -75,6 +78,12 @@ func buildBathhouseDetailKeyboard(bh *domain.Bathhouse) tgbotapi.InlineKeyboardM
 	)
 }
 
+// Russian day-of-week abbreviations
+var ruDayNames = map[time.Weekday]string{
+	time.Monday: "Пн", time.Tuesday: "Вт", time.Wednesday: "Ср",
+	time.Thursday: "Чт", time.Friday: "Пт", time.Saturday: "Сб", time.Sunday: "Вс",
+}
+
 // buildDatePickerKeyboard builds keyboard for date selection (next 7 days)
 func buildDatePickerKeyboard() tgbotapi.InlineKeyboardMarkup {
 	var rows [][]tgbotapi.InlineKeyboardButton
@@ -82,7 +91,7 @@ func buildDatePickerKeyboard() tgbotapi.InlineKeyboardMarkup {
 
 	for i := 0; i < 7; i++ {
 		date := now.AddDate(0, 0, i)
-		label := date.Format("02.01 (Mon)")
+		label := fmt.Sprintf("%s (%s)", date.Format("02.01"), ruDayNames[date.Weekday()])
 		data := fmt.Sprintf("%s:%s", cbDate, date.Format("20060102"))
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData(label, data),
@@ -266,7 +275,9 @@ func formatBathhouseDetail(bh *domain.Bathhouse) string {
 	}
 
 	text := fmt.Sprintf("*%s*\n\n", escapeMD(bh.Name))
-	text += fmt.Sprintf("\U0001f4cd %s\n", escapeMD(bh.Address))
+	if bh.Address != "" {
+		text += fmt.Sprintf("\U0001f4cd %s\n", escapeMD(bh.Address))
+	}
 	text += fmt.Sprintf("\U0001f4b0 %s \u20bd/ч\n", escapeMD(fmt.Sprintf("%.0f", priceRub)))
 	text += fmt.Sprintf("\u2b50 %s \\(%d отзывов\\)\n", escapeMD(fmt.Sprintf("%.1f", bh.Rating)), bh.ReviewCount)
 	text += fmt.Sprintf("\U0001f465 до %d гостей\n", bh.MaxGuests)

@@ -193,6 +193,7 @@ func (b *Bot) startWebhook(ctx context.Context) error {
 			return
 		}
 
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20) // 1 MB limit
 		var update tgbotapi.Update
 		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
 			b.logger.Error("failed to decode webhook update", "error", err)
@@ -603,7 +604,7 @@ func (b *Bot) doSearch(ctx context.Context, chatID int64, query string, page int
 		b.cacheID(shortID(bh.ID), bh.ID)
 	}
 
-	slug := strings.ToLower(query)
+	slug := strings.ReplaceAll(strings.ToLower(query), ":", "")
 	kb := buildSearchResultsKeyboard(result.Items, slug, page, result.TotalPages)
 	text := fmt.Sprintf("Найдено %d бань:", result.TotalCount)
 	b.sendMessageWithKeyboard(chatID, escapeMD(text), kb)
