@@ -110,6 +110,12 @@ func (h *AnalyticsHandler) GetOwnerDailyStats(w http.ResponseWriter, r *http.Req
 func (h *AnalyticsHandler) GetAdminDashboard(w http.ResponseWriter, r *http.Request) {
 	userRole := middleware.GetUserRole(r.Context())
 
+	// RBAC check: only admins can view platform analytics
+	if userRole != domain.RoleAdmin {
+		writeError(w, http.StatusForbidden, "forbidden", "admin role required")
+		return
+	}
+
 	periodStr := r.URL.Query().Get("period")
 	if periodStr == "" {
 		periodStr = "30d" // default to 30 days
@@ -133,6 +139,14 @@ func (h *AnalyticsHandler) GetAdminDashboard(w http.ResponseWriter, r *http.Requ
 // GetTopBathhouses returns top bathhouses ranked by a metric
 // GET /api/v1/admin/analytics/top?metric=bookings&limit=10
 func (h *AnalyticsHandler) GetTopBathhouses(w http.ResponseWriter, r *http.Request) {
+	userRole := middleware.GetUserRole(r.Context())
+
+	// RBAC check: only admins can view platform analytics
+	if userRole != domain.RoleAdmin {
+		writeError(w, http.StatusForbidden, "forbidden", "admin role required")
+		return
+	}
+
 	metricStr := r.URL.Query().Get("metric")
 	if metricStr == "" {
 		metricStr = "bookings" // default metric
@@ -152,17 +166,11 @@ func (h *AnalyticsHandler) GetTopBathhouses(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	// Get the default 30-day period for top bathhouses
-	dashboard, err := h.analyticsService.GetAdminDashboard(r.Context(), domain.RoleAdmin, domain.PeriodMonth)
+	// Get top bathhouses for the specified metric
+	topBathhouses, err := h.analyticsService.GetTopBathhousesByMetric(r.Context(), userRole, metric, int64(limit))
 	if err != nil {
 		handleServiceError(w, err)
 		return
-	}
-
-	// Return top bathhouses, respecting the limit
-	topBathhouses := dashboard.TopBathhouses
-	if len(topBathhouses) > limit {
-		topBathhouses = topBathhouses[:limit]
 	}
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{

@@ -36,6 +36,10 @@ func (m *MockAnalyticsService) GetAdminDashboard(ctx context.Context, userRole d
 	return nil, nil
 }
 
+func (m *MockAnalyticsService) GetTopBathhousesByMetric(ctx context.Context, userRole domain.UserRole, metric domain.TopMetric, limit int64) ([]service.TopBathhouseInfo, error) {
+	return nil, nil
+}
+
 func (m *MockAnalyticsService) AggregateDaily(ctx context.Context) error {
 	if m.AggregateDailyFunc != nil {
 		return m.AggregateDailyFunc(ctx)

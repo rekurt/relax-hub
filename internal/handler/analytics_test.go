@@ -16,11 +16,12 @@ import (
 )
 
 type mockAnalyticsService struct {
-	recordViewFn         func(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error
-	getOwnerDashboardFn  func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*service.OwnerDashboard, error)
-	getDailyStatsFn      func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error)
-	getAdminDashboardFn  func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.AdminDashboard, error)
-	aggregateDailyFn     func(ctx context.Context) error
+	recordViewFn           func(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error
+	getOwnerDashboardFn    func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*service.OwnerDashboard, error)
+	getDailyStatsFn        func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error)
+	getAdminDashboardFn    func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.AdminDashboard, error)
+	getTopBathhousesByMetricFn func(ctx context.Context, userRole domain.UserRole, metric domain.TopMetric, limit int64) ([]service.TopBathhouseInfo, error)
+	aggregateDailyFn       func(ctx context.Context) error
 }
 
 func (m *mockAnalyticsService) RecordView(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error {
@@ -49,6 +50,13 @@ func (m *mockAnalyticsService) GetAdminDashboard(ctx context.Context, userRole d
 		return m.getAdminDashboardFn(ctx, userRole, period)
 	}
 	return &service.AdminDashboard{}, nil
+}
+
+func (m *mockAnalyticsService) GetTopBathhousesByMetric(ctx context.Context, userRole domain.UserRole, metric domain.TopMetric, limit int64) ([]service.TopBathhouseInfo, error) {
+	if m.getTopBathhousesByMetricFn != nil {
+		return m.getTopBathhousesByMetricFn(ctx, userRole, metric, limit)
+	}
+	return []service.TopBathhouseInfo{}, nil
 }
 
 func (m *mockAnalyticsService) AggregateDaily(ctx context.Context) error {

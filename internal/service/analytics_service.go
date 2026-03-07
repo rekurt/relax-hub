@@ -75,6 +75,7 @@ type AnalyticsService interface {
 	GetOwnerDashboard(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*OwnerDashboard, error)
 	GetDailyStats(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error)
 	GetAdminDashboard(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*AdminDashboard, error)
+	GetTopBathhousesByMetric(ctx context.Context, userRole domain.UserRole, metric domain.TopMetric, limit int64) ([]TopBathhouseInfo, error)
 	AggregateDaily(ctx context.Context) error
 }
 
@@ -344,6 +345,23 @@ func (s *analyticsService) GetAdminDashboard(ctx context.Context, userRole domai
 		}
 	}
 
+	// Get user and bathhouse counts
+	allUsers, err := s.userRepo.List(ctx, 1, 1)
+	if err == nil && allUsers != nil {
+		dashboard.TotalUsers = int64(allUsers.TotalCount)
+	}
+
+	allBathhouses, err := s.bhRepo.List(ctx, domain.BathhouseFilter{Page: 1, PageSize: 1})
+	if err == nil && allBathhouses != nil {
+		dashboard.TotalBathhouses = int64(allBathhouses.TotalCount)
+	}
+
+	// Get user activity metrics
+	dashboard.DAU, dashboard.WAU, dashboard.MAU = s.calculateUserActivity(ctx, from, to)
+
+	// Get new users for the period
+	dashboard.NewUsers = s.countNewUsers(ctx, from, to)
+
 	// Cache the result
 	if data, err := json.Marshal(dashboard); err == nil {
 		if err := s.redis.Set(ctx, cacheKey, data, cacheTTL).Err(); err != nil {
@@ -393,4 +411,123 @@ func (s *analyticsService) AggregateDaily(ctx context.Context) error {
 
 	s.logger.Info("Daily analytics aggregation completed", "date", dayDate)
 	return nil
+}
+
+// GetTopBathhousesByMetric returns top bathhouses ranked by the specified metric
+func (s *analyticsService) GetTopBathhousesByMetric(ctx context.Context, userRole domain.UserRole, metric domain.TopMetric, limit int64) ([]TopBathhouseInfo, error) {
+	// RBAC check
+	if userRole != domain.RoleAdmin {
+		return nil, domain.ErrForbidden
+	}
+
+	topIDs, err := s.analyticsRepo.GetTopBathhouses(ctx, metric, int(limit))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get top bathhouses: %w", err)
+	}
+
+	topBathhouses := make([]TopBathhouseInfo, 0, len(topIDs))
+	now := time.Now()
+	to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999999999, now.Location())
+	from := to.AddDate(0, 0, -30)
+	from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+
+	for _, id := range topIDs {
+		bh, err := s.bhRepo.GetByID(ctx, id)
+		if err != nil {
+			s.logger.Warn("Failed to get bathhouse", "id", id, "error", err)
+			continue
+		}
+
+		bhStats, err := s.analyticsRepo.GetBathhouseStats(ctx, id, from, to)
+		if err != nil {
+			s.logger.Warn("Failed to get bathhouse stats", "id", id, "error", err)
+			continue
+		}
+
+		topBathhouses = append(topBathhouses, TopBathhouseInfo{
+			BathhouseID: id,
+			Name:        bh.Name,
+			Views:       bhStats.Views,
+			Bookings:    bhStats.Bookings,
+			Revenue:     bhStats.Revenue,
+			Rating:      bhStats.AvgRating,
+		})
+	}
+
+	return topBathhouses, nil
+}
+
+// calculateUserActivity returns daily, weekly, and monthly active users
+func (s *analyticsService) calculateUserActivity(ctx context.Context, from, to time.Time) (dau, wau, mau int64) {
+	// Calculate active users from bookings in the period
+	// For simplicity, these metrics are estimated from booking data
+	// In a production system with high volume, these would be pre-calculated during aggregation
+
+	// Get the actual time windows for calculation
+	now := time.Now()
+	yesterday := now.AddDate(0, 0, -1)
+	weekAgo := now.AddDate(0, 0, -7)
+	monthAgo := now.AddDate(0, 0, -30)
+
+	// DAU: distinct users with completed bookings today
+	allBookingsToday, err := s.bookingRepo.ListByBathhouse(ctx, uuid.Nil, 1, 1000000)
+	if err == nil && allBookingsToday != nil {
+		dayStart := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, yesterday.Location())
+		dayEnd := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 23, 59, 59, 999999999, yesterday.Location())
+		distinctUsers := make(map[uuid.UUID]bool)
+		for _, booking := range allBookingsToday.Items {
+		if booking.StartTime.After(dayStart) && booking.StartTime.Before(dayEnd) && booking.Status == domain.BookingCompleted {
+				distinctUsers[booking.UserID] = true
+			}
+		}
+		dau = int64(len(distinctUsers))
+	}
+
+	// WAU: distinct users with completed bookings in last 7 days
+	allBookingsWeek, err := s.bookingRepo.ListByBathhouse(ctx, uuid.Nil, 1, 1000000)
+	if err == nil && allBookingsWeek != nil {
+		distinctUsers := make(map[uuid.UUID]bool)
+		for _, booking := range allBookingsWeek.Items {
+		if booking.StartTime.After(weekAgo) && booking.StartTime.Before(now) && booking.Status == domain.BookingCompleted {
+				distinctUsers[booking.UserID] = true
+			}
+		}
+		wau = int64(len(distinctUsers))
+	}
+
+	// MAU: distinct users with completed bookings in last 30 days
+	allBookingsMonth, err := s.bookingRepo.ListByBathhouse(ctx, uuid.Nil, 1, 1000000)
+	if err == nil && allBookingsMonth != nil {
+		distinctUsers := make(map[uuid.UUID]bool)
+		for _, booking := range allBookingsMonth.Items {
+			if booking.StartTime.After(monthAgo) && booking.StartTime.Before(now) && booking.Status == domain.BookingCompleted {
+				distinctUsers[booking.UserID] = true
+			}
+		}
+		mau = int64(len(distinctUsers))
+	}
+
+	return dau, wau, mau
+}
+
+// countNewUsers returns the count of users created in the given period
+func (s *analyticsService) countNewUsers(ctx context.Context, from, to time.Time) int64 {
+	// Get all users and count those created in the period
+	// This is simplified - in production we'd have a dedicated query for this
+	allUsers, err := s.userRepo.List(ctx, 1, 10000)
+	if err != nil {
+		s.logger.Warn("Failed to count new users", "error", err)
+		return 0
+	}
+	if allUsers == nil {
+		return 0
+	}
+
+	count := int64(0)
+	for _, user := range allUsers.Items {
+		if user.CreatedAt.After(from) && user.CreatedAt.Before(to) {
+			count++
+		}
+	}
+	return count
 }
