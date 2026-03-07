@@ -23,5 +23,6 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewLoyaltyRepository, fx.As(new(repository.LoyaltyRepository))),
 		fx.Annotate(NewConversationRepository, fx.As(new(repository.ConversationRepository))),
 		fx.Annotate(NewMessageRepository, fx.As(new(repository.MessageRepository))),
+		fx.Annotate(NewAnalyticsRepository, fx.As(new(repository.AnalyticsRepository))),
 	),
 )
