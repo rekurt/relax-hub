@@ -47,12 +47,12 @@ Base GoAdmin integration: dependency, config, cobra command, fx module, chi adap
 - Create: `internal/admin/engine.go`
 - Create: `internal/admin/auth.go`
 
-- [ ] Create fx.Module for admin panel
-- [ ] Initialize GoAdmin engine with chi adapter
-- [ ] Configure GoAdmin connection to existing PostgreSQL (reuse BANI_DATABASE_DSN)
-- [ ] Create custom auth adapter that bridges existing JWT auth (domain.UserRole admin) to GoAdmin session
-- [ ] Configure GoAdmin file upload to use existing S3/MinIO storage config
-- [ ] Set Russian language, timezone, logo, mini-logo, footer
+- [x] Create fx.Module for admin panel
+- [x] Initialize GoAdmin engine with chi adapter
+- [x] Configure GoAdmin connection to existing PostgreSQL (reuse BANI_DATABASE_DSN)
+- [x] Create custom auth adapter that bridges existing JWT auth (domain.UserRole admin) to GoAdmin session
+- [x] Configure GoAdmin file upload to use existing S3/MinIO storage config
+- [x] Set Russian language, timezone, logo, mini-logo, footer
 
 ### Task 4: Mount Admin Router
 
