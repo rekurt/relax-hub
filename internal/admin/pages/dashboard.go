@@ -3,6 +3,7 @@ package pages
 import (
 	"context"
 	"embed"
+	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
@@ -18,6 +19,11 @@ var dashboardFS embed.FS
 var dashboardFuncMap = template.FuncMap{
 	"formatRubles": FormatKopecksToRubles,
 	"stars": func(n int) string {
+		if n < 0 {
+			n = 0
+		} else if n > 5 {
+			n = 5
+		}
 		return strings.Repeat("★", n) + strings.Repeat("☆", 5-n)
 	},
 }
@@ -293,48 +299,30 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // FormatKopecksToRubles converts kopecks to rubles string (e.g. 150050 -> "1 500.50").
 func FormatKopecksToRubles(kopecks int64) string {
+	negative := kopecks < 0
+	if negative {
+		kopecks = -kopecks
+	}
+
 	rubles := kopecks / 100
 	kop := kopecks % 100
 
 	// Format with thousands separator.
-	s := ""
-	r := rubles
-	if r == 0 {
-		s = "0"
-	}
-	for r > 0 {
-		if s != "" {
-			s = " " + s
+	s := fmt.Sprintf("%d", rubles)
+	// Insert space separators from right to left.
+	if len(s) > 3 {
+		var parts []string
+		for len(s) > 3 {
+			parts = append([]string{s[len(s)-3:]}, parts...)
+			s = s[:len(s)-3]
 		}
-		if r >= 1000 {
-			chunk := r % 1000
-			if chunk < 10 {
-				s = "00" + intToStr(chunk) + s
-			} else if chunk < 100 {
-				s = "0" + intToStr(chunk) + s
-			} else {
-				s = intToStr(chunk) + s
-			}
-		} else {
-			s = intToStr(r) + s
-		}
-		r /= 1000
+		parts = append([]string{s}, parts...)
+		s = strings.Join(parts, " ")
 	}
 
-	if kop < 10 {
-		return s + ".0" + intToStr(kop)
+	result := fmt.Sprintf("%s.%02d", s, kop)
+	if negative {
+		return "-" + result
 	}
-	return s + "." + intToStr(kop)
-}
-
-func intToStr(n int64) string {
-	if n == 0 {
-		return "0"
-	}
-	s := ""
-	for n > 0 {
-		s = string(rune('0'+n%10)) + s
-		n /= 10
-	}
-	return s
+	return result
 }

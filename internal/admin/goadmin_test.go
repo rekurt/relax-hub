@@ -31,7 +31,10 @@ func testLogger() *logger.Logger {
 func TestBuildGoAdminConfig_Defaults(t *testing.T) {
 	cfg := &appconfig.Config{
 		Admin: appconfig.AdminConfig{
-			Enabled: true,
+			Enabled:  true,
+			Prefix:   "/admin-panel",
+			Language: "ru",
+			Theme:    "adminlte",
 		},
 		Database: appconfig.DatabaseConfig{
 			DSN: "postgres://localhost/test",
@@ -41,19 +44,22 @@ func TestBuildGoAdminConfig_Defaults(t *testing.T) {
 	gaCfg := BuildGoAdminConfig(cfg)
 
 	if gaCfg.Theme != "adminlte" {
-		t.Errorf("expected default theme 'adminlte', got %s", gaCfg.Theme)
+		t.Errorf("expected theme 'adminlte', got %s", gaCfg.Theme)
 	}
 	if gaCfg.UrlPrefix != "/admin-panel" {
-		t.Errorf("expected default prefix '/admin-panel', got %s", gaCfg.UrlPrefix)
+		t.Errorf("expected prefix '/admin-panel', got %s", gaCfg.UrlPrefix)
 	}
 	if gaCfg.Language != "ru" {
-		t.Errorf("expected default language 'ru', got %s", gaCfg.Language)
+		t.Errorf("expected language 'ru', got %s", gaCfg.Language)
 	}
 	if gaCfg.Title != "Бани - Админ-панель" {
 		t.Errorf("expected Russian title, got %s", gaCfg.Title)
 	}
 	if gaCfg.SessionLifeTime != 7200 {
 		t.Errorf("expected session lifetime 7200, got %d", gaCfg.SessionLifeTime)
+	}
+	if gaCfg.Debug {
+		t.Error("expected Debug to be false")
 	}
 }
 
@@ -126,8 +132,9 @@ func TestBuildGoAdminConfig_HidesInternalUI(t *testing.T) {
 	}
 }
 
-func TestNewGoAdmin(t *testing.T) {
+func TestBuildGoAdminConfig_EnvProduction(t *testing.T) {
 	cfg := &appconfig.Config{
+		Environment: "production",
 		Admin: appconfig.AdminConfig{
 			Enabled:  true,
 			Prefix:   "/admin-panel",
@@ -138,17 +145,30 @@ func TestNewGoAdmin(t *testing.T) {
 			DSN: "postgres://localhost/test",
 		},
 	}
-	log := testLogger()
 
-	ga := NewGoAdmin(cfg, log)
-	if ga == nil {
-		t.Fatal("expected non-nil GoAdmin")
+	gaCfg := BuildGoAdminConfig(cfg)
+	if gaCfg.Env != gaconfig.EnvProd {
+		t.Errorf("expected EnvProd for production environment, got %s", gaCfg.Env)
 	}
-	if ga.Engine == nil {
-		t.Fatal("expected non-nil engine")
+}
+
+func TestBuildGoAdminConfig_EnvDev(t *testing.T) {
+	cfg := &appconfig.Config{
+		Environment: "dev",
+		Admin: appconfig.AdminConfig{
+			Enabled:  true,
+			Prefix:   "/admin-panel",
+			Language: "ru",
+			Theme:    "adminlte",
+		},
+		Database: appconfig.DatabaseConfig{
+			DSN: "postgres://localhost/test",
+		},
 	}
-	if ga.Config == nil {
-		t.Fatal("expected non-nil config")
+
+	gaCfg := BuildGoAdminConfig(cfg)
+	if gaCfg.Env != gaconfig.EnvLocal {
+		t.Errorf("expected EnvLocal for dev environment, got %s", gaCfg.Env)
 	}
 }
 

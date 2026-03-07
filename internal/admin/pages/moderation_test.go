@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -177,7 +178,7 @@ func TestModerationHandler_RendersReviews(t *testing.T) {
 		"Фейковый отзыв",
 	}
 	for _, c := range checks {
-		if !containsStr(body, c) {
+		if !strings.Contains(body, c) {
 			t.Errorf("body missing expected value %q", c)
 		}
 	}
@@ -193,7 +194,7 @@ func TestModerationHandler_RendersStats(t *testing.T) {
 
 	body := rec.Body.String()
 	// Stats: PendingTotal=5, ApprovedToday=3, RejectedToday=1, PendingWeek=12
-	if !containsStr(body, "warn") {
+	if !strings.Contains(body, "warn") {
 		t.Error("expected 'warn' class for non-zero pending counts")
 	}
 }
@@ -207,10 +208,10 @@ func TestModerationHandler_RendersImages(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	body := rec.Body.String()
-	if !containsStr(body, "/img/1.jpg") {
+	if !strings.Contains(body, "/img/1.jpg") {
 		t.Error("body missing image URL /img/1.jpg")
 	}
-	if !containsStr(body, "/img/2.jpg") {
+	if !strings.Contains(body, "/img/2.jpg") {
 		t.Error("body missing image URL /img/2.jpg")
 	}
 }
@@ -419,7 +420,7 @@ func TestModerationHandler_EmptyState(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	body := rec.Body.String()
-	if !containsStr(body, "Нет отзывов для отображения") {
+	if !strings.Contains(body, "Нет отзывов для отображения") {
 		t.Error("expected empty state message")
 	}
 }

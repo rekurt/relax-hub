@@ -227,15 +227,11 @@
     {{if gt .TotalPages 1}}
     <div class="pagination">
         {{if gt .Page 1}}
-        <a href="?page={{.Page}}&status={{.Filter.Status}}&bathhouse_id={{.Filter.BathhouseID}}&min_rating={{.Filter.MinRating}}&max_rating={{.Filter.MaxRating}}&from_date={{.Filter.FromDate}}&to_date={{.Filter.ToDate}}">&#8592;</a>
+        <a href="?page={{subtract .Page 1}}&status={{.Filter.Status}}&bathhouse_id={{.Filter.BathhouseID}}&min_rating={{.Filter.MinRating}}&max_rating={{.Filter.MaxRating}}&from_date={{.Filter.FromDate}}&to_date={{.Filter.ToDate}}">&#8592;</a>
         {{end}}
-        {{range $i := .TotalPages}}
-        {{end}}
-        {{if gt .Page 0}}
-        <span class="active">{{.Page}}</span>
-        {{end}}
+        <span class="active">{{.Page}} / {{.TotalPages}}</span>
         {{if lt .Page .TotalPages}}
-        <a href="?page={{.Page}}&status={{.Filter.Status}}&bathhouse_id={{.Filter.BathhouseID}}&min_rating={{.Filter.MinRating}}&max_rating={{.Filter.MaxRating}}&from_date={{.Filter.FromDate}}&to_date={{.Filter.ToDate}}">&#8594;</a>
+        <a href="?page={{add .Page 1}}&status={{.Filter.Status}}&bathhouse_id={{.Filter.BathhouseID}}&min_rating={{.Filter.MinRating}}&max_rating={{.Filter.MaxRating}}&from_date={{.Filter.FromDate}}&to_date={{.Filter.ToDate}}">&#8594;</a>
         {{end}}
     </div>
     {{end}}

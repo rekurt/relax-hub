@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,9 +20,16 @@ var moderationFS embed.FS
 
 var moderationFuncMap = template.FuncMap{
 	"stars": func(n int) string {
+		if n < 0 {
+			n = 0
+		} else if n > 5 {
+			n = 5
+		}
 		return strings.Repeat("★", n) + strings.Repeat("☆", 5-n)
 	},
-	"join": strings.Join,
+	"join":     strings.Join,
+	"add":      func(a, b int) int { return a + b },
+	"subtract": func(a, b int) int { return a - b },
 }
 
 var moderationTmpl = template.Must(
@@ -181,37 +189,37 @@ func (p *PostgresModerationProvider) loadReviews(ctx context.Context, data *Mode
 		status = "pending"
 	}
 	if status != "all" {
-		where = append(where, "r.status = $"+intToStr(int64(argIdx)))
+		where = append(where, "r.status = $"+strconv.Itoa(argIdx))
 		args = append(args, status)
 		argIdx++
 	}
 
 	if data.Filter.BathhouseID != "" {
-		where = append(where, "r.bathhouse_id = $"+intToStr(int64(argIdx)))
+		where = append(where, "r.bathhouse_id = $"+strconv.Itoa(argIdx))
 		args = append(args, data.Filter.BathhouseID)
 		argIdx++
 	}
 
 	if data.Filter.MinRating != "" {
-		where = append(where, "r.rating >= $"+intToStr(int64(argIdx)))
+		where = append(where, "r.rating >= $"+strconv.Itoa(argIdx))
 		args = append(args, data.Filter.MinRating)
 		argIdx++
 	}
 
 	if data.Filter.MaxRating != "" {
-		where = append(where, "r.rating <= $"+intToStr(int64(argIdx)))
+		where = append(where, "r.rating <= $"+strconv.Itoa(argIdx))
 		args = append(args, data.Filter.MaxRating)
 		argIdx++
 	}
 
 	if data.Filter.FromDate != "" {
-		where = append(where, "r.created_at >= $"+intToStr(int64(argIdx)))
+		where = append(where, "r.created_at >= $"+strconv.Itoa(argIdx))
 		args = append(args, data.Filter.FromDate)
 		argIdx++
 	}
 
 	if data.Filter.ToDate != "" {
-		where = append(where, "r.created_at <= $"+intToStr(int64(argIdx))+"::date + interval '1 day'")
+		where = append(where, "r.created_at <= $"+strconv.Itoa(argIdx)+"::date + interval '1 day'")
 		args = append(args, data.Filter.ToDate)
 		argIdx++
 	}
@@ -247,7 +255,7 @@ func (p *PostgresModerationProvider) loadReviews(ctx context.Context, data *Mode
 		JOIN bathhouses bh ON bh.id = r.bathhouse_id
 		WHERE ` + whereClause + `
 		ORDER BY r.created_at DESC
-		LIMIT $` + intToStr(int64(argIdx)) + ` OFFSET $` + intToStr(int64(argIdx+1))
+		LIMIT $` + strconv.Itoa(argIdx) + ` OFFSET $` + strconv.Itoa(argIdx+1)
 
 	args = append(args, data.PageSize, offset)
 
@@ -263,7 +271,7 @@ func (p *PostgresModerationProvider) loadReviews(ctx context.Context, data *Mode
 		if err := rows.Scan(&mr.ID, &mr.UserName, &mr.BathhouseID, &mr.BathhouseName, &mr.Rating, &mr.Text, &mr.Status, &mr.RejectionReasons, &mr.Images, &mr.CreatedAt); err != nil {
 			return err
 		}
-		*&data.Reviews = append(data.Reviews, mr)
+		data.Reviews = append(data.Reviews, mr)
 	}
 	return rows.Err()
 }
@@ -332,13 +340,7 @@ func (h *ModerationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	page := 1
 	if p := q.Get("page"); p != "" {
-		parsed := 0
-		for _, c := range p {
-			if c >= '0' && c <= '9' {
-				parsed = parsed*10 + int(c-'0')
-			}
-		}
-		if parsed > 0 {
+		if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
 			page = parsed
 		}
 	}
@@ -403,8 +405,11 @@ func (h *ModerationHandler) HandleReject(w http.ResponseWriter, r *http.Request)
 	}
 
 	var req approveRejectRequest
-	if r.Body != nil {
-		_ = json.NewDecoder(r.Body).Decode(&req)
+	if r.Body != nil && r.ContentLength != 0 {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid request body"})
+			return
+		}
 	}
 
 	if err := h.provider.RejectReview(r.Context(), id, req.Reasons); err != nil {

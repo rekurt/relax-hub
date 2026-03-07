@@ -126,7 +126,7 @@ Built on GoAdmin framework, enabled via `--with-admin` flag on the serve command
 
 - `internal/admin/` — GoAdmin engine, JWT auth bridge, fx module
 - `internal/admin/pages/` — custom pages: dashboard, moderation, analytics, health
-- Config: `BANI_ADMIN_DB_DSN` (defaults to main DSN), `BANI_ADMIN_PREFIX` (default `/admin`)
+- Config: `BANI_ADMIN_ENABLED` (default `false`), `BANI_ADMIN_PREFIX` (default `/admin-panel`), `BANI_ADMIN_LANGUAGE` (default `ru`), `BANI_ADMIN_THEME` (default `adminlte`)
 
 ```bash
 go run ./cmd/server serve --with-admin   # start server with admin panel
@@ -136,7 +136,7 @@ Custom pages:
 - **Dashboard**: KPI cards (users, bathhouses, bookings, revenue), status cards, recent activity feed
 - **Moderation Center**: review queue with approve/reject actions, batch operations, filtering
 - **Analytics**: Chart.js charts for bookings, revenue, users, top bathhouses, with date range and city filters
-- **Health Monitor**: service status checks (PostgreSQL, Redis, S3), moderation backlog, auto-refresh
+- **Health Monitor**: service status checks (PostgreSQL, Redis), moderation backlog, auto-refresh
 
 Auth bridges JWT tokens from the main app to GoAdmin sessions. Menu configured in `engine.go`.
 

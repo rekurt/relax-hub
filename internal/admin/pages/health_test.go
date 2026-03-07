@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -121,7 +122,7 @@ func TestHealthHandler_RendersServiceStatus(t *testing.T) {
 		"42", // WebSocket clients
 	}
 	for _, c := range checks {
-		if !containsStr(body, c) {
+		if !strings.Contains(body, c) {
 			t.Errorf("body missing expected value %q", c)
 		}
 	}
@@ -144,10 +145,10 @@ func TestHealthHandler_RendersDownServices(t *testing.T) {
 	body := rec.Body.String()
 	checks := []string{
 		"Недоступен",
-		"connection refused",
+		"Сервис недоступен",
 	}
 	for _, c := range checks {
-		if !containsStr(body, c) {
+		if !strings.Contains(body, c) {
 			t.Errorf("body missing expected value %q", c)
 		}
 	}
@@ -164,10 +165,10 @@ func TestHealthHandler_RendersModerationBacklog(t *testing.T) {
 
 	body := rec.Body.String()
 	// Backlog values should be present
-	if !containsStr(body, "warn") {
+	if !strings.Contains(body, "warn") {
 		t.Error("expected 'warn' class for non-zero >24h backlog")
 	}
-	if !containsStr(body, "danger") {
+	if !strings.Contains(body, "danger") {
 		t.Error("expected 'danger' class for non-zero >48h or >72h backlog")
 	}
 }
@@ -182,10 +183,10 @@ func TestHealthHandler_RendersAutoRefresh(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	body := rec.Body.String()
-	if !containsStr(body, "countdown") {
+	if !strings.Contains(body, "countdown") {
 		t.Error("expected auto-refresh countdown element")
 	}
-	if !containsStr(body, "location.reload") {
+	if !strings.Contains(body, "location.reload") {
 		t.Error("expected auto-refresh reload script")
 	}
 }
@@ -210,7 +211,7 @@ func TestHealthHandler_ZeroBacklogShowsOk(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	body := rec.Body.String()
-	if !containsStr(body, "ok") {
+	if !strings.Contains(body, "ok") {
 		t.Error("expected 'ok' class for zero backlog counts")
 	}
 }

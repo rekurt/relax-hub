@@ -51,6 +51,8 @@ func NewAuthProcessor(authService middleware.AuthService, log *logger.Logger) fu
 			return empty, false, "access denied: admin role required"
 		}
 
+		// TODO: Look up GoAdmin user ID from goadmin_users by username (email)
+		// to properly distinguish admin users in GoAdmin's audit log.
 		user := models.UserModel{
 			Id:       1,
 			UserName: userID.String(),

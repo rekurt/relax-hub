@@ -17,23 +17,13 @@ import (
 // This is separated from engine initialization because GoAdmin's AddConfig
 // immediately connects to the database, so it must be deferred to fx lifecycle.
 func BuildGoAdminConfig(cfg *appconfig.Config) *gaconfig.Config {
-	theme := cfg.Admin.Theme
-	if theme == "" {
-		theme = "adminlte"
-	}
-
-	prefix := cfg.Admin.Prefix
-	if prefix == "" {
-		prefix = "/admin-panel"
-	}
-
-	language := cfg.Admin.Language
-	if language == "" {
-		language = "ru"
+	env := gaconfig.EnvLocal
+	if cfg.Environment == "production" {
+		env = gaconfig.EnvProd
 	}
 
 	gaCfg := &gaconfig.Config{
-		Env: gaconfig.EnvLocal,
+		Env: env,
 		Databases: gaconfig.DatabaseList{
 			"default": {
 				Driver:          gaconfig.DriverPostgresql,
@@ -43,9 +33,9 @@ func BuildGoAdminConfig(cfg *appconfig.Config) *gaconfig.Config {
 				ConnMaxLifetime: time.Hour,
 			},
 		},
-		UrlPrefix: prefix,
-		Theme:     theme,
-		Language:  language,
+		UrlPrefix: cfg.Admin.Prefix,
+		Theme:     cfg.Admin.Theme,
+		Language:  cfg.Admin.Language,
 		Store: gaconfig.Store{
 			Path:   "./uploads",
 			Prefix: "uploads",
@@ -54,7 +44,7 @@ func BuildGoAdminConfig(cfg *appconfig.Config) *gaconfig.Config {
 		Logo:            template.HTML(`<b>Бани</b>`),
 		MiniLogo:        template.HTML(`<b>Б</b>`),
 		IndexUrl:        "/pages/",
-		Debug:           true,
+		Debug:           false,
 		SessionLifeTime: 7200,
 
 		HideConfigCenterEntrance:      true,
@@ -62,12 +52,6 @@ func BuildGoAdminConfig(cfg *appconfig.Config) *gaconfig.Config {
 		HideAppInfoEntrance:           true,
 		HidePluginEntrance:            true,
 		HideVisitorUserCenterEntrance: true,
-	}
-
-	if cfg.Storage.Endpoint != "" {
-		gaCfg.FileUploadEngine = gaconfig.FileUploadEngine{
-			Name: "local",
-		}
 	}
 
 	return gaCfg

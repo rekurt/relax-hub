@@ -5,6 +5,7 @@ import (
 	"embed"
 	"html/template"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -17,7 +18,7 @@ var analyticsFS embed.FS
 var analyticsFuncMap = template.FuncMap{
 	"formatRubles": FormatKopecksToRubles,
 	"itoa": func(n int64) string {
-		return intToStr(n)
+		return strconv.FormatInt(n, 10)
 	},
 }
 
@@ -161,27 +162,20 @@ func (p *PostgresAnalyticsProvider) loadCities(ctx context.Context, cities *[]Ci
 	return rows.Err()
 }
 
-func (p *PostgresAnalyticsProvider) cityJoin(cityID string) (string, []interface{}, int) {
-	if cityID != "" {
-		return " JOIN bathhouses bh ON bh.id = b.bathhouse_id", []interface{}{cityID}, 1
-	}
-	return "", nil, 0
-}
-
 func (p *PostgresAnalyticsProvider) loadBookingsPerDay(ctx context.Context, from, to time.Time, cityID string, points *[]ChartPoint) error {
-	join, extraArgs, extraIdx := p.cityJoin(cityID)
-	cityWhere := ""
+	cityFilter := ""
+	args := []interface{}{from, to}
 	if cityID != "" {
-		cityWhere = " AND bh.city_id = $" + intToStr(int64(extraIdx+2))
+		cityFilter = " AND b.bathhouse_id IN (SELECT id FROM bathhouses WHERE city_id = $3)"
+		args = append(args, cityID)
 	}
 
 	query := `
 		SELECT d::date AS day, COUNT(b.id)
 		FROM generate_series($1::date, $2::date, '1 day') d
-		LEFT JOIN bookings b` + join + ` ON b.created_at::date = d::date` + cityWhere + `
+		LEFT JOIN bookings b ON b.created_at::date = d::date` + cityFilter + `
 		GROUP BY day ORDER BY day`
 
-	args := append([]interface{}{from, to}, extraArgs...)
 	rows, err := p.pool.Query(ctx, query, args...)
 	if err != nil {
 		p.log.Error("analytics: bookings per day", "error", err)
@@ -202,19 +196,19 @@ func (p *PostgresAnalyticsProvider) loadBookingsPerDay(ctx context.Context, from
 }
 
 func (p *PostgresAnalyticsProvider) loadRevenuePerDay(ctx context.Context, from, to time.Time, cityID string, points *[]ChartPoint) error {
-	join, extraArgs, extraIdx := p.cityJoin(cityID)
-	cityWhere := ""
+	cityFilter := ""
+	args := []interface{}{from, to}
 	if cityID != "" {
-		cityWhere = " AND bh.city_id = $" + intToStr(int64(extraIdx+2))
+		cityFilter = " AND b.bathhouse_id IN (SELECT id FROM bathhouses WHERE city_id = $3)"
+		args = append(args, cityID)
 	}
 
 	query := `
 		SELECT d::date AS day, COALESCE(SUM(b.total_price), 0)
 		FROM generate_series($1::date, $2::date, '1 day') d
-		LEFT JOIN bookings b` + join + ` ON b.created_at::date = d::date` + cityWhere + `
+		LEFT JOIN bookings b ON b.created_at::date = d::date` + cityFilter + `
 		GROUP BY day ORDER BY day`
 
-	args := append([]interface{}{from, to}, extraArgs...)
 	rows, err := p.pool.Query(ctx, query, args...)
 	if err != nil {
 		p.log.Error("analytics: revenue per day", "error", err)

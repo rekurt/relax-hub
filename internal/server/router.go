@@ -232,6 +232,11 @@ func NewRouter(p RouterParams) http.Handler {
 		} else {
 			p.Log.Info("GoAdmin panel mounted", "prefix", p.GoAdmin.Config.UrlPrefix)
 		}
+
+		// Mount custom admin pages router
+		pagesPrefix := p.GoAdmin.Config.UrlPrefix + "/pages"
+		r.Mount(pagesPrefix, p.GoAdmin.PagesRouter)
+		p.Log.Info("Admin custom pages mounted", "prefix", pagesPrefix)
 	}
 
 	return r

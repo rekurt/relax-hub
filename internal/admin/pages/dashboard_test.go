@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -171,7 +172,7 @@ func TestDashboardHandler_RendersKPIs(t *testing.T) {
 		"15 000.00", // revenue today (1500000 kopecks = 15000 rubles)
 	}
 	for _, c := range checks {
-		if !containsStr(body, c) {
+		if !strings.Contains(body, c) {
 			t.Errorf("body missing expected value %q", c)
 		}
 	}
@@ -187,7 +188,7 @@ func TestDashboardHandler_RendersStatusCards(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	body := rec.Body.String()
-	if !containsStr(body, "warn") {
+	if !strings.Contains(body, "warn") {
 		t.Error("expected 'warn' class for non-zero pending counts")
 	}
 }
@@ -210,7 +211,7 @@ func TestDashboardHandler_RendersActivityFeed(t *testing.T) {
 		"new@example.com",
 	}
 	for _, c := range checks {
-		if !containsStr(body, c) {
+		if !strings.Contains(body, c) {
 			t.Errorf("body missing expected value %q", c)
 		}
 	}
@@ -230,6 +231,9 @@ func TestFormatKopecksToRubles(t *testing.T) {
 		{100000000, "1 000 000.00"},
 		{50, "0.50"},
 		{1, "0.01"},
+		{-15000, "-150.00"},
+		{-1500050, "-15 000.50"},
+		{-1, "-0.01"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.want, func(t *testing.T) {
@@ -239,17 +243,4 @@ func TestFormatKopecksToRubles(t *testing.T) {
 			}
 		})
 	}
-}
-
-func containsStr(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsSubstring(s, substr))
-}
-
-func containsSubstring(s, sub string) bool {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
 }

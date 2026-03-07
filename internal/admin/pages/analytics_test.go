@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -150,7 +151,7 @@ func TestAnalyticsHandler_RendersChartData(t *testing.T) {
 		"reviewRatingChart",
 	}
 	for _, c := range checks {
-		if !containsStr(body, c) {
+		if !strings.Contains(body, c) {
 			t.Errorf("body missing expected value %q", c)
 		}
 	}
@@ -172,7 +173,7 @@ func TestAnalyticsHandler_RendersCities(t *testing.T) {
 		"Все города",
 	}
 	for _, c := range checks {
-		if !containsStr(body, c) {
+		if !strings.Contains(body, c) {
 			t.Errorf("body missing expected value %q", c)
 		}
 	}
@@ -197,10 +198,10 @@ func TestAnalyticsHandler_ParsesQueryParams(t *testing.T) {
 	}
 
 	body := rec.Body.String()
-	if !containsStr(body, "2026-03-01") {
+	if !strings.Contains(body, "2026-03-01") {
 		t.Error("body missing date_from value")
 	}
-	if !containsStr(body, "2026-03-07") {
+	if !strings.Contains(body, "2026-03-07") {
 		t.Error("body missing date_to value")
 	}
 }
@@ -223,7 +224,7 @@ func TestAnalyticsHandler_RendersFilterSection(t *testing.T) {
 		"Сброс",
 	}
 	for _, c := range checks {
-		if !containsStr(body, c) {
+		if !strings.Contains(body, c) {
 			t.Errorf("body missing expected value %q", c)
 		}
 	}

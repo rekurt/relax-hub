@@ -59,7 +59,7 @@
             <div class="name">{{.Name}}</div>
             <span class="status-badge {{.Status}}">{{if eq .Status "up"}}Работает{{else}}Недоступен{{end}}</span>
             <div class="latency">Время ответа: {{.Latency}}</div>
-            {{if .Error}}<div class="error-msg">{{.Error}}</div>{{end}}
+            {{if .Error}}<div class="error-msg">Сервис недоступен</div>{{end}}
         </div>
         {{end}}
     </div>
