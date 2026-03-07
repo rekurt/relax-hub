@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -71,6 +72,9 @@ type StorageConfig struct {
 }
 
 func Load(cfgFile string) (*Config, error) {
+	// Load .env file if it exists (ignored in production where real env vars are used)
+	_ = godotenv.Load()
+
 	v := viper.New()
 
 	if cfgFile != "" {

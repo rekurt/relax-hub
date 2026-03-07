@@ -80,7 +80,7 @@
 **Files:**
 - Create: `internal/service/analytics_service.go`
 
-- [ ] AnalyticsService:
+- [x] AnalyticsService:
   - RecordView(ctx, bathhouseID, viewerID, source) — записать просмотр (дедупликация по IP за 30 мин)
   - GetOwnerDashboard(ctx, bathhouseID, period) — дашборд владельца:
     - Просмотры (total, unique), бронирования, конверсия (bookings/views)
@@ -93,10 +93,10 @@
     - Топ-10 бань по бронированиям/выручке
     - Активность (DAU/WAU/MAU)
   - AggregateDaily(ctx) — cron: агрегация за прошедший день в snapshots
-- [ ] Кеширование в Redis: дашборды кешируются на 15 минут
-- [ ] RBAC: owner — только свои бани, admin — все
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Кеширование в Redis: дашборды кешируются на 15 минут
+- [x] RBAC: owner — только свои бани, admin — все
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Хендлеры аналитики
 
