@@ -195,3 +195,10 @@ type AnalyticsRepository interface {
 	CreateSnapshot(ctx context.Context, snapshot *domain.AnalyticsSnapshot) error
 	DeleteOldViews(ctx context.Context, before time.Time) (int64, error)
 }
+
+type TelegramLinkRepository interface {
+	Create(ctx context.Context, link *domain.TelegramLink) error
+	GetByTelegramID(ctx context.Context, telegramID int64) (*domain.TelegramLink, error)
+	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.TelegramLink, error)
+	Delete(ctx context.Context, userID uuid.UUID) error
+}

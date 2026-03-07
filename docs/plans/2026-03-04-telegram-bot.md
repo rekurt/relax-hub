@@ -48,12 +48,12 @@ Telegram-бот для поиска бань, просмотра доступн�
 - Create: `internal/repository/postgres/telegram.go`
 - Create: `internal/repository/mock/telegram.go`
 
-- [ ] Модель TelegramLink (UserID, TelegramID int64, TelegramUsername, LinkedAt)
-- [ ] TelegramLinkRepository: Create, GetByTelegramID, GetByUserID, Delete
-- [ ] Команда /link <token> — привязать через одноразовый токен, генерируемый в веб-интерфейсе
-- [ ] Создать миграции
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Модель TelegramLink (UserID, TelegramID int64, TelegramUsername, LinkedAt)
+- [x] TelegramLinkRepository: Create, GetByTelegramID, GetByUserID, Delete
+- [x] Команда /link <token> — привязать через одноразовый токен, генерируемый в веб-интерфейсе
+- [x] Создать миграции
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Основные команды бота
 

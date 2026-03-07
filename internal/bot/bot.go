@@ -11,13 +11,14 @@ import (
 )
 
 type Bot struct {
-	client             *tgbotapi.BotAPI
-	config             *config.TelegramConfig
-	logger             *logger.Logger
-	bathhouseService   service.BathhouseService
-	bookingService     service.BookingService
-	userService        service.UserService
-	notificationService service.NotificationService
+	client                *tgbotapi.BotAPI
+	config                *config.TelegramConfig
+	logger                *logger.Logger
+	bathhouseService      service.BathhouseService
+	bookingService        service.BookingService
+	userService           service.UserService
+	notificationService   service.NotificationService
+	telegramLinkService   service.TelegramLinkService
 }
 
 func NewBot(
@@ -27,6 +28,7 @@ func NewBot(
 	bookingService service.BookingService,
 	userService service.UserService,
 	notificationService service.NotificationService,
+	telegramLinkService service.TelegramLinkService,
 ) (*Bot, error) {
 	if cfg.BotToken == "" {
 		return nil, fmt.Errorf("telegram bot token is required")
@@ -45,6 +47,7 @@ func NewBot(
 		bookingService:      bookingService,
 		userService:         userService,
 		notificationService: notificationService,
+		telegramLinkService: telegramLinkService,
 	}
 
 	log.Info("Telegram bot initialized", "username", client.Self.UserName)
@@ -129,6 +132,8 @@ func (b *Bot) handleCommand(ctx context.Context, msg *tgbotapi.Message) {
 		b.commandStart(ctx, chatID)
 	case "help":
 		b.commandHelp(ctx, chatID)
+	case "link":
+		b.commandLink(ctx, chatID, msg.CommandArguments())
 	default:
 		b.sendMessage(chatID, "Неизвестная команда. Используйте /help для справки.")
 	}
@@ -160,6 +165,19 @@ func (b *Bot) commandHelp(ctx context.Context, chatID int64) {
 		"/favorites - мое избранное\n" +
 		"/link <токен> - привязать Telegram-аккаунт\n"
 	b.sendMessage(chatID, text)
+}
+
+// commandLink handles the /link command for account linking
+func (b *Bot) commandLink(ctx context.Context, chatID int64, token string) {
+	if token == "" {
+		b.sendMessage(chatID, "Пожалуйста, укажите токен: /link <токен>")
+		return
+	}
+
+	// TODO: Implement token validation and linking logic
+	// This requires generating and validating one-time tokens on the web API side
+	// For now, provide placeholder feedback
+	b.sendMessage(chatID, "Функция привязки аккаунта находится в разработке. Пожалуйста, используйте веб-интерфейс.")
 }
 
 // sendMessage sends a text message to the user

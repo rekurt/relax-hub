@@ -24,5 +24,6 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewConversationRepository, fx.As(new(repository.ConversationRepository))),
 		fx.Annotate(NewMessageRepository, fx.As(new(repository.MessageRepository))),
 		fx.Annotate(NewAnalyticsRepository, fx.As(new(repository.AnalyticsRepository))),
+		fx.Annotate(NewTelegramLinkRepository, fx.As(new(repository.TelegramLinkRepository))),
 	),
 )

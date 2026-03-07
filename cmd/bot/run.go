@@ -40,6 +40,7 @@ var runCmd = &cobra.Command{
 			nil, // bookingService - will be provided by DI
 			nil, // userService - will be provided by DI
 			nil, // notificationService - will be provided by DI
+		nil, // telegramLinkService - will be provided by DI
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create bot: %w", err)

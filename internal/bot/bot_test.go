@@ -36,7 +36,7 @@ func TestNewBot_MissingToken(t *testing.T) {
 
 	log := logger.New(logger.LevelInfo)
 
-	_, err := NewBot(cfg, log, nil, nil, nil, nil)
+	_, err := NewBot(cfg, log, nil, nil, nil, nil, nil)
 	require.Error(t, err)
 	assert.Equal(t, "telegram bot token is required", err.Error())
 }
