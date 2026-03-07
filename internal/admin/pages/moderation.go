@@ -5,8 +5,10 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -297,26 +299,34 @@ func (p *PostgresModerationProvider) loadReviews(ctx context.Context, data *Mode
 }
 
 func (p *PostgresModerationProvider) ApproveReview(ctx context.Context, id uuid.UUID) error {
-	_, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'approved', updated_at = NOW() WHERE id = $1", id)
+	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'approved', updated_at = NOW() WHERE id = $1 AND status = 'pending'", id)
 	if err != nil {
 		p.log.Error("moderation: approve review", "error", err, "id", id)
+		return err
 	}
-	return err
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("review not found or not in pending status")
+	}
+	return nil
 }
 
 func (p *PostgresModerationProvider) RejectReview(ctx context.Context, id uuid.UUID, reasons []string) error {
-	_, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'rejected', rejection_reasons = $2, updated_at = NOW() WHERE id = $1", id, reasons)
+	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'rejected', rejection_reasons = $2, updated_at = NOW() WHERE id = $1 AND status = 'pending'", id, reasons)
 	if err != nil {
 		p.log.Error("moderation: reject review", "error", err, "id", id)
+		return err
 	}
-	return err
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("review not found or not in pending status")
+	}
+	return nil
 }
 
 func (p *PostgresModerationProvider) BatchApproveReviews(ctx context.Context, ids []uuid.UUID) (successful, failed int) {
 	if len(ids) == 0 {
 		return 0, 0
 	}
-	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'approved', updated_at = NOW() WHERE id = ANY($1)", ids)
+	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'approved', updated_at = NOW() WHERE id = ANY($1) AND status = 'pending'", ids)
 	if err != nil {
 		p.log.Error("moderation: batch approve", "error", err, "count", len(ids))
 		return 0, len(ids)
@@ -330,7 +340,7 @@ func (p *PostgresModerationProvider) BatchRejectReviews(ctx context.Context, ids
 	if len(ids) == 0 {
 		return 0, 0
 	}
-	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'rejected', rejection_reasons = $2, updated_at = NOW() WHERE id = ANY($1)", ids, reasons)
+	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'rejected', rejection_reasons = $2, updated_at = NOW() WHERE id = ANY($1) AND status = 'pending'", ids, reasons)
 	if err != nil {
 		p.log.Error("moderation: batch reject", "error", err, "count", len(ids))
 		return 0, len(ids)
@@ -443,9 +453,9 @@ func (h *ModerationHandler) HandleReject(w http.ResponseWriter, r *http.Request)
 	}
 
 	var req approveRejectRequest
-	if r.Body != nil && r.ContentLength != 0 {
+	if r.Body != nil {
 		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil && !errors.Is(err, io.EOF) {
 			writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid request body"})
 			return
 		}

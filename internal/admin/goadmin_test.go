@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	gacontext "github.com/GoAdminGroup/go-admin/context"
@@ -196,6 +197,40 @@ func TestNewAuthProcessor_AdminUser(t *testing.T) {
 	}
 	if len(user.Roles) == 0 || user.Roles[0].Slug != "administrator" {
 		t.Error("expected administrator role")
+	}
+}
+
+func TestNewAuthProcessor_SetsAdminTokenCookie(t *testing.T) {
+	adminID := uuid.New()
+	auth := &mockAuthService{
+		userID: adminID,
+		role:   domain.RoleAdmin,
+	}
+	log := testLogger()
+
+	processor := NewAuthProcessor(auth, log)
+
+	req := httptest.NewRequest(http.MethodGet, "/admin-panel/", nil)
+	req.Header.Set("Authorization", "Bearer test-jwt-token")
+
+	resp := &http.Response{Header: make(http.Header)}
+	ctx := &gacontext.Context{Request: req, Response: resp}
+	_, exists, msg := processor(ctx)
+
+	if !exists {
+		t.Fatalf("expected user to exist, got msg: %s", msg)
+	}
+
+	cookies := resp.Header.Values("Set-Cookie")
+	found := false
+	for _, c := range cookies {
+		if strings.Contains(c, "admin_token=test-jwt-token") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected admin_token cookie to be set, got headers: %v", cookies)
 	}
 }
 
