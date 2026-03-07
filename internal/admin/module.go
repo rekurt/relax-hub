@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoAdminGroup/go-admin/engine"
 	gaconfig "github.com/GoAdminGroup/go-admin/modules/config"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	appconfig "github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/logger"
@@ -40,14 +41,25 @@ var Module = fx.Module("goadmin",
 	fx.Invoke(registerLifecycle),
 )
 
-func registerLifecycle(lc fx.Lifecycle, ga *GoAdmin, authService middleware.AuthService, log *logger.Logger) {
+func registerLifecycle(lc fx.Lifecycle, ga *GoAdmin, pool *pgxpool.Pool, cfg *appconfig.Config, authService middleware.AuthService, log *logger.Logger) {
 	processor := NewAuthProcessor(authService, log)
 	ga.Engine.AddAuthService(processor)
+
+	pagesPrefix := cfg.Admin.Prefix
+	if pagesPrefix == "" {
+		pagesPrefix = "/admin-panel"
+	}
+	pagesPrefix += "/pages"
 
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			log.Info("Starting GoAdmin engine, connecting to database")
 			ga.Engine.AddConfig(ga.Config)
+
+			if err := RegisterCustomMenu(ctx, pool, pagesPrefix, log); err != nil {
+				log.Error("Failed to register custom menu", "error", err)
+			}
+
 			log.Info("GoAdmin engine started successfully")
 			return nil
 		},

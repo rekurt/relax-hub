@@ -53,7 +53,7 @@ func BuildGoAdminConfig(cfg *appconfig.Config) *gaconfig.Config {
 		Title:           "Бани - Админ-панель",
 		Logo:            template.HTML(`<b>Бани</b>`),
 		MiniLogo:        template.HTML(`<b>Б</b>`),
-		IndexUrl:        "/",
+		IndexUrl:        "/pages/",
 		Debug:           true,
 		SessionLifeTime: 7200,
 

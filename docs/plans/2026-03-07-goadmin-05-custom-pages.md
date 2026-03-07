@@ -82,10 +82,10 @@ Custom GoAdmin pages beyond CRUD tables: admin dashboard with KPIs, review moder
 **Files:**
 - Modify: `internal/admin/engine.go`
 
-- [ ] Register all 4 custom pages with GoAdmin
-- [ ] Menu: Dashboard as first item (home icon)
-- [ ] Menu: "Operations" group with Moderation Center, Analytics Dashboard, Platform Health
-- [ ] Set dashboard as default page after login
+- [x] Register all 4 custom pages with GoAdmin
+- [x] Menu: Dashboard as first item (home icon)
+- [x] Menu: "Operations" group with Moderation Center, Analytics Dashboard, Platform Health
+- [x] Set dashboard as default page after login
 
 ### Task 6: Final Verification
 
