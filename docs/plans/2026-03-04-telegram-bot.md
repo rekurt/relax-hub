@@ -31,12 +31,12 @@ Telegram-бот для поиска бань, просмотра доступн�
 - Create: `internal/bot/module.go`
 - Modify: `config/config.go`
 
-- [ ] Создать точку входа cmd/bot/main.go с Uber fx
-- [ ] Конфигурация: BANI_TELEGRAM_BOT_TOKEN, BANI_TELEGRAM_WEBHOOK_URL (опционально)
-- [ ] Bot struct с зависимостями на сервисы
-- [ ] Long polling режим для разработки, webhook для production
-- [ ] Написать тесты инициализации
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать точку входа cmd/bot/main.go с Uber fx
+- [x] Конфигурация: BANI_TELEGRAM_BOT_TOKEN, BANI_TELEGRAM_WEBHOOK_URL (опционально)
+- [x] Bot struct с зависимостями на сервисы
+- [x] Long polling режим для разработки, webhook для production
+- [x] Написать тесты инициализации
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Привязка Telegram-аккаунта
 
