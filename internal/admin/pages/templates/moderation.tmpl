@@ -116,7 +116,7 @@
 
     <!-- Filters -->
     <div class="filter-bar">
-        <form method="GET" action="/admin-panel/pages/moderation">
+        <form method="GET" action="{{.PagesPrefix}}/moderation">
             <div class="filter-group">
                 <label>Статус</label>
                 <select name="status">
@@ -166,7 +166,7 @@
                 <input type="date" name="to_date" value="{{.Filter.ToDate}}">
             </div>
             <button type="submit" class="btn btn-primary">Фильтр</button>
-            <a href="/admin-panel/pages/moderation" class="btn btn-secondary">Сброс</a>
+            <a href="{{.PagesPrefix}}/moderation" class="btn btn-secondary">Сброс</a>
         </form>
     </div>
 
@@ -256,11 +256,12 @@
 </div>
 
 <script>
+const pagesPrefix = "{{.PagesPrefix}}";
 let rejectTargetId = null;
 let isBatchReject = false;
 
 function approveReview(id) {
-    fetch('/admin-panel/pages/moderation/api/approve?id=' + id, { method: 'POST' })
+    fetch(pagesPrefix + '/moderation/api/approve?id=' + id, { method: 'POST' })
         .then(r => r.json())
         .then(data => {
             if (data.success) {
@@ -300,7 +301,7 @@ function confirmReject() {
     const reasons = getSelectedReasons();
     if (isBatchReject) {
         const ids = getSelectedIds();
-        fetch('/admin-panel/pages/moderation/api/batch-reject', {
+        fetch(pagesPrefix + '/moderation/api/batch-reject', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ids: ids, reasons: reasons })
@@ -313,7 +314,7 @@ function confirmReject() {
         })
         .catch(() => alert('Ошибка сети'));
     } else {
-        fetch('/admin-panel/pages/moderation/api/reject?id=' + rejectTargetId, {
+        fetch(pagesPrefix + '/moderation/api/reject?id=' + rejectTargetId, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ reasons: reasons })
@@ -347,7 +348,7 @@ function updateBatchCount() {
 function batchApprove() {
     const ids = getSelectedIds();
     if (ids.length === 0) return;
-    fetch('/admin-panel/pages/moderation/api/batch-approve', {
+    fetch(pagesPrefix + '/moderation/api/batch-approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: ids })

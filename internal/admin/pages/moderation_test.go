@@ -139,7 +139,7 @@ func TestModerationHandler_ServeHTTP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewModerationHandler(tt.provider, testLogger())
+			handler := NewModerationHandler(tt.provider, testLogger(), "/admin-panel/pages")
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
 
@@ -161,7 +161,7 @@ func TestModerationHandler_ServeHTTP(t *testing.T) {
 
 func TestModerationHandler_RendersReviews(t *testing.T) {
 	provider := &mockModerationProvider{data: sampleModerationData()}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
@@ -186,7 +186,7 @@ func TestModerationHandler_RendersReviews(t *testing.T) {
 
 func TestModerationHandler_RendersStats(t *testing.T) {
 	provider := &mockModerationProvider{data: sampleModerationData()}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
@@ -201,7 +201,7 @@ func TestModerationHandler_RendersStats(t *testing.T) {
 
 func TestModerationHandler_RendersImages(t *testing.T) {
 	provider := &mockModerationProvider{data: sampleModerationData()}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
@@ -219,7 +219,7 @@ func TestModerationHandler_RendersImages(t *testing.T) {
 func TestModerationHandler_HandleApprove(t *testing.T) {
 	id := uuid.New()
 	provider := &mockModerationProvider{}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/moderation/api/approve?id="+id.String(), nil)
@@ -241,7 +241,7 @@ func TestModerationHandler_HandleApprove(t *testing.T) {
 
 func TestModerationHandler_HandleApprove_InvalidID(t *testing.T) {
 	provider := &mockModerationProvider{}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/moderation/api/approve?id=invalid", nil)
@@ -255,7 +255,7 @@ func TestModerationHandler_HandleApprove_InvalidID(t *testing.T) {
 func TestModerationHandler_HandleApprove_ProviderError(t *testing.T) {
 	id := uuid.New()
 	provider := &mockModerationProvider{approveErr: errors.New("db error")}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/moderation/api/approve?id="+id.String(), nil)
@@ -269,7 +269,7 @@ func TestModerationHandler_HandleApprove_ProviderError(t *testing.T) {
 func TestModerationHandler_HandleReject(t *testing.T) {
 	id := uuid.New()
 	provider := &mockModerationProvider{}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	body, _ := json.Marshal(approveRejectRequest{
 		Reasons: []string{"Спам или реклама", "Нецензурная лексика"},
@@ -294,7 +294,7 @@ func TestModerationHandler_HandleReject(t *testing.T) {
 func TestModerationHandler_HandleReject_NoReasons(t *testing.T) {
 	id := uuid.New()
 	provider := &mockModerationProvider{}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/moderation/api/reject?id="+id.String(), nil)
@@ -311,7 +311,7 @@ func TestModerationHandler_HandleReject_NoReasons(t *testing.T) {
 func TestModerationHandler_HandleBatchApprove(t *testing.T) {
 	id1, id2 := uuid.New(), uuid.New()
 	provider := &mockModerationProvider{}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	body, _ := json.Marshal(batchRequest{IDs: []string{id1.String(), id2.String()}})
 	rec := httptest.NewRecorder()
@@ -338,7 +338,7 @@ func TestModerationHandler_HandleBatchApprove(t *testing.T) {
 
 func TestModerationHandler_HandleBatchApprove_InvalidBody(t *testing.T) {
 	provider := &mockModerationProvider{}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/moderation/api/batch-approve", bytes.NewReader([]byte("not json")))
@@ -351,7 +351,7 @@ func TestModerationHandler_HandleBatchApprove_InvalidBody(t *testing.T) {
 
 func TestModerationHandler_HandleBatchApprove_InvalidIDs(t *testing.T) {
 	provider := &mockModerationProvider{}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	body, _ := json.Marshal(batchRequest{IDs: []string{"not-a-uuid"}})
 	rec := httptest.NewRecorder()
@@ -367,7 +367,7 @@ func TestModerationHandler_HandleBatchApprove_InvalidIDs(t *testing.T) {
 func TestModerationHandler_HandleBatchReject(t *testing.T) {
 	id1 := uuid.New()
 	provider := &mockModerationProvider{}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	body, _ := json.Marshal(batchRequest{
 		IDs:     []string{id1.String()},
@@ -394,7 +394,7 @@ func TestModerationHandler_HandleBatchReject(t *testing.T) {
 
 func TestModerationHandler_WithFilters(t *testing.T) {
 	provider := &mockModerationProvider{data: sampleModerationData()}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/moderation?status=pending&min_rating=3&bathhouse_id=abc", nil)
@@ -413,7 +413,7 @@ func TestModerationHandler_EmptyState(t *testing.T) {
 			TotalPages: 1,
 		},
 	}
-	handler := NewModerationHandler(provider, testLogger())
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)

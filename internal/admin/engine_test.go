@@ -121,6 +121,7 @@ func TestPagesRouter_AllRoutesRegistered(t *testing.T) {
 		&mockAnalyticsProvider{},
 		&mockHealthProvider{},
 		testLogger(),
+		"/admin-panel",
 	)
 
 	for _, tc := range routes {
@@ -152,6 +153,7 @@ func TestPagesRouter_ModerationAPIRoutes(t *testing.T) {
 		&mockAnalyticsProvider{},
 		&mockHealthProvider{},
 		testLogger(),
+		"/admin-panel",
 	)
 
 	for _, tc := range routes {
@@ -174,6 +176,7 @@ func TestPagesRouter_HealthEndpoint(t *testing.T) {
 		&mockAnalyticsProvider{},
 		&mockHealthProvider{},
 		testLogger(),
+		"/admin-panel",
 	)
 
 	req := httptest.NewRequest("GET", "/health", nil)

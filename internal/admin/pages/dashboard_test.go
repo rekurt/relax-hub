@@ -129,7 +129,7 @@ func TestDashboardHandler_ServeHTTP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewDashboardHandler(tt.provider, testLogger())
+			handler := NewDashboardHandler(tt.provider, testLogger(), "/admin-panel")
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
 
@@ -156,7 +156,7 @@ func TestDashboardHandler_ServeHTTP(t *testing.T) {
 func TestDashboardHandler_RendersKPIs(t *testing.T) {
 	data := sampleDashboardData()
 	provider := &mockDashboardProvider{data: data}
-	handler := NewDashboardHandler(provider, testLogger())
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
@@ -181,7 +181,7 @@ func TestDashboardHandler_RendersKPIs(t *testing.T) {
 func TestDashboardHandler_RendersStatusCards(t *testing.T) {
 	data := sampleDashboardData()
 	provider := &mockDashboardProvider{data: data}
-	handler := NewDashboardHandler(provider, testLogger())
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
@@ -196,7 +196,7 @@ func TestDashboardHandler_RendersStatusCards(t *testing.T) {
 func TestDashboardHandler_RendersActivityFeed(t *testing.T) {
 	data := sampleDashboardData()
 	provider := &mockDashboardProvider{data: data}
-	handler := NewDashboardHandler(provider, testLogger())
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)

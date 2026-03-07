@@ -76,14 +76,15 @@ type BathhouseOption struct {
 
 // ModerationData is the full data model for the moderation page.
 type ModerationData struct {
-	Reviews    []ModerationReview
-	Stats      ModerationStats
-	Filter     ModerationFilter
-	Bathhouses []BathhouseOption
-	TotalCount int64
-	Page       int
-	PageSize   int
-	TotalPages int
+	Reviews     []ModerationReview
+	Stats       ModerationStats
+	Filter      ModerationFilter
+	Bathhouses  []BathhouseOption
+	TotalCount  int64
+	Page        int
+	PageSize    int
+	TotalPages  int
+	PagesPrefix string
 }
 
 // ModerationDataProvider fetches moderation data from a data source.
@@ -316,13 +317,14 @@ func (p *PostgresModerationProvider) BatchRejectReviews(ctx context.Context, ids
 
 // ModerationHandler serves the moderation page and AJAX endpoints.
 type ModerationHandler struct {
-	provider ModerationDataProvider
-	log      *logger.Logger
+	provider    ModerationDataProvider
+	log         *logger.Logger
+	pagesPrefix string
 }
 
 // NewModerationHandler creates a new ModerationHandler.
-func NewModerationHandler(provider ModerationDataProvider, log *logger.Logger) *ModerationHandler {
-	return &ModerationHandler{provider: provider, log: log}
+func NewModerationHandler(provider ModerationDataProvider, log *logger.Logger, pagesPrefix string) *ModerationHandler {
+	return &ModerationHandler{provider: provider, log: log, pagesPrefix: pagesPrefix}
 }
 
 // ServeHTTP renders the moderation page.
@@ -351,6 +353,8 @@ func (h *ModerationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	data.PagesPrefix = h.pagesPrefix
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := moderationTmpl.ExecuteTemplate(w, "moderation.tmpl", data); err != nil {

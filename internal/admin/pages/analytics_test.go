@@ -101,7 +101,7 @@ func TestAnalyticsHandler_ServeHTTP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewAnalyticsHandler(tt.provider, testLogger())
+			handler := NewAnalyticsHandler(tt.provider, testLogger(), "/admin-panel/pages")
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
 
@@ -128,7 +128,7 @@ func TestAnalyticsHandler_ServeHTTP(t *testing.T) {
 func TestAnalyticsHandler_RendersChartData(t *testing.T) {
 	data := sampleAnalyticsData()
 	provider := &mockAnalyticsProvider{data: data}
-	handler := NewAnalyticsHandler(provider, testLogger())
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
@@ -160,7 +160,7 @@ func TestAnalyticsHandler_RendersChartData(t *testing.T) {
 func TestAnalyticsHandler_RendersCities(t *testing.T) {
 	data := sampleAnalyticsData()
 	provider := &mockAnalyticsProvider{data: data}
-	handler := NewAnalyticsHandler(provider, testLogger())
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
@@ -187,7 +187,7 @@ func TestAnalyticsHandler_ParsesQueryParams(t *testing.T) {
 		CityID:   "1",
 	}
 	provider := &mockAnalyticsProvider{data: data}
-	handler := NewAnalyticsHandler(provider, testLogger())
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/analytics?date_from=2026-03-01&date_to=2026-03-07&city_id=1", nil)
@@ -209,7 +209,7 @@ func TestAnalyticsHandler_ParsesQueryParams(t *testing.T) {
 func TestAnalyticsHandler_RendersFilterSection(t *testing.T) {
 	data := sampleAnalyticsData()
 	provider := &mockAnalyticsProvider{data: data}
-	handler := NewAnalyticsHandler(provider, testLogger())
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)

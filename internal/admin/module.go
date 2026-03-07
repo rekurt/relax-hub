@@ -43,7 +43,7 @@ func NewGoAdmin(cfg *appconfig.Config, pool *pgxpool.Pool, redisClient *redis.Cl
 	return &GoAdmin{
 		Engine:      engine.Default(),
 		Config:      BuildGoAdminConfig(cfg),
-		PagesRouter: PagesRouter(dashProvider, modProvider, analyticsProvider, healthProvider, log),
+		PagesRouter: PagesRouter(dashProvider, modProvider, analyticsProvider, healthProvider, log, cfg.Admin.Prefix),
 	}
 }
 

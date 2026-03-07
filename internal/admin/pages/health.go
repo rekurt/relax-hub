@@ -94,6 +94,7 @@ func (p *PlatformHealthProvider) checkServices(ctx context.Context) []ServiceSta
 	pgStatus := ServiceStatus{Name: "PostgreSQL"}
 	start := time.Now()
 	pgCtx, pgCancel := context.WithTimeout(ctx, 3*time.Second)
+	defer pgCancel()
 	if err := p.pool.Ping(pgCtx); err != nil {
 		pgStatus.Status = "down"
 		pgStatus.Error = err.Error()
@@ -101,13 +102,13 @@ func (p *PlatformHealthProvider) checkServices(ctx context.Context) []ServiceSta
 		pgStatus.Status = "up"
 	}
 	pgStatus.Latency = time.Since(start)
-	pgCancel()
 	services = append(services, pgStatus)
 
 	// Redis
 	redisStatus := ServiceStatus{Name: "Redis"}
 	start = time.Now()
 	redisCtx, redisCancel := context.WithTimeout(ctx, 3*time.Second)
+	defer redisCancel()
 	if err := p.redis.Ping(redisCtx).Err(); err != nil {
 		redisStatus.Status = "down"
 		redisStatus.Error = err.Error()
@@ -115,7 +116,6 @@ func (p *PlatformHealthProvider) checkServices(ctx context.Context) []ServiceSta
 		redisStatus.Status = "up"
 	}
 	redisStatus.Latency = time.Since(start)
-	redisCancel()
 	services = append(services, redisStatus)
 
 	return services

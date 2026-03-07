@@ -69,6 +69,7 @@ type AnalyticsData struct {
 	Filter             AnalyticsFilter
 	Cities             []CityOption
 	GeneratedAt        time.Time
+	PagesPrefix        string
 }
 
 // AnalyticsDataProvider fetches analytics data from a data source.
@@ -392,22 +393,31 @@ func (p *PostgresAnalyticsProvider) loadReviewRatingDist(ctx context.Context, fr
 
 // AnalyticsHandler serves the analytics dashboard page.
 type AnalyticsHandler struct {
-	provider AnalyticsDataProvider
-	log      *logger.Logger
+	provider    AnalyticsDataProvider
+	log         *logger.Logger
+	pagesPrefix string
 }
 
 // NewAnalyticsHandler creates a new AnalyticsHandler.
-func NewAnalyticsHandler(provider AnalyticsDataProvider, log *logger.Logger) *AnalyticsHandler {
-	return &AnalyticsHandler{provider: provider, log: log}
+func NewAnalyticsHandler(provider AnalyticsDataProvider, log *logger.Logger, pagesPrefix string) *AnalyticsHandler {
+	return &AnalyticsHandler{provider: provider, log: log, pagesPrefix: pagesPrefix}
 }
 
 // ServeHTTP renders the analytics dashboard page.
 func (h *AnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
+
+	cityID := q.Get("city_id")
+	if cityID != "" {
+		if _, err := strconv.ParseInt(cityID, 10, 64); err != nil {
+			cityID = ""
+		}
+	}
+
 	filter := AnalyticsFilter{
 		DateFrom: q.Get("date_from"),
 		DateTo:   q.Get("date_to"),
-		CityID:   q.Get("city_id"),
+		CityID:   cityID,
 	}
 
 	data, err := h.provider.GetAnalyticsData(r.Context(), filter)
@@ -416,6 +426,8 @@ func (h *AnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	data.PagesPrefix = h.pagesPrefix
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := analyticsTmpl.ExecuteTemplate(w, "analytics.tmpl", data); err != nil {

@@ -92,6 +92,7 @@ type DashboardData struct {
 	Reviews       []RecentReview
 	Registrations []RecentRegistration
 	GeneratedAt   time.Time
+	AdminPrefix   string
 }
 
 // DashboardDataProvider fetches dashboard data from a data source.
@@ -273,13 +274,14 @@ func (p *PostgresDashboardProvider) loadRecentRegistrations(ctx context.Context,
 
 // DashboardHandler serves the admin dashboard page.
 type DashboardHandler struct {
-	provider DashboardDataProvider
-	log      *logger.Logger
+	provider    DashboardDataProvider
+	log         *logger.Logger
+	adminPrefix string
 }
 
 // NewDashboardHandler creates a new DashboardHandler.
-func NewDashboardHandler(provider DashboardDataProvider, log *logger.Logger) *DashboardHandler {
-	return &DashboardHandler{provider: provider, log: log}
+func NewDashboardHandler(provider DashboardDataProvider, log *logger.Logger, adminPrefix string) *DashboardHandler {
+	return &DashboardHandler{provider: provider, log: log, adminPrefix: adminPrefix}
 }
 
 // ServeHTTP renders the admin dashboard page.
@@ -290,6 +292,8 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
+
+	data.AdminPrefix = h.adminPrefix
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := dashboardTmpl.ExecuteTemplate(w, "dashboard.tmpl", data); err != nil {

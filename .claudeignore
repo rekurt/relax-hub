@@ -1,29 +1,54 @@
-# Compiled binaries
+# .claudeignore — Banya (bani) project
+
+# === BINARIES ===
 bin/
 bani
 bani-server
+bani-bot
+/bot
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
 
-# Coverage and output files
-coverage.out
+# === COVERAGE & TEST REPORTS ===
 *.out
+coverage.html
 
-# Built widget assets
-widget/dist/
-
-# SQL migrations (rarely needed for code review)
-migrations/
-
-# Dependency lock file
+# === DEPENDENCIES ===
 go.sum
 
-# Git internals
-.git/
+# === ENVIRONMENT (may contain secrets) ===
+.env
 
-# OS files
+# === IDE & EDITOR ===
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# === OS ===
 .DS_Store
+Thumbs.db
 
-# Ralphex internals
-.ralphex/
+# === DOCKER VOLUMES ===
+postgres_data/
+redis_data/
 
-# Implementation plans (not code)
+# === TEMPORARY FILES ===
+tmp/
+*.tmp
+*.bak
+*.orig
+*.log
+
+# === WIDGET BUILD OUTPUT ===
+widget/dist/
+
+# === PLAN DOCS (not code) ===
 docs/plans/
+
+# === RALPHEX PROGRESS ===
+.ralphex/

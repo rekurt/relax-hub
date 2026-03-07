@@ -20,21 +20,24 @@ func PagesRouter(
 	analyticsProvider pages.AnalyticsDataProvider,
 	healthProvider pages.HealthDataProvider,
 	log *logger.Logger,
+	adminPrefix string,
 ) http.Handler {
 	r := chi.NewRouter()
 
-	dashboard := pages.NewDashboardHandler(dashProvider, log)
+	pagesPrefix := adminPrefix + "/pages"
+
+	dashboard := pages.NewDashboardHandler(dashProvider, log, adminPrefix)
 	r.Get("/", dashboard.ServeHTTP)
 	r.Get("/dashboard", dashboard.ServeHTTP)
 
-	moderation := pages.NewModerationHandler(modProvider, log)
+	moderation := pages.NewModerationHandler(modProvider, log, pagesPrefix)
 	r.Get("/moderation", moderation.ServeHTTP)
 	r.Post("/moderation/api/approve", moderation.HandleApprove)
 	r.Post("/moderation/api/reject", moderation.HandleReject)
 	r.Post("/moderation/api/batch-approve", moderation.HandleBatchApprove)
 	r.Post("/moderation/api/batch-reject", moderation.HandleBatchReject)
 
-	analytics := pages.NewAnalyticsHandler(analyticsProvider, log)
+	analytics := pages.NewAnalyticsHandler(analyticsProvider, log, pagesPrefix)
 	r.Get("/analytics", analytics.ServeHTTP)
 
 	health := pages.NewHealthHandler(healthProvider, log)
@@ -101,10 +104,16 @@ func RegisterCustomMenu(ctx context.Context, pool *pgxpool.Pool, pagesPrefix str
 		return fmt.Errorf("expected 5 menu items, got %d", len(items))
 	}
 
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
 	now := time.Now()
 
 	// Clean up existing custom menu items (idempotent).
-	_, err := pool.Exec(ctx, `DELETE FROM goadmin_menu WHERE uri LIKE $1 OR header = 'Операции'`, pagesPrefix+"%")
+	_, err = tx.Exec(ctx, `DELETE FROM goadmin_menu WHERE uri LIKE $1 OR header = 'Операции'`, pagesPrefix+"%")
 	if err != nil {
 		log.Error("admin menu: cleanup failed", "error", err)
 		return fmt.Errorf("cleanup menu items: %w", err)
@@ -112,7 +121,7 @@ func RegisterCustomMenu(ctx context.Context, pool *pgxpool.Pool, pagesPrefix str
 
 	// Insert Dashboard (top-level, first item).
 	dash := items[0]
-	_, err = pool.Exec(ctx,
+	_, err = tx.Exec(ctx,
 		`INSERT INTO goadmin_menu (parent_id, type, "order", title, icon, uri, header, plugin_name, uuid, created_at, updated_at)
 		 VALUES (0, 0, $1, $2, $3, $4, '', '', '', $5, $5)`,
 		dash.Order, dash.Title, dash.Icon, dash.URI, now,
@@ -125,7 +134,7 @@ func RegisterCustomMenu(ctx context.Context, pool *pgxpool.Pool, pagesPrefix str
 	// Insert Operations group (parent for moderation, analytics, health).
 	ops := items[1]
 	var opsID int
-	err = pool.QueryRow(ctx,
+	err = tx.QueryRow(ctx,
 		`INSERT INTO goadmin_menu (parent_id, type, "order", title, icon, uri, header, plugin_name, uuid, created_at, updated_at)
 		 VALUES (0, 0, $1, $2, $3, '', $4, '', '', $5, $5) RETURNING id`,
 		ops.Order, ops.Title, ops.Icon, ops.Header, now,
@@ -137,7 +146,7 @@ func RegisterCustomMenu(ctx context.Context, pool *pgxpool.Pool, pagesPrefix str
 
 	// Insert child items under Operations.
 	for _, item := range items[2:] {
-		_, err = pool.Exec(ctx,
+		_, err = tx.Exec(ctx,
 			`INSERT INTO goadmin_menu (parent_id, type, "order", title, icon, uri, header, plugin_name, uuid, created_at, updated_at)
 			 VALUES ($1, 0, $2, $3, $4, $5, '', '', '', $6, $6)`,
 			opsID, item.Order, item.Title, item.Icon, item.URI, now,
@@ -146,6 +155,10 @@ func RegisterCustomMenu(ctx context.Context, pool *pgxpool.Pool, pagesPrefix str
 			log.Error("admin menu: insert child", "error", err, "title", item.Title)
 			return fmt.Errorf("insert menu item %s: %w", item.Title, err)
 		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit menu transaction: %w", err)
 	}
 
 	log.Info("admin menu: registered custom pages",

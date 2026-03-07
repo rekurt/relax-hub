@@ -42,7 +42,7 @@
 
     <!-- Filters -->
     <div class="filter-bar">
-        <form method="GET" action="/admin-panel/pages/analytics">
+        <form method="GET" action="{{.PagesPrefix}}/analytics">
             <div class="filter-group">
                 <label>Дата от</label>
                 <input type="date" name="date_from" value="{{.Filter.DateFrom}}">
@@ -61,7 +61,7 @@
                 </select>
             </div>
             <button type="submit" class="btn btn-primary">Применить</button>
-            <a href="/admin-panel/pages/analytics" class="btn btn-secondary">Сброс</a>
+            <a href="{{.PagesPrefix}}/analytics" class="btn btn-secondary">Сброс</a>
         </form>
     </div>
 
