@@ -161,7 +161,16 @@ new Chart(document.getElementById('revenueChart'), {
     },
     options: {
         responsive: true,
-        plugins: { legend: { display: false } },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        return (ctx.raw / 100).toLocaleString('ru-RU') + ' ₽';
+                    }
+                }
+            }
+        },
         scales: {
             y: {
                 ticks: {
@@ -223,7 +232,16 @@ new Chart(document.getElementById('topRevenueChart'), {
     options: {
         indexAxis: 'y',
         responsive: true,
-        plugins: { legend: { display: false } },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        return (ctx.raw / 100).toLocaleString('ru-RU') + ' ₽';
+                    }
+                }
+            }
+        },
         scales: {
             x: {
                 ticks: {

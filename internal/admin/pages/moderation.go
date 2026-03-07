@@ -331,13 +331,18 @@ func NewModerationHandler(provider ModerationDataProvider, log *logger.Logger, p
 func (h *ModerationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 
+	status := q.Get("status")
+	if status == "" {
+		status = "pending"
+	}
+
 	filter := ModerationFilter{
 		BathhouseID: q.Get("bathhouse_id"),
 		MinRating:   q.Get("min_rating"),
 		MaxRating:   q.Get("max_rating"),
 		FromDate:    q.Get("from_date"),
 		ToDate:      q.Get("to_date"),
-		Status:      q.Get("status"),
+		Status:      status,
 	}
 
 	page := 1
@@ -410,6 +415,7 @@ func (h *ModerationHandler) HandleReject(w http.ResponseWriter, r *http.Request)
 
 	var req approveRejectRequest
 	if r.Body != nil && r.ContentLength != 0 {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, actionResponse{Error: "invalid request body"})
 			return
