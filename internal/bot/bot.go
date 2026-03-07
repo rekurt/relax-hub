@@ -30,7 +30,10 @@ type BookingWizardState struct {
 	EndTime     time.Time
 	GuestCount  int
 	Step        string // "date", "time", "guests", "confirm"
+	CreatedAt   time.Time
 }
+
+const wizardTTL = 30 * time.Minute
 
 type Bot struct {
 	client              *tgbotapi.BotAPI
@@ -101,10 +104,34 @@ func NewBot(
 
 // Start begins the bot in either polling or webhook mode
 func (b *Bot) Start(ctx context.Context) error {
+	go b.cleanupExpiredWizards(ctx)
+
 	if b.config.Mode == "webhook" {
 		return b.startWebhook(ctx)
 	}
 	return b.startPolling(ctx)
+}
+
+// cleanupExpiredWizards periodically removes stale wizard states
+func (b *Bot) cleanupExpiredWizards(ctx context.Context) {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			b.wizardsMu.Lock()
+			now := time.Now()
+			for chatID, w := range b.wizards {
+				if now.Sub(w.CreatedAt) > wizardTTL {
+					delete(b.wizards, chatID)
+				}
+			}
+			b.wizardsMu.Unlock()
+		}
+	}
 }
 
 // startPolling runs the bot using long polling (suitable for development)
@@ -625,6 +652,7 @@ func (b *Bot) doStartBookingWizard(ctx context.Context, chatID int64, sid string
 		BathhouseID: bhID,
 		Bathhouse:   bh,
 		Step:        "date",
+		CreatedAt:   time.Now(),
 	}
 	b.wizardsMu.Unlock()
 
@@ -643,7 +671,7 @@ func (b *Bot) doSelectDate(ctx context.Context, chatID int64, dateStr string) {
 	bathhouseID := wizard.BathhouseID
 	b.wizardsMu.RUnlock()
 
-	date, err := time.Parse("20060102", dateStr)
+	date, err := time.ParseInLocation("20060102", dateStr, time.Local)
 	if err != nil {
 		b.sendPlainMessage(chatID, "Неверная дата.")
 		return
@@ -671,6 +699,13 @@ func (b *Bot) doSelectDate(ctx context.Context, chatID int64, dateStr string) {
 	}
 
 	b.wizardsMu.Lock()
+	// Re-check wizard after acquiring write lock to prevent TOCTOU race
+	wizard = b.wizards[chatID]
+	if wizard == nil {
+		b.wizardsMu.Unlock()
+		b.sendPlainMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		return
+	}
 	wizard.Date = date
 	wizard.Slots = slots
 	wizard.Step = "time"
@@ -887,9 +922,16 @@ const maxIDCacheSize = 10000
 
 func (b *Bot) cacheID(short string, full uuid.UUID) {
 	b.idCacheMu.Lock()
-	// Evict all entries when cache exceeds max size to prevent unbounded growth
+	// Evict half the entries when cache exceeds max size to preserve recent mappings
 	if len(b.idCache) >= maxIDCacheSize {
-		b.idCache = make(map[string]uuid.UUID, maxIDCacheSize/2)
+		evictCount := 0
+		for k := range b.idCache {
+			delete(b.idCache, k)
+			evictCount++
+			if evictCount >= maxIDCacheSize/2 {
+				break
+			}
+		}
 	}
 	b.idCache[short] = full
 	b.idCacheMu.Unlock()
