@@ -33,6 +33,13 @@ func shortID(id uuid.UUID) string {
 
 // buildSearchResultsKeyboard builds inline keyboard for bathhouse search results
 func buildSearchResultsKeyboard(items []domain.Bathhouse, citySlug string, page, totalPages int) tgbotapi.InlineKeyboardMarkup {
+	// Truncate citySlug to fit within Telegram's 64-byte callback data limit
+	// Format: "s:<slug>:<page>" - reserve 10 bytes for prefix, separator, and page number
+	const maxSlugLen = 54
+	if len(citySlug) > maxSlugLen {
+		citySlug = citySlug[:maxSlugLen]
+	}
+
 	var rows [][]tgbotapi.InlineKeyboardButton
 
 	for _, bh := range items {

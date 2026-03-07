@@ -144,9 +144,11 @@ func (b *Bot) startWebhook(ctx context.Context) error {
 	// Derive a secret path component from the bot token for webhook verification
 	webhookPath := "/telegram/webhook/" + deriveWebhookSecret(b.config.BotToken)
 
-	b.logger.Info("Starting Telegram bot in webhook mode", "webhook_url", b.config.WebhookURL)
+	// The full webhook URL must include the secret path so Telegram sends updates to the correct endpoint
+	fullWebhookURL := strings.TrimRight(b.config.WebhookURL, "/") + webhookPath
+	b.logger.Info("Starting Telegram bot in webhook mode", "webhook_url", fullWebhookURL)
 
-	whConfig, err := tgbotapi.NewWebhook(b.config.WebhookURL)
+	whConfig, err := tgbotapi.NewWebhook(fullWebhookURL)
 	if err != nil {
 		return fmt.Errorf("failed to create webhook config: %w", err)
 	}
@@ -333,8 +335,8 @@ func (b *Bot) handleCallbackQuery(ctx context.Context, cq *tgbotapi.CallbackQuer
 	switch prefix {
 	case cbSearch:
 		if len(parts) >= 3 {
-			page, _ := strconv.Atoi(parts[2])
-			if page < 1 {
+			page, err := strconv.Atoi(parts[2])
+			if err != nil || page < 1 {
 				page = 1
 			}
 			b.doSearch(ctx, chatID, parts[1], page)
@@ -353,12 +355,20 @@ func (b *Bot) handleCallbackQuery(ctx context.Context, cq *tgbotapi.CallbackQuer
 		}
 	case cbSlot:
 		if len(parts) >= 2 {
-			idx, _ := strconv.Atoi(parts[1])
+			idx, err := strconv.Atoi(parts[1])
+			if err != nil {
+				b.sendPlainMessage(chatID, "Неверный слот.")
+				return
+			}
 			b.doSelectSlot(ctx, chatID, idx)
 		}
 	case cbGuests:
 		if len(parts) >= 2 {
-			count, _ := strconv.Atoi(parts[1])
+			count, err := strconv.Atoi(parts[1])
+			if err != nil {
+				b.sendPlainMessage(chatID, "Неверное количество гостей.")
+				return
+			}
 			b.doSelectGuests(ctx, chatID, count)
 		}
 	case cbConfirm:
