@@ -334,6 +334,20 @@ func TestComplaintService_AutoHideReview(t *testing.T) {
 	}
 }
 
+func TestComplaintService_Report_SelfReportUser(t *testing.T) {
+	env := newComplaintTestEnv()
+	userID := uuid.New()
+
+	_, err := env.svc.Report(context.Background(), userID, service.CreateComplaintInput{
+		TargetType: domain.ComplaintTargetUser,
+		TargetID:   userID,
+		Reason:     domain.ComplaintReasonSpam,
+	})
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput for self-report", err)
+	}
+}
+
 func TestComplaintService_NoAutoHideBeforeThreshold(t *testing.T) {
 	env := newComplaintTestEnv()
 	reviewID := uuid.New()

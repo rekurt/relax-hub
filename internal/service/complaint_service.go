@@ -65,6 +65,11 @@ func (s *complaintService) Report(ctx context.Context, reporterID uuid.UUID, inp
 		return nil, err
 	}
 
+	// Prevent self-reporting
+	if input.TargetType == domain.ComplaintTargetUser && input.TargetID == reporterID {
+		return nil, domain.ErrInvalidInput
+	}
+
 	// Check if user already reported this target
 	exists, err := s.complaintRepo.CheckExists(ctx, reporterID, input.TargetType, input.TargetID)
 	if err != nil {
@@ -139,7 +144,7 @@ func (s *complaintService) checkAutoActions(ctx context.Context, targetType doma
 
 	switch targetType {
 	case domain.ComplaintTargetReview:
-		if count >= autoHideReviewThreshold {
+		if count == autoHideReviewThreshold {
 			if err := s.reviewRepo.UpdateStatus(ctx, targetID, domain.ReviewStatusHidden); err != nil {
 				s.logger.Error("failed to auto-hide review", "review_id", targetID, "error", err)
 			} else {
@@ -147,7 +152,7 @@ func (s *complaintService) checkAutoActions(ctx context.Context, targetType doma
 			}
 		}
 	case domain.ComplaintTargetBathhouse:
-		if count >= notifyAdminBathhouseThreshold {
+		if count == notifyAdminBathhouseThreshold {
 			s.logger.Warn("bathhouse flagged for admin review due to complaints", "bathhouse_id", targetID, "complaint_count", count)
 		}
 	}
