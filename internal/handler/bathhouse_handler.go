@@ -875,7 +875,7 @@ func generateWidgetCode(apiKey string, req widgetCodeRequest, r *http.Request) s
 <link rel="stylesheet" href="` + escapedApiBaseURL + `/widget.css">
 <script src="` + escapedApiBaseURL + `/widget.js"></script>
 <script>
-  window.BANI_WIDGET_API_URL = '` + escapedApiBaseURL + `';
+  window.BANI_WIDGET_API_URL = '` + strings.ReplaceAll(strings.ReplaceAll(escapedApiBaseURL, `\`, `\\`), `'`, `\'`) + `';
 </script>`
 }
 
@@ -932,7 +932,7 @@ func (h *BathhouseHandler) GetMeta(w http.ResponseWriter, r *http.Request) {
 
 func (h *BathhouseHandler) buildMeta(ctx context.Context, bh *domain.Bathhouse) *seo.MetaTags {
 	var cityName, citySlug string
-	if h.cityRepo != nil {
+	if h.cityRepo != nil && bh.CityID > 0 {
 		city, err := h.cityRepo.GetByID(ctx, bh.CityID)
 		if err == nil && city != nil {
 			cityName = city.Name
