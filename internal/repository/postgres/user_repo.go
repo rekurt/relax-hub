@@ -202,3 +202,38 @@ func (r *userRepo) GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.
 	}
 	return &p, nil
 }
+
+func (r *userRepo) GetByReferralCode(ctx context.Context, code string) (*domain.User, error) {
+	query := `
+		SELECT id, email, password_hash, name, phone, role, is_active, avatar_url, bio, city_id, referral_code, created_at, updated_at
+		FROM users WHERE referral_code = $1`
+
+	var user domain.User
+	err := r.pool.QueryRow(ctx, query, code).Scan(
+		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone,
+		&user.Role, &user.IsActive, &user.AvatarURL, &user.Bio, &user.CityID,
+		&user.ReferralCode, &user.CreatedAt, &user.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("get user by referral code: %w", err)
+	}
+	return &user, nil
+}
+
+func (r *userRepo) UpdateReferralCode(ctx context.Context, userID uuid.UUID, code string) error {
+	query := `UPDATE users SET referral_code = $2, updated_at = $3 WHERE id = $1`
+	tag, err := r.pool.Exec(ctx, query, userID, code, time.Now())
+	if err != nil {
+		if isDuplicateKeyError(err) {
+			return domain.ErrAlreadyExists
+		}
+		return fmt.Errorf("update referral code: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}

@@ -152,6 +152,36 @@ func (r *UserRepo) GetPublicProfile(_ context.Context, id uuid.UUID) (*domain.Us
 	}, nil
 }
 
+func (r *UserRepo) GetByReferralCode(_ context.Context, code string) (*domain.User, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, u := range r.users {
+		if u.ReferralCode == code {
+			cp := *u
+			return &cp, nil
+		}
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (r *UserRepo) UpdateReferralCode(_ context.Context, userID uuid.UUID, code string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	u, ok := r.users[userID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	// Check uniqueness
+	for _, other := range r.users {
+		if other.ID != userID && other.ReferralCode == code {
+			return domain.ErrAlreadyExists
+		}
+	}
+	u.ReferralCode = code
+	u.UpdatedAt = time.Now()
+	return nil
+}
+
 // CityRepo is an in-memory mock implementation of repository.CityRepository.
 type CityRepo struct {
 	mu     sync.RWMutex

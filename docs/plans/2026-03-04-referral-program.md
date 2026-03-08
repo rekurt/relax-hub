@@ -58,16 +58,16 @@
 - Create: `internal/repository/mock/referral.go`
 - Create: `internal/service/referral_service.go`
 
-- [ ] ReferralRepository: Create, GetByReferee, ListByReferrer, UpdateStatus, GetBalance, UpdateBalance
-- [ ] ReferralService:
+- [x] ReferralRepository: Create, GetByReferee, ListByReferrer, UpdateStatus, GetBalance, UpdateBalance
+- [x] ReferralService:
   - GenerateCode(ctx, userID) — генерация уникального кода
   - RegisterReferral(ctx, referralCode, newUserID) — регистрация реферала при регистрации
   - CompleteReferral(ctx, refereeID) — начислить бонус при первом бронировании
   - GetBalance(ctx, userID) — баланс бонусов
   - UseBalance(ctx, userID, amount, bookingID) — списание бонусов при бронировании
   - GetStats(ctx, userID) — статистика приглашений
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Интеграция с регистрацией и бронированием
 

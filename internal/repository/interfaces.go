@@ -16,6 +16,8 @@ type UserRepository interface {
 	List(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.User], error)
 	SetActive(ctx context.Context, id uuid.UUID, active bool) error
 	GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.UserProfile, error)
+	GetByReferralCode(ctx context.Context, code string) (*domain.User, error)
+	UpdateReferralCode(ctx context.Context, userID uuid.UUID, code string) error
 }
 
 type CityRepository interface {
@@ -201,6 +203,17 @@ type TelegramLinkRepository interface {
 	GetByTelegramID(ctx context.Context, telegramID int64) (*domain.TelegramLink, error)
 	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.TelegramLink, error)
 	Delete(ctx context.Context, userID uuid.UUID) error
+}
+
+type ReferralRepository interface {
+	Create(ctx context.Context, referral *domain.Referral) error
+	GetByReferee(ctx context.Context, refereeID uuid.UUID) (*domain.Referral, error)
+	ListByReferrer(ctx context.Context, referrerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Referral], error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReferralStatus, completedAt *time.Time) error
+	GetBalance(ctx context.Context, userID uuid.UUID) (*domain.ReferralBalance, error)
+	CreateBalance(ctx context.Context, balance *domain.ReferralBalance) error
+	UpdateBalance(ctx context.Context, userID uuid.UUID, delta int64) error
+	CountByReferrer(ctx context.Context, referrerID uuid.UUID) (int, int, error) // totalInvited, totalCompleted
 }
 
 type ComplaintRepository interface {
