@@ -174,15 +174,10 @@ func (h *CertificateHandler) ListMyCertificates(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	totalPages := int(result.TotalCount) / pageSize
-	if int(result.TotalCount)%pageSize > 0 {
-		totalPages++
-	}
-
 	writeJSONWithMeta(w, http.StatusOK, toCertificateListResponse(result.Items), &Meta{
 		Page:       page,
 		PageSize:   pageSize,
 		TotalCount: result.TotalCount,
-		TotalPages: totalPages,
+		TotalPages: result.TotalPages,
 	})
 }

@@ -123,69 +123,6 @@ func TestCertificateRepo_GetByCode_NotFound(t *testing.T) {
 	}
 }
 
-func TestCertificateRepo_UpdateBalance(t *testing.T) {
-	repo := mock.NewCertificateRepo()
-
-	cert := &domain.GiftCertificate{
-		Code:           "BANI-AAAA-BBBB",
-		PurchaserEmail: "buyer@test.com",
-		RecipientEmail: "recipient@test.com",
-		Amount:         500000,
-		Balance:        500000,
-		Status:         domain.CertificateStatusActive,
-		ValidUntil:     time.Now().Add(365 * 24 * time.Hour),
-	}
-	_ = repo.Create(context.Background(), cert)
-
-	// Partial use
-	err := repo.UpdateBalance(context.Background(), cert.ID, 200000)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	found, _ := repo.GetByID(context.Background(), cert.ID)
-	if found.Balance != 300000 {
-		t.Errorf("balance = %d, want 300000", found.Balance)
-	}
-	if found.Status != domain.CertificateStatusActive {
-		t.Errorf("status = %v, want active", found.Status)
-	}
-
-	// Full use
-	err = repo.UpdateBalance(context.Background(), cert.ID, 300000)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	found, _ = repo.GetByID(context.Background(), cert.ID)
-	if found.Balance != 0 {
-		t.Errorf("balance = %d, want 0", found.Balance)
-	}
-	if found.Status != domain.CertificateStatusUsed {
-		t.Errorf("status = %v, want used", found.Status)
-	}
-}
-
-func TestCertificateRepo_UpdateBalance_Insufficient(t *testing.T) {
-	repo := mock.NewCertificateRepo()
-
-	cert := &domain.GiftCertificate{
-		Code:           "BANI-AAAA-BBBB",
-		PurchaserEmail: "buyer@test.com",
-		RecipientEmail: "recipient@test.com",
-		Amount:         100000,
-		Balance:        100000,
-		Status:         domain.CertificateStatusActive,
-		ValidUntil:     time.Now().Add(365 * 24 * time.Hour),
-	}
-	_ = repo.Create(context.Background(), cert)
-
-	err := repo.UpdateBalance(context.Background(), cert.ID, 200000)
-	if err != domain.ErrCertificateInsufficientBalance {
-		t.Errorf("err = %v, want ErrCertificateInsufficientBalance", err)
-	}
-}
-
 func TestCertificateRepo_Redeem(t *testing.T) {
 	repo := mock.NewCertificateRepo()
 
@@ -278,23 +215,5 @@ func TestCertificateRepo_ListByUser(t *testing.T) {
 	}
 	if result.TotalCount != 2 {
 		t.Errorf("total_count = %d, want 2", result.TotalCount)
-	}
-}
-
-func TestCertificateRepo_CreateUsage(t *testing.T) {
-	repo := mock.NewCertificateRepo()
-
-	usage := &domain.CertificateUsage{
-		CertificateID: uuid.New(),
-		BookingID:     uuid.New(),
-		Amount:        200000,
-	}
-
-	err := repo.CreateUsage(context.Background(), usage)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if usage.ID == uuid.Nil {
-		t.Error("expected ID to be set")
 	}
 }

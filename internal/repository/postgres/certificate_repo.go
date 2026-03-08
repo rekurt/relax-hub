@@ -83,23 +83,6 @@ func (r *certificateRepo) scanCertificate(ctx context.Context, query string, arg
 	return &cert, nil
 }
 
-func (r *certificateRepo) UpdateBalance(ctx context.Context, id uuid.UUID, amount int64) error {
-	query := `
-		UPDATE gift_certificates
-		SET balance = balance - $2,
-			status = CASE WHEN balance - $2 = 0 THEN 'used' ELSE status END
-		WHERE id = $1 AND balance >= $2 AND status = 'active' AND valid_until > NOW()`
-
-	result, err := r.pool.Exec(ctx, query, id, amount)
-	if err != nil {
-		return fmt.Errorf("update certificate balance: %w", err)
-	}
-	if result.RowsAffected() == 0 {
-		return domain.ErrCertificateInsufficientBalance
-	}
-	return nil
-}
-
 func (r *certificateRepo) ApplyToBooking(ctx context.Context, id uuid.UUID, usage *domain.CertificateUsage) error {
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
@@ -211,23 +194,3 @@ func (r *certificateRepo) Redeem(ctx context.Context, id uuid.UUID, userID uuid.
 	return nil
 }
 
-func (r *certificateRepo) CreateUsage(ctx context.Context, usage *domain.CertificateUsage) error {
-	if usage.ID == uuid.Nil {
-		usage.ID = uuid.New()
-	}
-	if usage.UsedAt.IsZero() {
-		usage.UsedAt = time.Now()
-	}
-
-	query := `
-		INSERT INTO certificate_usages (id, certificate_id, booking_id, amount, used_at)
-		VALUES ($1, $2, $3, $4, $5)`
-
-	_, err := r.pool.Exec(ctx, query,
-		usage.ID, usage.CertificateID, usage.BookingID, usage.Amount, usage.UsedAt,
-	)
-	if err != nil {
-		return fmt.Errorf("create certificate usage: %w", err)
-	}
-	return nil
-}

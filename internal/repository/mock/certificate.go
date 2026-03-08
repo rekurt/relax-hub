@@ -77,7 +77,7 @@ func (r *CertificateRepo) GetByCode(_ context.Context, code string) (*domain.Gif
 	return nil, domain.ErrCertificateNotFound
 }
 
-func (r *CertificateRepo) UpdateBalance(_ context.Context, id uuid.UUID, amount int64) error {
+func (r *CertificateRepo) ApplyToBooking(_ context.Context, id uuid.UUID, usage *domain.CertificateUsage) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -86,22 +86,25 @@ func (r *CertificateRepo) UpdateBalance(_ context.Context, id uuid.UUID, amount 
 		return domain.ErrCertificateNotFound
 	}
 
-	if cert.Status != domain.CertificateStatusActive || cert.Balance < amount || time.Now().After(cert.ValidUntil) {
+	if cert.Status != domain.CertificateStatusActive || cert.Balance < usage.Amount || time.Now().After(cert.ValidUntil) {
 		return domain.ErrCertificateInsufficientBalance
 	}
 
-	cert.Balance -= amount
+	cert.Balance -= usage.Amount
 	if cert.Balance == 0 {
 		cert.Status = domain.CertificateStatusUsed
 	}
-	return nil
-}
 
-func (r *CertificateRepo) ApplyToBooking(ctx context.Context, id uuid.UUID, usage *domain.CertificateUsage) error {
-	if err := r.UpdateBalance(ctx, id, usage.Amount); err != nil {
-		return err
+	if usage.ID == uuid.Nil {
+		usage.ID = uuid.New()
 	}
-	return r.CreateUsage(ctx, usage)
+	if usage.UsedAt.IsZero() {
+		usage.UsedAt = time.Now()
+	}
+
+	cp := *usage
+	r.usages[usage.ID] = &cp
+	return nil
 }
 
 func (r *CertificateRepo) ListByUser(_ context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error) {
@@ -161,22 +164,6 @@ func (r *CertificateRepo) Redeem(_ context.Context, id uuid.UUID, userID uuid.UU
 	}
 
 	cert.RedeemedByID = &userID
-	return nil
-}
-
-func (r *CertificateRepo) CreateUsage(_ context.Context, usage *domain.CertificateUsage) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if usage.ID == uuid.Nil {
-		usage.ID = uuid.New()
-	}
-	if usage.UsedAt.IsZero() {
-		usage.UsedAt = time.Now()
-	}
-
-	cp := *usage
-	r.usages[usage.ID] = &cp
 	return nil
 }
 
