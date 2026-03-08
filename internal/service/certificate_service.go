@@ -51,6 +51,12 @@ func (s *certificateService) Purchase(ctx context.Context, amount int64, purchas
 	if purchaserEmail == "" || recipientEmail == "" {
 		return nil, domain.ErrInvalidInput
 	}
+	if len(recipientName) > 255 {
+		return nil, domain.ErrInvalidInput
+	}
+	if len(message) > 1000 {
+		return nil, domain.ErrInvalidInput
+	}
 
 	var cert *domain.GiftCertificate
 	for i := 0; i < certificateCodeRetries; i++ {
@@ -59,6 +65,7 @@ func (s *certificateService) Purchase(ctx context.Context, amount int64, purchas
 			return nil, fmt.Errorf("generate certificate code: %w", err)
 		}
 
+		now := time.Now()
 		cert = &domain.GiftCertificate{
 			ID:             uuid.New(),
 			Code:           code,
@@ -70,8 +77,8 @@ func (s *certificateService) Purchase(ctx context.Context, amount int64, purchas
 			Balance:        amount,
 			Message:        message,
 			Status:         domain.CertificateStatusActive,
-			ValidUntil:     time.Now().AddDate(0, 0, certificateValidDays),
-			CreatedAt:      time.Now(),
+			ValidUntil:     now.AddDate(0, 0, certificateValidDays),
+			CreatedAt:      now,
 		}
 
 		if err := s.certRepo.Create(ctx, cert); err != nil {
@@ -168,11 +175,26 @@ func (s *certificateService) GetBalance(ctx context.Context, code string) (*doma
 		return nil, err
 	}
 
+	if cert.Status == domain.CertificateStatusActive && cert.IsExpired() {
+		cert.Status = domain.CertificateStatusExpired
+	}
+
 	return cert, nil
 }
 
 func (s *certificateService) ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error) {
-	return s.certRepo.ListByUser(ctx, userID, page, pageSize)
+	result, err := s.certRepo.ListByUser(ctx, userID, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range result.Items {
+		if result.Items[i].Status == domain.CertificateStatusActive && result.Items[i].IsExpired() {
+			result.Items[i].Status = domain.CertificateStatusExpired
+		}
+	}
+
+	return result, nil
 }
 
 func generateCertificateCode() (string, error) {
