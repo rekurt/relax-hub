@@ -91,6 +91,7 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(optionalAuth).Get("/bathhouses/by-slug/{slug}", p.BHHandler.GetBySlug)
 		r.With(optionalAuth).Get("/bathhouses/{id}", p.BHHandler.GetByID)
 		r.Get("/bathhouses/{id}/available-slots", p.BHHandler.GetAvailableSlots)
+		r.Get("/bathhouses/{id}/meta", p.BHHandler.GetMeta)
 
 		// City bathhouses (public, SEO-friendly)
 		r.With(optionalAuth).Get("/cities/{slug}/bathhouses", p.BHHandler.SearchByCitySlug)

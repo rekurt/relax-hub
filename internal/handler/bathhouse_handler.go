@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 	"html"
@@ -16,6 +17,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/nikitaaldaev/bani/internal/seo"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
@@ -27,6 +29,7 @@ type BathhouseHandler struct {
 	recommendationService service.RecommendationService
 	analyticsService      service.AnalyticsService
 	promotionRepository   repository.PromotionRepository
+	cityRepo              repository.CityRepository
 	log                   *logger.Logger
 }
 
@@ -38,6 +41,7 @@ func NewBathhouseHandler(
 	recommendationService service.RecommendationService,
 	analyticsService service.AnalyticsService,
 	promotionRepository repository.PromotionRepository,
+	cityRepo repository.CityRepository,
 	log *logger.Logger,
 ) *BathhouseHandler {
 	return &BathhouseHandler{
@@ -48,6 +52,7 @@ func NewBathhouseHandler(
 		recommendationService: recommendationService,
 		analyticsService:      analyticsService,
 		promotionRepository:   promotionRepository,
+		cityRepo:              cityRepo,
 		log:                   log,
 	}
 }
@@ -102,6 +107,7 @@ type bathhouseResponse struct {
 	Status       string             `json:"status"`
 	IsFavorite   bool               `json:"is_favorite"`
 	IsPromoted   bool               `json:"is_promoted"`
+	Meta         *seo.MetaTags      `json:"meta,omitempty"`
 	CreatedAt    time.Time          `json:"created_at"`
 	UpdatedAt    time.Time          `json:"updated_at"`
 }
@@ -414,6 +420,7 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := toBathhouseResponse(bh)
+	resp.Meta = h.buildMeta(r.Context(), bh)
 
 	userID := middleware.GetUserID(r.Context())
 	if userID != uuid.Nil && h.favoriteService != nil {
@@ -471,6 +478,7 @@ func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := toBathhouseResponse(bh)
+	resp.Meta = h.buildMeta(r.Context(), bh)
 
 	userID := middleware.GetUserID(r.Context())
 	if userID != uuid.Nil && h.favoriteService != nil {
@@ -868,6 +876,57 @@ func isValidFontFamily(fontFamily string) bool {
 		return false
 	}
 	return true
+}
+
+func (h *BathhouseHandler) GetMeta(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	bh, err := h.bathhouseService.GetByID(r.Context(), id)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	meta := h.buildMeta(r.Context(), bh)
+	if meta == nil {
+		meta = &seo.MetaTags{}
+	}
+
+	writeJSON(w, http.StatusOK, meta)
+}
+
+func (h *BathhouseHandler) buildMeta(ctx context.Context, bh *domain.Bathhouse) *seo.MetaTags {
+	var cityName, citySlug string
+	if h.cityRepo != nil {
+		city, err := h.cityRepo.GetByID(ctx, bh.CityID)
+		if err == nil && city != nil {
+			cityName = city.Name
+			citySlug = city.Slug
+		}
+	}
+
+	meta := seo.GenerateMetaTags(seo.MetaInput{
+		Name:         bh.Name,
+		CityName:     cityName,
+		CitySlug:     citySlug,
+		Slug:         bh.Slug,
+		Description:  bh.Description,
+		PricePerHour: bh.PricePerHour,
+		Rating:       bh.Rating,
+		ReviewCount:  bh.ReviewCount,
+		Images:       bh.Images,
+		HasPool:      bh.HasPool,
+		HasSauna:     bh.HasSauna,
+		HasSteamRoom: bh.HasSteamRoom,
+		HasHotTub:    bh.HasHotTub,
+		HasBBQ:       bh.HasBBQ,
+		HasKaraoke:   bh.HasKaraoke,
+	})
+	return &meta
 }
 
 const maxPageSize = 100

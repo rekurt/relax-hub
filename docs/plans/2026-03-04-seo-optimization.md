@@ -59,7 +59,7 @@ SEO-оптимизация для поисковых систем: slug (ЧПУ)
 - Create: `internal/seo/meta.go`
 - Modify: `internal/handler/bathhouse.go`
 
-- [ ] Генератор мета-тегов для бани:
+- [x] Генератор мета-тегов для бани:
   ```
   MetaTags {
     Title       string  // "Баня на Липовой в Москве — Bani.ru"
@@ -69,10 +69,10 @@ SEO-оптимизация для поисковых систем: slug (ЧПУ)
     Canonical   string  // "https://bani.ru/moscow/banya-na-lipovoy"
   }
   ```
-- [ ] Включить meta в ответ GetByID и GetBySlug
-- [ ] GET /api/v1/bathhouses/{id}/meta — мета-теги для SSR/prerender
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Включить meta в ответ GetByID и GetBySlug
+- [x] GET /api/v1/bathhouses/{id}/meta — мета-теги для SSR/prerender
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Sitemap и Schema.org
 
