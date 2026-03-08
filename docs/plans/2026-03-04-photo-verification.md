@@ -29,7 +29,7 @@
 - Create: `migrations/000021_photo_verification.up.sql`
 - Create: `migrations/000021_photo_verification.down.sql`
 
-- [ ] Создать модель BathhousePhoto:
+- [x] Создать модель BathhousePhoto:
   ```
   BathhousePhoto {
     ID              uuid.UUID
@@ -44,10 +44,10 @@
     UploadedAt      time.Time
   }
   ```
-- [ ] Добавить поле IsPhotoVerified bool в Bathhouse
-- [ ] Создать миграцию: таблица bathhouse_photos + ALTER bathhouses ADD is_photo_verified
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить поле IsPhotoVerified bool в Bathhouse
+- [x] Создать миграцию: таблица bathhouse_photos + ALTER bathhouses ADD is_photo_verified
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий и сервис верификации
 

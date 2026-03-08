@@ -53,8 +53,9 @@ type Bathhouse struct {
 	Images       []string
 	WorkingHours []WorkingHours
 	Status       BathhouseStatus
-	IsPromoted   bool // transient field, set during List queries
-	ApiKey       string
+	IsPromoted       bool // transient field, set during List queries
+	IsPhotoVerified  bool
+	ApiKey           string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
