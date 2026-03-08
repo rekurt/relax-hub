@@ -30,14 +30,14 @@ SEO-оптимизация для поисковых систем: slug (ЧПУ)
 - Create: `migrations/000023_bathhouse_slugs.up.sql`
 - Create: `migrations/000023_bathhouse_slugs.down.sql`
 
-- [ ] Добавить поле Slug string в Bathhouse
-- [ ] Генератор slug из названия (транслитерация ru->en, lowercase, дефисы):
+- [x] Добавить поле Slug string в Bathhouse
+- [x] Генератор slug из названия (транслитерация ru->en, lowercase, дефисы):
   - "Баня на Липовой" -> "banya-na-lipovoy"
   - При конфликте: добавить суффикс "-2", "-3" etc.
-- [ ] Миграция: ALTER bathhouses ADD COLUMN slug VARCHAR(255) UNIQUE
-- [ ] Заполнить slug для существующих бань из name
-- [ ] Написать тесты (транслитерация, коллизии, спецсимволы)
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Миграция: ALTER bathhouses ADD COLUMN slug VARCHAR(255) UNIQUE
+- [x] Заполнить slug для существующих бань из name
+- [x] Написать тесты (транслитерация, коллизии, спецсимволы)
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: ЧПУ-маршруты
 

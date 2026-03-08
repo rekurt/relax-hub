@@ -33,6 +33,7 @@ type Bathhouse struct {
 	ID           uuid.UUID
 	OwnerID      uuid.UUID
 	Name         string
+	Slug         string
 	Description  string
 	Address      string
 	CityID       int64
