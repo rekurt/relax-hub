@@ -30,7 +30,7 @@
 - Create: `migrations/000020_complaints.up.sql`
 - Create: `migrations/000020_complaints.down.sql`
 
-- [ ] Создать модель Complaint:
+- [x] Создать модель Complaint:
   ```
   Complaint {
     ID            uuid.UUID
@@ -46,10 +46,10 @@
     CreatedAt     time.Time
   }
   ```
-- [ ] Добавить domain-ошибки: ErrComplaintNotFound, ErrAlreadyReported (один пользователь — одна жалоба на объект)
-- [ ] Создать миграцию с UNIQUE(reporter_id, target_type, target_id)
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить domain-ошибки: ErrComplaintNotFound, ErrAlreadyReported (один пользователь — одна жалоба на объект)
+- [x] Создать миграцию с UNIQUE(reporter_id, target_type, target_id)
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий жалоб
 

@@ -26,4 +26,6 @@ var (
 	ErrPromoMaxUses               = errors.New("promo code usage limit exceeded")
 	ErrPromoMinAmount             = errors.New("promo code minimum amount not met")
 	ErrPromoInvalid               = errors.New("promo code is invalid")
+	ErrComplaintNotFound          = errors.New("complaint not found")
+	ErrAlreadyReported            = errors.New("already reported")
 )
