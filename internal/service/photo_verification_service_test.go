@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -22,9 +21,8 @@ func newPhotoVerifTestEnv() *photoVerifTestEnv {
 	photoRepo := mock.NewBathhousePhotoRepo()
 	bhRepo := mock.NewBathhouseRepo()
 	repRepo := mock.NewRepresentativeRepo()
-	log := logger.New(logger.LevelWarn)
 	accessCheck := service.NewAccessChecker(repRepo, bhRepo)
-	svc := service.NewPhotoVerificationService(photoRepo, bhRepo, accessCheck, log)
+	svc := service.NewPhotoVerificationService(photoRepo, bhRepo, accessCheck)
 	return &photoVerifTestEnv{
 		svc:       svc,
 		photoRepo: photoRepo,
@@ -519,6 +517,22 @@ func TestPhotoVerification_ListVerifiedByBathhouse(t *testing.T) {
 	}
 	if len(allPhotos) != 2 {
 		t.Errorf("all photos count = %d, want 2", len(allPhotos))
+	}
+}
+
+func TestPhotoVerification_RejectPhoto_EmptyReason(t *testing.T) {
+	env := newPhotoVerifTestEnv()
+	ownerID := uuid.New()
+	bh := createTestBathhouse(env, ownerID)
+	adminID := uuid.New()
+
+	photo, _ := env.svc.UploadPhoto(context.Background(), ownerID, domain.RoleOwner, service.UploadPhotoInput{
+		BathhouseID: bh.ID, URL: "https://example.com/photo.jpg",
+	})
+
+	_, err := env.svc.RejectPhoto(context.Background(), photo.ID, adminID, "")
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput for empty rejection reason", err)
 	}
 }
 

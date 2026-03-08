@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
@@ -31,20 +30,17 @@ type photoVerificationService struct {
 	photoRepo   repository.BathhousePhotoRepository
 	bhRepo      repository.BathhouseRepository
 	accessCheck *AccessChecker
-	logger      *logger.Logger
 }
 
 func NewPhotoVerificationService(
 	photoRepo repository.BathhousePhotoRepository,
 	bhRepo repository.BathhouseRepository,
 	accessCheck *AccessChecker,
-	log *logger.Logger,
 ) PhotoVerificationService {
 	return &photoVerificationService{
 		photoRepo:   photoRepo,
 		bhRepo:      bhRepo,
 		accessCheck: accessCheck,
-		logger:      log,
 	}
 }
 
@@ -85,7 +81,7 @@ func (s *photoVerificationService) UploadPhoto(ctx context.Context, userID uuid.
 
 	// New photo resets verification badge
 	if err := s.bhRepo.UpdatePhotoVerified(ctx, input.BathhouseID, false); err != nil {
-		s.logger.Error("failed to reset photo verification", "bathhouse_id", input.BathhouseID, "error", err)
+		return nil, fmt.Errorf("reset photo verification: %w", err)
 	}
 
 	return photo, nil
@@ -178,6 +174,10 @@ func (s *photoVerificationService) RejectPhoto(ctx context.Context, photoID uuid
 	}
 
 	if photo.Status != domain.PhotoStatusPending {
+		return nil, domain.ErrInvalidInput
+	}
+
+	if reason == "" {
 		return nil, domain.ErrInvalidInput
 	}
 

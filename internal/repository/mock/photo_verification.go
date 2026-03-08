@@ -111,6 +111,10 @@ func (r *BathhousePhotoRepo) UpdateStatus(_ context.Context, id uuid.UUID, statu
 		return domain.ErrPhotoNotFound
 	}
 
+	if p.Status != domain.PhotoStatusPending {
+		return domain.ErrPhotoNotFound
+	}
+
 	p.Status = status
 	p.VerifiedByID = verifiedByID
 	p.RejectionReason = rejectionReason

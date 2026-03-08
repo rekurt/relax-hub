@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -39,7 +40,10 @@ func (p *BathhousePhoto) Validate() error {
 	if p.BathhouseID == uuid.Nil {
 		return ErrInvalidInput
 	}
-	if p.URL == "" {
+	if p.URL == "" || (!strings.HasPrefix(p.URL, "https://") && !strings.HasPrefix(p.URL, "http://")) {
+		return ErrInvalidInput
+	}
+	if p.ThumbnailURL != "" && !strings.HasPrefix(p.ThumbnailURL, "https://") && !strings.HasPrefix(p.ThumbnailURL, "http://") {
 		return ErrInvalidInput
 	}
 	if p.Position < 0 {

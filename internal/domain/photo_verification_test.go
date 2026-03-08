@@ -51,6 +51,9 @@ func TestBathhousePhoto_Validate(t *testing.T) {
 	}{
 		{"nil bathhouse ID", BathhousePhoto{BathhouseID: uuid.Nil, URL: "https://example.com/photo.jpg"}},
 		{"empty URL", BathhousePhoto{BathhouseID: uuid.New(), URL: ""}},
+		{"invalid URL scheme", BathhousePhoto{BathhouseID: uuid.New(), URL: "javascript:alert(1)"}},
+		{"no URL scheme", BathhousePhoto{BathhouseID: uuid.New(), URL: "example.com/photo.jpg"}},
+		{"invalid thumbnail URL scheme", BathhousePhoto{BathhouseID: uuid.New(), URL: "https://example.com/photo.jpg", ThumbnailURL: "ftp://example.com/thumb.jpg"}},
 		{"negative position", BathhousePhoto{BathhouseID: uuid.New(), URL: "https://example.com/photo.jpg", Position: -1}},
 		{"invalid status", BathhousePhoto{BathhouseID: uuid.New(), URL: "https://example.com/photo.jpg", Status: "bad"}},
 	}
