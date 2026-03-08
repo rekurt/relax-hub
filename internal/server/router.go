@@ -39,6 +39,7 @@ type RouterParams struct {
 	ChatHandler            *handler.ChatHandler
 	AnalyticsHandler       *handler.AnalyticsHandler
 	ComplaintHandler       *handler.ComplaintHandler
+	ReferralHandler       *handler.ReferralHandler
 	GoAdmin                *admin.GoAdmin `optional:"true"`
 }
 
@@ -171,6 +172,11 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Get("/my/loyalty", p.LoyaltyHandler.GetAccount)
 		r.With(auth).Get("/my/loyalty/transactions", p.LoyaltyHandler.ListTransactions)
 		r.With(auth).Get("/my/loyalty/levels", p.LoyaltyHandler.GetLevels)
+
+		// Referral program (authenticated)
+		r.With(auth).Get("/my/referral", p.ReferralHandler.GetCode)
+		r.With(auth).Get("/my/referral/stats", p.ReferralHandler.GetStats)
+		r.With(auth).Get("/my/referral/balance", p.ReferralHandler.GetBalance)
 
 		// Chat (authenticated)
 		r.With(auth, middleware.RequireRole(domain.RoleClient, domain.RoleAdmin)).Post("/bathhouses/{id}/chat", p.ChatHandler.StartConversation)

@@ -88,12 +88,12 @@
 - Create: `internal/handler/referral.go`
 - Modify: `internal/server/router.go`
 
-- [ ] GET /api/v1/my/referral — мой реферальный код и ссылка
-- [ ] GET /api/v1/my/referral/stats — статистика (приглашено, завершено, заработано)
-- [ ] GET /api/v1/my/referral/balance — текущий баланс бонусов
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] GET /api/v1/my/referral — мой реферальный код и ссылка
+- [x] GET /api/v1/my/referral/stats — статистика (приглашено, завершено, заработано)
+- [x] GET /api/v1/my/referral/balance — текущий баланс бонусов
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Верификация
 
