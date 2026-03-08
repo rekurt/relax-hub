@@ -212,7 +212,7 @@ type ReferralRepository interface {
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReferralStatus, completedAt *time.Time) error
 	GetBalance(ctx context.Context, userID uuid.UUID) (*domain.ReferralBalance, error)
 	CreateBalance(ctx context.Context, balance *domain.ReferralBalance) error
-	UpdateBalance(ctx context.Context, userID uuid.UUID, delta int64) error
+	UpdateBalance(ctx context.Context, userID uuid.UUID, delta int64, trackEarnings bool) error
 	CountByReferrer(ctx context.Context, referrerID uuid.UUID) (int, int, error) // totalInvited, totalCompleted
 }
 

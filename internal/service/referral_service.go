@@ -56,17 +56,25 @@ func (s *referralService) GenerateCode(ctx context.Context, userID uuid.UUID) (s
 		return user.ReferralCode, nil
 	}
 
-	code, err := generateReferralCode()
-	if err != nil {
-		return "", err
+	const maxRetries = 3
+	for i := 0; i < maxRetries; i++ {
+		code, err := generateReferralCode()
+		if err != nil {
+			return "", err
+		}
+
+		if err := s.userRepo.UpdateReferralCode(ctx, userID, code); err != nil {
+			if errors.Is(err, domain.ErrAlreadyExists) && i < maxRetries-1 {
+				continue // retry with a new code
+			}
+			return "", err
+		}
+
+		s.logger.Info("generated referral code", "user_id", userID)
+		return code, nil
 	}
 
-	if err := s.userRepo.UpdateReferralCode(ctx, userID, code); err != nil {
-		return "", err
-	}
-
-	s.logger.Info("generated referral code", "user_id", userID)
-	return code, nil
+	return "", domain.ErrAlreadyExists
 }
 
 func (s *referralService) RegisterReferral(ctx context.Context, referralCode string, newUserID uuid.UUID) error {
@@ -117,16 +125,16 @@ func (s *referralService) CompleteReferral(ctx context.Context, refereeID uuid.U
 		return nil // Already completed or expired
 	}
 
-	now := time.Now()
-	if err := s.referralRepo.UpdateStatus(ctx, referral.ID, domain.ReferralStatusCompleted, &now); err != nil {
-		return err
-	}
+	// Credit bonuses first, update status last.
+	// If the process crashes after crediting but before status update,
+	// a retry will re-credit (idempotency issue), but this is safer than
+	// marking completed before crediting, which would permanently lose bonuses.
 
 	// Credit bonus to referrer
 	if err := s.ensureBalance(ctx, referral.ReferrerID); err != nil {
 		return err
 	}
-	if err := s.referralRepo.UpdateBalance(ctx, referral.ReferrerID, referral.BonusAmount); err != nil {
+	if err := s.referralRepo.UpdateBalance(ctx, referral.ReferrerID, referral.BonusAmount, true); err != nil {
 		return err
 	}
 
@@ -134,7 +142,13 @@ func (s *referralService) CompleteReferral(ctx context.Context, refereeID uuid.U
 	if err := s.ensureBalance(ctx, refereeID); err != nil {
 		return err
 	}
-	if err := s.referralRepo.UpdateBalance(ctx, refereeID, referral.BonusAmount); err != nil {
+	if err := s.referralRepo.UpdateBalance(ctx, refereeID, referral.BonusAmount, true); err != nil {
+		return err
+	}
+
+	// Mark as completed only after both bonuses are credited
+	now := time.Now()
+	if err := s.referralRepo.UpdateStatus(ctx, referral.ID, domain.ReferralStatusCompleted, &now); err != nil {
 		return err
 	}
 
@@ -166,7 +180,7 @@ func (s *referralService) UseBalance(ctx context.Context, userID uuid.UUID, amou
 		return domain.ErrInvalidInput
 	}
 
-	if err := s.referralRepo.UpdateBalance(ctx, userID, -amount); err != nil {
+	if err := s.referralRepo.UpdateBalance(ctx, userID, -amount, false); err != nil {
 		return err
 	}
 
@@ -183,7 +197,7 @@ func (s *referralService) RefundBalance(ctx context.Context, userID uuid.UUID, a
 		return err
 	}
 
-	if err := s.referralRepo.UpdateBalance(ctx, userID, amount); err != nil {
+	if err := s.referralRepo.UpdateBalance(ctx, userID, amount, false); err != nil {
 		return err
 	}
 

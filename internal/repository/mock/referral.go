@@ -149,7 +149,7 @@ func (r *ReferralRepo) CreateBalance(_ context.Context, balance *domain.Referral
 	return nil
 }
 
-func (r *ReferralRepo) UpdateBalance(_ context.Context, userID uuid.UUID, delta int64) error {
+func (r *ReferralRepo) UpdateBalance(_ context.Context, userID uuid.UUID, delta int64, trackEarnings bool) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -163,7 +163,7 @@ func (r *ReferralRepo) UpdateBalance(_ context.Context, userID uuid.UUID, delta 
 	}
 
 	b.Balance += delta
-	if delta > 0 {
+	if delta > 0 && trackEarnings {
 		b.TotalEarned += delta
 	}
 	b.UpdatedAt = time.Now()

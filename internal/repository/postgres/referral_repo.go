@@ -171,15 +171,10 @@ func (r *referralRepo) CreateBalance(ctx context.Context, balance *domain.Referr
 	return nil
 }
 
-func (r *referralRepo) UpdateBalance(ctx context.Context, userID uuid.UUID, delta int64) error {
-	query := `
-		UPDATE referral_balances
-		SET balance = balance + $1, total_earned = CASE WHEN $1 > 0 THEN total_earned + $1 ELSE total_earned END, updated_at = $2
-		WHERE user_id = $3`
-
+func (r *referralRepo) UpdateBalance(ctx context.Context, userID uuid.UUID, delta int64, trackEarnings bool) error {
 	if delta < 0 {
 		// For spending, check sufficient balance
-		query = `
+		query := `
 			UPDATE referral_balances
 			SET balance = balance + $1, updated_at = $2
 			WHERE user_id = $3 AND balance >= $4`
@@ -196,6 +191,19 @@ func (r *referralRepo) UpdateBalance(ctx context.Context, userID uuid.UUID, delt
 			return domain.ErrInsufficientReferralBalance
 		}
 		return nil
+	}
+
+	var query string
+	if trackEarnings {
+		query = `
+			UPDATE referral_balances
+			SET balance = balance + $1, total_earned = total_earned + $1, updated_at = $2
+			WHERE user_id = $3`
+	} else {
+		query = `
+			UPDATE referral_balances
+			SET balance = balance + $1, updated_at = $2
+			WHERE user_id = $3`
 	}
 
 	result, err := r.pool.Exec(ctx, query, delta, time.Now(), userID)

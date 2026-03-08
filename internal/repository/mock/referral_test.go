@@ -117,8 +117,8 @@ func TestReferralRepo_Balance(t *testing.T) {
 		t.Fatalf("create balance: %v", err)
 	}
 
-	// Add
-	err = repo.UpdateBalance(context.Background(), userID, 50000)
+	// Add (earning)
+	err = repo.UpdateBalance(context.Background(), userID, 50000, true)
 	if err != nil {
 		t.Fatalf("add balance: %v", err)
 	}
@@ -132,7 +132,7 @@ func TestReferralRepo_Balance(t *testing.T) {
 	}
 
 	// Spend
-	err = repo.UpdateBalance(context.Background(), userID, -20000)
+	err = repo.UpdateBalance(context.Background(), userID, -20000, false)
 	if err != nil {
 		t.Fatalf("spend balance: %v", err)
 	}
@@ -143,7 +143,7 @@ func TestReferralRepo_Balance(t *testing.T) {
 	}
 
 	// Insufficient
-	err = repo.UpdateBalance(context.Background(), userID, -50000)
+	err = repo.UpdateBalance(context.Background(), userID, -50000, false)
 	if err != domain.ErrInsufficientReferralBalance {
 		t.Errorf("err = %v, want ErrInsufficientReferralBalance", err)
 	}

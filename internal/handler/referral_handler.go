@@ -57,11 +57,18 @@ func (h *ReferralHandler) GetCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scheme := "https"
-	if r.TLS == nil {
-		scheme = "http"
+	scheme := r.Header.Get("X-Forwarded-Proto")
+	if scheme == "" {
+		scheme = "https"
+		if r.TLS == nil {
+			scheme = "http"
+		}
 	}
-	baseURL := scheme + "://" + r.Host
+	host := r.Header.Get("X-Forwarded-Host")
+	if host == "" {
+		host = r.Host
+	}
+	baseURL := scheme + "://" + host
 
 	writeJSON(w, http.StatusOK, referralCodeResponse{
 		ReferralCode: code,
