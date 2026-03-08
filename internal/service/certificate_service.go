@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net/mail"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,6 +20,7 @@ const (
 	certificateCodeSegLen  = 4
 	certificateCodeRetries = 3
 	certificateValidDays   = 365
+	certificateMaxAmount   = 10_000_000 // 100 000 рублей в копейках
 )
 
 type CertificateService interface {
@@ -45,10 +47,13 @@ func NewCertificateService(
 }
 
 func (s *certificateService) Purchase(ctx context.Context, amount int64, purchaserID *uuid.UUID, purchaserEmail, recipientEmail, recipientName, message string) (*domain.GiftCertificate, error) {
-	if amount <= 0 {
+	if amount <= 0 || amount > certificateMaxAmount {
 		return nil, domain.ErrInvalidInput
 	}
-	if purchaserEmail == "" || recipientEmail == "" {
+	if _, err := mail.ParseAddress(purchaserEmail); err != nil {
+		return nil, domain.ErrInvalidInput
+	}
+	if _, err := mail.ParseAddress(recipientEmail); err != nil {
 		return nil, domain.ErrInvalidInput
 	}
 	if len(recipientName) > 255 {

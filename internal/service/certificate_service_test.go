@@ -85,6 +85,11 @@ func TestCertificateService_Purchase_InvalidAmount(t *testing.T) {
 	if err != domain.ErrInvalidInput {
 		t.Errorf("err = %v, want ErrInvalidInput", err)
 	}
+
+	_, err = env.svc.Purchase(context.Background(), 10_000_001, nil, "buyer@test.com", "recipient@test.com", "Test", "")
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput for amount exceeding max", err)
+	}
 }
 
 func TestCertificateService_Purchase_MissingEmail(t *testing.T) {
@@ -98,6 +103,20 @@ func TestCertificateService_Purchase_MissingEmail(t *testing.T) {
 	_, err = env.svc.Purchase(context.Background(), 10000, nil, "buyer@test.com", "", "Test", "")
 	if err != domain.ErrInvalidInput {
 		t.Errorf("err = %v, want ErrInvalidInput for empty recipient email", err)
+	}
+}
+
+func TestCertificateService_Purchase_InvalidEmail(t *testing.T) {
+	env := newCertTestEnv()
+
+	_, err := env.svc.Purchase(context.Background(), 10000, nil, "not-an-email", "recipient@test.com", "Test", "")
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput for invalid purchaser email", err)
+	}
+
+	_, err = env.svc.Purchase(context.Background(), 10000, nil, "buyer@test.com", "also-invalid", "Test", "")
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput for invalid recipient email", err)
 	}
 }
 
