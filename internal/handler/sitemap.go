@@ -68,15 +68,17 @@ func (h *SitemapHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// Try cache first
-	cached, err := h.redis.Get(ctx, sitemapCacheKey).Result()
-	if err == nil {
-		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, cached)
-		return
-	}
-	if err != redis.Nil {
-		h.log.Warn("redis get sitemap cache failed", "error", err)
+	if h.redis != nil {
+		cached, err := h.redis.Get(ctx, sitemapCacheKey).Result()
+		if err == nil {
+			w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(cached))
+			return
+		}
+		if err != redis.Nil {
+			h.log.Warn("redis get sitemap cache failed", "error", err)
+		}
 	}
 
 	// Generate sitemap
@@ -88,8 +90,10 @@ func (h *SitemapHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Cache in Redis
-	if cacheErr := h.redis.Set(ctx, sitemapCacheKey, string(xmlData), sitemapCacheTTL).Err(); cacheErr != nil {
-		h.log.Error("failed to cache sitemap", "error", cacheErr)
+	if h.redis != nil {
+		if cacheErr := h.redis.Set(ctx, sitemapCacheKey, string(xmlData), sitemapCacheTTL).Err(); cacheErr != nil {
+			h.log.Error("failed to cache sitemap", "error", cacheErr)
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
@@ -204,6 +208,8 @@ func (h *SitemapHandler) GetSchema(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			cityName = city.Name
 			citySlug = city.Slug
+		} else {
+			h.log.Warn("failed to get city for schema", "city_id", bh.CityID, "error", err)
 		}
 	}
 
