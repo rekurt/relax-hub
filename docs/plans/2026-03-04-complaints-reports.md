@@ -88,16 +88,16 @@
 - Create: `internal/handler/complaint.go`
 - Modify: `internal/server/router.go`
 
-- [ ] POST /api/v1/reviews/{id}/report — пожаловаться на отзыв (auth)
-- [ ] POST /api/v1/bathhouses/{id}/report — пожаловаться на баню (auth)
-- [ ] POST /api/v1/users/{id}/report — пожаловаться на пользователя (auth)
-- [ ] GET /api/v1/admin/complaints — список жалоб с фильтрами (admin)
-- [ ] GET /api/v1/admin/complaints/{id} — детали жалобы (admin)
-- [ ] PATCH /api/v1/admin/complaints/{id}/resolve — решить (admin)
-- [ ] PATCH /api/v1/admin/complaints/{id}/dismiss — отклонить (admin)
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] POST /api/v1/reviews/{id}/report — пожаловаться на отзыв (auth)
+- [x] POST /api/v1/bathhouses/{id}/report — пожаловаться на баню (auth)
+- [x] POST /api/v1/users/{id}/report — пожаловаться на пользователя (auth)
+- [x] GET /api/v1/admin/complaints — список жалоб с фильтрами (admin)
+- [x] GET /api/v1/admin/complaints/{id} — детали жалобы (admin)
+- [x] PATCH /api/v1/admin/complaints/{id}/resolve — решить (admin)
+- [x] PATCH /api/v1/admin/complaints/{id}/dismiss — отклонить (admin)
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Верификация
 

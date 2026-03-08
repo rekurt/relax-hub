@@ -38,6 +38,7 @@ type RouterParams struct {
 	LoyaltyHandler         *handler.LoyaltyHandler
 	ChatHandler            *handler.ChatHandler
 	AnalyticsHandler       *handler.AnalyticsHandler
+	ComplaintHandler       *handler.ComplaintHandler
 	GoAdmin                *admin.GoAdmin `optional:"true"`
 }
 
@@ -113,6 +114,11 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Put("/reviews/{id}", p.ReviewHandler.Update)
 		r.With(auth).Delete("/reviews/{id}", p.ReviewHandler.Delete)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", p.ReviewHandler.AddOwnerResponse)
+
+		// Complaints / Reports (authenticated)
+		r.With(auth).Post("/reviews/{id}/report", p.ComplaintHandler.ReportReview)
+		r.With(auth).Post("/bathhouses/{id}/report", p.ComplaintHandler.ReportBathhouse)
+		r.With(auth).Post("/users/{id}/report", p.ComplaintHandler.ReportUser)
 
 		// Favorites (authenticated)
 		r.With(auth).Post("/bathhouses/{id}/favorite", p.FavHandler.Toggle)
@@ -222,6 +228,12 @@ func NewRouter(p RouterParams) http.Handler {
 			// Analytics (admin only)
 			r.Get("/analytics", p.AnalyticsHandler.GetAdminDashboard)
 			r.Get("/analytics/top", p.AnalyticsHandler.GetTopBathhouses)
+
+			// Complaints (admin only)
+			r.Get("/complaints", p.ComplaintHandler.List)
+			r.Get("/complaints/{id}", p.ComplaintHandler.GetByID)
+			r.Patch("/complaints/{id}/resolve", p.ComplaintHandler.Resolve)
+			r.Patch("/complaints/{id}/dismiss", p.ComplaintHandler.Dismiss)
 		})
 	})
 

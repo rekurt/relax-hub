@@ -113,6 +113,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusConflict, "promotion_budget_exhausted", err.Error())
 	case errors.Is(err, domain.ErrInsufficientPoints):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "insufficient_points", err.Error())
+	case errors.Is(err, domain.ErrComplaintNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "complaint_not_found", err.Error())
+	case errors.Is(err, domain.ErrAlreadyReported):
+		writeErrorWithContext(w, r, http.StatusConflict, "already_reported", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
