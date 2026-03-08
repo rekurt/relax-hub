@@ -12,11 +12,7 @@ import (
 )
 
 type complaintTestEnv struct {
-	svc           service.ComplaintService
-	complaintRepo interface{ // use interface for access to the mock methods
-		Create(context.Context, *domain.Complaint) error
-		GetByID(context.Context, uuid.UUID) (*domain.Complaint, error)
-	}
+	svc        service.ComplaintService
 	reviewRepo *mock.ReviewRepo
 }
 
