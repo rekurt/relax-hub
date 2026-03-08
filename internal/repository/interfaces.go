@@ -222,6 +222,7 @@ type GiftCertificateRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.GiftCertificate, error)
 	GetByCode(ctx context.Context, code string) (*domain.GiftCertificate, error)
 	UpdateBalance(ctx context.Context, id uuid.UUID, amount int64) error
+	ApplyToBooking(ctx context.Context, id uuid.UUID, usage *domain.CertificateUsage) error
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error)
 	Redeem(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	CreateUsage(ctx context.Context, usage *domain.CertificateUsage) error

@@ -47,11 +47,11 @@ type certificateResponse struct {
 }
 
 type certificateBalanceResponse struct {
-	Code       string `json:"code"`
-	Amount     int64  `json:"amount"`
-	Balance    int64  `json:"balance"`
-	Status     string `json:"status"`
-	ValidUntil string `json:"valid_until"`
+	Code       string    `json:"code"`
+	Amount     int64     `json:"amount"`
+	Balance    int64     `json:"balance"`
+	Status     string    `json:"status"`
+	ValidUntil time.Time `json:"valid_until"`
 }
 
 func toCertificateResponse(c *domain.GiftCertificate) certificateResponse {
@@ -76,7 +76,7 @@ func toCertificateBalanceResponse(c *domain.GiftCertificate) certificateBalanceR
 		Amount:     c.Amount,
 		Balance:    c.Balance,
 		Status:     string(c.Status),
-		ValidUntil: c.ValidUntil.Format(time.RFC3339),
+		ValidUntil: c.ValidUntil,
 	}
 }
 

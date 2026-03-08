@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS gift_certificates (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_gift_certificates_code ON gift_certificates(code);
 CREATE INDEX idx_gift_certificates_purchaser_id ON gift_certificates(purchaser_id);
 CREATE INDEX idx_gift_certificates_redeemed_by_id ON gift_certificates(redeemed_by_id);
 CREATE INDEX idx_gift_certificates_status ON gift_certificates(status);

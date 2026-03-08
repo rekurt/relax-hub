@@ -143,10 +143,6 @@ func (s *certificateService) Apply(ctx context.Context, certificateID, bookingID
 		return domain.ErrCertificateInsufficientBalance
 	}
 
-	if err := s.certRepo.UpdateBalance(ctx, certificateID, amount); err != nil {
-		return err
-	}
-
 	usage := &domain.CertificateUsage{
 		ID:            uuid.New(),
 		CertificateID: certificateID,
@@ -154,7 +150,7 @@ func (s *certificateService) Apply(ctx context.Context, certificateID, bookingID
 		Amount:        amount,
 		UsedAt:        time.Now(),
 	}
-	if err := s.certRepo.CreateUsage(ctx, usage); err != nil {
+	if err := s.certRepo.ApplyToBooking(ctx, certificateID, usage); err != nil {
 		return err
 	}
 

@@ -83,10 +83,10 @@ func (r *CertificateRepo) UpdateBalance(_ context.Context, id uuid.UUID, amount 
 
 	cert, ok := r.certs[id]
 	if !ok {
-		return domain.ErrCertificateInsufficientBalance
+		return domain.ErrCertificateNotFound
 	}
 
-	if cert.Status != domain.CertificateStatusActive || cert.Balance < amount {
+	if cert.Status != domain.CertificateStatusActive || cert.Balance < amount || time.Now().After(cert.ValidUntil) {
 		return domain.ErrCertificateInsufficientBalance
 	}
 
@@ -95,6 +95,13 @@ func (r *CertificateRepo) UpdateBalance(_ context.Context, id uuid.UUID, amount 
 		cert.Status = domain.CertificateStatusUsed
 	}
 	return nil
+}
+
+func (r *CertificateRepo) ApplyToBooking(ctx context.Context, id uuid.UUID, usage *domain.CertificateUsage) error {
+	if err := r.UpdateBalance(ctx, id, usage.Amount); err != nil {
+		return err
+	}
+	return r.CreateUsage(ctx, usage)
 }
 
 func (r *CertificateRepo) ListByUser(_ context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error) {
@@ -149,7 +156,7 @@ func (r *CertificateRepo) Redeem(_ context.Context, id uuid.UUID, userID uuid.UU
 		return domain.ErrCertificateNotFound
 	}
 
-	if cert.RedeemedByID != nil || cert.Status != domain.CertificateStatusActive {
+	if cert.RedeemedByID != nil || cert.Status != domain.CertificateStatusActive || time.Now().After(cert.ValidUntil) {
 		return domain.ErrCertificateNotFound
 	}
 

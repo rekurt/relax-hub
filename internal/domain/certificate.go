@@ -95,9 +95,3 @@ func (u *CertificateUsage) Validate() error {
 	return nil
 }
 
-type CertificateFilter struct {
-	UserID *uuid.UUID
-	Status *CertificateStatus
-	Page   int
-	Size   int
-}

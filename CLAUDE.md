@@ -88,6 +88,7 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrOAuthExchangeFailed→400, ErrInsufficientPoints→400
 - ErrComplaintNotFound→404, ErrAlreadyReported→409
 - ErrSelfReferral→400, ErrAlreadyReferred→409, ErrInsufficientReferralBalance→400
+- ErrCertificateNotFound→404, ErrCertificateExpired→400, ErrCertificateInsufficientBalance→400
 
 ### Logging
 
@@ -156,3 +157,4 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Telegram bot**: booking wizard with in-memory state, short ID cache for callback data (64-byte limit)
 - **Complaints**: report reviews/bathhouses/users (spam, offensive, fake, fraud, other), admin moderation queue with resolve/dismiss, auto-hide reviews at 3+ reports
 - **Referral program**: personal referral codes, bonus on first booking completion (500 rub default to both referrer and referee), referral balance usable on bookings
+- **Gift certificates**: purchasable with or without auth, unique BANI-XXXX-XXXX codes, partial redemption with balance tracking, 365-day validity
