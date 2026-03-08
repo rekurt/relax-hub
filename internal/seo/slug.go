@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"unicode"
 )
 
 var translitMap = map[rune]string{
@@ -84,13 +83,13 @@ func GenerateUniqueSlug(name string, exists func(slug string) (bool, error)) (st
 	return "", fmt.Errorf("could not generate unique slug for %q after 1000 attempts", name)
 }
 
-// IsValidSlug checks if a string is a valid slug format.
+// IsValidSlug checks if a string is a valid slug format (lowercase ASCII alphanumeric and dashes).
 func IsValidSlug(s string) bool {
 	if s == "" {
 		return false
 	}
 	for _, r := range s {
-		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' {
+		if !((r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-') {
 			return false
 		}
 	}

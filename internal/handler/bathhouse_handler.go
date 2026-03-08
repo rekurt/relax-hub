@@ -31,6 +31,7 @@ type BathhouseHandler struct {
 	promotionRepository   repository.PromotionRepository
 	cityRepo              repository.CityRepository
 	log                   *logger.Logger
+	baseURL               string
 }
 
 func NewBathhouseHandler(
@@ -43,6 +44,7 @@ func NewBathhouseHandler(
 	promotionRepository repository.PromotionRepository,
 	cityRepo repository.CityRepository,
 	log *logger.Logger,
+	baseURL string,
 ) *BathhouseHandler {
 	return &BathhouseHandler{
 		bathhouseService:      bathhouseService,
@@ -54,6 +56,7 @@ func NewBathhouseHandler(
 		promotionRepository:   promotionRepository,
 		cityRepo:              cityRepo,
 		log:                   log,
+		baseURL:               baseURL,
 	}
 }
 
@@ -485,6 +488,34 @@ func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 		fav, err := h.favoriteService.IsFavorite(r.Context(), userID, bh.ID)
 		if err == nil {
 			resp.IsFavorite = fav
+		}
+	}
+
+	// Record activity for authenticated users
+	if userID != uuid.Nil && h.recommendationService != nil {
+		_ = h.recommendationService.RecordView(r.Context(), userID, bh.ID)
+	}
+
+	// Record analytics view with IP-based deduplication
+	if h.analyticsService != nil {
+		ipHash := getIPHash(r)
+		source := domain.ViewSourceDirect
+		var viewerID *uuid.UUID
+		if userID != uuid.Nil {
+			viewerID = &userID
+		}
+		_ = h.analyticsService.RecordView(r.Context(), bh.ID, viewerID, source, ipHash)
+	}
+
+	// Record click for promoted bathhouses
+	if h.promotionRepository != nil {
+		promo, err := h.promotionRepository.GetActiveBybathhouse(r.Context(), bh.ID)
+		if err == nil && promo != nil {
+			if err := h.promotionRepository.RecordClick(r.Context(), promo.ID); err != nil {
+				if h.log != nil {
+					h.log.Warn("failed to record promotion click", "promotion_id", promo.ID, "error", err)
+				}
+			}
 		}
 	}
 
@@ -925,6 +956,7 @@ func (h *BathhouseHandler) buildMeta(ctx context.Context, bh *domain.Bathhouse) 
 		HasHotTub:    bh.HasHotTub,
 		HasBBQ:       bh.HasBBQ,
 		HasKaraoke:   bh.HasKaraoke,
+		BaseURL:      h.baseURL,
 	})
 	return &meta
 }

@@ -12,7 +12,20 @@ import (
 var Module = fx.Module("handler",
 	fx.Provide(
 		NewAuthHandler,
-		NewBathhouseHandler,
+		func(
+			bathhouseService service.BathhouseService,
+			bookingService service.BookingService,
+			representativeService service.RepresentativeService,
+			favoriteService service.FavoriteService,
+			recommendationService service.RecommendationService,
+			analyticsService service.AnalyticsService,
+			promotionRepository repository.PromotionRepository,
+			cityRepo repository.CityRepository,
+			log *logger.Logger,
+			cfg *config.Config,
+		) *BathhouseHandler {
+			return NewBathhouseHandler(bathhouseService, bookingService, representativeService, favoriteService, recommendationService, analyticsService, promotionRepository, cityRepo, log, cfg.BaseURL)
+		},
 		NewBookingHandler,
 		NewReviewHandler,
 		NewFavoriteHandler,

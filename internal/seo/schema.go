@@ -116,10 +116,12 @@ func GenerateSchema(input SchemaInput) SchemaLocalBusiness {
 	}
 
 	// Address
-	schema.Address = &SchemaPostalAddress{
-		Type:            "PostalAddress",
-		StreetAddress:   input.Address,
-		AddressLocality: input.CityName,
+	if input.Address != "" || input.CityName != "" {
+		schema.Address = &SchemaPostalAddress{
+			Type:            "PostalAddress",
+			StreetAddress:   input.Address,
+			AddressLocality: input.CityName,
+		}
 	}
 
 	// Geo

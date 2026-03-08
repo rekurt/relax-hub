@@ -75,6 +75,9 @@ func (h *SitemapHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, cached)
 		return
 	}
+	if err != redis.Nil {
+		h.log.Warn("redis get sitemap cache failed", "error", err)
+	}
 
 	// Generate sitemap
 	xmlData, err := h.generateSitemap(ctx)
@@ -131,6 +134,13 @@ func (h *SitemapHandler) generateSitemap(ctx context.Context) ([]byte, error) {
 	activeStatus := domain.BathhouseStatusActive
 	page := 1
 	pageSize := 1000
+
+	// Build city slug lookup
+	citySlugMap := make(map[int64]string)
+	for _, city := range cities {
+		citySlugMap[city.ID] = city.Slug
+	}
+
 	for {
 		result, err := h.bathhouseService.Search(ctx, domain.BathhouseFilter{
 			Status:   &activeStatus,
@@ -139,12 +149,6 @@ func (h *SitemapHandler) generateSitemap(ctx context.Context) ([]byte, error) {
 		})
 		if err != nil {
 			return nil, fmt.Errorf("search bathhouses: %w", err)
-		}
-
-		// Build city slug lookup
-		citySlugMap := make(map[int64]string)
-		for _, city := range cities {
-			citySlugMap[city.ID] = city.Slug
 		}
 
 		for _, bh := range result.Items {

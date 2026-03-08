@@ -1,6 +1,7 @@
 package seo
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -34,19 +35,19 @@ func TestGenerateMetaTags_FullData(t *testing.T) {
 	if meta.Description == "" {
 		t.Error("Description should not be empty")
 	}
-	if !containsSubstring(meta.Description, "русская баня") {
+	if !strings.Contains(meta.Description, "русская баня") {
 		t.Errorf("Description should contain 'русская баня', got %q", meta.Description)
 	}
-	if !containsSubstring(meta.Description, "бассейн") {
+	if !strings.Contains(meta.Description, "бассейн") {
 		t.Errorf("Description should contain 'бассейн', got %q", meta.Description)
 	}
-	if !containsSubstring(meta.Description, "2000 руб/ч") {
+	if !strings.Contains(meta.Description, "2000 руб/ч") {
 		t.Errorf("Description should contain '2000 руб/ч', got %q", meta.Description)
 	}
-	if !containsSubstring(meta.Description, "4.8") {
+	if !strings.Contains(meta.Description, "4.8") {
 		t.Errorf("Description should contain rating '4.8', got %q", meta.Description)
 	}
-	if !containsSubstring(meta.Description, "Бронируйте онлайн") {
+	if !strings.Contains(meta.Description, "Бронируйте онлайн") {
 		t.Errorf("Description should contain 'Бронируйте онлайн', got %q", meta.Description)
 	}
 
@@ -112,7 +113,7 @@ func TestGenerateMetaTags_NoRating(t *testing.T) {
 	meta := GenerateMetaTags(input)
 
 	// Description should not contain rating info
-	if containsSubstring(meta.Description, "Рейтинг") {
+	if strings.Contains(meta.Description, "Рейтинг") {
 		t.Errorf("Description should not contain rating when rating is 0, got %q", meta.Description)
 	}
 }
@@ -132,7 +133,7 @@ func TestGenerateMetaTags_AllAmenities(t *testing.T) {
 	meta := GenerateMetaTags(input)
 
 	for _, amenity := range []string{"русская баня", "сауна", "бассейн", "джакузи", "мангал", "караоке"} {
-		if !containsSubstring(meta.Description, amenity) {
+		if !strings.Contains(meta.Description, amenity) {
 			t.Errorf("Description should contain %q, got %q", amenity, meta.Description)
 		}
 	}
@@ -163,17 +164,4 @@ func TestGenerateMetaTags_NoSlug(t *testing.T) {
 	if meta.Canonical != "" {
 		t.Errorf("Canonical should be empty when no slug, got %q", meta.Canonical)
 	}
-}
-
-func containsSubstring(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsCheck(s, substr))
-}
-
-func containsCheck(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
