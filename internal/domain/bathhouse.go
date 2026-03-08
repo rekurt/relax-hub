@@ -24,9 +24,9 @@ func (s BathhouseStatus) IsValid() bool {
 }
 
 type WorkingHours struct {
-	DayOfWeek int    // 0=Mon, 6=Sun
-	OpenTime  string // "09:00"
-	CloseTime string // "23:00"
+	DayOfWeek int    `json:"day_of_week"` // 0=Mon, 6=Sun
+	OpenTime  string `json:"open_time"`   // "09:00"
+	CloseTime string `json:"close_time"`  // "23:00"
 }
 
 type Bathhouse struct {

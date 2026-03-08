@@ -50,6 +50,11 @@ func GenerateSlug(name string) string {
 	slug = nonAlphanumRegex.ReplaceAllString(slug, "-")
 	slug = multiDashRegex.ReplaceAllString(slug, "-")
 	slug = leadTrailDashTrim.ReplaceAllString(slug, "")
+	// Truncate to leave room for numeric suffixes (e.g., "-999")
+	if len(slug) > 200 {
+		slug = slug[:200]
+		slug = leadTrailDashTrim.ReplaceAllString(slug, "")
+	}
 	return slug
 }
 
