@@ -64,7 +64,7 @@ func (s *referralService) GenerateCode(ctx context.Context, userID uuid.UUID) (s
 		return "", err
 	}
 
-	s.logger.Info("generated referral code", "user_id", userID, "code", code)
+	s.logger.Info("generated referral code", "user_id", userID)
 	return code, nil
 }
 

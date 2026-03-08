@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -33,14 +34,16 @@ type AuthService interface {
 type authService struct {
 	userRepo    repository.UserRepository
 	referralSvc ReferralService
+	logger      *logger.Logger
 	jwtSecret   []byte
 	tokenTTL    time.Duration
 }
 
-func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralService, cfg *config.Config) AuthService {
+func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralService, cfg *config.Config, log *logger.Logger) AuthService {
 	return &authService{
 		userRepo:    userRepo,
 		referralSvc: referralSvc,
+		logger:      log,
 		jwtSecret:   []byte(cfg.JWT.Secret),
 		tokenTTL:    cfg.JWT.TokenTTL,
 	}
@@ -99,8 +102,7 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 	// Register referral if code provided (best-effort, don't fail registration)
 	if input.ReferralCode != "" {
 		if err := s.referralSvc.RegisterReferral(ctx, input.ReferralCode, user.ID); err != nil {
-			// Log but don't fail registration
-			_ = err
+			s.logger.Warn("failed to register referral", "user_id", user.ID, "referral_code", input.ReferralCode, "error", err)
 		}
 	}
 

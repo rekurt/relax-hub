@@ -752,7 +752,7 @@ func TestBookingService_Create_PointsExceedPrice(t *testing.T) {
 	}
 }
 
-func newBookingServiceWithReferral() (service.BookingService, *mock.BathhouseRepo, *mock.BookingRepo, service.ReferralService) {
+func newBookingServiceWithReferral() (service.BookingService, *mock.BathhouseRepo, *mock.BookingRepo, service.ReferralService, *mock.UserRepo) {
 	bhRepo := mock.NewBathhouseRepo()
 	bookingRepo := mock.NewBookingRepo()
 	repRepo := mock.NewRepresentativeRepo()
@@ -766,31 +766,41 @@ func newBookingServiceWithReferral() (service.BookingService, *mock.BathhouseRep
 	userRepo := mock.NewUserRepo()
 	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
 	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, referralSvc, access, &noopNotifService{}, log)
-	return svc, bhRepo, bookingRepo, referralSvc
+	return svc, bhRepo, bookingRepo, referralSvc, userRepo
 }
 
 func TestBookingService_Complete_CompletesReferral(t *testing.T) {
-	svc, bhRepo, bookingRepo, referralSvc := newBookingServiceWithReferral()
+	svc, bhRepo, bookingRepo, referralSvc, userRepo := newBookingServiceWithReferral()
 	ownerID := uuid.New()
-	referrerID := uuid.New()
-	refereeID := uuid.New()
-	bh := createBathhouse(t, bhRepo, ownerID)
 
-	// Set up a pending referral
-	_ = referralSvc.RegisterReferral(context.Background(), "testcode", refereeID)
-	// That will fail because there is no user with that code, but let's test CompleteReferral directly
+	// Create referrer and referee users
+	referrer := &domain.User{ID: uuid.New(), Email: "referrer@test.com", Name: "Referrer", Role: domain.RoleClient, IsActive: true}
+	referee := &domain.User{ID: uuid.New(), Email: "referee@test.com", Name: "Referee", Role: domain.RoleClient, IsActive: true}
+	_ = userRepo.Create(context.Background(), referrer)
+	_ = userRepo.Create(context.Background(), referee)
+
+	// Generate referral code and register referral
+	code, err := referralSvc.GenerateCode(context.Background(), referrer.ID)
+	if err != nil {
+		t.Fatalf("failed to generate code: %v", err)
+	}
+	if err := referralSvc.RegisterReferral(context.Background(), code, referee.ID); err != nil {
+		t.Fatalf("failed to register referral: %v", err)
+	}
+
+	bh := createBathhouse(t, bhRepo, ownerID)
 
 	// Create and confirm a booking that ended in the past
 	start := time.Now().Add(-3 * time.Hour)
 	end := start.Add(2 * time.Hour)
 	booking := &domain.Booking{
-		ID: uuid.New(), UserID: refereeID, BathhouseID: bh.ID,
+		ID: uuid.New(), UserID: referee.ID, BathhouseID: bh.ID,
 		StartTime: start, EndTime: end,
 		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingConfirmed,
 	}
 	_ = bookingRepo.Create(context.Background(), booking)
 
-	// Complete the booking - should call CompleteReferral (which will silently succeed)
+	// Complete the booking - should trigger CompleteReferral and credit bonuses
 	result, err := svc.Complete(context.Background(), ownerID, domain.RoleOwner, booking.ID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -798,27 +808,47 @@ func TestBookingService_Complete_CompletesReferral(t *testing.T) {
 	if result.Booking == nil {
 		t.Fatal("booking should not be nil")
 	}
-	_ = referrerID
+
+	// Verify referrer got bonus
+	referrerBalance, err := referralSvc.GetBalance(context.Background(), referrer.ID)
+	if err != nil {
+		t.Fatalf("failed to get referrer balance: %v", err)
+	}
+	if referrerBalance.Balance != 50000 {
+		t.Errorf("referrer balance = %d, want 50000", referrerBalance.Balance)
+	}
+
+	// Verify referee got bonus
+	refereeBalance, err := referralSvc.GetBalance(context.Background(), referee.ID)
+	if err != nil {
+		t.Fatalf("failed to get referee balance: %v", err)
+	}
+	if refereeBalance.Balance != 50000 {
+		t.Errorf("referee balance = %d, want 50000", refereeBalance.Balance)
+	}
 }
 
 func TestBookingService_Create_WithReferralBonus(t *testing.T) {
-	svc, bhRepo, _, referralSvc := newBookingServiceWithReferral()
+	svc, bhRepo, _, referralSvc, userRepo := newBookingServiceWithReferral()
 	ownerID := uuid.New()
-	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
 
-	// Give the client some referral balance by directly using GetBalance and checking
-	// We need to set up balance through the referral service's ensureBalance path
-	// Instead, let's use the service's UseBalance which expects existing balance
-	// We'll skip this - the UseBalance will fail with ErrNotFound, and the booking will be cancelled
-	// Instead, we test that the input field is accepted and validated
+	// Create referrer and client users, set up referral with balance
+	referrer := &domain.User{ID: uuid.New(), Email: "ref-r@test.com", Name: "Referrer", Role: domain.RoleClient, IsActive: true}
+	client := &domain.User{ID: uuid.New(), Email: "ref-e@test.com", Name: "Client", Role: domain.RoleClient, IsActive: true}
+	_ = userRepo.Create(context.Background(), referrer)
+	_ = userRepo.Create(context.Background(), client)
+
+	code, _ := referralSvc.GenerateCode(context.Background(), referrer.ID)
+	_ = referralSvc.RegisterReferral(context.Background(), code, client.ID)
+	_ = referralSvc.CompleteReferral(context.Background(), client.ID) // Gives 50000 to both
 
 	now := time.Now()
 	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
 	end := start.Add(2 * time.Hour)
 
 	// Test that referral bonus exceeding price is rejected
-	_, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+	_, err := svc.Create(context.Background(), client.ID, service.CreateBookingInput{
 		BathhouseID:      bh.ID,
 		StartTime:        start,
 		EndTime:          end,
@@ -829,5 +859,25 @@ func TestBookingService_Create_WithReferralBonus(t *testing.T) {
 	if !errors.Is(err, domain.ErrInvalidInput) {
 		t.Errorf("should fail when referral bonus exceeds price, got: %v", err)
 	}
-	_ = referralSvc
+
+	// Test successful referral bonus usage
+	result, err := svc.Create(context.Background(), client.ID, service.CreateBookingInput{
+		BathhouseID:      bh.ID,
+		StartTime:        start,
+		EndTime:          end,
+		GuestCount:       5,
+		UseReferralBonus: 5000,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error creating booking with referral bonus: %v", err)
+	}
+	if result.ReferralBonusUsed != 5000 {
+		t.Errorf("referral bonus used = %d, want 5000", result.ReferralBonusUsed)
+	}
+
+	// Verify balance was deducted
+	balance, _ := referralSvc.GetBalance(context.Background(), client.ID)
+	if balance.Balance != 45000 {
+		t.Errorf("client referral balance = %d, want 45000", balance.Balance)
+	}
 }

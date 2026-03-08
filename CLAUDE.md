@@ -87,6 +87,7 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrSocialAccountAlreadyLinked→409, ErrSocialAccountNotFound→404
 - ErrOAuthExchangeFailed→400, ErrInsufficientPoints→400
 - ErrComplaintNotFound→404, ErrAlreadyReported→409
+- ErrSelfReferral→400, ErrAlreadyReferred→409, ErrInsufficientReferralBalance→400
 
 ### Logging
 
@@ -154,3 +155,4 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Chat**: real-time via WebSocket, conversations tied to bathhouse+client pair
 - **Telegram bot**: booking wizard with in-memory state, short ID cache for callback data (64-byte limit)
 - **Complaints**: report reviews/bathhouses/users (spam, offensive, fake, fraud, other), admin moderation queue with resolve/dismiss, auto-hide reviews at 3+ reports
+- **Referral program**: personal referral codes, bonus on first booking completion (500 rub default to both referrer and referee), referral balance usable on bookings

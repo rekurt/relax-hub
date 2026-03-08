@@ -96,7 +96,7 @@ func (r *referralRepo) ListByReferrer(ctx context.Context, referrerID uuid.UUID,
 	}
 	defer rows.Close()
 
-	var referrals []domain.Referral
+	referrals := make([]domain.Referral, 0)
 	for rows.Next() {
 		var ref domain.Referral
 		if err := rows.Scan(

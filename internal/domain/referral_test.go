@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -88,8 +89,9 @@ func TestReferral_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.referral.Validate(); err == nil {
-				t.Error("expected error for invalid referral")
+			err := tt.referral.Validate()
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("Validate() error = %v, want %v", err, tt.wantErr)
 			}
 		})
 	}

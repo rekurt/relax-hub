@@ -209,6 +209,13 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	// Spend referral bonus after booking exists in DB
 	if referralBonusUsed > 0 {
 		if err := s.referralSvc.UseBalance(ctx, userID, referralBonusUsed, bookingID); err != nil {
+			// Refund loyalty points if they were spent
+			if pointsSpent > 0 {
+				if refundErr := s.loyaltySvc.RefundPoints(ctx, userID, pointsSpent, bookingID); refundErr != nil {
+					s.logger.Error("failed to refund loyalty points after referral spend failure",
+						"booking_id", bookingID, "spend_error", err, "refund_error", refundErr)
+				}
+			}
 			// Roll back the booking since referral bonus couldn't be spent
 			if delErr := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); delErr != nil {
 				s.logger.Error("failed to cancel booking after referral spend failure",

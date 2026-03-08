@@ -117,6 +117,12 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusNotFound, "complaint_not_found", err.Error())
 	case errors.Is(err, domain.ErrAlreadyReported):
 		writeErrorWithContext(w, r, http.StatusConflict, "already_reported", err.Error())
+	case errors.Is(err, domain.ErrSelfReferral):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "self_referral", err.Error())
+	case errors.Is(err, domain.ErrAlreadyReferred):
+		writeErrorWithContext(w, r, http.StatusConflict, "already_referred", err.Error())
+	case errors.Is(err, domain.ErrInsufficientReferralBalance):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "insufficient_referral_balance", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
