@@ -133,7 +133,7 @@ func (r *bathhousePhotoRepo) Reorder(ctx context.Context, bathhouseID uuid.UUID,
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx) //nolint:errcheck // rollback after commit is a no-op
 
 	for i, photoID := range photoIDs {
 		result, err := tx.Exec(ctx,

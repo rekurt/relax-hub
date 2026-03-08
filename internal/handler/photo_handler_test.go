@@ -325,7 +325,9 @@ func TestPhotoHandler_GetPending(t *testing.T) {
 	}
 
 	var resp map[string]interface{}
-	json.Unmarshal(rec.Body.Bytes(), &resp)
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
 	if resp["meta"] == nil {
 		t.Error("expected meta in response")
 	}
