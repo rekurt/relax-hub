@@ -61,10 +61,10 @@
 - Create: `internal/repository/postgres/certificate.go`
 - Create: `internal/repository/mock/certificate.go`
 
-- [ ] GiftCertificateRepository interface: Create, GetByID, GetByCode, UpdateBalance, ListByUser, Redeem
-- [ ] Реализовать postgres и mock репозитории
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] GiftCertificateRepository interface: Create, GetByID, GetByCode, UpdateBalance, ListByUser, Redeem
+- [x] Реализовать postgres и mock репозитории
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Сервис сертификатов
 

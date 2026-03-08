@@ -217,6 +217,16 @@ type ReferralRepository interface {
 	CountByReferrer(ctx context.Context, referrerID uuid.UUID) (int, int, error) // totalInvited, totalCompleted
 }
 
+type GiftCertificateRepository interface {
+	Create(ctx context.Context, cert *domain.GiftCertificate) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.GiftCertificate, error)
+	GetByCode(ctx context.Context, code string) (*domain.GiftCertificate, error)
+	UpdateBalance(ctx context.Context, id uuid.UUID, amount int64) error
+	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error)
+	Redeem(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	CreateUsage(ctx context.Context, usage *domain.CertificateUsage) error
+}
+
 type ComplaintRepository interface {
 	Create(ctx context.Context, complaint *domain.Complaint) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Complaint, error)
