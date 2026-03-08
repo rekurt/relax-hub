@@ -172,3 +172,11 @@ func (r *CertificateRepo) CreateUsage(_ context.Context, usage *domain.Certifica
 	r.usages[usage.ID] = &cp
 	return nil
 }
+
+// ForceUpdate overwrites a certificate in the mock store (for testing only).
+func (r *CertificateRepo) ForceUpdate(cert *domain.GiftCertificate) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	cp := *cert
+	r.certs[cert.ID] = &cp
+}

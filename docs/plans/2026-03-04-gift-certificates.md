@@ -71,15 +71,15 @@
 **Files:**
 - Create: `internal/service/certificate_service.go`
 
-- [ ] CertificateService:
+- [x] CertificateService:
   - Purchase(ctx, amount, purchaserEmail, recipientEmail, message) — купить сертификат, инициировать оплату
   - Redeem(ctx, code, userID) — привязать сертификат к аккаунту
   - Apply(ctx, certificateID, bookingID, amount) — применить к бронированию (частично или полностью)
   - GetBalance(ctx, code) — проверить остаток
   - ListByUser(ctx, userID) — сертификаты пользователя
-- [ ] Генерация уникального кода (формат BANI-XXXX-XXXX)
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Генерация уникального кода (формат BANI-XXXX-XXXX)
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Хендлеры сертификатов
 
