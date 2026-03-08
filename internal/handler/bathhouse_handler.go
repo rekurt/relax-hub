@@ -109,7 +109,8 @@ type bathhouseResponse struct {
 	WorkingHours []workingHoursResp `json:"working_hours"`
 	Status       string             `json:"status"`
 	IsFavorite   bool               `json:"is_favorite"`
-	IsPromoted   bool               `json:"is_promoted"`
+	IsPromoted       bool               `json:"is_promoted"`
+	IsPhotoVerified  bool               `json:"is_photo_verified"`
 	Meta         *seo.MetaTags      `json:"meta,omitempty"`
 	CreatedAt    time.Time          `json:"created_at"`
 	UpdatedAt    time.Time          `json:"updated_at"`
@@ -158,7 +159,8 @@ func toBathhouseResponse(b *domain.Bathhouse) bathhouseResponse {
 		Images:       images,
 		WorkingHours: wh,
 		Status:       string(b.Status),
-		IsPromoted:   b.IsPromoted,
+		IsPromoted:      b.IsPromoted,
+		IsPhotoVerified: b.IsPhotoVerified,
 		CreatedAt:    b.CreatedAt,
 		UpdatedAt:    b.UpdatedAt,
 	}
