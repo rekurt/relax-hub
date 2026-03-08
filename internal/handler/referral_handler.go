@@ -10,10 +10,11 @@ import (
 
 type ReferralHandler struct {
 	referralService service.ReferralService
+	baseURL         string
 }
 
-func NewReferralHandler(referralService service.ReferralService) *ReferralHandler {
-	return &ReferralHandler{referralService: referralService}
+func NewReferralHandler(referralService service.ReferralService, baseURL string) *ReferralHandler {
+	return &ReferralHandler{referralService: referralService, baseURL: baseURL}
 }
 
 type referralCodeResponse struct {
@@ -57,18 +58,16 @@ func (h *ReferralHandler) GetCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scheme := r.Header.Get("X-Forwarded-Proto")
-	if scheme == "" {
-		scheme = "https"
+	var baseURL string
+	if h.baseURL != "" {
+		baseURL = h.baseURL
+	} else {
+		scheme := "https"
 		if r.TLS == nil {
 			scheme = "http"
 		}
+		baseURL = scheme + "://" + r.Host
 	}
-	host := r.Header.Get("X-Forwarded-Host")
-	if host == "" {
-		host = r.Host
-	}
-	baseURL := scheme + "://" + host
 
 	writeJSON(w, http.StatusOK, referralCodeResponse{
 		ReferralCode: code,

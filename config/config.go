@@ -11,6 +11,7 @@ import (
 
 type Config struct {
 	Environment string           `mapstructure:"environment"`
+	BaseURL     string           `mapstructure:"base_url"`
 	Server      ServerConfig     `mapstructure:"server"`
 	Database    DatabaseConfig   `mapstructure:"database"`
 	Redis       RedisConfig      `mapstructure:"redis"`

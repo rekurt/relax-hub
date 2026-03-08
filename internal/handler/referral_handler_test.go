@@ -80,7 +80,7 @@ func TestReferralHandler_GetCode(t *testing.T) {
 		},
 	}
 
-	h := NewReferralHandler(refSvc)
+	h := NewReferralHandler(refSvc, "")
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -128,7 +128,7 @@ func TestReferralHandler_GetCode_ServiceError(t *testing.T) {
 		},
 	}
 
-	h := NewReferralHandler(refSvc)
+	h := NewReferralHandler(refSvc, "")
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -161,7 +161,7 @@ func TestReferralHandler_GetStats(t *testing.T) {
 		},
 	}
 
-	h := NewReferralHandler(refSvc)
+	h := NewReferralHandler(refSvc, "")
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -219,7 +219,7 @@ func TestReferralHandler_GetBalance(t *testing.T) {
 		},
 	}
 
-	h := NewReferralHandler(refSvc)
+	h := NewReferralHandler(refSvc, "")
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -260,7 +260,7 @@ func TestReferralHandler_GetBalance(t *testing.T) {
 
 func TestReferralHandler_GetCode_Unauthorized(t *testing.T) {
 	refSvc := &mockReferralService{}
-	h := NewReferralHandler(refSvc)
+	h := NewReferralHandler(refSvc, "")
 	authService := &mockAuthService{err: domain.ErrUnauthorized}
 
 	r := chi.NewRouter()

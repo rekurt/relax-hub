@@ -184,10 +184,6 @@ func (r *referralRepo) UpdateBalance(ctx context.Context, userID uuid.UUID, delt
 			return fmt.Errorf("update referral balance: %w", err)
 		}
 		if result.RowsAffected() == 0 {
-			_, getErr := r.GetBalance(ctx, userID)
-			if getErr != nil {
-				return domain.ErrNotFound
-			}
 			return domain.ErrInsufficientReferralBalance
 		}
 		return nil
