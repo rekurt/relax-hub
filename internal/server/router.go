@@ -88,8 +88,12 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// Bathhouses (public, with optional auth for is_favorite)
 		r.With(optionalAuth).Get("/bathhouses", p.BHHandler.Search)
+		r.With(optionalAuth).Get("/bathhouses/by-slug/{slug}", p.BHHandler.GetBySlug)
 		r.With(optionalAuth).Get("/bathhouses/{id}", p.BHHandler.GetByID)
 		r.Get("/bathhouses/{id}/available-slots", p.BHHandler.GetAvailableSlots)
+
+		// City bathhouses (public, SEO-friendly)
+		r.With(optionalAuth).Get("/cities/{slug}/bathhouses", p.BHHandler.SearchByCitySlug)
 
 		// Bathhouses (authenticated)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses", p.BHHandler.Create)

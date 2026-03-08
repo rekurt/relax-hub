@@ -32,12 +32,14 @@ type CityRepository interface {
 type BathhouseRepository interface {
 	Create(ctx context.Context, bh *domain.Bathhouse) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
+	GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error)
 	GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error)
 	Update(ctx context.Context, bh *domain.Bathhouse) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)
 	ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error)
 	ListIDsByOwner(ctx context.Context, ownerID uuid.UUID) ([]uuid.UUID, error)
+	SlugExists(ctx context.Context, slug string) (bool, error)
 	UpdateRating(ctx context.Context, bathhouseID uuid.UUID) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BathhouseStatus) error
 }

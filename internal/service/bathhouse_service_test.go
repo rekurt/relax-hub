@@ -275,3 +275,116 @@ func TestBathhouseService_RegenerateWidgetKey_OtherOwnerForbidden(t *testing.T) 
 		t.Errorf("other owner should be forbidden, got: %v", err)
 	}
 }
+
+func TestBathhouseService_Create_GeneratesSlug(t *testing.T) {
+	svc, _, _, _ := newBathhouseService()
+	ownerID := uuid.New()
+
+	bh, err := svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+		Name:         "Баня на Липовой",
+		Address:      "ул. Липовая 5",
+		CityID:       1,
+		PricePerHour: 5000,
+		MinDuration:  1,
+		MaxGuests:    10,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if bh.Slug == "" {
+		t.Error("slug should not be empty")
+	}
+	if bh.Slug != "banya-na-lipovoy" {
+		t.Errorf("slug = %q, want %q", bh.Slug, "banya-na-lipovoy")
+	}
+}
+
+func TestBathhouseService_Create_UniqueSlug(t *testing.T) {
+	svc, _, _, _ := newBathhouseService()
+	ownerID := uuid.New()
+
+	bh1, err := svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+		Name:         "Баня",
+		Address:      "ул. А",
+		CityID:       1,
+		PricePerHour: 5000,
+		MinDuration:  1,
+		MaxGuests:    10,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	bh2, err := svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+		Name:         "Баня",
+		Address:      "ул. Б",
+		CityID:       1,
+		PricePerHour: 5000,
+		MinDuration:  1,
+		MaxGuests:    10,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if bh1.Slug == bh2.Slug {
+		t.Errorf("slugs should be different: %q vs %q", bh1.Slug, bh2.Slug)
+	}
+	if bh2.Slug != "banya-2" {
+		t.Errorf("second slug = %q, want %q", bh2.Slug, "banya-2")
+	}
+}
+
+func TestBathhouseService_Update_RegeneratesSlugOnNameChange(t *testing.T) {
+	svc, bhRepo, _, _ := newBathhouseService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+	oldSlug := bh.Slug
+
+	newName := "Новое Название"
+	updated, err := svc.Update(context.Background(), ownerID, domain.RoleOwner, bh.ID, service.UpdateBathhouseInput{
+		Name: &newName,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.Slug == oldSlug {
+		t.Error("slug should change when name changes")
+	}
+	if updated.Slug != "novoe-nazvanie" {
+		t.Errorf("slug = %q, want %q", updated.Slug, "novoe-nazvanie")
+	}
+}
+
+func TestBathhouseService_GetBySlug_ActiveOnly(t *testing.T) {
+	svc, bhRepo, _, _ := newBathhouseService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Active bathhouse should be found
+	found, err := svc.GetBySlug(context.Background(), bh.Slug)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if found.ID != bh.ID {
+		t.Errorf("found wrong bathhouse: %v", found.ID)
+	}
+
+	// Inactive bathhouse should not be found
+	_ = bhRepo.UpdateStatus(context.Background(), bh.ID, domain.BathhouseStatusPending)
+	_, err = svc.GetBySlug(context.Background(), bh.Slug)
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("pending bathhouse should not be found via GetBySlug, got: %v", err)
+	}
+}
+
+func TestBathhouseService_GetBySlug_NotFound(t *testing.T) {
+	svc, _, _, _ := newBathhouseService()
+
+	_, err := svc.GetBySlug(context.Background(), "nonexistent-slug")
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("should return ErrNotFound for nonexistent slug, got: %v", err)
+	}
+}

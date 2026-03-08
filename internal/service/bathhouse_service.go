@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/nikitaaldaev/bani/internal/seo"
 )
 
 type CreateBathhouseInput struct {
@@ -52,6 +53,7 @@ type UpdateBathhouseInput struct {
 type BathhouseService interface {
 	Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
+	GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error)
 	Update(ctx context.Context, userID uuid.UUID, role domain.UserRole, id uuid.UUID, input UpdateBathhouseInput) (*domain.Bathhouse, error)
 	Delete(ctx context.Context, ownerID uuid.UUID, id uuid.UUID) error
 	Search(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)
@@ -75,10 +77,19 @@ func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repo
 
 func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error) {
 	now := time.Now()
+
+	slug, err := seo.GenerateUniqueSlug(input.Name, func(slug string) (bool, error) {
+		return s.bhRepo.SlugExists(ctx, slug)
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	bh := &domain.Bathhouse{
 		ID:           uuid.New(),
 		OwnerID:      ownerID,
 		Name:         input.Name,
+		Slug:         slug,
 		Description:  input.Description,
 		Address:      input.Address,
 		CityID:       input.CityID,
@@ -126,6 +137,19 @@ func (s *bathhouseService) GetByID(ctx context.Context, id uuid.UUID) (*domain.B
 	return bh, nil
 }
 
+func (s *bathhouseService) GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error) {
+	bh, err := s.bhRepo.GetBySlug(ctx, slug)
+	if err != nil {
+		return nil, err
+	}
+
+	if bh.Status != domain.BathhouseStatusActive {
+		return nil, domain.ErrNotFound
+	}
+
+	return bh, nil
+}
+
 func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role domain.UserRole, id uuid.UUID, input UpdateBathhouseInput) (*domain.Bathhouse, error) {
 	if err := s.access.CanManageBathhouse(ctx, userID, role, id); err != nil {
 		return nil, err
@@ -138,6 +162,16 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 
 	if input.Name != nil {
 		bh.Name = *input.Name
+		newSlug, err := seo.GenerateUniqueSlug(*input.Name, func(slug string) (bool, error) {
+			if slug == bh.Slug {
+				return false, nil
+			}
+			return s.bhRepo.SlugExists(ctx, slug)
+		})
+		if err != nil {
+			return nil, err
+		}
+		bh.Slug = newSlug
 	}
 	if input.Description != nil {
 		bh.Description = *input.Description

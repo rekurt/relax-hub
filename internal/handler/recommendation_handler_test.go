@@ -115,6 +115,14 @@ func (m *mockBathhouseRepository) UpdateStatus(ctx context.Context, id uuid.UUID
 	return nil
 }
 
+func (m *mockBathhouseRepository) GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockBathhouseRepository) SlugExists(ctx context.Context, slug string) (bool, error) {
+	return false, nil
+}
+
 // Mock AuthService for testing
 type mockAuthService struct {
 	userID uuid.UUID

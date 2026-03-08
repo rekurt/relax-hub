@@ -64,6 +64,14 @@ func (m *mockWidgetBathhouseRepository) UpdateStatus(ctx context.Context, id uui
 	return nil
 }
 
+func (m *mockWidgetBathhouseRepository) GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockWidgetBathhouseRepository) SlugExists(ctx context.Context, slug string) (bool, error) {
+	return false, nil
+}
+
 // Mock BookingService for widget testing
 type mockWidgetBookingService struct {
 	createFn              func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error)

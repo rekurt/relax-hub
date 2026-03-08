@@ -213,6 +213,10 @@ func (m *mockBathhouseService) RegenerateWidgetKey(ctx context.Context, userID u
 	return "", nil
 }
 
+func (m *mockBathhouseService) GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error) {
+	return nil, domain.ErrNotFound
+}
+
 type mockBookingService struct {
 	createFn          func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error)
 	cancelFn          func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error

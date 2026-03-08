@@ -80,6 +80,7 @@ type bathhouseResponse struct {
 	ID           string             `json:"id"`
 	OwnerID      string             `json:"owner_id"`
 	Name         string             `json:"name"`
+	Slug         string             `json:"slug"`
 	Description  string             `json:"description"`
 	Address      string             `json:"address"`
 	CityID       int64              `json:"city_id"`
@@ -128,6 +129,7 @@ func toBathhouseResponse(b *domain.Bathhouse) bathhouseResponse {
 		ID:           b.ID.String(),
 		OwnerID:      b.OwnerID.String(),
 		Name:         b.Name,
+		Slug:         b.Slug,
 		Description:  b.Description,
 		Address:      b.Address,
 		CityID:       b.CityID,
@@ -352,6 +354,52 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *BathhouseHandler) SearchByCitySlug(w http.ResponseWriter, r *http.Request) {
+	citySlug := chi.URLParam(r, "slug")
+	if citySlug == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "city slug is required")
+		return
+	}
+
+	q := r.URL.Query()
+	filter := domain.BathhouseFilter{
+		Page:     getPage(q.Get("page")),
+		PageSize: getPageSize(q.Get("page_size"), 20),
+		CitySlug: &citySlug,
+	}
+
+	activeStatus := domain.BathhouseStatusActive
+	filter.Status = &activeStatus
+
+	result, err := h.bathhouseService.Search(r.Context(), filter)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	items := make([]bathhouseResponse, len(result.Items))
+	for i := range result.Items {
+		items[i] = toBathhouseResponse(&result.Items[i])
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	if userID != uuid.Nil && h.favoriteService != nil {
+		for i := range result.Items {
+			fav, err := h.favoriteService.IsFavorite(r.Context(), userID, result.Items[i].ID)
+			if err == nil {
+				items[i].IsFavorite = fav
+			}
+		}
+	}
+
+	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
+		Page:       result.Page,
+		PageSize:   result.PageSize,
+		TotalCount: result.TotalCount,
+		TotalPages: result.TotalPages,
+	})
+}
+
 func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -403,6 +451,32 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 					h.log.Warn("failed to record promotion click", "promotion_id", promo.ID, "error", err)
 				}
 			}
+		}
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
+	slug := chi.URLParam(r, "slug")
+	if slug == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "slug is required")
+		return
+	}
+
+	bh, err := h.bathhouseService.GetBySlug(r.Context(), slug)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	resp := toBathhouseResponse(bh)
+
+	userID := middleware.GetUserID(r.Context())
+	if userID != uuid.Nil && h.favoriteService != nil {
+		fav, err := h.favoriteService.IsFavorite(r.Context(), userID, bh.ID)
+		if err == nil {
+			resp.IsFavorite = fav
 		}
 	}
 

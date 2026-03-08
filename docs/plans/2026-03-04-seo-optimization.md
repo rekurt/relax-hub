@@ -46,12 +46,12 @@ SEO-оптимизация для поисковых систем: slug (ЧПУ)
 - Modify: `internal/handler/bathhouse.go`
 - Modify: `internal/server/router.go`
 
-- [ ] Добавить GetBySlug в BathhouseRepository
-- [ ] GET /api/v1/bathhouses/by-slug/{slug} — получить баню по slug
-- [ ] GET /api/v1/cities/{slug}/bathhouses — бани в городе по slug (уже есть city_slug filter)
-- [ ] При создании/обновлении бани — автоматически генерировать/обновлять slug
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Добавить GetBySlug в BathhouseRepository
+- [x] GET /api/v1/bathhouses/by-slug/{slug} — получить баню по slug
+- [x] GET /api/v1/cities/{slug}/bathhouses — бани в городе по slug (уже есть city_slug filter)
+- [x] При создании/обновлении бани — автоматически генерировать/обновлять slug
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Мета-теги и Open Graph
 

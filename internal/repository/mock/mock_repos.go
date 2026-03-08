@@ -936,6 +936,29 @@ func (r *BathhouseRepo) GetByAPIKey(_ context.Context, apiKey string) (*domain.B
 	return nil, domain.ErrNotFound
 }
 
+func (r *BathhouseRepo) GetBySlug(_ context.Context, slug string) (*domain.Bathhouse, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, bh := range r.bathhouses {
+		if bh.Slug == slug {
+			cp := *bh
+			return &cp, nil
+		}
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (r *BathhouseRepo) SlugExists(_ context.Context, slug string) (bool, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, bh := range r.bathhouses {
+		if bh.Slug == slug {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func (r *BathhouseRepo) Update(_ context.Context, bh *domain.Bathhouse) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

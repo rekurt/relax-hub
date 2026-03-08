@@ -26,15 +26,15 @@ func NewBathhouseRepository(pool *pgxpool.Pool) repository.BathhouseRepository {
 func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error {
 	query := `
 		INSERT INTO bathhouses (
-			id, owner_id, name, description, address, city_id,
+			id, owner_id, name, slug, description, address, city_id,
 			latitude, longitude, price_per_hour, min_duration, max_guests,
 			has_pool, has_sauna, has_steam_room, has_hot_tub, has_bbq, has_karaoke,
 			rating, review_count, images, working_hours, status, api_key, created_at, updated_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6,
-			$7, $8, $9, $10, $11,
-			$12, $13, $14, $15, $16, $17,
-			$18, $19, $20, $21, $22, $23, $24, $25
+			$1, $2, $3, $4, $5, $6, $7,
+			$8, $9, $10, $11, $12,
+			$13, $14, $15, $16, $17, $18,
+			$19, $20, $21, $22, $23, $24, $25, $26
 		)`
 
 	if bh.ID == uuid.Nil {
@@ -51,7 +51,7 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 	}
 
 	_, err = r.pool.Exec(ctx, query,
-		bh.ID, bh.OwnerID, bh.Name, bh.Description, bh.Address, bh.CityID,
+		bh.ID, bh.OwnerID, bh.Name, bh.Slug, bh.Description, bh.Address, bh.CityID,
 		bh.Latitude, bh.Longitude, bh.PricePerHour, bh.MinDuration, bh.MaxGuests,
 		bh.HasPool, bh.HasSauna, bh.HasSteamRoom, bh.HasHotTub, bh.HasBBQ, bh.HasKaraoke,
 		bh.Rating, bh.ReviewCount, imagesJSON, whJSON, bh.Status, bh.ApiKey, bh.CreatedAt, bh.UpdatedAt,
@@ -64,7 +64,7 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 
 func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
 	query := `
-		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.description, bathhouses.address, bathhouses.city_id,
+		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
@@ -88,9 +88,44 @@ func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bath
 	return nil, domain.ErrNotFound
 }
 
+func (r *bathhouseRepo) GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error) {
+	query := `
+		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
+			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
+			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
+			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
+			bathhouses.created_at, bathhouses.updated_at,
+			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
+		FROM bathhouses
+		LEFT JOIN subscriptions s ON bathhouses.id = s.bathhouse_id AND s.status = 'active'
+		LEFT JOIN promotions p ON bathhouses.id = p.bathhouse_id AND p.status = 'active'
+		WHERE bathhouses.slug = $1`
+
+	rows, err := r.pool.Query(ctx, query, slug)
+	if err != nil {
+		return nil, fmt.Errorf("get bathhouse by slug: %w", err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		return r.scanBathhouseFromRowWithSubscription(rows)
+	}
+
+	return nil, domain.ErrNotFound
+}
+
+func (r *bathhouseRepo) SlugExists(ctx context.Context, slug string) (bool, error) {
+	var exists bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM bathhouses WHERE slug = $1)`, slug).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("check slug exists: %w", err)
+	}
+	return exists, nil
+}
+
 func (r *bathhouseRepo) GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error) {
 	query := `
-		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.description, bathhouses.address, bathhouses.city_id,
+		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
@@ -117,10 +152,10 @@ func (r *bathhouseRepo) GetByAPIKey(ctx context.Context, apiKey string) (*domain
 func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error {
 	query := `
 		UPDATE bathhouses SET
-			name = $2, description = $3, address = $4, city_id = $5,
-			latitude = $6, longitude = $7, price_per_hour = $8, min_duration = $9, max_guests = $10,
-			has_pool = $11, has_sauna = $12, has_steam_room = $13, has_hot_tub = $14, has_bbq = $15, has_karaoke = $16,
-			images = $17, working_hours = $18, api_key = $19, updated_at = $20
+			name = $2, slug = $3, description = $4, address = $5, city_id = $6,
+			latitude = $7, longitude = $8, price_per_hour = $9, min_duration = $10, max_guests = $11,
+			has_pool = $12, has_sauna = $13, has_steam_room = $14, has_hot_tub = $15, has_bbq = $16, has_karaoke = $17,
+			images = $18, working_hours = $19, api_key = $20, updated_at = $21
 		WHERE id = $1`
 
 	bh.UpdatedAt = time.Now()
@@ -135,7 +170,7 @@ func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error 
 	}
 
 	tag, err := r.pool.Exec(ctx, query,
-		bh.ID, bh.Name, bh.Description, bh.Address, bh.CityID,
+		bh.ID, bh.Name, bh.Slug, bh.Description, bh.Address, bh.CityID,
 		bh.Latitude, bh.Longitude, bh.PricePerHour, bh.MinDuration, bh.MaxGuests,
 		bh.HasPool, bh.HasSauna, bh.HasSteamRoom, bh.HasHotTub, bh.HasBBQ, bh.HasKaraoke,
 		imagesJSON, whJSON, bh.ApiKey, bh.UpdatedAt,
@@ -324,7 +359,7 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	offset := (filter.Page - 1) * filter.PageSize
 
 	selectQuery := fmt.Sprintf(`
-		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.description, bathhouses.address, bathhouses.city_id,
+		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
@@ -377,7 +412,7 @@ func (r *bathhouseRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 
 	offset := (page - 1) * pageSize
 	query := `
-		SELECT id, owner_id, name, description, address, city_id,
+		SELECT id, owner_id, name, slug, description, address, city_id,
 			latitude, longitude, price_per_hour, min_duration, max_guests,
 			has_pool, has_sauna, has_steam_room, has_hot_tub, has_bbq, has_karaoke,
 			rating, review_count, images, working_hours, status, api_key, created_at, updated_at
@@ -471,7 +506,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*do
 		isPromoted bool
 	)
 	err := rows.Scan(
-		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Description, &bh.Address, &bh.CityID,
+		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Slug, &bh.Description, &bh.Address, &bh.CityID,
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
 		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
@@ -501,7 +536,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKey(rows pgx.Rows) (*domain.B
 		isPromoted bool
 	)
 	err := rows.Scan(
-		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Description, &bh.Address, &bh.CityID,
+		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Slug, &bh.Description, &bh.Address, &bh.CityID,
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
 		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
@@ -530,7 +565,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKeyOnly(rows pgx.Rows) (*doma
 		whJSON     []byte
 	)
 	err := rows.Scan(
-		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Description, &bh.Address, &bh.CityID,
+		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Slug, &bh.Description, &bh.Address, &bh.CityID,
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
 		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.ApiKey, &bh.CreatedAt, &bh.UpdatedAt,
