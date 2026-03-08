@@ -68,7 +68,7 @@ func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bath
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
-			bathhouses.created_at, bathhouses.updated_at,
+			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified,
 			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
 		FROM bathhouses
 		LEFT JOIN subscriptions s ON bathhouses.id = s.bathhouse_id AND s.status = 'active'
@@ -97,7 +97,7 @@ func (r *bathhouseRepo) GetBySlug(ctx context.Context, slug string) (*domain.Bat
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
-			bathhouses.created_at, bathhouses.updated_at,
+			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified,
 			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
 		FROM bathhouses
 		LEFT JOIN subscriptions s ON bathhouses.id = s.bathhouse_id AND s.status = 'active'
@@ -135,7 +135,7 @@ func (r *bathhouseRepo) GetByAPIKey(ctx context.Context, apiKey string) (*domain
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
-			bathhouses.created_at, bathhouses.updated_at, bathhouses.api_key,
+			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified, bathhouses.api_key,
 			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
 		FROM bathhouses
 		LEFT JOIN subscriptions s ON bathhouses.id = s.bathhouse_id AND s.status = 'active'
@@ -369,7 +369,7 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
-			bathhouses.created_at, bathhouses.updated_at,
+			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified,
 			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
 		FROM bathhouses %s %s ORDER BY %s LIMIT %s OFFSET %s`,
 		joinClause, whereClause, orderBy, addArg(filter.PageSize), addArg(offset),
@@ -421,7 +421,7 @@ func (r *bathhouseRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 		SELECT id, owner_id, name, slug, description, address, city_id,
 			latitude, longitude, price_per_hour, min_duration, max_guests,
 			has_pool, has_sauna, has_steam_room, has_hot_tub, has_bbq, has_karaoke,
-			rating, review_count, images, working_hours, status, api_key, created_at, updated_at
+			rating, review_count, images, working_hours, status, api_key, is_photo_verified, created_at, updated_at
 		FROM bathhouses WHERE owner_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, query, ownerID, pageSize, offset)
@@ -528,7 +528,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*do
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
 		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
-		&isPromoted,
+		&bh.IsPhotoVerified, &isPromoted,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan bathhouse row: %w", err)
@@ -558,7 +558,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKey(rows pgx.Rows) (*domain.B
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
 		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
-		&bh.ApiKey, &isPromoted,
+		&bh.IsPhotoVerified, &bh.ApiKey, &isPromoted,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan bathhouse row: %w", err)
@@ -586,7 +586,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKeyOnly(rows pgx.Rows) (*doma
 		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Slug, &bh.Description, &bh.Address, &bh.CityID,
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
-		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.ApiKey, &bh.CreatedAt, &bh.UpdatedAt,
+		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.ApiKey, &bh.IsPhotoVerified, &bh.CreatedAt, &bh.UpdatedAt,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan bathhouse row: %w", err)

@@ -129,6 +129,8 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "certificate_expired", err.Error())
 	case errors.Is(err, domain.ErrCertificateInsufficientBalance):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "certificate_insufficient_balance", err.Error())
+	case errors.Is(err, domain.ErrPhotoNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "photo_not_found", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

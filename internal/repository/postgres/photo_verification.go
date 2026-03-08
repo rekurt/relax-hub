@@ -151,18 +151,6 @@ func (r *bathhousePhotoRepo) Reorder(ctx context.Context, bathhouseID uuid.UUID,
 	return tx.Commit(ctx)
 }
 
-func (r *bathhousePhotoRepo) CountByBathhouseAndStatus(ctx context.Context, bathhouseID uuid.UUID, status domain.PhotoStatus) (int64, error) {
-	var count int64
-	err := r.pool.QueryRow(ctx,
-		`SELECT COUNT(*) FROM bathhouse_photos WHERE bathhouse_id = $1 AND status = $2`,
-		bathhouseID, string(status),
-	).Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("count photos by status: %w", err)
-	}
-	return count, nil
-}
-
 func (r *bathhousePhotoRepo) ListPending(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.BathhousePhoto], error) {
 	if page < 1 {
 		page = 1

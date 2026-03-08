@@ -118,19 +118,6 @@ func (r *BathhousePhotoRepo) Reorder(_ context.Context, bathhouseID uuid.UUID, p
 	return nil
 }
 
-func (r *BathhousePhotoRepo) CountByBathhouseAndStatus(_ context.Context, bathhouseID uuid.UUID, status domain.PhotoStatus) (int64, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	var count int64
-	for _, p := range r.photos {
-		if p.BathhouseID == bathhouseID && p.Status == status {
-			count++
-		}
-	}
-	return count, nil
-}
-
 func (r *BathhousePhotoRepo) ListPending(_ context.Context, page, pageSize int) (*domain.PaginatedResult[domain.BathhousePhoto], error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

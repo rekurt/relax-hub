@@ -145,6 +145,9 @@ func (s *photoVerificationService) RejectPhoto(ctx context.Context, photoID uuid
 		return nil, err
 	}
 
+	// Recalculate verification status after rejection
+	s.recalcVerificationStatus(ctx, photo.BathhouseID)
+
 	return s.photoRepo.GetByID(ctx, photoID)
 }
 
@@ -163,22 +166,23 @@ func (s *photoVerificationService) recalcVerificationStatus(ctx context.Context,
 		return
 	}
 
-	if len(photos) == 0 {
-		if err := s.bhRepo.UpdatePhotoVerified(ctx, bathhouseID, false); err != nil {
-			s.logger.Error("failed to update photo verification", "bathhouse_id", bathhouseID, "error", err)
-		}
-		return
-	}
-
+	// Only consider non-rejected photos; a bathhouse is verified when it has
+	// at least one photo and all non-rejected photos are verified (no pending).
+	var nonRejected int
 	allVerified := true
 	for _, p := range photos {
+		if p.Status == domain.PhotoStatusRejected {
+			continue
+		}
+		nonRejected++
 		if p.Status != domain.PhotoStatusVerified {
 			allVerified = false
 			break
 		}
 	}
 
-	if err := s.bhRepo.UpdatePhotoVerified(ctx, bathhouseID, allVerified); err != nil {
+	verified := nonRejected > 0 && allVerified
+	if err := s.bhRepo.UpdatePhotoVerified(ctx, bathhouseID, verified); err != nil {
 		s.logger.Error("failed to update photo verification", "bathhouse_id", bathhouseID, "error", err)
 	}
 }

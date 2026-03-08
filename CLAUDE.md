@@ -89,6 +89,7 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrComplaintNotFound→404, ErrAlreadyReported→409
 - ErrSelfReferral→400, ErrAlreadyReferred→409, ErrInsufficientReferralBalance→400
 - ErrCertificateNotFound→404, ErrCertificateExpired→400, ErrCertificateInsufficientBalance→400
+- ErrPhotoNotFound→404
 
 ### Logging
 
@@ -158,3 +159,4 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Complaints**: report reviews/bathhouses/users (spam, offensive, fake, fraud, other), admin moderation queue with resolve/dismiss, auto-hide reviews at 3+ reports
 - **Referral program**: personal referral codes, bonus on first booking completion (500 rub default to both referrer and referee), referral balance usable on bookings
 - **Gift certificates**: purchasable with or without auth, unique BANI-XXXX-XXXX codes, partial redemption with balance tracking, 365-day validity
+- **Photo verification**: admin-verified bathhouse photos with pending/verified/rejected statuses, `is_photo_verified` badge on bathhouse cards, owner/representative upload with admin moderation queue

@@ -236,7 +236,6 @@ type BathhousePhotoRepository interface {
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.PhotoStatus, verifiedByID *uuid.UUID, rejectionReason string) error
 	Reorder(ctx context.Context, bathhouseID uuid.UUID, photoIDs []uuid.UUID) error
-	CountByBathhouseAndStatus(ctx context.Context, bathhouseID uuid.UUID, status domain.PhotoStatus) (int64, error)
 	ListPending(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.BathhousePhoto], error)
 }
 
