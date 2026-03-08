@@ -69,18 +69,18 @@
 **Files:**
 - Create: `internal/service/complaint_service.go`
 
-- [ ] ComplaintService:
+- [x] ComplaintService:
   - Report(ctx, reporterID, targetType, targetID, reason, description) — подать жалобу
   - Resolve(ctx, complaintID, adminID, resolution) — решить жалобу
   - Dismiss(ctx, complaintID, adminID) — отклонить жалобу
   - List(ctx, filter, page, pageSize) — список жалоб (admin)
   - GetByID(ctx, id) — деталь жалобы
-- [ ] Автоматические действия:
+- [x] Автоматические действия:
   - 3+ жалоб на отзыв — автоскрытие (status = hidden)
   - 5+ жалоб на баню — уведомление админу, пометка для проверки
-- [ ] RBAC: подать жалобу — любой auth user, управление — только admin
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] RBAC: подать жалобу — любой auth user, управление — только admin
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Хендлеры жалоб
 
