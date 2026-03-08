@@ -1099,6 +1099,18 @@ func (r *BathhouseRepo) UpdateStatus(_ context.Context, id uuid.UUID, status dom
 	return nil
 }
 
+func (r *BathhouseRepo) UpdatePhotoVerified(_ context.Context, id uuid.UUID, verified bool) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	bh, ok := r.bathhouses[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	bh.IsPhotoVerified = verified
+	bh.UpdatedAt = time.Now()
+	return nil
+}
+
 func (r *BathhouseRepo) ListIDsByOwner(_ context.Context, ownerID uuid.UUID) ([]uuid.UUID, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

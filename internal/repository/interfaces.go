@@ -42,6 +42,7 @@ type BathhouseRepository interface {
 	SlugExists(ctx context.Context, slug string) (bool, error)
 	UpdateRating(ctx context.Context, bathhouseID uuid.UUID) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BathhouseStatus) error
+	UpdatePhotoVerified(ctx context.Context, id uuid.UUID, verified bool) error
 }
 
 type BookingRepository interface {
@@ -226,6 +227,17 @@ type GiftCertificateRepository interface {
 	ApplyToBooking(ctx context.Context, id uuid.UUID, usage *domain.CertificateUsage) error
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error)
 	Redeem(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+}
+
+type BathhousePhotoRepository interface {
+	Create(ctx context.Context, photo *domain.BathhousePhoto) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.BathhousePhoto, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.PhotoStatus, verifiedByID *uuid.UUID, rejectionReason string) error
+	Reorder(ctx context.Context, bathhouseID uuid.UUID, photoIDs []uuid.UUID) error
+	CountByBathhouseAndStatus(ctx context.Context, bathhouseID uuid.UUID, status domain.PhotoStatus) (int64, error)
+	ListPending(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.BathhousePhoto], error)
 }
 
 type ComplaintRepository interface {

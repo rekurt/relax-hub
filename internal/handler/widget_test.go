@@ -64,6 +64,10 @@ func (m *mockWidgetBathhouseRepository) UpdateStatus(ctx context.Context, id uui
 	return nil
 }
 
+func (m *mockWidgetBathhouseRepository) UpdatePhotoVerified(ctx context.Context, id uuid.UUID, verified bool) error {
+	return nil
+}
+
 func (m *mockWidgetBathhouseRepository) GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error) {
 	return nil, domain.ErrNotFound
 }

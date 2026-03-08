@@ -504,6 +504,18 @@ func (r *bathhouseRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status d
 	return nil
 }
 
+func (r *bathhouseRepo) UpdatePhotoVerified(ctx context.Context, id uuid.UUID, verified bool) error {
+	query := `UPDATE bathhouses SET is_photo_verified = $2, updated_at = $3 WHERE id = $1`
+	tag, err := r.pool.Exec(ctx, query, id, verified, time.Now())
+	if err != nil {
+		return fmt.Errorf("update bathhouse photo verified: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
 func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*domain.Bathhouse, error) {
 	var (
 		bh         domain.Bathhouse

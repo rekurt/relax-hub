@@ -57,18 +57,18 @@
 - Create: `internal/repository/mock/photo_verification.go`
 - Create: `internal/service/photo_verification_service.go`
 
-- [ ] BathhousePhotoRepository: Create, Delete, ListByBathhouse, UpdateStatus, Reorder
-- [ ] PhotoVerificationService:
+- [x] BathhousePhotoRepository: Create, Delete, ListByBathhouse, UpdateStatus, Reorder
+- [x] PhotoVerificationService:
   - UploadPhoto(ctx, bathhouseID, file) — загрузить фото (owner/representative), создать thumbnail
   - DeletePhoto(ctx, photoID, userID) — удалить фото (owner/representative или admin)
   - ReorderPhotos(ctx, bathhouseID, photoIDs) — изменить порядок
   - VerifyPhoto(ctx, photoID, adminID) — одобрить фото (admin)
   - RejectPhoto(ctx, photoID, adminID, reason) — отклонить фото (admin)
   - GetPendingPhotos(ctx, page, pageSize) — очередь на проверку (admin)
-- [ ] При верификации всех фото бани — установить IsPhotoVerified = true
-- [ ] RBAC: загрузка — owner/representative, верификация — admin
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] При верификации всех фото бани — установить IsPhotoVerified = true
+- [x] RBAC: загрузка — owner/representative, верификация — admin
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Хендлеры управления фотографиями
 

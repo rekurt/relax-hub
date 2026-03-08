@@ -35,4 +35,6 @@ var (
 	ErrCertificateNotFound            = errors.New("gift certificate not found")
 	ErrCertificateExpired             = errors.New("gift certificate expired")
 	ErrCertificateInsufficientBalance = errors.New("gift certificate insufficient balance")
+
+	ErrPhotoNotFound = errors.New("photo not found")
 )

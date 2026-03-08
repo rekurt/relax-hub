@@ -115,6 +115,10 @@ func (m *mockBathhouseRepository) UpdateStatus(ctx context.Context, id uuid.UUID
 	return nil
 }
 
+func (m *mockBathhouseRepository) UpdatePhotoVerified(ctx context.Context, id uuid.UUID, verified bool) error {
+	return nil
+}
+
 func (m *mockBathhouseRepository) GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error) {
 	return nil, domain.ErrNotFound
 }

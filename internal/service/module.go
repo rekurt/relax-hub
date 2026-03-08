@@ -32,5 +32,6 @@ var Module = fx.Module("service",
 		fx.Annotate(NewComplaintService, fx.As(new(ComplaintService))),
 		fx.Annotate(NewReferralService, fx.As(new(ReferralService))),
 		fx.Annotate(NewCertificateService, fx.As(new(CertificateService))),
+		fx.Annotate(NewPhotoVerificationService, fx.As(new(PhotoVerificationService))),
 	),
 )
