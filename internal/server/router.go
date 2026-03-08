@@ -41,6 +41,7 @@ type RouterParams struct {
 	ComplaintHandler       *handler.ComplaintHandler
 	ReferralHandler        *handler.ReferralHandler
 	CertificateHandler     *handler.CertificateHandler
+	SitemapHandler         *handler.SitemapHandler
 	GoAdmin                *admin.GoAdmin `optional:"true"`
 }
 
@@ -54,6 +55,7 @@ func NewRouter(p RouterParams) http.Handler {
 
 	r.Get("/health", p.HealthHandler.Health)
 	r.Get("/ready", p.HealthHandler.Ready)
+	r.Get("/sitemap.xml", p.SitemapHandler.Sitemap)
 
 	auth := middleware.RequireAuth(p.AuthService)
 	optionalAuth := middleware.OptionalAuth(p.AuthService)
@@ -92,6 +94,7 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(optionalAuth).Get("/bathhouses/{id}", p.BHHandler.GetByID)
 		r.Get("/bathhouses/{id}/available-slots", p.BHHandler.GetAvailableSlots)
 		r.Get("/bathhouses/{id}/meta", p.BHHandler.GetMeta)
+		r.Get("/bathhouses/{id}/schema", p.SitemapHandler.GetSchema)
 
 		// City bathhouses (public, SEO-friendly)
 		r.With(optionalAuth).Get("/cities/{slug}/bathhouses", p.BHHandler.SearchByCitySlug)

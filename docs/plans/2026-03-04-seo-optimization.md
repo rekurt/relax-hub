@@ -81,7 +81,7 @@ SEO-оптимизация для поисковых систем: slug (ЧПУ)
 - Create: `internal/seo/schema.go`
 - Modify: `internal/server/router.go`
 
-- [ ] GET /sitemap.xml — XML sitemap:
+- [x] GET /sitemap.xml — XML sitemap:
   ```xml
   <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
@@ -93,9 +93,9 @@ SEO-оптимизация для поисковых систем: slug (ЧПУ)
     ...
   </urlset>
   ```
-- [ ] Включать: все активные бани, все города, главную страницу
-- [ ] Кешировать sitemap в Redis (обновлять раз в сутки)
-- [ ] Schema.org JSON-LD для бань (тип LocalBusiness):
+- [x] Включать: все активные бани, все города, главную страницу
+- [x] Кешировать sitemap в Redis (обновлять раз в сутки)
+- [x] Schema.org JSON-LD для бань (тип LocalBusiness):
   ```json
   {
     "@context": "https://schema.org",
@@ -107,9 +107,9 @@ SEO-оптимизация для поисковых систем: slug (ЧПУ)
     "priceRange": "$$"
   }
   ```
-- [ ] GET /api/v1/bathhouses/{id}/schema — JSON-LD для бани
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] GET /api/v1/bathhouses/{id}/schema — JSON-LD для бани
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Верификация
 
