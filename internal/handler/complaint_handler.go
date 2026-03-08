@@ -115,25 +115,43 @@ func (h *ComplaintHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	if v := q.Get("status"); v != "" {
 		s := domain.ComplaintStatus(v)
+		if !s.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid status filter")
+			return
+		}
 		filter.Status = &s
 	}
 	if v := q.Get("target_type"); v != "" {
 		t := domain.ComplaintTargetType(v)
+		if !t.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid target_type filter")
+			return
+		}
 		filter.TargetType = &t
 	}
 	if v := q.Get("reason"); v != "" {
 		reason := domain.ComplaintReason(v)
+		if !reason.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid reason filter")
+			return
+		}
 		filter.Reason = &reason
 	}
 	if v := q.Get("from_date"); v != "" {
-		if t, err := time.Parse(time.RFC3339, v); err == nil {
-			filter.FromDate = &t
+		t, err := time.Parse(time.RFC3339, v)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid from_date, expected RFC3339 format")
+			return
 		}
+		filter.FromDate = &t
 	}
 	if v := q.Get("to_date"); v != "" {
-		if t, err := time.Parse(time.RFC3339, v); err == nil {
-			filter.ToDate = &t
+		t, err := time.Parse(time.RFC3339, v)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid to_date, expected RFC3339 format")
+			return
 		}
+		filter.ToDate = &t
 	}
 
 	result, err := h.complaintService.List(r.Context(), filter)

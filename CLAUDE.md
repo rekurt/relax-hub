@@ -86,6 +86,7 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrBathhouseHasBookings→409, ErrReviewAlreadyResponded→409
 - ErrSocialAccountAlreadyLinked→409, ErrSocialAccountNotFound→404
 - ErrOAuthExchangeFailed→400, ErrInsufficientPoints→400
+- ErrComplaintNotFound→404, ErrAlreadyReported→409
 
 ### Logging
 
@@ -152,3 +153,4 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Loyalty**: bronze/silver/gold/platinum tiers based on visit count, points system
 - **Chat**: real-time via WebSocket, conversations tied to bathhouse+client pair
 - **Telegram bot**: booking wizard with in-memory state, short ID cache for callback data (64-byte limit)
+- **Complaints**: report reviews/bathhouses/users (spam, offensive, fake, fraud, other), admin moderation queue with resolve/dismiss, auto-hide reviews at 3+ reports

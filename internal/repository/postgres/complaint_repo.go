@@ -41,15 +41,11 @@ func scanComplaint(row pgx.Row) (*domain.Complaint, error) {
 func scanComplaints(rows pgx.Rows) ([]domain.Complaint, error) {
 	var complaints []domain.Complaint
 	for rows.Next() {
-		var c domain.Complaint
-		if err := rows.Scan(
-			&c.ID, &c.ReporterID, &c.TargetType, &c.TargetID,
-			&c.Reason, &c.Description, &c.Status,
-			&c.ResolvedByID, &c.Resolution, &c.ResolvedAt, &c.CreatedAt,
-		); err != nil {
+		c, err := scanComplaint(rows)
+		if err != nil {
 			return nil, fmt.Errorf("scan complaint: %w", err)
 		}
-		complaints = append(complaints, c)
+		complaints = append(complaints, *c)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate complaint rows: %w", err)

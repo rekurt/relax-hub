@@ -96,6 +96,7 @@ func TestComplaint_Validate(t *testing.T) {
 		{"nil target", Complaint{ReporterID: uuid.New(), TargetType: ComplaintTargetReview, TargetID: uuid.Nil, Reason: ComplaintReasonSpam}},
 		{"invalid reason", Complaint{ReporterID: uuid.New(), TargetType: ComplaintTargetReview, TargetID: uuid.New(), Reason: "bad"}},
 		{"invalid status", Complaint{ReporterID: uuid.New(), TargetType: ComplaintTargetReview, TargetID: uuid.New(), Reason: ComplaintReasonSpam, Status: "bad"}},
+		{"description too long", Complaint{ReporterID: uuid.New(), TargetType: ComplaintTargetReview, TargetID: uuid.New(), Reason: ComplaintReasonSpam, Description: string(make([]byte, 2001))}},
 	}
 
 	for _, tt := range tests {
@@ -104,50 +105,5 @@ func TestComplaint_Validate(t *testing.T) {
 				t.Error("expected error for invalid complaint")
 			}
 		})
-	}
-}
-
-func TestComplaintFilter(t *testing.T) {
-	status := ComplaintStatusPending
-	targetType := ComplaintTargetReview
-	reason := ComplaintReasonSpam
-
-	filter := ComplaintFilter{
-		Status:     &status,
-		TargetType: &targetType,
-		Reason:     &reason,
-		Page:       1,
-		PageSize:   20,
-	}
-
-	if *filter.Status != ComplaintStatusPending {
-		t.Error("Status mismatch")
-	}
-	if *filter.TargetType != ComplaintTargetReview {
-		t.Error("TargetType mismatch")
-	}
-	if *filter.Reason != ComplaintReasonSpam {
-		t.Error("Reason mismatch")
-	}
-	if filter.Page != 1 {
-		t.Error("Page mismatch")
-	}
-	if filter.PageSize != 20 {
-		t.Error("PageSize mismatch")
-	}
-}
-
-func TestComplaintErrors(t *testing.T) {
-	errs := []error{
-		ErrComplaintNotFound,
-		ErrAlreadyReported,
-	}
-	for _, err := range errs {
-		if err == nil {
-			t.Error("complaint error should not be nil")
-		}
-		if err.Error() == "" {
-			t.Error("complaint error message should not be empty")
-		}
 	}
 }

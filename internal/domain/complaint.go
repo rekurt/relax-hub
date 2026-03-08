@@ -86,6 +86,9 @@ func (c *Complaint) Validate() error {
 	if c.Status != "" && !c.Status.IsValid() {
 		return ErrInvalidInput
 	}
+	if len(c.Description) > 2000 {
+		return ErrInvalidInput
+	}
 	return nil
 }
 

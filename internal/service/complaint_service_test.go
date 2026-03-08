@@ -182,6 +182,15 @@ func TestComplaintService_Dismiss_NotPending(t *testing.T) {
 	}
 }
 
+func TestComplaintService_Dismiss_NotFound(t *testing.T) {
+	env := newComplaintTestEnv()
+
+	_, err := env.svc.Dismiss(context.Background(), uuid.New(), uuid.New())
+	if err != domain.ErrComplaintNotFound {
+		t.Errorf("err = %v, want ErrComplaintNotFound", err)
+	}
+}
+
 func TestComplaintService_GetByID(t *testing.T) {
 	env := newComplaintTestEnv()
 	reporterID := uuid.New()

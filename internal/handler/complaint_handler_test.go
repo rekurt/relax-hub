@@ -451,3 +451,37 @@ func TestComplaintHandler_Dismiss(t *testing.T) {
 		t.Errorf("expected status 200, got %d", rec.Code)
 	}
 }
+
+func TestComplaintHandler_ListInvalidStatusFilter(t *testing.T) {
+	svc := &mockComplaintService{}
+	h := handler.NewComplaintHandler(svc)
+	router := chi.NewRouter()
+	router.Get("/admin/complaints", h.List)
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/complaints?status=invalid_status", nil)
+	req = req.WithContext(createTestContext(uuid.New(), domain.RoleAdmin))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid status filter, got %d", rec.Code)
+	}
+}
+
+func TestComplaintHandler_ListInvalidDateFilter(t *testing.T) {
+	svc := &mockComplaintService{}
+	h := handler.NewComplaintHandler(svc)
+	router := chi.NewRouter()
+	router.Get("/admin/complaints", h.List)
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/complaints?from_date=2024-01-01", nil)
+	req = req.WithContext(createTestContext(uuid.New(), domain.RoleAdmin))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid date format, got %d", rec.Code)
+	}
+}
