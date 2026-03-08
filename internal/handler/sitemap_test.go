@@ -351,7 +351,7 @@ func TestSitemapHandler_GenerateSitemap_EmptySlugs(t *testing.T) {
 	if idx := strings.Index(xmlContent, "<urlset"); idx > 0 {
 		xmlContent = xmlContent[idx:]
 	}
-	xml.Unmarshal([]byte(xmlContent), &urlset)
+	_ = xml.Unmarshal([]byte(xmlContent), &urlset)
 
 	// Only 1 URL (main page) since city and bathhouse have empty slugs
 	if len(urlset.URLs) != 1 {

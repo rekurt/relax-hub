@@ -91,7 +91,7 @@ func (h *SitemapHandler) Sitemap(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write(xmlData)
+	_, _ = w.Write(xmlData)
 }
 
 func (h *SitemapHandler) generateSitemap(ctx context.Context) ([]byte, error) {
@@ -237,5 +237,5 @@ func (h *SitemapHandler) GetSchema(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/ld+json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(schema)
+	_ = json.NewEncoder(w).Encode(schema)
 }
