@@ -134,6 +134,28 @@ func TestComplaintService_Resolve_NotPending(t *testing.T) {
 	}
 }
 
+func TestComplaintService_Resolve_EmptyResolution(t *testing.T) {
+	env := newComplaintTestEnv()
+	reporterID := uuid.New()
+	adminID := uuid.New()
+
+	complaint, _ := env.svc.Report(context.Background(), reporterID, service.CreateComplaintInput{
+		TargetType: domain.ComplaintTargetReview,
+		TargetID:   uuid.New(),
+		Reason:     domain.ComplaintReasonSpam,
+	})
+
+	_, err := env.svc.Resolve(context.Background(), complaint.ID, adminID, "")
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput for empty resolution", err)
+	}
+
+	_, err = env.svc.Resolve(context.Background(), complaint.ID, adminID, "   ")
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput for whitespace-only resolution", err)
+	}
+}
+
 func TestComplaintService_Resolve_NotFound(t *testing.T) {
 	env := newComplaintTestEnv()
 
