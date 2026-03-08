@@ -240,7 +240,7 @@ func (s *referralService) revertReferralStatus(ctx context.Context, referralID u
 
 // reverseReferrerCredit undoes the referrer's bonus and reverts the referral to pending.
 func (s *referralService) reverseReferrerCredit(ctx context.Context, referral *domain.Referral) {
-	if err := s.referralRepo.UpdateBalance(ctx, referral.ReferrerID, -referral.BonusAmount, true); err != nil {
+	if err := s.referralRepo.UpdateBalance(ctx, referral.ReferrerID, -referral.BonusAmount, false); err != nil {
 		s.logger.Error("failed to reverse referrer credit",
 			"referrer_id", referral.ReferrerID, "error", err)
 	}
