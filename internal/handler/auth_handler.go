@@ -27,11 +27,12 @@ func NewAuthHandler(authService service.AuthService, userService service.UserSer
 }
 
 type registerRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Name     string `json:"name"`
-	Phone    string `json:"phone"`
-	Role     string `json:"role"`
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	Name         string `json:"name"`
+	Phone        string `json:"phone"`
+	Role         string `json:"role"`
+	ReferralCode string `json:"referral_code,omitempty"`
 }
 
 type loginRequest struct {
@@ -127,11 +128,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, token, err := h.authService.Register(r.Context(), service.RegisterInput{
-		Email:    req.Email,
-		Password: req.Password,
-		Name:     req.Name,
-		Phone:    req.Phone,
-		Role:     domain.UserRole(req.Role),
+		Email:        req.Email,
+		Password:     req.Password,
+		Name:         req.Name,
+		Phone:        req.Phone,
+		Role:         domain.UserRole(req.Role),
+		ReferralCode: req.ReferralCode,
 	})
 	if err != nil {
 		handleServiceError(w, err)

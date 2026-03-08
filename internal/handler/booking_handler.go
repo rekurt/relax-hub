@@ -20,29 +20,31 @@ func NewBookingHandler(bookingService service.BookingService) *BookingHandler {
 }
 
 type createBookingRequest struct {
-	BathhouseID string `json:"bathhouse_id"`
-	StartTime   string `json:"start_time"`
-	EndTime     string `json:"end_time"`
-	GuestCount  int    `json:"guest_count"`
-	Comment     string `json:"comment"`
-	UsePoints   int64  `json:"use_points,omitempty"`
+	BathhouseID      string `json:"bathhouse_id"`
+	StartTime        string `json:"start_time"`
+	EndTime          string `json:"end_time"`
+	GuestCount       int    `json:"guest_count"`
+	Comment          string `json:"comment"`
+	UsePoints        int64  `json:"use_points,omitempty"`
+	UseReferralBonus int64  `json:"use_referral_bonus,omitempty"`
 }
 
 type bookingResponse struct {
-	ID              string    `json:"id"`
-	UserID          string    `json:"user_id"`
-	BathhouseID     string    `json:"bathhouse_id"`
-	StartTime       time.Time `json:"start_time"`
-	EndTime         time.Time `json:"end_time"`
-	GuestCount      int       `json:"guest_count"`
-	TotalPrice      int64     `json:"total_price"`
-	Status          string    `json:"status"`
-	Comment         string    `json:"comment"`
-	EarnedPoints    int64     `json:"earned_points,omitempty"`
-	LoyaltyDiscount int64     `json:"loyalty_discount,omitempty"`
-	PointsSpent     int64     `json:"points_spent,omitempty"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID                string    `json:"id"`
+	UserID            string    `json:"user_id"`
+	BathhouseID       string    `json:"bathhouse_id"`
+	StartTime         time.Time `json:"start_time"`
+	EndTime           time.Time `json:"end_time"`
+	GuestCount        int       `json:"guest_count"`
+	TotalPrice        int64     `json:"total_price"`
+	Status            string    `json:"status"`
+	Comment           string    `json:"comment"`
+	EarnedPoints      int64     `json:"earned_points,omitempty"`
+	LoyaltyDiscount   int64     `json:"loyalty_discount,omitempty"`
+	PointsSpent       int64     `json:"points_spent,omitempty"`
+	ReferralBonusUsed int64     `json:"referral_bonus_used,omitempty"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
 
 func toBookingResponse(b *domain.Booking) bookingResponse {
@@ -67,6 +69,7 @@ func toBookingResultResponse(r *service.BookingResult) bookingResponse {
 	resp.EarnedPoints = r.EarnedPoints
 	resp.LoyaltyDiscount = r.LoyaltyDiscount
 	resp.PointsSpent = r.PointsSpent
+	resp.ReferralBonusUsed = r.ReferralBonusUsed
 	return resp
 }
 
@@ -98,12 +101,13 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
 	result, err := h.bookingService.Create(r.Context(), userID, service.CreateBookingInput{
-		BathhouseID: bathhouseID,
-		StartTime:   startTime,
-		EndTime:     endTime,
-		GuestCount:  req.GuestCount,
-		Comment:     req.Comment,
-		UsePoints:   req.UsePoints,
+		BathhouseID:      bathhouseID,
+		StartTime:        startTime,
+		EndTime:          endTime,
+		GuestCount:       req.GuestCount,
+		Comment:          req.Comment,
+		UsePoints:        req.UsePoints,
+		UseReferralBonus: req.UseReferralBonus,
 	})
 	if err != nil {
 		handleServiceError(w, err)

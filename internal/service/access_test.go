@@ -35,6 +35,28 @@ func (n *noopNotifService) UpdatePreferences(_ context.Context, _ uuid.UUID, _ *
 	return nil
 }
 
+// noopReferralService is a no-op ReferralService for tests that don't verify referrals.
+type noopReferralService struct{}
+
+func (n *noopReferralService) GenerateCode(_ context.Context, _ uuid.UUID) (string, error) {
+	return "testcode", nil
+}
+func (n *noopReferralService) RegisterReferral(_ context.Context, _ string, _ uuid.UUID) error {
+	return nil
+}
+func (n *noopReferralService) CompleteReferral(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+func (n *noopReferralService) GetBalance(_ context.Context, userID uuid.UUID) (*domain.ReferralBalance, error) {
+	return &domain.ReferralBalance{UserID: userID}, nil
+}
+func (n *noopReferralService) UseBalance(_ context.Context, _ uuid.UUID, _ int64, _ uuid.UUID) error {
+	return nil
+}
+func (n *noopReferralService) GetStats(_ context.Context, _ uuid.UUID) (*domain.ReferralStats, error) {
+	return &domain.ReferralStats{}, nil
+}
+
 func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID) *domain.Bathhouse {
 	t.Helper()
 	wh := make([]domain.WorkingHours, 7)

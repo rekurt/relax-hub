@@ -15,19 +15,21 @@ import (
 const cancelDeadline = 2 * time.Hour
 
 type CreateBookingInput struct {
-	BathhouseID uuid.UUID
-	StartTime   time.Time
-	EndTime     time.Time
-	GuestCount  int
-	Comment     string
-	UsePoints   int64 // Optional: loyalty points to spend (reduces total price)
+	BathhouseID      uuid.UUID
+	StartTime        time.Time
+	EndTime          time.Time
+	GuestCount       int
+	Comment          string
+	UsePoints        int64 // Optional: loyalty points to spend (reduces total price)
+	UseReferralBonus int64 // Optional: referral bonus to spend (reduces total price)
 }
 
 type BookingResult struct {
-	Booking        *domain.Booking
-	EarnedPoints   int64 // Points earned (only on complete)
-	LoyaltyDiscount int64 // Discount from loyalty level in kopecks
-	PointsSpent    int64 // Points spent on this booking
+	Booking             *domain.Booking
+	EarnedPoints        int64 // Points earned (only on complete)
+	LoyaltyDiscount     int64 // Discount from loyalty level in kopecks
+	PointsSpent         int64 // Points spent on this booking
+	ReferralBonusUsed   int64 // Referral bonus used on this booking
 }
 
 type TimeSlot struct {
@@ -53,6 +55,7 @@ type bookingService struct {
 	bhRepo      repository.BathhouseRepository
 	pricingSvc  PricingService
 	loyaltySvc  LoyaltyService
+	referralSvc ReferralService
 	access      *AccessChecker
 	notifSvc    NotificationService
 	logger      *logger.Logger
@@ -63,6 +66,7 @@ func NewBookingService(
 	bhRepo repository.BathhouseRepository,
 	pricingSvc PricingService,
 	loyaltySvc LoyaltyService,
+	referralSvc ReferralService,
 	access *AccessChecker,
 	notifSvc NotificationService,
 	log *logger.Logger,
@@ -72,6 +76,7 @@ func NewBookingService(
 		bhRepo:      bhRepo,
 		pricingSvc:  pricingSvc,
 		loyaltySvc:  loyaltySvc,
+		referralSvc: referralSvc,
 		access:      access,
 		notifSvc:    notifSvc,
 		logger:      log,
@@ -149,6 +154,16 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		totalPrice -= input.UsePoints
 	}
 
+	// Apply referral bonus
+	var referralBonusUsed int64
+	if input.UseReferralBonus > 0 {
+		if input.UseReferralBonus > totalPrice {
+			return nil, fmt.Errorf("%w: referral bonus exceeds total price", domain.ErrInvalidInput)
+		}
+		referralBonusUsed = input.UseReferralBonus
+		totalPrice -= input.UseReferralBonus
+	}
+
 	if totalPrice <= 0 {
 		totalPrice = 1 // Minimum price 1 kopeck
 	}
@@ -191,10 +206,23 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		}
 	}
 
+	// Spend referral bonus after booking exists in DB
+	if referralBonusUsed > 0 {
+		if err := s.referralSvc.UseBalance(ctx, userID, referralBonusUsed, bookingID); err != nil {
+			// Roll back the booking since referral bonus couldn't be spent
+			if delErr := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); delErr != nil {
+				s.logger.Error("failed to cancel booking after referral spend failure",
+					"booking_id", bookingID, "spend_error", err, "cancel_error", delErr)
+			}
+			return nil, err
+		}
+	}
+
 	return &BookingResult{
-		Booking:         booking,
-		LoyaltyDiscount: loyaltyDiscount,
-		PointsSpent:     pointsSpent,
+		Booking:           booking,
+		LoyaltyDiscount:   loyaltyDiscount,
+		PointsSpent:       pointsSpent,
+		ReferralBonusUsed: referralBonusUsed,
 	}, nil
 }
 
@@ -312,6 +340,11 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 		if err := s.loyaltySvc.RecalculateLevel(ctx, booking.UserID); err != nil {
 			s.logger.Warn("failed to recalculate loyalty level", "booking_id", bookingID, "error", err)
 		}
+	}
+
+	// Complete referral if this is the referee's first completed booking
+	if err := s.referralSvc.CompleteReferral(ctx, booking.UserID); err != nil {
+		s.logger.Warn("failed to complete referral", "booking_id", bookingID, "user_id", booking.UserID, "error", err)
 	}
 
 	return &BookingResult{

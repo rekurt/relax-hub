@@ -7,6 +7,7 @@ import (
 
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -23,7 +24,7 @@ func newTestConfig() *config.Config {
 func TestAuthService_Register_Success(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, cfg)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, cfg)
 
 	user, token, err := svc.Register(context.Background(), service.RegisterInput{
 		Email:    "test@example.com",
@@ -53,7 +54,7 @@ func TestAuthService_Register_Success(t *testing.T) {
 func TestAuthService_Register_AsOwner(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, cfg)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, cfg)
 
 	user, _, err := svc.Register(context.Background(), service.RegisterInput{
 		Email:    "owner@example.com",
@@ -73,7 +74,7 @@ func TestAuthService_Register_AsOwner(t *testing.T) {
 func TestAuthService_Register_InvalidRole(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, cfg)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, cfg)
 
 	tests := []struct {
 		name string
@@ -101,7 +102,7 @@ func TestAuthService_Register_InvalidRole(t *testing.T) {
 func TestAuthService_Register_DuplicateEmail(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, cfg)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, cfg)
 
 	_, _, _ = svc.Register(context.Background(), service.RegisterInput{
 		Email:    "dup@example.com",
@@ -125,7 +126,7 @@ func TestAuthService_Register_DuplicateEmail(t *testing.T) {
 func TestAuthService_Login_Success(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, cfg)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, cfg)
 
 	_, _, _ = svc.Register(context.Background(), service.RegisterInput{
 		Email:    "login@example.com",
@@ -146,7 +147,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 func TestAuthService_Login_WrongPassword(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, cfg)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, cfg)
 
 	_, _, _ = svc.Register(context.Background(), service.RegisterInput{
 		Email:    "login@example.com",
@@ -164,7 +165,7 @@ func TestAuthService_Login_WrongPassword(t *testing.T) {
 func TestAuthService_Login_NonExistentUser(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, cfg)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, cfg)
 
 	_, _, err := svc.Login(context.Background(), "nonexistent@example.com", "password")
 	if !errors.Is(err, domain.ErrUnauthorized) {
@@ -175,7 +176,7 @@ func TestAuthService_Login_NonExistentUser(t *testing.T) {
 func TestAuthService_Login_BlockedUser(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, cfg)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, cfg)
 
 	user, _, _ := svc.Register(context.Background(), service.RegisterInput{
 		Email:    "blocked@example.com",
@@ -195,7 +196,7 @@ func TestAuthService_Login_BlockedUser(t *testing.T) {
 func TestAuthService_ParseToken_Roundtrip(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, cfg)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, cfg)
 
 	user, token, _ := svc.Register(context.Background(), service.RegisterInput{
 		Email:    "parse@example.com",
@@ -219,7 +220,7 @@ func TestAuthService_ParseToken_Roundtrip(t *testing.T) {
 func TestAuthService_ParseToken_InvalidToken(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, cfg)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, cfg)
 
 	_, _, err := svc.ParseToken(context.Background(), "invalid-token")
 	if !errors.Is(err, domain.ErrUnauthorized) {
@@ -230,7 +231,7 @@ func TestAuthService_ParseToken_InvalidToken(t *testing.T) {
 func TestAuthService_ParseToken_WrongSecret(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, cfg)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, cfg)
 
 	_, token, _ := svc.Register(context.Background(), service.RegisterInput{
 		Email:    "test@example.com",
@@ -245,10 +246,84 @@ func TestAuthService_ParseToken_WrongSecret(t *testing.T) {
 			TokenTTL: 3600_000_000_000,
 		},
 	}
-	svc2 := service.NewAuthService(userRepo, cfg2)
+	svc2 := service.NewAuthService(userRepo, &noopReferralService{}, cfg2)
 
 	_, _, err := svc2.ParseToken(context.Background(), token)
 	if !errors.Is(err, domain.ErrUnauthorized) {
 		t.Errorf("should return ErrUnauthorized for wrong secret, got: %v", err)
+	}
+}
+
+func TestAuthService_Register_WithReferralCode(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	referralRepo := mock.NewReferralRepo()
+	cfg := newTestConfig()
+	log := logger.New(logger.LevelWarn)
+	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
+	svc := service.NewAuthService(userRepo, referralSvc, cfg)
+
+	// First, register a referrer and generate a referral code
+	referrer, _, err := svc.Register(context.Background(), service.RegisterInput{
+		Email:    "referrer@example.com",
+		Password: "password123",
+		Name:     "Referrer",
+		Role:     domain.RoleClient,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error creating referrer: %v", err)
+	}
+
+	code, err := referralSvc.GenerateCode(context.Background(), referrer.ID)
+	if err != nil {
+		t.Fatalf("unexpected error generating code: %v", err)
+	}
+
+	// Register a new user with the referral code
+	referee, _, err := svc.Register(context.Background(), service.RegisterInput{
+		Email:        "referee@example.com",
+		Password:     "password123",
+		Name:         "Referee",
+		Role:         domain.RoleClient,
+		ReferralCode: code,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error registering with referral: %v", err)
+	}
+
+	// Verify the referral was created
+	stats, err := referralSvc.GetStats(context.Background(), referrer.ID)
+	if err != nil {
+		t.Fatalf("unexpected error getting stats: %v", err)
+	}
+	if stats.TotalInvited != 1 {
+		t.Errorf("totalInvited = %d, want 1", stats.TotalInvited)
+	}
+	_ = referee
+}
+
+func TestAuthService_Register_WithInvalidReferralCode(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	referralRepo := mock.NewReferralRepo()
+	cfg := newTestConfig()
+	log := logger.New(logger.LevelWarn)
+	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
+	svc := service.NewAuthService(userRepo, referralSvc, cfg)
+
+	// Register with an invalid referral code - should still succeed (best-effort)
+	user, token, err := svc.Register(context.Background(), service.RegisterInput{
+		Email:        "test@example.com",
+		Password:     "password123",
+		Name:         "Test User",
+		Role:         domain.RoleClient,
+		ReferralCode: "invalidcode",
+	})
+	if err != nil {
+		t.Fatalf("registration should succeed even with invalid referral code, got: %v", err)
+	}
+	if user == nil {
+		t.Fatal("user should not be nil")
+	}
+	if token == "" {
+		t.Fatal("token should not be empty")
 	}
 }

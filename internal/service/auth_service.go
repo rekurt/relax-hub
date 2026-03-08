@@ -16,11 +16,12 @@ import (
 )
 
 type RegisterInput struct {
-	Email    string
-	Password string
-	Name     string
-	Phone    string
-	Role     domain.UserRole // client or owner only
+	Email        string
+	Password     string
+	Name         string
+	Phone        string
+	Role         domain.UserRole // client or owner only
+	ReferralCode string          // optional referral code from inviter
 }
 
 type AuthService interface {
@@ -30,16 +31,18 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo  repository.UserRepository
-	jwtSecret []byte
-	tokenTTL  time.Duration
+	userRepo    repository.UserRepository
+	referralSvc ReferralService
+	jwtSecret   []byte
+	tokenTTL    time.Duration
 }
 
-func NewAuthService(userRepo repository.UserRepository, cfg *config.Config) AuthService {
+func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralService, cfg *config.Config) AuthService {
 	return &authService{
-		userRepo:  userRepo,
-		jwtSecret: []byte(cfg.JWT.Secret),
-		tokenTTL:  cfg.JWT.TokenTTL,
+		userRepo:    userRepo,
+		referralSvc: referralSvc,
+		jwtSecret:   []byte(cfg.JWT.Secret),
+		tokenTTL:    cfg.JWT.TokenTTL,
 	}
 }
 
@@ -91,6 +94,14 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
 		return nil, "", err
+	}
+
+	// Register referral if code provided (best-effort, don't fail registration)
+	if input.ReferralCode != "" {
+		if err := s.referralSvc.RegisterReferral(ctx, input.ReferralCode, user.ID); err != nil {
+			// Log but don't fail registration
+			_ = err
+		}
 	}
 
 	token, err := s.generateToken(user.ID, user.Role)
