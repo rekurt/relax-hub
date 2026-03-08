@@ -58,11 +58,11 @@
 - Create: `internal/repository/postgres/complaint.go`
 - Create: `internal/repository/mock/complaint.go`
 
-- [ ] ComplaintRepository: Create, GetByID, List (paginated, с фильтрами), UpdateStatus, CountByTarget, CheckExists
-- [ ] Фильтры: status, target_type, reason, date range
-- [ ] Реализовать postgres и mock
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] ComplaintRepository: Create, GetByID, List (paginated, с фильтрами), UpdateStatus, CountByTarget, CheckExists
+- [x] Фильтры: status, target_type, reason, date range
+- [x] Реализовать postgres и mock
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Сервис жалоб
 

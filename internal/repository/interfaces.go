@@ -202,3 +202,12 @@ type TelegramLinkRepository interface {
 	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.TelegramLink, error)
 	Delete(ctx context.Context, userID uuid.UUID) error
 }
+
+type ComplaintRepository interface {
+	Create(ctx context.Context, complaint *domain.Complaint) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Complaint, error)
+	List(ctx context.Context, filter domain.ComplaintFilter) (*domain.PaginatedResult[domain.Complaint], error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ComplaintStatus, resolvedByID *uuid.UUID, resolution string) error
+	CountByTarget(ctx context.Context, targetType domain.ComplaintTargetType, targetID uuid.UUID) (int64, error)
+	CheckExists(ctx context.Context, reporterID uuid.UUID, targetType domain.ComplaintTargetType, targetID uuid.UUID) (bool, error)
+}

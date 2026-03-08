@@ -27,6 +27,7 @@ var (
 	_ repository.PromotionRepository      = (*PromotionRepo)(nil)
 	_ repository.LoyaltyRepository        = (*LoyaltyRepo)(nil)
 	_ repository.AnalyticsRepository      = (*AnalyticsRepo)(nil)
+	_ repository.ComplaintRepository      = (*ComplaintRepo)(nil)
 )
 
 func TestUserRepo_CRUD(t *testing.T) {
