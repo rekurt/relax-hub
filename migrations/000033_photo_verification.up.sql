@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS bathhouse_photos (
     thumbnail_url TEXT NOT NULL DEFAULT '',
     position INT NOT NULL DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
-    verified_by_id UUID REFERENCES users(id),
+    verified_by_id UUID REFERENCES users(id) ON DELETE SET NULL,
     verified_at TIMESTAMPTZ,
     rejection_reason TEXT NOT NULL DEFAULT '',
     uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
