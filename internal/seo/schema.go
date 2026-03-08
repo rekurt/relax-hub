@@ -2,6 +2,7 @@ package seo
 
 import (
 	"fmt"
+	"strings"
 )
 
 // SchemaLocalBusiness represents a Schema.org LocalBusiness JSON-LD object.
@@ -201,6 +202,7 @@ func generateSchemaURL(input SchemaInput) string {
 	if base == "" {
 		base = "https://bani.ru"
 	}
+	base = strings.TrimRight(base, "/")
 	if input.CitySlug != "" && input.Slug != "" {
 		return fmt.Sprintf("%s/%s/%s", base, input.CitySlug, input.Slug)
 	}
