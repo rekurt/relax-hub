@@ -80,7 +80,7 @@ func TestReferralHandler_GetCode(t *testing.T) {
 		},
 	}
 
-	h := NewReferralHandler(refSvc, "")
+	h := NewReferralHandler(refSvc, "http://example.com")
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()

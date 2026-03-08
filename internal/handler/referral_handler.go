@@ -58,15 +58,9 @@ func (h *ReferralHandler) GetCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var baseURL string
-	if h.baseURL != "" {
-		baseURL = h.baseURL
-	} else {
-		scheme := "https"
-		if r.TLS == nil {
-			scheme = "http"
-		}
-		baseURL = scheme + "://" + r.Host
+	baseURL := h.baseURL
+	if baseURL == "" {
+		baseURL = "https://bani.ru"
 	}
 
 	writeJSON(w, http.StatusOK, referralCodeResponse{

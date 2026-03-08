@@ -359,8 +359,9 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 	}
 
 	return &BookingResult{
-		Booking:      booking,
-		EarnedPoints: earnedPoints,
+		Booking:           booking,
+		EarnedPoints:      earnedPoints,
+		ReferralBonusUsed: booking.ReferralBonusUsed,
 	}, nil
 }
 
