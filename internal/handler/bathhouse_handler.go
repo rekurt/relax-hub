@@ -365,8 +365,8 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 
 func (h *BathhouseHandler) SearchByCitySlug(w http.ResponseWriter, r *http.Request) {
 	citySlug := chi.URLParam(r, "slug")
-	if citySlug == "" {
-		writeError(w, http.StatusBadRequest, "invalid_input", "city slug is required")
+	if citySlug == "" || !seo.IsValidSlug(citySlug) {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid city slug")
 		return
 	}
 
@@ -433,44 +433,15 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Record activity for authenticated users
-	if userID != uuid.Nil && h.recommendationService != nil {
-		_ = h.recommendationService.RecordView(r.Context(), userID, bh.ID)
-	}
-
-	// Record analytics view with IP-based deduplication
-	if h.analyticsService != nil {
-		ipHash := getIPHash(r)
-		source := domain.ViewSourceDirect // default source
-		// Pass nil for viewer_id for anonymous users (uuid.Nil), non-nil only for authenticated users
-		var viewerID *uuid.UUID
-		if userID != uuid.Nil {
-			viewerID = &userID
-		}
-		_ = h.analyticsService.RecordView(r.Context(), id, viewerID, source, ipHash)
-	}
-
-	// Record click for promoted bathhouses
-	if h.promotionRepository != nil {
-		// Try to get active promotion for this bathhouse
-		// If exists, record a click
-		promo, err := h.promotionRepository.GetActiveBybathhouse(r.Context(), id)
-		if err == nil && promo != nil {
-			if err := h.promotionRepository.RecordClick(r.Context(), promo.ID); err != nil {
-				if h.log != nil {
-					h.log.Warn("failed to record promotion click", "promotion_id", promo.ID, "error", err)
-				}
-			}
-		}
-	}
+	h.recordBathhouseView(r, bh.ID, userID)
 
 	writeJSON(w, http.StatusOK, resp)
 }
 
 func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
-	if slug == "" {
-		writeError(w, http.StatusBadRequest, "invalid_input", "slug is required")
+	if slug == "" || !seo.IsValidSlug(slug) {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid slug format")
 		return
 	}
 
@@ -491,33 +462,7 @@ func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Record activity for authenticated users
-	if userID != uuid.Nil && h.recommendationService != nil {
-		_ = h.recommendationService.RecordView(r.Context(), userID, bh.ID)
-	}
-
-	// Record analytics view with IP-based deduplication
-	if h.analyticsService != nil {
-		ipHash := getIPHash(r)
-		source := domain.ViewSourceDirect
-		var viewerID *uuid.UUID
-		if userID != uuid.Nil {
-			viewerID = &userID
-		}
-		_ = h.analyticsService.RecordView(r.Context(), bh.ID, viewerID, source, ipHash)
-	}
-
-	// Record click for promoted bathhouses
-	if h.promotionRepository != nil {
-		promo, err := h.promotionRepository.GetActiveBybathhouse(r.Context(), bh.ID)
-		if err == nil && promo != nil {
-			if err := h.promotionRepository.RecordClick(r.Context(), promo.ID); err != nil {
-				if h.log != nil {
-					h.log.Warn("failed to record promotion click", "promotion_id", promo.ID, "error", err)
-				}
-			}
-		}
-	}
+	h.recordBathhouseView(r, bh.ID, userID)
 
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -959,6 +904,35 @@ func (h *BathhouseHandler) buildMeta(ctx context.Context, bh *domain.Bathhouse) 
 		BaseURL:      h.baseURL,
 	})
 	return &meta
+}
+
+func (h *BathhouseHandler) recordBathhouseView(r *http.Request, bathhouseID uuid.UUID, userID uuid.UUID) {
+	ctx := r.Context()
+
+	if userID != uuid.Nil && h.recommendationService != nil {
+		_ = h.recommendationService.RecordView(ctx, userID, bathhouseID)
+	}
+
+	if h.analyticsService != nil {
+		ipHash := getIPHash(r)
+		source := domain.ViewSourceDirect
+		var viewerID *uuid.UUID
+		if userID != uuid.Nil {
+			viewerID = &userID
+		}
+		_ = h.analyticsService.RecordView(ctx, bathhouseID, viewerID, source, ipHash)
+	}
+
+	if h.promotionRepository != nil {
+		promo, err := h.promotionRepository.GetActiveBybathhouse(ctx, bathhouseID)
+		if err == nil && promo != nil {
+			if err := h.promotionRepository.RecordClick(ctx, promo.ID); err != nil {
+				if h.log != nil {
+					h.log.Warn("failed to record promotion click", "promotion_id", promo.ID, "error", err)
+				}
+			}
+		}
+	}
 }
 
 const maxPageSize = 100

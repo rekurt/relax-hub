@@ -84,6 +84,9 @@ func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bath
 	if rows.Next() {
 		return r.scanBathhouseFromRowWithSubscription(rows)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("get bathhouse by id: %w", err)
+	}
 
 	return nil, domain.ErrNotFound
 }
@@ -109,6 +112,9 @@ func (r *bathhouseRepo) GetBySlug(ctx context.Context, slug string) (*domain.Bat
 
 	if rows.Next() {
 		return r.scanBathhouseFromRowWithSubscription(rows)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("get bathhouse by slug: %w", err)
 	}
 
 	return nil, domain.ErrNotFound
