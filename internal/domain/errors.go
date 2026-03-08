@@ -28,4 +28,7 @@ var (
 	ErrPromoInvalid               = errors.New("promo code is invalid")
 	ErrComplaintNotFound          = errors.New("complaint not found")
 	ErrAlreadyReported            = errors.New("already reported")
+	ErrSelfReferral               = errors.New("cannot refer yourself")
+	ErrAlreadyReferred            = errors.New("user already referred")
+	ErrInsufficientReferralBalance = errors.New("insufficient referral balance")
 )

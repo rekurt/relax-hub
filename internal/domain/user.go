@@ -34,6 +34,7 @@ type User struct {
 	AvatarURL    string
 	Bio          string
 	CityID       *int64
+	ReferralCode string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

@@ -30,7 +30,7 @@
 - Create: `migrations/000009_referrals.up.sql`
 - Create: `migrations/000009_referrals.down.sql`
 
-- [ ] Создать модель Referral:
+- [x] Создать модель Referral:
   ```
   Referral {
     ID            uuid.UUID
@@ -43,12 +43,12 @@
     CreatedAt     time.Time
   }
   ```
-- [ ] Создать модель ReferralBalance (UserID, Balance int64, TotalEarned int64)
-- [ ] Добавить поле ReferralCode в модель User
-- [ ] Добавить domain-ошибки: ErrSelfReferral, ErrAlreadyReferred, ErrInsufficientReferralBalance
-- [ ] Создать миграции
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать модель ReferralBalance (UserID, Balance int64, TotalEarned int64)
+- [x] Добавить поле ReferralCode в модель User
+- [x] Добавить domain-ошибки: ErrSelfReferral, ErrAlreadyReferred, ErrInsufficientReferralBalance
+- [x] Создать миграции
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий и сервис рефералов
 
