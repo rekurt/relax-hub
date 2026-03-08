@@ -777,7 +777,7 @@ func TestBookingService_Complete_CompletesReferral(t *testing.T) {
 	bh := createBathhouse(t, bhRepo, ownerID)
 
 	// Set up a pending referral
-	referralSvc.RegisterReferral(context.Background(), "testcode", refereeID)
+	_ = referralSvc.RegisterReferral(context.Background(), "testcode", refereeID)
 	// That will fail because there is no user with that code, but let's test CompleteReferral directly
 
 	// Create and confirm a booking that ended in the past
