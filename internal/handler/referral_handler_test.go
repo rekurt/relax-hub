@@ -57,6 +57,10 @@ func (m *mockReferralService) UseBalance(ctx context.Context, userID uuid.UUID, 
 	return nil
 }
 
+func (m *mockReferralService) RefundBalance(_ context.Context, _ uuid.UUID, _ int64, _ uuid.UUID) error {
+	return nil
+}
+
 func (m *mockReferralService) GetStats(ctx context.Context, userID uuid.UUID) (*domain.ReferralStats, error) {
 	if m.getStatsFn != nil {
 		return m.getStatsFn(ctx, userID)
@@ -110,7 +114,7 @@ func TestReferralHandler_GetCode(t *testing.T) {
 	if data["referral_code"] != "ref12345" {
 		t.Errorf("expected referral_code ref12345, got %v", data["referral_code"])
 	}
-	if data["referral_link"] != "https://bani.ru/register?ref=ref12345" {
+	if data["referral_link"] != "http://example.com/register?ref=ref12345" {
 		t.Errorf("expected referral_link with code, got %v", data["referral_link"])
 	}
 }

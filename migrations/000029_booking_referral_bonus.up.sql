@@ -1,0 +1,1 @@
+ALTER TABLE bookings ADD COLUMN referral_bonus_used BIGINT NOT NULL DEFAULT 0;

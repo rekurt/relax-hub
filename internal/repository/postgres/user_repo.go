@@ -47,14 +47,14 @@ func (r *userRepo) Create(ctx context.Context, user *domain.User) error {
 
 func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, name, phone, role, is_active, avatar_url, bio, city_id, created_at, updated_at
+		SELECT id, email, password_hash, name, phone, role, is_active, avatar_url, bio, city_id, referral_code, created_at, updated_at
 		FROM users WHERE id = $1`
 
 	var user domain.User
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone,
 		&user.Role, &user.IsActive, &user.AvatarURL, &user.Bio, &user.CityID,
-		&user.CreatedAt, &user.UpdatedAt,
+		&user.ReferralCode, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -67,14 +67,14 @@ func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, err
 
 func (r *userRepo) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, name, phone, role, is_active, avatar_url, bio, city_id, created_at, updated_at
+		SELECT id, email, password_hash, name, phone, role, is_active, avatar_url, bio, city_id, referral_code, created_at, updated_at
 		FROM users WHERE email = $1`
 
 	var user domain.User
 	err := r.pool.QueryRow(ctx, query, email).Scan(
 		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone,
 		&user.Role, &user.IsActive, &user.AvatarURL, &user.Bio, &user.CityID,
-		&user.CreatedAt, &user.UpdatedAt,
+		&user.ReferralCode, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {

@@ -25,18 +25,19 @@ func (s BookingStatus) IsValid() bool {
 }
 
 type Booking struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	BathhouseID uuid.UUID
-	StartTime   time.Time
-	EndTime     time.Time
-	GuestCount  int
-	TotalPrice  int64
-	PointsSpent int64
-	Status      BookingStatus
-	Comment     string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID                uuid.UUID
+	UserID            uuid.UUID
+	BathhouseID       uuid.UUID
+	StartTime         time.Time
+	EndTime           time.Time
+	GuestCount        int
+	TotalPrice        int64
+	PointsSpent       int64
+	ReferralBonusUsed int64
+	Status            BookingStatus
+	Comment           string
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
 func (b *Booking) Validate() error {

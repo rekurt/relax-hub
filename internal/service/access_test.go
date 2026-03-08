@@ -53,6 +53,9 @@ func (n *noopReferralService) GetBalance(_ context.Context, userID uuid.UUID) (*
 func (n *noopReferralService) UseBalance(_ context.Context, _ uuid.UUID, _ int64, _ uuid.UUID) error {
 	return nil
 }
+func (n *noopReferralService) RefundBalance(_ context.Context, _ uuid.UUID, _ int64, _ uuid.UUID) error {
+	return nil
+}
 func (n *noopReferralService) GetStats(_ context.Context, _ uuid.UUID) (*domain.ReferralStats, error) {
 	return &domain.ReferralStats{}, nil
 }

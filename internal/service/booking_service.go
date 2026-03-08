@@ -171,18 +171,19 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	bookingID := uuid.New()
 	now := time.Now()
 	booking := &domain.Booking{
-		ID:          bookingID,
-		UserID:      userID,
-		BathhouseID: input.BathhouseID,
-		StartTime:   input.StartTime,
-		EndTime:     input.EndTime,
-		GuestCount:  input.GuestCount,
-		TotalPrice:  totalPrice,
-		PointsSpent: pointsSpent,
-		Status:      domain.BookingPending,
-		Comment:     input.Comment,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		ID:                bookingID,
+		UserID:            userID,
+		BathhouseID:       input.BathhouseID,
+		StartTime:         input.StartTime,
+		EndTime:           input.EndTime,
+		GuestCount:        input.GuestCount,
+		TotalPrice:        totalPrice,
+		PointsSpent:       pointsSpent,
+		ReferralBonusUsed: referralBonusUsed,
+		Status:            domain.BookingPending,
+		Comment:           input.Comment,
+		CreatedAt:         now,
+		UpdatedAt:         now,
 	}
 
 	if err := booking.Validate(); err != nil {
@@ -255,6 +256,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 			return err
 		}
 		s.refundBookingPoints(ctx, booking)
+		s.refundReferralBonus(ctx, booking)
 		s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 		return nil
 	}
@@ -268,6 +270,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 	s.refundBookingPoints(ctx, booking)
+	s.refundReferralBonus(ctx, booking)
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 	return nil
 }
@@ -311,6 +314,7 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 	s.refundBookingPoints(ctx, booking)
+	s.refundReferralBonus(ctx, booking)
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingRejected)
 	return nil
 }
@@ -558,6 +562,17 @@ func (s *bookingService) refundBookingPoints(ctx context.Context, booking *domai
 		s.logger.Error("failed to refund loyalty points on booking cancellation",
 			"booking_id", booking.ID, "user_id", booking.UserID,
 			"points_spent", booking.PointsSpent, "error", err)
+	}
+}
+
+func (s *bookingService) refundReferralBonus(ctx context.Context, booking *domain.Booking) {
+	if booking.ReferralBonusUsed <= 0 {
+		return
+	}
+	if err := s.referralSvc.RefundBalance(ctx, booking.UserID, booking.ReferralBonusUsed, booking.ID); err != nil {
+		s.logger.Error("failed to refund referral bonus on booking cancellation",
+			"booking_id", booking.ID, "user_id", booking.UserID,
+			"referral_bonus_used", booking.ReferralBonusUsed, "error", err)
 	}
 }
 

@@ -24,6 +24,7 @@ type ReferralService interface {
 	CompleteReferral(ctx context.Context, refereeID uuid.UUID) error
 	GetBalance(ctx context.Context, userID uuid.UUID) (*domain.ReferralBalance, error)
 	UseBalance(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
+	RefundBalance(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
 	GetStats(ctx context.Context, userID uuid.UUID) (*domain.ReferralStats, error)
 }
 
@@ -173,6 +174,23 @@ func (s *referralService) UseBalance(ctx context.Context, userID uuid.UUID, amou
 	return nil
 }
 
+func (s *referralService) RefundBalance(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error {
+	if amount <= 0 {
+		return nil
+	}
+
+	if err := s.ensureBalance(ctx, userID); err != nil {
+		return err
+	}
+
+	if err := s.referralRepo.UpdateBalance(ctx, userID, amount); err != nil {
+		return err
+	}
+
+	s.logger.Info("referral balance refunded", "user_id", userID, "amount", amount, "booking_id", bookingID)
+	return nil
+}
+
 func (s *referralService) GetStats(ctx context.Context, userID uuid.UUID) (*domain.ReferralStats, error) {
 	totalInvited, totalCompleted, err := s.referralRepo.CountByReferrer(ctx, userID)
 	if err != nil {
@@ -199,11 +217,15 @@ func (s *referralService) ensureBalance(ctx context.Context, userID uuid.UUID) e
 	if !errors.Is(err, domain.ErrNotFound) {
 		return err
 	}
-	return s.referralRepo.CreateBalance(ctx, &domain.ReferralBalance{
+	err = s.referralRepo.CreateBalance(ctx, &domain.ReferralBalance{
 		UserID:      userID,
 		Balance:     0,
 		TotalEarned: 0,
 	})
+	if errors.Is(err, domain.ErrAlreadyExists) {
+		return nil // concurrent call already created it
+	}
+	return err
 }
 
 func generateReferralCode() (string, error) {
