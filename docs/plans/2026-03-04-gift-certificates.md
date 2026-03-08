@@ -30,7 +30,7 @@
 - Create: `migrations/000007_gift_certificates.up.sql`
 - Create: `migrations/000007_gift_certificates.down.sql`
 
-- [ ] Создать модель GiftCertificate:
+- [x] Создать модель GiftCertificate:
   ```
   GiftCertificate {
     ID              uuid.UUID
@@ -48,11 +48,11 @@
     CreatedAt       time.Time
   }
   ```
-- [ ] Создать модель CertificateUsage (ID, CertificateID, BookingID, Amount, UsedAt)
-- [ ] Добавить domain-ошибки: ErrCertificateNotFound, ErrCertificateExpired, ErrCertificateInsufficientBalance
-- [ ] Создать миграцию
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать модель CertificateUsage (ID, CertificateID, BookingID, Amount, UsedAt)
+- [x] Добавить domain-ошибки: ErrCertificateNotFound, ErrCertificateExpired, ErrCertificateInsufficientBalance
+- [x] Создать миграцию
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий сертификатов
 

@@ -31,4 +31,8 @@ var (
 	ErrSelfReferral               = errors.New("cannot refer yourself")
 	ErrAlreadyReferred            = errors.New("user already referred")
 	ErrInsufficientReferralBalance = errors.New("insufficient referral balance")
+
+	ErrCertificateNotFound            = errors.New("gift certificate not found")
+	ErrCertificateExpired             = errors.New("gift certificate expired")
+	ErrCertificateInsufficientBalance = errors.New("gift certificate insufficient balance")
 )
