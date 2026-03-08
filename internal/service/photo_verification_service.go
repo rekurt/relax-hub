@@ -85,9 +85,8 @@ func (s *photoVerificationService) UploadPhoto(ctx context.Context, userID uuid.
 		return nil, err
 	}
 
-	// New photo resets verification badge
-	if err := s.bhRepo.UpdatePhotoVerified(ctx, input.BathhouseID, false); err != nil {
-		return nil, fmt.Errorf("reset photo verification: %w", err)
+	if err := s.recalcVerificationStatus(ctx, input.BathhouseID); err != nil {
+		return nil, fmt.Errorf("recalculate verification status: %w", err)
 	}
 
 	return photo, nil

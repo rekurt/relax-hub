@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -565,4 +566,28 @@ func TestPhotoVerification_UploadPhoto_PositionAfterDeletion(t *testing.T) {
 	}
 
 	_ = p2 // used above in setup
+}
+
+func TestPhotoVerification_UploadPhoto_MaxPhotosExceeded(t *testing.T) {
+	env := newPhotoVerifTestEnv()
+	ownerID := uuid.New()
+	bh := createTestBathhouse(env, ownerID)
+
+	// Upload 30 photos (the maximum)
+	for i := 0; i < 30; i++ {
+		_, err := env.svc.UploadPhoto(context.Background(), ownerID, domain.RoleOwner, service.UploadPhotoInput{
+			BathhouseID: bh.ID, URL: fmt.Sprintf("https://example.com/photo%d.jpg", i),
+		})
+		if err != nil {
+			t.Fatalf("upload photo %d: %v", i, err)
+		}
+	}
+
+	// 31st upload should fail
+	_, err := env.svc.UploadPhoto(context.Background(), ownerID, domain.RoleOwner, service.UploadPhotoInput{
+		BathhouseID: bh.ID, URL: "https://example.com/overflow.jpg",
+	})
+	if err != domain.ErrInvalidInput {
+		t.Errorf("expected ErrInvalidInput for exceeding max photos, got %v", err)
+	}
 }
