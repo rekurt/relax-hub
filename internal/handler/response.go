@@ -123,6 +123,12 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusConflict, "already_referred", err.Error())
 	case errors.Is(err, domain.ErrInsufficientReferralBalance):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "insufficient_referral_balance", err.Error())
+	case errors.Is(err, domain.ErrCertificateNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "certificate_not_found", err.Error())
+	case errors.Is(err, domain.ErrCertificateExpired):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "certificate_expired", err.Error())
+	case errors.Is(err, domain.ErrCertificateInsufficientBalance):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "certificate_insufficient_balance", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

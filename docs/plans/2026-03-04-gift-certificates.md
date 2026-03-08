@@ -87,13 +87,13 @@
 - Create: `internal/handler/certificate.go`
 - Modify: `internal/server/router.go`
 
-- [ ] POST /api/v1/certificates/purchase — купить сертификат (может быть без auth)
-- [ ] POST /api/v1/certificates/redeem — привязать сертификат к аккаунту
-- [ ] GET /api/v1/certificates/{code}/balance — проверить остаток
-- [ ] GET /api/v1/my/certificates — мои сертификаты
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] POST /api/v1/certificates/purchase — купить сертификат (может быть без auth)
+- [x] POST /api/v1/certificates/redeem — привязать сертификат к аккаунту
+- [x] GET /api/v1/certificates/{code}/balance — проверить остаток
+- [x] GET /api/v1/my/certificates — мои сертификаты
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Верификация
 
