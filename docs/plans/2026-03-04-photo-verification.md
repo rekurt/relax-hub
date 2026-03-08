@@ -76,15 +76,15 @@
 - Create: `internal/handler/photo.go`
 - Modify: `internal/server/router.go`
 
-- [ ] POST /api/v1/my/bathhouses/{id}/photos — загрузить фото (multipart, owner/rep)
-- [ ] DELETE /api/v1/photos/{id} — удалить фото (owner/rep/admin)
-- [ ] PUT /api/v1/my/bathhouses/{id}/photos/reorder — изменить порядок (owner/rep)
-- [ ] GET /api/v1/admin/photos/pending — очередь на проверку (admin)
-- [ ] PATCH /api/v1/admin/photos/{id}/verify — одобрить (admin)
-- [ ] PATCH /api/v1/admin/photos/{id}/reject — отклонить (admin)
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] POST /api/v1/my/bathhouses/{id}/photos — загрузить фото (multipart, owner/rep)
+- [x] DELETE /api/v1/photos/{id} — удалить фото (owner/rep/admin)
+- [x] PUT /api/v1/my/bathhouses/{id}/photos/reorder — изменить порядок (owner/rep)
+- [x] GET /api/v1/admin/photos/pending — очередь на проверку (admin)
+- [x] PATCH /api/v1/admin/photos/{id}/verify — одобрить (admin)
+- [x] PATCH /api/v1/admin/photos/{id}/reject — отклонить (admin)
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Бейдж "Фото проверены" в выдаче
 

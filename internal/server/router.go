@@ -42,6 +42,7 @@ type RouterParams struct {
 	ReferralHandler        *handler.ReferralHandler
 	CertificateHandler     *handler.CertificateHandler
 	SitemapHandler         *handler.SitemapHandler
+	PhotoHandler           *handler.PhotoHandler
 	GoAdmin                *admin.GoAdmin `optional:"true"`
 }
 
@@ -106,6 +107,14 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// My bathhouses (owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses", p.BHHandler.MyBathhouses)
+
+		// Bathhouse photos (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/photos", p.PhotoHandler.Upload)
+		r.With(auth).Delete("/photos/{id}", p.PhotoHandler.Delete)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/bathhouses/{id}/photos/reorder", p.PhotoHandler.Reorder)
+
+		// Bathhouse photos (public)
+		r.Get("/bathhouses/{id}/photos", p.PhotoHandler.ListByBathhouse)
 
 		// Bookings (authenticated)
 		r.With(auth, middleware.RequireRole(domain.RoleClient)).Post("/bookings", p.BookingHandler.Create)
@@ -255,6 +264,11 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Get("/complaints/{id}", p.ComplaintHandler.GetByID)
 			r.Patch("/complaints/{id}/resolve", p.ComplaintHandler.Resolve)
 			r.Patch("/complaints/{id}/dismiss", p.ComplaintHandler.Dismiss)
+
+			// Photo verification (admin only)
+			r.Get("/photos/pending", p.PhotoHandler.GetPending)
+			r.Patch("/photos/{id}/verify", p.PhotoHandler.Verify)
+			r.Patch("/photos/{id}/reject", p.PhotoHandler.Reject)
 		})
 	})
 
