@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"regexp"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,6 +18,8 @@ const (
 	referralCodeLength = 8
 	defaultBonusAmount = 50000 // 500 рублей в копейках
 )
+
+var referralCodePattern = regexp.MustCompile(`^[0-9a-f]{8}$`)
 
 type ReferralService interface {
 	GenerateCode(ctx context.Context, userID uuid.UUID) (string, error)
@@ -78,7 +81,7 @@ func (s *referralService) GenerateCode(ctx context.Context, userID uuid.UUID) (s
 }
 
 func (s *referralService) RegisterReferral(ctx context.Context, referralCode string, newUserID uuid.UUID) error {
-	if referralCode == "" {
+	if referralCode == "" || !referralCodePattern.MatchString(referralCode) {
 		return domain.ErrInvalidInput
 	}
 
@@ -138,17 +141,21 @@ func (s *referralService) CompleteReferral(ctx context.Context, refereeID uuid.U
 
 	// Credit bonus to referrer
 	if err := s.ensureBalance(ctx, referral.ReferrerID); err != nil {
+		s.revertReferralStatus(ctx, referral.ID)
 		return err
 	}
 	if err := s.referralRepo.UpdateBalance(ctx, referral.ReferrerID, referral.BonusAmount, true); err != nil {
+		s.revertReferralStatus(ctx, referral.ID)
 		return err
 	}
 
 	// Credit bonus to referee
 	if err := s.ensureBalance(ctx, refereeID); err != nil {
+		s.reverseReferrerCredit(ctx, referral)
 		return err
 	}
 	if err := s.referralRepo.UpdateBalance(ctx, refereeID, referral.BonusAmount, true); err != nil {
+		s.reverseReferrerCredit(ctx, referral)
 		return err
 	}
 
@@ -221,6 +228,23 @@ func (s *referralService) GetStats(ctx context.Context, userID uuid.UUID) (*doma
 		TotalCompleted: totalCompleted,
 		TotalEarned:    balance.TotalEarned,
 	}, nil
+}
+
+// revertReferralStatus resets referral to pending so it can be retried on next booking completion.
+func (s *referralService) revertReferralStatus(ctx context.Context, referralID uuid.UUID) {
+	if err := s.referralRepo.RevertToPending(ctx, referralID); err != nil {
+		s.logger.Error("failed to revert referral status to pending",
+			"referral_id", referralID, "error", err)
+	}
+}
+
+// reverseReferrerCredit undoes the referrer's bonus and reverts the referral to pending.
+func (s *referralService) reverseReferrerCredit(ctx context.Context, referral *domain.Referral) {
+	if err := s.referralRepo.UpdateBalance(ctx, referral.ReferrerID, -referral.BonusAmount, true); err != nil {
+		s.logger.Error("failed to reverse referrer credit",
+			"referrer_id", referral.ReferrerID, "error", err)
+	}
+	s.revertReferralStatus(ctx, referral.ID)
 }
 
 func (s *referralService) ensureBalance(ctx context.Context, userID uuid.UUID) error {

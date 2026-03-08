@@ -126,6 +126,24 @@ func (r *ReferralRepo) UpdateStatus(_ context.Context, id uuid.UUID, status doma
 	return nil
 }
 
+func (r *ReferralRepo) RevertToPending(_ context.Context, id uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	ref, ok := r.referrals[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+
+	if ref.Status != domain.ReferralStatusCompleted {
+		return domain.ErrNotFound
+	}
+
+	ref.Status = domain.ReferralStatusPending
+	ref.CompletedAt = nil
+	return nil
+}
+
 func (r *ReferralRepo) GetBalance(_ context.Context, userID uuid.UUID) (*domain.ReferralBalance, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

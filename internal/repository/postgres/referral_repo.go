@@ -132,6 +132,18 @@ func (r *referralRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status do
 	return nil
 }
 
+func (r *referralRepo) RevertToPending(ctx context.Context, id uuid.UUID) error {
+	query := `UPDATE referrals SET status = 'pending', completed_at = NULL WHERE id = $1 AND status = 'completed'`
+	result, err := r.pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("revert referral to pending: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
 func (r *referralRepo) GetBalance(ctx context.Context, userID uuid.UUID) (*domain.ReferralBalance, error) {
 	query := `
 		SELECT user_id, balance, total_earned, updated_at, created_at

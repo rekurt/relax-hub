@@ -210,6 +210,7 @@ type ReferralRepository interface {
 	GetByReferee(ctx context.Context, refereeID uuid.UUID) (*domain.Referral, error)
 	ListByReferrer(ctx context.Context, referrerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Referral], error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReferralStatus, completedAt *time.Time) error
+	RevertToPending(ctx context.Context, id uuid.UUID) error
 	GetBalance(ctx context.Context, userID uuid.UUID) (*domain.ReferralBalance, error)
 	CreateBalance(ctx context.Context, balance *domain.ReferralBalance) error
 	UpdateBalance(ctx context.Context, userID uuid.UUID, delta int64, trackEarnings bool) error

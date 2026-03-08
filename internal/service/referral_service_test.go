@@ -114,8 +114,8 @@ func TestReferralService_RegisterReferral_InvalidCode(t *testing.T) {
 	referee := createTestUser(t, env)
 
 	err := env.svc.RegisterReferral(context.Background(), "nonexistent", referee.ID)
-	if err != domain.ErrNotFound {
-		t.Errorf("err = %v, want ErrNotFound", err)
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput", err)
 	}
 }
 

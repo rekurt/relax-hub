@@ -160,6 +160,14 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		if input.UseReferralBonus > totalPrice {
 			return nil, fmt.Errorf("%w: referral bonus exceeds total price", domain.ErrInvalidInput)
 		}
+		// Verify user has sufficient referral balance before creating booking
+		balance, err := s.referralSvc.GetBalance(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+		if balance.Balance < input.UseReferralBonus {
+			return nil, domain.ErrInsufficientReferralBalance
+		}
 		referralBonusUsed = input.UseReferralBonus
 		totalPrice -= input.UseReferralBonus
 	}
