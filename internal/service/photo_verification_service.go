@@ -44,6 +44,8 @@ func NewPhotoVerificationService(
 	}
 }
 
+const maxPhotosPerBathhouse = 30
+
 func (s *photoVerificationService) UploadPhoto(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, input UploadPhotoInput) (*domain.BathhousePhoto, error) {
 	if err := s.accessCheck.CanManageBathhouse(ctx, userID, userRole, input.BathhouseID); err != nil {
 		return nil, err
@@ -52,6 +54,10 @@ func (s *photoVerificationService) UploadPhoto(ctx context.Context, userID uuid.
 	existing, err := s.photoRepo.ListByBathhouse(ctx, input.BathhouseID)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(existing) >= maxPhotosPerBathhouse {
+		return nil, domain.ErrInvalidInput
 	}
 
 	// Calculate next position as max(existing positions) + 1 to avoid collisions after deletions.
@@ -177,7 +183,7 @@ func (s *photoVerificationService) RejectPhoto(ctx context.Context, photoID uuid
 		return nil, domain.ErrInvalidInput
 	}
 
-	if reason == "" {
+	if reason == "" || len(reason) > 1000 {
 		return nil, domain.ErrInvalidInput
 	}
 
