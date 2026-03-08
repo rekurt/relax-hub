@@ -125,10 +125,16 @@ func (s *referralService) CompleteReferral(ctx context.Context, refereeID uuid.U
 		return nil // Already completed or expired
 	}
 
-	// Credit bonuses first, update status last.
-	// If the process crashes after crediting but before status update,
-	// a retry will re-credit (idempotency issue), but this is safer than
-	// marking completed before crediting, which would permanently lose bonuses.
+	// Claim the referral first via optimistic lock (WHERE status = 'pending').
+	// If another goroutine already completed it, UpdateStatus returns ErrNotFound
+	// and we skip crediting. This prevents double-credit on concurrent calls.
+	now := time.Now()
+	if err := s.referralRepo.UpdateStatus(ctx, referral.ID, domain.ReferralStatusCompleted, &now); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil // Another call already completed this referral
+		}
+		return err
+	}
 
 	// Credit bonus to referrer
 	if err := s.ensureBalance(ctx, referral.ReferrerID); err != nil {
@@ -143,12 +149,6 @@ func (s *referralService) CompleteReferral(ctx context.Context, refereeID uuid.U
 		return err
 	}
 	if err := s.referralRepo.UpdateBalance(ctx, refereeID, referral.BonusAmount, true); err != nil {
-		return err
-	}
-
-	// Mark as completed only after both bonuses are credited
-	now := time.Now()
-	if err := s.referralRepo.UpdateStatus(ctx, referral.ID, domain.ReferralStatusCompleted, &now); err != nil {
 		return err
 	}
 

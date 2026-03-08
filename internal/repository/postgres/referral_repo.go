@@ -121,7 +121,7 @@ func (r *referralRepo) ListByReferrer(ctx context.Context, referrerID uuid.UUID,
 }
 
 func (r *referralRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReferralStatus, completedAt *time.Time) error {
-	query := `UPDATE referrals SET status = $2, completed_at = $3 WHERE id = $1`
+	query := `UPDATE referrals SET status = $2, completed_at = $3 WHERE id = $1 AND status = 'pending'`
 	result, err := r.pool.Exec(ctx, query, id, string(status), completedAt)
 	if err != nil {
 		return fmt.Errorf("update referral status: %w", err)

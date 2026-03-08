@@ -116,6 +116,11 @@ func (r *ReferralRepo) UpdateStatus(_ context.Context, id uuid.UUID, status doma
 		return domain.ErrNotFound
 	}
 
+	// Match postgres behavior: only update if current status is pending
+	if ref.Status != domain.ReferralStatusPending {
+		return domain.ErrNotFound
+	}
+
 	ref.Status = status
 	ref.CompletedAt = completedAt
 	return nil
