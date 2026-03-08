@@ -1,0 +1,1 @@
+ALTER TABLE referral_balances DROP CONSTRAINT IF EXISTS referral_balances_balance_non_negative;
