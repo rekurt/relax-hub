@@ -228,7 +228,7 @@ func (h *PhotoHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	photos, err := h.photoService.ListByBathhouse(r.Context(), bathhouseID)
+	photos, err := h.photoService.ListVerifiedByBathhouse(r.Context(), bathhouseID)
 	if err != nil {
 		handleServiceError(w, err)
 		return

@@ -85,6 +85,23 @@ func (r *BathhousePhotoRepo) ListByBathhouse(_ context.Context, bathhouseID uuid
 	return result, nil
 }
 
+func (r *BathhousePhotoRepo) ListVerifiedByBathhouse(_ context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var result []domain.BathhousePhoto
+	for _, p := range r.photos {
+		if p.BathhouseID == bathhouseID && p.Status == domain.PhotoStatusVerified {
+			cp := *p
+			result = append(result, cp)
+		}
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Position < result[j].Position
+	})
+	return result, nil
+}
+
 func (r *BathhousePhotoRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domain.PhotoStatus, verifiedByID *uuid.UUID, rejectionReason string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

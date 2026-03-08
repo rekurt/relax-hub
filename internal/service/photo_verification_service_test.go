@@ -453,3 +453,102 @@ func TestPhotoVerification_DeletePhoto_RecalcsVerification(t *testing.T) {
 		t.Error("should be verified after deleting the unverified photo")
 	}
 }
+
+func TestPhotoVerification_ReorderPhotos_IncompleteList(t *testing.T) {
+	env := newPhotoVerifTestEnv()
+	ownerID := uuid.New()
+	bh := createTestBathhouse(env, ownerID)
+
+	p1, _ := env.svc.UploadPhoto(context.Background(), ownerID, domain.RoleOwner, service.UploadPhotoInput{
+		BathhouseID: bh.ID, URL: "https://example.com/1.jpg",
+	})
+	_, _ = env.svc.UploadPhoto(context.Background(), ownerID, domain.RoleOwner, service.UploadPhotoInput{
+		BathhouseID: bh.ID, URL: "https://example.com/2.jpg",
+	})
+
+	// Try to reorder with only one of two photos
+	err := env.svc.ReorderPhotos(context.Background(), bh.ID, ownerID, domain.RoleOwner, []uuid.UUID{p1.ID})
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput", err)
+	}
+}
+
+func TestPhotoVerification_ReorderPhotos_EmptyList(t *testing.T) {
+	env := newPhotoVerifTestEnv()
+	ownerID := uuid.New()
+	bh := createTestBathhouse(env, ownerID)
+
+	err := env.svc.ReorderPhotos(context.Background(), bh.ID, ownerID, domain.RoleOwner, []uuid.UUID{})
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput", err)
+	}
+}
+
+func TestPhotoVerification_ListVerifiedByBathhouse(t *testing.T) {
+	env := newPhotoVerifTestEnv()
+	ownerID := uuid.New()
+	bh := createTestBathhouse(env, ownerID)
+	adminID := uuid.New()
+
+	p1, _ := env.svc.UploadPhoto(context.Background(), ownerID, domain.RoleOwner, service.UploadPhotoInput{
+		BathhouseID: bh.ID, URL: "https://example.com/1.jpg",
+	})
+	_, _ = env.svc.UploadPhoto(context.Background(), ownerID, domain.RoleOwner, service.UploadPhotoInput{
+		BathhouseID: bh.ID, URL: "https://example.com/2.jpg",
+	})
+
+	// Verify only p1
+	_, _ = env.svc.VerifyPhoto(context.Background(), p1.ID, adminID)
+
+	// ListVerifiedByBathhouse should return only verified photos
+	photos, err := env.svc.ListVerifiedByBathhouse(context.Background(), bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(photos) != 1 {
+		t.Errorf("photos count = %d, want 1", len(photos))
+	}
+	if len(photos) > 0 && photos[0].ID != p1.ID {
+		t.Errorf("photo ID = %v, want %v", photos[0].ID, p1.ID)
+	}
+
+	// ListByBathhouse should return all photos
+	allPhotos, err := env.svc.ListByBathhouse(context.Background(), bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(allPhotos) != 2 {
+		t.Errorf("all photos count = %d, want 2", len(allPhotos))
+	}
+}
+
+func TestPhotoVerification_UploadPhoto_PositionAfterDeletion(t *testing.T) {
+	env := newPhotoVerifTestEnv()
+	ownerID := uuid.New()
+	bh := createTestBathhouse(env, ownerID)
+
+	p1, _ := env.svc.UploadPhoto(context.Background(), ownerID, domain.RoleOwner, service.UploadPhotoInput{
+		BathhouseID: bh.ID, URL: "https://example.com/1.jpg",
+	})
+	p2, _ := env.svc.UploadPhoto(context.Background(), ownerID, domain.RoleOwner, service.UploadPhotoInput{
+		BathhouseID: bh.ID, URL: "https://example.com/2.jpg",
+	})
+
+	// Delete first photo (position 0)
+	_ = env.svc.DeletePhoto(context.Background(), p1.ID, ownerID, domain.RoleOwner)
+
+	// Upload new photo - should not collide with p2's position (1)
+	p3, err := env.svc.UploadPhoto(context.Background(), ownerID, domain.RoleOwner, service.UploadPhotoInput{
+		BathhouseID: bh.ID, URL: "https://example.com/3.jpg",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// p2 is at position 1, so p3 should be at position 2
+	if p3.Position != 2 {
+		t.Errorf("position = %d, want 2 (p2 is at 1)", p3.Position)
+	}
+
+	_ = p2 // used above in setup
+}

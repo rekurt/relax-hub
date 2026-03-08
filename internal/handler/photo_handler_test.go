@@ -19,13 +19,14 @@ import (
 // --- Mock photo verification service ---
 
 type mockPhotoVerificationService struct {
-	uploadPhotoFn    func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, input service.UploadPhotoInput) (*domain.BathhousePhoto, error)
-	deletePhotoFn    func(ctx context.Context, photoID uuid.UUID, userID uuid.UUID, userRole domain.UserRole) error
-	reorderPhotosFn  func(ctx context.Context, bathhouseID uuid.UUID, userID uuid.UUID, userRole domain.UserRole, photoIDs []uuid.UUID) error
-	verifyPhotoFn    func(ctx context.Context, photoID uuid.UUID, adminID uuid.UUID) (*domain.BathhousePhoto, error)
-	rejectPhotoFn    func(ctx context.Context, photoID uuid.UUID, adminID uuid.UUID, reason string) (*domain.BathhousePhoto, error)
-	getPendingFn     func(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.BathhousePhoto], error)
-	listByBathhouseFn func(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error)
+	uploadPhotoFn              func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, input service.UploadPhotoInput) (*domain.BathhousePhoto, error)
+	deletePhotoFn              func(ctx context.Context, photoID uuid.UUID, userID uuid.UUID, userRole domain.UserRole) error
+	reorderPhotosFn            func(ctx context.Context, bathhouseID uuid.UUID, userID uuid.UUID, userRole domain.UserRole, photoIDs []uuid.UUID) error
+	verifyPhotoFn              func(ctx context.Context, photoID uuid.UUID, adminID uuid.UUID) (*domain.BathhousePhoto, error)
+	rejectPhotoFn              func(ctx context.Context, photoID uuid.UUID, adminID uuid.UUID, reason string) (*domain.BathhousePhoto, error)
+	getPendingFn               func(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.BathhousePhoto], error)
+	listByBathhouseFn          func(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error)
+	listVerifiedByBathhouseFn  func(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error)
 }
 
 func (m *mockPhotoVerificationService) UploadPhoto(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, input service.UploadPhotoInput) (*domain.BathhousePhoto, error) {
@@ -73,6 +74,13 @@ func (m *mockPhotoVerificationService) GetPendingPhotos(ctx context.Context, pag
 func (m *mockPhotoVerificationService) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error) {
 	if m.listByBathhouseFn != nil {
 		return m.listByBathhouseFn(ctx, bathhouseID)
+	}
+	return nil, nil
+}
+
+func (m *mockPhotoVerificationService) ListVerifiedByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error) {
+	if m.listVerifiedByBathhouseFn != nil {
+		return m.listVerifiedByBathhouseFn(ctx, bathhouseID)
 	}
 	return nil, nil
 }
@@ -439,7 +447,7 @@ func TestPhotoHandler_ListByBathhouse(t *testing.T) {
 	bathhouseID := uuid.New()
 
 	svc := &mockPhotoVerificationService{
-		listByBathhouseFn: func(ctx context.Context, bhID uuid.UUID) ([]domain.BathhousePhoto, error) {
+		listVerifiedByBathhouseFn: func(ctx context.Context, bhID uuid.UUID) ([]domain.BathhousePhoto, error) {
 			if bhID != bathhouseID {
 				t.Errorf("expected bathhouse %v, got %v", bathhouseID, bhID)
 			}
@@ -450,14 +458,6 @@ func TestPhotoHandler_ListByBathhouse(t *testing.T) {
 					URL:         "https://example.com/photo1.jpg",
 					Position:    0,
 					Status:      domain.PhotoStatusVerified,
-					UploadedAt:  time.Now(),
-				},
-				{
-					ID:          uuid.New(),
-					BathhouseID: bathhouseID,
-					URL:         "https://example.com/photo2.jpg",
-					Position:    1,
-					Status:      domain.PhotoStatusPending,
 					UploadedAt:  time.Now(),
 				},
 			}, nil

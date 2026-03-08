@@ -110,6 +110,16 @@ func (r *bathhousePhotoRepo) ListByBathhouse(ctx context.Context, bathhouseID uu
 	return scanPhotos(rows)
 }
 
+func (r *bathhousePhotoRepo) ListVerifiedByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error) {
+	query := `SELECT ` + photoColumns + ` FROM bathhouse_photos WHERE bathhouse_id = $1 AND status = 'verified' ORDER BY position ASC`
+	rows, err := r.pool.Query(ctx, query, bathhouseID)
+	if err != nil {
+		return nil, fmt.Errorf("list verified photos by bathhouse: %w", err)
+	}
+	defer rows.Close()
+	return scanPhotos(rows)
+}
+
 func (r *bathhousePhotoRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.PhotoStatus, verifiedByID *uuid.UUID, rejectionReason string) error {
 	var verifiedAt *time.Time
 	if status == domain.PhotoStatusVerified || status == domain.PhotoStatusRejected {
@@ -117,7 +127,7 @@ func (r *bathhousePhotoRepo) UpdateStatus(ctx context.Context, id uuid.UUID, sta
 		verifiedAt = &now
 	}
 
-	query := `UPDATE bathhouse_photos SET status = $2, verified_by_id = $3, verified_at = $4, rejection_reason = $5 WHERE id = $1`
+	query := `UPDATE bathhouse_photos SET status = $2, verified_by_id = $3, verified_at = $4, rejection_reason = $5 WHERE id = $1 AND status = 'pending'`
 	result, err := r.pool.Exec(ctx, query, id, string(status), verifiedByID, verifiedAt, rejectionReason)
 	if err != nil {
 		return fmt.Errorf("update photo status: %w", err)
