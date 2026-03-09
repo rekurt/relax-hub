@@ -60,6 +60,25 @@ func (n *noopReferralService) GetStats(_ context.Context, _ uuid.UUID) (*domain.
 	return &domain.ReferralStats{}, nil
 }
 
+// noopPromoService is a no-op PromoService for tests that don't verify promo codes.
+type noopPromoService struct{}
+
+func (n *noopPromoService) Create(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ *domain.PromoCode) (*domain.PromoCode, error) {
+	return &domain.PromoCode{}, nil
+}
+func (n *noopPromoService) Validate(_ context.Context, _ string, _ uuid.UUID, _ int64) (*domain.PromoCode, int64, error) {
+	return &domain.PromoCode{}, 0, nil
+}
+func (n *noopPromoService) Apply(_ context.Context, _ uuid.UUID, _ string, _ uuid.UUID, _ int64) (int64, error) {
+	return 0, nil
+}
+func (n *noopPromoService) Deactivate(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+func (n *noopPromoService) ListByBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.PromoCode], error) {
+	return &domain.PaginatedResult[domain.PromoCode]{}, nil
+}
+
 func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID) *domain.Bathhouse {
 	t.Helper()
 	wh := make([]domain.WorkingHours, 7)

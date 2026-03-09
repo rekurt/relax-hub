@@ -20,16 +20,19 @@ type CreateBookingInput struct {
 	EndTime          time.Time
 	GuestCount       int
 	Comment          string
-	UsePoints        int64 // Optional: loyalty points to spend (reduces total price)
-	UseReferralBonus int64 // Optional: referral bonus to spend (reduces total price)
+	UsePoints        int64  // Optional: loyalty points to spend (reduces total price)
+	UseReferralBonus int64  // Optional: referral bonus to spend (reduces total price)
+	PromoCode        string // Optional: promo code to apply for a discount
 }
 
 type BookingResult struct {
-	Booking             *domain.Booking
-	EarnedPoints        int64 // Points earned (only on complete)
-	LoyaltyDiscount     int64 // Discount from loyalty level in kopecks
-	PointsSpent         int64 // Points spent on this booking
-	ReferralBonusUsed   int64 // Referral bonus used on this booking
+	Booking           *domain.Booking
+	EarnedPoints      int64 // Points earned (only on complete)
+	LoyaltyDiscount   int64 // Discount from loyalty level in kopecks
+	PointsSpent       int64 // Points spent on this booking
+	ReferralBonusUsed int64 // Referral bonus used on this booking
+	OriginalPrice     int64 // Price before promo code discount
+	PromoDiscount     int64 // Discount from promo code in kopecks
 }
 
 type TimeSlot struct {
@@ -56,6 +59,7 @@ type bookingService struct {
 	pricingSvc  PricingService
 	loyaltySvc  LoyaltyService
 	referralSvc ReferralService
+	promoSvc    PromoService
 	access      *AccessChecker
 	notifSvc    NotificationService
 	logger      *logger.Logger
@@ -67,6 +71,7 @@ func NewBookingService(
 	pricingSvc PricingService,
 	loyaltySvc LoyaltyService,
 	referralSvc ReferralService,
+	promoSvc PromoService,
 	access *AccessChecker,
 	notifSvc NotificationService,
 	log *logger.Logger,
@@ -77,6 +82,7 @@ func NewBookingService(
 		pricingSvc:  pricingSvc,
 		loyaltySvc:  loyaltySvc,
 		referralSvc: referralSvc,
+		promoSvc:    promoSvc,
 		access:      access,
 		notifSvc:    notifSvc,
 		logger:      log,
@@ -142,6 +148,20 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	} else if discount > 0 {
 		loyaltyDiscount = totalPrice * int64(discount) / 100
 		totalPrice -= loyaltyDiscount
+	}
+
+	// Validate and calculate promo code discount (before points/referral)
+	var promoDiscount int64
+	originalPriceBeforePromo := totalPrice
+	if input.PromoCode != "" {
+		_, promoDiscount, err = s.promoSvc.Validate(ctx, input.PromoCode, input.BathhouseID, totalPrice)
+		if err != nil {
+			return nil, err
+		}
+		totalPrice -= promoDiscount
+		if totalPrice <= 0 {
+			totalPrice = 1
+		}
 	}
 
 	// Validate points before applying
@@ -234,11 +254,39 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		}
 	}
 
+	// Apply promo code after booking exists in DB
+	if input.PromoCode != "" && promoDiscount > 0 {
+		if _, err := s.promoSvc.Apply(ctx, userID, input.PromoCode, bookingID, originalPriceBeforePromo); err != nil {
+			// Refund loyalty points if they were spent
+			if pointsSpent > 0 {
+				if refundErr := s.loyaltySvc.RefundPoints(ctx, userID, pointsSpent, bookingID); refundErr != nil {
+					s.logger.Error("failed to refund loyalty points after promo apply failure",
+						"booking_id", bookingID, "apply_error", err, "refund_error", refundErr)
+				}
+			}
+			// Refund referral bonus if it was used
+			if referralBonusUsed > 0 {
+				if refundErr := s.referralSvc.RefundBalance(ctx, userID, referralBonusUsed, bookingID); refundErr != nil {
+					s.logger.Error("failed to refund referral bonus after promo apply failure",
+						"booking_id", bookingID, "apply_error", err, "refund_error", refundErr)
+				}
+			}
+			// Roll back the booking
+			if delErr := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); delErr != nil {
+				s.logger.Error("failed to cancel booking after promo apply failure",
+					"booking_id", bookingID, "apply_error", err, "cancel_error", delErr)
+			}
+			return nil, err
+		}
+	}
+
 	return &BookingResult{
 		Booking:           booking,
 		LoyaltyDiscount:   loyaltyDiscount,
 		PointsSpent:       pointsSpent,
 		ReferralBonusUsed: referralBonusUsed,
+		OriginalPrice:     originalPriceBeforePromo,
+		PromoDiscount:     promoDiscount,
 	}, nil
 }
 

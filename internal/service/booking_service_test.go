@@ -23,7 +23,7 @@ func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.Boo
 	log := logger.New(logger.LevelWarn)
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, repRepo, pricingSvc, pricingRepo, loyaltySvc, loyaltyRepo
 }
 
@@ -765,7 +765,7 @@ func newBookingServiceWithReferral() (service.BookingService, *mock.BathhouseRep
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	userRepo := mock.NewUserRepo()
 	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, referralSvc, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, referralSvc, &noopPromoService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, referralSvc, userRepo
 }
 
@@ -879,5 +879,205 @@ func TestBookingService_Create_WithReferralBonus(t *testing.T) {
 	balance, _ := referralSvc.GetBalance(context.Background(), client.ID)
 	if balance.Balance != 45000 {
 		t.Errorf("client referral balance = %d, want 45000", balance.Balance)
+	}
+}
+
+func newBookingServiceWithPromo() (service.BookingService, *mock.BathhouseRepo, *mock.BookingRepo, service.PromoService) {
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	pricingRepo := mock.NewPricingRuleRepo()
+	loyaltyRepo := mock.NewLoyaltyRepo()
+	promoRepo := mock.NewPromoCodeRepo()
+	access := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
+	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
+	promoSvc := service.NewPromoService(promoRepo, access, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, promoSvc, access, &noopNotifService{}, log)
+	return svc, bhRepo, bookingRepo, promoSvc
+}
+
+func TestBookingService_Create_WithPromoCodePercentage(t *testing.T) {
+	svc, bhRepo, _, promoSvc := newBookingServiceWithPromo()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Create a 10% promo code for this bathhouse
+	bhID := bh.ID
+	_, err := promoSvc.Create(context.Background(), ownerID, domain.RoleOwner, &domain.PromoCode{
+		Code:        "SAVE10",
+		Type:        domain.PromoTypePercentage,
+		Value:       10,
+		BathhouseID: &bhID,
+		ValidFrom:   time.Now().Add(-time.Hour),
+		ValidUntil:  time.Now().Add(24 * time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("failed to create promo: %v", err)
+	}
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+		PromoCode:   "SAVE10",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Base price: 5000 * 2 = 10000. 10% discount = 1000. Final = 9000
+	if result.PromoDiscount != 1000 {
+		t.Errorf("promoDiscount = %d, want 1000", result.PromoDiscount)
+	}
+	if result.OriginalPrice != 10000 {
+		t.Errorf("originalPrice = %d, want 10000", result.OriginalPrice)
+	}
+	if result.Booking.TotalPrice != 9000 {
+		t.Errorf("totalPrice = %d, want 9000", result.Booking.TotalPrice)
+	}
+}
+
+func TestBookingService_Create_WithPromoCodeFixedAmount(t *testing.T) {
+	svc, bhRepo, _, promoSvc := newBookingServiceWithPromo()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Create a 2000 kopeck (20 rub) fixed discount promo code
+	bhID := bh.ID
+	_, err := promoSvc.Create(context.Background(), ownerID, domain.RoleOwner, &domain.PromoCode{
+		Code:        "FLAT20",
+		Type:        domain.PromoTypeFixedAmount,
+		Value:       2000,
+		BathhouseID: &bhID,
+		ValidFrom:   time.Now().Add(-time.Hour),
+		ValidUntil:  time.Now().Add(24 * time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("failed to create promo: %v", err)
+	}
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+		PromoCode:   "FLAT20",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Base price: 5000 * 2 = 10000. Fixed discount 2000. Final = 8000
+	if result.PromoDiscount != 2000 {
+		t.Errorf("promoDiscount = %d, want 2000", result.PromoDiscount)
+	}
+	if result.Booking.TotalPrice != 8000 {
+		t.Errorf("totalPrice = %d, want 8000", result.Booking.TotalPrice)
+	}
+}
+
+func TestBookingService_Create_WithInvalidPromoCode(t *testing.T) {
+	svc, bhRepo, _, _ := newBookingServiceWithPromo()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	_, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+		PromoCode:   "NONEXISTENT",
+	})
+
+	if !errors.Is(err, domain.ErrPromoNotFound) {
+		t.Errorf("should fail with promo not found, got: %v", err)
+	}
+}
+
+func TestBookingService_Create_WithExpiredPromoCode(t *testing.T) {
+	svc, bhRepo, _, promoSvc := newBookingServiceWithPromo()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Create an expired promo code
+	bhID := bh.ID
+	_, err := promoSvc.Create(context.Background(), ownerID, domain.RoleOwner, &domain.PromoCode{
+		Code:        "EXPIRED",
+		Type:        domain.PromoTypePercentage,
+		Value:       10,
+		BathhouseID: &bhID,
+		ValidFrom:   time.Now().Add(-48 * time.Hour),
+		ValidUntil:  time.Now().Add(-24 * time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("failed to create promo: %v", err)
+	}
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	_, err = svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+		PromoCode:   "EXPIRED",
+	})
+
+	if !errors.Is(err, domain.ErrPromoExpired) {
+		t.Errorf("should fail with promo expired, got: %v", err)
+	}
+}
+
+func TestBookingService_Create_WithPromoCodeNoDiscount(t *testing.T) {
+	svc, bhRepo, _, _ := newBookingServiceWithPromo()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Create booking without promo code - should work as before
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// No promo - originalPrice and promoDiscount should be 0 (omitted)
+	if result.PromoDiscount != 0 {
+		t.Errorf("promoDiscount = %d, want 0", result.PromoDiscount)
+	}
+	if result.Booking.TotalPrice != 10000 {
+		t.Errorf("totalPrice = %d, want 10000", result.Booking.TotalPrice)
 	}
 }
