@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"time"
@@ -111,7 +112,13 @@ func (h *PaymentHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.paymentService.HandleWebhook(r.Context(), event); err != nil {
-		handleServiceError(w, err)
+		// For domain errors (not found, invalid input), return 200 to prevent infinite retries
+		// since these won't resolve on retry. For transient errors, return 500 so provider retries.
+		if errors.Is(err, domain.ErrPaymentNotFound) || errors.Is(err, domain.ErrInvalidInput) {
+			writeJSON(w, http.StatusOK, map[string]string{"status": "error"})
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "internal_error", "webhook processing failed")
 		return
 	}
 

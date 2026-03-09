@@ -137,7 +137,7 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 	}
 
 	if p.Status == domain.PaymentSucceeded || p.Status == domain.PaymentRefunded || p.Status == domain.PaymentPartiallyRefunded {
-		// Already in terminal state - ensure downstream actions completed (booking confirmation)
+		// Already in terminal state - ensure downstream actions completed
 		if p.Status == domain.PaymentSucceeded {
 			booking, err := s.bookingRepo.GetByID(ctx, p.BookingID)
 			if err != nil {
@@ -148,6 +148,16 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 				if err := s.bookingRepo.UpdateStatus(ctx, p.BookingID, domain.BookingConfirmed); err != nil {
 					return fmt.Errorf("failed to confirm booking on retry: %w", err)
 				}
+			}
+			if booking.Status == domain.BookingCancelled {
+				// Payment succeeded but booking was cancelled - retry auto-refund
+				s.logger.Warn("retrying auto-refund for cancelled booking",
+					"booking_id", p.BookingID, "payment_id", p.ID)
+				if refundErr := s.provider.CreateRefund(ctx, p.ExternalID, p.Amount); refundErr != nil {
+					return fmt.Errorf("failed to auto-refund cancelled booking on retry: %w", refundErr)
+				}
+				now := time.Now()
+				return s.paymentRepo.UpdateRefund(ctx, p.ID, p.Amount, now, domain.PaymentRefunded)
 			}
 		}
 		return nil
