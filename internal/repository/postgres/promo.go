@@ -197,3 +197,43 @@ func (r *promoRepo) RecordUsage(ctx context.Context, usage *domain.PromoUsage) e
 	}
 	return nil
 }
+
+func (r *promoRepo) ApplyUsage(ctx context.Context, id uuid.UUID, usage *domain.PromoUsage) error {
+	if usage.ID == uuid.Nil {
+		usage.ID = uuid.New()
+	}
+	if usage.UsedAt.IsZero() {
+		usage.UsedAt = time.Now()
+	}
+
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	incrementQuery := `UPDATE promo_codes SET current_uses = current_uses + 1 WHERE id = $1 AND (max_uses = 0 OR current_uses < max_uses)`
+	result, err := tx.Exec(ctx, incrementQuery, id)
+	if err != nil {
+		return fmt.Errorf("increment promo uses: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrPromoMaxUses
+	}
+
+	usageQuery := `
+		INSERT INTO promo_usages (id, promo_code_id, user_id, booking_id, discount_amount, used_at)
+		VALUES ($1, $2, $3, $4, $5, $6)`
+	_, err = tx.Exec(ctx, usageQuery,
+		usage.ID, usage.PromoCodeID, usage.UserID, usage.BookingID,
+		usage.DiscountAmount, usage.UsedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("record promo usage: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit tx: %w", err)
+	}
+	return nil
+}

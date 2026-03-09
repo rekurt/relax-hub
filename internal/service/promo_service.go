@@ -106,10 +106,6 @@ func (s *promoService) Apply(ctx context.Context, userID uuid.UUID, code string,
 
 	discount := s.calculateDiscount(promo, amount)
 
-	if err := s.promoRepo.IncrementUses(ctx, promo.ID); err != nil {
-		return 0, err
-	}
-
 	usage := &domain.PromoUsage{
 		ID:             uuid.New(),
 		PromoCodeID:    promo.ID,
@@ -118,7 +114,7 @@ func (s *promoService) Apply(ctx context.Context, userID uuid.UUID, code string,
 		DiscountAmount: discount,
 		UsedAt:         time.Now(),
 	}
-	if err := s.promoRepo.RecordUsage(ctx, usage); err != nil {
+	if err := s.promoRepo.ApplyUsage(ctx, promo.ID, usage); err != nil {
 		return 0, err
 	}
 
@@ -178,7 +174,7 @@ func (s *promoService) checkPromoValidity(promo *domain.PromoCode, bathhouseID u
 	}
 
 	// If promo is bathhouse-specific, check it matches
-	if promo.BathhouseID != nil && bathhouseID != uuid.Nil && *promo.BathhouseID != bathhouseID {
+	if promo.BathhouseID != nil && *promo.BathhouseID != bathhouseID {
 		return domain.ErrPromoInvalid
 	}
 

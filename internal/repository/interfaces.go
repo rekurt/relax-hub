@@ -248,6 +248,7 @@ type PromoCodeRepository interface {
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PromoCode], error)
 	IncrementUses(ctx context.Context, id uuid.UUID) error
 	RecordUsage(ctx context.Context, usage *domain.PromoUsage) error
+	ApplyUsage(ctx context.Context, id uuid.UUID, usage *domain.PromoUsage) error
 }
 
 type ComplaintRepository interface {

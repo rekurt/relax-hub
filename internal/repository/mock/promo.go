@@ -149,6 +149,31 @@ func (r *PromoCodeRepo) RecordUsage(_ context.Context, usage *domain.PromoUsage)
 	return nil
 }
 
+func (r *PromoCodeRepo) ApplyUsage(_ context.Context, id uuid.UUID, usage *domain.PromoUsage) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	promo, ok := r.promos[id]
+	if !ok {
+		return domain.ErrPromoNotFound
+	}
+	if promo.MaxUses > 0 && promo.CurrentUses >= promo.MaxUses {
+		return domain.ErrPromoMaxUses
+	}
+	promo.CurrentUses++
+
+	if usage.ID == uuid.Nil {
+		usage.ID = uuid.New()
+	}
+	if usage.UsedAt.IsZero() {
+		usage.UsedAt = time.Now()
+	}
+
+	cp := *usage
+	r.usages[usage.ID] = &cp
+	return nil
+}
+
 func paginatePromos(items []domain.PromoCode, page, pageSize int) *domain.PaginatedResult[domain.PromoCode] {
 	totalCount := int64(len(items))
 	offset := (page - 1) * pageSize
