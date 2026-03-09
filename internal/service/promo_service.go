@@ -15,6 +15,7 @@ type PromoService interface {
 	Create(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, promo *domain.PromoCode) (*domain.PromoCode, error)
 	Validate(ctx context.Context, code string, bathhouseID uuid.UUID, amount int64) (*domain.PromoCode, int64, error)
 	Apply(ctx context.Context, userID uuid.UUID, code string, bookingID uuid.UUID, bathhouseID uuid.UUID, amount int64) (int64, error)
+	RefundUsage(ctx context.Context, bookingID uuid.UUID) error
 	Deactivate(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, promoID uuid.UUID) error
 	ListByBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PromoCode], error)
 }
@@ -120,6 +121,27 @@ func (s *promoService) Apply(ctx context.Context, userID uuid.UUID, code string,
 
 	s.logger.Info("promo code applied", "promo_id", promo.ID, "booking_id", bookingID, "discount", discount)
 	return discount, nil
+}
+
+func (s *promoService) RefundUsage(ctx context.Context, bookingID uuid.UUID) error {
+	usage, err := s.promoRepo.GetUsageByBookingID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+	if usage == nil {
+		return nil
+	}
+
+	if err := s.promoRepo.DecrementUses(ctx, usage.PromoCodeID); err != nil {
+		s.logger.Error("failed to decrement promo uses on refund", "promo_code_id", usage.PromoCodeID, "booking_id", bookingID, "error", err)
+	}
+
+	if err := s.promoRepo.DeleteUsage(ctx, usage.ID); err != nil {
+		return err
+	}
+
+	s.logger.Info("promo usage refunded", "promo_code_id", usage.PromoCodeID, "booking_id", bookingID)
+	return nil
 }
 
 func (s *promoService) Deactivate(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, promoID uuid.UUID) error {

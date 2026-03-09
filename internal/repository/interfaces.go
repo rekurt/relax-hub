@@ -246,9 +246,13 @@ type PromoCodeRepository interface {
 	GetByCode(ctx context.Context, code string) (*domain.PromoCode, error)
 	Update(ctx context.Context, promo *domain.PromoCode) error
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PromoCode], error)
+	ListByCreator(ctx context.Context, creatorID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PromoCode], error)
 	IncrementUses(ctx context.Context, id uuid.UUID) error
 	RecordUsage(ctx context.Context, usage *domain.PromoUsage) error
 	ApplyUsage(ctx context.Context, id uuid.UUID, usage *domain.PromoUsage) error
+	GetUsageByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.PromoUsage, error)
+	DecrementUses(ctx context.Context, id uuid.UUID) error
+	DeleteUsage(ctx context.Context, usageID uuid.UUID) error
 }
 
 type ComplaintRepository interface {

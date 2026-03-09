@@ -163,6 +163,33 @@ func (r *promoRepo) scanPromoList(ctx context.Context, query string, totalCount 
 	}, nil
 }
 
+func (r *promoRepo) ListByCreator(ctx context.Context, creatorID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PromoCode], error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	var totalCount int64
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM promo_codes WHERE creator_id = $1`, creatorID,
+	).Scan(&totalCount)
+	if err != nil {
+		return nil, fmt.Errorf("count promo codes by creator: %w", err)
+	}
+
+	offset := (page - 1) * pageSize
+	query := `
+		SELECT id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, valid_from, valid_until, is_active, created_at
+		FROM promo_codes
+		WHERE creator_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3`
+
+	return r.scanPromoList(ctx, query, totalCount, page, pageSize, creatorID, pageSize, offset)
+}
+
 func (r *promoRepo) IncrementUses(ctx context.Context, id uuid.UUID) error {
 	query := `UPDATE promo_codes SET current_uses = current_uses + 1 WHERE id = $1 AND (max_uses = 0 OR current_uses < max_uses)`
 
@@ -234,6 +261,51 @@ func (r *promoRepo) ApplyUsage(ctx context.Context, id uuid.UUID, usage *domain.
 
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit tx: %w", err)
+	}
+	return nil
+}
+
+func (r *promoRepo) GetUsageByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.PromoUsage, error) {
+	query := `
+		SELECT id, promo_code_id, user_id, booking_id, discount_amount, used_at
+		FROM promo_usages WHERE booking_id = $1`
+
+	var usage domain.PromoUsage
+	err := r.pool.QueryRow(ctx, query, bookingID).Scan(
+		&usage.ID, &usage.PromoCodeID, &usage.UserID, &usage.BookingID,
+		&usage.DiscountAmount, &usage.UsedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("get promo usage by booking: %w", err)
+	}
+	return &usage, nil
+}
+
+func (r *promoRepo) DecrementUses(ctx context.Context, id uuid.UUID) error {
+	query := `UPDATE promo_codes SET current_uses = current_uses - 1 WHERE id = $1 AND current_uses > 0`
+
+	result, err := r.pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("decrement promo uses: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrPromoNotFound
+	}
+	return nil
+}
+
+func (r *promoRepo) DeleteUsage(ctx context.Context, usageID uuid.UUID) error {
+	query := `DELETE FROM promo_usages WHERE id = $1`
+
+	result, err := r.pool.Exec(ctx, query, usageID)
+	if err != nil {
+		return fmt.Errorf("delete promo usage: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrPromoNotFound
 	}
 	return nil
 }

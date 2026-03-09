@@ -58,6 +58,10 @@ func (m *mockPromoService) ListByBathhouse(ctx context.Context, userID uuid.UUID
 	return &domain.PaginatedResult[domain.PromoCode]{}, nil
 }
 
+func (m *mockPromoService) RefundUsage(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
 func TestPromoHandler_CreateForBathhouse(t *testing.T) {
 	bathhouseID := uuid.New()
 	userID := uuid.New()

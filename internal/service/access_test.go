@@ -78,6 +78,9 @@ func (n *noopPromoService) Deactivate(_ context.Context, _ uuid.UUID, _ domain.U
 func (n *noopPromoService) ListByBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.PromoCode], error) {
 	return &domain.PaginatedResult[domain.PromoCode]{}, nil
 }
+func (n *noopPromoService) RefundUsage(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
 
 func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID) *domain.Bathhouse {
 	t.Helper()

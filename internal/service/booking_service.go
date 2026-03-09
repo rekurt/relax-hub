@@ -313,6 +313,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		}
 		s.refundBookingPoints(ctx, booking)
 		s.refundReferralBonus(ctx, booking)
+		s.refundPromoUsage(ctx, booking)
 		s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 		return nil
 	}
@@ -327,6 +328,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 	}
 	s.refundBookingPoints(ctx, booking)
 	s.refundReferralBonus(ctx, booking)
+	s.refundPromoUsage(ctx, booking)
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 	return nil
 }
@@ -371,6 +373,7 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 	}
 	s.refundBookingPoints(ctx, booking)
 	s.refundReferralBonus(ctx, booking)
+	s.refundPromoUsage(ctx, booking)
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingRejected)
 	return nil
 }
@@ -630,6 +633,13 @@ func (s *bookingService) refundReferralBonus(ctx context.Context, booking *domai
 		s.logger.Error("failed to refund referral bonus on booking cancellation",
 			"booking_id", booking.ID, "user_id", booking.UserID,
 			"referral_bonus_used", booking.ReferralBonusUsed, "error", err)
+	}
+}
+
+func (s *bookingService) refundPromoUsage(ctx context.Context, booking *domain.Booking) {
+	if err := s.promoSvc.RefundUsage(ctx, booking.ID); err != nil {
+		s.logger.Error("failed to refund promo usage on booking cancellation",
+			"booking_id", booking.ID, "user_id", booking.UserID, "error", err)
 	}
 }
 
