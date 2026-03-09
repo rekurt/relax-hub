@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -133,7 +134,7 @@ func (s *promoService) RefundUsage(ctx context.Context, bookingID uuid.UUID) err
 	}
 
 	if err := s.promoRepo.DecrementUses(ctx, usage.PromoCodeID); err != nil {
-		s.logger.Error("failed to decrement promo uses on refund", "promo_code_id", usage.PromoCodeID, "booking_id", bookingID, "error", err)
+		return fmt.Errorf("decrement promo uses on refund: %w", err)
 	}
 
 	if err := s.promoRepo.DeleteUsage(ctx, usage.ID); err != nil {

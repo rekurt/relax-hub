@@ -221,9 +221,10 @@ func (r *PromoCodeRepo) DecrementUses(_ context.Context, id uuid.UUID) error {
 	if !ok {
 		return domain.ErrPromoNotFound
 	}
-	if promo.CurrentUses > 0 {
-		promo.CurrentUses--
+	if promo.CurrentUses == 0 {
+		return domain.ErrPromoNotFound
 	}
+	promo.CurrentUses--
 	return nil
 }
 
