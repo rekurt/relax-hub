@@ -71,16 +71,16 @@
 **Files:**
 - Create: `internal/service/promo_service.go`
 
-- [ ] PromoService:
+- [x] PromoService:
   - Create(ctx, promo) — создать промокод (owner для своей бани, admin для глобальных)
   - Validate(ctx, code, bathhouseID, amount) — проверить промокод и вернуть сумму скидки
   - Apply(ctx, code, bookingID) — применить промокод к бронированию
   - Deactivate(ctx, promoID) — деактивировать промокод
   - ListByBathhouse(ctx, bathhouseID) — промокоды бани
-- [ ] RBAC: owner создает для своей бани, admin — глобальные
-- [ ] Логика расчета скидки: percentage от суммы, fixed_amount вычитается, free_hour уменьшает время
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] RBAC: owner создает для своей бани, admin — глобальные
+- [x] Логика расчета скидки: percentage от суммы, fixed_amount вычитается, free_hour уменьшает время
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Интеграция с бронированием
 
