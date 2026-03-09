@@ -143,6 +143,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Delete("/reviews/{id}", p.ReviewHandler.Delete)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", p.ReviewHandler.AddOwnerResponse)
 
+		// Review media
+		r.With(auth).Post("/reviews/{id}/media", p.ReviewHandler.UploadMedia)
+		r.With(auth).Delete("/media/{id}", p.ReviewHandler.DeleteMedia)
+
 		// Complaints / Reports (authenticated)
 		r.With(auth).Post("/reviews/{id}/report", p.ComplaintHandler.ReportReview)
 		r.With(auth).Post("/bathhouses/{id}/report", p.ComplaintHandler.ReportBathhouse)

@@ -71,7 +71,7 @@ func testRouterParams() server.RouterParams {
 		AuthHandler:    handler.NewAuthHandler(authSvc, nil),
 		BHHandler:      handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, ""),
 		BookingHandler: handler.NewBookingHandler(nil),
-		ReviewHandler:  handler.NewReviewHandler(nil),
+		ReviewHandler:  handler.NewReviewHandler(nil, nil),
 		FavHandler:     handler.NewFavoriteHandler(nil),
 		RepHandler:     handler.NewRepresentativeHandler(nil),
 		CityHandler:    handler.NewCityHandler(nil),

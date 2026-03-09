@@ -141,6 +141,14 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "promo_min_amount", err.Error())
 	case errors.Is(err, domain.ErrPromoInvalid):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "promo_invalid", err.Error())
+	case errors.Is(err, domain.ErrMediaNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "media_not_found", err.Error())
+	case errors.Is(err, domain.ErrMediaFileTooLarge):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "media_file_too_large", err.Error())
+	case errors.Is(err, domain.ErrMediaInvalidType):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "media_invalid_type", err.Error())
+	case errors.Is(err, domain.ErrMediaLimitReached):
+		writeErrorWithContext(w, r, http.StatusConflict, "media_limit_reached", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

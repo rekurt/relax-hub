@@ -78,11 +78,11 @@
 - Modify: `internal/handler/review.go`
 - Modify: `internal/service/review_service.go`
 
-- [ ] POST /api/v1/reviews/{id}/media — загрузить фото/видео к отзыву (multipart/form-data)
-- [ ] DELETE /api/v1/media/{id} — удалить медиа
-- [ ] В ответе отзыва: включить массив media с URL и thumbnail_url
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] POST /api/v1/reviews/{id}/media — загрузить фото/видео к отзыву (multipart/form-data)
+- [x] DELETE /api/v1/media/{id} — удалить медиа
+- [x] В ответе отзыва: включить массив media с URL и thumbnail_url
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Галерея бани от посетителей
 
