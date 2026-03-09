@@ -1,7 +1,11 @@
 package service
 
 import (
+	"github.com/nikitaaldaev/bani/config"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/payment"
+	"github.com/nikitaaldaev/bani/internal/repository"
 	"go.uber.org/fx"
 )
 
@@ -35,5 +39,11 @@ var Module = fx.Module("service",
 		fx.Annotate(NewPhotoVerificationService, fx.As(new(PhotoVerificationService))),
 		fx.Annotate(NewPromoService, fx.As(new(PromoService))),
 		fx.Annotate(NewMediaService, fx.As(new(MediaService))),
+		fx.Annotate(
+			func(paymentRepo repository.PaymentRepository, bookingRepo repository.BookingRepository, provider payment.PaymentProvider, cfg *config.Config, log *logger.Logger) PaymentService {
+				return NewPaymentService(paymentRepo, bookingRepo, provider, cfg.Payment.ReturnURL, log)
+			},
+			fx.As(new(PaymentService)),
+		),
 	),
 )

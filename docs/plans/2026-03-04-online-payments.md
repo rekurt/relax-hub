@@ -124,7 +124,7 @@
 **Files:**
 - Create: `internal/service/payment_service.go`
 
-- [ ] Создать PaymentService interface:
+- [x] Создать PaymentService interface:
   ```go
   type PaymentService interface {
     InitiatePayment(ctx context.Context, bookingID uuid.UUID) (confirmationURL string, err error)
@@ -134,11 +134,11 @@
     ListUserPayments(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
   }
   ```
-- [ ] InitiatePayment: создать Payment в БД, вызвать PaymentProvider.CreatePayment, вернуть URL для оплаты
-- [ ] HandleWebhook: обработать webhook от ЮKassa, обновить статус Payment, при успехе обновить Booking status на confirmed
-- [ ] RefundPayment: при отмене бронирования создать возврат, если платеж был успешен (полный возврат если > 24ч до визита, без возврата если < 2ч)
-- [ ] Написать unit-тесты с mock-провайдером и mock-репозиторием
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] InitiatePayment: создать Payment в БД, вызвать PaymentProvider.CreatePayment, вернуть URL для оплаты
+- [x] HandleWebhook: обработать webhook от ЮKassa, обновить статус Payment, при успехе обновить Booking status на confirmed
+- [x] RefundPayment: при отмене бронирования создать возврат, если платеж был успешен (полный возврат если > 24ч до визита, без возврата если < 2ч)
+- [x] Написать unit-тесты с mock-провайдером и mock-репозиторием
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Хендлеры платежей и webhook
 
