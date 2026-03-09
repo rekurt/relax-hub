@@ -82,12 +82,12 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 // HandleWebhook handles POST /api/v1/webhooks/yookassa
 func (h *PaymentHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
+	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_input", "failed to read request body")
 		return
 	}
-	defer r.Body.Close()
 
 	var webhook struct {
 		Event  string `json:"event"`

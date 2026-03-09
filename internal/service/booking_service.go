@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -651,7 +652,10 @@ func (s *bookingService) refundPromoUsage(ctx context.Context, booking *domain.B
 
 func (s *bookingService) refundPayment(ctx context.Context, booking *domain.Booking, forceFullRefund bool) {
 	if err := s.paymentSvc.RefundPayment(ctx, booking.ID, forceFullRefund); err != nil {
-		s.logger.Warn("failed to refund payment on booking cancellation",
+		if errors.Is(err, domain.ErrPaymentNotFound) {
+			return
+		}
+		s.logger.Error("failed to refund payment on booking cancellation",
 			"booking_id", booking.ID, "user_id", booking.UserID, "error", err)
 	}
 }
