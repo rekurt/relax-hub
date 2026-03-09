@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -235,10 +237,19 @@ func (h *ReviewHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) 
 	}
 
 	items := make([]reviewResponse, len(result.Items))
+	reviewIDs := make([]uuid.UUID, len(result.Items))
+	for i, rev := range result.Items {
+		reviewIDs[i] = rev.ID
+	}
+
+	mediaByReview, err := h.mediaService.ListByReviewIDs(r.Context(), reviewIDs)
+	if err != nil {
+		mediaByReview = make(map[uuid.UUID][]domain.Media)
+	}
+
 	for i, rev := range result.Items {
 		resp := toReviewResponse(&rev)
-		media, err := h.mediaService.ListByReview(r.Context(), rev.ID)
-		if err == nil && len(media) > 0 {
+		if media, ok := mediaByReview[rev.ID]; ok && len(media) > 0 {
 			resp.Media = toMediaResponses(media)
 		}
 		items[i] = resp
@@ -294,6 +305,18 @@ func (h *ReviewHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	detectedType := http.DetectContentType(buf[:n])
+
+	// http.DetectContentType cannot reliably detect video MIME types.
+	// Fall back to file extension for video detection.
+	if detectedType == "application/octet-stream" {
+		ext := strings.ToLower(filepath.Ext(header.Filename))
+		switch ext {
+		case ".mp4":
+			detectedType = "video/mp4"
+		case ".webm":
+			detectedType = "video/webm"
+		}
+	}
 
 	// Reconstruct the reader with the already-read bytes prepended
 	data := io.MultiReader(bytes.NewReader(buf[:n]), file)

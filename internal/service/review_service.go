@@ -11,6 +11,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/moderation"
 	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/nikitaaldaev/bani/internal/storage"
 )
 
 type CreateReviewInput struct {
@@ -39,6 +40,8 @@ type reviewService struct {
 	reviewRepo     repository.ReviewRepository
 	bookingRepo    repository.BookingRepository
 	bhRepo         repository.BathhouseRepository
+	mediaRepo      repository.MediaRepository
+	fileStorage    storage.FileStorage
 	accessChecker  *AccessChecker
 	notifSvc       NotificationService
 	contentFilter  *moderation.ContentFilter
@@ -49,6 +52,8 @@ func NewReviewService(
 	reviewRepo repository.ReviewRepository,
 	bookingRepo repository.BookingRepository,
 	bhRepo repository.BathhouseRepository,
+	mediaRepo repository.MediaRepository,
+	fileStorage storage.FileStorage,
 	accessChecker *AccessChecker,
 	notifSvc NotificationService,
 	contentFilter *moderation.ContentFilter,
@@ -58,6 +63,8 @@ func NewReviewService(
 		reviewRepo:    reviewRepo,
 		bookingRepo:   bookingRepo,
 		bhRepo:        bhRepo,
+		mediaRepo:     mediaRepo,
+		fileStorage:   fileStorage,
 		accessChecker: accessChecker,
 		notifSvc:      notifSvc,
 		contentFilter: contentFilter,
@@ -216,6 +223,9 @@ func (s *reviewService) Delete(ctx context.Context, userID uuid.UUID, userRole d
 		return err
 	}
 
+	// Clean up associated media files
+	s.cleanupReviewMedia(ctx, reviewID)
+
 	if err := s.bhRepo.UpdateRating(ctx, review.BathhouseID); err != nil {
 		s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", review.BathhouseID, "error", err)
 	}
@@ -287,4 +297,26 @@ func (s *reviewService) AddOwnerResponse(ctx context.Context, userID uuid.UUID, 
 	}
 
 	return review, nil
+}
+
+func (s *reviewService) cleanupReviewMedia(ctx context.Context, reviewID uuid.UUID) {
+	result, err := s.mediaRepo.ListByOwner(ctx, domain.MediaOwnerReview, reviewID, 1, domain.MaxImagesPerReview+domain.MaxVideosPerReview)
+	if err != nil {
+		s.logger.Warn("failed to list review media for cleanup", "review_id", reviewID, "error", err)
+		return
+	}
+	for _, m := range result.Items {
+		if err := s.mediaRepo.Delete(ctx, m.ID); err != nil {
+			s.logger.Warn("failed to delete media record", "media_id", m.ID, "error", err)
+			continue
+		}
+		if err := s.fileStorage.Delete(ctx, extractStorageKey(m.URL)); err != nil {
+			s.logger.Warn("failed to delete media file", "url", m.URL, "error", err)
+		}
+		if m.ThumbnailURL != "" {
+			if err := s.fileStorage.Delete(ctx, extractStorageKey(m.ThumbnailURL)); err != nil {
+				s.logger.Warn("failed to delete thumbnail file", "url", m.ThumbnailURL, "error", err)
+			}
+		}
+	}
 }

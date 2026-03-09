@@ -31,6 +31,7 @@ type MediaService interface {
 	Upload(ctx context.Context, userID uuid.UUID, input UploadMediaInput) (*domain.Media, error)
 	Delete(ctx context.Context, mediaID uuid.UUID, userID uuid.UUID, userRole domain.UserRole) error
 	ListByReview(ctx context.Context, reviewID uuid.UUID) ([]domain.Media, error)
+	ListByReviewIDs(ctx context.Context, reviewIDs []uuid.UUID) (map[uuid.UUID][]domain.Media, error)
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error)
 }
 
@@ -64,7 +65,7 @@ func (s *mediaService) Upload(ctx context.Context, userID uuid.UUID, input Uploa
 		OriginalName: input.OriginalName,
 		Size:         input.Size,
 		MimeType:     input.MimeType,
-		Status:       domain.MediaStatusPending,
+		Status:       domain.MediaStatusApproved,
 	}
 
 	if err := media.ValidateMimeType(); err != nil {
@@ -90,6 +91,7 @@ func (s *mediaService) Upload(ctx context.Context, userID uuid.UUID, input Uploa
 		media.ThumbnailURL = thumbURL
 		media.Width = width
 		media.Height = height
+		media.MimeType = "image/jpeg" // images are re-encoded as JPEG
 	} else {
 		// Video: upload as-is, no processing
 		filename := fmt.Sprintf("media/%s/original", baseID)
@@ -142,6 +144,10 @@ func (s *mediaService) ListByReview(ctx context.Context, reviewID uuid.UUID) ([]
 		return nil, err
 	}
 	return result.Items, nil
+}
+
+func (s *mediaService) ListByReviewIDs(ctx context.Context, reviewIDs []uuid.UUID) (map[uuid.UUID][]domain.Media, error) {
+	return s.mediaRepo.ListByOwnerIDs(ctx, domain.MediaOwnerReview, reviewIDs)
 }
 
 func (s *mediaService) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error) {

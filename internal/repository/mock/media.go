@@ -125,6 +125,25 @@ func (r *MediaRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domain.
 	return nil
 }
 
+func (r *MediaRepo) ListByOwnerIDs(_ context.Context, ownerType domain.MediaOwnerType, ownerIDs []uuid.UUID) (map[uuid.UUID][]domain.Media, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	idSet := make(map[uuid.UUID]bool, len(ownerIDs))
+	for _, id := range ownerIDs {
+		idSet[id] = true
+	}
+
+	result := make(map[uuid.UUID][]domain.Media)
+	for _, m := range r.media {
+		if m.OwnerType == ownerType && idSet[m.OwnerID] {
+			cp := *m
+			result[m.OwnerID] = append(result[m.OwnerID], cp)
+		}
+	}
+	return result, nil
+}
+
 func (r *MediaRepo) ListByBathhouseReviews(_ context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

@@ -86,8 +86,8 @@ func TestMediaService_Upload_Image_Success(t *testing.T) {
 	if media.Width == 0 || media.Height == 0 {
 		t.Errorf("dimensions should be set, got %dx%d", media.Width, media.Height)
 	}
-	if media.Status != domain.MediaStatusPending {
-		t.Errorf("status = %v, want pending", media.Status)
+	if media.Status != domain.MediaStatusApproved {
+		t.Errorf("status = %v, want approved", media.Status)
 	}
 }
 

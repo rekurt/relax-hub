@@ -12,6 +12,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/moderation"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/nikitaaldaev/bani/internal/storage"
 )
 
 type reviewTestEnv struct {
@@ -31,7 +32,9 @@ func newReviewTestEnv() *reviewTestEnv {
 	log := logger.New(logger.LevelWarn) // Use Warn level to suppress debug output during tests
 	// ContentFilter with moderation disabled (so reviews default to pending)
 	contentFilter := moderation.NewContentFilter(false, false)
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, &noopNotifService{}, contentFilter, log)
+	mediaRepo := mock.NewMediaRepo()
+	noopStore := storage.NewNoopStorage(log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
 	return &reviewTestEnv{
 		svc:         svc,
 		bhRepo:      bhRepo,
@@ -435,7 +438,9 @@ func TestReviewService_Create_WithModeration_CleanText(t *testing.T) {
 	log := logger.New(logger.LevelWarn)
 	// ContentFilter with moderation enabled and auto-approve enabled
 	contentFilter := moderation.NewContentFilter(true, true)
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, &noopNotifService{}, contentFilter, log)
+	mediaRepo := mock.NewMediaRepo()
+	noopStore := storage.NewNoopStorage(log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())
@@ -464,7 +469,9 @@ func TestReviewService_Create_WithModeration_AutoRejectProfanity(t *testing.T) {
 	log := logger.New(logger.LevelWarn)
 	// ContentFilter with moderation enabled but auto-approve disabled
 	contentFilter := moderation.NewContentFilter(true, false)
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, &noopNotifService{}, contentFilter, log)
+	mediaRepo := mock.NewMediaRepo()
+	noopStore := storage.NewNoopStorage(log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())
@@ -496,7 +503,9 @@ func TestReviewService_Create_WithModeration_PendingCleanText(t *testing.T) {
 	log := logger.New(logger.LevelWarn)
 	// ContentFilter with moderation enabled but auto-approve disabled
 	contentFilter := moderation.NewContentFilter(true, false)
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, ac, &noopNotifService{}, contentFilter, log)
+	mediaRepo := mock.NewMediaRepo()
+	noopStore := storage.NewNoopStorage(log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())

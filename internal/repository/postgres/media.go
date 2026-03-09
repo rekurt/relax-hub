@@ -131,6 +131,30 @@ func (r *mediaRepo) ListByOwner(ctx context.Context, ownerType domain.MediaOwner
 	}, nil
 }
 
+func (r *mediaRepo) ListByOwnerIDs(ctx context.Context, ownerType domain.MediaOwnerType, ownerIDs []uuid.UUID) (map[uuid.UUID][]domain.Media, error) {
+	if len(ownerIDs) == 0 {
+		return make(map[uuid.UUID][]domain.Media), nil
+	}
+
+	query := fmt.Sprintf(`SELECT %s FROM media WHERE owner_type = $1 AND owner_id = ANY($2) ORDER BY created_at DESC`, mediaColumns)
+	rows, err := r.pool.Query(ctx, query, string(ownerType), ownerIDs)
+	if err != nil {
+		return nil, fmt.Errorf("list media by owner ids: %w", err)
+	}
+	defer rows.Close()
+
+	items, err := scanMediaRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[uuid.UUID][]domain.Media, len(ownerIDs))
+	for _, m := range items {
+		result[m.OwnerID] = append(result[m.OwnerID], m)
+	}
+	return result, nil
+}
+
 func (r *mediaRepo) ListByBathhouseReviews(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error) {
 	if page < 1 {
 		page = 1
@@ -140,14 +164,14 @@ func (r *mediaRepo) ListByBathhouseReviews(ctx context.Context, bathhouseID uuid
 	}
 
 	var totalCount int64
-	countQuery := `SELECT COUNT(*) FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image' AND rv.status = 'approved'`
+	countQuery := `SELECT COUNT(*) FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image' AND rv.status = 'approved' AND m.status = 'approved'`
 	err := r.pool.QueryRow(ctx, countQuery, bathhouseID).Scan(&totalCount)
 	if err != nil {
 		return nil, fmt.Errorf("count bathhouse review media: %w", err)
 	}
 
 	offset := (page - 1) * pageSize
-	query := `SELECT m.id, m.owner_type, m.owner_id, m.user_id, m.type, m.url, m.thumbnail_url, m.original_name, m.size, m.mime_type, m.width, m.height, m.status, m.created_at FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image' AND rv.status = 'approved' ORDER BY m.created_at DESC LIMIT $2 OFFSET $3`
+	query := `SELECT m.id, m.owner_type, m.owner_id, m.user_id, m.type, m.url, m.thumbnail_url, m.original_name, m.size, m.mime_type, m.width, m.height, m.status, m.created_at FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image' AND rv.status = 'approved' AND m.status = 'approved' ORDER BY m.created_at DESC LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, query, bathhouseID, pageSize, offset)
 	if err != nil {

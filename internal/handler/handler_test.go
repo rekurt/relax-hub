@@ -336,10 +336,11 @@ func (m *mockReviewService) AddOwnerResponse(ctx context.Context, userID uuid.UU
 }
 
 type mockMediaService struct {
-	uploadFn        func(ctx context.Context, userID uuid.UUID, input service.UploadMediaInput) (*domain.Media, error)
-	deleteFn        func(ctx context.Context, mediaID uuid.UUID, userID uuid.UUID, userRole domain.UserRole) error
-	listByReviewFn  func(ctx context.Context, reviewID uuid.UUID) ([]domain.Media, error)
-	listByBathhouseFn func(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error)
+	uploadFn           func(ctx context.Context, userID uuid.UUID, input service.UploadMediaInput) (*domain.Media, error)
+	deleteFn           func(ctx context.Context, mediaID uuid.UUID, userID uuid.UUID, userRole domain.UserRole) error
+	listByReviewFn     func(ctx context.Context, reviewID uuid.UUID) ([]domain.Media, error)
+	listByReviewIDsFn  func(ctx context.Context, reviewIDs []uuid.UUID) (map[uuid.UUID][]domain.Media, error)
+	listByBathhouseFn  func(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error)
 }
 
 func (m *mockMediaService) Upload(ctx context.Context, userID uuid.UUID, input service.UploadMediaInput) (*domain.Media, error) {
@@ -361,6 +362,13 @@ func (m *mockMediaService) ListByReview(ctx context.Context, reviewID uuid.UUID)
 		return m.listByReviewFn(ctx, reviewID)
 	}
 	return nil, nil
+}
+
+func (m *mockMediaService) ListByReviewIDs(ctx context.Context, reviewIDs []uuid.UUID) (map[uuid.UUID][]domain.Media, error) {
+	if m.listByReviewIDsFn != nil {
+		return m.listByReviewIDsFn(ctx, reviewIDs)
+	}
+	return make(map[uuid.UUID][]domain.Media), nil
 }
 
 func (m *mockMediaService) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error) {

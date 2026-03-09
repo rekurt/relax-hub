@@ -260,6 +260,7 @@ type MediaRepository interface {
 	Create(ctx context.Context, media *domain.Media) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Media, error)
 	ListByOwner(ctx context.Context, ownerType domain.MediaOwnerType, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error)
+	ListByOwnerIDs(ctx context.Context, ownerType domain.MediaOwnerType, ownerIDs []uuid.UUID) (map[uuid.UUID][]domain.Media, error)
 	ListByBathhouseReviews(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.MediaStatus) error
