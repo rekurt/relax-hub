@@ -31,7 +31,7 @@
 - Create: `migrations/000004_payments.up.sql`
 - Create: `migrations/000004_payments.down.sql`
 
-- [ ] Создать модель Payment:
+- [x] Создать модель Payment:
   ```
   Payment {
     ID            uuid.UUID
@@ -49,9 +49,9 @@
     UpdatedAt     time.Time
   }
   ```
-- [ ] Создать PaymentStatus с валидацией IsValid()
-- [ ] Добавить domain-ошибки: ErrPaymentNotFound, ErrPaymentAlreadyProcessed, ErrRefundExceedsAmount, ErrPaymentFailed
-- [ ] Создать миграцию:
+- [x] Создать PaymentStatus с валидацией IsValid()
+- [x] Добавить domain-ошибки: ErrPaymentNotFound, ErrPaymentAlreadyProcessed, ErrRefundExceedsAmount, ErrPaymentFailed
+- [x] Создать миграцию:
   ```sql
   CREATE TABLE payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -72,8 +72,8 @@
   CREATE INDEX idx_payments_user_id ON payments(user_id);
   CREATE INDEX idx_payments_external_id ON payments(external_id);
   ```
-- [ ] Написать тесты для валидации модели Payment
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Написать тесты для валидации модели Payment
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Репозиторий платежей
 

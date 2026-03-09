@@ -42,4 +42,9 @@ var (
 	ErrMediaFileTooLarge = errors.New("media file too large")
 	ErrMediaInvalidType  = errors.New("media invalid file type")
 	ErrMediaLimitReached = errors.New("media upload limit reached")
+
+	ErrPaymentNotFound        = errors.New("payment not found")
+	ErrPaymentAlreadyProcessed = errors.New("payment already processed")
+	ErrRefundExceedsAmount    = errors.New("refund amount exceeds payment amount")
+	ErrPaymentFailed          = errors.New("payment failed")
 )

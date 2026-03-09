@@ -149,6 +149,14 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "media_invalid_type", err.Error())
 	case errors.Is(err, domain.ErrMediaLimitReached):
 		writeErrorWithContext(w, r, http.StatusConflict, "media_limit_reached", err.Error())
+	case errors.Is(err, domain.ErrPaymentNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "payment_not_found", err.Error())
+	case errors.Is(err, domain.ErrPaymentAlreadyProcessed):
+		writeErrorWithContext(w, r, http.StatusConflict, "payment_already_processed", err.Error())
+	case errors.Is(err, domain.ErrRefundExceedsAmount):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "refund_exceeds_amount", err.Error())
+	case errors.Is(err, domain.ErrPaymentFailed):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "payment_failed", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
