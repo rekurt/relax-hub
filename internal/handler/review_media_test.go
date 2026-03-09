@@ -22,7 +22,7 @@ func createMultipartFile(fieldName, fileName string, content []byte) (*bytes.Buf
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
 	part, _ := w.CreateFormFile(fieldName, fileName)
-	part.Write(content)
+	_, _ = part.Write(content)
 	w.Close()
 	return &buf, w.FormDataContentType()
 }
