@@ -253,6 +253,7 @@ type PromoCodeRepository interface {
 	GetUsageByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.PromoUsage, error)
 	DecrementUses(ctx context.Context, id uuid.UUID) error
 	DeleteUsage(ctx context.Context, usageID uuid.UUID) error
+	RefundUsage(ctx context.Context, promoCodeID uuid.UUID, usageID uuid.UUID) error
 }
 
 type ComplaintRepository interface {

@@ -32,5 +32,5 @@ CREATE TABLE promo_usages (
 
 CREATE INDEX idx_promo_usages_promo_code_id ON promo_usages (promo_code_id);
 CREATE INDEX idx_promo_usages_user_id ON promo_usages (user_id);
-CREATE INDEX idx_promo_usages_booking_id ON promo_usages (booking_id);
+CREATE UNIQUE INDEX idx_promo_usages_booking_id ON promo_usages (booking_id);
 CREATE INDEX idx_promo_usages_used_at ON promo_usages (used_at);

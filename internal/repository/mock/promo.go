@@ -239,6 +239,27 @@ func (r *PromoCodeRepo) DeleteUsage(_ context.Context, usageID uuid.UUID) error 
 	return nil
 }
 
+func (r *PromoCodeRepo) RefundUsage(_ context.Context, promoCodeID uuid.UUID, usageID uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	promo, ok := r.promos[promoCodeID]
+	if !ok {
+		return domain.ErrPromoNotFound
+	}
+	if promo.CurrentUses == 0 {
+		return domain.ErrPromoNotFound
+	}
+
+	if _, ok := r.usages[usageID]; !ok {
+		return domain.ErrPromoNotFound
+	}
+
+	promo.CurrentUses--
+	delete(r.usages, usageID)
+	return nil
+}
+
 func paginatePromos(items []domain.PromoCode, page, pageSize int) *domain.PaginatedResult[domain.PromoCode] {
 	totalCount := int64(len(items))
 	offset := (page - 1) * pageSize

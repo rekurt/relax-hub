@@ -309,3 +309,34 @@ func (r *promoRepo) DeleteUsage(ctx context.Context, usageID uuid.UUID) error {
 	}
 	return nil
 }
+
+func (r *promoRepo) RefundUsage(ctx context.Context, promoCodeID uuid.UUID, usageID uuid.UUID) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	decrementQuery := `UPDATE promo_codes SET current_uses = current_uses - 1 WHERE id = $1 AND current_uses > 0`
+	result, err := tx.Exec(ctx, decrementQuery, promoCodeID)
+	if err != nil {
+		return fmt.Errorf("decrement promo uses: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrPromoNotFound
+	}
+
+	deleteQuery := `DELETE FROM promo_usages WHERE id = $1`
+	result, err = tx.Exec(ctx, deleteQuery, usageID)
+	if err != nil {
+		return fmt.Errorf("delete promo usage: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrPromoNotFound
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit tx: %w", err)
+	}
+	return nil
+}

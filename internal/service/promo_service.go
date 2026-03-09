@@ -133,12 +133,8 @@ func (s *promoService) RefundUsage(ctx context.Context, bookingID uuid.UUID) err
 		return nil
 	}
 
-	if err := s.promoRepo.DecrementUses(ctx, usage.PromoCodeID); err != nil {
-		return fmt.Errorf("decrement promo uses on refund: %w", err)
-	}
-
-	if err := s.promoRepo.DeleteUsage(ctx, usage.ID); err != nil {
-		return err
+	if err := s.promoRepo.RefundUsage(ctx, usage.PromoCodeID, usage.ID); err != nil {
+		return fmt.Errorf("refund promo usage: %w", err)
 	}
 
 	s.logger.Info("promo usage refunded", "promo_code_id", usage.PromoCodeID, "booking_id", bookingID)
