@@ -49,6 +49,7 @@ var Module = fx.Module("handler",
 		NewPhotoHandler,
 		NewPromoHandler,
 		NewMediaHandler,
+		NewPaymentHandler,
 		func(svc service.ReferralService, cfg *config.Config) *ReferralHandler {
 			return NewReferralHandler(svc, cfg.BaseURL)
 		},

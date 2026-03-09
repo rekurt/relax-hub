@@ -45,6 +45,7 @@ type RouterParams struct {
 	PhotoHandler           *handler.PhotoHandler
 	PromoHandler           *handler.PromoHandler
 	MediaHandler           *handler.MediaHandler
+	PaymentHandler         *handler.PaymentHandler
 	GoAdmin                *admin.GoAdmin `optional:"true"`
 }
 
@@ -70,6 +71,9 @@ func NewRouter(p RouterParams) http.Handler {
 	r.Route("/api/v1", func(r chi.Router) {
 		// WebSocket (auth via query parameter)
 		r.Get("/ws/notifications", p.WSHandler.HandleWS)
+
+		// Webhooks (public, called by payment providers)
+		r.Post("/webhooks/yookassa", p.PaymentHandler.HandleWebhook)
 
 		// Auth (public)
 		r.Post("/auth/register", p.AuthHandler.Register)
@@ -130,6 +134,8 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireRole(domain.RoleClient)).Post("/bookings", p.BookingHandler.Create)
 		r.With(auth).Get("/bookings", p.BookingHandler.ListByUser)
 		r.With(auth).Patch("/bookings/{id}/cancel", p.BookingHandler.Cancel)
+		r.With(auth).Post("/bookings/{id}/pay", p.PaymentHandler.InitiatePayment)
+		r.With(auth).Get("/bookings/{id}/payment", p.PaymentHandler.GetBookingPayment)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/confirm", p.BookingHandler.Confirm)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/reject", p.BookingHandler.Reject)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/complete", p.BookingHandler.Complete)
@@ -207,6 +213,9 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Get("/my/loyalty", p.LoyaltyHandler.GetAccount)
 		r.With(auth).Get("/my/loyalty/transactions", p.LoyaltyHandler.ListTransactions)
 		r.With(auth).Get("/my/loyalty/levels", p.LoyaltyHandler.GetLevels)
+
+		// Payments (authenticated)
+		r.With(auth).Get("/my/payments", p.PaymentHandler.ListUserPayments)
 
 		// Referral program (authenticated)
 		r.With(auth).Get("/my/referral", p.ReferralHandler.GetCode)

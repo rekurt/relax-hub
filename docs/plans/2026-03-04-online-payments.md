@@ -146,14 +146,14 @@
 - Create: `internal/handler/payment.go`
 - Modify: `internal/server/router.go`
 
-- [ ] POST /api/v1/bookings/{id}/pay - инициировать оплату бронирования (возвращает confirmation_url)
-- [ ] POST /api/v1/webhooks/yookassa - webhook от ЮKassa (верификация подписи, обработка события)
-- [ ] GET /api/v1/my/payments - история платежей текущего пользователя (paginated)
-- [ ] GET /api/v1/bookings/{id}/payment - статус оплаты бронирования
-- [ ] Зарегистрировать маршруты в роутере
-- [ ] Добавить fx.Module для payment-слоя
-- [ ] Написать handler-тесты с httptest
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] POST /api/v1/bookings/{id}/pay - инициировать оплату бронирования (возвращает confirmation_url)
+- [x] POST /api/v1/webhooks/yookassa - webhook от ЮKassa (верификация подписи, обработка события)
+- [x] GET /api/v1/my/payments - история платежей текущего пользователя (paginated)
+- [x] GET /api/v1/bookings/{id}/payment - статус оплаты бронирования
+- [x] Зарегистрировать маршруты в роутере
+- [x] Добавить fx.Module для payment-слоя
+- [x] Написать handler-тесты с httptest
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 6: Интеграция с бронированием
 
