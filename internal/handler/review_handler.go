@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -296,7 +297,7 @@ func (h *ReviewHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
 	// Detect actual content type from file bytes
 	buf := make([]byte, 512)
 	n, err := file.Read(buf)
-	if err != nil && err != io.EOF {
+	if err != nil && !errors.Is(err, io.EOF) {
 		writeError(w, http.StatusBadRequest, "invalid_input", "failed to read file")
 		return
 	}

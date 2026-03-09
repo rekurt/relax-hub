@@ -159,7 +159,7 @@ func (r *MediaRepo) ListByBathhouseReviews(_ context.Context, bathhouseID uuid.U
 	// For testing, we store bathhouseID in a map (see SetReviewBathhouse)
 	var filtered []domain.Media
 	for _, m := range r.media {
-		if m.OwnerType == domain.MediaOwnerReview && m.Type == domain.MediaTypeImage {
+		if m.OwnerType == domain.MediaOwnerReview && m.Type == domain.MediaTypeImage && m.Status == domain.MediaStatusApproved {
 			if bhID, ok := r.reviewBathhouses[m.OwnerID]; ok && bhID == bathhouseID {
 				cp := *m
 				filtered = append(filtered, cp)

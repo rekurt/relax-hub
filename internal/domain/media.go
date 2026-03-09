@@ -130,6 +130,8 @@ func (m *Media) ValidateFileSize() error {
 		if m.Size > MaxVideoSizeBytes {
 			return ErrMediaFileTooLarge
 		}
+	default:
+		return ErrMediaInvalidType
 	}
 	return nil
 }
@@ -144,6 +146,8 @@ func (m *Media) ValidateMimeType() error {
 		if !AllowedVideoMimeTypes[m.MimeType] {
 			return ErrMediaInvalidType
 		}
+	default:
+		return ErrMediaInvalidType
 	}
 	return nil
 }

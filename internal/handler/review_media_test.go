@@ -3,6 +3,7 @@ package handler_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"mime/multipart"
 	"net/http"
@@ -374,22 +375,26 @@ func TestReviewHandler_ListByBathhouse_WithMedia(t *testing.T) {
 		},
 	}
 
+	mediaID := uuid.New()
 	mediaSvc := &mockMediaService{
-		listByReviewFn: func(_ context.Context, revID uuid.UUID) ([]domain.Media, error) {
-			if revID != reviewID {
-				return nil, nil
+		listByReviewIDsFn: func(_ context.Context, reviewIDs []uuid.UUID) (map[uuid.UUID][]domain.Media, error) {
+			result := make(map[uuid.UUID][]domain.Media)
+			for _, rid := range reviewIDs {
+				if rid == reviewID {
+					result[rid] = []domain.Media{
+						{
+							ID:           mediaID,
+							OwnerType:    domain.MediaOwnerReview,
+							OwnerID:      reviewID,
+							Type:         domain.MediaTypeImage,
+							URL:          "https://s3.example.com/media/test.jpg",
+							ThumbnailURL: "https://s3.example.com/media/test_thumb.jpg",
+							Status:       domain.MediaStatusApproved,
+						},
+					}
+				}
 			}
-			return []domain.Media{
-				{
-					ID:           uuid.New(),
-					OwnerType:    domain.MediaOwnerReview,
-					OwnerID:      reviewID,
-					Type:         domain.MediaTypeImage,
-					URL:          "https://s3.example.com/media/test.jpg",
-					ThumbnailURL: "https://s3.example.com/media/test_thumb.jpg",
-					Status:       domain.MediaStatusPending,
-				},
-			}, nil
+			return result, nil
 		},
 	}
 
@@ -410,5 +415,18 @@ func TestReviewHandler_ListByBathhouse_WithMedia(t *testing.T) {
 	resp := parseResponse(t, rec)
 	if !resp.Success {
 		t.Errorf("expected success, got error: %v", resp.Error)
+	}
+
+	// Verify media is attached to the review response
+	var dataList []map[string]interface{}
+	if err := json.Unmarshal(resp.Data, &dataList); err != nil {
+		t.Fatalf("failed to unmarshal data: %v", err)
+	}
+	if len(dataList) == 0 {
+		t.Fatal("expected non-empty data array")
+	}
+	mediaArr, ok := dataList[0]["media"].([]interface{})
+	if !ok || len(mediaArr) == 0 {
+		t.Error("expected non-empty media array in review response")
 	}
 }
