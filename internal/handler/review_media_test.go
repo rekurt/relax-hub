@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/handler"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -64,7 +65,7 @@ func TestReviewHandler_UploadMedia(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewReviewHandler(reviewSvc, mediaSvc)
+	h := handler.NewReviewHandler(reviewSvc, mediaSvc, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Post("/reviews/{id}/media", h.UploadMedia)
@@ -93,7 +94,7 @@ func TestReviewHandler_UploadMedia(t *testing.T) {
 
 func TestReviewHandler_UploadMedia_InvalidReviewID(t *testing.T) {
 	authSvc := makeAuthToken(uuid.New(), domain.RoleClient)
-	h := handler.NewReviewHandler(&mockReviewService{}, &mockMediaService{})
+	h := handler.NewReviewHandler(&mockReviewService{}, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Post("/reviews/{id}/media", h.UploadMedia)
@@ -121,7 +122,7 @@ func TestReviewHandler_UploadMedia_ReviewNotFound(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Post("/reviews/{id}/media", h.UploadMedia)
@@ -154,7 +155,7 @@ func TestReviewHandler_UploadMedia_ForbiddenNotAuthor(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Post("/reviews/{id}/media", h.UploadMedia)
@@ -186,7 +187,7 @@ func TestReviewHandler_UploadMedia_NoFile(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Post("/reviews/{id}/media", h.UploadMedia)
@@ -223,7 +224,7 @@ func TestReviewHandler_UploadMedia_LimitReached(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewReviewHandler(reviewSvc, mediaSvc)
+	h := handler.NewReviewHandler(reviewSvc, mediaSvc, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Post("/reviews/{id}/media", h.UploadMedia)
@@ -263,7 +264,7 @@ func TestReviewHandler_DeleteMedia(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewReviewHandler(&mockReviewService{}, mediaSvc)
+	h := handler.NewReviewHandler(&mockReviewService{}, mediaSvc, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Delete("/media/{id}", h.DeleteMedia)
@@ -281,7 +282,7 @@ func TestReviewHandler_DeleteMedia(t *testing.T) {
 
 func TestReviewHandler_DeleteMedia_InvalidID(t *testing.T) {
 	authSvc := makeAuthToken(uuid.New(), domain.RoleClient)
-	h := handler.NewReviewHandler(&mockReviewService{}, &mockMediaService{})
+	h := handler.NewReviewHandler(&mockReviewService{}, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Delete("/media/{id}", h.DeleteMedia)
@@ -307,7 +308,7 @@ func TestReviewHandler_DeleteMedia_NotFound(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewReviewHandler(&mockReviewService{}, mediaSvc)
+	h := handler.NewReviewHandler(&mockReviewService{}, mediaSvc, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Delete("/media/{id}", h.DeleteMedia)
@@ -333,7 +334,7 @@ func TestReviewHandler_DeleteMedia_Forbidden(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewReviewHandler(&mockReviewService{}, mediaSvc)
+	h := handler.NewReviewHandler(&mockReviewService{}, mediaSvc, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Delete("/media/{id}", h.DeleteMedia)
@@ -398,7 +399,7 @@ func TestReviewHandler_ListByBathhouse_WithMedia(t *testing.T) {
 		},
 	}
 
-	h := handler.NewReviewHandler(reviewSvc, mediaSvc)
+	h := handler.NewReviewHandler(reviewSvc, mediaSvc, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}/reviews", h.ListByBathhouse)

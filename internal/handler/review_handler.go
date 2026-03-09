@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -19,12 +20,14 @@ import (
 type ReviewHandler struct {
 	reviewService service.ReviewService
 	mediaService  service.MediaService
+	log           *logger.Logger
 }
 
-func NewReviewHandler(reviewService service.ReviewService, mediaService service.MediaService) *ReviewHandler {
+func NewReviewHandler(reviewService service.ReviewService, mediaService service.MediaService, log *logger.Logger) *ReviewHandler {
 	return &ReviewHandler{
 		reviewService: reviewService,
 		mediaService:  mediaService,
+		log:           log,
 	}
 }
 
@@ -245,6 +248,7 @@ func (h *ReviewHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) 
 
 	mediaByReview, err := h.mediaService.ListByReviewIDs(r.Context(), reviewIDs)
 	if err != nil {
+		h.log.Warn("failed to load media for reviews", "error", err)
 		mediaByReview = make(map[uuid.UUID][]domain.Media)
 	}
 

@@ -136,7 +136,7 @@ func (r *MediaRepo) ListByOwnerIDs(_ context.Context, ownerType domain.MediaOwne
 
 	result := make(map[uuid.UUID][]domain.Media)
 	for _, m := range r.media {
-		if m.OwnerType == ownerType && idSet[m.OwnerID] {
+		if m.OwnerType == ownerType && idSet[m.OwnerID] && m.Status == domain.MediaStatusApproved {
 			cp := *m
 			result[m.OwnerID] = append(result[m.OwnerID], cp)
 		}

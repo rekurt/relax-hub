@@ -136,7 +136,7 @@ func (r *mediaRepo) ListByOwnerIDs(ctx context.Context, ownerType domain.MediaOw
 		return make(map[uuid.UUID][]domain.Media), nil
 	}
 
-	query := fmt.Sprintf(`SELECT %s FROM media WHERE owner_type = $1 AND owner_id = ANY($2) ORDER BY created_at DESC`, mediaColumns)
+	query := fmt.Sprintf(`SELECT %s FROM media WHERE owner_type = $1 AND owner_id = ANY($2) AND status = 'approved' ORDER BY created_at DESC`, mediaColumns)
 	rows, err := r.pool.Query(ctx, query, string(ownerType), ownerIDs)
 	if err != nil {
 		return nil, fmt.Errorf("list media by owner ids: %w", err)

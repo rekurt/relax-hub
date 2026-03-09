@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/handler"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -1299,7 +1300,7 @@ func TestReviewHandler_Create(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleClient)).Post("/bathhouses/{id}/reviews", h.Create)
@@ -1336,7 +1337,7 @@ func TestReviewHandler_ListByBathhouse(t *testing.T) {
 		},
 	}
 
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}/reviews", h.ListByBathhouse)
@@ -2304,7 +2305,7 @@ func TestReviewHandler_Update(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Put("/reviews/{id}", h.Update)
@@ -2335,7 +2336,7 @@ func TestReviewHandler_Update(t *testing.T) {
 
 func TestReviewHandler_Update_InvalidUUID(t *testing.T) {
 	authSvc := makeAuthToken(uuid.New(), domain.RoleClient)
-	h := handler.NewReviewHandler(nil, nil)
+	h := handler.NewReviewHandler(nil, nil, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Put("/reviews/{id}", h.Update)
@@ -2364,7 +2365,7 @@ func TestReviewHandler_Update_Forbidden(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Put("/reviews/{id}", h.Update)
@@ -2393,7 +2394,7 @@ func TestReviewHandler_Delete(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Delete("/reviews/{id}", h.Delete)
@@ -2423,7 +2424,7 @@ func TestReviewHandler_Delete_AdminCanDelete(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(adminID, domain.RoleAdmin)
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Delete("/reviews/{id}", h.Delete)
@@ -2441,7 +2442,7 @@ func TestReviewHandler_Delete_AdminCanDelete(t *testing.T) {
 
 func TestReviewHandler_Delete_InvalidUUID(t *testing.T) {
 	authSvc := makeAuthToken(uuid.New(), domain.RoleClient)
-	h := handler.NewReviewHandler(nil, nil)
+	h := handler.NewReviewHandler(nil, nil, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Delete("/reviews/{id}", h.Delete)
@@ -2468,7 +2469,7 @@ func TestReviewHandler_Delete_Forbidden(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Delete("/reviews/{id}", h.Delete)
@@ -2503,7 +2504,7 @@ func TestReviewHandler_AddOwnerResponse(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", h.AddOwnerResponse)
@@ -2528,7 +2529,7 @@ func TestReviewHandler_AddOwnerResponse(t *testing.T) {
 
 func TestReviewHandler_AddOwnerResponse_InvalidUUID(t *testing.T) {
 	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
-	h := handler.NewReviewHandler(nil, nil)
+	h := handler.NewReviewHandler(nil, nil, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", h.AddOwnerResponse)
@@ -2549,7 +2550,7 @@ func TestReviewHandler_AddOwnerResponse_InvalidUUID(t *testing.T) {
 func TestReviewHandler_AddOwnerResponse_ForbiddenForClient(t *testing.T) {
 	clientID := uuid.New()
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewReviewHandler(nil, nil)
+	h := handler.NewReviewHandler(nil, nil, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", h.AddOwnerResponse)
@@ -2578,7 +2579,7 @@ func TestReviewHandler_AddOwnerResponse_AlreadyResponded(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{})
+	h := handler.NewReviewHandler(reviewSvc, &mockMediaService{}, logger.New(logger.LevelError))
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireOwnerOrRepresentative()).Post("/reviews/{id}/response", h.AddOwnerResponse)
