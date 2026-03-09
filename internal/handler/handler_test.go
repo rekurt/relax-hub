@@ -1054,7 +1054,7 @@ func TestBookingHandler_Create(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewBookingHandler(bookingSvc)
+	h := handler.NewBookingHandler(bookingSvc, &mockPaymentService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleClient)).Post("/bookings", h.Create)
@@ -1085,7 +1085,7 @@ func TestBookingHandler_Create(t *testing.T) {
 func TestBookingHandler_Create_ForbiddenForOwner(t *testing.T) {
 	ownerID := uuid.New()
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBookingHandler(nil)
+	h := handler.NewBookingHandler(nil, &mockPaymentService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleClient)).Post("/bookings", h.Create)
@@ -1113,7 +1113,7 @@ func TestBookingHandler_Cancel(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewBookingHandler(bookingSvc)
+	h := handler.NewBookingHandler(bookingSvc, &mockPaymentService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Patch("/bookings/{id}/cancel", h.Cancel)
@@ -1132,7 +1132,7 @@ func TestBookingHandler_Cancel(t *testing.T) {
 func TestBookingHandler_Confirm_RequiresOwnerOrRep(t *testing.T) {
 	clientID := uuid.New()
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewBookingHandler(nil)
+	h := handler.NewBookingHandler(nil, &mockPaymentService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/confirm", h.Confirm)
@@ -1657,7 +1657,7 @@ func TestBookingHandler_ListByUser(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewBookingHandler(bookingSvc)
+	h := handler.NewBookingHandler(bookingSvc, &mockPaymentService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Get("/bookings", h.ListByUser)
@@ -1683,7 +1683,7 @@ func TestBookingHandler_Confirm(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBookingHandler(bookingSvc)
+	h := handler.NewBookingHandler(bookingSvc, &mockPaymentService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Patch("/bookings/{id}/confirm", h.Confirm)
@@ -1709,7 +1709,7 @@ func TestBookingHandler_Reject(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBookingHandler(bookingSvc)
+	h := handler.NewBookingHandler(bookingSvc, &mockPaymentService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Patch("/bookings/{id}/reject", h.Reject)
@@ -1737,7 +1737,7 @@ func TestBookingHandler_ListByBathhouse(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBookingHandler(bookingSvc)
+	h := handler.NewBookingHandler(bookingSvc, &mockPaymentService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc)).Get("/bathhouses/{id}/bookings", h.ListByBathhouse)
@@ -1750,6 +1750,69 @@ func TestBookingHandler_ListByBathhouse(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBookingHandler_ListByUser_WithPaymentStatus(t *testing.T) {
+	clientID := uuid.New()
+	bookingID := uuid.New()
+	bookingSvc := &mockBookingService{
+		listByUserFn: func(_ context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {
+			return &domain.PaginatedResult[domain.Booking]{
+				Items: []domain.Booking{
+					{
+						ID: bookingID, UserID: userID, BathhouseID: uuid.New(),
+						StartTime: time.Now().Add(24 * time.Hour), EndTime: time.Now().Add(26 * time.Hour),
+						GuestCount: 2, TotalPrice: 10000, Status: domain.BookingConfirmed,
+					},
+				},
+				TotalCount: 1, Page: 1, PageSize: 20, TotalPages: 1,
+			}, nil
+		},
+	}
+
+	paymentSvc := &mockPaymentService{
+		getByBookingFn: func(_ context.Context, bID uuid.UUID) (*domain.Payment, error) {
+			if bID == bookingID {
+				return &domain.Payment{
+					ID: uuid.New(), BookingID: bookingID, UserID: clientID,
+					Amount: 10000, Status: domain.PaymentSucceeded,
+				}, nil
+			}
+			return nil, domain.ErrPaymentNotFound
+		},
+	}
+
+	authSvc := makeAuthToken(clientID, domain.RoleClient)
+	h := handler.NewBookingHandler(bookingSvc, paymentSvc)
+
+	router := chi.NewRouter()
+	router.With(middleware.RequireAuth(authSvc)).Get("/bookings", h.ListByUser)
+
+	req := httptest.NewRequest(http.MethodGet, "/bookings", nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+
+	var resp struct {
+		Data []struct {
+			PaymentStatus string `json:"payment_status"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	if len(resp.Data) != 1 {
+		t.Fatalf("expected 1 booking, got %d", len(resp.Data))
+	}
+	if resp.Data[0].PaymentStatus != string(domain.PaymentSucceeded) {
+		t.Errorf("payment_status = %q, want %q", resp.Data[0].PaymentStatus, domain.PaymentSucceeded)
 	}
 }
 
@@ -2134,7 +2197,7 @@ func TestBathhouseHandler_GetByID_InvalidUUID(t *testing.T) {
 }
 
 func TestBookingHandler_Cancel_InvalidUUID(t *testing.T) {
-	h := handler.NewBookingHandler(nil)
+	h := handler.NewBookingHandler(nil, &mockPaymentService{})
 	router := chi.NewRouter()
 	authSvc := makeAuthToken(uuid.New(), domain.RoleClient)
 	router.With(middleware.RequireAuth(authSvc)).Patch("/bookings/{id}/cancel", h.Cancel)
@@ -2150,7 +2213,7 @@ func TestBookingHandler_Cancel_InvalidUUID(t *testing.T) {
 }
 
 func TestBookingHandler_Confirm_InvalidUUID(t *testing.T) {
-	h := handler.NewBookingHandler(nil)
+	h := handler.NewBookingHandler(nil, &mockPaymentService{})
 	router := chi.NewRouter()
 	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
 	router.With(middleware.RequireAuth(authSvc)).Patch("/bookings/{id}/confirm", h.Confirm)
@@ -2166,7 +2229,7 @@ func TestBookingHandler_Confirm_InvalidUUID(t *testing.T) {
 }
 
 func TestBookingHandler_Reject_InvalidUUID(t *testing.T) {
-	h := handler.NewBookingHandler(nil)
+	h := handler.NewBookingHandler(nil, &mockPaymentService{})
 	router := chi.NewRouter()
 	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
 	router.With(middleware.RequireAuth(authSvc)).Patch("/bookings/{id}/reject", h.Reject)
@@ -2182,7 +2245,7 @@ func TestBookingHandler_Reject_InvalidUUID(t *testing.T) {
 }
 
 func TestBookingHandler_ListByBathhouse_InvalidUUID(t *testing.T) {
-	h := handler.NewBookingHandler(nil)
+	h := handler.NewBookingHandler(nil, &mockPaymentService{})
 	router := chi.NewRouter()
 	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
 	router.With(middleware.RequireAuth(authSvc)).Get("/bathhouses/{id}/bookings", h.ListByBathhouse)
@@ -2609,7 +2672,7 @@ func TestProtectedEndpoints_RequireAuth(t *testing.T) {
 	router := chi.NewRouter()
 	auth := middleware.RequireAuth(authSvc)
 
-	bookingH := handler.NewBookingHandler(nil)
+	bookingH := handler.NewBookingHandler(nil, &mockPaymentService{})
 	bhH := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router.With(auth).Get("/bookings", bookingH.ListByUser)

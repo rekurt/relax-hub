@@ -60,6 +60,7 @@ type bookingService struct {
 	loyaltySvc  LoyaltyService
 	referralSvc ReferralService
 	promoSvc    PromoService
+	paymentSvc  PaymentService
 	access      *AccessChecker
 	notifSvc    NotificationService
 	logger      *logger.Logger
@@ -72,6 +73,7 @@ func NewBookingService(
 	loyaltySvc LoyaltyService,
 	referralSvc ReferralService,
 	promoSvc PromoService,
+	paymentSvc PaymentService,
 	access *AccessChecker,
 	notifSvc NotificationService,
 	log *logger.Logger,
@@ -83,6 +85,7 @@ func NewBookingService(
 		loyaltySvc:  loyaltySvc,
 		referralSvc: referralSvc,
 		promoSvc:    promoSvc,
+		paymentSvc:  paymentSvc,
 		access:      access,
 		notifSvc:    notifSvc,
 		logger:      log,
@@ -314,6 +317,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		s.refundBookingPoints(ctx, booking)
 		s.refundReferralBonus(ctx, booking)
 		s.refundPromoUsage(ctx, booking)
+		s.refundPayment(ctx, booking)
 		s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 		return nil
 	}
@@ -329,6 +333,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 	s.refundBookingPoints(ctx, booking)
 	s.refundReferralBonus(ctx, booking)
 	s.refundPromoUsage(ctx, booking)
+	s.refundPayment(ctx, booking)
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 	return nil
 }
@@ -639,6 +644,13 @@ func (s *bookingService) refundReferralBonus(ctx context.Context, booking *domai
 func (s *bookingService) refundPromoUsage(ctx context.Context, booking *domain.Booking) {
 	if err := s.promoSvc.RefundUsage(ctx, booking.ID); err != nil {
 		s.logger.Error("failed to refund promo usage on booking cancellation",
+			"booking_id", booking.ID, "user_id", booking.UserID, "error", err)
+	}
+}
+
+func (s *bookingService) refundPayment(ctx context.Context, booking *domain.Booking) {
+	if err := s.paymentSvc.RefundPayment(ctx, booking.ID); err != nil {
+		s.logger.Warn("failed to refund payment on booking cancellation",
 			"booking_id", booking.ID, "user_id", booking.UserID, "error", err)
 	}
 }

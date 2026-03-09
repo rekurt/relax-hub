@@ -161,10 +161,10 @@
 - Modify: `internal/service/booking_service.go`
 - Modify: `internal/handler/booking.go`
 
-- [ ] При отмене бронирования автоматически инициировать возврат если платеж был
-- [ ] Добавить поле payment_status в ответ booking endpoint
-- [ ] Написать тесты интеграции booking + payment
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] При отмене бронирования автоматически инициировать возврат если платеж был
+- [x] Добавить поле payment_status в ответ booking endpoint
+- [x] Написать тесты интеграции booking + payment
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 7: Верификация
 

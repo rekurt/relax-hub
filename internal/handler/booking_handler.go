@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -13,10 +14,11 @@ import (
 
 type BookingHandler struct {
 	bookingService service.BookingService
+	paymentService service.PaymentService
 }
 
-func NewBookingHandler(bookingService service.BookingService) *BookingHandler {
-	return &BookingHandler{bookingService: bookingService}
+func NewBookingHandler(bookingService service.BookingService, paymentService service.PaymentService) *BookingHandler {
+	return &BookingHandler{bookingService: bookingService, paymentService: paymentService}
 }
 
 type createBookingRequest struct {
@@ -41,6 +43,7 @@ type bookingResponse struct {
 	OriginalPrice     int64     `json:"original_price,omitempty"`
 	PromoDiscount     int64     `json:"promo_discount,omitempty"`
 	Status            string    `json:"status"`
+	PaymentStatus     string    `json:"payment_status,omitempty"`
 	Comment           string    `json:"comment"`
 	EarnedPoints      int64     `json:"earned_points,omitempty"`
 	LoyaltyDiscount   int64     `json:"loyalty_discount,omitempty"`
@@ -77,6 +80,18 @@ func toBookingResultResponse(r *service.BookingResult) bookingResponse {
 	resp.OriginalPrice = r.OriginalPrice
 	resp.PromoDiscount = r.PromoDiscount
 	return resp
+}
+
+func (h *BookingHandler) enrichWithPaymentStatus(ctx context.Context, resp *bookingResponse) {
+	bookingID, err := uuid.Parse(resp.ID)
+	if err != nil {
+		return
+	}
+	p, err := h.paymentService.GetPaymentByBooking(ctx, bookingID)
+	if err != nil || p == nil {
+		return
+	}
+	resp.PaymentStatus = string(p.Status)
 }
 
 func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -138,6 +153,7 @@ func (h *BookingHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 	items := make([]bookingResponse, len(result.Items))
 	for i := range result.Items {
 		items[i] = toBookingResponse(&result.Items[i])
+		h.enrichWithPaymentStatus(r.Context(), &items[i])
 	}
 
 	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
@@ -242,6 +258,7 @@ func (h *BookingHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request)
 	items := make([]bookingResponse, len(result.Items))
 	for i := range result.Items {
 		items[i] = toBookingResponse(&result.Items[i])
+		h.enrichWithPaymentStatus(r.Context(), &items[i])
 	}
 
 	writeJSONWithMeta(w, http.StatusOK, items, &Meta{

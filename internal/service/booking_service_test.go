@@ -23,7 +23,7 @@ func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.Boo
 	log := logger.New(logger.LevelWarn)
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, repRepo, pricingSvc, pricingRepo, loyaltySvc, loyaltyRepo
 }
 
@@ -765,7 +765,7 @@ func newBookingServiceWithReferral() (service.BookingService, *mock.BathhouseRep
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	userRepo := mock.NewUserRepo()
 	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, referralSvc, &noopPromoService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, referralSvc, userRepo
 }
 
@@ -894,7 +894,7 @@ func newBookingServiceWithPromo() (service.BookingService, *mock.BathhouseRepo, 
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	promoSvc := service.NewPromoService(promoRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, promoSvc, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, promoSvc
 }
 
@@ -1079,5 +1079,113 @@ func TestBookingService_Create_WithPromoCodeNoDiscount(t *testing.T) {
 	}
 	if result.Booking.TotalPrice != 10000 {
 		t.Errorf("totalPrice = %d, want 10000", result.Booking.TotalPrice)
+	}
+}
+
+// --- Booking + Payment integration tests ---
+
+type trackingPaymentService struct {
+	noopPaymentService
+	refundCalled bool
+	refundErr    error
+	payment      *domain.Payment
+}
+
+func (t *trackingPaymentService) RefundPayment(_ context.Context, _ uuid.UUID) error {
+	t.refundCalled = true
+	return t.refundErr
+}
+
+func (t *trackingPaymentService) GetPaymentByBooking(_ context.Context, _ uuid.UUID) (*domain.Payment, error) {
+	if t.payment != nil {
+		return t.payment, nil
+	}
+	return nil, domain.ErrPaymentNotFound
+}
+
+func newBookingServiceWithPayment() (service.BookingService, *mock.BathhouseRepo, *mock.BookingRepo, *trackingPaymentService) {
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	pricingRepo := mock.NewPricingRuleRepo()
+	loyaltyRepo := mock.NewLoyaltyRepo()
+	access := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
+	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
+	paymentSvc := &trackingPaymentService{}
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, paymentSvc, access, &noopNotifService{}, log)
+	return svc, bhRepo, bookingRepo, paymentSvc
+}
+
+func TestBookingService_Cancel_RefundsPayment(t *testing.T) {
+	svc, bhRepo, bookingRepo, paymentSvc := newBookingServiceWithPayment()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, uuid.New())
+
+	start := time.Now().Add(48 * time.Hour) // well in advance
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: start.Add(2 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	_ = bookingRepo.Create(context.Background(), booking)
+
+	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !paymentSvc.refundCalled {
+		t.Error("expected RefundPayment to be called on booking cancellation")
+	}
+}
+
+func TestBookingService_Cancel_OwnerRefundsPayment(t *testing.T) {
+	svc, bhRepo, bookingRepo, paymentSvc := newBookingServiceWithPayment()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	start := time.Now().Add(30 * time.Minute) // owner can cancel anytime
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID,
+		StartTime: start, EndTime: start.Add(2 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingPending,
+	}
+	_ = bookingRepo.Create(context.Background(), booking)
+
+	err := svc.Cancel(context.Background(), ownerID, domain.RoleOwner, booking.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !paymentSvc.refundCalled {
+		t.Error("expected RefundPayment to be called when owner cancels booking")
+	}
+}
+
+func TestBookingService_Cancel_RefundErrorDoesNotBlockCancel(t *testing.T) {
+	svc, bhRepo, bookingRepo, paymentSvc := newBookingServiceWithPayment()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, uuid.New())
+
+	paymentSvc.refundErr = errors.New("payment provider error")
+
+	start := time.Now().Add(48 * time.Hour)
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: start.Add(2 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	_ = bookingRepo.Create(context.Background(), booking)
+
+	// Cancel should succeed even if refund fails
+	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID)
+	if err != nil {
+		t.Fatalf("cancel should succeed even when refund fails: %v", err)
+	}
+
+	if !paymentSvc.refundCalled {
+		t.Error("expected RefundPayment to be called")
 	}
 }

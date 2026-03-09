@@ -82,6 +82,25 @@ func (n *noopPromoService) RefundUsage(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
 
+// noopPaymentService is a no-op PaymentService for tests that don't verify payments.
+type noopPaymentService struct{}
+
+func (n *noopPaymentService) InitiatePayment(_ context.Context, _ uuid.UUID) (string, error) {
+	return "", nil
+}
+func (n *noopPaymentService) HandleWebhook(_ context.Context, _ service.WebhookEvent) error {
+	return nil
+}
+func (n *noopPaymentService) RefundPayment(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+func (n *noopPaymentService) GetPaymentByBooking(_ context.Context, _ uuid.UUID) (*domain.Payment, error) {
+	return nil, domain.ErrPaymentNotFound
+}
+func (n *noopPaymentService) ListUserPayments(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Payment], error) {
+	return &domain.PaginatedResult[domain.Payment]{}, nil
+}
+
 func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID) *domain.Bathhouse {
 	t.Helper()
 	wh := make([]domain.WorkingHours, 7)
