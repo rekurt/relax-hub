@@ -112,7 +112,9 @@ func TestPromoHandler_CreateForBathhouse(t *testing.T) {
 	}
 
 	var resp APIResponse
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if !resp.Success {
 		t.Error("expected success true")
 	}
@@ -218,7 +220,9 @@ func TestPromoHandler_ListByBathhouse(t *testing.T) {
 	}
 
 	var resp APIResponse
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if !resp.Success {
 		t.Error("expected success true")
 	}
@@ -319,7 +323,9 @@ func TestPromoHandler_Validate(t *testing.T) {
 	}
 
 	var resp APIResponse
-	json.NewDecoder(rec.Body).Decode(&resp)
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
 	if !resp.Success {
 		t.Error("expected success true")
 	}
