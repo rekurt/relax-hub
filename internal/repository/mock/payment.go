@@ -1,0 +1,177 @@
+package mock
+
+import (
+	"context"
+	"math"
+	"sort"
+	"sync"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/repository"
+)
+
+type PaymentRepo struct {
+	mu       sync.RWMutex
+	payments map[uuid.UUID]*domain.Payment
+}
+
+func NewPaymentRepo() repository.PaymentRepository {
+	return &PaymentRepo{
+		payments: make(map[uuid.UUID]*domain.Payment),
+	}
+}
+
+func (r *PaymentRepo) Create(_ context.Context, payment *domain.Payment) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if payment.ID == uuid.Nil {
+		payment.ID = uuid.New()
+	}
+	if payment.CreatedAt.IsZero() {
+		payment.CreatedAt = time.Now()
+	}
+	if payment.UpdatedAt.IsZero() {
+		payment.UpdatedAt = time.Now()
+	}
+	if payment.Metadata == nil {
+		payment.Metadata = make(map[string]string)
+	}
+
+	cp := *payment
+	cpMeta := make(map[string]string, len(payment.Metadata))
+	for k, v := range payment.Metadata {
+		cpMeta[k] = v
+	}
+	cp.Metadata = cpMeta
+	r.payments[payment.ID] = &cp
+	return nil
+}
+
+func (r *PaymentRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Payment, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	p, ok := r.payments[id]
+	if !ok {
+		return nil, domain.ErrPaymentNotFound
+	}
+	cp := r.copyPayment(p)
+	return &cp, nil
+}
+
+func (r *PaymentRepo) GetByBookingID(_ context.Context, bookingID uuid.UUID) (*domain.Payment, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, p := range r.payments {
+		if p.BookingID == bookingID {
+			cp := r.copyPayment(p)
+			return &cp, nil
+		}
+	}
+	return nil, domain.ErrPaymentNotFound
+}
+
+func (r *PaymentRepo) GetByExternalID(_ context.Context, externalID string) (*domain.Payment, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, p := range r.payments {
+		if p.ExternalID == externalID {
+			cp := r.copyPayment(p)
+			return &cp, nil
+		}
+	}
+	return nil, domain.ErrPaymentNotFound
+}
+
+func (r *PaymentRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domain.PaymentStatus, externalID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	p, ok := r.payments[id]
+	if !ok {
+		return domain.ErrPaymentNotFound
+	}
+
+	p.Status = status
+	p.ExternalID = externalID
+	p.UpdatedAt = time.Now()
+	return nil
+}
+
+func (r *PaymentRepo) UpdateRefund(_ context.Context, id uuid.UUID, refundAmount int64, refundedAt time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	p, ok := r.payments[id]
+	if !ok {
+		return domain.ErrPaymentNotFound
+	}
+
+	p.RefundAmount = refundAmount
+	p.RefundedAt = &refundedAt
+	p.Status = domain.PaymentRefunded
+	p.UpdatedAt = time.Now()
+	return nil
+}
+
+func (r *PaymentRepo) ListByUser(_ context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	var filtered []domain.Payment
+	for _, p := range r.payments {
+		if p.UserID == userID {
+			filtered = append(filtered, r.copyPayment(p))
+		}
+	}
+
+	sort.Slice(filtered, func(i, j int) bool {
+		return filtered[i].CreatedAt.After(filtered[j].CreatedAt)
+	})
+
+	totalCount := int64(len(filtered))
+	offset := (page - 1) * pageSize
+	end := offset + pageSize
+	if offset > int(totalCount) {
+		offset = int(totalCount)
+	}
+	if end > int(totalCount) {
+		end = int(totalCount)
+	}
+
+	return &domain.PaginatedResult[domain.Payment]{
+		Items:      filtered[offset:end],
+		TotalCount: totalCount,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
+	}, nil
+}
+
+func (r *PaymentRepo) copyPayment(p *domain.Payment) domain.Payment {
+	cp := *p
+	if p.Metadata != nil {
+		cpMeta := make(map[string]string, len(p.Metadata))
+		for k, v := range p.Metadata {
+			cpMeta[k] = v
+		}
+		cp.Metadata = cpMeta
+	}
+	if p.RefundedAt != nil {
+		t := *p.RefundedAt
+		cp.RefundedAt = &t
+	}
+	return cp
+}

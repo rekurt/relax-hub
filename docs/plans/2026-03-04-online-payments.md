@@ -82,7 +82,7 @@
 - Create: `internal/repository/postgres/payment.go`
 - Create: `internal/repository/mock/payment.go`
 
-- [ ] Добавить PaymentRepository interface:
+- [x] Добавить PaymentRepository interface:
   ```go
   type PaymentRepository interface {
     Create(ctx context.Context, payment *domain.Payment) error
@@ -94,10 +94,10 @@
     ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
   }
   ```
-- [ ] Реализовать postgres-репозиторий
-- [ ] Реализовать mock-репозиторий для тестов
-- [ ] Написать тесты для mock-репозитория
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Реализовать postgres-репозиторий
+- [x] Реализовать mock-репозиторий для тестов
+- [x] Написать тесты для mock-репозитория
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Интеграция с ЮKassa
 

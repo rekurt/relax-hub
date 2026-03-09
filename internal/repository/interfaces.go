@@ -267,6 +267,16 @@ type MediaRepository interface {
 	CountByOwner(ctx context.Context, ownerType domain.MediaOwnerType, ownerID uuid.UUID, mediaType *domain.MediaType) (int64, error)
 }
 
+type PaymentRepository interface {
+	Create(ctx context.Context, payment *domain.Payment) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Payment, error)
+	GetByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.Payment, error)
+	GetByExternalID(ctx context.Context, externalID string) (*domain.Payment, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.PaymentStatus, externalID string) error
+	UpdateRefund(ctx context.Context, id uuid.UUID, refundAmount int64, refundedAt time.Time) error
+	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
+}
+
 type ComplaintRepository interface {
 	Create(ctx context.Context, complaint *domain.Complaint) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Complaint, error)
