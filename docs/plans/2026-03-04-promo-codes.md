@@ -61,10 +61,10 @@
 - Create: `internal/repository/postgres/promo.go`
 - Create: `internal/repository/mock/promo.go`
 
-- [ ] PromoCodeRepository interface: Create, GetByID, GetByCode, Update, ListByBathhouse, ListByCreator, IncrementUses, RecordUsage
-- [ ] Реализовать postgres и mock репозитории
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] PromoCodeRepository interface: Create, GetByID, GetByCode, Update, ListByBathhouse, ListByCreator, IncrementUses, RecordUsage
+- [x] Реализовать postgres и mock репозитории
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Сервис промокодов
 

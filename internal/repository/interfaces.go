@@ -240,6 +240,17 @@ type BathhousePhotoRepository interface {
 	ListPending(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.BathhousePhoto], error)
 }
 
+type PromoCodeRepository interface {
+	Create(ctx context.Context, promo *domain.PromoCode) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.PromoCode, error)
+	GetByCode(ctx context.Context, code string) (*domain.PromoCode, error)
+	Update(ctx context.Context, promo *domain.PromoCode) error
+	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PromoCode], error)
+	ListByCreator(ctx context.Context, creatorID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PromoCode], error)
+	IncrementUses(ctx context.Context, id uuid.UUID) error
+	RecordUsage(ctx context.Context, usage *domain.PromoUsage) error
+}
+
 type ComplaintRepository interface {
 	Create(ctx context.Context, complaint *domain.Complaint) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Complaint, error)
