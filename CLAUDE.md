@@ -91,6 +91,7 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrCertificateNotFound→404, ErrCertificateExpired→400, ErrCertificateInsufficientBalance→400
 - ErrPhotoNotFound→404
 - ErrPromoNotFound→404, ErrPromoExpired→400, ErrPromoMaxUses→409, ErrPromoMinAmount→400, ErrPromoInvalid→400
+- ErrMediaNotFound→404, ErrMediaFileTooLarge→400, ErrMediaInvalidType→400, ErrMediaLimitReached→409
 
 ### Logging
 
@@ -162,3 +163,4 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Gift certificates**: purchasable with or without auth, unique BANI-XXXX-XXXX codes, partial redemption with balance tracking, 365-day validity
 - **Photo verification**: admin-verified bathhouse photos with pending/verified/rejected statuses, `is_photo_verified` badge on bathhouse cards, owner/representative upload with admin moderation queue
 - **Promo codes**: percentage/fixed_amount/free_hour discount types, bathhouse-scoped (owner/representative) and global (admin) codes, usage limits, validity periods, min amount checks, integrated into booking creation discount chain
+- **Review media**: photo/video attachments on reviews (max 10 photos, 1 video per review), file type/size validation, image resize and thumbnail generation, bathhouse gallery endpoint aggregates review media with review status filtering

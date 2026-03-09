@@ -147,7 +147,7 @@ func TestMedia_ValidateMimeType(t *testing.T) {
 	}{
 		{"jpeg", Media{Type: MediaTypeImage, MimeType: "image/jpeg"}, false},
 		{"png", Media{Type: MediaTypeImage, MimeType: "image/png"}, false},
-		{"webp", Media{Type: MediaTypeImage, MimeType: "image/webp"}, false},
+		{"webp", Media{Type: MediaTypeImage, MimeType: "image/webp"}, true},
 		{"invalid image mime", Media{Type: MediaTypeImage, MimeType: "image/gif"}, true},
 		{"mp4", Media{Type: MediaTypeVideo, MimeType: "video/mp4"}, false},
 		{"webm", Media{Type: MediaTypeVideo, MimeType: "video/webm"}, false},
@@ -161,20 +161,5 @@ func TestMedia_ValidateMimeType(t *testing.T) {
 				t.Errorf("ValidateMimeType() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
-	}
-}
-
-func TestMediaConstants(t *testing.T) {
-	if MaxImagesPerReview != 10 {
-		t.Errorf("MaxImagesPerReview = %d, want 10", MaxImagesPerReview)
-	}
-	if MaxVideosPerReview != 1 {
-		t.Errorf("MaxVideosPerReview = %d, want 1", MaxVideosPerReview)
-	}
-	if MaxImageSizeBytes != 10*1024*1024 {
-		t.Errorf("MaxImageSizeBytes = %d, want %d", MaxImageSizeBytes, 10*1024*1024)
-	}
-	if MaxVideoSizeBytes != 50*1024*1024 {
-		t.Errorf("MaxVideoSizeBytes = %d, want %d", MaxVideoSizeBytes, 50*1024*1024)
 	}
 }

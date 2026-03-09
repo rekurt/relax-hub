@@ -140,14 +140,14 @@ func (r *mediaRepo) ListByBathhouseReviews(ctx context.Context, bathhouseID uuid
 	}
 
 	var totalCount int64
-	countQuery := `SELECT COUNT(*) FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image'`
+	countQuery := `SELECT COUNT(*) FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image' AND rv.status = 'approved'`
 	err := r.pool.QueryRow(ctx, countQuery, bathhouseID).Scan(&totalCount)
 	if err != nil {
 		return nil, fmt.Errorf("count bathhouse review media: %w", err)
 	}
 
 	offset := (page - 1) * pageSize
-	query := `SELECT m.id, m.owner_type, m.owner_id, m.user_id, m.type, m.url, m.thumbnail_url, m.original_name, m.size, m.mime_type, m.width, m.height, m.status, m.created_at FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image' ORDER BY m.created_at DESC LIMIT $2 OFFSET $3`
+	query := `SELECT m.id, m.owner_type, m.owner_id, m.user_id, m.type, m.url, m.thumbnail_url, m.original_name, m.size, m.mime_type, m.width, m.height, m.status, m.created_at FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image' AND rv.status = 'approved' ORDER BY m.created_at DESC LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, query, bathhouseID, pageSize, offset)
 	if err != nil {

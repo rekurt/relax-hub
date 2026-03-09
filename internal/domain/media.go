@@ -65,7 +65,6 @@ var (
 	AllowedImageMimeTypes = map[string]bool{
 		"image/jpeg": true,
 		"image/png":  true,
-		"image/webp": true,
 	}
 	AllowedVideoMimeTypes = map[string]bool{
 		"video/mp4":  true,
@@ -147,13 +146,4 @@ func (m *Media) ValidateMimeType() error {
 		}
 	}
 	return nil
-}
-
-type MediaFilter struct {
-	OwnerType *MediaOwnerType
-	OwnerID   *uuid.UUID
-	Status    *MediaStatus
-	Type      *MediaType
-	Page      int
-	PageSize  int
 }
