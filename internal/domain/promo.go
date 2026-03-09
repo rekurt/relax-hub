@@ -48,6 +48,9 @@ func (p *PromoCode) Validate() error {
 	if p.Value <= 0 {
 		return ErrInvalidInput
 	}
+	if p.Type == PromoTypePercentage && p.Value > 100 {
+		return ErrInvalidInput
+	}
 	if p.CreatorID == uuid.Nil {
 		return ErrInvalidInput
 	}

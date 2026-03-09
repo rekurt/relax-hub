@@ -69,7 +69,7 @@ func (n *noopPromoService) Create(_ context.Context, _ uuid.UUID, _ domain.UserR
 func (n *noopPromoService) Validate(_ context.Context, _ string, _ uuid.UUID, _ int64) (*domain.PromoCode, int64, error) {
 	return &domain.PromoCode{}, 0, nil
 }
-func (n *noopPromoService) Apply(_ context.Context, _ uuid.UUID, _ string, _ uuid.UUID, _ int64) (int64, error) {
+func (n *noopPromoService) Apply(_ context.Context, _ uuid.UUID, _ string, _ uuid.UUID, _ uuid.UUID, _ int64) (int64, error) {
 	return 0, nil
 }
 func (n *noopPromoService) Deactivate(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {

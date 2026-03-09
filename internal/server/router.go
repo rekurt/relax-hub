@@ -120,7 +120,7 @@ func NewRouter(p RouterParams) http.Handler {
 		// Promo codes (owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/promo-codes", p.PromoHandler.CreateForBathhouse)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/promo-codes", p.PromoHandler.ListByBathhouse)
-		r.With(auth).Delete("/promo-codes/{id}", p.PromoHandler.Deactivate)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative, domain.RoleAdmin)).Delete("/promo-codes/{id}", p.PromoHandler.Deactivate)
 
 		// Promo codes (public validation)
 		r.Post("/promo-codes/validate", p.PromoHandler.Validate)

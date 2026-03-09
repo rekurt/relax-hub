@@ -18,7 +18,7 @@ import (
 type mockPromoService struct {
 	createFn          func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, promo *domain.PromoCode) (*domain.PromoCode, error)
 	validateFn        func(ctx context.Context, code string, bathhouseID uuid.UUID, amount int64) (*domain.PromoCode, int64, error)
-	applyFn           func(ctx context.Context, userID uuid.UUID, code string, bookingID uuid.UUID, amount int64) (int64, error)
+	applyFn           func(ctx context.Context, userID uuid.UUID, code string, bookingID uuid.UUID, bathhouseID uuid.UUID, amount int64) (int64, error)
 	deactivateFn      func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, promoID uuid.UUID) error
 	listByBathhouseFn func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PromoCode], error)
 }
@@ -37,9 +37,9 @@ func (m *mockPromoService) Validate(ctx context.Context, code string, bathhouseI
 	return nil, 0, nil
 }
 
-func (m *mockPromoService) Apply(ctx context.Context, userID uuid.UUID, code string, bookingID uuid.UUID, amount int64) (int64, error) {
+func (m *mockPromoService) Apply(ctx context.Context, userID uuid.UUID, code string, bookingID uuid.UUID, bathhouseID uuid.UUID, amount int64) (int64, error) {
 	if m.applyFn != nil {
-		return m.applyFn(ctx, userID, code, bookingID, amount)
+		return m.applyFn(ctx, userID, code, bookingID, bathhouseID, amount)
 	}
 	return 0, nil
 }

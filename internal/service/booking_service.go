@@ -256,7 +256,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 
 	// Apply promo code after booking exists in DB
 	if input.PromoCode != "" && promoDiscount > 0 {
-		if _, err := s.promoSvc.Apply(ctx, userID, input.PromoCode, bookingID, originalPriceBeforePromo); err != nil {
+		if _, err := s.promoSvc.Apply(ctx, userID, input.PromoCode, bookingID, input.BathhouseID, originalPriceBeforePromo); err != nil {
 			// Refund loyalty points if they were spent
 			if pointsSpent > 0 {
 				if refundErr := s.loyaltySvc.RefundPoints(ctx, userID, pointsSpent, bookingID); refundErr != nil {

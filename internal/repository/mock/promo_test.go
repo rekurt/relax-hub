@@ -145,27 +145,6 @@ func TestPromoCodeRepo_ListByBathhouse(t *testing.T) {
 	}
 }
 
-func TestPromoCodeRepo_ListByCreator(t *testing.T) {
-	repo := mock.NewPromoCodeRepo()
-	creator1 := uuid.New()
-	creator2 := uuid.New()
-
-	p1 := newTestPromo("C1A", creator1, nil)
-	p2 := newTestPromo("C1B", creator1, nil)
-	p3 := newTestPromo("C2A", creator2, nil)
-	_ = repo.Create(context.Background(), p1)
-	_ = repo.Create(context.Background(), p2)
-	_ = repo.Create(context.Background(), p3)
-
-	result, err := repo.ListByCreator(context.Background(), creator1, 1, 10)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if result.TotalCount != 2 {
-		t.Errorf("total_count = %d, want 2", result.TotalCount)
-	}
-}
-
 func TestPromoCodeRepo_IncrementUses(t *testing.T) {
 	repo := mock.NewPromoCodeRepo()
 	promo := newTestPromo("INC1", uuid.New(), nil)

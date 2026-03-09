@@ -15,7 +15,6 @@ CREATE TABLE promo_codes (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_promo_codes_code ON promo_codes (code);
 CREATE INDEX idx_promo_codes_bathhouse_id ON promo_codes (bathhouse_id);
 CREATE INDEX idx_promo_codes_creator_id ON promo_codes (creator_id);
 CREATE INDEX idx_promo_codes_is_active ON promo_codes (is_active);

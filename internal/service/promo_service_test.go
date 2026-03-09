@@ -46,7 +46,9 @@ func createPromoBathhouse(env *promoTestEnv, ownerID uuid.UUID) *domain.Bathhous
 		MaxGuests:    10,
 		Status:       domain.BathhouseStatusActive,
 	}
-	_ = env.bhRepo.Create(context.Background(), bh)
+	if err := env.bhRepo.Create(context.Background(), bh); err != nil {
+		panic("setup: " + err.Error())
+	}
 	return bh
 }
 
@@ -268,7 +270,9 @@ func TestPromoService_Validate_Expired(t *testing.T) {
 		ValidUntil:  time.Now().Add(-24 * time.Hour),
 		CreatedAt:   time.Now(),
 	}
-	_ = env.promoRepo.Create(context.Background(), promo)
+	if err := env.promoRepo.Create(context.Background(), promo); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
 
 	_, _, err := env.svc.Validate(context.Background(), "EXPIRED", uuid.New(), 200000)
 	if err != domain.ErrPromoExpired {
@@ -292,7 +296,9 @@ func TestPromoService_Validate_MaxUsesReached(t *testing.T) {
 		ValidUntil:  time.Now().Add(24 * time.Hour),
 		CreatedAt:   time.Now(),
 	}
-	_ = env.promoRepo.Create(context.Background(), promo)
+	if err := env.promoRepo.Create(context.Background(), promo); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
 
 	_, _, err := env.svc.Validate(context.Background(), "MAXED", uuid.New(), 200000)
 	if err != domain.ErrPromoMaxUses {
@@ -331,7 +337,9 @@ func TestPromoService_Validate_Inactive(t *testing.T) {
 		ValidUntil:  time.Now().Add(24 * time.Hour),
 		CreatedAt:   time.Now(),
 	}
-	_ = env.promoRepo.Create(context.Background(), promo)
+	if err := env.promoRepo.Create(context.Background(), promo); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
 
 	_, _, err := env.svc.Validate(context.Background(), "INACTIVE", uuid.New(), 200000)
 	if err != domain.ErrPromoInvalid {
@@ -364,7 +372,9 @@ func TestPromoService_Validate_WrongBathhouse(t *testing.T) {
 		ValidUntil:  time.Now().Add(24 * time.Hour),
 		CreatedAt:   time.Now(),
 	}
-	_ = env.promoRepo.Create(context.Background(), promo)
+	if err := env.promoRepo.Create(context.Background(), promo); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
 
 	otherBhID := uuid.New()
 	_, _, err := env.svc.Validate(context.Background(), "BHSPECIFIC", otherBhID, 200000)
@@ -388,7 +398,7 @@ func TestPromoService_Apply_Success(t *testing.T) {
 
 	userID := uuid.New()
 	bookingID := uuid.New()
-	discount, err := env.svc.Apply(context.Background(), userID, "SUMMER20", bookingID, 200000)
+	discount, err := env.svc.Apply(context.Background(), userID, "SUMMER20", bookingID, uuid.Nil, 200000)
 	if err != nil {
 		t.Fatalf("apply: %v", err)
 	}
@@ -400,7 +410,7 @@ func TestPromoService_Apply_Success(t *testing.T) {
 func TestPromoService_Apply_EmptyCode(t *testing.T) {
 	env := newPromoTestEnv()
 
-	_, err := env.svc.Apply(context.Background(), uuid.New(), "", uuid.New(), 200000)
+	_, err := env.svc.Apply(context.Background(), uuid.New(), "", uuid.New(), uuid.Nil, 200000)
 	if err != domain.ErrPromoInvalid {
 		t.Errorf("err = %v, want ErrPromoInvalid", err)
 	}

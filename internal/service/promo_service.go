@@ -14,7 +14,7 @@ import (
 type PromoService interface {
 	Create(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, promo *domain.PromoCode) (*domain.PromoCode, error)
 	Validate(ctx context.Context, code string, bathhouseID uuid.UUID, amount int64) (*domain.PromoCode, int64, error)
-	Apply(ctx context.Context, userID uuid.UUID, code string, bookingID uuid.UUID, amount int64) (int64, error)
+	Apply(ctx context.Context, userID uuid.UUID, code string, bookingID uuid.UUID, bathhouseID uuid.UUID, amount int64) (int64, error)
 	Deactivate(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, promoID uuid.UUID) error
 	ListByBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PromoCode], error)
 }
@@ -89,7 +89,7 @@ func (s *promoService) Validate(ctx context.Context, code string, bathhouseID uu
 	return promo, discount, nil
 }
 
-func (s *promoService) Apply(ctx context.Context, userID uuid.UUID, code string, bookingID uuid.UUID, amount int64) (int64, error) {
+func (s *promoService) Apply(ctx context.Context, userID uuid.UUID, code string, bookingID uuid.UUID, bathhouseID uuid.UUID, amount int64) (int64, error) {
 	code = strings.ToUpper(strings.TrimSpace(code))
 	if code == "" {
 		return 0, domain.ErrPromoInvalid
@@ -100,7 +100,7 @@ func (s *promoService) Apply(ctx context.Context, userID uuid.UUID, code string,
 		return 0, err
 	}
 
-	if err := s.checkPromoValidity(promo, uuid.Nil, amount); err != nil {
+	if err := s.checkPromoValidity(promo, bathhouseID, amount); err != nil {
 		return 0, err
 	}
 

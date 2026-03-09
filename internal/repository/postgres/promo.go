@@ -131,33 +131,6 @@ func (r *promoRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, 
 	return r.scanPromoList(ctx, query, totalCount, page, pageSize, bathhouseID, pageSize, offset)
 }
 
-func (r *promoRepo) ListByCreator(ctx context.Context, creatorID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PromoCode], error) {
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
-	var totalCount int64
-	err := r.pool.QueryRow(ctx,
-		`SELECT COUNT(*) FROM promo_codes WHERE creator_id = $1`, creatorID,
-	).Scan(&totalCount)
-	if err != nil {
-		return nil, fmt.Errorf("count promo codes: %w", err)
-	}
-
-	offset := (page - 1) * pageSize
-	query := `
-		SELECT id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, valid_from, valid_until, is_active, created_at
-		FROM promo_codes
-		WHERE creator_id = $1
-		ORDER BY created_at DESC
-		LIMIT $2 OFFSET $3`
-
-	return r.scanPromoList(ctx, query, totalCount, page, pageSize, creatorID, pageSize, offset)
-}
-
 func (r *promoRepo) scanPromoList(ctx context.Context, query string, totalCount int64, page, pageSize int, args ...any) (*domain.PaginatedResult[domain.PromoCode], error) {
 	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
@@ -191,14 +164,14 @@ func (r *promoRepo) scanPromoList(ctx context.Context, query string, totalCount 
 }
 
 func (r *promoRepo) IncrementUses(ctx context.Context, id uuid.UUID) error {
-	query := `UPDATE promo_codes SET current_uses = current_uses + 1 WHERE id = $1`
+	query := `UPDATE promo_codes SET current_uses = current_uses + 1 WHERE id = $1 AND (max_uses = 0 OR current_uses < max_uses)`
 
 	result, err := r.pool.Exec(ctx, query, id)
 	if err != nil {
 		return fmt.Errorf("increment promo uses: %w", err)
 	}
 	if result.RowsAffected() == 0 {
-		return domain.ErrPromoNotFound
+		return domain.ErrPromoMaxUses
 	}
 	return nil
 }
