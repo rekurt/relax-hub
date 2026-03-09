@@ -26,7 +26,7 @@ type WebhookEvent struct {
 type PaymentService interface {
 	InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (confirmationURL string, err error)
 	HandleWebhook(ctx context.Context, event WebhookEvent) error
-	RefundPayment(ctx context.Context, bookingID uuid.UUID) error
+	RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool) error
 	GetPaymentByBooking(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*domain.Payment, error)
 	ListUserPayments(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
 }
@@ -141,15 +141,44 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 		return nil
 	}
 
+	// Verify the webhook by checking the actual payment status at the provider
+	providerStatus, err := s.provider.GetPaymentStatus(ctx, event.ExternalID)
+	if err != nil {
+		s.logger.Error("failed to verify payment status with provider",
+			"external_id", event.ExternalID, "error", err)
+		return fmt.Errorf("failed to verify payment with provider: %w", err)
+	}
+	if providerStatus != event.Status {
+		s.logger.Warn("webhook status mismatch with provider",
+			"external_id", event.ExternalID, "webhook_status", event.Status, "provider_status", providerStatus)
+		return fmt.Errorf("%w: webhook status does not match provider", domain.ErrInvalidInput)
+	}
+
 	switch event.Status {
 	case "succeeded":
 		if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentSucceeded, event.ExternalID); err != nil {
 			return err
 		}
-		// Update booking status to confirmed on successful payment
+		// Check booking status before confirming - don't re-confirm cancelled bookings
+		booking, err := s.bookingRepo.GetByID(ctx, p.BookingID)
+		if err != nil {
+			return fmt.Errorf("failed to get booking for confirmation: %w", err)
+		}
+		if booking.Status == domain.BookingCancelled {
+			// Booking was cancelled while payment was processing - issue automatic refund
+			s.logger.Warn("booking already cancelled, issuing automatic refund",
+				"booking_id", p.BookingID, "payment_id", p.ID)
+			if refundErr := s.provider.CreateRefund(ctx, p.ExternalID, p.Amount); refundErr != nil {
+				s.logger.Error("failed to auto-refund cancelled booking payment",
+					"booking_id", p.BookingID, "payment_id", p.ID, "error", refundErr)
+				return fmt.Errorf("failed to auto-refund cancelled booking: %w", refundErr)
+			}
+			now := time.Now()
+			return s.paymentRepo.UpdateRefund(ctx, p.ID, p.Amount, now, domain.PaymentRefunded)
+		}
+		// Confirm the booking
 		if err := s.bookingRepo.UpdateStatus(ctx, p.BookingID, domain.BookingConfirmed); err != nil {
-			s.logger.Error("failed to confirm booking after payment",
-				"booking_id", p.BookingID, "payment_id", p.ID, "error", err)
+			return fmt.Errorf("failed to confirm booking after payment: %w", err)
 		}
 	case "canceled":
 		if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentFailed, event.ExternalID); err != nil {
@@ -162,7 +191,7 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 	return nil
 }
 
-func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID) error {
+func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool) error {
 	p, err := s.paymentRepo.GetByBookingID(ctx, bookingID)
 	if err != nil {
 		return err
@@ -177,23 +206,30 @@ func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID)
 		return err
 	}
 
-	timeUntilStart := time.Until(booking.StartTime)
-
-	// No refund if less than 2 hours until start
-	if timeUntilStart < noRefundDeadline {
-		return nil
-	}
-
-	// Full refund if more than 24 hours until start
 	var refundAmount int64
 	var refundStatus domain.PaymentStatus
-	if timeUntilStart >= fullRefundDeadline {
+
+	if forceFullRefund {
+		// Owner/representative-initiated cancellation: always full refund
 		refundAmount = p.Amount
 		refundStatus = domain.PaymentRefunded
 	} else {
-		// Partial refund: 50% between 2h and 24h
-		refundAmount = p.Amount / 2
-		refundStatus = domain.PaymentPartiallyRefunded
+		timeUntilStart := time.Until(booking.StartTime)
+
+		// No refund if less than 2 hours until start
+		if timeUntilStart < noRefundDeadline {
+			return nil
+		}
+
+		// Full refund if more than 24 hours until start
+		if timeUntilStart >= fullRefundDeadline {
+			refundAmount = p.Amount
+			refundStatus = domain.PaymentRefunded
+		} else {
+			// Partial refund: 50% between 2h and 24h
+			refundAmount = p.Amount / 2
+			refundStatus = domain.PaymentPartiallyRefunded
+		}
 	}
 
 	if err := s.provider.CreateRefund(ctx, p.ExternalID, refundAmount); err != nil {

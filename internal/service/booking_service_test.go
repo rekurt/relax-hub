@@ -1091,7 +1091,7 @@ type trackingPaymentService struct {
 	payment      *domain.Payment
 }
 
-func (t *trackingPaymentService) RefundPayment(_ context.Context, _ uuid.UUID) error {
+func (t *trackingPaymentService) RefundPayment(_ context.Context, _ uuid.UUID, _ bool) error {
 	t.refundCalled = true
 	return t.refundErr
 }
