@@ -106,7 +106,7 @@
 - Create: `internal/payment/provider.go` (интерфейс)
 - Modify: `config/config.go`
 
-- [ ] Создать интерфейс PaymentProvider:
+- [x] Создать интерфейс PaymentProvider:
   ```go
   type PaymentProvider interface {
     CreatePayment(ctx context.Context, amount int64, currency string, description string, returnURL string, metadata map[string]string) (externalID string, confirmationURL string, err error)
@@ -114,10 +114,10 @@
     CreateRefund(ctx context.Context, externalID string, amount int64) error
   }
   ```
-- [ ] Реализовать YooKassaProvider с SDK
-- [ ] Добавить конфигурацию: BANI_PAYMENT_YOOKASSA_SHOP_ID, BANI_PAYMENT_YOOKASSA_SECRET_KEY, BANI_PAYMENT_RETURN_URL
-- [ ] Написать тесты с моковым провайдером
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Реализовать YooKassaProvider с SDK
+- [x] Добавить конфигурацию: BANI_PAYMENT_YOOKASSA_SHOP_ID, BANI_PAYMENT_YOOKASSA_SECRET_KEY, BANI_PAYMENT_RETURN_URL
+- [x] Написать тесты с моковым провайдером
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Сервис платежей
 

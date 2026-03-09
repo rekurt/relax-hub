@@ -22,6 +22,7 @@ type Config struct {
 	Moderation  ModerationConfig `mapstructure:"moderation"`
 	Telegram    TelegramConfig   `mapstructure:"telegram"`
 	Admin       AdminConfig      `mapstructure:"admin"`
+	Payment     PaymentConfig    `mapstructure:"payment"`
 }
 
 type OAuthConfig struct {
@@ -52,6 +53,16 @@ type AdminConfig struct {
 	Prefix   string `mapstructure:"prefix"`
 	Language string `mapstructure:"language"`
 	Theme    string `mapstructure:"theme"`
+}
+
+type PaymentConfig struct {
+	YooKassa YooKassaConfig `mapstructure:"yookassa"`
+	ReturnURL string        `mapstructure:"return_url"`
+}
+
+type YooKassaConfig struct {
+	ShopID    string `mapstructure:"shop_id"`
+	SecretKey string `mapstructure:"secret_key"`
 }
 
 type ServerConfig struct {
@@ -129,6 +140,9 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("admin.prefix", "/admin-panel")
 	v.SetDefault("admin.language", "ru")
 	v.SetDefault("admin.theme", "adminlte")
+	v.SetDefault("payment.yookassa.shop_id", "")
+	v.SetDefault("payment.yookassa.secret_key", "")
+	v.SetDefault("payment.return_url", "http://localhost:3000/payment/callback")
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
