@@ -119,7 +119,8 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 			s.logger.Error("failed to update payment status after provider error",
 				"payment_id", p.ID, "error", updErr)
 		}
-		return "", fmt.Errorf("%w: %v", domain.ErrPaymentFailed, err)
+		s.logger.Error("payment provider error", "payment_id", p.ID, "error", err)
+		return "", domain.ErrPaymentFailed
 	}
 
 	// Update with external ID and processing status
