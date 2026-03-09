@@ -46,6 +46,7 @@ Clean architecture: **handler → service → repository**
 - `internal/middleware/` — auth (JWT), RBAC, CORS, logging, panic recovery
 - `internal/server/` — chi router setup
 - `internal/notification/` — dispatcher, email sender, WebSocket hub, telegram sender
+- `internal/payment/` — payment provider abstraction (YooKassa integration)
 - `internal/bot/` — Telegram bot (separate binary: `cmd/bot/`)
 - `internal/app/` — Uber fx DI container
 
@@ -92,6 +93,7 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrPhotoNotFound→404
 - ErrPromoNotFound→404, ErrPromoExpired→400, ErrPromoMaxUses→409, ErrPromoMinAmount→400, ErrPromoInvalid→400
 - ErrMediaNotFound→404, ErrMediaFileTooLarge→400, ErrMediaInvalidType→400, ErrMediaLimitReached→409
+- ErrPaymentNotFound→404, ErrPaymentAlreadyProcessed→409, ErrRefundExceedsAmount→400, ErrPaymentFailed→400
 
 ### Logging
 
@@ -164,3 +166,4 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Photo verification**: admin-verified bathhouse photos with pending/verified/rejected statuses, `is_photo_verified` badge on bathhouse cards, owner/representative upload with admin moderation queue
 - **Promo codes**: percentage/fixed_amount/free_hour discount types, bathhouse-scoped (owner/representative) and global (admin) codes, usage limits, validity periods, min amount checks, integrated into booking creation discount chain
 - **Review media**: photo/video attachments on reviews (max 10 photos, 1 video per review), file type/size validation, image resize and thumbnail generation, bathhouse gallery endpoint aggregates review media with review status filtering
+- **Online payments**: YooKassa integration via PaymentProvider interface, automatic refund on booking cancellation (100% if >24h, 50% if 2-24h, 0% if <2h), webhook processing. Config: `BANI_PAYMENT_YOOKASSA_SHOP_ID`, `BANI_PAYMENT_YOOKASSA_SECRET_KEY`, `BANI_PAYMENT_RETURN_URL`
