@@ -131,6 +131,44 @@ func (r *mediaRepo) ListByOwner(ctx context.Context, ownerType domain.MediaOwner
 	}, nil
 }
 
+func (r *mediaRepo) ListByBathhouseReviews(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error) {
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	var totalCount int64
+	countQuery := `SELECT COUNT(*) FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image'`
+	err := r.pool.QueryRow(ctx, countQuery, bathhouseID).Scan(&totalCount)
+	if err != nil {
+		return nil, fmt.Errorf("count bathhouse review media: %w", err)
+	}
+
+	offset := (page - 1) * pageSize
+	query := `SELECT m.id, m.owner_type, m.owner_id, m.user_id, m.type, m.url, m.thumbnail_url, m.original_name, m.size, m.mime_type, m.width, m.height, m.status, m.created_at FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image' ORDER BY m.created_at DESC LIMIT $2 OFFSET $3`
+
+	rows, err := r.pool.Query(ctx, query, bathhouseID, pageSize, offset)
+	if err != nil {
+		return nil, fmt.Errorf("list media by bathhouse reviews: %w", err)
+	}
+	defer rows.Close()
+
+	items, err := scanMediaRows(rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.PaginatedResult[domain.Media]{
+		Items:      items,
+		TotalCount: totalCount,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
+	}, nil
+}
+
 func (r *mediaRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	query := `DELETE FROM media WHERE id = $1`
 	result, err := r.pool.Exec(ctx, query, id)

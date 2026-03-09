@@ -354,13 +354,17 @@ func TestMediaService_ListByBathhouse(t *testing.T) {
 	env := newMediaTestEnv()
 	userID := uuid.New()
 	bathhouseID := uuid.New()
+	reviewID := uuid.New()
 
-	// Upload 2 images for the same "bathhouse" via review owner
+	// Map the review to the bathhouse in mock
+	env.mediaRepo.SetReviewBathhouse(reviewID, bathhouseID)
+
+	// Upload 2 images for the review
 	for i := 0; i < 2; i++ {
 		imgData := createTestJPEGData(t, 100, 100)
 		_, err := env.svc.Upload(context.Background(), userID, service.UploadMediaInput{
 			OwnerType:    domain.MediaOwnerReview,
-			OwnerID:      bathhouseID,
+			OwnerID:      reviewID,
 			Data:         imgData,
 			OriginalName: "photo.jpg",
 			Size:         int64(imgData.Len()),

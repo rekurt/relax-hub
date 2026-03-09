@@ -28,6 +28,7 @@ type BathhouseHandler struct {
 	favoriteService       service.FavoriteService
 	recommendationService service.RecommendationService
 	analyticsService      service.AnalyticsService
+	mediaService          service.MediaService
 	promotionRepository   repository.PromotionRepository
 	cityRepo              repository.CityRepository
 	log                   *logger.Logger
@@ -41,6 +42,7 @@ func NewBathhouseHandler(
 	favoriteService service.FavoriteService,
 	recommendationService service.RecommendationService,
 	analyticsService service.AnalyticsService,
+	mediaService service.MediaService,
 	promotionRepository repository.PromotionRepository,
 	cityRepo repository.CityRepository,
 	log *logger.Logger,
@@ -53,6 +55,7 @@ func NewBathhouseHandler(
 		favoriteService:       favoriteService,
 		recommendationService: recommendationService,
 		analyticsService:      analyticsService,
+		mediaService:          mediaService,
 		promotionRepository:   promotionRepository,
 		cityRepo:              cityRepo,
 		log:                   log,
@@ -111,6 +114,7 @@ type bathhouseResponse struct {
 	IsFavorite   bool               `json:"is_favorite"`
 	IsPromoted       bool               `json:"is_promoted"`
 	IsPhotoVerified  bool               `json:"is_photo_verified"`
+	GalleryPreview   []mediaResponse    `json:"gallery_preview,omitempty"`
 	Meta         *seo.MetaTags      `json:"meta,omitempty"`
 	CreatedAt    time.Time          `json:"created_at"`
 	UpdatedAt    time.Time          `json:"updated_at"`
@@ -437,6 +441,14 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	h.recordBathhouseView(r, bh.ID, userID)
 
+	// Load gallery preview (first 4 photos from reviews)
+	if h.mediaService != nil {
+		gallery, err := h.mediaService.ListByBathhouse(r.Context(), bh.ID, 1, 4)
+		if err == nil && len(gallery.Items) > 0 {
+			resp.GalleryPreview = toMediaResponses(gallery.Items)
+		}
+	}
+
 	writeJSON(w, http.StatusOK, resp)
 }
 
@@ -465,6 +477,14 @@ func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.recordBathhouseView(r, bh.ID, userID)
+
+	// Load gallery preview (first 4 photos from reviews)
+	if h.mediaService != nil {
+		gallery, err := h.mediaService.ListByBathhouse(r.Context(), bh.ID, 1, 4)
+		if err == nil && len(gallery.Items) > 0 {
+			resp.GalleryPreview = toMediaResponses(gallery.Items)
+		}
+	}
 
 	writeJSON(w, http.StatusOK, resp)
 }

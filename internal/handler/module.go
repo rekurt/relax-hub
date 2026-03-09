@@ -19,12 +19,13 @@ var Module = fx.Module("handler",
 			favoriteService service.FavoriteService,
 			recommendationService service.RecommendationService,
 			analyticsService service.AnalyticsService,
+			mediaService service.MediaService,
 			promotionRepository repository.PromotionRepository,
 			cityRepo repository.CityRepository,
 			log *logger.Logger,
 			cfg *config.Config,
 		) *BathhouseHandler {
-			return NewBathhouseHandler(bathhouseService, bookingService, representativeService, favoriteService, recommendationService, analyticsService, promotionRepository, cityRepo, log, cfg.BaseURL)
+			return NewBathhouseHandler(bathhouseService, bookingService, representativeService, favoriteService, recommendationService, analyticsService, mediaService, promotionRepository, cityRepo, log, cfg.BaseURL)
 		},
 		NewBookingHandler,
 		NewReviewHandler,
@@ -47,6 +48,7 @@ var Module = fx.Module("handler",
 		NewCertificateHandler,
 		NewPhotoHandler,
 		NewPromoHandler,
+		NewMediaHandler,
 		func(svc service.ReferralService, cfg *config.Config) *ReferralHandler {
 			return NewReferralHandler(svc, cfg.BaseURL)
 		},

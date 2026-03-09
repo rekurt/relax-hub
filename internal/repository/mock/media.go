@@ -14,13 +14,15 @@ import (
 
 // MediaRepo is an in-memory mock implementation of repository.MediaRepository
 type MediaRepo struct {
-	mu    sync.RWMutex
-	media map[uuid.UUID]*domain.Media
+	mu               sync.RWMutex
+	media            map[uuid.UUID]*domain.Media
+	reviewBathhouses map[uuid.UUID]uuid.UUID // reviewID -> bathhouseID
 }
 
 func NewMediaRepo() *MediaRepo {
 	return &MediaRepo{
-		media: make(map[uuid.UUID]*domain.Media),
+		media:            make(map[uuid.UUID]*domain.Media),
+		reviewBathhouses: make(map[uuid.UUID]uuid.UUID),
 	}
 }
 
@@ -121,6 +123,59 @@ func (r *MediaRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domain.
 	}
 	m.Status = status
 	return nil
+}
+
+func (r *MediaRepo) ListByBathhouseReviews(_ context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	// In mock, we use BathhouseID field if stored, otherwise filter by ReviewIDs
+	// For testing, we store bathhouseID in a map (see SetReviewBathhouse)
+	var filtered []domain.Media
+	for _, m := range r.media {
+		if m.OwnerType == domain.MediaOwnerReview && m.Type == domain.MediaTypeImage {
+			if bhID, ok := r.reviewBathhouses[m.OwnerID]; ok && bhID == bathhouseID {
+				cp := *m
+				filtered = append(filtered, cp)
+			}
+		}
+	}
+
+	sort.Slice(filtered, func(i, j int) bool {
+		return filtered[i].CreatedAt.After(filtered[j].CreatedAt)
+	})
+
+	totalCount := int64(len(filtered))
+	offset := (page - 1) * pageSize
+	end := offset + pageSize
+	if offset > int(totalCount) {
+		offset = int(totalCount)
+	}
+	if end > int(totalCount) {
+		end = int(totalCount)
+	}
+
+	return &domain.PaginatedResult[domain.Media]{
+		Items:      filtered[offset:end],
+		TotalCount: totalCount,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
+	}, nil
+}
+
+// SetReviewBathhouse maps a reviewID to a bathhouseID for testing ListByBathhouseReviews
+func (r *MediaRepo) SetReviewBathhouse(reviewID, bathhouseID uuid.UUID) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.reviewBathhouses[reviewID] = bathhouseID
 }
 
 func (r *MediaRepo) CountByOwner(_ context.Context, ownerType domain.MediaOwnerType, ownerID uuid.UUID, mediaType *domain.MediaType) (int64, error) {

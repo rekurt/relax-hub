@@ -145,7 +145,7 @@ func (s *mediaService) ListByReview(ctx context.Context, reviewID uuid.UUID) ([]
 }
 
 func (s *mediaService) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error) {
-	return s.mediaRepo.ListByOwner(ctx, domain.MediaOwnerReview, bathhouseID, page, pageSize)
+	return s.mediaRepo.ListByBathhouseReviews(ctx, bathhouseID, page, pageSize)
 }
 
 func (s *mediaService) checkLimits(ctx context.Context, ownerType domain.MediaOwnerType, ownerID uuid.UUID, mediaType domain.MediaType) error {

@@ -44,6 +44,7 @@ type RouterParams struct {
 	SitemapHandler         *handler.SitemapHandler
 	PhotoHandler           *handler.PhotoHandler
 	PromoHandler           *handler.PromoHandler
+	MediaHandler           *handler.MediaHandler
 	GoAdmin                *admin.GoAdmin `optional:"true"`
 }
 
@@ -146,6 +147,9 @@ func NewRouter(p RouterParams) http.Handler {
 		// Review media
 		r.With(auth).Post("/reviews/{id}/media", p.ReviewHandler.UploadMedia)
 		r.With(auth).Delete("/media/{id}", p.ReviewHandler.DeleteMedia)
+
+		// Bathhouse gallery (public)
+		r.Get("/bathhouses/{id}/gallery", p.MediaHandler.BathhouseGallery)
 
 		// Complaints / Reports (authenticated)
 		r.With(auth).Post("/reviews/{id}/report", p.ComplaintHandler.ReportReview)

@@ -69,7 +69,7 @@ func testRouterParams() server.RouterParams {
 		CORS:           cors,
 		AuthService:    authSvc,
 		AuthHandler:    handler.NewAuthHandler(authSvc, nil),
-		BHHandler:      handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, ""),
+		BHHandler:      handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, ""),
 		BookingHandler: handler.NewBookingHandler(nil),
 		ReviewHandler:  handler.NewReviewHandler(nil, nil),
 		FavHandler:     handler.NewFavoriteHandler(nil),
@@ -78,6 +78,7 @@ func testRouterParams() server.RouterParams {
 		AdminHandler:   handler.NewAdminHandler(nil, nil, nil, nil, nil, &mockAdminNotificationService{}),
 		SitemapHandler: handler.NewSitemapHandler(nil, nil, nil, log, ""),
 		PromoHandler:   handler.NewPromoHandler(nil),
+		MediaHandler:   handler.NewMediaHandler(nil),
 	}
 }
 
