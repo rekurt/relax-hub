@@ -100,14 +100,14 @@
 - Create: `internal/handler/promo.go`
 - Modify: `internal/server/router.go`
 
-- [ ] POST /api/v1/my/bathhouses/{id}/promo-codes — создать промокод для бани
-- [ ] GET /api/v1/my/bathhouses/{id}/promo-codes — список промокодов бани
-- [ ] DELETE /api/v1/promo-codes/{id} — деактивировать промокод
-- [ ] POST /api/v1/promo-codes/validate — проверить промокод (публичный)
-- [ ] POST /api/v1/admin/promo-codes — создать глобальный промокод (admin)
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] POST /api/v1/my/bathhouses/{id}/promo-codes — создать промокод для бани
+- [x] GET /api/v1/my/bathhouses/{id}/promo-codes — список промокодов бани
+- [x] DELETE /api/v1/promo-codes/{id} — деактивировать промокод
+- [x] POST /api/v1/promo-codes/validate — проверить промокод (публичный)
+- [x] POST /api/v1/admin/promo-codes — создать глобальный промокод (admin)
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 6: Верификация
 

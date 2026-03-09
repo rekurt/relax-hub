@@ -43,6 +43,7 @@ type RouterParams struct {
 	CertificateHandler     *handler.CertificateHandler
 	SitemapHandler         *handler.SitemapHandler
 	PhotoHandler           *handler.PhotoHandler
+	PromoHandler           *handler.PromoHandler
 	GoAdmin                *admin.GoAdmin `optional:"true"`
 }
 
@@ -115,6 +116,14 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// Bathhouse photos (public)
 		r.Get("/bathhouses/{id}/photos", p.PhotoHandler.ListByBathhouse)
+
+		// Promo codes (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/promo-codes", p.PromoHandler.CreateForBathhouse)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/promo-codes", p.PromoHandler.ListByBathhouse)
+		r.With(auth).Delete("/promo-codes/{id}", p.PromoHandler.Deactivate)
+
+		// Promo codes (public validation)
+		r.Post("/promo-codes/validate", p.PromoHandler.Validate)
 
 		// Bookings (authenticated)
 		r.With(auth, middleware.RequireRole(domain.RoleClient)).Post("/bookings", p.BookingHandler.Create)
@@ -269,6 +278,9 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Get("/photos/pending", p.PhotoHandler.GetPending)
 			r.Patch("/photos/{id}/verify", p.PhotoHandler.Verify)
 			r.Patch("/photos/{id}/reject", p.PhotoHandler.Reject)
+
+			// Promo codes (admin only)
+			r.Post("/promo-codes", p.PromoHandler.CreateGlobal)
 		})
 	})
 

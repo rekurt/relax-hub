@@ -131,6 +131,16 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "certificate_insufficient_balance", err.Error())
 	case errors.Is(err, domain.ErrPhotoNotFound):
 		writeErrorWithContext(w, r, http.StatusNotFound, "photo_not_found", err.Error())
+	case errors.Is(err, domain.ErrPromoNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "promo_not_found", err.Error())
+	case errors.Is(err, domain.ErrPromoExpired):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "promo_expired", err.Error())
+	case errors.Is(err, domain.ErrPromoMaxUses):
+		writeErrorWithContext(w, r, http.StatusConflict, "promo_max_uses", err.Error())
+	case errors.Is(err, domain.ErrPromoMinAmount):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "promo_min_amount", err.Error())
+	case errors.Is(err, domain.ErrPromoInvalid):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "promo_invalid", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
