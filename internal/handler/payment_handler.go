@@ -29,7 +29,6 @@ type paymentResponse struct {
 	Currency     string            `json:"currency"`
 	Status       string            `json:"status"`
 	Provider     string            `json:"provider"`
-	ExternalID   string            `json:"external_id,omitempty"`
 	RefundAmount int64             `json:"refund_amount"`
 	RefundedAt   *time.Time        `json:"refunded_at,omitempty"`
 	Metadata     map[string]string `json:"metadata,omitempty"`
@@ -50,7 +49,6 @@ func toPaymentResponse(p *domain.Payment) paymentResponse {
 		Currency:     p.Currency,
 		Status:       string(p.Status),
 		Provider:     p.Provider,
-		ExternalID:   p.ExternalID,
 		RefundAmount: p.RefundAmount,
 		RefundedAt:   p.RefundedAt,
 		Metadata:     p.Metadata,

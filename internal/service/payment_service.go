@@ -137,7 +137,19 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 	}
 
 	if p.Status == domain.PaymentSucceeded || p.Status == domain.PaymentRefunded || p.Status == domain.PaymentPartiallyRefunded {
-		// Already in terminal state - return nil for idempotency (200 OK to provider)
+		// Already in terminal state - ensure downstream actions completed (booking confirmation)
+		if p.Status == domain.PaymentSucceeded {
+			booking, err := s.bookingRepo.GetByID(ctx, p.BookingID)
+			if err != nil {
+				return fmt.Errorf("failed to get booking for idempotency check: %w", err)
+			}
+			if booking.Status == domain.BookingPending {
+				// Payment succeeded but booking was never confirmed (previous webhook partially failed)
+				if err := s.bookingRepo.UpdateStatus(ctx, p.BookingID, domain.BookingConfirmed); err != nil {
+					return fmt.Errorf("failed to confirm booking on retry: %w", err)
+				}
+			}
+		}
 		return nil
 	}
 
@@ -168,7 +180,7 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 			// Booking was cancelled while payment was processing - issue automatic refund
 			s.logger.Warn("booking already cancelled, issuing automatic refund",
 				"booking_id", p.BookingID, "payment_id", p.ID)
-			if refundErr := s.provider.CreateRefund(ctx, p.ExternalID, p.Amount); refundErr != nil {
+			if refundErr := s.provider.CreateRefund(ctx, event.ExternalID, p.Amount); refundErr != nil {
 				s.logger.Error("failed to auto-refund cancelled booking payment",
 					"booking_id", p.BookingID, "payment_id", p.ID, "error", refundErr)
 				return fmt.Errorf("failed to auto-refund cancelled booking: %w", refundErr)
