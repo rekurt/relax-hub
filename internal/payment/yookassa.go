@@ -78,7 +78,9 @@ func (p *YooKassaProvider) CreateRefund(ctx context.Context, externalID string, 
 		},
 	}
 
-	handler := p.refundHandler.WithIdempotencyKey(uuid.New().String())
+	// Use deterministic idempotency key to prevent double refunds if the DB update
+	// after a successful provider refund fails and the operation is retried.
+	handler := p.refundHandler.WithIdempotencyKey(fmt.Sprintf("refund-%s-%d", externalID, amount))
 	_, err := handler.CreateRefund(ctx, refund)
 	if err != nil {
 		return fmt.Errorf("yookassa create refund: %w", err)
