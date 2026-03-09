@@ -256,6 +256,15 @@ type PromoCodeRepository interface {
 	RefundUsage(ctx context.Context, promoCodeID uuid.UUID, usageID uuid.UUID) error
 }
 
+type MediaRepository interface {
+	Create(ctx context.Context, media *domain.Media) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Media, error)
+	ListByOwner(ctx context.Context, ownerType domain.MediaOwnerType, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Media], error)
+	Delete(ctx context.Context, id uuid.UUID) error
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.MediaStatus) error
+	CountByOwner(ctx context.Context, ownerType domain.MediaOwnerType, ownerID uuid.UUID, mediaType *domain.MediaType) (int64, error)
+}
+
 type ComplaintRepository interface {
 	Create(ctx context.Context, complaint *domain.Complaint) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Complaint, error)

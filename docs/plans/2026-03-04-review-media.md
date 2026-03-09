@@ -61,16 +61,16 @@
 - Create: `internal/repository/mock/media.go`
 - Create: `internal/service/media_service.go`
 
-- [ ] MediaRepository: Create, GetByID, ListByOwner, Delete, UpdateStatus
-- [ ] MediaService:
+- [x] MediaRepository: Create, GetByID, ListByOwner, Delete, UpdateStatus
+- [x] MediaService:
   - Upload(ctx, ownerType, ownerID, userID, file) — загрузить файл, создать thumbnail, сохранить в S3
   - Delete(ctx, mediaID, userID) — удалить (автор или админ)
   - ListByReview(ctx, reviewID) — медиа отзыва
   - ListByBathhouse(ctx, bathhouseID, page, pageSize) — галерея бани (все фото из отзывов)
-- [ ] Обработка изображений: ресайз до макс 1920px, thumbnail 300x300, JPEG оптимизация
-- [ ] Валидация: проверка mime type, размера файла
-- [ ] Написать unit-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Обработка изображений: ресайз до макс 1920px, thumbnail 300x300, JPEG оптимизация
+- [x] Валидация: проверка mime type, размера файла
+- [x] Написать unit-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Интеграция с отзывами
 
