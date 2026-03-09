@@ -37,4 +37,9 @@ var (
 	ErrCertificateInsufficientBalance = errors.New("gift certificate insufficient balance")
 
 	ErrPhotoNotFound = errors.New("photo not found")
+
+	ErrMediaNotFound     = errors.New("media not found")
+	ErrMediaFileTooLarge = errors.New("media file too large")
+	ErrMediaInvalidType  = errors.New("media invalid file type")
+	ErrMediaLimitReached = errors.New("media upload limit reached")
 )
