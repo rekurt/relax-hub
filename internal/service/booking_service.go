@@ -379,6 +379,7 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 	s.refundBookingPoints(ctx, booking)
 	s.refundReferralBonus(ctx, booking)
 	s.refundPromoUsage(ctx, booking)
+	s.refundPayment(ctx, booking)
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingRejected)
 	return nil
 }

@@ -85,7 +85,7 @@ func (n *noopPromoService) RefundUsage(_ context.Context, _ uuid.UUID) error {
 // noopPaymentService is a no-op PaymentService for tests that don't verify payments.
 type noopPaymentService struct{}
 
-func (n *noopPaymentService) InitiatePayment(_ context.Context, _ uuid.UUID) (string, error) {
+func (n *noopPaymentService) InitiatePayment(_ context.Context, _, _ uuid.UUID) (string, error) {
 	return "", nil
 }
 func (n *noopPaymentService) HandleWebhook(_ context.Context, _ service.WebhookEvent) error {
@@ -94,7 +94,7 @@ func (n *noopPaymentService) HandleWebhook(_ context.Context, _ service.WebhookE
 func (n *noopPaymentService) RefundPayment(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
-func (n *noopPaymentService) GetPaymentByBooking(_ context.Context, _ uuid.UUID) (*domain.Payment, error) {
+func (n *noopPaymentService) GetPaymentByBooking(_ context.Context, _, _ uuid.UUID) (*domain.Payment, error) {
 	return nil, domain.ErrPaymentNotFound
 }
 func (n *noopPaymentService) ListUserPayments(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Payment], error) {

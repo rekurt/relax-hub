@@ -82,12 +82,12 @@ func toBookingResultResponse(r *service.BookingResult) bookingResponse {
 	return resp
 }
 
-func (h *BookingHandler) enrichWithPaymentStatus(ctx context.Context, resp *bookingResponse) {
+func (h *BookingHandler) enrichWithPaymentStatus(ctx context.Context, userID uuid.UUID, resp *bookingResponse) {
 	bookingID, err := uuid.Parse(resp.ID)
 	if err != nil {
 		return
 	}
-	p, err := h.paymentService.GetPaymentByBooking(ctx, bookingID)
+	p, err := h.paymentService.GetPaymentByBooking(ctx, userID, bookingID)
 	if err != nil || p == nil {
 		return
 	}
@@ -153,7 +153,7 @@ func (h *BookingHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 	items := make([]bookingResponse, len(result.Items))
 	for i := range result.Items {
 		items[i] = toBookingResponse(&result.Items[i])
-		h.enrichWithPaymentStatus(r.Context(), &items[i])
+		h.enrichWithPaymentStatus(r.Context(), userID, &items[i])
 	}
 
 	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
@@ -258,7 +258,7 @@ func (h *BookingHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request)
 	items := make([]bookingResponse, len(result.Items))
 	for i := range result.Items {
 		items[i] = toBookingResponse(&result.Items[i])
-		h.enrichWithPaymentStatus(r.Context(), &items[i])
+		h.enrichWithPaymentStatus(r.Context(), userID, &items[i])
 	}
 
 	writeJSONWithMeta(w, http.StatusOK, items, &Meta{

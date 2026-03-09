@@ -179,7 +179,7 @@ func TestPaymentRepo_UpdateRefund(t *testing.T) {
 	_ = repo.Create(context.Background(), payment)
 
 	refundedAt := time.Now()
-	err := repo.UpdateRefund(context.Background(), payment.ID, 500000, refundedAt)
+	err := repo.UpdateRefund(context.Background(), payment.ID, 500000, refundedAt, domain.PaymentRefunded)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -199,7 +199,7 @@ func TestPaymentRepo_UpdateRefund(t *testing.T) {
 func TestPaymentRepo_UpdateRefund_NotFound(t *testing.T) {
 	repo := mock.NewPaymentRepo()
 
-	err := repo.UpdateRefund(context.Background(), uuid.New(), 500000, time.Now())
+	err := repo.UpdateRefund(context.Background(), uuid.New(), 500000, time.Now(), domain.PaymentRefunded)
 	if err != domain.ErrPaymentNotFound {
 		t.Errorf("err = %v, want ErrPaymentNotFound", err)
 	}

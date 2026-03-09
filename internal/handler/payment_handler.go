@@ -67,7 +67,8 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	confirmationURL, err := h.paymentService.InitiatePayment(r.Context(), bookingID)
+	userID := middleware.GetUserID(r.Context())
+	confirmationURL, err := h.paymentService.InitiatePayment(r.Context(), userID, bookingID)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -80,7 +81,8 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 
 // HandleWebhook handles POST /api/v1/webhooks/yookassa
 func (h *PaymentHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(io.LimitReader(r.Body, maxBodySize))
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_input", "failed to read request body")
 		return
@@ -151,7 +153,8 @@ func (h *PaymentHandler) GetBookingPayment(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	p, err := h.paymentService.GetPaymentByBooking(r.Context(), bookingID)
+	userID := middleware.GetUserID(r.Context())
+	p, err := h.paymentService.GetPaymentByBooking(r.Context(), userID, bookingID)
 	if err != nil {
 		handleServiceError(w, err)
 		return

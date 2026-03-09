@@ -13,6 +13,7 @@
 - [Favorites](#favorites)
 - [Representatives](#representatives)
 - [Cities](#cities)
+- [Payments](#payments)
 - [Admin](#admin)
 - [Health Checks](#health-checks)
 - [Response Format](#response-format)
@@ -957,6 +958,100 @@ search=Москва        # Текстовый поиск
 
 ---
 
+## Payments
+
+### Initiate Payment
+
+Инициирование оплаты бронирования через ЮKassa.
+
+**Endpoint:** `POST /bookings/{id}/pay`
+
+**Access:** Authenticated (только владелец бронирования)
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "confirmation_url": "https://yoomoney.ru/checkout/..."
+  }
+}
+```
+
+**Errors:**
+- `400` — бронирование не в статусе pending/confirmed
+- `403` — пользователь не является владельцем бронирования
+- `409` — оплата уже инициирована или завершена
+
+### Get Booking Payment
+
+Получение информации об оплате бронирования.
+
+**Endpoint:** `GET /bookings/{id}/payment`
+
+**Access:** Authenticated (только владелец бронирования)
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "booking_id": "uuid",
+    "user_id": "uuid",
+    "amount": 500000,
+    "currency": "RUB",
+    "status": "succeeded",
+    "provider": "yookassa",
+    "external_id": "...",
+    "refund_amount": 0,
+    "refunded_at": null,
+    "created_at": "2026-03-09T12:00:00Z",
+    "updated_at": "2026-03-09T12:00:00Z"
+  }
+}
+```
+
+### List My Payments
+
+История платежей текущего пользователя.
+
+**Endpoint:** `GET /my/payments`
+
+**Access:** Authenticated
+
+**Query Parameters:** `page`, `page_size`
+
+**Response:** `200 OK` (paginated list of payment objects)
+
+### YooKassa Webhook
+
+Webhook от ЮKassa для обработки событий оплаты.
+
+**Endpoint:** `POST /webhooks/yookassa`
+
+**Access:** Public
+
+**Request Body:** YooKassa notification JSON
+
+**Response:** `200 OK`
+
+```json
+{ "status": "ok" }
+```
+
+### Refund Policy
+
+При отмене бронирования автоматически выполняется возврат:
+
+- Более 24 часов до визита — 100% возврат
+- От 2 до 24 часов до визита — 50% возврат
+- Менее 2 часов до визита — без возврата
+
+---
+
 ## Admin
 
 ### Get Users
@@ -1180,6 +1275,10 @@ page_size=20
 | BATHHOUSE_NOT_ACTIVE | 400 | Баня не активна |
 | BATHHOUSE_HAS_BOOKINGS | 409 | Баня имеет бронирования |
 | REVIEW_ALREADY_RESPONDED | 409 | На отзыв уже дан ответ |
+| PAYMENT_NOT_FOUND | 404 | Платёж не найден |
+| PAYMENT_ALREADY_PROCESSED | 409 | Платёж уже обработан |
+| REFUND_EXCEEDS_AMOUNT | 400 | Сумма возврата превышает сумму платежа |
+| PAYMENT_FAILED | 400 | Ошибка оплаты |
 | INTERNAL_SERVER_ERROR | 500 | Внутренняя ошибка сервера |
 
 ---

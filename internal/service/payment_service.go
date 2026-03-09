@@ -24,10 +24,10 @@ type WebhookEvent struct {
 }
 
 type PaymentService interface {
-	InitiatePayment(ctx context.Context, bookingID uuid.UUID) (confirmationURL string, err error)
+	InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (confirmationURL string, err error)
 	HandleWebhook(ctx context.Context, event WebhookEvent) error
 	RefundPayment(ctx context.Context, bookingID uuid.UUID) error
-	GetPaymentByBooking(ctx context.Context, bookingID uuid.UUID) (*domain.Payment, error)
+	GetPaymentByBooking(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*domain.Payment, error)
 	ListUserPayments(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
 }
 
@@ -55,10 +55,14 @@ func NewPaymentService(
 	}
 }
 
-func (s *paymentService) InitiatePayment(ctx context.Context, bookingID uuid.UUID) (string, error) {
+func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (string, error) {
 	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
 	if err != nil {
 		return "", err
+	}
+
+	if booking.UserID != userID {
+		return "", domain.ErrForbidden
 	}
 
 	if booking.Status != domain.BookingPending && booking.Status != domain.BookingConfirmed {
@@ -73,6 +77,12 @@ func (s *paymentService) InitiatePayment(ctx context.Context, bookingID uuid.UUI
 		}
 		if existing.Status == domain.PaymentPending || existing.Status == domain.PaymentProcessing {
 			return "", domain.ErrPaymentAlreadyProcessed
+		}
+		// If previous payment failed, delete it to allow retry
+		if existing.Status == domain.PaymentFailed {
+			if err := s.paymentRepo.Delete(ctx, existing.ID); err != nil {
+				return "", fmt.Errorf("failed to delete failed payment: %w", err)
+			}
 		}
 	}
 
@@ -126,8 +136,9 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 		return err
 	}
 
-	if p.Status == domain.PaymentSucceeded || p.Status == domain.PaymentRefunded {
-		return domain.ErrPaymentAlreadyProcessed
+	if p.Status == domain.PaymentSucceeded || p.Status == domain.PaymentRefunded || p.Status == domain.PaymentPartiallyRefunded {
+		// Already in terminal state - return nil for idempotency (200 OK to provider)
+		return nil
 	}
 
 	switch event.Status {
@@ -175,11 +186,14 @@ func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID)
 
 	// Full refund if more than 24 hours until start
 	var refundAmount int64
+	var refundStatus domain.PaymentStatus
 	if timeUntilStart >= fullRefundDeadline {
 		refundAmount = p.Amount
+		refundStatus = domain.PaymentRefunded
 	} else {
 		// Partial refund: 50% between 2h and 24h
 		refundAmount = p.Amount / 2
+		refundStatus = domain.PaymentPartiallyRefunded
 	}
 
 	if err := s.provider.CreateRefund(ctx, p.ExternalID, refundAmount); err != nil {
@@ -187,15 +201,22 @@ func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID)
 	}
 
 	now := time.Now()
-	if err := s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now); err != nil {
+	if err := s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now, refundStatus); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *paymentService) GetPaymentByBooking(ctx context.Context, bookingID uuid.UUID) (*domain.Payment, error) {
-	return s.paymentRepo.GetByBookingID(ctx, bookingID)
+func (s *paymentService) GetPaymentByBooking(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*domain.Payment, error) {
+	p, err := s.paymentRepo.GetByBookingID(ctx, bookingID)
+	if err != nil {
+		return nil, err
+	}
+	if p.UserID != userID {
+		return nil, domain.ErrForbidden
+	}
+	return p, nil
 }
 
 func (s *paymentService) ListUserPayments(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error) {

@@ -110,12 +110,23 @@ func (r *paymentRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status dom
 	return nil
 }
 
-func (r *paymentRepo) UpdateRefund(ctx context.Context, id uuid.UUID, refundAmount int64, refundedAt time.Time) error {
+func (r *paymentRepo) UpdateRefund(ctx context.Context, id uuid.UUID, refundAmount int64, refundedAt time.Time, status domain.PaymentStatus) error {
 	query := `UPDATE payments SET refund_amount = $2, refunded_at = $3, status = $4, updated_at = $5 WHERE id = $1`
 
-	tag, err := r.pool.Exec(ctx, query, id, refundAmount, refundedAt, domain.PaymentRefunded, time.Now())
+	tag, err := r.pool.Exec(ctx, query, id, refundAmount, refundedAt, status, time.Now())
 	if err != nil {
 		return fmt.Errorf("update payment refund: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrPaymentNotFound
+	}
+	return nil
+}
+
+func (r *paymentRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	tag, err := r.pool.Exec(ctx, `DELETE FROM payments WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("delete payment: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
 		return domain.ErrPaymentNotFound

@@ -103,7 +103,7 @@ func (r *PaymentRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domai
 	return nil
 }
 
-func (r *PaymentRepo) UpdateRefund(_ context.Context, id uuid.UUID, refundAmount int64, refundedAt time.Time) error {
+func (r *PaymentRepo) UpdateRefund(_ context.Context, id uuid.UUID, refundAmount int64, refundedAt time.Time, status domain.PaymentStatus) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -114,8 +114,19 @@ func (r *PaymentRepo) UpdateRefund(_ context.Context, id uuid.UUID, refundAmount
 
 	p.RefundAmount = refundAmount
 	p.RefundedAt = &refundedAt
-	p.Status = domain.PaymentRefunded
+	p.Status = status
 	p.UpdatedAt = time.Now()
+	return nil
+}
+
+func (r *PaymentRepo) Delete(_ context.Context, id uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, ok := r.payments[id]; !ok {
+		return domain.ErrPaymentNotFound
+	}
+	delete(r.payments, id)
 	return nil
 }
 

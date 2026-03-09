@@ -1096,7 +1096,7 @@ func (t *trackingPaymentService) RefundPayment(_ context.Context, _ uuid.UUID) e
 	return t.refundErr
 }
 
-func (t *trackingPaymentService) GetPaymentByBooking(_ context.Context, _ uuid.UUID) (*domain.Payment, error) {
+func (t *trackingPaymentService) GetPaymentByBooking(_ context.Context, _, _ uuid.UUID) (*domain.Payment, error) {
 	if t.payment != nil {
 		return t.payment, nil
 	}

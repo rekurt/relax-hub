@@ -1772,7 +1772,7 @@ func TestBookingHandler_ListByUser_WithPaymentStatus(t *testing.T) {
 	}
 
 	paymentSvc := &mockPaymentService{
-		getByBookingFn: func(_ context.Context, bID uuid.UUID) (*domain.Payment, error) {
+		getByBookingFn: func(_ context.Context, _, bID uuid.UUID) (*domain.Payment, error) {
 			if bID == bookingID {
 				return &domain.Payment{
 					ID: uuid.New(), BookingID: bookingID, UserID: clientID,

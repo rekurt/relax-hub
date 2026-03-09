@@ -20,16 +20,16 @@ import (
 // --- Mock payment service ---
 
 type mockPaymentService struct {
-	initiateFn       func(ctx context.Context, bookingID uuid.UUID) (string, error)
+	initiateFn       func(ctx context.Context, userID, bookingID uuid.UUID) (string, error)
 	handleWebhookFn  func(ctx context.Context, event service.WebhookEvent) error
 	refundFn         func(ctx context.Context, bookingID uuid.UUID) error
-	getByBookingFn   func(ctx context.Context, bookingID uuid.UUID) (*domain.Payment, error)
+	getByBookingFn   func(ctx context.Context, userID, bookingID uuid.UUID) (*domain.Payment, error)
 	listUserFn       func(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
 }
 
-func (m *mockPaymentService) InitiatePayment(ctx context.Context, bookingID uuid.UUID) (string, error) {
+func (m *mockPaymentService) InitiatePayment(ctx context.Context, userID, bookingID uuid.UUID) (string, error) {
 	if m.initiateFn != nil {
-		return m.initiateFn(ctx, bookingID)
+		return m.initiateFn(ctx, userID, bookingID)
 	}
 	return "", nil
 }
@@ -48,9 +48,9 @@ func (m *mockPaymentService) RefundPayment(ctx context.Context, bookingID uuid.U
 	return nil
 }
 
-func (m *mockPaymentService) GetPaymentByBooking(ctx context.Context, bookingID uuid.UUID) (*domain.Payment, error) {
+func (m *mockPaymentService) GetPaymentByBooking(ctx context.Context, userID, bookingID uuid.UUID) (*domain.Payment, error) {
 	if m.getByBookingFn != nil {
-		return m.getByBookingFn(ctx, bookingID)
+		return m.getByBookingFn(ctx, userID, bookingID)
 	}
 	return nil, nil
 }
@@ -71,7 +71,7 @@ func TestPaymentHandler_InitiatePayment(t *testing.T) {
 	expectedURL := "https://yookassa.ru/checkout/confirm/abc123"
 
 	svc := &mockPaymentService{
-		initiateFn: func(ctx context.Context, bID uuid.UUID) (string, error) {
+		initiateFn: func(ctx context.Context, uID, bID uuid.UUID) (string, error) {
 			if bID != bookingID {
 				t.Errorf("expected booking ID %v, got %v", bookingID, bID)
 			}
@@ -126,7 +126,7 @@ func TestPaymentHandler_InitiatePayment_InvalidID(t *testing.T) {
 
 func TestPaymentHandler_InitiatePayment_AlreadyProcessed(t *testing.T) {
 	svc := &mockPaymentService{
-		initiateFn: func(ctx context.Context, bID uuid.UUID) (string, error) {
+		initiateFn: func(ctx context.Context, uID, bID uuid.UUID) (string, error) {
 			return "", domain.ErrPaymentAlreadyProcessed
 		},
 	}
@@ -305,7 +305,7 @@ func TestPaymentHandler_GetBookingPayment(t *testing.T) {
 	now := time.Now()
 
 	svc := &mockPaymentService{
-		getByBookingFn: func(ctx context.Context, bID uuid.UUID) (*domain.Payment, error) {
+		getByBookingFn: func(ctx context.Context, uID, bID uuid.UUID) (*domain.Payment, error) {
 			if bID != bookingID {
 				t.Errorf("expected booking ID %v, got %v", bookingID, bID)
 			}
@@ -358,7 +358,7 @@ func TestPaymentHandler_GetBookingPayment(t *testing.T) {
 
 func TestPaymentHandler_GetBookingPayment_NotFound(t *testing.T) {
 	svc := &mockPaymentService{
-		getByBookingFn: func(ctx context.Context, bID uuid.UUID) (*domain.Payment, error) {
+		getByBookingFn: func(ctx context.Context, uID, bID uuid.UUID) (*domain.Payment, error) {
 			return nil, domain.ErrPaymentNotFound
 		},
 	}

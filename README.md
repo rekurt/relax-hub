@@ -97,6 +97,9 @@ make run
 | `BANI_REDIS_ADDR` | Redis адрес | `localhost:6379` |
 | `BANI_JWT_SECRET` | Секрет для JWT | `change-me-in-production` |
 | `BANI_JWT_TOKEN_TTL` | Время жизни токена | `24h` |
+| `BANI_PAYMENT_YOOKASSA_SHOP_ID` | Shop ID в ЮKassa | `` |
+| `BANI_PAYMENT_YOOKASSA_SECRET_KEY` | Секретный ключ ЮKassa | `` |
+| `BANI_PAYMENT_RETURN_URL` | URL возврата после оплаты | `http://localhost:3000/payment/callback` |
 
 ## API Endpoints
 
@@ -184,6 +187,15 @@ make run
 | Метод | Путь | Доступ | Описание |
 |-------|------|--------|----------|
 | GET | `/cities` | public | Список городов |
+
+### Платежи
+
+| Метод | Путь | Доступ | Описание |
+|-------|------|--------|----------|
+| POST | `/bookings/{id}/pay` | auth | Инициировать оплату бронирования |
+| GET | `/bookings/{id}/payment` | auth | Статус оплаты бронирования |
+| GET | `/my/payments` | auth | История платежей пользователя |
+| POST | `/webhooks/yookassa` | public | Webhook от ЮKassa |
 
 ### Администрирование
 
