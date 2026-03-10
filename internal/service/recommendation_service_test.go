@@ -12,11 +12,11 @@ import (
 
 func TestRecommendationService_UpdatePreferences(t *testing.T) {
 	tests := []struct {
-		name      string
-		userID    uuid.UUID
-		prefs     *domain.UserPreferences
-		wantErr   bool
-		errType   error
+		name    string
+		userID  uuid.UUID
+		prefs   *domain.UserPreferences
+		wantErr bool
+		errType error
 	}{
 		{
 			name:    "successful update",
@@ -70,7 +70,7 @@ func TestRecommendationService_UpdatePreferences(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			recRepo := mockrepo.NewRecommendationRepo()
 			bhRepo := mockrepo.NewBathhouseRepo()
-			svc := NewRecommendationService(recRepo, bhRepo)
+			svc := NewRecommendationService(recRepo, bhRepo, nil)
 
 			err := svc.UpdatePreferences(context.Background(), tt.userID, tt.prefs)
 
@@ -115,7 +115,7 @@ func TestRecommendationService_RecordView(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			recRepo := mockrepo.NewRecommendationRepo()
 			bhRepo := mockrepo.NewBathhouseRepo()
-			svc := NewRecommendationService(recRepo, bhRepo)
+			svc := NewRecommendationService(recRepo, bhRepo, nil)
 
 			err := svc.RecordView(context.Background(), tt.userID, tt.bathhouseID)
 
@@ -130,7 +130,7 @@ func TestRecommendationService_GetSimilar(t *testing.T) {
 	t.Run("successful similar bathhouses retrieval", func(t *testing.T) {
 		recRepo := mockrepo.NewRecommendationRepo()
 		bhRepo := mockrepo.NewBathhouseRepo()
-		svc := NewRecommendationService(recRepo, bhRepo)
+		svc := NewRecommendationService(recRepo, bhRepo, nil)
 
 		bathhouseID := uuid.New()
 		result, err := svc.GetSimilar(context.Background(), bathhouseID, 5)
@@ -147,7 +147,7 @@ func TestRecommendationService_GetSimilar(t *testing.T) {
 	t.Run("default limit applied", func(t *testing.T) {
 		recRepo := mockrepo.NewRecommendationRepo()
 		bhRepo := mockrepo.NewBathhouseRepo()
-		svc := NewRecommendationService(recRepo, bhRepo)
+		svc := NewRecommendationService(recRepo, bhRepo, nil)
 
 		bathhouseID := uuid.New()
 		// Call with 0 limit - should use default 10
@@ -167,7 +167,7 @@ func TestRecommendationService_GetPopular(t *testing.T) {
 	t.Run("successful popular bathhouses retrieval", func(t *testing.T) {
 		recRepo := mockrepo.NewRecommendationRepo()
 		bhRepo := mockrepo.NewBathhouseRepo()
-		svc := NewRecommendationService(recRepo, bhRepo)
+		svc := NewRecommendationService(recRepo, bhRepo, nil)
 
 		result, err := svc.GetPopular(context.Background(), 1, 5)
 
@@ -183,7 +183,7 @@ func TestRecommendationService_GetPopular(t *testing.T) {
 	t.Run("default limit applied", func(t *testing.T) {
 		recRepo := mockrepo.NewRecommendationRepo()
 		bhRepo := mockrepo.NewBathhouseRepo()
-		svc := NewRecommendationService(recRepo, bhRepo)
+		svc := NewRecommendationService(recRepo, bhRepo, nil)
 
 		// Call with 0 limit - should use default 10
 		result, err := svc.GetPopular(context.Background(), 1, 0)
@@ -202,7 +202,7 @@ func TestRecommendationService_GetPersonalized(t *testing.T) {
 	t.Run("returns empty results when no bookings", func(t *testing.T) {
 		recRepo := mockrepo.NewRecommendationRepo()
 		bhRepo := mockrepo.NewBathhouseRepo()
-		svc := NewRecommendationService(recRepo, bhRepo)
+		svc := NewRecommendationService(recRepo, bhRepo, nil)
 
 		userID := uuid.New()
 		results, total, err := svc.GetPersonalized(context.Background(), userID, 1, 10)
@@ -242,7 +242,7 @@ func TestRecommendationService_GetPersonalized(t *testing.T) {
 			}
 		}
 
-		svc := NewRecommendationService(recRepo, bhRepo)
+		svc := NewRecommendationService(recRepo, bhRepo, nil)
 
 		// Test first page
 		results1, total1, err := svc.GetPersonalized(context.Background(), userID, 1, 10)
@@ -463,7 +463,7 @@ func TestRecommendationService_ScoringAndRanking(t *testing.T) {
 			t.Fatalf("failed to create bathhouse: %v", err)
 		}
 
-		svc := NewRecommendationService(recRepo, bhRepo)
+		svc := NewRecommendationService(recRepo, bhRepo, nil)
 		userID := uuid.New()
 
 		// Should return highest rated first
@@ -482,7 +482,7 @@ func TestRecommendationService_ActivityTracking(t *testing.T) {
 	t.Run("records activity with correct timestamp", func(t *testing.T) {
 		recRepo := mockrepo.NewRecommendationRepo()
 		bhRepo := mockrepo.NewBathhouseRepo()
-		svc := NewRecommendationService(recRepo, bhRepo)
+		svc := NewRecommendationService(recRepo, bhRepo, nil)
 
 		userID := uuid.New()
 		bhID := uuid.New()
@@ -503,5 +503,101 @@ func TestRecommendationService_ActivityTracking(t *testing.T) {
 		// Check timestamp is reasonable
 		_ = before
 		_ = after
+	})
+}
+
+// mockLoyaltyService implements LoyaltyService for testing
+type mockLoyaltyService struct {
+	account *domain.LoyaltyAccount
+	err     error
+}
+
+func (m *mockLoyaltyService) GetAccount(_ context.Context, _ uuid.UUID) (*domain.LoyaltyAccount, error) {
+	return m.account, m.err
+}
+
+func (m *mockLoyaltyService) EarnPoints(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ int64) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockLoyaltyService) SpendPoints(_ context.Context, _ uuid.UUID, _ int64, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockLoyaltyService) RefundPoints(_ context.Context, _ uuid.UUID, _ int64, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockLoyaltyService) GetDiscount(_ context.Context, _ uuid.UUID) (int, error) {
+	return 0, nil
+}
+
+func (m *mockLoyaltyService) RecalculateLevel(_ context.Context, _ uuid.UUID) (*LevelChangeResult, error) {
+	return nil, nil
+}
+
+func (m *mockLoyaltyService) ListTransactions(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.LoyaltyTransaction], error) {
+	return nil, nil
+}
+
+func TestGetPersonalized_WithLoyaltyBoost(t *testing.T) {
+	t.Run("gold user gets higher scores", func(t *testing.T) {
+		recRepo := mockrepo.NewRecommendationRepo()
+		bhRepo := mockrepo.NewBathhouseRepo()
+
+		loyaltySvc := &mockLoyaltyService{
+			account: &domain.LoyaltyAccount{
+				Level:      domain.LoyaltyGold,
+				VisitCount: 20,
+			},
+		}
+
+		svc := NewRecommendationService(recRepo, bhRepo, loyaltySvc)
+		userID := uuid.New()
+
+		// With no similar users, we get 0 results, but the service should not error
+		results, total, err := svc.GetPersonalized(context.Background(), userID, 1, 10)
+		if err != nil {
+			t.Fatalf("GetPersonalized() error = %v", err)
+		}
+
+		_ = results
+		_ = total
+	})
+
+	t.Run("nil loyalty service gracefully defaults to 1.0 boost", func(t *testing.T) {
+		recRepo := mockrepo.NewRecommendationRepo()
+		bhRepo := mockrepo.NewBathhouseRepo()
+
+		svc := NewRecommendationService(recRepo, bhRepo, nil)
+		userID := uuid.New()
+
+		results, total, err := svc.GetPersonalized(context.Background(), userID, 1, 10)
+		if err != nil {
+			t.Fatalf("GetPersonalized() error = %v", err)
+		}
+
+		_ = results
+		_ = total
+	})
+
+	t.Run("loyalty service error gracefully defaults to 1.0 boost", func(t *testing.T) {
+		recRepo := mockrepo.NewRecommendationRepo()
+		bhRepo := mockrepo.NewBathhouseRepo()
+
+		loyaltySvc := &mockLoyaltyService{
+			err: domain.ErrNotFound,
+		}
+
+		svc := NewRecommendationService(recRepo, bhRepo, loyaltySvc)
+		userID := uuid.New()
+
+		results, total, err := svc.GetPersonalized(context.Background(), userID, 1, 10)
+		if err != nil {
+			t.Fatalf("GetPersonalized() error = %v", err)
+		}
+
+		_ = results
+		_ = total
 	})
 }

@@ -254,6 +254,7 @@ type PromoCodeRepository interface {
 	DecrementUses(ctx context.Context, id uuid.UUID) error
 	DeleteUsage(ctx context.Context, usageID uuid.UUID) error
 	RefundUsage(ctx context.Context, promoCodeID uuid.UUID, usageID uuid.UUID) error
+	DeactivateExpired(ctx context.Context, before time.Time) (int64, error)
 }
 
 type MediaRepository interface {
@@ -285,4 +286,11 @@ type ComplaintRepository interface {
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ComplaintStatus, resolvedByID *uuid.UUID, resolution string) error
 	CountByTarget(ctx context.Context, targetType domain.ComplaintTargetType, targetID uuid.UUID) (int64, error)
 	CheckExists(ctx context.Context, reporterID uuid.UUID, targetType domain.ComplaintTargetType, targetID uuid.UUID) (bool, error)
+}
+
+type DeviceTokenRepository interface {
+	Create(ctx context.Context, token *domain.DeviceToken) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	DeleteByToken(ctx context.Context, token string) error
+	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.DeviceToken, error)
 }

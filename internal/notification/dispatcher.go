@@ -15,12 +15,14 @@ type TelegramSender interface {
 
 // Dispatcher routes notifications to appropriate delivery channels based on user preferences.
 type Dispatcher struct {
-	notifRepo      repository.NotificationRepository
-	emailSender    EmailSender
-	telegramSender TelegramSender
-	telegramRepo   repository.TelegramLinkRepository
-	hub            *Hub
-	logger         *logger.Logger
+	notifRepo       repository.NotificationRepository
+	emailSender     EmailSender
+	telegramSender  TelegramSender
+	telegramRepo    repository.TelegramLinkRepository
+	pushSender      PushSender
+	deviceTokenRepo repository.DeviceTokenRepository
+	hub             *Hub
+	logger          *logger.Logger
 }
 
 // NewDispatcher creates a new notification Dispatcher.
@@ -29,16 +31,20 @@ func NewDispatcher(
 	emailSender EmailSender,
 	telegramSender TelegramSender,
 	telegramRepo repository.TelegramLinkRepository,
+	pushSender PushSender,
+	deviceTokenRepo repository.DeviceTokenRepository,
 	hub *Hub,
 	log *logger.Logger,
 ) *Dispatcher {
 	return &Dispatcher{
-		notifRepo:      notifRepo,
-		emailSender:    emailSender,
-		telegramSender: telegramSender,
-		telegramRepo:   telegramRepo,
-		hub:            hub,
-		logger:         log,
+		notifRepo:       notifRepo,
+		emailSender:     emailSender,
+		telegramSender:  telegramSender,
+		telegramRepo:    telegramRepo,
+		pushSender:      pushSender,
+		deviceTokenRepo: deviceTokenRepo,
+		hub:             hub,
+		logger:          log,
 	}
 }
 
@@ -70,6 +76,17 @@ func (d *Dispatcher) Dispatch(ctx context.Context, notif *domain.Notification, p
 		if err == nil && link != nil {
 			if err := d.telegramSender.Send(ctx, link.TelegramID, notif.Title, notif.Body); err != nil {
 				d.logger.Warn("failed to send telegram notification", "user_id", notif.UserID, "error", err)
+			}
+		}
+	}
+
+	if prefs.Push && d.pushSender != nil && d.deviceTokenRepo != nil {
+		tokens, err := d.deviceTokenRepo.ListByUser(ctx, notif.UserID)
+		if err == nil {
+			for _, dt := range tokens {
+				if err := d.pushSender.Send(ctx, dt.Token, notif.Title, notif.Body, notif.Data); err != nil {
+					d.logger.Warn("failed to send push notification", "user_id", notif.UserID, "error", err)
+				}
 			}
 		}
 	}

@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
@@ -22,15 +22,17 @@ import (
 
 // BookingWizardState tracks the booking wizard progress per chat
 type BookingWizardState struct {
-	BathhouseID uuid.UUID
-	Bathhouse   *domain.Bathhouse
-	Date        time.Time
-	Slots       []service.TimeSlot
-	StartTime   time.Time
-	EndTime     time.Time
-	GuestCount  int
-	Step        string // "date", "time", "guests", "confirm"
-	CreatedAt   time.Time
+	BathhouseID     uuid.UUID
+	Bathhouse       *domain.Bathhouse
+	Date            time.Time
+	Slots           []service.TimeSlot
+	StartTime       time.Time
+	EndTime         time.Time
+	GuestCount      int
+	PromoCode       string // applied promo code
+	CertificateCode string // applied certificate code
+	Step            string // "date", "time", "guests", "promo", "confirm"
+	CreatedAt       time.Time
 }
 
 const wizardTTL = 30 * time.Minute
@@ -46,6 +48,9 @@ type Bot struct {
 	telegramLinkService service.TelegramLinkService
 	favoriteService     service.FavoriteService
 	cityService         service.CityService
+	promoService        service.PromoService
+	certificateService  service.CertificateService
+	paymentService      service.PaymentService
 
 	// In-memory booking wizard state per chatID
 	wizards   map[int64]*BookingWizardState
@@ -66,6 +71,9 @@ func NewBot(
 	telegramLinkService service.TelegramLinkService,
 	favoriteService service.FavoriteService,
 	cityService service.CityService,
+	promoService service.PromoService,
+	certificateService service.CertificateService,
+	paymentService service.PaymentService,
 ) (*Bot, error) {
 	if cfg.BotToken == "" {
 		return nil, fmt.Errorf("telegram bot token is required")
@@ -93,6 +101,9 @@ func NewBot(
 		telegramLinkService: telegramLinkService,
 		favoriteService:     favoriteService,
 		cityService:         cityService,
+		promoService:        promoService,
+		certificateService:  certificateService,
+		paymentService:      paymentService,
 		wizards:             make(map[int64]*BookingWizardState),
 		idCache:             make(map[string]uuid.UUID),
 	}
@@ -340,6 +351,16 @@ func (b *Bot) handleCommand(ctx context.Context, msg *tgbotapi.Message) {
 
 // handleMessage processes regular text messages
 func (b *Bot) handleMessage(ctx context.Context, msg *tgbotapi.Message) {
+	// Check if wizard is active and expecting promo code input
+	b.wizardsMu.RLock()
+	wizard := b.wizards[msg.Chat.ID]
+	b.wizardsMu.RUnlock()
+
+	if wizard != nil && wizard.Step == "promo" {
+		b.doApplyCode(ctx, msg.Chat.ID, strings.TrimSpace(msg.Text))
+		return
+	}
+
 	b.sendPlainMessage(msg.Chat.ID, "Используйте /help для списка команд.")
 }
 
@@ -421,6 +442,8 @@ func (b *Bot) handleCallbackQuery(ctx context.Context, cq *tgbotapi.CallbackQuer
 		if len(parts) >= 2 {
 			b.doToggleFavorite(ctx, chatID, parts[1])
 		}
+	case cbPromoSkip:
+		b.doSkipPromo(ctx, chatID)
 	}
 }
 
@@ -777,29 +800,11 @@ func (b *Bot) doSelectGuests(ctx context.Context, chatID int64, count int) {
 	}
 
 	wizard.GuestCount = count
-	wizard.Step = "confirm"
-
-	bhName := "Баня"
-	if wizard.Bathhouse != nil {
-		bhName = wizard.Bathhouse.Name
-	}
-
-	text := fmt.Sprintf("*Подтверждение бронирования:*\n\n"+
-		"\U0001f6c1 %s\n"+
-		"\U0001f4c5 %s\n"+
-		"\U0001f552 %s \\- %s\n"+
-		"\U0001f465 %d гостей\n\n"+
-		"Всё верно?",
-		escapeMD(bhName),
-		wizard.Date.Format("02\\.01\\.2006"),
-		wizard.StartTime.Format("15:04"),
-		wizard.EndTime.Format("15:04"),
-		wizard.GuestCount,
-	)
+	wizard.Step = "promo"
 	b.wizardsMu.Unlock()
 
-	kb := buildConfirmBookingKeyboard()
-	b.sendMessageWithKeyboard(chatID, text, kb)
+	kb := buildPromoStepKeyboard()
+	b.sendMessageWithKeyboard(chatID, "Есть промокод или подарочный сертификат? Введите код или нажмите Пропустить\\.", kb)
 }
 
 func (b *Bot) doConfirmBooking(ctx context.Context, chatID int64) {
@@ -811,10 +816,12 @@ func (b *Bot) doConfirmBooking(ctx context.Context, chatID int64) {
 		return
 	}
 	input := service.CreateBookingInput{
-		BathhouseID: wizard.BathhouseID,
-		StartTime:   wizard.StartTime,
-		EndTime:     wizard.EndTime,
-		GuestCount:  wizard.GuestCount,
+		BathhouseID:     wizard.BathhouseID,
+		StartTime:       wizard.StartTime,
+		EndTime:         wizard.EndTime,
+		GuestCount:      wizard.GuestCount,
+		PromoCode:       wizard.PromoCode,
+		CertificateCode: wizard.CertificateCode,
 	}
 	// Delete wizard before releasing lock to prevent double-booking from concurrent confirms
 	delete(b.wizards, chatID)
@@ -834,12 +841,143 @@ func (b *Bot) doConfirmBooking(ctx context.Context, chatID int64) {
 
 	text := fmt.Sprintf("\u2705 *Бронирование создано\\!*\n\n"+
 		"ID: `%s`\n"+
-		"Статус: %s\n\n"+
-		"Вы получите уведомление при подтверждении\\.",
+		"Статус: %s",
 		result.Booking.ID.String(),
 		translateBookingStatus(result.Booking.Status),
 	)
+
+	// Try to get a payment link
+	if b.paymentService != nil {
+		payURL, err := b.paymentService.InitiatePayment(ctx, userID, result.Booking.ID)
+		if err == nil && payURL != "" {
+			text += fmt.Sprintf("\n\n[Оплатить онлайн](%s)", escapeMD(payURL))
+		}
+	}
+
+	text += "\n\nВы получите уведомление при подтверждении\\."
 	b.sendMessage(chatID, text)
+}
+
+// doApplyCode tries to apply a promo code or certificate code
+func (b *Bot) doApplyCode(ctx context.Context, chatID int64, code string) {
+	if code == "" {
+		b.sendPlainMessage(chatID, "Пожалуйста, введите код или нажмите Пропустить.")
+		return
+	}
+
+	b.wizardsMu.RLock()
+	wizard := b.wizards[chatID]
+	b.wizardsMu.RUnlock()
+
+	if wizard == nil || wizard.Step != "promo" {
+		b.sendPlainMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		return
+	}
+
+	// Try as promo code first
+	if b.promoService != nil {
+		bathhouseID := wizard.BathhouseID
+		// Estimate amount for validation (price per hour)
+		estimatedAmount := int64(0)
+		if wizard.Bathhouse != nil {
+			hours := wizard.EndTime.Sub(wizard.StartTime).Hours()
+			if hours < 1 {
+				hours = 1
+			}
+			estimatedAmount = wizard.Bathhouse.PricePerHour * int64(hours)
+		}
+
+		_, _, err := b.promoService.Validate(ctx, code, bathhouseID, estimatedAmount)
+		if err == nil {
+			b.wizardsMu.Lock()
+			w := b.wizards[chatID]
+			if w != nil {
+				w.PromoCode = code
+			}
+			b.wizardsMu.Unlock()
+			b.sendPlainMessage(chatID, fmt.Sprintf("Промокод %s применён!", code))
+			b.doShowConfirmation(ctx, chatID)
+			return
+		}
+	}
+
+	// Try as certificate code
+	if b.certificateService != nil {
+		cert, err := b.certificateService.GetBalance(ctx, code)
+		if err == nil && cert != nil && cert.Balance > 0 {
+			b.wizardsMu.Lock()
+			w := b.wizards[chatID]
+			if w != nil {
+				w.CertificateCode = code
+			}
+			b.wizardsMu.Unlock()
+			balanceRub := float64(cert.Balance) / 100
+			b.sendPlainMessage(chatID, fmt.Sprintf("Сертификат применён! Баланс: %.0f ₽", balanceRub))
+			b.doShowConfirmation(ctx, chatID)
+			return
+		}
+	}
+
+	// Code not found
+	kb := buildPromoStepKeyboard()
+	b.sendMessageWithKeyboard(chatID, "Код не найден или недействителен\\. Попробуйте другой или нажмите Пропустить\\.", kb)
+}
+
+// doSkipPromo skips the promo step and proceeds to confirmation
+func (b *Bot) doSkipPromo(ctx context.Context, chatID int64) {
+	b.wizardsMu.RLock()
+	wizard := b.wizards[chatID]
+	b.wizardsMu.RUnlock()
+
+	if wizard == nil {
+		b.sendPlainMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		return
+	}
+
+	b.doShowConfirmation(ctx, chatID)
+}
+
+// doShowConfirmation displays booking confirmation with applied discount info
+func (b *Bot) doShowConfirmation(_ context.Context, chatID int64) {
+	b.wizardsMu.Lock()
+	wizard := b.wizards[chatID]
+	if wizard == nil {
+		b.wizardsMu.Unlock()
+		b.sendPlainMessage(chatID, "Сессия бронирования истекла. Начните заново через /book")
+		return
+	}
+
+	wizard.Step = "confirm"
+
+	bhName := "Баня"
+	if wizard.Bathhouse != nil {
+		bhName = wizard.Bathhouse.Name
+	}
+
+	text := fmt.Sprintf("*Подтверждение бронирования:*\n\n"+
+		"\U0001f6c1 %s\n"+
+		"\U0001f4c5 %s\n"+
+		"\U0001f552 %s \\- %s\n"+
+		"\U0001f465 %d гостей",
+		escapeMD(bhName),
+		wizard.Date.Format("02\\.01\\.2006"),
+		wizard.StartTime.Format("15:04"),
+		wizard.EndTime.Format("15:04"),
+		wizard.GuestCount,
+	)
+
+	if wizard.PromoCode != "" {
+		text += fmt.Sprintf("\n\U0001f3ab Промокод: %s", escapeMD(wizard.PromoCode))
+	}
+	if wizard.CertificateCode != "" {
+		text += fmt.Sprintf("\n\U0001f381 Сертификат: %s", escapeMD(wizard.CertificateCode))
+	}
+
+	text += "\n\nВсё верно?"
+	b.wizardsMu.Unlock()
+
+	kb := buildConfirmBookingKeyboard()
+	b.sendMessageWithKeyboard(chatID, text, kb)
 }
 
 func (b *Bot) doCancelWizard(chatID int64) {

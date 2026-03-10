@@ -260,6 +260,20 @@ func (r *PromoCodeRepo) RefundUsage(_ context.Context, promoCodeID uuid.UUID, us
 	return nil
 }
 
+func (r *PromoCodeRepo) DeactivateExpired(_ context.Context, before time.Time) (int64, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	var count int64
+	for _, promo := range r.promos {
+		if promo.IsActive && !promo.ValidUntil.IsZero() && promo.ValidUntil.Before(before) {
+			promo.IsActive = false
+			count++
+		}
+	}
+	return count, nil
+}
+
 func paginatePromos(items []domain.PromoCode, page, pageSize int) *domain.PaginatedResult[domain.PromoCode] {
 	totalCount := int64(len(items))
 	offset := (page - 1) * pageSize

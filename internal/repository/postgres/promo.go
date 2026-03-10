@@ -340,3 +340,12 @@ func (r *promoRepo) RefundUsage(ctx context.Context, promoCodeID uuid.UUID, usag
 	}
 	return nil
 }
+
+func (r *promoRepo) DeactivateExpired(ctx context.Context, before time.Time) (int64, error) {
+	query := `UPDATE promo_codes SET is_active = false WHERE is_active = true AND valid_until < $1`
+	result, err := r.pool.Exec(ctx, query, before)
+	if err != nil {
+		return 0, fmt.Errorf("deactivate expired promo codes: %w", err)
+	}
+	return result.RowsAffected(), nil
+}

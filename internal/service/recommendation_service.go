@@ -21,15 +21,17 @@ type RecommendationService interface {
 }
 
 type recommendationService struct {
-	recRepo repository.RecommendationRepository
-	bhRepo  repository.BathhouseRepository
+	recRepo    repository.RecommendationRepository
+	bhRepo     repository.BathhouseRepository
+	loyaltySvc LoyaltyService
 }
 
 // NewRecommendationService creates a new recommendation service
-func NewRecommendationService(recRepo repository.RecommendationRepository, bhRepo repository.BathhouseRepository) RecommendationService {
+func NewRecommendationService(recRepo repository.RecommendationRepository, bhRepo repository.BathhouseRepository, loyaltySvc LoyaltyService) RecommendationService {
 	return &recommendationService{
-		recRepo: recRepo,
-		bhRepo:  bhRepo,
+		recRepo:    recRepo,
+		bhRepo:     bhRepo,
+		loyaltySvc: loyaltySvc,
 	}
 }
 
@@ -112,6 +114,16 @@ func (s *recommendationService) GetPersonalized(ctx context.Context, userID uuid
 		candidates = append(candidates, scoreItem{bathID, score})
 	}
 
+	// Calculate loyalty boost once before scoring candidates
+	loyaltyBoost := 1.0
+	if s.loyaltySvc != nil {
+		account, err := s.loyaltySvc.GetAccount(ctx, userID)
+		if err == nil && account != nil {
+			levelInfo := domain.GetLoyaltyLevelInfo(account.Level)
+			loyaltyBoost = 1.0 + float64(levelInfo.DiscountPercent)/100.0
+		}
+	}
+
 	// Fetch bathhouse details for filtering and scoring
 	filtered := make([]scoreItem, 0, len(candidates))
 	now := time.Now()
@@ -134,10 +146,10 @@ func (s *recommendationService) GetPersonalized(ctx context.Context, userID uuid
 			recencyBonus = 1.0 / (1.0 + daysSince/30.0)
 		}
 
-		// Enhance score with rating, similarity, and recency
-		// Scoring formula: rating × similarity_weight × recency_bonus
+		// Enhance score with rating, similarity, recency, and loyalty level
+		// Scoring formula: rating × similarity_weight × recency_bonus × loyalty_boost
 		ratingBonus := bh.Rating / 5.0 // normalize rating 0-1
-		finalScore := ratingBonus * item.score * recencyBonus
+		finalScore := ratingBonus * item.score * recencyBonus * loyaltyBoost
 
 		filtered = append(filtered, scoreItem{item.bathhouseID, finalScore})
 	}
@@ -255,8 +267,8 @@ func (s *recommendationService) matchesPreferences(bh *domain.Bathhouse, prefs *
 
 	// Check amenities preferences
 	// Only filter if user explicitly prefers certain amenities
-	if (prefs.PreferPool || prefs.PreferSauna || prefs.PreferSteamRoom ||
-		prefs.PreferHotTub || prefs.PreferBBQ || prefs.PreferKaraoke) {
+	if prefs.PreferPool || prefs.PreferSauna || prefs.PreferSteamRoom ||
+		prefs.PreferHotTub || prefs.PreferBBQ || prefs.PreferKaraoke {
 
 		// Count how many preferences the bathhouse has
 		matchedCount := 0

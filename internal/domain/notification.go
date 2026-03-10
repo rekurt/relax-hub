@@ -9,22 +9,24 @@ import (
 type NotificationType string
 
 const (
-	NotifBookingConfirmed NotificationType = "booking_confirmed"
-	NotifBookingCancelled NotificationType = "booking_cancelled"
-	NotifBookingRejected  NotificationType = "booking_rejected"
-	NotifNewReview        NotificationType = "new_review"
-	NotifReviewResponse   NotificationType = "review_response"
-	NotifReviewApproved   NotificationType = "review_approved"
-	NotifReviewRejected   NotificationType = "review_rejected"
-	NotifPromo            NotificationType = "promo"
-	NotifReminder         NotificationType = "reminder"
-	NotifSystem           NotificationType = "system"
-	NotifNewMessage       NotificationType = "new_message"
-	NotifPhotoVerified    NotificationType = "photo_verified"
-	NotifPhotoRejected    NotificationType = "photo_rejected"
-	NotifReviewHidden     NotificationType = "review_hidden"
-	NotifLoyaltyUpgrade   NotificationType = "loyalty_upgrade"
-	NotifReferralBonus    NotificationType = "referral_bonus"
+	NotifBookingConfirmed     NotificationType = "booking_confirmed"
+	NotifBookingCancelled     NotificationType = "booking_cancelled"
+	NotifBookingRejected      NotificationType = "booking_rejected"
+	NotifNewReview            NotificationType = "new_review"
+	NotifReviewResponse       NotificationType = "review_response"
+	NotifReviewApproved       NotificationType = "review_approved"
+	NotifReviewRejected       NotificationType = "review_rejected"
+	NotifPromo                NotificationType = "promo"
+	NotifReminder             NotificationType = "reminder"
+	NotifSystem               NotificationType = "system"
+	NotifNewMessage           NotificationType = "new_message"
+	NotifPhotoVerified        NotificationType = "photo_verified"
+	NotifPhotoRejected        NotificationType = "photo_rejected"
+	NotifReviewHidden         NotificationType = "review_hidden"
+	NotifLoyaltyUpgrade       NotificationType = "loyalty_upgrade"
+	NotifReferralBonus        NotificationType = "referral_bonus"
+	NotifSubscriptionExpiring NotificationType = "subscription_expiring"
+	NotifSubscriptionExpired  NotificationType = "subscription_expired"
 )
 
 func (t NotificationType) IsValid() bool {
@@ -32,7 +34,8 @@ func (t NotificationType) IsValid() bool {
 	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected, NotifNewReview,
 		NotifReviewResponse, NotifReviewApproved, NotifReviewRejected, NotifPromo, NotifReminder, NotifSystem,
 		NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected, NotifReviewHidden,
-		NotifLoyaltyUpgrade, NotifReferralBonus:
+		NotifLoyaltyUpgrade, NotifReferralBonus,
+		NotifSubscriptionExpiring, NotifSubscriptionExpired:
 		return true
 	}
 	return false
@@ -103,7 +106,8 @@ func (p *NotificationPreferences) Validate() error {
 func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 	switch t {
 	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected,
-		NotifLoyaltyUpgrade, NotifReferralBonus:
+		NotifLoyaltyUpgrade, NotifReferralBonus,
+		NotifSubscriptionExpiring, NotifSubscriptionExpired:
 		return p.BookingEvents
 	case NotifNewReview, NotifReviewResponse, NotifReviewApproved, NotifReviewRejected,
 		NotifReviewHidden:

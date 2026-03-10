@@ -14,10 +14,13 @@ import (
 
 // CronScheduler manages all scheduled tasks
 type CronScheduler struct {
-	c              *cron.Cron
-	logger         *logger.Logger
+	c                *cron.Cron
+	logger           *logger.Logger
 	analyticsService service.AnalyticsService
-	analyticsRepo  repository.AnalyticsRepository
+	analyticsRepo    repository.AnalyticsRepository
+	subscriptionRepo repository.SubscriptionRepository
+	promoRepo        repository.PromoCodeRepository
+	notifSvc         service.NotificationService
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -25,12 +28,18 @@ func NewCronScheduler(
 	l *logger.Logger,
 	svc service.AnalyticsService,
 	repo repository.AnalyticsRepository,
+	subscriptionRepo repository.SubscriptionRepository,
+	promoRepo repository.PromoCodeRepository,
+	notifSvc service.NotificationService,
 ) *CronScheduler {
 	return &CronScheduler{
-		c:               cron.New(),
-		logger:          l,
+		c:                cron.New(),
+		logger:           l,
 		analyticsService: svc,
-		analyticsRepo:   repo,
+		analyticsRepo:    repo,
+		subscriptionRepo: subscriptionRepo,
+		promoRepo:        promoRepo,
+		notifSvc:         notifSvc,
 	}
 }
 
@@ -61,6 +70,27 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register weekly cleanup: %w", err)
 	}
 	cs.logger.Info("Registered weekly cleanup job at 03:00 UTC on Sunday")
+
+	// Subscription expiry notification at 06:00 UTC daily
+	if _, err := cs.c.AddFunc("0 6 * * *", cs.handleSubscriptionExpiryNotify); err != nil {
+		cs.logger.Error("Failed to register subscription expiry notify job", "error", err)
+		return fmt.Errorf("failed to register subscription expiry notify: %w", err)
+	}
+	cs.logger.Info("Registered subscription expiry notification job at 06:00 UTC")
+
+	// Expired subscription update at 06:05 UTC daily
+	if _, err := cs.c.AddFunc("5 6 * * *", cs.handleExpiredSubscriptionUpdate); err != nil {
+		cs.logger.Error("Failed to register expired subscription update job", "error", err)
+		return fmt.Errorf("failed to register expired subscription update: %w", err)
+	}
+	cs.logger.Info("Registered expired subscription update job at 06:05 UTC")
+
+	// Promo code deactivation at 06:10 UTC daily
+	if _, err := cs.c.AddFunc("10 6 * * *", cs.handlePromoDeactivation); err != nil {
+		cs.logger.Error("Failed to register promo deactivation job", "error", err)
+		return fmt.Errorf("failed to register promo deactivation: %w", err)
+	}
+	cs.logger.Info("Registered promo deactivation job at 06:10 UTC")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")

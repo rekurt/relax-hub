@@ -432,3 +432,44 @@ func TestDeriveWebhookSecret(t *testing.T) {
 	// Result is 32 hex characters (16 bytes)
 	assert.Len(t, s1, 32)
 }
+
+func TestBuildPromoStepKeyboard(t *testing.T) {
+	kb := buildPromoStepKeyboard()
+	require.Len(t, kb.InlineKeyboard, 1)
+	assert.Len(t, kb.InlineKeyboard[0], 2) // Skip + Cancel
+	require.NotNil(t, kb.InlineKeyboard[0][0].CallbackData)
+	assert.Equal(t, cbPromoSkip, *kb.InlineKeyboard[0][0].CallbackData)
+}
+
+func TestWizardPromoStep(t *testing.T) {
+	b := &Bot{
+		wizards: make(map[int64]*BookingWizardState),
+	}
+
+	chatID := int64(12345)
+
+	// Set wizard at promo step
+	b.wizardsMu.Lock()
+	b.wizards[chatID] = &BookingWizardState{
+		BathhouseID: uuid.New(),
+		Step:        "promo",
+		GuestCount:  3,
+		Bathhouse:   &domain.Bathhouse{Name: "Test"},
+		Date:        time.Now(),
+		StartTime:   time.Now(),
+		EndTime:     time.Now().Add(time.Hour),
+	}
+	b.wizardsMu.Unlock()
+
+	wizard := b.getWizard(chatID)
+	require.NotNil(t, wizard)
+	assert.Equal(t, "promo", wizard.Step)
+	assert.Empty(t, wizard.PromoCode)
+	assert.Empty(t, wizard.CertificateCode)
+}
+
+func TestCallbackPromoSkipParsing(t *testing.T) {
+	data := "ps"
+	parts := strings.SplitN(data, ":", 3)
+	assert.Equal(t, cbPromoSkip, parts[0])
+}

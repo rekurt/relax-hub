@@ -14,17 +14,18 @@ import (
 
 // Callback data prefixes
 const (
-	cbSearch    = "s"   // s:<slug>:<page>
-	cbView      = "v"   // v:<bathhouse_id>
-	cbBook      = "bk"  // bk:<bathhouse_id>
-	cbDate      = "dt"  // dt:<YYYYMMDD>
-	cbSlot      = "tm"  // tm:<index>
-	cbGuests    = "gs"  // gs:<count>
-	cbConfirm   = "cf"  // cf
-	cbCancelBk  = "xb"  // xb:<booking_id>
-	cbFavPage   = "fp"  // fp:<page>
-	cbBkPage    = "mp"  // mp:<page>
-	cbFavToggle = "ft"  // ft:<bathhouse_id>
+	cbSearch    = "s"  // s:<slug>:<page>
+	cbView      = "v"  // v:<bathhouse_id>
+	cbBook      = "bk" // bk:<bathhouse_id>
+	cbDate      = "dt" // dt:<YYYYMMDD>
+	cbSlot      = "tm" // tm:<index>
+	cbGuests    = "gs" // gs:<count>
+	cbConfirm   = "cf" // cf
+	cbCancelBk  = "xb" // xb:<booking_id>
+	cbFavPage   = "fp" // fp:<page>
+	cbBkPage    = "mp" // mp:<page>
+	cbFavToggle = "ft" // ft:<bathhouse_id>
+	cbPromoSkip = "ps" // ps - skip promo step
 )
 
 // shortID returns first 8 characters of UUID for compact callback data
@@ -155,6 +156,16 @@ func buildConfirmBookingKeyboard() tgbotapi.InlineKeyboardMarkup {
 	return tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("\u2705 Подтвердить", cbConfirm),
+			tgbotapi.NewInlineKeyboardButtonData("\u274c Отменить", "cancel_wizard"),
+		),
+	)
+}
+
+// buildPromoStepKeyboard builds keyboard for promo code step
+func buildPromoStepKeyboard() tgbotapi.InlineKeyboardMarkup {
+	return tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Пропустить \u27a1", cbPromoSkip),
 			tgbotapi.NewInlineKeyboardButtonData("\u274c Отменить", "cancel_wizard"),
 		),
 	)

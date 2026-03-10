@@ -5,6 +5,7 @@ go 1.25.1
 require (
 	github.com/GoAdminGroup/go-admin v1.2.26
 	github.com/GoAdminGroup/themes v0.0.48
+	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/alicebob/miniredis/v2 v2.37.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-chi/chi/v5 v5.2.5
