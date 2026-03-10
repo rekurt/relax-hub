@@ -23,6 +23,13 @@ type Config struct {
 	Telegram    TelegramConfig   `mapstructure:"telegram"`
 	Admin       AdminConfig      `mapstructure:"admin"`
 	Payment     PaymentConfig    `mapstructure:"payment"`
+	WebPush     WebPushConfig    `mapstructure:"webpush"`
+}
+
+type WebPushConfig struct {
+	VAPIDPublicKey  string `mapstructure:"vapid_public_key"`
+	VAPIDPrivateKey string `mapstructure:"vapid_private_key"`
+	VAPIDContact    string `mapstructure:"vapid_contact"`
 }
 
 type OAuthConfig struct {
@@ -56,8 +63,8 @@ type AdminConfig struct {
 }
 
 type PaymentConfig struct {
-	YooKassa YooKassaConfig `mapstructure:"yookassa"`
-	ReturnURL string        `mapstructure:"return_url"`
+	YooKassa  YooKassaConfig `mapstructure:"yookassa"`
+	ReturnURL string         `mapstructure:"return_url"`
 }
 
 type YooKassaConfig struct {

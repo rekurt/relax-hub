@@ -16,37 +16,38 @@ import (
 type RouterParams struct {
 	fx.In
 
-	Log                    *logger.Logger
-	CORS                   *middleware.CORSMiddleware
-	AuthService            middleware.AuthService
-	AuthHandler            *handler.AuthHandler
-	BHHandler              *handler.BathhouseHandler
-	BookingHandler         *handler.BookingHandler
-	ReviewHandler          *handler.ReviewHandler
-	FavHandler             *handler.FavoriteHandler
-	RepHandler             *handler.RepresentativeHandler
-	CityHandler            *handler.CityHandler
-	AdminHandler           *handler.AdminHandler
-	HealthHandler          *handler.HealthHandler
-	WSHandler              *handler.WSHandler
-	NotifHandler           *handler.NotificationHandler
-	OAuthHandler           *handler.OAuthHandler
-	RecommendationHandler  *handler.RecommendationHandler
-	SubscriptionHandler    *handler.SubscriptionHandler
-	PricingHandler         *handler.PricingHandler
-	WidgetHandler          *handler.WidgetHandler
-	LoyaltyHandler         *handler.LoyaltyHandler
-	ChatHandler            *handler.ChatHandler
-	AnalyticsHandler       *handler.AnalyticsHandler
-	ComplaintHandler       *handler.ComplaintHandler
-	ReferralHandler        *handler.ReferralHandler
-	CertificateHandler     *handler.CertificateHandler
-	SitemapHandler         *handler.SitemapHandler
-	PhotoHandler           *handler.PhotoHandler
-	PromoHandler           *handler.PromoHandler
-	MediaHandler           *handler.MediaHandler
-	PaymentHandler         *handler.PaymentHandler
-	GoAdmin                *admin.GoAdmin `optional:"true"`
+	Log                   *logger.Logger
+	CORS                  *middleware.CORSMiddleware
+	AuthService           middleware.AuthService
+	AuthHandler           *handler.AuthHandler
+	BHHandler             *handler.BathhouseHandler
+	BookingHandler        *handler.BookingHandler
+	ReviewHandler         *handler.ReviewHandler
+	FavHandler            *handler.FavoriteHandler
+	RepHandler            *handler.RepresentativeHandler
+	CityHandler           *handler.CityHandler
+	AdminHandler          *handler.AdminHandler
+	HealthHandler         *handler.HealthHandler
+	WSHandler             *handler.WSHandler
+	NotifHandler          *handler.NotificationHandler
+	OAuthHandler          *handler.OAuthHandler
+	RecommendationHandler *handler.RecommendationHandler
+	SubscriptionHandler   *handler.SubscriptionHandler
+	PricingHandler        *handler.PricingHandler
+	WidgetHandler         *handler.WidgetHandler
+	LoyaltyHandler        *handler.LoyaltyHandler
+	ChatHandler           *handler.ChatHandler
+	AnalyticsHandler      *handler.AnalyticsHandler
+	ComplaintHandler      *handler.ComplaintHandler
+	ReferralHandler       *handler.ReferralHandler
+	CertificateHandler    *handler.CertificateHandler
+	SitemapHandler        *handler.SitemapHandler
+	PhotoHandler          *handler.PhotoHandler
+	PromoHandler          *handler.PromoHandler
+	MediaHandler          *handler.MediaHandler
+	PaymentHandler        *handler.PaymentHandler
+	DeviceTokenHandler    *handler.DeviceTokenHandler
+	GoAdmin               *admin.GoAdmin `optional:"true"`
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -247,6 +248,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Patch("/my/notifications/read-all", p.NotifHandler.MarkAllAsRead)
 		r.With(auth).Get("/my/notification-preferences", p.NotifHandler.GetPreferences)
 		r.With(auth).Put("/my/notification-preferences", p.NotifHandler.UpdatePreferences)
+
+		// Device tokens for push notifications (authenticated)
+		r.With(auth).Post("/device-tokens", p.DeviceTokenHandler.Register)
+		r.With(auth).Delete("/device-tokens/{id}", p.DeviceTokenHandler.Delete)
 
 		// Representatives (owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses/{id}/representatives", p.RepHandler.Invite)

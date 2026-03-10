@@ -24,7 +24,7 @@ func newNotifTestEnv() *notifTestEnv {
 	userRepo := mock.NewUserRepo()
 	log := logger.New(logger.LevelError)
 	emailSender := notification.NewNoopEmailSender()
-	dispatcher := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), notification.NewHub(log), log)
+	dispatcher := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), nil, nil, notification.NewHub(log), log)
 	svc := service.NewNotificationService(notifRepo, userRepo, dispatcher, log)
 	return &notifTestEnv{
 		svc:       svc,
