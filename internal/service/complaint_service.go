@@ -34,17 +34,20 @@ type ComplaintService interface {
 type complaintService struct {
 	complaintRepo repository.ComplaintRepository
 	reviewRepo    repository.ReviewRepository
+	notifSvc      NotificationService
 	logger        *logger.Logger
 }
 
 func NewComplaintService(
 	complaintRepo repository.ComplaintRepository,
 	reviewRepo repository.ReviewRepository,
+	notifSvc NotificationService,
 	log *logger.Logger,
 ) ComplaintService {
 	return &complaintService{
 		complaintRepo: complaintRepo,
 		reviewRepo:    reviewRepo,
+		notifSvc:      notifSvc,
 		logger:        log,
 	}
 }
@@ -149,6 +152,19 @@ func (s *complaintService) checkAutoActions(ctx context.Context, targetType doma
 				s.logger.Error("failed to auto-hide review", "review_id", targetID, "error", err)
 			} else {
 				s.logger.Info("review auto-hidden due to complaints", "review_id", targetID, "complaint_count", count)
+				// Notify the review author
+				review, err := s.reviewRepo.GetByID(ctx, targetID)
+				if err != nil {
+					s.logger.Warn("failed to get review for hidden notification", "review_id", targetID, "error", err)
+				} else {
+					if err := s.notifSvc.Send(ctx, review.UserID, domain.NotifReviewHidden,
+						"Отзыв скрыт",
+						"Ваш отзыв был скрыт после проверки модераторами",
+						map[string]string{"review_id": targetID.String()},
+					); err != nil {
+						s.logger.Warn("failed to send review hidden notification", "review_id", targetID, "error", err)
+					}
+				}
 			}
 		}
 	case domain.ComplaintTargetBathhouse:

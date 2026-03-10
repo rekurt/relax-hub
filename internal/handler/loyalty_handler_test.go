@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 type mockLoyaltyService struct {
@@ -20,7 +21,7 @@ type mockLoyaltyService struct {
 	spendPointsFn      func(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
 	refundPointsFn     func(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
 	getDiscountFn      func(ctx context.Context, userID uuid.UUID) (int, error)
-	recalculateLevelFn func(ctx context.Context, userID uuid.UUID) error
+	recalculateLevelFn func(ctx context.Context, userID uuid.UUID) (*service.LevelChangeResult, error)
 	listTransactionsFn func(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.LoyaltyTransaction], error)
 }
 
@@ -59,11 +60,11 @@ func (m *mockLoyaltyService) GetDiscount(ctx context.Context, userID uuid.UUID) 
 	return 0, nil
 }
 
-func (m *mockLoyaltyService) RecalculateLevel(ctx context.Context, userID uuid.UUID) error {
+func (m *mockLoyaltyService) RecalculateLevel(ctx context.Context, userID uuid.UUID) (*service.LevelChangeResult, error) {
 	if m.recalculateLevelFn != nil {
 		return m.recalculateLevelFn(ctx, userID)
 	}
-	return nil
+	return nil, nil
 }
 
 func (m *mockLoyaltyService) ListTransactions(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.LoyaltyTransaction], error) {

@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 type mockReferralService struct {
@@ -18,7 +19,7 @@ type mockReferralService struct {
 	getStatsFn     func(ctx context.Context, userID uuid.UUID) (*domain.ReferralStats, error)
 	getBalanceFn   func(ctx context.Context, userID uuid.UUID) (*domain.ReferralBalance, error)
 	registerFn     func(ctx context.Context, referralCode string, newUserID uuid.UUID) error
-	completeFn     func(ctx context.Context, refereeID uuid.UUID) error
+	completeFn     func(ctx context.Context, refereeID uuid.UUID) (*service.ReferralCompletionResult, error)
 	useBalanceFn   func(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
 }
 
@@ -36,11 +37,11 @@ func (m *mockReferralService) RegisterReferral(ctx context.Context, referralCode
 	return nil
 }
 
-func (m *mockReferralService) CompleteReferral(ctx context.Context, refereeID uuid.UUID) error {
+func (m *mockReferralService) CompleteReferral(ctx context.Context, refereeID uuid.UUID) (*service.ReferralCompletionResult, error) {
 	if m.completeFn != nil {
 		return m.completeFn(ctx, refereeID)
 	}
-	return nil
+	return nil, nil
 }
 
 func (m *mockReferralService) GetBalance(ctx context.Context, userID uuid.UUID) (*domain.ReferralBalance, error) {

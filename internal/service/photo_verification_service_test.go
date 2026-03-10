@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -23,7 +24,7 @@ func newPhotoVerifTestEnv() *photoVerifTestEnv {
 	bhRepo := mock.NewBathhouseRepo()
 	repRepo := mock.NewRepresentativeRepo()
 	accessCheck := service.NewAccessChecker(repRepo, bhRepo)
-	svc := service.NewPhotoVerificationService(photoRepo, bhRepo, accessCheck)
+	svc := service.NewPhotoVerificationService(photoRepo, bhRepo, accessCheck, &noopNotifService{}, logger.New(logger.LevelWarn))
 	return &photoVerifTestEnv{
 		svc:       svc,
 		photoRepo: photoRepo,

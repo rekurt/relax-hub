@@ -12,13 +12,19 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
+type LevelChangeResult struct {
+	Changed  bool
+	OldLevel domain.LoyaltyLevel
+	NewLevel domain.LoyaltyLevel
+}
+
 type LoyaltyService interface {
 	GetAccount(ctx context.Context, userID uuid.UUID) (*domain.LoyaltyAccount, error)
 	EarnPoints(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) (int64, error)
 	SpendPoints(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
 	RefundPoints(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
 	GetDiscount(ctx context.Context, userID uuid.UUID) (int, error)
-	RecalculateLevel(ctx context.Context, userID uuid.UUID) error
+	RecalculateLevel(ctx context.Context, userID uuid.UUID) (*LevelChangeResult, error)
 	ListTransactions(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.LoyaltyTransaction], error)
 }
 
@@ -177,21 +183,27 @@ func (s *loyaltyService) GetDiscount(ctx context.Context, userID uuid.UUID) (int
 }
 
 // RecalculateLevel updates the user's loyalty level based on their visit count.
-func (s *loyaltyService) RecalculateLevel(ctx context.Context, userID uuid.UUID) error {
+// Returns a LevelChangeResult if the level changed, nil otherwise.
+func (s *loyaltyService) RecalculateLevel(ctx context.Context, userID uuid.UUID) (*LevelChangeResult, error) {
 	account, err := s.GetAccount(ctx, userID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	newLevel := domain.LevelForVisitCount(account.VisitCount)
 	if newLevel != account.Level {
 		if err := s.loyaltyRepo.UpdateLevel(ctx, userID, newLevel); err != nil {
-			return err
+			return nil, err
 		}
 		s.logger.Info("loyalty level changed", "user_id", userID, "old_level", account.Level, "new_level", newLevel)
+		return &LevelChangeResult{
+			Changed:  true,
+			OldLevel: account.Level,
+			NewLevel: newLevel,
+		}, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 // ListTransactions returns paginated transaction history for a user.

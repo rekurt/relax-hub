@@ -21,10 +21,17 @@ const (
 
 var referralCodePattern = regexp.MustCompile(`^[0-9a-f]{8}$`)
 
+type ReferralCompletionResult struct {
+	Completed   bool
+	ReferrerID  uuid.UUID
+	RefereeID   uuid.UUID
+	BonusAmount int64
+}
+
 type ReferralService interface {
 	GenerateCode(ctx context.Context, userID uuid.UUID) (string, error)
 	RegisterReferral(ctx context.Context, referralCode string, newUserID uuid.UUID) error
-	CompleteReferral(ctx context.Context, refereeID uuid.UUID) error
+	CompleteReferral(ctx context.Context, refereeID uuid.UUID) (*ReferralCompletionResult, error)
 	GetBalance(ctx context.Context, userID uuid.UUID) (*domain.ReferralBalance, error)
 	UseBalance(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
 	RefundBalance(ctx context.Context, userID uuid.UUID, amount int64, bookingID uuid.UUID) error
@@ -115,17 +122,17 @@ func (s *referralService) RegisterReferral(ctx context.Context, referralCode str
 	return nil
 }
 
-func (s *referralService) CompleteReferral(ctx context.Context, refereeID uuid.UUID) error {
+func (s *referralService) CompleteReferral(ctx context.Context, refereeID uuid.UUID) (*ReferralCompletionResult, error) {
 	referral, err := s.referralRepo.GetByReferee(ctx, refereeID)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return nil // Not a referred user, nothing to do
+			return nil, nil // Not a referred user, nothing to do
 		}
-		return err
+		return nil, err
 	}
 
 	if referral.Status != domain.ReferralStatusPending {
-		return nil // Already completed or expired
+		return nil, nil // Already completed or expired
 	}
 
 	// Claim the referral first via optimistic lock (WHERE status = 'pending').
@@ -134,29 +141,29 @@ func (s *referralService) CompleteReferral(ctx context.Context, refereeID uuid.U
 	now := time.Now()
 	if err := s.referralRepo.UpdateStatus(ctx, referral.ID, domain.ReferralStatusCompleted, &now); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return nil // Another call already completed this referral
+			return nil, nil // Another call already completed this referral
 		}
-		return err
+		return nil, err
 	}
 
 	// Credit bonus to referrer
 	if err := s.ensureBalance(ctx, referral.ReferrerID); err != nil {
 		s.revertReferralStatus(ctx, referral.ID)
-		return err
+		return nil, err
 	}
 	if err := s.referralRepo.UpdateBalance(ctx, referral.ReferrerID, referral.BonusAmount, true); err != nil {
 		s.revertReferralStatus(ctx, referral.ID)
-		return err
+		return nil, err
 	}
 
 	// Credit bonus to referee
 	if err := s.ensureBalance(ctx, refereeID); err != nil {
 		s.reverseReferrerCredit(ctx, referral)
-		return err
+		return nil, err
 	}
 	if err := s.referralRepo.UpdateBalance(ctx, refereeID, referral.BonusAmount, true); err != nil {
 		s.reverseReferrerCredit(ctx, referral)
-		return err
+		return nil, err
 	}
 
 	s.logger.Info("referral completed, bonuses credited",
@@ -164,7 +171,12 @@ func (s *referralService) CompleteReferral(ctx context.Context, refereeID uuid.U
 		"referee_id", refereeID,
 		"bonus_amount", referral.BonusAmount,
 	)
-	return nil
+	return &ReferralCompletionResult{
+		Completed:   true,
+		ReferrerID:  referral.ReferrerID,
+		RefereeID:   refereeID,
+		BonusAmount: referral.BonusAmount,
+	}, nil
 }
 
 func (s *referralService) GetBalance(ctx context.Context, userID uuid.UUID) (*domain.ReferralBalance, error) {

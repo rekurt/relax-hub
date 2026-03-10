@@ -20,13 +20,19 @@ const (
 	NotifReminder         NotificationType = "reminder"
 	NotifSystem           NotificationType = "system"
 	NotifNewMessage       NotificationType = "new_message"
+	NotifPhotoVerified    NotificationType = "photo_verified"
+	NotifPhotoRejected    NotificationType = "photo_rejected"
+	NotifReviewHidden     NotificationType = "review_hidden"
+	NotifLoyaltyUpgrade   NotificationType = "loyalty_upgrade"
+	NotifReferralBonus    NotificationType = "referral_bonus"
 )
 
 func (t NotificationType) IsValid() bool {
 	switch t {
 	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected, NotifNewReview,
 		NotifReviewResponse, NotifReviewApproved, NotifReviewRejected, NotifPromo, NotifReminder, NotifSystem,
-		NotifNewMessage:
+		NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected, NotifReviewHidden,
+		NotifLoyaltyUpgrade, NotifReferralBonus:
 		return true
 	}
 	return false
@@ -96,15 +102,17 @@ func (p *NotificationPreferences) Validate() error {
 // WantsEventType checks if the user wants notifications for the given event type.
 func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 	switch t {
-	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected:
+	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected,
+		NotifLoyaltyUpgrade, NotifReferralBonus:
 		return p.BookingEvents
-	case NotifNewReview, NotifReviewResponse, NotifReviewApproved, NotifReviewRejected:
+	case NotifNewReview, NotifReviewResponse, NotifReviewApproved, NotifReviewRejected,
+		NotifReviewHidden:
 		return p.ReviewEvents
 	case NotifPromo:
 		return p.PromoEvents
 	case NotifReminder:
 		return p.Reminders
-	case NotifSystem, NotifNewMessage:
+	case NotifSystem, NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected:
 		return true
 	}
 	return false

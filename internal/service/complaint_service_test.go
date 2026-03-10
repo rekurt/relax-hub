@@ -20,7 +20,7 @@ func newComplaintTestEnv() *complaintTestEnv {
 	complaintRepo := mock.NewComplaintRepo()
 	reviewRepo := mock.NewReviewRepo()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewComplaintService(complaintRepo, reviewRepo, log)
+	svc := service.NewComplaintService(complaintRepo, reviewRepo, &noopNotifService{}, log)
 	return &complaintTestEnv{
 		svc:        svc,
 		reviewRepo: reviewRepo,

@@ -23,7 +23,7 @@ func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.Boo
 	log := logger.New(logger.LevelWarn)
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, repRepo, pricingSvc, pricingRepo, loyaltySvc, loyaltyRepo
 }
 
@@ -765,7 +765,7 @@ func newBookingServiceWithReferral() (service.BookingService, *mock.BathhouseRep
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	userRepo := mock.NewUserRepo()
 	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, referralSvc, userRepo
 }
 
@@ -841,7 +841,7 @@ func TestBookingService_Create_WithReferralBonus(t *testing.T) {
 
 	code, _ := referralSvc.GenerateCode(context.Background(), referrer.ID)
 	_ = referralSvc.RegisterReferral(context.Background(), code, client.ID)
-	_ = referralSvc.CompleteReferral(context.Background(), client.ID) // Gives 50000 to both
+	_, _ = referralSvc.CompleteReferral(context.Background(), client.ID) // Gives 50000 to both
 
 	now := time.Now()
 	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
@@ -894,7 +894,7 @@ func newBookingServiceWithPromo() (service.BookingService, *mock.BathhouseRepo, 
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	promoSvc := service.NewPromoService(promoRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopPaymentService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, promoSvc
 }
 
@@ -1114,7 +1114,7 @@ func newBookingServiceWithPayment() (service.BookingService, *mock.BathhouseRepo
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	paymentSvc := &trackingPaymentService{}
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, paymentSvc, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, paymentSvc, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, paymentSvc
 }
 

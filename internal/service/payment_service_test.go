@@ -19,7 +19,7 @@ func newPaymentService() (service.PaymentService, *mock.PaymentRepo, *mock.Booki
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, provider, "http://localhost:3000/callback", log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, provider, &noopNotifService{}, "http://localhost:3000/callback", log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 

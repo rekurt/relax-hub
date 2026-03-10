@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
@@ -30,17 +31,23 @@ type photoVerificationService struct {
 	photoRepo   repository.BathhousePhotoRepository
 	bhRepo      repository.BathhouseRepository
 	accessCheck *AccessChecker
+	notifSvc    NotificationService
+	logger      *logger.Logger
 }
 
 func NewPhotoVerificationService(
 	photoRepo repository.BathhousePhotoRepository,
 	bhRepo repository.BathhouseRepository,
 	accessCheck *AccessChecker,
+	notifSvc NotificationService,
+	log *logger.Logger,
 ) PhotoVerificationService {
 	return &photoVerificationService{
 		photoRepo:   photoRepo,
 		bhRepo:      bhRepo,
 		accessCheck: accessCheck,
+		notifSvc:    notifSvc,
+		logger:      log,
 	}
 }
 
@@ -169,6 +176,9 @@ func (s *photoVerificationService) VerifyPhoto(ctx context.Context, photoID uuid
 		return nil, fmt.Errorf("recalculate verification status: %w", err)
 	}
 
+	s.notifyBathhouseOwner(ctx, photo.BathhouseID, domain.NotifPhotoVerified,
+		"Фото одобрено", "Ваше фото прошло проверку и опубликовано")
+
 	return s.photoRepo.GetByID(ctx, photoID)
 }
 
@@ -193,6 +203,9 @@ func (s *photoVerificationService) RejectPhoto(ctx context.Context, photoID uuid
 	if err := s.recalcVerificationStatus(ctx, photo.BathhouseID); err != nil {
 		return nil, fmt.Errorf("recalculate verification status: %w", err)
 	}
+
+	s.notifyBathhouseOwner(ctx, photo.BathhouseID, domain.NotifPhotoRejected,
+		"Фото отклонено", fmt.Sprintf("Ваше фото не прошло проверку: %s", reason))
 
 	return s.photoRepo.GetByID(ctx, photoID)
 }
@@ -235,4 +248,18 @@ func (s *photoVerificationService) recalcVerificationStatus(ctx context.Context,
 		return fmt.Errorf("update photo verification flag: %w", err)
 	}
 	return nil
+}
+
+func (s *photoVerificationService) notifyBathhouseOwner(ctx context.Context, bathhouseID uuid.UUID, notifType domain.NotificationType, title, body string) {
+	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
+		s.logger.Warn("failed to get bathhouse for photo notification", "bathhouse_id", bathhouseID, "error", err)
+		return
+	}
+	data := map[string]string{
+		"bathhouse_id": bathhouseID.String(),
+	}
+	if err := s.notifSvc.Send(ctx, bh.OwnerID, notifType, title, body, data); err != nil {
+		s.logger.Warn("failed to send photo verification notification", "bathhouse_id", bathhouseID, "error", err)
+	}
 }

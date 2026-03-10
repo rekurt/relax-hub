@@ -44,8 +44,8 @@ func (n *noopReferralService) GenerateCode(_ context.Context, _ uuid.UUID) (stri
 func (n *noopReferralService) RegisterReferral(_ context.Context, _ string, _ uuid.UUID) error {
 	return nil
 }
-func (n *noopReferralService) CompleteReferral(_ context.Context, _ uuid.UUID) error {
-	return nil
+func (n *noopReferralService) CompleteReferral(_ context.Context, _ uuid.UUID) (*service.ReferralCompletionResult, error) {
+	return nil, nil
 }
 func (n *noopReferralService) GetBalance(_ context.Context, userID uuid.UUID) (*domain.ReferralBalance, error) {
 	return &domain.ReferralBalance{UserID: userID}, nil
@@ -99,6 +99,25 @@ func (n *noopPaymentService) GetPaymentByBooking(_ context.Context, _, _ uuid.UU
 }
 func (n *noopPaymentService) ListUserPayments(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Payment], error) {
 	return &domain.PaginatedResult[domain.Payment]{}, nil
+}
+
+// noopCertificateService is a no-op CertificateService for tests that don't verify certificates.
+type noopCertificateService struct{}
+
+func (n *noopCertificateService) Purchase(_ context.Context, _ int64, _ *uuid.UUID, _, _, _, _ string) (*domain.GiftCertificate, error) {
+	return nil, nil
+}
+func (n *noopCertificateService) Redeem(_ context.Context, _ string, _ uuid.UUID) (*domain.GiftCertificate, error) {
+	return nil, nil
+}
+func (n *noopCertificateService) Apply(_ context.Context, _, _ uuid.UUID, _ int64) error {
+	return nil
+}
+func (n *noopCertificateService) GetBalance(_ context.Context, _ string) (*domain.GiftCertificate, error) {
+	return nil, nil
+}
+func (n *noopCertificateService) ListByUser(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.GiftCertificate], error) {
+	return &domain.PaginatedResult[domain.GiftCertificate]{}, nil
 }
 
 func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID) *domain.Bathhouse {

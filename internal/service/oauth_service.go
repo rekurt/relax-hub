@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,7 +16,7 @@ import (
 )
 
 type OAuthService interface {
-	GetOAuthURL(provider domain.OAuthProvider) (string, error)
+	GetOAuthURL(provider domain.OAuthProvider, referralCode string) (string, error)
 	OAuthCallback(ctx context.Context, provider domain.OAuthProvider, code, state string) (*domain.User, string, error)
 	LinkSocialAccount(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider, code string) error
 	UnlinkSocialAccount(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider) error
@@ -27,6 +28,7 @@ type oauthService struct {
 	socialRepo     repository.SocialAccountRepository
 	redisClient    *redis.Client
 	providers      map[domain.OAuthProvider]auth.OAuthProvider
+	referralSvc    ReferralService
 	jwtSecret      []byte
 	tokenTTL       time.Duration
 }
@@ -35,6 +37,7 @@ func NewOAuthService(
 	userRepo repository.UserRepository,
 	socialRepo repository.SocialAccountRepository,
 	redisClient *redis.Client,
+	referralSvc ReferralService,
 	cfg *config.Config,
 ) OAuthService {
 	providers := make(map[domain.OAuthProvider]auth.OAuthProvider)
@@ -60,6 +63,7 @@ func NewOAuthService(
 		socialRepo:   socialRepo,
 		redisClient:  redisClient,
 		providers:    providers,
+		referralSvc:  referralSvc,
 		jwtSecret:    []byte(cfg.JWT.Secret),
 		tokenTTL:     cfg.JWT.TokenTTL,
 	}
@@ -71,6 +75,7 @@ func NewOAuthServiceWithProviders(
 	socialRepo repository.SocialAccountRepository,
 	redisClient *redis.Client,
 	providers map[domain.OAuthProvider]auth.OAuthProvider,
+	referralSvc ReferralService,
 	jwtSecret string,
 	tokenTTL time.Duration,
 ) OAuthService {
@@ -79,12 +84,13 @@ func NewOAuthServiceWithProviders(
 		socialRepo:  socialRepo,
 		redisClient: redisClient,
 		providers:   providers,
+		referralSvc: referralSvc,
 		jwtSecret:   []byte(jwtSecret),
 		tokenTTL:    tokenTTL,
 	}
 }
 
-func (s *oauthService) GetOAuthURL(provider domain.OAuthProvider) (string, error) {
+func (s *oauthService) GetOAuthURL(provider domain.OAuthProvider, referralCode string) (string, error) {
 	p, err := s.getProvider(provider)
 	if err != nil {
 		return "", err
@@ -94,7 +100,13 @@ func (s *oauthService) GetOAuthURL(provider domain.OAuthProvider) (string, error
 	// Store state in Redis with 10-minute expiration for CSRF protection
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err = s.redisClient.Set(ctx, "oauth_state:"+state, string(provider), 10*time.Minute).Err()
+
+	// Store provider and optional referral code together
+	storedValue := string(provider)
+	if referralCode != "" {
+		storedValue = string(provider) + ":" + referralCode
+	}
+	err = s.redisClient.Set(ctx, "oauth_state:"+state, storedValue, 10*time.Minute).Err()
 	if err != nil {
 		return "", fmt.Errorf("failed to store OAuth state: %w", err)
 	}
@@ -122,8 +134,16 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 	// State is already validated, so deletion failure is non-critical cleanup
 	_ = s.redisClient.Del(redisCtx, "oauth_state:"+state).Err()
 
+	// Parse "provider:referralCode" or just "provider"
+	var referralCode string
+	providerStr := storedProvider
+	if idx := strings.Index(storedProvider, ":"); idx >= 0 {
+		providerStr = storedProvider[:idx]
+		referralCode = storedProvider[idx+1:]
+	}
+
 	// Verify the stored provider is valid
-	providerFromState := domain.OAuthProvider(storedProvider)
+	providerFromState := domain.OAuthProvider(providerStr)
 	if !providerFromState.IsValid() {
 		return nil, "", fmt.Errorf("%w: invalid provider in OAuth state", domain.ErrUnauthorized)
 	}
@@ -208,6 +228,14 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 
 		if err := s.userRepo.Create(ctx, user); err != nil {
 			return nil, "", fmt.Errorf("create user: %w", err)
+		}
+
+		// Register referral if code was provided during OAuth initiation
+		if referralCode != "" && s.referralSvc != nil {
+			if err := s.referralSvc.RegisterReferral(ctx, referralCode, user.ID); err != nil {
+				// Non-fatal: don't fail login because referral registration failed
+				// (mirrors AuthService.Register behavior)
+			}
 		}
 	}
 

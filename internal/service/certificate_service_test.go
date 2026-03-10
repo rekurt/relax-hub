@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/nikitaaldaev/bani/internal/notification"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -21,7 +22,7 @@ type certTestEnv struct {
 func newCertTestEnv() *certTestEnv {
 	certRepo := mock.NewCertificateRepo().(*mock.CertificateRepo)
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewCertificateService(certRepo, log)
+	svc := service.NewCertificateService(certRepo, notification.NewNoopEmailSender(), log)
 	return &certTestEnv{
 		svc:      svc,
 		certRepo: certRepo,

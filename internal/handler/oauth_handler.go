@@ -55,8 +55,9 @@ func toSocialAccountListResponse(accounts []domain.SocialAccount) []socialAccoun
 // GET /api/v1/auth/oauth/{provider}
 func (h *OAuthHandler) OAuthRedirect(w http.ResponseWriter, r *http.Request) {
 	provider := domain.OAuthProvider(chi.URLParam(r, "provider"))
+	referralCode := r.URL.Query().Get("referral_code")
 
-	url, err := h.oauthService.GetOAuthURL(provider)
+	url, err := h.oauthService.GetOAuthURL(provider, referralCode)
 	if err != nil {
 		handleServiceError(w, err)
 		return

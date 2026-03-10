@@ -327,7 +327,7 @@ func TestLoyaltyService_RecalculateLevel(t *testing.T) {
 				t.Fatalf("failed to create account: %v", err)
 			}
 
-			err = svc.RecalculateLevel(context.Background(), userID)
+			_, err = svc.RecalculateLevel(context.Background(), userID)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -356,7 +356,7 @@ func TestLoyaltyService_RecalculateLevel_NoChangeIfSameLevel(t *testing.T) {
 		t.Fatalf("failed to create account: %v", err)
 	}
 
-	err = svc.RecalculateLevel(context.Background(), userID)
+	_, err = svc.RecalculateLevel(context.Background(), userID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -49,6 +49,7 @@ func newTestOAuthService(t *testing.T, userRepo *mock.UserRepo, socialRepo *mock
 
 	return service.NewOAuthServiceWithProviders(
 		userRepo, socialRepo, redisClient, providers,
+		nil,
 		"test-secret-key-for-testing",
 		time.Hour,
 	), mr
@@ -63,7 +64,7 @@ func TestOAuthService_GetOAuthURL_Success(t *testing.T) {
 	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
 	defer mr.Close()
 
-	url, err := svc.GetOAuthURL(domain.OAuthProviderVK)
+	url, err := svc.GetOAuthURL(domain.OAuthProviderVK, "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -78,7 +79,7 @@ func TestOAuthService_GetOAuthURL_InvalidProvider(t *testing.T) {
 	svc, mr := newTestOAuthService(t, userRepo, socialRepo, nil)
 	defer mr.Close()
 
-	_, err := svc.GetOAuthURL("invalid")
+	_, err := svc.GetOAuthURL("invalid", "")
 	if !errors.Is(err, domain.ErrInvalidInput) {
 		t.Errorf("expected ErrInvalidInput, got: %v", err)
 	}
@@ -91,7 +92,7 @@ func TestOAuthService_GetOAuthURL_ProviderNotConfigured(t *testing.T) {
 	svc, mr := newTestOAuthService(t, userRepo, socialRepo, providers)
 	defer mr.Close()
 
-	_, err := svc.GetOAuthURL(domain.OAuthProviderGoogle)
+	_, err := svc.GetOAuthURL(domain.OAuthProviderGoogle, "")
 	if !errors.Is(err, domain.ErrInvalidInput) {
 		t.Errorf("expected ErrInvalidInput, got: %v", err)
 	}

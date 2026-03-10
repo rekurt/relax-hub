@@ -24,6 +24,7 @@ type CreateBookingInput struct {
 	UsePoints        int64  // Optional: loyalty points to spend (reduces total price)
 	UseReferralBonus int64  // Optional: referral bonus to spend (reduces total price)
 	PromoCode        string // Optional: promo code to apply for a discount
+	CertificateCode  string // Optional: gift certificate code to apply
 }
 
 type BookingResult struct {
@@ -34,6 +35,7 @@ type BookingResult struct {
 	ReferralBonusUsed int64 // Referral bonus used on this booking
 	OriginalPrice     int64 // Price before promo code discount
 	PromoDiscount     int64 // Discount from promo code in kopecks
+	CertificateDiscount int64 // Discount from gift certificate in kopecks
 }
 
 type TimeSlot struct {
@@ -61,6 +63,7 @@ type bookingService struct {
 	loyaltySvc  LoyaltyService
 	referralSvc ReferralService
 	promoSvc    PromoService
+	certSvc     CertificateService
 	paymentSvc  PaymentService
 	access      *AccessChecker
 	notifSvc    NotificationService
@@ -74,6 +77,7 @@ func NewBookingService(
 	loyaltySvc LoyaltyService,
 	referralSvc ReferralService,
 	promoSvc PromoService,
+	certSvc CertificateService,
 	paymentSvc PaymentService,
 	access *AccessChecker,
 	notifSvc NotificationService,
@@ -86,6 +90,7 @@ func NewBookingService(
 		loyaltySvc:  loyaltySvc,
 		referralSvc: referralSvc,
 		promoSvc:    promoSvc,
+		certSvc:     certSvc,
 		paymentSvc:  paymentSvc,
 		access:      access,
 		notifSvc:    notifSvc,
@@ -166,6 +171,25 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		if totalPrice <= 0 {
 			totalPrice = 1
 		}
+	}
+
+	// Apply gift certificate discount (after promo, before points/referral)
+	var certificateDiscount int64
+	var certificateForApply *domain.GiftCertificate
+	if input.CertificateCode != "" {
+		cert, err := s.certSvc.GetBalance(ctx, input.CertificateCode)
+		if err != nil {
+			return nil, err
+		}
+		if cert.Balance <= 0 || !cert.IsUsable() {
+			return nil, domain.ErrCertificateInsufficientBalance
+		}
+		certificateDiscount = cert.Balance
+		if certificateDiscount > totalPrice-1 {
+			certificateDiscount = totalPrice - 1 // keep at least 1 kopeck
+		}
+		totalPrice -= certificateDiscount
+		certificateForApply = cert
 	}
 
 	// Validate points before applying
@@ -284,13 +308,47 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		}
 	}
 
+	// Apply gift certificate after booking exists in DB
+	if certificateForApply != nil && certificateDiscount > 0 {
+		if err := s.certSvc.Apply(ctx, certificateForApply.ID, bookingID, certificateDiscount); err != nil {
+			// Refund promo usage
+			if input.PromoCode != "" && promoDiscount > 0 {
+				if refundErr := s.promoSvc.RefundUsage(ctx, bookingID); refundErr != nil {
+					s.logger.Error("failed to refund promo after certificate apply failure",
+						"booking_id", bookingID, "apply_error", err, "refund_error", refundErr)
+				}
+			}
+			// Refund loyalty points
+			if pointsSpent > 0 {
+				if refundErr := s.loyaltySvc.RefundPoints(ctx, userID, pointsSpent, bookingID); refundErr != nil {
+					s.logger.Error("failed to refund loyalty points after certificate apply failure",
+						"booking_id", bookingID, "apply_error", err, "refund_error", refundErr)
+				}
+			}
+			// Refund referral bonus
+			if referralBonusUsed > 0 {
+				if refundErr := s.referralSvc.RefundBalance(ctx, userID, referralBonusUsed, bookingID); refundErr != nil {
+					s.logger.Error("failed to refund referral bonus after certificate apply failure",
+						"booking_id", bookingID, "apply_error", err, "refund_error", refundErr)
+				}
+			}
+			// Roll back the booking
+			if delErr := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); delErr != nil {
+				s.logger.Error("failed to cancel booking after certificate apply failure",
+					"booking_id", bookingID, "apply_error", err, "cancel_error", delErr)
+			}
+			return nil, err
+		}
+	}
+
 	return &BookingResult{
-		Booking:           booking,
-		LoyaltyDiscount:   loyaltyDiscount,
-		PointsSpent:       pointsSpent,
-		ReferralBonusUsed: referralBonusUsed,
-		OriginalPrice:     originalPriceBeforePromo,
-		PromoDiscount:     promoDiscount,
+		Booking:             booking,
+		LoyaltyDiscount:     loyaltyDiscount,
+		PointsSpent:         pointsSpent,
+		ReferralBonusUsed:   referralBonusUsed,
+		OriginalPrice:       originalPriceBeforePromo,
+		PromoDiscount:       promoDiscount,
+		CertificateDiscount: certificateDiscount,
 	}, nil
 }
 
@@ -414,14 +472,20 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 		s.logger.Warn("failed to earn loyalty points", "booking_id", bookingID, "error", err)
 	} else {
 		earnedPoints = earned
-		if err := s.loyaltySvc.RecalculateLevel(ctx, booking.UserID); err != nil {
+		levelChange, err := s.loyaltySvc.RecalculateLevel(ctx, booking.UserID)
+		if err != nil {
 			s.logger.Warn("failed to recalculate loyalty level", "booking_id", bookingID, "error", err)
+		} else if levelChange != nil && levelChange.Changed {
+			s.sendLoyaltyUpgradeNotification(ctx, booking.UserID, levelChange)
 		}
 	}
 
 	// Complete referral if this is the referee's first completed booking
-	if err := s.referralSvc.CompleteReferral(ctx, booking.UserID); err != nil {
+	referralResult, err := s.referralSvc.CompleteReferral(ctx, booking.UserID)
+	if err != nil {
 		s.logger.Warn("failed to complete referral", "booking_id", bookingID, "user_id", booking.UserID, "error", err)
+	} else if referralResult != nil && referralResult.Completed {
+		s.sendReferralBonusNotifications(ctx, referralResult)
 	}
 
 	return &BookingResult{
@@ -683,5 +747,37 @@ func (s *bookingService) sendBookingNotification(ctx context.Context, booking *d
 
 	if err := s.notifSvc.Send(ctx, booking.UserID, notifType, title, body, data); err != nil {
 		s.logger.Warn("failed to send booking notification", "booking_id", booking.ID, "type", notifType, "error", err)
+	}
+}
+
+func (s *bookingService) sendLoyaltyUpgradeNotification(ctx context.Context, userID uuid.UUID, change *LevelChangeResult) {
+	title := "Повышение уровня лояльности!"
+	body := fmt.Sprintf("Поздравляем! Ваш уровень лояльности повышен: %s → %s",
+		change.OldLevel, change.NewLevel)
+	data := map[string]string{
+		"old_level": string(change.OldLevel),
+		"new_level": string(change.NewLevel),
+	}
+	if err := s.notifSvc.Send(ctx, userID, domain.NotifLoyaltyUpgrade, title, body, data); err != nil {
+		s.logger.Warn("failed to send loyalty upgrade notification", "user_id", userID, "error", err)
+	}
+}
+
+func (s *bookingService) sendReferralBonusNotifications(ctx context.Context, result *ReferralCompletionResult) {
+	amountRub := result.BonusAmount / 100
+	title := "Реферальный бонус начислен!"
+
+	// Notify referrer
+	referrerBody := fmt.Sprintf("Вам начислен реферальный бонус %d руб. за приглашённого друга", amountRub)
+	if err := s.notifSvc.Send(ctx, result.ReferrerID, domain.NotifReferralBonus, title, referrerBody, nil); err != nil {
+		s.logger.Warn("failed to send referral bonus notification to referrer",
+			"referrer_id", result.ReferrerID, "error", err)
+	}
+
+	// Notify referee
+	refereeBody := fmt.Sprintf("Вам начислен приветственный бонус %d руб. по реферальной программе", amountRub)
+	if err := s.notifSvc.Send(ctx, result.RefereeID, domain.NotifReferralBonus, title, refereeBody, nil); err != nil {
+		s.logger.Warn("failed to send referral bonus notification to referee",
+			"referee_id", result.RefereeID, "error", err)
 	}
 }

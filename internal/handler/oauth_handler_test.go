@@ -19,16 +19,16 @@ import (
 // --- Mock OAuth Service ---
 
 type mockOAuthService struct {
-	getOAuthURLFn         func(provider domain.OAuthProvider) (string, error)
+	getOAuthURLFn         func(provider domain.OAuthProvider, referralCode string) (string, error)
 	oauthCallbackFn       func(ctx context.Context, provider domain.OAuthProvider, code, state string) (*domain.User, string, error)
 	linkSocialAccountFn   func(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider, code string) error
 	unlinkSocialAccountFn func(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider) error
 	listSocialAccountsFn  func(ctx context.Context, userID uuid.UUID) ([]domain.SocialAccount, error)
 }
 
-func (m *mockOAuthService) GetOAuthURL(provider domain.OAuthProvider) (string, error) {
+func (m *mockOAuthService) GetOAuthURL(provider domain.OAuthProvider, referralCode string) (string, error) {
 	if m.getOAuthURLFn != nil {
-		return m.getOAuthURLFn(provider)
+		return m.getOAuthURLFn(provider, referralCode)
 	}
 	return "", nil
 }
@@ -68,7 +68,7 @@ var _ service.OAuthService = (*mockOAuthService)(nil)
 
 func TestOAuthHandler_OAuthRedirect(t *testing.T) {
 	oauthSvc := &mockOAuthService{
-		getOAuthURLFn: func(provider domain.OAuthProvider) (string, error) {
+		getOAuthURLFn: func(provider domain.OAuthProvider, referralCode string) (string, error) {
 			return "https://oauth.example.com/authorize?state=abc", nil
 		},
 	}
@@ -95,7 +95,7 @@ func TestOAuthHandler_OAuthRedirect(t *testing.T) {
 
 func TestOAuthHandler_OAuthRedirect_InvalidProvider(t *testing.T) {
 	oauthSvc := &mockOAuthService{
-		getOAuthURLFn: func(provider domain.OAuthProvider) (string, error) {
+		getOAuthURLFn: func(provider domain.OAuthProvider, referralCode string) (string, error) {
 			return "", domain.ErrInvalidInput
 		},
 	}

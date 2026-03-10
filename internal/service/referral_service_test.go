@@ -153,7 +153,7 @@ func TestReferralService_CompleteReferral_Success(t *testing.T) {
 	code, _ := env.svc.GenerateCode(context.Background(), referrer.ID)
 	_ = env.svc.RegisterReferral(context.Background(), code, referee.ID)
 
-	err := env.svc.CompleteReferral(context.Background(), referee.ID)
+	_, err := env.svc.CompleteReferral(context.Background(), referee.ID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -182,7 +182,7 @@ func TestReferralService_CompleteReferral_NotReferred(t *testing.T) {
 	user := createTestUser(t, env)
 
 	// Should not error for non-referred users
-	err := env.svc.CompleteReferral(context.Background(), user.ID)
+	_, err := env.svc.CompleteReferral(context.Background(), user.ID)
 	if err != nil {
 		t.Errorf("unexpected error for non-referred user: %v", err)
 	}
@@ -196,8 +196,8 @@ func TestReferralService_CompleteReferral_Idempotent(t *testing.T) {
 	code, _ := env.svc.GenerateCode(context.Background(), referrer.ID)
 	_ = env.svc.RegisterReferral(context.Background(), code, referee.ID)
 
-	_ = env.svc.CompleteReferral(context.Background(), referee.ID)
-	err := env.svc.CompleteReferral(context.Background(), referee.ID)
+	_, _ = env.svc.CompleteReferral(context.Background(), referee.ID)
+	_, err := env.svc.CompleteReferral(context.Background(), referee.ID)
 	if err != nil {
 		t.Errorf("second complete should not error: %v", err)
 	}
@@ -231,7 +231,7 @@ func TestReferralService_UseBalance_Success(t *testing.T) {
 
 	code, _ := env.svc.GenerateCode(context.Background(), referrer.ID)
 	_ = env.svc.RegisterReferral(context.Background(), code, referee.ID)
-	_ = env.svc.CompleteReferral(context.Background(), referee.ID)
+	_, _ = env.svc.CompleteReferral(context.Background(), referee.ID)
 
 	bookingID := uuid.New()
 	err := env.svc.UseBalance(context.Background(), referrer.ID, 20000, bookingID)
@@ -252,7 +252,7 @@ func TestReferralService_UseBalance_Insufficient(t *testing.T) {
 
 	code, _ := env.svc.GenerateCode(context.Background(), referrer.ID)
 	_ = env.svc.RegisterReferral(context.Background(), code, referee.ID)
-	_ = env.svc.CompleteReferral(context.Background(), referee.ID)
+	_, _ = env.svc.CompleteReferral(context.Background(), referee.ID)
 
 	err := env.svc.UseBalance(context.Background(), referrer.ID, 100000, uuid.New())
 	if err != domain.ErrInsufficientReferralBalance {
@@ -285,7 +285,7 @@ func TestReferralService_GetStats(t *testing.T) {
 	code, _ := env.svc.GenerateCode(context.Background(), referrer.ID)
 	_ = env.svc.RegisterReferral(context.Background(), code, referee1.ID)
 	_ = env.svc.RegisterReferral(context.Background(), code, referee2.ID)
-	_ = env.svc.CompleteReferral(context.Background(), referee1.ID)
+	_, _ = env.svc.CompleteReferral(context.Background(), referee1.ID)
 
 	stats, err := env.svc.GetStats(context.Background(), referrer.ID)
 	if err != nil {

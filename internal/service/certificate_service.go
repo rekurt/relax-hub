@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/nikitaaldaev/bani/internal/notification"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
@@ -32,17 +33,20 @@ type CertificateService interface {
 }
 
 type certificateService struct {
-	certRepo repository.GiftCertificateRepository
-	logger   *logger.Logger
+	certRepo    repository.GiftCertificateRepository
+	emailSender notification.EmailSender
+	logger      *logger.Logger
 }
 
 func NewCertificateService(
 	certRepo repository.GiftCertificateRepository,
+	emailSender notification.EmailSender,
 	log *logger.Logger,
 ) CertificateService {
 	return &certificateService{
-		certRepo: certRepo,
-		logger:   log,
+		certRepo:    certRepo,
+		emailSender: emailSender,
+		logger:      log,
 	}
 }
 
@@ -94,6 +98,10 @@ func (s *certificateService) Purchase(ctx context.Context, amount int64, purchas
 		}
 
 		s.logger.Info("certificate purchased", "certificate_id", cert.ID, "amount", amount)
+
+		// Send email to recipient with certificate code
+		s.sendCertificateEmail(ctx, cert)
+
 		return cert, nil
 	}
 
@@ -228,4 +236,32 @@ func randomSegment(chars []byte, max *big.Int, length int) (string, error) {
 		result[i] = chars[n.Int64()]
 	}
 	return string(result), nil
+}
+
+func (s *certificateService) sendCertificateEmail(ctx context.Context, cert *domain.GiftCertificate) {
+	amountRub := float64(cert.Amount) / 100
+	// Email to recipient
+	recipientSubject := "Вам подарили сертификат Bani!"
+	recipientBody := fmt.Sprintf(
+		"Вам подарен сертификат на %.0f руб.\n\nКод сертификата: %s\n\nСрок действия до: %s",
+		amountRub, cert.Code, cert.ValidUntil.Format("02.01.2006"),
+	)
+	if cert.Message != "" {
+		recipientBody += fmt.Sprintf("\n\nСообщение: %s", cert.Message)
+	}
+	if err := s.emailSender.Send(ctx, cert.RecipientEmail, recipientSubject, recipientBody); err != nil {
+		s.logger.Warn("failed to send certificate email to recipient",
+			"certificate_id", cert.ID, "recipient_email", cert.RecipientEmail, "error", err)
+	}
+
+	// Email to purchaser
+	purchaserSubject := "Подтверждение покупки сертификата"
+	purchaserBody := fmt.Sprintf(
+		"Вы приобрели подарочный сертификат на %.0f руб.\n\nКод: %s\nПолучатель: %s (%s)\nДействителен до: %s",
+		amountRub, cert.Code, cert.RecipientName, cert.RecipientEmail, cert.ValidUntil.Format("02.01.2006"),
+	)
+	if err := s.emailSender.Send(ctx, cert.PurchaserEmail, purchaserSubject, purchaserBody); err != nil {
+		s.logger.Warn("failed to send certificate confirmation to purchaser",
+			"certificate_id", cert.ID, "purchaser_email", cert.PurchaserEmail, "error", err)
+	}
 }

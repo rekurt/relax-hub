@@ -35,6 +35,7 @@ type paymentService struct {
 	paymentRepo repository.PaymentRepository
 	bookingRepo repository.BookingRepository
 	provider    payment.PaymentProvider
+	notifSvc    NotificationService
 	returnURL   string
 	logger      *logger.Logger
 }
@@ -43,6 +44,7 @@ func NewPaymentService(
 	paymentRepo repository.PaymentRepository,
 	bookingRepo repository.BookingRepository,
 	provider payment.PaymentProvider,
+	notifSvc NotificationService,
 	returnURL string,
 	log *logger.Logger,
 ) PaymentService {
@@ -50,6 +52,7 @@ func NewPaymentService(
 		paymentRepo: paymentRepo,
 		bookingRepo: bookingRepo,
 		provider:    provider,
+		notifSvc:    notifSvc,
 		returnURL:   returnURL,
 		logger:      log,
 	}
@@ -203,6 +206,8 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 		if err := s.bookingRepo.UpdateStatus(ctx, p.BookingID, domain.BookingConfirmed); err != nil {
 			return fmt.Errorf("failed to confirm booking after payment: %w", err)
 		}
+		// Send notification about successful payment and booking confirmation
+		s.sendPaymentConfirmationNotification(ctx, booking)
 	case "canceled":
 		if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentFailed, event.ExternalID); err != nil {
 			return err
@@ -280,4 +285,17 @@ func (s *paymentService) GetPaymentByBooking(ctx context.Context, userID uuid.UU
 
 func (s *paymentService) ListUserPayments(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error) {
 	return s.paymentRepo.ListByUser(ctx, userID, page, pageSize)
+}
+
+func (s *paymentService) sendPaymentConfirmationNotification(ctx context.Context, booking *domain.Booking) {
+	title := "Оплата прошла успешно"
+	body := fmt.Sprintf("Бронирование на %s оплачено и подтверждено", booking.StartTime.Format("02.01.2006 15:04"))
+	data := map[string]string{
+		"booking_id":   booking.ID.String(),
+		"bathhouse_id": booking.BathhouseID.String(),
+	}
+	if err := s.notifSvc.Send(ctx, booking.UserID, domain.NotifBookingConfirmed, title, body, data); err != nil {
+		s.logger.Warn("failed to send payment confirmation notification",
+			"booking_id", booking.ID, "error", err)
+	}
 }

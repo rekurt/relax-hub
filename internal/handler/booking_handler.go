@@ -30,6 +30,7 @@ type createBookingRequest struct {
 	UsePoints        int64  `json:"use_points,omitempty"`
 	UseReferralBonus int64  `json:"use_referral_bonus,omitempty"`
 	PromoCode        string `json:"promo_code,omitempty"`
+	CertificateCode  string `json:"certificate_code,omitempty"`
 }
 
 type bookingResponse struct {
@@ -41,8 +42,9 @@ type bookingResponse struct {
 	GuestCount        int       `json:"guest_count"`
 	TotalPrice        int64     `json:"total_price"`
 	OriginalPrice     int64     `json:"original_price,omitempty"`
-	PromoDiscount     int64     `json:"promo_discount,omitempty"`
-	Status            string    `json:"status"`
+	PromoDiscount       int64     `json:"promo_discount,omitempty"`
+	CertificateDiscount int64     `json:"certificate_discount,omitempty"`
+	Status              string    `json:"status"`
 	PaymentStatus     string    `json:"payment_status,omitempty"`
 	Comment           string    `json:"comment"`
 	EarnedPoints      int64     `json:"earned_points,omitempty"`
@@ -79,6 +81,7 @@ func toBookingResultResponse(r *service.BookingResult) bookingResponse {
 	resp.ReferralBonusUsed = r.ReferralBonusUsed
 	resp.OriginalPrice = r.OriginalPrice
 	resp.PromoDiscount = r.PromoDiscount
+	resp.CertificateDiscount = r.CertificateDiscount
 	return resp
 }
 
@@ -134,6 +137,7 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 		UsePoints:        req.UsePoints,
 		UseReferralBonus: req.UseReferralBonus,
 		PromoCode:        req.PromoCode,
+		CertificateCode:  req.CertificateCode,
 	})
 	if err != nil {
 		handleServiceError(w, err)
