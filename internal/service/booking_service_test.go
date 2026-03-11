@@ -19,11 +19,12 @@ func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.Boo
 	repRepo := mock.NewRepresentativeRepo()
 	pricingRepo := mock.NewPricingRuleRepo()
 	loyaltyRepo := mock.NewLoyaltyRepo()
+	slotBlockRepo := mock.NewSlotBlockRepo()
 	access := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, repRepo, pricingSvc, pricingRepo, loyaltySvc, loyaltyRepo
 }
 
@@ -765,7 +766,7 @@ func newBookingServiceWithReferral() (service.BookingService, *mock.BathhouseRep
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	userRepo := mock.NewUserRepo()
 	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), pricingSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, referralSvc, userRepo
 }
 
@@ -894,7 +895,7 @@ func newBookingServiceWithPromo() (service.BookingService, *mock.BathhouseRepo, 
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	promoSvc := service.NewPromoService(promoRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), pricingSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, promoSvc
 }
 
@@ -1114,7 +1115,7 @@ func newBookingServiceWithPayment() (service.BookingService, *mock.BathhouseRepo
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	paymentSvc := &trackingPaymentService{}
-	svc := service.NewBookingService(bookingRepo, bhRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, paymentSvc, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, paymentSvc, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, paymentSvc
 }
 
@@ -1187,5 +1188,186 @@ func TestBookingService_Cancel_RefundErrorDoesNotBlockCancel(t *testing.T) {
 
 	if !paymentSvc.refundCalled {
 		t.Error("expected RefundPayment to be called")
+	}
+}
+
+// --- SlotBlock integration tests ---
+
+func newBookingServiceWithSlotBlocks() (service.BookingService, *mock.BathhouseRepo, *mock.BookingRepo, *mock.SlotBlockRepo) {
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	pricingRepo := mock.NewPricingRuleRepo()
+	loyaltyRepo := mock.NewLoyaltyRepo()
+	slotBlockRepo := mock.NewSlotBlockRepo()
+	access := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
+	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
+	return svc, bhRepo, bookingRepo, slotBlockRepo
+}
+
+func TestBookingService_Create_BlockedBySlotBlock(t *testing.T) {
+	svc, bhRepo, _, slotBlockRepo := newBookingServiceWithSlotBlocks()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	// Create a slot block overlapping with the requested time
+	block := &domain.SlotBlock{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		Source:      domain.SlotBlockSourceGoogleCalendar,
+		ExternalID:  "ext-123",
+		Description: "External event",
+	}
+	if err := slotBlockRepo.Create(context.Background(), block); err != nil {
+		t.Fatalf("failed to create slot block: %v", err)
+	}
+
+	_, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  3,
+	})
+
+	if !errors.Is(err, domain.ErrSlotUnavailable) {
+		t.Errorf("should fail with slot unavailable due to slot block, got: %v", err)
+	}
+}
+
+func TestBookingService_Create_PartialOverlapWithSlotBlock(t *testing.T) {
+	svc, bhRepo, _, slotBlockRepo := newBookingServiceWithSlotBlocks()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+
+	// Block 11:00-13:00
+	block := &domain.SlotBlock{
+		BathhouseID: bh.ID,
+		StartTime:   start.Add(time.Hour),
+		EndTime:     start.Add(3 * time.Hour),
+		Source:      domain.SlotBlockSourceManual,
+		Description: "Maintenance",
+	}
+	if err := slotBlockRepo.Create(context.Background(), block); err != nil {
+		t.Fatalf("failed to create slot block: %v", err)
+	}
+
+	// Try to book 10:00-12:00 (overlaps with block)
+	_, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     start.Add(2 * time.Hour),
+		GuestCount:  3,
+	})
+
+	if !errors.Is(err, domain.ErrSlotUnavailable) {
+		t.Errorf("should fail with slot unavailable due to partial overlap with slot block, got: %v", err)
+	}
+}
+
+func TestBookingService_Create_NoOverlapWithSlotBlock(t *testing.T) {
+	svc, bhRepo, _, slotBlockRepo := newBookingServiceWithSlotBlocks()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+
+	// Block 14:00-16:00
+	block := &domain.SlotBlock{
+		BathhouseID: bh.ID,
+		StartTime:   start.Add(4 * time.Hour),
+		EndTime:     start.Add(6 * time.Hour),
+		Source:      domain.SlotBlockSourceManual,
+		Description: "Maintenance",
+	}
+	if err := slotBlockRepo.Create(context.Background(), block); err != nil {
+		t.Fatalf("failed to create slot block: %v", err)
+	}
+
+	// Book 10:00-12:00 (no overlap with block at 14:00-16:00)
+	result, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     start.Add(2 * time.Hour),
+		GuestCount:  3,
+	})
+
+	if err != nil {
+		t.Fatalf("should succeed when no overlap with slot block, got: %v", err)
+	}
+	if result.Booking.Status != domain.BookingPending {
+		t.Errorf("status = %q, want %q", result.Booking.Status, domain.BookingPending)
+	}
+}
+
+func TestBookingService_GetAvailableSlots_WithSlotBlock(t *testing.T) {
+	svc, bhRepo, _, slotBlockRepo := newBookingServiceWithSlotBlocks()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Test Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, Status: domain.BathhouseStatusActive,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: 0, OpenTime: "09:00", CloseTime: "13:00"}, // Monday
+		},
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Find next Monday
+	now := time.Now()
+	daysUntilMonday := (8 - int(now.Weekday())) % 7
+	if daysUntilMonday == 0 {
+		daysUntilMonday = 7
+	}
+	monday := time.Date(now.Year(), now.Month(), now.Day()+daysUntilMonday, 0, 0, 0, 0, time.UTC)
+
+	// Create a slot block that covers 11:00-12:00
+	block := &domain.SlotBlock{
+		BathhouseID: bh.ID,
+		StartTime:   time.Date(monday.Year(), monday.Month(), monday.Day(), 11, 0, 0, 0, time.UTC),
+		EndTime:     time.Date(monday.Year(), monday.Month(), monday.Day(), 12, 0, 0, 0, time.UTC),
+		Source:      domain.SlotBlockSourceYandexCalendar,
+		ExternalID:  "yandex-event-1",
+		Description: "External event",
+	}
+	if err := slotBlockRepo.Create(context.Background(), block); err != nil {
+		t.Fatalf("failed to create slot block: %v", err)
+	}
+
+	slots, err := svc.GetAvailableSlots(context.Background(), bh.ID, monday)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(slots) != 4 { // 09:00-10:00, 10:00-11:00, 11:00-12:00, 12:00-13:00
+		t.Fatalf("expected 4 slots, got %d", len(slots))
+	}
+
+	// The 11:00-12:00 slot should be unavailable due to slot block
+	for _, slot := range slots {
+		if slot.StartTime.Hour() == 11 && slot.Available {
+			t.Error("11:00-12:00 slot should be unavailable due to slot block")
+		}
+		if slot.StartTime.Hour() == 9 && !slot.Available {
+			t.Error("09:00-10:00 slot should be available")
+		}
+		if slot.StartTime.Hour() == 10 && !slot.Available {
+			t.Error("10:00-11:00 slot should be available")
+		}
+		if slot.StartTime.Hour() == 12 && !slot.Available {
+			t.Error("12:00-13:00 slot should be available")
+		}
 	}
 }

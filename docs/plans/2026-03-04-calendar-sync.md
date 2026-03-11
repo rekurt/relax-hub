@@ -54,7 +54,7 @@ iCal-экспорт расписания бронирований для вла�
 - Create: `migrations/000019_slot_blocks.up.sql`
 - Create: `migrations/000019_slot_blocks.down.sql`
 
-- [ ] Модель SlotBlock:
+- [x] Модель SlotBlock:
   ```
   SlotBlock {
     ID            uuid.UUID
@@ -67,10 +67,10 @@ iCal-экспорт расписания бронирований для вла�
     CreatedAt     time.Time
   }
   ```
-- [ ] Создать миграцию
-- [ ] Интегрировать с CheckAvailability: проверять и slot_blocks при бронировании
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] Создать миграцию
+- [x] Интегрировать с CheckAvailability: проверять и slot_blocks при бронировании
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 3: Импорт из внешних календарей
 

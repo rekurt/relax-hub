@@ -297,3 +297,14 @@ type DeviceTokenRepository interface {
 	DeleteByToken(ctx context.Context, token string) error
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.DeviceToken, error)
 }
+
+type SlotBlockRepository interface {
+	Create(ctx context.Context, block *domain.SlotBlock) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.SlotBlock, error)
+	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.SlotBlock, error)
+	GetByExternalID(ctx context.Context, bathhouseID uuid.UUID, source domain.SlotBlockSource, externalID string) (*domain.SlotBlock, error)
+	DeleteBySource(ctx context.Context, bathhouseID uuid.UUID, source domain.SlotBlockSource) error
+	GetOverlapping(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) ([]domain.SlotBlock, error)
+	HasOverlapping(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) (bool, error)
+}

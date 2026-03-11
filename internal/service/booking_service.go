@@ -57,22 +57,24 @@ type BookingService interface {
 }
 
 type bookingService struct {
-	bookingRepo repository.BookingRepository
-	bhRepo      repository.BathhouseRepository
-	pricingSvc  PricingService
-	loyaltySvc  LoyaltyService
-	referralSvc ReferralService
-	promoSvc    PromoService
-	certSvc     CertificateService
-	paymentSvc  PaymentService
-	access      *AccessChecker
-	notifSvc    NotificationService
-	logger      *logger.Logger
+	bookingRepo   repository.BookingRepository
+	bhRepo        repository.BathhouseRepository
+	slotBlockRepo repository.SlotBlockRepository
+	pricingSvc    PricingService
+	loyaltySvc    LoyaltyService
+	referralSvc   ReferralService
+	promoSvc      PromoService
+	certSvc       CertificateService
+	paymentSvc    PaymentService
+	access        *AccessChecker
+	notifSvc      NotificationService
+	logger        *logger.Logger
 }
 
 func NewBookingService(
 	bookingRepo repository.BookingRepository,
 	bhRepo repository.BathhouseRepository,
+	slotBlockRepo repository.SlotBlockRepository,
 	pricingSvc PricingService,
 	loyaltySvc LoyaltyService,
 	referralSvc ReferralService,
@@ -84,17 +86,18 @@ func NewBookingService(
 	log *logger.Logger,
 ) BookingService {
 	return &bookingService{
-		bookingRepo: bookingRepo,
-		bhRepo:      bhRepo,
-		pricingSvc:  pricingSvc,
-		loyaltySvc:  loyaltySvc,
-		referralSvc: referralSvc,
-		promoSvc:    promoSvc,
-		certSvc:     certSvc,
-		paymentSvc:  paymentSvc,
-		access:      access,
-		notifSvc:    notifSvc,
-		logger:      log,
+		bookingRepo:   bookingRepo,
+		bhRepo:        bhRepo,
+		slotBlockRepo: slotBlockRepo,
+		pricingSvc:    pricingSvc,
+		loyaltySvc:    loyaltySvc,
+		referralSvc:   referralSvc,
+		promoSvc:      promoSvc,
+		certSvc:       certSvc,
+		paymentSvc:    paymentSvc,
+		access:        access,
+		notifSvc:      notifSvc,
+		logger:        log,
 	}
 }
 
@@ -140,6 +143,15 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, err
 	}
 	if !available {
+		return nil, domain.ErrSlotUnavailable
+	}
+
+	// Check for slot blocks (external calendar events, manual blocks)
+	blocked, err := s.slotBlockRepo.HasOverlapping(ctx, input.BathhouseID, input.StartTime, input.EndTime)
+	if err != nil {
+		return nil, err
+	}
+	if blocked {
 		return nil, domain.ErrSlotUnavailable
 	}
 
@@ -552,6 +564,12 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 		return nil, err
 	}
 
+	// Get slot blocks for the day
+	slotBlocks, err := s.slotBlockRepo.GetOverlapping(ctx, bathhouseID, dayStart, dayEnd)
+	if err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	var slots []TimeSlot
 	for t := dayStart; t.Before(dayEnd); t = t.Add(time.Hour) {
@@ -568,6 +586,15 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 			if t.Before(b.EndTime) && slotEnd.After(b.StartTime) {
 				avail = false
 				break
+			}
+		}
+		// Check slot blocks
+		if avail {
+			for _, sb := range slotBlocks {
+				if t.Before(sb.EndTime) && slotEnd.After(sb.StartTime) {
+					avail = false
+					break
+				}
 			}
 		}
 
