@@ -90,7 +90,7 @@ func TestDeviceTokenHandler_Delete(t *testing.T) {
 			ID string `json:"id"`
 		} `json:"data"`
 	}
-	json.NewDecoder(w.Body).Decode(&resp)
+	_ = json.NewDecoder(w.Body).Decode(&resp)
 	tokenID := resp.Data.ID
 
 	// Delete the token

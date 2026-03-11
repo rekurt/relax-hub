@@ -39,7 +39,7 @@ func (h *CalendarHandler) ExportICal(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Set("Content-Disposition", "attachment; filename=calendar.ics")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(ical))
+	_, _ = w.Write([]byte(ical))
 }
 
 // ExportICalByToken handles GET /calendar/{token}.ics
@@ -59,7 +59,7 @@ func (h *CalendarHandler) ExportICalByToken(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Set("Content-Disposition", "attachment; filename=calendar.ics")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(ical))
+	_, _ = w.Write([]byte(ical))
 }
 
 // GetCalendarToken handles GET /api/v1/my/bathhouses/{id}/calendar-token
