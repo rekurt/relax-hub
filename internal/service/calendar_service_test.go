@@ -7,24 +7,28 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/calendar"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
-func newCalendarService() (service.CalendarService, *mock.BathhouseRepo, *mock.BookingRepo, *mock.RepresentativeRepo) {
+func newCalendarService() (service.CalendarService, *mock.BathhouseRepo, *mock.BookingRepo, *mock.RepresentativeRepo, *mock.ExternalCalendarRepo, *mock.SlotBlockRepo) {
 	bhRepo := mock.NewBathhouseRepo()
 	bookingRepo := mock.NewBookingRepo()
 	repRepo := mock.NewRepresentativeRepo()
+	extCalRepo := mock.NewExternalCalendarRepo()
+	slotBlockRepo := mock.NewSlotBlockRepo()
 	access := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewCalendarService(bhRepo, bookingRepo, access, log)
-	return svc, bhRepo, bookingRepo, repRepo
+	syncSvc := calendar.NewCalendarSyncService(extCalRepo, slotBlockRepo, log)
+	svc := service.NewCalendarService(bhRepo, bookingRepo, extCalRepo, slotBlockRepo, syncSvc, access, log)
+	return svc, bhRepo, bookingRepo, repRepo, extCalRepo, slotBlockRepo
 }
 
 func TestCalendarService_ExportICal_Success(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newCalendarService()
+	svc, bhRepo, bookingRepo, _, _, _ := newCalendarService()
 	ownerID := uuid.New()
 
 	bh := &domain.Bathhouse{
@@ -68,7 +72,7 @@ func TestCalendarService_ExportICal_Success(t *testing.T) {
 }
 
 func TestCalendarService_ExportICal_Forbidden(t *testing.T) {
-	svc, bhRepo, _, _ := newCalendarService()
+	svc, bhRepo, _, _, _, _ := newCalendarService()
 	ownerID := uuid.New()
 	otherUserID := uuid.New()
 
@@ -89,7 +93,7 @@ func TestCalendarService_ExportICal_Forbidden(t *testing.T) {
 }
 
 func TestCalendarService_ExportICalByToken(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newCalendarService()
+	svc, bhRepo, bookingRepo, _, _, _ := newCalendarService()
 	ownerID := uuid.New()
 
 	bh := &domain.Bathhouse{
@@ -130,7 +134,7 @@ func TestCalendarService_ExportICalByToken(t *testing.T) {
 }
 
 func TestCalendarService_ExportICalByToken_NotFound(t *testing.T) {
-	svc, _, _, _ := newCalendarService()
+	svc, _, _, _, _, _ := newCalendarService()
 
 	_, err := svc.ExportICalByToken(context.Background(), "nonexistent-token")
 	if err == nil {
@@ -139,7 +143,7 @@ func TestCalendarService_ExportICalByToken_NotFound(t *testing.T) {
 }
 
 func TestCalendarService_GetOrCreateCalendarToken(t *testing.T) {
-	svc, bhRepo, _, _ := newCalendarService()
+	svc, bhRepo, _, _, _, _ := newCalendarService()
 	ownerID := uuid.New()
 
 	bh := &domain.Bathhouse{
@@ -171,7 +175,7 @@ func TestCalendarService_GetOrCreateCalendarToken(t *testing.T) {
 }
 
 func TestCalendarService_ExportICal_FiltersCancelled(t *testing.T) {
-	svc, bhRepo, bookingRepo, _ := newCalendarService()
+	svc, bhRepo, bookingRepo, _, _, _ := newCalendarService()
 	ownerID := uuid.New()
 
 	bh := &domain.Bathhouse{

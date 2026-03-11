@@ -97,15 +97,15 @@ iCal-экспорт расписания бронирований для вла�
 - Modify: `internal/handler/calendar.go`
 - Modify: `internal/server/router.go`
 
-- [ ] POST /api/v1/my/bathhouses/{id}/external-calendars — добавить внешний календарь (URL)
-- [ ] GET /api/v1/my/bathhouses/{id}/external-calendars — список внешних календарей
-- [ ] DELETE /api/v1/my/external-calendars/{id} — удалить внешний календарь
-- [ ] POST /api/v1/my/bathhouses/{id}/external-calendars/sync — принудительная синхронизация
-- [ ] POST /api/v1/my/bathhouses/{id}/slot-blocks — ручная блокировка слота
-- [ ] DELETE /api/v1/my/slot-blocks/{id} — снять ручную блокировку
-- [ ] Зарегистрировать маршруты, добавить fx.Module
-- [ ] Написать handler-тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] POST /api/v1/my/bathhouses/{id}/external-calendars — добавить внешний календарь (URL)
+- [x] GET /api/v1/my/bathhouses/{id}/external-calendars — список внешних календарей
+- [x] DELETE /api/v1/my/external-calendars/{id} — удалить внешний календарь
+- [x] POST /api/v1/my/bathhouses/{id}/external-calendars/sync — принудительная синхронизация
+- [x] POST /api/v1/my/bathhouses/{id}/slot-blocks — ручная блокировка слота
+- [x] DELETE /api/v1/my/slot-blocks/{id} — снять ручную блокировку
+- [x] Зарегистрировать маршруты, добавить fx.Module
+- [x] Написать handler-тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 5: Верификация
 

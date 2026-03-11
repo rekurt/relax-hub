@@ -259,6 +259,16 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/calendar.ics", p.CalendarHandler.ExportICal)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/calendar-token", p.CalendarHandler.GetCalendarToken)
 
+		// External calendars (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/external-calendars", p.CalendarHandler.AddExternalCalendar)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/external-calendars", p.CalendarHandler.ListExternalCalendars)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/external-calendars/{id}", p.CalendarHandler.RemoveExternalCalendar)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/external-calendars/sync", p.CalendarHandler.SyncExternalCalendars)
+
+		// Slot blocks (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/slot-blocks", p.CalendarHandler.CreateSlotBlock)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/slot-blocks/{id}", p.CalendarHandler.DeleteSlotBlock)
+
 		// Representatives (owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses/{id}/representatives", p.RepHandler.Invite)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/bathhouses/{id}/representatives", p.RepHandler.ListByBathhouse)
