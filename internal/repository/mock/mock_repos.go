@@ -1111,6 +1111,39 @@ func (r *BathhouseRepo) UpdatePhotoVerified(_ context.Context, id uuid.UUID, ver
 	return nil
 }
 
+func (r *BathhouseRepo) GetCalendarToken(_ context.Context, bathhouseID uuid.UUID) (string, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	bh, ok := r.bathhouses[bathhouseID]
+	if !ok {
+		return "", domain.ErrNotFound
+	}
+	return bh.CalendarToken, nil
+}
+
+func (r *BathhouseRepo) SetCalendarToken(_ context.Context, bathhouseID uuid.UUID, token string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	bh, ok := r.bathhouses[bathhouseID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	bh.CalendarToken = token
+	return nil
+}
+
+func (r *BathhouseRepo) GetByCalendarToken(_ context.Context, token string) (*domain.Bathhouse, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, bh := range r.bathhouses {
+		if bh.CalendarToken == token {
+			cp := *bh
+			return &cp, nil
+		}
+	}
+	return nil, domain.ErrNotFound
+}
+
 func (r *BathhouseRepo) ListIDsByOwner(_ context.Context, ownerID uuid.UUID) ([]uuid.UUID, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

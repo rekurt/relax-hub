@@ -516,6 +516,79 @@ func (r *bathhouseRepo) UpdatePhotoVerified(ctx context.Context, id uuid.UUID, v
 	return nil
 }
 
+func (r *bathhouseRepo) GetCalendarToken(ctx context.Context, bathhouseID uuid.UUID) (string, error) {
+	var token *string
+	err := r.pool.QueryRow(ctx, `SELECT calendar_token FROM bathhouses WHERE id = $1`, bathhouseID).Scan(&token)
+	if err != nil {
+		return "", fmt.Errorf("get calendar token: %w", err)
+	}
+	if token == nil {
+		return "", nil
+	}
+	return *token, nil
+}
+
+func (r *bathhouseRepo) SetCalendarToken(ctx context.Context, bathhouseID uuid.UUID, token string) error {
+	tag, err := r.pool.Exec(ctx, `UPDATE bathhouses SET calendar_token = $2 WHERE id = $1`, bathhouseID, token)
+	if err != nil {
+		return fmt.Errorf("set calendar token: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *bathhouseRepo) GetByCalendarToken(ctx context.Context, token string) (*domain.Bathhouse, error) {
+	query := `
+		SELECT id, owner_id, name, slug, description, address, city_id,
+			latitude, longitude, price_per_hour, min_duration, max_guests,
+			has_pool, has_sauna, has_steam_room, has_hot_tub, has_bbq, has_karaoke,
+			rating, review_count, images, working_hours, status,
+			created_at, updated_at, is_photo_verified
+		FROM bathhouses
+		WHERE calendar_token = $1`
+
+	rows, err := r.pool.Query(ctx, query, token)
+	if err != nil {
+		return nil, fmt.Errorf("get bathhouse by calendar token: %w", err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		return r.scanBathhouseMinimal(rows)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("get bathhouse by calendar token: %w", err)
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (r *bathhouseRepo) scanBathhouseMinimal(rows pgx.Rows) (*domain.Bathhouse, error) {
+	var (
+		bh         domain.Bathhouse
+		imagesJSON []byte
+		whJSON     []byte
+	)
+	err := rows.Scan(
+		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Slug, &bh.Description, &bh.Address, &bh.CityID,
+		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
+		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
+		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status,
+		&bh.CreatedAt, &bh.UpdatedAt, &bh.IsPhotoVerified,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("scan bathhouse row: %w", err)
+	}
+	if err := json.Unmarshal(imagesJSON, &bh.Images); err != nil {
+		return nil, fmt.Errorf("unmarshal images: %w", err)
+	}
+	if err := json.Unmarshal(whJSON, &bh.WorkingHours); err != nil {
+		return nil, fmt.Errorf("unmarshal working hours: %w", err)
+	}
+	return &bh, nil
+}
+
 func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*domain.Bathhouse, error) {
 	var (
 		bh         domain.Bathhouse

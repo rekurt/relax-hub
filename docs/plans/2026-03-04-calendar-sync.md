@@ -29,7 +29,7 @@ iCal-экспорт расписания бронирований для вла�
 - Create: `internal/handler/calendar.go`
 - Modify: `internal/server/router.go`
 
-- [ ] Генератор iCal-формата:
+- [x] Генератор iCal-формата:
   ```
   BEGIN:VCALENDAR
   VERSION:2.0
@@ -42,10 +42,10 @@ iCal-экспорт расписания бронирований для вла�
   END:VEVENT
   END:VCALENDAR
   ```
-- [ ] GET /api/v1/my/bathhouses/{id}/calendar.ics — экспорт бронирований в iCal (auth + уникальный токен)
-- [ ] Уникальный URL для подписки (без JWT, по секретному токену): /calendar/{secret_token}.ics
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] GET /api/v1/my/bathhouses/{id}/calendar.ics — экспорт бронирований в iCal (auth + уникальный токен)
+- [x] Уникальный URL для подписки (без JWT, по секретному токену): /calendar/{secret_token}.ics
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 2: Внешние блокировки слотов
 

@@ -39,6 +39,7 @@ var Module = fx.Module("service",
 		fx.Annotate(NewPhotoVerificationService, fx.As(new(PhotoVerificationService))),
 		fx.Annotate(NewPromoService, fx.As(new(PromoService))),
 		fx.Annotate(NewMediaService, fx.As(new(MediaService))),
+		fx.Annotate(NewCalendarService, fx.As(new(CalendarService))),
 		fx.Annotate(
 			func(paymentRepo repository.PaymentRepository, bookingRepo repository.BookingRepository, provider payment.PaymentProvider, notifSvc NotificationService, cfg *config.Config, log *logger.Logger) PaymentService {
 				return NewPaymentService(paymentRepo, bookingRepo, provider, notifSvc, cfg.Payment.ReturnURL, log)

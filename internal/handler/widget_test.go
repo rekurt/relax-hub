@@ -76,6 +76,18 @@ func (m *mockWidgetBathhouseRepository) SlugExists(ctx context.Context, slug str
 	return false, nil
 }
 
+func (m *mockWidgetBathhouseRepository) GetCalendarToken(ctx context.Context, bathhouseID uuid.UUID) (string, error) {
+	return "", nil
+}
+
+func (m *mockWidgetBathhouseRepository) SetCalendarToken(ctx context.Context, bathhouseID uuid.UUID, token string) error {
+	return nil
+}
+
+func (m *mockWidgetBathhouseRepository) GetByCalendarToken(ctx context.Context, token string) (*domain.Bathhouse, error) {
+	return nil, domain.ErrNotFound
+}
+
 // Mock BookingService for widget testing
 type mockWidgetBookingService struct {
 	createFn              func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error)

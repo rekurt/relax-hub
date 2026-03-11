@@ -43,6 +43,9 @@ type BathhouseRepository interface {
 	UpdateRating(ctx context.Context, bathhouseID uuid.UUID) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BathhouseStatus) error
 	UpdatePhotoVerified(ctx context.Context, id uuid.UUID, verified bool) error
+	GetCalendarToken(ctx context.Context, bathhouseID uuid.UUID) (string, error)
+	SetCalendarToken(ctx context.Context, bathhouseID uuid.UUID, token string) error
+	GetByCalendarToken(ctx context.Context, token string) (*domain.Bathhouse, error)
 }
 
 type BookingRepository interface {

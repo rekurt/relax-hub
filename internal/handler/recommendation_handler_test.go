@@ -127,6 +127,18 @@ func (m *mockBathhouseRepository) SlugExists(ctx context.Context, slug string) (
 	return false, nil
 }
 
+func (m *mockBathhouseRepository) GetCalendarToken(ctx context.Context, bathhouseID uuid.UUID) (string, error) {
+	return "", nil
+}
+
+func (m *mockBathhouseRepository) SetCalendarToken(ctx context.Context, bathhouseID uuid.UUID, token string) error {
+	return nil
+}
+
+func (m *mockBathhouseRepository) GetByCalendarToken(ctx context.Context, token string) (*domain.Bathhouse, error) {
+	return nil, domain.ErrNotFound
+}
+
 // Mock AuthService for testing
 type mockAuthService struct {
 	userID uuid.UUID

@@ -47,6 +47,7 @@ type RouterParams struct {
 	MediaHandler          *handler.MediaHandler
 	PaymentHandler        *handler.PaymentHandler
 	DeviceTokenHandler    *handler.DeviceTokenHandler
+	CalendarHandler       *handler.CalendarHandler
 	GoAdmin               *admin.GoAdmin `optional:"true"`
 }
 
@@ -61,6 +62,7 @@ func NewRouter(p RouterParams) http.Handler {
 	r.Get("/health", p.HealthHandler.Health)
 	r.Get("/ready", p.HealthHandler.Ready)
 	r.Get("/sitemap.xml", p.SitemapHandler.Sitemap)
+	r.Get("/calendar/{token}.ics", p.CalendarHandler.ExportICalByToken)
 
 	auth := middleware.RequireAuth(p.AuthService)
 	optionalAuth := middleware.OptionalAuth(p.AuthService)
@@ -252,6 +254,10 @@ func NewRouter(p RouterParams) http.Handler {
 		// Device tokens for push notifications (authenticated)
 		r.With(auth).Post("/device-tokens", p.DeviceTokenHandler.Register)
 		r.With(auth).Delete("/device-tokens/{id}", p.DeviceTokenHandler.Delete)
+
+		// Calendar export (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/calendar.ics", p.CalendarHandler.ExportICal)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/calendar-token", p.CalendarHandler.GetCalendarToken)
 
 		// Representatives (owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses/{id}/representatives", p.RepHandler.Invite)

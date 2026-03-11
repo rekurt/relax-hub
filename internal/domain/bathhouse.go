@@ -56,6 +56,7 @@ type Bathhouse struct {
 	IsPromoted       bool // transient field, set during List queries
 	IsPhotoVerified  bool
 	ApiKey           string
+	CalendarToken    string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
