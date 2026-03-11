@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/admin"
+	"github.com/nikitaaldaev/bani/internal/calendar"
 	"github.com/nikitaaldaev/bani/internal/cron"
 	"github.com/nikitaaldaev/bani/internal/database"
 	"github.com/nikitaaldaev/bani/internal/handler"
@@ -41,6 +42,7 @@ func New(cfg *config.Config) *fx.App {
 			func(svc service.ChatService) handler.ConversationAccessChecker { return svc },
 			// TelegramSender: noop by default, override with bot.Module when configured
 			func() notification.TelegramSender { return notification.NewNoopTelegramSender() },
+			calendar.NewCalendarSyncService,
 		),
 	)
 }

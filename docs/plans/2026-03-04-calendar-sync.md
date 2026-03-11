@@ -81,15 +81,15 @@ iCal-экспорт расписания бронирований для вла�
 - Create: `internal/repository/postgres/slot_block.go`
 - Create: `internal/repository/mock/slot_block.go`
 
-- [ ] Парсер iCal-формата (для Google Calendar и Яндекс.Календарь — оба используют iCal)
-- [ ] CalendarSync service:
+- [x] Парсер iCal-формата (для Google Calendar и Яндекс.Календарь — оба используют iCal)
+- [x] CalendarSync service:
   - AddExternalCalendar(ctx, bathhouseID, calendarURL) — подписаться на внешний календарь
   - SyncCalendar(ctx, bathhouseID) — синхронизировать (вызывается по cron)
   - RemoveExternalCalendar(ctx, bathhouseID, calendarID) — отписаться
-- [ ] SlotBlockRepository: Create, Delete, ListByBathhouse, GetByExternalID, DeleteBySource
-- [ ] Cron-задача: синхронизация каждые 15 минут
-- [ ] Написать тесты
-- [ ] Запустить go test ./... - все тесты должны пройти
+- [x] SlotBlockRepository: Create, Delete, ListByBathhouse, GetByExternalID, DeleteBySource
+- [x] Cron-задача: синхронизация каждые 15 минут
+- [x] Написать тесты
+- [x] Запустить go test ./... - все тесты должны пройти
 
 ### Task 4: Хендлеры управления календарями
 

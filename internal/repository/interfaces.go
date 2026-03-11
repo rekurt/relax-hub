@@ -298,6 +298,15 @@ type DeviceTokenRepository interface {
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.DeviceToken, error)
 }
 
+type ExternalCalendarRepository interface {
+	Create(ctx context.Context, cal *domain.ExternalCalendar) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.ExternalCalendar, error)
+	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.ExternalCalendar, error)
+	ListAll(ctx context.Context) ([]domain.ExternalCalendar, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+	UpdateSyncStatus(ctx context.Context, id uuid.UUID, syncedAt time.Time, lastError string) error
+}
+
 type SlotBlockRepository interface {
 	Create(ctx context.Context, block *domain.SlotBlock) error
 	Delete(ctx context.Context, id uuid.UUID) error

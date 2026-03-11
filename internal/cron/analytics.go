@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/nikitaaldaev/bani/internal/calendar"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/service"
@@ -21,6 +22,7 @@ type CronScheduler struct {
 	subscriptionRepo repository.SubscriptionRepository
 	promoRepo        repository.PromoCodeRepository
 	notifSvc         service.NotificationService
+	calendarSync     *calendar.CalendarSyncService
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -31,6 +33,7 @@ func NewCronScheduler(
 	subscriptionRepo repository.SubscriptionRepository,
 	promoRepo repository.PromoCodeRepository,
 	notifSvc service.NotificationService,
+	calendarSync *calendar.CalendarSyncService,
 ) *CronScheduler {
 	return &CronScheduler{
 		c:                cron.New(),
@@ -40,6 +43,7 @@ func NewCronScheduler(
 		subscriptionRepo: subscriptionRepo,
 		promoRepo:        promoRepo,
 		notifSvc:         notifSvc,
+		calendarSync:     calendarSync,
 	}
 }
 
@@ -91,6 +95,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register promo deactivation: %w", err)
 	}
 	cs.logger.Info("Registered promo deactivation job at 06:10 UTC")
+
+	// Calendar sync every 15 minutes
+	if _, err := cs.c.AddFunc("*/15 * * * *", cs.handleCalendarSync); err != nil {
+		cs.logger.Error("Failed to register calendar sync job", "error", err)
+		return fmt.Errorf("failed to register calendar sync: %w", err)
+	}
+	cs.logger.Info("Registered calendar sync job every 15 minutes")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")
