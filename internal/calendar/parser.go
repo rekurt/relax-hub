@@ -21,9 +21,10 @@ func ParseICal(data string) ([]ICalEvent, error) {
 	var current *ICalEvent
 	inEvent := false
 
-	scanner := bufio.NewScanner(strings.NewReader(data))
-	for scanner.Scan() {
-		line := strings.TrimRight(scanner.Text(), "\r")
+	lines := unfoldICalLines(data)
+
+	for _, line := range lines {
+		line = strings.TrimRight(line, "\r")
 
 		if line == "BEGIN:VEVENT" {
 			inEvent = true
@@ -62,7 +63,24 @@ func ParseICal(data string) ([]ICalEvent, error) {
 		}
 	}
 
-	return events, scanner.Err()
+	return events, nil
+}
+
+// unfoldICalLines handles RFC 5545 line folding: lines starting with a space
+// or tab are continuations of the previous line.
+func unfoldICalLines(data string) []string {
+	scanner := bufio.NewScanner(strings.NewReader(data))
+	var lines []string
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) > 0 && (line[0] == ' ' || line[0] == '\t') && len(lines) > 0 {
+			// Continuation line: append to previous line (strip leading whitespace char)
+			lines[len(lines)-1] += line[1:]
+		} else {
+			lines = append(lines, line)
+		}
+	}
+	return lines
 }
 
 func parseICalLine(line string) (string, string) {

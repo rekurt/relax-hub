@@ -18,14 +18,15 @@ const (
 // SlotBlock represents a blocked time slot for a bathhouse.
 // Blocks can come from manual creation or external calendar sync.
 type SlotBlock struct {
-	ID          uuid.UUID
-	BathhouseID uuid.UUID
-	StartTime   time.Time
-	EndTime     time.Time
-	Source      SlotBlockSource
-	ExternalID  string
-	Description string
-	CreatedAt   time.Time
+	ID                 uuid.UUID
+	BathhouseID        uuid.UUID
+	StartTime          time.Time
+	EndTime            time.Time
+	Source             SlotBlockSource
+	ExternalID         string
+	ExternalCalendarID *uuid.UUID
+	Description        string
+	CreatedAt          time.Time
 }
 
 func (sb *SlotBlock) Validate() error {
