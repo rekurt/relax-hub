@@ -35,6 +35,7 @@ import ReferralProgram from '@/pages/client/ReferralProgram'
 import CertificateList from '@/pages/client/CertificateList'
 import CertificatePurchase from '@/pages/client/CertificatePurchase'
 import PaymentHistory from '@/pages/client/PaymentHistory'
+import ClientProfile from '@/pages/client/ClientProfile'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 
 export default function AppRouter() {
@@ -94,6 +95,7 @@ export default function AppRouter() {
         <Route path="certificates" element={<CertificateList />} />
         <Route path="certificates/purchase" element={<CertificatePurchase />} />
         <Route path="payments" element={<PaymentHistory />} />
+        <Route path="profile" element={<ClientProfile />} />
       </Route>
 
       {/* Admin routes */}

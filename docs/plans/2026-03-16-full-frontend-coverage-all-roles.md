@@ -148,13 +148,13 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 **Files:**
 - Create: `frontend/src/pages/client/ClientProfile.tsx`
 
-- [ ] Profile settings (reuse ProfileSettings pattern): name, email, phone, avatar
-- [ ] User statistics: total bookings, reviews count
-- [ ] Social account linking (VK, Yandex, Google) with OAuth flow
-- [ ] Notification preferences
-- [ ] API hooks: `useGetAuthMe`, `usePutAuthMe`, `usePostAuthMeAvatar`, `useDeleteAuthMeAvatar`, `useGetMyStats`, `useGetAuthMeSocialAccounts`, `usePostAuthLinkProvider`, `useDeleteAuthLinkProvider`, `useGetMyNotificationPreferences`, `usePutMyNotificationPreferences`
-- [ ] Write tests for profile edit, social link/unlink
-- [ ] Run project test suite - must pass before task 11
+- [x] Profile settings (reuse ProfileSettings pattern): name, email, phone, avatar
+- [x] User statistics: total bookings, reviews count
+- [x] Social account linking (VK, Yandex, Google) with OAuth flow
+- [x] Notification preferences
+- [x] API hooks: `useGetAuthMe`, `usePutAuthMe`, `usePostAuthMeAvatar`, `useDeleteAuthMeAvatar`, `useGetMyStats`, `useGetAuthMeSocialAccounts`, `usePostAuthLinkProvider`, `useDeleteAuthLinkProvider`, `useGetMyNotificationPreferences`, `usePutMyNotificationPreferences`
+- [x] Write tests for profile edit, social link/unlink
+- [x] Run project test suite - must pass before task 11
 
 ### Task 11: Admin - Dashboard and user management
 
