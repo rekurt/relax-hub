@@ -60,12 +60,12 @@ React SPA для владельцев бань: управление баням�
 - Create: `frontend/src/api/` (автогенерация)
 - Create: `frontend/src/api/axios-instance.ts`
 
-- [ ] Создать orval.config.ts: input из `../docs/swagger.json`, output в `src/api/generated/`
-- [ ] Настроить orval: генерировать React Query хуки, TypeScript типы, использовать кастомный axios instance
-- [ ] Создать axios-instance.ts: baseURL `/api/v1`, interceptor для JWT токена из localStorage, interceptor для обработки 401 (редирект на login)
-- [ ] Запустить `npx orval` и убедиться что API-клиент сгенерирован
-- [ ] Добавить npm script `generate:api` в package.json
-- [ ] Создать утилиту `src/lib/format.ts`: formatPrice (копейки -> рубли), formatDayOfWeek (0=Пн), formatDateTime
+- [x] Создать orval.config.ts: input из `../docs/swagger.json`, output в `src/api/generated/`
+- [x] Настроить orval: генерировать React Query хуки, TypeScript типы, использовать кастомный axios instance
+- [x] Создать axios-instance.ts: baseURL `/api/v1`, interceptor для JWT токена из localStorage, interceptor для обработки 401 (редирект на login)
+- [x] Запустить `npx orval` и убедиться что API-клиент сгенерирован
+- [x] Добавить npm script `generate:api` в package.json
+- [x] Создать утилиту `src/lib/format.ts`: formatPrice (копейки -> рубли), formatDayOfWeek (0=Пн), formatDateTime
 
 ### Task 3: Аутентификация и auth store
 
