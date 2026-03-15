@@ -1,21 +1,100 @@
 {{define "page-styles"}}
 <style>
-    .auto-refresh { font-size: 13px; color: #888; margin-bottom: 20px; }
-    .auto-refresh .countdown { font-weight: 600; color: #3498db; }
+    .auto-refresh-bar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 20px;
+        background: #fff;
+        padding: 12px 16px;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .auto-refresh-bar .refresh-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        background: #f8f9fa;
+        cursor: pointer;
+        font-size: 13px;
+        color: #333;
+    }
+    .auto-refresh-bar .refresh-toggle:hover { background: #e9ecef; }
+    .auto-refresh-bar .refresh-toggle.active { background: #d4edda; border-color: #27ae60; color: #155724; }
+    .auto-refresh-bar .interval-select {
+        padding: 4px 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+    .countdown-bar {
+        flex: 1;
+        height: 4px;
+        background: #e9ecef;
+        border-radius: 2px;
+        overflow: hidden;
+        max-width: 200px;
+    }
+    .countdown-bar .countdown-fill {
+        height: 100%;
+        background: #3498db;
+        border-radius: 2px;
+        transition: width 1s linear;
+    }
+    .last-updated { margin-left: auto; color: #999; font-size: 12px; }
 
     /* Service Status */
     .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .service-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #ccc; }
+    .service-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #ccc; position: relative; }
     .service-card.up { border-left-color: #27ae60; }
     .service-card.down { border-left-color: #e74c3c; }
     .service-card.unconfigured { border-left-color: #95a5a6; }
-    .service-card .name { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .service-card .name { font-size: 16px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
     .service-card .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
     .service-card .status-badge.up { background: #d4edda; color: #155724; }
     .service-card .status-badge.down { background: #f8d7da; color: #721c24; }
     .service-card .status-badge.unconfigured { background: #e2e3e5; color: #383d41; }
     .service-card .latency { font-size: 13px; color: #888; margin-top: 6px; }
     .service-card .error-msg { font-size: 12px; color: #e74c3c; margin-top: 6px; word-break: break-all; }
+
+    /* Status indicator dot */
+    .status-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .status-dot.up { background: #27ae60; animation: pulse-green 2s infinite; }
+    .status-dot.down { background: #e74c3c; }
+    .status-dot.unconfigured { background: #95a5a6; }
+    @keyframes pulse-green {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(39,174,96,0.4); }
+        50% { box-shadow: 0 0 0 6px rgba(39,174,96,0); }
+    }
+
+    /* System Metrics */
+    .system-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .sys-metric { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+    .sys-metric .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    .sys-metric .value { font-size: 24px; font-weight: 700; color: #3498db; margin-top: 4px; }
+
+    /* Pool Stats */
+    .pool-section { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px; }
+    .pool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .pool-stat { text-align: center; }
+    .pool-stat .label { font-size: 12px; color: #888; text-transform: uppercase; margin-bottom: 4px; }
+    .pool-stat .value { font-size: 20px; font-weight: 600; color: #333; }
+    .pool-bar { height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+    .pool-bar .fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    .pool-bar .fill.pool-ok { background: #27ae60; }
+    .pool-bar .fill.pool-warning { background: #e67e22; }
+    .pool-bar .fill.pool-danger { background: #e74c3c; }
 
     /* Metrics Cards */
     .metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
@@ -27,29 +106,130 @@
     .backlog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .backlog-item { text-align: center; padding: 16px; border-radius: 8px; background: #f8f9fa; }
     .backlog-item .count { font-size: 28px; font-weight: 700; }
-    .backlog-item .count.ok { color: #27ae60; }
-    .backlog-item .count.warn { color: #e67e22; }
-    .backlog-item .count.danger { color: #e74c3c; }
+    .backlog-item a { text-decoration: none; color: inherit; }
+    .backlog-item a:hover .count { text-decoration: underline; }
+    .backlog-item .count.severity-ok { color: #27ae60; }
+    .backlog-item .count.severity-warning { color: #e67e22; }
+    .backlog-item .count.severity-elevated { color: #e74c3c; }
+    .backlog-item .count.severity-critical { color: #e74c3c; animation: pulse-critical 1s infinite; }
+    @keyframes pulse-critical {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
     .backlog-item .desc { font-size: 13px; color: #666; margin-top: 4px; }
+
+    /* Additional checks */
+    .checks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .check-card { background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+    .check-card .label { font-size: 12px; color: #888; text-transform: uppercase; margin-bottom: 4px; }
+    .check-card .value { font-size: 18px; font-weight: 600; }
+    .check-card .value.ok { color: #27ae60; }
+    .check-card .value.error { color: #e74c3c; }
 </style>
 {{end}}
 
 {{define "content"}}
 <h1>Мониторинг платформы</h1>
-<div class="auto-refresh">
-    Автообновление через <span class="countdown" id="countdown">30</span> сек.
+<div class="auto-refresh-bar">
+    <button class="refresh-toggle" id="refresh-toggle" title="Вкл/выкл автообновление">
+        <span id="refresh-icon">&#9654;</span> <span id="refresh-label">Пауза</span>
+    </button>
+    <select class="interval-select" id="interval-select" title="Интервал обновления">
+        <option value="15">15 сек</option>
+        <option value="30" selected>30 сек</option>
+        <option value="60">60 сек</option>
+    </select>
+    <div class="countdown-bar">
+        <div class="countdown-fill" id="countdown-fill" style="width: 100%"></div>
+    </div>
+    <span class="last-updated" id="last-updated">Обновлено: {{.GeneratedAt.Format "15:04:05"}}</span>
 </div>
 
 <h2>Статус сервисов</h2>
 <div class="services-grid">
     {{range .Services}}
     <div class="service-card {{.Status}}">
-        <div class="name">{{.Name}}</div>
+        <div class="name">
+            <span class="status-dot {{.Status}}"></span>
+            {{.Name}}
+        </div>
         <span class="status-badge {{.Status}}">{{if eq .Status "up"}}Работает{{else if eq .Status "unconfigured"}}Не настроен{{else}}Недоступен{{end}}</span>
-        <div class="latency">Время ответа: {{.Latency}}</div>
+        <div class="latency">Время ответа: {{formatLatency .Latency}}</div>
         {{if .Error}}<div class="error-msg"><details><summary>Ошибка</summary>{{.Error}}</details></div>{{end}}
     </div>
     {{end}}
+</div>
+
+<h2>Система</h2>
+<div class="system-grid">
+    <div class="sys-metric">
+        <div class="label">Uptime</div>
+        <div class="value">{{formatUptime .System.Uptime}}</div>
+    </div>
+    <div class="sys-metric">
+        <div class="label">Go Version</div>
+        <div class="value" style="font-size: 16px;">{{.System.GoVersion}}</div>
+    </div>
+    <div class="sys-metric">
+        <div class="label">Горутины</div>
+        <div class="value">{{.System.NumGoroutines}}</div>
+    </div>
+    <div class="sys-metric">
+        <div class="label">CPU</div>
+        <div class="value">{{.System.NumCPU}}</div>
+    </div>
+    <div class="sys-metric">
+        <div class="label">Память (Alloc)</div>
+        <div class="value" style="font-size: 18px;">{{formatBytes .System.MemAlloc}}</div>
+    </div>
+    <div class="sys-metric">
+        <div class="label">Память (Sys)</div>
+        <div class="value" style="font-size: 18px;">{{formatBytes .System.MemSys}}</div>
+    </div>
+    <div class="sys-metric">
+        <div class="label">Память (Total)</div>
+        <div class="value" style="font-size: 18px;">{{formatBytes .System.MemTotalAlloc}}</div>
+    </div>
+    <div class="sys-metric">
+        <div class="label">Циклов GC</div>
+        <div class="value">{{.System.NumGC}}</div>
+    </div>
+</div>
+
+<h2>Connection Pool (PostgreSQL)</h2>
+<div class="pool-section">
+    <div class="pool-grid">
+        <div class="pool-stat">
+            <div class="label">Активные / Макс.</div>
+            <div class="value">{{.Pool.AcquiredConns}} / {{.Pool.MaxConns}}</div>
+            <div class="pool-bar">
+                <div class="fill {{poolUsageClass .Pool.AcquiredConns .Pool.MaxConns}}" style="width: {{poolPercent .Pool.AcquiredConns .Pool.MaxConns}}%"></div>
+            </div>
+        </div>
+        <div class="pool-stat">
+            <div class="label">Всего соединений</div>
+            <div class="value">{{.Pool.TotalConns}} / {{.Pool.MaxConns}}</div>
+            <div class="pool-bar">
+                <div class="fill {{poolUsageClass .Pool.TotalConns .Pool.MaxConns}}" style="width: {{poolPercent .Pool.TotalConns .Pool.MaxConns}}%"></div>
+            </div>
+        </div>
+        <div class="pool-stat">
+            <div class="label">Idle</div>
+            <div class="value">{{.Pool.IdleConns}}</div>
+        </div>
+        <div class="pool-stat">
+            <div class="label">Запросов подключения</div>
+            <div class="value">{{.Pool.AcquireCount}}</div>
+        </div>
+        <div class="pool-stat">
+            <div class="label">Ожиданий пула</div>
+            <div class="value">{{.Pool.EmptyAcquireCount}}</div>
+        </div>
+        <div class="pool-stat">
+            <div class="label">Время ожидания</div>
+            <div class="value" style="font-size: 16px;">{{formatLatency .Pool.AcquireDuration}}</div>
+        </div>
+    </div>
 </div>
 
 <h2>Системные метрики</h2>
@@ -64,19 +244,40 @@
     </div>
 </div>
 
-<div class="section">
+<h2>Дополнительные проверки</h2>
+<div class="checks-grid">
+    <div class="check-card">
+        <div class="label">Размер базы данных</div>
+        <div class="value ok">{{if .DatabaseSize}}{{.DatabaseSize}}{{else}}—{{end}}</div>
+    </div>
+    <div class="check-card">
+        <div class="label">Файловая система</div>
+        <div class="value {{if .FilesystemOK}}ok{{else}}error{{end}}">
+            {{if .FilesystemOK}}OK{{else}}Ошибка{{end}}
+        </div>
+        {{if .FilesystemError}}<div style="font-size: 11px; color: #e74c3c; margin-top: 4px;">{{.FilesystemError}}</div>{{end}}
+    </div>
+</div>
+
+<div class="section" style="margin-top: 24px;">
     <h2>Очередь модерации</h2>
     <div class="backlog-grid">
         <div class="backlog-item">
-            <div class="count {{if gt .ModerationBacklog.Over24h 0}}warn{{else}}ok{{end}}">{{.ModerationBacklog.Over24h}}</div>
+            <a href="{{.PagesPrefix}}/moderation?status=pending">
+                <div class="count {{backlogSeverity .ModerationBacklog.Over24h}}">{{.ModerationBacklog.Over24h}}</div>
+            </a>
             <div class="desc">Ожидают &gt; 24ч</div>
         </div>
         <div class="backlog-item">
-            <div class="count {{if gt .ModerationBacklog.Over48h 0}}danger{{else}}ok{{end}}">{{.ModerationBacklog.Over48h}}</div>
+            <a href="{{.PagesPrefix}}/moderation?status=pending">
+                <div class="count {{backlogSeverity .ModerationBacklog.Over48h}}">{{.ModerationBacklog.Over48h}}</div>
+            </a>
             <div class="desc">Ожидают &gt; 48ч</div>
         </div>
         <div class="backlog-item">
-            <div class="count {{if gt .ModerationBacklog.Over72h 0}}danger{{else}}ok{{end}}">{{.ModerationBacklog.Over72h}}</div>
+            <a href="{{.PagesPrefix}}/moderation?status=pending">
+                <div class="count {{backlogSeverity .ModerationBacklog.Over72h}}">{{.ModerationBacklog.Over72h}}</div>
+            </a>
             <div class="desc">Ожидают &gt; 72ч</div>
         </div>
     </div>
@@ -86,16 +287,59 @@
 {{define "page-scripts"}}
 <script>
 (function() {
-    var seconds = 30;
-    var el = document.getElementById('countdown');
-    setInterval(function() {
-        seconds--;
-        if (seconds <= 0) {
+    var paused = false;
+    var interval = 30;
+    var remaining = interval;
+    var timer = null;
+    var toggleBtn = document.getElementById('refresh-toggle');
+    var toggleIcon = document.getElementById('refresh-icon');
+    var toggleLabel = document.getElementById('refresh-label');
+    var intervalSelect = document.getElementById('interval-select');
+    var countdownFill = document.getElementById('countdown-fill');
+
+    function updateBar() {
+        var pct = (remaining / interval) * 100;
+        countdownFill.style.width = pct + '%';
+    }
+
+    function tick() {
+        if (paused) return;
+        remaining--;
+        updateBar();
+        if (remaining <= 0) {
             location.reload();
             return;
         }
-        el.textContent = seconds;
-    }, 1000);
+    }
+
+    function startTimer() {
+        if (timer) clearInterval(timer);
+        timer = setInterval(tick, 1000);
+    }
+
+    toggleBtn.addEventListener('click', function() {
+        paused = !paused;
+        if (paused) {
+            toggleIcon.textContent = '\u25B6';
+            toggleLabel.textContent = 'Старт';
+            toggleBtn.classList.remove('active');
+        } else {
+            toggleIcon.textContent = '\u275A\u275A';
+            toggleLabel.textContent = 'Пауза';
+            toggleBtn.classList.add('active');
+        }
+    });
+    toggleBtn.classList.add('active');
+    toggleIcon.textContent = '\u275A\u275A';
+
+    intervalSelect.addEventListener('change', function() {
+        interval = parseInt(this.value, 10);
+        remaining = interval;
+        updateBar();
+    });
+
+    startTimer();
+    updateBar();
 })();
 </script>
 {{end}}

@@ -242,13 +242,13 @@ KPI-карточки статичны и не кликабельны. Нет т�
 
 **6a: Системные метрики**
 
-- [ ] Добавить секцию "Система" с метриками из `runtime` пакета:
+- [x] Добавить секцию "Система" с метриками из `runtime` пакета:
     - Uptime сервера (время с момента запуска)
     - Go version (`runtime.Version()`)
     - Количество горутин (`runtime.NumGoroutine()`)
     - Использование памяти: Alloc, TotalAlloc, Sys, NumGC (`runtime.MemStats`)
     - Количество CPU (`runtime.NumCPU()`)
-- [ ] Добавить метрики connection pool из pgxpool:
+- [x] Добавить метрики connection pool из pgxpool:
     - Active connections / Max connections (progress bar с процентом)
     - Idle connections
     - Total connections acquired
@@ -257,33 +257,33 @@ KPI-карточки статичны и не кликабельны. Нет т�
 
 **6b: Улучшение UX мониторинга**
 
-- [ ] Color-code backlog с порогами severity:
+- [x] Color-code backlog с порогами severity:
     - 0: зеленый (ok)
     - 1-5: желтый (warning)
     - 6-20: оранжевый (elevated)
     - >20: красный (critical)
     - Добавить пульсирующую анимацию для critical
-- [ ] Сделать числа backlog кликабельными → ссылка на модерацию с предфильтром
+- [x] Сделать числа backlog кликабельными → ссылка на модерацию с предфильтром
     (pending + created_at <= порог)
-- [ ] Улучшить auto-refresh UX:
+- [x] Улучшить auto-refresh UX:
     - Кнопка play/pause (сейчас нельзя остановить)
     - Настраиваемый интервал: 15/30/60 секунд (dropdown)
     - Показывать "Последнее обновление: HH:MM:SS" prominently
     - Countdown bar вместо текстового счетчика
-- [ ] Показывать latency как "2 ms" / "150 ms" (человекочитаемый формат)
+- [x] Показывать latency как "2 ms" / "150 ms" (человекочитаемый формат)
     вместо Go-формата `2ms` / `1.234µs`
-- [ ] Добавить visual status indicator: зеленая точка (пульсирующая) для up,
+- [x] Добавить visual status indicator: зеленая точка (пульсирующая) для up,
     красная для down, серая для unconfigured
 
 **6c: Дополнительные проверки**
 
-- [ ] Добавить проверку доступности файловой системы (запись temp файла)
-- [ ] Добавить отображение размера БД: `SELECT pg_database_size(current_database())`
-- [ ] Показывать количество активных WebSocket соединений с контекстом
+- [x] Добавить проверку доступности файловой системы (запись temp файла)
+- [x] Добавить отображение размера БД: `SELECT pg_database_size(current_database())`
+- [x] Показывать количество активных WebSocket соединений с контекстом
     (min/max за последний час, если данные доступны)
-- [ ] Write tests: системные метрики (runtime данные), pool stats, threshold
+- [x] Write tests: системные метрики (runtime данные), pool stats, threshold
     color-coding logic, новые health checks, форматирование latency
-- [ ] Run project test suite - must pass before task 7
+- [x] Run project test suite - must pass before task 7
 
 ### Task 7: Keyboard shortcuts и accessibility для модерации
 
