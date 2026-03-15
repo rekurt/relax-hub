@@ -1,0 +1,87 @@
+# Banya API Server Configuration
+# Copy this file to config.yaml and fill in your values:
+#   cp config/config.yaml.example config/config.yaml
+#
+# All values can be overridden via environment variables with BANI_ prefix:
+#   BANI_SERVER_PORT=8080, BANI_DATABASE_DSN=..., etc.
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+
+# Environment: "dev" or "production"
+# In production: JWT secret must not be default, CORS "*" is rejected
+environment: "dev"
+
+database:
+  dsn: "postgres://postgres:postgres@localhost:5432/bani?sslmode=disable"
+  max_conns: 20
+  min_conns: 2
+  max_conn_lifetime: "1h"
+
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+
+jwt:
+  # REQUIRED: change this in production (env: BANI_JWT_SECRET)
+  secret: ""
+  token_ttl: "24h"
+
+logger:
+  level: "info"       # debug, info, warn, error
+  format: "json"      # json (production) or console (development)
+
+storage:
+  # MinIO / S3-compatible storage (env: BANI_STORAGE_*)
+  endpoint: "localhost:9000"
+  bucket: "bani-avatars"
+  access_key: ""
+  secret_key: ""
+  region: "us-east-1"
+  use_ssl: false
+
+cors:
+  # Comma-separated allowed origins (env: BANI_CORS_ALLOWED_ORIGINS)
+  # In production, "*" is rejected - specify exact origins
+  allowed_origins:
+    - "*"
+
+moderation:
+  enabled: true
+  auto_approve: false
+
+# Telegram bot (env: BANI_TELEGRAM_*)
+telegram:
+  token: ""
+  mode: "polling"     # polling or webhook
+
+# Admin panel (env: BANI_ADMIN_*)
+admin:
+  enabled: false
+  prefix: "/admin-panel"
+  language: "ru"
+  theme: "adminlte"
+
+# Payment provider (env: BANI_PAYMENT_*)
+payment:
+  yookassa:
+    shop_id: ""
+    secret_key: ""
+  return_url: "http://localhost:3000/payment/callback"
+
+# OAuth providers (env: BANI_OAUTH_*)
+# oauth:
+#   vk:
+#     client_id: ""
+#     client_secret: ""
+#     redirect_url: ""
+#   yandex:
+#     client_id: ""
+#     client_secret: ""
+#     redirect_url: ""
+#   google:
+#     client_id: ""
+#     client_secret: ""
+#     redirect_url: ""

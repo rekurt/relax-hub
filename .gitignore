@@ -20,6 +20,9 @@ coverage.html
 # Environment
 .env
 
+# Local config (use config.yaml.example as template)
+config/config.yaml
+
 # IDE
 .idea/
 .vscode/

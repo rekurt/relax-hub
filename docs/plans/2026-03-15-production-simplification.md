@@ -238,10 +238,10 @@ No automated CI/CD exists.
 
 config.yaml is committed with minioadmin credentials and change-me-in-production JWT. docker-compose.yml hardcodes a JWT secret that bypasses the validator.
 
-- [ ] Replace `config/config.yaml` with `config/config.yaml.example` containing only structure and env var references
-- [ ] Add `config/config.yaml` to .gitignore
-- [ ] In docker-compose.yml, replace hardcoded `BANI_JWT_SECRET` with `${BANI_JWT_SECRET}` and add `env_file: .env`
-- [ ] Verify app still starts with example config + env overrides
+- [x] Replace `config/config.yaml` with `config/config.yaml.example` containing only structure and env var references
+- [x] Add `config/config.yaml` to .gitignore
+- [x] In docker-compose.yml, replace hardcoded `BANI_JWT_SECRET` with `${BANI_JWT_SECRET}` and add `env_file: .env`
+- [x] Verify app still starts with example config + env overrides
 
 ### Task 12: Verify acceptance criteria
 
