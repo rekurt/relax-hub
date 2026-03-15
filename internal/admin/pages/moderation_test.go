@@ -892,3 +892,28 @@ func TestModerationHandler_RendersPaginationIDs(t *testing.T) {
 		t.Error("body missing pagination-next ID for arrow key navigation")
 	}
 }
+
+func TestModerationHandler_RendersResponsiveDesign(t *testing.T) {
+	data := sampleModerationData()
+	provider := &mockModerationProvider{data: data}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Should have media queries for responsive layout
+	if !strings.Contains(body, "@media (max-width: 768px)") {
+		t.Error("body missing mobile media query (768px)")
+	}
+	if !strings.Contains(body, "@media (max-width: 1024px)") {
+		t.Error("body missing tablet media query (1024px)")
+	}
+
+	// Mobile thumbnail size (60x60)
+	if !strings.Contains(body, "60px") {
+		t.Error("body missing reduced thumbnail size for mobile (60px)")
+	}
+}

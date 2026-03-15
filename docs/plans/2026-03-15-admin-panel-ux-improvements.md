@@ -319,20 +319,20 @@ KPI-карточки статичны и не кликабельны. Нет т�
 - Modify: `internal/admin/pages/templates/analytics.tmpl`
 - Modify: `internal/admin/pages/templates/moderation.tmpl`
 
-- [ ] Добавить media queries в shared CSS:
+- [x] Добавить media queries в shared CSS:
     - `@media (max-width: 768px)`: sidebar collapse в hamburger menu,
       single column layout для всех grid-ов
     - `@media (max-width: 1024px)`: 2-column layout для KPI карточек,
       уменьшить minmax значения для графиков
-- [ ] Dashboard: уменьшить `minmax(400px, 1fr)` до `minmax(280px, 1fr)` для feed-grid
-- [ ] Analytics: уменьшить `minmax(500px, 1fr)` до `minmax(300px, 1fr)` для chart-grid,
+- [x] Dashboard: уменьшить `minmax(400px, 1fr)` до `minmax(280px, 1fr)` для feed-grid
+- [x] Analytics: уменьшить `minmax(500px, 1fr)` до `minmax(300px, 1fr)` для chart-grid,
     добавить `overflow-x: auto` для графиков которые не помещаются
-- [ ] Moderation: адаптировать filter-bar для вертикального layout на мобильных,
+- [x] Moderation: адаптировать filter-bar для вертикального layout на мобильных,
     image thumbnails уменьшить до 60x60 на мобильных
-- [ ] Таблицы: добавить `overflow-x: auto` wrapper для горизонтального скролла
+- [x] Таблицы: добавить `overflow-x: auto` wrapper для горизонтального скролла
     на узких экранах
-- [ ] Write tests: проверить наличие media queries в rendered HTML
-- [ ] Run project test suite - must pass before task 9
+- [x] Write tests: проверить наличие media queries в rendered HTML
+- [x] Run project test suite - must pass before task 9
 
 ### Task 9: Verify acceptance criteria
 

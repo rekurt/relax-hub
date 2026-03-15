@@ -684,3 +684,30 @@ func TestAnalyticsSummaryTrendPercent(t *testing.T) {
 		})
 	}
 }
+
+func TestAnalyticsHandler_RendersResponsiveDesign(t *testing.T) {
+	data := sampleAnalyticsData()
+	provider := &mockAnalyticsProvider{data: data}
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Chart grid should use 300px minmax
+	if !strings.Contains(body, "minmax(300px") {
+		t.Error("body missing reduced chart-grid minmax (300px)")
+	}
+
+	// Chart cards should have overflow-x: auto for horizontal scrolling
+	if !strings.Contains(body, "overflow-x: auto") {
+		t.Error("body missing overflow-x: auto for chart cards")
+	}
+
+	// Responsive media queries should be present
+	if !strings.Contains(body, "@media (max-width: 768px)") {
+		t.Error("body missing mobile media query (768px)")
+	}
+}

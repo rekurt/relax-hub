@@ -678,3 +678,41 @@ func TestDashboardHandler_UserNamesTruncated(t *testing.T) {
 		t.Errorf("expected at least 7 text-truncate occurrences for names, got %d", count)
 	}
 }
+
+func TestDashboardHandler_RendersResponsiveDesign(t *testing.T) {
+	data := sampleDashboardData()
+	provider := &mockDashboardProvider{data: data}
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Base layout responsive elements
+	if !strings.Contains(body, "hamburger-btn") {
+		t.Error("body missing hamburger menu button")
+	}
+	if !strings.Contains(body, "sidebar-overlay") {
+		t.Error("body missing sidebar overlay for mobile")
+	}
+
+	// Media queries in base CSS
+	if !strings.Contains(body, "@media (max-width: 768px)") {
+		t.Error("body missing mobile media query (768px)")
+	}
+	if !strings.Contains(body, "@media (max-width: 1024px)") {
+		t.Error("body missing tablet media query (1024px)")
+	}
+
+	// Dashboard-specific responsive: feed-grid should use 280px minmax
+	if !strings.Contains(body, "minmax(280px") {
+		t.Error("body missing reduced feed-grid minmax (280px)")
+	}
+
+	// Table responsive wrappers
+	if !strings.Contains(body, "table-responsive") {
+		t.Error("body missing table-responsive wrapper for horizontal scrolling")
+	}
+}

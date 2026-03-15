@@ -196,12 +196,77 @@
             padding: 20px;
             margin-top: auto;
         }
+
+        /* Hamburger Menu Button (hidden on desktop) */
+        .hamburger-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #333;
+            cursor: pointer;
+            padding: 8px 12px;
+            position: fixed;
+            top: 8px;
+            left: 8px;
+            z-index: 1100;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+        .hamburger-btn:hover { background: #f0f0f0; }
+
+        /* Sidebar overlay (mobile) */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 999;
+        }
+        .sidebar-overlay.active { display: block; }
+
+        /* Table responsive wrapper */
+        .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+        /* Responsive: Tablet (max-width: 1024px) */
+        @media (max-width: 1024px) {
+            .container { padding: 16px; }
+        }
+
+        /* Responsive: Mobile (max-width: 768px) */
+        @media (max-width: 768px) {
+            .hamburger-btn { display: block; }
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -260px;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s ease;
+                width: 240px;
+            }
+            .sidebar.open { left: 0; }
+            .main-content { margin-left: 0; }
+            .container { padding: 12px; }
+            .breadcrumb { padding: 12px 12px 12px 52px; }
+            .filter-bar form { flex-direction: column; }
+            .filter-group { width: 100%; }
+            .filter-group select, .filter-group input { width: 100%; }
+            h1 { font-size: 20px; }
+            .toast { max-width: calc(100vw - 40px); }
+        }
     </style>
     {{template "page-styles" .}}
 </head>
 <body>
+<button class="hamburger-btn" id="hamburger-btn" aria-label="Открыть меню">&#9776;</button>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
 <div class="layout">
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">Бани Admin</div>
         <nav class="sidebar-nav">
             <a href="{{.PagesPrefix}}/dashboard" class="nav-link {{if eq .ActivePage "dashboard"}}active{{end}}">
@@ -249,6 +314,21 @@ function showToast(message, type) {
         setTimeout(function() { toast.remove(); }, 300);
     }, duration);
 }
+(function() {
+    var hamburger = document.getElementById('hamburger-btn');
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    if (hamburger && sidebar && overlay) {
+        hamburger.addEventListener('click', function() {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        });
+        overlay.addEventListener('click', function() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        });
+    }
+})();
 </script>
 {{template "page-scripts" .}}
 </body>

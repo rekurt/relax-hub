@@ -129,6 +129,26 @@
         min-width: 24px;
         text-align: center;
     }
+
+    /* Responsive: Tablet */
+    @media (max-width: 1024px) {
+        .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* Responsive: Mobile */
+    @media (max-width: 768px) {
+        .stats-row { grid-template-columns: 1fr; }
+        .review-header { flex-direction: column; gap: 8px; }
+        .review-actions { justify-content: flex-start; }
+        .review-images img { width: 60px; height: 60px; }
+        .batch-actions { flex-wrap: wrap; }
+        .lightbox-prev { left: -10px; font-size: 24px; padding: 6px 10px; }
+        .lightbox-next { right: -10px; font-size: 24px; padding: 6px 10px; }
+        .lightbox-content img { max-width: 95vw; }
+        .modal { width: 95vw; padding: 16px; }
+        .shortcuts-help { bottom: 12px; right: 12px; }
+        .pagination a, .pagination span { padding: 6px 10px; font-size: 13px; }
+    }
 </style>
 {{end}}
 
