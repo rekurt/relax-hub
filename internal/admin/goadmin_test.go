@@ -181,7 +181,7 @@ func TestNewAuthProcessor_AdminUser(t *testing.T) {
 	}
 	log := testLogger()
 
-	processor := NewAuthProcessor(auth, log)
+	processor := NewAuthProcessor(auth, log, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin-panel/", nil)
 	req.Header.Set("Authorization", "Bearer valid-admin-token")
@@ -208,7 +208,7 @@ func TestNewAuthProcessor_SetsAdminTokenCookie(t *testing.T) {
 	}
 	log := testLogger()
 
-	processor := NewAuthProcessor(auth, log)
+	processor := NewAuthProcessor(auth, log, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin-panel/", nil)
 	req.Header.Set("Authorization", "Bearer test-jwt-token")
@@ -241,7 +241,7 @@ func TestNewAuthProcessor_NonAdminUser(t *testing.T) {
 	}
 	log := testLogger()
 
-	processor := NewAuthProcessor(auth, log)
+	processor := NewAuthProcessor(auth, log, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin-panel/", nil)
 	req.Header.Set("Authorization", "Bearer valid-owner-token")
@@ -261,7 +261,7 @@ func TestNewAuthProcessor_NoAuth(t *testing.T) {
 	auth := &mockAuthService{}
 	log := testLogger()
 
-	processor := NewAuthProcessor(auth, log)
+	processor := NewAuthProcessor(auth, log, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin-panel/", nil)
 	ctx := &gacontext.Context{Request: req}
@@ -281,7 +281,7 @@ func TestNewAuthProcessor_InvalidToken(t *testing.T) {
 	}
 	log := testLogger()
 
-	processor := NewAuthProcessor(auth, log)
+	processor := NewAuthProcessor(auth, log, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin-panel/", nil)
 	req.Header.Set("Authorization", "Bearer invalid-token")
@@ -305,7 +305,7 @@ func TestNewAuthProcessor_CookieAuth(t *testing.T) {
 	}
 	log := testLogger()
 
-	processor := NewAuthProcessor(auth, log)
+	processor := NewAuthProcessor(auth, log, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin-panel/", nil)
 	req.AddCookie(&http.Cookie{Name: "admin_token", Value: "cookie-token"})
@@ -325,7 +325,7 @@ func TestNewAuthProcessor_NilRequest(t *testing.T) {
 	auth := &mockAuthService{}
 	log := testLogger()
 
-	processor := NewAuthProcessor(auth, log)
+	processor := NewAuthProcessor(auth, log, false)
 
 	ctx := &gacontext.Context{Request: nil}
 	_, exists, msg := processor(ctx)
@@ -342,7 +342,7 @@ func TestNewAuthProcessor_InvalidHeaderFormat(t *testing.T) {
 	auth := &mockAuthService{}
 	log := testLogger()
 
-	processor := NewAuthProcessor(auth, log)
+	processor := NewAuthProcessor(auth, log, false)
 
 	req := httptest.NewRequest(http.MethodGet, "/admin-panel/", nil)
 	req.Header.Set("Authorization", "Basic dXNlcjpwYXNz")

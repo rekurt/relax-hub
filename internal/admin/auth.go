@@ -64,7 +64,9 @@ func extractToken(r *http.Request) string {
 // NewAuthProcessor creates a GoAdmin auth.Processor that bridges the existing JWT auth system
 // to GoAdmin's session-based auth. It extracts the Bearer token from the request,
 // validates it via the app's AuthService, and maps admin users to GoAdmin's UserModel.
-func NewAuthProcessor(authService middleware.AuthService, log *logger.Logger) func(ctx *gacontext.Context) (models.UserModel, bool, string) {
+// When isProduction is true, the Secure cookie flag is always set (for reverse-proxy setups
+// where TLS is terminated upstream).
+func NewAuthProcessor(authService middleware.AuthService, log *logger.Logger, isProduction bool) func(ctx *gacontext.Context) (models.UserModel, bool, string) {
 	return func(ctx *gacontext.Context) (models.UserModel, bool, string) {
 		empty := models.UserModel{}
 
@@ -103,7 +105,7 @@ func NewAuthProcessor(authService middleware.AuthService, log *logger.Logger) fu
 				Path:     "/",
 				HttpOnly: true,
 				SameSite: http.SameSiteStrictMode,
-				Secure:   ctx.Request.TLS != nil,
+				Secure:   isProduction || ctx.Request.TLS != nil,
 			})
 		}
 

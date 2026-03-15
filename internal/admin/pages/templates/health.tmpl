@@ -125,6 +125,16 @@
     .check-card .value { font-size: 18px; font-weight: 600; }
     .check-card .value.ok { color: #27ae60; }
     .check-card .value.error { color: #e74c3c; }
+
+    @media (max-width: 1024px) {
+        .backlog-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+        .backlog-grid { grid-template-columns: 1fr; }
+        .system-grid { grid-template-columns: repeat(2, 1fr); }
+        .pool-grid { grid-template-columns: 1fr; }
+        .checks-grid { grid-template-columns: 1fr; }
+    }
 </style>
 {{end}}
 
