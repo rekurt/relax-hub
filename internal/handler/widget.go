@@ -119,6 +119,7 @@ func toWidgetBookingResponse(b *domain.Booking) widgetBookingResponse {
 // @Success      200      {object}  APIResponse{data=widgetBathhouseResponse}
 // @Failure      400      {object}  APIResponse{error=APIError}
 // @Failure      404      {object}  APIResponse{error=APIError}
+// @Failure      429      {object}  APIResponse{error=APIError}  "Rate limited (10/s per API key)"
 // @Router       /widget/{api_key}/bathhouse [get]
 func (h *WidgetHandler) GetBathhouse(w http.ResponseWriter, r *http.Request) {
 	apiKey := chi.URLParam(r, "api_key")
@@ -156,6 +157,7 @@ func (h *WidgetHandler) GetBathhouse(w http.ResponseWriter, r *http.Request) {
 // @Success      200      {object}  APIResponse{data=[]widgetSlotResponse}
 // @Failure      400      {object}  APIResponse{error=APIError}
 // @Failure      404      {object}  APIResponse{error=APIError}
+// @Failure      429      {object}  APIResponse{error=APIError}  "Rate limited (10/s per API key)"
 // @Router       /widget/{api_key}/slots [get]
 func (h *WidgetHandler) GetAvailableSlots(w http.ResponseWriter, r *http.Request) {
 	apiKey := chi.URLParam(r, "api_key")
@@ -224,6 +226,7 @@ func (h *WidgetHandler) GetAvailableSlots(w http.ResponseWriter, r *http.Request
 // @Failure      400      {object}  APIResponse{error=APIError}
 // @Failure      404      {object}  APIResponse{error=APIError}
 // @Failure      409      {object}  APIResponse{error=APIError}
+// @Failure      429      {object}  APIResponse{error=APIError}  "Rate limited (10/s per API key)"
 // @Router       /widget/{api_key}/booking [post]
 func (h *WidgetHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	apiKey := chi.URLParam(r, "api_key")

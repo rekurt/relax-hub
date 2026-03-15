@@ -168,6 +168,7 @@ func (h *LoyaltyHandler) ListTransactions(w http.ResponseWriter, r *http.Request
 // @Produce      json
 // @Security     BearerAuth
 // @Success      200  {object}  APIResponse{data=[]loyaltyLevelResponse}
+// @Failure      401  {object}  APIResponse{error=APIError}
 // @Router       /my/loyalty/levels [get]
 func (h *LoyaltyHandler) GetLevels(w http.ResponseWriter, r *http.Request) {
 	allLevels := domain.GetAllLoyaltyLevels()

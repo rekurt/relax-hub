@@ -100,6 +100,7 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 // @Param        body  body      object  true  "YooKassa webhook payload"
 // @Success      200   {object}  APIResponse{data=statusResponse}
 // @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      429   {object}  APIResponse{error=APIError}  "Rate limited (30/min)"
 // @Failure      500   {object}  APIResponse{error=APIError}
 // @Router       /webhooks/yookassa [post]
 // HandleWebhook handles POST /api/v1/webhooks/yookassa

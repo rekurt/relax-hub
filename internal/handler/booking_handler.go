@@ -112,6 +112,7 @@ func (h *BookingHandler) enrichWithPaymentStatus(ctx context.Context, resp *book
 // @Success      201   {object}  APIResponse{data=bookingResponse}
 // @Failure      400   {object}  APIResponse{error=APIError}
 // @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
 // @Failure      409   {object}  APIResponse{error=APIError}
 // @Router       /bookings [post]
 func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {

@@ -237,10 +237,10 @@ func (h *AnalyticsHandler) GetTopBathhouses(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"metric":      metricStr,
-		"limit":       limit,
-		"bathhouses":  topBathhouses,
-		"total_count": len(topBathhouses),
+	writeJSON(w, http.StatusOK, topBathhousesResponse{
+		Metric:     metricStr,
+		Limit:      limit,
+		Bathhouses: topBathhouses,
+		TotalCount: len(topBathhouses),
 	})
 }

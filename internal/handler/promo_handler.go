@@ -231,6 +231,7 @@ func (h *PromoHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 // @Failure      400   {object}  APIResponse{error=APIError}
 // @Failure      404   {object}  APIResponse{error=APIError}
 // @Failure      409   {object}  APIResponse{error=APIError}
+// @Failure      429   {object}  APIResponse{error=APIError}  "Rate limited (20/min)"
 // @Router       /promo-codes/validate [post]
 func (h *PromoHandler) Validate(w http.ResponseWriter, r *http.Request) {
 	var req validatePromoRequest

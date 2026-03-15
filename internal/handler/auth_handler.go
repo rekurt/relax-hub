@@ -130,6 +130,7 @@ func toPublicProfileResponse(p *domain.UserProfile) publicProfileResponse {
 // @Success      201   {object}  APIResponse{data=authResponse}
 // @Failure      400   {object}  APIResponse{error=APIError}
 // @Failure      409   {object}  APIResponse{error=APIError}
+// @Failure      429   {object}  APIResponse{error=APIError}  "Rate limited (5/min)"
 // @Router       /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
@@ -167,6 +168,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Success      200   {object}  APIResponse{data=authResponse}
 // @Failure      400   {object}  APIResponse{error=APIError}
 // @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      429   {object}  APIResponse{error=APIError}  "Rate limited (10/min)"
 // @Router       /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
