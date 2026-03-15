@@ -184,10 +184,10 @@ React SPA для владельцев бань: управление баням�
 **Files:**
 - Create: `frontend/src/pages/representatives/RepresentativeList.tsx`
 
-- [ ] Список представителей бани (GET /bathhouses/{id}/representatives)
-- [ ] Приглашение нового представителя: модалка с полем email (POST /bathhouses/{id}/representatives)
-- [ ] Удаление представителя с подтверждением (DELETE /representatives/{id})
-- [ ] Доступно только для роли owner
+- [x] Список представителей бани (GET /bathhouses/{id}/representatives)
+- [x] Приглашение нового представителя: модалка с полем email (POST /bathhouses/{id}/representatives)
+- [x] Удаление представителя с подтверждением (DELETE /representatives/{id})
+- [x] Доступно только для роли owner
 
 ### Task 13: Чат
 
