@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -320,7 +321,7 @@ func (h *SubscriptionHandler) CreatePromotion(w http.ResponseWriter, r *http.Req
 
 	// Check if there's already an active promotion
 	existing, err := h.promoService.GetActiveBybathhouse(r.Context(), bathhouseID)
-	if err != nil && err != domain.ErrNotFound {
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
 		handleServiceError(w, err)
 		return
 	}
