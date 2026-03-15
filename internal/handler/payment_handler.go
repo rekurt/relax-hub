@@ -58,6 +58,19 @@ func toPaymentResponse(p *domain.Payment) paymentResponse {
 	}
 }
 
+// InitiatePayment godoc
+// @Summary      Initiate payment
+// @Description  Creates a payment for a booking via YooKassa and returns the confirmation URL for redirect
+// @Tags         payments
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Booking ID (UUID)"
+// @Success      200  {object}  APIResponse{data=initiatePaymentResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Failure      409  {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/pay [post]
 // InitiatePayment handles POST /api/v1/bookings/{id}/pay
 func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
@@ -78,6 +91,17 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 	})
 }
 
+// HandleWebhook godoc
+// @Summary      YooKassa webhook
+// @Description  Processes payment status updates from YooKassa. Returns 200 even for domain errors to prevent infinite retries.
+// @Tags         payments
+// @Accept       json
+// @Produce      json
+// @Param        body  body      object  true  "YooKassa webhook payload"
+// @Success      200   {object}  APIResponse{data=object}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      500   {object}  APIResponse{error=APIError}
+// @Router       /webhooks/yookassa [post]
 // HandleWebhook handles POST /api/v1/webhooks/yookassa
 func (h *PaymentHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
@@ -125,6 +149,17 @@ func (h *PaymentHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// ListUserPayments godoc
+// @Summary      List my payments
+// @Description  Returns a paginated list of payments for the authenticated user
+// @Tags         payments
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page       query     int  false  "Page number"  default(1)
+// @Param        page_size  query     int  false  "Page size"    default(20)
+// @Success      200        {object}  APIResponse{data=[]paymentResponse,meta=Meta}
+// @Failure      401        {object}  APIResponse{error=APIError}
+// @Router       /my/payments [get]
 // ListUserPayments handles GET /api/v1/my/payments
 func (h *PaymentHandler) ListUserPayments(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
@@ -150,6 +185,18 @@ func (h *PaymentHandler) ListUserPayments(w http.ResponseWriter, r *http.Request
 	})
 }
 
+// GetBookingPayment godoc
+// @Summary      Get booking payment
+// @Description  Returns the payment associated with a specific booking
+// @Tags         payments
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Booking ID (UUID)"
+// @Success      200  {object}  APIResponse{data=paymentResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/payment [get]
 // GetBookingPayment handles GET /api/v1/bookings/{id}/payment
 func (h *PaymentHandler) GetBookingPayment(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))

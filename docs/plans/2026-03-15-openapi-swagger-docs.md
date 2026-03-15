@@ -64,9 +64,9 @@
 - Modify: `internal/handler/booking.go`
 - Modify: `internal/handler/payment.go`
 
-- [ ] Аннотировать Create, List, Cancel, Confirm, Reject, Complete, GetBathhouseBookings
-- [ ] Аннотировать Pay, GetPayment, ListMyPayments, YooKassaWebhook
-- [ ] Запустить `swag init` — без ошибок
+- [x] Аннотировать Create, List, Cancel, Confirm, Reject, Complete, GetBathhouseBookings
+- [x] Аннотировать Pay, GetPayment, ListMyPayments, YooKassaWebhook
+- [x] Запустить `swag init` — без ошибок
 
 ### Task 5: Аннотации — Reviews, Media, Complaints
 

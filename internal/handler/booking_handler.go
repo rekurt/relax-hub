@@ -101,6 +101,19 @@ func (h *BookingHandler) enrichWithPaymentStatus(ctx context.Context, resp *book
 	resp.PaymentStatus = string(p.Status)
 }
 
+// Create godoc
+// @Summary      Create booking
+// @Description  Creates a new booking for a bathhouse. Supports loyalty points, referral bonus, promo codes, and gift certificates as discounts.
+// @Tags         bookings
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        body  body      createBookingRequest  true  "Booking data"
+// @Success      201   {object}  APIResponse{data=bookingResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
+// @Router       /bookings [post]
 func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createBookingRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -147,6 +160,17 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toBookingResultResponse(result))
 }
 
+// ListByUser godoc
+// @Summary      List my bookings
+// @Description  Returns a paginated list of bookings for the authenticated user
+// @Tags         bookings
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page       query     int  false  "Page number"  default(1)
+// @Param        page_size  query     int  false  "Page size"    default(20)
+// @Success      200        {object}  APIResponse{data=[]bookingResponse,meta=Meta}
+// @Failure      401        {object}  APIResponse{error=APIError}
+// @Router       /bookings [get]
 func (h *BookingHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	page := getPage(r.URL.Query().Get("page"))
@@ -172,6 +196,19 @@ func (h *BookingHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Cancel godoc
+// @Summary      Cancel booking
+// @Description  Cancels a booking. Clients can cancel their own bookings, owners/representatives can cancel bookings for their bathhouses.
+// @Tags         bookings
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Booking ID (UUID)"
+// @Success      200  {object}  APIResponse{data=object}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/cancel [patch]
 func (h *BookingHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -190,6 +227,19 @@ func (h *BookingHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "cancelled"})
 }
 
+// Confirm godoc
+// @Summary      Confirm booking
+// @Description  Confirms a pending booking. Only available to bathhouse owners and representatives.
+// @Tags         bookings
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Booking ID (UUID)"
+// @Success      200  {object}  APIResponse{data=object}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/confirm [patch]
 func (h *BookingHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -208,6 +258,19 @@ func (h *BookingHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "confirmed"})
 }
 
+// Reject godoc
+// @Summary      Reject booking
+// @Description  Rejects a pending booking. Only available to bathhouse owners and representatives.
+// @Tags         bookings
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Booking ID (UUID)"
+// @Success      200  {object}  APIResponse{data=object}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/reject [patch]
 func (h *BookingHandler) Reject(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -226,6 +289,19 @@ func (h *BookingHandler) Reject(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "rejected"})
 }
 
+// Complete godoc
+// @Summary      Complete booking
+// @Description  Marks a confirmed booking as completed. Awards loyalty points. Only available to bathhouse owners and representatives.
+// @Tags         bookings
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Booking ID (UUID)"
+// @Success      200  {object}  APIResponse{data=bookingResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/complete [patch]
 func (h *BookingHandler) Complete(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -245,6 +321,20 @@ func (h *BookingHandler) Complete(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toBookingResultResponse(result))
 }
 
+// ListByBathhouse godoc
+// @Summary      List bathhouse bookings
+// @Description  Returns a paginated list of bookings for a specific bathhouse. Only available to bathhouse owners and representatives.
+// @Tags         bookings
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id         path      string  true   "Bathhouse ID (UUID)"
+// @Param        page       query     int     false  "Page number"  default(1)
+// @Param        page_size  query     int     false  "Page size"    default(20)
+// @Success      200        {object}  APIResponse{data=[]bookingResponse,meta=Meta}
+// @Failure      400        {object}  APIResponse{error=APIError}
+// @Failure      401        {object}  APIResponse{error=APIError}
+// @Failure      403        {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/bookings [get]
 func (h *BookingHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
