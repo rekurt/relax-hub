@@ -223,11 +223,11 @@ Pool uses pgx defaults with no tuning. No MaxConns, MaxConnLifetime, MinConns co
 
 No automated CI/CD exists.
 
-- [ ] Create workflow: on push/PR to main
-- [ ] Steps: checkout, setup-go, go mod download, make lint, go vet ./..., go test ./... -race -coverprofile=coverage.out
-- [ ] Add coverage threshold check (80%+)
-- [ ] Add go build ./... step
-- [ ] Test workflow by pushing to a branch
+- [x] Create workflow: on push/PR to main
+- [x] Steps: checkout, setup-go, go mod download, make lint, go vet ./..., go test ./... -race -coverprofile=coverage.out
+- [x] Add coverage threshold check (80%+)
+- [x] Add go build ./... step
+- [x] Test workflow by pushing to a branch
 
 ### Task 11: Clean up committed secrets
 
