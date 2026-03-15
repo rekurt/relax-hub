@@ -151,7 +151,11 @@ func (h *Hub) SendToUser(userID uuid.UUID, notif *domain.Notification) bool {
 	sent := false
 	for _, c := range clients {
 		func() {
-			defer func() { _ = recover() }()
+			defer func() {
+				if r := recover(); r != nil {
+					h.logger.Error("panic recovered while sending to ws client", "user_id", userID, "panic", r)
+				}
+			}()
 			select {
 			case c.Send <- data:
 				sent = true
@@ -241,7 +245,11 @@ func (h *Hub) SendToConversation(conversationID uuid.UUID, msg *ChatWSMessage) {
 
 	for _, c := range clients {
 		func() {
-			defer func() { _ = recover() }()
+			defer func() {
+				if r := recover(); r != nil {
+					h.logger.Error("panic recovered while sending to chat ws client", "user_id", c.UserID, "conversation_id", conversationID, "panic", r)
+				}
+			}()
 			select {
 			case c.Send <- data:
 			default:

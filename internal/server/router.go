@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/admin"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/handler"
@@ -17,6 +18,7 @@ type RouterParams struct {
 	fx.In
 
 	Log                   *logger.Logger
+	Config                *config.Config
 	CORS                  *middleware.CORSMiddleware
 	AuthService           middleware.AuthService
 	AuthHandler           *handler.AuthHandler
@@ -56,7 +58,7 @@ func NewRouter(p RouterParams) http.Handler {
 
 	r.Use(chiMiddleware.RequestID)
 	r.Use(middleware.Logging(*p.Log))
-	r.Use(middleware.RecoveryMiddleware(middleware.IsDevEnvironment(), p.Log))
+	r.Use(middleware.RecoveryMiddleware(middleware.IsDevEnvironment(p.Config.Environment), p.Log))
 	r.Use(p.CORS.Handler)
 
 	r.Get("/health", p.HealthHandler.Health)

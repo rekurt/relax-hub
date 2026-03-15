@@ -232,3 +232,16 @@ func (c *Config) Validate() error {
 
 	return nil
 }
+
+// Warnings returns non-fatal warnings about the configuration.
+// These should be logged at startup but do not prevent the application from running.
+func (c *Config) Warnings() []string {
+	var warnings []string
+	if c.Payment.YooKassa.ShopID == "" {
+		warnings = append(warnings, "payment.yookassa.shop_id is empty: online payments will be disabled (set BANI_PAYMENT_YOOKASSA_SHOP_ID)")
+	}
+	if c.Telegram.BotToken == "" {
+		warnings = append(warnings, "telegram.bot_token is empty: telegram notifications will be disabled (set BANI_TELEGRAM_BOT_TOKEN)")
+	}
+	return warnings
+}

@@ -69,6 +69,7 @@ func testRouterParams() server.RouterParams {
 
 	return server.RouterParams{
 		Log:            log,
+		Config:         &config.Config{Environment: "dev"},
 		CORS:           cors,
 		AuthService:    authSvc,
 		AuthHandler:    handler.NewAuthHandler(authSvc, nil),

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"runtime/debug"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
@@ -60,8 +59,7 @@ func RecoveryMiddleware(isDev bool, log *logger.Logger) func(next http.Handler) 
 	}
 }
 
-// IsDevEnvironment checks if the application is running in dev mode
-func IsDevEnvironment() bool {
-	env := os.Getenv("BANI_ENVIRONMENT")
+// IsDevEnvironment checks if the given environment string represents dev mode
+func IsDevEnvironment(env string) bool {
 	return env == "" || env == "dev"
 }

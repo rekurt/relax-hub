@@ -26,6 +26,11 @@ const (
 )
 
 func RegisterServer(lc fx.Lifecycle, cfg *config.Config, router http.Handler, log *logger.Logger) {
+	// Log config warnings at startup
+	for _, w := range cfg.Warnings() {
+		log.Warn("config warning", "message", w)
+	}
+
 	srv := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
 		Handler:           router,

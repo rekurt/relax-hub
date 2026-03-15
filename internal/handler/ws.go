@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
@@ -32,63 +33,51 @@ const (
 	sendBufSize = 256
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		// Enforce same-origin policy for WebSocket connections.
-		// WebSocket requests bypass standard CORS preflight checks, so origin validation
-		// must be explicitly performed here.
-		origin := r.Header.Get("Origin")
-		if origin == "" {
-			// In development, allow requests without Origin header (e.g., from test clients)
-			// In production, require Origin header for security
-			if middleware.IsDevEnvironment() {
-				return true
-			}
-			// Reject requests without Origin header in production
-			return false
-		}
-
-		// Parse origin and host to compare properly
-		host := r.Header.Get("Host")
-		if host == "" {
-			return false
-		}
-
-		// Determine the scheme from the request
-		scheme := "http"
-		if r.TLS != nil {
-			scheme = "https"
-		}
-
-		// Build expected origin with matching scheme
-		expectedOrigin := scheme + "://" + host
-
-		// For localhost development, also allow http->https mismatch
-		if scheme == "https" && origin == "http://"+host && middleware.IsDevEnvironment() {
-			return true
-		}
-
-		return origin == expectedOrigin
-	},
-}
-
 // WSHandler handles WebSocket connections for real-time notifications.
 type WSHandler struct {
 	hub         *notification.Hub
 	authService middleware.AuthService
 	chatService service.ChatService
 	logger      *logger.Logger
+	upgrader    websocket.Upgrader
 }
 
 // NewWSHandler creates a new WebSocket handler.
-func NewWSHandler(hub *notification.Hub, authService middleware.AuthService, chatService service.ChatService, log *logger.Logger) *WSHandler {
+func NewWSHandler(hub *notification.Hub, authService middleware.AuthService, chatService service.ChatService, log *logger.Logger, cfg *config.Config) *WSHandler {
+	isDev := middleware.IsDevEnvironment(cfg.Environment)
 	return &WSHandler{
 		hub:         hub,
 		authService: authService,
 		chatService: chatService,
 		logger:      log,
+		upgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					return isDev
+				}
+
+				host := r.Header.Get("Host")
+				if host == "" {
+					return false
+				}
+
+				scheme := "http"
+				if r.TLS != nil {
+					scheme = "https"
+				}
+
+				expectedOrigin := scheme + "://" + host
+
+				if scheme == "https" && origin == "http://"+host && isDev {
+					return true
+				}
+
+				return origin == expectedOrigin
+			},
+		},
 	}
 }
 
@@ -111,7 +100,7 @@ func (h *WSHandler) HandleWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		h.logger.Error("ws upgrade failed", "error", err)
 		return

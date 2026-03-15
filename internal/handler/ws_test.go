@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/logger"
@@ -60,7 +61,7 @@ func TestWSHandler_MissingToken(t *testing.T) {
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
 	auth := &mockWSAuthService{}
-	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log, &config.Config{Environment: "dev"})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/ws/notifications", nil)
 	w := httptest.NewRecorder()
@@ -79,7 +80,7 @@ func TestWSHandler_InvalidToken(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log, &config.Config{Environment: "dev"})
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/ws/notifications?token=invalid", nil)
 	w := httptest.NewRecorder()
@@ -103,7 +104,7 @@ func TestWSHandler_ValidConnection(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log, &config.Config{Environment: "dev"})
 
 	server := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer server.Close()
@@ -164,7 +165,7 @@ func TestWSHandler_DisconnectCleansUp(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log, &config.Config{Environment: "dev"})
 
 	server := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer server.Close()
@@ -203,7 +204,7 @@ func TestWSHandler_ChatSubscribe(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log, &config.Config{Environment: "dev"})
 
 	srv := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer srv.Close()
@@ -268,7 +269,7 @@ func TestWSHandler_ChatTypingIndicator(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log, &config.Config{Environment: "dev"})
 
 	srv := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer srv.Close()

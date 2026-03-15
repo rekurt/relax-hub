@@ -134,29 +134,25 @@ func TestRecoveryMiddleware_ErrorFormatting(t *testing.T) {
 }
 
 func TestIsDevEnvironment_Dev(t *testing.T) {
-	t.Setenv("BANI_ENVIRONMENT", "dev")
-	if !IsDevEnvironment() {
+	if !IsDevEnvironment("dev") {
 		t.Error("Expected IsDevEnvironment to return true for dev environment")
 	}
 }
 
 func TestIsDevEnvironment_Empty(t *testing.T) {
-	t.Setenv("BANI_ENVIRONMENT", "")
-	if !IsDevEnvironment() {
+	if !IsDevEnvironment("") {
 		t.Error("Expected IsDevEnvironment to return true for empty environment")
 	}
 }
 
 func TestIsDevEnvironment_Production(t *testing.T) {
-	t.Setenv("BANI_ENVIRONMENT", "production")
-	if IsDevEnvironment() {
+	if IsDevEnvironment("production") {
 		t.Error("Expected IsDevEnvironment to return false for production environment")
 	}
 }
 
 func TestIsDevEnvironment_Staging(t *testing.T) {
-	t.Setenv("BANI_ENVIRONMENT", "staging")
-	if IsDevEnvironment() {
+	if IsDevEnvironment("staging") {
 		t.Error("Expected IsDevEnvironment to return false for staging environment")
 	}
 }

@@ -211,10 +211,10 @@ Pool uses pgx defaults with no tuning. No MaxConns, MaxConnLifetime, MinConns co
 - Modify: `internal/middleware/recovery.go` (use config instead of env var)
 - Modify: `config/config.go` (validate payment/telegram config)
 
-- [ ] In hub.go: replace `_ = recover()` with logged recovery using the logger
-- [ ] In recovery.go: replace `os.Getenv("BANI_ENVIRONMENT")` with config-based check
-- [ ] Add startup validation: if `BANI_PAYMENT_YOOKASSA_SHOP_ID` is empty, log a warning (not error, since payments may be optional)
-- [ ] Test recovery middleware behavior
+- [x] In hub.go: replace `_ = recover()` with logged recovery using the logger
+- [x] In recovery.go: replace `os.Getenv("BANI_ENVIRONMENT")` with config-based check
+- [x] Add startup validation: if `BANI_PAYMENT_YOOKASSA_SHOP_ID` is empty, log a warning (not error, since payments may be optional)
+- [x] Test recovery middleware behavior
 
 ### Task 10: Add CI/CD pipeline (GitHub Actions)
 

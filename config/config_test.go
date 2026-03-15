@@ -521,6 +521,62 @@ func TestValidate_DatabasePoolConfigValid(t *testing.T) {
 	}
 }
 
+func TestWarnings_EmptyPayment(t *testing.T) {
+	cfg := &Config{
+		Payment: PaymentConfig{
+			YooKassa: YooKassaConfig{ShopID: ""},
+		},
+		Telegram: TelegramConfig{BotToken: "some-token"},
+	}
+
+	warnings := cfg.Warnings()
+	found := false
+	for _, w := range warnings {
+		if contains(w, "yookassa") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected warning about empty yookassa shop_id")
+	}
+}
+
+func TestWarnings_EmptyTelegram(t *testing.T) {
+	cfg := &Config{
+		Payment: PaymentConfig{
+			YooKassa: YooKassaConfig{ShopID: "shop-123"},
+		},
+		Telegram: TelegramConfig{BotToken: ""},
+	}
+
+	warnings := cfg.Warnings()
+	found := false
+	for _, w := range warnings {
+		if contains(w, "telegram") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected warning about empty telegram bot_token")
+	}
+}
+
+func TestWarnings_AllConfigured(t *testing.T) {
+	cfg := &Config{
+		Payment: PaymentConfig{
+			YooKassa: YooKassaConfig{ShopID: "shop-123"},
+		},
+		Telegram: TelegramConfig{BotToken: "some-token"},
+	}
+
+	warnings := cfg.Warnings()
+	if len(warnings) != 0 {
+		t.Errorf("expected no warnings, got %v", warnings)
+	}
+}
+
 func index(s, substr string) int {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
