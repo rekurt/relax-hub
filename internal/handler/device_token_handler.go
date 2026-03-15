@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -37,8 +36,8 @@ func (h *DeviceTokenHandler) Register(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
 	var req registerDeviceTokenRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid_input", "Invalid request body")
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
 		return
 	}
 

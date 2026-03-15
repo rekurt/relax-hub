@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -17,6 +18,7 @@ import (
 type RouterParams struct {
 	fx.In
 
+	Lifecycle             fx.Lifecycle
 	Log                   *logger.Logger
 	Config                *config.Config
 	CORS                  *middleware.CORSMiddleware
@@ -77,6 +79,20 @@ func NewRouter(p RouterParams) http.Handler {
 	authLoginRateLimiter := middleware.NewRateLimiter()
 	webhookRateLimiter := middleware.NewRateLimiter()
 	promoRateLimiter := middleware.NewRateLimiter()
+
+	// Close rate limiters on shutdown to stop cleanup goroutines
+	if p.Lifecycle != nil {
+		p.Lifecycle.Append(fx.Hook{
+			OnStop: func(ctx context.Context) error {
+				widgetRateLimiter.Close()
+				authRegisterRateLimiter.Close()
+				authLoginRateLimiter.Close()
+				webhookRateLimiter.Close()
+				promoRateLimiter.Close()
+				return nil
+			},
+		})
+	}
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// WebSocket (auth via query parameter)

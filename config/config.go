@@ -176,6 +176,18 @@ func Load(cfgFile string) (*Config, error) {
 		return nil, err
 	}
 
+	// Viper doesn't split comma-separated env vars into slices automatically.
+	// Handle BANI_CORS_ALLOWED_ORIGINS="origin1,origin2" by splitting manually.
+	if len(cfg.CORS.AllowedOrigins) == 1 && strings.Contains(cfg.CORS.AllowedOrigins[0], ",") {
+		parts := strings.Split(cfg.CORS.AllowedOrigins[0], ",")
+		cfg.CORS.AllowedOrigins = make([]string, 0, len(parts))
+		for _, p := range parts {
+			if trimmed := strings.TrimSpace(p); trimmed != "" {
+				cfg.CORS.AllowedOrigins = append(cfg.CORS.AllowedOrigins, trimmed)
+			}
+		}
+	}
+
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
