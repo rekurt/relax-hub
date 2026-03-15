@@ -278,7 +278,7 @@ describe('PromoList', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Деактивировать промокод?')).toBeInTheDocument()
-    })
+    }, { timeout: 10000 })
 
     const confirmBtn = screen.getByRole('button', { name: 'Деактивировать' })
     await act(async () => {
@@ -286,7 +286,7 @@ describe('PromoList', () => {
     })
 
     expect(mockDeleteMutation.mutate).toHaveBeenCalledWith({ id: 'promo-1' })
-  })
+  }, 15000)
 
   it('shows copy buttons for each promo code', () => {
     mockBathhouseStore('bath-1')

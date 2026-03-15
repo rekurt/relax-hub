@@ -304,12 +304,12 @@ export default function PromoList() {
             name="code"
             label="Код промокода"
             rules={[{ required: true, message: 'Укажите код' }]}
+            normalize={(value: string) => (typeof value === 'string' ? value.toUpperCase() : value)}
             extra="Латинские буквы и цифры, например: SUMMER20"
           >
             <Input
               placeholder="SUMMER20"
               style={{ fontFamily: 'monospace' }}
-              onChange={(e) => form.setFieldValue('code', e.target.value.toUpperCase())}
             />
           </Form.Item>
 

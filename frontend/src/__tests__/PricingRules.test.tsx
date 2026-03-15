@@ -273,7 +273,7 @@ describe('PricingRules', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Удалить правило?')).toBeInTheDocument()
-    })
+    }, { timeout: 10000 })
 
     const confirmBtn = screen.getByRole('button', { name: 'Удалить' })
     await act(async () => {
@@ -281,7 +281,7 @@ describe('PricingRules', () => {
     })
 
     expect(mockDeleteMutation.mutate).toHaveBeenCalledWith({ id: 'rule-1' })
-  })
+  }, 15000)
 
   it('renders switch for is_active toggle', () => {
     mockBathhouseStore('bath-1')

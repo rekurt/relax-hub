@@ -43,7 +43,7 @@ function MessageBubble({
           color: isOwn ? '#fff' : 'inherit',
         }}
       >
-        <div>{message.text}</div>
+        <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{message.text}</div>
         <Text
           type="secondary"
           style={{
@@ -89,6 +89,7 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
 
   const { mutate: markRead } = usePatchConversationsIdRead()
   const markReadRef = useRef(markRead)
+  const markedReadForRef = useRef<string | null>(null)
 
   useEffect(() => {
     markReadRef.current = markRead
@@ -103,8 +104,13 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
   }, [messages.length])
 
   useEffect(() => {
-    if (conversationId && messages.some((m) => !m.is_read && m.sender_id !== currentUser?.id)) {
+    if (
+      conversationId &&
+      conversationId !== markedReadForRef.current &&
+      messages.some((m) => !m.is_read && m.sender_id !== currentUser?.id)
+    ) {
       markReadRef.current({ id: conversationId })
+      markedReadForRef.current = conversationId
     }
   }, [conversationId, messages, currentUser?.id])
 

@@ -1,4 +1,4 @@
-import { Avatar, Badge, Typography, Input, Empty, Spin } from 'antd'
+import { Avatar, Typography, Input, Empty, Spin } from 'antd'
 import { UserOutlined, SearchOutlined } from '@ant-design/icons'
 import { useState, useMemo } from 'react'
 import { useGetMyConversations } from '@/api/generated/chat/chat'
@@ -72,9 +72,7 @@ export default function ConversationList({ selectedId, onSelect }: ConversationL
                 gap: 12,
               }}
             >
-              <Badge dot={false}>
-                <Avatar icon={<UserOutlined />} />
-              </Badge>
+              <Avatar icon={<UserOutlined />} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <Text ellipsis style={{ maxWidth: 180, display: 'block' }}>
                   Клиент {conv.client_id?.slice(0, 8)}
