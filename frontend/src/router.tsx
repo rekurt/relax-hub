@@ -34,6 +34,7 @@ import LoyaltyDashboard from '@/pages/client/LoyaltyDashboard'
 import ReferralProgram from '@/pages/client/ReferralProgram'
 import CertificateList from '@/pages/client/CertificateList'
 import CertificatePurchase from '@/pages/client/CertificatePurchase'
+import PaymentHistory from '@/pages/client/PaymentHistory'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 
 export default function AppRouter() {
@@ -92,6 +93,7 @@ export default function AppRouter() {
         <Route path="referral" element={<ReferralProgram />} />
         <Route path="certificates" element={<CertificateList />} />
         <Route path="certificates/purchase" element={<CertificatePurchase />} />
+        <Route path="payments" element={<PaymentHistory />} />
       </Route>
 
       {/* Admin routes */}

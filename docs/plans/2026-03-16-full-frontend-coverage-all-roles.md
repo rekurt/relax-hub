@@ -136,12 +136,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 **Files:**
 - Create: `frontend/src/pages/client/PaymentHistory.tsx`
 
-- [ ] Payment history table: date, amount, status, booking link, refund info
-- [ ] Status badges: pending, succeeded, refunded, cancelled
-- [ ] Filter by date range and status
-- [ ] API hooks: `useGetMyPayments`
-- [ ] Write tests for payment list, status display, filtering
-- [ ] Run project test suite - must pass before task 10
+- [x] Payment history table: date, amount, status, booking link, refund info
+- [x] Status badges: pending, succeeded, refunded, cancelled
+- [x] Filter by date range and status
+- [x] API hooks: `useGetMyPayments`
+- [x] Write tests for payment list, status display, filtering
+- [x] Run project test suite - must pass before task 10
 
 ### Task 10: Client - User profile and stats
 
