@@ -217,7 +217,7 @@ describe('ReviewList', () => {
 
     renderWithProviders(<ReviewList />)
 
-    expect(screen.getByText('Статистика отзывов')).toBeInTheDocument()
+    expect(screen.getByText(/Статистика отзывов/)).toBeInTheDocument()
     expect(screen.getByText('Средний рейтинг')).toBeInTheDocument()
     expect(screen.getByText('3 отзывов')).toBeInTheDocument()
   })

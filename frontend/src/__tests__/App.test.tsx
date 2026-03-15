@@ -81,7 +81,7 @@ describe('App', () => {
     expect(mainContent!.textContent).toContain('Дашборд')
   })
 
-  it('redirects client role to login', () => {
+  it('shows access denied for client role', () => {
     useAuthStore.setState({
       isAuthenticated: true,
       isLoading: false,
@@ -89,7 +89,7 @@ describe('App', () => {
       token: 'jwt-token',
     })
     renderWithProviders(<App />, { route: '/' })
-    expect(screen.getByText('Вход в личный кабинет')).toBeInTheDocument()
+    expect(screen.getByText('Доступ запрещён')).toBeInTheDocument()
   })
 
   it('shows spinner while loading auth', () => {

@@ -53,7 +53,7 @@ function RatingDistribution({ reviews }: { reviews: InternalHandlerReviewRespons
     : 0
 
   return (
-    <Card size="small" title="Статистика отзывов" style={{ marginBottom: 16 }}>
+    <Card size="small" title={`Статистика отзывов (${total > 0 ? `на странице: ${total}` : 'нет данных'})`} style={{ marginBottom: 16 }}>
       <Row gutter={24}>
         <Col xs={24} sm={8} style={{ textAlign: 'center', marginBottom: 16 }}>
           <Statistic
@@ -160,10 +160,11 @@ export default function ReviewList() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [filter, setFilter] = useState('all')
+  const hasActiveFilter = filter !== 'all'
 
   const { data, isLoading } = useGetBathhousesIdReviews(selectedBathhouseId ?? '', {
-    page,
-    page_size: pageSize,
+    page: hasActiveFilter ? 1 : page,
+    page_size: hasActiveFilter ? 999 : pageSize,
   }, {
     query: {
       enabled: !!selectedBathhouseId,
@@ -172,7 +173,6 @@ export default function ReviewList() {
 
   const reviews = data?.data ?? []
   const meta = data?.meta
-  const hasActiveFilter = filter !== 'all'
 
   const filteredReviews = useMemo(() => {
     const items = data?.data ?? []
@@ -219,10 +219,14 @@ export default function ReviewList() {
         loading={isLoading}
         dataSource={filteredReviews}
         locale={{ emptyText: 'Нет отзывов' }}
-        pagination={{
+        pagination={hasActiveFilter ? {
+          pageSize: pageSize,
+          showSizeChanger: true,
+          showTotal: (total) => `Всего: ${total}`,
+        } : {
           current: page,
           pageSize: pageSize,
-          total: hasActiveFilter ? filteredReviews.length : (meta?.total_count ?? 0),
+          total: meta?.total_count ?? 0,
           showSizeChanger: true,
           showTotal: (total) => `Всего: ${total}`,
           onChange: (p, ps) => {

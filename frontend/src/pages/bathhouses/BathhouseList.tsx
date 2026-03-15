@@ -69,7 +69,7 @@ export default function BathhouseList() {
       key: 'rating',
       render: (rating: number) => (
         <Space>
-          <Rate disabled defaultValue={rating ?? 0} allowHalf style={{ fontSize: 14 }} />
+          <Rate disabled value={rating ?? 0} allowHalf style={{ fontSize: 14 }} />
           <span>{rating?.toFixed(1) ?? '—'}</span>
         </Space>
       ),

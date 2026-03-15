@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { App, Button, DatePicker, Select, Space, Table, Tag, Typography } from 'antd'
+import { App, Button, DatePicker, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   CheckCircleOutlined,
@@ -46,9 +46,11 @@ export default function BookingList() {
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
   const [detailsBooking, setDetailsBooking] = useState<InternalHandlerBookingResponse | null>(null)
 
+  const hasActiveFilter = !!statusFilter || !!(dateRange?.[0] && dateRange?.[1])
+
   const { data, isLoading } = useGetBathhousesIdBookings(selectedBathhouseId ?? '', {
-    page,
-    page_size: pageSize,
+    page: hasActiveFilter ? 1 : page,
+    page_size: hasActiveFilter ? 999 : pageSize,
   }, {
     query: {
       enabled: !!selectedBathhouseId,
@@ -103,7 +105,6 @@ export default function BookingList() {
 
   const bookings = data?.data ?? []
   const meta = data?.meta
-  const hasActiveFilter = !!statusFilter || !!(dateRange?.[0] && dateRange?.[1])
 
   const filteredBookings = bookings.filter((b) => {
     if (statusFilter && b.status !== statusFilter) return false
@@ -145,17 +146,25 @@ export default function BookingList() {
         </Button>,
       )
       actions.push(
-        <Button
+        <Popconfirm
           key="reject"
-          type="link"
-          size="small"
-          danger
-          icon={<CloseCircleOutlined />}
-          loading={rejectMutation.isPending && rejectMutation.variables?.id === record.id}
-          onClick={() => record.id && rejectMutation.mutate({ id: record.id })}
+          title="Отклонить бронирование?"
+          description="Это действие нельзя отменить."
+          onConfirm={() => record.id && rejectMutation.mutate({ id: record.id })}
+          okText="Отклонить"
+          cancelText="Нет"
+          okButtonProps={{ danger: true }}
         >
-          Отклонить
-        </Button>,
+          <Button
+            type="link"
+            size="small"
+            danger
+            icon={<CloseCircleOutlined />}
+            loading={rejectMutation.isPending && rejectMutation.variables?.id === record.id}
+          >
+            Отклонить
+          </Button>
+        </Popconfirm>,
       )
     }
 
@@ -173,17 +182,25 @@ export default function BookingList() {
         </Button>,
       )
       actions.push(
-        <Button
+        <Popconfirm
           key="cancel"
-          type="link"
-          size="small"
-          danger
-          icon={<StopOutlined />}
-          loading={cancelMutation.isPending && cancelMutation.variables?.id === record.id}
-          onClick={() => record.id && cancelMutation.mutate({ id: record.id })}
+          title="Отменить бронирование?"
+          description="Это может повлечь автоматический возврат средств."
+          onConfirm={() => record.id && cancelMutation.mutate({ id: record.id })}
+          okText="Отменить"
+          cancelText="Нет"
+          okButtonProps={{ danger: true }}
         >
-          Отменить
-        </Button>,
+          <Button
+            type="link"
+            size="small"
+            danger
+            icon={<StopOutlined />}
+            loading={cancelMutation.isPending && cancelMutation.variables?.id === record.id}
+          >
+            Отменить
+          </Button>
+        </Popconfirm>,
       )
     }
 
@@ -280,10 +297,14 @@ export default function BookingList() {
         rowKey="id"
         loading={isLoading}
         locale={{ emptyText: 'Нет бронирований' }}
-        pagination={{
+        pagination={hasActiveFilter ? {
+          pageSize: pageSize,
+          showSizeChanger: true,
+          showTotal: (total) => `Всего: ${total}`,
+        } : {
           current: page,
           pageSize: pageSize,
-          total: hasActiveFilter ? filteredBookings.length : (meta?.total_count ?? 0),
+          total: meta?.total_count ?? 0,
           showSizeChanger: true,
           showTotal: (total) => `Всего: ${total}`,
           onChange: (p, ps) => {
