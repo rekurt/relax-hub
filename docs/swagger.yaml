@@ -206,6 +206,44 @@ definitions:
       user_id:
         type: string
     type: object
+  handler.certificateBalanceResponse:
+    properties:
+      amount:
+        type: integer
+      balance:
+        type: integer
+      code:
+        type: string
+      status:
+        type: string
+      valid_until:
+        type: string
+    type: object
+  handler.certificateResponse:
+    properties:
+      amount:
+        type: integer
+      balance:
+        type: integer
+      code:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      message:
+        type: string
+      purchaser_email:
+        type: string
+      recipient_email:
+        type: string
+      recipient_name:
+        type: string
+      status:
+        type: string
+      valid_until:
+        type: string
+    type: object
   handler.cityResponse:
     properties:
       id:
@@ -317,6 +355,23 @@ definitions:
       slug:
         type: string
     type: object
+  handler.createPromoRequest:
+    properties:
+      code:
+        type: string
+      max_uses:
+        type: integer
+      min_amount:
+        type: integer
+      type:
+        type: string
+      valid_from:
+        type: string
+      valid_until:
+        type: string
+      value:
+        type: integer
+    type: object
   handler.createReviewRequest:
     properties:
       booking_id:
@@ -336,6 +391,66 @@ definitions:
       email:
         type: string
       password:
+        type: string
+    type: object
+  handler.loyaltyAccountResponse:
+    properties:
+      created_at:
+        type: string
+      level:
+        type: string
+      points:
+        type: integer
+      privileges:
+        $ref: '#/definitions/handler.loyaltyPrivileges'
+      total_earned:
+        type: integer
+      total_spent:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: string
+      visit_count:
+        type: integer
+    type: object
+  handler.loyaltyLevelResponse:
+    properties:
+      discount_percent:
+        type: integer
+      level:
+        type: string
+      min_visits:
+        type: integer
+      point_multiplier:
+        type: number
+    type: object
+  handler.loyaltyPrivileges:
+    properties:
+      discount_percent:
+        type: integer
+      next_level:
+        type: string
+      point_multiplier:
+        type: number
+      visits_to_next:
+        type: integer
+    type: object
+  handler.loyaltyTransactionResponse:
+    properties:
+      amount:
+        type: integer
+      booking_id:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      type:
+        type: string
+      user_id:
         type: string
     type: object
   handler.mediaResponse:
@@ -435,6 +550,35 @@ definitions:
       verified_by_id:
         type: string
     type: object
+  handler.promoResponse:
+    properties:
+      bathhouse_id:
+        type: string
+      code:
+        type: string
+      created_at:
+        type: string
+      creator_id:
+        type: string
+      current_uses:
+        type: integer
+      id:
+        type: string
+      is_active:
+        type: boolean
+      max_uses:
+        type: integer
+      min_amount:
+        type: integer
+      type:
+        type: string
+      valid_from:
+        type: string
+      valid_until:
+        type: string
+      value:
+        type: integer
+    type: object
   handler.publicProfileResponse:
     properties:
       avatar_url:
@@ -454,6 +598,47 @@ definitions:
       review_count:
         type: integer
       visit_count:
+        type: integer
+    type: object
+  handler.purchaseCertificateRequest:
+    properties:
+      amount:
+        type: integer
+      message:
+        type: string
+      purchaser_email:
+        type: string
+      recipient_email:
+        type: string
+      recipient_name:
+        type: string
+    type: object
+  handler.redeemCertificateRequest:
+    properties:
+      code:
+        type: string
+    type: object
+  handler.referralBalanceResponse:
+    properties:
+      balance:
+        type: integer
+      total_earned:
+        type: integer
+    type: object
+  handler.referralCodeResponse:
+    properties:
+      referral_code:
+        type: string
+      referral_link:
+        type: string
+    type: object
+  handler.referralStatsResponse:
+    properties:
+      total_completed:
+        type: integer
+      total_earned:
+        type: integer
+      total_invited:
         type: integer
     type: object
   handler.registerRequest:
@@ -644,6 +829,26 @@ definitions:
         type: string
       role:
         type: string
+    type: object
+  handler.validatePromoRequest:
+    properties:
+      amount:
+        type: integer
+      bathhouse_id:
+        type: string
+      code:
+        type: string
+    type: object
+  handler.validatePromoResponse:
+    properties:
+      code:
+        type: string
+      discount:
+        type: integer
+      type:
+        type: string
+      value:
+        type: integer
     type: object
   handler.widgetCodeResponse:
     properties:
@@ -1378,6 +1583,63 @@ paths:
       summary: List pending photos
       tags:
       - admin-photos
+  /admin/promo-codes:
+    post:
+      consumes:
+      - application/json
+      description: Creates a global promo code (not tied to a specific bathhouse).
+        Admin only.
+      parameters:
+      - description: Promo code data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createPromoRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.promoResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create global promo code
+      tags:
+      - promo-codes
   /admin/reviews:
     get:
       description: Returns a paginated list of all reviews for moderation. Supports
@@ -3555,6 +3817,142 @@ paths:
       summary: Reject booking
       tags:
       - bookings
+  /certificates/{code}/balance:
+    get:
+      description: Returns the balance and status of a gift certificate by its code
+      parameters:
+      - description: Certificate code (e.g. BANI-XXXX-XXXX)
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.certificateBalanceResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      summary: Get certificate balance
+      tags:
+      - certificates
+  /certificates/purchase:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new gift certificate. Can be used without authentication.
+        Amount is in kopecks.
+      parameters:
+      - description: Certificate purchase data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.purchaseCertificateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.certificateResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      summary: Purchase gift certificate
+      tags:
+      - certificates
+  /certificates/redeem:
+    post:
+      consumes:
+      - application/json
+      description: Binds a gift certificate to the authenticated user's account by
+        its code
+      parameters:
+      - description: Certificate code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.redeemCertificateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.certificateResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Redeem gift certificate
+      tags:
+      - certificates
   /cities:
     get:
       description: Get all available cities.
@@ -3879,6 +4277,135 @@ paths:
       summary: Reorder bathhouse photos
       tags:
       - photos
+  /my/bathhouses/{id}/promo-codes:
+    get:
+      description: Returns promo codes for a specific bathhouse with pagination. Available
+        to owners and representatives.
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.promoResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List bathhouse promo codes
+      tags:
+      - promo-codes
+    post:
+      consumes:
+      - application/json
+      description: Creates a promo code for a specific bathhouse. Available to owners
+        and representatives.
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Promo code data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createPromoRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.promoResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create bathhouse promo code
+      tags:
+      - promo-codes
   /my/bathhouses/{id}/widget-code:
     get:
       description: Generate HTML embed code for the booking widget with customization
@@ -4062,6 +4589,145 @@ paths:
       summary: Regenerate widget API key
       tags:
       - widgets
+  /my/certificates:
+    get:
+      description: Returns all gift certificates for the authenticated user with pagination
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.certificateResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List my certificates
+      tags:
+      - certificates
+  /my/loyalty:
+    get:
+      description: Returns the loyalty account for the authenticated user, including
+        level, points, and privileges
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.loyaltyAccountResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get loyalty account
+      tags:
+      - loyalty
+  /my/loyalty/levels:
+    get:
+      description: Returns information about all loyalty levels and their privileges
+        (bronze, silver, gold, platinum)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.loyaltyLevelResponse'
+                  type: array
+              type: object
+      summary: Get loyalty levels
+      tags:
+      - loyalty
+  /my/loyalty/transactions:
+    get:
+      description: Returns paginated transaction history for the authenticated user
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.loyaltyTransactionResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List loyalty transactions
+      tags:
+      - loyalty
   /my/payments:
     get:
       description: Returns a paginated list of payments for the authenticated user
@@ -4106,6 +4772,96 @@ paths:
       summary: List my payments
       tags:
       - payments
+  /my/referral:
+    get:
+      description: Returns the referral code and shareable link for the authenticated
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.referralCodeResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get referral code
+      tags:
+      - referral
+  /my/referral/balance:
+    get:
+      description: Returns the referral bonus balance and total earned for the authenticated
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.referralBalanceResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get referral balance
+      tags:
+      - referral
+  /my/referral/stats:
+    get:
+      description: 'Returns referral statistics: total invited, completed, and earned
+        amount'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.referralStatsResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get referral statistics
+      tags:
+      - referral
   /my/stats:
     get:
       description: Returns booking and review statistics for the authenticated user
@@ -4192,6 +4948,119 @@ paths:
       summary: Delete photo
       tags:
       - photos
+  /promo-codes/{id}:
+    delete:
+      description: Deactivates a promo code. Available to owners, representatives,
+        and admins.
+      parameters:
+      - description: Promo code ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Deactivate promo code
+      tags:
+      - promo-codes
+  /promo-codes/validate:
+    post:
+      consumes:
+      - application/json
+      description: Checks a promo code and returns the calculated discount amount.
+        Rate limited to 20 requests per minute.
+      parameters:
+      - description: Promo code and booking details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.validatePromoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.validatePromoResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      summary: Validate promo code
+      tags:
+      - promo-codes
   /reviews/{id}:
     delete:
       description: Deletes a review. The author or an admin can delete it.

@@ -48,7 +48,15 @@ func toReferralBalanceResponse(b *domain.ReferralBalance) referralBalanceRespons
 	}
 }
 
-// GetCode returns the referral code and link for the authenticated user.
+// GetCode godoc
+// @Summary      Get referral code
+// @Description  Returns the referral code and shareable link for the authenticated user
+// @Tags         referral
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=referralCodeResponse}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/referral [get]
 func (h *ReferralHandler) GetCode(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -69,7 +77,15 @@ func (h *ReferralHandler) GetCode(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetStats returns referral statistics for the authenticated user.
+// GetStats godoc
+// @Summary      Get referral statistics
+// @Description  Returns referral statistics: total invited, completed, and earned amount
+// @Tags         referral
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=referralStatsResponse}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/referral/stats [get]
 func (h *ReferralHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -82,7 +98,15 @@ func (h *ReferralHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toReferralStatsResponse(stats))
 }
 
-// GetBalance returns the referral bonus balance for the authenticated user.
+// GetBalance godoc
+// @Summary      Get referral balance
+// @Description  Returns the referral bonus balance and total earned for the authenticated user
+// @Tags         referral
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=referralBalanceResponse}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/referral/balance [get]
 func (h *ReferralHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 

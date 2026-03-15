@@ -88,7 +88,16 @@ func toCertificateListResponse(certs []domain.GiftCertificate) []certificateResp
 	return result
 }
 
-// Purchase creates a new gift certificate. Can be used without authentication.
+// Purchase godoc
+// @Summary      Purchase gift certificate
+// @Description  Creates a new gift certificate. Can be used without authentication. Amount is in kopecks.
+// @Tags         certificates
+// @Accept       json
+// @Produce      json
+// @Param        body  body      purchaseCertificateRequest  true  "Certificate purchase data"
+// @Success      201   {object}  APIResponse{data=certificateResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Router       /certificates/purchase [post]
 func (h *CertificateHandler) Purchase(w http.ResponseWriter, r *http.Request) {
 	var req purchaseCertificateRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -119,7 +128,19 @@ func (h *CertificateHandler) Purchase(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toCertificateResponse(cert))
 }
 
-// Redeem binds a gift certificate to the authenticated user's account.
+// Redeem godoc
+// @Summary      Redeem gift certificate
+// @Description  Binds a gift certificate to the authenticated user's account by its code
+// @Tags         certificates
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        body  body      redeemCertificateRequest  true  "Certificate code"
+// @Success      200   {object}  APIResponse{data=certificateResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /certificates/redeem [post]
 func (h *CertificateHandler) Redeem(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -138,7 +159,16 @@ func (h *CertificateHandler) Redeem(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toCertificateResponse(cert))
 }
 
-// GetBalance returns the balance of a gift certificate by its code.
+// GetBalance godoc
+// @Summary      Get certificate balance
+// @Description  Returns the balance and status of a gift certificate by its code
+// @Tags         certificates
+// @Produce      json
+// @Param        code  path      string  true  "Certificate code (e.g. BANI-XXXX-XXXX)"
+// @Success      200   {object}  APIResponse{data=certificateBalanceResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /certificates/{code}/balance [get]
 func (h *CertificateHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
 	code := chi.URLParam(r, "code")
 	if code == "" {
@@ -155,7 +185,17 @@ func (h *CertificateHandler) GetBalance(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, toCertificateBalanceResponse(cert))
 }
 
-// ListMyCertificates returns all certificates for the authenticated user.
+// ListMyCertificates godoc
+// @Summary      List my certificates
+// @Description  Returns all gift certificates for the authenticated user with pagination
+// @Tags         certificates
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page       query     int  false  "Page number"  default(1)
+// @Param        page_size  query     int  false  "Page size"    default(20)
+// @Success      200  {object}  APIResponse{data=[]certificateResponse,meta=Meta}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/certificates [get]
 func (h *CertificateHandler) ListMyCertificates(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 

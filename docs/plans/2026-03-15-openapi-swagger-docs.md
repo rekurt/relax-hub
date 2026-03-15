@@ -89,11 +89,11 @@
 - Modify: `internal/handler/certificate.go`
 - Modify: `internal/handler/promo.go`
 
-- [ ] Аннотировать Loyalty: GetAccount, GetTransactions, GetLevels
-- [ ] Аннотировать Referral: GetCode, GetStats, GetBalance
-- [ ] Аннотировать Certificates: Purchase, Redeem, GetBalance, ListMy
-- [ ] Аннотировать Promo: Create, List, Delete, Validate, AdminCreate
-- [ ] Запустить `swag init` — без ошибок
+- [x] Аннотировать Loyalty: GetAccount, GetTransactions, GetLevels
+- [x] Аннотировать Referral: GetCode, GetStats, GetBalance
+- [x] Аннотировать Certificates: Purchase, Redeem, GetBalance, ListMy
+- [x] Аннотировать Promo: Create, List, Delete, Validate, AdminCreate
+- [x] Запустить `swag init` — без ошибок
 
 ### Task 7: Аннотации — Chat, Notifications, Favorites, Recommendations
 
