@@ -124,12 +124,6 @@ func (h *SubscriptionHandler) Subscribe(w http.ResponseWriter, r *http.Request) 
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
 
-	// Verify user has access to manage this bathhouse
-	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, userRole, bathhouseID); err != nil {
-		handleServiceError(w, err)
-		return
-	}
-
 	sub, err := h.subService.Subscribe(r.Context(), userID, userRole, bathhouseID, plan)
 	if err != nil {
 		handleServiceError(w, err)
@@ -175,12 +169,6 @@ func (h *SubscriptionHandler) CancelSubscription(w http.ResponseWriter, r *http.
 
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
-
-	// Verify user has access to manage this bathhouse
-	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, userRole, bathhouseID); err != nil {
-		handleServiceError(w, err)
-		return
-	}
 
 	// Get the subscription first
 	sub, err := h.subService.GetActive(r.Context(), bathhouseID)

@@ -95,7 +95,7 @@ func (r *bookingRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pa
 		if err := rows.Scan(
 			&b.ID, &b.UserID, &b.BathhouseID,
 			&b.StartTime, &b.EndTime, &b.GuestCount,
-			&b.TotalPrice, &b.PointsSpent, &b.Status, &b.Comment,
+			&b.TotalPrice, &b.PointsSpent, &b.ReferralBonusUsed, &b.Status, &b.Comment,
 			&b.CreatedAt, &b.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan booking: %w", err)
@@ -146,7 +146,7 @@ func (r *bookingRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID
 		if err := rows.Scan(
 			&b.ID, &b.UserID, &b.BathhouseID,
 			&b.StartTime, &b.EndTime, &b.GuestCount,
-			&b.TotalPrice, &b.PointsSpent, &b.Status, &b.Comment,
+			&b.TotalPrice, &b.PointsSpent, &b.ReferralBonusUsed, &b.Status, &b.Comment,
 			&b.CreatedAt, &b.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan booking: %w", err)
@@ -217,7 +217,7 @@ func (r *bookingRepo) GetOverlapping(ctx context.Context, bathhouseID uuid.UUID,
 		if err := rows.Scan(
 			&b.ID, &b.UserID, &b.BathhouseID,
 			&b.StartTime, &b.EndTime, &b.GuestCount,
-			&b.TotalPrice, &b.PointsSpent, &b.Status, &b.Comment,
+			&b.TotalPrice, &b.PointsSpent, &b.ReferralBonusUsed, &b.Status, &b.Comment,
 			&b.CreatedAt, &b.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan overlapping booking: %w", err)

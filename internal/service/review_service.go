@@ -239,26 +239,13 @@ func (s *reviewService) Delete(ctx context.Context, userID uuid.UUID, userRole d
 }
 
 func (s *reviewService) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Review], error) {
-	result, err := s.reviewRepo.ListByBathhouse(ctx, bathhouseID, page, pageSize)
-	if err != nil {
-		return nil, err
-	}
-
-	// Filter out non-approved reviews for public endpoint
-	var approvedReviews []domain.Review
-	for _, review := range result.Items {
-		if review.Status == domain.ReviewStatusApproved {
-			approvedReviews = append(approvedReviews, review)
-		}
-	}
-
-	// Update result with filtered reviews
-	approvedCount := int64(len(approvedReviews))
-	result.Items = approvedReviews
-	result.TotalCount = approvedCount
-	result.TotalPages = int((approvedCount + int64(pageSize) - 1) / int64(pageSize))
-
-	return result, nil
+	approvedStatus := domain.ReviewStatusApproved
+	return s.reviewRepo.ListByBathhouseFiltered(ctx, domain.ReviewFilter{
+		BathhouseID: &bathhouseID,
+		Status:      &approvedStatus,
+		Page:        page,
+		PageSize:    pageSize,
+	})
 }
 
 func (s *reviewService) AddOwnerResponse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, reviewID uuid.UUID, response string) (*domain.Review, error) {

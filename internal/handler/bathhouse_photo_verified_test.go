@@ -53,8 +53,8 @@ func TestBathhouseHandler_GetByID_IsPhotoVerified(t *testing.T) {
 				nil, // recommendationService
 				nil, // analyticsService
 				nil, // mediaService
-				nil, // promotionRepository
-				nil, // cityRepo
+				nil, // promotionService
+				nil, // cityService
 				nil, // logger
 				"",  // baseURL
 			)
