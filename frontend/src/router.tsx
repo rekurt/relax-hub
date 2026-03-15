@@ -17,10 +17,7 @@ import NotificationList from '@/pages/notifications/NotificationList'
 import ProfileSettings from '@/pages/settings/ProfileSettings'
 import SubscriptionPage from '@/pages/subscriptions/SubscriptionPage'
 import WidgetSettings from '@/pages/widget/WidgetSettings'
-
-function Placeholder({ title }: { title: string }) {
-  return <div>{title}</div>
-}
+import PhotoManager from '@/pages/photos/PhotoManager'
 
 export default function AppRouter() {
   return (
@@ -48,7 +45,7 @@ export default function AppRouter() {
         <Route path="representatives" element={<RepresentativeList />} />
         <Route path="subscriptions" element={<SubscriptionPage />} />
         <Route path="widget" element={<WidgetSettings />} />
-        <Route path="photos" element={<Placeholder title="Фото" />} />
+        <Route path="photos" element={<PhotoManager />} />
         <Route path="settings" element={<ProfileSettings />} />
         <Route path="notifications" element={<NotificationList />} />
       </Route>

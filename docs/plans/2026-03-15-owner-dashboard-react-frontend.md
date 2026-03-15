@@ -234,11 +234,11 @@ React SPA для владельцев бань: управление баням�
 **Files:**
 - Create: `frontend/src/pages/photos/PhotoManager.tsx`
 
-- [ ] Сетка фотографий бани (GET /bathhouses/{id}/photos) с drag-and-drop сортировкой
-- [ ] Загрузка новых фото (POST /my/bathhouses/{id}/photos) с preview
-- [ ] Статусы фото: pending (на модерации), verified, rejected - с Badge
-- [ ] Перестановка порядка (PUT /my/bathhouses/{id}/photos/reorder)
-- [ ] Удаление фото (DELETE /photos/{id})
+- [x] Сетка фотографий бани (GET /bathhouses/{id}/photos) с drag-and-drop сортировкой
+- [x] Загрузка новых фото (POST /my/bathhouses/{id}/photos) с preview
+- [x] Статусы фото: pending (на модерации), verified, rejected - с Badge
+- [x] Перестановка порядка (PUT /my/bathhouses/{id}/photos/reorder)
+- [x] Удаление фото (DELETE /photos/{id})
 
 ### Task 17: Верификация и финальная проверка
 
