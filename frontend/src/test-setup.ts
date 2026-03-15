@@ -1,5 +1,11 @@
 import '@testing-library/jest-dom'
 
+;(globalThis as Record<string, unknown>).ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({

@@ -4,6 +4,8 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
 import Dashboard from '@/pages/Dashboard'
+import BathhouseList from '@/pages/bathhouses/BathhouseList'
+import BathhouseForm from '@/pages/bathhouses/BathhouseForm'
 
 function Placeholder({ title }: { title: string }) {
   return <div>{title}</div>
@@ -23,9 +25,9 @@ export default function AppRouter() {
         }
       >
         <Route index element={<Dashboard />} />
-        <Route path="bathhouses" element={<Placeholder title="Бани" />} />
-        <Route path="bathhouses/new" element={<Placeholder title="Новая баня" />} />
-        <Route path="bathhouses/:id/edit" element={<Placeholder title="Редактирование бани" />} />
+        <Route path="bathhouses" element={<BathhouseList />} />
+        <Route path="bathhouses/new" element={<BathhouseForm />} />
+        <Route path="bathhouses/:id/edit" element={<BathhouseForm />} />
         <Route path="bookings" element={<Placeholder title="Бронирования" />} />
         <Route path="reviews" element={<Placeholder title="Отзывы" />} />
         <Route path="calendar" element={<Placeholder title="Календарь" />} />
