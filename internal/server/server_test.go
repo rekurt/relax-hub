@@ -167,9 +167,9 @@ func TestHTTPServerTimeoutOrdering(t *testing.T) {
 		t.Errorf("ReadTimeout (%v) should be >= ReadHeaderTimeout (%v)", server.ReadTimeout, server.ReadHeaderTimeout)
 	}
 	if server.WriteTimeout < server.ReadTimeout && server.WriteTimeout < server.ReadHeaderTimeout {
-		t.Logf("Note: WriteTimeout (%v) may be less than ReadTimeout/ReadHeaderTimeout for streaming", server.WriteTimeout)
+		t.Errorf("WriteTimeout (%v) should be >= ReadTimeout (%v) or ReadHeaderTimeout (%v)", server.WriteTimeout, server.ReadTimeout, server.ReadHeaderTimeout)
 	}
 	if server.IdleTimeout < server.WriteTimeout {
-		t.Logf("Note: IdleTimeout (%v) is >= WriteTimeout (%v)", server.IdleTimeout, server.WriteTimeout)
+		t.Errorf("IdleTimeout (%v) should be >= WriteTimeout (%v)", server.IdleTimeout, server.WriteTimeout)
 	}
 }

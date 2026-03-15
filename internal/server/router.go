@@ -73,7 +73,8 @@ func NewRouter(p RouterParams) http.Handler {
 	widgetRateLimiter := middleware.NewRateLimiter()
 	widgetRateLimit := middleware.WidgetRateLimit(widgetRateLimiter, 10) // 10 req/s per API key
 
-	authRateLimiter := middleware.NewRateLimiter()
+	authRegisterRateLimiter := middleware.NewRateLimiter()
+	authLoginRateLimiter := middleware.NewRateLimiter()
 	webhookRateLimiter := middleware.NewRateLimiter()
 	promoRateLimiter := middleware.NewRateLimiter()
 
@@ -85,8 +86,8 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(middleware.RateLimit(webhookRateLimiter, 0.5)).Post("/webhooks/yookassa", p.PaymentHandler.HandleWebhook) // 30/min
 
 		// Auth (public, rate-limited)
-		r.With(middleware.RateLimit(authRateLimiter, 5.0/60.0)).Post("/auth/register", p.AuthHandler.Register) // 5/min
-		r.With(middleware.RateLimit(authRateLimiter, 10.0/60.0)).Post("/auth/login", p.AuthHandler.Login)       // 10/min
+		r.With(middleware.RateLimit(authRegisterRateLimiter, 5.0/60.0)).Post("/auth/register", p.AuthHandler.Register) // 5/min
+		r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/login", p.AuthHandler.Login)         // 10/min
 		r.With(auth).Get("/auth/me", p.AuthHandler.Me)
 		r.With(auth).Put("/auth/me", p.AuthHandler.UpdateProfile)
 		r.With(auth).Post("/auth/me/avatar", p.AuthHandler.UploadAvatar)

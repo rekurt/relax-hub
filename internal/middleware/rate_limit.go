@@ -76,6 +76,9 @@ func (rl *RateLimiter) Check(key string, ratePerSecond float64) RateLimitInfo {
 		}
 		rl.limiters[key] = limiter
 		remaining := int(limiter.tokens) - 1
+		if remaining < 0 {
+			remaining = 0
+		}
 		limiter.tokens--
 		return RateLimitInfo{Allowed: true, Remaining: remaining}
 	}

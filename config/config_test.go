@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -216,7 +217,7 @@ func TestValidate_ProductionShortSecret(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for short jwt.secret in production, got nil")
 	}
-	if len(err.Error()) == 0 || !contains(err.Error(), "32 characters") {
+	if len(err.Error()) == 0 || !strings.Contains(err.Error(), "32 characters") {
 		t.Errorf("unexpected error message: %v", err)
 	}
 }
@@ -294,10 +295,6 @@ func TestLoad_ProductionEnvironment(t *testing.T) {
 	if cfg.Environment != "production" {
 		t.Errorf("expected environment = production, got %s", cfg.Environment)
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || index(s, substr) >= 0))
 }
 
 func TestLoad_AdminDefaults(t *testing.T) {
@@ -411,7 +408,7 @@ func TestValidate_ProductionCORSWildcard(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for CORS wildcard in production, got nil")
 	}
-	if !contains(err.Error(), "cors") {
+	if !strings.Contains(err.Error(), "cors") {
 		t.Errorf("expected error about CORS, got: %v", err)
 	}
 }
@@ -485,7 +482,7 @@ func TestValidate_DatabaseMaxConnsExceedsLimit(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for MaxConns > 100, got nil")
 	}
-	if !contains(err.Error(), "100") {
+	if !strings.Contains(err.Error(), "100") {
 		t.Errorf("expected error about max conns limit, got: %v", err)
 	}
 }
@@ -502,7 +499,7 @@ func TestValidate_DatabaseMinConnsExceedsMaxConns(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for MinConns > MaxConns, got nil")
 	}
-	if !contains(err.Error(), "min_conns") {
+	if !strings.Contains(err.Error(), "min_conns") {
 		t.Errorf("expected error about min_conns, got: %v", err)
 	}
 }
@@ -532,7 +529,7 @@ func TestWarnings_EmptyPayment(t *testing.T) {
 	warnings := cfg.Warnings()
 	found := false
 	for _, w := range warnings {
-		if contains(w, "yookassa") {
+		if strings.Contains(w, "yookassa") {
 			found = true
 			break
 		}
@@ -553,7 +550,7 @@ func TestWarnings_EmptyTelegram(t *testing.T) {
 	warnings := cfg.Warnings()
 	found := false
 	for _, w := range warnings {
-		if contains(w, "telegram") {
+		if strings.Contains(w, "telegram") {
 			found = true
 			break
 		}
@@ -575,13 +572,4 @@ func TestWarnings_AllConfigured(t *testing.T) {
 	if len(warnings) != 0 {
 		t.Errorf("expected no warnings, got %v", warnings)
 	}
-}
-
-func index(s, substr string) int {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return i
-		}
-	}
-	return -1
 }

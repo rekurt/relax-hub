@@ -19,7 +19,7 @@ import (
 // Mock SubscriptionService for testing
 type mockSubscriptionService struct {
 	subscribeFn      func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, plan domain.SubscriptionPlan) (*domain.Subscription, error)
-	cancelFn         func(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error
+	cancelFn         func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, subscriptionID uuid.UUID) error
 	getActiveFn      func(ctx context.Context, bathhouseID uuid.UUID) (*domain.Subscription, error)
 	listByOwnerFn    func(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Subscription], error)
 }
@@ -33,7 +33,7 @@ func (m *mockSubscriptionService) Subscribe(ctx context.Context, userID uuid.UUI
 
 func (m *mockSubscriptionService) Cancel(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, subscriptionID uuid.UUID) error {
 	if m.cancelFn != nil {
-		return m.cancelFn(ctx, userID, subscriptionID)
+		return m.cancelFn(ctx, userID, userRole, subscriptionID)
 	}
 	return nil
 }
@@ -293,7 +293,7 @@ func TestSubscriptionHandler_CancelSubscription(t *testing.T) {
 			}
 			return nil, domain.ErrNotFound
 		},
-		cancelFn: func(ctx context.Context, uid uuid.UUID, sid uuid.UUID) error {
+		cancelFn: func(ctx context.Context, uid uuid.UUID, role domain.UserRole, sid uuid.UUID) error {
 			if uid == userID && sid == subID {
 				return nil
 			}

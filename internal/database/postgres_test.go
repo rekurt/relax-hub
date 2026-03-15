@@ -62,8 +62,8 @@ func TestDefaultQueryTimeout_IsSet(t *testing.T) {
 
 func TestPostgresTimeoutConfiguration(t *testing.T) {
 	// Verify timeout value is reasonable for production (20-30 seconds)
-	if DefaultQueryTimeout < 20 || DefaultQueryTimeout > 30 {
-		t.Logf("Warning: DefaultQueryTimeout (%v) is outside typical production range (20-30s)", DefaultQueryTimeout)
+	if DefaultQueryTimeout < 20*time.Second || DefaultQueryTimeout > 30*time.Second {
+		t.Errorf("DefaultQueryTimeout (%v) is outside typical production range (20-30s)", DefaultQueryTimeout)
 	}
 }
 

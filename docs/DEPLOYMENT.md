@@ -25,9 +25,11 @@ Before deployment, configure the following environment variables:
 ### Optional Variables
 
 - `BANI_LOGGER_LEVEL` - Logging level (debug/info/warn/error, default: info)
-- `BANI_CORS_ALLOWED_ORIGINS` - CORS allowed origins (comma-separated)
-- `BANI_CORS_ALLOWED_METHODS` - CORS allowed methods (comma-separated)
-- `BANI_CORS_ALLOWED_HEADERS` - CORS allowed headers (comma-separated)
+- `BANI_LOGGER_FORMAT` - Log format: `json` (default, for production) or `console` (for development)
+- `BANI_CORS_ALLOWED_ORIGINS` - CORS allowed origins (comma-separated, wildcard `*` rejected in production)
+- `BANI_DATABASE_MAX_CONNS` - Maximum database connections (default: 20, warn if >100)
+- `BANI_DATABASE_MIN_CONNS` - Minimum database connections (default: 2)
+- `BANI_DATABASE_MAX_CONN_LIFETIME` - Maximum connection lifetime (default: 1h)
 
 ## Docker Deployment
 
