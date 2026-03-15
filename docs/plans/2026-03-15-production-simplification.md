@@ -245,12 +245,12 @@ config.yaml is committed with minioadmin credentials and change-me-in-production
 
 ### Task 12: Verify acceptance criteria
 
-- [ ] manual test: start server, verify structured JSON logs appear
-- [ ] manual test: verify CORS rejects unauthorized origins when configured
-- [ ] manual test: verify rate limiting returns 429 on auth endpoints
-- [ ] run full test suite: `go test ./... -race`
-- [ ] run linter: `make lint` (with govet, staticcheck enabled)
-- [ ] verify no direct repo imports in handler constructors (except via services)
+- [x] manual test: start server, verify structured JSON logs appear
+- [x] manual test: verify CORS rejects unauthorized origins when configured
+- [x] manual test: verify rate limiting returns 429 on auth endpoints
+- [x] run full test suite: `go test ./... -race`
+- [x] run linter: `make lint` (with govet, staticcheck enabled)
+- [x] verify no direct repo imports in handler constructors (except via services)
 
 ### Task 13: Update documentation
 
