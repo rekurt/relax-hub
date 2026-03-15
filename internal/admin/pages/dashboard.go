@@ -176,7 +176,7 @@ func (p *PostgresDashboardProvider) loadKPIs(ctx context.Context, kpi *KPICards)
 	}
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 
-	bookingQuery := "SELECT COUNT(*), COALESCE(SUM(total_price), 0) FROM bookings WHERE created_at >= $1"
+	bookingQuery := "SELECT COUNT(*), COALESCE(SUM(total_price), 0) FROM bookings WHERE created_at >= $1 AND status != 'cancelled'"
 
 	err = p.pool.QueryRow(ctx, bookingQuery, todayStart).Scan(&kpi.BookingsToday, &kpi.RevenueToday)
 	if err != nil {
@@ -252,8 +252,8 @@ func (p *PostgresDashboardProvider) loadTrends(ctx context.Context, kpi *KPICard
 	kpi.BathhousesTrend = TrendData{Current: bhThisWeek, Previous: bhPrevWeek}
 
 	// Bookings today trend: today vs yesterday.
-	bookingCountQuery := "SELECT COUNT(*) FROM bookings WHERE created_at >= $1 AND created_at < $2"
-	revenueQuery := "SELECT COALESCE(SUM(total_price), 0) FROM bookings WHERE created_at >= $1 AND created_at < $2"
+	bookingCountQuery := "SELECT COUNT(*) FROM bookings WHERE created_at >= $1 AND created_at < $2 AND status != 'cancelled'"
+	revenueQuery := "SELECT COALESCE(SUM(total_price), 0) FROM bookings WHERE created_at >= $1 AND created_at < $2 AND status != 'cancelled'"
 
 	var bookingsYesterday int64
 	err = p.pool.QueryRow(ctx, bookingCountQuery, yesterdayStart, todayStart).Scan(&bookingsYesterday)

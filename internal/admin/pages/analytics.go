@@ -172,6 +172,12 @@ func (p *PostgresAnalyticsProvider) parseDateRange(filter AnalyticsFilter) (time
 		}
 	}
 
+	// Cap the date range to 365 days to prevent expensive generate_series queries.
+	if dateTo.Sub(dateFrom).Hours() > 365*24 {
+		dateFrom = dateTo.AddDate(0, 0, -365)
+		dateFrom = time.Date(dateFrom.Year(), dateFrom.Month(), dateFrom.Day(), 0, 0, 0, 0, dateFrom.Location())
+	}
+
 	return dateFrom, dateTo
 }
 
