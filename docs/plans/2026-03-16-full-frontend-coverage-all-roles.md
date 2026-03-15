@@ -185,12 +185,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 **Files:**
 - Create: `frontend/src/pages/admin/ReviewModeration.tsx`
 
-- [ ] Review list with status filter, pending count badge
-- [ ] Review detail with media, user info, bathhouse info
-- [ ] Approve/reject single and batch actions
-- [ ] API hooks: `useGetAdminReviews`, `useGetAdminReviewsPendingCount`, `usePatchAdminReviewsIdApprove`, `usePatchAdminReviewsIdReject`, `usePostAdminReviewsBatchApprove`, `usePostAdminReviewsBatchReject`
-- [ ] Write tests for single and batch moderation flows
-- [ ] Run project test suite - must pass before task 14
+- [x] Review list with status filter, pending count badge
+- [x] Review detail with media, user info, bathhouse info
+- [x] Approve/reject single and batch actions
+- [x] API hooks: `useGetAdminReviews`, `useGetAdminReviewsPendingCount`, `usePatchAdminReviewsIdApprove`, `usePatchAdminReviewsIdReject`, `usePostAdminReviewsBatchApprove`, `usePostAdminReviewsBatchReject`
+- [x] Write tests for single and batch moderation flows
+- [x] Run project test suite - must pass before task 14
 
 ### Task 14: Admin - Photo verification
 

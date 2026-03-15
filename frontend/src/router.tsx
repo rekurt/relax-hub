@@ -39,6 +39,7 @@ import ClientProfile from '@/pages/client/ClientProfile'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import UserManagement from '@/pages/admin/UserManagement'
 import BathhouseModeration from '@/pages/admin/BathhouseModeration'
+import ReviewModeration from '@/pages/admin/ReviewModeration'
 
 export default function AppRouter() {
   return (
@@ -112,6 +113,7 @@ export default function AppRouter() {
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="bathhouses" element={<BathhouseModeration />} />
+        <Route path="reviews" element={<ReviewModeration />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
