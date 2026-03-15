@@ -101,7 +101,21 @@ func toPromotionResponse(p *domain.Promotion) promotionResponse {
 	}
 }
 
-// Subscribe creates a new subscription for a bathhouse
+// Subscribe godoc
+// @Summary      Create subscription
+// @Description  Creates a new subscription for a bathhouse. Owner or representative only.
+// @Tags         subscriptions
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string            true  "Bathhouse ID (UUID)"
+// @Param        body  body      subscribeRequest  true  "Subscription plan"
+// @Success      201   {object}  APIResponse{data=subscriptionResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/subscription [post]
 func (h *SubscriptionHandler) Subscribe(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -133,7 +147,19 @@ func (h *SubscriptionHandler) Subscribe(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusCreated, toSubscriptionResponse(sub))
 }
 
-// GetSubscription returns the active subscription for a bathhouse
+// GetSubscription godoc
+// @Summary      Get active subscription
+// @Description  Returns the active subscription for a bathhouse. Owner or representative only.
+// @Tags         subscriptions
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=subscriptionResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/subscription [get]
 func (h *SubscriptionHandler) GetSubscription(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -159,7 +185,19 @@ func (h *SubscriptionHandler) GetSubscription(w http.ResponseWriter, r *http.Req
 	writeJSON(w, http.StatusOK, toSubscriptionResponse(sub))
 }
 
-// CancelSubscription cancels auto-renewal for a subscription
+// CancelSubscription godoc
+// @Summary      Cancel subscription
+// @Description  Cancels auto-renewal for the active subscription of a bathhouse. Owner or representative only.
+// @Tags         subscriptions
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/subscription [delete]
 func (h *SubscriptionHandler) CancelSubscription(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -186,7 +224,17 @@ func (h *SubscriptionHandler) CancelSubscription(w http.ResponseWriter, r *http.
 	writeJSON(w, http.StatusOK, map[string]string{"message": "subscription cancelled"})
 }
 
-// ListSubscriptions returns all subscriptions for the owner
+// ListSubscriptions godoc
+// @Summary      List my subscriptions
+// @Description  Returns a paginated list of all subscriptions for the authenticated owner.
+// @Tags         subscriptions
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page       query     int  false  "Page number"   default(1)
+// @Param        page_size  query     int  false  "Page size"     default(20)
+// @Success      200        {object}  APIResponse{data=[]subscriptionResponse,meta=Meta}
+// @Failure      401        {object}  APIResponse{error=APIError}
+// @Router       /my/subscriptions [get]
 func (h *SubscriptionHandler) ListSubscriptions(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	page := getPage(r.URL.Query().Get("page"))
@@ -211,7 +259,21 @@ func (h *SubscriptionHandler) ListSubscriptions(w http.ResponseWriter, r *http.R
 	})
 }
 
-// CreatePromotion creates a promotion campaign for a bathhouse
+// CreatePromotion godoc
+// @Summary      Create promotion
+// @Description  Creates a promotion campaign for a bathhouse. Requires an active Promoted subscription. Owner or representative only.
+// @Tags         subscriptions
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string                  true  "Bathhouse ID (UUID)"
+// @Param        body  body      createPromotionRequest  true  "Promotion parameters"
+// @Success      201   {object}  APIResponse{data=promotionResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/promotion [post]
 func (h *SubscriptionHandler) CreatePromotion(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -294,7 +356,19 @@ func (h *SubscriptionHandler) CreatePromotion(w http.ResponseWriter, r *http.Req
 	writeJSON(w, http.StatusCreated, toPromotionResponse(promo))
 }
 
-// GetPromotion returns promotion statistics for a bathhouse
+// GetPromotion godoc
+// @Summary      Get promotion
+// @Description  Returns promotion statistics for a bathhouse. Owner or representative only.
+// @Tags         subscriptions
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=promotionResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/promotion [get]
 func (h *SubscriptionHandler) GetPromotion(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

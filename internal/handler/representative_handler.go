@@ -30,6 +30,21 @@ type representativeResponse struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+// Invite godoc
+// @Summary      Invite representative
+// @Description  Invites a user as a representative for a bathhouse by email. Owner only.
+// @Tags         representatives
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string                       true  "Bathhouse ID (UUID)"
+// @Param        body  body      inviteRepresentativeRequest  true  "User email to invite"
+// @Success      201   {object}  APIResponse{data=representativeResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/representatives [post]
 func (h *RepresentativeHandler) Invite(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -63,6 +78,18 @@ func (h *RepresentativeHandler) Invite(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ListByBathhouse godoc
+// @Summary      List representatives
+// @Description  Returns all representatives for a bathhouse. Owner only.
+// @Tags         representatives
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=[]representativeResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/representatives [get]
 func (h *RepresentativeHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -92,6 +119,19 @@ func (h *RepresentativeHandler) ListByBathhouse(w http.ResponseWriter, r *http.R
 	writeJSON(w, http.StatusOK, items)
 }
 
+// Revoke godoc
+// @Summary      Revoke representative
+// @Description  Revokes a representative's access to a bathhouse. Owner only.
+// @Tags         representatives
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Representative ID (UUID)"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /representatives/{id} [delete]
 func (h *RepresentativeHandler) Revoke(w http.ResponseWriter, r *http.Request) {
 	repID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

@@ -28,8 +28,20 @@ func NewAnalyticsHandler(
 	}
 }
 
-// GetOwnerDashboard returns analytics dashboard for a bathhouse owner
-// GET /api/v1/my/bathhouses/{id}/analytics?period=30d
+// GetOwnerDashboard godoc
+// @Summary      Get owner analytics dashboard
+// @Description  Returns analytics dashboard for a bathhouse owner, including booking stats, revenue, and views. Owner or representative only.
+// @Tags         analytics
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id      path      string  true   "Bathhouse ID (UUID)"
+// @Param        period  query     string  false  "Period: 1d, 7d, 30d, 90d"  default(30d)
+// @Success      200     {object}  APIResponse{data=object}
+// @Failure      400     {object}  APIResponse{error=APIError}
+// @Failure      401     {object}  APIResponse{error=APIError}
+// @Failure      403     {object}  APIResponse{error=APIError}
+// @Failure      404     {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/analytics [get]
 func (h *AnalyticsHandler) GetOwnerDashboard(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -62,8 +74,21 @@ func (h *AnalyticsHandler) GetOwnerDashboard(w http.ResponseWriter, r *http.Requ
 	})
 }
 
-// GetOwnerDailyStats returns daily analytics breakdown for a bathhouse
-// GET /api/v1/my/bathhouses/{id}/analytics/daily?from=2024-01-01&to=2024-01-31
+// GetOwnerDailyStats godoc
+// @Summary      Get daily analytics
+// @Description  Returns daily analytics breakdown for a bathhouse within a date range (max 365 days). Owner or representative only.
+// @Tags         analytics
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string  true  "Bathhouse ID (UUID)"
+// @Param        from  query     string  true  "Start date (YYYY-MM-DD)"
+// @Param        to    query     string  true  "End date (YYYY-MM-DD)"
+// @Success      200   {object}  APIResponse{data=object}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/analytics/daily [get]
 func (h *AnalyticsHandler) GetOwnerDailyStats(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -120,8 +145,18 @@ func (h *AnalyticsHandler) GetOwnerDailyStats(w http.ResponseWriter, r *http.Req
 	})
 }
 
-// GetAdminDashboard returns platform-wide analytics dashboard
-// GET /api/v1/admin/analytics?period=30d
+// GetAdminDashboard godoc
+// @Summary      Get admin analytics dashboard
+// @Description  Returns platform-wide analytics dashboard. Admin only.
+// @Tags         admin-analytics
+// @Produce      json
+// @Security     BearerAuth
+// @Param        period  query     string  false  "Period: 1d, 7d, 30d, 90d"  default(30d)
+// @Success      200     {object}  APIResponse{data=object}
+// @Failure      400     {object}  APIResponse{error=APIError}
+// @Failure      401     {object}  APIResponse{error=APIError}
+// @Failure      403     {object}  APIResponse{error=APIError}
+// @Router       /admin/analytics [get]
 func (h *AnalyticsHandler) GetAdminDashboard(w http.ResponseWriter, r *http.Request) {
 	userRole := middleware.GetUserRole(r.Context())
 
@@ -153,8 +188,19 @@ func (h *AnalyticsHandler) GetAdminDashboard(w http.ResponseWriter, r *http.Requ
 	})
 }
 
-// GetTopBathhouses returns top bathhouses ranked by a metric
-// GET /api/v1/admin/analytics/top?metric=bookings&limit=10
+// GetTopBathhouses godoc
+// @Summary      Get top bathhouses
+// @Description  Returns top bathhouses ranked by a specified metric (views, bookings, revenue, rating). Admin only.
+// @Tags         admin-analytics
+// @Produce      json
+// @Security     BearerAuth
+// @Param        metric  query     string  false  "Metric: views, bookings, revenue, rating"  default(bookings)
+// @Param        limit   query     int     false  "Max results (1-100)"                        default(10)
+// @Success      200     {object}  APIResponse{data=object}
+// @Failure      400     {object}  APIResponse{error=APIError}
+// @Failure      401     {object}  APIResponse{error=APIError}
+// @Failure      403     {object}  APIResponse{error=APIError}
+// @Router       /admin/analytics/top [get]
 func (h *AnalyticsHandler) GetTopBathhouses(w http.ResponseWriter, r *http.Request) {
 	userRole := middleware.GetUserRole(r.Context())
 

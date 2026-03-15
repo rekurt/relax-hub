@@ -15,6 +15,544 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/analytics": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns platform-wide analytics dashboard. Admin only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-analytics"
+                ],
+                "summary": "Get admin analytics dashboard",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "30d",
+                        "description": "Period: 1d, 7d, 30d, 90d",
+                        "name": "period",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/analytics/top": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns top bathhouses ranked by a specified metric (views, bookings, revenue, rating). Admin only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-analytics"
+                ],
+                "summary": "Get top bathhouses",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "bookings",
+                        "description": "Metric: views, bookings, revenue, rating",
+                        "name": "metric",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Max results (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/bathhouses": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a paginated list of bathhouses with optional status filter. Shows all statuses by default. Admin only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-bathhouses"
+                ],
+                "summary": "List bathhouses (admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status (pending, active, rejected, blocked)",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_handler.bathhouseResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/internal_handler.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/bathhouses/{id}/approve": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Approves a bathhouse, changing its status to active. Admin only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-bathhouses"
+                ],
+                "summary": "Approve bathhouse",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/bathhouses/{id}/reject": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Rejects a bathhouse registration. Admin only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-bathhouses"
+                ],
+                "summary": "Reject bathhouse",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/admin/cities": {
             "post": {
                 "security": [
@@ -40,7 +578,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.createCityRequest"
+                            "$ref": "#/definitions/internal_handler.createCityRequest"
                         }
                     }
                 ],
@@ -50,13 +588,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.cityResponse"
+                                            "$ref": "#/definitions/internal_handler.cityResponse"
                                         }
                                     }
                                 }
@@ -68,13 +606,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -86,13 +624,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -104,13 +642,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -122,13 +660,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -170,7 +708,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.updateCityRequest"
+                            "$ref": "#/definitions/internal_handler.updateCityRequest"
                         }
                     }
                 ],
@@ -180,13 +718,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.cityResponse"
+                                            "$ref": "#/definitions/internal_handler.cityResponse"
                                         }
                                     }
                                 }
@@ -198,13 +736,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -216,13 +754,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -234,13 +772,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -252,13 +790,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -294,7 +832,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
+                            "$ref": "#/definitions/internal_handler.APIResponse"
                         }
                     },
                     "400": {
@@ -302,13 +840,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -320,13 +858,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -338,13 +876,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -356,13 +894,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -439,7 +977,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -447,11 +985,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.complaintResponse"
+                                                "$ref": "#/definitions/internal_handler.complaintResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -463,13 +1001,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -481,13 +1019,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -499,13 +1037,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -545,13 +1083,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.complaintResponse"
+                                            "$ref": "#/definitions/internal_handler.complaintResponse"
                                         }
                                     }
                                 }
@@ -563,13 +1101,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -581,13 +1119,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -599,13 +1137,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -617,13 +1155,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -663,13 +1201,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.complaintResponse"
+                                            "$ref": "#/definitions/internal_handler.complaintResponse"
                                         }
                                     }
                                 }
@@ -681,13 +1219,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -699,13 +1237,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -717,13 +1255,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -735,13 +1273,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -783,7 +1321,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.resolveRequest"
+                            "$ref": "#/definitions/internal_handler.resolveRequest"
                         }
                     }
                 ],
@@ -793,13 +1331,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.complaintResponse"
+                                            "$ref": "#/definitions/internal_handler.complaintResponse"
                                         }
                                     }
                                 }
@@ -811,13 +1349,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -829,13 +1367,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -847,13 +1385,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -865,13 +1403,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -918,7 +1456,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -926,11 +1464,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.photoResponse"
+                                                "$ref": "#/definitions/internal_handler.photoResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -942,13 +1480,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -960,13 +1498,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1008,7 +1546,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.rejectPhotoRequest"
+                            "$ref": "#/definitions/internal_handler.rejectPhotoRequest"
                         }
                     }
                 ],
@@ -1018,13 +1556,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.photoResponse"
+                                            "$ref": "#/definitions/internal_handler.photoResponse"
                                         }
                                     }
                                 }
@@ -1036,13 +1574,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1054,13 +1592,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1072,13 +1610,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1090,13 +1628,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1136,13 +1674,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.photoResponse"
+                                            "$ref": "#/definitions/internal_handler.photoResponse"
                                         }
                                     }
                                 }
@@ -1154,13 +1692,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1172,13 +1710,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1190,13 +1728,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1208,13 +1746,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1249,7 +1787,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.createPromoRequest"
+                            "$ref": "#/definitions/internal_handler.createPromoRequest"
                         }
                     }
                 ],
@@ -1259,13 +1797,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.promoResponse"
+                                            "$ref": "#/definitions/internal_handler.promoResponse"
                                         }
                                     }
                                 }
@@ -1277,13 +1815,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1295,13 +1833,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1313,13 +1851,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1402,7 +1940,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -1410,11 +1948,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.adminReviewResponse"
+                                                "$ref": "#/definitions/internal_handler.adminReviewResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -1426,13 +1964,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1444,13 +1982,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1462,13 +2000,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1503,7 +2041,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.batchIDsRequest"
+                            "$ref": "#/definitions/internal_handler.batchIDsRequest"
                         }
                     }
                 ],
@@ -1513,13 +2051,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.batchResult"
+                                            "$ref": "#/definitions/internal_handler.batchResult"
                                         }
                                     }
                                 }
@@ -1531,13 +2069,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1549,13 +2087,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1567,13 +2105,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1608,7 +2146,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.batchRejectRequest"
+                            "$ref": "#/definitions/internal_handler.batchRejectRequest"
                         }
                     }
                 ],
@@ -1618,13 +2156,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.batchResult"
+                                            "$ref": "#/definitions/internal_handler.batchResult"
                                         }
                                     }
                                 }
@@ -1636,13 +2174,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1654,13 +2192,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1672,13 +2210,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1709,7 +2247,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -1727,13 +2265,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1745,13 +2283,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1791,13 +2329,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.adminReviewResponse"
+                                            "$ref": "#/definitions/internal_handler.adminReviewResponse"
                                         }
                                     }
                                 }
@@ -1809,13 +2347,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1827,13 +2365,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1845,13 +2383,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1863,13 +2401,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1911,7 +2449,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.approveRejectRequest"
+                            "$ref": "#/definitions/internal_handler.approveRejectRequest"
                         }
                     }
                 ],
@@ -1921,13 +2459,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.adminReviewResponse"
+                                            "$ref": "#/definitions/internal_handler.adminReviewResponse"
                                         }
                                     }
                                 }
@@ -1939,13 +2477,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1957,13 +2495,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1975,13 +2513,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -1993,13 +2531,320 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a paginated list of all users. Admin only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-users"
+                ],
+                "summary": "List users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_handler.userResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/internal_handler.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/{id}/block": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Blocks a user account, preventing them from logging in. Cannot block yourself. Admin only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-users"
+                ],
+                "summary": "Block user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/users/{id}/unblock": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Unblocks a previously blocked user account. Admin only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin-users"
+                ],
+                "summary": "Unblock user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2056,7 +2901,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -2079,13 +2924,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2097,13 +2942,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2115,13 +2960,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2159,7 +3004,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -2182,13 +3027,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2200,13 +3045,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2236,7 +3081,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.loginRequest"
+                            "$ref": "#/definitions/internal_handler.loginRequest"
                         }
                     }
                 ],
@@ -2246,13 +3091,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.authResponse"
+                                            "$ref": "#/definitions/internal_handler.authResponse"
                                         }
                                     }
                                 }
@@ -2264,13 +3109,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2282,13 +3127,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2319,13 +3164,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.userResponse"
+                                            "$ref": "#/definitions/internal_handler.userResponse"
                                         }
                                     }
                                 }
@@ -2337,13 +3182,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2376,7 +3221,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.updateProfileRequest"
+                            "$ref": "#/definitions/internal_handler.updateProfileRequest"
                         }
                     }
                 ],
@@ -2386,13 +3231,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.userResponse"
+                                            "$ref": "#/definitions/internal_handler.userResponse"
                                         }
                                     }
                                 }
@@ -2404,13 +3249,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2422,13 +3267,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2471,13 +3316,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.userResponse"
+                                            "$ref": "#/definitions/internal_handler.userResponse"
                                         }
                                     }
                                 }
@@ -2489,13 +3334,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2507,13 +3352,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2542,13 +3387,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.userResponse"
+                                            "$ref": "#/definitions/internal_handler.userResponse"
                                         }
                                     }
                                 }
@@ -2560,13 +3405,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2597,7 +3442,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -2605,7 +3450,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.socialAccountResponse"
+                                                "$ref": "#/definitions/internal_handler.socialAccountResponse"
                                             }
                                         }
                                     }
@@ -2618,13 +3463,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2665,13 +3510,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2720,13 +3565,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.oauthCallbackResponse"
+                                            "$ref": "#/definitions/internal_handler.oauthCallbackResponse"
                                         }
                                     }
                                 }
@@ -2738,13 +3583,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2774,7 +3619,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.registerRequest"
+                            "$ref": "#/definitions/internal_handler.registerRequest"
                         }
                     }
                 ],
@@ -2784,13 +3629,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.authResponse"
+                                            "$ref": "#/definitions/internal_handler.authResponse"
                                         }
                                     }
                                 }
@@ -2802,13 +3647,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -2820,13 +3665,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3006,7 +3851,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -3014,11 +3859,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.bathhouseResponse"
+                                                "$ref": "#/definitions/internal_handler.bathhouseResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -3030,13 +3875,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3069,7 +3914,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.createBathhouseRequest"
+                            "$ref": "#/definitions/internal_handler.createBathhouseRequest"
                         }
                     }
                 ],
@@ -3079,13 +3924,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.bathhouseResponse"
+                                            "$ref": "#/definitions/internal_handler.bathhouseResponse"
                                         }
                                     }
                                 }
@@ -3097,13 +3942,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3115,13 +3960,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3133,13 +3978,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3174,13 +4019,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.bathhouseResponse"
+                                            "$ref": "#/definitions/internal_handler.bathhouseResponse"
                                         }
                                     }
                                 }
@@ -3192,13 +4037,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3210,13 +4055,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3251,13 +4096,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.bathhouseResponse"
+                                            "$ref": "#/definitions/internal_handler.bathhouseResponse"
                                         }
                                     }
                                 }
@@ -3269,13 +4114,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3287,13 +4132,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3333,7 +4178,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.updateBathhouseRequest"
+                            "$ref": "#/definitions/internal_handler.updateBathhouseRequest"
                         }
                     }
                 ],
@@ -3343,13 +4188,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.bathhouseResponse"
+                                            "$ref": "#/definitions/internal_handler.bathhouseResponse"
                                         }
                                     }
                                 }
@@ -3361,13 +4206,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3379,13 +4224,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3397,13 +4242,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3415,13 +4260,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3457,7 +4302,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
+                            "$ref": "#/definitions/internal_handler.APIResponse"
                         }
                     },
                     "400": {
@@ -3465,13 +4310,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3483,13 +4328,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3501,13 +4346,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3519,13 +4364,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3537,13 +4382,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3585,7 +4430,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -3593,7 +4438,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/service.TimeSlot"
+                                                "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.TimeSlot"
                                             }
                                         }
                                     }
@@ -3606,13 +4451,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3624,13 +4469,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3684,7 +4529,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -3692,11 +4537,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.bookingResponse"
+                                                "$ref": "#/definitions/internal_handler.bookingResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -3708,13 +4553,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3726,13 +4571,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3744,13 +4589,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3791,7 +4636,7 @@ const docTemplate = `{
                         "name": "body",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/handler.startConversationRequest"
+                            "$ref": "#/definitions/internal_handler.startConversationRequest"
                         }
                     }
                 ],
@@ -3801,13 +4646,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.conversationResponse"
+                                            "$ref": "#/definitions/internal_handler.conversationResponse"
                                         }
                                     }
                                 }
@@ -3819,13 +4664,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3837,13 +4682,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3883,7 +4728,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -3901,13 +4746,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3919,13 +4764,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -3974,7 +4819,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -3982,11 +4827,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.mediaResponse"
+                                                "$ref": "#/definitions/internal_handler.mediaResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -3998,13 +4843,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4039,13 +4884,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/seo.MetaTags"
+                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_seo.MetaTags"
                                         }
                                     }
                                 }
@@ -4057,13 +4902,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4075,13 +4920,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4116,7 +4961,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -4124,7 +4969,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.photoResponse"
+                                                "$ref": "#/definitions/internal_handler.photoResponse"
                                             }
                                         }
                                     }
@@ -4137,13 +4982,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4155,13 +5000,104 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/bathhouses/{id}/price-calculator": {
+            "get": {
+                "description": "Calculates the price for a bathhouse booking with dynamic pricing rules applied. Public endpoint.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pricing"
+                ],
+                "summary": "Calculate price",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start time (RFC3339)",
+                        "name": "start",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "End time (RFC3339)",
+                        "name": "end",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.priceCalculatorResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4203,7 +5139,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.reportRequest"
+                            "$ref": "#/definitions/internal_handler.reportRequest"
                         }
                     }
                 ],
@@ -4213,13 +5149,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.complaintResponse"
+                                            "$ref": "#/definitions/internal_handler.complaintResponse"
                                         }
                                     }
                                 }
@@ -4231,13 +5167,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4249,13 +5185,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4267,13 +5203,244 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/bathhouses/{id}/representatives": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns all representatives for a bathhouse. Owner only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "representatives"
+                ],
+                "summary": "List representatives",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_handler.representativeResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Invites a user as a representative for a bathhouse by email. Owner only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "representatives"
+                ],
+                "summary": "Invite representative",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "User email to invite",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.inviteRepresentativeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.representativeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4322,7 +5489,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -4330,11 +5497,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.reviewResponse"
+                                                "$ref": "#/definitions/internal_handler.reviewResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -4346,13 +5513,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4392,7 +5559,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.createReviewRequest"
+                            "$ref": "#/definitions/internal_handler.createReviewRequest"
                         }
                     }
                 ],
@@ -4402,13 +5569,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.reviewResponse"
+                                            "$ref": "#/definitions/internal_handler.reviewResponse"
                                         }
                                     }
                                 }
@@ -4420,13 +5587,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4438,13 +5605,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4456,13 +5623,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4474,13 +5641,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4521,13 +5688,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4539,13 +5706,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4587,7 +5754,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -4595,7 +5762,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.recommendationResponse"
+                                                "$ref": "#/definitions/internal_handler.recommendationResponse"
                                             }
                                         }
                                     }
@@ -4608,13 +5775,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4661,7 +5828,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -4669,11 +5836,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.bookingResponse"
+                                                "$ref": "#/definitions/internal_handler.bookingResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -4685,13 +5852,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4724,7 +5891,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.createBookingRequest"
+                            "$ref": "#/definitions/internal_handler.createBookingRequest"
                         }
                     }
                 ],
@@ -4734,13 +5901,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.bookingResponse"
+                                            "$ref": "#/definitions/internal_handler.bookingResponse"
                                         }
                                     }
                                 }
@@ -4752,13 +5919,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4770,13 +5937,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4788,13 +5955,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4834,7 +6001,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -4852,13 +6019,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4870,13 +6037,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4888,13 +6055,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4906,13 +6073,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4952,13 +6119,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.bookingResponse"
+                                            "$ref": "#/definitions/internal_handler.bookingResponse"
                                         }
                                     }
                                 }
@@ -4970,13 +6137,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -4988,13 +6155,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5006,13 +6173,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5024,13 +6191,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5070,7 +6237,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -5088,13 +6255,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5106,13 +6273,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5124,13 +6291,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5142,13 +6309,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5188,13 +6355,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.initiatePaymentResponse"
+                                            "$ref": "#/definitions/internal_handler.initiatePaymentResponse"
                                         }
                                     }
                                 }
@@ -5206,13 +6373,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5224,13 +6391,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5242,13 +6409,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5260,13 +6427,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5306,13 +6473,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.paymentResponse"
+                                            "$ref": "#/definitions/internal_handler.paymentResponse"
                                         }
                                     }
                                 }
@@ -5324,13 +6491,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5342,13 +6509,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5360,13 +6527,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5406,7 +6573,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -5424,13 +6591,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5442,13 +6609,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5460,13 +6627,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5478,13 +6645,78 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/calendar/{token}.ics": {
+            "get": {
+                "description": "Exports bathhouse bookings as an iCalendar (.ics) file using a shareable token. No authentication required.",
+                "produces": [
+                    "text/calendar"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "Export calendar by token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Calendar token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ICS file content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5514,7 +6746,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.purchaseCertificateRequest"
+                            "$ref": "#/definitions/internal_handler.purchaseCertificateRequest"
                         }
                     }
                 ],
@@ -5524,13 +6756,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.certificateResponse"
+                                            "$ref": "#/definitions/internal_handler.certificateResponse"
                                         }
                                     }
                                 }
@@ -5542,13 +6774,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5583,7 +6815,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.redeemCertificateRequest"
+                            "$ref": "#/definitions/internal_handler.redeemCertificateRequest"
                         }
                     }
                 ],
@@ -5593,13 +6825,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.certificateResponse"
+                                            "$ref": "#/definitions/internal_handler.certificateResponse"
                                         }
                                     }
                                 }
@@ -5611,13 +6843,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5629,13 +6861,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5647,13 +6879,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5688,13 +6920,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.certificateBalanceResponse"
+                                            "$ref": "#/definitions/internal_handler.certificateBalanceResponse"
                                         }
                                     }
                                 }
@@ -5706,13 +6938,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5724,13 +6956,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5756,7 +6988,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -5764,7 +6996,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.cityResponse"
+                                                "$ref": "#/definitions/internal_handler.cityResponse"
                                             }
                                         }
                                     }
@@ -5777,13 +7009,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5832,7 +7064,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -5840,11 +7072,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.bathhouseResponse"
+                                                "$ref": "#/definitions/internal_handler.bathhouseResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -5856,13 +7088,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5874,13 +7106,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5934,7 +7166,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -5942,11 +7174,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.messageResponse"
+                                                "$ref": "#/definitions/internal_handler.messageResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -5958,13 +7190,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -5976,13 +7208,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6022,7 +7254,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.sendMessageRequest"
+                            "$ref": "#/definitions/internal_handler.sendMessageRequest"
                         }
                     }
                 ],
@@ -6032,13 +7264,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.messageResponse"
+                                            "$ref": "#/definitions/internal_handler.messageResponse"
                                         }
                                     }
                                 }
@@ -6050,13 +7282,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6068,13 +7300,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6114,7 +7346,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -6132,13 +7364,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6150,13 +7382,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6191,7 +7423,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.registerDeviceTokenRequest"
+                            "$ref": "#/definitions/internal_handler.registerDeviceTokenRequest"
                         }
                     }
                 ],
@@ -6201,13 +7433,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.deviceTokenResponse"
+                                            "$ref": "#/definitions/internal_handler.deviceTokenResponse"
                                         }
                                     }
                                 }
@@ -6219,13 +7451,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6237,13 +7469,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6283,7 +7515,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -6301,13 +7533,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6319,13 +7551,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6363,7 +7595,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
+                            "$ref": "#/definitions/internal_handler.APIResponse"
                         }
                     },
                     "400": {
@@ -6371,13 +7603,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6389,13 +7621,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6407,13 +7639,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6425,13 +7657,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6478,7 +7710,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -6486,11 +7718,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.bathhouseResponse"
+                                                "$ref": "#/definitions/internal_handler.bathhouseResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -6502,13 +7734,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6520,13 +7752,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6538,13 +7770,777 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/bathhouses/{id}/analytics": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns analytics dashboard for a bathhouse owner, including booking stats, revenue, and views. Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get owner analytics dashboard",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "30d",
+                        "description": "Period: 1d, 7d, 30d, 90d",
+                        "name": "period",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/bathhouses/{id}/analytics/daily": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns daily analytics breakdown for a bathhouse within a date range (max 365 days). Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "analytics"
+                ],
+                "summary": "Get daily analytics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "from",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "to",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/bathhouses/{id}/calendar-token": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns or creates a shareable calendar token for ICS export. Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "Get calendar token",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/bathhouses/{id}/calendar.ics": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Exports bathhouse bookings as an iCalendar (.ics) file. Owner or representative only.",
+                "produces": [
+                    "text/calendar"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "Export calendar as ICS",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ICS file content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/bathhouses/{id}/external-calendars": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns all external calendars linked to a bathhouse. Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "List external calendars",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Adds an external iCal calendar URL for syncing blocked slots. Owner or representative only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "Add external calendar",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "External calendar data (url, source)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/bathhouses/{id}/external-calendars/sync": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Manually triggers synchronization of all external calendars for a bathhouse. Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "Sync external calendars",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6586,7 +8582,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.uploadPhotoRequest"
+                            "$ref": "#/definitions/internal_handler.uploadPhotoRequest"
                         }
                     }
                 ],
@@ -6596,13 +8592,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.photoResponse"
+                                            "$ref": "#/definitions/internal_handler.photoResponse"
                                         }
                                     }
                                 }
@@ -6614,13 +8610,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6632,13 +8628,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6650,13 +8646,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6698,7 +8694,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.reorderPhotosRequest"
+                            "$ref": "#/definitions/internal_handler.reorderPhotosRequest"
                         }
                     }
                 ],
@@ -6706,7 +8702,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
+                            "$ref": "#/definitions/internal_handler.APIResponse"
                         }
                     },
                     "400": {
@@ -6714,13 +8710,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6732,13 +8728,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6750,13 +8746,226 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/bathhouses/{id}/pricing-rules": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns all pricing rules for a bathhouse. Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pricing"
+                ],
+                "summary": "List pricing rules",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_handler.pricingRuleResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new dynamic pricing rule for a bathhouse. Owner or representative only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pricing"
+                ],
+                "summary": "Create pricing rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Pricing rule data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.pricingRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.pricingRuleResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6810,7 +9019,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -6818,11 +9027,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.promoResponse"
+                                                "$ref": "#/definitions/internal_handler.promoResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -6834,13 +9043,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6852,13 +9061,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6870,13 +9079,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6916,7 +9125,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.createPromoRequest"
+                            "$ref": "#/definitions/internal_handler.createPromoRequest"
                         }
                     }
                 ],
@@ -6926,13 +9135,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.promoResponse"
+                                            "$ref": "#/definitions/internal_handler.promoResponse"
                                         }
                                     }
                                 }
@@ -6944,13 +9153,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6962,13 +9171,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -6980,13 +9189,721 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/bathhouses/{id}/promotion": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns promotion statistics for a bathhouse. Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Get promotion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.promotionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a promotion campaign for a bathhouse. Requires an active Promoted subscription. Owner or representative only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Create promotion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Promotion parameters",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.createPromotionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.promotionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/bathhouses/{id}/slot-blocks": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a manual time slot block for a bathhouse, preventing bookings during that period. Owner or representative only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "Create slot block",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Slot block data (start_time, end_time, description)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/bathhouses/{id}/subscription": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the active subscription for a bathhouse. Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Get active subscription",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.subscriptionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new subscription for a bathhouse. Owner or representative only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Create subscription",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Subscription plan",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.subscribeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.subscriptionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cancels auto-renewal for the active subscription of a bathhouse. Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "Cancel subscription",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bathhouse ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7058,13 +9975,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.widgetCodeResponse"
+                                            "$ref": "#/definitions/internal_handler.widgetCodeResponse"
                                         }
                                     }
                                 }
@@ -7076,13 +9993,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7094,13 +10011,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7112,13 +10029,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7158,13 +10075,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.widgetKeyResponse"
+                                            "$ref": "#/definitions/internal_handler.widgetKeyResponse"
                                         }
                                     }
                                 }
@@ -7176,13 +10093,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7194,13 +10111,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7212,13 +10129,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7258,13 +10175,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.widgetKeyResponse"
+                                            "$ref": "#/definitions/internal_handler.widgetKeyResponse"
                                         }
                                     }
                                 }
@@ -7276,13 +10193,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7294,13 +10211,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7312,13 +10229,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7365,7 +10282,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -7373,11 +10290,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.certificateResponse"
+                                                "$ref": "#/definitions/internal_handler.certificateResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -7389,13 +10306,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7442,7 +10359,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -7450,11 +10367,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.conversationResponse"
+                                                "$ref": "#/definitions/internal_handler.conversationResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -7466,13 +10383,119 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/external-calendars/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Removes an external calendar link. Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "Remove external calendar",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "External calendar ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7519,7 +10542,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -7527,11 +10550,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.favoriteResponse"
+                                                "$ref": "#/definitions/internal_handler.favoriteResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -7543,13 +10566,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7580,13 +10603,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.loyaltyAccountResponse"
+                                            "$ref": "#/definitions/internal_handler.loyaltyAccountResponse"
                                         }
                                     }
                                 }
@@ -7598,13 +10621,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7630,7 +10653,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -7638,7 +10661,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.loyaltyLevelResponse"
+                                                "$ref": "#/definitions/internal_handler.loyaltyLevelResponse"
                                             }
                                         }
                                     }
@@ -7686,7 +10709,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -7694,11 +10717,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.loyaltyTransactionResponse"
+                                                "$ref": "#/definitions/internal_handler.loyaltyTransactionResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -7710,13 +10733,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7747,13 +10770,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.preferencesResponse"
+                                            "$ref": "#/definitions/internal_handler.preferencesResponse"
                                         }
                                     }
                                 }
@@ -7765,13 +10788,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7804,7 +10827,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.updatePreferencesRequest"
+                            "$ref": "#/definitions/internal_handler.updatePreferencesRequest"
                         }
                     }
                 ],
@@ -7814,13 +10837,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.preferencesResponse"
+                                            "$ref": "#/definitions/internal_handler.preferencesResponse"
                                         }
                                     }
                                 }
@@ -7832,13 +10855,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7850,13 +10873,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7903,7 +10926,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -7911,11 +10934,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.notificationResponse"
+                                                "$ref": "#/definitions/internal_handler.notificationResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -7927,13 +10950,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -7964,7 +10987,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -7982,13 +11005,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8019,7 +11042,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -8037,13 +11060,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8083,7 +11106,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -8101,13 +11124,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8119,13 +11142,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8172,7 +11195,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -8180,11 +11203,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.paymentResponse"
+                                                "$ref": "#/definitions/internal_handler.paymentResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -8196,13 +11219,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8233,13 +11256,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.userPreferencesResponse"
+                                            "$ref": "#/definitions/internal_handler.userPreferencesResponse"
                                         }
                                     }
                                 }
@@ -8251,13 +11274,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8290,7 +11313,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.updateRecommendationPreferencesRequest"
+                            "$ref": "#/definitions/internal_handler.updateRecommendationPreferencesRequest"
                         }
                     }
                 ],
@@ -8300,13 +11323,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.userPreferencesResponse"
+                                            "$ref": "#/definitions/internal_handler.userPreferencesResponse"
                                         }
                                     }
                                 }
@@ -8318,13 +11341,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8336,13 +11359,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8373,13 +11396,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.referralCodeResponse"
+                                            "$ref": "#/definitions/internal_handler.referralCodeResponse"
                                         }
                                     }
                                 }
@@ -8391,13 +11414,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8428,13 +11451,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.referralBalanceResponse"
+                                            "$ref": "#/definitions/internal_handler.referralBalanceResponse"
                                         }
                                     }
                                 }
@@ -8446,13 +11469,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8483,13 +11506,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.referralStatsResponse"
+                                            "$ref": "#/definitions/internal_handler.referralStatsResponse"
                                         }
                                     }
                                 }
@@ -8501,13 +11524,119 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/slot-blocks/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a slot block, freeing the time period for bookings. Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "calendar"
+                ],
+                "summary": "Delete slot block",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Slot block ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8538,13 +11667,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/service.MyStatsOutput"
+                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.MyStatsOutput"
                                         }
                                     }
                                 }
@@ -8556,13 +11685,90 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/my/subscriptions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a paginated list of all subscriptions for the authenticated owner.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subscriptions"
+                ],
+                "summary": "List my subscriptions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_handler.subscriptionResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/internal_handler.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8593,7 +11799,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -8611,13 +11817,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8655,7 +11861,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
+                            "$ref": "#/definitions/internal_handler.APIResponse"
                         }
                     },
                     "400": {
@@ -8663,13 +11869,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8681,13 +11887,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8699,13 +11905,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8717,13 +11923,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8765,7 +11971,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -8773,7 +11979,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.recommendationResponse"
+                                                "$ref": "#/definitions/internal_handler.recommendationResponse"
                                             }
                                         }
                                     }
@@ -8786,13 +11992,235 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/pricing-rules/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing pricing rule. Owner or representative only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pricing"
+                ],
+                "summary": "Update pricing rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rule ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated rule data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.pricingRuleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a pricing rule. Owner or representative only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pricing"
+                ],
+                "summary": "Delete pricing rule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Rule ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8822,7 +12250,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.validatePromoRequest"
+                            "$ref": "#/definitions/internal_handler.validatePromoRequest"
                         }
                     }
                 ],
@@ -8832,13 +12260,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.validatePromoResponse"
+                                            "$ref": "#/definitions/internal_handler.validatePromoResponse"
                                         }
                                     }
                                 }
@@ -8850,13 +12278,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8868,13 +12296,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8886,13 +12314,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8930,7 +12358,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
+                            "$ref": "#/definitions/internal_handler.APIResponse"
                         }
                     },
                     "400": {
@@ -8938,13 +12366,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8956,13 +12384,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8974,13 +12402,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -8992,13 +12420,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9045,7 +12473,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -9053,11 +12481,11 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.recommendationResponse"
+                                                "$ref": "#/definitions/internal_handler.recommendationResponse"
                                             }
                                         },
                                         "meta": {
-                                            "$ref": "#/definitions/handler.Meta"
+                                            "$ref": "#/definitions/internal_handler.Meta"
                                         }
                                     }
                                 }
@@ -9069,13 +12497,119 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/representatives/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Revokes a representative's access to a bathhouse. Owner only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "representatives"
+                ],
+                "summary": "Revoke representative",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Representative ID (UUID)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9117,7 +12651,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.updateReviewRequest"
+                            "$ref": "#/definitions/internal_handler.updateReviewRequest"
                         }
                     }
                 ],
@@ -9127,13 +12661,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.reviewResponse"
+                                            "$ref": "#/definitions/internal_handler.reviewResponse"
                                         }
                                     }
                                 }
@@ -9145,13 +12679,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9163,13 +12697,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9181,13 +12715,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9199,13 +12733,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9241,7 +12775,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
+                            "$ref": "#/definitions/internal_handler.APIResponse"
                         }
                     },
                     "400": {
@@ -9249,13 +12783,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9267,13 +12801,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9285,13 +12819,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9303,13 +12837,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9359,13 +12893,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.mediaResponse"
+                                            "$ref": "#/definitions/internal_handler.mediaResponse"
                                         }
                                     }
                                 }
@@ -9377,13 +12911,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9395,13 +12929,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9413,13 +12947,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9431,13 +12965,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9449,13 +12983,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9497,7 +13031,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.reportRequest"
+                            "$ref": "#/definitions/internal_handler.reportRequest"
                         }
                     }
                 ],
@@ -9507,13 +13041,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.complaintResponse"
+                                            "$ref": "#/definitions/internal_handler.complaintResponse"
                                         }
                                     }
                                 }
@@ -9525,13 +13059,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9543,13 +13077,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9561,13 +13095,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9609,7 +13143,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ownerResponseRequest"
+                            "$ref": "#/definitions/internal_handler.ownerResponseRequest"
                         }
                     }
                 ],
@@ -9619,13 +13153,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.reviewResponse"
+                                            "$ref": "#/definitions/internal_handler.reviewResponse"
                                         }
                                     }
                                 }
@@ -9637,13 +13171,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9655,13 +13189,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9673,13 +13207,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9691,13 +13225,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9709,13 +13243,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9750,13 +13284,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.publicProfileResponse"
+                                            "$ref": "#/definitions/internal_handler.publicProfileResponse"
                                         }
                                     }
                                 }
@@ -9768,13 +13302,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9786,13 +13320,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9834,7 +13368,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.reportRequest"
+                            "$ref": "#/definitions/internal_handler.reportRequest"
                         }
                     }
                 ],
@@ -9844,13 +13378,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.complaintResponse"
+                                            "$ref": "#/definitions/internal_handler.complaintResponse"
                                         }
                                     }
                                 }
@@ -9862,13 +13396,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9880,13 +13414,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9898,13 +13432,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9944,7 +13478,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
@@ -9962,13 +13496,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9980,13 +13514,284 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.APIResponse"
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "error": {
-                                            "$ref": "#/definitions/handler.APIError"
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/widget/{api_key}/bathhouse": {
+            "get": {
+                "description": "Returns bathhouse info for the embeddable widget. Public endpoint, authenticated via API key.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "widget"
+                ],
+                "summary": "Get bathhouse (widget)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Widget API key",
+                        "name": "api_key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.widgetBathhouseResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/widget/{api_key}/booking": {
+            "post": {
+                "description": "Creates a booking through the embeddable widget. Requires guest name, phone, and email. Public endpoint, authenticated via API key.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "widget"
+                ],
+                "summary": "Create booking (widget)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Widget API key",
+                        "name": "api_key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Booking details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.widgetBookingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.widgetBookingResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/widget/{api_key}/slots": {
+            "get": {
+                "description": "Returns available booking slots for a given date. Public endpoint, authenticated via API key.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "widget"
+                ],
+                "summary": "Get available slots (widget)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Widget API key",
+                        "name": "api_key",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Date (YYYY-MM-DD)",
+                        "name": "date",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_handler.widgetSlotResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
                                         }
                                     }
                                 }
@@ -9998,7 +13803,66 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.APIError": {
+        "github_com_nikitaaldaev_bani_internal_seo.MetaTags": {
+            "type": "object",
+            "properties": {
+                "canonical": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "og_image": {
+                    "type": "string"
+                },
+                "og_type": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_nikitaaldaev_bani_internal_service.MyStatsOutput": {
+            "type": "object",
+            "properties": {
+                "avg_check": {
+                    "type": "integer"
+                },
+                "avg_rating": {
+                    "type": "number"
+                },
+                "review_count": {
+                    "type": "integer"
+                },
+                "total_spent": {
+                    "type": "integer"
+                },
+                "total_visits": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_nikitaaldaev_bani_internal_service.TimeSlot": {
+            "type": "object",
+            "properties": {
+                "available": {
+                    "type": "boolean"
+                },
+                "endTime": {
+                    "type": "string"
+                },
+                "price": {
+                    "description": "Price in kopecks for this hour slot",
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "startTime": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.APIError": {
             "type": "object",
             "properties": {
                 "code": {
@@ -10009,22 +13873,22 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.APIResponse": {
+        "internal_handler.APIResponse": {
             "type": "object",
             "properties": {
                 "data": {},
                 "error": {
-                    "$ref": "#/definitions/handler.APIError"
+                    "$ref": "#/definitions/internal_handler.APIError"
                 },
                 "meta": {
-                    "$ref": "#/definitions/handler.Meta"
+                    "$ref": "#/definitions/internal_handler.Meta"
                 },
                 "success": {
                     "type": "boolean"
                 }
             }
         },
-        "handler.Meta": {
+        "internal_handler.Meta": {
             "type": "object",
             "properties": {
                 "page": {
@@ -10041,7 +13905,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.adminReviewResponse": {
+        "internal_handler.adminReviewResponse": {
             "type": "object",
             "properties": {
                 "bathhouse_id": {
@@ -10091,7 +13955,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.approveRejectRequest": {
+        "internal_handler.approveRejectRequest": {
             "type": "object",
             "properties": {
                 "reason": {
@@ -10099,18 +13963,18 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.authResponse": {
+        "internal_handler.authResponse": {
             "type": "object",
             "properties": {
                 "token": {
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/handler.userResponse"
+                    "$ref": "#/definitions/internal_handler.userResponse"
                 }
             }
         },
-        "handler.batchIDsRequest": {
+        "internal_handler.batchIDsRequest": {
             "type": "object",
             "properties": {
                 "ids": {
@@ -10121,7 +13985,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.batchRejectRequest": {
+        "internal_handler.batchRejectRequest": {
             "type": "object",
             "properties": {
                 "ids": {
@@ -10135,7 +13999,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.batchResult": {
+        "internal_handler.batchResult": {
             "type": "object",
             "properties": {
                 "failed": {
@@ -10146,7 +14010,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.bathhouseResponse": {
+        "internal_handler.bathhouseResponse": {
             "type": "object",
             "properties": {
                 "address": {
@@ -10164,7 +14028,7 @@ const docTemplate = `{
                 "gallery_preview": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.mediaResponse"
+                        "$ref": "#/definitions/internal_handler.mediaResponse"
                     }
                 },
                 "has_bbq": {
@@ -10213,7 +14077,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "meta": {
-                    "$ref": "#/definitions/seo.MetaTags"
+                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_seo.MetaTags"
                 },
                 "min_duration": {
                     "type": "integer"
@@ -10245,12 +14109,12 @@ const docTemplate = `{
                 "working_hours": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.workingHoursResp"
+                        "$ref": "#/definitions/internal_handler.workingHoursResp"
                     }
                 }
             }
         },
-        "handler.bookingResponse": {
+        "internal_handler.bookingResponse": {
             "type": "object",
             "properties": {
                 "bathhouse_id": {
@@ -10312,7 +14176,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.certificateBalanceResponse": {
+        "internal_handler.certificateBalanceResponse": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -10332,7 +14196,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.certificateResponse": {
+        "internal_handler.certificateResponse": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -10370,7 +14234,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.cityResponse": {
+        "internal_handler.cityResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -10390,7 +14254,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.complaintResponse": {
+        "internal_handler.complaintResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -10428,7 +14292,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.conversationResponse": {
+        "internal_handler.conversationResponse": {
             "type": "object",
             "properties": {
                 "bathhouse_id": {
@@ -10451,7 +14315,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.createBathhouseRequest": {
+        "internal_handler.createBathhouseRequest": {
             "type": "object",
             "properties": {
                 "address": {
@@ -10508,12 +14372,12 @@ const docTemplate = `{
                 "working_hours": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.workingHoursRequest"
+                        "$ref": "#/definitions/internal_handler.workingHoursRequest"
                     }
                 }
             }
         },
-        "handler.createBookingRequest": {
+        "internal_handler.createBookingRequest": {
             "type": "object",
             "properties": {
                 "bathhouse_id": {
@@ -10545,7 +14409,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.createCityRequest": {
+        "internal_handler.createCityRequest": {
             "type": "object",
             "properties": {
                 "latitude": {
@@ -10562,7 +14426,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.createPromoRequest": {
+        "internal_handler.createPromoRequest": {
             "type": "object",
             "properties": {
                 "code": {
@@ -10588,7 +14452,21 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.createReviewRequest": {
+        "internal_handler.createPromotionRequest": {
+            "type": "object",
+            "properties": {
+                "budget_kopecks": {
+                    "type": "integer"
+                },
+                "duration_days": {
+                    "type": "integer"
+                },
+                "target_city_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_handler.createReviewRequest": {
             "type": "object",
             "properties": {
                 "booking_id": {
@@ -10602,7 +14480,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.deviceTokenResponse": {
+        "internal_handler.deviceTokenResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -10622,7 +14500,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.favoriteResponse": {
+        "internal_handler.favoriteResponse": {
             "type": "object",
             "properties": {
                 "bathhouse_id": {
@@ -10639,7 +14517,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.initiatePaymentResponse": {
+        "internal_handler.initiatePaymentResponse": {
             "type": "object",
             "properties": {
                 "confirmation_url": {
@@ -10647,7 +14525,15 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.loginRequest": {
+        "internal_handler.inviteRepresentativeRequest": {
+            "type": "object",
+            "properties": {
+                "user_email": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.loginRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -10658,7 +14544,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.loyaltyAccountResponse": {
+        "internal_handler.loyaltyAccountResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -10671,7 +14557,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "privileges": {
-                    "$ref": "#/definitions/handler.loyaltyPrivileges"
+                    "$ref": "#/definitions/internal_handler.loyaltyPrivileges"
                 },
                 "total_earned": {
                     "type": "integer"
@@ -10690,7 +14576,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.loyaltyLevelResponse": {
+        "internal_handler.loyaltyLevelResponse": {
             "type": "object",
             "properties": {
                 "discount_percent": {
@@ -10707,7 +14593,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.loyaltyPrivileges": {
+        "internal_handler.loyaltyPrivileges": {
             "type": "object",
             "properties": {
                 "discount_percent": {
@@ -10724,7 +14610,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.loyaltyTransactionResponse": {
+        "internal_handler.loyaltyTransactionResponse": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -10750,7 +14636,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.mediaResponse": {
+        "internal_handler.mediaResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -10788,7 +14674,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.messageResponse": {
+        "internal_handler.messageResponse": {
             "type": "object",
             "properties": {
                 "conversation_id": {
@@ -10814,7 +14700,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.notificationResponse": {
+        "internal_handler.notificationResponse": {
             "type": "object",
             "properties": {
                 "body": {
@@ -10849,7 +14735,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.nullableInt64Field": {
+        "internal_handler.nullableInt64Field": {
             "type": "object",
             "properties": {
                 "set": {
@@ -10861,18 +14747,18 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.oauthCallbackResponse": {
+        "internal_handler.oauthCallbackResponse": {
             "type": "object",
             "properties": {
                 "token": {
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/handler.userResponse"
+                    "$ref": "#/definitions/internal_handler.userResponse"
                 }
             }
         },
-        "handler.ownerResponseRequest": {
+        "internal_handler.ownerResponseRequest": {
             "type": "object",
             "properties": {
                 "response": {
@@ -10880,7 +14766,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.paymentResponse": {
+        "internal_handler.paymentResponse": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -10924,7 +14810,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.photoResponse": {
+        "internal_handler.photoResponse": {
             "type": "object",
             "properties": {
                 "bathhouse_id": {
@@ -10959,7 +14845,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.preferencesResponse": {
+        "internal_handler.preferencesResponse": {
             "type": "object",
             "properties": {
                 "booking_events": {
@@ -10985,7 +14871,109 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.promoResponse": {
+        "internal_handler.priceCalculatorResponse": {
+            "type": "object",
+            "properties": {
+                "base_price": {
+                    "type": "integer"
+                },
+                "final_price": {
+                    "type": "integer"
+                },
+                "hours": {
+                    "type": "integer"
+                },
+                "price_saving": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_handler.pricingRuleRequest": {
+            "type": "object",
+            "properties": {
+                "date_from": {
+                    "type": "string"
+                },
+                "date_to": {
+                    "type": "string"
+                },
+                "days_of_week": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "multiplier": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "time_from": {
+                    "type": "string"
+                },
+                "time_to": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.pricingRuleResponse": {
+            "type": "object",
+            "properties": {
+                "bathhouse_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "date_from": {
+                    "type": "string"
+                },
+                "date_to": {
+                    "type": "string"
+                },
+                "days_of_week": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "multiplier": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "time_from": {
+                    "type": "string"
+                },
+                "time_to": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.promoResponse": {
             "type": "object",
             "properties": {
                 "bathhouse_id": {
@@ -11029,7 +15017,48 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.publicProfileResponse": {
+        "internal_handler.promotionResponse": {
+            "type": "object",
+            "properties": {
+                "bathhouse_id": {
+                    "type": "string"
+                },
+                "budget_kopecks": {
+                    "type": "integer"
+                },
+                "click_count": {
+                    "type": "integer"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "impression_count": {
+                    "type": "integer"
+                },
+                "spent_kopecks": {
+                    "type": "integer"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "target_city_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.publicProfileResponse": {
             "type": "object",
             "properties": {
                 "avatar_url": {
@@ -11061,7 +15090,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.purchaseCertificateRequest": {
+        "internal_handler.purchaseCertificateRequest": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -11081,7 +15110,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.recommendationResponse": {
+        "internal_handler.recommendationResponse": {
             "type": "object",
             "properties": {
                 "address": {
@@ -11116,7 +15145,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.redeemCertificateRequest": {
+        "internal_handler.redeemCertificateRequest": {
             "type": "object",
             "properties": {
                 "code": {
@@ -11124,7 +15153,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.referralBalanceResponse": {
+        "internal_handler.referralBalanceResponse": {
             "type": "object",
             "properties": {
                 "balance": {
@@ -11135,7 +15164,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.referralCodeResponse": {
+        "internal_handler.referralCodeResponse": {
             "type": "object",
             "properties": {
                 "referral_code": {
@@ -11146,7 +15175,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.referralStatsResponse": {
+        "internal_handler.referralStatsResponse": {
             "type": "object",
             "properties": {
                 "total_completed": {
@@ -11160,7 +15189,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.registerDeviceTokenRequest": {
+        "internal_handler.registerDeviceTokenRequest": {
             "type": "object",
             "properties": {
                 "platform": {
@@ -11171,7 +15200,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.registerRequest": {
+        "internal_handler.registerRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -11194,7 +15223,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.rejectPhotoRequest": {
+        "internal_handler.rejectPhotoRequest": {
             "type": "object",
             "properties": {
                 "reason": {
@@ -11202,7 +15231,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.reorderPhotosRequest": {
+        "internal_handler.reorderPhotosRequest": {
             "type": "object",
             "properties": {
                 "photo_ids": {
@@ -11213,7 +15242,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.reportRequest": {
+        "internal_handler.reportRequest": {
             "type": "object",
             "properties": {
                 "description": {
@@ -11224,7 +15253,27 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.resolveRequest": {
+        "internal_handler.representativeResponse": {
+            "type": "object",
+            "properties": {
+                "bathhouse_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "owner_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.resolveRequest": {
             "type": "object",
             "properties": {
                 "resolution": {
@@ -11232,7 +15281,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.reviewResponse": {
+        "internal_handler.reviewResponse": {
             "type": "object",
             "properties": {
                 "bathhouse_id": {
@@ -11256,7 +15305,7 @@ const docTemplate = `{
                 "media": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.mediaResponse"
+                        "$ref": "#/definitions/internal_handler.mediaResponse"
                     }
                 },
                 "owner_response": {
@@ -11282,7 +15331,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.sendMessageRequest": {
+        "internal_handler.sendMessageRequest": {
             "type": "object",
             "properties": {
                 "text": {
@@ -11290,7 +15339,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.socialAccountResponse": {
+        "internal_handler.socialAccountResponse": {
             "type": "object",
             "properties": {
                 "avatar_url": {
@@ -11313,7 +15362,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.startConversationRequest": {
+        "internal_handler.startConversationRequest": {
             "type": "object",
             "properties": {
                 "booking_id": {
@@ -11321,7 +15370,53 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.updateBathhouseRequest": {
+        "internal_handler.subscribeRequest": {
+            "type": "object",
+            "properties": {
+                "plan": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.subscriptionResponse": {
+            "type": "object",
+            "properties": {
+                "auto_renew": {
+                    "type": "boolean"
+                },
+                "bathhouse_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "owner_id": {
+                    "type": "string"
+                },
+                "plan": {
+                    "type": "string"
+                },
+                "price_kopecks": {
+                    "type": "integer"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.updateBathhouseRequest": {
             "type": "object",
             "properties": {
                 "address": {
@@ -11378,12 +15473,12 @@ const docTemplate = `{
                 "working_hours": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.workingHoursRequest"
+                        "$ref": "#/definitions/internal_handler.workingHoursRequest"
                     }
                 }
             }
         },
-        "handler.updateCityRequest": {
+        "internal_handler.updateCityRequest": {
             "type": "object",
             "properties": {
                 "latitude": {
@@ -11400,7 +15495,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.updatePreferencesRequest": {
+        "internal_handler.updatePreferencesRequest": {
             "type": "object",
             "properties": {
                 "booking_events": {
@@ -11426,14 +15521,14 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.updateProfileRequest": {
+        "internal_handler.updateProfileRequest": {
             "type": "object",
             "properties": {
                 "bio": {
                     "type": "string"
                 },
                 "city_id": {
-                    "$ref": "#/definitions/handler.nullableInt64Field"
+                    "$ref": "#/definitions/internal_handler.nullableInt64Field"
                 },
                 "name": {
                     "type": "string"
@@ -11443,7 +15538,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.updateRecommendationPreferencesRequest": {
+        "internal_handler.updateRecommendationPreferencesRequest": {
             "type": "object",
             "properties": {
                 "prefer_bbq": {
@@ -11475,7 +15570,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.updateReviewRequest": {
+        "internal_handler.updateReviewRequest": {
             "type": "object",
             "properties": {
                 "images": {
@@ -11492,7 +15587,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.uploadPhotoRequest": {
+        "internal_handler.uploadPhotoRequest": {
             "type": "object",
             "properties": {
                 "thumbnail_url": {
@@ -11503,7 +15598,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.userPreferencesResponse": {
+        "internal_handler.userPreferencesResponse": {
             "type": "object",
             "properties": {
                 "prefer_bbq": {
@@ -11535,7 +15630,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.userResponse": {
+        "internal_handler.userResponse": {
             "type": "object",
             "properties": {
                 "avatar_url": {
@@ -11567,7 +15662,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.validatePromoRequest": {
+        "internal_handler.validatePromoRequest": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -11581,7 +15676,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.validatePromoResponse": {
+        "internal_handler.validatePromoResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -11598,7 +15693,100 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.widgetCodeResponse": {
+        "internal_handler.widgetBathhouseResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "max_guests": {
+                    "type": "integer"
+                },
+                "min_duration": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price_per_hour": {
+                    "type": "integer"
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "review_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_handler.widgetBookingRequest": {
+            "type": "object",
+            "properties": {
+                "comment": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "guest_count": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.widgetBookingResponse": {
+            "type": "object",
+            "properties": {
+                "bathhouse_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "guest_count": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "total_price": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_handler.widgetCodeResponse": {
             "type": "object",
             "properties": {
                 "api_key": {
@@ -11615,7 +15803,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.widgetKeyResponse": {
+        "internal_handler.widgetKeyResponse": {
             "type": "object",
             "properties": {
                 "api_key": {
@@ -11623,89 +15811,47 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.workingHoursRequest": {
-            "type": "object",
-            "properties": {
-                "close_time": {
-                    "type": "string"
-                },
-                "day_of_week": {
-                    "type": "integer"
-                },
-                "open_time": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.workingHoursResp": {
-            "type": "object",
-            "properties": {
-                "close_time": {
-                    "type": "string"
-                },
-                "day_of_week": {
-                    "type": "integer"
-                },
-                "open_time": {
-                    "type": "string"
-                }
-            }
-        },
-        "seo.MetaTags": {
-            "type": "object",
-            "properties": {
-                "canonical": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "og_image": {
-                    "type": "string"
-                },
-                "og_type": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "service.MyStatsOutput": {
-            "type": "object",
-            "properties": {
-                "avg_check": {
-                    "type": "integer"
-                },
-                "avg_rating": {
-                    "type": "number"
-                },
-                "review_count": {
-                    "type": "integer"
-                },
-                "total_spent": {
-                    "type": "integer"
-                },
-                "total_visits": {
-                    "type": "integer"
-                }
-            }
-        },
-        "service.TimeSlot": {
+        "internal_handler.widgetSlotResponse": {
             "type": "object",
             "properties": {
                 "available": {
                     "type": "boolean"
                 },
-                "endTime": {
+                "end_time": {
                     "type": "string"
                 },
                 "price": {
-                    "description": "Price in kopecks for this hour slot",
-                    "type": "integer",
-                    "format": "int64"
+                    "type": "integer"
                 },
-                "startTime": {
+                "start_time": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.workingHoursRequest": {
+            "type": "object",
+            "properties": {
+                "close_time": {
+                    "type": "string"
+                },
+                "day_of_week": {
+                    "type": "integer"
+                },
+                "open_time": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.workingHoursResp": {
+            "type": "object",
+            "properties": {
+                "close_time": {
+                    "type": "string"
+                },
+                "day_of_week": {
+                    "type": "integer"
+                },
+                "open_time": {
                     "type": "string"
                 }
             }

@@ -81,7 +81,20 @@ func toPricingRuleResponse(r *domain.PricingRule) pricingRuleResponse {
 	}
 }
 
-// CreateRule creates a new pricing rule
+// CreateRule godoc
+// @Summary      Create pricing rule
+// @Description  Creates a new dynamic pricing rule for a bathhouse. Owner or representative only.
+// @Tags         pricing
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string              true  "Bathhouse ID (UUID)"
+// @Param        body  body      pricingRuleRequest  true  "Pricing rule data"
+// @Success      201   {object}  APIResponse{data=pricingRuleResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/pricing-rules [post]
 func (h *PricingHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -129,7 +142,18 @@ func (h *PricingHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toPricingRuleResponse(createdRule))
 }
 
-// ListRules returns all pricing rules for a bathhouse
+// ListRules godoc
+// @Summary      List pricing rules
+// @Description  Returns all pricing rules for a bathhouse. Owner or representative only.
+// @Tags         pricing
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=[]pricingRuleResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/pricing-rules [get]
 func (h *PricingHandler) ListRules(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -151,7 +175,21 @@ func (h *PricingHandler) ListRules(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, responses)
 }
 
-// UpdateRule updates an existing pricing rule
+// UpdateRule godoc
+// @Summary      Update pricing rule
+// @Description  Updates an existing pricing rule. Owner or representative only.
+// @Tags         pricing
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string              true  "Rule ID (UUID)"
+// @Param        body  body      pricingRuleRequest  true  "Updated rule data"
+// @Success      200   {object}  APIResponse
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /pricing-rules/{id} [put]
 func (h *PricingHandler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 	ruleID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -197,7 +235,19 @@ func (h *PricingHandler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "rule updated"})
 }
 
-// DeleteRule deletes a pricing rule
+// DeleteRule godoc
+// @Summary      Delete pricing rule
+// @Description  Deletes a pricing rule. Owner or representative only.
+// @Tags         pricing
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Rule ID (UUID)"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /pricing-rules/{id} [delete]
 func (h *PricingHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 	ruleID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -216,7 +266,18 @@ func (h *PricingHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "rule deleted"})
 }
 
-// CalculatePrice calculates price for a given bathhouse and time range
+// CalculatePrice godoc
+// @Summary      Calculate price
+// @Description  Calculates the price for a bathhouse booking with dynamic pricing rules applied. Public endpoint.
+// @Tags         pricing
+// @Produce      json
+// @Param        id     path      string  true  "Bathhouse ID (UUID)"
+// @Param        start  query     string  true  "Start time (RFC3339)"
+// @Param        end    query     string  true  "End time (RFC3339)"
+// @Success      200    {object}  APIResponse{data=priceCalculatorResponse}
+// @Failure      400    {object}  APIResponse{error=APIError}
+// @Failure      404    {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/price-calculator [get]
 func (h *PricingHandler) CalculatePrice(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

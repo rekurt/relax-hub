@@ -124,14 +124,14 @@
 - Modify: `internal/handler/slot_block.go`
 - Modify: `internal/handler/external_calendar.go`
 
-- [ ] Аннотировать Subscriptions: Create, Get, Delete, ListMy
-- [ ] Аннотировать Pricing: CreateRule, ListRules, UpdateRule, DeleteRule, PriceCalculator
-- [ ] Аннотировать Analytics: GetBathhouseAnalytics, GetDailyAnalytics, AdminAnalytics, AdminTopBathhouses
-- [ ] Аннотировать Calendar: GetICS, GetToken, SlotBlocks CRUD, ExternalCalendars CRUD
-- [ ] Аннотировать Representatives: Add, List, Remove
-- [ ] Аннотировать Admin: ListUsers, Block/Unblock, ListBathhouses, Approve/Reject
-- [ ] Аннотировать Widget: GetBathhouse, GetSlots, CreateBooking
-- [ ] Запустить `swag init` — без ошибок
+- [x] Аннотировать Subscriptions: Create, Get, Delete, ListMy
+- [x] Аннотировать Pricing: CreateRule, ListRules, UpdateRule, DeleteRule, PriceCalculator
+- [x] Аннотировать Analytics: GetBathhouseAnalytics, GetDailyAnalytics, AdminAnalytics, AdminTopBathhouses
+- [x] Аннотировать Calendar: GetICS, GetToken, SlotBlocks CRUD, ExternalCalendars CRUD
+- [x] Аннотировать Representatives: Add, List, Remove
+- [x] Аннотировать Admin: ListUsers, Block/Unblock, ListBathhouses, Approve/Reject
+- [x] Аннотировать Widget: GetBathhouse, GetSlots, CreateBooking
+- [x] Запустить `swag init` — без ошибок
 
 ### Task 9: Финальная верификация
 

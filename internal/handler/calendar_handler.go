@@ -19,7 +19,19 @@ func NewCalendarHandler(calendarSvc service.CalendarService) *CalendarHandler {
 	return &CalendarHandler{calendarSvc: calendarSvc}
 }
 
-// ExportICal handles GET /api/v1/my/bathhouses/{id}/calendar.ics
+// ExportICal godoc
+// @Summary      Export calendar as ICS
+// @Description  Exports bathhouse bookings as an iCalendar (.ics) file. Owner or representative only.
+// @Tags         calendar
+// @Produce      text/calendar
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {string}  string  "ICS file content"
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/calendar.ics [get]
 func (h *CalendarHandler) ExportICal(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -42,7 +54,16 @@ func (h *CalendarHandler) ExportICal(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(ical))
 }
 
-// ExportICalByToken handles GET /calendar/{token}.ics
+// ExportICalByToken godoc
+// @Summary      Export calendar by token
+// @Description  Exports bathhouse bookings as an iCalendar (.ics) file using a shareable token. No authentication required.
+// @Tags         calendar
+// @Produce      text/calendar
+// @Param        token  path      string  true  "Calendar token"
+// @Success      200    {string}  string  "ICS file content"
+// @Failure      400    {object}  APIResponse{error=APIError}
+// @Failure      404    {object}  APIResponse{error=APIError}
+// @Router       /calendar/{token}.ics [get]
 func (h *CalendarHandler) ExportICalByToken(w http.ResponseWriter, r *http.Request) {
 	token := chi.URLParam(r, "token")
 	if token == "" {
@@ -62,7 +83,18 @@ func (h *CalendarHandler) ExportICalByToken(w http.ResponseWriter, r *http.Reque
 	_, _ = w.Write([]byte(ical))
 }
 
-// GetCalendarToken handles GET /api/v1/my/bathhouses/{id}/calendar-token
+// GetCalendarToken godoc
+// @Summary      Get calendar token
+// @Description  Returns or creates a shareable calendar token for ICS export. Owner or representative only.
+// @Tags         calendar
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=object}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/calendar-token [get]
 func (h *CalendarHandler) GetCalendarToken(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -85,7 +117,20 @@ func (h *CalendarHandler) GetCalendarToken(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-// AddExternalCalendar handles POST /api/v1/my/bathhouses/{id}/external-calendars
+// AddExternalCalendar godoc
+// @Summary      Add external calendar
+// @Description  Adds an external iCal calendar URL for syncing blocked slots. Owner or representative only.
+// @Tags         calendar
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string  true  "Bathhouse ID (UUID)"
+// @Param        body  body      object  true  "External calendar data (url, source)"
+// @Success      201   {object}  APIResponse{data=object}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/external-calendars [post]
 func (h *CalendarHandler) AddExternalCalendar(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -114,7 +159,18 @@ func (h *CalendarHandler) AddExternalCalendar(w http.ResponseWriter, r *http.Req
 	writeJSON(w, http.StatusCreated, cal)
 }
 
-// ListExternalCalendars handles GET /api/v1/my/bathhouses/{id}/external-calendars
+// ListExternalCalendars godoc
+// @Summary      List external calendars
+// @Description  Returns all external calendars linked to a bathhouse. Owner or representative only.
+// @Tags         calendar
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=[]object}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/external-calendars [get]
 func (h *CalendarHandler) ListExternalCalendars(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -134,7 +190,19 @@ func (h *CalendarHandler) ListExternalCalendars(w http.ResponseWriter, r *http.R
 	writeJSON(w, http.StatusOK, calendars)
 }
 
-// RemoveExternalCalendar handles DELETE /api/v1/my/external-calendars/{id}
+// RemoveExternalCalendar godoc
+// @Summary      Remove external calendar
+// @Description  Removes an external calendar link. Owner or representative only.
+// @Tags         calendar
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "External calendar ID (UUID)"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /my/external-calendars/{id} [delete]
 func (h *CalendarHandler) RemoveExternalCalendar(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -153,7 +221,18 @@ func (h *CalendarHandler) RemoveExternalCalendar(w http.ResponseWriter, r *http.
 	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }
 
-// SyncExternalCalendars handles POST /api/v1/my/bathhouses/{id}/external-calendars/sync
+// SyncExternalCalendars godoc
+// @Summary      Sync external calendars
+// @Description  Manually triggers synchronization of all external calendars for a bathhouse. Owner or representative only.
+// @Tags         calendar
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/external-calendars/sync [post]
 func (h *CalendarHandler) SyncExternalCalendars(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -172,7 +251,20 @@ func (h *CalendarHandler) SyncExternalCalendars(w http.ResponseWriter, r *http.R
 	writeJSON(w, http.StatusOK, map[string]string{"status": "synced"})
 }
 
-// CreateSlotBlock handles POST /api/v1/my/bathhouses/{id}/slot-blocks
+// CreateSlotBlock godoc
+// @Summary      Create slot block
+// @Description  Creates a manual time slot block for a bathhouse, preventing bookings during that period. Owner or representative only.
+// @Tags         calendar
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string  true  "Bathhouse ID (UUID)"
+// @Param        body  body      object  true  "Slot block data (start_time, end_time, description)"
+// @Success      201   {object}  APIResponse{data=object}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/slot-blocks [post]
 func (h *CalendarHandler) CreateSlotBlock(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -208,7 +300,19 @@ func (h *CalendarHandler) CreateSlotBlock(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusCreated, result)
 }
 
-// DeleteSlotBlock handles DELETE /api/v1/my/slot-blocks/{id}
+// DeleteSlotBlock godoc
+// @Summary      Delete slot block
+// @Description  Deletes a slot block, freeing the time period for bookings. Owner or representative only.
+// @Tags         calendar
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Slot block ID (UUID)"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /my/slot-blocks/{id} [delete]
 func (h *CalendarHandler) DeleteSlotBlock(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
