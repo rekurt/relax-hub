@@ -124,12 +124,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 - Create: `frontend/src/pages/client/CertificateList.tsx`
 - Create: `frontend/src/pages/client/CertificatePurchase.tsx`
 
-- [ ] CertificateList: owned certificates with code, balance, expiry, status
-- [ ] CertificatePurchase: amount input, purchase flow (works without auth too)
-- [ ] Certificate redemption UI (redeem code input, balance check)
-- [ ] API hooks: `useGetMyCertificates`, `usePostCertificatesPurchase`, `usePostCertificatesRedeem`, `useGetCertificatesCodeBalance`
-- [ ] Write tests for purchase flow, balance display, expiry handling
-- [ ] Run project test suite - must pass before task 9
+- [x] CertificateList: owned certificates with code, balance, expiry, status
+- [x] CertificatePurchase: amount input, purchase flow (works without auth too)
+- [x] Certificate redemption UI (redeem code input, balance check)
+- [x] API hooks: `useGetMyCertificates`, `usePostCertificatesPurchase`, `usePostCertificatesRedeem`, `useGetCertificatesCodeBalance`
+- [x] Write tests for purchase flow, balance display, expiry handling
+- [x] Run project test suite - must pass before task 9
 
 ### Task 9: Client - Payments history
 
