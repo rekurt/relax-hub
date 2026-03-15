@@ -556,7 +556,7 @@ export default function CalendarPage() {
                           size="small"
                           danger
                           icon={<DeleteOutlined />}
-                          loading={removeExternalCalMutation.isPending}
+                          loading={removeExternalCalMutation.isPending && removeExternalCalMutation.variables?.id === cal.id}
                         />
                       </Popconfirm>,
                     ]}

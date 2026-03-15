@@ -114,7 +114,7 @@ export default function BathhouseList() {
                 type="link"
                 danger
                 icon={<DeleteOutlined />}
-                loading={deleteMutation.isPending}
+                loading={deleteMutation.isPending && deleteMutation.variables?.id === record.id}
               >
                 Удалить
               </Button>

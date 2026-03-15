@@ -138,7 +138,7 @@ export default function BookingList() {
           type="link"
           size="small"
           icon={<CheckCircleOutlined />}
-          loading={confirmMutation.isPending}
+          loading={confirmMutation.isPending && confirmMutation.variables?.id === record.id}
           onClick={() => record.id && confirmMutation.mutate({ id: record.id })}
         >
           Подтвердить
@@ -151,7 +151,7 @@ export default function BookingList() {
           size="small"
           danger
           icon={<CloseCircleOutlined />}
-          loading={rejectMutation.isPending}
+          loading={rejectMutation.isPending && rejectMutation.variables?.id === record.id}
           onClick={() => record.id && rejectMutation.mutate({ id: record.id })}
         >
           Отклонить
@@ -166,7 +166,7 @@ export default function BookingList() {
           type="link"
           size="small"
           icon={<CheckOutlined />}
-          loading={completeMutation.isPending}
+          loading={completeMutation.isPending && completeMutation.variables?.id === record.id}
           onClick={() => record.id && completeMutation.mutate({ id: record.id })}
         >
           Завершить
@@ -179,7 +179,7 @@ export default function BookingList() {
           size="small"
           danger
           icon={<StopOutlined />}
-          loading={cancelMutation.isPending}
+          loading={cancelMutation.isPending && cancelMutation.variables?.id === record.id}
           onClick={() => record.id && cancelMutation.mutate({ id: record.id })}
         >
           Отменить

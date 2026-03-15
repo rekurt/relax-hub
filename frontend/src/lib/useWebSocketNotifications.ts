@@ -20,6 +20,7 @@ export function useWebSocketNotifications({
   const wsRef = useRef<WebSocket | null>(null)
   const queryClient = useQueryClient()
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const reconnectDelayRef = useRef(1000)
   const onMessageRef = useRef(onMessage)
   const activeConversationIdRef = useRef(activeConversationId)
 
@@ -43,6 +44,10 @@ export function useWebSocketNotifications({
 
       const ws = new WebSocket(wsUrl)
       wsRef.current = ws
+
+      ws.onopen = () => {
+        reconnectDelayRef.current = 1000
+      }
 
       ws.onmessage = (event) => {
         try {
@@ -70,7 +75,9 @@ export function useWebSocketNotifications({
 
       ws.onclose = () => {
         wsRef.current = null
-        reconnectTimeoutRef.current = setTimeout(connect, 5000)
+        const delay = reconnectDelayRef.current
+        reconnectDelayRef.current = Math.min(delay * 2, 60000)
+        reconnectTimeoutRef.current = setTimeout(connect, delay)
       }
 
       ws.onerror = () => {

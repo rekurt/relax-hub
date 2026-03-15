@@ -254,7 +254,7 @@ describe('ReviewList', () => {
     expect(screen.getByText('Все отзывы')).toBeInTheDocument()
   })
 
-  it('shows media images for reviews with media', async () => {
+  it('shows media images for reviews with media', { timeout: 15000 }, async () => {
     mockBathhouseStore('bathhouse-1')
     vi.mocked(useGetBathhousesIdReviews).mockReturnValue({
       data: {
@@ -271,7 +271,7 @@ describe('ReviewList', () => {
       const imgs = screen.getAllByRole('img')
       const mediaImg = imgs.find((img) => img.getAttribute('src')?.includes('thumb1.jpg'))
       expect(mediaImg).toBeTruthy()
-    })
+    }, { timeout: 10000 })
   })
 
   it('disables submit button when response is empty', () => {

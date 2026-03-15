@@ -33,6 +33,7 @@ import {
   useGetMyBathhousesIdPromotion,
   usePostMyBathhousesIdPromotion,
 } from '@/api/generated/subscriptions/subscriptions'
+import { useGetCities } from '@/api/generated/cities/cities'
 import type {
   InternalHandlerSubscriptionResponse,
   InternalHandlerPromotionResponse,
@@ -125,6 +126,9 @@ export default function SubscriptionPage() {
     selectedBathhouseId ?? '',
     { query: { enabled: !!selectedBathhouseId } },
   )
+
+  const { data: citiesData } = useGetCities()
+  const cities = (citiesData?.data ?? []) as { id?: number; name?: string }[]
 
   const currentSubscription = subscriptionData?.data as InternalHandlerSubscriptionResponse | undefined
   const allSubscriptions = (allSubscriptionsData?.data ?? []) as InternalHandlerSubscriptionResponse[]
@@ -466,7 +470,13 @@ export default function SubscriptionPage() {
             label="Целевой город"
             extra="Оставьте пустым для показа во всех городах"
           >
-            <InputNumber min={1} style={{ width: '100%' }} placeholder="ID города" />
+            <Select allowClear placeholder="Все города" style={{ width: '100%' }}>
+              {cities.map((city) => (
+                <Select.Option key={city.id} value={city.id}>
+                  {city.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item>
