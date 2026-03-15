@@ -455,8 +455,13 @@ func FormatKopecksToRubles(kopecks int64) string {
 }
 
 // RelativeTime returns a human-readable Russian string for elapsed time.
+// Handles both past and future times.
 func RelativeTime(t time.Time) string {
 	d := time.Since(t)
+	if d < 0 {
+		// Future time — show absolute date.
+		return t.Format("02.01.2006 15:04")
+	}
 	switch {
 	case d < time.Minute:
 		return "только что"

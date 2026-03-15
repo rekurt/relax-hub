@@ -163,13 +163,17 @@ func (p *PostgresAnalyticsProvider) parseDateRange(filter AnalyticsFilter) (time
 
 	if filter.DateFrom != "" {
 		if t, err := time.Parse("2006-01-02", filter.DateFrom); err == nil {
-			dateFrom = t
+			dateFrom = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, now.Location())
 		}
 	}
 	if filter.DateTo != "" {
 		if t, err := time.Parse("2006-01-02", filter.DateTo); err == nil {
-			dateTo = time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 0, t.Location())
+			dateTo = time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 0, now.Location())
 		}
+	}
+
+	if dateFrom.After(dateTo) {
+		dateFrom, dateTo = dateTo, dateFrom
 	}
 
 	// Cap the date range to 365 days to prevent expensive generate_series queries.

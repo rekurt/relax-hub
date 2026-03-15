@@ -451,12 +451,14 @@ function confirmReject() {
                 var total = data.successful + data.failed;
                 showToast('Обработано ' + data.successful + ' из ' + total + ' отзывов', 'success');
                 if (data.failed > 0) {
-                    showToast(data.failed + ' отзыв(ов) уже обработаны другим админом. Обновите страницу.', 'warning');
+                    showToast(data.failed + ' отзыв(ов) уже обработаны другим админом. Страница обновится.', 'warning');
+                    setTimeout(function() { location.reload(); }, 2000);
+                } else {
+                    ids.forEach(function(id) { removeReviewCard(id); });
+                    updateStat('stat-pending', -data.successful);
+                    updateStat('stat-rejected', data.successful);
+                    updateBatchCount();
                 }
-                ids.forEach(function(id) { removeReviewCard(id); });
-                updateStat('stat-pending', -data.successful);
-                updateStat('stat-rejected', data.successful);
-                updateBatchCount();
             } else {
                 showToast('Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
             }
@@ -526,12 +528,14 @@ function executeBatchApprove() {
             var total = data.successful + data.failed;
             showToast('Обработано ' + data.successful + ' из ' + total + ' отзывов', 'success');
             if (data.failed > 0) {
-                showToast(data.failed + ' отзыв(ов) уже обработаны другим админом. Обновите страницу.', 'warning');
+                showToast(data.failed + ' отзыв(ов) уже обработаны другим админом. Страница обновится.', 'warning');
+                setTimeout(function() { location.reload(); }, 2000);
+            } else {
+                ids.forEach(function(id) { removeReviewCard(id); });
+                updateStat('stat-pending', -data.successful);
+                updateStat('stat-approved', data.successful);
+                updateBatchCount();
             }
-            ids.forEach(function(id) { removeReviewCard(id); });
-            updateStat('stat-pending', -data.successful);
-            updateStat('stat-approved', data.successful);
-            updateBatchCount();
         } else {
             showToast('Ошибка', 'error');
         }

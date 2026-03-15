@@ -728,10 +728,7 @@ func TestModerationHandler_RendersInlineAJAX(t *testing.T) {
 	if strings.Contains(body, "alert(") {
 		t.Error("body should not contain alert() calls - should use showToast instead")
 	}
-	// Should NOT use location.reload()
-	if strings.Contains(body, "location.reload()") {
-		t.Error("body should not contain location.reload() - should use DOM manipulation")
-	}
+	// location.reload() is allowed only as a fallback when batch operations have partial failures
 	// Should have removeReviewCard function
 	if !strings.Contains(body, "removeReviewCard") {
 		t.Error("body missing removeReviewCard function for inline DOM updates")
