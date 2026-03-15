@@ -2,7 +2,6 @@ package mock
 
 import (
 	"context"
-	"math"
 	"sort"
 	"sync"
 	"time"
@@ -96,13 +95,6 @@ func (r *PromoCodeRepo) ListByBathhouse(_ context.Context, bathhouseID uuid.UUID
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	var filtered []domain.PromoCode
 	for _, promo := range r.promos {
 		if promo.BathhouseID != nil && *promo.BathhouseID == bathhouseID {
@@ -115,19 +107,12 @@ func (r *PromoCodeRepo) ListByBathhouse(_ context.Context, bathhouseID uuid.UUID
 		return filtered[i].CreatedAt.After(filtered[j].CreatedAt)
 	})
 
-	return paginatePromos(filtered, page, pageSize), nil
+	return paginate(filtered, page, pageSize), nil
 }
 
 func (r *PromoCodeRepo) ListByCreator(_ context.Context, creatorID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PromoCode], error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
 
 	var filtered []domain.PromoCode
 	for _, promo := range r.promos {
@@ -141,7 +126,7 @@ func (r *PromoCodeRepo) ListByCreator(_ context.Context, creatorID uuid.UUID, pa
 		return filtered[i].CreatedAt.After(filtered[j].CreatedAt)
 	})
 
-	return paginatePromos(filtered, page, pageSize), nil
+	return paginate(filtered, page, pageSize), nil
 }
 
 func (r *PromoCodeRepo) IncrementUses(_ context.Context, id uuid.UUID) error {
@@ -272,24 +257,4 @@ func (r *PromoCodeRepo) DeactivateExpired(_ context.Context, before time.Time) (
 		}
 	}
 	return count, nil
-}
-
-func paginatePromos(items []domain.PromoCode, page, pageSize int) *domain.PaginatedResult[domain.PromoCode] {
-	totalCount := int64(len(items))
-	offset := (page - 1) * pageSize
-	end := offset + pageSize
-	if offset > int(totalCount) {
-		offset = int(totalCount)
-	}
-	if end > int(totalCount) {
-		end = int(totalCount)
-	}
-
-	return &domain.PaginatedResult[domain.PromoCode]{
-		Items:      items[offset:end],
-		TotalCount: totalCount,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
-	}
 }

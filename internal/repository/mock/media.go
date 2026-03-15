@@ -2,7 +2,6 @@ package mock
 
 import (
 	"context"
-	"math"
 	"sort"
 	"sync"
 	"time"
@@ -64,13 +63,6 @@ func (r *MediaRepo) ListByOwner(_ context.Context, ownerType domain.MediaOwnerTy
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	var filtered []domain.Media
 	for _, m := range r.media {
 		if m.OwnerType == ownerType && m.OwnerID == ownerID {
@@ -83,23 +75,7 @@ func (r *MediaRepo) ListByOwner(_ context.Context, ownerType domain.MediaOwnerTy
 		return filtered[i].CreatedAt.After(filtered[j].CreatedAt)
 	})
 
-	totalCount := int64(len(filtered))
-	offset := (page - 1) * pageSize
-	end := offset + pageSize
-	if offset > int(totalCount) {
-		offset = int(totalCount)
-	}
-	if end > int(totalCount) {
-		end = int(totalCount)
-	}
-
-	return &domain.PaginatedResult[domain.Media]{
-		Items:      filtered[offset:end],
-		TotalCount: totalCount,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
-	}, nil
+	return paginate(filtered, page, pageSize), nil
 }
 
 func (r *MediaRepo) Delete(_ context.Context, id uuid.UUID) error {
@@ -148,13 +124,6 @@ func (r *MediaRepo) ListByBathhouseReviews(_ context.Context, bathhouseID uuid.U
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	// In mock, we use BathhouseID field if stored, otherwise filter by ReviewIDs
 	// For testing, we store bathhouseID in a map (see SetReviewBathhouse)
 	var filtered []domain.Media
@@ -171,23 +140,7 @@ func (r *MediaRepo) ListByBathhouseReviews(_ context.Context, bathhouseID uuid.U
 		return filtered[i].CreatedAt.After(filtered[j].CreatedAt)
 	})
 
-	totalCount := int64(len(filtered))
-	offset := (page - 1) * pageSize
-	end := offset + pageSize
-	if offset > int(totalCount) {
-		offset = int(totalCount)
-	}
-	if end > int(totalCount) {
-		end = int(totalCount)
-	}
-
-	return &domain.PaginatedResult[domain.Media]{
-		Items:      filtered[offset:end],
-		TotalCount: totalCount,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
-	}, nil
+	return paginate(filtered, page, pageSize), nil
 }
 
 // SetReviewBathhouse maps a reviewID to a bathhouseID for testing ListByBathhouseReviews

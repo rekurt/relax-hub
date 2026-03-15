@@ -2,7 +2,6 @@ package mock
 
 import (
 	"context"
-	"math"
 	"sort"
 	"sync"
 	"time"
@@ -111,13 +110,6 @@ func (r *CertificateRepo) ListByUser(_ context.Context, userID uuid.UUID, page, 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	var filtered []domain.GiftCertificate
 	for _, cert := range r.certs {
 		if (cert.RedeemedByID != nil && *cert.RedeemedByID == userID) ||
@@ -131,23 +123,7 @@ func (r *CertificateRepo) ListByUser(_ context.Context, userID uuid.UUID, page, 
 		return filtered[i].CreatedAt.After(filtered[j].CreatedAt)
 	})
 
-	totalCount := int64(len(filtered))
-	offset := (page - 1) * pageSize
-	end := offset + pageSize
-	if offset > int(totalCount) {
-		offset = int(totalCount)
-	}
-	if end > int(totalCount) {
-		end = int(totalCount)
-	}
-
-	return &domain.PaginatedResult[domain.GiftCertificate]{
-		Items:      filtered[offset:end],
-		TotalCount: totalCount,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
-	}, nil
+	return paginate(filtered, page, pageSize), nil
 }
 
 func (r *CertificateRepo) Redeem(_ context.Context, id uuid.UUID, userID uuid.UUID) error {

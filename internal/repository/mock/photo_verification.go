@@ -2,7 +2,6 @@ package mock
 
 import (
 	"context"
-	"math"
 	"sort"
 	"sync"
 	"time"
@@ -143,13 +142,6 @@ func (r *BathhousePhotoRepo) ListPending(_ context.Context, page, pageSize int) 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	var pending []domain.BathhousePhoto
 	for _, p := range r.photos {
 		if p.Status == domain.PhotoStatusPending {
@@ -162,21 +154,5 @@ func (r *BathhousePhotoRepo) ListPending(_ context.Context, page, pageSize int) 
 		return pending[i].UploadedAt.Before(pending[j].UploadedAt)
 	})
 
-	totalCount := int64(len(pending))
-	offset := (page - 1) * pageSize
-	end := offset + pageSize
-	if offset > int(totalCount) {
-		offset = int(totalCount)
-	}
-	if end > int(totalCount) {
-		end = int(totalCount)
-	}
-
-	return &domain.PaginatedResult[domain.BathhousePhoto]{
-		Items:      pending[offset:end],
-		TotalCount: totalCount,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
-	}, nil
+	return paginate(pending, page, pageSize), nil
 }

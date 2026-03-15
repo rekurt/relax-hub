@@ -2,7 +2,6 @@ package mock
 
 import (
 	"context"
-	"math"
 	"sort"
 	"sync"
 	"time"
@@ -69,13 +68,6 @@ func (r *ReferralRepo) ListByReferrer(_ context.Context, referrerID uuid.UUID, p
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	var filtered []domain.Referral
 	for _, ref := range r.referrals {
 		if ref.ReferrerID == referrerID {
@@ -88,23 +80,7 @@ func (r *ReferralRepo) ListByReferrer(_ context.Context, referrerID uuid.UUID, p
 		return filtered[i].CreatedAt.After(filtered[j].CreatedAt)
 	})
 
-	totalCount := int64(len(filtered))
-	offset := (page - 1) * pageSize
-	end := offset + pageSize
-	if offset > int(totalCount) {
-		offset = int(totalCount)
-	}
-	if end > int(totalCount) {
-		end = int(totalCount)
-	}
-
-	return &domain.PaginatedResult[domain.Referral]{
-		Items:      filtered[offset:end],
-		TotalCount: totalCount,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
-	}, nil
+	return paginate(filtered, page, pageSize), nil
 }
 
 func (r *ReferralRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domain.ReferralStatus, completedAt *time.Time) error {

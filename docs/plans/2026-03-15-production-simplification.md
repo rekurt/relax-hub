@@ -187,9 +187,9 @@ Several service methods add zero business logic and just forward to repository:
 
 15+ mock methods repeat the same 6-line pagination slice pattern.
 
-- [ ] Create generic `paginate[T any](items []T, page, pageSize int) *domain.PaginatedResult[T]` helper
-- [ ] Replace all manual pagination logic in mock files with the helper
-- [ ] Run tests to verify mocks still work correctly
+- [x] Create generic `paginate[T any](items []T, page, pageSize int) *domain.PaginatedResult[T]` helper
+- [x] Replace all manual pagination logic in mock files with the helper
+- [x] Run tests to verify mocks still work correctly
 
 ### Task 8: Tune database connection pool
 

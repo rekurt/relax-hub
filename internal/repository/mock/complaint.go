@@ -2,7 +2,6 @@ package mock
 
 import (
 	"context"
-	"math"
 	"sort"
 	"sync"
 	"time"
@@ -69,13 +68,6 @@ func (r *ComplaintRepo) List(_ context.Context, filter domain.ComplaintFilter) (
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if filter.Page < 1 {
-		filter.Page = 1
-	}
-	if filter.PageSize < 1 {
-		filter.PageSize = 20
-	}
-
 	var filtered []domain.Complaint
 	for _, c := range r.complaints {
 		if filter.Status != nil && c.Status != *filter.Status {
@@ -102,23 +94,7 @@ func (r *ComplaintRepo) List(_ context.Context, filter domain.ComplaintFilter) (
 		return filtered[i].CreatedAt.After(filtered[j].CreatedAt)
 	})
 
-	totalCount := int64(len(filtered))
-	offset := (filter.Page - 1) * filter.PageSize
-	end := offset + filter.PageSize
-	if offset > int(totalCount) {
-		offset = int(totalCount)
-	}
-	if end > int(totalCount) {
-		end = int(totalCount)
-	}
-
-	return &domain.PaginatedResult[domain.Complaint]{
-		Items:      filtered[offset:end],
-		TotalCount: totalCount,
-		Page:       filter.Page,
-		PageSize:   filter.PageSize,
-		TotalPages: int(math.Ceil(float64(totalCount) / float64(filter.PageSize))),
-	}, nil
+	return paginate(filtered, filter.Page, filter.PageSize), nil
 }
 
 func (r *ComplaintRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domain.ComplaintStatus, resolvedByID *uuid.UUID, resolution string) error {

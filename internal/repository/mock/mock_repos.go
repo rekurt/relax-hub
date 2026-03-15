@@ -80,41 +80,12 @@ func (r *UserRepo) List(_ context.Context, page, pageSize int) (*domain.Paginate
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	all := make([]domain.User, 0, len(r.users))
 	for _, u := range r.users {
 		all = append(all, *u)
 	}
 
-	total := int64(len(all))
-	start := (page - 1) * pageSize
-	if start >= len(all) {
-		return &domain.PaginatedResult[domain.User]{
-			Items:      nil,
-			TotalCount: total,
-			Page:       page,
-			PageSize:   pageSize,
-			TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-		}, nil
-	}
-	end := start + pageSize
-	if end > len(all) {
-		end = len(all)
-	}
-
-	return &domain.PaginatedResult[domain.User]{
-		Items:      all[start:end],
-		TotalCount: total,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-	}, nil
+	return paginate(all, page, pageSize), nil
 }
 
 func (r *UserRepo) SetActive(_ context.Context, id uuid.UUID, active bool) error {
@@ -308,7 +279,7 @@ func (r *BookingRepo) ListByUser(_ context.Context, userID uuid.UUID, page, page
 		}
 	}
 
-	return paginateBookings(items, page, pageSize), nil
+	return paginate(items, page, pageSize), nil
 }
 
 func (r *BookingRepo) ListByBathhouse(_ context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {
@@ -322,7 +293,7 @@ func (r *BookingRepo) ListByBathhouse(_ context.Context, bathhouseID uuid.UUID, 
 		}
 	}
 
-	return paginateBookings(items, page, pageSize), nil
+	return paginate(items, page, pageSize), nil
 }
 
 func (r *BookingRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domain.BookingStatus) error {
@@ -393,30 +364,6 @@ func (r *BookingRepo) GetUserStats(_ context.Context, userID uuid.UUID) (*domain
 	return &stats, nil
 }
 
-func paginateBookings(items []domain.Booking, page, pageSize int) *domain.PaginatedResult[domain.Booking] {
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-	total := int64(len(items))
-	start := (page - 1) * pageSize
-	if start >= len(items) {
-		return &domain.PaginatedResult[domain.Booking]{
-			Items: nil, TotalCount: total, Page: page, PageSize: pageSize,
-			TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-		}
-	}
-	end := start + pageSize
-	if end > len(items) {
-		end = len(items)
-	}
-	return &domain.PaginatedResult[domain.Booking]{
-		Items: items[start:end], TotalCount: total, Page: page, PageSize: pageSize,
-		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-	}
-}
 
 // RepresentativeRepo is an in-memory mock implementation of repository.RepresentativeRepository.
 type RepresentativeRepo struct {
@@ -580,13 +527,6 @@ func (r *ReviewRepo) ListByBathhouse(_ context.Context, bathhouseID uuid.UUID, p
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	var items []domain.Review
 	for _, rev := range r.reviews {
 		if rev.BathhouseID == bathhouseID && rev.Status == domain.ReviewStatusApproved {
@@ -594,35 +534,12 @@ func (r *ReviewRepo) ListByBathhouse(_ context.Context, bathhouseID uuid.UUID, p
 		}
 	}
 
-	total := int64(len(items))
-	start := (page - 1) * pageSize
-	if start >= len(items) {
-		return &domain.PaginatedResult[domain.Review]{
-			Items: nil, TotalCount: total, Page: page, PageSize: pageSize,
-			TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-		}, nil
-	}
-	end := start + pageSize
-	if end > len(items) {
-		end = len(items)
-	}
-
-	return &domain.PaginatedResult[domain.Review]{
-		Items: items[start:end], TotalCount: total, Page: page, PageSize: pageSize,
-		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-	}, nil
+	return paginate(items, page, pageSize), nil
 }
 
 func (r *ReviewRepo) ListByBathhouseFiltered(_ context.Context, filter domain.ReviewFilter) (*domain.PaginatedResult[domain.Review], error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-
-	if filter.Page < 1 {
-		filter.Page = 1
-	}
-	if filter.PageSize < 1 {
-		filter.PageSize = 20
-	}
 
 	var items []domain.Review
 	for _, rev := range r.reviews {
@@ -638,23 +555,7 @@ func (r *ReviewRepo) ListByBathhouseFiltered(_ context.Context, filter domain.Re
 		items = append(items, *rev)
 	}
 
-	total := int64(len(items))
-	start := (filter.Page - 1) * filter.PageSize
-	if start >= len(items) {
-		return &domain.PaginatedResult[domain.Review]{
-			Items: nil, TotalCount: total, Page: filter.Page, PageSize: filter.PageSize,
-			TotalPages: int((total + int64(filter.PageSize) - 1) / int64(filter.PageSize)),
-		}, nil
-	}
-	end := start + filter.PageSize
-	if end > len(items) {
-		end = len(items)
-	}
-
-	return &domain.PaginatedResult[domain.Review]{
-		Items: items[start:end], TotalCount: total, Page: filter.Page, PageSize: filter.PageSize,
-		TotalPages: int((total + int64(filter.PageSize) - 1) / int64(filter.PageSize)),
-	}, nil
+	return paginate(items, filter.Page, filter.PageSize), nil
 }
 
 func (r *ReviewRepo) GetByBookingID(_ context.Context, bookingID uuid.UUID) (*domain.Review, error) {
@@ -740,13 +641,6 @@ func (r *ReviewRepo) ListAllReviews(_ context.Context, filter domain.AdminReview
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if filter.Page < 1 {
-		filter.Page = 1
-	}
-	if filter.PageSize < 1 {
-		filter.PageSize = 20
-	}
-
 	var items []domain.Review
 	for _, rev := range r.reviews {
 		if filter.BathhouseID != nil && rev.BathhouseID != *filter.BathhouseID {
@@ -770,23 +664,7 @@ func (r *ReviewRepo) ListAllReviews(_ context.Context, filter domain.AdminReview
 		items = append(items, *rev)
 	}
 
-	total := int64(len(items))
-	start := (filter.Page - 1) * filter.PageSize
-	if start >= len(items) {
-		return &domain.PaginatedResult[domain.Review]{
-			Items: nil, TotalCount: total, Page: filter.Page, PageSize: filter.PageSize,
-			TotalPages: int((total + int64(filter.PageSize) - 1) / int64(filter.PageSize)),
-		}, nil
-	}
-	end := start + filter.PageSize
-	if end > len(items) {
-		end = len(items)
-	}
-
-	return &domain.PaginatedResult[domain.Review]{
-		Items: items[start:end], TotalCount: total, Page: filter.Page, PageSize: filter.PageSize,
-		TotalPages: int((total + int64(filter.PageSize) - 1) / int64(filter.PageSize)),
-	}, nil
+	return paginate(items, filter.Page, filter.PageSize), nil
 }
 
 // FavoriteRepo is an in-memory mock implementation of repository.FavoriteRepository.
@@ -833,13 +711,6 @@ func (r *FavoriteRepo) ListByUser(_ context.Context, userID uuid.UUID, page, pag
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	var items []domain.Favorite
 	for _, f := range r.favorites {
 		if f.UserID == userID {
@@ -847,23 +718,7 @@ func (r *FavoriteRepo) ListByUser(_ context.Context, userID uuid.UUID, page, pag
 		}
 	}
 
-	total := int64(len(items))
-	start := (page - 1) * pageSize
-	if start >= len(items) {
-		return &domain.PaginatedResult[domain.Favorite]{
-			Items: nil, TotalCount: total, Page: page, PageSize: pageSize,
-			TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-		}, nil
-	}
-	end := start + pageSize
-	if end > len(items) {
-		end = len(items)
-	}
-
-	return &domain.PaginatedResult[domain.Favorite]{
-		Items: items[start:end], TotalCount: total, Page: page, PageSize: pageSize,
-		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-	}, nil
+	return paginate(items, page, pageSize), nil
 }
 
 func (r *FavoriteRepo) IsFavorite(_ context.Context, userID, bathhouseID uuid.UUID) (bool, error) {
@@ -985,13 +840,6 @@ func (r *BathhouseRepo) List(_ context.Context, filter domain.BathhouseFilter) (
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if filter.Page < 1 {
-		filter.Page = 1
-	}
-	if filter.PageSize < 1 {
-		filter.PageSize = 20
-	}
-
 	var items []domain.Bathhouse
 	for _, bh := range r.bathhouses {
 		if filter.Status != nil {
@@ -1027,35 +875,12 @@ func (r *BathhouseRepo) List(_ context.Context, filter domain.BathhouseFilter) (
 		items = append(items, *bh)
 	}
 
-	total := int64(len(items))
-	start := (filter.Page - 1) * filter.PageSize
-	if start >= len(items) {
-		return &domain.PaginatedResult[domain.Bathhouse]{
-			Items: nil, TotalCount: total, Page: filter.Page, PageSize: filter.PageSize,
-			TotalPages: int((total + int64(filter.PageSize) - 1) / int64(filter.PageSize)),
-		}, nil
-	}
-	end := start + filter.PageSize
-	if end > len(items) {
-		end = len(items)
-	}
-
-	return &domain.PaginatedResult[domain.Bathhouse]{
-		Items: items[start:end], TotalCount: total, Page: filter.Page, PageSize: filter.PageSize,
-		TotalPages: int((total + int64(filter.PageSize) - 1) / int64(filter.PageSize)),
-	}, nil
+	return paginate(items, filter.Page, filter.PageSize), nil
 }
 
 func (r *BathhouseRepo) ListByOwner(_ context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
 
 	var items []domain.Bathhouse
 	for _, bh := range r.bathhouses {
@@ -1064,23 +889,7 @@ func (r *BathhouseRepo) ListByOwner(_ context.Context, ownerID uuid.UUID, page, 
 		}
 	}
 
-	total := int64(len(items))
-	start := (page - 1) * pageSize
-	if start >= len(items) {
-		return &domain.PaginatedResult[domain.Bathhouse]{
-			Items: nil, TotalCount: total, Page: page, PageSize: pageSize,
-			TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-		}, nil
-	}
-	end := start + pageSize
-	if end > len(items) {
-		end = len(items)
-	}
-
-	return &domain.PaginatedResult[domain.Bathhouse]{
-		Items: items[start:end], TotalCount: total, Page: page, PageSize: pageSize,
-		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-	}, nil
+	return paginate(items, page, pageSize), nil
 }
 
 func (r *BathhouseRepo) UpdateRating(_ context.Context, _ uuid.UUID) error {
@@ -1243,13 +1052,6 @@ func (r *NotificationRepo) ListByUser(_ context.Context, userID uuid.UUID, page,
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	var items []domain.Notification
 	for _, n := range r.notifications {
 		if n.UserID == userID {
@@ -1257,23 +1059,7 @@ func (r *NotificationRepo) ListByUser(_ context.Context, userID uuid.UUID, page,
 		}
 	}
 
-	total := int64(len(items))
-	start := (page - 1) * pageSize
-	if start >= len(items) {
-		return &domain.PaginatedResult[domain.Notification]{
-			Items: nil, TotalCount: total, Page: page, PageSize: pageSize,
-			TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-		}, nil
-	}
-	end := start + pageSize
-	if end > len(items) {
-		end = len(items)
-	}
-
-	return &domain.PaginatedResult[domain.Notification]{
-		Items: items[start:end], TotalCount: total, Page: page, PageSize: pageSize,
-		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-	}, nil
+	return paginate(items, page, pageSize), nil
 }
 
 func (r *NotificationRepo) MarkAsRead(_ context.Context, id uuid.UUID) error {
@@ -1666,13 +1452,6 @@ func (r *SubscriptionRepo) ListByOwner(_ context.Context, ownerID uuid.UUID, pag
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	var items []domain.Subscription
 	for _, sub := range r.subscriptions {
 		if sub.OwnerID == ownerID {
@@ -1680,23 +1459,7 @@ func (r *SubscriptionRepo) ListByOwner(_ context.Context, ownerID uuid.UUID, pag
 		}
 	}
 
-	total := int64(len(items))
-	start := (page - 1) * pageSize
-	if start >= len(items) {
-		return &domain.PaginatedResult[domain.Subscription]{
-			Items: nil, TotalCount: total, Page: page, PageSize: pageSize,
-			TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-		}, nil
-	}
-	end := start + pageSize
-	if end > len(items) {
-		end = len(items)
-	}
-
-	return &domain.PaginatedResult[domain.Subscription]{
-		Items: items[start:end], TotalCount: total, Page: page, PageSize: pageSize,
-		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-	}, nil
+	return paginate(items, page, pageSize), nil
 }
 
 func (r *SubscriptionRepo) GetExpiring(_ context.Context, before time.Time) ([]domain.Subscription, error) {
@@ -1787,35 +1550,12 @@ func (r *PromotionRepo) ListByOwner(_ context.Context, ownerID uuid.UUID, page, 
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	var items []domain.Promotion
 	// In a real app, we'd join with bathhouses to find owner
 	// For mock, we return empty since we don't have bathhouse context
 	// This would be populated by test setup
 
-	total := int64(len(items))
-	start := (page - 1) * pageSize
-	if start >= len(items) {
-		return &domain.PaginatedResult[domain.Promotion]{
-			Items: nil, TotalCount: total, Page: page, PageSize: pageSize,
-			TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-		}, nil
-	}
-	end := start + pageSize
-	if end > len(items) {
-		end = len(items)
-	}
-
-	return &domain.PaginatedResult[domain.Promotion]{
-		Items: items[start:end], TotalCount: total, Page: page, PageSize: pageSize,
-		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-	}, nil
+	return paginate(items, page, pageSize), nil
 }
 
 func (r *PromotionRepo) RecordImpression(_ context.Context, promotionID uuid.UUID) error {
@@ -2045,13 +1785,6 @@ func (r *LoyaltyRepo) ListTransactions(_ context.Context, userID uuid.UUID, page
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
-
 	var items []domain.LoyaltyTransaction
 	for i := len(r.transactions) - 1; i >= 0; i-- {
 		if r.transactions[i].UserID == userID {
@@ -2059,23 +1792,7 @@ func (r *LoyaltyRepo) ListTransactions(_ context.Context, userID uuid.UUID, page
 		}
 	}
 
-	total := int64(len(items))
-	start := (page - 1) * pageSize
-	if start >= len(items) {
-		return &domain.PaginatedResult[domain.LoyaltyTransaction]{
-			Items: nil, TotalCount: total, Page: page, PageSize: pageSize,
-			TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-		}, nil
-	}
-	end := start + pageSize
-	if end > len(items) {
-		end = len(items)
-	}
-
-	return &domain.PaginatedResult[domain.LoyaltyTransaction]{
-		Items: items[start:end], TotalCount: total, Page: page, PageSize: pageSize,
-		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
-	}, nil
+	return paginate(items, page, pageSize), nil
 }
 
 func (r *LoyaltyRepo) CreateTransaction(_ context.Context, tx *domain.LoyaltyTransaction) error {
