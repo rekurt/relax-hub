@@ -77,6 +77,58 @@
     .lightbox-nav:hover { background: rgba(0,0,0,0.6); }
     .lightbox-prev { left: -60px; }
     .lightbox-next { right: -60px; }
+
+    /* Focus management */
+    .review-card:focus { outline: 2px solid #3498db; outline-offset: 2px; }
+    .review-card.focused { outline: 2px solid #3498db; outline-offset: 2px; }
+
+    /* Keyboard shortcuts help */
+    .shortcuts-help {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 900;
+    }
+    .shortcuts-help-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #3498db;
+        color: #fff;
+        border: none;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        transition: background 0.2s;
+    }
+    .shortcuts-help-btn:hover { background: #2980b9; }
+    .shortcuts-popup {
+        display: none;
+        position: absolute;
+        bottom: 44px;
+        right: 0;
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px 20px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        min-width: 260px;
+        font-size: 13px;
+    }
+    .shortcuts-popup.active { display: block; }
+    .shortcuts-popup h4 { margin-bottom: 10px; font-size: 14px; color: #333; }
+    .shortcuts-popup .shortcut-row { display: flex; justify-content: space-between; padding: 4px 0; }
+    .shortcuts-popup .shortcut-key {
+        display: inline-block;
+        background: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        padding: 1px 6px;
+        font-family: monospace;
+        font-size: 12px;
+        min-width: 24px;
+        text-align: center;
+    }
 </style>
 {{end}}
 
@@ -172,7 +224,7 @@
 <!-- Review List -->
 <div class="review-list" id="review-list">
     {{range .Reviews}}
-    <div class="review-card {{.Status}}" id="review-{{.ID}}" data-review-id="{{.ID}}">
+    <div class="review-card {{.Status}}" id="review-{{.ID}}" data-review-id="{{.ID}}" tabindex="0">
         <div class="review-header">
             <div style="display:flex;align-items:flex-start;">
                 <input type="checkbox" class="review-select" value="{{.ID}}" onchange="updateBatchCount()">
@@ -222,14 +274,29 @@
 {{if gt .TotalPages 1}}
 <div class="pagination" id="pagination">
     {{if gt .Page 1}}
-    <a href="?page={{subtract .Page 1}}&status={{.Filter.Status}}&bathhouse_id={{.Filter.BathhouseID}}&min_rating={{.Filter.MinRating}}&max_rating={{.Filter.MaxRating}}&from_date={{.Filter.FromDate}}&to_date={{.Filter.ToDate}}">&#8592;</a>
+    <a href="?page={{subtract .Page 1}}&status={{.Filter.Status}}&bathhouse_id={{.Filter.BathhouseID}}&min_rating={{.Filter.MinRating}}&max_rating={{.Filter.MaxRating}}&from_date={{.Filter.FromDate}}&to_date={{.Filter.ToDate}}" id="pagination-prev">&#8592;</a>
     {{end}}
     <span class="active">{{.Page}} / {{.TotalPages}}</span>
     {{if lt .Page .TotalPages}}
-    <a href="?page={{add .Page 1}}&status={{.Filter.Status}}&bathhouse_id={{.Filter.BathhouseID}}&min_rating={{.Filter.MinRating}}&max_rating={{.Filter.MaxRating}}&from_date={{.Filter.FromDate}}&to_date={{.Filter.ToDate}}">&#8594;</a>
+    <a href="?page={{add .Page 1}}&status={{.Filter.Status}}&bathhouse_id={{.Filter.BathhouseID}}&min_rating={{.Filter.MinRating}}&max_rating={{.Filter.MaxRating}}&from_date={{.Filter.FromDate}}&to_date={{.Filter.ToDate}}" id="pagination-next">&#8594;</a>
     {{end}}
 </div>
 {{end}}
+
+<!-- Keyboard Shortcuts Help -->
+<div class="shortcuts-help" id="shortcuts-help">
+    <button class="shortcuts-help-btn" onclick="toggleShortcutsPopup()" title="Горячие клавиши">?</button>
+    <div class="shortcuts-popup" id="shortcuts-popup">
+        <h4>Горячие клавиши</h4>
+        <div class="shortcut-row"><span>Одобрить выбранные</span> <span class="shortcut-key">A</span></div>
+        <div class="shortcut-row"><span>Отклонить выбранные</span> <span class="shortcut-key">R</span></div>
+        <div class="shortcut-row"><span>Закрыть окно</span> <span class="shortcut-key">Esc</span></div>
+        <div class="shortcut-row"><span>Подтвердить отклонение</span> <span class="shortcut-key">Enter</span></div>
+        <div class="shortcut-row"><span>Выбрать все</span> <span class="shortcut-key">Ctrl+A</span></div>
+        <div class="shortcut-row"><span>Предыдущая страница</span> <span class="shortcut-key">&#8592;</span></div>
+        <div class="shortcut-row"><span>Следующая страница</span> <span class="shortcut-key">&#8594;</span></div>
+    </div>
+</div>
 
 <!-- Reject Modal -->
 <div class="modal-overlay" id="reject-modal">
@@ -574,10 +641,120 @@ function showLightboxImage() {
 
 /* === Keyboard: Escape closes modals === */
 document.addEventListener('keydown', function(e) {
+    var tag = e.target.tagName.toLowerCase();
+    var isInput = (tag === 'input' || tag === 'textarea' || tag === 'select');
+
+    /* Escape always closes modals/lightbox */
     if (e.key === 'Escape') {
+        var shortcutsPopup = document.getElementById('shortcuts-popup');
+        if (shortcutsPopup && shortcutsPopup.classList.contains('active')) {
+            shortcutsPopup.classList.remove('active');
+            return;
+        }
         closeLightbox();
         closeRejectModal();
         closeConfirmModal();
+        return;
+    }
+
+    /* Enter in reject modal confirms rejection */
+    if (e.key === 'Enter') {
+        var rejectModal = document.getElementById('reject-modal');
+        if (rejectModal && rejectModal.classList.contains('active') && !isInput) {
+            e.preventDefault();
+            confirmReject();
+            return;
+        }
+        var confirmModal = document.getElementById('confirm-modal');
+        if (confirmModal && confirmModal.classList.contains('active')) {
+            e.preventDefault();
+            executeBatchApprove();
+            return;
+        }
+    }
+
+    /* Skip shortcuts when typing in input fields or when a modal is open */
+    if (isInput) return;
+    var rejectModalOpen = document.getElementById('reject-modal').classList.contains('active');
+    var confirmModalOpen = document.getElementById('confirm-modal').classList.contains('active');
+    var lightboxOpen = document.getElementById('lightbox').classList.contains('active');
+    if (rejectModalOpen || confirmModalOpen || lightboxOpen) return;
+
+    /* a - approve selected or focused */
+    if (e.key === 'a' || e.key === 'A') {
+        e.preventDefault();
+        var selected = getSelectedIds();
+        if (selected.length > 0) {
+            confirmBatchApprove();
+        } else {
+            var focused = document.querySelector('.review-card:focus');
+            if (focused && focused.querySelector('.btn-success')) {
+                focused.querySelector('.btn-success').click();
+            }
+        }
+        return;
+    }
+
+    /* r - reject selected or focused */
+    if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        var selectedForReject = getSelectedIds();
+        if (selectedForReject.length > 0) {
+            openBatchRejectModal();
+        } else {
+            var focusedForReject = document.querySelector('.review-card:focus');
+            if (focusedForReject) {
+                var rejectBtn = focusedForReject.querySelector('.btn-danger');
+                if (rejectBtn) rejectBtn.click();
+            }
+        }
+        return;
+    }
+
+    /* Ctrl+A - select all */
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        var selectAllCb = document.getElementById('select-all');
+        if (selectAllCb) {
+            selectAllCb.checked = true;
+            toggleSelectAll(selectAllCb);
+        }
+        return;
+    }
+
+    /* Arrow Left - previous page */
+    if (e.key === 'ArrowLeft') {
+        var prevLink = document.getElementById('pagination-prev');
+        if (prevLink) {
+            e.preventDefault();
+            prevLink.click();
+        }
+        return;
+    }
+
+    /* Arrow Right - next page */
+    if (e.key === 'ArrowRight') {
+        var nextLink = document.getElementById('pagination-next');
+        if (nextLink) {
+            e.preventDefault();
+            nextLink.click();
+        }
+        return;
+    }
+});
+
+/* === Shortcuts Help Popup === */
+function toggleShortcutsPopup() {
+    var popup = document.getElementById('shortcuts-popup');
+    popup.classList.toggle('active');
+}
+
+/* Close shortcuts popup on outside click */
+document.addEventListener('click', function(e) {
+    var help = document.getElementById('shortcuts-help');
+    if (help && !help.contains(e.target)) {
+        var popup = document.getElementById('shortcuts-popup');
+        if (popup) popup.classList.remove('active');
     }
 });
 </script>

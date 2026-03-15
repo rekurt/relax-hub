@@ -755,3 +755,140 @@ func TestModerationHandler_RendersInlineAJAX(t *testing.T) {
 		t.Error("body missing stat-approved ID on stats card")
 	}
 }
+
+func TestModerationHandler_RendersKeyboardShortcuts(t *testing.T) {
+	provider := &mockModerationProvider{data: sampleModerationData()}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Keyboard event listener should be present
+	if !strings.Contains(body, "addEventListener('keydown'") {
+		t.Error("body missing keydown event listener for keyboard shortcuts")
+	}
+
+	// Shortcut keys should be handled
+	shortcuts := []string{
+		"e.key === 'a'",
+		"e.key === 'r'",
+		"e.key === 'Escape'",
+		"e.key === 'Enter'",
+		"e.key === 'ArrowLeft'",
+		"e.key === 'ArrowRight'",
+	}
+	for _, s := range shortcuts {
+		if !strings.Contains(body, s) {
+			t.Errorf("body missing keyboard shortcut handler for %q", s)
+		}
+	}
+
+	// Ctrl+A support
+	if !strings.Contains(body, "e.ctrlKey") {
+		t.Error("body missing Ctrl key check for Ctrl+A shortcut")
+	}
+}
+
+func TestModerationHandler_RendersShortcutsHelp(t *testing.T) {
+	provider := &mockModerationProvider{data: sampleModerationData()}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Shortcuts help button and popup
+	if !strings.Contains(body, "shortcuts-help") {
+		t.Error("body missing shortcuts-help container")
+	}
+	if !strings.Contains(body, "shortcuts-popup") {
+		t.Error("body missing shortcuts-popup element")
+	}
+	if !strings.Contains(body, "shortcuts-help-btn") {
+		t.Error("body missing shortcuts help button")
+	}
+	if !strings.Contains(body, "toggleShortcutsPopup") {
+		t.Error("body missing toggleShortcutsPopup function")
+	}
+
+	// Help content should list all shortcuts
+	helpLabels := []string{
+		"Горячие клавиши",
+		"Одобрить выбранные",
+		"Отклонить выбранные",
+		"Закрыть окно",
+		"Подтвердить отклонение",
+		"Выбрать все",
+		"Предыдущая страница",
+		"Следующая страница",
+	}
+	for _, label := range helpLabels {
+		if !strings.Contains(body, label) {
+			t.Errorf("shortcuts help missing label %q", label)
+		}
+	}
+
+	// Shortcut keys displayed in popup
+	keyLabels := []string{
+		"shortcut-key",
+		">A<",
+		">R<",
+		"Esc",
+		"Enter",
+		"Ctrl+A",
+	}
+	for _, key := range keyLabels {
+		if !strings.Contains(body, key) {
+			t.Errorf("shortcuts help missing key display %q", key)
+		}
+	}
+}
+
+func TestModerationHandler_RendersFocusManagement(t *testing.T) {
+	provider := &mockModerationProvider{data: sampleModerationData()}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Review cards should have tabindex for Tab navigation
+	if !strings.Contains(body, `tabindex="0"`) {
+		t.Error("body missing tabindex attribute on review cards for Tab navigation")
+	}
+
+	// CSS should include focus styles for review cards
+	if !strings.Contains(body, ".review-card:focus") {
+		t.Error("body missing CSS focus styles for review cards")
+	}
+}
+
+func TestModerationHandler_RendersPaginationIDs(t *testing.T) {
+	data := sampleModerationData()
+	data.Page = 2
+	data.TotalPages = 5
+	data.TotalCount = 100
+	provider := &mockModerationProvider{data: data}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation?page=2", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Pagination links should have IDs for keyboard navigation
+	if !strings.Contains(body, `id="pagination-prev"`) {
+		t.Error("body missing pagination-prev ID for arrow key navigation")
+	}
+	if !strings.Contains(body, `id="pagination-next"`) {
+		t.Error("body missing pagination-next ID for arrow key navigation")
+	}
+}

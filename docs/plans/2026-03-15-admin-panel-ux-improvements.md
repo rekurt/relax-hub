@@ -293,20 +293,20 @@ KPI-карточки статичны и не кликабельны. Нет т�
 **Files:**
 - Modify: `internal/admin/pages/templates/moderation.tmpl`
 
-- [ ] Добавить keyboard shortcuts:
+- [x] Добавить keyboard shortcuts:
     - `a` — одобрить выбранные (или текущий focused если ничего не выбрано)
     - `r` — открыть reject modal для выбранных
     - `Escape` — закрыть reject modal
     - `Enter` в reject modal — подтвердить отклонение
     - `Ctrl+A` — выбрать все на странице
     - `→` / `←` — следующая/предыдущая страница пагинации
-- [ ] Добавить focus management: Tab навигация по карточкам, outline для
+- [x] Добавить focus management: Tab навигация по карточкам, outline для
     focused карточки
-- [ ] Добавить подсказку по горячим клавишам: маленькая иконка "?" в правом
+- [x] Добавить подсказку по горячим клавишам: маленькая иконка "?" в правом
     нижнем углу, при клике/hover показывает список shortcuts
-- [ ] Write tests: проверить наличие keyboard event listeners в шаблоне,
+- [x] Write tests: проверить наличие keyboard event listeners в шаблоне,
     корректность data-атрибутов для shortcuts
-- [ ] Run project test suite - must pass before task 8
+- [x] Run project test suite - must pass before task 8
 
 ### Task 8: Responsive design для всех страниц
 
