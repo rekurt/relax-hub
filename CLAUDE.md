@@ -31,6 +31,10 @@ make docker-down
 # Run
 make run                                    # build + run server
 go run ./cmd/bot run                        # run telegram bot
+
+# OpenAPI / Swagger
+make swagger                               # generate docs via swag init
+make swagger-fmt                           # format swagger annotations
 ```
 
 ## Architecture
@@ -133,6 +137,16 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) runs on push/PR to `main`:
 - `go vet ./...`
 - `go test ./... -race` with coverage
 - `go build ./...`
+
+### OpenAPI / Swagger
+
+All API endpoints are annotated with swaggo/swag comments. Swagger UI is served at `/swagger/`.
+
+- `docs/` — auto-generated OpenAPI spec (docs.go, swagger.json, swagger.yaml), committed for CI
+- `cmd/server/docs.go` — main API annotations (@title, @version, @BasePath, @securityDefinitions)
+- Annotations live in handler method comments (`internal/handler/*.go`)
+- After modifying handler annotations, run `make swagger` to regenerate the spec
+- Run `make swagger-fmt` to auto-format annotation comments
 
 ## Critical Conventions
 

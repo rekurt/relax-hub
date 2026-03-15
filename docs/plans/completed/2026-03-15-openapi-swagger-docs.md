@@ -143,5 +143,5 @@
 
 ### Task 10: Обновить документацию
 
-- [ ] Обновить CLAUDE.md: добавить секцию про OpenAPI/Swagger, команды make swagger/swagger-fmt
-- [ ] Переместить план в `docs/plans/completed/`
+- [x] Обновить CLAUDE.md: добавить секцию про OpenAPI/Swagger, команды make swagger/swagger-fmt
+- [x] Переместить план в `docs/plans/completed/`
