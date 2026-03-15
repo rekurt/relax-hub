@@ -173,12 +173,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 **Files:**
 - Create: `frontend/src/pages/admin/BathhouseModeration.tsx`
 
-- [ ] Bathhouse list with status filter (pending/active/rejected/inactive)
-- [ ] Detail view with all bathhouse info
-- [ ] Approve/reject actions with confirmation
-- [ ] API hooks: `useGetAdminBathhouses`, `usePatchAdminBathhousesIdApprove`, `usePatchAdminBathhousesIdReject`
-- [ ] Write tests for moderation actions, status filtering
-- [ ] Run project test suite - must pass before task 13
+- [x] Bathhouse list with status filter (pending/active/rejected/inactive)
+- [x] Detail view with all bathhouse info
+- [x] Approve/reject actions with confirmation
+- [x] API hooks: `useGetAdminBathhouses`, `usePatchAdminBathhousesIdApprove`, `usePatchAdminBathhousesIdReject`
+- [x] Write tests for moderation actions, status filtering
+- [x] Run project test suite - must pass before task 13
 
 ### Task 13: Admin - Review moderation
 
