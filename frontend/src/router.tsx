@@ -41,6 +41,7 @@ import UserManagement from '@/pages/admin/UserManagement'
 import BathhouseModeration from '@/pages/admin/BathhouseModeration'
 import ReviewModeration from '@/pages/admin/ReviewModeration'
 import PhotoVerification from '@/pages/admin/PhotoVerification'
+import ComplaintManagement from '@/pages/admin/ComplaintManagement'
 
 export default function AppRouter() {
   return (
@@ -116,6 +117,7 @@ export default function AppRouter() {
         <Route path="bathhouses" element={<BathhouseModeration />} />
         <Route path="reviews" element={<ReviewModeration />} />
         <Route path="photos" element={<PhotoVerification />} />
+        <Route path="complaints" element={<ComplaintManagement />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

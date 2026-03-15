@@ -209,12 +209,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 **Files:**
 - Create: `frontend/src/pages/admin/ComplaintManagement.tsx`
 
-- [ ] Complaint list with type filter (spam, offensive, fake, fraud, other) and status filter
-- [ ] Complaint detail: reporter info, target (review/bathhouse/user), reason, description
-- [ ] Resolve/dismiss actions with notes
-- [ ] API hooks: `useGetAdminComplaints`, `useGetAdminComplaintsId`, `usePatchAdminComplaintsIdResolve`, `usePatchAdminComplaintsIdDismiss`
-- [ ] Write tests for complaint list, resolve/dismiss actions
-- [ ] Run project test suite - must pass before task 16
+- [x] Complaint list with type filter (spam, offensive, fake, fraud, other) and status filter
+- [x] Complaint detail: reporter info, target (review/bathhouse/user), reason, description
+- [x] Resolve/dismiss actions with notes
+- [x] API hooks: `useGetAdminComplaints`, `useGetAdminComplaintsId`, `usePatchAdminComplaintsIdResolve`, `usePatchAdminComplaintsIdDismiss`
+- [x] Write tests for complaint list, resolve/dismiss actions
+- [x] Run project test suite - must pass before task 16
 
 ### Task 16: Admin - City management and global promo codes
 
