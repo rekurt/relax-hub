@@ -337,8 +337,9 @@ func TestTrendData_Percent(t *testing.T) {
 		{"positive growth", TrendData{Current: 150, Previous: 100}, 50.0},
 		{"negative growth", TrendData{Current: 50, Previous: 100}, -50.0},
 		{"no change", TrendData{Current: 100, Previous: 100}, 0.0},
-		{"zero previous", TrendData{Current: 100, Previous: 0}, 0.0},
+		{"zero previous", TrendData{Current: 100, Previous: 0}, 100.0},
 		{"both zero", TrendData{Current: 0, Previous: 0}, 0.0},
+		{"zero previous zero current", TrendData{Current: 0, Previous: 0}, 0.0},
 		{"100% growth", TrendData{Current: 200, Previous: 100}, 100.0},
 		{"small growth", TrendData{Current: 105, Previous: 100}, 5.0},
 	}
@@ -362,6 +363,7 @@ func TestTrendClass(t *testing.T) {
 		{"down", TrendData{Current: 50, Previous: 100}, "trend-down"},
 		{"neutral", TrendData{Current: 100, Previous: 100}, "trend-neutral"},
 		{"zero previous", TrendData{Current: 0, Previous: 0}, "trend-neutral"},
+		{"zero previous positive current", TrendData{Current: 10, Previous: 0}, "trend-up"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

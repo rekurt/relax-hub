@@ -113,7 +113,7 @@
         <div class="label">Пользователи</div>
         <div class="value-row">
             <div class="value">{{.KPI.TotalUsers}}</div>
-            {{if .KPI.UsersTrend.Previous}}
+            {{if .KPI.UsersTrend.HasTrend}}
             <span class="trend {{trendClass .KPI.UsersTrend}}">{{trendArrow .KPI.UsersTrend}}{{formatTrend .KPI.UsersTrend}}</span>
             {{end}}
         </div>
@@ -123,7 +123,7 @@
         <div class="label">Бани</div>
         <div class="value-row">
             <div class="value">{{.KPI.TotalBathhouses}}</div>
-            {{if .KPI.BathhousesTrend.Previous}}
+            {{if .KPI.BathhousesTrend.HasTrend}}
             <span class="trend {{trendClass .KPI.BathhousesTrend}}">{{trendArrow .KPI.BathhousesTrend}}{{formatTrend .KPI.BathhousesTrend}}</span>
             {{end}}
         </div>
@@ -133,7 +133,7 @@
         <div class="label">Бронирования сегодня</div>
         <div class="value-row">
             <div class="value">{{.KPI.BookingsToday}}</div>
-            {{if .KPI.BookingsTodayTrend.Previous}}
+            {{if .KPI.BookingsTodayTrend.HasTrend}}
             <span class="trend {{trendClass .KPI.BookingsTodayTrend}}">{{trendArrow .KPI.BookingsTodayTrend}}{{formatTrend .KPI.BookingsTodayTrend}}</span>
             {{end}}
         </div>
@@ -148,7 +148,7 @@
         <div class="label">Сегодня</div>
         <div class="value-row">
             <div class="value">{{formatRubles .KPI.RevenueToday}} &#8381;</div>
-            {{if .KPI.RevenueTodayTrend.Previous}}
+            {{if .KPI.RevenueTodayTrend.HasTrend}}
             <span class="trend {{trendClass .KPI.RevenueTodayTrend}}">{{trendArrow .KPI.RevenueTodayTrend}}{{formatTrend .KPI.RevenueTodayTrend}}</span>
             {{end}}
         </div>
@@ -157,7 +157,7 @@
         <div class="label">За неделю</div>
         <div class="value-row">
             <div class="value">{{formatRubles .KPI.RevenueWeek}} &#8381;</div>
-            {{if .KPI.RevenueWeekTrend.Previous}}
+            {{if .KPI.RevenueWeekTrend.HasTrend}}
             <span class="trend {{trendClass .KPI.RevenueWeekTrend}}">{{trendArrow .KPI.RevenueWeekTrend}}{{formatTrend .KPI.RevenueWeekTrend}}</span>
             {{end}}
         </div>
@@ -166,7 +166,7 @@
         <div class="label">За месяц</div>
         <div class="value-row">
             <div class="value">{{formatRubles .KPI.RevenueMonth}} &#8381;</div>
-            {{if .KPI.RevenueMonthTrend.Previous}}
+            {{if .KPI.RevenueMonthTrend.HasTrend}}
             <span class="trend {{trendClass .KPI.RevenueMonthTrend}}">{{trendArrow .KPI.RevenueMonthTrend}}{{formatTrend .KPI.RevenueMonthTrend}}</span>
             {{end}}
         </div>

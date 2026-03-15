@@ -32,12 +32,20 @@ type TrendData struct {
 }
 
 // Percent returns the percentage change from Previous to Current.
-// Returns 0 if Previous is 0.
+// Returns 100 if Previous is 0 and Current > 0 (new growth).
 func (t TrendData) Percent() float64 {
 	if t.Previous == 0 {
+		if t.Current > 0 {
+			return 100
+		}
 		return 0
 	}
 	return float64(t.Current-t.Previous) / float64(t.Previous) * 100
+}
+
+// HasTrend reports whether this TrendData has meaningful comparison data.
+func (t TrendData) HasTrend() bool {
+	return t.Previous > 0 || t.Current > 0
 }
 
 // KPICards holds the main KPI metrics for the admin dashboard.

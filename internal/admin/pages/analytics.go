@@ -174,6 +174,9 @@ func (p *PostgresAnalyticsProvider) parseDateRange(filter AnalyticsFilter) (time
 
 	if dateFrom.After(dateTo) {
 		dateFrom, dateTo = dateTo, dateFrom
+		// Re-normalize times after swap so dateFrom starts at 00:00:00 and dateTo ends at 23:59:59.
+		dateFrom = time.Date(dateFrom.Year(), dateFrom.Month(), dateFrom.Day(), 0, 0, 0, 0, dateFrom.Location())
+		dateTo = time.Date(dateTo.Year(), dateTo.Month(), dateTo.Day(), 23, 59, 59, 0, dateTo.Location())
 	}
 
 	// Cap the date range to 365 days to prevent expensive generate_series queries.
