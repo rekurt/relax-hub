@@ -327,3 +327,354 @@ func TestFormatKopecksToRubles(t *testing.T) {
 		})
 	}
 }
+
+func TestTrendData_Percent(t *testing.T) {
+	tests := []struct {
+		name string
+		td   TrendData
+		want float64
+	}{
+		{"positive growth", TrendData{Current: 150, Previous: 100}, 50.0},
+		{"negative growth", TrendData{Current: 50, Previous: 100}, -50.0},
+		{"no change", TrendData{Current: 100, Previous: 100}, 0.0},
+		{"zero previous", TrendData{Current: 100, Previous: 0}, 0.0},
+		{"both zero", TrendData{Current: 0, Previous: 0}, 0.0},
+		{"100% growth", TrendData{Current: 200, Previous: 100}, 100.0},
+		{"small growth", TrendData{Current: 105, Previous: 100}, 5.0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.td.Percent()
+			if got != tt.want {
+				t.Errorf("TrendData{%d,%d}.Percent() = %f, want %f", tt.td.Current, tt.td.Previous, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTrendClass(t *testing.T) {
+	tests := []struct {
+		name string
+		td   TrendData
+		want string
+	}{
+		{"up", TrendData{Current: 150, Previous: 100}, "trend-up"},
+		{"down", TrendData{Current: 50, Previous: 100}, "trend-down"},
+		{"neutral", TrendData{Current: 100, Previous: 100}, "trend-neutral"},
+		{"zero previous", TrendData{Current: 0, Previous: 0}, "trend-neutral"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := TrendClass(tt.td)
+			if got != tt.want {
+				t.Errorf("TrendClass() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTrendArrow(t *testing.T) {
+	tests := []struct {
+		name string
+		td   TrendData
+		want string
+	}{
+		{"up", TrendData{Current: 150, Previous: 100}, "↑"},
+		{"down", TrendData{Current: 50, Previous: 100}, "↓"},
+		{"neutral", TrendData{Current: 100, Previous: 100}, "="},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := TrendArrow(tt.td)
+			if got != tt.want {
+				t.Errorf("TrendArrow() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFormatTrend(t *testing.T) {
+	tests := []struct {
+		name string
+		td   TrendData
+		want string
+	}{
+		{"50 percent up", TrendData{Current: 150, Previous: 100}, "50%"},
+		{"50 percent down", TrendData{Current: 50, Previous: 100}, "50%"},
+		{"no change", TrendData{Current: 100, Previous: 100}, "0%"},
+		{"100 percent", TrendData{Current: 200, Previous: 100}, "100%"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := FormatTrend(tt.td)
+			if got != tt.want {
+				t.Errorf("FormatTrend() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRelativeTime(t *testing.T) {
+	now := time.Now()
+	tests := []struct {
+		name string
+		t    time.Time
+		want string
+	}{
+		{"just now", now.Add(-10 * time.Second), "только что"},
+		{"minutes ago", now.Add(-5 * time.Minute), "5 мин. назад"},
+		{"hours ago", now.Add(-3 * time.Hour), "3 ч. назад"},
+		{"yesterday", now.Add(-36 * time.Hour), "вчера"},
+		{"days ago", now.Add(-72 * time.Hour), "3 дн. назад"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := RelativeTime(tt.t)
+			if got != tt.want {
+				t.Errorf("RelativeTime() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTruncateText(t *testing.T) {
+	tests := []struct {
+		name   string
+		s      string
+		maxLen int
+		want   string
+	}{
+		{"short text", "Hello", 100, "Hello"},
+		{"exact length", "Hello", 5, "Hello"},
+		{"truncated", "Hello World!", 5, "Hello..."},
+		{"empty", "", 10, ""},
+		{"unicode", "Привет мир!", 6, "Привет..."},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := TruncateText(tt.s, tt.maxLen)
+			if got != tt.want {
+				t.Errorf("TruncateText(%q, %d) = %q, want %q", tt.s, tt.maxLen, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDashboardHandler_RendersClickableKPIs(t *testing.T) {
+	data := sampleDashboardData()
+	provider := &mockDashboardProvider{data: data}
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// KPI cards should be links
+	kpiLinks := []string{
+		`href="/admin-panel/info/users"`,       // Users KPI → users list
+		`href="/admin-panel/info/bathhouses"`,   // Bathhouses KPI → bathhouses list
+		`/admin-panel/pages/analytics?date_from`, // Bookings KPI → analytics
+	}
+	for _, link := range kpiLinks {
+		if !strings.Contains(body, link) {
+			t.Errorf("body missing KPI link %q", link)
+		}
+	}
+
+	// Status cards should be links to moderation
+	statusLinks := []string{
+		`href="/admin-panel/pages/moderation?entity=bathhouse`,
+		`href="/admin-panel/pages/moderation?status=pending"`,
+	}
+	for _, link := range statusLinks {
+		if !strings.Contains(body, link) {
+			t.Errorf("body missing status card link %q", link)
+		}
+	}
+}
+
+func TestDashboardHandler_RendersRevenueSubCards(t *testing.T) {
+	data := sampleDashboardData()
+	provider := &mockDashboardProvider{data: data}
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Revenue should be in 3 separate sub-cards
+	if !strings.Contains(body, "revenue-row") {
+		t.Error("body missing revenue-row container")
+	}
+	if !strings.Contains(body, "revenue-card") {
+		t.Error("body missing revenue-card elements")
+	}
+	// Each period should have its label
+	for _, label := range []string{"Сегодня", "За неделю", "За месяц"} {
+		if !strings.Contains(body, label) {
+			t.Errorf("body missing revenue label %q", label)
+		}
+	}
+}
+
+func TestDashboardHandler_RendersTrends(t *testing.T) {
+	data := sampleDashboardData()
+	// Set some trend data
+	data.KPI.UsersTrend = TrendData{Current: 20, Previous: 10}
+	data.KPI.BookingsTodayTrend = TrendData{Current: 12, Previous: 15}
+	data.KPI.RevenueTodayTrend = TrendData{Current: 1500000, Previous: 1500000}
+
+	provider := &mockDashboardProvider{data: data}
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Should contain trend classes
+	if !strings.Contains(body, "trend-up") {
+		t.Error("body missing trend-up class for growing KPI")
+	}
+	if !strings.Contains(body, "trend-down") {
+		t.Error("body missing trend-down class for declining KPI")
+	}
+	// Users trend: 100% growth
+	if !strings.Contains(body, "100%") {
+		t.Error("body missing 100% trend for users")
+	}
+}
+
+func TestDashboardHandler_RendersEmptyStates(t *testing.T) {
+	data := &DashboardData{
+		GeneratedAt: time.Now(),
+		// No bookings, reviews, or registrations
+	}
+	provider := &mockDashboardProvider{data: data}
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Each empty feed should show feed-empty with meaningful message
+	emptyChecks := []string{
+		"feed-empty",
+		"Нет бронирований за последнее время",
+		"Нет отзывов за последнее время",
+		"Нет новых регистраций за последнее время",
+	}
+	for _, c := range emptyChecks {
+		if !strings.Contains(body, c) {
+			t.Errorf("body missing empty-state element %q", c)
+		}
+	}
+}
+
+func TestDashboardHandler_RendersViewAllLinks(t *testing.T) {
+	data := sampleDashboardData()
+	provider := &mockDashboardProvider{data: data}
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	viewAllLinks := []string{
+		`/admin-panel/info/bookings`,
+		`/admin-panel/pages/moderation`,
+		`/admin-panel/info/users`,
+	}
+	for _, link := range viewAllLinks {
+		if !strings.Contains(body, link) {
+			t.Errorf("body missing view-all link %q", link)
+		}
+	}
+	if !strings.Contains(body, "view-all") {
+		t.Error("body missing view-all CSS class")
+	}
+}
+
+func TestDashboardHandler_RendersAutoRefresh(t *testing.T) {
+	data := sampleDashboardData()
+	provider := &mockDashboardProvider{data: data}
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	if !strings.Contains(body, "refresh-toggle") {
+		t.Error("body missing auto-refresh toggle button")
+	}
+	if !strings.Contains(body, "refresh-status") {
+		t.Error("body missing refresh status display")
+	}
+}
+
+func TestDashboardHandler_RendersReviewPreview(t *testing.T) {
+	data := sampleDashboardData()
+	data.Reviews = []RecentReview{
+		{
+			ID:            "r1",
+			UserName:      "Тест",
+			BathhouseName: "Баня",
+			Rating:        5,
+			Text:          "Очень длинный текст отзыва который должен быть обрезан до ста символов потому что полный текст не помещается в таблицу и выглядит плохо в интерфейсе",
+			Status:        "approved",
+			CreatedAt:     time.Now().Add(-1 * time.Hour),
+		},
+	}
+	provider := &mockDashboardProvider{data: data}
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// The preview should contain truncated text (100 chars + "...")
+	if !strings.Contains(body, "review-preview") {
+		t.Error("body missing review-preview class")
+	}
+	// The truncated version with "..." should appear in the visible cell text
+	if !strings.Contains(body, "...") {
+		t.Error("body missing truncation indicator '...'")
+	}
+	// Full text should still appear in the title attribute for tooltip
+	if !strings.Contains(body, "в интерфейсе") {
+		t.Error("body missing full review text in title attribute")
+	}
+}
+
+func TestDashboardHandler_UserNamesTruncated(t *testing.T) {
+	data := sampleDashboardData()
+	provider := &mockDashboardProvider{data: data}
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// User names in bookings and registrations should have text-truncate class
+	// Count occurrences of text-truncate - should be used for user names and bathhouse names
+	count := strings.Count(body, "text-truncate")
+	// We expect at least: 2 bookings * 2 (name+bathhouse) + 2 reviews * 2 + 1 registration = 9
+	if count < 7 {
+		t.Errorf("expected at least 7 text-truncate occurrences for names, got %d", count)
+	}
+}

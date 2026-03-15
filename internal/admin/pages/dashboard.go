@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -23,9 +24,29 @@ var dashboardFuncMap = template.FuncMap{
 		}
 		return strings.Repeat("★", n) + strings.Repeat("☆", 5-n)
 	},
+	"relativeTime": RelativeTime,
+	"truncateText": TruncateText,
+	"trendClass":   TrendClass,
+	"trendArrow":   TrendArrow,
+	"formatTrend":  FormatTrend,
 }
 
 var dashboardTmpl = ParsePageTemplate(dashboardFuncMap, "templates/dashboard.tmpl")
+
+// TrendData holds comparison data against a previous period.
+type TrendData struct {
+	Current  int64
+	Previous int64
+}
+
+// Percent returns the percentage change from Previous to Current.
+// Returns 0 if Previous is 0.
+func (t TrendData) Percent() float64 {
+	if t.Previous == 0 {
+		return 0
+	}
+	return float64(t.Current-t.Previous) / float64(t.Previous) * 100
+}
 
 // KPICards holds the main KPI metrics for the admin dashboard.
 type KPICards struct {
@@ -40,6 +61,14 @@ type KPICards struct {
 	RevenueToday int64
 	RevenueWeek  int64
 	RevenueMonth int64
+
+	// Trends: comparison with previous period.
+	UsersTrend         TrendData
+	BathhousesTrend    TrendData
+	BookingsTodayTrend TrendData
+	RevenueTodayTrend  TrendData
+	RevenueWeekTrend   TrendData
+	RevenueMonthTrend  TrendData
 }
 
 // StatusCards holds counts of items needing admin attention.
@@ -115,6 +144,9 @@ func (p *PostgresDashboardProvider) GetDashboardData(ctx context.Context) (*Dash
 	if err := p.loadKPIs(ctx, &data.KPI); err != nil {
 		return nil, err
 	}
+	if err := p.loadTrends(ctx, &data.KPI); err != nil {
+		return nil, err
+	}
 	if err := p.loadStatusCards(ctx, &data.Status); err != nil {
 		return nil, err
 	}
@@ -171,6 +203,100 @@ func (p *PostgresDashboardProvider) loadKPIs(ctx context.Context, kpi *KPICards)
 		p.log.Error("dashboard: bookings month", "error", err)
 		return err
 	}
+
+	return nil
+}
+
+func (p *PostgresDashboardProvider) loadTrends(ctx context.Context, kpi *KPICards) error {
+	now := time.Now()
+	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	yesterdayStart := todayStart.AddDate(0, 0, -1)
+
+	weekStart := todayStart.AddDate(0, 0, -int(now.Weekday()-time.Monday))
+	if now.Weekday() == time.Sunday {
+		weekStart = todayStart.AddDate(0, 0, -6)
+	}
+	prevWeekStart := weekStart.AddDate(0, 0, -7)
+
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	prevMonthStart := monthStart.AddDate(0, -1, 0)
+
+	// Users trend: registered this week vs previous week.
+	var usersThisWeek, usersPrevWeek int64
+	err := p.pool.QueryRow(ctx,
+		"SELECT COUNT(*) FROM users WHERE created_at >= $1", weekStart,
+	).Scan(&usersThisWeek)
+	if err != nil {
+		p.log.Error("dashboard: users trend this week", "error", err)
+		return err
+	}
+	err = p.pool.QueryRow(ctx,
+		"SELECT COUNT(*) FROM users WHERE created_at >= $1 AND created_at < $2",
+		prevWeekStart, weekStart,
+	).Scan(&usersPrevWeek)
+	if err != nil {
+		p.log.Error("dashboard: users trend prev week", "error", err)
+		return err
+	}
+	kpi.UsersTrend = TrendData{Current: usersThisWeek, Previous: usersPrevWeek}
+
+	// Bathhouses trend: new this week vs previous week.
+	var bhThisWeek, bhPrevWeek int64
+	err = p.pool.QueryRow(ctx,
+		"SELECT COUNT(*) FROM bathhouses WHERE created_at >= $1", weekStart,
+	).Scan(&bhThisWeek)
+	if err != nil {
+		p.log.Error("dashboard: bathhouses trend this week", "error", err)
+		return err
+	}
+	err = p.pool.QueryRow(ctx,
+		"SELECT COUNT(*) FROM bathhouses WHERE created_at >= $1 AND created_at < $2",
+		prevWeekStart, weekStart,
+	).Scan(&bhPrevWeek)
+	if err != nil {
+		p.log.Error("dashboard: bathhouses trend prev week", "error", err)
+		return err
+	}
+	kpi.BathhousesTrend = TrendData{Current: bhThisWeek, Previous: bhPrevWeek}
+
+	// Bookings today trend: today vs yesterday.
+	bookingCountQuery := "SELECT COUNT(*) FROM bookings WHERE created_at >= $1 AND created_at < $2"
+	revenueQuery := "SELECT COALESCE(SUM(total_price), 0) FROM bookings WHERE created_at >= $1 AND created_at < $2"
+
+	var bookingsYesterday int64
+	err = p.pool.QueryRow(ctx, bookingCountQuery, yesterdayStart, todayStart).Scan(&bookingsYesterday)
+	if err != nil {
+		p.log.Error("dashboard: bookings yesterday", "error", err)
+		return err
+	}
+	kpi.BookingsTodayTrend = TrendData{Current: kpi.BookingsToday, Previous: bookingsYesterday}
+
+	// Revenue today trend: today vs yesterday.
+	var revenueYesterday int64
+	err = p.pool.QueryRow(ctx, revenueQuery, yesterdayStart, todayStart).Scan(&revenueYesterday)
+	if err != nil {
+		p.log.Error("dashboard: revenue yesterday", "error", err)
+		return err
+	}
+	kpi.RevenueTodayTrend = TrendData{Current: kpi.RevenueToday, Previous: revenueYesterday}
+
+	// Revenue week trend: this week vs previous week.
+	var revenuePrevWeek int64
+	err = p.pool.QueryRow(ctx, revenueQuery, prevWeekStart, weekStart).Scan(&revenuePrevWeek)
+	if err != nil {
+		p.log.Error("dashboard: revenue prev week", "error", err)
+		return err
+	}
+	kpi.RevenueWeekTrend = TrendData{Current: kpi.RevenueWeek, Previous: revenuePrevWeek}
+
+	// Revenue month trend: this month vs previous month.
+	var revenuePrevMonth int64
+	err = p.pool.QueryRow(ctx, revenueQuery, prevMonthStart, monthStart).Scan(&revenuePrevMonth)
+	if err != nil {
+		p.log.Error("dashboard: revenue prev month", "error", err)
+		return err
+	}
+	kpi.RevenueMonthTrend = TrendData{Current: kpi.RevenueMonth, Previous: revenuePrevMonth}
 
 	return nil
 }
@@ -335,4 +461,69 @@ func FormatKopecksToRubles(kopecks int64) string {
 		return "-" + result
 	}
 	return result
+}
+
+// RelativeTime returns a human-readable Russian string for elapsed time.
+func RelativeTime(t time.Time) string {
+	d := time.Since(t)
+	switch {
+	case d < time.Minute:
+		return "только что"
+	case d < time.Hour:
+		m := int(d.Minutes())
+		return fmt.Sprintf("%d мин. назад", m)
+	case d < 24*time.Hour:
+		h := int(d.Hours())
+		return fmt.Sprintf("%d ч. назад", h)
+	default:
+		days := int(d.Hours() / 24)
+		if days == 1 {
+			return "вчера"
+		}
+		return fmt.Sprintf("%d дн. назад", days)
+	}
+}
+
+// TruncateText truncates text to maxLen characters and appends "..." if truncated.
+func TruncateText(s string, maxLen int) string {
+	runes := []rune(s)
+	if len(runes) <= maxLen {
+		return s
+	}
+	return string(runes[:maxLen]) + "..."
+}
+
+// TrendClass returns CSS class name based on trend direction.
+func TrendClass(t TrendData) string {
+	p := t.Percent()
+	switch {
+	case p > 0:
+		return "trend-up"
+	case p < 0:
+		return "trend-down"
+	default:
+		return "trend-neutral"
+	}
+}
+
+// TrendArrow returns an arrow indicator for the trend.
+func TrendArrow(t TrendData) string {
+	p := t.Percent()
+	switch {
+	case p > 0:
+		return "↑"
+	case p < 0:
+		return "↓"
+	default:
+		return "="
+	}
+}
+
+// FormatTrend returns the absolute percentage value as a formatted string.
+func FormatTrend(t TrendData) string {
+	p := math.Abs(t.Percent())
+	if p == 0 {
+		return "0%"
+	}
+	return fmt.Sprintf("%.0f%%", p)
 }
