@@ -267,6 +267,39 @@ func TestDashboardHandler_RendersBaseLayout(t *testing.T) {
 	}
 }
 
+func TestDashboardHandler_RendersLocalizedStatuses(t *testing.T) {
+	data := sampleDashboardData()
+	provider := &mockDashboardProvider{data: data}
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Booking statuses should be in Russian
+	ruStatuses := []string{
+		"Подтверждено", // confirmed
+		"Ожидает",      // pending
+		"Одобрено",     // approved (review)
+	}
+	for _, s := range ruStatuses {
+		if !strings.Contains(body, s) {
+			t.Errorf("body missing localized status %q", s)
+		}
+	}
+
+	// English statuses should NOT appear as badge text (they still appear as CSS classes)
+	// We check that "badge confirmed">confirmed doesn't appear (it should be "badge confirmed">Подтверждено)
+	if strings.Contains(body, `confirmed">confirmed`) {
+		t.Error("found non-localized 'confirmed' status in badge text")
+	}
+	if strings.Contains(body, `pending">pending`) {
+		t.Error("found non-localized 'pending' status in badge text")
+	}
+}
+
 func TestFormatKopecksToRubles(t *testing.T) {
 	tests := []struct {
 		input int64

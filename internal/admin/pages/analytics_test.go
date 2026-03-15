@@ -288,3 +288,40 @@ func TestAnalyticsHandler_RendersBaseLayout(t *testing.T) {
 		}
 	}
 }
+
+func TestAnalyticsHandler_XSSEscapedInChartData(t *testing.T) {
+	data := sampleAnalyticsData()
+	// Inject XSS payload into bathhouse names
+	data.TopByBookings = []RankedItem{
+		{Name: `Баня "Огонь & Пар" <script>alert(1)</script>`, Value: 10},
+	}
+	data.TopByRevenue = []RankedItem{
+		{Name: `Test"; alert(document.cookie); "`, Value: 5000},
+	}
+	provider := &mockAnalyticsProvider{data: data}
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Raw XSS payloads must NOT appear in the output
+	// html/template automatically escapes in JS string context
+	if strings.Contains(body, `<script>alert(1)</script>`) {
+		t.Error("XSS: unescaped <script> tag found in chart data")
+	}
+	if strings.Contains(body, `"; alert(document.cookie); "`) {
+		t.Error("XSS: unescaped JS injection found in chart data")
+	}
+
+	// html/template uses \u003c escaping for < in JS string context
+	if !strings.Contains(body, `\u003cscript\u003e`) {
+		t.Error("expected html/template JS-escaped <script> (\\u003c format) in chart data")
+	}
+	// html/template uses \u0022 for " in JS string context
+	if !strings.Contains(body, `\u0022`) {
+		t.Error("expected html/template JS-escaped double quote (\\u0022) in chart data")
+	}
+}

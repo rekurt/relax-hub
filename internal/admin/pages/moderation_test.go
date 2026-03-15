@@ -450,3 +450,41 @@ func TestModerationHandler_RendersBaseLayout(t *testing.T) {
 		}
 	}
 }
+
+func TestModerationHandler_RendersLocalizedStatuses(t *testing.T) {
+	data := sampleModerationData()
+	// First review is "pending", second is "rejected"
+	provider := &mockModerationProvider{data: data}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation?status=all", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Localized statuses should appear in badges
+	if !strings.Contains(body, "Ожидает") {
+		t.Error("body missing localized status 'Ожидает' for pending")
+	}
+	if !strings.Contains(body, "Отклонено") {
+		t.Error("body missing localized status 'Отклонено' for rejected")
+	}
+}
+
+func TestModerationHandler_PagesPrefixEscapedInJS(t *testing.T) {
+	data := sampleModerationData()
+	provider := &mockModerationProvider{data: data}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// html/template escapes "/" to "\/" in JS string context, which is valid JS
+	if !strings.Contains(body, `const pagesPrefix = "\/admin-panel\/pages"`) {
+		t.Error("body missing pagesPrefix JS constant (with html/template \\/ escaping)")
+	}
+}

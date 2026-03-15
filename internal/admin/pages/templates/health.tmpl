@@ -8,10 +8,12 @@
     .service-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #ccc; }
     .service-card.up { border-left-color: #27ae60; }
     .service-card.down { border-left-color: #e74c3c; }
+    .service-card.unconfigured { border-left-color: #95a5a6; }
     .service-card .name { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
     .service-card .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
     .service-card .status-badge.up { background: #d4edda; color: #155724; }
     .service-card .status-badge.down { background: #f8d7da; color: #721c24; }
+    .service-card .status-badge.unconfigured { background: #e2e3e5; color: #383d41; }
     .service-card .latency { font-size: 13px; color: #888; margin-top: 6px; }
     .service-card .error-msg { font-size: 12px; color: #e74c3c; margin-top: 6px; word-break: break-all; }
 
@@ -43,9 +45,9 @@
     {{range .Services}}
     <div class="service-card {{.Status}}">
         <div class="name">{{.Name}}</div>
-        <span class="status-badge {{.Status}}">{{if eq .Status "up"}}Работает{{else}}Недоступен{{end}}</span>
+        <span class="status-badge {{.Status}}">{{if eq .Status "up"}}Работает{{else if eq .Status "unconfigured"}}Не настроен{{else}}Недоступен{{end}}</span>
         <div class="latency">Время ответа: {{.Latency}}</div>
-        {{if .Error}}<div class="error-msg">Сервис недоступен</div>{{end}}
+        {{if .Error}}<div class="error-msg"><details><summary>Ошибка</summary>{{.Error}}</details></div>{{end}}
     </div>
     {{end}}
 </div>

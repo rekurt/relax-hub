@@ -89,21 +89,21 @@ Redis в статусе "unconfigured" отображается как "Недо
 - Modify: `internal/admin/pages/analytics.go`
 - Modify: `internal/admin/pages/health.go`
 
-- [ ] Создать template function `statusRu` для маппинга статусов EN→RU:
+- [x] Создать template function `statusRu` для маппинга статусов EN→RU:
     pending→"Ожидает", confirmed→"Подтверждено", approved→"Одобрено", rejected→"Отклонено",
     cancelled→"Отменено", completed→"Завершено", hidden→"Скрыто"
-- [ ] Применить `statusRu` ко всем бейджам статусов на dashboard и moderation
-- [ ] Исправить XSS в analytics: экранировать `.Name` в chart.js данных через template
+- [x] Применить `statusRu` ко всем бейджам статусов на dashboard и moderation
+- [x] Исправить XSS в analytics: экранировать `.Name` в chart.js данных через template
     function `jsEscape` (заменить `"`, `\`, `<`, `>` и т.д.)
-- [ ] Исправить health page: добавить третье состояние "unconfigured" для Redis -
+- [x] Исправить health page: добавить третье состояние "unconfigured" для Redis -
     показывать "Не настроен" (серый бейдж) вместо "Недоступен" (красный)
-- [ ] Показывать реальное сообщение об ошибке в health page service cards вместо
+- [x] Показывать реальное сообщение об ошибке в health page service cards вместо
     generic "Сервис недоступен" - отображать `{{.Error}}` в collapsed блоке
-- [ ] Исправить экранирование `pagesPrefix` в JS на moderation page (использовать
+- [x] Исправить экранирование `pagesPrefix` в JS на moderation page (использовать
     template function для безопасной вставки в JS строку)
-- [ ] Write tests: проверить маппинг всех статусов, XSS экранирование для спецсимволов
+- [x] Write tests: проверить маппинг всех статусов, XSS экранирование для спецсимволов
     в названиях бань, корректное отображение 3 состояний Redis
-- [ ] Run project test suite - must pass before task 3
+- [x] Run project test suite - must pass before task 3
 
 ### Task 3: Moderation - inline AJAX без перезагрузки страницы
 

@@ -143,14 +143,72 @@ func TestHealthHandler_RendersDownServices(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	body := rec.Body.String()
-	checks := []string{
-		"Недоступен",
-		"Сервис недоступен",
+	if !strings.Contains(body, "Недоступен") {
+		t.Error("body missing 'Недоступен' badge for down service")
 	}
-	for _, c := range checks {
-		if !strings.Contains(body, c) {
-			t.Errorf("body missing expected value %q", c)
-		}
+	// Real error message should be shown in collapsed details
+	if !strings.Contains(body, "connection refused") {
+		t.Error("body missing real error message 'connection refused'")
+	}
+}
+
+func TestHealthHandler_RendersUnconfiguredRedis(t *testing.T) {
+	data := &HealthData{
+		Services: []ServiceStatus{
+			{Name: "PostgreSQL", Status: "up", Latency: time.Millisecond},
+			{Name: "Redis", Status: "unconfigured"},
+		},
+		GeneratedAt: time.Now(),
+	}
+	provider := &mockHealthProvider{data: data}
+	handler := NewHealthHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Should show "Не настроен" instead of "Недоступен"
+	if !strings.Contains(body, "Не настроен") {
+		t.Error("body missing 'Не настроен' badge for unconfigured service")
+	}
+
+	// Should have unconfigured CSS class
+	if !strings.Contains(body, "unconfigured") {
+		t.Error("body missing 'unconfigured' CSS class")
+	}
+
+	// Should NOT show "Недоступен" for unconfigured service
+	// (Работает is for PostgreSQL, Не настроен is for Redis)
+	// Count occurrences of "Недоступен" - should be 0
+	if strings.Count(body, "Недоступен") > 0 {
+		t.Error("unconfigured Redis should not show 'Недоступен'")
+	}
+}
+
+func TestHealthHandler_ShowsRealErrorMessage(t *testing.T) {
+	data := &HealthData{
+		Services: []ServiceStatus{
+			{Name: "PostgreSQL", Status: "down", Error: "dial tcp 127.0.0.1:5432: connect: connection refused"},
+		},
+		GeneratedAt: time.Now(),
+	}
+	provider := &mockHealthProvider{data: data}
+	handler := NewHealthHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Real error should be present (in a details/summary block)
+	if !strings.Contains(body, "dial tcp 127.0.0.1:5432") {
+		t.Error("body missing real error message")
+	}
+	if !strings.Contains(body, "<details>") {
+		t.Error("expected error to be in a collapsible details element")
 	}
 }
 

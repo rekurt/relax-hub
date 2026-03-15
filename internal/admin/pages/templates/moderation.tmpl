@@ -155,7 +155,7 @@
                 </div>
             </div>
             <div class="review-actions">
-                <span class="badge {{.Status}}">{{.Status}}</span>
+                <span class="badge {{.Status}}">{{statusRu .Status}}</span>
                 {{if eq .Status "pending"}}
                 <button class="btn btn-success btn-sm" onclick="approveReview('{{.ID}}')">Одобрить</button>
                 <button class="btn btn-danger btn-sm" onclick="openRejectModal('{{.ID}}')">Отклонить</button>
