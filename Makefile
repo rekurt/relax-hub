@@ -1,4 +1,4 @@
-.PHONY: build run test test-hurl lint vet migrate-up migrate-down docker-up docker-down seed-admin clean swagger swagger-fmt
+.PHONY: build run test test-hurl lint vet migrate-up migrate-down docker-up docker-down seed-admin clean swagger swagger-fmt frontend-dev frontend-build frontend-generate-api frontend-test
 
 APP_NAME := bani-server
 BUILD_DIR := ./bin
@@ -51,3 +51,15 @@ swagger:
 
 swagger-fmt:
 	swag fmt -g cmd/server/docs.go
+
+frontend-dev:
+	cd frontend && npm run dev
+
+frontend-build:
+	cd frontend && npm run build
+
+frontend-generate-api:
+	cd frontend && npm run generate:api
+
+frontend-test:
+	cd frontend && npx vitest run
