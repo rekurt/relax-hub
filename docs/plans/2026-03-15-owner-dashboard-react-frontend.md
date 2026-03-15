@@ -75,12 +75,12 @@ React SPA для владельцев бань: управление баням�
 - Create: `frontend/src/pages/Register.tsx`
 - Create: `frontend/src/components/ProtectedRoute.tsx`
 
-- [ ] Создать zustand store для auth: user, token, login(), logout(), isAuthenticated
-- [ ] При инициализации проверять JWT в localStorage, загружать профиль через GET /auth/me
-- [ ] Страница Login: форма email + password, вызов POST /auth/login, сохранение JWT
-- [ ] Страница Register: форма с role=owner, email, password, name, phone
-- [ ] ProtectedRoute: редирект на /login если не авторизован, проверка роли owner/representative
-- [ ] Обработка ошибок авторизации: показ antd message при неверных данных
+- [x] Создать zustand store для auth: user, token, login(), logout(), isAuthenticated
+- [x] При инициализации проверять JWT в localStorage, загружать профиль через GET /auth/me
+- [x] Страница Login: форма email + password, вызов POST /auth/login, сохранение JWT
+- [x] Страница Register: форма с role=owner, email, password, name, phone
+- [x] ProtectedRoute: редирект на /login если не авторизован, проверка роли owner/representative
+- [x] Обработка ошибок авторизации: показ antd message при неверных данных
 
 ### Task 4: Layout и навигация
 
