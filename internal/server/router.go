@@ -69,10 +69,12 @@ func NewRouter(p RouterParams) http.Handler {
 	r.Get("/sitemap.xml", p.SitemapHandler.Sitemap)
 	r.Get("/calendar/{token}.ics", p.CalendarHandler.ExportICalByToken)
 
-	// Swagger UI
-	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/doc.json"),
-	))
+	// Swagger UI (disabled in production)
+	if middleware.IsDevEnvironment(p.Config.Environment) {
+		r.Get("/swagger/*", httpSwagger.Handler(
+			httpSwagger.URL("/swagger/doc.json"),
+		))
+	}
 
 	auth := middleware.RequireAuth(p.AuthService)
 	optionalAuth := middleware.OptionalAuth(p.AuthService)

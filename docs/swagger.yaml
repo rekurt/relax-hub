@@ -5010,45 +5010,6 @@ paths:
       summary: Reject booking
       tags:
       - bookings
-  /calendar/{token}.ics:
-    get:
-      description: 'Exports bathhouse bookings as an iCalendar (.ics) file using a
-        shareable token. No authentication required. Note: actual URL is /calendar/{token}.ics
-        (without /api/v1 prefix).'
-      parameters:
-      - description: Calendar token
-        in: path
-        name: token
-        required: true
-        type: string
-      produces:
-      - text/calendar
-      responses:
-        "200":
-          description: ICS file content
-          schema:
-            type: string
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-        "404":
-          description: Not Found
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-      summary: Export calendar by token
-      tags:
-      - calendar
   /certificates/{code}/balance:
     get:
       description: Returns the balance and status of a gift certificate by its code

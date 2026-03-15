@@ -54,16 +54,8 @@ func (h *CalendarHandler) ExportICal(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte(ical))
 }
 
-// ExportICalByToken godoc
-// @Summary      Export calendar by token
-// @Description  Exports bathhouse bookings as an iCalendar (.ics) file using a shareable token. No authentication required. Note: actual URL is /calendar/{token}.ics (without /api/v1 prefix).
-// @Tags         calendar
-// @Produce      text/calendar
-// @Param        token  path      string  true  "Calendar token"
-// @Success      200    {string}  string  "ICS file content"
-// @Failure      400    {object}  APIResponse{error=APIError}
-// @Failure      404    {object}  APIResponse{error=APIError}
-// @Router       /calendar/{token}.ics [get]
+// ExportICalByToken exports bathhouse bookings as an iCalendar (.ics) file using a shareable token.
+// No authentication required. URL: GET /calendar/{token}.ics (outside /api/v1 prefix, not in OpenAPI spec).
 func (h *CalendarHandler) ExportICalByToken(w http.ResponseWriter, r *http.Request) {
 	token := chi.URLParam(r, "token")
 	if token == "" {
