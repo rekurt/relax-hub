@@ -37,6 +37,7 @@ import CertificatePurchase from '@/pages/client/CertificatePurchase'
 import PaymentHistory from '@/pages/client/PaymentHistory'
 import ClientProfile from '@/pages/client/ClientProfile'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
+import UserManagement from '@/pages/admin/UserManagement'
 
 export default function AppRouter() {
   return (
@@ -108,6 +109,7 @@ export default function AppRouter() {
         }
       >
         <Route index element={<AdminDashboard />} />
+        <Route path="users" element={<UserManagement />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

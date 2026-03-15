@@ -162,11 +162,11 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 - Create: `frontend/src/pages/admin/AdminDashboard.tsx`
 - Create: `frontend/src/pages/admin/UserManagement.tsx`
 
-- [ ] Admin dashboard: KPI analytics (bookings, revenue, users, bathhouses), top bathhouses table
-- [ ] User management: searchable user table, block/unblock actions with confirmation
-- [ ] API hooks: `useGetAdminAnalytics`, `useGetAdminAnalyticsTop`, `useGetAdminUsers`, `usePatchAdminUsersIdBlock`, `usePatchAdminUsersIdUnblock`
-- [ ] Write tests for analytics display, user block/unblock flow
-- [ ] Run project test suite - must pass before task 12
+- [x] Admin dashboard: KPI analytics (bookings, revenue, users, bathhouses), top bathhouses table
+- [x] User management: searchable user table, block/unblock actions with confirmation
+- [x] API hooks: `useGetAdminAnalytics`, `useGetAdminAnalyticsTop`, `useGetAdminUsers`, `usePatchAdminUsersIdBlock`, `usePatchAdminUsersIdUnblock`
+- [x] Write tests for analytics display, user block/unblock flow
+- [x] Run project test suite - must pass before task 12
 
 ### Task 12: Admin - Bathhouse moderation
 
