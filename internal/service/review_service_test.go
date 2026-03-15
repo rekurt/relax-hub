@@ -33,7 +33,7 @@ func newReviewTestEnv() *reviewTestEnv {
 	// ContentFilter with moderation disabled (so reviews default to pending)
 	contentFilter := moderation.NewContentFilter(false, false)
 	mediaRepo := mock.NewMediaRepo()
-	noopStore := storage.NewNoopStorage(log)
+	noopStore := storage.NewMockStorage()
 	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
 	return &reviewTestEnv{
 		svc:         svc,
@@ -439,7 +439,7 @@ func TestReviewService_Create_WithModeration_CleanText(t *testing.T) {
 	// ContentFilter with moderation enabled and auto-approve enabled
 	contentFilter := moderation.NewContentFilter(true, true)
 	mediaRepo := mock.NewMediaRepo()
-	noopStore := storage.NewNoopStorage(log)
+	noopStore := storage.NewMockStorage()
 	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
 
 	clientID := uuid.New()
@@ -470,7 +470,7 @@ func TestReviewService_Create_WithModeration_AutoRejectProfanity(t *testing.T) {
 	// ContentFilter with moderation enabled but auto-approve disabled
 	contentFilter := moderation.NewContentFilter(true, false)
 	mediaRepo := mock.NewMediaRepo()
-	noopStore := storage.NewNoopStorage(log)
+	noopStore := storage.NewMockStorage()
 	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
 
 	clientID := uuid.New()
@@ -504,7 +504,7 @@ func TestReviewService_Create_WithModeration_PendingCleanText(t *testing.T) {
 	// ContentFilter with moderation enabled but auto-approve disabled
 	contentFilter := moderation.NewContentFilter(true, false)
 	mediaRepo := mock.NewMediaRepo()
-	noopStore := storage.NewNoopStorage(log)
+	noopStore := storage.NewMockStorage()
 	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
 
 	clientID := uuid.New()

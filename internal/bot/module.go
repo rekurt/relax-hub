@@ -9,16 +9,11 @@ import (
 
 var Module = fx.Module("bot",
 	fx.Provide(
-		ProvideBotConfig,
+		func(cfg *config.Config) *config.TelegramConfig { return &cfg.Telegram },
 		NewBot,
 		ProvideTelegramSender,
 	),
 )
-
-// ProvideBotConfig extracts telegram config and provides it for the bot
-func ProvideBotConfig(cfg *config.Config) *config.TelegramConfig {
-	return &cfg.Telegram
-}
 
 // ProvideTelegramSender creates a TelegramSender from the Bot's API client
 func ProvideTelegramSender(b *Bot, log *logger.Logger) notification.TelegramSender {

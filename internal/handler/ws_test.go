@@ -27,11 +27,29 @@ func (m *mockWSAuthService) ParseToken(ctx context.Context, token string) (uuid.
 	return uuid.Nil, "", domain.ErrUnauthorized
 }
 
-type mockConvAccessChecker struct {
+type mockChatServiceForWS struct {
 	canAccessFn func(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) bool
 }
 
-func (m *mockConvAccessChecker) CanAccessConversation(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) bool {
+func (m *mockChatServiceForWS) StartConversation(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ *uuid.UUID) (*domain.Conversation, error) {
+	return nil, nil
+}
+func (m *mockChatServiceForWS) SendMessage(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID, _ string) (*domain.Message, error) {
+	return nil, nil
+}
+func (m *mockChatServiceForWS) ListConversations(_ context.Context, _ uuid.UUID, _ domain.UserRole, _, _ int) (*domain.PaginatedResult[domain.Conversation], error) {
+	return nil, nil
+}
+func (m *mockChatServiceForWS) ListMessages(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Message], error) {
+	return nil, nil
+}
+func (m *mockChatServiceForWS) MarkAsRead(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockChatServiceForWS) GetUnreadCount(_ context.Context, _ uuid.UUID, _ domain.UserRole) (int64, error) {
+	return 0, nil
+}
+func (m *mockChatServiceForWS) CanAccessConversation(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) bool {
 	if m.canAccessFn != nil {
 		return m.canAccessFn(ctx, userID, role, conversationID)
 	}
@@ -42,7 +60,7 @@ func TestWSHandler_MissingToken(t *testing.T) {
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
 	auth := &mockWSAuthService{}
-	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/ws/notifications", nil)
 	w := httptest.NewRecorder()
@@ -61,7 +79,7 @@ func TestWSHandler_InvalidToken(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/ws/notifications?token=invalid", nil)
 	w := httptest.NewRecorder()
@@ -85,7 +103,7 @@ func TestWSHandler_ValidConnection(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
 
 	server := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer server.Close()
@@ -146,7 +164,7 @@ func TestWSHandler_DisconnectCleansUp(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
 
 	server := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer server.Close()
@@ -185,7 +203,7 @@ func TestWSHandler_ChatSubscribe(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
 
 	srv := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer srv.Close()
@@ -250,7 +268,7 @@ func TestWSHandler_ChatTypingIndicator(t *testing.T) {
 			return uuid.Nil, "", domain.ErrUnauthorized
 		},
 	}
-	h := handler.NewWSHandler(hub, auth, &mockConvAccessChecker{}, log)
+	h := handler.NewWSHandler(hub, auth, &mockChatServiceForWS{}, log)
 
 	srv := httptest.NewServer(http.HandlerFunc(h.HandleWS))
 	defer srv.Close()

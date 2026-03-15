@@ -98,55 +98,55 @@ The codebase has accumulated multiple layers of abstraction that add indirection
 
 `CanViewBathhouseBookings()` in `access.go` is a 1-line pass-through to `CanManageBathhouse()`. Zero additional logic.
 
-- [ ] Find all callers of `CanViewBathhouseBookings` across the codebase
-- [ ] Replace every call with `CanManageBathhouse`
-- [ ] Delete `CanViewBathhouseBookings` method from AccessChecker
-- [ ] Remove from AccessChecker interface definition if present
-- [ ] Run tests to verify
+- [x] Find all callers of `CanViewBathhouseBookings` across the codebase
+- [x] Replace every call with `CanManageBathhouse`
+- [x] Delete `CanViewBathhouseBookings` method from AccessChecker
+- [x] Remove from AccessChecker interface definition if present
+- [x] Run tests to verify
 
 #### 5.2: Remove `ConversationAccessChecker` wrapper interface
 
 `ConversationAccessChecker` in `handler/ws.go` is a single-method interface that wraps `ChatService.CanAccessConversation()`. An adapter in `app.go` (`func(svc service.ChatService) handler.ConversationAccessChecker { return svc }`) exists solely to bridge this.
 
-- [ ] Change `WSHandler` to depend on `service.ChatService` directly instead of `ConversationAccessChecker`
-- [ ] Update WSHandler constructor and all call sites from `checker.CanAccessConversation(...)` to `chatService.CanAccessConversation(...)`
-- [ ] Delete the `ConversationAccessChecker` interface definition from `handler/ws.go`
-- [ ] Remove the adapter function from `internal/app/app.go`
-- [ ] Update DI module to inject ChatService into WSHandler
-- [ ] Run tests to verify
+- [x] Change `WSHandler` to depend on `service.ChatService` directly instead of `ConversationAccessChecker`
+- [x] Update WSHandler constructor and all call sites from `checker.CanAccessConversation(...)` to `chatService.CanAccessConversation(...)`
+- [x] Delete the `ConversationAccessChecker` interface definition from `handler/ws.go`
+- [x] Remove the adapter function from `internal/app/app.go`
+- [x] Update DI module to inject ChatService into WSHandler
+- [x] Run tests to verify
 
 #### 5.3: Remove `ChatBroadcaster` wrapper interface
 
 `ChatBroadcaster` in `service/chat_service.go` wraps 2 methods from `notification.Hub` (`BroadcastNewMessage`, `BroadcastMessageRead`). An adapter in `app.go` (`func(hub *notification.Hub) service.ChatBroadcaster { return hub }`) exists to bridge this.
 
-- [ ] Change `ChatService` to depend on `*notification.Hub` directly instead of `ChatBroadcaster`
-- [ ] Update ChatService constructor signature and field type
-- [ ] Delete the `ChatBroadcaster` interface definition from `chat_service.go`
-- [ ] Remove the adapter function from `internal/app/app.go`
-- [ ] Remove `noopChatBroadcaster` test struct from `chat_service_test.go` and replace with a nil Hub or a test Hub instance
-- [ ] Update DI module
-- [ ] Run tests to verify
+- [x] Change `ChatService` to depend on `*notification.Hub` directly instead of `ChatBroadcaster`
+- [x] Update ChatService constructor signature and field type
+- [x] Delete the `ChatBroadcaster` interface definition from `chat_service.go`
+- [x] Remove the adapter function from `internal/app/app.go`
+- [x] Remove `noopChatBroadcaster` test struct from `chat_service_test.go` and replace with a nil Hub or a test Hub instance
+- [x] Update DI module
+- [x] Run tests to verify
 
 #### 5.4: Remove noop implementations for optional features
 
 4 noop structs exist: `NoopTelegramSender`, `NoopEmailSender`, `NoopPushSender`, `NoopStorage`. These are used to satisfy DI when features are disabled but add boilerplate. Replace with nil-safe patterns.
 
-- [ ] Add nil-receiver guards to TelegramSender, EmailSender, PushSender, Storage method calls (e.g., `if s == nil { return nil }`)
-- [ ] Remove `NoopTelegramSender` from `notification/module.go`
-- [ ] Remove `NoopEmailSender` from `notification/email.go`
-- [ ] Remove `NoopPushSender` from `notification/push.go`
-- [ ] Remove `NoopStorage` from `storage/noop.go`
-- [ ] Update DI modules to provide `nil` when feature is disabled instead of noop struct
-- [ ] Run tests to verify
+- [x] Add nil-receiver guards to TelegramSender, EmailSender, PushSender, Storage method calls (e.g., `if s == nil { return nil }`)
+- [x] Remove `NoopTelegramSender` from `notification/module.go`
+- [x] Remove `NoopEmailSender` from `notification/email.go`
+- [x] Remove `NoopPushSender` from `notification/push.go`
+- [x] Remove `NoopStorage` from `storage/noop.go`
+- [x] Update DI modules to provide `nil` when feature is disabled instead of noop struct
+- [x] Run tests to verify
 
 #### 5.5: Simplify `ProvideBotConfig` factory function
 
 `ProvideBotConfig()` in `bot/module.go` is a 1-line field extraction: `return &cfg.Telegram`. This adds unnecessary indirection.
 
-- [ ] Inline config access where bot config is needed, or use `fx.Supply` with direct field extraction
-- [ ] Remove `ProvideBotConfig` function
-- [ ] Update bot module DI wiring
-- [ ] Run tests to verify
+- [x] Inline config access where bot config is needed, or use `fx.Supply` with direct field extraction
+- [x] Remove `ProvideBotConfig` function
+- [x] Update bot module DI wiring
+- [x] Run tests to verify
 
 #### 5.6: Remove pure pass-through service methods
 
@@ -155,11 +155,11 @@ Several service methods add zero business logic and just forward to repository:
 - `CityService.GetAll()`, `CityService.GetBySlug()`, `CityService.Delete()` -> direct repo calls
 - `SubscriptionService.GetActive()`, `SubscriptionService.ListByOwner()` -> direct repo calls
 
-- [ ] Audit each pass-through method to confirm it has no business logic, no access checks, no logging
-- [ ] For confirmed pass-throughs: remove the service method and have the handler call the service's other methods or restructure so the repo call is part of a meaningful service method
-- [ ] Note: do NOT remove service methods that perform access checks or validation, even if they look simple
-- [ ] Run tests to verify
-- [ ] Final: run full test suite after all sub-tasks to confirm nothing is broken
+- [x] Audit each pass-through method to confirm it has no business logic, no access checks, no logging
+- [x] For confirmed pass-throughs: remove the service method and have the handler call the service's other methods or restructure so the repo call is part of a meaningful service method
+- [x] Note: do NOT remove service methods that perform access checks or validation, even if they look simple
+- [x] Run tests to verify
+- [x] Final: run full test suite after all sub-tasks to confirm nothing is broken
 
 ### Task 6: Fix handler-to-repo bypasses
 

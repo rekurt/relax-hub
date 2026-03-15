@@ -239,6 +239,9 @@ func randomSegment(chars []byte, max *big.Int, length int) (string, error) {
 }
 
 func (s *certificateService) sendCertificateEmail(ctx context.Context, cert *domain.GiftCertificate) {
+	if s.emailSender == nil {
+		return
+	}
 	amountRub := float64(cert.Amount) / 100
 	// Email to recipient
 	recipientSubject := "Вам подарили сертификат Bani!"

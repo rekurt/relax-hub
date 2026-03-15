@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/nikitaaldaev/bani/internal/notification"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -21,12 +22,6 @@ type chatTestEnv struct {
 	repRepo  *mock.RepresentativeRepo
 }
 
-// noopChatBroadcaster is a no-op ChatBroadcaster for tests.
-type noopChatBroadcaster struct{}
-
-func (n *noopChatBroadcaster) BroadcastNewMessage(_ uuid.UUID, _ *domain.Message)  {}
-func (n *noopChatBroadcaster) BroadcastMessageRead(_ uuid.UUID, _ uuid.UUID)        {}
-
 func newChatTestEnv() *chatTestEnv {
 	convRepo := mock.NewConversationRepo()
 	msgRepo := mock.NewMessageRepo(convRepo)
@@ -34,7 +29,8 @@ func newChatTestEnv() *chatTestEnv {
 	repRepo := mock.NewRepresentativeRepo()
 	ac := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewChatService(convRepo, msgRepo, bhRepo, repRepo, ac, &noopNotifService{}, &noopChatBroadcaster{}, log)
+	hub := notification.NewHub(log)
+	svc := service.NewChatService(convRepo, msgRepo, bhRepo, repRepo, ac, &noopNotifService{}, hub, log)
 	return &chatTestEnv{
 		svc:      svc,
 		convRepo: convRepo,

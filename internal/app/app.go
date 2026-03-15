@@ -38,10 +38,8 @@ func New(cfg *config.Config) *fx.App {
 		admin.ProvideConditionalModule(cfg),
 		// Cross-package interface bindings
 		fx.Provide(
-			func(hub *notification.Hub) service.ChatBroadcaster { return hub },
-			func(svc service.ChatService) handler.ConversationAccessChecker { return svc },
-			// TelegramSender: noop by default, override with bot.Module when configured
-			func() notification.TelegramSender { return notification.NewNoopTelegramSender() },
+			// TelegramSender: nil by default, override with bot.Module when configured
+			func() notification.TelegramSender { return nil },
 			calendar.NewCalendarSyncService,
 		),
 	)

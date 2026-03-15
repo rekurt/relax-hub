@@ -48,6 +48,9 @@ func NewS3Storage(cfg *config.Config, log *logger.Logger) (*S3Storage, error) {
 }
 
 func (s *S3Storage) Upload(ctx context.Context, filename string, data io.Reader, contentType string) (string, error) {
+	if s == nil {
+		return "", nil
+	}
 	buf, err := io.ReadAll(data)
 	if err != nil {
 		return "", fmt.Errorf("read data: %w", err)
@@ -65,6 +68,9 @@ func (s *S3Storage) Upload(ctx context.Context, filename string, data io.Reader,
 }
 
 func (s *S3Storage) Delete(ctx context.Context, filename string) error {
+	if s == nil {
+		return nil
+	}
 	err := s.client.RemoveObject(ctx, s.bucket, filename, minio.RemoveObjectOptions{})
 	if err != nil {
 		return fmt.Errorf("delete from s3: %w", err)

@@ -12,6 +12,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/notification"
+	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 const (
@@ -73,26 +74,21 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// ConversationAccessChecker checks if a user can access a conversation.
-type ConversationAccessChecker interface {
-	CanAccessConversation(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) bool
-}
-
 // WSHandler handles WebSocket connections for real-time notifications.
 type WSHandler struct {
-	hub            *notification.Hub
-	authService    middleware.AuthService
-	convAccessCheck ConversationAccessChecker
-	logger         *logger.Logger
+	hub         *notification.Hub
+	authService middleware.AuthService
+	chatService service.ChatService
+	logger      *logger.Logger
 }
 
 // NewWSHandler creates a new WebSocket handler.
-func NewWSHandler(hub *notification.Hub, authService middleware.AuthService, convAccessCheck ConversationAccessChecker, log *logger.Logger) *WSHandler {
+func NewWSHandler(hub *notification.Hub, authService middleware.AuthService, chatService service.ChatService, log *logger.Logger) *WSHandler {
 	return &WSHandler{
-		hub:            hub,
-		authService:    authService,
-		convAccessCheck: convAccessCheck,
-		logger:         log,
+		hub:         hub,
+		authService: authService,
+		chatService: chatService,
+		logger:      log,
 	}
 }
 
@@ -181,7 +177,7 @@ func (h *WSHandler) handleClientMessage(client *notification.Client, raw []byte)
 	case notification.ChatActionSubscribe:
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if !h.convAccessCheck.CanAccessConversation(ctx, client.UserID, domain.UserRole(client.Role), convID) {
+		if !h.chatService.CanAccessConversation(ctx, client.UserID, domain.UserRole(client.Role), convID) {
 			h.logger.Warn("ws unauthorized conversation subscribe attempt", "user_id", client.UserID, "conversation_id", convID)
 			return
 		}

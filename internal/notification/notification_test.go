@@ -31,7 +31,7 @@ func TestDispatcher_Dispatch_AllChannelsEnabled(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -76,7 +76,7 @@ func TestDispatcher_Dispatch_InAppOnly(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -113,7 +113,7 @@ func TestDispatcher_Dispatch_UserOptedOutOfEventType(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -150,7 +150,7 @@ func TestDispatcher_Dispatch_EmailWithoutAddress(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, notification.NewNoopTelegramSender(), mock.NewTelegramLinkRepo(), nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -178,22 +178,6 @@ func TestDispatcher_Dispatch_EmailWithoutAddress(t *testing.T) {
 
 	if len(emailSender.calls) != 0 {
 		t.Errorf("email calls = %d, want 0 (no email address)", len(emailSender.calls))
-	}
-}
-
-func TestNoopEmailSender_Send(t *testing.T) {
-	sender := notification.NewNoopEmailSender()
-	err := sender.Send(context.Background(), "test@example.com", "Subject", "Body")
-	if err != nil {
-		t.Errorf("NoopEmailSender should not return error, got: %v", err)
-	}
-}
-
-func TestNoopTelegramSender_Send(t *testing.T) {
-	sender := notification.NewNoopTelegramSender()
-	err := sender.Send(context.Background(), 12345, "Subject", "Body")
-	if err != nil {
-		t.Errorf("NoopTelegramSender should not return error, got: %v", err)
 	}
 }
 

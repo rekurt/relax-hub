@@ -14,17 +14,6 @@ type PushSender interface {
 	Send(ctx context.Context, token, title, body string, data map[string]string) error
 }
 
-// NoopPushSender is a no-op implementation used when push is not configured.
-type NoopPushSender struct{}
-
-func NewNoopPushSender() PushSender {
-	return &NoopPushSender{}
-}
-
-func (n *NoopPushSender) Send(_ context.Context, _, _, _ string, _ map[string]string) error {
-	return nil
-}
-
 // WebPushSender sends Web Push notifications using VAPID.
 type WebPushSender struct {
 	vapidPublicKey  string

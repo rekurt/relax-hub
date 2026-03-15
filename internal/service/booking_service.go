@@ -512,7 +512,7 @@ func (s *bookingService) ListByUser(ctx context.Context, userID uuid.UUID, page,
 }
 
 func (s *bookingService) ListByBathhouse(ctx context.Context, userID uuid.UUID, role domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {
-	if err := s.access.CanViewBathhouseBookings(ctx, userID, role, bathhouseID); err != nil {
+	if err := s.access.CanManageBathhouse(ctx, userID, role, bathhouseID); err != nil {
 		return nil, err
 	}
 	return s.bookingRepo.ListByBathhouse(ctx, bathhouseID, page, pageSize)

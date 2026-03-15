@@ -65,7 +65,7 @@ func (d *Dispatcher) Dispatch(ctx context.Context, notif *domain.Notification, p
 		}
 	}
 
-	if prefs.Email && email != "" {
+	if prefs.Email && email != "" && d.emailSender != nil {
 		if err := d.emailSender.Send(ctx, email, notif.Title, notif.Body); err != nil {
 			d.logger.Warn("failed to send email notification", "user_id", notif.UserID, "error", err)
 		}

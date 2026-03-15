@@ -44,11 +44,3 @@ func (a *AccessChecker) CanManageBathhouse(ctx context.Context, userID uuid.UUID
 
 	return domain.ErrForbidden
 }
-
-// CanViewBathhouseBookings checks if the user can view bookings for a bathhouse.
-// admin - always allowed
-// owner - if they own the bathhouse
-// representative - if assigned to the bathhouse
-func (a *AccessChecker) CanViewBathhouseBookings(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error {
-	return a.CanManageBathhouse(ctx, userID, userRole, bathhouseID)
-}

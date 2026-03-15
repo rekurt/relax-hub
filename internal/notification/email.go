@@ -51,14 +51,3 @@ func (s *smtpEmailSender) Send(_ context.Context, to, subject, body string) erro
 	s.logger.Debug("email sent", "to", to, "subject", subject)
 	return nil
 }
-
-// NoopEmailSender is a no-op implementation used when email is not configured.
-type NoopEmailSender struct{}
-
-func NewNoopEmailSender() EmailSender {
-	return &NoopEmailSender{}
-}
-
-func (n *NoopEmailSender) Send(_ context.Context, _, _, _ string) error {
-	return nil
-}

@@ -9,14 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/nikitaaldaev/bani/internal/notification"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
-
-// ChatBroadcaster broadcasts real-time chat events via WebSocket.
-type ChatBroadcaster interface {
-	BroadcastNewMessage(conversationID uuid.UUID, msg *domain.Message)
-	BroadcastMessageRead(conversationID uuid.UUID, userID uuid.UUID)
-}
 
 type ChatService interface {
 	StartConversation(ctx context.Context, clientID uuid.UUID, bathhouseID uuid.UUID, bookingID *uuid.UUID) (*domain.Conversation, error)
@@ -34,9 +29,9 @@ type chatService struct {
 	bhRepo      repository.BathhouseRepository
 	repRepo     repository.RepresentativeRepository
 	access      *AccessChecker
-	notifSvc    NotificationService
-	broadcaster ChatBroadcaster
-	logger      *logger.Logger
+	notifSvc NotificationService
+	hub      *notification.Hub
+	logger   *logger.Logger
 }
 
 func NewChatService(
@@ -46,18 +41,18 @@ func NewChatService(
 	repRepo repository.RepresentativeRepository,
 	access *AccessChecker,
 	notifSvc NotificationService,
-	broadcaster ChatBroadcaster,
+	hub *notification.Hub,
 	log *logger.Logger,
 ) ChatService {
 	return &chatService{
-		convRepo:    convRepo,
-		msgRepo:     msgRepo,
-		bhRepo:      bhRepo,
-		repRepo:     repRepo,
-		access:      access,
-		notifSvc:    notifSvc,
-		broadcaster: broadcaster,
-		logger:      log,
+		convRepo: convRepo,
+		msgRepo:  msgRepo,
+		bhRepo:   bhRepo,
+		repRepo:  repRepo,
+		access:   access,
+		notifSvc: notifSvc,
+		hub:      hub,
+		logger:   log,
 	}
 }
 
@@ -122,7 +117,7 @@ func (s *chatService) SendMessage(ctx context.Context, senderID uuid.UUID, role 
 		s.logger.Warn("failed to update conversation last_message_at", "conversation_id", conversationID, "error", err)
 	}
 
-	s.broadcaster.BroadcastNewMessage(conversationID, msg)
+	s.hub.BroadcastNewMessage(conversationID, msg)
 	notifCtx, notifCancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
 	go func() {
 		defer notifCancel()
@@ -172,7 +167,7 @@ func (s *chatService) MarkAsRead(ctx context.Context, userID uuid.UUID, role dom
 		return err
 	}
 
-	s.broadcaster.BroadcastMessageRead(conversationID, userID)
+	s.hub.BroadcastMessageRead(conversationID, userID)
 	return nil
 }
 

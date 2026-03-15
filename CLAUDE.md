@@ -67,7 +67,7 @@ fx.Annotate(postgres.NewUserRepo, fx.As(new(repository.UserRepository)))
 Four roles: client, owner, representative, admin.
 
 Middleware: `RequireAuth`, `OptionalAuth`, `RequireRole(roles...)`, `RequireOwnerOrRepresentative()`
-Service: `AccessChecker.CanManageBathhouse()`, `AccessChecker.CanViewBathhouseBookings()`
+Service: `AccessChecker.CanManageBathhouse()`
 
 ```go
 middleware.GetUserID(ctx)   // uuid.UUID
