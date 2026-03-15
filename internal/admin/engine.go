@@ -39,6 +39,9 @@ func PagesRouter(
 
 	analytics := pages.NewAnalyticsHandler(analyticsProvider, log, pagesPrefix, adminPrefix)
 	r.Get("/analytics", analytics.ServeHTTP)
+	r.Get("/analytics/export", analytics.HandleCSVExport)
+
+	r.Get("/static/*", pages.ServeStatic)
 
 	health := pages.NewHealthHandler(healthProvider, log, pagesPrefix, adminPrefix)
 	r.Get("/health", health.ServeHTTP)

@@ -196,39 +196,39 @@ KPI-карточки статичны и не кликабельны. Нет т�
 
 **5a: Quick date presets и UI улучшения**
 
-- [ ] Добавить кнопки быстрого выбора периода над date picker:
+- [x] Добавить кнопки быстрого выбора периода над date picker:
     "Сегодня", "7 дней", "30 дней", "Этот месяц", "Прошлый месяц", "Этот год"
     - Каждая кнопка - ссылка с предвычисленными date_from/date_to query params
     - Активная кнопка подсвечена (определяется по совпадению дат в фильтре)
-- [ ] Добавить сводную строку под графиками: "Итого за период: X бронирований,
+- [x] Добавить сводную строку под графиками: "Итого за период: X бронирований,
     Y ₽ выручки, Z новых пользователей" - крупный шрифт, отдельный блок
-- [ ] Добавить процент изменения в сводке: сравнение с предыдущим аналогичным
+- [x] Добавить процент изменения в сводке: сравнение с предыдущим аналогичным
     периодом (например, если выбрано 7 дней, сравнить с предыдущими 7 днями)
     - ↑12% зеленый / ↓5% красный / = 0% серый
-- [ ] Исправить: применить фильтр по городу к графику новых пользователей
+- [x] Исправить: применить фильтр по городу к графику новых пользователей
     (сейчас `loadNewUsersPerDay` игнорирует `cityID`)
 
 **5b: CSV Export**
 
-- [ ] Добавить CSV export endpoint: `GET /pages/analytics/export`
+- [x] Добавить CSV export endpoint: `GET /pages/analytics/export`
     - Query params: `type` (bookings|revenue|users|top_bookings|top_revenue),
       `from`, `to`, `city_id`
     - Response: `Content-Type: text/csv`, `Content-Disposition: attachment;
       filename="analytics_bookings_2026-03-01_2026-03-15.csv"`
     - Формат CSV: заголовок + данные, BOM для корректного открытия в Excel
-- [ ] Добавить кнопку "Скачать CSV" (иконка download) рядом с каждым графиком
+- [x] Добавить кнопку "Скачать CSV" (иконка download) рядом с каждым графиком
     - Кнопка формирует URL с текущими фильтрами и type для этого графика
-- [ ] Добавить маршрут в engine.go: `GET /pages/analytics/export`
+- [x] Добавить маршрут в engine.go: `GET /pages/analytics/export`
 
 **5c: Self-hosted Chart.js**
 
-- [ ] Скопировать Chart.js 4.4.7 UMD bundle в `internal/admin/pages/static/chart.min.js`
-- [ ] Добавить route для раздачи статики: `GET /pages/static/*`
-- [ ] Заменить CDN ссылку в analytics.tmpl на локальный путь
-- [ ] Обновить embed.FS для включения static директории
-- [ ] Write tests: CSV export endpoint (формат, headers, фильтрация), date presets
+- [x] Скопировать Chart.js 4.4.7 UMD bundle в `internal/admin/pages/static/chart.min.js`
+- [x] Добавить route для раздачи статики: `GET /pages/static/*`
+- [x] Заменить CDN ссылку в analytics.tmpl на локальный путь
+- [x] Обновить embed.FS для включения static директории
+- [x] Write tests: CSV export endpoint (формат, headers, фильтрация), date presets
     (корректность дат для каждого пресета), period comparison расчеты
-- [ ] Run project test suite - must pass before task 6
+- [x] Run project test suite - must pass before task 6
 
 ### Task 6: Health Monitor - расширенный мониторинг и системные метрики
 

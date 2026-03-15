@@ -63,7 +63,16 @@ func sampleAnalyticsData() *AnalyticsData {
 			{ID: 1, Name: "Москва"},
 			{ID: 2, Name: "Санкт-Петербург"},
 		},
-		Filter:      AnalyticsFilter{},
+		Filter: AnalyticsFilter{},
+		DatePresets: BuildDatePresets(time.Date(2026, 3, 7, 15, 0, 0, 0, time.UTC), AnalyticsFilter{}),
+		Summary: AnalyticsSummary{
+			TotalBookings: 37,
+			TotalRevenue:  4550000,
+			TotalNewUsers: 16,
+			BookingsTrend: TrendData{Current: 37, Previous: 30},
+			RevenueTrend:  TrendData{Current: 4550000, Previous: 3800000},
+			UsersTrend:    TrendData{Current: 16, Previous: 20},
+		},
 		GeneratedAt: time.Date(2026, 3, 7, 15, 0, 0, 0, time.UTC),
 	}
 }
@@ -86,6 +95,7 @@ func TestAnalyticsHandler_ServeHTTP(t *testing.T) {
 			provider: &mockAnalyticsProvider{
 				data: &AnalyticsData{
 					GeneratedAt: time.Now(),
+					DatePresets: BuildDatePresets(time.Now(), AnalyticsFilter{}),
 				},
 			},
 			wantStatus: http.StatusOK,
@@ -323,5 +333,354 @@ func TestAnalyticsHandler_XSSEscapedInChartData(t *testing.T) {
 	// html/template uses \u0022 for " in JS string context
 	if !strings.Contains(body, `\u0022`) {
 		t.Error("expected html/template JS-escaped double quote (\\u0022) in chart data")
+	}
+}
+
+func TestAnalyticsHandler_RendersSummary(t *testing.T) {
+	data := sampleAnalyticsData()
+	provider := &mockAnalyticsProvider{data: data}
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	checks := []string{
+		"summary-bar",
+		"Бронирования за период",
+		"Выручка за период",
+		"Новые пользователи",
+		"к пред. периоду",
+		"37",  // TotalBookings
+		"16",  // TotalNewUsers
+		"trend-up",
+		"trend-down",
+	}
+	for _, c := range checks {
+		if !strings.Contains(body, c) {
+			t.Errorf("body missing summary element %q", c)
+		}
+	}
+}
+
+func TestAnalyticsHandler_RendersDatePresets(t *testing.T) {
+	data := sampleAnalyticsData()
+	provider := &mockAnalyticsProvider{data: data}
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	presetLabels := []string{
+		"Сегодня",
+		"7 дней",
+		"30 дней",
+		"Этот месяц",
+		"Прошлый месяц",
+		"Этот год",
+	}
+	for _, label := range presetLabels {
+		if !strings.Contains(body, label) {
+			t.Errorf("body missing date preset %q", label)
+		}
+	}
+
+	if !strings.Contains(body, "preset-btn") {
+		t.Error("body missing preset-btn class")
+	}
+}
+
+func TestAnalyticsHandler_RendersCSVButtons(t *testing.T) {
+	data := sampleAnalyticsData()
+	provider := &mockAnalyticsProvider{data: data}
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	csvTypes := []string{
+		"type=bookings",
+		"type=revenue",
+		"type=users",
+		"type=top_bookings",
+		"type=top_revenue",
+	}
+	for _, ct := range csvTypes {
+		if !strings.Contains(body, ct) {
+			t.Errorf("body missing CSV export link for %q", ct)
+		}
+	}
+
+	if !strings.Contains(body, "csv-btn") {
+		t.Error("body missing csv-btn class")
+	}
+}
+
+func TestAnalyticsHandler_RendersLocalChartJS(t *testing.T) {
+	data := sampleAnalyticsData()
+	provider := &mockAnalyticsProvider{data: data}
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	if strings.Contains(body, "cdn.jsdelivr.net") {
+		t.Error("Chart.js should be self-hosted, not loaded from CDN")
+	}
+	if !strings.Contains(body, "/admin-panel/pages/static/chart.min.js") {
+		t.Error("body missing self-hosted Chart.js path")
+	}
+}
+
+func TestAnalyticsHandler_CSVExport(t *testing.T) {
+	data := sampleAnalyticsData()
+	provider := &mockAnalyticsProvider{data: data}
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	tests := []struct {
+		name       string
+		url        string
+		wantStatus int
+		wantType   string
+		wantChecks []string
+	}{
+		{
+			name:       "bookings csv",
+			url:        "/analytics/export?type=bookings&from=2026-03-05&to=2026-03-07",
+			wantStatus: http.StatusOK,
+			wantType:   "text/csv; charset=utf-8",
+			wantChecks: []string{"Дата", "Бронирования", "05.03", "12", "06.03", "18"},
+		},
+		{
+			name:       "revenue csv",
+			url:        "/analytics/export?type=revenue&from=2026-03-05&to=2026-03-07",
+			wantStatus: http.StatusOK,
+			wantType:   "text/csv; charset=utf-8",
+			wantChecks: []string{"Дата", "Выручка (руб.)"},
+		},
+		{
+			name:       "users csv",
+			url:        "/analytics/export?type=users",
+			wantStatus: http.StatusOK,
+			wantType:   "text/csv; charset=utf-8",
+			wantChecks: []string{"Дата", "Новые пользователи"},
+		},
+		{
+			name:       "top bookings csv",
+			url:        "/analytics/export?type=top_bookings",
+			wantStatus: http.StatusOK,
+			wantType:   "text/csv; charset=utf-8",
+			wantChecks: []string{"Название", "Бронирования", "Русская баня на дровах", "45"},
+		},
+		{
+			name:       "top revenue csv",
+			url:        "/analytics/export?type=top_revenue",
+			wantStatus: http.StatusOK,
+			wantType:   "text/csv; charset=utf-8",
+			wantChecks: []string{"Название", "Выручка (руб.)", "Русская баня на дровах"},
+		},
+		{
+			name:       "missing type",
+			url:        "/analytics/export",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "invalid type",
+			url:        "/analytics/export?type=invalid",
+			wantStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, tt.url, nil)
+			handler.HandleCSVExport(rec, req)
+
+			if rec.Code != tt.wantStatus {
+				t.Errorf("status = %d, want %d", rec.Code, tt.wantStatus)
+			}
+
+			if tt.wantStatus == http.StatusOK {
+				ct := rec.Header().Get("Content-Type")
+				if ct != tt.wantType {
+					t.Errorf("content-type = %q, want %q", ct, tt.wantType)
+				}
+
+				disp := rec.Header().Get("Content-Disposition")
+				if !strings.Contains(disp, "attachment") {
+					t.Error("missing attachment in Content-Disposition")
+				}
+				if !strings.Contains(disp, ".csv") {
+					t.Error("missing .csv in Content-Disposition filename")
+				}
+
+				body := rec.Body.String()
+				// Check BOM
+				if len(body) < 3 || body[0] != 0xEF || body[1] != 0xBB || body[2] != 0xBF {
+					t.Error("missing UTF-8 BOM in CSV output")
+				}
+
+				for _, c := range tt.wantChecks {
+					if !strings.Contains(body, c) {
+						t.Errorf("CSV body missing %q", c)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestAnalyticsHandler_CSVExportProviderError(t *testing.T) {
+	provider := &mockAnalyticsProvider{err: context.DeadlineExceeded}
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/analytics/export?type=bookings", nil)
+	handler.HandleCSVExport(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
+	}
+}
+
+func TestBuildDatePresets(t *testing.T) {
+	now := time.Date(2026, 3, 15, 12, 0, 0, 0, time.UTC)
+
+	t.Run("generates all 6 presets", func(t *testing.T) {
+		presets := BuildDatePresets(now, AnalyticsFilter{})
+		if len(presets) != 6 {
+			t.Fatalf("expected 6 presets, got %d", len(presets))
+		}
+
+		expectedLabels := []string{"Сегодня", "7 дней", "30 дней", "Этот месяц", "Прошлый месяц", "Этот год"}
+		for i, label := range expectedLabels {
+			if presets[i].Label != label {
+				t.Errorf("preset[%d].Label = %q, want %q", i, presets[i].Label, label)
+			}
+		}
+	})
+
+	t.Run("today preset dates", func(t *testing.T) {
+		presets := BuildDatePresets(now, AnalyticsFilter{})
+		today := presets[0]
+		if today.DateFrom != "2026-03-15" || today.DateTo != "2026-03-15" {
+			t.Errorf("today preset: from=%q to=%q, want 2026-03-15 for both", today.DateFrom, today.DateTo)
+		}
+	})
+
+	t.Run("7 days preset dates", func(t *testing.T) {
+		presets := BuildDatePresets(now, AnalyticsFilter{})
+		week := presets[1]
+		if week.DateFrom != "2026-03-09" || week.DateTo != "2026-03-15" {
+			t.Errorf("7 days preset: from=%q to=%q, want 2026-03-09 to 2026-03-15", week.DateFrom, week.DateTo)
+		}
+	})
+
+	t.Run("this month preset dates", func(t *testing.T) {
+		presets := BuildDatePresets(now, AnalyticsFilter{})
+		month := presets[3]
+		if month.DateFrom != "2026-03-01" || month.DateTo != "2026-03-15" {
+			t.Errorf("this month preset: from=%q to=%q, want 2026-03-01 to 2026-03-15", month.DateFrom, month.DateTo)
+		}
+	})
+
+	t.Run("last month preset dates", func(t *testing.T) {
+		presets := BuildDatePresets(now, AnalyticsFilter{})
+		lastMonth := presets[4]
+		if lastMonth.DateFrom != "2026-02-01" || lastMonth.DateTo != "2026-02-28" {
+			t.Errorf("last month preset: from=%q to=%q, want 2026-02-01 to 2026-02-28", lastMonth.DateFrom, lastMonth.DateTo)
+		}
+	})
+
+	t.Run("this year preset dates", func(t *testing.T) {
+		presets := BuildDatePresets(now, AnalyticsFilter{})
+		year := presets[5]
+		if year.DateFrom != "2026-01-01" || year.DateTo != "2026-03-15" {
+			t.Errorf("this year preset: from=%q to=%q, want 2026-01-01 to 2026-03-15", year.DateFrom, year.DateTo)
+		}
+	})
+
+	t.Run("active preset highlighted", func(t *testing.T) {
+		filter := AnalyticsFilter{DateFrom: "2026-03-15", DateTo: "2026-03-15"}
+		presets := BuildDatePresets(now, filter)
+
+		if !presets[0].Active {
+			t.Error("expected today preset to be active")
+		}
+		for i := 1; i < len(presets); i++ {
+			if presets[i].Active {
+				t.Errorf("preset[%d] (%q) should not be active", i, presets[i].Label)
+			}
+		}
+	})
+
+	t.Run("no preset active when filter matches none", func(t *testing.T) {
+		filter := AnalyticsFilter{DateFrom: "2026-03-10", DateTo: "2026-03-12"}
+		presets := BuildDatePresets(now, filter)
+
+		for i, p := range presets {
+			if p.Active {
+				t.Errorf("preset[%d] (%q) should not be active for custom range", i, p.Label)
+			}
+		}
+	})
+}
+
+func TestServeStatic(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/static/chart.min.js", nil)
+	ServeStatic(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	body := rec.Body.String()
+	if len(body) == 0 {
+		t.Error("expected non-empty static file body")
+	}
+}
+
+func TestServeStatic_NotFound(t *testing.T) {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/static/nonexistent.js", nil)
+	ServeStatic(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
+func TestAnalyticsSummaryTrendPercent(t *testing.T) {
+	tests := []struct {
+		name     string
+		trend    TrendData
+		wantText string
+	}{
+		{"increase", TrendData{Current: 37, Previous: 30}, "23%"},
+		{"decrease", TrendData{Current: 16, Previous: 20}, "20%"},
+		{"zero previous", TrendData{Current: 10, Previous: 0}, "0%"},
+		{"no change", TrendData{Current: 10, Previous: 10}, "0%"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SummaryTrendPercent(tt.trend)
+			if got != tt.wantText {
+				t.Errorf("SummaryTrendPercent(%v) = %q, want %q", tt.trend, got, tt.wantText)
+			}
+		})
 	}
 }

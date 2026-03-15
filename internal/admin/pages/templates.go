@@ -3,11 +3,16 @@ package pages
 import (
 	"embed"
 	"html/template"
+	"io/fs"
+	"net/http"
 	"strings"
 )
 
 //go:embed templates/*.tmpl
 var templatesFS embed.FS
+
+//go:embed static/*
+var staticFS embed.FS
 
 // sharedFuncMap contains template functions available to all admin pages.
 var sharedFuncMap = template.FuncMap{
@@ -71,4 +76,15 @@ func ParsePageTemplate(funcMap template.FuncMap, pageFile string) *template.Temp
 			pageFile,
 		),
 	)
+}
+
+// ServeStatic serves files from the embedded static directory.
+func ServeStatic(w http.ResponseWriter, r *http.Request) {
+	sub, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	// Strip "/static/" prefix from the path.
+	http.StripPrefix("/static/", http.FileServer(http.FS(sub))).ServeHTTP(w, r)
 }

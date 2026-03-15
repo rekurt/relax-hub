@@ -3,7 +3,10 @@ package pages
 import (
 	"bytes"
 	"context"
+	"encoding/csv"
+	"fmt"
 	"html/template"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -17,6 +20,9 @@ var analyticsFuncMap = template.FuncMap{
 	"itoa": func(n int64) string {
 		return strconv.FormatInt(n, 10)
 	},
+	"trendClass":  TrendClass,
+	"trendArrow":  TrendArrow,
+	"formatTrend": FormatTrend,
 }
 
 var analyticsTmpl = ParsePageTemplate(analyticsFuncMap, "templates/analytics.tmpl")
@@ -52,6 +58,25 @@ type AnalyticsFilter struct {
 	CityID   string
 }
 
+// DatePreset represents a quick date range selection button.
+type DatePreset struct {
+	Label    string
+	DateFrom string
+	DateTo   string
+	Active   bool
+}
+
+// AnalyticsSummary holds aggregate totals for the selected period.
+type AnalyticsSummary struct {
+	TotalBookings int64
+	TotalRevenue  int64
+	TotalNewUsers int64
+
+	BookingsTrend TrendData
+	RevenueTrend  TrendData
+	UsersTrend    TrendData
+}
+
 // AnalyticsData is the full data model for the analytics dashboard page.
 type AnalyticsData struct {
 	BookingsPerDay     []ChartPoint
@@ -63,6 +88,8 @@ type AnalyticsData struct {
 	ReviewRatingDist   []DistributionItem
 	Filter             AnalyticsFilter
 	Cities             []CityOption
+	DatePresets        []DatePreset
+	Summary            AnalyticsSummary
 	GeneratedAt        time.Time
 	PagesPrefix        string
 	AdminPrefix        string
@@ -104,7 +131,7 @@ func (p *PostgresAnalyticsProvider) GetAnalyticsData(ctx context.Context, filter
 	if err := p.loadRevenuePerDay(ctx, dateFrom, dateTo, filter.CityID, &data.RevenuePerDay); err != nil {
 		return nil, err
 	}
-	if err := p.loadNewUsersPerDay(ctx, dateFrom, dateTo, &data.NewUsersPerDay); err != nil {
+	if err := p.loadNewUsersPerDay(ctx, dateFrom, dateTo, filter.CityID, &data.NewUsersPerDay); err != nil {
 		return nil, err
 	}
 	if err := p.loadTopByBookings(ctx, dateFrom, dateTo, filter.CityID, &data.TopByBookings); err != nil {
@@ -119,6 +146,11 @@ func (p *PostgresAnalyticsProvider) GetAnalyticsData(ctx context.Context, filter
 	if err := p.loadReviewRatingDist(ctx, dateFrom, dateTo, filter.CityID, &data.ReviewRatingDist); err != nil {
 		return nil, err
 	}
+	if err := p.loadSummary(ctx, dateFrom, dateTo, filter.CityID, &data.Summary); err != nil {
+		return nil, err
+	}
+
+	data.DatePresets = BuildDatePresets(time.Now(), filter)
 
 	return data, nil
 }
@@ -227,14 +259,21 @@ func (p *PostgresAnalyticsProvider) loadRevenuePerDay(ctx context.Context, from,
 	return rows.Err()
 }
 
-func (p *PostgresAnalyticsProvider) loadNewUsersPerDay(ctx context.Context, from, to time.Time, points *[]ChartPoint) error {
+func (p *PostgresAnalyticsProvider) loadNewUsersPerDay(ctx context.Context, from, to time.Time, cityID string, points *[]ChartPoint) error {
+	cityFilter := ""
+	args := []interface{}{from, to}
+	if cityID != "" {
+		cityFilter = " AND u.id IN (SELECT DISTINCT b2.user_id FROM bookings b2 JOIN bathhouses bh2 ON bh2.id = b2.bathhouse_id WHERE bh2.city_id = $3)"
+		args = append(args, cityID)
+	}
+
 	query := `
 		SELECT d::date AS day, COUNT(u.id)
 		FROM generate_series($1::date, $2::date, '1 day') d
-		LEFT JOIN users u ON u.created_at::date = d::date
+		LEFT JOIN users u ON u.created_at::date = d::date` + cityFilter + `
 		GROUP BY day ORDER BY day`
 
-	rows, err := p.pool.Query(ctx, query, from, to)
+	rows, err := p.pool.Query(ctx, query, args...)
 	if err != nil {
 		p.log.Error("analytics: new users per day", "error", err)
 		return err
@@ -389,6 +428,105 @@ func (p *PostgresAnalyticsProvider) loadReviewRatingDist(ctx context.Context, fr
 	return rows.Err()
 }
 
+func (p *PostgresAnalyticsProvider) loadSummary(ctx context.Context, dateFrom, dateTo time.Time, cityID string, summary *AnalyticsSummary) error {
+	// Total bookings and revenue for the period.
+	cityFilter := ""
+	args := []interface{}{dateFrom, dateTo}
+	if cityID != "" {
+		cityFilter = " AND b.bathhouse_id IN (SELECT id FROM bathhouses WHERE city_id = $3)"
+		args = append(args, cityID)
+	}
+
+	query := `SELECT COUNT(*), COALESCE(SUM(b.total_price), 0) FROM bookings b WHERE b.created_at >= $1 AND b.created_at <= $2` + cityFilter
+	if err := p.pool.QueryRow(ctx, query, args...).Scan(&summary.TotalBookings, &summary.TotalRevenue); err != nil {
+		p.log.Error("analytics: summary bookings/revenue", "error", err)
+		return err
+	}
+
+	// Total new users for the period.
+	userFilter := ""
+	userArgs := []interface{}{dateFrom, dateTo}
+	if cityID != "" {
+		userFilter = " AND u.id IN (SELECT DISTINCT b2.user_id FROM bookings b2 JOIN bathhouses bh2 ON bh2.id = b2.bathhouse_id WHERE bh2.city_id = $3)"
+		userArgs = append(userArgs, cityID)
+	}
+	userQuery := `SELECT COUNT(*) FROM users u WHERE u.created_at >= $1 AND u.created_at <= $2` + userFilter
+	if err := p.pool.QueryRow(ctx, userQuery, userArgs...).Scan(&summary.TotalNewUsers); err != nil {
+		p.log.Error("analytics: summary new users", "error", err)
+		return err
+	}
+
+	// Previous period comparison.
+	duration := dateTo.Sub(dateFrom)
+	prevTo := dateFrom.Add(-time.Second)
+	prevFrom := prevTo.Add(-duration)
+
+	prevArgs := []interface{}{prevFrom, prevTo}
+	prevCityFilter := ""
+	if cityID != "" {
+		prevCityFilter = " AND b.bathhouse_id IN (SELECT id FROM bathhouses WHERE city_id = $3)"
+		prevArgs = append(prevArgs, cityID)
+	}
+
+	var prevBookings, prevRevenue int64
+	prevQuery := `SELECT COUNT(*), COALESCE(SUM(b.total_price), 0) FROM bookings b WHERE b.created_at >= $1 AND b.created_at <= $2` + prevCityFilter
+	if err := p.pool.QueryRow(ctx, prevQuery, prevArgs...).Scan(&prevBookings, &prevRevenue); err != nil {
+		p.log.Error("analytics: prev period bookings/revenue", "error", err)
+		return err
+	}
+
+	var prevUsers int64
+	prevUserArgs := []interface{}{prevFrom, prevTo}
+	prevUserFilter := ""
+	if cityID != "" {
+		prevUserFilter = " AND u.id IN (SELECT DISTINCT b2.user_id FROM bookings b2 JOIN bathhouses bh2 ON bh2.id = b2.bathhouse_id WHERE bh2.city_id = $3)"
+		prevUserArgs = append(prevUserArgs, cityID)
+	}
+	prevUserQuery := `SELECT COUNT(*) FROM users u WHERE u.created_at >= $1 AND u.created_at <= $2` + prevUserFilter
+	if err := p.pool.QueryRow(ctx, prevUserQuery, prevUserArgs...).Scan(&prevUsers); err != nil {
+		p.log.Error("analytics: prev period users", "error", err)
+		return err
+	}
+
+	summary.BookingsTrend = TrendData{Current: summary.TotalBookings, Previous: prevBookings}
+	summary.RevenueTrend = TrendData{Current: summary.TotalRevenue, Previous: prevRevenue}
+	summary.UsersTrend = TrendData{Current: summary.TotalNewUsers, Previous: prevUsers}
+
+	return nil
+}
+
+// BuildDatePresets returns date preset buttons with the active one highlighted.
+func BuildDatePresets(now time.Time, filter AnalyticsFilter) []DatePreset {
+	today := now.Format("2006-01-02")
+	day7 := now.AddDate(0, 0, -6).Format("2006-01-02")
+	day30 := now.AddDate(0, 0, -29).Format("2006-01-02")
+
+	thisMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+
+	prevMonthEnd := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).AddDate(0, 0, -1)
+	prevMonthStart := time.Date(prevMonthEnd.Year(), prevMonthEnd.Month(), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+	prevMonthEndStr := prevMonthEnd.Format("2006-01-02")
+
+	thisYearStart := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+
+	presets := []DatePreset{
+		{Label: "Сегодня", DateFrom: today, DateTo: today},
+		{Label: "7 дней", DateFrom: day7, DateTo: today},
+		{Label: "30 дней", DateFrom: day30, DateTo: today},
+		{Label: "Этот месяц", DateFrom: thisMonthStart, DateTo: today},
+		{Label: "Прошлый месяц", DateFrom: prevMonthStart, DateTo: prevMonthEndStr},
+		{Label: "Этот год", DateFrom: thisYearStart, DateTo: today},
+	}
+
+	for i := range presets {
+		if filter.DateFrom == presets[i].DateFrom && filter.DateTo == presets[i].DateTo {
+			presets[i].Active = true
+		}
+	}
+
+	return presets
+}
+
 // AnalyticsHandler serves the analytics dashboard page.
 type AnalyticsHandler struct {
 	provider    AnalyticsDataProvider
@@ -439,4 +577,98 @@ func (h *AnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	buf.WriteTo(w) //nolint:errcheck
+}
+
+// HandleCSVExport serves CSV data for a specific chart type.
+func (h *AnalyticsHandler) HandleCSVExport(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	exportType := q.Get("type")
+	if exportType == "" {
+		http.Error(w, "missing type parameter", http.StatusBadRequest)
+		return
+	}
+
+	validTypes := map[string]bool{
+		"bookings": true, "revenue": true, "users": true,
+		"top_bookings": true, "top_revenue": true,
+	}
+	if !validTypes[exportType] {
+		http.Error(w, "invalid type parameter", http.StatusBadRequest)
+		return
+	}
+
+	cityID := q.Get("city_id")
+	if cityID != "" {
+		if _, err := strconv.ParseInt(cityID, 10, 64); err != nil {
+			cityID = ""
+		}
+	}
+
+	filter := AnalyticsFilter{
+		DateFrom: q.Get("from"),
+		DateTo:   q.Get("to"),
+		CityID:   cityID,
+	}
+
+	data, err := h.provider.GetAnalyticsData(r.Context(), filter)
+	if err != nil {
+		h.log.Error("analytics: csv export get data", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	fromStr := filter.DateFrom
+	if fromStr == "" {
+		fromStr = "start"
+	}
+	toStr := filter.DateTo
+	if toStr == "" {
+		toStr = "end"
+	}
+	filename := fmt.Sprintf("analytics_%s_%s_%s.csv", exportType, fromStr, toStr)
+
+	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	// BOM for Excel to correctly detect UTF-8.
+	w.Write([]byte{0xEF, 0xBB, 0xBF}) //nolint:errcheck
+
+	csvW := csv.NewWriter(w)
+	defer csvW.Flush()
+
+	switch exportType {
+	case "bookings":
+		csvW.Write([]string{"Дата", "Бронирования"}) //nolint:errcheck
+		for _, p := range data.BookingsPerDay {
+			csvW.Write([]string{p.Label, strconv.FormatInt(p.Value, 10)}) //nolint:errcheck
+		}
+	case "revenue":
+		csvW.Write([]string{"Дата", "Выручка (руб.)"}) //nolint:errcheck
+		for _, p := range data.RevenuePerDay {
+			csvW.Write([]string{p.Label, FormatKopecksToRubles(p.Value)}) //nolint:errcheck
+		}
+	case "users":
+		csvW.Write([]string{"Дата", "Новые пользователи"}) //nolint:errcheck
+		for _, p := range data.NewUsersPerDay {
+			csvW.Write([]string{p.Label, strconv.FormatInt(p.Value, 10)}) //nolint:errcheck
+		}
+	case "top_bookings":
+		csvW.Write([]string{"Название", "Бронирования"}) //nolint:errcheck
+		for _, item := range data.TopByBookings {
+			csvW.Write([]string{item.Name, strconv.FormatInt(item.Value, 10)}) //nolint:errcheck
+		}
+	case "top_revenue":
+		csvW.Write([]string{"Название", "Выручка (руб.)"}) //nolint:errcheck
+		for _, item := range data.TopByRevenue {
+			csvW.Write([]string{item.Name, FormatKopecksToRubles(item.Value)}) //nolint:errcheck
+		}
+	}
+}
+
+// SummaryTrendPercent returns the formatted absolute percentage for a summary trend.
+func SummaryTrendPercent(t TrendData) string {
+	p := math.Abs(t.Percent())
+	if p == 0 {
+		return "0%"
+	}
+	return fmt.Sprintf("%.0f%%", p)
 }
