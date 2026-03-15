@@ -111,12 +111,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 **Files:**
 - Create: `frontend/src/pages/client/ReferralProgram.tsx`
 
-- [ ] Personal referral code with copy-to-clipboard and share buttons
-- [ ] Referral stats: invited count, completed bookings count
-- [ ] Referral balance display with usage on bookings
-- [ ] API hooks: `useGetMyReferral`, `useGetMyReferralStats`, `useGetMyReferralBalance`
-- [ ] Write tests for referral code display, stats rendering
-- [ ] Run project test suite - must pass before task 8
+- [x] Personal referral code with copy-to-clipboard and share buttons
+- [x] Referral stats: invited count, completed bookings count
+- [x] Referral balance display with usage on bookings
+- [x] API hooks: `useGetMyReferral`, `useGetMyReferralStats`, `useGetMyReferralBalance`
+- [x] Write tests for referral code display, stats rendering
+- [x] Run project test suite - must pass before task 8
 
 ### Task 8: Client - Gift certificates
 
