@@ -51,11 +51,15 @@ func (r *DeviceTokenRepo) Create(_ context.Context, token *domain.DeviceToken) e
 	return nil
 }
 
-func (r *DeviceTokenRepo) Delete(_ context.Context, id uuid.UUID) error {
+func (r *DeviceTokenRepo) Delete(_ context.Context, id uuid.UUID, userID uuid.UUID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if _, ok := r.tokens[id]; !ok {
+	dt, ok := r.tokens[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	if dt.UserID != userID {
 		return domain.ErrNotFound
 	}
 	delete(r.tokens, id)

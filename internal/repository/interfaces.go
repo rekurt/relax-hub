@@ -293,7 +293,7 @@ type ComplaintRepository interface {
 
 type DeviceTokenRepository interface {
 	Create(ctx context.Context, token *domain.DeviceToken) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	DeleteByToken(ctx context.Context, token string) error
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.DeviceToken, error)
 }

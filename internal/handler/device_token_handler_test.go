@@ -50,11 +50,15 @@ func (m *mockDeviceTokenService) Register(_ context.Context, token *domain.Devic
 	return nil
 }
 
-func (m *mockDeviceTokenService) Delete(_ context.Context, id uuid.UUID) error {
+func (m *mockDeviceTokenService) Delete(_ context.Context, id uuid.UUID, userID uuid.UUID) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if _, ok := m.tokens[id]; !ok {
+	dt, ok := m.tokens[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	if dt.UserID != userID {
 		return domain.ErrNotFound
 	}
 	delete(m.tokens, id)

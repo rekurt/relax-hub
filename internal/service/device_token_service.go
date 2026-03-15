@@ -10,7 +10,7 @@ import (
 
 type DeviceTokenService interface {
 	Register(ctx context.Context, token *domain.DeviceToken) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }
 
 type deviceTokenService struct {
@@ -25,6 +25,6 @@ func (s *deviceTokenService) Register(ctx context.Context, token *domain.DeviceT
 	return s.repo.Create(ctx, token)
 }
 
-func (s *deviceTokenService) Delete(ctx context.Context, id uuid.UUID) error {
-	return s.repo.Delete(ctx, id)
+func (s *deviceTokenService) Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	return s.repo.Delete(ctx, id, userID)
 }

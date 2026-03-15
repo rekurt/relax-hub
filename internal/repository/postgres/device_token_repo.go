@@ -46,9 +46,9 @@ func (r *deviceTokenRepo) Create(ctx context.Context, token *domain.DeviceToken)
 	return nil
 }
 
-func (r *deviceTokenRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	query := `DELETE FROM device_tokens WHERE id = $1`
-	result, err := r.pool.Exec(ctx, query, id)
+func (r *deviceTokenRepo) Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	query := `DELETE FROM device_tokens WHERE id = $1 AND user_id = $2`
+	result, err := r.pool.Exec(ctx, query, id, userID)
 	if err != nil {
 		return fmt.Errorf("delete device token: %w", err)
 	}

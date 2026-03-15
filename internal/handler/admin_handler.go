@@ -477,6 +477,11 @@ func (h *AdminHandler) BatchApproveReviews(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	if len(req.IDs) > 100 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "batch size cannot exceed 100")
+		return
+	}
+
 	result := batchResult{}
 	for _, idStr := range req.IDs {
 		id, err := uuid.Parse(idStr)
@@ -525,6 +530,11 @@ func (h *AdminHandler) BatchRejectReviews(w http.ResponseWriter, r *http.Request
 
 	if len(req.IDs) == 0 {
 		writeError(w, http.StatusBadRequest, "invalid_input", "ids cannot be empty")
+		return
+	}
+
+	if len(req.IDs) > 100 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "batch size cannot exceed 100")
 		return
 	}
 

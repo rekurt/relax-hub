@@ -77,6 +77,8 @@ func (h *DeviceTokenHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *DeviceTokenHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -84,7 +86,7 @@ func (h *DeviceTokenHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.svc.Delete(r.Context(), id); err != nil {
+	if err := h.svc.Delete(r.Context(), id, userID); err != nil {
 		handleServiceError(w, err)
 		return
 	}
