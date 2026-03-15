@@ -246,7 +246,7 @@ func (h *ChatHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id  path      string  true  "Conversation ID (UUID)"
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
 // @Failure      400  {object}  APIResponse{error=APIError}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Router       /conversations/{id}/read [patch]
@@ -274,7 +274,7 @@ func (h *ChatHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 // @Tags         chat
 // @Produce      json
 // @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=unreadCountResponse}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Router       /my/unread-messages-count [get]
 func (h *ChatHandler) GetUnreadCount(w http.ResponseWriter, r *http.Request) {

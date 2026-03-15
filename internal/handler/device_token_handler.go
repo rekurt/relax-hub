@@ -94,7 +94,7 @@ func (h *DeviceTokenHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id  path      string  true  "Device token ID (UUID)"
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=statusResponse}
 // @Failure      400  {object}  APIResponse{error=APIError}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Router       /device-tokens/{id} [delete]

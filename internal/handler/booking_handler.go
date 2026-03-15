@@ -203,7 +203,7 @@ func (h *BookingHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
 // @Failure      400  {object}  APIResponse{error=APIError}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Failure      403  {object}  APIResponse{error=APIError}
@@ -234,7 +234,7 @@ func (h *BookingHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
 // @Failure      400  {object}  APIResponse{error=APIError}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Failure      403  {object}  APIResponse{error=APIError}
@@ -265,7 +265,7 @@ func (h *BookingHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
 // @Failure      400  {object}  APIResponse{error=APIError}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Failure      403  {object}  APIResponse{error=APIError}

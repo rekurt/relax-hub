@@ -106,7 +106,7 @@ func (h *NotificationHandler) List(w http.ResponseWriter, r *http.Request) {
 // @Tags         notifications
 // @Produce      json
 // @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=unreadCountResponse}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Router       /my/notifications/unread-count [get]
 func (h *NotificationHandler) UnreadCount(w http.ResponseWriter, r *http.Request) {
@@ -128,7 +128,7 @@ func (h *NotificationHandler) UnreadCount(w http.ResponseWriter, r *http.Request
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id  path      string  true  "Notification ID (UUID)"
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
 // @Failure      400  {object}  APIResponse{error=APIError}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Router       /my/notifications/{id}/read [patch]
@@ -155,7 +155,7 @@ func (h *NotificationHandler) MarkAsRead(w http.ResponseWriter, r *http.Request)
 // @Tags         notifications
 // @Produce      json
 // @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Router       /my/notifications/read-all [patch]
 func (h *NotificationHandler) MarkAllAsRead(w http.ResponseWriter, r *http.Request) {

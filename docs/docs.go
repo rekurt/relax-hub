@@ -51,7 +51,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.AdminDashboard"
                                         }
                                     }
                                 }
@@ -158,7 +158,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.topBathhousesResponse"
                                         }
                                     }
                                 }
@@ -2253,7 +2253,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.pendingCountResponse"
                                         }
                                     }
                                 }
@@ -4734,7 +4734,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.toggleFavoriteResponse"
                                         }
                                     }
                                 }
@@ -6007,7 +6007,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.simpleMessageResponse"
                                         }
                                     }
                                 }
@@ -6243,7 +6243,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.simpleMessageResponse"
                                         }
                                     }
                                 }
@@ -6579,7 +6579,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.simpleMessageResponse"
                                         }
                                     }
                                 }
@@ -7287,7 +7287,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.simpleMessageResponse"
                                         }
                                     }
                                 }
@@ -7456,7 +7456,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.statusResponse"
                                         }
                                     }
                                 }
@@ -7764,7 +7764,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.OwnerDashboard"
                                         }
                                     }
                                 }
@@ -7896,7 +7896,10 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsSnapshot"
+                                            }
                                         }
                                     }
                                 }
@@ -10951,7 +10954,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.simpleMessageResponse"
                                         }
                                     }
                                 }
@@ -11006,7 +11009,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.unreadCountResponse"
                                         }
                                     }
                                 }
@@ -11070,7 +11073,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.simpleMessageResponse"
                                         }
                                     }
                                 }
@@ -11631,7 +11634,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.MyStatsOutput"
+                                            "$ref": "#/definitions/internal_handler.myStatsResponse"
                                         }
                                     }
                                 }
@@ -11763,7 +11766,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.unreadCountResponse"
                                         }
                                     }
                                 }
@@ -13442,7 +13445,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.statusResponse"
                                         }
                                     }
                                 }
@@ -13761,6 +13764,50 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod": {
+            "type": "string",
+            "enum": [
+                "1d",
+                "7d",
+                "30d",
+                "90d"
+            ],
+            "x-enum-varnames": [
+                "PeriodDay",
+                "PeriodWeek",
+                "PeriodMonth",
+                "Period90d"
+            ]
+        },
+        "github_com_nikitaaldaev_bani_internal_domain.AnalyticsSnapshot": {
+            "type": "object",
+            "properties": {
+                "avg_rating": {
+                    "type": "number"
+                },
+                "bathhouse_id": {
+                    "type": "string"
+                },
+                "bookings": {
+                    "type": "integer"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "revenue": {
+                    "type": "integer"
+                },
+                "review_count": {
+                    "type": "integer"
+                },
+                "unique_views": {
+                    "type": "integer"
+                },
+                "views": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_nikitaaldaev_bani_internal_seo.MetaTags": {
             "type": "object",
             "properties": {
@@ -13781,23 +13828,98 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_service.MyStatsOutput": {
+        "github_com_nikitaaldaev_bani_internal_service.AdminDashboard": {
             "type": "object",
             "properties": {
-                "avg_check": {
-                    "type": "integer"
-                },
                 "avg_rating": {
                     "type": "number"
                 },
-                "review_count": {
+                "dau": {
+                    "description": "daily active users (from bookings)",
                     "type": "integer"
                 },
-                "total_spent": {
+                "mau": {
+                    "description": "monthly active users",
                     "type": "integer"
                 },
-                "total_visits": {
+                "new_users": {
                     "type": "integer"
+                },
+                "period": {
+                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod"
+                },
+                "top_bathhouses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.TopBathhouseInfo"
+                    }
+                },
+                "total_bathhouses": {
+                    "type": "integer"
+                },
+                "total_bookings": {
+                    "type": "integer"
+                },
+                "total_revenue": {
+                    "type": "integer"
+                },
+                "total_users": {
+                    "type": "integer"
+                },
+                "total_views": {
+                    "type": "integer"
+                },
+                "wau": {
+                    "description": "weekly active users",
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_nikitaaldaev_bani_internal_service.OwnerDashboard": {
+            "type": "object",
+            "properties": {
+                "avg_check": {
+                    "description": "revenue / bookings",
+                    "type": "integer"
+                },
+                "bookings": {
+                    "type": "integer"
+                },
+                "bookings_change": {
+                    "type": "number"
+                },
+                "conversion_rate": {
+                    "description": "bookings / views",
+                    "type": "number"
+                },
+                "period": {
+                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod"
+                },
+                "previous_period": {
+                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.OwnerDashboard"
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "rating_change": {
+                    "description": "% change from previous period",
+                    "type": "number"
+                },
+                "revenue": {
+                    "description": "in kopecks",
+                    "type": "integer"
+                },
+                "revenue_change": {
+                    "type": "number"
+                },
+                "unique_views": {
+                    "type": "integer"
+                },
+                "views": {
+                    "type": "integer"
+                },
+                "views_change": {
+                    "type": "number"
                 }
             }
         },
@@ -13817,6 +13939,29 @@ const docTemplate = `{
                 },
                 "startTime": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_nikitaaldaev_bani_internal_service.TopBathhouseInfo": {
+            "type": "object",
+            "properties": {
+                "bathhouse_id": {
+                    "type": "string"
+                },
+                "bookings": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rating": {
+                    "type": "number"
+                },
+                "revenue": {
+                    "type": "integer"
+                },
+                "views": {
+                    "type": "integer"
                 }
             }
         },
@@ -14734,6 +14879,26 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handler.myStatsResponse": {
+            "type": "object",
+            "properties": {
+                "avg_check": {
+                    "type": "integer"
+                },
+                "avg_rating": {
+                    "type": "number"
+                },
+                "review_count": {
+                    "type": "integer"
+                },
+                "total_spent": {
+                    "type": "integer"
+                },
+                "total_visits": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_handler.notificationResponse": {
             "type": "object",
             "properties": {
@@ -14766,18 +14931,6 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
-                }
-            }
-        },
-        "internal_handler.nullableInt64Field": {
-            "type": "object",
-            "properties": {
-                "set": {
-                    "type": "boolean"
-                },
-                "value": {
-                    "type": "integer",
-                    "format": "int64"
                 }
             }
         },
@@ -14841,6 +14994,14 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_handler.pendingCountResponse": {
+            "type": "object",
+            "properties": {
+                "pending_count": {
+                    "type": "integer"
                 }
             }
         },
@@ -15373,6 +15534,14 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handler.simpleMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_handler.slotBlockResponse": {
             "type": "object",
             "properties": {
@@ -15437,6 +15606,14 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handler.statusResponse": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_handler.subscribeRequest": {
             "type": "object",
             "properties": {
@@ -15480,6 +15657,42 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_handler.toggleFavoriteResponse": {
+            "type": "object",
+            "properties": {
+                "is_favorite": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_handler.topBathhousesResponse": {
+            "type": "object",
+            "properties": {
+                "bathhouses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.TopBathhouseInfo"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "metric": {
+                    "type": "string"
+                },
+                "total_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_handler.unreadCountResponse": {
+            "type": "object",
+            "properties": {
+                "unread_count": {
+                    "type": "integer"
                 }
             }
         },
@@ -15595,7 +15808,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "city_id": {
-                    "$ref": "#/definitions/internal_handler.nullableInt64Field"
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"

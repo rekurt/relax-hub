@@ -28,6 +28,13 @@ func NewAnalyticsHandler(
 	}
 }
 
+type topBathhousesResponse struct {
+	Metric     string                    `json:"metric"`
+	Limit      int                       `json:"limit"`
+	Bathhouses []service.TopBathhouseInfo `json:"bathhouses"`
+	TotalCount int                       `json:"total_count"`
+}
+
 // GetOwnerDashboard godoc
 // @Summary      Get owner analytics dashboard
 // @Description  Returns analytics dashboard for a bathhouse owner, including booking stats, revenue, and views. Owner or representative only.
@@ -36,7 +43,7 @@ func NewAnalyticsHandler(
 // @Security     BearerAuth
 // @Param        id      path      string  true   "Bathhouse ID (UUID)"
 // @Param        period  query     string  false  "Period: 1d, 7d, 30d, 90d"  default(30d)
-// @Success      200     {object}  APIResponse{data=object}
+// @Success      200     {object}  APIResponse{data=service.OwnerDashboard}
 // @Failure      400     {object}  APIResponse{error=APIError}
 // @Failure      401     {object}  APIResponse{error=APIError}
 // @Failure      403     {object}  APIResponse{error=APIError}
@@ -81,7 +88,7 @@ func (h *AnalyticsHandler) GetOwnerDashboard(w http.ResponseWriter, r *http.Requ
 // @Param        id    path      string  true  "Bathhouse ID (UUID)"
 // @Param        from  query     string  true  "Start date (YYYY-MM-DD)"
 // @Param        to    query     string  true  "End date (YYYY-MM-DD)"
-// @Success      200   {object}  APIResponse{data=object}
+// @Success      200   {object}  APIResponse{data=[]domain.AnalyticsSnapshot}
 // @Failure      400   {object}  APIResponse{error=APIError}
 // @Failure      401   {object}  APIResponse{error=APIError}
 // @Failure      403   {object}  APIResponse{error=APIError}
@@ -148,7 +155,7 @@ func (h *AnalyticsHandler) GetOwnerDailyStats(w http.ResponseWriter, r *http.Req
 // @Produce      json
 // @Security     BearerAuth
 // @Param        period  query     string  false  "Period: 1d, 7d, 30d, 90d"  default(30d)
-// @Success      200     {object}  APIResponse{data=object}
+// @Success      200     {object}  APIResponse{data=service.AdminDashboard}
 // @Failure      400     {object}  APIResponse{error=APIError}
 // @Failure      401     {object}  APIResponse{error=APIError}
 // @Failure      403     {object}  APIResponse{error=APIError}
@@ -190,7 +197,7 @@ func (h *AnalyticsHandler) GetAdminDashboard(w http.ResponseWriter, r *http.Requ
 // @Security     BearerAuth
 // @Param        metric  query     string  false  "Metric: views, bookings, revenue, rating"  default(bookings)
 // @Param        limit   query     int     false  "Max results (1-100)"                        default(10)
-// @Success      200     {object}  APIResponse{data=object}
+// @Success      200     {object}  APIResponse{data=topBathhousesResponse}
 // @Failure      400     {object}  APIResponse{error=APIError}
 // @Failure      401     {object}  APIResponse{error=APIError}
 // @Failure      403     {object}  APIResponse{error=APIError}

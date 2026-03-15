@@ -61,7 +61,7 @@ type updateProfileRequest struct {
 	Name   *string            `json:"name,omitempty"`
 	Phone  *string            `json:"phone,omitempty"`
 	Bio    *string            `json:"bio,omitempty"`
-	CityID nullableInt64Field `json:"city_id"`
+	CityID nullableInt64Field `json:"city_id" swaggertype:"integer"`
 }
 
 // nullableInt64Field distinguishes three JSON states: absent, null, and value.
@@ -364,7 +364,7 @@ func (h *AuthHandler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 // @Tags         users
 // @Produce      json
 // @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=service.MyStatsOutput}
+// @Success      200  {object}  APIResponse{data=myStatsResponse}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Router       /my/stats [get]
 func (h *AuthHandler) GetMyStats(w http.ResponseWriter, r *http.Request) {

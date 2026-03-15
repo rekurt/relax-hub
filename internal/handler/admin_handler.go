@@ -503,7 +503,7 @@ func (h *AdminHandler) ListReviews(w http.ResponseWriter, r *http.Request) {
 // @Tags         admin-reviews
 // @Produce      json
 // @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=pendingCountResponse}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Failure      403  {object}  APIResponse{error=APIError}
 // @Router       /admin/reviews/pending-count [get]

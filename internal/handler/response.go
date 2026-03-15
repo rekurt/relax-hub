@@ -29,6 +29,36 @@ type Meta struct {
 	TotalPages int   `json:"total_pages"`
 }
 
+// swagger response helpers (used only in annotations, not in runtime code)
+
+type simpleMessageResponse struct {
+	Message string `json:"message"`
+}
+
+type statusResponse struct {
+	Status string `json:"status"`
+}
+
+type unreadCountResponse struct {
+	UnreadCount int64 `json:"unread_count"`
+}
+
+type pendingCountResponse struct {
+	PendingCount int64 `json:"pending_count"`
+}
+
+type toggleFavoriteResponse struct {
+	IsFavorite bool `json:"is_favorite"`
+}
+
+type myStatsResponse struct {
+	TotalVisits int     `json:"total_visits"`
+	TotalSpent  int64   `json:"total_spent"`
+	AvgCheck    int64   `json:"avg_check"`
+	ReviewCount int     `json:"review_count"`
+	AvgRating   float64 `json:"avg_rating"`
+}
+
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

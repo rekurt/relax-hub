@@ -32,7 +32,7 @@ type favoriteResponse struct {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id  path      string  true  "Bathhouse ID (UUID)"
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=toggleFavoriteResponse}
 // @Failure      400  {object}  APIResponse{error=APIError}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Router       /bathhouses/{id}/favorite [post]
