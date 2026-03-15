@@ -1,0 +1,324 @@
+import { useState } from 'react'
+import { App, Button, DatePicker, Select, Space, Table, Tag, Typography } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  StopOutlined,
+  CheckOutlined,
+  EyeOutlined,
+} from '@ant-design/icons'
+import dayjs from 'dayjs'
+import {
+  useGetBathhousesIdBookings,
+  usePatchBookingsIdConfirm,
+  usePatchBookingsIdReject,
+  usePatchBookingsIdCancel,
+  usePatchBookingsIdComplete,
+} from '@/api/generated/bookings/bookings'
+import type { InternalHandlerBookingResponse } from '@/api/generated/model'
+import { useBathhouseStore } from '@/stores/bathhouse'
+import { formatPrice, formatDateTime } from '@/lib/format'
+import { useQueryClient } from '@tanstack/react-query'
+import BookingDetails from './BookingDetails'
+
+const { Title } = Typography
+const { RangePicker } = DatePicker
+
+const STATUS_CONFIG: Record<string, { color: string; text: string }> = {
+  pending: { color: 'orange', text: 'Ожидает' },
+  confirmed: { color: 'blue', text: 'Подтверждено' },
+  completed: { color: 'green', text: 'Завершено' },
+  cancelled: { color: 'default', text: 'Отменено' },
+  rejected: { color: 'red', text: 'Отклонено' },
+}
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'Все статусы' },
+  { value: 'pending', label: 'Ожидает' },
+  { value: 'confirmed', label: 'Подтверждено' },
+  { value: 'completed', label: 'Завершено' },
+  { value: 'cancelled', label: 'Отменено' },
+  { value: 'rejected', label: 'Отклонено' },
+]
+
+export default function BookingList() {
+  const { message } = App.useApp()
+  const queryClient = useQueryClient()
+  const selectedBathhouseId = useBathhouseStore((s) => s.selectedBathhouseId)
+
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [statusFilter, setStatusFilter] = useState('')
+  const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
+  const [detailsBooking, setDetailsBooking] = useState<InternalHandlerBookingResponse | null>(null)
+
+  const { data, isLoading } = useGetBathhousesIdBookings(selectedBathhouseId ?? '', {
+    page: page - 1,
+    page_size: pageSize,
+  }, {
+    query: {
+      enabled: !!selectedBathhouseId,
+    },
+  })
+
+  const invalidateBookings = () => {
+    queryClient.invalidateQueries({
+      queryKey: [`/bathhouses/${selectedBathhouseId}/bookings`],
+    })
+  }
+
+  const confirmMutation = usePatchBookingsIdConfirm({
+    mutation: {
+      onSuccess: () => {
+        message.success('Бронирование подтверждено')
+        invalidateBookings()
+      },
+      onError: () => message.error('Не удалось подтвердить бронирование'),
+    },
+  })
+
+  const rejectMutation = usePatchBookingsIdReject({
+    mutation: {
+      onSuccess: () => {
+        message.success('Бронирование отклонено')
+        invalidateBookings()
+      },
+      onError: () => message.error('Не удалось отклонить бронирование'),
+    },
+  })
+
+  const cancelMutation = usePatchBookingsIdCancel({
+    mutation: {
+      onSuccess: () => {
+        message.success('Бронирование отменено')
+        invalidateBookings()
+      },
+      onError: () => message.error('Не удалось отменить бронирование'),
+    },
+  })
+
+  const completeMutation = usePatchBookingsIdComplete({
+    mutation: {
+      onSuccess: () => {
+        message.success('Бронирование завершено')
+        invalidateBookings()
+      },
+      onError: () => message.error('Не удалось завершить бронирование'),
+    },
+  })
+
+  const bookings = data?.data ?? []
+  const meta = data?.meta
+
+  const filteredBookings = bookings.filter((b) => {
+    if (statusFilter && b.status !== statusFilter) return false
+    if (dateRange?.[0] && dateRange?.[1] && b.start_time) {
+      const bookingDate = dayjs(b.start_time)
+      if (bookingDate.isBefore(dateRange[0], 'day') || bookingDate.isAfter(dateRange[1], 'day')) {
+        return false
+      }
+    }
+    return true
+  })
+
+  const renderActions = (record: InternalHandlerBookingResponse) => {
+    const actions: React.ReactNode[] = []
+
+    actions.push(
+      <Button
+        key="details"
+        type="link"
+        size="small"
+        icon={<EyeOutlined />}
+        onClick={() => setDetailsBooking(record)}
+      >
+        Детали
+      </Button>,
+    )
+
+    if (record.status === 'pending') {
+      actions.push(
+        <Button
+          key="confirm"
+          type="link"
+          size="small"
+          icon={<CheckCircleOutlined />}
+          loading={confirmMutation.isPending}
+          onClick={() => record.id && confirmMutation.mutate({ id: record.id })}
+        >
+          Подтвердить
+        </Button>,
+      )
+      actions.push(
+        <Button
+          key="reject"
+          type="link"
+          size="small"
+          danger
+          icon={<CloseCircleOutlined />}
+          loading={rejectMutation.isPending}
+          onClick={() => record.id && rejectMutation.mutate({ id: record.id })}
+        >
+          Отклонить
+        </Button>,
+      )
+    }
+
+    if (record.status === 'confirmed') {
+      actions.push(
+        <Button
+          key="complete"
+          type="link"
+          size="small"
+          icon={<CheckOutlined />}
+          loading={completeMutation.isPending}
+          onClick={() => record.id && completeMutation.mutate({ id: record.id })}
+        >
+          Завершить
+        </Button>,
+      )
+      actions.push(
+        <Button
+          key="cancel"
+          type="link"
+          size="small"
+          danger
+          icon={<StopOutlined />}
+          loading={cancelMutation.isPending}
+          onClick={() => record.id && cancelMutation.mutate({ id: record.id })}
+        >
+          Отменить
+        </Button>,
+      )
+    }
+
+    if (record.status === 'pending') {
+      actions.push(
+        <Button
+          key="cancel-pending"
+          type="link"
+          size="small"
+          danger
+          icon={<StopOutlined />}
+          loading={cancelMutation.isPending}
+          onClick={() => record.id && cancelMutation.mutate({ id: record.id })}
+        >
+          Отменить
+        </Button>,
+      )
+    }
+
+    return <Space wrap>{actions}</Space>
+  }
+
+  const columns: ColumnsType<InternalHandlerBookingResponse> = [
+    {
+      title: 'Дата/время',
+      key: 'datetime',
+      render: (_, record) => (
+        <div>
+          <div>{record.start_time ? formatDateTime(record.start_time, 'DD.MM.YYYY') : '—'}</div>
+          <div style={{ color: '#888', fontSize: 12 }}>
+            {record.start_time ? formatDateTime(record.start_time, 'HH:mm') : ''}
+            {record.end_time ? ` – ${formatDateTime(record.end_time, 'HH:mm')}` : ''}
+          </div>
+        </div>
+      ),
+      sorter: (a, b) => (a.start_time ?? '').localeCompare(b.start_time ?? ''),
+    },
+    {
+      title: 'Гость',
+      dataIndex: 'user_id',
+      key: 'user_id',
+      render: (userId: string) => userId ? userId.slice(0, 8) + '...' : '—',
+      responsive: ['md'],
+    },
+    {
+      title: 'Гостей',
+      dataIndex: 'guest_count',
+      key: 'guest_count',
+      render: (count: number) => count ?? '—',
+      responsive: ['sm'],
+    },
+    {
+      title: 'Сумма',
+      dataIndex: 'total_price',
+      key: 'total_price',
+      render: (price: number) => formatPrice(price ?? 0),
+    },
+    {
+      title: 'Статус',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => {
+        const config = STATUS_CONFIG[status] ?? { color: 'default', text: status }
+        return <Tag color={config.color}>{config.text}</Tag>
+      },
+    },
+    {
+      title: 'Действия',
+      key: 'actions',
+      render: (_, record) => renderActions(record),
+    },
+  ]
+
+  if (!selectedBathhouseId) {
+    return (
+      <div>
+        <Title level={3}>Бронирования</Title>
+        <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+          Выберите баню для просмотра бронирований
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <Title level={3} style={{ marginBottom: 16 }}>
+        Бронирования
+      </Title>
+
+      <Space wrap style={{ marginBottom: 16 }}>
+        <Select
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={STATUS_OPTIONS}
+          style={{ width: 160 }}
+          placeholder="Статус"
+        />
+        <RangePicker
+          value={dateRange}
+          onChange={(dates) => setDateRange(dates)}
+          format="DD.MM.YYYY"
+          placeholder={['С', 'По']}
+        />
+      </Space>
+
+      <Table
+        columns={columns}
+        dataSource={filteredBookings}
+        rowKey="id"
+        loading={isLoading}
+        locale={{ emptyText: 'Нет бронирований' }}
+        pagination={{
+          current: page,
+          pageSize: pageSize,
+          total: meta?.total_count ?? 0,
+          showSizeChanger: true,
+          showTotal: (total) => `Всего: ${total}`,
+          onChange: (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        }}
+      />
+
+      <BookingDetails
+        booking={detailsBooking}
+        onClose={() => setDetailsBooking(null)}
+      />
+    </div>
+  )
+}

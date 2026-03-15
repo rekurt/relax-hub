@@ -126,12 +126,12 @@ React SPA для владельцев бань: управление баням�
 - Create: `frontend/src/pages/bookings/BookingList.tsx`
 - Create: `frontend/src/pages/bookings/BookingDetails.tsx`
 
-- [ ] BookingList: таблица бронирований (GET /bathhouses/{id}/bookings) с пагинацией
-- [ ] Колонки: дата/время, гость, кол-во гостей, сумма, статус, действия
-- [ ] Фильтры: по статусу (pending/confirmed/completed/cancelled/rejected), по дате
-- [ ] Действия: подтвердить (confirm), отклонить (reject), завершить (complete), отменить (cancel)
-- [ ] BookingDetails: модальное окно с полной информацией о бронировании и платеже
-- [ ] Цветовая кодировка статусов (Tag с цветами)
+- [x] BookingList: таблица бронирований (GET /bathhouses/{id}/bookings) с пагинацией
+- [x] Колонки: дата/время, гость, кол-во гостей, сумма, статус, действия
+- [x] Фильтры: по статусу (pending/confirmed/completed/cancelled/rejected), по дате
+- [x] Действия: подтвердить (confirm), отклонить (reject), завершить (complete), отменить (cancel)
+- [x] BookingDetails: модальное окно с полной информацией о бронировании и платеже
+- [x] Цветовая кодировка статусов (Tag с цветами)
 
 ### Task 8: Календарь и расписание
 
