@@ -69,9 +69,7 @@ func (h *AnalyticsHandler) GetOwnerDashboard(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"data": dashboard,
-	})
+	writeJSON(w, http.StatusOK, dashboard)
 }
 
 // GetOwnerDailyStats godoc
@@ -140,9 +138,7 @@ func (h *AnalyticsHandler) GetOwnerDailyStats(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"data": dailyStats,
-	})
+	writeJSON(w, http.StatusOK, dailyStats)
 }
 
 // GetAdminDashboard godoc
@@ -183,9 +179,7 @@ func (h *AnalyticsHandler) GetAdminDashboard(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"data": dashboard,
-	})
+	writeJSON(w, http.StatusOK, dashboard)
 }
 
 // GetTopBathhouses godoc

@@ -56,7 +56,7 @@ func (h *CalendarHandler) ExportICal(w http.ResponseWriter, r *http.Request) {
 
 // ExportICalByToken godoc
 // @Summary      Export calendar by token
-// @Description  Exports bathhouse bookings as an iCalendar (.ics) file using a shareable token. No authentication required.
+// @Description  Exports bathhouse bookings as an iCalendar (.ics) file using a shareable token. No authentication required. Note: actual URL is /calendar/{token}.ics (without /api/v1 prefix).
 // @Tags         calendar
 // @Produce      text/calendar
 // @Param        token  path      string  true  "Calendar token"

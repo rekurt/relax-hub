@@ -186,11 +186,11 @@ func (h *SitemapHandler) generateSitemap(ctx context.Context) ([]byte, error) {
 }
 
 // @Summary      Get bathhouse Schema.org JSON-LD
-// @Description  Get Schema.org structured data (JSON-LD) for a bathhouse, used for SEO.
+// @Description  Get Schema.org structured data (JSON-LD) for a bathhouse, used for SEO. Returns raw JSON-LD, not wrapped in APIResponse.
 // @Tags         bathhouses
 // @Produce      json
 // @Param        id   path      string  true  "Bathhouse ID (UUID)"
-// @Success      200  {object}  object
+// @Success      200  {string}  string  "Schema.org JSON-LD"
 // @Failure      400  {object}  APIResponse{error=APIError}
 // @Failure      404  {object}  APIResponse{error=APIError}
 // @Router       /bathhouses/{id}/schema [get]

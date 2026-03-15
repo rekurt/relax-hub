@@ -17,25 +17,25 @@ func GenerateICal(bathhouse *domain.Bathhouse, bookings []domain.Booking) string
 	b.WriteString("PRODID:-//Bani//Booking Calendar//RU\r\n")
 	b.WriteString("CALSCALE:GREGORIAN\r\n")
 	b.WriteString("METHOD:PUBLISH\r\n")
-	b.WriteString(fmt.Sprintf("X-WR-CALNAME:%s\r\n", escapeICalText(bathhouse.Name)))
+	fmt.Fprintf(&b, "X-WR-CALNAME:%s\r\n", escapeICalText(bathhouse.Name))
 
 	for _, booking := range bookings {
 		b.WriteString("BEGIN:VEVENT\r\n")
-		b.WriteString(fmt.Sprintf("UID:%s@bani.app\r\n", booking.ID.String()))
-		b.WriteString(fmt.Sprintf("DTSTART:%s\r\n", formatICalTime(booking.StartTime)))
-		b.WriteString(fmt.Sprintf("DTEND:%s\r\n", formatICalTime(booking.EndTime)))
-		b.WriteString(fmt.Sprintf("DTSTAMP:%s\r\n", formatICalTime(booking.CreatedAt)))
+		fmt.Fprintf(&b, "UID:%s@bani.app\r\n", booking.ID.String())
+		fmt.Fprintf(&b, "DTSTART:%s\r\n", formatICalTime(booking.StartTime))
+		fmt.Fprintf(&b, "DTEND:%s\r\n", formatICalTime(booking.EndTime))
+		fmt.Fprintf(&b, "DTSTAMP:%s\r\n", formatICalTime(booking.CreatedAt))
 
 		summary := fmt.Sprintf("Бронирование - %s", bathhouse.Name)
-		b.WriteString(fmt.Sprintf("SUMMARY:%s\r\n", escapeICalText(summary)))
+		fmt.Fprintf(&b, "SUMMARY:%s\r\n", escapeICalText(summary))
 
 		description := fmt.Sprintf("Гостей: %d, Статус: %s", booking.GuestCount, booking.Status)
 		if booking.Comment != "" {
 			description += fmt.Sprintf(", Комментарий: %s", booking.Comment)
 		}
-		b.WriteString(fmt.Sprintf("DESCRIPTION:%s\r\n", escapeICalText(description)))
+		fmt.Fprintf(&b, "DESCRIPTION:%s\r\n", escapeICalText(description))
 
-		b.WriteString(fmt.Sprintf("STATUS:%s\r\n", bookingStatusToICalStatus(booking.Status)))
+		fmt.Fprintf(&b, "STATUS:%s\r\n", bookingStatusToICalStatus(booking.Status))
 		b.WriteString("END:VEVENT\r\n")
 	}
 

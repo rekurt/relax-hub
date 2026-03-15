@@ -6,7 +6,6 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
         "/admin/analytics": {
@@ -5653,7 +5652,7 @@
         },
         "/bathhouses/{id}/schema": {
             "get": {
-                "description": "Get Schema.org structured data (JSON-LD) for a bathhouse, used for SEO.",
+                "description": "Get Schema.org structured data (JSON-LD) for a bathhouse, used for SEO. Returns raw JSON-LD, not wrapped in APIResponse.",
                 "produces": [
                     "application/json"
                 ],
@@ -5672,9 +5671,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Schema.org JSON-LD",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
                         }
                     },
                     "400": {
@@ -6657,7 +6656,7 @@
         },
         "/calendar/{token}.ics": {
             "get": {
-                "description": "Exports bathhouse bookings as an iCalendar (.ics) file using a shareable token. No authentication required.",
+                "description": "Exports bathhouse bookings as an iCalendar (.ics) file using a shareable token. No authentication required. Note: actual URL is /calendar/{token}.ics (without /api/v1 prefix).",
                 "produces": [
                     "text/calendar"
                 ],
@@ -10633,6 +10632,11 @@
         },
         "/my/loyalty/levels": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns information about all loyalty levels and their privileges (bronze, silver, gold, platinum)",
                 "produces": [
                     "application/json"

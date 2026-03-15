@@ -160,7 +160,8 @@ func (s *mediaService) checkLimits(ctx context.Context, ownerType domain.MediaOw
 		return nil
 	}
 
-	if mediaType == domain.MediaTypeImage {
+	switch mediaType {
+	case domain.MediaTypeImage:
 		imageType := domain.MediaTypeImage
 		count, err := s.mediaRepo.CountByOwner(ctx, ownerType, ownerID, &imageType)
 		if err != nil {
@@ -169,7 +170,7 @@ func (s *mediaService) checkLimits(ctx context.Context, ownerType domain.MediaOw
 		if count >= int64(domain.MaxImagesPerReview) {
 			return domain.ErrMediaLimitReached
 		}
-	} else if mediaType == domain.MediaTypeVideo {
+	case domain.MediaTypeVideo:
 		videoType := domain.MediaTypeVideo
 		count, err := s.mediaRepo.CountByOwner(ctx, ownerType, ownerID, &videoType)
 		if err != nil {

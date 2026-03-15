@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -295,10 +294,9 @@ func (h *RecommendationHandler) UpdatePreferences(w http.ResponseWriter, r *http
 		return
 	}
 
-	defer r.Body.Close()
 	var req updateRecommendationPreferencesRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid_input", "invalid request body")
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
 		return
 	}
 

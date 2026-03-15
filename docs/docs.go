@@ -5659,7 +5659,7 @@ const docTemplate = `{
         },
         "/bathhouses/{id}/schema": {
             "get": {
-                "description": "Get Schema.org structured data (JSON-LD) for a bathhouse, used for SEO.",
+                "description": "Get Schema.org structured data (JSON-LD) for a bathhouse, used for SEO. Returns raw JSON-LD, not wrapped in APIResponse.",
                 "produces": [
                     "application/json"
                 ],
@@ -5678,9 +5678,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Schema.org JSON-LD",
                         "schema": {
-                            "type": "object"
+                            "type": "string"
                         }
                     },
                     "400": {
@@ -6663,7 +6663,7 @@ const docTemplate = `{
         },
         "/calendar/{token}.ics": {
             "get": {
-                "description": "Exports bathhouse bookings as an iCalendar (.ics) file using a shareable token. No authentication required.",
+                "description": "Exports bathhouse bookings as an iCalendar (.ics) file using a shareable token. No authentication required. Note: actual URL is /calendar/{token}.ics (without /api/v1 prefix).",
                 "produces": [
                     "text/calendar"
                 ],
@@ -10639,6 +10639,11 @@ const docTemplate = `{
         },
         "/my/loyalty/levels": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Returns information about all loyalty levels and their privileges (bronze, silver, gold, platinum)",
                 "produces": [
                     "application/json"
@@ -15870,7 +15875,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Bani API",

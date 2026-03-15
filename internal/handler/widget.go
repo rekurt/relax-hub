@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -128,7 +129,7 @@ func (h *WidgetHandler) GetBathhouse(w http.ResponseWriter, r *http.Request) {
 
 	bathhouse, err := h.bathhouseService.GetByAPIKey(r.Context(), apiKey)
 	if err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			writeError(w, http.StatusNotFound, "not_found", "bathhouse not found")
 		} else {
 			h.log.Error("failed to get bathhouse by api_key", "error", err)
@@ -177,7 +178,7 @@ func (h *WidgetHandler) GetAvailableSlots(w http.ResponseWriter, r *http.Request
 
 	bathhouse, err := h.bathhouseService.GetByAPIKey(r.Context(), apiKey)
 	if err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			writeError(w, http.StatusNotFound, "not_found", "bathhouse not found")
 		} else {
 			h.log.Error("failed to get bathhouse by api_key", "error", err)
@@ -254,7 +255,7 @@ func (h *WidgetHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 
 	bathhouse, err := h.bathhouseService.GetByAPIKey(r.Context(), apiKey)
 	if err != nil {
-		if err == domain.ErrNotFound {
+		if errors.Is(err, domain.ErrNotFound) {
 			writeError(w, http.StatusNotFound, "not_found", "bathhouse not found")
 		} else {
 			h.log.Error("failed to get bathhouse by api_key", "error", err)

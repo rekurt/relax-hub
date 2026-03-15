@@ -1341,7 +1341,6 @@ definitions:
       open_time:
         type: string
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: API for the Bani bathhouse marketplace platform.
@@ -4425,7 +4424,7 @@ paths:
   /bathhouses/{id}/schema:
     get:
       description: Get Schema.org structured data (JSON-LD) for a bathhouse, used
-        for SEO.
+        for SEO. Returns raw JSON-LD, not wrapped in APIResponse.
       parameters:
       - description: Bathhouse ID (UUID)
         in: path
@@ -4436,9 +4435,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Schema.org JSON-LD
           schema:
-            type: object
+            type: string
         "400":
           description: Bad Request
           schema:
@@ -5013,8 +5012,9 @@ paths:
       - bookings
   /calendar/{token}.ics:
     get:
-      description: Exports bathhouse bookings as an iCalendar (.ics) file using a
-        shareable token. No authentication required.
+      description: 'Exports bathhouse bookings as an iCalendar (.ics) file using a
+        shareable token. No authentication required. Note: actual URL is /calendar/{token}.ics
+        (without /api/v1 prefix).'
       parameters:
       - description: Calendar token
         in: path
@@ -7225,6 +7225,8 @@ paths:
                     $ref: '#/definitions/internal_handler.loyaltyLevelResponse'
                   type: array
               type: object
+      security:
+      - BearerAuth: []
       summary: Get loyalty levels
       tags:
       - loyalty

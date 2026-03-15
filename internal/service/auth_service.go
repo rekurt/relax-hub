@@ -213,7 +213,7 @@ func isValidEmail(email string) bool {
 
 	// Validate TLD contains only letters
 	for _, c := range tld {
-		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+		if (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') {
 			return false
 		}
 	}

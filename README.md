@@ -217,6 +217,15 @@ make run
 |-------|------|----------|
 | GET | `/health` | Статус сервера |
 
+### API документация (Swagger UI)
+
+Интерактивная документация доступна по адресу `/swagger/` при запущенном сервере. Спецификация генерируется из аннотаций в коде с помощью [swaggo/swag](https://github.com/swaggo/swag).
+
+```bash
+make swagger       # перегенерировать спецификацию
+make swagger-fmt   # форматировать аннотации
+```
+
 ## Makefile команды
 
 ```
@@ -230,6 +239,8 @@ make migrate-down  — откатить миграции
 make docker-up     — поднять docker compose
 make docker-down   — остановить docker compose
 make seed-admin    — создать admin-пользователя
+make swagger       — сгенерировать OpenAPI спецификацию
+make swagger-fmt   — форматировать Swagger аннотации
 make clean         — очистить артефакты сборки
 ```
 
