@@ -34,6 +34,11 @@ type ReviewService interface {
 	Delete(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, reviewID uuid.UUID) error
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Review], error)
 	AddOwnerResponse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, reviewID uuid.UUID, response string) (*domain.Review, error)
+	// Admin moderation:
+	ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error)
+	CountPendingReviews(ctx context.Context) (int64, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReviewStatus) error
+	UpdateStatusWithReasons(ctx context.Context, id uuid.UUID, status domain.ReviewStatus, reasons []string) error
 }
 
 type reviewService struct {
@@ -319,4 +324,20 @@ func (s *reviewService) cleanupReviewMedia(ctx context.Context, reviewID uuid.UU
 			}
 		}
 	}
+}
+
+func (s *reviewService) ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error) {
+	return s.reviewRepo.ListAllReviews(ctx, filter)
+}
+
+func (s *reviewService) CountPendingReviews(ctx context.Context) (int64, error) {
+	return s.reviewRepo.CountPendingReviews(ctx)
+}
+
+func (s *reviewService) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReviewStatus) error {
+	return s.reviewRepo.UpdateStatus(ctx, id, status)
+}
+
+func (s *reviewService) UpdateStatusWithReasons(ctx context.Context, id uuid.UUID, status domain.ReviewStatus, reasons []string) error {
+	return s.reviewRepo.UpdateStatusWithReasons(ctx, id, status, reasons)
 }

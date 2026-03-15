@@ -9,22 +9,21 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
-	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 type PricingHandler struct {
-	pricingService service.PricingService
-	bathhouseRepo  repository.BathhouseRepository
+	pricingService   service.PricingService
+	bathhouseService service.BathhouseService
 }
 
 func NewPricingHandler(
 	pricingService service.PricingService,
-	bathhouseRepo repository.BathhouseRepository,
+	bathhouseService service.BathhouseService,
 ) *PricingHandler {
 	return &PricingHandler{
-		pricingService: pricingService,
-		bathhouseRepo:  bathhouseRepo,
+		pricingService:   pricingService,
+		bathhouseService: bathhouseService,
 	}
 }
 
@@ -263,7 +262,7 @@ func (h *PricingHandler) CalculatePrice(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Get bathhouse to get base price
-	bathhouse, err := h.bathhouseRepo.GetByID(r.Context(), bathhouseID)
+	bathhouse, err := h.bathhouseService.GetByID(r.Context(), bathhouseID)
 	if err != nil {
 		handleServiceError(w, err)
 		return

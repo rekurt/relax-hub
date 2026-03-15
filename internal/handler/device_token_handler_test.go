@@ -6,18 +6,79 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/handler"
-	"github.com/nikitaaldaev/bani/internal/repository/mock"
 )
 
+// mockDeviceTokenService implements service.DeviceTokenService for testing.
+type mockDeviceTokenService struct {
+	mu     sync.RWMutex
+	tokens map[uuid.UUID]*domain.DeviceToken
+}
+
+func newMockDeviceTokenService() *mockDeviceTokenService {
+	return &mockDeviceTokenService{
+		tokens: make(map[uuid.UUID]*domain.DeviceToken),
+	}
+}
+
+func (m *mockDeviceTokenService) Register(_ context.Context, token *domain.DeviceToken) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if token.Token == "" {
+		return domain.ErrInvalidInput
+	}
+	if token.ID == uuid.Nil {
+		token.ID = uuid.New()
+	}
+	now := time.Now()
+	if token.CreatedAt.IsZero() {
+		token.CreatedAt = now
+	}
+	if token.UpdatedAt.IsZero() {
+		token.UpdatedAt = now
+	}
+	cp := *token
+	m.tokens[token.ID] = &cp
+	return nil
+}
+
+func (m *mockDeviceTokenService) Delete(_ context.Context, id uuid.UUID) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, ok := m.tokens[id]; !ok {
+		return domain.ErrNotFound
+	}
+	delete(m.tokens, id)
+	return nil
+}
+
+// ListByUser is a test helper, not part of the service interface.
+func (m *mockDeviceTokenService) ListByUser(userID uuid.UUID) []domain.DeviceToken {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var result []domain.DeviceToken
+	for _, dt := range m.tokens {
+		if dt.UserID == userID {
+			cp := *dt
+			result = append(result, cp)
+		}
+	}
+	return result
+}
+
 func TestDeviceTokenHandler_Register(t *testing.T) {
-	repo := mock.NewDeviceTokenRepo()
-	h := handler.NewDeviceTokenHandler(repo)
+	svc := newMockDeviceTokenService()
+	h := handler.NewDeviceTokenHandler(svc)
 
 	userID := uuid.New()
 	body := map[string]string{
@@ -37,18 +98,15 @@ func TestDeviceTokenHandler_Register(t *testing.T) {
 	}
 
 	// Verify token was stored
-	tokens, err := repo.ListByUser(context.Background(), userID)
-	if err != nil {
-		t.Fatalf("ListByUser error: %v", err)
-	}
+	tokens := svc.ListByUser(userID)
 	if len(tokens) != 1 {
 		t.Errorf("tokens count = %d, want 1", len(tokens))
 	}
 }
 
 func TestDeviceTokenHandler_Register_EmptyToken(t *testing.T) {
-	repo := mock.NewDeviceTokenRepo()
-	h := handler.NewDeviceTokenHandler(repo)
+	svc := newMockDeviceTokenService()
+	h := handler.NewDeviceTokenHandler(svc)
 
 	userID := uuid.New()
 	body := map[string]string{
@@ -69,8 +127,8 @@ func TestDeviceTokenHandler_Register_EmptyToken(t *testing.T) {
 }
 
 func TestDeviceTokenHandler_Delete(t *testing.T) {
-	repo := mock.NewDeviceTokenRepo()
-	h := handler.NewDeviceTokenHandler(repo)
+	svc := newMockDeviceTokenService()
+	h := handler.NewDeviceTokenHandler(svc)
 
 	userID := uuid.New()
 	body := map[string]string{
@@ -108,15 +166,15 @@ func TestDeviceTokenHandler_Delete(t *testing.T) {
 	}
 
 	// Verify token was deleted
-	tokens, _ := repo.ListByUser(context.Background(), userID)
+	tokens := svc.ListByUser(userID)
 	if len(tokens) != 0 {
 		t.Errorf("tokens count = %d, want 0", len(tokens))
 	}
 }
 
 func TestDeviceTokenHandler_Delete_InvalidID(t *testing.T) {
-	repo := mock.NewDeviceTokenRepo()
-	h := handler.NewDeviceTokenHandler(repo)
+	svc := newMockDeviceTokenService()
+	h := handler.NewDeviceTokenHandler(svc)
 
 	r := chi.NewRouter()
 	r.Delete("/api/v1/device-tokens/{id}", h.Delete)

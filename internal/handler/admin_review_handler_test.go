@@ -15,6 +15,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
+	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 type mockAdminNotificationService struct {
@@ -50,6 +51,55 @@ func (m *mockAdminNotificationService) GetPreferences(ctx context.Context, userI
 
 func (m *mockAdminNotificationService) UpdatePreferences(ctx context.Context, userID uuid.UUID, prefs *domain.NotificationPreferences) error {
 	return nil
+}
+
+// adminReviewServiceMock wraps mock.ReviewRepo to implement service.ReviewService for admin tests.
+type adminReviewServiceMock struct {
+	repo *mock.ReviewRepo
+}
+
+func newAdminReviewServiceMock(repo *mock.ReviewRepo) *adminReviewServiceMock {
+	return &adminReviewServiceMock{repo: repo}
+}
+
+func (m *adminReviewServiceMock) Create(_ context.Context, _ uuid.UUID, _ service.CreateReviewInput) (*domain.Review, error) {
+	return nil, nil
+}
+
+func (m *adminReviewServiceMock) GetByID(ctx context.Context, id uuid.UUID) (*domain.Review, error) {
+	return m.repo.GetByID(ctx, id)
+}
+
+func (m *adminReviewServiceMock) Update(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ service.UpdateReviewInput) (*domain.Review, error) {
+	return nil, nil
+}
+
+func (m *adminReviewServiceMock) Delete(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *adminReviewServiceMock) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Review], error) {
+	return m.repo.ListByBathhouse(ctx, bathhouseID, page, pageSize)
+}
+
+func (m *adminReviewServiceMock) AddOwnerResponse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID, _ string) (*domain.Review, error) {
+	return nil, nil
+}
+
+func (m *adminReviewServiceMock) ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error) {
+	return m.repo.ListAllReviews(ctx, filter)
+}
+
+func (m *adminReviewServiceMock) CountPendingReviews(ctx context.Context) (int64, error) {
+	return m.repo.CountPendingReviews(ctx)
+}
+
+func (m *adminReviewServiceMock) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReviewStatus) error {
+	return m.repo.UpdateStatus(ctx, id, status)
+}
+
+func (m *adminReviewServiceMock) UpdateStatusWithReasons(ctx context.Context, id uuid.UUID, status domain.ReviewStatus, reasons []string) error {
+	return m.repo.UpdateStatusWithReasons(ctx, id, status, reasons)
 }
 
 func TestAdminHandler_ListReviews(t *testing.T) {
@@ -88,7 +138,7 @@ func TestAdminHandler_ListReviews(t *testing.T) {
 		t.Fatalf("failed to create review2: %v", err)
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
+	adminH := handler.NewAdminHandler(nil, nil, nil, newAdminReviewServiceMock(reviewRepo), &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Get("/admin/reviews", adminH.ListReviews)
@@ -157,7 +207,7 @@ func TestAdminHandler_GetPendingCount(t *testing.T) {
 		}
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
+	adminH := handler.NewAdminHandler(nil, nil, nil, newAdminReviewServiceMock(reviewRepo), &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Get("/admin/reviews/pending-count", adminH.GetPendingCount)
@@ -213,7 +263,7 @@ func TestAdminHandler_ApproveReview(t *testing.T) {
 		t.Fatalf("failed to create review: %v", err)
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
+	adminH := handler.NewAdminHandler(nil, nil, nil, newAdminReviewServiceMock(reviewRepo), &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/reviews/{id}/approve", adminH.ApproveReview)
@@ -273,7 +323,7 @@ func TestAdminHandler_RejectReview(t *testing.T) {
 		t.Fatalf("failed to create review: %v", err)
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
+	adminH := handler.NewAdminHandler(nil, nil, nil, newAdminReviewServiceMock(reviewRepo), &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/reviews/{id}/reject", adminH.RejectReview)
@@ -341,7 +391,7 @@ func TestAdminHandler_BatchApproveReviews(t *testing.T) {
 		ids = append(ids, review.ID.String())
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
+	adminH := handler.NewAdminHandler(nil, nil, nil, newAdminReviewServiceMock(reviewRepo), &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Post("/admin/reviews/batch-approve", adminH.BatchApproveReviews)
@@ -398,7 +448,7 @@ func TestAdminHandler_BatchRejectReviews(t *testing.T) {
 		ids = append(ids, review.ID.String())
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, &mockAdminNotificationService{})
+	adminH := handler.NewAdminHandler(nil, nil, nil, newAdminReviewServiceMock(reviewRepo), &mockAdminNotificationService{})
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Post("/admin/reviews/batch-reject", adminH.BatchRejectReviews)
@@ -466,7 +516,7 @@ func TestAdminHandler_ApproveReview_SendsNotification(t *testing.T) {
 		},
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, notifService)
+	adminH := handler.NewAdminHandler(nil, nil, nil, newAdminReviewServiceMock(reviewRepo), notifService)
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/reviews/{id}/approve", adminH.ApproveReview)
@@ -529,7 +579,7 @@ func TestAdminHandler_RejectReview_SendsNotification(t *testing.T) {
 		},
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, notifService)
+	adminH := handler.NewAdminHandler(nil, nil, nil, newAdminReviewServiceMock(reviewRepo), notifService)
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Patch("/admin/reviews/{id}/reject", adminH.RejectReview)
@@ -593,7 +643,7 @@ func TestAdminHandler_BatchApproveReviews_SendsNotifications(t *testing.T) {
 		},
 	}
 
-	adminH := handler.NewAdminHandler(nil, nil, nil, nil, reviewRepo, notifService)
+	adminH := handler.NewAdminHandler(nil, nil, nil, newAdminReviewServiceMock(reviewRepo), notifService)
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleAdmin)).Post("/admin/reviews/batch-approve", adminH.BatchApproveReviews)

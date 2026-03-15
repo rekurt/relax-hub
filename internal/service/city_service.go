@@ -24,6 +24,7 @@ type UpdateCityInput struct {
 type CityService interface {
 	GetAll(ctx context.Context) ([]domain.City, error)
 	GetBySlug(ctx context.Context, slug string) (*domain.City, error)
+	GetByID(ctx context.Context, id int64) (*domain.City, error)
 	// Admin:
 	Create(ctx context.Context, input CreateCityInput) (*domain.City, error)
 	Update(ctx context.Context, id int64, input UpdateCityInput) (*domain.City, error)
@@ -44,6 +45,10 @@ func (s *cityService) GetAll(ctx context.Context) ([]domain.City, error) {
 
 func (s *cityService) GetBySlug(ctx context.Context, slug string) (*domain.City, error) {
 	return s.cityRepo.GetBySlug(ctx, slug)
+}
+
+func (s *cityService) GetByID(ctx context.Context, id int64) (*domain.City, error) {
+	return s.cityRepo.GetByID(ctx, id)
 }
 
 func (s *cityService) Create(ctx context.Context, input CreateCityInput) (*domain.City, error) {

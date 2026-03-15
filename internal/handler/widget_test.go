@@ -16,77 +16,56 @@ import (
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
-// Mock BathhouseRepository for widget testing
-type mockWidgetBathhouseRepository struct {
+// mockWidgetBathhouseService implements service.BathhouseService for widget testing
+type mockWidgetBathhouseService struct {
 	getByAPIKeyFn func(ctx context.Context, apiKey string) (*domain.Bathhouse, error)
 }
 
-func (m *mockWidgetBathhouseRepository) Create(ctx context.Context, bh *domain.Bathhouse) error {
-	return nil
-}
-
-func (m *mockWidgetBathhouseRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
+func (m *mockWidgetBathhouseService) Create(_ context.Context, _ uuid.UUID, _ service.CreateBathhouseInput) (*domain.Bathhouse, error) {
 	return nil, nil
 }
 
-func (m *mockWidgetBathhouseRepository) GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error) {
+func (m *mockWidgetBathhouseService) GetByID(_ context.Context, _ uuid.UUID) (*domain.Bathhouse, error) {
+	return nil, nil
+}
+
+func (m *mockWidgetBathhouseService) GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error) {
 	if m.getByAPIKeyFn != nil {
 		return m.getByAPIKeyFn(ctx, apiKey)
 	}
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockWidgetBathhouseRepository) Update(ctx context.Context, bh *domain.Bathhouse) error {
-	return nil
-}
-
-func (m *mockWidgetBathhouseRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	return nil
-}
-
-func (m *mockWidgetBathhouseRepository) List(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
-	return nil, nil
-}
-
-func (m *mockWidgetBathhouseRepository) ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error) {
-	return nil, nil
-}
-
-func (m *mockWidgetBathhouseRepository) ListIDsByOwner(ctx context.Context, ownerID uuid.UUID) ([]uuid.UUID, error) {
-	return nil, nil
-}
-
-func (m *mockWidgetBathhouseRepository) UpdateRating(ctx context.Context, bathhouseID uuid.UUID) error {
-	return nil
-}
-
-func (m *mockWidgetBathhouseRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BathhouseStatus) error {
-	return nil
-}
-
-func (m *mockWidgetBathhouseRepository) UpdatePhotoVerified(ctx context.Context, id uuid.UUID, verified bool) error {
-	return nil
-}
-
-func (m *mockWidgetBathhouseRepository) GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error) {
+func (m *mockWidgetBathhouseService) GetBySlug(_ context.Context, _ string) (*domain.Bathhouse, error) {
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockWidgetBathhouseRepository) SlugExists(ctx context.Context, slug string) (bool, error) {
-	return false, nil
+func (m *mockWidgetBathhouseService) Update(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID, _ service.UpdateBathhouseInput) (*domain.Bathhouse, error) {
+	return nil, nil
 }
 
-func (m *mockWidgetBathhouseRepository) GetCalendarToken(ctx context.Context, bathhouseID uuid.UUID) (string, error) {
+func (m *mockWidgetBathhouseService) Delete(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockWidgetBathhouseService) Search(_ context.Context, _ domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
+	return nil, nil
+}
+
+func (m *mockWidgetBathhouseService) ListByOwner(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Bathhouse], error) {
+	return nil, nil
+}
+
+func (m *mockWidgetBathhouseService) GetWidgetKey(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (string, error) {
 	return "", nil
 }
 
-func (m *mockWidgetBathhouseRepository) SetCalendarToken(ctx context.Context, bathhouseID uuid.UUID, token string) error {
-	return nil
+func (m *mockWidgetBathhouseService) RegenerateWidgetKey(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (string, error) {
+	return "", nil
 }
 
-func (m *mockWidgetBathhouseRepository) GetByCalendarToken(ctx context.Context, token string) (*domain.Bathhouse, error) {
-	return nil, domain.ErrNotFound
-}
+func (m *mockWidgetBathhouseService) Approve(_ context.Context, _ uuid.UUID) error { return nil }
+func (m *mockWidgetBathhouseService) Reject(_ context.Context, _ uuid.UUID) error  { return nil }
 
 // Mock BookingService for widget testing
 type mockWidgetBookingService struct {
@@ -149,7 +128,7 @@ func TestWidgetHandler_GetBathhouse(t *testing.T) {
 	apiKey := "test-api-key"
 	bathhouseID := uuid.New()
 
-	bhRepo := &mockWidgetBathhouseRepository{
+	bhRepo := &mockWidgetBathhouseService{
 		getByAPIKeyFn: func(ctx context.Context, key string) (*domain.Bathhouse, error) {
 			if key == apiKey {
 				return &domain.Bathhouse{
@@ -200,7 +179,7 @@ func TestWidgetHandler_GetBathhouse(t *testing.T) {
 }
 
 func TestWidgetHandler_GetBathhouse_NotFound(t *testing.T) {
-	bhRepo := &mockWidgetBathhouseRepository{
+	bhRepo := &mockWidgetBathhouseService{
 		getByAPIKeyFn: func(ctx context.Context, key string) (*domain.Bathhouse, error) {
 			return nil, domain.ErrNotFound
 		},
@@ -226,7 +205,7 @@ func TestWidgetHandler_GetAvailableSlots(t *testing.T) {
 	bathhouseID := uuid.New()
 	testDate := time.Now().Add(24 * time.Hour).Format("2006-01-02")
 
-	bhRepo := &mockWidgetBathhouseRepository{
+	bhRepo := &mockWidgetBathhouseService{
 		getByAPIKeyFn: func(ctx context.Context, key string) (*domain.Bathhouse, error) {
 			if key == apiKey {
 				return &domain.Bathhouse{
@@ -283,7 +262,7 @@ func TestWidgetHandler_CreateBooking(t *testing.T) {
 	apiKey := "test-api-key"
 	bathhouseID := uuid.New()
 
-	bhRepo := &mockWidgetBathhouseRepository{
+	bhRepo := &mockWidgetBathhouseService{
 		getByAPIKeyFn: func(ctx context.Context, key string) (*domain.Bathhouse, error) {
 			if key == apiKey {
 				return &domain.Bathhouse{
@@ -342,7 +321,7 @@ func TestWidgetHandler_CreateBooking_MissingFields(t *testing.T) {
 	apiKey := "test-api-key"
 	bathhouseID := uuid.New()
 
-	bhRepo := &mockWidgetBathhouseRepository{
+	bhRepo := &mockWidgetBathhouseService{
 		getByAPIKeyFn: func(ctx context.Context, key string) (*domain.Bathhouse, error) {
 			if key == apiKey {
 				return &domain.Bathhouse{
@@ -383,7 +362,7 @@ func TestWidgetHandler_CreateBooking_MissingFields(t *testing.T) {
 // TestServeScript tests the static script serving
 func TestServeScript(t *testing.T) {
 	handler := NewWidgetHandler(
-		&mockWidgetBathhouseRepository{},
+		&mockWidgetBathhouseService{},
 		&mockWidgetBookingService{},
 		nil,
 	)
@@ -407,7 +386,7 @@ func TestServeScript(t *testing.T) {
 // TestServeStyles tests the static styles serving
 func TestServeStyles(t *testing.T) {
 	handler := NewWidgetHandler(
-		&mockWidgetBathhouseRepository{},
+		&mockWidgetBathhouseService{},
 		&mockWidgetBookingService{},
 		nil,
 	)

@@ -9,15 +9,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
-	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 type DeviceTokenHandler struct {
-	repo repository.DeviceTokenRepository
+	svc service.DeviceTokenService
 }
 
-func NewDeviceTokenHandler(repo repository.DeviceTokenRepository) *DeviceTokenHandler {
-	return &DeviceTokenHandler{repo: repo}
+func NewDeviceTokenHandler(svc service.DeviceTokenService) *DeviceTokenHandler {
+	return &DeviceTokenHandler{svc: svc}
 }
 
 type registerDeviceTokenRequest struct {
@@ -62,7 +62,7 @@ func (h *DeviceTokenHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Create(r.Context(), dt); err != nil {
+	if err := h.svc.Register(r.Context(), dt); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -84,7 +84,7 @@ func (h *DeviceTokenHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Delete(r.Context(), id); err != nil {
+	if err := h.svc.Delete(r.Context(), id); err != nil {
 		handleServiceError(w, err)
 		return
 	}

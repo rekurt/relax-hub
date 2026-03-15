@@ -8,28 +8,24 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
-	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 type SubscriptionHandler struct {
-	subService  service.SubscriptionService
-	promoRepo   repository.PromotionRepository
-	bhRepo      repository.BathhouseRepository
-	accessCheck *service.AccessChecker
+	subService   service.SubscriptionService
+	promoService service.PromotionService
+	accessCheck  *service.AccessChecker
 }
 
 func NewSubscriptionHandler(
 	subService service.SubscriptionService,
-	promoRepo repository.PromotionRepository,
-	bhRepo repository.BathhouseRepository,
+	promoService service.PromotionService,
 	accessCheck *service.AccessChecker,
 ) *SubscriptionHandler {
 	return &SubscriptionHandler{
-		subService:  subService,
-		promoRepo:   promoRepo,
-		bhRepo:      bhRepo,
-		accessCheck: accessCheck,
+		subService:   subService,
+		promoService: promoService,
+		accessCheck:  accessCheck,
 	}
 }
 
@@ -272,7 +268,7 @@ func (h *SubscriptionHandler) CreatePromotion(w http.ResponseWriter, r *http.Req
 	}
 
 	// Check if there's already an active promotion
-	existing, err := h.promoRepo.GetActiveBybathhouse(r.Context(), bathhouseID)
+	existing, err := h.promoService.GetActiveBybathhouse(r.Context(), bathhouseID)
 	if err != nil && err != domain.ErrNotFound {
 		handleServiceError(w, err)
 		return
@@ -302,7 +298,7 @@ func (h *SubscriptionHandler) CreatePromotion(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	if err := h.promoRepo.Create(r.Context(), promo); err != nil {
+	if err := h.promoService.Create(r.Context(), promo); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -327,7 +323,7 @@ func (h *SubscriptionHandler) GetPromotion(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	promo, err := h.promoRepo.GetActiveBybathhouse(r.Context(), bathhouseID)
+	promo, err := h.promoService.GetActiveBybathhouse(r.Context(), bathhouseID)
 	if err != nil {
 		handleServiceError(w, err)
 		return

@@ -59,14 +59,16 @@ func (m *sitemapMockBHService) RegenerateWidgetKey(_ context.Context, _ uuid.UUI
 }
 func (m *sitemapMockBHService) Approve(_ context.Context, _ uuid.UUID) error { return nil }
 func (m *sitemapMockBHService) Reject(_ context.Context, _ uuid.UUID) error  { return nil }
+func (m *sitemapMockBHService) GetByAPIKey(_ context.Context, _ string) (*domain.Bathhouse, error) {
+	return nil, domain.ErrNotFound
+}
 
-// mockCityRepo implements repository.CityRepository for sitemap tests.
+// mockCityRepo implements service.CityService for sitemap tests.
 type mockCityRepo struct {
 	getAllFn   func(ctx context.Context) ([]domain.City, error)
 	getByIDFn func(ctx context.Context, id int64) (*domain.City, error)
 }
 
-func (m *mockCityRepo) Create(_ context.Context, _ *domain.City) error { return nil }
 func (m *mockCityRepo) GetAll(ctx context.Context) ([]domain.City, error) {
 	if m.getAllFn != nil {
 		return m.getAllFn(ctx)
@@ -82,8 +84,13 @@ func (m *mockCityRepo) GetByID(ctx context.Context, id int64) (*domain.City, err
 	}
 	return nil, domain.ErrNotFound
 }
-func (m *mockCityRepo) Update(_ context.Context, _ *domain.City) error { return nil }
-func (m *mockCityRepo) Delete(_ context.Context, _ int64) error        { return nil }
+func (m *mockCityRepo) Create(_ context.Context, _ service.CreateCityInput) (*domain.City, error) {
+	return nil, nil
+}
+func (m *mockCityRepo) Update(_ context.Context, _ int64, _ service.UpdateCityInput) (*domain.City, error) {
+	return nil, nil
+}
+func (m *mockCityRepo) Delete(_ context.Context, _ int64) error { return nil }
 
 func TestSitemapHandler_GetSchema(t *testing.T) {
 	log := logger.New(logger.LevelWarn)

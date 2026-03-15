@@ -9,22 +9,21 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
-	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 type RecommendationHandler struct {
 	recommendationService service.RecommendationService
-	bathhouseRepository   repository.BathhouseRepository
+	bathhouseService      service.BathhouseService
 }
 
 func NewRecommendationHandler(
 	recommendationService service.RecommendationService,
-	bathhouseRepository repository.BathhouseRepository,
+	bathhouseService service.BathhouseService,
 ) *RecommendationHandler {
 	return &RecommendationHandler{
 		recommendationService: recommendationService,
-		bathhouseRepository:   bathhouseRepository,
+		bathhouseService:      bathhouseService,
 	}
 }
 
@@ -85,7 +84,7 @@ func (h *RecommendationHandler) GetPersonalized(w http.ResponseWriter, r *http.R
 
 	items := make([]recommendationResponse, 0, len(recommendations))
 	for _, recID := range recommendations {
-		bh, err := h.bathhouseRepository.GetByID(r.Context(), recID)
+		bh, err := h.bathhouseService.GetByID(r.Context(), recID)
 		if err != nil {
 			continue
 		}
@@ -140,7 +139,7 @@ func (h *RecommendationHandler) GetSimilar(w http.ResponseWriter, r *http.Reques
 
 	items := make([]recommendationResponse, 0, len(recommendations))
 	for _, recID := range recommendations {
-		bh, err := h.bathhouseRepository.GetByID(r.Context(), recID)
+		bh, err := h.bathhouseService.GetByID(r.Context(), recID)
 		if err != nil {
 			continue
 		}
@@ -191,7 +190,7 @@ func (h *RecommendationHandler) GetPopular(w http.ResponseWriter, r *http.Reques
 
 	items := make([]recommendationResponse, 0, len(recommendations))
 	for _, recID := range recommendations {
-		bh, err := h.bathhouseRepository.GetByID(r.Context(), recID)
+		bh, err := h.bathhouseService.GetByID(r.Context(), recID)
 		if err != nil {
 			continue
 		}

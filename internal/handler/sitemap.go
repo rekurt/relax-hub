@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/seo"
 	"github.com/nikitaaldaev/bani/internal/service"
 	"github.com/redis/go-redis/v9"
@@ -26,7 +25,7 @@ const (
 // SitemapHandler handles sitemap.xml and Schema.org endpoints.
 type SitemapHandler struct {
 	bathhouseService service.BathhouseService
-	cityRepo         repository.CityRepository
+	cityService      service.CityService
 	redis            *redis.Client
 	log              *logger.Logger
 	baseURL          string
@@ -34,14 +33,14 @@ type SitemapHandler struct {
 
 func NewSitemapHandler(
 	bathhouseService service.BathhouseService,
-	cityRepo repository.CityRepository,
+	cityService service.CityService,
 	redisClient *redis.Client,
 	log *logger.Logger,
 	baseURL string,
 ) *SitemapHandler {
 	return &SitemapHandler{
 		bathhouseService: bathhouseService,
-		cityRepo:         cityRepo,
+		cityService:      cityService,
 		redis:            redisClient,
 		log:              log,
 		baseURL:          baseURL,
@@ -119,7 +118,7 @@ func (h *SitemapHandler) generateSitemap(ctx context.Context) ([]byte, error) {
 	})
 
 	// Cities
-	cities, err := h.cityRepo.GetAll(ctx)
+	cities, err := h.cityService.GetAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("get cities: %w", err)
 	}
@@ -204,7 +203,7 @@ func (h *SitemapHandler) GetSchema(w http.ResponseWriter, r *http.Request) {
 	// Get city info
 	var cityName, citySlug string
 	if bh.CityID > 0 {
-		city, err := h.cityRepo.GetByID(r.Context(), bh.CityID)
+		city, err := h.cityService.GetByID(r.Context(), bh.CityID)
 		if err == nil {
 			cityName = city.Name
 			citySlug = city.Slug

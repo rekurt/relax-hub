@@ -16,7 +16,6 @@ import (
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
-	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/seo"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -29,8 +28,8 @@ type BathhouseHandler struct {
 	recommendationService service.RecommendationService
 	analyticsService      service.AnalyticsService
 	mediaService          service.MediaService
-	promotionRepository   repository.PromotionRepository
-	cityRepo              repository.CityRepository
+	promotionService      service.PromotionService
+	cityService           service.CityService
 	log                   *logger.Logger
 	baseURL               string
 }
@@ -43,8 +42,8 @@ func NewBathhouseHandler(
 	recommendationService service.RecommendationService,
 	analyticsService service.AnalyticsService,
 	mediaService service.MediaService,
-	promotionRepository repository.PromotionRepository,
-	cityRepo repository.CityRepository,
+	promotionService service.PromotionService,
+	cityService service.CityService,
 	log *logger.Logger,
 	baseURL string,
 ) *BathhouseHandler {
@@ -56,8 +55,8 @@ func NewBathhouseHandler(
 		recommendationService: recommendationService,
 		analyticsService:      analyticsService,
 		mediaService:          mediaService,
-		promotionRepository:   promotionRepository,
-		cityRepo:              cityRepo,
+		promotionService:      promotionService,
+		cityService:           cityService,
 		log:                   log,
 		baseURL:               baseURL,
 	}
@@ -346,17 +345,10 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Record impressions for promoted bathhouses
-	if h.promotionRepository != nil {
+	if h.promotionService != nil {
 		for _, bh := range result.Items {
 			if bh.IsPromoted {
-				promo, err := h.promotionRepository.GetActiveBybathhouse(r.Context(), bh.ID)
-				if err == nil && promo != nil {
-					if err := h.promotionRepository.RecordImpression(r.Context(), promo.ID); err != nil {
-						if h.log != nil {
-							h.log.Warn("failed to record promotion impression", "promotion_id", promo.ID, "error", err)
-						}
-					}
-				}
+				_ = h.promotionService.RecordImpression(r.Context(), bh.ID)
 			}
 		}
 	}
@@ -899,8 +891,8 @@ func (h *BathhouseHandler) GetMeta(w http.ResponseWriter, r *http.Request) {
 
 func (h *BathhouseHandler) buildMeta(ctx context.Context, bh *domain.Bathhouse) *seo.MetaTags {
 	var cityName, citySlug string
-	if h.cityRepo != nil && bh.CityID > 0 {
-		city, err := h.cityRepo.GetByID(ctx, bh.CityID)
+	if h.cityService != nil && bh.CityID > 0 {
+		city, err := h.cityService.GetByID(ctx, bh.CityID)
 		if err == nil && city != nil {
 			cityName = city.Name
 			citySlug = city.Slug
@@ -945,15 +937,8 @@ func (h *BathhouseHandler) recordBathhouseView(r *http.Request, bathhouseID uuid
 		_ = h.analyticsService.RecordView(ctx, bathhouseID, viewerID, source, ipHash)
 	}
 
-	if h.promotionRepository != nil {
-		promo, err := h.promotionRepository.GetActiveBybathhouse(ctx, bathhouseID)
-		if err == nil && promo != nil {
-			if err := h.promotionRepository.RecordClick(ctx, promo.ID); err != nil {
-				if h.log != nil {
-					h.log.Warn("failed to record promotion click", "promotion_id", promo.ID, "error", err)
-				}
-			}
-		}
+	if h.promotionService != nil {
+		_ = h.promotionService.RecordClick(ctx, bathhouseID)
 	}
 }
 

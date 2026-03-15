@@ -78,7 +78,7 @@ func testRouterParams() server.RouterParams {
 		FavHandler:     handler.NewFavoriteHandler(nil),
 		RepHandler:     handler.NewRepresentativeHandler(nil),
 		CityHandler:    handler.NewCityHandler(nil),
-		AdminHandler:   handler.NewAdminHandler(nil, nil, nil, nil, nil, &mockAdminNotificationService{}),
+		AdminHandler:   handler.NewAdminHandler(nil, nil, nil, nil, &mockAdminNotificationService{}),
 		SitemapHandler: handler.NewSitemapHandler(nil, nil, nil, log, ""),
 		PromoHandler:   handler.NewPromoHandler(nil),
 		MediaHandler:   handler.NewMediaHandler(nil),

@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
-	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
@@ -18,7 +17,6 @@ type AdminHandler struct {
 	bathhouseService service.BathhouseService
 	cityService      service.CityService
 	reviewService    service.ReviewService
-	reviewRepo       repository.ReviewRepository
 	notifService     service.NotificationService
 }
 
@@ -27,7 +25,6 @@ func NewAdminHandler(
 	bathhouseService service.BathhouseService,
 	cityService service.CityService,
 	reviewService service.ReviewService,
-	reviewRepo repository.ReviewRepository,
 	notifService service.NotificationService,
 ) *AdminHandler {
 	return &AdminHandler{
@@ -35,7 +32,6 @@ func NewAdminHandler(
 		bathhouseService: bathhouseService,
 		cityService:      cityService,
 		reviewService:    reviewService,
-		reviewRepo:       reviewRepo,
 		notifService:     notifService,
 	}
 }
@@ -343,7 +339,7 @@ func (h *AdminHandler) ListReviews(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result, err := h.reviewRepo.ListAllReviews(r.Context(), filter)
+	result, err := h.reviewService.ListAllReviews(r.Context(), filter)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -363,7 +359,7 @@ func (h *AdminHandler) ListReviews(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AdminHandler) GetPendingCount(w http.ResponseWriter, r *http.Request) {
-	count, err := h.reviewRepo.CountPendingReviews(r.Context())
+	count, err := h.reviewService.CountPendingReviews(r.Context())
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -383,13 +379,13 @@ func (h *AdminHandler) ApproveReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	review, err := h.reviewRepo.GetByID(r.Context(), id)
+	review, err := h.reviewService.GetByID(r.Context(), id)
 	if err != nil {
 		handleServiceError(w, err)
 		return
 	}
 
-	if err := h.reviewRepo.UpdateStatus(r.Context(), id, domain.ReviewStatusApproved); err != nil {
+	if err := h.reviewService.UpdateStatus(r.Context(), id, domain.ReviewStatusApproved); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -423,7 +419,7 @@ func (h *AdminHandler) RejectReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	review, err := h.reviewRepo.GetByID(r.Context(), id)
+	review, err := h.reviewService.GetByID(r.Context(), id)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -434,7 +430,7 @@ func (h *AdminHandler) RejectReview(w http.ResponseWriter, r *http.Request) {
 		reasons = []string{req.Reason}
 	}
 
-	if err := h.reviewRepo.UpdateStatusWithReasons(r.Context(), id, domain.ReviewStatusRejected, reasons); err != nil {
+	if err := h.reviewService.UpdateStatusWithReasons(r.Context(), id, domain.ReviewStatusRejected, reasons); err != nil {
 		handleServiceError(w, err)
 		return
 	}
@@ -489,13 +485,13 @@ func (h *AdminHandler) BatchApproveReviews(w http.ResponseWriter, r *http.Reques
 			continue
 		}
 
-		review, err := h.reviewRepo.GetByID(r.Context(), id)
+		review, err := h.reviewService.GetByID(r.Context(), id)
 		if err != nil {
 			result.Failed++
 			continue
 		}
 
-		if err := h.reviewRepo.UpdateStatus(r.Context(), id, domain.ReviewStatusApproved); err != nil {
+		if err := h.reviewService.UpdateStatus(r.Context(), id, domain.ReviewStatusApproved); err != nil {
 			result.Failed++
 			continue
 		}
@@ -545,13 +541,13 @@ func (h *AdminHandler) BatchRejectReviews(w http.ResponseWriter, r *http.Request
 			continue
 		}
 
-		review, err := h.reviewRepo.GetByID(r.Context(), id)
+		review, err := h.reviewService.GetByID(r.Context(), id)
 		if err != nil {
 			result.Failed++
 			continue
 		}
 
-		if err := h.reviewRepo.UpdateStatusWithReasons(r.Context(), id, domain.ReviewStatusRejected, reasons); err != nil {
+		if err := h.reviewService.UpdateStatusWithReasons(r.Context(), id, domain.ReviewStatusRejected, reasons); err != nil {
 			result.Failed++
 			continue
 		}

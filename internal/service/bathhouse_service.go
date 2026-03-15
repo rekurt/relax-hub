@@ -54,6 +54,7 @@ type BathhouseService interface {
 	Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
 	GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error)
+	GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error)
 	Update(ctx context.Context, userID uuid.UUID, role domain.UserRole, id uuid.UUID, input UpdateBathhouseInput) (*domain.Bathhouse, error)
 	Delete(ctx context.Context, ownerID uuid.UUID, id uuid.UUID) error
 	Search(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)
@@ -321,4 +322,8 @@ func (s *bathhouseService) RegenerateWidgetKey(ctx context.Context, userID uuid.
 	}
 
 	return bh.ApiKey, nil
+}
+
+func (s *bathhouseService) GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error) {
+	return s.bhRepo.GetByAPIKey(ctx, apiKey)
 }

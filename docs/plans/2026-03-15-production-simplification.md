@@ -171,13 +171,13 @@ Several service methods add zero business logic and just forward to repository:
 
 6 handlers bypass the service layer with direct repo injections. This violates the handler->service->repository pattern.
 
-- [ ] Move `PromotionRepository.RecordImpression/RecordClick/GetActiveByBathhouse` calls behind BathhouseService or a new PromotionService
-- [ ] Move `CityRepository` usage in BathhouseHandler.buildMeta() behind CityService (it already exists)
-- [ ] Move direct `BathhouseRepository` in SubscriptionHandler, PricingHandler, RecommendationHandler, WidgetHandler behind BathhouseService
-- [ ] Move direct `ReviewRepository` in AdminHandler behind ReviewService
-- [ ] Create minimal DeviceTokenService (or add methods to UserService) for DeviceTokenHandler
-- [ ] Update handler constructors, DI module, and router params
-- [ ] Update existing tests for modified handlers
+- [x] Move `PromotionRepository.RecordImpression/RecordClick/GetActiveByBathhouse` calls behind BathhouseService or a new PromotionService
+- [x] Move `CityRepository` usage in BathhouseHandler.buildMeta() behind CityService (it already exists)
+- [x] Move direct `BathhouseRepository` in SubscriptionHandler, PricingHandler, RecommendationHandler, WidgetHandler behind BathhouseService
+- [x] Move direct `ReviewRepository` in AdminHandler behind ReviewService
+- [x] Create minimal DeviceTokenService (or add methods to UserService) for DeviceTokenHandler
+- [x] Update handler constructors, DI module, and router params
+- [x] Update existing tests for modified handlers
 
 ### Task 7: Simplify mock pagination boilerplate
 

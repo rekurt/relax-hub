@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 // Mock RecommendationService for testing
@@ -67,7 +68,58 @@ func (m *mockRecommendationService) RecordView(ctx context.Context, userID uuid.
 	return nil
 }
 
-// Mock BathhouseRepository for testing
+// mockBHService implements service.BathhouseService for handler tests in package handler.
+type mockBHService struct {
+	getByIDFn func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
+}
+
+func (m *mockBHService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
+	if m.getByIDFn != nil {
+		return m.getByIDFn(ctx, id)
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockBHService) GetByAPIKey(_ context.Context, _ string) (*domain.Bathhouse, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockBHService) GetBySlug(_ context.Context, _ string) (*domain.Bathhouse, error) {
+	return nil, domain.ErrNotFound
+}
+
+func (m *mockBHService) Create(_ context.Context, _ uuid.UUID, _ service.CreateBathhouseInput) (*domain.Bathhouse, error) {
+	return nil, nil
+}
+
+func (m *mockBHService) Update(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID, _ service.UpdateBathhouseInput) (*domain.Bathhouse, error) {
+	return nil, nil
+}
+
+func (m *mockBHService) Delete(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockBHService) Search(_ context.Context, _ domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
+	return nil, nil
+}
+
+func (m *mockBHService) ListByOwner(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Bathhouse], error) {
+	return nil, nil
+}
+
+func (m *mockBHService) GetWidgetKey(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (string, error) {
+	return "", nil
+}
+
+func (m *mockBHService) RegenerateWidgetKey(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (string, error) {
+	return "", nil
+}
+
+func (m *mockBHService) Approve(_ context.Context, _ uuid.UUID) error { return nil }
+func (m *mockBHService) Reject(_ context.Context, _ uuid.UUID) error  { return nil }
+
+// mockBathhouseRepository implements repository.BathhouseRepository for AccessChecker tests.
 type mockBathhouseRepository struct {
 	getByIDFn func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
 }
@@ -79,63 +131,63 @@ func (m *mockBathhouseRepository) GetByID(ctx context.Context, id uuid.UUID) (*d
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockBathhouseRepository) GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error) {
+func (m *mockBathhouseRepository) GetByAPIKey(_ context.Context, _ string) (*domain.Bathhouse, error) {
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockBathhouseRepository) Create(ctx context.Context, bh *domain.Bathhouse) error {
+func (m *mockBathhouseRepository) Create(_ context.Context, _ *domain.Bathhouse) error {
 	return nil
 }
 
-func (m *mockBathhouseRepository) Update(ctx context.Context, bh *domain.Bathhouse) error {
+func (m *mockBathhouseRepository) Update(_ context.Context, _ *domain.Bathhouse) error {
 	return nil
 }
 
-func (m *mockBathhouseRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (m *mockBathhouseRepository) Delete(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
 
-func (m *mockBathhouseRepository) List(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
+func (m *mockBathhouseRepository) List(_ context.Context, _ domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
 	return nil, nil
 }
 
-func (m *mockBathhouseRepository) ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error) {
+func (m *mockBathhouseRepository) ListByOwner(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Bathhouse], error) {
 	return nil, nil
 }
 
-func (m *mockBathhouseRepository) ListIDsByOwner(ctx context.Context, ownerID uuid.UUID) ([]uuid.UUID, error) {
+func (m *mockBathhouseRepository) ListIDsByOwner(_ context.Context, _ uuid.UUID) ([]uuid.UUID, error) {
 	return nil, nil
 }
 
-func (m *mockBathhouseRepository) UpdateRating(ctx context.Context, bathhouseID uuid.UUID) error {
+func (m *mockBathhouseRepository) UpdateRating(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
 
-func (m *mockBathhouseRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BathhouseStatus) error {
+func (m *mockBathhouseRepository) UpdateStatus(_ context.Context, _ uuid.UUID, _ domain.BathhouseStatus) error {
 	return nil
 }
 
-func (m *mockBathhouseRepository) UpdatePhotoVerified(ctx context.Context, id uuid.UUID, verified bool) error {
+func (m *mockBathhouseRepository) UpdatePhotoVerified(_ context.Context, _ uuid.UUID, _ bool) error {
 	return nil
 }
 
-func (m *mockBathhouseRepository) GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error) {
+func (m *mockBathhouseRepository) GetBySlug(_ context.Context, _ string) (*domain.Bathhouse, error) {
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockBathhouseRepository) SlugExists(ctx context.Context, slug string) (bool, error) {
+func (m *mockBathhouseRepository) SlugExists(_ context.Context, _ string) (bool, error) {
 	return false, nil
 }
 
-func (m *mockBathhouseRepository) GetCalendarToken(ctx context.Context, bathhouseID uuid.UUID) (string, error) {
+func (m *mockBathhouseRepository) GetCalendarToken(_ context.Context, _ uuid.UUID) (string, error) {
 	return "", nil
 }
 
-func (m *mockBathhouseRepository) SetCalendarToken(ctx context.Context, bathhouseID uuid.UUID, token string) error {
+func (m *mockBathhouseRepository) SetCalendarToken(_ context.Context, _ uuid.UUID, _ string) error {
 	return nil
 }
 
-func (m *mockBathhouseRepository) GetByCalendarToken(ctx context.Context, token string) (*domain.Bathhouse, error) {
+func (m *mockBathhouseRepository) GetByCalendarToken(_ context.Context, _ string) (*domain.Bathhouse, error) {
 	return nil, domain.ErrNotFound
 }
 
@@ -164,7 +216,7 @@ func TestRecommendationHandler_GetPersonalized(t *testing.T) {
 		},
 	}
 
-	bhRepo := &mockBathhouseRepository{
+	bhSvc := &mockBHService{
 		getByIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
 			return &domain.Bathhouse{
 				ID: id, Name: "Test Bath", Address: "123 Main St", CityID: 1,
@@ -173,7 +225,7 @@ func TestRecommendationHandler_GetPersonalized(t *testing.T) {
 		},
 	}
 
-	h := NewRecommendationHandler(recSvc, bhRepo)
+	h := NewRecommendationHandler(recSvc, bhSvc)
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -214,7 +266,7 @@ func TestRecommendationHandler_GetSimilar(t *testing.T) {
 		},
 	}
 
-	bhRepo := &mockBathhouseRepository{
+	bhSvc := &mockBHService{
 		getByIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
 			return &domain.Bathhouse{
 				ID: id, Name: "Similar Bath", Address: "456 Oak St", CityID: 1,
@@ -223,7 +275,7 @@ func TestRecommendationHandler_GetSimilar(t *testing.T) {
 		},
 	}
 
-	h := NewRecommendationHandler(recSvc, bhRepo)
+	h := NewRecommendationHandler(recSvc, bhSvc)
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}/similar", h.GetSimilar)
@@ -264,7 +316,7 @@ func TestRecommendationHandler_GetPopular(t *testing.T) {
 		},
 	}
 
-	bhRepo := &mockBathhouseRepository{
+	bhSvc := &mockBHService{
 		getByIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
 			return &domain.Bathhouse{
 				ID: id, Name: "Popular Bath", Address: "789 Elm St", CityID: 1,
@@ -273,7 +325,7 @@ func TestRecommendationHandler_GetPopular(t *testing.T) {
 		},
 	}
 
-	h := NewRecommendationHandler(recSvc, bhRepo)
+	h := NewRecommendationHandler(recSvc, bhSvc)
 
 	r := chi.NewRouter()
 	r.Get("/popular", h.GetPopular)
@@ -290,8 +342,8 @@ func TestRecommendationHandler_GetPopular(t *testing.T) {
 
 func TestRecommendationHandler_GetPopularMissingCityID(t *testing.T) {
 	recSvc := &mockRecommendationService{}
-	bhRepo := &mockBathhouseRepository{}
-	h := NewRecommendationHandler(recSvc, bhRepo)
+	bhSvc := &mockBHService{}
+	h := NewRecommendationHandler(recSvc, bhSvc)
 
 	r := chi.NewRouter()
 	r.Get("/popular", h.GetPopular)
@@ -326,8 +378,8 @@ func TestRecommendationHandler_UpdatePreferences(t *testing.T) {
 		},
 	}
 
-	bhRepo := &mockBathhouseRepository{}
-	h := NewRecommendationHandler(recSvc, bhRepo)
+	bhSvc := &mockBHService{}
+	h := NewRecommendationHandler(recSvc, bhSvc)
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -381,8 +433,8 @@ func TestRecommendationHandler_GetPreferences(t *testing.T) {
 		},
 	}
 
-	bhRepo := &mockBathhouseRepository{}
-	h := NewRecommendationHandler(recSvc, bhRepo)
+	bhSvc := &mockBHService{}
+	h := NewRecommendationHandler(recSvc, bhSvc)
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -428,8 +480,8 @@ func TestRecommendationHandler_GetPreferencesNotFound(t *testing.T) {
 		},
 	}
 
-	bhRepo := &mockBathhouseRepository{}
-	h := NewRecommendationHandler(recSvc, bhRepo)
+	bhSvc := &mockBHService{}
+	h := NewRecommendationHandler(recSvc, bhSvc)
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()

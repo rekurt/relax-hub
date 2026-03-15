@@ -52,62 +52,38 @@ func (m *mockSubscriptionService) ListByOwner(ctx context.Context, userID uuid.U
 	return nil, nil
 }
 
-// Mock PromotionRepository for testing
-type mockPromotionRepository struct {
+// Mock PromotionService for testing
+type mockPromotionService struct {
 	createFn                func(ctx context.Context, promo *domain.Promotion) error
-	getByIDFn               func(ctx context.Context, id uuid.UUID) (*domain.Promotion, error)
 	getActiveBybathhouseFn  func(ctx context.Context, bathhouseID uuid.UUID) (*domain.Promotion, error)
-	updateFn                func(ctx context.Context, promo *domain.Promotion) error
-	listByOwnerFn           func(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Promotion], error)
-	recordImpressionFn      func(ctx context.Context, promotionID uuid.UUID) error
-	recordClickFn           func(ctx context.Context, promotionID uuid.UUID) error
+	recordImpressionFn      func(ctx context.Context, bathhouseID uuid.UUID) error
+	recordClickFn           func(ctx context.Context, bathhouseID uuid.UUID) error
 }
 
-func (m *mockPromotionRepository) Create(ctx context.Context, promo *domain.Promotion) error {
+func (m *mockPromotionService) Create(ctx context.Context, promo *domain.Promotion) error {
 	if m.createFn != nil {
 		return m.createFn(ctx, promo)
 	}
 	return nil
 }
 
-func (m *mockPromotionRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Promotion, error) {
-	if m.getByIDFn != nil {
-		return m.getByIDFn(ctx, id)
-	}
-	return nil, domain.ErrNotFound
-}
-
-func (m *mockPromotionRepository) GetActiveBybathhouse(ctx context.Context, bathhouseID uuid.UUID) (*domain.Promotion, error) {
+func (m *mockPromotionService) GetActiveBybathhouse(ctx context.Context, bathhouseID uuid.UUID) (*domain.Promotion, error) {
 	if m.getActiveBybathhouseFn != nil {
 		return m.getActiveBybathhouseFn(ctx, bathhouseID)
 	}
 	return nil, domain.ErrNotFound
 }
 
-func (m *mockPromotionRepository) Update(ctx context.Context, promo *domain.Promotion) error {
-	if m.updateFn != nil {
-		return m.updateFn(ctx, promo)
-	}
-	return nil
-}
-
-func (m *mockPromotionRepository) ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Promotion], error) {
-	if m.listByOwnerFn != nil {
-		return m.listByOwnerFn(ctx, ownerID, page, pageSize)
-	}
-	return nil, nil
-}
-
-func (m *mockPromotionRepository) RecordImpression(ctx context.Context, promotionID uuid.UUID) error {
+func (m *mockPromotionService) RecordImpression(ctx context.Context, bathhouseID uuid.UUID) error {
 	if m.recordImpressionFn != nil {
-		return m.recordImpressionFn(ctx, promotionID)
+		return m.recordImpressionFn(ctx, bathhouseID)
 	}
 	return nil
 }
 
-func (m *mockPromotionRepository) RecordClick(ctx context.Context, promotionID uuid.UUID) error {
+func (m *mockPromotionService) RecordClick(ctx context.Context, bathhouseID uuid.UUID) error {
 	if m.recordClickFn != nil {
-		return m.recordClickFn(ctx, promotionID)
+		return m.recordClickFn(ctx, bathhouseID)
 	}
 	return nil
 }
@@ -138,11 +114,10 @@ func TestSubscriptionHandler_Subscribe(t *testing.T) {
 		},
 	}
 
-	promoRepo := &mockPromotionRepository{}
-	bhRepo := &mockBathhouseRepository{}
+	promoSvc := &mockPromotionService{}
 	accessCheck := newTestAccessChecker(userID, bathhouseID)
 
-	h := NewSubscriptionHandler(subSvc, promoRepo, bhRepo, accessCheck)
+	h := NewSubscriptionHandler(subSvc, promoSvc, accessCheck)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -197,11 +172,10 @@ func TestSubscriptionHandler_GetSubscription(t *testing.T) {
 		},
 	}
 
-	promoRepo := &mockPromotionRepository{}
-	bhRepo := &mockBathhouseRepository{}
+	promoSvc := &mockPromotionService{}
 	accessCheck := newTestAccessChecker(userID, bathhouseID)
 
-	h := NewSubscriptionHandler(subSvc, promoRepo, bhRepo, accessCheck)
+	h := NewSubscriptionHandler(subSvc, promoSvc, accessCheck)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -264,11 +238,10 @@ func TestSubscriptionHandler_ListSubscriptions(t *testing.T) {
 		},
 	}
 
-	promoRepo := &mockPromotionRepository{}
-	bhRepo := &mockBathhouseRepository{}
+	promoSvc := &mockPromotionService{}
 	accessCheck := newTestAccessChecker(ownerID, bathhouseID)
 
-	h := NewSubscriptionHandler(subSvc, promoRepo, bhRepo, accessCheck)
+	h := NewSubscriptionHandler(subSvc, promoSvc, accessCheck)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -328,11 +301,10 @@ func TestSubscriptionHandler_CancelSubscription(t *testing.T) {
 		},
 	}
 
-	promoRepo := &mockPromotionRepository{}
-	bhRepo := &mockBathhouseRepository{}
+	promoSvc := &mockPromotionService{}
 	accessCheck := newTestAccessChecker(userID, bathhouseID)
 
-	h := NewSubscriptionHandler(subSvc, promoRepo, bhRepo, accessCheck)
+	h := NewSubscriptionHandler(subSvc, promoSvc, accessCheck)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -364,7 +336,7 @@ func TestSubscriptionHandler_CreatePromotion(t *testing.T) {
 	bathhouseID := uuid.New()
 	promoID := uuid.New()
 
-	promoRepo := &mockPromotionRepository{
+	promoRepo := &mockPromotionService{
 		getActiveBybathhouseFn: func(ctx context.Context, bhid uuid.UUID) (*domain.Promotion, error) {
 			return nil, domain.ErrNotFound
 		},
@@ -397,10 +369,9 @@ func TestSubscriptionHandler_CreatePromotion(t *testing.T) {
 			return nil, domain.ErrNotFound
 		},
 	}
-	bhRepo := &mockBathhouseRepository{}
 	accessCheck := newTestAccessChecker(userID, bathhouseID)
 
-	h := NewSubscriptionHandler(subSvc, promoRepo, bhRepo, accessCheck)
+	h := NewSubscriptionHandler(subSvc, promoRepo, accessCheck)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -434,7 +405,7 @@ func TestSubscriptionHandler_GetPromotion(t *testing.T) {
 	promoID := uuid.New()
 	now := time.Now()
 
-	promoRepo := &mockPromotionRepository{
+	promoRepo := &mockPromotionService{
 		getActiveBybathhouseFn: func(ctx context.Context, bhid uuid.UUID) (*domain.Promotion, error) {
 			if bhid == bathhouseID {
 				return &domain.Promotion{
@@ -456,10 +427,9 @@ func TestSubscriptionHandler_GetPromotion(t *testing.T) {
 	}
 
 	subSvc := &mockSubscriptionService{}
-	bhRepo := &mockBathhouseRepository{}
 	accessCheck := newTestAccessChecker(userID, bathhouseID)
 
-	h := NewSubscriptionHandler(subSvc, promoRepo, bhRepo, accessCheck)
+	h := NewSubscriptionHandler(subSvc, promoRepo, accessCheck)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()

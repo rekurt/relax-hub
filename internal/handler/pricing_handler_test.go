@@ -84,7 +84,7 @@ func TestPricingHandler_CreateRule(t *testing.T) {
 		},
 	}
 
-	bhRepo := &mockBathhouseRepository{
+	bhSvc := &mockBHService{
 		getByIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
 			if id == bathhouseID {
 				return &domain.Bathhouse{ID: id, OwnerID: userID}, nil
@@ -93,7 +93,7 @@ func TestPricingHandler_CreateRule(t *testing.T) {
 		},
 	}
 
-	h := NewPricingHandler(pricingSvc, bhRepo)
+	h := NewPricingHandler(pricingSvc, bhSvc)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -149,7 +149,7 @@ func TestPricingHandler_ListRules(t *testing.T) {
 		},
 	}
 
-	bhRepo := &mockBathhouseRepository{
+	bhSvc := &mockBHService{
 		getByIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
 			if id == bathhouseID {
 				return &domain.Bathhouse{ID: id, OwnerID: userID}, nil
@@ -158,7 +158,7 @@ func TestPricingHandler_ListRules(t *testing.T) {
 		},
 	}
 
-	h := NewPricingHandler(pricingSvc, bhRepo)
+	h := NewPricingHandler(pricingSvc, bhSvc)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -198,8 +198,8 @@ func TestPricingHandler_UpdateRule(t *testing.T) {
 		},
 	}
 
-	bhRepo := &mockBathhouseRepository{}
-	h := NewPricingHandler(pricingSvc, bhRepo)
+	bhSvc := &mockBHService{}
+	h := NewPricingHandler(pricingSvc, bhSvc)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -240,8 +240,8 @@ func TestPricingHandler_DeleteRule(t *testing.T) {
 		},
 	}
 
-	bhRepo := &mockBathhouseRepository{}
-	h := NewPricingHandler(pricingSvc, bhRepo)
+	bhSvc := &mockBHService{}
+	h := NewPricingHandler(pricingSvc, bhSvc)
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -283,7 +283,7 @@ func TestPricingHandler_CalculatePrice(t *testing.T) {
 		},
 	}
 
-	bhRepo := &mockBathhouseRepository{
+	bhSvc := &mockBHService{
 		getByIDFn: func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
 			if id == bathhouseID {
 				return &domain.Bathhouse{ID: id, PricePerHour: 1000}, nil
@@ -292,7 +292,7 @@ func TestPricingHandler_CalculatePrice(t *testing.T) {
 		},
 	}
 
-	h := NewPricingHandler(pricingSvc, bhRepo)
+	h := NewPricingHandler(pricingSvc, bhSvc)
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}/price-calculator", h.CalculatePrice)
@@ -323,8 +323,8 @@ func TestPricingHandler_CalculatePrice_MissingParams(t *testing.T) {
 	bathhouseID := uuid.New()
 
 	pricingSvc := &mockPricingService{}
-	bhRepo := &mockBathhouseRepository{}
-	h := NewPricingHandler(pricingSvc, bhRepo)
+	bhSvc := &mockBHService{}
+	h := NewPricingHandler(pricingSvc, bhSvc)
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}/price-calculator", h.CalculatePrice)

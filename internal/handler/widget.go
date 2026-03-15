@@ -10,19 +10,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 type WidgetHandler struct {
-	bathhouseRepo   repository.BathhouseRepository
-	bookingService  service.BookingService
-	guestUserID     uuid.UUID
-	log             *logger.Logger
+	bathhouseService service.BathhouseService
+	bookingService   service.BookingService
+	guestUserID      uuid.UUID
+	log              *logger.Logger
 }
 
 func NewWidgetHandler(
-	bathhouseRepo repository.BathhouseRepository,
+	bathhouseService service.BathhouseService,
 	bookingService service.BookingService,
 	log *logger.Logger,
 ) *WidgetHandler {
@@ -30,10 +29,10 @@ func NewWidgetHandler(
 	guestUserID, _ := uuid.Parse("00000000-0000-0000-0000-000000000001")
 
 	return &WidgetHandler{
-		bathhouseRepo:   bathhouseRepo,
-		bookingService:  bookingService,
-		guestUserID:     guestUserID,
-		log:             log,
+		bathhouseService: bathhouseService,
+		bookingService:   bookingService,
+		guestUserID:      guestUserID,
+		log:              log,
 	}
 }
 
@@ -117,7 +116,7 @@ func (h *WidgetHandler) GetBathhouse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bathhouse, err := h.bathhouseRepo.GetByAPIKey(r.Context(), apiKey)
+	bathhouse, err := h.bathhouseService.GetByAPIKey(r.Context(), apiKey)
 	if err != nil {
 		if err == domain.ErrNotFound {
 			writeError(w, http.StatusNotFound, "not_found", "bathhouse not found")
@@ -155,7 +154,7 @@ func (h *WidgetHandler) GetAvailableSlots(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	bathhouse, err := h.bathhouseRepo.GetByAPIKey(r.Context(), apiKey)
+	bathhouse, err := h.bathhouseService.GetByAPIKey(r.Context(), apiKey)
 	if err != nil {
 		if err == domain.ErrNotFound {
 			writeError(w, http.StatusNotFound, "not_found", "bathhouse not found")
@@ -219,7 +218,7 @@ func (h *WidgetHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bathhouse, err := h.bathhouseRepo.GetByAPIKey(r.Context(), apiKey)
+	bathhouse, err := h.bathhouseService.GetByAPIKey(r.Context(), apiKey)
 	if err != nil {
 		if err == domain.ErrNotFound {
 			writeError(w, http.StatusNotFound, "not_found", "bathhouse not found")
