@@ -222,12 +222,12 @@ React SPA для владельцев бань: управление баням�
 - Create: `frontend/src/pages/subscriptions/SubscriptionPage.tsx`
 - Create: `frontend/src/pages/widget/WidgetSettings.tsx`
 
-- [ ] SubscriptionPage: текущая подписка бани, выбор плана (free/premium/promoted), отмена
-- [ ] Список всех подписок (GET /my/subscriptions)
-- [ ] Промо-кампании: создание (бюджет, длительность, целевой город), статистика (показы, клики, потрачено)
-- [ ] WidgetSettings: получение embed-кода (GET /my/bathhouses/{id}/widget-code), предпросмотр
-- [ ] Кнопка перегенерации API-ключа (POST /my/bathhouses/{id}/widget-key/regenerate) с подтверждением
-- [ ] Настройки виджета: цвет, шрифт, показывать цену/рейтинг
+- [x] SubscriptionPage: текущая подписка бани, выбор плана (free/premium/promoted), отмена
+- [x] Список всех подписок (GET /my/subscriptions)
+- [x] Промо-кампании: создание (бюджет, длительность, целевой город), статистика (показы, клики, потрачено)
+- [x] WidgetSettings: получение embed-кода (GET /my/bathhouses/{id}/widget-code), предпросмотр
+- [x] Кнопка перегенерации API-ключа (POST /my/bathhouses/{id}/widget-key/regenerate) с подтверждением
+- [x] Настройки виджета: цвет, шрифт, показывать цену/рейтинг
 
 ### Task 16: Фото-менеджмент
 

@@ -15,6 +15,8 @@ import RepresentativeList from '@/pages/representatives/RepresentativeList'
 import ChatPage from '@/pages/chat/ChatPage'
 import NotificationList from '@/pages/notifications/NotificationList'
 import ProfileSettings from '@/pages/settings/ProfileSettings'
+import SubscriptionPage from '@/pages/subscriptions/SubscriptionPage'
+import WidgetSettings from '@/pages/widget/WidgetSettings'
 
 function Placeholder({ title }: { title: string }) {
   return <div>{title}</div>
@@ -44,8 +46,8 @@ export default function AppRouter() {
         <Route path="promo" element={<PromoList />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="representatives" element={<RepresentativeList />} />
-        <Route path="subscriptions" element={<Placeholder title="Подписки" />} />
-        <Route path="widget" element={<Placeholder title="Виджет" />} />
+        <Route path="subscriptions" element={<SubscriptionPage />} />
+        <Route path="widget" element={<WidgetSettings />} />
         <Route path="photos" element={<Placeholder title="Фото" />} />
         <Route path="settings" element={<ProfileSettings />} />
         <Route path="notifications" element={<NotificationList />} />
