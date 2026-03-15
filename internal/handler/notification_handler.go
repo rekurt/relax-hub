@@ -65,6 +65,17 @@ type updatePreferencesRequest struct {
 	Reminders     *bool `json:"reminders"`
 }
 
+// List godoc
+// @Summary      List notifications
+// @Description  Returns paginated list of notifications for the authenticated user
+// @Tags         notifications
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page       query     int  false  "Page number"  default(1)
+// @Param        page_size  query     int  false  "Page size"    default(20)
+// @Success      200  {object}  APIResponse{data=[]notificationResponse,meta=Meta}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/notifications [get]
 func (h *NotificationHandler) List(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	page := getPage(r.URL.Query().Get("page"))
@@ -89,6 +100,15 @@ func (h *NotificationHandler) List(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// UnreadCount godoc
+// @Summary      Get unread notifications count
+// @Description  Returns the number of unread notifications for the authenticated user
+// @Tags         notifications
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=object}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/notifications/unread-count [get]
 func (h *NotificationHandler) UnreadCount(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -101,6 +121,17 @@ func (h *NotificationHandler) UnreadCount(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusOK, map[string]int64{"unread_count": count})
 }
 
+// MarkAsRead godoc
+// @Summary      Mark notification as read
+// @Description  Marks a single notification as read
+// @Tags         notifications
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id  path      string  true  "Notification ID (UUID)"
+// @Success      200  {object}  APIResponse{data=object}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/notifications/{id}/read [patch]
 func (h *NotificationHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	notifID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -118,6 +149,15 @@ func (h *NotificationHandler) MarkAsRead(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, map[string]string{"message": "marked as read"})
 }
 
+// MarkAllAsRead godoc
+// @Summary      Mark all notifications as read
+// @Description  Marks all notifications as read for the authenticated user
+// @Tags         notifications
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=object}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/notifications/read-all [patch]
 func (h *NotificationHandler) MarkAllAsRead(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -129,6 +169,15 @@ func (h *NotificationHandler) MarkAllAsRead(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, map[string]string{"message": "all marked as read"})
 }
 
+// GetPreferences godoc
+// @Summary      Get notification preferences
+// @Description  Returns notification channel and event type preferences for the authenticated user
+// @Tags         notifications
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=preferencesResponse}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/notification-preferences [get]
 func (h *NotificationHandler) GetPreferences(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -149,6 +198,18 @@ func (h *NotificationHandler) GetPreferences(w http.ResponseWriter, r *http.Requ
 	})
 }
 
+// UpdatePreferences godoc
+// @Summary      Update notification preferences
+// @Description  Updates notification channel and event type preferences. Only provided fields are updated.
+// @Tags         notifications
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        body  body      updatePreferencesRequest  true  "Preferences to update"
+// @Success      200   {object}  APIResponse{data=preferencesResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Router       /my/notification-preferences [put]
 func (h *NotificationHandler) UpdatePreferences(w http.ResponseWriter, r *http.Request) {
 	var req updatePreferencesRequest
 	if err := readJSON(w, r, &req); err != nil {

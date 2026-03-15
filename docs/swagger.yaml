@@ -282,6 +282,21 @@ definitions:
       target_type:
         type: string
     type: object
+  handler.conversationResponse:
+    properties:
+      bathhouse_id:
+        type: string
+      booking_id:
+        type: string
+      client_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      last_message_at:
+        type: string
+    type: object
   handler.createBathhouseRequest:
     properties:
       address:
@@ -381,6 +396,30 @@ definitions:
       text:
         type: string
     type: object
+  handler.deviceTokenResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      platform:
+        type: string
+      token:
+        type: string
+      user_id:
+        type: string
+    type: object
+  handler.favoriteResponse:
+    properties:
+      bathhouse_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      user_id:
+        type: string
+    type: object
   handler.initiatePaymentResponse:
     properties:
       confirmation_url:
@@ -478,6 +517,46 @@ definitions:
       width:
         type: integer
     type: object
+  handler.messageResponse:
+    properties:
+      conversation_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      is_read:
+        type: boolean
+      read_at:
+        type: string
+      sender_id:
+        type: string
+      text:
+        type: string
+    type: object
+  handler.notificationResponse:
+    properties:
+      body:
+        type: string
+      created_at:
+        type: string
+      data:
+        additionalProperties:
+          type: string
+        type: object
+      id:
+        type: string
+      is_read:
+        type: boolean
+      read_at:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+      user_id:
+        type: string
+    type: object
   handler.nullableInt64Field:
     properties:
       set:
@@ -550,6 +629,23 @@ definitions:
       verified_by_id:
         type: string
     type: object
+  handler.preferencesResponse:
+    properties:
+      booking_events:
+        type: boolean
+      email:
+        type: boolean
+      in_app:
+        type: boolean
+      promo_events:
+        type: boolean
+      push:
+        type: boolean
+      reminders:
+        type: boolean
+      review_events:
+        type: boolean
+    type: object
   handler.promoResponse:
     properties:
       bathhouse_id:
@@ -613,6 +709,29 @@ definitions:
       recipient_name:
         type: string
     type: object
+  handler.recommendationResponse:
+    properties:
+      address:
+        type: string
+      city_id:
+        type: integer
+      description:
+        type: string
+      id:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+      price_per_hour:
+        type: integer
+      rating:
+        type: number
+      review_count:
+        type: integer
+    type: object
   handler.redeemCertificateRequest:
     properties:
       code:
@@ -640,6 +759,13 @@ definitions:
         type: integer
       total_invited:
         type: integer
+    type: object
+  handler.registerDeviceTokenRequest:
+    properties:
+      platform:
+        type: string
+      token:
+        type: string
     type: object
   handler.registerRequest:
     properties:
@@ -713,6 +839,11 @@ definitions:
       user_id:
         type: string
     type: object
+  handler.sendMessageRequest:
+    properties:
+      text:
+        type: string
+    type: object
   handler.socialAccountResponse:
     properties:
       avatar_url:
@@ -726,6 +857,11 @@ definitions:
       name:
         type: string
       provider:
+        type: string
+    type: object
+  handler.startConversationRequest:
+    properties:
+      booking_id:
         type: string
     type: object
   handler.updateBathhouseRequest:
@@ -780,6 +916,23 @@ definitions:
       slug:
         type: string
     type: object
+  handler.updatePreferencesRequest:
+    properties:
+      booking_events:
+        type: boolean
+      email:
+        type: boolean
+      in_app:
+        type: boolean
+      promo_events:
+        type: boolean
+      push:
+        type: boolean
+      reminders:
+        type: boolean
+      review_events:
+        type: boolean
+    type: object
   handler.updateProfileRequest:
     properties:
       bio:
@@ -790,6 +943,27 @@ definitions:
         type: string
       phone:
         type: string
+    type: object
+  handler.updateRecommendationPreferencesRequest:
+    properties:
+      prefer_bbq:
+        type: boolean
+      prefer_hot_tub:
+        type: boolean
+      prefer_karaoke:
+        type: boolean
+      prefer_pool:
+        type: boolean
+      prefer_sauna:
+        type: boolean
+      prefer_steam_room:
+        type: boolean
+      preferred_city_id:
+        type: integer
+      price_range_max:
+        type: integer
+      price_range_min:
+        type: integer
     type: object
   handler.updateReviewRequest:
     properties:
@@ -808,6 +982,27 @@ definitions:
         type: string
       url:
         type: string
+    type: object
+  handler.userPreferencesResponse:
+    properties:
+      prefer_bbq:
+        type: boolean
+      prefer_hot_tub:
+        type: boolean
+      prefer_karaoke:
+        type: boolean
+      prefer_pool:
+        type: boolean
+      prefer_sauna:
+        type: boolean
+      prefer_steam_room:
+        type: boolean
+      preferred_city_id:
+        type: integer
+      price_range_max:
+        type: integer
+      price_range_min:
+        type: integer
     type: object
   handler.userResponse:
     properties:
@@ -2954,6 +3149,102 @@ paths:
       summary: List bathhouse bookings
       tags:
       - bookings
+  /bathhouses/{id}/chat:
+    post:
+      consumes:
+      - application/json
+      description: Creates or returns an existing conversation between the authenticated
+        user and a bathhouse. Optionally links to a booking.
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Optional booking link
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/handler.startConversationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.conversationResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Start a conversation
+      tags:
+      - chat
+  /bathhouses/{id}/favorite:
+    post:
+      description: Adds or removes a bathhouse from the user's favorites
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Toggle favorite
+      tags:
+      - favorites
   /bathhouses/{id}/gallery:
     get:
       description: Returns a paginated list of review media (photos/videos) for a
@@ -3307,6 +3598,47 @@ paths:
       summary: Get bathhouse Schema.org JSON-LD
       tags:
       - bathhouses
+  /bathhouses/{id}/similar:
+    get:
+      description: Returns bathhouses similar to the specified one based on features
+        and location
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 10
+        description: Max results
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.recommendationResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      summary: Get similar bathhouses
+      tags:
+      - recommendations
   /bathhouses/by-slug/{slug}:
     get:
       description: Get detailed bathhouse information by its URL-friendly slug.
@@ -4038,6 +4370,252 @@ paths:
       summary: Search bathhouses by city slug
       tags:
       - bathhouses
+  /conversations/{id}/messages:
+    get:
+      description: Returns paginated list of messages in a conversation
+      parameters:
+      - description: Conversation ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.messageResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List messages
+      tags:
+      - chat
+    post:
+      consumes:
+      - application/json
+      description: Sends a text message to a conversation
+      parameters:
+      - description: Conversation ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message text
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.sendMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.messageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Send a message
+      tags:
+      - chat
+  /conversations/{id}/read:
+    patch:
+      description: Marks all messages in a conversation as read for the authenticated
+        user
+      parameters:
+      - description: Conversation ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Mark conversation as read
+      tags:
+      - chat
+  /device-tokens:
+    post:
+      consumes:
+      - application/json
+      description: Registers a device token for push notifications (FCM, APNs)
+      parameters:
+      - description: Device token and platform
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.registerDeviceTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.deviceTokenResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Register device token
+      tags:
+      - device-tokens
+  /device-tokens/{id}:
+    delete:
+      description: Removes a registered device token, disabling push notifications
+        for that device
+      parameters:
+      - description: Device token ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete device token
+      tags:
+      - device-tokens
   /media/{id}:
     delete:
       description: Deletes a media attachment from a review. Only the review author
@@ -4633,6 +5211,94 @@ paths:
       summary: List my certificates
       tags:
       - certificates
+  /my/conversations:
+    get:
+      description: Returns paginated list of conversations for the authenticated user
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.conversationResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List conversations
+      tags:
+      - chat
+  /my/favorites:
+    get:
+      description: Returns paginated list of the user's favorite bathhouses
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.favoriteResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List favorites
+      tags:
+      - favorites
   /my/loyalty:
     get:
       description: Returns the loyalty account for the authenticated user, including
@@ -4728,6 +5394,230 @@ paths:
       summary: List loyalty transactions
       tags:
       - loyalty
+  /my/notification-preferences:
+    get:
+      description: Returns notification channel and event type preferences for the
+        authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.preferencesResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get notification preferences
+      tags:
+      - notifications
+    put:
+      consumes:
+      - application/json
+      description: Updates notification channel and event type preferences. Only provided
+        fields are updated.
+      parameters:
+      - description: Preferences to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updatePreferencesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.preferencesResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update notification preferences
+      tags:
+      - notifications
+  /my/notifications:
+    get:
+      description: Returns paginated list of notifications for the authenticated user
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.notificationResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List notifications
+      tags:
+      - notifications
+  /my/notifications/{id}/read:
+    patch:
+      description: Marks a single notification as read
+      parameters:
+      - description: Notification ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Mark notification as read
+      tags:
+      - notifications
+  /my/notifications/read-all:
+    patch:
+      description: Marks all notifications as read for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Mark all notifications as read
+      tags:
+      - notifications
+  /my/notifications/unread-count:
+    get:
+      description: Returns the number of unread notifications for the authenticated
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get unread notifications count
+      tags:
+      - notifications
   /my/payments:
     get:
       description: Returns a paginated list of payments for the authenticated user
@@ -4772,6 +5662,83 @@ paths:
       summary: List my payments
       tags:
       - payments
+  /my/preferences:
+    get:
+      description: Returns the user's current recommendation preferences (city, price
+        range, amenities)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.userPreferencesResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get recommendation preferences
+      tags:
+      - recommendations
+    put:
+      consumes:
+      - application/json
+      description: Updates the user's recommendation preferences. Only provided fields
+        are updated.
+      parameters:
+      - description: Preferences to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateRecommendationPreferencesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.userPreferencesResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update recommendation preferences
+      tags:
+      - recommendations
   /my/referral:
     get:
       description: Returns the referral code and shareable link for the authenticated
@@ -4891,6 +5858,35 @@ paths:
       summary: Get my statistics
       tags:
       - users
+  /my/unread-messages-count:
+    get:
+      description: Returns the total number of unread messages across all conversations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get unread messages count
+      tags:
+      - chat
   /photos/{id}:
     delete:
       description: Delete a bathhouse photo by its ID.
@@ -4948,6 +5944,46 @@ paths:
       summary: Delete photo
       tags:
       - photos
+  /popular:
+    get:
+      description: Returns popular bathhouses in a specified city
+      parameters:
+      - description: City ID
+        in: query
+        name: city_id
+        required: true
+        type: integer
+      - default: 10
+        description: Max results
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.recommendationResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      summary: Get popular bathhouses
+      tags:
+      - recommendations
   /promo-codes/{id}:
     delete:
       description: Deactivates a promo code. Available to owners, representatives,
@@ -5061,6 +6097,51 @@ paths:
       summary: Validate promo code
       tags:
       - promo-codes
+  /recommendations:
+    get:
+      description: Returns personalized bathhouse recommendations based on user preferences
+        and booking history
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.recommendationResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get personalized recommendations
+      tags:
+      - recommendations
   /reviews/{id}:
     delete:
       description: Deletes a review. The author or an admin can delete it.

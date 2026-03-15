@@ -64,7 +64,17 @@ type updateRecommendationPreferencesRequest struct {
 	PreferKaraoke   *bool  `json:"prefer_karaoke,omitempty"`
 }
 
-// GetPersonalized returns personalized recommendations for the authenticated user
+// GetPersonalized godoc
+// @Summary      Get personalized recommendations
+// @Description  Returns personalized bathhouse recommendations based on user preferences and booking history
+// @Tags         recommendations
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page       query     int  false  "Page number"  default(1)
+// @Param        page_size  query     int  false  "Page size"    default(20)
+// @Success      200  {object}  APIResponse{data=[]recommendationResponse,meta=Meta}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /recommendations [get]
 func (h *RecommendationHandler) GetPersonalized(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	if userID == uuid.Nil {
@@ -115,7 +125,16 @@ func (h *RecommendationHandler) GetPersonalized(w http.ResponseWriter, r *http.R
 	})
 }
 
-// GetSimilar returns bathhouses similar to the specified bathhouse
+// GetSimilar godoc
+// @Summary      Get similar bathhouses
+// @Description  Returns bathhouses similar to the specified one based on features and location
+// @Tags         recommendations
+// @Produce      json
+// @Param        id     path      string  true   "Bathhouse ID (UUID)"
+// @Param        limit  query     int     false  "Max results"  default(10)
+// @Success      200  {object}  APIResponse{data=[]recommendationResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/similar [get]
 func (h *RecommendationHandler) GetSimilar(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -160,7 +179,16 @@ func (h *RecommendationHandler) GetSimilar(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, items)
 }
 
-// GetPopular returns popular bathhouses in a city
+// GetPopular godoc
+// @Summary      Get popular bathhouses
+// @Description  Returns popular bathhouses in a specified city
+// @Tags         recommendations
+// @Produce      json
+// @Param        city_id  query     int  true   "City ID"
+// @Param        limit    query     int  false  "Max results"  default(10)
+// @Success      200  {object}  APIResponse{data=[]recommendationResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Router       /popular [get]
 func (h *RecommendationHandler) GetPopular(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	cityIDStr := q.Get("city_id")
@@ -211,7 +239,15 @@ func (h *RecommendationHandler) GetPopular(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, items)
 }
 
-// GetPreferences returns the user's current preferences
+// GetPreferences godoc
+// @Summary      Get recommendation preferences
+// @Description  Returns the user's current recommendation preferences (city, price range, amenities)
+// @Tags         recommendations
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=userPreferencesResponse}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/preferences [get]
 func (h *RecommendationHandler) GetPreferences(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	if userID == uuid.Nil {
@@ -240,7 +276,18 @@ func (h *RecommendationHandler) GetPreferences(w http.ResponseWriter, r *http.Re
 	writeJSON(w, http.StatusOK, resp)
 }
 
-// UpdatePreferences updates the user's preferences
+// UpdatePreferences godoc
+// @Summary      Update recommendation preferences
+// @Description  Updates the user's recommendation preferences. Only provided fields are updated.
+// @Tags         recommendations
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        body  body      updateRecommendationPreferencesRequest  true  "Preferences to update"
+// @Success      200   {object}  APIResponse{data=userPreferencesResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Router       /my/preferences [put]
 func (h *RecommendationHandler) UpdatePreferences(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	if userID == uuid.Nil {

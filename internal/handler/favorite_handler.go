@@ -25,6 +25,17 @@ type favoriteResponse struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+// Toggle godoc
+// @Summary      Toggle favorite
+// @Description  Adds or removes a bathhouse from the user's favorites
+// @Tags         favorites
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id  path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=object}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/favorite [post]
 func (h *FavoriteHandler) Toggle(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -43,6 +54,17 @@ func (h *FavoriteHandler) Toggle(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]bool{"is_favorite": isFavorite})
 }
 
+// List godoc
+// @Summary      List favorites
+// @Description  Returns paginated list of the user's favorite bathhouses
+// @Tags         favorites
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page       query     int  false  "Page number"  default(1)
+// @Param        page_size  query     int  false  "Page size"    default(20)
+// @Success      200  {object}  APIResponse{data=[]favoriteResponse,meta=Meta}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/favorites [get]
 func (h *FavoriteHandler) List(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 

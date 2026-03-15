@@ -73,7 +73,19 @@ func toMessageResponse(m *domain.Message) messageResponse {
 	}
 }
 
-// StartConversation handles POST /api/v1/bathhouses/{id}/chat
+// StartConversation godoc
+// @Summary      Start a conversation
+// @Description  Creates or returns an existing conversation between the authenticated user and a bathhouse. Optionally links to a booking.
+// @Tags         chat
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string                     true  "Bathhouse ID (UUID)"
+// @Param        body  body      startConversationRequest   false "Optional booking link"
+// @Success      201   {object}  APIResponse{data=conversationResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/chat [post]
 func (h *ChatHandler) StartConversation(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -109,7 +121,17 @@ func (h *ChatHandler) StartConversation(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusCreated, toConversationResponse(conv))
 }
 
-// ListConversations handles GET /api/v1/my/conversations
+// ListConversations godoc
+// @Summary      List conversations
+// @Description  Returns paginated list of conversations for the authenticated user
+// @Tags         chat
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page       query     int  false  "Page number"  default(1)
+// @Param        page_size  query     int  false  "Page size"    default(20)
+// @Success      200  {object}  APIResponse{data=[]conversationResponse,meta=Meta}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/conversations [get]
 func (h *ChatHandler) ListConversations(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -135,7 +157,19 @@ func (h *ChatHandler) ListConversations(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-// ListMessages handles GET /api/v1/conversations/{id}/messages
+// ListMessages godoc
+// @Summary      List messages
+// @Description  Returns paginated list of messages in a conversation
+// @Tags         chat
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id         path      string  true   "Conversation ID (UUID)"
+// @Param        page       query     int     false  "Page number"  default(1)
+// @Param        page_size  query     int     false  "Page size"    default(20)
+// @Success      200  {object}  APIResponse{data=[]messageResponse,meta=Meta}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /conversations/{id}/messages [get]
 func (h *ChatHandler) ListMessages(w http.ResponseWriter, r *http.Request) {
 	convID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -167,7 +201,19 @@ func (h *ChatHandler) ListMessages(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// SendMessage handles POST /api/v1/conversations/{id}/messages
+// SendMessage godoc
+// @Summary      Send a message
+// @Description  Sends a text message to a conversation
+// @Tags         chat
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string              true  "Conversation ID (UUID)"
+// @Param        body  body      sendMessageRequest  true  "Message text"
+// @Success      201   {object}  APIResponse{data=messageResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Router       /conversations/{id}/messages [post]
 func (h *ChatHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	convID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -193,7 +239,17 @@ func (h *ChatHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toMessageResponse(msg))
 }
 
-// MarkAsRead handles PATCH /api/v1/conversations/{id}/read
+// MarkAsRead godoc
+// @Summary      Mark conversation as read
+// @Description  Marks all messages in a conversation as read for the authenticated user
+// @Tags         chat
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id  path      string  true  "Conversation ID (UUID)"
+// @Success      200  {object}  APIResponse{data=object}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /conversations/{id}/read [patch]
 func (h *ChatHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	convID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -212,7 +268,15 @@ func (h *ChatHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "marked as read"})
 }
 
-// GetUnreadCount handles GET /api/v1/my/unread-messages-count
+// GetUnreadCount godoc
+// @Summary      Get unread messages count
+// @Description  Returns the total number of unread messages across all conversations
+// @Tags         chat
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=object}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/unread-messages-count [get]
 func (h *ChatHandler) GetUnreadCount(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())

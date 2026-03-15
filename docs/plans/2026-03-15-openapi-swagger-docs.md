@@ -104,12 +104,12 @@
 - Modify: `internal/handler/recommendation.go`
 - Modify: `internal/handler/device_token.go`
 
-- [ ] Аннотировать Chat: StartChat, ListConversations, GetMessages, SendMessage, MarkRead, UnreadCount
-- [ ] Аннотировать Notifications: List, UnreadCount, MarkRead, MarkAllRead, GetPreferences, UpdatePreferences
-- [ ] Аннотировать Favorites: Toggle, ListMy
-- [ ] Аннотировать Recommendations: Get, GetPreferences, UpdatePreferences
-- [ ] Аннотировать DeviceTokens: Register, Delete
-- [ ] Запустить `swag init` — без ошибок
+- [x] Аннотировать Chat: StartChat, ListConversations, GetMessages, SendMessage, MarkRead, UnreadCount
+- [x] Аннотировать Notifications: List, UnreadCount, MarkRead, MarkAllRead, GetPreferences, UpdatePreferences
+- [x] Аннотировать Favorites: Toggle, ListMy
+- [x] Аннотировать Recommendations: Get, GetPreferences, UpdatePreferences
+- [x] Аннотировать DeviceTokens: Register, Delete
+- [x] Запустить `swag init` — без ошибок
 
 ### Task 8: Аннотации — Subscriptions, Pricing, Analytics, Calendar, Representatives, Admin, Widget
 
