@@ -91,5 +91,8 @@ func (p *YooKassaProvider) CreateRefund(ctx context.Context, externalID string, 
 // kopecksToString converts an amount in kopecks to a string with 2 decimal places.
 // Example: 10050 -> "100.50", 500 -> "5.00"
 func kopecksToString(kopecks int64) string {
+	if kopecks < 0 {
+		return "-" + kopecksToString(-kopecks)
+	}
 	return fmt.Sprintf("%d.%02d", kopecks/100, kopecks%100)
 }

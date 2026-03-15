@@ -2,6 +2,7 @@ package admin
 
 import (
 	"html/template"
+	"strings"
 	"time"
 
 	_ "github.com/GoAdminGroup/go-admin/adapter/chi"
@@ -18,7 +19,7 @@ import (
 // immediately connects to the database, so it must be deferred to fx lifecycle.
 func BuildGoAdminConfig(cfg *appconfig.Config) *gaconfig.Config {
 	env := gaconfig.EnvLocal
-	if cfg.Environment == "production" {
+	if strings.EqualFold(cfg.Environment, "production") {
 		env = gaconfig.EnvProd
 	}
 

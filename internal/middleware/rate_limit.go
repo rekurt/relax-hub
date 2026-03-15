@@ -27,6 +27,7 @@ type APIResponse struct {
 type RateLimiter struct {
 	mu       sync.RWMutex
 	limiters map[string]*clientLimiter
+	done     chan struct{}
 }
 
 type clientLimiter struct {
@@ -44,15 +45,31 @@ type RateLimitInfo struct {
 func NewRateLimiter() *RateLimiter {
 	rl := &RateLimiter{
 		limiters: make(map[string]*clientLimiter),
+		done:     make(chan struct{}),
 	}
 	go func() {
 		ticker := time.NewTicker(1 * time.Minute)
 		defer ticker.Stop()
-		for range ticker.C {
-			rl.cleanup()
+		for {
+			select {
+			case <-ticker.C:
+				rl.cleanup()
+			case <-rl.done:
+				return
+			}
 		}
 	}()
 	return rl
+}
+
+// Close stops the cleanup goroutine. Safe to call multiple times.
+func (rl *RateLimiter) Close() {
+	select {
+	case <-rl.done:
+		// already closed
+	default:
+		close(rl.done)
+	}
 }
 
 // Allow checks if the request is allowed under the given rate.

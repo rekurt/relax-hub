@@ -209,7 +209,7 @@ func (c *Config) Validate() error {
 	}
 
 	// Production-specific validation
-	if c.Environment == "production" {
+	if strings.EqualFold(c.Environment, "production") {
 		if len(c.JWT.Secret) < 32 {
 			return fmt.Errorf("jwt.secret must be at least 32 characters long in production (current length: %d)", len(c.JWT.Secret))
 		}
