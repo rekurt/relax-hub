@@ -59,12 +59,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 - Create: `frontend/src/pages/client/BookingList.tsx`
 - Create: `frontend/src/pages/client/BookingDetail.tsx`
 
-- [ ] BookingCreate: date picker, slot selection, promo code input with validation, gift certificate input, loyalty points toggle, referral balance toggle, price calculator display, payment initiation
-- [ ] BookingList: client's own bookings with status filters, cancel action, payment status
-- [ ] BookingDetail: full booking info with payment status, cancel button (with refund policy display)
-- [ ] API hooks: `useGetBathhousesIdAvailableSlots`, `useGetBathhousesIdPriceCalculator`, `usePostBookings`, `useGetBookings`, `usePatchBookingsIdCancel`, `usePostBookingsIdPay`, `useGetBookingsIdPayment`, `usePostPromoCodesValidate`, `useGetCertificatesCodeBalance`
-- [ ] Write tests for booking flow, promo validation, payment display
-- [ ] Run project test suite - must pass before task 4
+- [x] BookingCreate: date picker, slot selection, promo code input with validation, gift certificate input, loyalty points toggle, referral balance toggle, price calculator display, payment initiation
+- [x] BookingList: client's own bookings with status filters, cancel action, payment status
+- [x] BookingDetail: full booking info with payment status, cancel button (with refund policy display)
+- [x] API hooks: `useGetBathhousesIdAvailableSlots`, `useGetBathhousesIdPriceCalculator`, `usePostBookings`, `useGetBookings`, `usePatchBookingsIdCancel`, `usePostBookingsIdPay`, `useGetBookingsIdPayment`, `usePostPromoCodesValidate`, `useGetCertificatesCodeBalance`
+- [x] Write tests for booking flow, promo validation, payment display
+- [x] Run project test suite - must pass before task 4
 
 ### Task 4: Client - Reviews with media
 

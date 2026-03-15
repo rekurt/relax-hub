@@ -23,6 +23,9 @@ import PhotoManager from '@/pages/photos/PhotoManager'
 import ClientHome from '@/pages/client/ClientHome'
 import BathhouseSearch from '@/pages/client/BathhouseSearch'
 import BathhouseDetail from '@/pages/client/BathhouseDetail'
+import BookingCreate from '@/pages/client/BookingCreate'
+import ClientBookingList from '@/pages/client/BookingList'
+import ClientBookingDetail from '@/pages/client/BookingDetail'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 
 export default function AppRouter() {
@@ -70,6 +73,9 @@ export default function AppRouter() {
         <Route index element={<ClientHome />} />
         <Route path="search" element={<BathhouseSearch />} />
         <Route path="bathhouse/:id" element={<BathhouseDetail />} />
+        <Route path="booking/new" element={<BookingCreate />} />
+        <Route path="bookings" element={<ClientBookingList />} />
+        <Route path="bookings/:id" element={<ClientBookingDetail />} />
       </Route>
 
       {/* Admin routes */}
