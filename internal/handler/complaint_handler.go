@@ -62,14 +62,56 @@ func toComplaintResponse(c *domain.Complaint) complaintResponse {
 	return resp
 }
 
+// ReportReview godoc
+// @Summary      Report a review
+// @Description  Submit a complaint about a review (spam, offensive, fake, fraud, other)
+// @Tags         complaints
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string         true  "Review ID (UUID)"
+// @Param        body  body      reportRequest  true  "Report details"
+// @Success      201   {object}  APIResponse{data=complaintResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
+// @Router       /reviews/{id}/report [post]
 func (h *ComplaintHandler) ReportReview(w http.ResponseWriter, r *http.Request) {
 	h.report(w, r, domain.ComplaintTargetReview)
 }
 
+// ReportBathhouse godoc
+// @Summary      Report a bathhouse
+// @Description  Submit a complaint about a bathhouse (spam, offensive, fake, fraud, other)
+// @Tags         complaints
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string         true  "Bathhouse ID (UUID)"
+// @Param        body  body      reportRequest  true  "Report details"
+// @Success      201   {object}  APIResponse{data=complaintResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/report [post]
 func (h *ComplaintHandler) ReportBathhouse(w http.ResponseWriter, r *http.Request) {
 	h.report(w, r, domain.ComplaintTargetBathhouse)
 }
 
+// ReportUser godoc
+// @Summary      Report a user
+// @Description  Submit a complaint about a user (spam, offensive, fake, fraud, other)
+// @Tags         complaints
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string         true  "User ID (UUID)"
+// @Param        body  body      reportRequest  true  "Report details"
+// @Success      201   {object}  APIResponse{data=complaintResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
+// @Router       /users/{id}/report [post]
 func (h *ComplaintHandler) ReportUser(w http.ResponseWriter, r *http.Request) {
 	h.report(w, r, domain.ComplaintTargetUser)
 }
@@ -103,6 +145,24 @@ func (h *ComplaintHandler) report(w http.ResponseWriter, r *http.Request, target
 	writeJSON(w, http.StatusCreated, toComplaintResponse(complaint))
 }
 
+// List godoc
+// @Summary      List complaints
+// @Description  Returns a paginated list of complaints. Admin only. Supports filtering by status, target_type, reason, and date range.
+// @Tags         admin-complaints
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page         query     int     false  "Page number"                          default(1)
+// @Param        page_size    query     int     false  "Page size"                            default(20)
+// @Param        status       query     string  false  "Filter by status (pending, resolved, dismissed)"
+// @Param        target_type  query     string  false  "Filter by target type (review, bathhouse, user)"
+// @Param        reason       query     string  false  "Filter by reason (spam, offensive, fake, fraud, other)"
+// @Param        from_date    query     string  false  "Filter from date (RFC3339)"
+// @Param        to_date      query     string  false  "Filter to date (RFC3339)"
+// @Success      200          {object}  APIResponse{data=[]complaintResponse,meta=Meta}
+// @Failure      400          {object}  APIResponse{error=APIError}
+// @Failure      401          {object}  APIResponse{error=APIError}
+// @Failure      403          {object}  APIResponse{error=APIError}
+// @Router       /admin/complaints [get]
 func (h *ComplaintHandler) List(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	page := getPage(q.Get("page"))
@@ -173,6 +233,19 @@ func (h *ComplaintHandler) List(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetByID godoc
+// @Summary      Get complaint by ID
+// @Description  Returns a single complaint by its ID. Admin only.
+// @Tags         admin-complaints
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Complaint ID (UUID)"
+// @Success      200  {object}  APIResponse{data=complaintResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /admin/complaints/{id} [get]
 func (h *ComplaintHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -189,6 +262,21 @@ func (h *ComplaintHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toComplaintResponse(complaint))
 }
 
+// Resolve godoc
+// @Summary      Resolve complaint
+// @Description  Resolves a complaint with a resolution note. Admin only.
+// @Tags         admin-complaints
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string          true  "Complaint ID (UUID)"
+// @Param        body  body      resolveRequest  true  "Resolution details"
+// @Success      200   {object}  APIResponse{data=complaintResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /admin/complaints/{id}/resolve [patch]
 func (h *ComplaintHandler) Resolve(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -213,6 +301,19 @@ func (h *ComplaintHandler) Resolve(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toComplaintResponse(complaint))
 }
 
+// Dismiss godoc
+// @Summary      Dismiss complaint
+// @Description  Dismisses a complaint without action. Admin only.
+// @Tags         admin-complaints
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Complaint ID (UUID)"
+// @Success      200  {object}  APIResponse{data=complaintResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /admin/complaints/{id}/dismiss [patch]
 func (h *ComplaintHandler) Dismiss(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

@@ -1,62 +1,23 @@
 basePath: /api/v1
 definitions:
-  github_com_nikitaaldaev_bani_internal_seo.MetaTags:
-    properties:
-      canonical:
-        type: string
-      description:
-        type: string
-      og_image:
-        type: string
-      og_type:
-        type: string
-      title:
-        type: string
-    type: object
-  github_com_nikitaaldaev_bani_internal_service.MyStatsOutput:
-    properties:
-      avg_check:
-        type: integer
-      avg_rating:
-        type: number
-      review_count:
-        type: integer
-      total_spent:
-        type: integer
-      total_visits:
-        type: integer
-    type: object
-  github_com_nikitaaldaev_bani_internal_service.TimeSlot:
-    properties:
-      available:
-        type: boolean
-      endTime:
-        type: string
-      price:
-        description: Price in kopecks for this hour slot
-        format: int64
-        type: integer
-      startTime:
-        type: string
-    type: object
-  internal_handler.APIError:
+  handler.APIError:
     properties:
       code:
         type: string
       message:
         type: string
     type: object
-  internal_handler.APIResponse:
+  handler.APIResponse:
     properties:
       data: {}
       error:
-        $ref: '#/definitions/internal_handler.APIError'
+        $ref: '#/definitions/handler.APIError'
       meta:
-        $ref: '#/definitions/internal_handler.Meta'
+        $ref: '#/definitions/handler.Meta'
       success:
         type: boolean
     type: object
-  internal_handler.Meta:
+  handler.Meta:
     properties:
       page:
         type: integer
@@ -67,14 +28,75 @@ definitions:
       total_pages:
         type: integer
     type: object
-  internal_handler.authResponse:
+  handler.adminReviewResponse:
+    properties:
+      bathhouse_id:
+        type: string
+      booking_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      images:
+        items:
+          type: string
+        type: array
+      owner_response:
+        type: string
+      owner_response_at:
+        type: string
+      rating:
+        type: integer
+      rejection_reasons:
+        items:
+          type: string
+        type: array
+      status:
+        type: string
+      text:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  handler.approveRejectRequest:
+    properties:
+      reason:
+        type: string
+    type: object
+  handler.authResponse:
     properties:
       token:
         type: string
       user:
-        $ref: '#/definitions/internal_handler.userResponse'
+        $ref: '#/definitions/handler.userResponse'
     type: object
-  internal_handler.bathhouseResponse:
+  handler.batchIDsRequest:
+    properties:
+      ids:
+        items:
+          type: string
+        type: array
+    type: object
+  handler.batchRejectRequest:
+    properties:
+      ids:
+        items:
+          type: string
+        type: array
+      reason:
+        type: string
+    type: object
+  handler.batchResult:
+    properties:
+      failed:
+        type: integer
+      successful:
+        type: integer
+    type: object
+  handler.bathhouseResponse:
     properties:
       address:
         type: string
@@ -86,7 +108,7 @@ definitions:
         type: string
       gallery_preview:
         items:
-          $ref: '#/definitions/internal_handler.mediaResponse'
+          $ref: '#/definitions/handler.mediaResponse'
         type: array
       has_bbq:
         type: boolean
@@ -119,7 +141,7 @@ definitions:
       max_guests:
         type: integer
       meta:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_seo.MetaTags'
+        $ref: '#/definitions/seo.MetaTags'
       min_duration:
         type: integer
       name:
@@ -140,10 +162,10 @@ definitions:
         type: string
       working_hours:
         items:
-          $ref: '#/definitions/internal_handler.workingHoursResp'
+          $ref: '#/definitions/handler.workingHoursResp'
         type: array
     type: object
-  internal_handler.bookingResponse:
+  handler.bookingResponse:
     properties:
       bathhouse_id:
         type: string
@@ -184,7 +206,7 @@ definitions:
       user_id:
         type: string
     type: object
-  internal_handler.cityResponse:
+  handler.cityResponse:
     properties:
       id:
         type: integer
@@ -197,7 +219,32 @@ definitions:
       slug:
         type: string
     type: object
-  internal_handler.createBathhouseRequest:
+  handler.complaintResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      reason:
+        type: string
+      reporter_id:
+        type: string
+      resolution:
+        type: string
+      resolved_at:
+        type: string
+      resolved_by_id:
+        type: string
+      status:
+        type: string
+      target_id:
+        type: string
+      target_type:
+        type: string
+    type: object
+  handler.createBathhouseRequest:
     properties:
       address:
         type: string
@@ -235,10 +282,10 @@ definitions:
         type: integer
       working_hours:
         items:
-          $ref: '#/definitions/internal_handler.workingHoursRequest'
+          $ref: '#/definitions/handler.workingHoursRequest'
         type: array
     type: object
-  internal_handler.createBookingRequest:
+  handler.createBookingRequest:
     properties:
       bathhouse_id:
         type: string
@@ -259,7 +306,7 @@ definitions:
       use_referral_bonus:
         type: integer
     type: object
-  internal_handler.createCityRequest:
+  handler.createCityRequest:
     properties:
       latitude:
         type: number
@@ -270,19 +317,28 @@ definitions:
       slug:
         type: string
     type: object
-  internal_handler.initiatePaymentResponse:
+  handler.createReviewRequest:
+    properties:
+      booking_id:
+        type: string
+      rating:
+        type: integer
+      text:
+        type: string
+    type: object
+  handler.initiatePaymentResponse:
     properties:
       confirmation_url:
         type: string
     type: object
-  internal_handler.loginRequest:
+  handler.loginRequest:
     properties:
       email:
         type: string
       password:
         type: string
     type: object
-  internal_handler.mediaResponse:
+  handler.mediaResponse:
     properties:
       created_at:
         type: string
@@ -307,7 +363,7 @@ definitions:
       width:
         type: integer
     type: object
-  internal_handler.nullableInt64Field:
+  handler.nullableInt64Field:
     properties:
       set:
         type: boolean
@@ -315,14 +371,19 @@ definitions:
         format: int64
         type: integer
     type: object
-  internal_handler.oauthCallbackResponse:
+  handler.oauthCallbackResponse:
     properties:
       token:
         type: string
       user:
-        $ref: '#/definitions/internal_handler.userResponse'
+        $ref: '#/definitions/handler.userResponse'
     type: object
-  internal_handler.paymentResponse:
+  handler.ownerResponseRequest:
+    properties:
+      response:
+        type: string
+    type: object
+  handler.paymentResponse:
     properties:
       amount:
         type: integer
@@ -351,7 +412,7 @@ definitions:
       user_id:
         type: string
     type: object
-  internal_handler.photoResponse:
+  handler.photoResponse:
     properties:
       bathhouse_id:
         type: string
@@ -374,7 +435,7 @@ definitions:
       verified_by_id:
         type: string
     type: object
-  internal_handler.publicProfileResponse:
+  handler.publicProfileResponse:
     properties:
       avatar_url:
         type: string
@@ -395,7 +456,7 @@ definitions:
       visit_count:
         type: integer
     type: object
-  internal_handler.registerRequest:
+  handler.registerRequest:
     properties:
       email:
         type: string
@@ -410,19 +471,64 @@ definitions:
       role:
         type: string
     type: object
-  internal_handler.rejectPhotoRequest:
+  handler.rejectPhotoRequest:
     properties:
       reason:
         type: string
     type: object
-  internal_handler.reorderPhotosRequest:
+  handler.reorderPhotosRequest:
     properties:
       photo_ids:
         items:
           type: string
         type: array
     type: object
-  internal_handler.socialAccountResponse:
+  handler.reportRequest:
+    properties:
+      description:
+        type: string
+      reason:
+        type: string
+    type: object
+  handler.resolveRequest:
+    properties:
+      resolution:
+        type: string
+    type: object
+  handler.reviewResponse:
+    properties:
+      bathhouse_id:
+        type: string
+      booking_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      images:
+        items:
+          type: string
+        type: array
+      media:
+        items:
+          $ref: '#/definitions/handler.mediaResponse'
+        type: array
+      owner_response:
+        type: string
+      owner_response_at:
+        type: string
+      rating:
+        type: integer
+      status:
+        type: string
+      text:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  handler.socialAccountResponse:
     properties:
       avatar_url:
         type: string
@@ -437,7 +543,7 @@ definitions:
       provider:
         type: string
     type: object
-  internal_handler.updateBathhouseRequest:
+  handler.updateBathhouseRequest:
     properties:
       address:
         type: string
@@ -475,10 +581,10 @@ definitions:
         type: integer
       working_hours:
         items:
-          $ref: '#/definitions/internal_handler.workingHoursRequest'
+          $ref: '#/definitions/handler.workingHoursRequest'
         type: array
     type: object
-  internal_handler.updateCityRequest:
+  handler.updateCityRequest:
     properties:
       latitude:
         type: number
@@ -489,25 +595,36 @@ definitions:
       slug:
         type: string
     type: object
-  internal_handler.updateProfileRequest:
+  handler.updateProfileRequest:
     properties:
       bio:
         type: string
       city_id:
-        $ref: '#/definitions/internal_handler.nullableInt64Field'
+        $ref: '#/definitions/handler.nullableInt64Field'
       name:
         type: string
       phone:
         type: string
     type: object
-  internal_handler.uploadPhotoRequest:
+  handler.updateReviewRequest:
+    properties:
+      images:
+        items:
+          type: string
+        type: array
+      rating:
+        type: integer
+      text:
+        type: string
+    type: object
+  handler.uploadPhotoRequest:
     properties:
       thumbnail_url:
         type: string
       url:
         type: string
     type: object
-  internal_handler.userResponse:
+  handler.userResponse:
     properties:
       avatar_url:
         type: string
@@ -528,7 +645,7 @@ definitions:
       role:
         type: string
     type: object
-  internal_handler.widgetCodeResponse:
+  handler.widgetCodeResponse:
     properties:
       api_key:
         type: string
@@ -539,12 +656,12 @@ definitions:
       style_url:
         type: string
     type: object
-  internal_handler.widgetKeyResponse:
+  handler.widgetKeyResponse:
     properties:
       api_key:
         type: string
     type: object
-  internal_handler.workingHoursRequest:
+  handler.workingHoursRequest:
     properties:
       close_time:
         type: string
@@ -553,13 +670,52 @@ definitions:
       open_time:
         type: string
     type: object
-  internal_handler.workingHoursResp:
+  handler.workingHoursResp:
     properties:
       close_time:
         type: string
       day_of_week:
         type: integer
       open_time:
+        type: string
+    type: object
+  seo.MetaTags:
+    properties:
+      canonical:
+        type: string
+      description:
+        type: string
+      og_image:
+        type: string
+      og_type:
+        type: string
+      title:
+        type: string
+    type: object
+  service.MyStatsOutput:
+    properties:
+      avg_check:
+        type: integer
+      avg_rating:
+        type: number
+      review_count:
+        type: integer
+      total_spent:
+        type: integer
+      total_visits:
+        type: integer
+    type: object
+  service.TimeSlot:
+    properties:
+      available:
+        type: boolean
+      endTime:
+        type: string
+      price:
+        description: Price in kopecks for this hour slot
+        format: int64
+        type: integer
+      startTime:
         type: string
     type: object
 host: localhost:8080
@@ -580,7 +736,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler.createCityRequest'
+          $ref: '#/definitions/handler.createCityRequest'
       produces:
       - application/json
       responses:
@@ -588,46 +744,46 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.cityResponse'
+                  $ref: '#/definitions/handler.cityResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "409":
           description: Conflict
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -649,42 +805,42 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler.APIResponse'
+            $ref: '#/definitions/handler.APIResponse'
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -706,7 +862,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler.updateCityRequest'
+          $ref: '#/definitions/handler.updateCityRequest'
       produces:
       - application/json
       responses:
@@ -714,52 +870,329 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.cityResponse'
+                  $ref: '#/definitions/handler.cityResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
       summary: Update city
       tags:
       - admin-cities
+  /admin/complaints:
+    get:
+      description: Returns a paginated list of complaints. Admin only. Supports filtering
+        by status, target_type, reason, and date range.
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by status (pending, resolved, dismissed)
+        in: query
+        name: status
+        type: string
+      - description: Filter by target type (review, bathhouse, user)
+        in: query
+        name: target_type
+        type: string
+      - description: Filter by reason (spam, offensive, fake, fraud, other)
+        in: query
+        name: reason
+        type: string
+      - description: Filter from date (RFC3339)
+        in: query
+        name: from_date
+        type: string
+      - description: Filter to date (RFC3339)
+        in: query
+        name: to_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.complaintResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List complaints
+      tags:
+      - admin-complaints
+  /admin/complaints/{id}:
+    get:
+      description: Returns a single complaint by its ID. Admin only.
+      parameters:
+      - description: Complaint ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.complaintResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get complaint by ID
+      tags:
+      - admin-complaints
+  /admin/complaints/{id}/dismiss:
+    patch:
+      description: Dismisses a complaint without action. Admin only.
+      parameters:
+      - description: Complaint ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.complaintResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Dismiss complaint
+      tags:
+      - admin-complaints
+  /admin/complaints/{id}/resolve:
+    patch:
+      consumes:
+      - application/json
+      description: Resolves a complaint with a resolution note. Admin only.
+      parameters:
+      - description: Complaint ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Resolution details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.resolveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.complaintResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Resolve complaint
+      tags:
+      - admin-complaints
   /admin/photos/{id}/reject:
     patch:
       consumes:
@@ -776,7 +1209,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler.rejectPhotoRequest'
+          $ref: '#/definitions/handler.rejectPhotoRequest'
       produces:
       - application/json
       responses:
@@ -784,46 +1217,46 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.photoResponse'
+                  $ref: '#/definitions/handler.photoResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -846,46 +1279,46 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.photoResponse'
+                  $ref: '#/definitions/handler.photoResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -913,38 +1346,410 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_handler.photoResponse'
+                    $ref: '#/definitions/handler.photoResponse'
                   type: array
                 meta:
-                  $ref: '#/definitions/internal_handler.Meta'
+                  $ref: '#/definitions/handler.Meta'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
       summary: List pending photos
       tags:
       - admin-photos
+  /admin/reviews:
+    get:
+      description: Returns a paginated list of all reviews for moderation. Supports
+        filtering by status, bathhouse, rating range, and date range. Admin only.
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by status (pending, approved, rejected, hidden)
+        in: query
+        name: status
+        type: string
+      - description: Filter by bathhouse ID (UUID)
+        in: query
+        name: bathhouse_id
+        type: string
+      - description: Minimum rating
+        in: query
+        name: min_rating
+        type: integer
+      - description: Maximum rating
+        in: query
+        name: max_rating
+        type: integer
+      - description: Filter from date (RFC3339)
+        in: query
+        name: from_date
+        type: string
+      - description: Filter to date (RFC3339)
+        in: query
+        name: to_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.adminReviewResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List reviews (admin)
+      tags:
+      - admin-reviews
+  /admin/reviews/{id}/approve:
+    patch:
+      description: Approves a pending review and notifies the author. Admin only.
+      parameters:
+      - description: Review ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.adminReviewResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Approve review
+      tags:
+      - admin-reviews
+  /admin/reviews/{id}/reject:
+    patch:
+      consumes:
+      - application/json
+      description: Rejects a review with an optional reason and notifies the author.
+        Admin only.
+      parameters:
+      - description: Review ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Rejection reason (optional)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.approveRejectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.adminReviewResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Reject review
+      tags:
+      - admin-reviews
+  /admin/reviews/batch-approve:
+    post:
+      consumes:
+      - application/json
+      description: Approves multiple reviews at once (max 100). Notifies each author.
+        Admin only.
+      parameters:
+      - description: List of review IDs to approve
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.batchIDsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.batchResult'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Batch approve reviews
+      tags:
+      - admin-reviews
+  /admin/reviews/batch-reject:
+    post:
+      consumes:
+      - application/json
+      description: Rejects multiple reviews at once (max 100) with an optional reason.
+        Notifies each author. Admin only.
+      parameters:
+      - description: List of review IDs and optional rejection reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.batchRejectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.batchResult'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Batch reject reviews
+      tags:
+      - admin-reviews
+  /admin/reviews/pending-count:
+    get:
+      description: Returns the number of reviews awaiting moderation. Admin only.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get pending reviews count
+      tags:
+      - admin-reviews
   /auth/link/{provider}:
     delete:
       description: Unlinks a social account from the authenticated user
@@ -961,7 +1766,7 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   properties:
@@ -973,19 +1778,19 @@ paths:
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -1018,7 +1823,7 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   properties:
@@ -1030,28 +1835,28 @@ paths:
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "409":
           description: Conflict
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -1069,7 +1874,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler.loginRequest'
+          $ref: '#/definitions/handler.loginRequest'
       produces:
       - application/json
       responses:
@@ -1077,28 +1882,28 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.authResponse'
+                  $ref: '#/definitions/handler.authResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: Login
       tags:
@@ -1113,19 +1918,19 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.userResponse'
+                  $ref: '#/definitions/handler.userResponse'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -1142,7 +1947,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler.updateProfileRequest'
+          $ref: '#/definitions/handler.updateProfileRequest'
       produces:
       - application/json
       responses:
@@ -1150,28 +1955,28 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.userResponse'
+                  $ref: '#/definitions/handler.userResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -1188,19 +1993,19 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.userResponse'
+                  $ref: '#/definitions/handler.userResponse'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -1225,28 +2030,28 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.userResponse'
+                  $ref: '#/definitions/handler.userResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -1264,21 +2069,21 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_handler.socialAccountResponse'
+                    $ref: '#/definitions/handler.socialAccountResponse'
                   type: array
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -1305,10 +2110,10 @@ paths:
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: OAuth redirect
       tags:
@@ -1340,19 +2145,19 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.oauthCallbackResponse'
+                  $ref: '#/definitions/handler.oauthCallbackResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: OAuth callback
       tags:
@@ -1368,7 +2173,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler.registerRequest'
+          $ref: '#/definitions/handler.registerRequest'
       produces:
       - application/json
       responses:
@@ -1376,28 +2181,28 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.authResponse'
+                  $ref: '#/definitions/handler.authResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "409":
           description: Conflict
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: Register a new user
       tags:
@@ -1516,23 +2321,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_handler.bathhouseResponse'
+                    $ref: '#/definitions/handler.bathhouseResponse'
                   type: array
                 meta:
-                  $ref: '#/definitions/internal_handler.Meta'
+                  $ref: '#/definitions/handler.Meta'
               type: object
         "500":
           description: Internal Server Error
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: Search bathhouses
       tags:
@@ -1547,7 +2352,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler.createBathhouseRequest'
+          $ref: '#/definitions/handler.createBathhouseRequest'
       produces:
       - application/json
       responses:
@@ -1555,37 +2360,37 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.bathhouseResponse'
+                  $ref: '#/definitions/handler.bathhouseResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -1607,51 +2412,51 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler.APIResponse'
+            $ref: '#/definitions/handler.APIResponse'
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "409":
           description: Conflict
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -1674,28 +2479,28 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.bathhouseResponse'
+                  $ref: '#/definitions/handler.bathhouseResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: Get bathhouse by ID
       tags:
@@ -1715,7 +2520,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler.updateBathhouseRequest'
+          $ref: '#/definitions/handler.updateBathhouseRequest'
       produces:
       - application/json
       responses:
@@ -1723,46 +2528,46 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.bathhouseResponse'
+                  $ref: '#/definitions/handler.bathhouseResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -1791,30 +2596,30 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.TimeSlot'
+                    $ref: '#/definitions/service.TimeSlot'
                   type: array
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: Get available time slots
       tags:
@@ -1846,47 +2651,95 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_handler.bookingResponse'
+                    $ref: '#/definitions/handler.bookingResponse'
                   type: array
                 meta:
-                  $ref: '#/definitions/internal_handler.Meta'
+                  $ref: '#/definitions/handler.Meta'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
       summary: List bathhouse bookings
       tags:
       - bookings
+  /bathhouses/{id}/gallery:
+    get:
+      description: Returns a paginated list of review media (photos/videos) for a
+        bathhouse, aggregated from approved reviews
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.mediaResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      summary: Get bathhouse gallery
+      tags:
+      - review-media
   /bathhouses/{id}/meta:
     get:
       description: Get SEO meta tags (title, description, og:image, canonical) for
@@ -1904,28 +2757,28 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_seo.MetaTags'
+                  $ref: '#/definitions/seo.MetaTags'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: Get bathhouse SEO meta tags
       tags:
@@ -1946,34 +2799,214 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_handler.photoResponse'
+                    $ref: '#/definitions/handler.photoResponse'
                   type: array
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: List bathhouse photos
       tags:
       - photos
+  /bathhouses/{id}/report:
+    post:
+      consumes:
+      - application/json
+      description: Submit a complaint about a bathhouse (spam, offensive, fake, fraud,
+        other)
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Report details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.reportRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.complaintResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Report a bathhouse
+      tags:
+      - complaints
+  /bathhouses/{id}/reviews:
+    get:
+      description: Returns a paginated list of reviews for a bathhouse with attached
+        media
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.reviewResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/handler.Meta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      summary: List bathhouse reviews
+      tags:
+      - reviews
+    post:
+      consumes:
+      - application/json
+      description: Creates a review for a bathhouse. Requires a completed booking.
+        Only clients can write reviews.
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Review data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.createReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.reviewResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create review
+      tags:
+      - reviews
   /bathhouses/{id}/schema:
     get:
       description: Get Schema.org structured data (JSON-LD) for a bathhouse, used
@@ -1995,19 +3028,19 @@ paths:
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: Get bathhouse Schema.org JSON-LD
       tags:
@@ -2028,28 +3061,28 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.bathhouseResponse'
+                  $ref: '#/definitions/handler.bathhouseResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: Get bathhouse by slug
       tags:
@@ -2075,23 +3108,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_handler.bookingResponse'
+                    $ref: '#/definitions/handler.bookingResponse'
                   type: array
                 meta:
-                  $ref: '#/definitions/internal_handler.Meta'
+                  $ref: '#/definitions/handler.Meta'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2109,7 +3142,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler.createBookingRequest'
+          $ref: '#/definitions/handler.createBookingRequest'
       produces:
       - application/json
       responses:
@@ -2117,37 +3150,37 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.bookingResponse'
+                  $ref: '#/definitions/handler.bookingResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "409":
           description: Conflict
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2171,7 +3204,7 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   type: object
@@ -2180,37 +3213,37 @@ paths:
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2234,46 +3267,46 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.bookingResponse'
+                  $ref: '#/definitions/handler.bookingResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2297,7 +3330,7 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   type: object
@@ -2306,37 +3339,37 @@ paths:
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2360,46 +3393,46 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.initiatePaymentResponse'
+                  $ref: '#/definitions/handler.initiatePaymentResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "409":
           description: Conflict
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2422,37 +3455,37 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.paymentResponse'
+                  $ref: '#/definitions/handler.paymentResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2476,7 +3509,7 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   type: object
@@ -2485,37 +3518,37 @@ paths:
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2532,21 +3565,21 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_handler.cityResponse'
+                    $ref: '#/definitions/handler.cityResponse'
                   type: array
               type: object
         "500":
           description: Internal Server Error
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: List cities
       tags:
@@ -2577,36 +3610,94 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_handler.bathhouseResponse'
+                    $ref: '#/definitions/handler.bathhouseResponse'
                   type: array
                 meta:
-                  $ref: '#/definitions/internal_handler.Meta'
+                  $ref: '#/definitions/handler.Meta'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "500":
           description: Internal Server Error
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: Search bathhouses by city slug
       tags:
       - bathhouses
+  /media/{id}:
+    delete:
+      description: Deletes a media attachment from a review. Only the review author
+        or an admin can delete.
+      parameters:
+      - description: Media ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete review media
+      tags:
+      - review-media
   /my/bathhouses:
     get:
       description: List bathhouses owned by or assigned to the current user.
@@ -2628,41 +3719,41 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_handler.bathhouseResponse'
+                    $ref: '#/definitions/handler.bathhouseResponse'
                   type: array
                 meta:
-                  $ref: '#/definitions/internal_handler.Meta'
+                  $ref: '#/definitions/handler.Meta'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2686,7 +3777,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler.uploadPhotoRequest'
+          $ref: '#/definitions/handler.uploadPhotoRequest'
       produces:
       - application/json
       responses:
@@ -2694,37 +3785,37 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.photoResponse'
+                  $ref: '#/definitions/handler.photoResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2748,40 +3839,40 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/internal_handler.reorderPhotosRequest'
+          $ref: '#/definitions/handler.reorderPhotosRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler.APIResponse'
+            $ref: '#/definitions/handler.APIResponse'
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2827,37 +3918,37 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.widgetCodeResponse'
+                  $ref: '#/definitions/handler.widgetCodeResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2881,37 +3972,37 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.widgetKeyResponse'
+                  $ref: '#/definitions/handler.widgetKeyResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2934,37 +4025,37 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.widgetKeyResponse'
+                  $ref: '#/definitions/handler.widgetKeyResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -2992,23 +4083,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_handler.paymentResponse'
+                    $ref: '#/definitions/handler.paymentResponse'
                   type: array
                 meta:
-                  $ref: '#/definitions/internal_handler.Meta'
+                  $ref: '#/definitions/handler.Meta'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -3025,19 +4116,19 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.MyStatsOutput'
+                  $ref: '#/definitions/service.MyStatsOutput'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
@@ -3059,48 +4150,395 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/internal_handler.APIResponse'
+            $ref: '#/definitions/handler.APIResponse'
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "401":
           description: Unauthorized
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "403":
           description: Forbidden
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       security:
       - BearerAuth: []
       summary: Delete photo
       tags:
       - photos
+  /reviews/{id}:
+    delete:
+      description: Deletes a review. The author or an admin can delete it.
+      parameters:
+      - description: Review ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete review
+      tags:
+      - reviews
+    put:
+      consumes:
+      - application/json
+      description: Updates a review. Only the review author can update it.
+      parameters:
+      - description: Review ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.reviewResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update review
+      tags:
+      - reviews
+  /reviews/{id}/media:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads a photo or video attachment to a review. Max 10 photos
+        and 1 video per review. Max file size 50MB.
+      parameters:
+      - description: Review ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Media file (image or video)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.mediaResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Upload review media
+      tags:
+      - review-media
+  /reviews/{id}/report:
+    post:
+      consumes:
+      - application/json
+      description: Submit a complaint about a review (spam, offensive, fake, fraud,
+        other)
+      parameters:
+      - description: Review ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Report details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.reportRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.complaintResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Report a review
+      tags:
+      - complaints
+  /reviews/{id}/response:
+    post:
+      consumes:
+      - application/json
+      description: Adds an owner/representative response to a review. Only available
+        to bathhouse owners and representatives.
+      parameters:
+      - description: Review ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Response text
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ownerResponseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.reviewResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Respond to review
+      tags:
+      - reviews
   /users/{id}/profile:
     get:
       description: Returns a user's public profile by ID
@@ -3117,32 +4555,94 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_handler.publicProfileResponse'
+                  $ref: '#/definitions/handler.publicProfileResponse'
               type: object
         "400":
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "404":
           description: Not Found
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: Get public user profile
       tags:
       - users
+  /users/{id}/report:
+    post:
+      consumes:
+      - application/json
+      description: Submit a complaint about a user (spam, offensive, fake, fraud,
+        other)
+      parameters:
+      - description: User ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Report details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.reportRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.complaintResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Report a user
+      tags:
+      - complaints
   /webhooks/yookassa:
     post:
       consumes:
@@ -3163,7 +4663,7 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 data:
                   type: object
@@ -3172,19 +4672,19 @@ paths:
           description: Bad Request
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
         "500":
           description: Internal Server Error
           schema:
             allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
+            - $ref: '#/definitions/handler.APIResponse'
             - properties:
                 error:
-                  $ref: '#/definitions/internal_handler.APIError'
+                  $ref: '#/definitions/handler.APIError'
               type: object
       summary: YooKassa webhook
       tags:

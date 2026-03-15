@@ -75,11 +75,11 @@
 - Modify: `internal/handler/media.go`
 - Modify: `internal/handler/complaint.go`
 
-- [ ] Аннотировать Create/List/Update/Delete Review, RespondToReview
-- [ ] Аннотировать UploadMedia, DeleteMedia, GetGallery
-- [ ] Аннотировать Report (review/bathhouse/user), Admin complaints CRUD
-- [ ] Аннотировать Admin review moderation: List, PendingCount, Approve, Reject, BatchApprove, BatchReject
-- [ ] Запустить `swag init` — без ошибок
+- [x] Аннотировать Create/List/Update/Delete Review, RespondToReview
+- [x] Аннотировать UploadMedia, DeleteMedia, GetGallery
+- [x] Аннотировать Report (review/bathhouse/user), Admin complaints CRUD
+- [x] Аннотировать Admin review moderation: List, PendingCount, Approve, Reject, BatchApprove, BatchReject
+- [x] Запустить `swag init` — без ошибок
 
 ### Task 6: Аннотации — Loyalty, Referral, Certificates, Promo
 

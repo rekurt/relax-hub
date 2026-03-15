@@ -16,6 +16,17 @@ func NewMediaHandler(mediaService service.MediaService) *MediaHandler {
 	return &MediaHandler{mediaService: mediaService}
 }
 
+// BathhouseGallery godoc
+// @Summary      Get bathhouse gallery
+// @Description  Returns a paginated list of review media (photos/videos) for a bathhouse, aggregated from approved reviews
+// @Tags         review-media
+// @Produce      json
+// @Param        id         path      string  true   "Bathhouse ID (UUID)"
+// @Param        page       query     int     false  "Page number"  default(1)
+// @Param        page_size  query     int     false  "Page size"    default(20)
+// @Success      200        {object}  APIResponse{data=[]mediaResponse,meta=Meta}
+// @Failure      400        {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/gallery [get]
 func (h *MediaHandler) BathhouseGallery(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

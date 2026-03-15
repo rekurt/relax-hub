@@ -118,6 +118,21 @@ func toReviewResponse(rev *domain.Review) reviewResponse {
 	}
 }
 
+// Create godoc
+// @Summary      Create review
+// @Description  Creates a review for a bathhouse. Requires a completed booking. Only clients can write reviews.
+// @Tags         reviews
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string              true  "Bathhouse ID (UUID)"
+// @Param        body  body      createReviewRequest  true  "Review data"
+// @Success      201   {object}  APIResponse{data=reviewResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/reviews [post]
 func (h *ReviewHandler) Create(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -153,6 +168,21 @@ func (h *ReviewHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toReviewResponse(review))
 }
 
+// Update godoc
+// @Summary      Update review
+// @Description  Updates a review. Only the review author can update it.
+// @Tags         reviews
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string               true  "Review ID (UUID)"
+// @Param        body  body      updateReviewRequest   true  "Fields to update"
+// @Success      200   {object}  APIResponse{data=reviewResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /reviews/{id} [put]
 func (h *ReviewHandler) Update(w http.ResponseWriter, r *http.Request) {
 	reviewID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -181,6 +211,19 @@ func (h *ReviewHandler) Update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toReviewResponse(review))
 }
 
+// Delete godoc
+// @Summary      Delete review
+// @Description  Deletes a review. The author or an admin can delete it.
+// @Tags         reviews
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Review ID (UUID)"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /reviews/{id} [delete]
 func (h *ReviewHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	reviewID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -199,6 +242,22 @@ func (h *ReviewHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "review deleted"})
 }
 
+// AddOwnerResponse godoc
+// @Summary      Respond to review
+// @Description  Adds an owner/representative response to a review. Only available to bathhouse owners and representatives.
+// @Tags         reviews
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string                true  "Review ID (UUID)"
+// @Param        body  body      ownerResponseRequest  true  "Response text"
+// @Success      200   {object}  APIResponse{data=reviewResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
+// @Router       /reviews/{id}/response [post]
 func (h *ReviewHandler) AddOwnerResponse(w http.ResponseWriter, r *http.Request) {
 	reviewID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -224,6 +283,17 @@ func (h *ReviewHandler) AddOwnerResponse(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, http.StatusOK, toReviewResponse(review))
 }
 
+// ListByBathhouse godoc
+// @Summary      List bathhouse reviews
+// @Description  Returns a paginated list of reviews for a bathhouse with attached media
+// @Tags         reviews
+// @Produce      json
+// @Param        id         path      string  true   "Bathhouse ID (UUID)"
+// @Param        page       query     int     false  "Page number"  default(1)
+// @Param        page_size  query     int     false  "Page size"    default(20)
+// @Success      200        {object}  APIResponse{data=[]reviewResponse,meta=Meta}
+// @Failure      400        {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/reviews [get]
 func (h *ReviewHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -270,6 +340,22 @@ func (h *ReviewHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) 
 
 const maxMediaUploadSize = 50 << 20 // 50MB (max video size)
 
+// UploadMedia godoc
+// @Summary      Upload review media
+// @Description  Uploads a photo or video attachment to a review. Max 10 photos and 1 video per review. Max file size 50MB.
+// @Tags         review-media
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string  true  "Review ID (UUID)"
+// @Param        file  formData  file    true  "Media file (image or video)"
+// @Success      201   {object}  APIResponse{data=mediaResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
+// @Router       /reviews/{id}/media [post]
 func (h *ReviewHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
 	reviewID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -342,6 +428,19 @@ func (h *ReviewHandler) UploadMedia(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toMediaResponse(media))
 }
 
+// DeleteMedia godoc
+// @Summary      Delete review media
+// @Description  Deletes a media attachment from a review. Only the review author or an admin can delete.
+// @Tags         review-media
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Media ID (UUID)"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /media/{id} [delete]
 func (h *ReviewHandler) DeleteMedia(w http.ResponseWriter, r *http.Request) {
 	mediaID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
