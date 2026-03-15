@@ -7985,7 +7985,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns or creates a shareable calendar token for ICS export. Owner or representative only.",
+                "description": "Returns or creates a shareable calendar token for ICS export. The token can be used at /calendar/{token}.ics to access the calendar without authentication. Owner or representative only.",
                 "produces": [
                     "application/json"
                 ],
@@ -8014,7 +8014,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.calendarTokenResponse"
                                         }
                                     }
                                 }
@@ -8222,7 +8222,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/definitions/internal_handler.externalCalendarResponse"
                                             }
                                         }
                                     }
@@ -8312,12 +8312,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "External calendar data (url, source)",
+                        "description": "External calendar data",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/internal_handler.addExternalCalendarRequest"
                         }
                     }
                 ],
@@ -8333,7 +8333,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.externalCalendarResponse"
                                         }
                                     }
                                 }
@@ -8492,7 +8492,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Upload a photo for a bathhouse. Photo goes to pending verification. Owner or representative only.",
+                "description": "Upload a photo for a bathhouse by providing its URL. Photo goes to pending verification. Owner or representative only.",
                 "consumes": [
                     "application/json"
                 ],
@@ -9413,12 +9413,12 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Slot block data (start_time, end_time, description)",
+                        "description": "Slot block data",
                         "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/internal_handler.createSlotBlockRequest"
                         }
                     }
                 ],
@@ -9434,7 +9434,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/definitions/internal_handler.slotBlockResponse"
                                         }
                                     }
                                 }
@@ -9725,6 +9725,24 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "allOf": [
                                 {
@@ -13845,6 +13863,19 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handler.addExternalCalendarRequest": {
+            "type": "object",
+            "properties": {
+                "source": {
+                    "type": "string",
+                    "example": "google_calendar"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://calendar.google.com/calendar/ical/xxx/basic.ics"
+                }
+            }
+        },
         "internal_handler.adminReviewResponse": {
             "type": "object",
             "properties": {
@@ -14113,6 +14144,19 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_handler.calendarTokenResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "abc123def456"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "/calendar/abc123def456.ics"
                 }
             }
         },
@@ -14420,6 +14464,23 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handler.createSlotBlockRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Maintenance"
+                },
+                "end_time": {
+                    "type": "string",
+                    "example": "2026-03-20T14:00:00Z"
+                },
+                "start_time": {
+                    "type": "string",
+                    "example": "2026-03-20T10:00:00Z"
+                }
+            }
+        },
         "internal_handler.deviceTokenResponse": {
             "type": "object",
             "properties": {
@@ -14437,6 +14498,39 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_handler.externalCalendarResponse": {
+            "type": "object",
+            "properties": {
+                "bathhouse_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-01-15T10:00:00Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "last_error": {
+                    "type": "string",
+                    "example": ""
+                },
+                "last_sync_at": {
+                    "type": "string",
+                    "example": "2026-01-15T10:00:00Z"
+                },
+                "source": {
+                    "type": "string",
+                    "example": "google_calendar"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://calendar.google.com/calendar/ical/xxx/basic.ics"
                 }
             }
         },
@@ -15276,6 +15370,39 @@ const docTemplate = `{
             "properties": {
                 "text": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_handler.slotBlockResponse": {
+            "type": "object",
+            "properties": {
+                "bathhouse_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440001"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2026-01-15T10:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Maintenance"
+                },
+                "end_time": {
+                    "type": "string",
+                    "example": "2026-03-20T14:00:00Z"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "source": {
+                    "type": "string",
+                    "example": "manual"
+                },
+                "start_time": {
+                    "type": "string",
+                    "example": "2026-03-20T10:00:00Z"
                 }
             }
         },

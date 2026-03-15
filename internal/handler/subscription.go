@@ -115,6 +115,7 @@ func toPromotionResponse(p *domain.Promotion) promotionResponse {
 // @Failure      401   {object}  APIResponse{error=APIError}
 // @Failure      403   {object}  APIResponse{error=APIError}
 // @Failure      404   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
 // @Router       /my/bathhouses/{id}/subscription [post]
 func (h *SubscriptionHandler) Subscribe(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))

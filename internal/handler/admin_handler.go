@@ -253,6 +253,7 @@ type updateCityRequest struct {
 	Longitude *float64 `json:"longitude"`
 }
 
+// CreateCity godoc
 // @Summary      Create city
 // @Description  Create a new city. Admin only.
 // @Tags         admin-cities
@@ -293,6 +294,7 @@ func (h *AdminHandler) CreateCity(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// UpdateCity godoc
 // @Summary      Update city
 // @Description  Update an existing city. Admin only.
 // @Tags         admin-cities
@@ -340,6 +342,7 @@ func (h *AdminHandler) UpdateCity(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// DeleteCity godoc
 // @Summary      Delete city
 // @Description  Delete a city. Admin only.
 // @Tags         admin-cities

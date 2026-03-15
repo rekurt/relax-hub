@@ -15,6 +15,44 @@ type CalendarHandler struct {
 	calendarSvc service.CalendarService
 }
 
+// swagger types for calendar endpoints
+
+type calendarTokenResponse struct {
+	Token string `json:"token" example:"abc123def456"`
+	URL   string `json:"url" example:"/calendar/abc123def456.ics"`
+}
+
+type addExternalCalendarRequest struct {
+	URL    string `json:"url" example:"https://calendar.google.com/calendar/ical/xxx/basic.ics"`
+	Source string `json:"source" example:"google_calendar"`
+}
+
+type externalCalendarResponse struct {
+	ID          string  `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	BathhouseID string  `json:"bathhouse_id" example:"550e8400-e29b-41d4-a716-446655440001"`
+	URL         string  `json:"url" example:"https://calendar.google.com/calendar/ical/xxx/basic.ics"`
+	Source      string  `json:"source" example:"google_calendar"`
+	LastSyncAt  *string `json:"last_sync_at,omitempty" example:"2026-01-15T10:00:00Z"`
+	LastError   string  `json:"last_error,omitempty" example:""`
+	CreatedAt   string  `json:"created_at" example:"2026-01-15T10:00:00Z"`
+}
+
+type createSlotBlockRequest struct {
+	StartTime   string `json:"start_time" example:"2026-03-20T10:00:00Z"`
+	EndTime     string `json:"end_time" example:"2026-03-20T14:00:00Z"`
+	Description string `json:"description" example:"Maintenance"`
+}
+
+type slotBlockResponse struct {
+	ID          string `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	BathhouseID string `json:"bathhouse_id" example:"550e8400-e29b-41d4-a716-446655440001"`
+	StartTime   string `json:"start_time" example:"2026-03-20T10:00:00Z"`
+	EndTime     string `json:"end_time" example:"2026-03-20T14:00:00Z"`
+	Source      string `json:"source" example:"manual"`
+	Description string `json:"description" example:"Maintenance"`
+	CreatedAt   string `json:"created_at" example:"2026-01-15T10:00:00Z"`
+}
+
 func NewCalendarHandler(calendarSvc service.CalendarService) *CalendarHandler {
 	return &CalendarHandler{calendarSvc: calendarSvc}
 }
@@ -77,12 +115,12 @@ func (h *CalendarHandler) ExportICalByToken(w http.ResponseWriter, r *http.Reque
 
 // GetCalendarToken godoc
 // @Summary      Get calendar token
-// @Description  Returns or creates a shareable calendar token for ICS export. Owner or representative only.
+// @Description  Returns or creates a shareable calendar token for ICS export. The token can be used at /calendar/{token}.ics to access the calendar without authentication. Owner or representative only.
 // @Tags         calendar
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Bathhouse ID (UUID)"
-// @Success      200  {object}  APIResponse{data=object}
+// @Success      200  {object}  APIResponse{data=calendarTokenResponse}
 // @Failure      400  {object}  APIResponse{error=APIError}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Failure      403  {object}  APIResponse{error=APIError}
@@ -116,9 +154,9 @@ func (h *CalendarHandler) GetCalendarToken(w http.ResponseWriter, r *http.Reques
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        id    path      string  true  "Bathhouse ID (UUID)"
-// @Param        body  body      object  true  "External calendar data (url, source)"
-// @Success      201   {object}  APIResponse{data=object}
+// @Param        id    path      string                      true  "Bathhouse ID (UUID)"
+// @Param        body  body      addExternalCalendarRequest  true  "External calendar data"
+// @Success      201   {object}  APIResponse{data=externalCalendarResponse}
 // @Failure      400   {object}  APIResponse{error=APIError}
 // @Failure      401   {object}  APIResponse{error=APIError}
 // @Failure      403   {object}  APIResponse{error=APIError}
@@ -158,7 +196,7 @@ func (h *CalendarHandler) AddExternalCalendar(w http.ResponseWriter, r *http.Req
 // @Produce      json
 // @Security     BearerAuth
 // @Param        id   path      string  true  "Bathhouse ID (UUID)"
-// @Success      200  {object}  APIResponse{data=[]object}
+// @Success      200  {object}  APIResponse{data=[]externalCalendarResponse}
 // @Failure      400  {object}  APIResponse{error=APIError}
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Failure      403  {object}  APIResponse{error=APIError}
@@ -250,9 +288,9 @@ func (h *CalendarHandler) SyncExternalCalendars(w http.ResponseWriter, r *http.R
 // @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        id    path      string  true  "Bathhouse ID (UUID)"
-// @Param        body  body      object  true  "Slot block data (start_time, end_time, description)"
-// @Success      201   {object}  APIResponse{data=object}
+// @Param        id    path      string                  true  "Bathhouse ID (UUID)"
+// @Param        body  body      createSlotBlockRequest  true  "Slot block data"
+// @Success      201   {object}  APIResponse{data=slotBlockResponse}
 // @Failure      400   {object}  APIResponse{error=APIError}
 // @Failure      401   {object}  APIResponse{error=APIError}
 // @Failure      403   {object}  APIResponse{error=APIError}

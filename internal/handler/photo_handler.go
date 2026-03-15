@@ -73,8 +73,9 @@ func toPhotoResponses(photos []domain.BathhousePhoto) []photoResponse {
 	return result
 }
 
+// Upload godoc
 // @Summary      Upload bathhouse photo
-// @Description  Upload a photo for a bathhouse. Photo goes to pending verification. Owner or representative only.
+// @Description  Upload a photo for a bathhouse by providing its URL. Photo goes to pending verification. Owner or representative only.
 // @Tags         photos
 // @Accept       json
 // @Produce      json
@@ -115,6 +116,7 @@ func (h *PhotoHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toPhotoResponse(photo))
 }
 
+// Delete godoc
 // @Summary      Delete photo
 // @Description  Delete a bathhouse photo by its ID.
 // @Tags         photos
@@ -145,6 +147,7 @@ func (h *PhotoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, nil)
 }
 
+// Reorder godoc
 // @Summary      Reorder bathhouse photos
 // @Description  Set the display order of photos for a bathhouse. Owner or representative only.
 // @Tags         photos
@@ -192,6 +195,7 @@ func (h *PhotoHandler) Reorder(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, nil)
 }
 
+// GetPending godoc
 // @Summary      List pending photos
 // @Description  List photos awaiting verification. Admin only.
 // @Tags         admin-photos
@@ -228,6 +232,7 @@ func (h *PhotoHandler) GetPending(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Verify godoc
 // @Summary      Verify photo
 // @Description  Approve a pending photo. Admin only.
 // @Tags         admin-photos
@@ -258,6 +263,7 @@ func (h *PhotoHandler) Verify(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toPhotoResponse(photo))
 }
 
+// Reject godoc
 // @Summary      Reject photo
 // @Description  Reject a pending photo with a reason. Admin only.
 // @Tags         admin-photos
@@ -296,6 +302,7 @@ func (h *PhotoHandler) Reject(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toPhotoResponse(photo))
 }
 
+// ListByBathhouse godoc
 // @Summary      List bathhouse photos
 // @Description  Get verified photos for a bathhouse.
 // @Tags         photos

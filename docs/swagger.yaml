@@ -67,6 +67,15 @@ definitions:
       total_pages:
         type: integer
     type: object
+  internal_handler.addExternalCalendarRequest:
+    properties:
+      source:
+        example: google_calendar
+        type: string
+      url:
+        example: https://calendar.google.com/calendar/ical/xxx/basic.ics
+        type: string
+    type: object
   internal_handler.adminReviewResponse:
     properties:
       bathhouse_id:
@@ -243,6 +252,15 @@ definitions:
       updated_at:
         type: string
       user_id:
+        type: string
+    type: object
+  internal_handler.calendarTokenResponse:
+    properties:
+      token:
+        example: abc123def456
+        type: string
+      url:
+        example: /calendar/abc123def456.ics
         type: string
     type: object
   internal_handler.certificateBalanceResponse:
@@ -444,6 +462,18 @@ definitions:
       text:
         type: string
     type: object
+  internal_handler.createSlotBlockRequest:
+    properties:
+      description:
+        example: Maintenance
+        type: string
+      end_time:
+        example: "2026-03-20T14:00:00Z"
+        type: string
+      start_time:
+        example: "2026-03-20T10:00:00Z"
+        type: string
+    type: object
   internal_handler.deviceTokenResponse:
     properties:
       created_at:
@@ -455,6 +485,30 @@ definitions:
       token:
         type: string
       user_id:
+        type: string
+    type: object
+  internal_handler.externalCalendarResponse:
+    properties:
+      bathhouse_id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+      created_at:
+        example: "2026-01-15T10:00:00Z"
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      last_error:
+        example: ""
+        type: string
+      last_sync_at:
+        example: "2026-01-15T10:00:00Z"
+        type: string
+      source:
+        example: google_calendar
+        type: string
+      url:
+        example: https://calendar.google.com/calendar/ical/xxx/basic.ics
         type: string
     type: object
   internal_handler.favoriteResponse:
@@ -1002,6 +1056,30 @@ definitions:
   internal_handler.sendMessageRequest:
     properties:
       text:
+        type: string
+    type: object
+  internal_handler.slotBlockResponse:
+    properties:
+      bathhouse_id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+      created_at:
+        example: "2026-01-15T10:00:00Z"
+        type: string
+      description:
+        example: Maintenance
+        type: string
+      end_time:
+        example: "2026-03-20T14:00:00Z"
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      source:
+        example: manual
+        type: string
+      start_time:
+        example: "2026-03-20T10:00:00Z"
         type: string
     type: object
   internal_handler.socialAccountResponse:
@@ -5740,8 +5818,9 @@ paths:
       - analytics
   /my/bathhouses/{id}/calendar-token:
     get:
-      description: Returns or creates a shareable calendar token for ICS export. Owner
-        or representative only.
+      description: Returns or creates a shareable calendar token for ICS export. The
+        token can be used at /calendar/{token}.ics to access the calendar without
+        authentication. Owner or representative only.
       parameters:
       - description: Bathhouse ID (UUID)
         in: path
@@ -5758,7 +5837,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  type: object
+                  $ref: '#/definitions/internal_handler.calendarTokenResponse'
               type: object
         "400":
           description: Bad Request
@@ -5871,7 +5950,7 @@ paths:
             - properties:
                 data:
                   items:
-                    type: object
+                    $ref: '#/definitions/internal_handler.externalCalendarResponse'
                   type: array
               type: object
         "400":
@@ -5917,12 +5996,12 @@ paths:
         name: id
         required: true
         type: string
-      - description: External calendar data (url, source)
+      - description: External calendar data
         in: body
         name: body
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/internal_handler.addExternalCalendarRequest'
       produces:
       - application/json
       responses:
@@ -5933,7 +6012,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  type: object
+                  $ref: '#/definitions/internal_handler.externalCalendarResponse'
               type: object
         "400":
           description: Bad Request
@@ -6020,8 +6099,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Upload a photo for a bathhouse. Photo goes to pending verification.
-        Owner or representative only.
+      description: Upload a photo for a bathhouse by providing its URL. Photo goes
+        to pending verification. Owner or representative only.
       parameters:
       - description: Bathhouse ID (UUID)
         in: path
@@ -6526,12 +6605,12 @@ paths:
         name: id
         required: true
         type: string
-      - description: Slot block data (start_time, end_time, description)
+      - description: Slot block data
         in: body
         name: body
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/internal_handler.createSlotBlockRequest'
       produces:
       - application/json
       responses:
@@ -6542,7 +6621,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  type: object
+                  $ref: '#/definitions/internal_handler.slotBlockResponse'
               type: object
         "400":
           description: Bad Request
@@ -6754,6 +6833,15 @@ paths:
               type: object
         "404":
           description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
           schema:
             allOf:
             - $ref: '#/definitions/internal_handler.APIResponse'

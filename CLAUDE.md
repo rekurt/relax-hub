@@ -133,7 +133,7 @@ PostgreSQL with PostGIS. Migrations in `migrations/`. Geo-search uses `ST_DWithi
 ### CI/CD
 
 GitHub Actions workflow (`.github/workflows/ci.yml`) runs on push/PR to `main`:
-- golangci-lint (govet, staticcheck, gosimple, typecheck enabled)
+- golangci-lint v2 (govet, staticcheck enabled)
 - `go vet ./...`
 - `go test ./... -race` with coverage
 - `go build ./...`
