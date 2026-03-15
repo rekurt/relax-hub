@@ -197,12 +197,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 **Files:**
 - Create: `frontend/src/pages/admin/PhotoVerification.tsx`
 
-- [ ] Pending photos grid with bathhouse context
-- [ ] Full-size photo lightbox view
-- [ ] Verify/reject actions per photo
-- [ ] API hooks: `useGetAdminPhotosPending`, `usePatchAdminPhotosIdVerify`, `usePatchAdminPhotosIdReject`
-- [ ] Write tests for verification flow, photo display
-- [ ] Run project test suite - must pass before task 15
+- [x] Pending photos grid with bathhouse context
+- [x] Full-size photo lightbox view
+- [x] Verify/reject actions per photo
+- [x] API hooks: `useGetAdminPhotosPending`, `usePatchAdminPhotosIdVerify`, `usePatchAdminPhotosIdReject`
+- [x] Write tests for verification flow, photo display
+- [x] Run project test suite - must pass before task 15
 
 ### Task 15: Admin - Complaint management
 
