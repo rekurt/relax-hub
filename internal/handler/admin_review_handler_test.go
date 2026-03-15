@@ -565,7 +565,6 @@ func TestAdminHandler_BatchApproveReviews_SendsNotifications(t *testing.T) {
 
 	reviewRepo := mock.NewReviewRepo()
 	var ids []string
-	var authorIDs []uuid.UUID
 
 	for i := 0; i < 2; i++ {
 		authorID := uuid.New()
@@ -584,7 +583,6 @@ func TestAdminHandler_BatchApproveReviews_SendsNotifications(t *testing.T) {
 			t.Fatalf("failed to create review: %v", err)
 		}
 		ids = append(ids, review.ID.String())
-		authorIDs = append(authorIDs, authorID)
 	}
 
 	notificationCount := 0

@@ -1,8 +1,6 @@
 linters:
-  disable:
-    - typecheck
+  enable:
+    - govet
     - staticcheck
     - gosimple
-    - govet
-
-
+    - typecheck

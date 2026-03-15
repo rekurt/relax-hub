@@ -70,11 +70,11 @@ Auth/register, auth/login, webhook, promo-codes/validate, certificates/purchase 
 
 govet, staticcheck, gosimple, and typecheck are all disabled. These are critical correctness linters.
 
-- [ ] Enable `govet` and fix all violations
-- [ ] Enable `staticcheck` and fix all violations
-- [ ] Enable `gosimple` and fix all violations
-- [ ] Enable `typecheck` and fix all violations
-- [ ] Run `make lint` clean
+- [x] Enable `govet` and fix all violations
+- [x] Enable `staticcheck` and fix all violations
+- [x] Enable `gosimple` and fix all violations
+- [x] Enable `typecheck` and fix all violations
+- [x] Run `make lint` clean
 
 ### Task 5: Remove unnecessary abstractions
 

@@ -232,10 +232,9 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 
 		// Register referral if code was provided during OAuth initiation
 		if referralCode != "" && s.referralSvc != nil {
-			if err := s.referralSvc.RegisterReferral(ctx, referralCode, user.ID); err != nil {
-				// Non-fatal: don't fail login because referral registration failed
-				// (mirrors AuthService.Register behavior)
-			}
+			// Non-fatal: don't fail login because referral registration failed
+			// (mirrors AuthService.Register behavior)
+			_ = s.referralSvc.RegisterReferral(ctx, referralCode, user.ID)
 		}
 	}
 

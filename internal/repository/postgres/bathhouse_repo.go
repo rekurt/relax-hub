@@ -357,9 +357,7 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		}
 	default:
 		// Default sort: promoted first, then premium, then by created_at
-		orderBy = fmt.Sprintf(
-			"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, created_at DESC",
-		)
+		orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, created_at DESC"
 	}
 
 	offset := (filter.Page - 1) * filter.PageSize
