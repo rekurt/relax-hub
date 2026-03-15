@@ -215,6 +215,38 @@ type updateBathhouseRequest struct {
 	WorkingHours []workingHoursRequest `json:"working_hours"`
 }
 
+// @Summary      Search bathhouses
+// @Description  Search and filter bathhouses with pagination. Supports geo-search, amenity filters, availability checks.
+// @Tags         bathhouses
+// @Produce      json
+// @Param        page               query   int     false  "Page number"              default(1)
+// @Param        page_size          query   int     false  "Items per page"           default(20)
+// @Param        sort_by            query   string  false  "Sort field (price, rating, distance, created_at)"
+// @Param        sort_order         query   string  false  "Sort order (asc, desc)"
+// @Param        city_id            query   int     false  "Filter by city ID"
+// @Param        city_slug          query   string  false  "Filter by city slug"
+// @Param        price_min          query   int     false  "Minimum price in kopecks"
+// @Param        price_max          query   int     false  "Maximum price in kopecks"
+// @Param        min_guests         query   int     false  "Minimum guest capacity"
+// @Param        has_pool           query   bool    false  "Has pool"
+// @Param        has_sauna          query   bool    false  "Has sauna"
+// @Param        has_steam_room     query   bool    false  "Has steam room"
+// @Param        has_hot_tub        query   bool    false  "Has hot tub"
+// @Param        has_bbq            query   bool    false  "Has BBQ"
+// @Param        has_karaoke        query   bool    false  "Has karaoke"
+// @Param        min_rating         query   number  false  "Minimum rating"
+// @Param        lat                query   number  false  "Latitude for geo-search"
+// @Param        lng                query   number  false  "Longitude for geo-search"
+// @Param        radius_km          query   number  false  "Search radius in km"
+// @Param        guest_count        query   int     false  "Number of guests"
+// @Param        available_date     query   string  false  "Check availability date (YYYY-MM-DD)"
+// @Param        available_time_from query  string  false  "Available from time (HH:MM)"
+// @Param        available_time_to  query   string  false  "Available to time (HH:MM)"
+// @Param        open_now           query   bool    false  "Only open now"
+// @Param        q                  query   string  false  "Search query"
+// @Success      200  {object}  APIResponse{data=[]bathhouseResponse,meta=Meta}
+// @Failure      500  {object}  APIResponse{error=APIError}
+// @Router       /bathhouses [get]
 func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	filter := domain.BathhouseFilter{
@@ -361,6 +393,17 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// @Summary      Search bathhouses by city slug
+// @Description  Get bathhouses in a city identified by its slug. SEO-friendly endpoint.
+// @Tags         bathhouses
+// @Produce      json
+// @Param        slug       path    string  true   "City slug"
+// @Param        page       query   int     false  "Page number"     default(1)
+// @Param        page_size  query   int     false  "Items per page"  default(20)
+// @Success      200  {object}  APIResponse{data=[]bathhouseResponse,meta=Meta}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      500  {object}  APIResponse{error=APIError}
+// @Router       /cities/{slug}/bathhouses [get]
 func (h *BathhouseHandler) SearchByCitySlug(w http.ResponseWriter, r *http.Request) {
 	citySlug := chi.URLParam(r, "slug")
 	if citySlug == "" || !seo.IsValidSlug(citySlug) {
@@ -407,6 +450,15 @@ func (h *BathhouseHandler) SearchByCitySlug(w http.ResponseWriter, r *http.Reque
 	})
 }
 
+// @Summary      Get bathhouse by ID
+// @Description  Get detailed bathhouse information including meta tags and gallery preview.
+// @Tags         bathhouses
+// @Produce      json
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=bathhouseResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id} [get]
 func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -444,6 +496,15 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
+// @Summary      Get bathhouse by slug
+// @Description  Get detailed bathhouse information by its URL-friendly slug.
+// @Tags         bathhouses
+// @Produce      json
+// @Param        slug  path      string  true  "Bathhouse slug"
+// @Success      200   {object}  APIResponse{data=bathhouseResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/by-slug/{slug} [get]
 func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 	if slug == "" || !seo.IsValidSlug(slug) {
@@ -481,6 +542,18 @@ func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
+// @Summary      Create bathhouse
+// @Description  Create a new bathhouse. Only owners can create bathhouses.
+// @Tags         bathhouses
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        body  body      createBathhouseRequest  true  "Bathhouse data"
+// @Success      201   {object}  APIResponse{data=bathhouseResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Router       /bathhouses [post]
 func (h *BathhouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createBathhouseRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -526,6 +599,20 @@ func (h *BathhouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toBathhouseResponse(bh))
 }
 
+// @Summary      Update bathhouse
+// @Description  Update bathhouse details. Owner or representative only.
+// @Tags         bathhouses
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string                  true  "Bathhouse ID (UUID)"
+// @Param        body  body      updateBathhouseRequest  true  "Fields to update"
+// @Success      200   {object}  APIResponse{data=bathhouseResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id} [put]
 func (h *BathhouseHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -581,6 +668,19 @@ func (h *BathhouseHandler) Update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toBathhouseResponse(bh))
 }
 
+// @Summary      Delete bathhouse
+// @Description  Delete a bathhouse. Only the owner can delete.
+// @Tags         bathhouses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Failure      409  {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id} [delete]
 func (h *BathhouseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -597,6 +697,16 @@ func (h *BathhouseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "deleted"})
 }
 
+// @Summary      Get available time slots
+// @Description  Get available booking time slots for a bathhouse on a specific date.
+// @Tags         bathhouses
+// @Produce      json
+// @Param        id    path      string  true  "Bathhouse ID (UUID)"
+// @Param        date  query     string  true  "Date in YYYY-MM-DD format"
+// @Success      200   {object}  APIResponse{data=[]service.TimeSlot}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/available-slots [get]
 func (h *BathhouseHandler) GetAvailableSlots(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -625,6 +735,18 @@ func (h *BathhouseHandler) GetAvailableSlots(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, http.StatusOK, slots)
 }
 
+// @Summary      Get my bathhouses
+// @Description  List bathhouses owned by or assigned to the current user.
+// @Tags         bathhouses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page       query   int  false  "Page number"     default(1)
+// @Param        page_size  query   int  false  "Items per page"  default(20)
+// @Success      200  {object}  APIResponse{data=[]bathhouseResponse,meta=Meta}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses [get]
 func (h *BathhouseHandler) MyBathhouses(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -702,6 +824,17 @@ type widgetCodeResponse struct {
 	StyleURL string `json:"style_url"`
 }
 
+// @Summary      Get widget API key
+// @Description  Get the widget API key for a bathhouse. Owner or representative only.
+// @Tags         widgets
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=widgetKeyResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/widget-key [get]
 func (h *BathhouseHandler) GetWidgetKey(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -722,6 +855,17 @@ func (h *BathhouseHandler) GetWidgetKey(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, widgetKeyResponse{ApiKey: apiKey})
 }
 
+// @Summary      Regenerate widget API key
+// @Description  Generate a new widget API key, invalidating the old one.
+// @Tags         widgets
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=widgetKeyResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/widget-key/regenerate [post]
 func (h *BathhouseHandler) RegenerateWidgetKey(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -742,6 +886,22 @@ func (h *BathhouseHandler) RegenerateWidgetKey(w http.ResponseWriter, r *http.Re
 	writeJSON(w, http.StatusOK, widgetKeyResponse{ApiKey: newKey})
 }
 
+// @Summary      Get widget embed code
+// @Description  Generate HTML embed code for the booking widget with customization options.
+// @Tags         widgets
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id           path      string  true   "Bathhouse ID (UUID)"
+// @Param        color        query     string  false  "Widget accent color (#RRGGBB)"       default(#4CAF50)
+// @Param        font_family  query     string  false  "Font family for the widget"
+// @Param        show_price   query     bool    false  "Show price in widget"
+// @Param        show_rating  query     bool    false  "Show rating in widget"
+// @Param        language     query     string  false  "Widget language"                      default(en)
+// @Success      200  {object}  APIResponse{data=widgetCodeResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/widget-code [get]
 func (h *BathhouseHandler) GetWidgetCode(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -868,6 +1028,15 @@ func isValidFontFamily(fontFamily string) bool {
 	return true
 }
 
+// @Summary      Get bathhouse SEO meta tags
+// @Description  Get SEO meta tags (title, description, og:image, canonical) for a bathhouse.
+// @Tags         bathhouses
+// @Produce      json
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=seo.MetaTags}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/meta [get]
 func (h *BathhouseHandler) GetMeta(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

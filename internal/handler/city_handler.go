@@ -22,6 +22,13 @@ type cityResponse struct {
 	Longitude float64 `json:"longitude"`
 }
 
+// @Summary      List cities
+// @Description  Get all available cities.
+// @Tags         cities
+// @Produce      json
+// @Success      200  {object}  APIResponse{data=[]cityResponse}
+// @Failure      500  {object}  APIResponse{error=APIError}
+// @Router       /cities [get]
 func (h *CityHandler) List(w http.ResponseWriter, r *http.Request) {
 	cities, err := h.cityService.GetAll(r.Context())
 	if err != nil {

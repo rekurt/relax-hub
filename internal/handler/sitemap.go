@@ -185,6 +185,15 @@ func (h *SitemapHandler) generateSitemap(ctx context.Context) ([]byte, error) {
 	return append([]byte(xml.Header), output...), nil
 }
 
+// @Summary      Get bathhouse Schema.org JSON-LD
+// @Description  Get Schema.org structured data (JSON-LD) for a bathhouse, used for SEO.
+// @Tags         bathhouses
+// @Produce      json
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  object
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/schema [get]
 // GetSchema serves Schema.org JSON-LD for a bathhouse.
 func (h *SitemapHandler) GetSchema(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")

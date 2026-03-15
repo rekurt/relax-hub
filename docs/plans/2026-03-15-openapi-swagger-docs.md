@@ -52,11 +52,11 @@
 - Modify: `internal/handler/city.go`
 - Modify: `internal/handler/photo.go`
 
-- [ ] Аннотировать List, Get, GetBySlug, Create, Update, Delete, GetAvailableSlots, GetMeta, GetSchema, GetSimilar, GetPopular, GetByCity
-- [ ] Аннотировать GetMyBathhouses, WidgetKey, WidgetCode, RegenerateWidgetKey
-- [ ] Аннотировать City CRUD (admin), ListCities (public)
-- [ ] Аннотировать Photo эндпоинты: Upload, Reorder, GetPhotos, AdminPending, AdminVerify, AdminReject
-- [ ] Запустить `swag init` — без ошибок
+- [x] Аннотировать List, Get, GetBySlug, Create, Update, Delete, GetAvailableSlots, GetMeta, GetSchema, GetSimilar, GetPopular, GetByCity
+- [x] Аннотировать GetMyBathhouses, WidgetKey, WidgetCode, RegenerateWidgetKey
+- [x] Аннотировать City CRUD (admin), ListCities (public)
+- [x] Аннотировать Photo эндпоинты: Upload, Reorder, GetPhotos, AdminPending, AdminVerify, AdminReject
+- [x] Запустить `swag init` — без ошибок
 
 ### Task 4: Аннотации — Bookings, Payments
 

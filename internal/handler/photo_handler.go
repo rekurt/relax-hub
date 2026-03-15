@@ -73,6 +73,19 @@ func toPhotoResponses(photos []domain.BathhousePhoto) []photoResponse {
 	return result
 }
 
+// @Summary      Upload bathhouse photo
+// @Description  Upload a photo for a bathhouse. Photo goes to pending verification. Owner or representative only.
+// @Tags         photos
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string              true  "Bathhouse ID (UUID)"
+// @Param        body  body      uploadPhotoRequest  true  "Photo URL data"
+// @Success      201   {object}  APIResponse{data=photoResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/photos [post]
 func (h *PhotoHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -102,6 +115,18 @@ func (h *PhotoHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toPhotoResponse(photo))
 }
 
+// @Summary      Delete photo
+// @Description  Delete a bathhouse photo by its ID.
+// @Tags         photos
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Photo ID (UUID)"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /photos/{id} [delete]
 func (h *PhotoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	photoID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -120,6 +145,19 @@ func (h *PhotoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, nil)
 }
 
+// @Summary      Reorder bathhouse photos
+// @Description  Set the display order of photos for a bathhouse. Owner or representative only.
+// @Tags         photos
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string                true  "Bathhouse ID (UUID)"
+// @Param        body  body      reorderPhotosRequest  true  "Ordered photo IDs"
+// @Success      200   {object}  APIResponse
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/photos/reorder [put]
 func (h *PhotoHandler) Reorder(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -154,6 +192,17 @@ func (h *PhotoHandler) Reorder(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, nil)
 }
 
+// @Summary      List pending photos
+// @Description  List photos awaiting verification. Admin only.
+// @Tags         admin-photos
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page       query   int  false  "Page number"     default(1)
+// @Param        page_size  query   int  false  "Items per page"  default(20)
+// @Success      200  {object}  APIResponse{data=[]photoResponse,meta=Meta}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /admin/photos/pending [get]
 func (h *PhotoHandler) GetPending(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	if page < 1 {
@@ -179,6 +228,18 @@ func (h *PhotoHandler) GetPending(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// @Summary      Verify photo
+// @Description  Approve a pending photo. Admin only.
+// @Tags         admin-photos
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Photo ID (UUID)"
+// @Success      200  {object}  APIResponse{data=photoResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /admin/photos/{id}/verify [patch]
 func (h *PhotoHandler) Verify(w http.ResponseWriter, r *http.Request) {
 	photoID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -197,6 +258,20 @@ func (h *PhotoHandler) Verify(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toPhotoResponse(photo))
 }
 
+// @Summary      Reject photo
+// @Description  Reject a pending photo with a reason. Admin only.
+// @Tags         admin-photos
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string              true  "Photo ID (UUID)"
+// @Param        body  body      rejectPhotoRequest  true  "Rejection reason"
+// @Success      200   {object}  APIResponse{data=photoResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /admin/photos/{id}/reject [patch]
 func (h *PhotoHandler) Reject(w http.ResponseWriter, r *http.Request) {
 	photoID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -221,6 +296,15 @@ func (h *PhotoHandler) Reject(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toPhotoResponse(photo))
 }
 
+// @Summary      List bathhouse photos
+// @Description  Get verified photos for a bathhouse.
+// @Tags         photos
+// @Produce      json
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=[]photoResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bathhouses/{id}/photos [get]
 func (h *PhotoHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

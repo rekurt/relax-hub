@@ -175,6 +175,19 @@ type updateCityRequest struct {
 	Longitude *float64 `json:"longitude"`
 }
 
+// @Summary      Create city
+// @Description  Create a new city. Admin only.
+// @Tags         admin-cities
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        body  body      createCityRequest  true  "City data"
+// @Success      201   {object}  APIResponse{data=cityResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
+// @Router       /admin/cities [post]
 func (h *AdminHandler) CreateCity(w http.ResponseWriter, r *http.Request) {
 	var req createCityRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -202,6 +215,20 @@ func (h *AdminHandler) CreateCity(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// @Summary      Update city
+// @Description  Update an existing city. Admin only.
+// @Tags         admin-cities
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      int                true  "City ID"
+// @Param        body  body      updateCityRequest  true  "Fields to update"
+// @Success      200   {object}  APIResponse{data=cityResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /admin/cities/{id} [put]
 func (h *AdminHandler) UpdateCity(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -235,6 +262,18 @@ func (h *AdminHandler) UpdateCity(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// @Summary      Delete city
+// @Description  Delete a city. Admin only.
+// @Tags         admin-cities
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      int  true  "City ID"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /admin/cities/{id} [delete]
 func (h *AdminHandler) DeleteCity(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
