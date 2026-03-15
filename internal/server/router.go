@@ -67,20 +67,24 @@ func NewRouter(p RouterParams) http.Handler {
 	auth := middleware.RequireAuth(p.AuthService)
 	optionalAuth := middleware.OptionalAuth(p.AuthService)
 
-	// Create rate limiter for widget endpoints
+	// Create rate limiters
 	widgetRateLimiter := middleware.NewRateLimiter()
-	widgetRateLimit := middleware.WidgetRateLimit(widgetRateLimiter, 10) // 10 requests per second per API key
+	widgetRateLimit := middleware.WidgetRateLimit(widgetRateLimiter, 10) // 10 req/s per API key
+
+	authRateLimiter := middleware.NewRateLimiter()
+	webhookRateLimiter := middleware.NewRateLimiter()
+	promoRateLimiter := middleware.NewRateLimiter()
 
 	r.Route("/api/v1", func(r chi.Router) {
 		// WebSocket (auth via query parameter)
 		r.Get("/ws/notifications", p.WSHandler.HandleWS)
 
 		// Webhooks (public, called by payment providers)
-		r.Post("/webhooks/yookassa", p.PaymentHandler.HandleWebhook)
+		r.With(middleware.RateLimit(webhookRateLimiter, 0.5)).Post("/webhooks/yookassa", p.PaymentHandler.HandleWebhook) // 30/min
 
-		// Auth (public)
-		r.Post("/auth/register", p.AuthHandler.Register)
-		r.Post("/auth/login", p.AuthHandler.Login)
+		// Auth (public, rate-limited)
+		r.With(middleware.RateLimit(authRateLimiter, 5.0/60.0)).Post("/auth/register", p.AuthHandler.Register) // 5/min
+		r.With(middleware.RateLimit(authRateLimiter, 10.0/60.0)).Post("/auth/login", p.AuthHandler.Login)       // 10/min
 		r.With(auth).Get("/auth/me", p.AuthHandler.Me)
 		r.With(auth).Put("/auth/me", p.AuthHandler.UpdateProfile)
 		r.With(auth).Post("/auth/me/avatar", p.AuthHandler.UploadAvatar)
@@ -130,8 +134,8 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/promo-codes", p.PromoHandler.ListByBathhouse)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative, domain.RoleAdmin)).Delete("/promo-codes/{id}", p.PromoHandler.Deactivate)
 
-		// Promo codes (validation - public per plan)
-		r.Post("/promo-codes/validate", p.PromoHandler.Validate)
+		// Promo codes (validation - public, rate-limited)
+		r.With(middleware.RateLimit(promoRateLimiter, 20.0/60.0)).Post("/promo-codes/validate", p.PromoHandler.Validate) // 20/min
 
 		// Bookings (authenticated)
 		r.With(auth, middleware.RequireRole(domain.RoleClient)).Post("/bookings", p.BookingHandler.Create)

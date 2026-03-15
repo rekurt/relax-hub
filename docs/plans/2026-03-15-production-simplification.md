@@ -56,11 +56,11 @@ CORS is hardcoded as `AllowedOrigins: ["*"]`. Must be configurable per environme
 
 Auth/register, auth/login, webhook, promo-codes/validate, certificates/purchase have no rate limiting. The existing rate limiter is in-memory only.
 
-- [ ] Add `Retry-After` and `X-RateLimit-Remaining` headers to rate limit responses
-- [ ] Fix `r.RemoteAddr` port issue: use IP-only key (strip port)
-- [ ] Apply rate limiting middleware to auth group (register: 5/min, login: 10/min)
-- [ ] Apply rate limiting to webhooks (30/min) and promo validation (20/min)
-- [ ] Add tests for rate limit middleware
+- [x] Add `Retry-After` and `X-RateLimit-Remaining` headers to rate limit responses
+- [x] Fix `r.RemoteAddr` port issue: use IP-only key (strip port)
+- [x] Apply rate limiting middleware to auth group (register: 5/min, login: 10/min)
+- [x] Apply rate limiting to webhooks (30/min) and promo validation (20/min)
+- [x] Add tests for rate limit middleware
 
 ### Task 4: Enable disabled linters and fix violations
 
