@@ -173,11 +173,11 @@ React SPA для владельцев бань: управление баням�
 **Files:**
 - Create: `frontend/src/pages/promo/PromoList.tsx`
 
-- [ ] Список промокодов бани (GET /my/bathhouses/{id}/promo-codes) с пагинацией
-- [ ] Создание промокода: форма с code, type (percentage/fixed_amount/free_hour), value, max_uses, min_amount, validity period
-- [ ] Отображение: код, тип скидки, использовано/максимум, период, статус
-- [ ] Деактивация промокода (DELETE /promo-codes/{id})
-- [ ] Копирование кода в буфер обмена
+- [x] Список промокодов бани (GET /my/bathhouses/{id}/promo-codes) с пагинацией
+- [x] Создание промокода: форма с code, type (percentage/fixed_amount/free_hour), value, max_uses, min_amount, validity period
+- [x] Отображение: код, тип скидки, использовано/максимум, период, статус
+- [x] Деактивация промокода (DELETE /promo-codes/{id})
+- [x] Копирование кода в буфер обмена
 
 ### Task 12: Управление представителями
 
