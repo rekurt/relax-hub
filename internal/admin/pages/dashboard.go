@@ -131,12 +131,13 @@ func NewPostgresDashboardProvider(pool *pgxpool.Pool, log *logger.Logger) *Postg
 }
 
 func (p *PostgresDashboardProvider) GetDashboardData(ctx context.Context) (*DashboardData, error) {
-	data := &DashboardData{GeneratedAt: time.Now()}
+	now := time.Now()
+	data := &DashboardData{GeneratedAt: now}
 
-	if err := p.loadKPIs(ctx, &data.KPI); err != nil {
+	if err := p.loadKPIs(ctx, &data.KPI, now); err != nil {
 		return nil, err
 	}
-	if err := p.loadTrends(ctx, &data.KPI); err != nil {
+	if err := p.loadTrends(ctx, &data.KPI, now); err != nil {
 		return nil, err
 	}
 	if err := p.loadStatusCards(ctx, &data.Status); err != nil {
@@ -155,7 +156,7 @@ func (p *PostgresDashboardProvider) GetDashboardData(ctx context.Context) (*Dash
 	return data, nil
 }
 
-func (p *PostgresDashboardProvider) loadKPIs(ctx context.Context, kpi *KPICards) error {
+func (p *PostgresDashboardProvider) loadKPIs(ctx context.Context, kpi *KPICards, now time.Time) error {
 	err := p.pool.QueryRow(ctx, "SELECT COUNT(*) FROM users").Scan(&kpi.TotalUsers)
 	if err != nil {
 		p.log.Error("dashboard: count users", "error", err)
@@ -168,7 +169,6 @@ func (p *PostgresDashboardProvider) loadKPIs(ctx context.Context, kpi *KPICards)
 		return err
 	}
 
-	now := time.Now()
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	weekStart := todayStart.AddDate(0, 0, -int(now.Weekday()-time.Monday))
 	if now.Weekday() == time.Sunday {
@@ -199,8 +199,7 @@ func (p *PostgresDashboardProvider) loadKPIs(ctx context.Context, kpi *KPICards)
 	return nil
 }
 
-func (p *PostgresDashboardProvider) loadTrends(ctx context.Context, kpi *KPICards) error {
-	now := time.Now()
+func (p *PostgresDashboardProvider) loadTrends(ctx context.Context, kpi *KPICards, now time.Time) error {
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	yesterdayStart := todayStart.AddDate(0, 0, -1)
 

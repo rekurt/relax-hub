@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 //go:embed templates/*.tmpl
@@ -89,13 +90,16 @@ func ParsePageTemplate(funcMap template.FuncMap, pageFile string) *template.Temp
 	)
 }
 
+var (
+	staticHandler     http.Handler
+	staticHandlerOnce sync.Once
+)
+
 // ServeStatic serves files from the embedded static directory.
 func ServeStatic(w http.ResponseWriter, r *http.Request) {
-	sub, err := fs.Sub(staticFS, "static")
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-	// Strip "/static/" prefix from the path.
-	http.StripPrefix("/static/", http.FileServer(http.FS(sub))).ServeHTTP(w, r)
+	staticHandlerOnce.Do(func() {
+		sub, _ := fs.Sub(staticFS, "static")
+		staticHandler = http.StripPrefix("/static/", http.FileServer(http.FS(sub)))
+	})
+	staticHandler.ServeHTTP(w, r)
 }

@@ -650,7 +650,7 @@ func (h *AnalyticsHandler) HandleCSVExport(w http.ResponseWriter, r *http.Reques
 	case "revenue":
 		csvW.Write([]string{"Дата", "Выручка (руб.)"}) //nolint:errcheck
 		for _, p := range data.RevenuePerDay {
-			csvW.Write([]string{p.Label, FormatKopecksToRubles(p.Value)}) //nolint:errcheck
+			csvW.Write([]string{p.Label, strconv.FormatFloat(float64(p.Value)/100, 'f', 2, 64)}) //nolint:errcheck
 		}
 	case "users":
 		csvW.Write([]string{"Дата", "Новые пользователи"}) //nolint:errcheck
@@ -665,7 +665,7 @@ func (h *AnalyticsHandler) HandleCSVExport(w http.ResponseWriter, r *http.Reques
 	case "top_revenue":
 		csvW.Write([]string{"Название", "Выручка (руб.)"}) //nolint:errcheck
 		for _, item := range data.TopByRevenue {
-			csvW.Write([]string{item.Name, FormatKopecksToRubles(item.Value)}) //nolint:errcheck
+			csvW.Write([]string{item.Name, strconv.FormatFloat(float64(item.Value)/100, 'f', 2, 64)}) //nolint:errcheck
 		}
 	}
 }
