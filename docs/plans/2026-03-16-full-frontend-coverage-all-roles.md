@@ -45,12 +45,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 - Create: `frontend/src/pages/client/BathhouseDetail.tsx`
 - Create: `frontend/src/components/BathhouseCard.tsx`
 
-- [ ] BathhouseSearch page: search with filters (city, price range, amenities, rating), geo-search, pagination, sorting
-- [ ] BathhouseCard component: photo, name, rating, price, city, amenities preview, favorite toggle
-- [ ] BathhouseDetail page: full info, photo gallery, reviews list, available slots, similar bathhouses, JSON-LD schema
-- [ ] API hooks: `useGetBathhouses`, `useGetBathhousesId`, `useGetBathhousesIdPhotos`, `useGetBathhousesIdReviews`, `useGetBathhousesIdSimilar`, `useGetBathhousesIdAvailableSlots`, `useGetBathhousesIdGallery`, `useGetCities`, `usePostBathhousesIdFavorite`
-- [ ] Write tests for search filters, card rendering, detail page
-- [ ] Run project test suite - must pass before task 3
+- [x] BathhouseSearch page: search with filters (city, price range, amenities, rating), geo-search, pagination, sorting
+- [x] BathhouseCard component: photo, name, rating, price, city, amenities preview, favorite toggle
+- [x] BathhouseDetail page: full info, photo gallery, reviews list, available slots, similar bathhouses, JSON-LD schema
+- [x] API hooks: `useGetBathhouses`, `useGetBathhousesId`, `useGetBathhousesIdPhotos`, `useGetBathhousesIdReviews`, `useGetBathhousesIdSimilar`, `useGetBathhousesIdAvailableSlots`, `useGetBathhousesIdGallery`, `useGetCities`, `usePostBathhousesIdFavorite`
+- [x] Write tests for search filters, card rendering, detail page
+- [x] Run project test suite - must pass before task 3
 
 ### Task 3: Client - Booking creation flow
 

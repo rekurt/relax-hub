@@ -15,7 +15,25 @@ vi.mock('@/api/generated/bathhouses/bathhouses', () => ({
     data: { data: [] },
     isLoading: false,
   }),
+  useGetBathhouses: vi.fn().mockReturnValue({
+    data: { data: [], success: true },
+    isLoading: false,
+  }),
   getMyBathhouses: vi.fn().mockResolvedValue({ success: true, data: [] }),
+}))
+
+vi.mock('@/api/generated/cities/cities', () => ({
+  useGetCities: vi.fn().mockReturnValue({
+    data: { data: [] },
+    isLoading: false,
+  }),
+}))
+
+vi.mock('@/api/generated/favorites/favorites', () => ({
+  usePostBathhousesIdFavorite: vi.fn().mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
 }))
 
 vi.mock('@/api/generated/notifications/notifications', () => ({

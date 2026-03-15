@@ -51,6 +51,10 @@ vi.mock('@/api/generated/bathhouses/bathhouses', () => ({
     data: { data: [{ id: 'b1', name: 'Тестовая баня' }] },
     isLoading: false,
   }),
+  useGetBathhouses: vi.fn().mockReturnValue({
+    data: { data: [], success: true },
+    isLoading: false,
+  }),
   getMyBathhouses: vi.fn(),
 }))
 
@@ -58,6 +62,13 @@ vi.mock('@/api/generated/chat/chat', () => ({
   useGetMyUnreadMessagesCount: vi.fn().mockReturnValue({
     data: { data: { unread_count: 0 } },
     isLoading: false,
+  }),
+}))
+
+vi.mock('@/api/generated/favorites/favorites', () => ({
+  usePostBathhousesIdFavorite: vi.fn().mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
   }),
 }))
 

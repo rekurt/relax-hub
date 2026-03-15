@@ -21,6 +21,8 @@ import SubscriptionPage from '@/pages/subscriptions/SubscriptionPage'
 import WidgetSettings from '@/pages/widget/WidgetSettings'
 import PhotoManager from '@/pages/photos/PhotoManager'
 import ClientHome from '@/pages/client/ClientHome'
+import BathhouseSearch from '@/pages/client/BathhouseSearch'
+import BathhouseDetail from '@/pages/client/BathhouseDetail'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 
 export default function AppRouter() {
@@ -66,6 +68,8 @@ export default function AppRouter() {
         }
       >
         <Route index element={<ClientHome />} />
+        <Route path="search" element={<BathhouseSearch />} />
+        <Route path="bathhouse/:id" element={<BathhouseDetail />} />
       </Route>
 
       {/* Admin routes */}
