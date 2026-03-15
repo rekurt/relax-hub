@@ -411,11 +411,13 @@ func (h *ModerationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type approveRejectRequest struct {
 	Reasons []string `json:"reasons"`
+	Comment string   `json:"comment"`
 }
 
 type batchRequest struct {
 	IDs     []string `json:"ids"`
 	Reasons []string `json:"reasons"`
+	Comment string   `json:"comment"`
 }
 
 type actionResponse struct {
@@ -464,7 +466,17 @@ func (h *ModerationHandler) HandleReject(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	if err := h.provider.RejectReview(r.Context(), id, req.Reasons); err != nil {
+	reasons := req.Reasons
+	comment := strings.TrimSpace(req.Comment)
+	if len(reasons) == 0 && comment == "" {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "необходимо указать хотя бы одну причину или комментарий"})
+		return
+	}
+	if comment != "" {
+		reasons = append(reasons, comment)
+	}
+
+	if err := h.provider.RejectReview(r.Context(), id, reasons); err != nil {
 		writeJSON(w, http.StatusInternalServerError, actionResponse{Error: "failed to reject"})
 		return
 	}
@@ -526,7 +538,17 @@ func (h *ModerationHandler) HandleBatchReject(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	successful, failed := h.provider.BatchRejectReviews(r.Context(), ids, req.Reasons)
+	reasons := req.Reasons
+	comment := strings.TrimSpace(req.Comment)
+	if len(reasons) == 0 && comment == "" {
+		writeJSON(w, http.StatusBadRequest, actionResponse{Error: "необходимо указать хотя бы одну причину или комментарий"})
+		return
+	}
+	if comment != "" {
+		reasons = append(reasons, comment)
+	}
+
+	successful, failed := h.provider.BatchRejectReviews(r.Context(), ids, reasons)
 	writeJSON(w, http.StatusOK, batchResponse{Success: true, Successful: successful, Failed: failed})
 }
 

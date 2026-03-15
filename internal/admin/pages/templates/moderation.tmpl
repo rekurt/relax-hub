@@ -15,10 +15,11 @@
 
     /* Review Cards */
     .review-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
-    .review-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #ffc107; }
+    .review-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #ffc107; transition: opacity 0.4s ease, transform 0.4s ease, max-height 0.4s ease, padding 0.4s ease, margin 0.4s ease; }
     .review-card.approved { border-left-color: #27ae60; }
     .review-card.rejected { border-left-color: #e74c3c; }
     .review-card.hidden { border-left-color: #95a5a6; }
+    .review-card.removing { opacity: 0; transform: translateX(30px); max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0; margin-bottom: 0; overflow: hidden; }
     .review-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
     .review-meta { display: flex; flex-direction: column; gap: 4px; }
     .review-meta .user-name { font-weight: 600; font-size: 16px; }
@@ -27,9 +28,17 @@
     .review-meta .date { font-size: 12px; color: #999; }
     .review-actions { display: flex; gap: 8px; align-items: flex-start; }
     .review-text { font-size: 14px; line-height: 1.6; margin-bottom: 12px; color: #444; }
+    .review-text.truncated { max-height: 4.8em; overflow: hidden; position: relative; }
+    .review-text-toggle { font-size: 13px; color: #3498db; cursor: pointer; margin-bottom: 12px; border: none; background: none; padding: 0; }
+    .review-text-toggle:hover { text-decoration: underline; }
     .review-images { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-    .review-images img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; }
+    .review-images img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; cursor: pointer; transition: transform 0.2s; }
+    .review-images img:hover { transform: scale(1.05); }
     .review-footer { display: flex; justify-content: space-between; align-items: center; }
+
+    /* Button loading state */
+    .btn.loading { position: relative; pointer-events: none; opacity: 0.7; }
+    .btn.loading .btn-spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 4px; vertical-align: middle; }
 
     /* Reject Modal */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
@@ -39,7 +48,14 @@
     .modal .reason-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
     .modal .reason-list label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
     .modal .reason-list input[type="checkbox"] { width: 16px; height: 16px; }
+    .modal .comment-group { margin-bottom: 16px; }
+    .modal .comment-group label { display: block; font-size: 14px; color: #555; margin-bottom: 4px; }
+    .modal .comment-group textarea { width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; font-family: inherit; resize: vertical; }
     .modal .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+    .modal .validation-error { color: #e74c3c; font-size: 13px; margin-bottom: 12px; display: none; }
+
+    /* Confirm Modal */
+    .confirm-modal .confirm-text { font-size: 15px; color: #444; margin-bottom: 20px; line-height: 1.5; }
 
     /* Checkbox */
     .review-select { width: 18px; height: 18px; cursor: pointer; margin-right: 8px; flex-shrink: 0; }
@@ -49,6 +65,18 @@
     .pagination a, .pagination span { display: inline-block; padding: 8px 14px; border: 1px solid #ddd; border-radius: 4px; text-decoration: none; color: #333; font-size: 14px; }
     .pagination a:hover { background: #e9ecef; }
     .pagination .active { background: #3498db; color: #fff; border-color: #3498db; }
+
+    /* Lightbox */
+    .lightbox-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; }
+    .lightbox-overlay.active { display: flex; }
+    .lightbox-content { position: relative; max-width: 90vw; max-height: 90vh; }
+    .lightbox-content img { max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: 4px; }
+    .lightbox-close { position: absolute; top: -40px; right: 0; color: #fff; font-size: 28px; cursor: pointer; background: none; border: none; padding: 4px 8px; }
+    .lightbox-close:hover { color: #ddd; }
+    .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); color: #fff; font-size: 32px; cursor: pointer; background: rgba(0,0,0,0.4); border: none; padding: 8px 14px; border-radius: 4px; }
+    .lightbox-nav:hover { background: rgba(0,0,0,0.6); }
+    .lightbox-prev { left: -60px; }
+    .lightbox-next { right: -60px; }
 </style>
 {{end}}
 
@@ -58,19 +86,19 @@
 <!-- Stats -->
 <div class="stats-row">
     <div class="stat-card">
-        <div class="stat-value {{if gt .Stats.PendingTotal 0}}warn{{else}}ok{{end}}">{{.Stats.PendingTotal}}</div>
+        <div class="stat-value {{if gt .Stats.PendingTotal 0}}warn{{else}}ok{{end}}" id="stat-pending">{{.Stats.PendingTotal}}</div>
         <div class="stat-label">Ожидают модерации</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value ok">{{.Stats.ApprovedToday}}</div>
+        <div class="stat-value ok" id="stat-approved">{{.Stats.ApprovedToday}}</div>
         <div class="stat-label">Одобрено сегодня</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value info">{{.Stats.RejectedToday}}</div>
+        <div class="stat-value info" id="stat-rejected">{{.Stats.RejectedToday}}</div>
         <div class="stat-label">Отклонено сегодня</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value {{if gt .Stats.PendingWeek 0}}warn{{else}}ok{{end}}">{{.Stats.PendingWeek}}</div>
+        <div class="stat-value {{if gt .Stats.PendingWeek 0}}warn{{else}}ok{{end}}" id="stat-pending-week">{{.Stats.PendingWeek}}</div>
         <div class="stat-label">Ожидают за неделю</div>
     </div>
 </div>
@@ -84,6 +112,7 @@
                 <option value="pending" {{if eq .Filter.Status "pending"}}selected{{end}}>Ожидает</option>
                 <option value="approved" {{if eq .Filter.Status "approved"}}selected{{end}}>Одобрен</option>
                 <option value="rejected" {{if eq .Filter.Status "rejected"}}selected{{end}}>Отклонён</option>
+                <option value="hidden" {{if eq .Filter.Status "hidden"}}selected{{end}}>Скрытые</option>
                 <option value="all" {{if eq .Filter.Status "all"}}selected{{end}}>Все</option>
             </select>
         </div>
@@ -135,15 +164,15 @@
 <div class="batch-actions">
     <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)">
     <label for="select-all" style="font-size:14px;cursor:pointer;">Выбрать все</label>
-    <button class="btn btn-success btn-sm" onclick="batchApprove()" id="btn-batch-approve" disabled>Одобрить выбранные</button>
+    <button class="btn btn-success btn-sm" onclick="confirmBatchApprove()" id="btn-batch-approve" disabled>Одобрить выбранные</button>
     <button class="btn btn-danger btn-sm" onclick="openBatchRejectModal()" id="btn-batch-reject" disabled>Отклонить выбранные</button>
     <span class="batch-count" id="batch-count"></span>
 </div>
 
 <!-- Review List -->
-<div class="review-list">
+<div class="review-list" id="review-list">
     {{range .Reviews}}
-    <div class="review-card {{.Status}}" id="review-{{.ID}}">
+    <div class="review-card {{.Status}}" id="review-{{.ID}}" data-review-id="{{.ID}}">
         <div class="review-header">
             <div style="display:flex;align-items:flex-start;">
                 <input type="checkbox" class="review-select" value="{{.ID}}" onchange="updateBatchCount()">
@@ -157,16 +186,21 @@
             <div class="review-actions">
                 <span class="badge {{.Status}}">{{statusRu .Status}}</span>
                 {{if eq .Status "pending"}}
-                <button class="btn btn-success btn-sm" onclick="approveReview('{{.ID}}')">Одобрить</button>
+                <button class="btn btn-success btn-sm" onclick="approveReview('{{.ID}}', this)">Одобрить</button>
                 <button class="btn btn-danger btn-sm" onclick="openRejectModal('{{.ID}}')">Отклонить</button>
                 {{end}}
             </div>
         </div>
+        {{if gt (len .Text) 200}}
+        <div class="review-text truncated" id="text-{{.ID}}">{{.Text}}</div>
+        <button class="review-text-toggle" onclick="toggleReviewText('{{.ID}}')">Показать полностью</button>
+        {{else}}
         <div class="review-text">{{.Text}}</div>
+        {{end}}
         {{if .Images}}
-        <div class="review-images">
-            {{range .Images}}
-            <img src="{{.}}" alt="Фото отзыва">
+        <div class="review-images" data-lightbox-group="{{.ID}}">
+            {{range $i, $img := .Images}}
+            <img src="{{$img}}" alt="Фото отзыва" onclick="openLightbox(this)" data-index="{{$i}}">
             {{end}}
         </div>
         {{end}}
@@ -186,7 +220,7 @@
 
 <!-- Pagination -->
 {{if gt .TotalPages 1}}
-<div class="pagination">
+<div class="pagination" id="pagination">
     {{if gt .Page 1}}
     <a href="?page={{subtract .Page 1}}&status={{.Filter.Status}}&bathhouse_id={{.Filter.BathhouseID}}&min_rating={{.Filter.MinRating}}&max_rating={{.Filter.MaxRating}}&from_date={{.Filter.FromDate}}&to_date={{.Filter.ToDate}}">&#8592;</a>
     {{end}}
@@ -208,43 +242,83 @@
             <label><input type="checkbox" value="Оскорбительное содержание"> Оскорбительное содержание</label>
             <label><input type="checkbox" value="Фейковый отзыв"> Фейковый отзыв</label>
         </div>
+        <div class="comment-group">
+            <label>Дополнительный комментарий</label>
+            <textarea id="reject-comment" placeholder="Необязательно"></textarea>
+        </div>
+        <div class="validation-error" id="reject-validation-error">Укажите хотя бы одну причину или комментарий</div>
         <div class="modal-actions">
             <button class="btn btn-secondary" onclick="closeRejectModal()">Отмена</button>
-            <button class="btn btn-danger" onclick="confirmReject()">Отклонить</button>
+            <button class="btn btn-danger" onclick="confirmReject()" id="btn-confirm-reject">Отклонить</button>
         </div>
+    </div>
+</div>
+
+<!-- Confirm Modal (for batch approve) -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal confirm-modal">
+        <h3>Подтверждение</h3>
+        <div class="confirm-text" id="confirm-text"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeConfirmModal()">Отмена</button>
+            <button class="btn btn-success" onclick="executeBatchApprove()" id="btn-confirm-approve">Подтвердить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightboxOnOverlay(event)">
+    <div class="lightbox-content">
+        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <button class="lightbox-nav lightbox-prev" onclick="lightboxNav(-1)">&#8592;</button>
+        <img id="lightbox-img" src="" alt="Фото отзыва">
+        <button class="lightbox-nav lightbox-next" onclick="lightboxNav(1)">&#8594;</button>
     </div>
 </div>
 {{end}}
 
 {{define "page-scripts"}}
 <script>
-const pagesPrefix = "{{.PagesPrefix}}";
-let rejectTargetId = null;
-let isBatchReject = false;
+var pagesPrefix = "{{.PagesPrefix}}";
+var rejectTargetId = null;
+var isBatchReject = false;
+var lightboxImages = [];
+var lightboxIndex = 0;
 
-function approveReview(id) {
+/* === Approve === */
+function approveReview(id, btn) {
+    setButtonLoading(btn, true);
     fetch(pagesPrefix + '/moderation/api/approve?id=' + id, { method: 'POST' })
-        .then(r => r.json())
-        .then(data => {
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
             if (data.success) {
-                location.reload();
+                showToast('Отзыв одобрен', 'success');
+                removeReviewCard(id);
+                updateStat('stat-pending', -1);
+                updateStat('stat-approved', 1);
+                updateStat('stat-pending-week', -1);
             } else {
-                alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+                showToast('Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
+                setButtonLoading(btn, false);
             }
         })
-        .catch(() => alert('Ошибка сети'));
+        .catch(function() {
+            showToast('Ошибка сети. Попробуйте снова.', 'error');
+            setButtonLoading(btn, false);
+        });
 }
 
+/* === Reject Modal === */
 function openRejectModal(id) {
     rejectTargetId = id;
     isBatchReject = false;
-    document.querySelectorAll('#reject-modal input[type="checkbox"]').forEach(cb => cb.checked = false);
+    resetRejectModal();
     document.getElementById('reject-modal').classList.add('active');
 }
 
 function openBatchRejectModal() {
     isBatchReject = true;
-    document.querySelectorAll('#reject-modal input[type="checkbox"]').forEach(cb => cb.checked = false);
+    resetRejectModal();
     document.getElementById('reject-modal').classList.add('active');
 }
 
@@ -254,73 +328,257 @@ function closeRejectModal() {
     isBatchReject = false;
 }
 
+function resetRejectModal() {
+    document.querySelectorAll('#reject-modal .reason-list input[type="checkbox"]').forEach(function(cb) { cb.checked = false; });
+    document.getElementById('reject-comment').value = '';
+    document.getElementById('reject-validation-error').style.display = 'none';
+}
+
 function getSelectedReasons() {
-    return Array.from(document.querySelectorAll('#reject-modal input[type="checkbox"]:checked'))
-        .map(cb => cb.value);
+    return Array.from(document.querySelectorAll('#reject-modal .reason-list input[type="checkbox"]:checked'))
+        .map(function(cb) { return cb.value; });
 }
 
 function confirmReject() {
-    const reasons = getSelectedReasons();
+    var reasons = getSelectedReasons();
+    var comment = document.getElementById('reject-comment').value.trim();
+    if (reasons.length === 0 && comment === '') {
+        document.getElementById('reject-validation-error').style.display = 'block';
+        return;
+    }
+    document.getElementById('reject-validation-error').style.display = 'none';
+
+    var confirmBtn = document.getElementById('btn-confirm-reject');
+    setButtonLoading(confirmBtn, true);
+
     if (isBatchReject) {
-        const ids = getSelectedIds();
+        var ids = getSelectedIds();
         fetch(pagesPrefix + '/moderation/api/batch-reject', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: ids, reasons: reasons })
+            body: JSON.stringify({ ids: ids, reasons: reasons, comment: comment })
         })
-        .then(r => r.json())
-        .then(data => {
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
             closeRejectModal();
-            if (data.success) location.reload();
-            else alert('Ошибка');
+            if (data.success) {
+                var total = data.successful + data.failed;
+                showToast('Обработано ' + data.successful + ' из ' + total + ' отзывов', 'success');
+                ids.forEach(function(id) { removeReviewCard(id); });
+                updateStat('stat-pending', -data.successful);
+                updateStat('stat-rejected', data.successful);
+                updateStat('stat-pending-week', -data.successful);
+                updateBatchCount();
+            } else {
+                showToast('Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
+            }
+            setButtonLoading(confirmBtn, false);
         })
-        .catch(() => alert('Ошибка сети'));
+        .catch(function() {
+            closeRejectModal();
+            showToast('Ошибка сети. Попробуйте снова.', 'error');
+            setButtonLoading(confirmBtn, false);
+        });
     } else {
         fetch(pagesPrefix + '/moderation/api/reject?id=' + rejectTargetId, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reasons: reasons })
+            body: JSON.stringify({ reasons: reasons, comment: comment })
         })
-        .then(r => r.json())
-        .then(data => {
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
             closeRejectModal();
-            if (data.success) location.reload();
-            else alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+            if (data.success) {
+                showToast('Отзыв отклонен', 'success');
+                removeReviewCard(rejectTargetId);
+                updateStat('stat-pending', -1);
+                updateStat('stat-rejected', 1);
+                updateStat('stat-pending-week', -1);
+            } else {
+                showToast('Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
+            }
+            setButtonLoading(confirmBtn, false);
         })
-        .catch(() => alert('Ошибка сети'));
+        .catch(function() {
+            closeRejectModal();
+            showToast('Ошибка сети. Попробуйте снова.', 'error');
+            setButtonLoading(confirmBtn, false);
+        });
     }
 }
 
-function getSelectedIds() {
-    return Array.from(document.querySelectorAll('.review-select:checked')).map(cb => cb.value);
-}
-
-function toggleSelectAll(el) {
-    document.querySelectorAll('.review-select').forEach(cb => cb.checked = el.checked);
-    updateBatchCount();
-}
-
-function updateBatchCount() {
-    const count = document.querySelectorAll('.review-select:checked').length;
-    document.getElementById('batch-count').textContent = count > 0 ? 'Выбрано: ' + count : '';
-    document.getElementById('btn-batch-approve').disabled = count === 0;
-    document.getElementById('btn-batch-reject').disabled = count === 0;
-}
-
-function batchApprove() {
-    const ids = getSelectedIds();
+/* === Batch Approve with Confirmation === */
+function confirmBatchApprove() {
+    var ids = getSelectedIds();
     if (ids.length === 0) return;
+    document.getElementById('confirm-text').textContent = 'Одобрить ' + ids.length + ' отзывов? Это действие нельзя отменить.';
+    document.getElementById('confirm-modal').classList.add('active');
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirm-modal').classList.remove('active');
+}
+
+function executeBatchApprove() {
+    var ids = getSelectedIds();
+    if (ids.length === 0) return;
+
+    var confirmBtn = document.getElementById('btn-confirm-approve');
+    setButtonLoading(confirmBtn, true);
+
     fetch(pagesPrefix + '/moderation/api/batch-approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: ids })
     })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) location.reload();
-        else alert('Ошибка');
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        closeConfirmModal();
+        if (data.success) {
+            var total = data.successful + data.failed;
+            showToast('Обработано ' + data.successful + ' из ' + total + ' отзывов', 'success');
+            ids.forEach(function(id) { removeReviewCard(id); });
+            updateStat('stat-pending', -data.successful);
+            updateStat('stat-approved', data.successful);
+            updateStat('stat-pending-week', -data.successful);
+            updateBatchCount();
+        } else {
+            showToast('Ошибка', 'error');
+        }
+        setButtonLoading(confirmBtn, false);
     })
-    .catch(() => alert('Ошибка сети'));
+    .catch(function() {
+        closeConfirmModal();
+        showToast('Ошибка сети. Попробуйте снова.', 'error');
+        setButtonLoading(confirmBtn, false);
+    });
 }
+
+/* === Selection === */
+function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.review-select:checked')).map(function(cb) { return cb.value; });
+}
+
+function toggleSelectAll(el) {
+    document.querySelectorAll('.review-select').forEach(function(cb) { cb.checked = el.checked; });
+    updateBatchCount();
+}
+
+function updateBatchCount() {
+    var count = document.querySelectorAll('.review-select:checked').length;
+    document.getElementById('batch-count').textContent = count > 0 ? 'Выбрано: ' + count : '';
+    document.getElementById('btn-batch-approve').disabled = count === 0;
+    document.getElementById('btn-batch-reject').disabled = count === 0;
+}
+
+/* === DOM Helpers === */
+function removeReviewCard(id) {
+    var card = document.getElementById('review-' + id);
+    if (!card) return;
+    card.classList.add('removing');
+    setTimeout(function() { card.remove(); checkEmptyState(); }, 400);
+}
+
+function checkEmptyState() {
+    var list = document.getElementById('review-list');
+    if (list && list.querySelectorAll('.review-card').length === 0) {
+        var emptyDiv = document.createElement('div');
+        emptyDiv.className = 'empty-state';
+        var iconDiv = document.createElement('div');
+        iconDiv.className = 'icon';
+        iconDiv.textContent = '\u2713';
+        var p = document.createElement('p');
+        p.textContent = 'Нет отзывов для отображения';
+        emptyDiv.appendChild(iconDiv);
+        emptyDiv.appendChild(p);
+        while (list.firstChild) { list.removeChild(list.firstChild); }
+        list.appendChild(emptyDiv);
+    }
+}
+
+function updateStat(id, delta) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var val = parseInt(el.textContent, 10) + delta;
+    if (val < 0) val = 0;
+    el.textContent = val;
+    if (id === 'stat-pending' || id === 'stat-pending-week') {
+        el.className = 'stat-value ' + (val > 0 ? 'warn' : 'ok');
+    }
+}
+
+function setButtonLoading(btn, loading) {
+    if (!btn) return;
+    if (loading) {
+        btn.classList.add('loading');
+        btn.disabled = true;
+        if (!btn.querySelector('.btn-spinner')) {
+            var spinner = document.createElement('span');
+            spinner.className = 'btn-spinner';
+            btn.insertBefore(spinner, btn.firstChild);
+        }
+    } else {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+        var s = btn.querySelector('.btn-spinner');
+        if (s) s.remove();
+    }
+}
+
+/* === Text Truncation === */
+function toggleReviewText(id) {
+    var textEl = document.getElementById('text-' + id);
+    var toggleBtn = textEl.nextElementSibling;
+    if (textEl.classList.contains('truncated')) {
+        textEl.classList.remove('truncated');
+        toggleBtn.textContent = 'Свернуть';
+    } else {
+        textEl.classList.add('truncated');
+        toggleBtn.textContent = 'Показать полностью';
+    }
+}
+
+/* === Lightbox === */
+function openLightbox(imgEl) {
+    var group = imgEl.parentElement;
+    lightboxImages = Array.from(group.querySelectorAll('img')).map(function(img) { return img.src; });
+    lightboxIndex = parseInt(imgEl.dataset.index, 10) || 0;
+    showLightboxImage();
+    document.getElementById('lightbox').classList.add('active');
+}
+
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('active');
+}
+
+function closeLightboxOnOverlay(e) {
+    if (e.target === document.getElementById('lightbox')) {
+        closeLightbox();
+    }
+}
+
+function lightboxNav(dir) {
+    lightboxIndex += dir;
+    if (lightboxIndex < 0) lightboxIndex = lightboxImages.length - 1;
+    if (lightboxIndex >= lightboxImages.length) lightboxIndex = 0;
+    showLightboxImage();
+}
+
+function showLightboxImage() {
+    document.getElementById('lightbox-img').src = lightboxImages[lightboxIndex];
+    var prevBtn = document.querySelector('.lightbox-prev');
+    var nextBtn = document.querySelector('.lightbox-next');
+    if (prevBtn) prevBtn.style.display = lightboxImages.length > 1 ? '' : 'none';
+    if (nextBtn) nextBtn.style.display = lightboxImages.length > 1 ? '' : 'none';
+}
+
+/* === Keyboard: Escape closes modals === */
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeLightbox();
+        closeRejectModal();
+        closeConfirmModal();
+    }
+});
 </script>
 {{end}}

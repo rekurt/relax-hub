@@ -300,11 +300,14 @@ func TestModerationHandler_HandleReject_NoReasons(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/moderation/api/reject?id="+id.String(), nil)
 	handler.HandleReject(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want %d", rec.Code, http.StatusOK)
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d (reject without reasons/comment should fail)", rec.Code, http.StatusBadRequest)
 	}
-	if len(provider.rejectedIDs) != 1 {
-		t.Error("expected review to be rejected even without reasons")
+
+	var resp actionResponse
+	_ = json.NewDecoder(rec.Body).Decode(&resp)
+	if resp.Success {
+		t.Error("expected success=false when no reasons or comment provided")
 	}
 }
 
@@ -484,7 +487,271 @@ func TestModerationHandler_PagesPrefixEscapedInJS(t *testing.T) {
 	body := rec.Body.String()
 
 	// html/template escapes "/" to "\/" in JS string context, which is valid JS
-	if !strings.Contains(body, `const pagesPrefix = "\/admin-panel\/pages"`) {
-		t.Error("body missing pagesPrefix JS constant (with html/template \\/ escaping)")
+	if !strings.Contains(body, `var pagesPrefix = "\/admin-panel\/pages"`) {
+		t.Error("body missing pagesPrefix JS variable (with html/template \\/ escaping)")
+	}
+}
+
+func TestModerationHandler_HandleReject_WithCommentOnly(t *testing.T) {
+	id := uuid.New()
+	provider := &mockModerationProvider{}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	body, _ := json.Marshal(approveRejectRequest{
+		Comment: "Некачественный контент",
+	})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/moderation/api/reject?id="+id.String(), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	handler.HandleReject(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	if len(provider.rejectedIDs) != 1 {
+		t.Error("expected review to be rejected with comment only")
+	}
+	if len(provider.rejectedReasons) != 1 || provider.rejectedReasons[0] != "Некачественный контент" {
+		t.Errorf("expected comment as reason, got %v", provider.rejectedReasons)
+	}
+}
+
+func TestModerationHandler_HandleReject_WithReasonsAndComment(t *testing.T) {
+	id := uuid.New()
+	provider := &mockModerationProvider{}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	body, _ := json.Marshal(approveRejectRequest{
+		Reasons: []string{"Спам или реклама"},
+		Comment: "Дополнительная причина",
+	})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/moderation/api/reject?id="+id.String(), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	handler.HandleReject(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	if len(provider.rejectedReasons) != 2 {
+		t.Errorf("expected 2 reasons (1 checkbox + comment), got %d", len(provider.rejectedReasons))
+	}
+}
+
+func TestModerationHandler_HandleReject_EmptyBody(t *testing.T) {
+	id := uuid.New()
+	provider := &mockModerationProvider{}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	body, _ := json.Marshal(approveRejectRequest{Reasons: []string{}, Comment: ""})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/moderation/api/reject?id="+id.String(), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	handler.HandleReject(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d (empty reasons and comment should fail)", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestModerationHandler_HandleBatchReject_NoReasons(t *testing.T) {
+	id1 := uuid.New()
+	provider := &mockModerationProvider{}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	body, _ := json.Marshal(batchRequest{IDs: []string{id1.String()}})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/moderation/api/batch-reject", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	handler.HandleBatchReject(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d (batch reject without reasons should fail)", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestModerationHandler_HandleBatchReject_WithComment(t *testing.T) {
+	id1 := uuid.New()
+	provider := &mockModerationProvider{}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	body, _ := json.Marshal(batchRequest{
+		IDs:     []string{id1.String()},
+		Comment: "Массовый спам",
+	})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/moderation/api/batch-reject", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	handler.HandleBatchReject(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	if len(provider.rejectedReasons) != 1 || provider.rejectedReasons[0] != "Массовый спам" {
+		t.Errorf("expected comment in reasons, got %v", provider.rejectedReasons)
+	}
+}
+
+func TestModerationHandler_RendersLightbox(t *testing.T) {
+	provider := &mockModerationProvider{data: sampleModerationData()}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	checks := []string{
+		"lightbox-overlay",
+		"lightbox-img",
+		"lightbox-close",
+		"lightbox-prev",
+		"lightbox-next",
+		"openLightbox(this)",
+		`data-lightbox-group=`,
+	}
+	for _, c := range checks {
+		if !strings.Contains(body, c) {
+			t.Errorf("body missing lightbox element %q", c)
+		}
+	}
+}
+
+func TestModerationHandler_RendersConfirmModal(t *testing.T) {
+	provider := &mockModerationProvider{data: sampleModerationData()}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+	if !strings.Contains(body, "confirm-modal") {
+		t.Error("body missing confirm modal for batch approve")
+	}
+	if !strings.Contains(body, "confirmBatchApprove()") {
+		t.Error("body missing confirmBatchApprove function call")
+	}
+}
+
+func TestModerationHandler_RendersRejectCommentField(t *testing.T) {
+	provider := &mockModerationProvider{data: sampleModerationData()}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+	if !strings.Contains(body, "reject-comment") {
+		t.Error("body missing reject comment textarea")
+	}
+	if !strings.Contains(body, "Дополнительный комментарий") {
+		t.Error("body missing reject comment label")
+	}
+	if !strings.Contains(body, "validation-error") {
+		t.Error("body missing reject validation error element")
+	}
+}
+
+func TestModerationHandler_RendersHiddenFilterOption(t *testing.T) {
+	provider := &mockModerationProvider{data: sampleModerationData()}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+	if !strings.Contains(body, `value="hidden"`) {
+		t.Error("body missing 'hidden' option in status filter")
+	}
+	if !strings.Contains(body, "Скрытые") {
+		t.Error("body missing 'Скрытые' label for hidden filter option")
+	}
+}
+
+func TestModerationHandler_RendersTextTruncation(t *testing.T) {
+	data := sampleModerationData()
+	// Make a review with text longer than 200 characters
+	data.Reviews[0].Text = strings.Repeat("А", 250)
+	provider := &mockModerationProvider{data: data}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+	if !strings.Contains(body, "truncated") {
+		t.Error("body missing 'truncated' class for long review text")
+	}
+	if !strings.Contains(body, "Показать полностью") {
+		t.Error("body missing 'Показать полностью' toggle button")
+	}
+}
+
+func TestModerationHandler_NoTruncationForShortText(t *testing.T) {
+	data := sampleModerationData()
+	data.Reviews = []ModerationReview{data.Reviews[0]}
+	data.Reviews[0].Text = "Короткий текст"
+	provider := &mockModerationProvider{data: data}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+	// Short text should not have the truncated class applied
+	if strings.Contains(body, `class="review-text truncated"`) {
+		t.Error("short text should not have truncated class")
+	}
+	// Short text should not have a toggle button with the review's ID
+	if strings.Contains(body, `toggleReviewText('`+data.Reviews[0].ID+`')`) {
+		t.Error("short text should not have truncation toggle button")
+	}
+}
+
+func TestModerationHandler_RendersInlineAJAX(t *testing.T) {
+	provider := &mockModerationProvider{data: sampleModerationData()}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Should use showToast instead of alert
+	if strings.Contains(body, "alert(") {
+		t.Error("body should not contain alert() calls - should use showToast instead")
+	}
+	// Should NOT use location.reload()
+	if strings.Contains(body, "location.reload()") {
+		t.Error("body should not contain location.reload() - should use DOM manipulation")
+	}
+	// Should have removeReviewCard function
+	if !strings.Contains(body, "removeReviewCard") {
+		t.Error("body missing removeReviewCard function for inline DOM updates")
+	}
+	// Should have updateStat function
+	if !strings.Contains(body, "updateStat") {
+		t.Error("body missing updateStat function for dynamic counter updates")
+	}
+	// Should have loading state support
+	if !strings.Contains(body, "setButtonLoading") {
+		t.Error("body missing setButtonLoading function")
+	}
+	if !strings.Contains(body, "btn-spinner") {
+		t.Error("body missing btn-spinner CSS class for loading states")
+	}
+	// Stats cards should have IDs for JS updates
+	if !strings.Contains(body, `id="stat-pending"`) {
+		t.Error("body missing stat-pending ID on stats card")
+	}
+	if !strings.Contains(body, `id="stat-approved"`) {
+		t.Error("body missing stat-approved ID on stats card")
 	}
 }
