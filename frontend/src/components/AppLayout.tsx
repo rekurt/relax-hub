@@ -8,6 +8,7 @@ import {
   Breadcrumb,
   Grid,
   Drawer,
+  Badge,
   theme,
 } from 'antd'
 import {
@@ -31,26 +32,37 @@ import {
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
+import { useGetMyUnreadMessagesCount } from '@/api/generated/chat/chat'
 import BathhouseSelector from '@/components/BathhouseSelector'
 
 const { Header, Sider, Content } = Layout
 const { useBreakpoint } = Grid
 
-const menuItems: MenuProps['items'] = [
-  { key: '/', icon: <DashboardOutlined />, label: 'Дашборд' },
-  { key: '/bathhouses', icon: <ShopOutlined />, label: 'Бани' },
-  { key: '/bookings', icon: <CalendarOutlined />, label: 'Бронирования' },
-  { key: '/reviews', icon: <StarOutlined />, label: 'Отзывы' },
-  { key: '/calendar', icon: <ScheduleOutlined />, label: 'Календарь' },
-  { key: '/pricing', icon: <DollarOutlined />, label: 'Цены' },
-  { key: '/promo', icon: <GiftOutlined />, label: 'Промокоды' },
-  { key: '/chat', icon: <MessageOutlined />, label: 'Чат' },
-  { key: '/representatives', icon: <TeamOutlined />, label: 'Представители' },
-  { key: '/subscriptions', icon: <CrownOutlined />, label: 'Подписки' },
-  { key: '/widget', icon: <CodeOutlined />, label: 'Виджет' },
-  { key: '/photos', icon: <CameraOutlined />, label: 'Фото' },
-  { key: '/settings', icon: <UserOutlined />, label: 'Настройки' },
-]
+function useMenuItems(unreadCount: number): MenuProps['items'] {
+  return [
+    { key: '/', icon: <DashboardOutlined />, label: 'Дашборд' },
+    { key: '/bathhouses', icon: <ShopOutlined />, label: 'Бани' },
+    { key: '/bookings', icon: <CalendarOutlined />, label: 'Бронирования' },
+    { key: '/reviews', icon: <StarOutlined />, label: 'Отзывы' },
+    { key: '/calendar', icon: <ScheduleOutlined />, label: 'Календарь' },
+    { key: '/pricing', icon: <DollarOutlined />, label: 'Цены' },
+    { key: '/promo', icon: <GiftOutlined />, label: 'Промокоды' },
+    {
+      key: '/chat',
+      icon: (
+        <Badge count={unreadCount} size="small" offset={[4, 0]}>
+          <MessageOutlined />
+        </Badge>
+      ),
+      label: 'Чат',
+    },
+    { key: '/representatives', icon: <TeamOutlined />, label: 'Представители' },
+    { key: '/subscriptions', icon: <CrownOutlined />, label: 'Подписки' },
+    { key: '/widget', icon: <CodeOutlined />, label: 'Виджет' },
+    { key: '/photos', icon: <CameraOutlined />, label: 'Фото' },
+    { key: '/settings', icon: <UserOutlined />, label: 'Настройки' },
+  ]
+}
 
 const breadcrumbNameMap: Record<string, string> = {
   '/': 'Дашборд',
@@ -96,6 +108,12 @@ export default function AppLayout() {
   const { user, logout } = useAuthStore()
   const screens = useBreakpoint()
   const { token: themeToken } = theme.useToken()
+
+  const { data: unreadData } = useGetMyUnreadMessagesCount({
+    query: { refetchInterval: 30000 },
+  })
+  const unreadCount = unreadData?.data?.unread_count ?? 0
+  const menuItems = useMenuItems(unreadCount)
 
   const isMobile = !screens.md
 

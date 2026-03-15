@@ -196,12 +196,12 @@ React SPA для владельцев бань: управление баням�
 - Create: `frontend/src/pages/chat/ConversationList.tsx`
 - Create: `frontend/src/pages/chat/MessageArea.tsx`
 
-- [ ] Двухпанельный layout: список бесед слева, сообщения справа
-- [ ] ConversationList: список бесед (GET /my/conversations) с последним сообщением и непрочитанными
-- [ ] MessageArea: история сообщений (GET /conversations/{id}/messages) со скроллом, отправка (POST /conversations/{id}/messages)
-- [ ] Отметка прочитанным (PATCH /conversations/{id}/read)
-- [ ] Счётчик непрочитанных в sidebar (GET /my/unread-messages-count)
-- [ ] WebSocket подключение для real-time обновлений (GET /ws/notifications с JWT)
+- [x] Двухпанельный layout: список бесед слева, сообщения справа
+- [x] ConversationList: список бесед (GET /my/conversations) с последним сообщением и непрочитанными
+- [x] MessageArea: история сообщений (GET /conversations/{id}/messages) со скроллом, отправка (POST /conversations/{id}/messages)
+- [x] Отметка прочитанным (PATCH /conversations/{id}/read)
+- [x] Счётчик непрочитанных в sidebar (GET /my/unread-messages-count)
+- [x] WebSocket подключение для real-time обновлений (GET /ws/notifications с JWT)
 
 ### Task 14: Уведомления и настройки профиля
 

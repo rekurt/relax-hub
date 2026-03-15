@@ -12,6 +12,7 @@ import ReviewList from '@/pages/reviews/ReviewList'
 import PricingRules from '@/pages/pricing/PricingRules'
 import PromoList from '@/pages/promo/PromoList'
 import RepresentativeList from '@/pages/representatives/RepresentativeList'
+import ChatPage from '@/pages/chat/ChatPage'
 
 function Placeholder({ title }: { title: string }) {
   return <div>{title}</div>
@@ -39,7 +40,7 @@ export default function AppRouter() {
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="pricing" element={<PricingRules />} />
         <Route path="promo" element={<PromoList />} />
-        <Route path="chat" element={<Placeholder title="Чат" />} />
+        <Route path="chat" element={<ChatPage />} />
         <Route path="representatives" element={<RepresentativeList />} />
         <Route path="subscriptions" element={<Placeholder title="Подписки" />} />
         <Route path="widget" element={<Placeholder title="Виджет" />} />
