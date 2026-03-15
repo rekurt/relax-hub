@@ -19,19 +19,12 @@ import {
 import type { InternalHandlerBookingResponse } from '@/api/generated/model'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { formatPrice, formatDateTime } from '@/lib/format'
+import { BOOKING_STATUS_CONFIG } from '@/lib/constants'
 import { useQueryClient } from '@tanstack/react-query'
 import BookingDetails from './BookingDetails'
 
 const { Title } = Typography
 const { RangePicker } = DatePicker
-
-const STATUS_CONFIG: Record<string, { color: string; text: string }> = {
-  pending: { color: 'orange', text: 'Ожидает' },
-  confirmed: { color: 'blue', text: 'Подтверждено' },
-  completed: { color: 'green', text: 'Завершено' },
-  cancelled: { color: 'default', text: 'Отменено' },
-  rejected: { color: 'red', text: 'Отклонено' },
-}
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
@@ -54,7 +47,7 @@ export default function BookingList() {
   const [detailsBooking, setDetailsBooking] = useState<InternalHandlerBookingResponse | null>(null)
 
   const { data, isLoading } = useGetBathhousesIdBookings(selectedBathhouseId ?? '', {
-    page: page - 1,
+    page,
     page_size: pageSize,
   }, {
     query: {
@@ -110,6 +103,7 @@ export default function BookingList() {
 
   const bookings = data?.data ?? []
   const meta = data?.meta
+  const hasActiveFilter = !!statusFilter || !!(dateRange?.[0] && dateRange?.[1])
 
   const filteredBookings = bookings.filter((b) => {
     if (statusFilter && b.status !== statusFilter) return false
@@ -193,22 +187,6 @@ export default function BookingList() {
       )
     }
 
-    if (record.status === 'pending') {
-      actions.push(
-        <Button
-          key="cancel-pending"
-          type="link"
-          size="small"
-          danger
-          icon={<StopOutlined />}
-          loading={cancelMutation.isPending}
-          onClick={() => record.id && cancelMutation.mutate({ id: record.id })}
-        >
-          Отменить
-        </Button>,
-      )
-    }
-
     return <Space wrap>{actions}</Space>
   }
 
@@ -252,7 +230,7 @@ export default function BookingList() {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
-        const config = STATUS_CONFIG[status] ?? { color: 'default', text: status }
+        const config = BOOKING_STATUS_CONFIG[status] ?? { color: 'default', text: status }
         return <Tag color={config.color}>{config.text}</Tag>
       },
     },
@@ -305,7 +283,7 @@ export default function BookingList() {
         pagination={{
           current: page,
           pageSize: pageSize,
-          total: meta?.total_count ?? 0,
+          total: hasActiveFilter ? filteredBookings.length : (meta?.total_count ?? 0),
           showSizeChanger: true,
           showTotal: (total) => `Всего: ${total}`,
           onChange: (p, ps) => {

@@ -14,6 +14,15 @@ Go-бекенд для агрегатора бань с онлайн-брони�
 - **golang-jwt** — JWT-аутентификация
 - **bcrypt** — хэширование паролей
 
+### Фронтенд
+
+- **React 18** + **TypeScript 5.6** — UI
+- **Vite 6** — сборщик
+- **Ant Design 6** — UI-библиотека (русская локализация)
+- **TanStack React Query 5** — серверное состояние
+- **orval** — генерация API-клиента из OpenAPI
+- **zustand** — клиентское состояние
+
 ## Структура проекта
 
 ```
@@ -31,6 +40,12 @@ internal/
   server/            — HTTP-сервер и роутер (chi)
   service/           — бизнес-логика и RBAC-проверки
 migrations/          — SQL-миграции (PostGIS, таблицы, индексы)
+frontend/            — React SPA (личный кабинет владельца)
+  src/api/           — Axios + сгенерированный API-клиент (orval)
+  src/components/    — переиспользуемые компоненты
+  src/pages/         — страницы по фичам
+  src/stores/        — zustand stores
+  src/lib/           — утилиты форматирования
 ```
 
 ## Роли и RBAC
@@ -242,6 +257,10 @@ make seed-admin    — создать admin-пользователя
 make swagger       — сгенерировать OpenAPI спецификацию
 make swagger-fmt   — форматировать Swagger аннотации
 make clean         — очистить артефакты сборки
+make frontend-dev  — запустить Vite dev-сервер
+make frontend-build — production сборка фронтенда
+make frontend-generate-api — перегенерировать API-клиент из swagger.json
+make frontend-test — запустить тесты фронтенда
 ```
 
 ## Тесты

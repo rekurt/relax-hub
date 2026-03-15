@@ -258,7 +258,8 @@ export default function AppLayout() {
           <Breadcrumb
             style={{ marginBottom: 16 }}
             items={breadcrumbs.map((item) => ({
-              title: item.href ? item.title : item.title,
+              title: item.title,
+              href: item.href,
             }))}
           />
           <Outlet />

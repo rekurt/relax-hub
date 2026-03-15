@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Input, Button, Empty, Spin, Typography, Space } from 'antd'
 import { SendOutlined } from '@ant-design/icons'
 import {
@@ -69,7 +69,7 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
 
   const { data, isLoading } = useGetConversationsIdMessages(
     conversationId ?? '',
-    { page: 0, page_size: 100 },
+    { page: 1, page_size: 100 },
     { query: { enabled: !!conversationId, refetchInterval: 5000 } },
   )
 
@@ -88,6 +88,11 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
   })
 
   const { mutate: markRead } = usePatchConversationsIdRead()
+  const markReadRef = useRef(markRead)
+
+  useEffect(() => {
+    markReadRef.current = markRead
+  }, [markRead])
 
   const messages = useMemo(() => data?.data ?? [], [data?.data])
 
@@ -99,9 +104,9 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
 
   useEffect(() => {
     if (conversationId && messages.some((m) => !m.is_read && m.sender_id !== currentUser?.id)) {
-      markRead({ id: conversationId })
+      markReadRef.current({ id: conversationId })
     }
-  }, [conversationId, messages, currentUser?.id, markRead])
+  }, [conversationId, messages, currentUser?.id])
 
   const handleSend = () => {
     if (!text.trim() || !conversationId) return

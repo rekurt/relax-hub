@@ -1,4 +1,4 @@
-import { formatPrice, formatDayOfWeek, formatDateTime, formatDate, formatTime } from '../lib/format'
+import { formatPrice, formatDayOfWeek, formatDateTime, formatTime } from '../lib/format'
 
 describe('formatPrice', () => {
   it('converts kopecks to rubles without decimals', () => {
@@ -49,12 +49,6 @@ describe('formatDateTime', () => {
 
   it('accepts custom format', () => {
     expect(formatDateTime('2025-03-15 14:30:00', 'YYYY-MM-DD')).toBe('2025-03-15')
-  })
-})
-
-describe('formatDate', () => {
-  it('formats date without time', () => {
-    expect(formatDate('2025-03-15 14:30:00')).toBe('15.03.2025')
   })
 })
 

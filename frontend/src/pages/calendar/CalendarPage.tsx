@@ -49,28 +49,13 @@ import type {
 } from '@/api/generated/model'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { formatPrice, formatTime, formatDateTime } from '@/lib/format'
+import { BOOKING_STATUS_CONFIG } from '@/lib/constants'
 
 const { Title, Text } = Typography
 const { RangePicker } = DatePicker
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const DAYS_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-
-const BOOKING_STATUS_COLORS: Record<string, string> = {
-  pending: '#faad14',
-  confirmed: '#1677ff',
-  completed: '#52c41a',
-  cancelled: '#d9d9d9',
-  rejected: '#ff4d4f',
-}
-
-const BOOKING_STATUS_TEXT: Record<string, string> = {
-  pending: 'Ожидает',
-  confirmed: 'Подтверждено',
-  completed: 'Завершено',
-  cancelled: 'Отменено',
-  rejected: 'Отклонено',
-}
 
 const SOURCE_OPTIONS = [
   { value: 'google_calendar', label: 'Google Calendar' },
@@ -89,9 +74,7 @@ export default function CalendarPage() {
   const queryClient = useQueryClient()
   const selectedBathhouseId = useBathhouseStore((s) => s.selectedBathhouseId)
 
-  const [weekStart, setWeekStart] = useState<Dayjs>(() =>
-    dayjs().startOf('week').add(dayjs().day() === 0 ? -6 : 1 - dayjs().day(), 'day'),
-  )
+  const [weekStart, setWeekStart] = useState<Dayjs>(() => dayjs().startOf('week'))
   const [slotBlockModalOpen, setSlotBlockModalOpen] = useState(false)
   const [externalCalendarModalOpen, setExternalCalendarModalOpen] = useState(false)
   const [slotBlockForm] = Form.useForm()
@@ -101,7 +84,7 @@ export default function CalendarPage() {
 
   const { data: bookingsData, isLoading: bookingsLoading } = useGetBathhousesIdBookings(
     selectedBathhouseId ?? '',
-    { page: 0, page_size: 100 },
+    { page: 1, page_size: 100 },
     { query: { enabled: !!selectedBathhouseId } },
   )
 
@@ -236,9 +219,10 @@ export default function CalendarPage() {
   const handleCopyIcalUrl = () => {
     if (calendarToken?.url) {
       const fullUrl = `${window.location.origin}${calendarToken.url}`
-      navigator.clipboard.writeText(fullUrl).then(() => {
-        message.success('Ссылка скопирована')
-      })
+      navigator.clipboard.writeText(fullUrl).then(
+        () => message.success('Ссылка скопирована'),
+        () => message.error('Не удалось скопировать ссылку'),
+      )
     }
   }
 
@@ -247,9 +231,7 @@ export default function CalendarPage() {
   }
 
   const goToToday = () => {
-    const today = dayjs()
-    const monday = today.startOf('week').add(today.day() === 0 ? -6 : 1 - today.day(), 'day')
-    setWeekStart(monday)
+    setWeekStart(dayjs().startOf('week'))
   }
 
   if (!selectedBathhouseId) {
@@ -417,13 +399,14 @@ export default function CalendarPage() {
                     ))}
                     {dayBlocks.map((block, i) => {
                       const status = block.booking.status ?? 'pending'
-                      const bgColor = BOOKING_STATUS_COLORS[status] ?? '#1677ff'
+                      const statusConf = BOOKING_STATUS_CONFIG[status]
+                      const bgColor = statusConf?.hexColor ?? '#1677ff'
                       return (
                         <Tooltip
                           key={`${block.booking.id}-${i}`}
                           title={
                             <div>
-                              <div>{BOOKING_STATUS_TEXT[status] ?? status}</div>
+                              <div>{statusConf?.text ?? status}</div>
                               <div>
                                 {block.booking.start_time
                                   ? formatTime(block.booking.start_time)

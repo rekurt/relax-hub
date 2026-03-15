@@ -20,7 +20,7 @@ interface ConversationListProps {
 export default function ConversationList({ selectedId, onSelect }: ConversationListProps) {
   const [search, setSearch] = useState('')
 
-  const { data, isLoading } = useGetMyConversations({ page: 0, page_size: 50 })
+  const { data, isLoading } = useGetMyConversations({ page: 1, page_size: 50 })
 
   const conversations = useMemo(() => {
     const items = data?.data ?? []

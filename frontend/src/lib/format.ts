@@ -41,13 +41,6 @@ export function formatDateTime(
 }
 
 /**
- * Форматирует только дату без времени.
- */
-export function formatDate(date: string | Date): string {
-  return dayjs(date).format('DD.MM.YYYY')
-}
-
-/**
  * Форматирует только время.
  */
 export function formatTime(date: string | Date): string {

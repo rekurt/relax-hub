@@ -1,8 +1,7 @@
 import { create } from 'zustand'
 import { getAuthMe } from '@/api/generated/auth/auth'
 import type { InternalHandlerUserResponse } from '@/api/generated/model'
-
-const AUTH_TOKEN_KEY = 'bani_token'
+import { AUTH_TOKEN_KEY } from '@/lib/constants'
 
 export interface AuthState {
   user: InternalHandlerUserResponse | null

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import {
   App,
   Button,
@@ -46,15 +46,12 @@ export default function WidgetSettings() {
   const [showPrice, setShowPrice] = useState(true)
   const [showRating, setShowRating] = useState(true)
 
-  const widgetParams = useMemo(
-    () => ({
-      color,
-      font_family: fontFamily,
-      show_price: showPrice,
-      show_rating: showRating,
-    }),
-    [color, fontFamily, showPrice, showRating],
-  )
+  const widgetParams = {
+    color,
+    font_family: fontFamily,
+    show_price: showPrice,
+    show_rating: showRating,
+  }
 
   const { data: widgetCodeData, isLoading: codeLoading } =
     useGetMyBathhousesIdWidgetCode(selectedBathhouseId ?? '', widgetParams, {

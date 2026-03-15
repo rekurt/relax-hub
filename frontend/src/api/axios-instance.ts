@@ -1,6 +1,5 @@
 import Axios, { AxiosRequestConfig } from 'axios'
-
-const AUTH_TOKEN_KEY = 'bani_token'
+import { AUTH_TOKEN_KEY } from '@/lib/constants'
 
 export const axiosInstance = Axios.create({
   baseURL: '/api/v1',
@@ -19,7 +18,9 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem(AUTH_TOKEN_KEY)
-      window.location.href = '/login'
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   },

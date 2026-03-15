@@ -162,7 +162,7 @@ export default function ReviewList() {
   const [filter, setFilter] = useState('all')
 
   const { data, isLoading } = useGetBathhousesIdReviews(selectedBathhouseId ?? '', {
-    page: page - 1,
+    page,
     page_size: pageSize,
   }, {
     query: {
@@ -172,6 +172,7 @@ export default function ReviewList() {
 
   const reviews = data?.data ?? []
   const meta = data?.meta
+  const hasActiveFilter = filter !== 'all'
 
   const filteredReviews = useMemo(() => {
     const items = data?.data ?? []
@@ -221,7 +222,7 @@ export default function ReviewList() {
         pagination={{
           current: page,
           pageSize: pageSize,
-          total: meta?.total_count ?? 0,
+          total: hasActiveFilter ? filteredReviews.length : (meta?.total_count ?? 0),
           showSizeChanger: true,
           showTotal: (total) => `Всего: ${total}`,
           onChange: (p, ps) => {

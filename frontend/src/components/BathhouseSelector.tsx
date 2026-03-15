@@ -9,11 +9,13 @@ export default function BathhouseSelector() {
   const { selectedBathhouseId, setSelectedBathhouseId } = useBathhouseStore()
   const { data, isLoading } = useGetMyBathhouses({ page: 1, page_size: 100 })
 
-  const bathhouses = useMemo(() => data?.data ?? [], [data])
+  const bathhouses = useMemo(() => data?.data ?? [], [data?.data])
 
   useEffect(() => {
-    if (bathhouses.length > 0 && !selectedBathhouseId) {
-      setSelectedBathhouseId(bathhouses[0]?.id ?? null)
+    if (bathhouses.length > 0) {
+      if (!selectedBathhouseId || !bathhouses.some((b) => b.id === selectedBathhouseId)) {
+        setSelectedBathhouseId(bathhouses[0]?.id ?? null)
+      }
     }
   }, [bathhouses, selectedBathhouseId, setSelectedBathhouseId])
 

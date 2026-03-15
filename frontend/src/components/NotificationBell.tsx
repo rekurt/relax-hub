@@ -13,22 +13,12 @@ import {
   usePatchMyNotificationsReadAll,
 } from '@/api/generated/notifications/notifications'
 import { useQueryClient } from '@tanstack/react-query'
+import { NOTIFICATION_TYPE_LABELS } from '@/lib/constants'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
 
 const { Text } = Typography
-
-const notificationTypeLabels: Record<string, string> = {
-  booking_new: 'Новое бронирование',
-  booking_confirmed: 'Бронирование подтверждено',
-  booking_cancelled: 'Бронирование отменено',
-  booking_completed: 'Бронирование завершено',
-  review_new: 'Новый отзыв',
-  payment_received: 'Оплата получена',
-  promo_used: 'Промокод использован',
-  chat_message: 'Новое сообщение',
-}
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false)
@@ -42,7 +32,7 @@ export default function NotificationBell() {
   const unreadCount = unreadData?.data?.unread_count ?? 0
 
   const { data: notificationsData, isLoading } = useGetMyNotifications(
-    { page: 0, page_size: 5 },
+    { page: 1, page_size: 5 },
     { query: { enabled: open } },
   )
   const notifications = notificationsData?.data ?? []
@@ -118,7 +108,7 @@ export default function NotificationBell() {
                     <Badge status="processing" />
                   )}
                   <Text style={{ fontSize: 13 }}>
-                    {item.title ?? notificationTypeLabels[item.type ?? ''] ?? 'Уведомление'}
+                    {item.title ?? NOTIFICATION_TYPE_LABELS[item.type ?? ''] ?? 'Уведомление'}
                   </Text>
                 </Space>
               }

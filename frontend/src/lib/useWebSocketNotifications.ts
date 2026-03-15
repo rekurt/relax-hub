@@ -4,8 +4,7 @@ import {
   getGetMyConversationsQueryKey,
   getGetMyUnreadMessagesCountQueryKey,
 } from '@/api/generated/chat/chat'
-
-const AUTH_TOKEN_KEY = 'bani_token'
+import { AUTH_TOKEN_KEY } from '@/lib/constants'
 
 interface UseWebSocketNotificationsOptions {
   enabled?: boolean
