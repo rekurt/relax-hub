@@ -8,6 +8,7 @@ import BathhouseList from '@/pages/bathhouses/BathhouseList'
 import BathhouseForm from '@/pages/bathhouses/BathhouseForm'
 import BookingList from '@/pages/bookings/BookingList'
 import CalendarPage from '@/pages/calendar/CalendarPage'
+import ReviewList from '@/pages/reviews/ReviewList'
 
 function Placeholder({ title }: { title: string }) {
   return <div>{title}</div>
@@ -31,7 +32,7 @@ export default function AppRouter() {
         <Route path="bathhouses/new" element={<BathhouseForm />} />
         <Route path="bathhouses/:id/edit" element={<BathhouseForm />} />
         <Route path="bookings" element={<BookingList />} />
-        <Route path="reviews" element={<Placeholder title="Отзывы" />} />
+        <Route path="reviews" element={<ReviewList />} />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="pricing" element={<Placeholder title="Цены" />} />
         <Route path="promo" element={<Placeholder title="Промокоды" />} />
