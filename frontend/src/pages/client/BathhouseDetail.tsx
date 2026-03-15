@@ -13,7 +13,6 @@ import {
   Button,
   Descriptions,
   Divider,
-  List,
   DatePicker,
   Empty,
   Pagination,
@@ -37,6 +36,7 @@ import { useGetBathhousesIdGallery } from '@/api/generated/review-media/review-m
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
 import { formatPrice, formatDayOfWeek } from '@/lib/format'
 import BathhouseCard from '@/components/BathhouseCard'
+import ReviewCard from '@/components/ReviewCard'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -297,42 +297,14 @@ export default function BathhouseDetail() {
         <Empty description="Нет отзывов" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       ) : (
         <>
-          <List
-            dataSource={reviews}
-            renderItem={(review) => (
-              <List.Item>
-                <div style={{ width: '100%' }}>
-                  <Space>
-                    <Rate disabled value={review.rating ?? 0} style={{ fontSize: 14 }} />
-                    <Text type="secondary">{review.created_at ? dayjs(review.created_at).format('DD.MM.YYYY') : ''}</Text>
-                  </Space>
-                  <Paragraph style={{ marginTop: 8, marginBottom: 4 }}>{review.text}</Paragraph>
-                  {review.media && review.media.length > 0 && (
-                    <Image.PreviewGroup>
-                      <Space>
-                        {review.media.map((m) => (
-                          <Image
-                            key={m.id}
-                            src={m.thumbnail_url ?? m.url}
-                            alt="Фото отзыва"
-                            width={80}
-                            height={80}
-                            style={{ borderRadius: 4, objectFit: 'cover' }}
-                          />
-                        ))}
-                      </Space>
-                    </Image.PreviewGroup>
-                  )}
-                  {review.owner_response && (
-                    <Card size="small" style={{ marginTop: 8, background: '#f9f9f9' }}>
-                      <Text strong>Ответ владельца:</Text>
-                      <Paragraph style={{ margin: '4px 0 0' }}>{review.owner_response}</Paragraph>
-                    </Card>
-                  )}
-                </div>
-              </List.Item>
-            )}
-          />
+          {reviews.map((review) => (
+            <ReviewCard
+              key={review.id}
+              review={review}
+              showActions={true}
+              onDeleted={() => queryClient.invalidateQueries({ queryKey: [`/bathhouses/${id}/reviews`] })}
+            />
+          ))}
           {reviewMeta && reviewMeta.total_pages && reviewMeta.total_pages > 1 && (
             <Pagination
               current={reviewPage}

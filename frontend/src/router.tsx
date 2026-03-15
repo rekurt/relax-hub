@@ -26,6 +26,7 @@ import BathhouseDetail from '@/pages/client/BathhouseDetail'
 import BookingCreate from '@/pages/client/BookingCreate'
 import ClientBookingList from '@/pages/client/BookingList'
 import ClientBookingDetail from '@/pages/client/BookingDetail'
+import ReviewForm from '@/pages/client/ReviewForm'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 
 export default function AppRouter() {
@@ -76,6 +77,7 @@ export default function AppRouter() {
         <Route path="booking/new" element={<BookingCreate />} />
         <Route path="bookings" element={<ClientBookingList />} />
         <Route path="bookings/:id" element={<ClientBookingDetail />} />
+        <Route path="review" element={<ReviewForm />} />
       </Route>
 
       {/* Admin routes */}

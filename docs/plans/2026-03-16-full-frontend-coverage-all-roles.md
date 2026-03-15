@@ -73,12 +73,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 - Create: `frontend/src/components/ReviewCard.tsx`
 - Create: `frontend/src/components/MediaUploader.tsx`
 
-- [ ] ReviewForm: rating input (1-5 stars), text, photo/video upload (max 10 photos, 1 video)
-- [ ] ReviewCard reusable component: rating, text, media gallery, owner response, report button
-- [ ] Media upload with type/size validation, thumbnail preview
-- [ ] API hooks: `usePostBathhousesIdReviews`, `usePutReviewsId`, `useDeleteReviewsId`, `usePostReviewsIdMedia`, `useDeleteMediaId`, `usePostReviewsIdReport`
-- [ ] Write tests for review creation, media upload validation
-- [ ] Run project test suite - must pass before task 5
+- [x] ReviewForm: rating input (1-5 stars), text, photo/video upload (max 10 photos, 1 video)
+- [x] ReviewCard reusable component: rating, text, media gallery, owner response, report button
+- [x] Media upload with type/size validation, thumbnail preview
+- [x] API hooks: `usePostBathhousesIdReviews`, `usePutReviewsId`, `useDeleteReviewsId`, `usePostReviewsIdMedia`, `useDeleteMediaId`, `usePostReviewsIdReport`
+- [x] Write tests for review creation, media upload validation
+- [x] Run project test suite - must pass before task 5
 
 ### Task 5: Client - Favorites and recommendations
 

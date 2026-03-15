@@ -13,7 +13,7 @@ import {
   Popconfirm,
   App,
 } from 'antd'
-import { ArrowLeftOutlined, StopOutlined, DollarOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, StopOutlined, DollarOutlined, StarOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useGetBookings, usePatchBookingsIdCancel } from '@/api/generated/bookings/bookings'
@@ -86,6 +86,7 @@ export default function ClientBookingDetail() {
 
   const canCancel = booking.status === 'pending' || booking.status === 'confirmed'
   const canPay = booking.status === 'confirmed' && (!payment || payment.status === 'pending' || !payment.status)
+  const canReview = booking.status === 'completed'
 
   const getRefundInfo = () => {
     if (!booking.start_time) return ''
@@ -217,6 +218,16 @@ export default function ClientBookingDetail() {
       <Divider />
 
       <Space>
+        {canReview && booking.bathhouse_id && (
+          <Button
+            type="primary"
+            size="large"
+            icon={<StarOutlined />}
+            onClick={() => navigate(`/client/review?bathhouse=${booking.bathhouse_id}&booking=${booking.id}`)}
+          >
+            Оставить отзыв
+          </Button>
+        )}
         {canPay && (
           <Button
             type="primary"

@@ -18,6 +18,7 @@ vi.mock('@/api/generated/photos/photos', () => ({
 
 vi.mock('@/api/generated/reviews/reviews', () => ({
   useGetBathhousesIdReviews: vi.fn(),
+  useDeleteReviewsId: vi.fn(),
 }))
 
 vi.mock('@/api/generated/recommendations/recommendations', () => ({
@@ -32,12 +33,18 @@ vi.mock('@/api/generated/favorites/favorites', () => ({
   usePostBathhousesIdFavorite: vi.fn(),
 }))
 
+vi.mock('@/api/generated/complaints/complaints', () => ({
+  usePostReviewsIdReport: vi.fn(),
+}))
+
 import { useGetBathhousesId, useGetBathhousesIdAvailableSlots, useGetBathhousesIdSchema } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPhotos } from '@/api/generated/photos/photos'
 import { useGetBathhousesIdReviews } from '@/api/generated/reviews/reviews'
+import { useDeleteReviewsId } from '@/api/generated/reviews/reviews'
 import { useGetBathhousesIdSimilar } from '@/api/generated/recommendations/recommendations'
 import { useGetBathhousesIdGallery } from '@/api/generated/review-media/review-media'
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
+import { usePostReviewsIdReport } from '@/api/generated/complaints/complaints'
 
 function renderWithProviders(ui: React.ReactElement, { route = '/client/bathhouse/bath-1' } = {}) {
   const queryClient = new QueryClient({
@@ -136,6 +143,16 @@ describe('BathhouseDetail', () => {
       mutate: vi.fn(),
       isPending: false,
     } as unknown as ReturnType<typeof usePostBathhousesIdFavorite>)
+
+    vi.mocked(useDeleteReviewsId).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useDeleteReviewsId>)
+
+    vi.mocked(usePostReviewsIdReport).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof usePostReviewsIdReport>)
   })
 
   it('renders bathhouse name and description', () => {
