@@ -26,21 +26,21 @@ func PagesRouter(
 
 	pagesPrefix := adminPrefix + "/pages"
 
-	dashboard := pages.NewDashboardHandler(dashProvider, log, adminPrefix)
+	dashboard := pages.NewDashboardHandler(dashProvider, log, pagesPrefix, adminPrefix)
 	r.Get("/", dashboard.ServeHTTP)
 	r.Get("/dashboard", dashboard.ServeHTTP)
 
-	moderation := pages.NewModerationHandler(modProvider, log, pagesPrefix)
+	moderation := pages.NewModerationHandler(modProvider, log, pagesPrefix, adminPrefix)
 	r.Get("/moderation", moderation.ServeHTTP)
 	r.Post("/moderation/api/approve", moderation.HandleApprove)
 	r.Post("/moderation/api/reject", moderation.HandleReject)
 	r.Post("/moderation/api/batch-approve", moderation.HandleBatchApprove)
 	r.Post("/moderation/api/batch-reject", moderation.HandleBatchReject)
 
-	analytics := pages.NewAnalyticsHandler(analyticsProvider, log, pagesPrefix)
+	analytics := pages.NewAnalyticsHandler(analyticsProvider, log, pagesPrefix, adminPrefix)
 	r.Get("/analytics", analytics.ServeHTTP)
 
-	health := pages.NewHealthHandler(healthProvider, log)
+	health := pages.NewHealthHandler(healthProvider, log, pagesPrefix, adminPrefix)
 	r.Get("/health", health.ServeHTTP)
 
 	return r

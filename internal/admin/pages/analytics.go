@@ -3,7 +3,6 @@ package pages
 import (
 	"bytes"
 	"context"
-	"embed"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -13,9 +12,6 @@ import (
 	"github.com/nikitaaldaev/bani/internal/logger"
 )
 
-//go:embed templates/analytics.tmpl
-var analyticsFS embed.FS
-
 var analyticsFuncMap = template.FuncMap{
 	"formatRubles": FormatKopecksToRubles,
 	"itoa": func(n int64) string {
@@ -23,9 +19,7 @@ var analyticsFuncMap = template.FuncMap{
 	},
 }
 
-var analyticsTmpl = template.Must(
-	template.New("").Funcs(analyticsFuncMap).ParseFS(analyticsFS, "templates/analytics.tmpl"),
-)
+var analyticsTmpl = ParsePageTemplate(analyticsFuncMap, "templates/analytics.tmpl")
 
 // ChartPoint represents a single data point for time-series charts.
 type ChartPoint struct {
@@ -71,6 +65,9 @@ type AnalyticsData struct {
 	Cities             []CityOption
 	GeneratedAt        time.Time
 	PagesPrefix        string
+	AdminPrefix        string
+	PageTitle          string
+	ActivePage         string
 }
 
 // AnalyticsDataProvider fetches analytics data from a data source.
@@ -397,11 +394,12 @@ type AnalyticsHandler struct {
 	provider    AnalyticsDataProvider
 	log         *logger.Logger
 	pagesPrefix string
+	adminPrefix string
 }
 
 // NewAnalyticsHandler creates a new AnalyticsHandler.
-func NewAnalyticsHandler(provider AnalyticsDataProvider, log *logger.Logger, pagesPrefix string) *AnalyticsHandler {
-	return &AnalyticsHandler{provider: provider, log: log, pagesPrefix: pagesPrefix}
+func NewAnalyticsHandler(provider AnalyticsDataProvider, log *logger.Logger, pagesPrefix, adminPrefix string) *AnalyticsHandler {
+	return &AnalyticsHandler{provider: provider, log: log, pagesPrefix: pagesPrefix, adminPrefix: adminPrefix}
 }
 
 // ServeHTTP renders the analytics dashboard page.
@@ -429,9 +427,12 @@ func (h *AnalyticsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.PagesPrefix = h.pagesPrefix
+	data.AdminPrefix = h.adminPrefix
+	data.PageTitle = "Аналитика платформы"
+	data.ActivePage = "analytics"
 
 	var buf bytes.Buffer
-	if err := analyticsTmpl.ExecuteTemplate(&buf, "analytics.tmpl", data); err != nil {
+	if err := analyticsTmpl.ExecuteTemplate(&buf, "base", data); err != nil {
 		h.log.Error("analytics: render template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

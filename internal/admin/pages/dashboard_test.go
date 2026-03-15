@@ -129,7 +129,7 @@ func TestDashboardHandler_ServeHTTP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewDashboardHandler(tt.provider, testLogger(), "/admin-panel")
+			handler := NewDashboardHandler(tt.provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
 
@@ -156,7 +156,7 @@ func TestDashboardHandler_ServeHTTP(t *testing.T) {
 func TestDashboardHandler_RendersKPIs(t *testing.T) {
 	data := sampleDashboardData()
 	provider := &mockDashboardProvider{data: data}
-	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel")
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
@@ -181,7 +181,7 @@ func TestDashboardHandler_RendersKPIs(t *testing.T) {
 func TestDashboardHandler_RendersStatusCards(t *testing.T) {
 	data := sampleDashboardData()
 	provider := &mockDashboardProvider{data: data}
-	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel")
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
@@ -196,7 +196,7 @@ func TestDashboardHandler_RendersStatusCards(t *testing.T) {
 func TestDashboardHandler_RendersActivityFeed(t *testing.T) {
 	data := sampleDashboardData()
 	provider := &mockDashboardProvider{data: data}
-	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel")
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
@@ -214,6 +214,56 @@ func TestDashboardHandler_RendersActivityFeed(t *testing.T) {
 		if !strings.Contains(body, c) {
 			t.Errorf("body missing expected value %q", c)
 		}
+	}
+}
+
+func TestDashboardHandler_RendersBaseLayout(t *testing.T) {
+	data := sampleDashboardData()
+	provider := &mockDashboardProvider{data: data}
+	handler := NewDashboardHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/dashboard", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Check sidebar
+	sidebarChecks := []string{
+		"sidebar",
+		"/admin-panel/pages/dashboard",
+		"/admin-panel/pages/moderation",
+		"/admin-panel/pages/analytics",
+		"/admin-panel/pages/health",
+		"Назад в GoAdmin",
+	}
+	for _, c := range sidebarChecks {
+		if !strings.Contains(body, c) {
+			t.Errorf("body missing sidebar element %q", c)
+		}
+	}
+
+	// Check breadcrumb
+	if !strings.Contains(body, "breadcrumb") {
+		t.Error("body missing breadcrumb navigation")
+	}
+	if !strings.Contains(body, "Главная") {
+		t.Error("body missing breadcrumb 'Главная' link")
+	}
+
+	// Check dynamic title
+	if !strings.Contains(body, "<title>Панель управления") {
+		t.Error("body missing dynamic page title")
+	}
+
+	// Check footer
+	if !strings.Contains(body, "Последнее обновление:") {
+		t.Error("body missing footer with last update time")
+	}
+
+	// Check active page
+	if !strings.Contains(body, `class="nav-link active"`) {
+		t.Error("body missing active nav-link class")
 	}
 }
 

@@ -3,7 +3,6 @@ package pages
 import (
 	"bytes"
 	"context"
-	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,9 +18,6 @@ import (
 	"github.com/nikitaaldaev/bani/internal/logger"
 )
 
-//go:embed templates/moderation.tmpl
-var moderationFS embed.FS
-
 var moderationFuncMap = template.FuncMap{
 	"stars": func(n int) string {
 		if n < 0 {
@@ -36,9 +32,7 @@ var moderationFuncMap = template.FuncMap{
 	"subtract": func(a, b int) int { return a - b },
 }
 
-var moderationTmpl = template.Must(
-	template.New("").Funcs(moderationFuncMap).ParseFS(moderationFS, "templates/moderation.tmpl"),
-)
+var moderationTmpl = ParsePageTemplate(moderationFuncMap, "templates/moderation.tmpl")
 
 // ModerationReview represents a review in the moderation queue.
 type ModerationReview struct {
@@ -89,6 +83,10 @@ type ModerationData struct {
 	PageSize    int
 	TotalPages  int
 	PagesPrefix string
+	AdminPrefix string
+	PageTitle   string
+	ActivePage  string
+	GeneratedAt time.Time
 }
 
 // ModerationDataProvider fetches moderation data from a data source.
@@ -355,11 +353,12 @@ type ModerationHandler struct {
 	provider    ModerationDataProvider
 	log         *logger.Logger
 	pagesPrefix string
+	adminPrefix string
 }
 
 // NewModerationHandler creates a new ModerationHandler.
-func NewModerationHandler(provider ModerationDataProvider, log *logger.Logger, pagesPrefix string) *ModerationHandler {
-	return &ModerationHandler{provider: provider, log: log, pagesPrefix: pagesPrefix}
+func NewModerationHandler(provider ModerationDataProvider, log *logger.Logger, pagesPrefix, adminPrefix string) *ModerationHandler {
+	return &ModerationHandler{provider: provider, log: log, pagesPrefix: pagesPrefix, adminPrefix: adminPrefix}
 }
 
 // ServeHTTP renders the moderation page.
@@ -395,9 +394,13 @@ func (h *ModerationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.PagesPrefix = h.pagesPrefix
+	data.AdminPrefix = h.adminPrefix
+	data.PageTitle = "Модерация отзывов"
+	data.ActivePage = "moderation"
+	data.GeneratedAt = time.Now()
 
 	var buf bytes.Buffer
-	if err := moderationTmpl.ExecuteTemplate(&buf, "moderation.tmpl", data); err != nil {
+	if err := moderationTmpl.ExecuteTemplate(&buf, "base", data); err != nil {
 		h.log.Error("moderation: render template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

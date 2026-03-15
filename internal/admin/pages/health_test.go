@@ -81,7 +81,7 @@ func TestHealthHandler_ServeHTTP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewHealthHandler(tt.provider, testLogger())
+			handler := NewHealthHandler(tt.provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/health", nil)
 
@@ -108,7 +108,7 @@ func TestHealthHandler_ServeHTTP(t *testing.T) {
 func TestHealthHandler_RendersServiceStatus(t *testing.T) {
 	data := sampleHealthData()
 	provider := &mockHealthProvider{data: data}
-	handler := NewHealthHandler(provider, testLogger())
+	handler := NewHealthHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -136,7 +136,7 @@ func TestHealthHandler_RendersDownServices(t *testing.T) {
 		GeneratedAt: time.Now(),
 	}
 	provider := &mockHealthProvider{data: data}
-	handler := NewHealthHandler(provider, testLogger())
+	handler := NewHealthHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -157,7 +157,7 @@ func TestHealthHandler_RendersDownServices(t *testing.T) {
 func TestHealthHandler_RendersModerationBacklog(t *testing.T) {
 	data := sampleHealthData()
 	provider := &mockHealthProvider{data: data}
-	handler := NewHealthHandler(provider, testLogger())
+	handler := NewHealthHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -176,7 +176,7 @@ func TestHealthHandler_RendersModerationBacklog(t *testing.T) {
 func TestHealthHandler_RendersAutoRefresh(t *testing.T) {
 	data := sampleHealthData()
 	provider := &mockHealthProvider{data: data}
-	handler := NewHealthHandler(provider, testLogger())
+	handler := NewHealthHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -204,7 +204,7 @@ func TestHealthHandler_ZeroBacklogShowsOk(t *testing.T) {
 		GeneratedAt: time.Now(),
 	}
 	provider := &mockHealthProvider{data: data}
-	handler := NewHealthHandler(provider, testLogger())
+	handler := NewHealthHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -213,5 +213,31 @@ func TestHealthHandler_ZeroBacklogShowsOk(t *testing.T) {
 	body := rec.Body.String()
 	if !strings.Contains(body, "ok") {
 		t.Error("expected 'ok' class for zero backlog counts")
+	}
+}
+
+func TestHealthHandler_RendersBaseLayout(t *testing.T) {
+	data := sampleHealthData()
+	provider := &mockHealthProvider{data: data}
+	handler := NewHealthHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	checks := []string{
+		"sidebar",
+		"breadcrumb",
+		"<title>Мониторинг платформы",
+		"Последнее обновление:",
+		"/admin-panel/pages/health",
+		"Назад в GoAdmin",
+	}
+	for _, c := range checks {
+		if !strings.Contains(body, c) {
+			t.Errorf("body missing layout element %q", c)
+		}
 	}
 }

@@ -101,7 +101,7 @@ func TestAnalyticsHandler_ServeHTTP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			handler := NewAnalyticsHandler(tt.provider, testLogger(), "/admin-panel/pages")
+			handler := NewAnalyticsHandler(tt.provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
 
@@ -128,7 +128,7 @@ func TestAnalyticsHandler_ServeHTTP(t *testing.T) {
 func TestAnalyticsHandler_RendersChartData(t *testing.T) {
 	data := sampleAnalyticsData()
 	provider := &mockAnalyticsProvider{data: data}
-	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages")
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
@@ -160,7 +160,7 @@ func TestAnalyticsHandler_RendersChartData(t *testing.T) {
 func TestAnalyticsHandler_RendersCities(t *testing.T) {
 	data := sampleAnalyticsData()
 	provider := &mockAnalyticsProvider{data: data}
-	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages")
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
@@ -187,7 +187,7 @@ func TestAnalyticsHandler_ParsesQueryParams(t *testing.T) {
 		CityID:   "1",
 	}
 	provider := &mockAnalyticsProvider{data: data}
-	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages")
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/analytics?date_from=2026-03-01&date_to=2026-03-07&city_id=1", nil)
@@ -209,7 +209,7 @@ func TestAnalyticsHandler_ParsesQueryParams(t *testing.T) {
 func TestAnalyticsHandler_RendersFilterSection(t *testing.T) {
 	data := sampleAnalyticsData()
 	provider := &mockAnalyticsProvider{data: data}
-	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages")
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
@@ -260,5 +260,31 @@ func TestPostgresAnalyticsProvider_ParseDateRange(t *testing.T) {
 	from3, _ := p.parseDateRange(AnalyticsFilter{})
 	if from2.Format("2006-01-02") != from3.Format("2006-01-02") {
 		t.Error("invalid date_from should fall back to default")
+	}
+}
+
+func TestAnalyticsHandler_RendersBaseLayout(t *testing.T) {
+	data := sampleAnalyticsData()
+	provider := &mockAnalyticsProvider{data: data}
+	handler := NewAnalyticsHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/analytics", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	checks := []string{
+		"sidebar",
+		"breadcrumb",
+		"<title>Аналитика платформы",
+		"Последнее обновление:",
+		"/admin-panel/pages/analytics",
+		"Назад в GoAdmin",
+	}
+	for _, c := range checks {
+		if !strings.Contains(body, c) {
+			t.Errorf("body missing layout element %q", c)
+		}
 	}
 }

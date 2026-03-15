@@ -3,8 +3,6 @@ package pages
 import (
 	"bytes"
 	"context"
-	"embed"
-	"html/template"
 	"net/http"
 	"time"
 
@@ -14,12 +12,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-//go:embed templates/health.tmpl
-var healthFS embed.FS
-
-var healthTmpl = template.Must(
-	template.New("").ParseFS(healthFS, "templates/health.tmpl"),
-)
+var healthTmpl = ParsePageTemplate(nil, "templates/health.tmpl")
 
 // ServiceStatus represents the health of a single external service.
 type ServiceStatus struct {
@@ -48,6 +41,10 @@ type HealthData struct {
 	ModerationBacklog  ModerationBacklog
 	SubscriptionHealth SubscriptionHealth
 	GeneratedAt        time.Time
+	PagesPrefix        string
+	AdminPrefix        string
+	PageTitle          string
+	ActivePage         string
 }
 
 // HealthDataProvider fetches health data from external services.
@@ -155,13 +152,15 @@ func (p *PlatformHealthProvider) loadSubscriptionHealth(ctx context.Context, hea
 
 // HealthHandler serves the platform health monitor page.
 type HealthHandler struct {
-	provider HealthDataProvider
-	log      *logger.Logger
+	provider    HealthDataProvider
+	log         *logger.Logger
+	pagesPrefix string
+	adminPrefix string
 }
 
 // NewHealthHandler creates a new admin HealthHandler.
-func NewHealthHandler(provider HealthDataProvider, log *logger.Logger) *HealthHandler {
-	return &HealthHandler{provider: provider, log: log}
+func NewHealthHandler(provider HealthDataProvider, log *logger.Logger, pagesPrefix, adminPrefix string) *HealthHandler {
+	return &HealthHandler{provider: provider, log: log, pagesPrefix: pagesPrefix, adminPrefix: adminPrefix}
 }
 
 // ServeHTTP renders the platform health monitor page.
@@ -173,8 +172,13 @@ func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data.PagesPrefix = h.pagesPrefix
+	data.AdminPrefix = h.adminPrefix
+	data.PageTitle = "Мониторинг платформы"
+	data.ActivePage = "health"
+
 	var buf bytes.Buffer
-	if err := healthTmpl.ExecuteTemplate(&buf, "health.tmpl", data); err != nil {
+	if err := healthTmpl.ExecuteTemplate(&buf, "base", data); err != nil {
 		h.log.Error("health: render template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

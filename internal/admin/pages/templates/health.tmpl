@@ -1,102 +1,87 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мониторинг платформы — Бани</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f4f6f9; color: #333; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        h1 { font-size: 24px; margin-bottom: 8px; color: #1a1a1a; }
-        h2 { font-size: 18px; margin-bottom: 12px; color: #444; }
+{{define "page-styles"}}
+<style>
+    .auto-refresh { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .auto-refresh .countdown { font-weight: 600; color: #3498db; }
 
-        .auto-refresh { font-size: 13px; color: #888; margin-bottom: 20px; }
-        .auto-refresh .countdown { font-weight: 600; color: #3498db; }
+    /* Service Status */
+    .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .service-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #ccc; }
+    .service-card.up { border-left-color: #27ae60; }
+    .service-card.down { border-left-color: #e74c3c; }
+    .service-card .name { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+    .service-card .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .service-card .status-badge.up { background: #d4edda; color: #155724; }
+    .service-card .status-badge.down { background: #f8d7da; color: #721c24; }
+    .service-card .latency { font-size: 13px; color: #888; margin-top: 6px; }
+    .service-card .error-msg { font-size: 12px; color: #e74c3c; margin-top: 6px; word-break: break-all; }
 
-        /* Service Status */
-        .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .service-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #ccc; }
-        .service-card.up { border-left-color: #27ae60; }
-        .service-card.down { border-left-color: #e74c3c; }
-        .service-card .name { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-        .service-card .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .service-card .status-badge.up { background: #d4edda; color: #155724; }
-        .service-card .status-badge.down { background: #f8d7da; color: #721c24; }
-        .service-card .latency { font-size: 13px; color: #888; margin-top: 6px; }
-        .service-card .error-msg { font-size: 12px; color: #e74c3c; margin-top: 6px; word-break: break-all; }
+    /* Metrics Cards */
+    .metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .metric-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+    .metric-card .label { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    .metric-card .value { font-size: 32px; font-weight: 700; margin-top: 4px; color: #3498db; }
 
-        /* Metrics Cards */
-        .metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .metric-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
-        .metric-card .label { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-        .metric-card .value { font-size: 32px; font-weight: 700; margin-top: 4px; color: #3498db; }
+    /* Backlog */
+    .backlog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .backlog-item { text-align: center; padding: 16px; border-radius: 8px; background: #f8f9fa; }
+    .backlog-item .count { font-size: 28px; font-weight: 700; }
+    .backlog-item .count.ok { color: #27ae60; }
+    .backlog-item .count.warn { color: #e67e22; }
+    .backlog-item .count.danger { color: #e74c3c; }
+    .backlog-item .desc { font-size: 13px; color: #666; margin-top: 4px; }
+</style>
+{{end}}
 
-        /* Backlog */
-        .section { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px; }
-        .backlog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-        .backlog-item { text-align: center; padding: 16px; border-radius: 8px; background: #f8f9fa; }
-        .backlog-item .count { font-size: 28px; font-weight: 700; }
-        .backlog-item .count.ok { color: #27ae60; }
-        .backlog-item .count.warn { color: #e67e22; }
-        .backlog-item .count.danger { color: #e74c3c; }
-        .backlog-item .desc { font-size: 13px; color: #666; margin-top: 4px; }
-
-        .footer { font-size: 12px; color: #aaa; text-align: right; margin-top: 16px; }
-    </style>
-</head>
-<body>
-<div class="container">
-    <h1>Мониторинг платформы</h1>
-    <div class="auto-refresh">
-        Автообновление через <span class="countdown" id="countdown">30</span> сек.
-    </div>
-
-    <h2>Статус сервисов</h2>
-    <div class="services-grid">
-        {{range .Services}}
-        <div class="service-card {{.Status}}">
-            <div class="name">{{.Name}}</div>
-            <span class="status-badge {{.Status}}">{{if eq .Status "up"}}Работает{{else}}Недоступен{{end}}</span>
-            <div class="latency">Время ответа: {{.Latency}}</div>
-            {{if .Error}}<div class="error-msg">Сервис недоступен</div>{{end}}
-        </div>
-        {{end}}
-    </div>
-
-    <h2>Системные метрики</h2>
-    <div class="metrics-row">
-        <div class="metric-card">
-            <div class="label">WebSocket подключения</div>
-            <div class="value">{{.WebSocketClients}}</div>
-        </div>
-        <div class="metric-card">
-            <div class="label">Истекающие подписки (7 дней)</div>
-            <div class="value">{{.SubscriptionHealth.ExpiringThisWeek}}</div>
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>Очередь модерации</h2>
-        <div class="backlog-grid">
-            <div class="backlog-item">
-                <div class="count {{if gt .ModerationBacklog.Over24h 0}}warn{{else}}ok{{end}}">{{.ModerationBacklog.Over24h}}</div>
-                <div class="desc">Ожидают &gt; 24ч</div>
-            </div>
-            <div class="backlog-item">
-                <div class="count {{if gt .ModerationBacklog.Over48h 0}}danger{{else}}ok{{end}}">{{.ModerationBacklog.Over48h}}</div>
-                <div class="desc">Ожидают &gt; 48ч</div>
-            </div>
-            <div class="backlog-item">
-                <div class="count {{if gt .ModerationBacklog.Over72h 0}}danger{{else}}ok{{end}}">{{.ModerationBacklog.Over72h}}</div>
-                <div class="desc">Ожидают &gt; 72ч</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="footer">Данные на {{.GeneratedAt.Format "02.01.2006 15:04:05"}}</div>
+{{define "content"}}
+<h1>Мониторинг платформы</h1>
+<div class="auto-refresh">
+    Автообновление через <span class="countdown" id="countdown">30</span> сек.
 </div>
 
+<h2>Статус сервисов</h2>
+<div class="services-grid">
+    {{range .Services}}
+    <div class="service-card {{.Status}}">
+        <div class="name">{{.Name}}</div>
+        <span class="status-badge {{.Status}}">{{if eq .Status "up"}}Работает{{else}}Недоступен{{end}}</span>
+        <div class="latency">Время ответа: {{.Latency}}</div>
+        {{if .Error}}<div class="error-msg">Сервис недоступен</div>{{end}}
+    </div>
+    {{end}}
+</div>
+
+<h2>Системные метрики</h2>
+<div class="metrics-row">
+    <div class="metric-card">
+        <div class="label">WebSocket подключения</div>
+        <div class="value">{{.WebSocketClients}}</div>
+    </div>
+    <div class="metric-card">
+        <div class="label">Истекающие подписки (7 дней)</div>
+        <div class="value">{{.SubscriptionHealth.ExpiringThisWeek}}</div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Очередь модерации</h2>
+    <div class="backlog-grid">
+        <div class="backlog-item">
+            <div class="count {{if gt .ModerationBacklog.Over24h 0}}warn{{else}}ok{{end}}">{{.ModerationBacklog.Over24h}}</div>
+            <div class="desc">Ожидают &gt; 24ч</div>
+        </div>
+        <div class="backlog-item">
+            <div class="count {{if gt .ModerationBacklog.Over48h 0}}danger{{else}}ok{{end}}">{{.ModerationBacklog.Over48h}}</div>
+            <div class="desc">Ожидают &gt; 48ч</div>
+        </div>
+        <div class="backlog-item">
+            <div class="count {{if gt .ModerationBacklog.Over72h 0}}danger{{else}}ok{{end}}">{{.ModerationBacklog.Over72h}}</div>
+            <div class="desc">Ожидают &gt; 72ч</div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "page-scripts"}}
 <script>
 (function() {
     var seconds = 30;
@@ -111,5 +96,4 @@
     }, 1000);
 })();
 </script>
-</body>
-</html>
+{{end}}

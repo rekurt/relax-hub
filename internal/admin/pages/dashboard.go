@@ -3,7 +3,6 @@ package pages
 import (
 	"bytes"
 	"context"
-	"embed"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -13,9 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nikitaaldaev/bani/internal/logger"
 )
-
-//go:embed templates/dashboard.tmpl
-var dashboardFS embed.FS
 
 var dashboardFuncMap = template.FuncMap{
 	"formatRubles": FormatKopecksToRubles,
@@ -29,9 +25,7 @@ var dashboardFuncMap = template.FuncMap{
 	},
 }
 
-var dashboardTmpl = template.Must(
-	template.New("").Funcs(dashboardFuncMap).ParseFS(dashboardFS, "templates/dashboard.tmpl"),
-)
+var dashboardTmpl = ParsePageTemplate(dashboardFuncMap, "templates/dashboard.tmpl")
 
 // KPICards holds the main KPI metrics for the admin dashboard.
 type KPICards struct {
@@ -94,6 +88,9 @@ type DashboardData struct {
 	Registrations []RecentRegistration
 	GeneratedAt   time.Time
 	AdminPrefix   string
+	PagesPrefix   string
+	PageTitle     string
+	ActivePage    string
 }
 
 // DashboardDataProvider fetches dashboard data from a data source.
@@ -277,12 +274,13 @@ func (p *PostgresDashboardProvider) loadRecentRegistrations(ctx context.Context,
 type DashboardHandler struct {
 	provider    DashboardDataProvider
 	log         *logger.Logger
+	pagesPrefix string
 	adminPrefix string
 }
 
 // NewDashboardHandler creates a new DashboardHandler.
-func NewDashboardHandler(provider DashboardDataProvider, log *logger.Logger, adminPrefix string) *DashboardHandler {
-	return &DashboardHandler{provider: provider, log: log, adminPrefix: adminPrefix}
+func NewDashboardHandler(provider DashboardDataProvider, log *logger.Logger, pagesPrefix, adminPrefix string) *DashboardHandler {
+	return &DashboardHandler{provider: provider, log: log, pagesPrefix: pagesPrefix, adminPrefix: adminPrefix}
 }
 
 // ServeHTTP renders the admin dashboard page.
@@ -295,9 +293,12 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data.AdminPrefix = h.adminPrefix
+	data.PagesPrefix = h.pagesPrefix
+	data.PageTitle = "Панель управления"
+	data.ActivePage = "dashboard"
 
 	var buf bytes.Buffer
-	if err := dashboardTmpl.ExecuteTemplate(&buf, "dashboard.tmpl", data); err != nil {
+	if err := dashboardTmpl.ExecuteTemplate(&buf, "base", data); err != nil {
 		h.log.Error("dashboard: render template", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
