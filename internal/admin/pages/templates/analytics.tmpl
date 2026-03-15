@@ -335,7 +335,7 @@ new Chart(document.getElementById('topRevenueChart'), {
 new Chart(document.getElementById('bookingStatusChart'), {
     type: 'pie',
     data: {
-        labels: [{{range .BookingStatusDist}}"{{.Label}}",{{end}}],
+        labels: [{{range .BookingStatusDist}}"{{statusRu .Label}}",{{end}}],
         datasets: [{
             data: [{{range .BookingStatusDist}}{{.Value}},{{end}}],
             backgroundColor: chartColors.pie,

@@ -18,6 +18,17 @@ var staticFS embed.FS
 var sharedFuncMap = template.FuncMap{
 	"statusRu": StatusRu,
 	"jsEscape": JsEscape,
+	"stars":    Stars,
+}
+
+// Stars returns a visual star rating string (filled and empty stars).
+func Stars(n int) string {
+	if n < 0 {
+		n = 0
+	} else if n > 5 {
+		n = 5
+	}
+	return strings.Repeat("★", n) + strings.Repeat("☆", 5-n)
 }
 
 // StatusRu maps English status strings to Russian translations.

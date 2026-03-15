@@ -483,9 +483,9 @@ func TestDashboardHandler_RendersClickableKPIs(t *testing.T) {
 		}
 	}
 
-	// Status cards should be links to moderation
+	// Status cards should be links to moderation/GoAdmin
 	statusLinks := []string{
-		`href="/admin-panel/pages/moderation?entity=bathhouse`,
+		`href="/admin-panel/info/bathhouses?`,
 		`href="/admin-panel/pages/moderation?status=pending"`,
 	}
 	for _, link := range statusLinks {

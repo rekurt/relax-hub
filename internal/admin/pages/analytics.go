@@ -6,7 +6,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"html/template"
-	"math"
+
 	"net/http"
 	"strconv"
 	"time"
@@ -662,13 +662,4 @@ func (h *AnalyticsHandler) HandleCSVExport(w http.ResponseWriter, r *http.Reques
 			csvW.Write([]string{item.Name, FormatKopecksToRubles(item.Value)}) //nolint:errcheck
 		}
 	}
-}
-
-// SummaryTrendPercent returns the formatted absolute percentage for a summary trend.
-func SummaryTrendPercent(t TrendData) string {
-	p := math.Abs(t.Percent())
-	if p == 0 {
-		return "0%"
-	}
-	return fmt.Sprintf("%.0f%%", p)
 }

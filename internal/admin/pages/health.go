@@ -7,7 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
-	"path/filepath"
+
 	"runtime"
 	"time"
 
@@ -331,14 +331,15 @@ func (p *PlatformHealthProvider) loadDatabaseSize(ctx context.Context, data *Hea
 }
 
 func (p *PlatformHealthProvider) checkFilesystem(data *HealthData) {
-	tmpDir := os.TempDir()
-	tmpFile := filepath.Join(tmpDir, "bani-health-check.tmp")
-	if err := os.WriteFile(tmpFile, []byte("ok"), 0600); err != nil {
+	f, err := os.CreateTemp("", "bani-health-check-*.tmp")
+	if err != nil {
 		data.FilesystemOK = false
 		data.FilesystemError = err.Error()
 		return
 	}
-	os.Remove(tmpFile) //nolint:errcheck
+	name := f.Name()
+	f.Close()
+	os.Remove(name) //nolint:errcheck
 	data.FilesystemOK = true
 }
 

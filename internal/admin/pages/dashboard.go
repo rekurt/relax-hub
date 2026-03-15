@@ -16,14 +16,6 @@ import (
 
 var dashboardFuncMap = template.FuncMap{
 	"formatRubles": FormatKopecksToRubles,
-	"stars": func(n int) string {
-		if n < 0 {
-			n = 0
-		} else if n > 5 {
-			n = 5
-		}
-		return strings.Repeat("★", n) + strings.Repeat("☆", 5-n)
-	},
 	"relativeTime": RelativeTime,
 	"truncateText": TruncateText,
 	"trendClass":   TrendClass,

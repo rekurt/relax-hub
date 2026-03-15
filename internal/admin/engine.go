@@ -116,7 +116,8 @@ func RegisterCustomMenu(ctx context.Context, pool *pgxpool.Pool, pagesPrefix str
 	now := time.Now()
 
 	// Clean up existing custom menu items (idempotent).
-	_, err = tx.Exec(ctx, `DELETE FROM goadmin_menu WHERE uri LIKE $1 OR header = 'Операции'`, pagesPrefix+"%")
+	ops := items[1]
+	_, err = tx.Exec(ctx, `DELETE FROM goadmin_menu WHERE uri LIKE $1 OR header = $2`, pagesPrefix+"%", ops.Header)
 	if err != nil {
 		log.Error("admin menu: cleanup failed", "error", err)
 		return fmt.Errorf("cleanup menu items: %w", err)
@@ -135,7 +136,7 @@ func RegisterCustomMenu(ctx context.Context, pool *pgxpool.Pool, pagesPrefix str
 	}
 
 	// Insert Operations group (parent for moderation, analytics, health).
-	ops := items[1]
+	ops = items[1]
 	var opsID int
 	err = tx.QueryRow(ctx,
 		`INSERT INTO goadmin_menu (parent_id, type, "order", title, icon, uri, header, plugin_name, uuid, created_at, updated_at)

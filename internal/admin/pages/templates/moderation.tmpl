@@ -700,6 +700,17 @@ document.addEventListener('keydown', function(e) {
     var lightboxOpen = document.getElementById('lightbox').classList.contains('active');
     if (rejectModalOpen || confirmModalOpen || lightboxOpen) return;
 
+    /* Ctrl+A - select all (must be checked before bare 'a') */
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        var selectAllCb = document.getElementById('select-all');
+        if (selectAllCb) {
+            selectAllCb.checked = true;
+            toggleSelectAll(selectAllCb);
+        }
+        return;
+    }
+
     /* a - approve selected or focused */
     if (e.key === 'a' || e.key === 'A') {
         e.preventDefault();
@@ -727,17 +738,6 @@ document.addEventListener('keydown', function(e) {
                 var rejectBtn = focusedForReject.querySelector('.btn-danger');
                 if (rejectBtn) rejectBtn.click();
             }
-        }
-        return;
-    }
-
-    /* Ctrl+A - select all */
-    if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A')) {
-        e.preventDefault();
-        var selectAllCb = document.getElementById('select-all');
-        if (selectAllCb) {
-            selectAllCb.checked = true;
-            toggleSelectAll(selectAllCb);
         }
         return;
     }

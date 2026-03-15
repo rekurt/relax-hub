@@ -19,14 +19,6 @@ import (
 )
 
 var moderationFuncMap = template.FuncMap{
-	"stars": func(n int) string {
-		if n < 0 {
-			n = 0
-		} else if n > 5 {
-			n = 5
-		}
-		return strings.Repeat("★", n) + strings.Repeat("☆", 5-n)
-	},
 	"join":     strings.Join,
 	"add":      func(a, b int) int { return a + b },
 	"subtract": func(a, b int) int { return a - b },

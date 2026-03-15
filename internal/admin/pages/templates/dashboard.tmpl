@@ -176,7 +176,7 @@
 <!-- Status Cards -->
 <h2>Требует внимания</h2>
 <div class="status-row">
-    <a href="{{.PagesPrefix}}/moderation?entity=bathhouse&status=pending" class="status-card" title="Перейти к модерации бань">
+    <a href="{{.AdminPrefix}}/info/bathhouses?__go_admin_no_pjax=1&status=pending" class="status-card" title="Перейти к списку бань">
         <div class="info">Ожидают модерации<br>(бани)</div>
         <div class="count {{if gt .Status.PendingBathhouses 0}}warn{{else}}ok{{end}}">{{.Status.PendingBathhouses}}</div>
     </a>
@@ -192,7 +192,7 @@
 
 <!-- Quick Actions -->
 <div class="actions">
-    <a href="{{.PagesPrefix}}/moderation?entity=bathhouse&status=pending" class="btn warn">Ожидают модерации: бани ({{.Status.PendingBathhouses}})</a>
+    <a href="{{.AdminPrefix}}/info/bathhouses?__go_admin_no_pjax=1&status=pending" class="btn warn">Ожидают модерации: бани ({{.Status.PendingBathhouses}})</a>
     <a href="{{.PagesPrefix}}/moderation?status=pending" class="btn warn">Модерация отзывов ({{.Status.PendingReviews}})</a>
 </div>
 

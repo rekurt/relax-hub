@@ -663,28 +663,6 @@ func TestServeStatic_NotFound(t *testing.T) {
 	}
 }
 
-func TestAnalyticsSummaryTrendPercent(t *testing.T) {
-	tests := []struct {
-		name     string
-		trend    TrendData
-		wantText string
-	}{
-		{"increase", TrendData{Current: 37, Previous: 30}, "23%"},
-		{"decrease", TrendData{Current: 16, Previous: 20}, "20%"},
-		{"zero previous", TrendData{Current: 10, Previous: 0}, "0%"},
-		{"no change", TrendData{Current: 10, Previous: 10}, "0%"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := SummaryTrendPercent(tt.trend)
-			if got != tt.wantText {
-				t.Errorf("SummaryTrendPercent(%v) = %q, want %q", tt.trend, got, tt.wantText)
-			}
-		})
-	}
-}
-
 func TestAnalyticsHandler_RendersResponsiveDesign(t *testing.T) {
 	data := sampleAnalyticsData()
 	provider := &mockAnalyticsProvider{data: data}
