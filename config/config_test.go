@@ -247,6 +247,7 @@ func TestValidate_ProductionValid(t *testing.T) {
 		Redis:       RedisConfig{Addr: "localhost:6379"},
 		JWT:         JWTConfig{Secret: secret},
 		Storage:     StorageConfig{AccessKey: "prod-key", SecretKey: "prod-secret", UseSSL: true},
+		CORS:        CORSConfig{AllowedOrigins: []string{"https://example.com"}},
 	}
 
 	err := cfg.Validate()
@@ -283,6 +284,7 @@ func TestLoad_ProductionEnvironment(t *testing.T) {
 	t.Setenv("BANI_STORAGE_ACCESS_KEY", "prod-access-key")
 	t.Setenv("BANI_STORAGE_SECRET_KEY", "prod-secret-key")
 	t.Setenv("BANI_STORAGE_USE_SSL", "true")
+	t.Setenv("BANI_CORS_ALLOWED_ORIGINS", "https://example.com")
 
 	cfg, err := Load(cfgPath)
 	if err != nil {
@@ -391,6 +393,58 @@ admin:
 	}
 	if cfg.Admin.Theme != "sword" {
 		t.Errorf("expected admin.theme = sword, got %s", cfg.Admin.Theme)
+	}
+}
+
+func TestValidate_ProductionCORSWildcard(t *testing.T) {
+	secret := "this-is-a-very-long-secret-that-is-definitely-over-32-chars"
+	cfg := &Config{
+		Environment: "production",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db?sslmode=require"},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: secret},
+		Storage:     StorageConfig{AccessKey: "prod-key", SecretKey: "prod-secret", UseSSL: true},
+		CORS:        CORSConfig{AllowedOrigins: []string{"*"}},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for CORS wildcard in production, got nil")
+	}
+	if !contains(err.Error(), "cors") {
+		t.Errorf("expected error about CORS, got: %v", err)
+	}
+}
+
+func TestValidate_ProductionCORSSpecificOrigins(t *testing.T) {
+	secret := "this-is-a-very-long-secret-that-is-definitely-over-32-chars"
+	cfg := &Config{
+		Environment: "production",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db?sslmode=require"},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: secret},
+		Storage:     StorageConfig{AccessKey: "prod-key", SecretKey: "prod-secret", UseSSL: true},
+		CORS:        CORSConfig{AllowedOrigins: []string{"https://example.com"}},
+	}
+
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("expected nil error for specific CORS origins in production, got %v", err)
+	}
+}
+
+func TestValidate_DevCORSWildcard(t *testing.T) {
+	cfg := &Config{
+		Environment: "dev",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db"},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: "short-secret"},
+		CORS:        CORSConfig{AllowedOrigins: []string{"*"}},
+	}
+
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("expected nil error for CORS wildcard in dev, got %v", err)
 	}
 }
 

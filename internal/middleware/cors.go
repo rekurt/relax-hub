@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/cors"
+	"github.com/nikitaaldaev/bani/config"
 	"go.uber.org/fx"
 )
 
@@ -15,9 +16,14 @@ type CORSMiddleware struct {
 	handler func(http.Handler) http.Handler
 }
 
-func NewCORSMiddleware() *CORSMiddleware {
+func NewCORSMiddleware(cfg *config.Config) *CORSMiddleware {
+	origins := cfg.CORS.AllowedOrigins
+	if len(origins) == 0 {
+		origins = []string{"*"}
+	}
+
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   origins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID"},
 		ExposedHeaders:   []string{"Link"},

@@ -17,6 +17,7 @@ type Config struct {
 	Redis       RedisConfig      `mapstructure:"redis"`
 	JWT         JWTConfig        `mapstructure:"jwt"`
 	Logger      LoggerConfig     `mapstructure:"logger"`
+	CORS        CORSConfig       `mapstructure:"cors"`
 	Storage     StorageConfig    `mapstructure:"storage"`
 	OAuth       OAuthConfig      `mapstructure:"oauth"`
 	Moderation  ModerationConfig `mapstructure:"moderation"`
@@ -97,6 +98,10 @@ type LoggerConfig struct {
 	Format string `mapstructure:"format"`
 }
 
+type CORSConfig struct {
+	AllowedOrigins []string `mapstructure:"allowed_origins"`
+}
+
 type StorageConfig struct {
 	Endpoint  string `mapstructure:"endpoint"`
 	Bucket    string `mapstructure:"bucket"`
@@ -149,6 +154,7 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("admin.prefix", "/admin-panel")
 	v.SetDefault("admin.language", "ru")
 	v.SetDefault("admin.theme", "adminlte")
+	v.SetDefault("cors.allowed_origins", []string{"*"})
 	v.SetDefault("payment.yookassa.shop_id", "")
 	v.SetDefault("payment.yookassa.secret_key", "")
 	v.SetDefault("payment.return_url", "http://localhost:3000/payment/callback")
@@ -202,6 +208,11 @@ func (c *Config) Validate() error {
 		}
 		if !c.Storage.UseSSL {
 			return fmt.Errorf("storage.use_ssl must be true in production")
+		}
+		for _, origin := range c.CORS.AllowedOrigins {
+			if origin == "*" {
+				return fmt.Errorf("cors.allowed_origins must not contain wildcard '*' in production (set BANI_CORS_ALLOWED_ORIGINS)")
+			}
 		}
 	}
 

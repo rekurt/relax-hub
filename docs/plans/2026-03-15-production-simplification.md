@@ -43,10 +43,10 @@ The current custom logger uses `fmt.Sprintf("[%s] %s", level, msg)` with `log.Ne
 
 CORS is hardcoded as `AllowedOrigins: ["*"]`. Must be configurable per environment.
 
-- [ ] Add `BANI_CORS_ALLOWED_ORIGINS` config (comma-separated list, default `["*"]` for dev)
-- [ ] Pass allowed origins from config into CORS middleware constructor
-- [ ] Add production validation: reject `["*"]` when `BANI_ENVIRONMENT=production`
-- [ ] Test with config validation tests
+- [x] Add `BANI_CORS_ALLOWED_ORIGINS` config (comma-separated list, default `["*"]` for dev)
+- [x] Pass allowed origins from config into CORS middleware constructor
+- [x] Add production validation: reject `["*"]` when `BANI_ENVIRONMENT=production`
+- [x] Test with config validation tests
 
 ### Task 3: Add rate limiting to auth and public endpoints
 

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/logger"
@@ -60,7 +61,9 @@ func (m *mockAdminNotificationService) UpdatePreferences(_ context.Context, _ uu
 }
 
 func testRouterParams() server.RouterParams {
-	cors := middleware.NewCORSMiddleware()
+	cors := middleware.NewCORSMiddleware(&config.Config{
+		CORS: config.CORSConfig{AllowedOrigins: []string{"*"}},
+	})
 	authSvc := &mockAuthServiceForRouter{}
 	log := logger.New(logger.LevelWarn)
 
