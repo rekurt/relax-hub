@@ -1,4 +1,4 @@
-.PHONY: build run test test-hurl lint vet migrate-up migrate-down docker-up docker-down seed-admin clean
+.PHONY: build run test test-hurl lint vet migrate-up migrate-down docker-up docker-down seed-admin clean swagger swagger-fmt
 
 APP_NAME := bani-server
 BUILD_DIR := ./bin
@@ -45,3 +45,9 @@ seed-admin:
 
 clean:
 	rm -rf $(BUILD_DIR)
+
+swagger:
+	swag init -g cmd/server/docs.go -o docs --parseDependency --parseInternal
+
+swagger-fmt:
+	swag fmt -g cmd/server/docs.go

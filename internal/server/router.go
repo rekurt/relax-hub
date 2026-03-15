@@ -12,6 +12,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.uber.org/fx"
 )
 
@@ -67,6 +68,11 @@ func NewRouter(p RouterParams) http.Handler {
 	r.Get("/ready", p.HealthHandler.Ready)
 	r.Get("/sitemap.xml", p.SitemapHandler.Sitemap)
 	r.Get("/calendar/{token}.ics", p.CalendarHandler.ExportICalByToken)
+
+	// Swagger UI
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 
 	auth := middleware.RequireAuth(p.AuthService)
 	optionalAuth := middleware.OptionalAuth(p.AuthService)
