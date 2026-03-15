@@ -41,9 +41,9 @@
 - Modify: `internal/handler/auth.go`
 - Modify: `internal/handler/oauth.go`
 
-- [ ] Аннотировать Register, Login, GetMe, UpdateProfile, UploadAvatar, DeleteAvatar, GetPublicProfile, GetMyStats
-- [ ] Аннотировать OAuth эндпоинты: OAuthRedirect, OAuthCallback, LinkSocialAccount, UnlinkSocialAccount, GetSocialAccounts
-- [ ] Запустить `swag init` — без ошибок
+- [x] Аннотировать Register, Login, GetMe, UpdateProfile, UploadAvatar, DeleteAvatar, GetPublicProfile, GetMyStats
+- [x] Аннотировать OAuth эндпоинты: OAuthRedirect, OAuthCallback, LinkSocialAccount, UnlinkSocialAccount, GetSocialAccounts
+- [x] Запустить `swag init` — без ошибок
 
 ### Task 3: Аннотации — Bathhouses, Cities, Photos
 

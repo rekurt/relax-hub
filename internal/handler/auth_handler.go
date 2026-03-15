@@ -120,6 +120,17 @@ func toPublicProfileResponse(p *domain.UserProfile) publicProfileResponse {
 	}
 }
 
+// Register godoc
+// @Summary      Register a new user
+// @Description  Creates a new user account with the given credentials and role
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      registerRequest  true  "Registration data"
+// @Success      201   {object}  APIResponse{data=authResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
+// @Router       /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -146,6 +157,17 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Login godoc
+// @Summary      Login
+// @Description  Authenticates a user and returns a JWT token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      loginRequest  true  "Login credentials"
+// @Success      200   {object}  APIResponse{data=authResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Router       /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -165,6 +187,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Me godoc
+// @Summary      Get current user
+// @Description  Returns the authenticated user's profile
+// @Tags         auth
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=userResponse}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /auth/me [get]
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	user, err := h.userService.GetByID(r.Context(), userID)
@@ -183,6 +214,18 @@ var allowedAvatarTypes = map[string]string{
 	"image/png":  ".png",
 }
 
+// UpdateProfile godoc
+// @Summary      Update user profile
+// @Description  Updates the authenticated user's profile fields
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        body  body      updateProfileRequest  true  "Profile fields to update"
+// @Success      200   {object}  APIResponse{data=userResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Router       /auth/me [put]
 func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	var req updateProfileRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -210,6 +253,18 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toUserResponse(user))
 }
 
+// UploadAvatar godoc
+// @Summary      Upload avatar
+// @Description  Uploads a new avatar image for the authenticated user (JPEG or PNG, max 5MB)
+// @Tags         auth
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     BearerAuth
+// @Param        avatar  formData  file  true  "Avatar image file"
+// @Success      200     {object}  APIResponse{data=userResponse}
+// @Failure      400     {object}  APIResponse{error=APIError}
+// @Failure      401     {object}  APIResponse{error=APIError}
+// @Router       /auth/me/avatar [post]
 func (h *AuthHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxAvatarSize)
 
@@ -256,6 +311,15 @@ func (h *AuthHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toUserResponse(user))
 }
 
+// DeleteAvatar godoc
+// @Summary      Delete avatar
+// @Description  Removes the authenticated user's avatar
+// @Tags         auth
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=userResponse}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /auth/me/avatar [delete]
 func (h *AuthHandler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -268,6 +332,16 @@ func (h *AuthHandler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toUserResponse(user))
 }
 
+// GetPublicProfile godoc
+// @Summary      Get public user profile
+// @Description  Returns a user's public profile by ID
+// @Tags         users
+// @Produce      json
+// @Param        id   path      string  true  "User ID (UUID)"
+// @Success      200  {object}  APIResponse{data=publicProfileResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /users/{id}/profile [get]
 func (h *AuthHandler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -284,6 +358,15 @@ func (h *AuthHandler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toPublicProfileResponse(profile))
 }
 
+// GetMyStats godoc
+// @Summary      Get my statistics
+// @Description  Returns booking and review statistics for the authenticated user
+// @Tags         users
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=service.MyStatsOutput}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /my/stats [get]
 func (h *AuthHandler) GetMyStats(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
