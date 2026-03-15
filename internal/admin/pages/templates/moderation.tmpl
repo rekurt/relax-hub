@@ -467,7 +467,8 @@ function confirmReject() {
             setButtonLoading(confirmBtn, false);
         });
     } else {
-        fetch(pagesPrefix + '/moderation/api/reject?id=' + rejectTargetId, {
+        var targetId = rejectTargetId;
+        fetch(pagesPrefix + '/moderation/api/reject?id=' + targetId, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ reasons: reasons, comment: comment })
@@ -477,7 +478,7 @@ function confirmReject() {
             closeRejectModal();
             if (data.success) {
                 showToast('Отзыв отклонен', 'success');
-                removeReviewCard(rejectTargetId);
+                removeReviewCard(targetId);
                 updateStat('stat-pending', -1);
                 updateStat('stat-rejected', 1);
                 updateStat('stat-pending-week', -1);
