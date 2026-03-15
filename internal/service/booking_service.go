@@ -664,16 +664,19 @@ func validateWithinWorkingHours(bh *domain.Bathhouse, startTime, endTime time.Ti
 	dayClose := time.Date(startTime.Year(), startTime.Month(), startTime.Day(), closeH, closeM, 0, 0, loc)
 
 	// Handle overnight working hours (e.g., 18:00 - 06:00)
+	overnight := false
 	if !dayClose.After(dayOpen) {
 		dayClose = dayClose.Add(24 * time.Hour)
+		overnight = true
 	}
 
 	if startTime.Before(dayOpen) || endTime.After(dayClose) {
 		return fmt.Errorf("%w: booking must be within working hours (%s-%s)", domain.ErrInvalidInput, wh.OpenTime, wh.CloseTime)
 	}
 
-	// For multi-day bookings, validate end date doesn't exceed the end day's closing hours
-	if endTime.Day() != startTime.Day() {
+	// For multi-day bookings, validate end date doesn't exceed the end day's closing hours.
+	// Skip this check for overnight schedules since dayClose already covers the next day.
+	if endTime.Day() != startTime.Day() && !overnight {
 		endDayOfWeek := toDayOfWeek(endTime.Weekday())
 		var endWh *domain.WorkingHours
 		for i := range bh.WorkingHours {
