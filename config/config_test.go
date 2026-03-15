@@ -235,7 +235,7 @@ func TestValidate_ProductionNoSSLMode(t *testing.T) {
 	if err == nil {
 		t.Error("expected error for missing sslmode=require in production, got nil")
 	}
-	if err.Error() != "database.dsn must use sslmode=require in production" {
+	if err.Error() != "database.dsn must use sslmode=require, sslmode=verify-ca, or sslmode=verify-full in production" {
 		t.Errorf("unexpected error message: %v", err)
 	}
 }

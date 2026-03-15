@@ -54,7 +54,7 @@ moderation:
 
 # Telegram bot (env: BANI_TELEGRAM_*)
 telegram:
-  token: ""
+  bot_token: ""
   mode: "polling"     # polling or webhook
 
 # Admin panel (env: BANI_ADMIN_*)

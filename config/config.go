@@ -213,8 +213,11 @@ func (c *Config) Validate() error {
 		if len(c.JWT.Secret) < 32 {
 			return fmt.Errorf("jwt.secret must be at least 32 characters long in production (current length: %d)", len(c.JWT.Secret))
 		}
-		if !strings.Contains(c.Database.DSN, "sslmode=require") {
-			return fmt.Errorf("database.dsn must use sslmode=require in production")
+		if strings.Contains(c.Database.DSN, "sslmode=disable") ||
+			strings.Contains(c.Database.DSN, "sslmode=prefer") ||
+			strings.Contains(c.Database.DSN, "sslmode=allow") ||
+			!strings.Contains(c.Database.DSN, "sslmode=") {
+			return fmt.Errorf("database.dsn must use sslmode=require, sslmode=verify-ca, or sslmode=verify-full in production")
 		}
 		if c.Storage.AccessKey == "" || c.Storage.AccessKey == "minioadmin" ||
 			c.Storage.SecretKey == "" || c.Storage.SecretKey == "minioadmin" {

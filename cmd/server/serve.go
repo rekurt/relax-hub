@@ -29,7 +29,7 @@ var serveCmd = &cobra.Command{
 			cfg.Admin.Enabled = true
 		}
 
-		log := logger.New(logger.ParseLogLevel(cfg.Logger.Level))
+		log := logger.NewWithFormat(logger.ParseLogLevel(cfg.Logger.Level), cfg.Logger.Format)
 		log.Info("Starting server", "host", cfg.Server.Host, "port", cfg.Server.Port)
 
 		if cfg.Admin.Enabled {

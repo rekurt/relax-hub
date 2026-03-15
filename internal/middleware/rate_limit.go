@@ -69,24 +69,25 @@ func (rl *RateLimiter) Check(key string, ratePerSecond float64) RateLimitInfo {
 	now := time.Now()
 	limiter, exists := rl.limiters[key]
 
+	// Bucket capacity must be at least 1 so that a token can be consumed.
+	// For sub-1 rates (e.g. 5 req/min = 0.0833 req/s), the bucket holds 1 token
+	// and refills at ratePerSecond, naturally spacing requests at the correct interval.
+	capacity := math.Max(ratePerSecond, 1.0)
+
 	if !exists {
 		limiter = &clientLimiter{
-			tokens:    ratePerSecond,
+			tokens:    capacity,
 			lastCheck: now,
 		}
 		rl.limiters[key] = limiter
-		remaining := int(limiter.tokens) - 1
-		if remaining < 0 {
-			remaining = 0
-		}
 		limiter.tokens--
-		return RateLimitInfo{Allowed: true, Remaining: remaining}
+		return RateLimitInfo{Allowed: true, Remaining: int(limiter.tokens)}
 	}
 
 	elapsed := now.Sub(limiter.lastCheck).Seconds()
 	limiter.tokens += elapsed * ratePerSecond
-	if limiter.tokens > ratePerSecond {
-		limiter.tokens = ratePerSecond
+	if limiter.tokens > capacity {
+		limiter.tokens = capacity
 	}
 	limiter.lastCheck = now
 
