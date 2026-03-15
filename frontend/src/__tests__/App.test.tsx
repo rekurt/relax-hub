@@ -10,6 +10,14 @@ vi.mock('@/api/generated/auth/auth', () => ({
   getAuthMe: vi.fn().mockResolvedValue({ success: false }),
 }))
 
+vi.mock('@/api/generated/bathhouses/bathhouses', () => ({
+  useGetMyBathhouses: vi.fn().mockReturnValue({
+    data: { data: [] },
+    isLoading: false,
+  }),
+  getMyBathhouses: vi.fn().mockResolvedValue({ success: true, data: [] }),
+}))
+
 function renderWithProviders(ui: React.ReactElement, { route = '/' } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -48,15 +56,17 @@ describe('App', () => {
     expect(screen.getByText('Регистрация владельца')).toBeInTheDocument()
   })
 
-  it('renders protected content when authenticated as owner', () => {
+  it('renders dashboard when authenticated as owner', () => {
     useAuthStore.setState({
       isAuthenticated: true,
       isLoading: false,
       user: { id: '1', role: 'owner', email: 'test@test.com' },
       token: 'jwt-token',
     })
-    renderWithProviders(<App />, { route: '/' })
-    expect(screen.getByText('Личный кабинет владельца бань')).toBeInTheDocument()
+    const { container } = renderWithProviders(<App />, { route: '/' })
+    const mainContent = container.querySelector('.ant-layout-content')
+    expect(mainContent).toBeTruthy()
+    expect(mainContent!.textContent).toContain('Дашборд')
   })
 
   it('renders protected content when authenticated as representative', () => {
@@ -66,8 +76,9 @@ describe('App', () => {
       user: { id: '2', role: 'representative', email: 'rep@test.com' },
       token: 'jwt-token',
     })
-    renderWithProviders(<App />, { route: '/' })
-    expect(screen.getByText('Личный кабинет владельца бань')).toBeInTheDocument()
+    const { container } = renderWithProviders(<App />, { route: '/' })
+    const mainContent = container.querySelector('.ant-layout-content')
+    expect(mainContent!.textContent).toContain('Дашборд')
   })
 
   it('redirects client role to login', () => {

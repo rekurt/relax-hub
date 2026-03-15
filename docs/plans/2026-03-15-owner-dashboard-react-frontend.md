@@ -89,12 +89,12 @@ React SPA для владельцев бань: управление баням�
 - Create: `frontend/src/components/BathhouseSelector.tsx`
 - Create: `frontend/src/router.tsx`
 
-- [ ] AppLayout: antd Layout с Sider (sidebar меню), Header (имя пользователя, аватар, выход), Content
-- [ ] Sidebar меню: Дашборд, Бани, Бронирования, Отзывы, Календарь, Цены, Промокоды, Чат, Представители, Подписки, Виджет, Настройки профиля
-- [ ] BathhouseSelector: выпадающий список бань владельца (GET /my/bathhouses) в header, сохранение выбранной бани в zustand
-- [ ] Настроить React Router: вложенные маршруты внутри AppLayout
-- [ ] Мобильная адаптивность sidebar (collapsible)
-- [ ] Breadcrumbs на основе текущего маршрута
+- [x] AppLayout: antd Layout с Sider (sidebar меню), Header (имя пользователя, аватар, выход), Content
+- [x] Sidebar меню: Дашборд, Бани, Бронирования, Отзывы, Календарь, Цены, Промокоды, Чат, Представители, Подписки, Виджет, Настройки профиля
+- [x] BathhouseSelector: выпадающий список бань владельца (GET /my/bathhouses) в header, сохранение выбранной бани в zustand
+- [x] Настроить React Router: вложенные маршруты внутри AppLayout
+- [x] Мобильная адаптивность sidebar (collapsible)
+- [x] Breadcrumbs на основе текущего маршрута
 
 ### Task 5: Дашборд (аналитика)
 

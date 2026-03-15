@@ -1,39 +1,22 @@
 import { useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
 import { App as AntApp } from 'antd'
 import { useAuthStore } from '@/stores/auth'
-import ProtectedRoute from '@/components/ProtectedRoute'
-import Login from '@/pages/Login'
-import Register from '@/pages/Register'
+import AppRouter from '@/router'
 
-function AppRoutes() {
+function AppWithAuth() {
   const loadProfile = useAuthStore((s) => s.loadProfile)
 
   useEffect(() => {
     loadProfile()
   }, [loadProfile])
 
-  return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route
-        path="/*"
-        element={
-          <ProtectedRoute>
-            <div>Личный кабинет владельца бань</div>
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  )
+  return <AppRouter />
 }
 
 export default function App() {
   return (
     <AntApp>
-      <AppRoutes />
+      <AppWithAuth />
     </AntApp>
   )
 }
