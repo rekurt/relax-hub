@@ -41,52 +41,77 @@ func TestLoggerNew(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			logger := New(tt.level)
-			if logger == nil {
+			l := New(tt.level)
+			if l == nil {
 				t.Errorf("New(%v) returned nil", tt.level)
 				return
 			}
-			if logger.level != tt.level {
-				t.Errorf("New(%v) set level to %v", tt.level, logger.level)
+			if l.level != tt.level {
+				t.Errorf("New(%v) set level to %v", tt.level, l.level)
+			}
+			if l.sugar == nil {
+				t.Error("New() did not initialize zap sugar logger")
+			}
+		})
+	}
+}
+
+func TestNewWithFormat(t *testing.T) {
+	tests := []struct {
+		name   string
+		format string
+	}{
+		{"json format", "json"},
+		{"console format", "console"},
+		{"unknown defaults to console", "unknown"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := NewWithFormat(LevelInfo, tt.format)
+			if l == nil {
+				t.Fatal("NewWithFormat returned nil")
+			}
+			if l.sugar == nil {
+				t.Error("NewWithFormat did not initialize zap sugar logger")
 			}
 		})
 	}
 }
 
 func TestLoggerDebug(t *testing.T) {
-	logger := New(LevelDebug)
+	l := New(LevelDebug)
 	// Should not panic
-	logger.Debug("test message")
-	logger.Debug("test message with fields", "key", "value")
+	l.Debug("test message")
+	l.Debug("test message with fields", "key", "value")
 }
 
 func TestLoggerInfo(t *testing.T) {
-	logger := New(LevelInfo)
+	l := New(LevelInfo)
 	// Should not panic
-	logger.Info("test message")
-	logger.Info("test message with fields", "key", "value")
+	l.Info("test message")
+	l.Info("test message with fields", "key", "value")
 }
 
 func TestLoggerWarn(t *testing.T) {
-	logger := New(LevelWarn)
+	l := New(LevelWarn)
 	// Should not panic
-	logger.Warn("test message")
-	logger.Warn("test message with fields", "key", "value")
+	l.Warn("test message")
+	l.Warn("test message with fields", "key", "value")
 }
 
 func TestLoggerError(t *testing.T) {
-	logger := New(LevelError)
+	l := New(LevelError)
 	// Should not panic
-	logger.Error("test message")
-	logger.Error("test message with fields", "key", "value")
+	l.Error("test message")
+	l.Error("test message with fields", "key", "value")
 }
 
 func TestLoggerLevelFiltering(t *testing.T) {
 	tests := []struct {
 		name  string
 		level LogLevel
-		// We can't easily test output, but we can test that different levels don't panic
-		fn func(*Logger)
+		fn    func(*Logger)
 	}{
 		{
 			name:  "error level logs errors",
@@ -112,9 +137,42 @@ func TestLoggerLevelFiltering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			logger := New(tt.level)
+			l := New(tt.level)
 			// Should not panic
-			tt.fn(logger)
+			tt.fn(l)
+		})
+	}
+}
+
+func TestLoggerSync(t *testing.T) {
+	l := New(LevelInfo)
+	// Should not panic
+	l.Sync()
+}
+
+func TestLoggerJSONFormat(t *testing.T) {
+	l := NewWithFormat(LevelDebug, "json")
+	// Should not panic with structured fields
+	l.Info("request", "method", "GET", "path", "/api/v1/test", "status", 200)
+	l.Error("failed", "error", "something went wrong", "retry", true)
+}
+
+func TestToZapLevel(t *testing.T) {
+	tests := []struct {
+		name  string
+		level LogLevel
+	}{
+		{"debug", LevelDebug},
+		{"info", LevelInfo},
+		{"warn", LevelWarn},
+		{"error", LevelError},
+		{"unknown defaults to info", LogLevel(99)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Should not panic
+			_ = toZapLevel(tt.level)
 		})
 	}
 }

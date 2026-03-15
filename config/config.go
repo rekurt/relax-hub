@@ -93,7 +93,8 @@ type JWTConfig struct {
 }
 
 type LoggerConfig struct {
-	Level string `mapstructure:"level"`
+	Level  string `mapstructure:"level"`
+	Format string `mapstructure:"format"`
 }
 
 type StorageConfig struct {
@@ -134,6 +135,7 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("jwt.secret", "change-me-in-production")
 	v.SetDefault("jwt.token_ttl", "24h")
 	v.SetDefault("logger.level", "info")
+	v.SetDefault("logger.format", "json")
 	v.SetDefault("storage.endpoint", "localhost:9000")
 	v.SetDefault("storage.bucket", "bani-avatars")
 	v.SetDefault("storage.access_key", "minioadmin")

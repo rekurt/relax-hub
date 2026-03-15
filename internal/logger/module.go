@@ -11,5 +11,9 @@ var Module = fx.Module("logger",
 
 func NewLogger(cfg *config.Config) *Logger {
 	level := ParseLogLevel(cfg.Logger.Level)
-	return New(level)
+	format := cfg.Logger.Format
+	if format == "" {
+		format = "json"
+	}
+	return NewWithFormat(level, format)
 }
