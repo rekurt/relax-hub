@@ -448,6 +448,79 @@ func TestValidate_DevCORSWildcard(t *testing.T) {
 	}
 }
 
+func TestLoad_DatabasePoolDefaults(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfgPath := filepath.Join(tmpDir, "config.yaml")
+	if err := os.WriteFile(cfgPath, []byte(""), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("BANI_JWT_SECRET", "a-secure-secret-for-testing")
+
+	cfg, err := Load(cfgPath)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Database.MaxConns != 20 {
+		t.Errorf("expected database.max_conns = 20, got %d", cfg.Database.MaxConns)
+	}
+	if cfg.Database.MinConns != 2 {
+		t.Errorf("expected database.min_conns = 2, got %d", cfg.Database.MinConns)
+	}
+	if cfg.Database.MaxConnLifetime != time.Hour {
+		t.Errorf("expected database.max_conn_lifetime = 1h, got %s", cfg.Database.MaxConnLifetime)
+	}
+}
+
+func TestValidate_DatabaseMaxConnsExceedsLimit(t *testing.T) {
+	cfg := &Config{
+		Environment: "dev",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db", MaxConns: 150},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: "test-secret"},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for MaxConns > 100, got nil")
+	}
+	if !contains(err.Error(), "100") {
+		t.Errorf("expected error about max conns limit, got: %v", err)
+	}
+}
+
+func TestValidate_DatabaseMinConnsExceedsMaxConns(t *testing.T) {
+	cfg := &Config{
+		Environment: "dev",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db", MaxConns: 10, MinConns: 20},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: "test-secret"},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("expected error for MinConns > MaxConns, got nil")
+	}
+	if !contains(err.Error(), "min_conns") {
+		t.Errorf("expected error about min_conns, got: %v", err)
+	}
+}
+
+func TestValidate_DatabasePoolConfigValid(t *testing.T) {
+	cfg := &Config{
+		Environment: "dev",
+		Database:    DatabaseConfig{DSN: "postgres://localhost/db", MaxConns: 50, MinConns: 5},
+		Redis:       RedisConfig{Addr: "localhost:6379"},
+		JWT:         JWTConfig{Secret: "test-secret"},
+	}
+
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("expected nil error for valid pool config, got %v", err)
+	}
+}
+
 func index(s, substr string) int {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {

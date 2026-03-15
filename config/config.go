@@ -79,7 +79,10 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	DSN string `mapstructure:"dsn"`
+	DSN             string        `mapstructure:"dsn"`
+	MaxConns        int32         `mapstructure:"max_conns"`
+	MinConns        int32         `mapstructure:"min_conns"`
+	MaxConnLifetime time.Duration `mapstructure:"max_conn_lifetime"`
 }
 
 type RedisConfig struct {
@@ -134,6 +137,9 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("server.host", "0.0.0.0")
 	v.SetDefault("server.port", 8080)
 	v.SetDefault("database.dsn", "postgres://postgres:postgres@localhost:5432/bani?sslmode=disable")
+	v.SetDefault("database.max_conns", 20)
+	v.SetDefault("database.min_conns", 2)
+	v.SetDefault("database.max_conn_lifetime", "1h")
 	v.SetDefault("redis.addr", "localhost:6379")
 	v.SetDefault("redis.password", "")
 	v.SetDefault("redis.db", 0)
@@ -192,6 +198,14 @@ func (c *Config) Validate() error {
 	// Validate Redis Addr
 	if c.Redis.Addr == "" {
 		return fmt.Errorf("redis.addr is required (set BANI_REDIS_ADDR)")
+	}
+
+	// Validate pool settings
+	if c.Database.MaxConns > 100 {
+		return fmt.Errorf("database.max_conns=%d exceeds recommended maximum of 100 (set BANI_DATABASE_MAX_CONNS)", c.Database.MaxConns)
+	}
+	if c.Database.MaxConns > 0 && c.Database.MinConns > c.Database.MaxConns {
+		return fmt.Errorf("database.min_conns (%d) must not exceed database.max_conns (%d)", c.Database.MinConns, c.Database.MaxConns)
 	}
 
 	// Production-specific validation

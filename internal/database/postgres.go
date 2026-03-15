@@ -29,6 +29,17 @@ func NewPostgresPool(lc fx.Lifecycle, cfg *config.Config, log *logger.Logger) (*
 		return nil, fmt.Errorf("parse postgres config: %w", err)
 	}
 
+	// Apply pool tuning from config
+	if cfg.Database.MaxConns > 0 {
+		poolCfg.MaxConns = cfg.Database.MaxConns
+	}
+	if cfg.Database.MinConns > 0 {
+		poolCfg.MinConns = cfg.Database.MinConns
+	}
+	if cfg.Database.MaxConnLifetime > 0 {
+		poolCfg.MaxConnLifetime = cfg.Database.MaxConnLifetime
+	}
+
 	pool, err := pgxpool.NewWithConfig(context.Background(), poolCfg)
 	if err != nil {
 		log.Error("Failed to create PostgreSQL pool", "error", err)
@@ -45,7 +56,12 @@ func NewPostgresPool(lc fx.Lifecycle, cfg *config.Config, log *logger.Logger) (*
 				log.Error("Failed to ping PostgreSQL", "error", err)
 				return err
 			}
-			log.Info("PostgreSQL connection established", "query_timeout", DefaultQueryTimeout)
+			log.Info("PostgreSQL connection established",
+				"query_timeout", DefaultQueryTimeout,
+				"max_conns", poolCfg.MaxConns,
+				"min_conns", poolCfg.MinConns,
+				"max_conn_lifetime", poolCfg.MaxConnLifetime,
+			)
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {

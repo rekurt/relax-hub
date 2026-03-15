@@ -199,10 +199,10 @@ Several service methods add zero business logic and just forward to repository:
 
 Pool uses pgx defaults with no tuning. No MaxConns, MaxConnLifetime, MinConns configured.
 
-- [ ] Add pool config: `BANI_DATABASE_MAX_CONNS` (default 20), `BANI_DATABASE_MAX_CONN_LIFETIME` (default 1h), `BANI_DATABASE_MIN_CONNS` (default 2)
-- [ ] Apply pool config to pgxpool before creating the pool
-- [ ] Add pool config to config validation (warn if MaxConns > 100)
-- [ ] Test pool creation with config
+- [x] Add pool config: `BANI_DATABASE_MAX_CONNS` (default 20), `BANI_DATABASE_MAX_CONN_LIFETIME` (default 1h), `BANI_DATABASE_MIN_CONNS` (default 2)
+- [x] Apply pool config to pgxpool before creating the pool
+- [x] Add pool config to config validation (warn if MaxConns > 100)
+- [x] Test pool creation with config
 
 ### Task 9: Fix silent panics and config inconsistencies
 
