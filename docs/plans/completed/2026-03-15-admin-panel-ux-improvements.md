@@ -357,6 +357,6 @@ KPI-карточки статичны и не кликабельны. Нет т�
 
 ### Task 10: Update documentation
 
-- [ ] Update CLAUDE.md: добавить описание shared template system (base.tmpl, components.tmpl),
+- [x] Update CLAUDE.md: добавить описание shared template system (base.tmpl, components.tmpl),
     new routes (analytics/export, static/*), keyboard shortcuts
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Move this plan to `docs/plans/completed/`

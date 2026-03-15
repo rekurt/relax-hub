@@ -164,17 +164,51 @@ Built on GoAdmin framework, enabled via `--with-admin` flag on the serve command
 
 - `internal/admin/` — GoAdmin engine, JWT auth bridge, fx module
 - `internal/admin/pages/` — custom pages: dashboard, moderation, analytics, health
+- `internal/admin/pages/templates/` — Go html/template files with shared layout system
+- `internal/admin/pages/static/` — self-hosted static assets (Chart.js)
 - Config: `BANI_ADMIN_ENABLED` (default `false`), `BANI_ADMIN_PREFIX` (default `/admin-panel`), `BANI_ADMIN_LANGUAGE` (default `ru`), `BANI_ADMIN_THEME` (default `adminlte`)
 
 ```bash
 go run ./cmd/server serve --with-admin   # start server with admin panel
 ```
 
-Custom pages:
-- **Dashboard**: KPI cards (users, bathhouses, bookings, revenue), status cards, recent activity feed
-- **Moderation Center**: review queue with approve/reject actions, batch operations, filtering
-- **Analytics**: Chart.js charts for bookings, revenue, users, top bathhouses, with date range and city filters
-- **Health Monitor**: service status checks (PostgreSQL, Redis), moderation backlog, auto-refresh
+### Shared Template System
+
+All custom pages use a shared template hierarchy via Go `html/template`:
+
+- `base.tmpl` — common HTML structure: sidebar navigation (links to all 4 pages + GoAdmin), breadcrumbs, shared CSS (reset, grid, cards, buttons, badges, responsive media queries), footer with "Последнее обновление"
+- `components.tmpl` — reusable template blocks: `{{define "toast"}}`, `{{define "status-badge"}}`, `{{define "empty-state"}}`, `{{define "loading-spinner"}}`, `{{define "pagination"}}`
+- Page templates extend base via `{{template "base" .}}` and `{{define "content"}}...{{end}}`
+
+Template functions available: `statusRu` (EN→RU status mapping), `jsEscape` (XSS-safe JS string escaping), `relativeTime` (human-readable relative timestamps), `formatBytes` (byte size formatting).
+
+### Custom Pages
+
+- **Dashboard**: clickable KPI cards with trend indicators (↑/↓%), revenue sub-cards (today/week/month), relative time in activity feeds, auto-refresh toggle (60s interval)
+- **Moderation Center**: inline AJAX approve/reject (no page reload), toast notifications, loading states, lightbox for review images, reject modal with reason validation and free-text comment, keyboard shortcuts, batch operations with confirmation
+- **Analytics**: date presets (Today/7d/30d/Month/Year), summary row with period comparison, CSV export, self-hosted Chart.js, city filter on all charts
+- **Health Monitor**: system metrics (uptime, goroutines, memory, GC), pgxpool connection stats with progress bars, filesystem check, DB size, severity-colored backlog (green/yellow/orange/red), configurable auto-refresh (15/30/60s) with pause/play
+
+### Admin Routes
+
+Custom pages are mounted under `{BANI_ADMIN_PREFIX}/pages/`:
+
+- `GET /` and `GET /dashboard` — dashboard
+- `GET /moderation` — moderation page
+- `POST /moderation/api/{approve,reject,batch-approve,batch-reject}` — moderation actions (return JSON)
+- `GET /analytics` — analytics page
+- `GET /analytics/export?type={bookings|revenue|users|top_bookings|top_revenue}&from=&to=&city_id=` — CSV export
+- `GET /static/*` — self-hosted static assets
+- `GET /health` — health monitor
+
+### Moderation Keyboard Shortcuts
+
+- `a` — approve selected (or focused card)
+- `r` — open reject modal
+- `Escape` — close reject modal
+- `Enter` in reject modal — confirm rejection
+- `Ctrl+A` — select all on page
+- `→` / `←` — next/previous page
 
 Auth bridges JWT tokens from the main app to GoAdmin sessions. Menu configured in `engine.go`.
 
