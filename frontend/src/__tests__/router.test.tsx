@@ -8,6 +8,42 @@ import { useAuthStore } from '@/stores/auth'
 
 vi.mock('@/api/generated/auth/auth', () => ({
   getAuthMe: vi.fn().mockResolvedValue({ success: false }),
+  usePutAuthMe: vi.fn().mockReturnValue({ mutate: vi.fn(), isPending: false }),
+  usePostAuthMeAvatar: vi.fn().mockReturnValue({ mutate: vi.fn(), isPending: false }),
+  useDeleteAuthMeAvatar: vi.fn().mockReturnValue({ mutate: vi.fn(), isPending: false }),
+}))
+
+vi.mock('@/api/generated/notifications/notifications', () => ({
+  useGetMyNotificationsUnreadCount: vi.fn().mockReturnValue({
+    data: { data: { unread_count: 0 } },
+    isLoading: false,
+  }),
+  useGetMyNotifications: vi.fn().mockReturnValue({
+    data: { data: [] },
+    isLoading: false,
+  }),
+  usePatchMyNotificationsIdRead: vi.fn().mockReturnValue({ mutate: vi.fn(), isPending: false }),
+  usePatchMyNotificationsReadAll: vi.fn().mockReturnValue({ mutate: vi.fn(), isPending: false }),
+  useGetMyNotificationPreferences: vi.fn().mockReturnValue({
+    data: { data: {} },
+    isLoading: false,
+  }),
+  usePutMyNotificationPreferences: vi.fn().mockReturnValue({ mutate: vi.fn(), isPending: false }),
+}))
+
+vi.mock('@/api/generated/oauth/oauth', () => ({
+  useGetAuthMeSocialAccounts: vi.fn().mockReturnValue({
+    data: { data: [] },
+    isLoading: false,
+  }),
+  useDeleteAuthLinkProvider: vi.fn().mockReturnValue({ mutate: vi.fn(), isPending: false }),
+}))
+
+vi.mock('@/api/generated/cities/cities', () => ({
+  useGetCities: vi.fn().mockReturnValue({
+    data: { data: [] },
+    isLoading: false,
+  }),
 }))
 
 vi.mock('@/api/generated/bathhouses/bathhouses', () => ({

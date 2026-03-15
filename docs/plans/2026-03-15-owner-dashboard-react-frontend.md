@@ -210,11 +210,11 @@ React SPA для владельцев бань: управление баням�
 - Create: `frontend/src/pages/settings/ProfileSettings.tsx`
 - Create: `frontend/src/components/NotificationBell.tsx`
 
-- [ ] NotificationBell: иконка в header со счётчиком непрочитанных, dropdown со списком
-- [ ] NotificationList: полный список уведомлений с пагинацией, кнопка "прочитать все"
-- [ ] ProfileSettings: редактирование профиля (имя, телефон, bio, город), загрузка/удаление аватара
-- [ ] Настройки уведомлений: переключатели каналов (in_app, email, push) и событий (booking, review, promo, reminders)
-- [ ] Привязка/отвязка социальных аккаунтов (VK, Yandex, Google)
+- [x] NotificationBell: иконка в header со счётчиком непрочитанных, dropdown со списком
+- [x] NotificationList: полный список уведомлений с пагинацией, кнопка "прочитать все"
+- [x] ProfileSettings: редактирование профиля (имя, телефон, bio, город), загрузка/удаление аватара
+- [x] Настройки уведомлений: переключатели каналов (in_app, email, push) и событий (booking, review, promo, reminders)
+- [x] Привязка/отвязка социальных аккаунтов (VK, Yandex, Google)
 
 ### Task 15: Подписки и виджет
 

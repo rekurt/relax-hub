@@ -34,6 +34,7 @@ import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
 import { useGetMyUnreadMessagesCount } from '@/api/generated/chat/chat'
 import BathhouseSelector from '@/components/BathhouseSelector'
+import NotificationBell from '@/components/NotificationBell'
 
 const { Header, Sider, Content } = Layout
 const { useBreakpoint } = Grid
@@ -243,11 +244,14 @@ export default function AppLayout() {
             <BathhouseSelector />
           </div>
 
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-            <Button type="text" icon={<UserOutlined />}>
-              {!isMobile && (user?.name ?? user?.email ?? 'Профиль')}
-            </Button>
-          </Dropdown>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <NotificationBell />
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <Button type="text" icon={<UserOutlined />}>
+                {!isMobile && (user?.name ?? user?.email ?? 'Профиль')}
+              </Button>
+            </Dropdown>
+          </div>
         </Header>
 
         <Content style={{ margin: 24 }}>

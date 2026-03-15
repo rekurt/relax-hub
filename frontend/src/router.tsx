@@ -13,6 +13,8 @@ import PricingRules from '@/pages/pricing/PricingRules'
 import PromoList from '@/pages/promo/PromoList'
 import RepresentativeList from '@/pages/representatives/RepresentativeList'
 import ChatPage from '@/pages/chat/ChatPage'
+import NotificationList from '@/pages/notifications/NotificationList'
+import ProfileSettings from '@/pages/settings/ProfileSettings'
 
 function Placeholder({ title }: { title: string }) {
   return <div>{title}</div>
@@ -45,8 +47,8 @@ export default function AppRouter() {
         <Route path="subscriptions" element={<Placeholder title="Подписки" />} />
         <Route path="widget" element={<Placeholder title="Виджет" />} />
         <Route path="photos" element={<Placeholder title="Фото" />} />
-        <Route path="settings" element={<Placeholder title="Настройки" />} />
-        <Route path="notifications" element={<Placeholder title="Уведомления" />} />
+        <Route path="settings" element={<ProfileSettings />} />
+        <Route path="notifications" element={<NotificationList />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
