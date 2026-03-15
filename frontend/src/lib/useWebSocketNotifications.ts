@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   getGetMyConversationsQueryKey,
@@ -21,58 +21,71 @@ export function useWebSocketNotifications({
   const wsRef = useRef<WebSocket | null>(null)
   const queryClient = useQueryClient()
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const onMessageRef = useRef(onMessage)
+  const activeConversationIdRef = useRef(activeConversationId)
 
-  const connect = useCallback(() => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY)
-    if (!token || !enabled) return
+  useEffect(() => {
+    onMessageRef.current = onMessage
+  }, [onMessage])
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/notifications?token=${token}`
+  useEffect(() => {
+    activeConversationIdRef.current = activeConversationId
+  }, [activeConversationId])
 
-    const ws = new WebSocket(wsUrl)
-    wsRef.current = ws
+  useEffect(() => {
+    if (!enabled) return
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        onMessage?.(data)
+    function connect() {
+      const token = localStorage.getItem(AUTH_TOKEN_KEY)
+      if (!token) return
 
-        if (data.type === 'new_message') {
-          queryClient.invalidateQueries({
-            queryKey: getGetMyConversationsQueryKey(),
-          })
-          queryClient.invalidateQueries({
-            queryKey: getGetMyUnreadMessagesCountQueryKey(),
-          })
-          if (activeConversationId && data.conversation_id === activeConversationId) {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/notifications?token=${token}`
+
+      const ws = new WebSocket(wsUrl)
+      wsRef.current = ws
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          onMessageRef.current?.(data)
+
+          if (data.type === 'new_message') {
             queryClient.invalidateQueries({
-              queryKey: [`/conversations/${activeConversationId}/messages`],
+              queryKey: getGetMyConversationsQueryKey(),
             })
+            queryClient.invalidateQueries({
+              queryKey: getGetMyUnreadMessagesCountQueryKey(),
+            })
+            const convId = activeConversationIdRef.current
+            if (convId && data.conversation_id === convId) {
+              queryClient.invalidateQueries({
+                queryKey: [`/conversations/${convId}/messages`],
+              })
+            }
           }
+        } catch {
+          // ignore non-JSON messages
         }
-      } catch {
-        // ignore non-JSON messages
+      }
+
+      ws.onclose = () => {
+        wsRef.current = null
+        reconnectTimeoutRef.current = setTimeout(connect, 5000)
+      }
+
+      ws.onerror = () => {
+        ws.close()
       }
     }
 
-    ws.onclose = () => {
-      wsRef.current = null
-      reconnectTimeoutRef.current = setTimeout(connect, 5000)
-    }
-
-    ws.onerror = () => {
-      ws.close()
-    }
-  }, [enabled, onMessage, queryClient, activeConversationId])
-
-  useEffect(() => {
     connect()
     return () => {
       clearTimeout(reconnectTimeoutRef.current)
       wsRef.current?.close()
       wsRef.current = null
     }
-  }, [connect])
+  }, [enabled, queryClient])
 
   return wsRef
 }

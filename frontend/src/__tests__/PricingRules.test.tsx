@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { render, screen, fireEvent, within, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from 'antd'
@@ -31,7 +31,7 @@ function renderWithProviders(ui: React.ReactElement) {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <ConfigProvider locale={ruRU}>
+      <ConfigProvider locale={ruRU} theme={{ token: { motion: false } }}>
         <AntApp>
           <MemoryRouter>{ui}</MemoryRouter>
         </AntApp>
@@ -254,7 +254,7 @@ describe('PricingRules', () => {
     expect(screen.getByText('Редактировать правило')).toBeInTheDocument()
   })
 
-  it('calls delete mutation when confirmed', () => {
+  it('calls delete mutation when confirmed', async () => {
     mockBathhouseStore('bath-1')
     vi.mocked(useGetMyBathhousesIdPricingRules).mockReturnValue({
       data: { data: [mockRules[0]], success: true },
@@ -267,13 +267,18 @@ describe('PricingRules', () => {
       (btn) => btn.querySelector('.anticon-delete'),
     )
     expect(deleteButtons.length).toBeGreaterThan(0)
-    fireEvent.click(deleteButtons[0]!)
+    await act(async () => {
+      fireEvent.click(deleteButtons[0]!)
+    })
 
-    const popconfirm = screen.getByText('Удалить правило?')
-    expect(popconfirm).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Удалить правило?')).toBeInTheDocument()
+    })
 
     const confirmBtn = screen.getByRole('button', { name: 'Удалить' })
-    fireEvent.click(confirmBtn)
+    await act(async () => {
+      fireEvent.click(confirmBtn)
+    })
 
     expect(mockDeleteMutation.mutate).toHaveBeenCalledWith({ id: 'rule-1' })
   })

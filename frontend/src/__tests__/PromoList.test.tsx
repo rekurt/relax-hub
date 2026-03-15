@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from 'antd'
@@ -29,7 +29,7 @@ function renderWithProviders(ui: React.ReactElement) {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <ConfigProvider locale={ruRU}>
+      <ConfigProvider locale={ruRU} theme={{ token: { motion: false } }}>
         <AntApp>
           <MemoryRouter>{ui}</MemoryRouter>
         </AntApp>
@@ -259,7 +259,7 @@ describe('PromoList', () => {
     expect(screen.getAllByText('Тип скидки').length).toBeGreaterThanOrEqual(2)
   })
 
-  it('calls delete mutation when confirmed', () => {
+  it('calls delete mutation when confirmed', async () => {
     mockBathhouseStore('bath-1')
     vi.mocked(useGetMyBathhousesIdPromoCodes).mockReturnValue({
       data: { data: [mockPromos[0]], success: true, meta: { total_count: 1 } },
@@ -272,12 +272,18 @@ describe('PromoList', () => {
       (btn) => btn.querySelector('.anticon-delete'),
     )
     expect(deleteButtons.length).toBeGreaterThan(0)
-    fireEvent.click(deleteButtons[0]!)
+    await act(async () => {
+      fireEvent.click(deleteButtons[0]!)
+    })
 
-    expect(screen.getByText('Деактивировать промокод?')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText('Деактивировать промокод?')).toBeInTheDocument()
+    })
 
     const confirmBtn = screen.getByRole('button', { name: 'Деактивировать' })
-    fireEvent.click(confirmBtn)
+    await act(async () => {
+      fireEvent.click(confirmBtn)
+    })
 
     expect(mockDeleteMutation.mutate).toHaveBeenCalledWith({ id: 'promo-1' })
   })

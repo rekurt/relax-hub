@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { Input, Button, Empty, Spin, Typography, Space } from 'antd'
 import { SendOutlined } from '@ant-design/icons'
 import {
@@ -87,9 +87,9 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
     },
   })
 
-  const markReadMutation = usePatchConversationsIdRead()
+  const { mutate: markRead } = usePatchConversationsIdRead()
 
-  const messages = data?.data ?? []
+  const messages = useMemo(() => data?.data ?? [], [data?.data])
 
   useEffect(() => {
     if (typeof messagesEndRef.current?.scrollIntoView === 'function') {
@@ -99,9 +99,9 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
 
   useEffect(() => {
     if (conversationId && messages.some((m) => !m.is_read && m.sender_id !== currentUser?.id)) {
-      markReadMutation.mutate({ id: conversationId })
+      markRead({ id: conversationId })
     }
-  }, [conversationId, messages, currentUser?.id])
+  }, [conversationId, messages, currentUser?.id, markRead])
 
   const handleSend = () => {
     if (!text.trim() || !conversationId) return

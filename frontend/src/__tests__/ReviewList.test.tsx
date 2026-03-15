@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from 'antd'
@@ -27,7 +27,7 @@ function renderWithProviders(ui: React.ReactElement) {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <ConfigProvider locale={ruRU}>
+      <ConfigProvider locale={ruRU} theme={{ token: { motion: false } }}>
         <AntApp>
           <MemoryRouter>{ui}</MemoryRouter>
         </AntApp>
@@ -254,7 +254,7 @@ describe('ReviewList', () => {
     expect(screen.getByText('Все отзывы')).toBeInTheDocument()
   })
 
-  it('shows media images for reviews with media', () => {
+  it('shows media images for reviews with media', async () => {
     mockBathhouseStore('bathhouse-1')
     vi.mocked(useGetBathhousesIdReviews).mockReturnValue({
       data: {
@@ -267,9 +267,11 @@ describe('ReviewList', () => {
 
     renderWithProviders(<ReviewList />)
 
-    const imgs = screen.getAllByRole('img')
-    const mediaImg = imgs.find((img) => img.getAttribute('src')?.includes('thumb1.jpg'))
-    expect(mediaImg).toBeTruthy()
+    await waitFor(() => {
+      const imgs = screen.getAllByRole('img')
+      const mediaImg = imgs.find((img) => img.getAttribute('src')?.includes('thumb1.jpg'))
+      expect(mediaImg).toBeTruthy()
+    })
   })
 
   it('disables submit button when response is empty', () => {

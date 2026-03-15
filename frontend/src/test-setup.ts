@@ -6,6 +6,22 @@ import '@testing-library/jest-dom'
   disconnect() {}
 }
 
+;(globalThis as Record<string, unknown>).IntersectionObserver = class IntersectionObserver {
+  readonly root = null
+  readonly rootMargin = ''
+  readonly thresholds: ReadonlyArray<number> = []
+  constructor(private callback: IntersectionObserverCallback) {}
+  observe(target: Element) {
+    this.callback(
+      [{ isIntersecting: true, target, intersectionRatio: 1 } as IntersectionObserverEntry],
+      this as unknown as IntersectionObserver,
+    )
+  }
+  unobserve() {}
+  disconnect() {}
+  takeRecords(): IntersectionObserverEntry[] { return [] }
+}
+
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({
