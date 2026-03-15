@@ -27,6 +27,9 @@ import BookingCreate from '@/pages/client/BookingCreate'
 import ClientBookingList from '@/pages/client/BookingList'
 import ClientBookingDetail from '@/pages/client/BookingDetail'
 import ReviewForm from '@/pages/client/ReviewForm'
+import Favorites from '@/pages/client/Favorites'
+import Recommendations from '@/pages/client/Recommendations'
+import Preferences from '@/pages/client/Preferences'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 
 export default function AppRouter() {
@@ -78,6 +81,9 @@ export default function AppRouter() {
         <Route path="bookings" element={<ClientBookingList />} />
         <Route path="bookings/:id" element={<ClientBookingDetail />} />
         <Route path="review" element={<ReviewForm />} />
+        <Route path="favorites" element={<Favorites />} />
+        <Route path="recommendations" element={<Recommendations />} />
+        <Route path="preferences" element={<Preferences />} />
       </Route>
 
       {/* Admin routes */}

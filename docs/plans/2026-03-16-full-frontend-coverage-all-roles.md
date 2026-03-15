@@ -87,12 +87,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 - Create: `frontend/src/pages/client/Recommendations.tsx`
 - Create: `frontend/src/pages/client/Preferences.tsx`
 
-- [ ] Favorites page: grid of favorite bathhouses with unfavorite toggle
-- [ ] Recommendations page: personalized recommendations grid, popular bathhouses section
-- [ ] Preferences page: user preference settings that improve recommendations
-- [ ] API hooks: `useGetMyFavorites`, `usePostBathhousesIdFavorite`, `useGetRecommendations`, `useGetPopular`, `useGetMyPreferences`, `usePutMyPreferences`
-- [ ] Write tests for favorites toggle, recommendations display
-- [ ] Run project test suite - must pass before task 6
+- [x] Favorites page: grid of favorite bathhouses with unfavorite toggle
+- [x] Recommendations page: personalized recommendations grid, popular bathhouses section
+- [x] Preferences page: user preference settings that improve recommendations
+- [x] API hooks: `useGetMyFavorites`, `usePostBathhousesIdFavorite`, `useGetRecommendations`, `useGetPopular`, `useGetMyPreferences`, `usePutMyPreferences`
+- [x] Write tests for favorites toggle, recommendations display
+- [x] Run project test suite - must pass before task 6
 
 ### Task 6: Client - Loyalty program
 
