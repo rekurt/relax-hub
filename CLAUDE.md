@@ -43,7 +43,7 @@ Clean architecture: **handler → service → repository**
 - `internal/repository/mock/` — in-memory mocks for testing
 - `internal/service/` — business logic, RBAC checks via AccessChecker
 - `internal/handler/` — HTTP handlers, one file per entity
-- `internal/middleware/` — auth (JWT), RBAC, CORS, logging, panic recovery
+- `internal/middleware/` — auth (JWT), RBAC, CORS (configurable origins), rate limiting, logging, panic recovery
 - `internal/server/` — chi router setup
 - `internal/notification/` — dispatcher, email sender, WebSocket hub, telegram sender
 - `internal/payment/` — payment provider abstraction (YooKassa integration)
@@ -97,19 +97,27 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 
 ### Logging
 
+Structured logging via zap (wrapped in `internal/logger/`).
+
 ```go
 logger.Info("message", "key", value)  // also Error, Debug, Warn
 ```
 
-Configured via `BANI_LOGGER_LEVEL`. Logger injected via fx.
+Config: `BANI_LOGGER_LEVEL` (default `info`), `BANI_LOGGER_FORMAT` (`json` for production, `console` for development). Logger injected via fx.
 
 ### Config
 
 Viper with env prefix `BANI_`. Nested keys use `_`: `BANI_DATABASE_DSN`, `BANI_JWT_SECRET`, etc.
 
+Key config variables:
+- `BANI_CORS_ALLOWED_ORIGINS` — comma-separated allowed origins (default `*`; wildcard rejected in production)
+- `BANI_DATABASE_MAX_CONNS` (default 20), `BANI_DATABASE_MIN_CONNS` (default 2), `BANI_DATABASE_MAX_CONN_LIFETIME` (default 1h) — connection pool tuning
+- `BANI_LOGGER_FORMAT` — `json` (default) or `console`
+- `BANI_ENVIRONMENT` — `dev` (default) or `production` (enables stricter validation)
+
 ### Database
 
-PostgreSQL with PostGIS. Migrations in `migrations/`. Geo-search uses `ST_DWithin`/`ST_Distance` with `geography` type.
+PostgreSQL with PostGIS. Migrations in `migrations/`. Geo-search uses `ST_DWithin`/`ST_Distance` with `geography` type. Connection pool is tuned via `BANI_DATABASE_MAX_CONNS`, `BANI_DATABASE_MIN_CONNS`, `BANI_DATABASE_MAX_CONN_LIFETIME`.
 
 ### Testing
 
@@ -117,6 +125,14 @@ PostgreSQL with PostGIS. Migrations in `migrations/`. Geo-search uses `ST_DWithi
 - Handlers: httptest + mock services
 - No integration tests for postgres repos (require real DB)
 - Hurl tests in `tests/hurl/` for full API endpoint testing
+
+### CI/CD
+
+GitHub Actions workflow (`.github/workflows/ci.yml`) runs on push/PR to `main`:
+- golangci-lint (govet, staticcheck, gosimple, typecheck enabled)
+- `go vet ./...`
+- `go test ./... -race` with coverage
+- `go build ./...`
 
 ## Critical Conventions
 
