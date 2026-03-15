@@ -893,6 +893,95 @@ func TestModerationHandler_RendersPaginationIDs(t *testing.T) {
 	}
 }
 
+func TestModerationHandler_HandleReject_ProviderError(t *testing.T) {
+	id := uuid.New()
+	provider := &mockModerationProvider{rejectErr: errors.New("db error")}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	body, _ := json.Marshal(approveRejectRequest{
+		Reasons: []string{"Спам или реклама"},
+	})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/moderation/api/reject?id="+id.String(), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	handler.HandleReject(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
+	}
+}
+
+func TestModerationHandler_HandleReject_InvalidID(t *testing.T) {
+	provider := &mockModerationProvider{}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/moderation/api/reject?id=not-a-uuid", nil)
+	handler.HandleReject(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestModerationHandler_HandleBatchApprove_EmptyIDs(t *testing.T) {
+	provider := &mockModerationProvider{}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	body, _ := json.Marshal(batchRequest{IDs: []string{}})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/moderation/api/batch-approve", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	handler.HandleBatchApprove(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestModerationHandler_HandleBatchReject_InvalidBody(t *testing.T) {
+	provider := &mockModerationProvider{}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/moderation/api/batch-reject", bytes.NewReader([]byte("not json")))
+	handler.HandleBatchReject(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestModerationHandler_HandleBatchReject_InvalidIDs(t *testing.T) {
+	provider := &mockModerationProvider{}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	body, _ := json.Marshal(batchRequest{IDs: []string{"not-a-uuid"}, Reasons: []string{"spam"}})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/moderation/api/batch-reject", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	handler.HandleBatchReject(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestModerationHandler_HandleBatchReject_EmptyIDs(t *testing.T) {
+	provider := &mockModerationProvider{}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	body, _ := json.Marshal(batchRequest{IDs: []string{}, Reasons: []string{"spam"}})
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/moderation/api/batch-reject", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	handler.HandleBatchReject(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
 func TestModerationHandler_RendersResponsiveDesign(t *testing.T) {
 	data := sampleModerationData()
 	provider := &mockModerationProvider{data: data}
