@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Form, Input, Button, Card, Typography, Space, App } from 'antd'
 import { MailOutlined, LockOutlined } from '@ant-design/icons'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { postAuthLogin } from '@/api/generated/auth/auth'
 import { useAuthStore } from '@/stores/auth'
+import { getRoleHomePath } from '@/stores/auth'
 import type { InternalHandlerLoginRequest } from '@/api/generated/model'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
@@ -12,6 +13,7 @@ const { Title, Text } = Typography
 
 export default function Login() {
   const navigate = useNavigate()
+  const location = useLocation()
   const setAuth = useAuthStore((s) => s.setAuth)
   const { message } = App.useApp()
   const [loading, setLoading] = useState(false)
@@ -23,7 +25,9 @@ export default function Login() {
       if (response.success && response.data?.token && response.data.user) {
         setAuth(response.data.token, response.data.user)
         message.success('Вы успешно вошли в систему')
-        navigate('/', { replace: true })
+        const from = (location.state as { from?: { pathname: string } })?.from?.pathname
+        const defaultPath = getRoleHomePath(response.data.user.role)
+        navigate(from ?? defaultPath, { replace: true })
       } else {
         message.error(response.error?.message || 'Ошибка авторизации')
       }

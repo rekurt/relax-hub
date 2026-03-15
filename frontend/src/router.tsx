@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from '@/components/AppLayout'
+import ClientLayout from '@/components/ClientLayout'
+import AdminLayout from '@/components/AdminLayout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
@@ -18,16 +20,20 @@ import ProfileSettings from '@/pages/settings/ProfileSettings'
 import SubscriptionPage from '@/pages/subscriptions/SubscriptionPage'
 import WidgetSettings from '@/pages/widget/WidgetSettings'
 import PhotoManager from '@/pages/photos/PhotoManager'
+import ClientHome from '@/pages/client/ClientHome'
+import AdminDashboard from '@/pages/admin/AdminDashboard'
 
 export default function AppRouter() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+
+      {/* Owner/Representative routes */}
       <Route
         path="/"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['owner', 'representative']}>
             <AppLayout />
           </ProtectedRoute>
         }
@@ -49,6 +55,31 @@ export default function AppRouter() {
         <Route path="settings" element={<ProfileSettings />} />
         <Route path="notifications" element={<NotificationList />} />
       </Route>
+
+      {/* Client routes */}
+      <Route
+        path="/client"
+        element={
+          <ProtectedRoute allowedRoles={['client']}>
+            <ClientLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<ClientHome />} />
+      </Route>
+
+      {/* Admin routes */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+      </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

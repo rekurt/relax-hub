@@ -18,6 +18,26 @@ vi.mock('@/api/generated/bathhouses/bathhouses', () => ({
   getMyBathhouses: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }))
 
+vi.mock('@/api/generated/notifications/notifications', () => ({
+  useGetMyNotificationsUnreadCount: vi.fn().mockReturnValue({
+    data: { data: { unread_count: 0 } },
+    isLoading: false,
+  }),
+  useGetMyNotifications: vi.fn().mockReturnValue({
+    data: { data: [] },
+    isLoading: false,
+  }),
+  usePatchMyNotificationsIdRead: vi.fn().mockReturnValue({ mutate: vi.fn(), isPending: false }),
+  usePatchMyNotificationsReadAll: vi.fn().mockReturnValue({ mutate: vi.fn(), isPending: false }),
+}))
+
+vi.mock('@/api/generated/chat/chat', () => ({
+  useGetMyUnreadMessagesCount: vi.fn().mockReturnValue({
+    data: { data: { unread_count: 0 } },
+    isLoading: false,
+  }),
+}))
+
 function renderWithProviders(ui: React.ReactElement, { route = '/' } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -81,15 +101,16 @@ describe('App', () => {
     expect(mainContent!.textContent).toContain('Дашборд')
   })
 
-  it('shows access denied for client role', () => {
+  it('redirects client role from / to /client', () => {
     useAuthStore.setState({
       isAuthenticated: true,
       isLoading: false,
       user: { id: '3', role: 'client', email: 'client@test.com' },
       token: 'jwt-token',
     })
-    renderWithProviders(<App />, { route: '/' })
-    expect(screen.getByText('Доступ запрещён')).toBeInTheDocument()
+    const { container } = renderWithProviders(<App />, { route: '/' })
+    const mainContent = container.querySelector('.ant-layout-content')
+    expect(mainContent!.textContent).toContain('Поиск бань')
   })
 
   it('shows spinner while loading auth', () => {

@@ -3,6 +3,17 @@ import { getAuthMe } from '@/api/generated/auth/auth'
 import type { InternalHandlerUserResponse } from '@/api/generated/model'
 import { AUTH_TOKEN_KEY } from '@/lib/constants'
 
+export function getRoleHomePath(role?: string): string {
+  switch (role) {
+    case 'client':
+      return '/client'
+    case 'admin':
+      return '/admin'
+    default:
+      return '/'
+  }
+}
+
 export interface AuthState {
   user: InternalHandlerUserResponse | null
   token: string | null

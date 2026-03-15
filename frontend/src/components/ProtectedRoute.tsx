@@ -1,14 +1,15 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { Button, Result, Spin } from 'antd'
+import { Spin } from 'antd'
 import { useAuthStore } from '@/stores/auth'
+import { getRoleHomePath } from '@/stores/auth'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
   allowedRoles?: string[]
 }
 
-export default function ProtectedRoute({ children, allowedRoles = ['owner', 'representative'] }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user, logout } = useAuthStore()
+export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+  const { isAuthenticated, isLoading, user } = useAuthStore()
   const location = useLocation()
 
   if (isLoading) {
@@ -23,19 +24,9 @@ export default function ProtectedRoute({ children, allowedRoles = ['owner', 'rep
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (user?.role && !allowedRoles.includes(user.role)) {
-    return (
-      <Result
-        status="403"
-        title="Доступ запрещён"
-        subTitle="Панель управления доступна только для владельцев и представителей бань."
-        extra={
-          <Button type="primary" onClick={logout}>
-            Выйти
-          </Button>
-        }
-      />
-    )
+  if (allowedRoles && (!user?.role || !allowedRoles.includes(user.role))) {
+    const homePath = getRoleHomePath(user?.role)
+    return <Navigate to={homePath} replace />
   }
 
   return <>{children}</>
