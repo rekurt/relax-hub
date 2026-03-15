@@ -30,6 +30,7 @@ import ReviewForm from '@/pages/client/ReviewForm'
 import Favorites from '@/pages/client/Favorites'
 import Recommendations from '@/pages/client/Recommendations'
 import Preferences from '@/pages/client/Preferences'
+import LoyaltyDashboard from '@/pages/client/LoyaltyDashboard'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 
 export default function AppRouter() {
@@ -84,6 +85,7 @@ export default function AppRouter() {
         <Route path="favorites" element={<Favorites />} />
         <Route path="recommendations" element={<Recommendations />} />
         <Route path="preferences" element={<Preferences />} />
+        <Route path="loyalty" element={<LoyaltyDashboard />} />
       </Route>
 
       {/* Admin routes */}

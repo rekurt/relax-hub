@@ -99,12 +99,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 **Files:**
 - Create: `frontend/src/pages/client/LoyaltyDashboard.tsx`
 
-- [ ] Loyalty dashboard: current level (bronze/silver/gold/platinum) with progress bar to next level, points balance, privileges list
-- [ ] Transactions history table: earned/spent points, timestamps, reasons
-- [ ] Level info cards showing requirements and benefits for each tier
-- [ ] API hooks: `useGetMyLoyalty`, `useGetMyLoyaltyTransactions`, `useGetMyLoyaltyLevels`
-- [ ] Write tests for level display, transaction list, progress calculation
-- [ ] Run project test suite - must pass before task 7
+- [x] Loyalty dashboard: current level (bronze/silver/gold/platinum) with progress bar to next level, points balance, privileges list
+- [x] Transactions history table: earned/spent points, timestamps, reasons
+- [x] Level info cards showing requirements and benefits for each tier
+- [x] API hooks: `useGetMyLoyalty`, `useGetMyLoyaltyTransactions`, `useGetMyLoyaltyLevels`
+- [x] Write tests for level display, transaction list, progress calculation
+- [x] Run project test suite - must pass before task 7
 
 ### Task 7: Client - Referral program
 
