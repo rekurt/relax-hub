@@ -3,6 +3,7 @@ import AppLayout from '@/components/AppLayout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
+import Dashboard from '@/pages/Dashboard'
 
 function Placeholder({ title }: { title: string }) {
   return <div>{title}</div>
@@ -21,7 +22,7 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Placeholder title="Дашборд" />} />
+        <Route index element={<Dashboard />} />
         <Route path="bathhouses" element={<Placeholder title="Бани" />} />
         <Route path="bathhouses/new" element={<Placeholder title="Новая баня" />} />
         <Route path="bathhouses/:id/edit" element={<Placeholder title="Редактирование бани" />} />
