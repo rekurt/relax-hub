@@ -295,6 +295,6 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 
 ### Task 22: Update documentation
 
-- [ ] Update CLAUDE.md frontend section with new pages and role-based architecture
-- [ ] Update README.md with multi-role SPA description
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Update CLAUDE.md frontend section with new pages and role-based architecture
+- [x] Update README.md with multi-role SPA description
+- [x] Move this plan to `docs/plans/completed/`
