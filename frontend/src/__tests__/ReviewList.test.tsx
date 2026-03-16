@@ -11,6 +11,12 @@ vi.mock('@/api/generated/reviews/reviews', () => ({
   usePostReviewsIdResponse: vi.fn(),
 }))
 
+vi.mock('@/api/generated/complaints/complaints', () => ({
+  usePostReviewsIdReport: vi.fn(),
+  usePostBathhousesIdReport: vi.fn(),
+  usePostUsersIdReport: vi.fn(),
+}))
+
 vi.mock('@/stores/bathhouse', () => ({
   useBathhouseStore: vi.fn(),
 }))
@@ -19,6 +25,11 @@ import {
   useGetBathhousesIdReviews,
   usePostReviewsIdResponse,
 } from '@/api/generated/reviews/reviews'
+import {
+  usePostReviewsIdReport,
+  usePostBathhousesIdReport,
+  usePostUsersIdReport,
+} from '@/api/generated/complaints/complaints'
 import { useBathhouseStore } from '@/stores/bathhouse'
 
 function renderWithProviders(ui: React.ReactElement) {
@@ -78,6 +89,7 @@ const mockReviews = [
 ]
 
 const mockResponseMutation = { mutate: vi.fn(), isPending: false }
+const mockReportMutation = { mutate: vi.fn(), isPending: false }
 
 function mockBathhouseStore(id: string | null) {
   vi.mocked(useBathhouseStore).mockImplementation((selector) =>
@@ -91,6 +103,15 @@ describe('ReviewList', () => {
   beforeEach(() => {
     vi.mocked(usePostReviewsIdResponse).mockReturnValue(
       mockResponseMutation as unknown as ReturnType<typeof usePostReviewsIdResponse>,
+    )
+    vi.mocked(usePostReviewsIdReport).mockReturnValue(
+      mockReportMutation as unknown as ReturnType<typeof usePostReviewsIdReport>,
+    )
+    vi.mocked(usePostBathhousesIdReport).mockReturnValue(
+      mockReportMutation as unknown as ReturnType<typeof usePostBathhousesIdReport>,
+    )
+    vi.mocked(usePostUsersIdReport).mockReturnValue(
+      mockReportMutation as unknown as ReturnType<typeof usePostUsersIdReport>,
     )
   })
 
@@ -289,5 +310,36 @@ describe('ReviewList', () => {
 
     const submitBtn = screen.getByText('Отправить ответ').closest('button')
     expect(submitBtn).toBeDisabled()
+  })
+
+  it('shows report button on reviews', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdReviews).mockReturnValue({
+      data: {
+        data: [mockReviews[0]],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdReviews>)
+
+    renderWithProviders(<ReviewList />)
+    expect(screen.getByText('Пожаловаться')).toBeInTheDocument()
+  })
+
+  it('opens report modal when report button clicked', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdReviews).mockReturnValue({
+      data: {
+        data: [mockReviews[0]],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdReviews>)
+
+    renderWithProviders(<ReviewList />)
+    fireEvent.click(screen.getByText('Пожаловаться'))
+    expect(screen.getByText('Пожаловаться на отзыв')).toBeInTheDocument()
   })
 })

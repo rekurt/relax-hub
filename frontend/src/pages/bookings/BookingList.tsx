@@ -7,6 +7,7 @@ import {
   StopOutlined,
   CheckOutlined,
   EyeOutlined,
+  DollarOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import {
@@ -16,6 +17,7 @@ import {
   usePatchBookingsIdCancel,
   usePatchBookingsIdComplete,
 } from '@/api/generated/bookings/bookings'
+import { usePostBookingsIdPay } from '@/api/generated/payments/payments'
 import type { InternalHandlerBookingResponse } from '@/api/generated/model'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { formatPrice, formatDateTime } from '@/lib/format'
@@ -34,6 +36,13 @@ const STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Отменено' },
   { value: 'rejected', label: 'Отклонено' },
 ]
+
+const PAYMENT_STATUS_CONFIG: Record<string, { color: string; text: string }> = {
+  pending: { color: 'orange', text: 'Ожидает оплаты' },
+  succeeded: { color: 'green', text: 'Оплачено' },
+  canceled: { color: 'default', text: 'Отменён' },
+  refunded: { color: 'purple', text: 'Возвращён' },
+}
 
 export default function BookingList() {
   const { message } = App.useApp()
@@ -103,6 +112,20 @@ export default function BookingList() {
     },
   })
 
+  const payMutation = usePostBookingsIdPay({
+    mutation: {
+      onSuccess: (response) => {
+        const url = response?.data?.confirmation_url
+        if (url) {
+          window.open(url, '_blank')
+        }
+        message.success('Платёж инициирован')
+        invalidateBookings()
+      },
+      onError: () => message.error('Не удалось инициировать оплату'),
+    },
+  })
+
   const bookings = data?.data ?? []
   const meta = data?.meta
 
@@ -169,6 +192,20 @@ export default function BookingList() {
     }
 
     if (record.status === 'confirmed') {
+      if (!record.payment_status || record.payment_status === 'pending') {
+        actions.push(
+          <Button
+            key="pay"
+            type="link"
+            size="small"
+            icon={<DollarOutlined />}
+            loading={payMutation.isPending && payMutation.variables?.id === record.id}
+            onClick={() => record.id && payMutation.mutate({ id: record.id })}
+          >
+            Оплатить
+          </Button>,
+        )
+      }
       actions.push(
         <Button
           key="complete"
@@ -241,6 +278,16 @@ export default function BookingList() {
       dataIndex: 'total_price',
       key: 'total_price',
       render: (price: number) => formatPrice(price ?? 0),
+    },
+    {
+      title: 'Оплата',
+      dataIndex: 'payment_status',
+      key: 'payment_status',
+      render: (status: string) => {
+        if (!status) return <Tag>Не оплачено</Tag>
+        const config = PAYMENT_STATUS_CONFIG[status] ?? { color: 'default', text: status }
+        return <Tag color={config.color}>{config.text}</Tag>
+      },
     },
     {
       title: 'Статус',

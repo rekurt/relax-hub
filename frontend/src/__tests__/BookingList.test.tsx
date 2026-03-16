@@ -19,6 +19,7 @@ vi.mock('@/api/generated/payments/payments', () => ({
     data: undefined,
     isLoading: false,
   }),
+  usePostBookingsIdPay: vi.fn(),
 }))
 
 vi.mock('@/stores/bathhouse', () => ({
@@ -32,6 +33,7 @@ import {
   usePatchBookingsIdCancel,
   usePatchBookingsIdComplete,
 } from '@/api/generated/bookings/bookings'
+import { usePostBookingsIdPay } from '@/api/generated/payments/payments'
 import { useBathhouseStore } from '@/stores/bathhouse'
 
 function renderWithProviders(ui: React.ReactElement) {
@@ -104,6 +106,7 @@ describe('BookingList', () => {
     vi.mocked(usePatchBookingsIdReject).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePatchBookingsIdReject>)
     vi.mocked(usePatchBookingsIdCancel).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePatchBookingsIdCancel>)
     vi.mocked(usePatchBookingsIdComplete).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePatchBookingsIdComplete>)
+    vi.mocked(usePostBookingsIdPay).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePostBookingsIdPay>)
   })
 
   it('shows prompt when no bathhouse selected', () => {
@@ -293,5 +296,87 @@ describe('BookingList', () => {
     renderWithProviders(<BookingList />)
 
     expect(screen.getByText('3000 ₽')).toBeInTheDocument()
+  })
+
+  it('shows payment status column with "Не оплачено" for no payment', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [{ ...mockBookings[0], payment_status: undefined }],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+    expect(screen.getByText('Не оплачено')).toBeInTheDocument()
+  })
+
+  it('shows "Оплачено" tag for succeeded payment', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [{ ...mockBookings[1], payment_status: 'succeeded' }],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+    expect(screen.getByText('Оплачено')).toBeInTheDocument()
+  })
+
+  it('shows pay button for confirmed booking without payment', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [{ ...mockBookings[1], payment_status: undefined }],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+    expect(screen.getByText('Оплатить')).toBeInTheDocument()
+  })
+
+  it('hides pay button for confirmed booking with succeeded payment', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [{ ...mockBookings[1], payment_status: 'succeeded' }],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+    expect(screen.queryByText('Оплатить')).not.toBeInTheDocument()
+  })
+
+  it('calls pay mutation when pay button clicked', () => {
+    const payMutate = vi.fn()
+    vi.mocked(usePostBookingsIdPay).mockReturnValue({
+      mutate: payMutate,
+      isPending: false,
+    } as unknown as ReturnType<typeof usePostBookingsIdPay>)
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [{ ...mockBookings[1], payment_status: 'pending' }],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+    fireEvent.click(screen.getByText('Оплатить'))
+
+    expect(payMutate).toHaveBeenCalledWith({ id: 'booking-2' })
   })
 })

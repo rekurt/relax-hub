@@ -235,13 +235,13 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 - Modify: `frontend/src/pages/reviews/ReviewList.tsx` (add media display, report button)
 - Create: `frontend/src/components/ReportModal.tsx`
 
-- [ ] Add payment status column/badge to owner booking list
-- [ ] Add payment initiation button for unpaid confirmed bookings
-- [ ] Display review media (photos/videos) in owner review list
-- [ ] Add ReportModal component for reporting reviews/bathhouses/users
-- [ ] API hooks: `useGetBookingsIdPayment`, `usePostBookingsIdPay`, `usePostReviewsIdReport`, `usePostBathhousesIdReport`, `usePostUsersIdReport`
-- [ ] Write tests for payment display, report modal
-- [ ] Run project test suite - must pass before task 18
+- [x] Add payment status column/badge to owner booking list
+- [x] Add payment initiation button for unpaid confirmed bookings
+- [x] Display review media (photos/videos) in owner review list
+- [x] Add ReportModal component for reporting reviews/bathhouses/users
+- [x] API hooks: `useGetBookingsIdPayment`, `usePostBookingsIdPay`, `usePostReviewsIdReport`, `usePostBathhousesIdReport`, `usePostUsersIdReport`
+- [x] Write tests for payment display, report modal
+- [x] Run project test suite - must pass before task 18
 
 ### Task 18: OAuth social login and device tokens
 

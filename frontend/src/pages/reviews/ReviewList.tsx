@@ -17,7 +17,7 @@ import {
   Tag,
   Typography,
 } from 'antd'
-import { MessageOutlined, StarFilled, UserOutlined } from '@ant-design/icons'
+import { MessageOutlined, StarFilled, UserOutlined, WarningOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import {
   useGetBathhousesIdReviews,
@@ -26,6 +26,8 @@ import {
 import type { InternalHandlerReviewResponse } from '@/api/generated/model'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { useQueryClient } from '@tanstack/react-query'
+import ReportModal from '@/components/ReportModal'
+import type { ReportTargetType } from '@/components/ReportModal'
 
 const { Title, Paragraph, Text } = Typography
 const { TextArea } = Input
@@ -160,6 +162,7 @@ export default function ReviewList() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [filter, setFilter] = useState('all')
+  const [reportTarget, setReportTarget] = useState<{ type: ReportTargetType; id: string } | null>(null)
   const hasActiveFilter = filter !== 'all'
 
   const { data, isLoading } = useGetBathhousesIdReviews(selectedBathhouseId ?? '', {
@@ -323,11 +326,31 @@ export default function ReviewList() {
                       onSuccess={invalidateReviews}
                     />
                   )}
+
+                  {review.id && (
+                    <Button
+                      type="link"
+                      size="small"
+                      danger
+                      icon={<WarningOutlined />}
+                      style={{ marginTop: 8, padding: 0 }}
+                      onClick={() => setReportTarget({ type: 'review', id: review.id! })}
+                    >
+                      Пожаловаться
+                    </Button>
+                  )}
                 </div>
               }
             />
           </List.Item>
         )}
+      />
+
+      <ReportModal
+        open={!!reportTarget}
+        targetType={reportTarget?.type ?? 'review'}
+        targetId={reportTarget?.id ?? ''}
+        onClose={() => setReportTarget(null)}
       />
     </div>
   )
