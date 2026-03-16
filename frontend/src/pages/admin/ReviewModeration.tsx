@@ -117,21 +117,25 @@ export default function ReviewModeration() {
   }
 
   const handleRejectConfirm = async () => {
-    if (rejectTarget === 'single' && singleRejectId) {
-      await rejectMutation.mutateAsync({
-        id: singleRejectId,
-        data: { reason: rejectReason || undefined },
-      })
-      message.success('Отзыв отклонён')
-    } else if (rejectTarget === 'batch' && selectedIds.length > 0) {
-      await batchRejectMutation.mutateAsync({
-        data: { ids: selectedIds, reason: rejectReason || undefined },
-      })
-      message.success(`Отклонено отзывов: ${selectedIds.length}`)
-      setSelectedIds([])
+    try {
+      if (rejectTarget === 'single' && singleRejectId) {
+        await rejectMutation.mutateAsync({
+          id: singleRejectId,
+          data: { reason: rejectReason || undefined },
+        })
+        message.success('Отзыв отклонён')
+      } else if (rejectTarget === 'batch' && selectedIds.length > 0) {
+        await batchRejectMutation.mutateAsync({
+          data: { ids: selectedIds, reason: rejectReason || undefined },
+        })
+        message.success(`Отклонено отзывов: ${selectedIds.length}`)
+        setSelectedIds([])
+      }
+      setRejectModalOpen(false)
+      invalidateAll()
+    } catch {
+      message.error('Не удалось отклонить отзыв')
     }
-    setRejectModalOpen(false)
-    invalidateAll()
   }
 
   const handleBatchApprove = () => {

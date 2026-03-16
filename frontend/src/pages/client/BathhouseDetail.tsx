@@ -129,6 +129,8 @@ export default function BathhouseDetail() {
   if (typeof schemaData === 'string') {
     try {
       safeSchemaJsonLd = JSON.stringify(JSON.parse(schemaData))
+        .replace(/</g, '\\u003c')
+        .replace(/>/g, '\\u003e')
     } catch {
       // invalid JSON, skip injection
     }

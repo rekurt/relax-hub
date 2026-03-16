@@ -122,14 +122,18 @@ export default function ComplaintManagement() {
 
   const handleResolveConfirm = async () => {
     if (!resolveComplaintId) return
-    await resolveMutation.mutateAsync({
-      id: resolveComplaintId,
-      data: { resolution: resolveNote || undefined },
-    })
-    message.success('Жалоба решена')
-    setResolveModalOpen(false)
-    setSelectedComplaint(null)
-    invalidate()
+    try {
+      await resolveMutation.mutateAsync({
+        id: resolveComplaintId,
+        data: { resolution: resolveNote || undefined },
+      })
+      message.success('Жалоба решена')
+      setResolveModalOpen(false)
+      setSelectedComplaint(null)
+      invalidate()
+    } catch {
+      message.error('Не удалось решить жалобу')
+    }
   }
 
   const handleDismiss = (complaint: InternalHandlerComplaintResponse) => {
