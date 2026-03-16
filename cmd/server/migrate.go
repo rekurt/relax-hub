@@ -106,6 +106,14 @@ var migrateResetCmd = &cobra.Command{
 	Use:   "reset",
 	Short: "Rollback all and re-apply all migrations (dev only)",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := config.Load(cfgFile)
+		if err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+		if cfg.Environment == "production" {
+			return fmt.Errorf("migrate reset is not allowed in production environment")
+		}
+
 		m, err := newMigrate()
 		if err != nil {
 			return err

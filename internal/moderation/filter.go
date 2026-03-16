@@ -7,6 +7,11 @@ import (
 	"unicode/utf8"
 )
 
+var (
+	urlPattern   = regexp.MustCompile(`(?i)(https?://|www\.|\.ru|\.com|\.org)`)
+	phonePattern = regexp.MustCompile(`(?i)(\+7|8-?)\s*\(?[0-9]{3}\)?[\s-]?[0-9]{3}[\s-]?[0-9]{2}[\s-]?[0-9]{2}`)
+)
+
 // FilterResult contains the result of content filtering
 type FilterResult struct {
 	IsClean bool
@@ -165,15 +170,11 @@ func (cf *ContentFilter) hasExcessiveCapsLock(text string) bool {
 
 // containsLinks checks for URLs
 func (cf *ContentFilter) containsLinks(text string) bool {
-	// Simple URL pattern check
-	urlPattern := regexp.MustCompile(`(?i)(https?://|www\.|\.ru|\.com|\.org)`)
 	return urlPattern.MatchString(text)
 }
 
 // containsPhoneNumbers checks for phone number patterns
 func (cf *ContentFilter) containsPhoneNumbers(text string) bool {
-	// Russian phone number patterns like +7, 8-, etc.
-	phonePattern := regexp.MustCompile(`(?i)(\+7|8-?)\s*\(?[0-9]{3}\)?[\s-]?[0-9]{3}[\s-]?[0-9]{2}[\s-]?[0-9]{2}`)
 	return phonePattern.MatchString(text)
 }
 
