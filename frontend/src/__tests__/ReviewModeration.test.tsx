@@ -147,12 +147,7 @@ describe('ReviewModeration', () => {
   it('renders media count for reviews with images', () => {
     renderWithProviders(<ReviewModeration />)
 
-    // Media column is responsive (lg only), so check using getAllByText which handles both visible and hidden
-    const photoTags2 = screen.queryAllByText('2 фото')
-    const photoTags1 = screen.queryAllByText('1 фото')
-    // At least verify the data is present (column may or may not render based on viewport)
-    expect(photoTags2.length + photoTags1.length).toBeGreaterThanOrEqual(0)
-    // Verify through the detail drawer instead - click review with images
+    // Verify media info through the detail drawer - click review with images
     fireEvent.click(screen.getByText('Отличная баня, очень понравилось!'))
     expect(screen.getByText(/Медиа \(2\)/)).toBeInTheDocument()
   })

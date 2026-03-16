@@ -7,7 +7,7 @@ import {
   Spin,
   Empty,
   Statistic,
-  message,
+  App,
   Space,
 } from 'antd'
 import {
@@ -25,6 +25,7 @@ import { formatPrice } from '@/lib/format'
 const { Title, Text, Paragraph } = Typography
 
 export default function ReferralProgram() {
+  const { message } = App.useApp()
   const { data: referralData, isLoading: loadingReferral } = useGetMyReferral()
   const { data: statsData, isLoading: loadingStats } = useGetMyReferralStats()
   const { data: balanceData, isLoading: loadingBalance } = useGetMyReferralBalance()

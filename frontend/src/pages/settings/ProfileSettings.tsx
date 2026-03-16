@@ -37,20 +37,9 @@ import {
   useDeleteAuthLinkProvider,
 } from '@/api/generated/oauth/oauth'
 import { useGetCities } from '@/api/generated/cities/cities'
+import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
 
 const { Title, Text } = Typography
-
-const providerLabels: Record<string, string> = {
-  vk: 'ВКонтакте',
-  yandex: 'Яндекс',
-  google: 'Google',
-}
-
-const providerColors: Record<string, string> = {
-  vk: '#4C75A3',
-  yandex: '#FC3F1D',
-  google: '#4285F4',
-}
 
 export default function ProfileSettings() {
   const { user, loadProfile } = useAuthStore()
@@ -297,7 +286,7 @@ export default function ProfileSettings() {
                     actions={[
                       <Popconfirm
                         key="unlink"
-                        title={`Отвязать ${providerLabels[account.provider ?? ''] ?? account.provider}?`}
+                        title={`Отвязать ${PROVIDER_LABELS[account.provider ?? ''] ?? account.provider}?`}
                         onConfirm={() => {
                           if (account.provider) unlinkSocial.mutate({ provider: account.provider })
                         }}
@@ -315,7 +304,7 @@ export default function ProfileSettings() {
                         <Avatar
                           src={account.avatar_url}
                           style={{
-                            backgroundColor: providerColors[account.provider ?? ''] ?? '#999',
+                            backgroundColor: PROVIDER_COLORS[account.provider ?? ''] ?? '#999',
                           }}
                         >
                           {(account.provider ?? '')[0]?.toUpperCase()}
@@ -323,7 +312,7 @@ export default function ProfileSettings() {
                       }
                       title={
                         <Text>
-                          {providerLabels[account.provider ?? ''] ?? account.provider}
+                          {PROVIDER_LABELS[account.provider ?? ''] ?? account.provider}
                         </Text>
                       }
                       description={account.email ?? account.name ?? ''}
@@ -340,11 +329,11 @@ export default function ProfileSettings() {
                       key={provider}
                       onClick={() => handleLinkProvider(provider)}
                       style={{
-                        borderColor: providerColors[provider],
-                        color: providerColors[provider],
+                        borderColor: PROVIDER_COLORS[provider],
+                        color: PROVIDER_COLORS[provider],
                       }}
                     >
-                      Привязать {providerLabels[provider]}
+                      Привязать {PROVIDER_LABELS[provider]}
                     </Button>
                   ) : null,
                 )}

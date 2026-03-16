@@ -19,16 +19,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useGetBookings, usePatchBookingsIdCancel } from '@/api/generated/bookings/bookings'
 import { useGetBookingsIdPayment, usePostBookingsIdPay } from '@/api/generated/payments/payments'
 import { formatPrice, formatDateTime } from '@/lib/format'
-import { BOOKING_STATUS_CONFIG } from '@/lib/constants'
+import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 
 const { Title, Text } = Typography
-
-const PAYMENT_STATUS_CONFIG: Record<string, { color: string; text: string }> = {
-  pending: { color: 'orange', text: 'Ожидает оплаты' },
-  succeeded: { color: 'green', text: 'Оплачено' },
-  canceled: { color: 'default', text: 'Отменён' },
-  refunded: { color: 'purple', text: 'Возвращён' },
-}
 
 export default function ClientBookingDetail() {
   const { id } = useParams<{ id: string }>()

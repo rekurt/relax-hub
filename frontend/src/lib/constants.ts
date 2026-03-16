@@ -8,6 +8,13 @@ export const BOOKING_STATUS_CONFIG: Record<string, { color: string; text: string
   rejected: { color: 'red', text: 'Отклонено', hexColor: '#ff4d4f' },
 }
 
+export const PAYMENT_STATUS_CONFIG: Record<string, { color: string; text: string }> = {
+  pending: { color: 'orange', text: 'Ожидает оплаты' },
+  succeeded: { color: 'green', text: 'Оплачено' },
+  canceled: { color: 'default', text: 'Отменён' },
+  refunded: { color: 'purple', text: 'Возвращён' },
+}
+
 export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   booking_new: 'Новое бронирование',
   booking_confirmed: 'Бронирование подтверждено',
@@ -17,4 +24,16 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   payment_received: 'Оплата получена',
   promo_used: 'Промокод использован',
   chat_message: 'Новое сообщение',
+}
+
+export const PROVIDER_LABELS: Record<string, string> = {
+  vk: 'ВКонтакте',
+  yandex: 'Яндекс',
+  google: 'Google',
+}
+
+export const PROVIDER_COLORS: Record<string, string> = {
+  vk: '#4C75A3',
+  yandex: '#FC3F1D',
+  google: '#4285F4',
 }

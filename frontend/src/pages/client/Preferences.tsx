@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Typography, Form, Switch, InputNumber, Select, Button, Card, Space, message, Spin, Row, Col } from 'antd'
+import { Typography, Form, Switch, InputNumber, Select, Button, Card, Space, App, Spin, Row, Col } from 'antd'
 import { useGetMyPreferences, usePutMyPreferences } from '@/api/generated/recommendations/recommendations'
 import { useGetCities } from '@/api/generated/cities/cities'
 import { useQueryClient } from '@tanstack/react-query'
@@ -18,6 +18,7 @@ const AMENITY_PREFS = [
 export default function Preferences() {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const { message } = App.useApp()
 
   const { data: prefsData, isLoading } = useGetMyPreferences()
   const { data: citiesData } = useGetCities()

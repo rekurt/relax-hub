@@ -2,14 +2,7 @@ import { Descriptions, Modal, Spin, Tag } from 'antd'
 import { useGetBookingsIdPayment } from '@/api/generated/payments/payments'
 import type { InternalHandlerBookingResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
-import { BOOKING_STATUS_CONFIG } from '@/lib/constants'
-
-const PAYMENT_STATUS_CONFIG: Record<string, { color: string; text: string }> = {
-  pending: { color: 'orange', text: 'Ожидает оплаты' },
-  succeeded: { color: 'green', text: 'Оплачено' },
-  canceled: { color: 'default', text: 'Отменён' },
-  refunded: { color: 'purple', text: 'Возвращён' },
-}
+import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 
 interface BookingDetailsProps {
   booking: InternalHandlerBookingResponse | null

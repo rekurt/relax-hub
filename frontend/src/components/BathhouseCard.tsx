@@ -1,4 +1,4 @@
-import { Card, Tag, Rate, Typography, Space, Button, Image } from 'antd'
+import { Card, Tag, Rate, Typography, Space, Button, Image, App } from 'antd'
 import {
   EnvironmentOutlined,
   HeartOutlined,
@@ -7,7 +7,6 @@ import {
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { message } from 'antd'
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
 import { formatPrice } from '@/lib/format'
@@ -31,6 +30,7 @@ interface BathhouseCardProps {
 export default function BathhouseCard({ bathhouse, showFavorite = true }: BathhouseCardProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { message } = App.useApp()
 
   const favoriteMutation = usePostBathhousesIdFavorite({
     mutation: {

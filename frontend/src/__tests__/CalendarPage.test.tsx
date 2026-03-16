@@ -76,6 +76,7 @@ function setupDefaultMocks() {
 
 describe('CalendarPage', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     setupDefaultMocks()
   })
 

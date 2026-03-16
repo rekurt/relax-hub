@@ -21,7 +21,7 @@ import { usePostBookingsIdPay } from '@/api/generated/payments/payments'
 import type { InternalHandlerBookingResponse } from '@/api/generated/model'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { formatPrice, formatDateTime } from '@/lib/format'
-import { BOOKING_STATUS_CONFIG } from '@/lib/constants'
+import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 import { useQueryClient } from '@tanstack/react-query'
 import BookingDetails from './BookingDetails'
 
@@ -36,13 +36,6 @@ const STATUS_OPTIONS = [
   { value: 'cancelled', label: 'Отменено' },
   { value: 'rejected', label: 'Отклонено' },
 ]
-
-const PAYMENT_STATUS_CONFIG: Record<string, { color: string; text: string }> = {
-  pending: { color: 'orange', text: 'Ожидает оплаты' },
-  succeeded: { color: 'green', text: 'Оплачено' },
-  canceled: { color: 'default', text: 'Отменён' },
-  refunded: { color: 'purple', text: 'Возвращён' },
-}
 
 export default function BookingList() {
   const { message } = App.useApp()

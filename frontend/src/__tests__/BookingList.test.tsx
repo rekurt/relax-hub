@@ -102,6 +102,7 @@ function mockBathhouseStore(id: string | null) {
 
 describe('BookingList', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     vi.mocked(usePatchBookingsIdConfirm).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePatchBookingsIdConfirm>)
     vi.mocked(usePatchBookingsIdReject).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePatchBookingsIdReject>)
     vi.mocked(usePatchBookingsIdCancel).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePatchBookingsIdCancel>)

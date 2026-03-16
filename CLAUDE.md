@@ -36,7 +36,7 @@ go run ./cmd/bot run                        # run telegram bot
 make swagger                               # generate docs via swag init
 make swagger-fmt                           # format swagger annotations
 
-# Frontend (Owner Dashboard)
+# Frontend (Multi-role SPA)
 make frontend-dev                          # start Vite dev server
 make frontend-build                        # production build
 make frontend-generate-api                 # regenerate API client from swagger.json

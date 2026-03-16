@@ -101,6 +101,7 @@ function mockBathhouseStore(id: string | null) {
 
 describe('ReviewList', () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     vi.mocked(usePostReviewsIdResponse).mockReturnValue(
       mockResponseMutation as unknown as ReturnType<typeof usePostReviewsIdResponse>,
     )

@@ -91,7 +91,7 @@ export default function BookingCreate() {
         if (data && data.discount != null) {
           setPromoValidated({ discount: data.discount, type: data.type })
           setPromoError('')
-          message.success(`Промокод применён: скидка ${formatPrice(data.discount)}`)
+          message.success(`Промокод применён: скидка ${data.type === 'percentage' ? `${data.discount}%` : formatPrice(data.discount)}`)
         }
       },
       onError: () => {
@@ -280,7 +280,7 @@ export default function BookingCreate() {
             {promoError && <Text type="danger" style={{ fontSize: 12 }}>{promoError}</Text>}
             {promoValidated && (
               <Text type="success" style={{ fontSize: 12 }}>
-                Скидка: {formatPrice(promoValidated.discount)}
+                Скидка: {promoValidated.type === 'percentage' ? `${promoValidated.discount}%` : formatPrice(promoValidated.discount)}
               </Text>
             )}
           </div>
@@ -354,7 +354,9 @@ export default function BookingCreate() {
             )}
             {promoValidated && (
               <Descriptions.Item label="Скидка по промокоду">
-                <Text type="success">-{formatPrice(promoValidated.discount)}</Text>
+                <Text type="success">
+                  -{promoValidated.type === 'percentage' ? `${promoValidated.discount}%` : formatPrice(promoValidated.discount)}
+                </Text>
               </Descriptions.Item>
             )}
             {certificateBalance != null && certificateBalance > 0 && (

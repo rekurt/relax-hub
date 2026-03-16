@@ -27,7 +27,7 @@ import {
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
-import { message } from 'antd'
+import { App } from 'antd'
 import { useGetBathhousesId, useGetBathhousesIdAvailableSlots, useGetBathhousesIdSchema } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPhotos } from '@/api/generated/photos/photos'
 import { useGetBathhousesIdReviews } from '@/api/generated/reviews/reviews'
@@ -53,6 +53,7 @@ export default function BathhouseDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { message } = App.useApp()
   const [selectedDate, setSelectedDate] = useState<string>(dayjs().format('YYYY-MM-DD'))
   const [reviewPage, setReviewPage] = useState(1)
 
@@ -123,12 +124,21 @@ export default function BathhouseDetail() {
   )
 
   // JSON-LD schema - the endpoint returns raw JSON-LD string
-  const schemaJsonLd = typeof schemaData === 'string' ? schemaData : null
+  // Validate it's proper JSON before injection to prevent XSS
+  let safeSchemaJsonLd: string | null = null
+  if (typeof schemaData === 'string') {
+    try {
+      JSON.parse(schemaData)
+      safeSchemaJsonLd = schemaData
+    } catch {
+      // invalid JSON, skip injection
+    }
+  }
 
   return (
     <div>
-      {schemaJsonLd && (
-        <script type="application/ld+json">{schemaJsonLd}</script>
+      {safeSchemaJsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeSchemaJsonLd }} />
       )}
 
       <Button
