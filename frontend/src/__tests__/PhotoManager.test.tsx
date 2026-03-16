@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import PhotoManager from '@/pages/photos/PhotoManager'
 
 vi.mock('@/api/generated/photos/photos', () => ({
-  useGetBathhousesIdPhotos: vi.fn(),
+  useGetMyBathhousesIdPhotos: vi.fn(),
   usePostMyBathhousesIdPhotos: vi.fn(),
   usePutMyBathhousesIdPhotosReorder: vi.fn(),
   useDeletePhotosId: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock('@/stores/bathhouse', () => ({
 }))
 
 import {
-  useGetBathhousesIdPhotos,
+  useGetMyBathhousesIdPhotos,
   usePostMyBathhousesIdPhotos,
   usePutMyBathhousesIdPhotosReorder,
   useDeletePhotosId,
@@ -103,10 +103,10 @@ describe('PhotoManager', () => {
 
   it('shows prompt when no bathhouse selected', () => {
     mockBathhouseStore(null)
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: undefined,
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -116,10 +116,10 @@ describe('PhotoManager', () => {
 
   it('shows loading spinner while fetching', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: undefined,
       isLoading: true,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -128,10 +128,10 @@ describe('PhotoManager', () => {
 
   it('shows empty state when no photos', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: { data: [], success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -141,10 +141,10 @@ describe('PhotoManager', () => {
 
   it('renders photo cards with data', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: { data: mockPhotos, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -155,10 +155,10 @@ describe('PhotoManager', () => {
 
   it('shows rejection reason for rejected photos', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: { data: mockPhotos, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -167,10 +167,10 @@ describe('PhotoManager', () => {
 
   it('shows upload dates', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: { data: mockPhotos, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -181,10 +181,10 @@ describe('PhotoManager', () => {
 
   it('opens upload modal when add button clicked', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: { data: [], success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -196,10 +196,10 @@ describe('PhotoManager', () => {
 
   it('opens upload modal from empty state button', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: { data: [], success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -210,10 +210,10 @@ describe('PhotoManager', () => {
 
   it('calls delete mutation when confirmed', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: { data: [mockPhotos[0]], success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -231,10 +231,10 @@ describe('PhotoManager', () => {
 
   it('shows drag icons for reordering', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: { data: mockPhotos, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -244,10 +244,10 @@ describe('PhotoManager', () => {
 
   it('renders photo images with thumbnails', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: { data: [mockPhotos[0]], success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -260,10 +260,10 @@ describe('PhotoManager', () => {
 
   it('shows add and refresh buttons', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: { data: [], success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
@@ -273,10 +273,10 @@ describe('PhotoManager', () => {
 
   it('has draggable cards', () => {
     mockBathhouseStore('bath-1')
-    vi.mocked(useGetBathhousesIdPhotos).mockReturnValue({
+    vi.mocked(useGetMyBathhousesIdPhotos).mockReturnValue({
       data: { data: mockPhotos, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesIdPhotos>)
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdPhotos>)
 
     renderWithProviders(<PhotoManager />)
 
