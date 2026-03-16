@@ -101,8 +101,8 @@ func TestCertificateService_Purchase_MissingEmail(t *testing.T) {
 	}
 
 	_, err = env.svc.Purchase(context.Background(), 10000, nil, "buyer@test.com", "", "Test", "")
-	if err != domain.ErrInvalidInput {
-		t.Errorf("err = %v, want ErrInvalidInput for empty recipient email", err)
+	if err != nil {
+		t.Errorf("err = %v, want nil for empty recipient email (buying for self)", err)
 	}
 }
 

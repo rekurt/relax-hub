@@ -59,12 +59,24 @@
     }
   };
 
+  function sanitizeColor(value) {
+    return /^#[0-9a-fA-F]{3,8}$/.test(value) ? value : null;
+  }
+
+  function sanitizeFontFamily(value) {
+    return value.replace(/[{};!@\\]/g, '');
+  }
+
+  function escapeHTMLAttr(str) {
+    return str.replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
   class BaniWidget {
     constructor(element) {
       this.element = element;
       this.apiKey = element.getAttribute('data-api-key');
-      this.primaryColor = element.getAttribute('data-color') || CONFIG.defaultPrimaryColor;
-      this.fontFamily = element.getAttribute('data-font-family') || CONFIG.defaultFontFamily;
+      this.primaryColor = sanitizeColor(element.getAttribute('data-color')) || CONFIG.defaultPrimaryColor;
+      this.fontFamily = sanitizeFontFamily(element.getAttribute('data-font-family') || CONFIG.defaultFontFamily);
       this.language = element.getAttribute('data-language') || CONFIG.defaultLanguage;
       this.t = CONFIG.translations[this.language] || CONFIG.translations[CONFIG.defaultLanguage];
 
@@ -250,6 +262,8 @@
         this.state.selectedSlot = { ...slot, ...res.data };
         this.state.view = 'confirmation';
         this.state.error = null;
+        this.state.loading = false;
+        this.render();
       } catch (error) {
         this.state.error = error.message;
         console.error('Bani Widget Error:', error);
@@ -403,7 +417,7 @@
           html += `
             <button
               class="bani-widget-slot ${isSelected ? 'selected' : ''} ${!isAvailable ? 'disabled' : ''}"
-              data-slot='${JSON.stringify(slot)}'
+              data-slot='${escapeHTMLAttr(JSON.stringify(slot))}'
               ${!isAvailable ? 'disabled' : ''}
             >
               <span class="bani-widget-slot-time">${timeStr}</span>

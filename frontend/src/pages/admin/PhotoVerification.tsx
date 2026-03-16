@@ -74,13 +74,17 @@ export default function PhotoVerification() {
 
   const handleRejectConfirm = async () => {
     if (!rejectPhotoId) return
-    await rejectMutation.mutateAsync({
-      id: rejectPhotoId,
-      data: { reason: rejectReason || undefined },
-    })
-    message.success('Фото отклонено')
-    setRejectModalOpen(false)
-    invalidate()
+    try {
+      await rejectMutation.mutateAsync({
+        id: rejectPhotoId,
+        data: { reason: rejectReason || undefined },
+      })
+      message.success('Фото отклонено')
+      setRejectModalOpen(false)
+      invalidate()
+    } catch {
+      message.error('Не удалось отклонить фото')
+    }
   }
 
   return (

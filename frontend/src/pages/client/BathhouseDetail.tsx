@@ -285,7 +285,7 @@ export default function BathhouseDetail() {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Space>
                           <ClockCircleOutlined />
-                          <Text>{slot.startTime} — {slot.endTime}</Text>
+                          <Text>{typeof slot.startTime === 'string' && slot.startTime.length > 5 ? slot.startTime.slice(11, 16) : slot.startTime} — {typeof slot.endTime === 'string' && slot.endTime.length > 5 ? slot.endTime.slice(11, 16) : slot.endTime}</Text>
                         </Space>
                         <div>
                           {slot.price != null && <Text strong>{formatPrice(slot.price)}</Text>}

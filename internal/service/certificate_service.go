@@ -57,8 +57,10 @@ func (s *certificateService) Purchase(ctx context.Context, amount int64, purchas
 	if _, err := mail.ParseAddress(purchaserEmail); err != nil {
 		return nil, domain.ErrInvalidInput
 	}
-	if _, err := mail.ParseAddress(recipientEmail); err != nil {
-		return nil, domain.ErrInvalidInput
+	if recipientEmail != "" {
+		if _, err := mail.ParseAddress(recipientEmail); err != nil {
+			return nil, domain.ErrInvalidInput
+		}
 	}
 	if len(recipientName) > 255 {
 		return nil, domain.ErrInvalidInput
