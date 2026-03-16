@@ -149,6 +149,7 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses", p.BHHandler.MyBathhouses)
 
 		// Bathhouse photos (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/photos", p.PhotoHandler.ListByBathhouseOwner)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/photos", p.PhotoHandler.Upload)
 		r.With(auth).Delete("/photos/{id}", p.PhotoHandler.Delete)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/bathhouses/{id}/photos/reorder", p.PhotoHandler.Reorder)

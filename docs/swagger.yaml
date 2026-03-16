@@ -117,7 +117,6 @@ definitions:
         type: string
       price:
         description: Price in kopecks for this hour slot
-        format: int64
         type: integer
       startTime:
         type: string
@@ -3264,6 +3263,15 @@ paths:
                 error:
                   $ref: '#/definitions/internal_handler.APIError'
               type: object
+        "429":
+          description: Rate limited (10/min)
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
       summary: Login
       tags:
       - auth
@@ -3556,6 +3564,15 @@ paths:
               type: object
         "409":
           description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "429":
+          description: Rate limited (5/min)
           schema:
             allOf:
             - $ref: '#/definitions/internal_handler.APIResponse'
@@ -4840,6 +4857,15 @@ paths:
               type: object
         "401":
           description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
           schema:
             allOf:
             - $ref: '#/definitions/internal_handler.APIResponse'
@@ -6239,6 +6265,61 @@ paths:
       tags:
       - calendar
   /my/bathhouses/{id}/photos:
+    get:
+      description: Get all photos (pending, verified, rejected) for a bathhouse. Owner
+        or representative only.
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.photoResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all bathhouse photos for owner
+      tags:
+      - photos
     post:
       consumes:
       - application/json
@@ -7417,6 +7498,15 @@ paths:
                     $ref: '#/definitions/internal_handler.loyaltyLevelResponse'
                   type: array
               type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
       security:
       - BearerAuth: []
       summary: Get loyalty levels
@@ -8390,6 +8480,15 @@ paths:
                 error:
                   $ref: '#/definitions/internal_handler.APIError'
               type: object
+        "429":
+          description: Rate limited (20/min)
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
       summary: Validate promo code
       tags:
       - promo-codes
@@ -8980,6 +9079,15 @@ paths:
                 error:
                   $ref: '#/definitions/internal_handler.APIError'
               type: object
+        "429":
+          description: Rate limited (30/min)
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
         "500":
           description: Internal Server Error
           schema:
@@ -9025,6 +9133,15 @@ paths:
               type: object
         "404":
           description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "429":
+          description: Rate limited (10/s per API key)
           schema:
             allOf:
             - $ref: '#/definitions/internal_handler.APIResponse'
@@ -9092,6 +9209,15 @@ paths:
                 error:
                   $ref: '#/definitions/internal_handler.APIError'
               type: object
+        "429":
+          description: Rate limited (10/s per API key)
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
       summary: Create booking (widget)
       tags:
       - widget
@@ -9135,6 +9261,15 @@ paths:
               type: object
         "404":
           description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "429":
+          description: Rate limited (10/s per API key)
           schema:
             allOf:
             - $ref: '#/definitions/internal_handler.APIResponse'

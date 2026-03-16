@@ -295,9 +295,9 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		conditions = append(conditions, subConditions)
 	}
 	if filter.Status != nil {
-		conditions = append(conditions, fmt.Sprintf("status = %s", addArg(string(*filter.Status))))
+		conditions = append(conditions, fmt.Sprintf("bathhouses.status = %s", addArg(string(*filter.Status))))
 	} else if !filter.ShowAllStatuses {
-		conditions = append(conditions, fmt.Sprintf("status = %s", addArg(string(domain.BathhouseStatusActive))))
+		conditions = append(conditions, fmt.Sprintf("bathhouses.status = %s", addArg(string(domain.BathhouseStatusActive))))
 	}
 
 	// Geo filter using PostGIS ST_DWithin

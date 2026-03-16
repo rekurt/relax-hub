@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 ALTER TABLE bathhouses ADD COLUMN api_key VARCHAR(64) UNIQUE;
 
 -- Populate existing bathhouses with generated API keys

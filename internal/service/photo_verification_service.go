@@ -24,6 +24,7 @@ type PhotoVerificationService interface {
 	RejectPhoto(ctx context.Context, photoID uuid.UUID, adminID uuid.UUID, reason string) (*domain.BathhousePhoto, error)
 	GetPendingPhotos(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.BathhousePhoto], error)
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error)
+	ListByBathhouseForOwner(ctx context.Context, bathhouseID uuid.UUID, userID uuid.UUID, userRole domain.UserRole) ([]domain.BathhousePhoto, error)
 	ListVerifiedByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error)
 }
 
@@ -215,6 +216,13 @@ func (s *photoVerificationService) GetPendingPhotos(ctx context.Context, page, p
 }
 
 func (s *photoVerificationService) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error) {
+	return s.photoRepo.ListByBathhouse(ctx, bathhouseID)
+}
+
+func (s *photoVerificationService) ListByBathhouseForOwner(ctx context.Context, bathhouseID uuid.UUID, userID uuid.UUID, userRole domain.UserRole) ([]domain.BathhousePhoto, error) {
+	if err := s.accessCheck.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
+		return nil, err
+	}
 	return s.photoRepo.ListByBathhouse(ctx, bathhouseID)
 }
 

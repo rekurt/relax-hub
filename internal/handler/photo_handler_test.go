@@ -26,6 +26,7 @@ type mockPhotoVerificationService struct {
 	rejectPhotoFn              func(ctx context.Context, photoID uuid.UUID, adminID uuid.UUID, reason string) (*domain.BathhousePhoto, error)
 	getPendingFn               func(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.BathhousePhoto], error)
 	listByBathhouseFn          func(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error)
+	listByBathhouseForOwnerFn  func(ctx context.Context, bathhouseID uuid.UUID, userID uuid.UUID, userRole domain.UserRole) ([]domain.BathhousePhoto, error)
 	listVerifiedByBathhouseFn  func(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error)
 }
 
@@ -74,6 +75,13 @@ func (m *mockPhotoVerificationService) GetPendingPhotos(ctx context.Context, pag
 func (m *mockPhotoVerificationService) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.BathhousePhoto, error) {
 	if m.listByBathhouseFn != nil {
 		return m.listByBathhouseFn(ctx, bathhouseID)
+	}
+	return nil, nil
+}
+
+func (m *mockPhotoVerificationService) ListByBathhouseForOwner(ctx context.Context, bathhouseID uuid.UUID, userID uuid.UUID, userRole domain.UserRole) ([]domain.BathhousePhoto, error) {
+	if m.listByBathhouseForOwnerFn != nil {
+		return m.listByBathhouseForOwnerFn(ctx, bathhouseID, userID, userRole)
 	}
 	return nil, nil
 }
@@ -475,5 +483,112 @@ func TestPhotoHandler_ListByBathhouse(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestPhotoHandler_ListByBathhouseOwner(t *testing.T) {
+	bathhouseID := uuid.New()
+	userID := uuid.New()
+
+	svc := &mockPhotoVerificationService{
+		listByBathhouseForOwnerFn: func(ctx context.Context, bhID uuid.UUID, uid uuid.UUID, role domain.UserRole) ([]domain.BathhousePhoto, error) {
+			if bhID != bathhouseID {
+				t.Errorf("expected bathhouse %v, got %v", bathhouseID, bhID)
+			}
+			if uid != userID {
+				t.Errorf("expected user %v, got %v", userID, uid)
+			}
+			return []domain.BathhousePhoto{
+				{
+					ID:          uuid.New(),
+					BathhouseID: bathhouseID,
+					URL:         "https://example.com/photo1.jpg",
+					Position:    0,
+					Status:      domain.PhotoStatusVerified,
+					UploadedAt:  time.Now(),
+				},
+				{
+					ID:          uuid.New(),
+					BathhouseID: bathhouseID,
+					URL:         "https://example.com/photo2.jpg",
+					Position:    1,
+					Status:      domain.PhotoStatusPending,
+					UploadedAt:  time.Now(),
+				},
+				{
+					ID:              uuid.New(),
+					BathhouseID:     bathhouseID,
+					URL:             "https://example.com/photo3.jpg",
+					Position:        2,
+					Status:          domain.PhotoStatusRejected,
+					RejectionReason: "blurry",
+					UploadedAt:      time.Now(),
+				},
+			}, nil
+		},
+	}
+
+	h := handler.NewPhotoHandler(svc)
+	router := chi.NewRouter()
+	router.Get("/my/bathhouses/{id}/photos", h.ListByBathhouseOwner)
+
+	req := httptest.NewRequest(http.MethodGet, "/my/bathhouses/"+bathhouseID.String()+"/photos", nil)
+	req = req.WithContext(createTestContext(userID, domain.RoleOwner))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+	data, ok := resp["data"].([]interface{})
+	if !ok {
+		t.Fatal("expected data to be an array")
+	}
+	if len(data) != 3 {
+		t.Errorf("expected 3 photos, got %d", len(data))
+	}
+}
+
+func TestPhotoHandler_ListByBathhouseOwner_InvalidID(t *testing.T) {
+	h := handler.NewPhotoHandler(&mockPhotoVerificationService{})
+	router := chi.NewRouter()
+	router.Get("/my/bathhouses/{id}/photos", h.ListByBathhouseOwner)
+
+	req := httptest.NewRequest(http.MethodGet, "/my/bathhouses/invalid-id/photos", nil)
+	req = req.WithContext(createTestContext(uuid.New(), domain.RoleOwner))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", rec.Code)
+	}
+}
+
+func TestPhotoHandler_ListByBathhouseOwner_Forbidden(t *testing.T) {
+	svc := &mockPhotoVerificationService{
+		listByBathhouseForOwnerFn: func(ctx context.Context, bhID uuid.UUID, uid uuid.UUID, role domain.UserRole) ([]domain.BathhousePhoto, error) {
+			return nil, domain.ErrForbidden
+		},
+	}
+
+	h := handler.NewPhotoHandler(svc)
+	router := chi.NewRouter()
+	router.Get("/my/bathhouses/{id}/photos", h.ListByBathhouseOwner)
+
+	req := httptest.NewRequest(http.MethodGet, "/my/bathhouses/"+uuid.New().String()+"/photos", nil)
+	req = req.WithContext(createTestContext(uuid.New(), domain.RoleClient))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("expected status 403, got %d", rec.Code)
 	}
 }

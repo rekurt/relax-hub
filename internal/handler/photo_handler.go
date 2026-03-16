@@ -302,6 +302,37 @@ func (h *PhotoHandler) Reject(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toPhotoResponse(photo))
 }
 
+// ListByBathhouseOwner godoc
+// @Summary      List all bathhouse photos for owner
+// @Description  Get all photos (pending, verified, rejected) for a bathhouse. Owner or representative only.
+// @Tags         photos
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=[]photoResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/photos [get]
+func (h *PhotoHandler) ListByBathhouseOwner(w http.ResponseWriter, r *http.Request) {
+	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
+
+	photos, err := h.photoService.ListByBathhouseForOwner(r.Context(), bathhouseID, userID, userRole)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toPhotoResponses(photos))
+}
+
 // ListByBathhouse godoc
 // @Summary      List bathhouse photos
 // @Description  Get verified photos for a bathhouse.

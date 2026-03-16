@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"path"
@@ -100,7 +101,32 @@ func (s *S3Storage) ensureBucket(ctx context.Context) error {
 		}
 		s.logger.Info("created storage bucket", "bucket", s.bucket)
 	}
+
+	// Set public read policy so browsers can access uploaded files directly.
+	if err := s.setPublicReadPolicy(ctx); err != nil {
+		s.logger.Warn("failed to set public read policy on bucket", "bucket", s.bucket, "error", err)
+	}
+
 	return nil
+}
+
+func (s *S3Storage) setPublicReadPolicy(ctx context.Context) error {
+	policy := map[string]interface{}{
+		"Version": "2012-10-17",
+		"Statement": []map[string]interface{}{
+			{
+				"Effect":    "Allow",
+				"Principal": map[string]string{"AWS": "*"},
+				"Action":    []string{"s3:GetObject"},
+				"Resource":  []string{fmt.Sprintf("arn:aws:s3:::%s/*", s.bucket)},
+			},
+		},
+	}
+	policyJSON, err := json.Marshal(policy)
+	if err != nil {
+		return fmt.Errorf("marshal policy: %w", err)
+	}
+	return s.client.SetBucketPolicy(ctx, s.bucket, string(policyJSON))
 }
 
 // AvatarPath returns the S3 key for an avatar file.

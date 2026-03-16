@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"time"
 
@@ -202,7 +203,14 @@ func (s *recommendationService) GetUserPreferences(ctx context.Context, userID u
 		return nil, domain.ErrInvalidInput
 	}
 
-	return s.recRepo.GetUserPreferences(ctx, userID)
+	prefs, err := s.recRepo.GetUserPreferences(ctx, userID)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return &domain.UserPreferences{UserID: userID}, nil
+		}
+		return nil, err
+	}
+	return prefs, nil
 }
 
 // UpdatePreferences updates user's explicit preferences
