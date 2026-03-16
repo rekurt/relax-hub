@@ -108,8 +108,8 @@ describe('PaymentHistory', () => {
     expect(screen.getByText('Оплачено')).toBeInTheDocument()
     expect(screen.getByText('Возвращён')).toBeInTheDocument()
     expect(screen.getByText('Отменён')).toBeInTheDocument()
-    // "Ожидает" appears both in status column and in the filter options
-    expect(screen.getAllByText('Ожидает').length).toBeGreaterThanOrEqual(1)
+    // "Ожидает оплаты" appears both in status column and in the filter options
+    expect(screen.getAllByText('Ожидает оплаты').length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders empty state when no payments', () => {

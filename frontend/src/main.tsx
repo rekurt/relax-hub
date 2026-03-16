@@ -7,9 +7,11 @@ import { ConfigProvider } from 'antd'
 import ruRU from 'antd/locale/ru_RU'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ru'
+import isoWeek from 'dayjs/plugin/isoWeek'
 import App from './App'
 
 dayjs.locale('ru')
+dayjs.extend(isoWeek)
 
 const queryClient = new QueryClient({
   defaultOptions: {

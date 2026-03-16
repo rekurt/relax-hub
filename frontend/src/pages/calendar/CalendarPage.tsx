@@ -74,7 +74,7 @@ export default function CalendarPage() {
   const queryClient = useQueryClient()
   const selectedBathhouseId = useBathhouseStore((s) => s.selectedBathhouseId)
 
-  const [weekStart, setWeekStart] = useState<Dayjs>(() => dayjs().startOf('week'))
+  const [weekStart, setWeekStart] = useState<Dayjs>(() => dayjs().startOf('isoWeek'))
   const [slotBlockModalOpen, setSlotBlockModalOpen] = useState(false)
   const [externalCalendarModalOpen, setExternalCalendarModalOpen] = useState(false)
   const [slotBlockForm] = Form.useForm()

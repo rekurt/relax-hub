@@ -6,23 +6,14 @@ import dayjs from 'dayjs'
 import { useGetMyPayments } from '@/api/generated/payments/payments'
 import type { InternalHandlerPaymentResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
+import { PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 
 const { Title } = Typography
 const { RangePicker } = DatePicker
 
-const PAYMENT_STATUS_CONFIG: Record<string, { color: string; text: string }> = {
-  pending: { color: 'orange', text: 'Ожидает' },
-  succeeded: { color: 'green', text: 'Оплачено' },
-  refunded: { color: 'purple', text: 'Возвращён' },
-  canceled: { color: 'default', text: 'Отменён' },
-}
-
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
-  { value: 'pending', label: 'Ожидает' },
-  { value: 'succeeded', label: 'Оплачено' },
-  { value: 'refunded', label: 'Возвращён' },
-  { value: 'canceled', label: 'Отменён' },
+  ...Object.entries(PAYMENT_STATUS_CONFIG).map(([value, { text }]) => ({ value, label: text })),
 ]
 
 export default function PaymentHistory() {

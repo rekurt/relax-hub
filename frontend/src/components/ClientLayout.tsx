@@ -58,8 +58,8 @@ export default function ClientLayout() {
 
   const isMobile = !screens.md
 
-  const selectedKey = '/client' + (location.pathname.replace('/client', '') || '')
-  const matchedKey = clientMenuItems?.find(item => item && 'key' in item && selectedKey.startsWith(item.key as string))?.key as string
+  const selectedKey = location.pathname
+  const matchedKey = clientMenuItems?.find(item => item && 'key' in item && (selectedKey.startsWith(item.key as string) && item.key !== '/client' || item.key === '/client' && selectedKey === '/client'))?.key as string
   const selectedKeys = [matchedKey || '/client']
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {

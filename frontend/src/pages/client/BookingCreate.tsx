@@ -376,11 +376,18 @@ export default function BookingCreate() {
                 <Text type="success">до -{formatPrice(certificateBalance)}</Text>
               </Descriptions.Item>
             )}
-            <Descriptions.Item label="Итого к оплате">
+            <Descriptions.Item label="Стоимость">
               <Text strong style={{ fontSize: 18 }}>
                 {formatPrice(priceInfo.final_price ?? 0)}
               </Text>
             </Descriptions.Item>
+            {(promoValidated || (certificateBalance != null && certificateBalance > 0)) && (
+              <Descriptions.Item label="Скидки будут рассчитаны при оформлении">
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Окончательная сумма определяется сервером
+                </Text>
+              </Descriptions.Item>
+            )}
           </Descriptions>
         ) : selectedSlot ? (
           <Text type="secondary">Загрузка цены...</Text>
