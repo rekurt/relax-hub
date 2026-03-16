@@ -250,12 +250,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 - Modify: `frontend/src/pages/Register.tsx` (add OAuth buttons)
 - Create: `frontend/src/lib/useDeviceToken.ts`
 
-- [ ] Add VK, Yandex, Google OAuth login buttons to Login/Register pages
-- [ ] OAuth redirect flow: redirect to provider, handle callback with token
-- [ ] Device token registration hook for push notification support
-- [ ] API hooks: `useGetAuthOauthProvider`, `usePostDeviceTokens`, `useDeleteDeviceTokensId`
-- [ ] Write tests for OAuth button rendering, device token hook
-- [ ] Run project test suite - must pass before task 19
+- [x] Add VK, Yandex, Google OAuth login buttons to Login/Register pages
+- [x] OAuth redirect flow: redirect to provider, handle callback with token
+- [x] Device token registration hook for push notification support
+- [x] API hooks: `useGetAuthOauthProvider`, `usePostDeviceTokens`, `useDeleteDeviceTokensId`
+- [x] Write tests for OAuth button rendering, device token hook
+- [x] Run project test suite - must pass before task 19
 
 ### Task 19: Client chat and notifications integration
 

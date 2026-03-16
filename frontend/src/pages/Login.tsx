@@ -5,6 +5,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { postAuthLogin } from '@/api/generated/auth/auth'
 import { useAuthStore } from '@/stores/auth'
 import { getRoleHomePath } from '@/stores/auth'
+import OAuthButtons from '@/components/OAuthButtons'
 import type { InternalHandlerLoginRequest } from '@/api/generated/model'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
@@ -73,6 +74,8 @@ export default function Login() {
               </Button>
             </Form.Item>
           </Form>
+
+          <OAuthButtons />
 
           <div style={{ textAlign: 'center' }}>
             <Text>Нет аккаунта? </Text>

@@ -4,6 +4,7 @@ import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined } from '@ant-de
 import { Link, useNavigate } from 'react-router-dom'
 import { postAuthRegister } from '@/api/generated/auth/auth'
 import { useAuthStore } from '@/stores/auth'
+import OAuthButtons from '@/components/OAuthButtons'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
 
@@ -117,6 +118,8 @@ export default function Register() {
               </Button>
             </Form.Item>
           </Form>
+
+          <OAuthButtons />
 
           <div style={{ textAlign: 'center' }}>
             <Text>Уже есть аккаунт? </Text>

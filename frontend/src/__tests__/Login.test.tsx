@@ -31,7 +31,7 @@ describe('Login page', () => {
     expect(screen.getByText('Вход в личный кабинет')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Email')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Пароль')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /войти/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^войти$/i })).toBeInTheDocument()
   })
 
   it('renders registration link', () => {

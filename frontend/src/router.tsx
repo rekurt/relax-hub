@@ -44,12 +44,14 @@ import PhotoVerification from '@/pages/admin/PhotoVerification'
 import ComplaintManagement from '@/pages/admin/ComplaintManagement'
 import CityManagement from '@/pages/admin/CityManagement'
 import GlobalPromoCodes from '@/pages/admin/GlobalPromoCodes'
+import OAuthCallback from '@/pages/OAuthCallback'
 
 export default function AppRouter() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/auth/oauth/callback/:provider" element={<OAuthCallback />} />
 
       {/* Owner/Representative routes */}
       <Route
