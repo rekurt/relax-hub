@@ -36,6 +36,8 @@ import CertificateList from '@/pages/client/CertificateList'
 import CertificatePurchase from '@/pages/client/CertificatePurchase'
 import PaymentHistory from '@/pages/client/PaymentHistory'
 import ClientProfile from '@/pages/client/ClientProfile'
+import ClientChat from '@/pages/client/ClientChat'
+import ClientNotifications from '@/pages/client/ClientNotifications'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import UserManagement from '@/pages/admin/UserManagement'
 import BathhouseModeration from '@/pages/admin/BathhouseModeration'
@@ -104,6 +106,8 @@ export default function AppRouter() {
         <Route path="certificates" element={<CertificateList />} />
         <Route path="certificates/purchase" element={<CertificatePurchase />} />
         <Route path="payments" element={<PaymentHistory />} />
+        <Route path="chat" element={<ClientChat />} />
+        <Route path="notifications" element={<ClientNotifications />} />
         <Route path="profile" element={<ClientProfile />} />
       </Route>
 

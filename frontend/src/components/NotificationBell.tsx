@@ -14,17 +14,25 @@ import {
 } from '@/api/generated/notifications/notifications'
 import { useQueryClient } from '@tanstack/react-query'
 import { NOTIFICATION_TYPE_LABELS } from '@/lib/constants'
+import { useAuthStore } from '@/stores/auth'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
 
 const { Text } = Typography
 
+function getNotificationsPath(role?: string) {
+  if (role === 'client') return '/client/notifications'
+  if (role === 'admin') return '/admin/notifications'
+  return '/notifications'
+}
+
 export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
+  const userRole = useAuthStore((s) => s.user?.role)
 
   const { data: unreadData } = useGetMyNotificationsUnreadCount({
     query: { refetchInterval: 30000 },
@@ -134,7 +142,7 @@ export default function NotificationBell() {
         style={{ marginTop: 8 }}
         onClick={() => {
           setOpen(false)
-          navigate('/notifications')
+          navigate(getNotificationsPath(userRole))
         }}
       >
         Все уведомления

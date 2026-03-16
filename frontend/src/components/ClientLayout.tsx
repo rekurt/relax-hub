@@ -25,6 +25,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   BulbOutlined,
+  BellOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -44,6 +45,7 @@ const clientMenuItems: MenuProps['items'] = [
   { key: '/client/certificates', icon: <GiftOutlined />, label: 'Сертификаты' },
   { key: '/client/payments', icon: <WalletOutlined />, label: 'Платежи' },
   { key: '/client/chat', icon: <MessageOutlined />, label: 'Чат' },
+  { key: '/client/notifications', icon: <BellOutlined />, label: 'Уведомления' },
   { key: '/client/profile', icon: <UserOutlined />, label: 'Профиль' },
 ]
 

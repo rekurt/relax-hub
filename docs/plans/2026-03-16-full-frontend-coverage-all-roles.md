@@ -264,12 +264,12 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 - Create: `frontend/src/pages/client/ClientChat.tsx`
 - Create: `frontend/src/pages/client/ClientNotifications.tsx`
 
-- [ ] Client chat page: start conversation with bathhouse, existing conversations list, real-time messaging
-- [ ] Client notifications page (reuse notification patterns from owner)
-- [ ] Notification bell in ClientLayout header
-- [ ] API hooks: `usePostBathhousesIdChat`, `useGetMyConversations`, `useGetConversationsIdMessages`, `usePostConversationsIdMessages`, `usePatchConversationsIdRead`, `useGetMyNotifications`, `usePatchMyNotificationsIdRead`, `usePatchMyNotificationsReadAll`
-- [ ] Write tests for chat initiation, notification display
-- [ ] Run project test suite - must pass before task 20
+- [x] Client chat page: start conversation with bathhouse, existing conversations list, real-time messaging
+- [x] Client notifications page (reuse notification patterns from owner)
+- [x] Notification bell in ClientLayout header
+- [x] API hooks: `usePostBathhousesIdChat`, `useGetMyConversations`, `useGetConversationsIdMessages`, `usePostConversationsIdMessages`, `usePatchConversationsIdRead`, `useGetMyNotifications`, `usePatchMyNotificationsIdRead`, `usePatchMyNotificationsReadAll`
+- [x] Write tests for chat initiation, notification display
+- [x] Run project test suite - must pass before task 20
 
 ### Task 20: Admin notifications, chat, and admin profile
 
