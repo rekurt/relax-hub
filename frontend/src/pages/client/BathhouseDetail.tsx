@@ -123,10 +123,18 @@ export default function BathhouseDetail() {
     (a) => bathhouse[a.key as keyof typeof bathhouse],
   )
 
-  // JSON-LD schema - the endpoint returns raw JSON-LD string
-  // Validate it's proper JSON before injection to prevent XSS
+  // JSON-LD schema - the endpoint returns raw JSON-LD object (not wrapped in envelope)
+  // Serialize and escape to prevent XSS before injection
   let safeSchemaJsonLd: string | null = null
-  if (typeof schemaData === 'string') {
+  if (schemaData && typeof schemaData === 'object') {
+    try {
+      safeSchemaJsonLd = JSON.stringify(schemaData)
+        .replace(/</g, '\\u003c')
+        .replace(/>/g, '\\u003e')
+    } catch {
+      // serialization failed, skip injection
+    }
+  } else if (typeof schemaData === 'string') {
     try {
       safeSchemaJsonLd = JSON.stringify(JSON.parse(schemaData))
         .replace(/</g, '\\u003c')

@@ -231,7 +231,7 @@ export default function CalendarPage() {
   }
 
   const goToToday = () => {
-    setWeekStart(dayjs().startOf('week'))
+    setWeekStart(dayjs().startOf('isoWeek'))
   }
 
   if (!selectedBathhouseId) {

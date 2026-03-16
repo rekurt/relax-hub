@@ -32,7 +32,12 @@ export default function ClientBookingList() {
   const [statusFilter, setStatusFilter] = useState('')
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
 
-  const { data, isLoading } = useGetBookings({ page, page_size: pageSize })
+  const hasActiveFilter = !!statusFilter || !!(dateRange?.[0] && dateRange?.[1])
+
+  const { data, isLoading } = useGetBookings({
+    page: hasActiveFilter ? 1 : page,
+    page_size: hasActiveFilter ? 999 : pageSize,
+  })
 
   const cancelMutation = usePatchBookingsIdCancel({
     mutation: {
@@ -179,7 +184,11 @@ export default function ClientBookingList() {
         rowKey="id"
         loading={isLoading}
         locale={{ emptyText: 'Нет бронирований' }}
-        pagination={{
+        pagination={hasActiveFilter ? {
+          pageSize: 999,
+          hideOnSinglePage: true,
+          showTotal: (total) => `Найдено: ${total}`,
+        } : {
           current: page,
           pageSize: pageSize,
           total: meta?.total_count ?? 0,

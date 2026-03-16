@@ -61,24 +61,28 @@ export default function GlobalPromoCodes() {
   const selectedType = Form.useWatch('type', form)
 
   const handleSubmit = async () => {
-    const values = await form.validateFields()
-    const result = await createMutation.mutateAsync({
-      data: {
-        code: values.code,
-        type: values.type,
-        value: values.type === 'free_hour' ? 1 : values.type === 'fixed_amount' ? values.value * 100 : values.value,
-        max_uses: values.max_uses,
-        min_amount: values.min_amount ? values.min_amount * 100 : undefined,
-        valid_from: values.valid_from?.toISOString(),
-        valid_until: values.valid_until?.toISOString(),
-      },
-    })
-    message.success('Промокод создан')
-    if (result.data) {
-      setCreatedPromos((prev) => [result.data as InternalHandlerPromoResponse, ...prev])
+    try {
+      const values = await form.validateFields()
+      const result = await createMutation.mutateAsync({
+        data: {
+          code: values.code,
+          type: values.type,
+          value: values.type === 'free_hour' ? 1 : values.type === 'fixed_amount' ? values.value * 100 : values.value,
+          max_uses: values.max_uses,
+          min_amount: values.min_amount ? values.min_amount * 100 : undefined,
+          valid_from: values.valid_from?.toISOString(),
+          valid_until: values.valid_until?.toISOString(),
+        },
+      })
+      message.success('Промокод создан')
+      if (result.data) {
+        setCreatedPromos((prev) => [result.data as InternalHandlerPromoResponse, ...prev])
+      }
+      form.resetFields()
+      setFormVisible(false)
+    } catch {
+      message.error('Не удалось создать промокод')
     }
-    form.resetFields()
-    setFormVisible(false)
   }
 
   const formatValue = (promo: InternalHandlerPromoResponse) => {
