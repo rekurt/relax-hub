@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Form, Input, Button, Card, Typography, Space, App, Segmented } from 'antd'
 import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined } from '@ant-design/icons'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { postAuthRegister } from '@/api/generated/auth/auth'
 import { useAuthStore } from '@/stores/auth'
 import OAuthButtons from '@/components/OAuthButtons'
@@ -30,6 +30,8 @@ interface RegisterFormValues {
 
 export default function Register() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const referralCode = searchParams.get('referral_code') ?? undefined
   const setAuth = useAuthStore((s) => s.setAuth)
   const { message } = App.useApp()
   const [loading, setLoading] = useState(false)
@@ -46,6 +48,7 @@ export default function Register() {
         name: values.name,
         phone: values.phone,
         role,
+        referral_code: referralCode,
       })
       if (response.success && response.data?.token && response.data.user) {
         setAuth(response.data.token, response.data.user)
@@ -143,7 +146,7 @@ export default function Register() {
             </Form.Item>
           </Form>
 
-          <OAuthButtons />
+          <OAuthButtons referralCode={referralCode} />
 
           <div style={{ textAlign: 'center' }}>
             <Text>Уже есть аккаунт? </Text>

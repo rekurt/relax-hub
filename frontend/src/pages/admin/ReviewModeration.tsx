@@ -105,6 +105,8 @@ export default function ReviewModeration() {
         approveMutation.mutateAsync({ id: item.id! }).then(() => {
           message.success('Отзыв одобрен')
           invalidateAll()
+        }).catch(() => {
+          message.error('Не удалось одобрить отзыв')
         }),
     })
   }
@@ -150,6 +152,8 @@ export default function ReviewModeration() {
           message.success(`Одобрено отзывов: ${selectedIds.length}`)
           setSelectedIds([])
           invalidateAll()
+        }).catch(() => {
+          message.error('Не удалось одобрить отзывы')
         }),
     })
   }
@@ -284,6 +288,7 @@ export default function ReviewModeration() {
           onChange={(val) => {
             setStatusFilter(val as string)
             setPage(1)
+            setSelectedIds([])
           }}
         />
       </div>
@@ -328,6 +333,7 @@ export default function ReviewModeration() {
           onChange: (p, ps) => {
             setPage(p)
             setPageSize(ps)
+            setSelectedIds([])
           },
         }}
       />

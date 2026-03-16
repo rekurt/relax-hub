@@ -64,7 +64,7 @@
   }
 
   function sanitizeFontFamily(value) {
-    return value.replace(/[^a-zA-Z0-9\s,'\-]/g, '');
+    return value.replace(/[^a-zA-Z0-9\s,\-]/g, '');
   }
 
   function escapeHTMLAttr(str) {

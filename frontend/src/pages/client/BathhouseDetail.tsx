@@ -35,6 +35,7 @@ import { useGetBathhousesIdSimilar } from '@/api/generated/recommendations/recom
 import { useGetBathhousesIdGallery } from '@/api/generated/review-media/review-media'
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
 import { formatPrice, formatDayOfWeek } from '@/lib/format'
+import { useAuthStore } from '@/stores/auth'
 import BathhouseCard from '@/components/BathhouseCard'
 import ReviewCard from '@/components/ReviewCard'
 
@@ -54,6 +55,7 @@ export default function BathhouseDetail() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { message } = App.useApp()
+  const currentUser = useAuthStore((s) => s.user)
   const [selectedDate, setSelectedDate] = useState<string>(dayjs().format('YYYY-MM-DD'))
   const [reviewPage, setReviewPage] = useState(1)
 
@@ -321,6 +323,8 @@ export default function BathhouseDetail() {
               key={review.id}
               review={review}
               showActions={true}
+              isAuthor={!!currentUser?.id && currentUser.id === review.user_id}
+              onEdit={(reviewId) => navigate(`/client/review?bathhouse=${id}&edit=${reviewId}`)}
               onDeleted={() => queryClient.invalidateQueries({ queryKey: [`/bathhouses/${id}/reviews`] })}
             />
           ))}
