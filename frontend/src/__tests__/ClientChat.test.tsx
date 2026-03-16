@@ -138,8 +138,8 @@ describe('ClientChat', () => {
     } as unknown as ReturnType<typeof useGetMyConversations>)
 
     renderWithProviders(<ClientChat />)
-    expect(screen.getByText('Клиент client-a')).toBeInTheDocument()
-    expect(screen.getByText('Клиент client-b')).toBeInTheDocument()
+    expect(screen.getByText('Баня bath-1')).toBeInTheDocument()
+    expect(screen.getByText('Баня bath-2')).toBeInTheDocument()
   })
 
   it('shows messages when conversation is selected', async () => {
@@ -163,7 +163,7 @@ describe('ClientChat', () => {
 
     renderWithProviders(<ClientChat />)
 
-    fireEvent.click(screen.getByText('Клиент client-a'))
+    fireEvent.click(screen.getByText('Баня bath-1'))
 
     await waitFor(() => {
       expect(screen.getByText('← Назад к беседам')).toBeInTheDocument()
@@ -190,7 +190,7 @@ describe('ClientChat', () => {
 
     renderWithProviders(<ClientChat />)
 
-    fireEvent.click(screen.getByText('Клиент client-a'))
+    fireEvent.click(screen.getByText('Баня bath-1'))
 
     await waitFor(() => {
       const input = screen.getByPlaceholderText('Введите сообщение...')

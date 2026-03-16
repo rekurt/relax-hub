@@ -104,13 +104,15 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
   }, [messages.length])
 
   useEffect(() => {
+    const unreadCount = messages.filter((m) => !m.is_read && m.sender_id !== currentUser?.id).length
+    const unreadKey = `${conversationId}:${unreadCount}`
     if (
       conversationId &&
-      conversationId !== markedReadForRef.current &&
-      messages.some((m) => !m.is_read && m.sender_id !== currentUser?.id)
+      unreadCount > 0 &&
+      unreadKey !== markedReadForRef.current
     ) {
       markReadRef.current({ id: conversationId })
-      markedReadForRef.current = conversationId
+      markedReadForRef.current = unreadKey
     }
   }, [conversationId, messages, currentUser?.id])
 

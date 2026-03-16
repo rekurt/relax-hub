@@ -39,10 +39,10 @@ type BookingResult struct {
 }
 
 type TimeSlot struct {
-	StartTime time.Time
-	EndTime   time.Time
-	Available bool
-	Price     int64 // Price in kopecks for this hour slot
+	StartTime time.Time `json:"startTime"`
+	EndTime   time.Time `json:"endTime"`
+	Available bool      `json:"available"`
+	Price     int64     `json:"price"` // Price in kopecks for this hour slot
 }
 
 type BookingService interface {

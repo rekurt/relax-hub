@@ -73,9 +73,9 @@ export default function BookingCreate() {
   )
   const slots = slotsData?.data ?? []
 
-  // Build RFC3339 timestamps for price calculator
-  const startTime = selectedSlot ? `${selectedDate}T${selectedSlot.from}:00Z` : ''
-  const endTime = selectedSlot ? `${selectedDate}T${selectedSlot.to}:00Z` : ''
+  // Use RFC3339 timestamps directly from slot data
+  const startTime = selectedSlot?.from ?? ''
+  const endTime = selectedSlot?.to ?? ''
 
   const { data: priceData, isLoading: priceLoading } = useGetBathhousesIdPriceCalculator(
     bathhouseId,
@@ -113,13 +113,13 @@ export default function BookingCreate() {
     })
   }
 
-  // Certificate balance check - enabled when code is entered
-  const shouldCheckCertificate = certificateCode.trim().length >= 4
+  // Certificate balance check - triggered by button click
+  const [checkCertificate, setCheckCertificate] = useState(false)
   const { data: certBalanceData } = useGetCertificatesCodeBalance(
     certificateCode.trim(),
     {
       query: {
-        enabled: shouldCheckCertificate,
+        enabled: checkCertificate && certificateCode.trim().length >= 4,
         retry: false,
       },
     },
@@ -210,6 +210,8 @@ export default function BookingCreate() {
                 <Space wrap style={{ marginTop: 8 }}>
                   {slots.map((slot) => {
                     const isSelected = selectedSlot?.from === slot.startTime && selectedSlot?.to === slot.endTime
+                    const fromTime = slot.startTime?.slice(11, 16) ?? slot.startTime ?? ''
+                    const toTime = slot.endTime?.slice(11, 16) ?? slot.endTime ?? ''
                     return (
                       <Button
                         key={`${slot.startTime}-${slot.endTime}`}
@@ -218,7 +220,7 @@ export default function BookingCreate() {
                         icon={<ClockCircleOutlined />}
                         onClick={() => setSelectedSlot({ from: slot.startTime!, to: slot.endTime! })}
                       >
-                        {slot.startTime} — {slot.endTime}
+                        {fromTime} — {toTime}
                         {slot.price != null && ` (${formatPrice(slot.price)})`}
                       </Button>
                     )
@@ -288,13 +290,23 @@ export default function BookingCreate() {
           {/* Gift certificate */}
           <div>
             <Text strong><GiftOutlined /> Подарочный сертификат:</Text>
-            <Input
-              value={certificateCode}
-              onChange={(e) => setCertificateCode(e.target.value)}
-              placeholder="BANI-XXXX-XXXX"
-              style={{ marginTop: 8 }}
-            />
-            {certificateBalance != null && (
+            <Space.Compact style={{ width: '100%', marginTop: 8 }}>
+              <Input
+                value={certificateCode}
+                onChange={(e) => {
+                  setCertificateCode(e.target.value)
+                  setCheckCertificate(false)
+                }}
+                placeholder="BANI-XXXX-XXXX"
+              />
+              <Button
+                onClick={() => setCheckCertificate(true)}
+                disabled={certificateCode.trim().length < 4}
+              >
+                Проверить
+              </Button>
+            </Space.Compact>
+            {checkCertificate && certificateBalance != null && (
               <Text type="success" style={{ fontSize: 12 }}>
                 Баланс сертификата: {formatPrice(certificateBalance)}
               </Text>

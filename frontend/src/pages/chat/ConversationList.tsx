@@ -2,6 +2,7 @@ import { Avatar, Typography, Input, Empty, Spin } from 'antd'
 import { UserOutlined, SearchOutlined } from '@ant-design/icons'
 import { useState, useMemo } from 'react'
 import { useGetMyConversations } from '@/api/generated/chat/chat'
+import { useAuthStore } from '@/stores/auth'
 import type { InternalHandlerConversationResponse } from '@/api/generated/model'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -19,6 +20,7 @@ interface ConversationListProps {
 
 export default function ConversationList({ selectedId, onSelect }: ConversationListProps) {
   const [search, setSearch] = useState('')
+  const userRole = useAuthStore((s) => s.user?.role)
 
   const { data, isLoading } = useGetMyConversations({ page: 1, page_size: 50 })
 
@@ -75,7 +77,9 @@ export default function ConversationList({ selectedId, onSelect }: ConversationL
               <Avatar icon={<UserOutlined />} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <Text ellipsis style={{ maxWidth: 180, display: 'block' }}>
-                  Клиент {conv.client_id?.slice(0, 8)}
+                  {userRole === 'client'
+                    ? `Баня ${conv.bathhouse_id?.slice(0, 8)}`
+                    : `Клиент ${conv.client_id?.slice(0, 8)}`}
                 </Text>
                 <Text type="secondary" style={{ fontSize: 12 }}>
                   {conv.last_message_at

@@ -63,9 +63,9 @@ const mockBathhouse = {
 }
 
 const mockSlots = [
-  { startTime: '10:00', endTime: '11:00', price: 300000, available: true },
-  { startTime: '11:00', endTime: '12:00', price: 300000, available: true },
-  { startTime: '12:00', endTime: '13:00', price: 350000, available: false },
+  { startTime: '2026-03-16T10:00:00Z', endTime: '2026-03-16T11:00:00Z', price: 300000, available: true },
+  { startTime: '2026-03-16T11:00:00Z', endTime: '2026-03-16T12:00:00Z', price: 300000, available: true },
+  { startTime: '2026-03-16T12:00:00Z', endTime: '2026-03-16T13:00:00Z', price: 350000, available: false },
 ]
 
 const mockPriceInfo = {

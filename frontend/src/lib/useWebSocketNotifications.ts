@@ -35,7 +35,10 @@ export function useWebSocketNotifications({
   useEffect(() => {
     if (!enabled) return
 
+    let mounted = true
+
     function connect() {
+      if (!mounted) return
       const token = localStorage.getItem(AUTH_TOKEN_KEY)
       if (!token) return
 
@@ -75,6 +78,7 @@ export function useWebSocketNotifications({
 
       ws.onclose = () => {
         wsRef.current = null
+        if (!mounted) return
         const delay = reconnectDelayRef.current
         reconnectDelayRef.current = Math.min(delay * 2, 60000)
         reconnectTimeoutRef.current = setTimeout(connect, delay)
@@ -87,6 +91,7 @@ export function useWebSocketNotifications({
 
     connect()
     return () => {
+      mounted = false
       clearTimeout(reconnectTimeoutRef.current)
       wsRef.current?.close()
       wsRef.current = null
