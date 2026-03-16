@@ -57,7 +57,12 @@ export default function AdminLayout() {
   const isMobile = !screens.md
 
   const selectedKey = location.pathname
-  const matchedKey = adminMenuItems?.find(item => item && 'key' in item && selectedKey.startsWith(item.key as string) && item.key !== '/admin' || item && 'key' in item && item.key === '/admin' && selectedKey === '/admin')?.key as string
+  const matchedKey = adminMenuItems?.find(item => {
+    if (!item || !('key' in item)) return false
+    const key = item.key as string
+    if (key === '/admin') return selectedKey === '/admin'
+    return selectedKey.startsWith(key)
+  })?.key as string
   const selectedKeys = [matchedKey || '/admin']
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {

@@ -64,7 +64,7 @@
   }
 
   function sanitizeFontFamily(value) {
-    return value.replace(/[{};!@\\]/g, '');
+    return value.replace(/[^a-zA-Z0-9\s,'\-]/g, '');
   }
 
   function escapeHTMLAttr(str) {
@@ -515,7 +515,7 @@
         <div class="bani-widget-confirmation-details">
           <div class="bani-widget-confirmation-detail">
             <span>${this.t.bookingId}</span>
-            <strong>${slot.id}</strong>
+            <strong>${this.escapeHtml(String(slot.id))}</strong>
           </div>
           <div class="bani-widget-confirmation-detail">
             <span>${this.escapeHtml(bathhouse.name)}</span>
