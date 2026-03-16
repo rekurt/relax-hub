@@ -25,6 +25,7 @@ import {
   MenuUnfoldOutlined,
   BulbOutlined,
   BellOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -38,6 +39,7 @@ const clientMenuItems: MenuProps['items'] = [
   { key: '/client/bookings', icon: <CalendarOutlined />, label: 'Мои бронирования' },
   { key: '/client/favorites', icon: <HeartOutlined />, label: 'Избранное' },
   { key: '/client/recommendations', icon: <BulbOutlined />, label: 'Рекомендации' },
+  { key: '/client/preferences', icon: <SettingOutlined />, label: 'Предпочтения' },
   { key: '/client/loyalty', icon: <TrophyOutlined />, label: 'Лояльность' },
   { key: '/client/referral', icon: <UsergroupAddOutlined />, label: 'Рефералы' },
   { key: '/client/certificates', icon: <GiftOutlined />, label: 'Сертификаты' },

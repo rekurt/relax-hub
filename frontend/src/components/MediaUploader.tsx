@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Upload, App, Image, Space, Tag } from 'antd'
 import { PlusOutlined, DeleteOutlined, VideoCameraOutlined } from '@ant-design/icons'
 import type { UploadFile } from 'antd'
@@ -28,6 +28,19 @@ export default function MediaUploader({ files, onChange, disabled }: MediaUpload
   const { message } = App.useApp()
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewImage, setPreviewImage] = useState('')
+  const filesRef = useRef<MediaFile[]>([])
+
+  // Keep ref in sync with files prop (inside effect to satisfy lint)
+  useEffect(() => {
+    filesRef.current = files
+  }, [files])
+
+  // Revoke object URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      filesRef.current.forEach((f) => URL.revokeObjectURL(f.previewUrl))
+    }
+  }, [])
 
   const photoCount = files.filter((f) => f.type === 'image').length
   const videoCount = files.filter((f) => f.type === 'video').length

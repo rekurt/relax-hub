@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Form, Input, Button, Card, Typography, Space, App } from 'antd'
+import { Form, Input, Button, Card, Typography, Space, App, Segmented } from 'antd'
 import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router-dom'
 import { postAuthRegister } from '@/api/generated/auth/auth'
@@ -9,6 +9,16 @@ import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
 
 const { Title, Text } = Typography
+
+const ROLE_OPTIONS = [
+  { label: 'Клиент', value: 'client' },
+  { label: 'Владелец бани', value: 'owner' },
+]
+
+const ROLE_DESCRIPTIONS: Record<string, { title: string; subtitle: string }> = {
+  client: { title: 'Регистрация клиента', subtitle: 'Создайте аккаунт для поиска и бронирования бань' },
+  owner: { title: 'Регистрация владельца', subtitle: 'Создайте аккаунт для управления банями' },
+}
 
 interface RegisterFormValues {
   email: string
@@ -23,6 +33,9 @@ export default function Register() {
   const setAuth = useAuthStore((s) => s.setAuth)
   const { message } = App.useApp()
   const [loading, setLoading] = useState(false)
+  const [role, setRole] = useState<string>('client')
+
+  const getRoleHomePath = (r: string) => (r === 'client' ? '/client' : '/')
 
   const onFinish = async (values: RegisterFormValues) => {
     setLoading(true)
@@ -32,12 +45,12 @@ export default function Register() {
         password: values.password,
         name: values.name,
         phone: values.phone,
-        role: 'owner',
+        role,
       })
       if (response.success && response.data?.token && response.data.user) {
         setAuth(response.data.token, response.data.user)
         message.success('Регистрация прошла успешно')
-        navigate('/', { replace: true })
+        navigate(getRoleHomePath(role), { replace: true })
       } else {
         message.error(response.error?.message || 'Ошибка регистрации')
       }
@@ -50,14 +63,25 @@ export default function Register() {
     }
   }
 
+  const roleDesc = ROLE_DESCRIPTIONS[role] ?? ROLE_DESCRIPTIONS['client']!
+  const title = roleDesc.title
+  const subtitle = roleDesc.subtitle
+
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f5f5f5' }}>
       <Card style={{ width: 440 }}>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div style={{ textAlign: 'center' }}>
-            <Title level={3}>Регистрация владельца</Title>
-            <Text type="secondary">Создайте аккаунт для управления банями</Text>
+            <Title level={3}>{title}</Title>
+            <Text type="secondary">{subtitle}</Text>
           </div>
+
+          <Segmented
+            options={ROLE_OPTIONS}
+            value={role}
+            onChange={(v) => setRole(v as string)}
+            block
+          />
 
           <Form layout="vertical" onFinish={onFinish} autoComplete="off">
             <Form.Item

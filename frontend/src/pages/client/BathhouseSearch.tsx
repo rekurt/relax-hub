@@ -162,7 +162,7 @@ export default function BathhouseSearch() {
                           const [min, max] = values
                           setFilters((prev) => ({
                             ...prev,
-                            price_min: min || undefined,
+                            price_min: min !== 0 ? min : undefined,
                             price_max: max !== undefined && max < 1000000 ? max : undefined,
                           }))
                           setPage(1)

@@ -91,7 +91,7 @@ describe('App', () => {
 
   it('renders register page on /register route', () => {
     renderWithProviders(<App />, { route: '/register' })
-    expect(screen.getByText('Регистрация владельца')).toBeInTheDocument()
+    expect(screen.getByText('Регистрация клиента')).toBeInTheDocument()
   })
 
   it('renders dashboard when authenticated as owner', () => {

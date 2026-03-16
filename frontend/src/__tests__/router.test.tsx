@@ -113,7 +113,7 @@ describe('AppRouter', () => {
 
   it('renders register at /register', () => {
     renderRouter('/register')
-    expect(screen.getByText('Регистрация владельца')).toBeInTheDocument()
+    expect(screen.getByText('Регистрация клиента')).toBeInTheDocument()
   })
 
   it('redirects to login for protected routes when not authenticated', () => {

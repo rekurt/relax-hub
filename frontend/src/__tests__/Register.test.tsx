@@ -28,7 +28,7 @@ function renderRegister() {
 describe('Register page', () => {
   it('renders registration form', () => {
     renderRegister()
-    expect(screen.getByText('Регистрация владельца')).toBeInTheDocument()
+    expect(screen.getByText('Регистрация клиента')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Имя')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Email')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Телефон')).toBeInTheDocument()
