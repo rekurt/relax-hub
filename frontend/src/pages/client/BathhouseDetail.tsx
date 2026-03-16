@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Typography,
@@ -106,6 +106,32 @@ export default function BathhouseDetail() {
     },
   })
 
+  // JSON-LD schema - inject via textContent (inherently safe, no XSS risk)
+  const schemaJsonLd = (() => {
+    try {
+      if (schemaData && typeof schemaData === 'object') {
+        return JSON.stringify(schemaData)
+      }
+      if (typeof schemaData === 'string') {
+        return JSON.stringify(JSON.parse(schemaData))
+      }
+    } catch {
+      // serialization failed, skip
+    }
+    return null
+  })()
+
+  useEffect(() => {
+    if (!schemaJsonLd) return
+    const script = document.createElement('script')
+    script.type = 'application/ld+json'
+    script.textContent = schemaJsonLd
+    document.head.appendChild(script)
+    return () => {
+      document.head.removeChild(script)
+    }
+  }, [schemaJsonLd])
+
   if (isLoading) {
     return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
   }
@@ -125,33 +151,8 @@ export default function BathhouseDetail() {
     (a) => bathhouse[a.key as keyof typeof bathhouse],
   )
 
-  // JSON-LD schema - the endpoint returns raw JSON-LD object (not wrapped in envelope)
-  // Serialize and escape to prevent XSS before injection
-  let safeSchemaJsonLd: string | null = null
-  if (schemaData && typeof schemaData === 'object') {
-    try {
-      safeSchemaJsonLd = JSON.stringify(schemaData)
-        .replace(/</g, '\\u003c')
-        .replace(/>/g, '\\u003e')
-    } catch {
-      // serialization failed, skip injection
-    }
-  } else if (typeof schemaData === 'string') {
-    try {
-      safeSchemaJsonLd = JSON.stringify(JSON.parse(schemaData))
-        .replace(/</g, '\\u003c')
-        .replace(/>/g, '\\u003e')
-    } catch {
-      // invalid JSON, skip injection
-    }
-  }
-
   return (
     <div>
-      {safeSchemaJsonLd && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeSchemaJsonLd }} />
-      )}
-
       <Button
         type="text"
         icon={<ArrowLeftOutlined />}

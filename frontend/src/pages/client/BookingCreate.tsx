@@ -216,9 +216,13 @@ export default function BookingCreate() {
                       <Button
                         key={`${slot.startTime}-${slot.endTime}`}
                         type={isSelected ? 'primary' : 'default'}
-                        disabled={!slot.available}
+                        disabled={!slot.available || !slot.startTime || !slot.endTime}
                         icon={<ClockCircleOutlined />}
-                        onClick={() => setSelectedSlot({ from: slot.startTime!, to: slot.endTime! })}
+                        onClick={() => {
+                          if (slot.startTime && slot.endTime) {
+                            setSelectedSlot({ from: slot.startTime, to: slot.endTime })
+                          }
+                        }}
                       >
                         {fromTime} — {toTime}
                         {slot.price != null && ` (${formatPrice(slot.price)})`}

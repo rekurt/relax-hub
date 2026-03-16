@@ -28,15 +28,14 @@ axiosInstance.interceptors.response.use(
 )
 
 export const customInstance = <T>(config: AxiosRequestConfig): Promise<T> => {
-  const source = Axios.CancelToken.source()
+  const controller = new AbortController()
   const promise = axiosInstance({
     ...config,
-    cancelToken: source.token,
-  }).then(({ data }) => data)
+    signal: controller.signal,
+  }).then(({ data }) => data) as Promise<T> & { cancel: () => void }
 
-  // @ts-expect-error -- orval cancel pattern
   promise.cancel = () => {
-    source.cancel('Query was cancelled')
+    controller.abort()
   }
 
   return promise

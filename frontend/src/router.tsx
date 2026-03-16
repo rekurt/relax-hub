@@ -56,6 +56,7 @@ export default function AppRouter() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/auth/oauth/callback/:provider" element={<OAuthCallback />} />
+      <Route path="/certificates/purchase" element={<CertificatePurchase />} />
 
       {/* Owner/Representative routes */}
       <Route
