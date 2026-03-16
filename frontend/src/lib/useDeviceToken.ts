@@ -16,11 +16,21 @@ export function useDeviceToken() {
   const registerMutation = usePostDeviceTokens()
   const deleteMutation = useDeleteDeviceTokensId()
   const registeredRef = useRef(false)
+  const registerMutationRef = useRef(registerMutation)
+  const deleteMutationRef = useRef(deleteMutation)
+
+  useEffect(() => {
+    registerMutationRef.current = registerMutation
+  }, [registerMutation])
+
+  useEffect(() => {
+    deleteMutationRef.current = deleteMutation
+  }, [deleteMutation])
 
   const registerToken = useCallback(
     async (token: string) => {
       try {
-        const response = await registerMutation.mutateAsync({
+        const response = await registerMutationRef.current.mutateAsync({
           data: { token, platform: getPlatform() },
         })
         if (response.data?.id) {
@@ -30,20 +40,20 @@ export function useDeviceToken() {
         // Registration failed silently - push notifications won't work but app continues
       }
     },
-    [registerMutation],
+    [],
   )
 
   const unregisterToken = useCallback(async () => {
     const tokenId = localStorage.getItem(DEVICE_TOKEN_KEY)
     if (!tokenId) return
     try {
-      await deleteMutation.mutateAsync({ id: tokenId })
+      await deleteMutationRef.current.mutateAsync({ id: tokenId })
     } catch {
       // Deletion failed silently
     } finally {
       localStorage.removeItem(DEVICE_TOKEN_KEY)
     }
-  }, [deleteMutation])
+  }, [])
 
   useEffect(() => {
     if (!isAuthenticated) {

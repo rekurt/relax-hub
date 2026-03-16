@@ -50,7 +50,7 @@ export default function ReviewCard({
   onEdit,
   onDeleted,
 }: ReviewCardProps) {
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
   const [reportOpen, setReportOpen] = useState(false)
   const [reportReason, setReportReason] = useState('')
   const [reportDescription, setReportDescription] = useState('')
@@ -87,7 +87,7 @@ export default function ReviewCard({
 
   const handleDelete = () => {
     if (!review.id) return
-    Modal.confirm({
+    modal.confirm({
       title: 'Удалить отзыв?',
       content: 'Это действие нельзя отменить.',
       okText: 'Удалить',

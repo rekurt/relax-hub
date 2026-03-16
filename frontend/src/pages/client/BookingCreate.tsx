@@ -325,7 +325,7 @@ export default function BookingCreate() {
                 min={0}
                 value={referralAmount}
                 onChange={(v) => setReferralAmount(v ?? 0)}
-                placeholder="Сумма (коп.)"
+                placeholder="Сумма"
                 style={{ width: 150 }}
               />
             )}

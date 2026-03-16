@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from 'antd'
 import ruRU from 'antd/locale/ru_RU'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import ReferralProgram from '@/pages/client/ReferralProgram'
 
 vi.mock('@/api/generated/referral/referral', () => ({
@@ -84,8 +84,14 @@ function setupMocks(overrides?: {
 }
 
 describe('ReferralProgram', () => {
+  const originalClipboard = navigator.clipboard
+
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    Object.assign(navigator, { clipboard: originalClipboard })
   })
 
   it('renders page title', () => {

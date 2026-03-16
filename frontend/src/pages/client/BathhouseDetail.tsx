@@ -128,8 +128,7 @@ export default function BathhouseDetail() {
   let safeSchemaJsonLd: string | null = null
   if (typeof schemaData === 'string') {
     try {
-      JSON.parse(schemaData)
-      safeSchemaJsonLd = schemaData
+      safeSchemaJsonLd = JSON.stringify(JSON.parse(schemaData))
     } catch {
       // invalid JSON, skip injection
     }

@@ -81,36 +81,36 @@ const mockReviews = [
 
 const mutationDefault = { mutateAsync: vi.fn(), isPending: false }
 
-beforeEach(() => {
-  vi.mocked(useGetAdminReviews).mockReturnValue({
-    data: {
-      data: mockReviews,
-      success: true,
-      meta: { page: 1, page_size: 20, total_count: 3, total_pages: 1 },
-    },
-    isLoading: false,
-  } as unknown as ReturnType<typeof useGetAdminReviews>)
-
-  vi.mocked(useGetAdminReviewsPendingCount).mockReturnValue({
-    data: { data: { pending_count: 5 }, success: true },
-    isLoading: false,
-  } as unknown as ReturnType<typeof useGetAdminReviewsPendingCount>)
-
-  vi.mocked(usePatchAdminReviewsIdApprove).mockReturnValue(
-    mutationDefault as unknown as ReturnType<typeof usePatchAdminReviewsIdApprove>,
-  )
-  vi.mocked(usePatchAdminReviewsIdReject).mockReturnValue(
-    mutationDefault as unknown as ReturnType<typeof usePatchAdminReviewsIdReject>,
-  )
-  vi.mocked(usePostAdminReviewsBatchApprove).mockReturnValue(
-    mutationDefault as unknown as ReturnType<typeof usePostAdminReviewsBatchApprove>,
-  )
-  vi.mocked(usePostAdminReviewsBatchReject).mockReturnValue(
-    mutationDefault as unknown as ReturnType<typeof usePostAdminReviewsBatchReject>,
-  )
-})
-
 describe('ReviewModeration', () => {
+  beforeEach(() => {
+    vi.mocked(useGetAdminReviews).mockReturnValue({
+      data: {
+        data: mockReviews,
+        success: true,
+        meta: { page: 1, page_size: 20, total_count: 3, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetAdminReviews>)
+
+    vi.mocked(useGetAdminReviewsPendingCount).mockReturnValue({
+      data: { data: { pending_count: 5 }, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetAdminReviewsPendingCount>)
+
+    vi.mocked(usePatchAdminReviewsIdApprove).mockReturnValue(
+      mutationDefault as unknown as ReturnType<typeof usePatchAdminReviewsIdApprove>,
+    )
+    vi.mocked(usePatchAdminReviewsIdReject).mockReturnValue(
+      mutationDefault as unknown as ReturnType<typeof usePatchAdminReviewsIdReject>,
+    )
+    vi.mocked(usePostAdminReviewsBatchApprove).mockReturnValue(
+      mutationDefault as unknown as ReturnType<typeof usePostAdminReviewsBatchApprove>,
+    )
+    vi.mocked(usePostAdminReviewsBatchReject).mockReturnValue(
+      mutationDefault as unknown as ReturnType<typeof usePostAdminReviewsBatchReject>,
+    )
+  })
+
   it('renders page title and review list', () => {
     renderWithProviders(<ReviewModeration />)
 
