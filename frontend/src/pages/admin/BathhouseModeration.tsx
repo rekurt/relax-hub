@@ -79,6 +79,8 @@ export default function BathhouseModeration() {
         approveMutation.mutateAsync({ id: item.id! }).then(() => {
           message.success('Баня одобрена')
           queryClient.invalidateQueries({ queryKey: getGetAdminBathhousesQueryKey() })
+        }).catch(() => {
+          message.error('Не удалось одобрить баню')
         }),
     })
   }
@@ -94,6 +96,8 @@ export default function BathhouseModeration() {
         rejectMutation.mutateAsync({ id: item.id! }).then(() => {
           message.success('Баня отклонена')
           queryClient.invalidateQueries({ queryKey: getGetAdminBathhousesQueryKey() })
+        }).catch(() => {
+          message.error('Не удалось отклонить баню')
         }),
     })
   }

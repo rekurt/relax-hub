@@ -195,7 +195,7 @@ export default function SubscriptionPage() {
     promotionMutation.mutate({
       id: selectedBathhouseId,
       data: {
-        budget_kopecks: values.budget * 100,
+        budget_kopecks: Math.round(values.budget * 100),
         duration_days: values.duration_days,
         target_city_id: values.target_city_id,
       },

@@ -148,6 +148,8 @@ export default function ComplaintManagement() {
           message.success('Жалоба отклонена')
           setSelectedComplaint(null)
           invalidate()
+        }).catch(() => {
+          message.error('Не удалось отклонить жалобу')
         }),
     })
   }

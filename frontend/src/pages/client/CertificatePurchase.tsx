@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { usePostCertificatesPurchase } from '@/api/generated/certificates/certificates'
 import { formatPrice } from '@/lib/format'
 import type { InternalHandlerCertificateResponse } from '@/api/generated/model'
+import { useAuthStore } from '@/stores/auth'
 
 const { Title, Text } = Typography
 
@@ -14,6 +15,7 @@ const PRESET_AMOUNTS = [100000, 200000, 300000, 500000] // in kopecks
 export default function CertificatePurchase() {
   const { message } = App.useApp()
   const navigate = useNavigate()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const [form] = Form.useForm()
   const [purchasedCertificate, setPurchasedCertificate] = useState<InternalHandlerCertificateResponse | null>(null)
 
@@ -26,7 +28,7 @@ export default function CertificatePurchase() {
     recipient_name?: string
     message?: string
   }) => {
-    const amountKopecks = values.amount * 100
+    const amountKopecks = Math.round(values.amount * 100)
     purchaseMutation.mutate(
       {
         data: {
@@ -61,16 +63,18 @@ export default function CertificatePurchase() {
           title="Сертификат создан!"
           subTitle="Сохраните код сертификата — он понадобится для использования при бронировании"
           extra={[
-            <Button key="list" onClick={() => navigate('/client/certificates')}>
-              Мои сертификаты
-            </Button>,
+            isAuthenticated && (
+              <Button key="list" onClick={() => navigate('/client/certificates')}>
+                Мои сертификаты
+              </Button>
+            ),
             <Button key="new" type="primary" onClick={() => {
               setPurchasedCertificate(null)
               form.resetFields()
             }}>
               Купить ещё
             </Button>,
-          ]}
+          ].filter(Boolean)}
         />
         <Card style={{ maxWidth: 500, margin: '0 auto' }}>
           <Descriptions bordered column={1}>
@@ -106,9 +110,15 @@ export default function CertificatePurchase() {
   return (
     <div>
       <Space style={{ marginBottom: 16 }}>
-        <Link to="/client/certificates">
-          <Button icon={<ArrowLeftOutlined />}>Назад к сертификатам</Button>
-        </Link>
+        {isAuthenticated ? (
+          <Link to="/client/certificates">
+            <Button icon={<ArrowLeftOutlined />}>Назад к сертификатам</Button>
+          </Link>
+        ) : (
+          <Link to="/">
+            <Button icon={<ArrowLeftOutlined />}>На главную</Button>
+          </Link>
+        )}
       </Space>
 
       <Title level={2}>
