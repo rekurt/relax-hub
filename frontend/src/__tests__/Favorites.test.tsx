@@ -46,11 +46,11 @@ describe('Favorites', () => {
       isPending: false,
     } as unknown as ReturnType<typeof usePostBathhousesIdFavorite>)
 
-    vi.mocked(getGetBathhousesIdQueryOptions).mockImplementation((id: string) => ({
+    vi.mocked(getGetBathhousesIdQueryOptions).mockImplementation(((id: string) => ({
       queryKey: [`/bathhouses/${id}`],
       queryFn: vi.fn(),
       enabled: true,
-    }))
+    })) as unknown as typeof getGetBathhousesIdQueryOptions)
   })
 
   it('renders favorites title', () => {

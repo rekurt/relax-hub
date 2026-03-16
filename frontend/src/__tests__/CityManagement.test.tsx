@@ -116,7 +116,7 @@ describe('CityManagement', () => {
     renderWithProviders(<CityManagement />)
 
     const editButtons = screen.getAllByText('Изменить')
-    fireEvent.click(editButtons[0])
+    fireEvent.click(editButtons[0]!)
 
     await waitFor(() => {
       expect(screen.getByText('Редактировать город')).toBeInTheDocument()
@@ -150,7 +150,7 @@ describe('CityManagement', () => {
     renderWithProviders(<CityManagement />)
 
     const deleteButtons = screen.getAllByText('Удалить')
-    fireEvent.click(deleteButtons[0])
+    fireEvent.click(deleteButtons[0]!)
 
     await waitFor(() => {
       expect(screen.getAllByText('Удалить город?').length).toBeGreaterThanOrEqual(1)

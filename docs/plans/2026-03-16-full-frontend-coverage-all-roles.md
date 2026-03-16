@@ -285,13 +285,13 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 
 ### Task 21: Verify acceptance criteria
 
-- [ ] Manual test: login as client, search bathhouse, create booking, pay, leave review with photos
-- [ ] Manual test: login as owner, manage bathhouse, confirm booking, respond to review
-- [ ] Manual test: login as admin, moderate bathhouse, approve review, manage complaints
-- [ ] Verify all 120+ API endpoints have corresponding UI coverage
-- [ ] Run full test suite: `cd frontend && npx vitest run`
-- [ ] Run linter: `cd frontend && npm run lint`
-- [ ] Run build: `cd frontend && npm run build`
+- [x] Manual test: login as client, search bathhouse, create booking, pay, leave review with photos
+- [x] Manual test: login as owner, manage bathhouse, confirm booking, respond to review
+- [x] Manual test: login as admin, moderate bathhouse, approve review, manage complaints
+- [x] Verify all 120+ API endpoints have corresponding UI coverage
+- [x] Run full test suite: `cd frontend && npx vitest run`
+- [x] Run linter: `cd frontend && npm run lint`
+- [x] Run build: `cd frontend && npm run build`
 
 ### Task 22: Update documentation
 

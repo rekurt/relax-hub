@@ -124,7 +124,7 @@ describe('PhotoVerification', () => {
     renderWithProviders(<PhotoVerification />)
 
     const verifyButtons = screen.getAllByText('Подтвердить')
-    fireEvent.click(verifyButtons[0])
+    fireEvent.click(verifyButtons[0]!)
 
     await waitFor(() => {
       const matches = screen.getAllByText('Подтвердить фото?')
@@ -136,7 +136,7 @@ describe('PhotoVerification', () => {
     renderWithProviders(<PhotoVerification />)
 
     const rejectButtons = screen.getAllByText('Отклонить')
-    fireEvent.click(rejectButtons[0])
+    fireEvent.click(rejectButtons[0]!)
 
     await waitFor(() => {
       expect(screen.getByText('Отклонить фото')).toBeInTheDocument()

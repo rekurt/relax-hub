@@ -185,7 +185,7 @@ describe('ComplaintManagement', () => {
     renderWithProviders(<ComplaintManagement />)
 
     const resolveButtons = screen.getAllByText('Решить')
-    fireEvent.click(resolveButtons[0])
+    fireEvent.click(resolveButtons[0]!)
 
     await waitFor(() => {
       expect(screen.getByText('Решить жалобу')).toBeInTheDocument()

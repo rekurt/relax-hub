@@ -190,7 +190,7 @@ describe('ReviewModeration', () => {
 
     // Select all checkbox (header)
     const checkboxes = screen.getAllByRole('checkbox')
-    fireEvent.click(checkboxes[0]) // header "select all"
+    fireEvent.click(checkboxes[0]!) // header "select all"
 
     expect(screen.getByText(/Выбрано: 3/)).toBeInTheDocument()
     expect(screen.getByText('Одобрить выбранные')).toBeInTheDocument()

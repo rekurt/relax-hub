@@ -35,6 +35,8 @@ const LEVEL_CONFIG: Record<string, { color: string; icon: React.ReactNode; label
   platinum: { color: '#e5e4e2', icon: <RiseOutlined />, label: 'Платина' },
 }
 
+const DEFAULT_LEVEL_CFG = LEVEL_CONFIG['bronze'] as { color: string; icon: React.ReactNode; label: string }
+
 const LEVEL_ORDER = ['bronze', 'silver', 'gold', 'platinum']
 
 function getLevelProgress(currentLevel: string, visitCount: number, levels: InternalHandlerLoyaltyLevelResponse[]): number {
@@ -71,7 +73,7 @@ export default function LoyaltyDashboard() {
   const txMeta = txData?.meta
 
   const currentLevel = loyalty?.level ?? 'bronze'
-  const levelCfg = LEVEL_CONFIG[currentLevel] ?? LEVEL_CONFIG.bronze
+  const levelCfg = LEVEL_CONFIG[currentLevel] ?? DEFAULT_LEVEL_CFG
   const progress = getLevelProgress(currentLevel, loyalty?.visit_count ?? 0, levels)
 
   const columns: ColumnsType<InternalHandlerLoyaltyTransactionResponse> = [
@@ -198,7 +200,7 @@ export default function LoyaltyDashboard() {
                 <Title level={4} style={{ marginBottom: 16 }}>Уровни программы</Title>
                 <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                   {levels.map((level) => {
-                    const cfg = LEVEL_CONFIG[level.level ?? ''] ?? LEVEL_CONFIG.bronze
+                    const cfg = LEVEL_CONFIG[level.level ?? ''] ?? DEFAULT_LEVEL_CFG
                     const isCurrentLevel = level.level === currentLevel
                     return (
                       <Col key={level.level} xs={24} sm={12} md={6}>

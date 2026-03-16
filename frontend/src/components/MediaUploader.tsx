@@ -144,7 +144,7 @@ export default function MediaUploader({ files, onChange, disabled }: MediaUpload
         ))}
         {canAddMore && !disabled && (
           <Upload
-            beforeUpload={handleBeforeUpload as (file: UploadFile) => boolean | typeof Upload.LIST_IGNORE}
+            beforeUpload={handleBeforeUpload as unknown as (file: UploadFile) => boolean | typeof Upload.LIST_IGNORE}
             showUploadList={false}
             accept={ALLOWED_TYPES.join(',')}
             multiple
