@@ -277,11 +277,11 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 - Create: `frontend/src/pages/admin/AdminNotifications.tsx`
 - Create: `frontend/src/pages/admin/AdminProfile.tsx`
 
-- [ ] Admin notifications page with notification preferences
-- [ ] Admin profile settings (name, email, avatar)
-- [ ] Notification bell in AdminLayout header
-- [ ] Write tests for admin notifications, profile
-- [ ] Run project test suite - must pass before task 21
+- [x] Admin notifications page with notification preferences
+- [x] Admin profile settings (name, email, avatar)
+- [x] Notification bell in AdminLayout header
+- [x] Write tests for admin notifications, profile
+- [x] Run project test suite - must pass before task 21
 
 ### Task 21: Verify acceptance criteria
 

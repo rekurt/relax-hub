@@ -46,6 +46,8 @@ import PhotoVerification from '@/pages/admin/PhotoVerification'
 import ComplaintManagement from '@/pages/admin/ComplaintManagement'
 import CityManagement from '@/pages/admin/CityManagement'
 import GlobalPromoCodes from '@/pages/admin/GlobalPromoCodes'
+import AdminNotifications from '@/pages/admin/AdminNotifications'
+import AdminProfile from '@/pages/admin/AdminProfile'
 import OAuthCallback from '@/pages/OAuthCallback'
 
 export default function AppRouter() {
@@ -128,6 +130,8 @@ export default function AppRouter() {
         <Route path="complaints" element={<ComplaintManagement />} />
         <Route path="cities" element={<CityManagement />} />
         <Route path="promos" element={<GlobalPromoCodes />} />
+        <Route path="notifications" element={<AdminNotifications />} />
+        <Route path="profile" element={<AdminProfile />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
