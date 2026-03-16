@@ -23,7 +23,7 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons'
 import {
-  useGetBathhousesIdPhotos,
+  useGetMyBathhousesIdPhotos,
   usePostMyBathhousesIdPhotos,
   usePutMyBathhousesIdPhotosReorder,
   useDeletePhotosId,
@@ -57,7 +57,7 @@ export default function PhotoManager() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const dragCounter = useRef(0)
 
-  const { data, isLoading } = useGetBathhousesIdPhotos(
+  const { data, isLoading } = useGetMyBathhousesIdPhotos(
     selectedBathhouseId ?? '',
     { query: { enabled: !!selectedBathhouseId } },
   )
@@ -66,7 +66,7 @@ export default function PhotoManager() {
 
   const invalidatePhotos = useCallback(() => {
     queryClient.invalidateQueries({
-      queryKey: [`/bathhouses/${selectedBathhouseId}/photos`],
+      queryKey: [`/my/bathhouses/${selectedBathhouseId}/photos`],
     })
   }, [queryClient, selectedBathhouseId])
 

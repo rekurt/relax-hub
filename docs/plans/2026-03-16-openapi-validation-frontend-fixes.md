@@ -71,11 +71,11 @@ Orval-генерированный клиент (33 модуля, 120+ хуко�
 - Regenerate: `frontend/src/api/generated/` (via orval)
 - Modify: `frontend/src/pages/photos/PhotoManager.tsx`
 
-- [ ] Запустить `make frontend-generate-api` для перегенерации API клиента
-- [ ] Проверить что новый хук useGetMyBathhousesIdPhotos появился в сгенерированном коде
-- [ ] Обновить PhotoManager.tsx: использовать useGetMyBathhousesIdPhotos вместо useGetBathhousesIdPhotos
-- [ ] Обновить invalidateQueries key на `/my/bathhouses/${id}/photos`
-- [ ] Проверить TypeScript компиляцию: `cd frontend && npx tsc --noEmit`
+- [x] Запустить `make frontend-generate-api` для перегенерации API клиента
+- [x] Проверить что новый хук useGetMyBathhousesIdPhotos появился в сгенерированном коде
+- [x] Обновить PhotoManager.tsx: использовать useGetMyBathhousesIdPhotos вместо useGetBathhousesIdPhotos
+- [x] Обновить invalidateQueries key на `/my/bathhouses/${id}/photos`
+- [x] Проверить TypeScript компиляцию: `cd frontend && npx tsc --noEmit`
 
 ### Task 3: Исправить тесты CertificatePurchase
 
