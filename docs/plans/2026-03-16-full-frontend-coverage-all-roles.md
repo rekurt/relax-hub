@@ -222,11 +222,11 @@ Extend the existing Owner Dashboard SPA to cover 100% of the backend API for all
 - Create: `frontend/src/pages/admin/CityManagement.tsx`
 - Create: `frontend/src/pages/admin/GlobalPromoCodes.tsx`
 
-- [ ] City CRUD: table with name, slug, create/edit/delete
-- [ ] Global promo code creation: type (percentage/fixed/free_hour), limits, validity
-- [ ] API hooks: `useGetCities`, `usePostAdminCities`, `usePutAdminCitiesId`, `useDeleteAdminCitiesId`, `usePostAdminPromoCodes`
-- [ ] Write tests for city CRUD, promo code creation
-- [ ] Run project test suite - must pass before task 17
+- [x] City CRUD: table with name, slug, create/edit/delete
+- [x] Global promo code creation: type (percentage/fixed/free_hour), limits, validity
+- [x] API hooks: `useGetCities`, `usePostAdminCities`, `usePutAdminCitiesId`, `useDeleteAdminCitiesId`, `usePostAdminPromoCodes`
+- [x] Write tests for city CRUD, promo code creation
+- [x] Run project test suite - must pass before task 17
 
 ### Task 17: Owner enhancements - Payment display and complaint submission
 
