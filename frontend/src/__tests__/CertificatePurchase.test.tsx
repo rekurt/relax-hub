@@ -10,6 +10,12 @@ vi.mock('@/api/generated/certificates/certificates', () => ({
   usePostCertificatesPurchase: vi.fn(),
 }))
 
+vi.mock('@/stores/auth', () => ({
+  useAuthStore: vi.fn((selector: (s: { isAuthenticated: boolean }) => boolean) =>
+    selector({ isAuthenticated: true }),
+  ),
+}))
+
 import { usePostCertificatesPurchase } from '@/api/generated/certificates/certificates'
 
 function renderWithProviders(ui: React.ReactElement) {

@@ -82,9 +82,9 @@ Orval-генерированный клиент (33 модуля, 120+ хуко�
 **Files:**
 - Modify: `frontend/src/__tests__/CertificatePurchase.test.tsx`
 
-- [ ] Добавить мок useAuthStore в тест (установить isAuthenticated = true для теста "shows success result after purchase")
-- [ ] Проверить второй падающий тест и исправить при необходимости
-- [ ] Запустить `cd frontend && npx vitest run src/__tests__/CertificatePurchase.test.tsx`
+- [x] Добавить мок useAuthStore в тест (установить isAuthenticated = true для теста "shows success result after purchase")
+- [x] Проверить второй падающий тест и исправить при необходимости
+- [x] Запустить `cd frontend && npx vitest run src/__tests__/CertificatePurchase.test.tsx`
 
 ### Task 4: Финальная верификация
 
