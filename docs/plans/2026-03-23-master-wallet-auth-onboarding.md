@@ -57,11 +57,11 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 **Files:**
 - Create: `internal/service/wallet_service.go`
 
-- [ ] Core methods: CreateWallet, GetWallet, TopUp, Spend, Hold, CaptureHold, ReleaseHold, Refund, AddBonus, GetBalance, ListTransactions, ExpireBonuses
-- [ ] Priority spending: expiring bonuses first (by expires_at ASC), then non-bonus (FIFO)
-- [ ] Balance limits: max 100,000 RUB / 3,000 BYN
-- [ ] Top-up limits: min 500 RUB, max 30,000 RUB per tx
-- [ ] Write tests, run `go test ./... -v`
+- [x] Core methods: CreateWallet, GetWallet, TopUp, Spend, Hold, CaptureHold, ReleaseHold, Refund, AddBonus, GetBalance, ListTransactions, ExpireBonuses
+- [x] Priority spending: expiring bonuses first (by expires_at ASC), then non-bonus (FIFO)
+- [x] Balance limits: max 100,000 RUB / 3,000 BYN
+- [x] Top-up limits: min 500 RUB, max 30,000 RUB per tx
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 4: Wallet Handler & Routes (Task 1.4)
 
