@@ -106,9 +106,9 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Create: `internal/handler/wallet_module.go` or modify existing module.go
 - Modify: `internal/app/app.go`
 
-- [ ] fx.Module for wallet service + handler + payout
-- [ ] Register in main app container
-- [ ] Verify: `go build ./...`, `go test ./... -v -race`, `make lint`
+- [x] fx.Module for wallet service + handler + payout
+- [x] Register in main app container
+- [x] Verify: `go build ./...`, `go test ./... -v -race`, `make lint`
 
 ### Phase 2: Authentication & Security (docs/plans/2026-03-23-02-auth-security.md)
 

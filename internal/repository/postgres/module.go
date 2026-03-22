@@ -35,5 +35,7 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewDeviceTokenRepository, fx.As(new(repository.DeviceTokenRepository))),
 		fx.Annotate(NewSlotBlockRepository, fx.As(new(repository.SlotBlockRepository))),
 		fx.Annotate(NewExternalCalendarRepository, fx.As(new(repository.ExternalCalendarRepository))),
+		fx.Annotate(NewWalletRepository, fx.As(new(repository.WalletRepository))),
+		fx.Annotate(NewPayoutRepository, fx.As(new(repository.PayoutRepository))),
 	),
 )
