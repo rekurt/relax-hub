@@ -187,6 +187,22 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "refund_exceeds_amount", err.Error())
 	case errors.Is(err, domain.ErrPaymentFailed):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "payment_failed", err.Error())
+	case errors.Is(err, domain.ErrWalletNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "wallet_not_found", err.Error())
+	case errors.Is(err, domain.ErrInsufficientWalletBalance):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "insufficient_wallet_balance", err.Error())
+	case errors.Is(err, domain.ErrWalletLimitExceeded):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "wallet_limit_exceeded", err.Error())
+	case errors.Is(err, domain.ErrWalletFrozen):
+		writeErrorWithContext(w, r, http.StatusForbidden, "wallet_frozen", err.Error())
+	case errors.Is(err, domain.ErrHoldNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "hold_not_found", err.Error())
+	case errors.Is(err, domain.ErrHoldExpired):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "hold_expired", err.Error())
+	case errors.Is(err, domain.ErrTopUpBelowMinimum):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "topup_below_minimum", err.Error())
+	case errors.Is(err, domain.ErrTopUpAboveMaximum):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "topup_above_maximum", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
