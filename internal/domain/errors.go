@@ -56,4 +56,10 @@ var (
 	ErrHoldExpired                = errors.New("hold has expired")
 	ErrTopUpBelowMinimum          = errors.New("top-up amount below minimum")
 	ErrTopUpAboveMaximum          = errors.New("top-up amount above maximum")
+
+	ErrPayoutNotFound             = errors.New("payout not found")
+	ErrPayoutBelowMinimum         = errors.New("payout amount below minimum")
+	ErrPayoutDailyLimitExceeded   = errors.New("daily payout limit exceeded")
+	ErrPayoutMonthlyLimitExceeded = errors.New("monthly payout limit exceeded")
+	ErrPayoutAlreadyProcessed     = errors.New("payout already processed")
 )

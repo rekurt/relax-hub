@@ -83,10 +83,10 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Modify: `internal/repository/interfaces.go`
 - Create: `migrations/000039_payouts.up.sql`, `migrations/000039_payouts.down.sql`
 
-- [ ] Payout model, repository, service (RequestPayout, SetAutoPayoutThreshold, ProcessPayout)
-- [ ] Daily/monthly payout limits
-- [ ] POST /api/v1/my/wallet/payout, PUT /api/v1/my/wallet/auto-payout, GET /api/v1/my/wallet/payouts
-- [ ] Write tests, run `go test ./... -v`
+- [x] Payout model, repository, service (RequestPayout, SetAutoPayoutThreshold, ProcessPayout)
+- [x] Daily/monthly payout limits
+- [x] POST /api/v1/my/wallet/payout, PUT /api/v1/my/wallet/auto-payout, GET /api/v1/my/wallet/payouts
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 6: Bonus Expiration Cron (Task 1.6)
 

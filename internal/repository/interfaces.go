@@ -318,6 +318,18 @@ type SlotBlockRepository interface {
 	HasOverlapping(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) (bool, error)
 }
 
+type PayoutRepository interface {
+	Create(ctx context.Context, payout *domain.Payout) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Payout, error)
+	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payout], error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.PayoutStatus, processedAt *time.Time, failureReason string) error
+	GetDailyTotal(ctx context.Context, userID uuid.UUID, date time.Time) (int64, error)
+	GetMonthlyTotal(ctx context.Context, userID uuid.UUID, year int, month time.Month) (int64, error)
+	GetPendingTotal(ctx context.Context, userID uuid.UUID) (int64, error)
+	GetAutoPayoutSettings(ctx context.Context, userID uuid.UUID) (*domain.AutoPayoutSettings, error)
+	UpsertAutoPayoutSettings(ctx context.Context, settings *domain.AutoPayoutSettings) error
+}
+
 type WalletRepository interface {
 	Create(ctx context.Context, wallet *domain.Wallet) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Wallet, error)

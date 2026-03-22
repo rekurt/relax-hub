@@ -54,6 +54,7 @@ type RouterParams struct {
 	DeviceTokenHandler    *handler.DeviceTokenHandler
 	CalendarHandler       *handler.CalendarHandler
 	WalletHandler         *handler.WalletHandler
+	PayoutHandler         *handler.PayoutHandler
 	GoAdmin               *admin.GoAdmin `optional:"true"`
 }
 
@@ -250,6 +251,11 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Get("/my/wallet/transactions", p.WalletHandler.ListTransactions)
 		r.With(auth).Post("/my/wallet/topup", p.WalletHandler.TopUp)
 		r.With(auth).Get("/my/wallet/holds", p.WalletHandler.ListHolds)
+
+		// Payouts (authenticated owner)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/wallet/payout", p.PayoutHandler.RequestPayout)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Put("/my/wallet/auto-payout", p.PayoutHandler.SetAutoPayoutThreshold)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/wallet/payouts", p.PayoutHandler.ListPayouts)
 
 		// Loyalty program (authenticated)
 		r.With(auth).Get("/my/loyalty", p.LoyaltyHandler.GetAccount)

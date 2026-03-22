@@ -203,6 +203,16 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "topup_below_minimum", err.Error())
 	case errors.Is(err, domain.ErrTopUpAboveMaximum):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "topup_above_maximum", err.Error())
+	case errors.Is(err, domain.ErrPayoutNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "payout_not_found", err.Error())
+	case errors.Is(err, domain.ErrPayoutBelowMinimum):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "payout_below_minimum", err.Error())
+	case errors.Is(err, domain.ErrPayoutDailyLimitExceeded):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "payout_daily_limit_exceeded", err.Error())
+	case errors.Is(err, domain.ErrPayoutMonthlyLimitExceeded):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "payout_monthly_limit_exceeded", err.Error())
+	case errors.Is(err, domain.ErrPayoutAlreadyProcessed):
+		writeErrorWithContext(w, r, http.StatusConflict, "payout_already_processed", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
