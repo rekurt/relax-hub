@@ -317,3 +317,24 @@ type SlotBlockRepository interface {
 	GetOverlapping(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) ([]domain.SlotBlock, error)
 	HasOverlapping(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) (bool, error)
 }
+
+type WalletRepository interface {
+	Create(ctx context.Context, wallet *domain.Wallet) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Wallet, error)
+	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error)
+	UpdateBalance(ctx context.Context, walletID uuid.UUID, newBalance int64, newHeldAmount int64) error
+	UpdateStatus(ctx context.Context, walletID uuid.UUID, status domain.WalletStatus) error
+
+	CreateTransaction(ctx context.Context, tx *domain.WalletTransaction) error
+	ListTransactions(ctx context.Context, filter domain.WalletTransactionFilter) (*domain.PaginatedResult[domain.WalletTransaction], error)
+	GetExpiringBonuses(ctx context.Context, walletID uuid.UUID, before time.Time) ([]domain.WalletTransaction, error)
+	GetBonusTransactionsForSpending(ctx context.Context, walletID uuid.UUID) ([]domain.WalletTransaction, error)
+	ExpireBonuses(ctx context.Context, transactionIDs []uuid.UUID) error
+	GetExpiringBonusesSoon(ctx context.Context, walletID uuid.UUID, from, to time.Time) ([]domain.WalletTransaction, error)
+
+	CreateHold(ctx context.Context, hold *domain.WalletHold) error
+	GetHoldByID(ctx context.Context, holdID uuid.UUID) (*domain.WalletHold, error)
+	UpdateHoldStatus(ctx context.Context, holdID uuid.UUID, status domain.WalletHoldStatus, capturedAt, releasedAt *time.Time) error
+	GetActiveHolds(ctx context.Context, walletID uuid.UUID) ([]domain.WalletHold, error)
+	GetExpiredHolds(ctx context.Context, before time.Time) ([]domain.WalletHold, error)
+}

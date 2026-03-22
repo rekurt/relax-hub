@@ -46,11 +46,11 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Create: `internal/repository/mock/wallet_repo.go`
 - Create: `migrations/000038_wallets.up.sql`, `migrations/000038_wallets.down.sql`
 
-- [ ] WalletRepository interface (20 methods: CRUD, transactions, holds, bonus expiry)
-- [ ] Migration: wallets, wallet_transactions, wallet_holds tables with indexes
-- [ ] Postgres implementation with pgx
-- [ ] Mock implementation for testing
-- [ ] Write tests, run `go test ./... -v`
+- [x] WalletRepository interface (20 methods: CRUD, transactions, holds, bonus expiry)
+- [x] Migration: wallets, wallet_transactions, wallet_holds tables with indexes
+- [x] Postgres implementation with pgx
+- [x] Mock implementation for testing
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 3: Wallet Service (Task 1.3)
 
