@@ -69,9 +69,9 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Create: `internal/handler/wallet_handler.go`
 - Modify: `internal/server/router.go`
 
-- [ ] GET /api/v1/my/wallet, GET /api/v1/my/wallet/transactions, POST /api/v1/my/wallet/topup, GET /api/v1/my/wallet/holds
-- [ ] Swagger annotations
-- [ ] Register routes, write handler tests, run `go test ./... -v`
+- [x] GET /api/v1/my/wallet, GET /api/v1/my/wallet/transactions, POST /api/v1/my/wallet/topup, GET /api/v1/my/wallet/holds
+- [x] Swagger annotations
+- [x] Register routes, write handler tests, run `go test ./... -v`
 
 #### Task 5: Owner Payout System (Task 1.5)
 

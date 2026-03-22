@@ -53,6 +53,7 @@ type RouterParams struct {
 	PaymentHandler        *handler.PaymentHandler
 	DeviceTokenHandler    *handler.DeviceTokenHandler
 	CalendarHandler       *handler.CalendarHandler
+	WalletHandler         *handler.WalletHandler
 	GoAdmin               *admin.GoAdmin `optional:"true"`
 }
 
@@ -243,6 +244,12 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// User profile and statistics (authenticated)
 		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)
+
+		// Wallet (authenticated)
+		r.With(auth).Get("/my/wallet", p.WalletHandler.GetWallet)
+		r.With(auth).Get("/my/wallet/transactions", p.WalletHandler.ListTransactions)
+		r.With(auth).Post("/my/wallet/topup", p.WalletHandler.TopUp)
+		r.With(auth).Get("/my/wallet/holds", p.WalletHandler.ListHolds)
 
 		// Loyalty program (authenticated)
 		r.With(auth).Get("/my/loyalty", p.LoyaltyHandler.GetAccount)

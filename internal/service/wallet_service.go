@@ -31,6 +31,7 @@ type WalletService interface {
 	AddBonus(ctx context.Context, walletID uuid.UUID, amount int64, bonusType domain.WalletTransactionType, expiresAt *time.Time, description string) (*domain.WalletTransaction, error)
 	GetBalance(ctx context.Context, userID uuid.UUID) (*WalletBalanceSummary, error)
 	ListTransactions(ctx context.Context, userID uuid.UUID, filter domain.WalletTransactionFilter) (*domain.PaginatedResult[domain.WalletTransaction], error)
+	GetActiveHolds(ctx context.Context, walletID uuid.UUID) ([]domain.WalletHold, error)
 	ExpireBonuses(ctx context.Context) (int, error)
 }
 
@@ -387,6 +388,10 @@ func (s *walletService) ListTransactions(ctx context.Context, userID uuid.UUID, 
 
 	filter.WalletID = &wallet.ID
 	return s.walletRepo.ListTransactions(ctx, filter)
+}
+
+func (s *walletService) GetActiveHolds(ctx context.Context, walletID uuid.UUID) ([]domain.WalletHold, error) {
+	return s.walletRepo.GetActiveHolds(ctx, walletID)
 }
 
 func (s *walletService) ExpireBonuses(ctx context.Context) (int, error) {
