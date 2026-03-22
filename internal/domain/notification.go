@@ -27,6 +27,8 @@ const (
 	NotifReferralBonus        NotificationType = "referral_bonus"
 	NotifSubscriptionExpiring NotificationType = "subscription_expiring"
 	NotifSubscriptionExpired  NotificationType = "subscription_expired"
+	NotifBonusExpiring        NotificationType = "bonus_expiring"
+	NotifBonusExpired         NotificationType = "bonus_expired"
 )
 
 func (t NotificationType) IsValid() bool {
@@ -35,7 +37,8 @@ func (t NotificationType) IsValid() bool {
 		NotifReviewResponse, NotifReviewApproved, NotifReviewRejected, NotifPromo, NotifReminder, NotifSystem,
 		NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected, NotifReviewHidden,
 		NotifLoyaltyUpgrade, NotifReferralBonus,
-		NotifSubscriptionExpiring, NotifSubscriptionExpired:
+		NotifSubscriptionExpiring, NotifSubscriptionExpired,
+		NotifBonusExpiring, NotifBonusExpired:
 		return true
 	}
 	return false
@@ -107,7 +110,8 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 	switch t {
 	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected,
 		NotifLoyaltyUpgrade, NotifReferralBonus,
-		NotifSubscriptionExpiring, NotifSubscriptionExpired:
+		NotifSubscriptionExpiring, NotifSubscriptionExpired,
+		NotifBonusExpiring, NotifBonusExpired:
 		return p.BookingEvents
 	case NotifNewReview, NotifReviewResponse, NotifReviewApproved, NotifReviewRejected,
 		NotifReviewHidden:

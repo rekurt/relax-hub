@@ -33,6 +33,7 @@ type WalletService interface {
 	ListTransactions(ctx context.Context, userID uuid.UUID, filter domain.WalletTransactionFilter) (*domain.PaginatedResult[domain.WalletTransaction], error)
 	GetActiveHolds(ctx context.Context, walletID uuid.UUID) ([]domain.WalletHold, error)
 	ExpireBonuses(ctx context.Context) (int, error)
+	ExpireBonusesForWallet(ctx context.Context, walletID uuid.UUID) (int, error)
 }
 
 type walletService struct {

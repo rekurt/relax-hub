@@ -112,6 +112,29 @@ func (r *walletRepo) UpdateStatus(ctx context.Context, walletID uuid.UUID, statu
 	return nil
 }
 
+func (r *walletRepo) ListAllIDs(ctx context.Context) ([]uuid.UUID, error) {
+	query := `SELECT id FROM wallets WHERE status = 'active' ORDER BY created_at`
+
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("list all wallet ids: %w", err)
+	}
+	defer rows.Close()
+
+	var ids []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scan wallet id: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate wallet id rows: %w", err)
+	}
+	return ids, nil
+}
+
 // --- Transactions ---
 
 func (r *walletRepo) CreateTransaction(ctx context.Context, tx *domain.WalletTransaction) error {

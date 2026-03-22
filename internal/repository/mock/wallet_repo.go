@@ -110,6 +110,19 @@ func (r *WalletRepo) UpdateStatus(_ context.Context, walletID uuid.UUID, status 
 	return nil
 }
 
+func (r *WalletRepo) ListAllIDs(_ context.Context) ([]uuid.UUID, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	ids := make([]uuid.UUID, 0, len(r.wallets))
+	for id, w := range r.wallets {
+		if w.Status == domain.WalletStatusActive {
+			ids = append(ids, id)
+		}
+	}
+	return ids, nil
+}
+
 // --- Transactions ---
 
 func (r *WalletRepo) CreateTransaction(_ context.Context, tx *domain.WalletTransaction) error {

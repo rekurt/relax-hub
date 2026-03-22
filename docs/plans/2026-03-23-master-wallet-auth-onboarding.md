@@ -94,10 +94,10 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Create: `internal/cron/wallet_jobs.go`
 - Modify: `internal/cron/module.go`
 
-- [ ] Daily cron: expire bonuses older than 180 days (configurable BANI_WALLET_BONUS_EXPIRY_DAYS)
-- [ ] Notification job: warn at 14 days and 3 days before expiry
-- [ ] Register in existing cron module
-- [ ] Write tests, run `go test ./... -v`
+- [x] Daily cron: expire bonuses older than 180 days (configurable BANI_WALLET_BONUS_EXPIRY_DAYS)
+- [x] Notification job: warn at 14 days and 3 days before expiry
+- [x] Register in existing cron module
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 7: Wallet fx Module (Task 1.7)
 

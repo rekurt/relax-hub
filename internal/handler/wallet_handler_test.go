@@ -123,6 +123,10 @@ func (m *mockWalletService) ExpireBonuses(ctx context.Context) (int, error) {
 	return 0, nil
 }
 
+func (m *mockWalletService) ExpireBonusesForWallet(_ context.Context, _ uuid.UUID) (int, error) {
+	return 0, nil
+}
+
 func TestWalletHandler_GetWallet(t *testing.T) {
 	userID := uuid.New()
 	expiry := time.Now().Add(7 * 24 * time.Hour)

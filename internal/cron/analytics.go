@@ -23,6 +23,8 @@ type CronScheduler struct {
 	promoRepo        repository.PromoCodeRepository
 	notifSvc         service.NotificationService
 	calendarSync     *calendar.CalendarSyncService
+	walletSvc        service.WalletService
+	walletRepo       repository.WalletRepository
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -34,6 +36,8 @@ func NewCronScheduler(
 	promoRepo repository.PromoCodeRepository,
 	notifSvc service.NotificationService,
 	calendarSync *calendar.CalendarSyncService,
+	walletSvc service.WalletService,
+	walletRepo repository.WalletRepository,
 ) *CronScheduler {
 	return &CronScheduler{
 		c:                cron.New(),
@@ -44,6 +48,8 @@ func NewCronScheduler(
 		promoRepo:        promoRepo,
 		notifSvc:         notifSvc,
 		calendarSync:     calendarSync,
+		walletSvc:        walletSvc,
+		walletRepo:       walletRepo,
 	}
 }
 
@@ -102,6 +108,20 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register calendar sync: %w", err)
 	}
 	cs.logger.Info("Registered calendar sync job every 15 minutes")
+
+	// Wallet bonus expiration at 04:00 UTC daily
+	if _, err := cs.c.AddFunc("0 4 * * *", cs.handleBonusExpiration); err != nil {
+		cs.logger.Error("Failed to register bonus expiration job", "error", err)
+		return fmt.Errorf("failed to register bonus expiration: %w", err)
+	}
+	cs.logger.Info("Registered wallet bonus expiration job at 04:00 UTC")
+
+	// Wallet bonus expiry notification at 05:00 UTC daily
+	if _, err := cs.c.AddFunc("0 5 * * *", cs.handleBonusExpiryNotify); err != nil {
+		cs.logger.Error("Failed to register bonus expiry notification job", "error", err)
+		return fmt.Errorf("failed to register bonus expiry notification: %w", err)
+	}
+	cs.logger.Info("Registered wallet bonus expiry notification job at 05:00 UTC")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")
