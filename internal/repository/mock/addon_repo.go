@@ -39,6 +39,9 @@ func (r *AddOnRepo) Create(_ context.Context, addon *domain.AddOn) error {
 	if addon.UpdatedAt.IsZero() {
 		addon.UpdatedAt = now
 	}
+	if !addon.IsActive {
+		addon.IsActive = true
+	}
 
 	cp := *addon
 	r.addons[addon.ID] = &cp
@@ -116,7 +119,7 @@ func (r *AddOnRepo) CountByBathhouse(_ context.Context, bathhouseID uuid.UUID) (
 
 	var count int64
 	for _, a := range r.addons {
-		if a.BathhouseID == bathhouseID {
+		if a.BathhouseID == bathhouseID && a.IsActive {
 			count++
 		}
 	}

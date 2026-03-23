@@ -132,7 +132,7 @@ func (r *addonRepo) ListActiveByBathhouse(ctx context.Context, bathhouseID uuid.
 
 func (r *addonRepo) CountByBathhouse(ctx context.Context, bathhouseID uuid.UUID) (int64, error) {
 	var count int64
-	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM addons WHERE bathhouse_id=$1`, bathhouseID).Scan(&count)
+	err := r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM addons WHERE bathhouse_id=$1 AND is_active = true`, bathhouseID).Scan(&count)
 	if err != nil {
 		return 0, fmt.Errorf("count addons: %w", err)
 	}
