@@ -149,22 +149,22 @@ starting interactive plan creation
 [26-03-23 09:20:38]   - Create: `internal/handler/search_handler.go`
 [26-03-23 09:20:38]   - Modify: `internal/server/router.go`
 [26-03-23 09:20:38]   - Modify: `internal/service/module.go`, `internal/handler/module.go`
-[26-03-23 09:20:38]   - [ ] SearchSuggestionService: GetSuggestions (bathhouse names via trigram, type names, city names, popular queries from Redis sorted set), RecordQuery (increment frequency in Redis)
-[26-03-23 09:20:38]   - [ ] GET /api/v1/search/suggestions?q=...&limit=10 — return typed suggestions
-[26-03-23 09:20:38]   - [ ] Cache in Redis with 5 min TTL
-[26-03-23 09:20:38]   - [ ] Register in fx modules
-[26-03-23 09:20:38]   - [ ] Write tests
-[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38]   - [x] SearchSuggestionService: GetSuggestions (bathhouse names via trigram, type names, city names, popular queries from Redis sorted set), RecordQuery (increment frequency in Redis)
+[26-03-23 09:20:38]   - [x] GET /api/v1/search/suggestions?q=...&limit=10 — return typed suggestions
+[26-03-23 09:20:38]   - [x] Cache in Redis with 5 min TTL
+[26-03-23 09:20:38]   - [x] Register in fx modules
+[26-03-23 09:20:38]   - [x] Write tests
+[26-03-23 09:20:38]   - [x] Run `go test ./... -v` — must pass
 [26-03-23 09:20:38] ### Task 10: Advanced Ranking (FR-041)
 [26-03-23 09:20:38] **Files:**
 [26-03-23 09:20:38]   - Modify: `internal/repository/postgres/bathhouse_repo.go`
 [26-03-23 09:20:38]   - Modify: `internal/domain/bathhouse.go`
 [26-03-23 09:20:38]   - Create: `migrations/000052_ranking_fields.up.sql`, `migrations/000052_ranking_fields.down.sql`
-[26-03-23 09:20:38]   - [ ] Migration: add conversion_rate, occupancy_rate, view_count columns to bathhouses
-[26-03-23 09:20:38]   - [ ] Composite ranking score in SQL: relevance*0.30 + bayesian_rating*0.25 + conversion_rate*0.20 + occupancy_rate*0.15 + promotion_boost*0.10
-[26-03-23 09:20:38]   - [ ] Extend SortBy options: "relevance" (default), "price_asc", "price_desc", "rating", "distance", "newest"
-[26-03-23 09:20:38]   - [ ] Write tests
-[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38]   - [x] Migration: add conversion_rate, occupancy_rate, view_count columns to bathhouses
+[26-03-23 09:20:38]   - [x] Composite ranking score in SQL: relevance*0.30 + bayesian_rating*0.25 + conversion_rate*0.20 + occupancy_rate*0.15 + promotion_boost*0.10
+[26-03-23 09:20:38]   - [x] Extend SortBy options: "relevance" (default), "price_asc", "price_desc", "rating", "distance", "newest"
+[26-03-23 09:20:38]   - [x] Write tests
+[26-03-23 09:20:38]   - [x] Run `go test ./... -v` — must pass
 [26-03-23 09:20:38] ### Task 11: Comparison (FR-046)
 [26-03-23 09:20:38] **Files:**
 [26-03-23 09:20:38]   - Create: `internal/handler/comparison_handler.go`
