@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -282,6 +281,12 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 	}
 	bh.UpdatedAt = time.Now()
 
+	// Detect substantial changes before persisting, so status update is atomic with data update
+	changedFields := buildChangedFields(&oldBh, bh)
+	if len(changedFields) > 0 && bh.Status != domain.BathhouseStatusPending && s.auditSvc.IsSubstantialChange(&oldBh, bh) {
+		bh.Status = domain.BathhouseStatusPending
+	}
+
 	if err := bh.Validate(); err != nil {
 		return nil, err
 	}
@@ -291,17 +296,8 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 	}
 
 	// Log the change in audit log
-	changedFields := buildChangedFields(&oldBh, bh)
 	if len(changedFields) > 0 {
 		_ = s.auditSvc.LogChange(ctx, "bathhouse", id, userID, domain.AuditActionUpdate, changedFields)
-
-		// Auto-set status to pending on substantial change (any non-pending status)
-		if bh.Status != domain.BathhouseStatusPending && s.auditSvc.IsSubstantialChange(&oldBh, bh) {
-			if err := s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusPending); err != nil {
-				return nil, fmt.Errorf("re-moderation status update: %w", err)
-			}
-			bh.Status = domain.BathhouseStatusPending
-		}
 	}
 
 	return bh, nil
