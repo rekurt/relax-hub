@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -80,7 +81,7 @@ func (s *paymentDetailsService) Get(ctx context.Context, userID uuid.UUID) (*dom
 func (s *paymentDetailsService) Validate(ctx context.Context, userID uuid.UUID) error {
 	details, err := s.repo.GetByUserID(ctx, userID)
 	if err != nil {
-		if err == domain.ErrPaymentDetailsNotFound {
+		if errors.Is(err, domain.ErrPaymentDetailsNotFound) {
 			return domain.ErrPaymentDetailsNotSet
 		}
 		return err
