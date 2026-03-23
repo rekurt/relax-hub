@@ -117,13 +117,13 @@ Sequential execution of three independent subsystems: listing management enhance
 - Modify: `internal/server/router.go`
 - Modify: `internal/service/module.go`, `internal/handler/module.go`
 
-- [ ] AddOnService: CreateAddOn (check ownership + max 20 limit), UpdateAddOn, DeleteAddOn (soft), ListAddOns, CalculateAddOnTotal (per_item/per_hour/per_person pricing)
-- [ ] Owner endpoints: POST/PUT/DELETE /api/v1/my/bathhouses/{id}/addons, /api/v1/my/addons/{id}
-- [ ] Public endpoint: GET /api/v1/bathhouses/{id}/addons
-- [ ] Add swagger annotations
-- [ ] Register in fx modules
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] AddOnService: CreateAddOn (check ownership + max 20 limit), UpdateAddOn, DeleteAddOn (soft), ListAddOns, CalculateAddOnTotal (per_item/per_hour/per_person pricing)
+- [x] Owner endpoints: POST/PUT/DELETE /api/v1/my/bathhouses/{id}/addons, /api/v1/my/addons/{id}
+- [x] Public endpoint: GET /api/v1/bathhouses/{id}/addons
+- [x] Add swagger annotations
+- [x] Register in fx modules
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 7: Add-ons Booking Integration
 

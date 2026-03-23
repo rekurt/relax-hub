@@ -277,6 +277,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "listing_draft_invalid_step", err.Error())
 	case errors.Is(err, domain.ErrListingIncomplete):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "listing_incomplete", err.Error())
+	case errors.Is(err, domain.ErrAddOnNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "addon_not_found", err.Error())
+	case errors.Is(err, domain.ErrAddOnLimitReached):
+		writeErrorWithContext(w, r, http.StatusConflict, "addon_limit_reached", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

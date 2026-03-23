@@ -61,6 +61,7 @@ type RouterParams struct {
 	PaymentDetailsHandler    *handler.PaymentDetailsHandler
 	ListingDraftHandler      *handler.ListingDraftHandler
 	AuditLogHandler          *handler.AuditLogHandler
+	AddOnHandler             *handler.AddOnHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
@@ -183,6 +184,15 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/activate", p.BHHandler.Activate)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/bathhouses/{id}/archive", p.BHHandler.Archive)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/history", p.AuditLogHandler.ListByBathhouse)
+
+		// Add-ons (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/addons", p.AddOnHandler.Create)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/addons", p.AddOnHandler.ListByBathhouse)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/addons/{id}", p.AddOnHandler.Update)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/addons/{id}", p.AddOnHandler.Delete)
+
+		// Add-ons (public)
+		r.Get("/bathhouses/{id}/addons", p.AddOnHandler.ListPublic)
 
 		// Bathhouse photos (owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/photos", p.PhotoHandler.ListByBathhouseOwner)

@@ -65,5 +65,6 @@ var Module = fx.Module("handler",
 		NewPaymentDetailsHandler,
 		NewListingDraftHandler,
 		NewAuditLogHandler,
+		NewAddOnHandler,
 	),
 )
