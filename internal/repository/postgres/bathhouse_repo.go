@@ -766,16 +766,19 @@ func (r *bathhouseRepo) SuggestNames(ctx context.Context, filter repository.Sugg
 		limit = 10
 	}
 
+	// Escape LIKE metacharacters to prevent pattern injection
+	escapedQuery := strings.NewReplacer("%", `\%`, "_", `\_`).Replace(filter.Query)
+
 	query := `
 		SELECT DISTINCT name
 		FROM bathhouses
 		WHERE status = 'active'
-		  AND (similarity(name, $1) > 0.2 OR name ILIKE '%' || $1 || '%')
+		  AND (similarity(name, $1) > 0.2 OR name ILIKE '%' || $2 || '%' ESCAPE '\')
 		ORDER BY similarity(name, $1) DESC
-		LIMIT $2
+		LIMIT $3
 	`
 
-	rows, err := r.pool.Query(ctx, query, filter.Query, limit)
+	rows, err := r.pool.Query(ctx, query, filter.Query, escapedQuery, limit)
 	if err != nil {
 		return nil, fmt.Errorf("suggest names: %w", err)
 	}

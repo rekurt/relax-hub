@@ -10,14 +10,15 @@ import (
 type AuditAction string
 
 const (
-	AuditActionCreate AuditAction = "create"
-	AuditActionUpdate AuditAction = "update"
-	AuditActionDelete AuditAction = "delete"
+	AuditActionCreate       AuditAction = "create"
+	AuditActionUpdate       AuditAction = "update"
+	AuditActionDelete       AuditAction = "delete"
+	AuditActionStatusChange AuditAction = "status_change"
 )
 
 func (a AuditAction) IsValid() bool {
 	switch a {
-	case AuditActionCreate, AuditActionUpdate, AuditActionDelete:
+	case AuditActionCreate, AuditActionUpdate, AuditActionDelete, AuditActionStatusChange:
 		return true
 	}
 	return false

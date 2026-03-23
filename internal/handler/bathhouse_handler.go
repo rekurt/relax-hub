@@ -1285,7 +1285,9 @@ func (h *BathhouseHandler) recordBathhouseView(r *http.Request, bathhouseID uuid
 	ctx := r.Context()
 
 	if userID != uuid.Nil && h.recommendationService != nil {
-		_ = h.recommendationService.RecordView(ctx, userID, bathhouseID)
+		if err := h.recommendationService.RecordView(ctx, userID, bathhouseID); err != nil {
+			h.log.Warn("failed to record recommendation view", "bathhouse_id", bathhouseID, "error", err)
+		}
 	}
 
 	if h.analyticsService != nil {
@@ -1295,15 +1297,21 @@ func (h *BathhouseHandler) recordBathhouseView(r *http.Request, bathhouseID uuid
 		if userID != uuid.Nil {
 			viewerID = &userID
 		}
-		_ = h.analyticsService.RecordView(ctx, bathhouseID, viewerID, source, ipHash)
+		if err := h.analyticsService.RecordView(ctx, bathhouseID, viewerID, source, ipHash); err != nil {
+			h.log.Warn("failed to record analytics view", "bathhouse_id", bathhouseID, "error", err)
+		}
 	}
 
 	if h.promotionService != nil {
-		_ = h.promotionService.RecordClick(ctx, bathhouseID)
+		if err := h.promotionService.RecordClick(ctx, bathhouseID); err != nil {
+			h.log.Warn("failed to record promotion click", "bathhouse_id", bathhouseID, "error", err)
+		}
 	}
 
 	if userID != uuid.Nil && h.savedSearchService != nil {
-		_ = h.savedSearchService.RecordView(ctx, userID, bathhouseID)
+		if err := h.savedSearchService.RecordView(ctx, userID, bathhouseID); err != nil {
+			h.log.Warn("failed to record recently viewed", "bathhouse_id", bathhouseID, "error", err)
+		}
 	}
 }
 

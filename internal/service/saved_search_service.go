@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -100,6 +101,15 @@ func (s *savedSearchService) ListRecentlyViewed(ctx context.Context, userID uuid
 }
 
 func (s *savedSearchService) SaveSearch(ctx context.Context, userID uuid.UUID, name string, filters json.RawMessage, notifyOnNew bool) (*domain.SavedSearch, error) {
+	// Validate name
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil, fmt.Errorf("name is required: %w", domain.ErrInvalidInput)
+	}
+	if len(name) > 200 {
+		return nil, fmt.Errorf("name must be at most 200 characters: %w", domain.ErrInvalidInput)
+	}
+
 	// Validate filters can be parsed as BathhouseFilter
 	var bf domain.BathhouseFilter
 	if err := json.Unmarshal(filters, &bf); err != nil {

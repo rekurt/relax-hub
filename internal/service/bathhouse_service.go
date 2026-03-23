@@ -293,8 +293,8 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 	if len(changedFields) > 0 {
 		_ = s.auditSvc.LogChange(ctx, "bathhouse", id, userID, domain.AuditActionUpdate, changedFields)
 
-		// Auto-set status to pending on substantial change (if currently active)
-		if bh.Status == domain.BathhouseStatusActive && s.auditSvc.IsSubstantialChange(&oldBh, bh) {
+		// Auto-set status to pending on substantial change (any non-pending status)
+		if bh.Status != domain.BathhouseStatusPending && s.auditSvc.IsSubstantialChange(&oldBh, bh) {
 			if err := s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusPending); err == nil {
 				bh.Status = domain.BathhouseStatusPending
 			}
@@ -555,7 +555,14 @@ func (s *bathhouseService) DeactivateBathhouse(ctx context.Context, userID uuid.
 		return domain.ErrInvalidInput
 	}
 
-	return s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusInactive)
+	if err := s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusInactive); err != nil {
+		return err
+	}
+
+	_ = s.auditSvc.LogChange(ctx, "bathhouse", bathhouseID, userID, domain.AuditActionStatusChange,
+		map[string]interface{}{"status": map[string]string{"old": string(bh.Status), "new": string(domain.BathhouseStatusInactive)}})
+
+	return nil
 }
 
 func (s *bathhouseService) ActivateBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error {
@@ -572,7 +579,14 @@ func (s *bathhouseService) ActivateBathhouse(ctx context.Context, userID uuid.UU
 		return domain.ErrInvalidInput
 	}
 
-	return s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusActive)
+	if err := s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusActive); err != nil {
+		return err
+	}
+
+	_ = s.auditSvc.LogChange(ctx, "bathhouse", bathhouseID, userID, domain.AuditActionStatusChange,
+		map[string]interface{}{"status": map[string]string{"old": string(bh.Status), "new": string(domain.BathhouseStatusActive)}})
+
+	return nil
 }
 
 func (s *bathhouseService) ArchiveBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error {
@@ -598,7 +612,14 @@ func (s *bathhouseService) ArchiveBathhouse(ctx context.Context, userID uuid.UUI
 		return domain.ErrBathhouseHasBookings
 	}
 
-	return s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusArchived)
+	if err := s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusArchived); err != nil {
+		return err
+	}
+
+	_ = s.auditSvc.LogChange(ctx, "bathhouse", bathhouseID, userID, domain.AuditActionStatusChange,
+		map[string]interface{}{"status": map[string]string{"old": string(bh.Status), "new": string(domain.BathhouseStatusArchived)}})
+
+	return nil
 }
 
 func buildChangedFields(old, new *domain.Bathhouse) map[string]interface{} {
