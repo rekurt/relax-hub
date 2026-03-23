@@ -195,6 +195,8 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "wallet_limit_exceeded", err.Error())
 	case errors.Is(err, domain.ErrWalletFrozen):
 		writeErrorWithContext(w, r, http.StatusForbidden, "wallet_frozen", err.Error())
+	case errors.Is(err, domain.ErrWalletConcurrentUpdate):
+		writeErrorWithContext(w, r, http.StatusConflict, "wallet_concurrent_update", err.Error())
 	case errors.Is(err, domain.ErrHoldNotFound):
 		writeErrorWithContext(w, r, http.StatusNotFound, "hold_not_found", err.Error())
 	case errors.Is(err, domain.ErrHoldExpired):

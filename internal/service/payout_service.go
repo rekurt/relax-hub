@@ -161,7 +161,7 @@ func (s *payoutService) ProcessPayout(ctx context.Context, payoutID uuid.UUID) e
 	}
 
 	newBalance := wallet.Balance - payout.Amount
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, newBalance, wallet.HeldAmount); err != nil {
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
 		now := time.Now()
 		_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &now, "balance update failed")
 		return err

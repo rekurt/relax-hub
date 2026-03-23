@@ -12,6 +12,7 @@ import (
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/auth"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
@@ -24,13 +25,18 @@ type OAuthService interface {
 }
 
 type oauthService struct {
-	userRepo       repository.UserRepository
-	socialRepo     repository.SocialAccountRepository
-	redisClient    *redis.Client
-	providers      map[domain.OAuthProvider]auth.OAuthProvider
-	referralSvc    ReferralService
-	jwtSecret      []byte
-	tokenTTL       time.Duration
+	userRepo           repository.UserRepository
+	socialRepo         repository.SocialAccountRepository
+	redisClient        *redis.Client
+	providers          map[domain.OAuthProvider]auth.OAuthProvider
+	referralSvc        ReferralService
+	walletSvc          WalletService
+	sessionSvc         SessionService
+	logger             *logger.Logger
+	jwtSecret          []byte
+	tokenTTL           time.Duration
+	welcomeBonusAmount int64
+	welcomeBonusExpiry int
 }
 
 func NewOAuthService(
@@ -38,6 +44,9 @@ func NewOAuthService(
 	socialRepo repository.SocialAccountRepository,
 	redisClient *redis.Client,
 	referralSvc ReferralService,
+	walletSvc WalletService,
+	sessionSvc SessionService,
+	log *logger.Logger,
 	cfg *config.Config,
 ) OAuthService {
 	providers := make(map[domain.OAuthProvider]auth.OAuthProvider)
@@ -59,13 +68,18 @@ func NewOAuthService(
 	}
 
 	return &oauthService{
-		userRepo:     userRepo,
-		socialRepo:   socialRepo,
-		redisClient:  redisClient,
-		providers:    providers,
-		referralSvc:  referralSvc,
-		jwtSecret:    []byte(cfg.JWT.Secret),
-		tokenTTL:     cfg.JWT.TokenTTL,
+		userRepo:           userRepo,
+		socialRepo:         socialRepo,
+		redisClient:        redisClient,
+		providers:          providers,
+		referralSvc:        referralSvc,
+		walletSvc:          walletSvc,
+		sessionSvc:         sessionSvc,
+		logger:             log,
+		jwtSecret:          []byte(cfg.JWT.Secret),
+		tokenTTL:           cfg.JWT.TokenTTL,
+		welcomeBonusAmount: cfg.WelcomeBonus.Amount,
+		welcomeBonusExpiry: cfg.WelcomeBonus.ExpiryDays,
 	}
 }
 
@@ -85,6 +99,7 @@ func NewOAuthServiceWithProviders(
 		redisClient: redisClient,
 		providers:   providers,
 		referralSvc: referralSvc,
+		logger:      logger.New(logger.LevelWarn),
 		jwtSecret:   []byte(jwtSecret),
 		tokenTTL:    tokenTTL,
 	}
@@ -176,7 +191,7 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 			return nil, "", domain.ErrUserBlocked
 		}
 
-		token, err := s.generateToken(user.ID, user.Role)
+		token, err := s.generateToken(ctx, user.ID, user.Role)
 		if err != nil {
 			return nil, "", err
 		}
@@ -236,6 +251,9 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 			// (mirrors AuthService.Register behavior)
 			_ = s.referralSvc.RegisterReferral(ctx, referralCode, user.ID)
 		}
+
+		// Create wallet and credit welcome bonus (best-effort, mirrors AuthService.Register)
+		s.createWalletWithBonus(ctx, user.ID)
 	}
 
 	// Link social account
@@ -258,7 +276,7 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 		return nil, "", fmt.Errorf("link social account: %w", err)
 	}
 
-	token, err := s.generateToken(user.ID, user.Role)
+	token, err := s.generateToken(ctx, user.ID, user.Role)
 	if err != nil {
 		return nil, "", err
 	}
@@ -356,6 +374,34 @@ func (s *oauthService) getProvider(provider domain.OAuthProvider) (auth.OAuthPro
 	return p, nil
 }
 
-func (s *oauthService) generateToken(userID uuid.UUID, role domain.UserRole) (string, error) {
+func (s *oauthService) generateToken(ctx context.Context, userID uuid.UUID, role domain.UserRole) (string, error) {
+	if s.sessionSvc != nil {
+		session, err := s.sessionSvc.CreateSession(ctx, userID, "", "", "")
+		if err != nil {
+			s.logger.Warn("failed to create session during OAuth token generation", "user_id", userID, "error", err)
+			return generateJWT(userID, role, s.jwtSecret, s.tokenTTL)
+		}
+		return generateJWTWithSession(userID, role, session.ID, s.jwtSecret, s.tokenTTL)
+	}
 	return generateJWT(userID, role, s.jwtSecret, s.tokenTTL)
+}
+
+func (s *oauthService) createWalletWithBonus(ctx context.Context, userID uuid.UUID) {
+	if s.walletSvc == nil {
+		return
+	}
+
+	wallet, err := s.walletSvc.CreateWallet(ctx, userID, domain.WalletCurrencyRUB)
+	if err != nil {
+		s.logger.Warn("failed to create wallet on OAuth registration", "user_id", userID, "error", err)
+		return
+	}
+
+	if s.welcomeBonusAmount > 0 {
+		expiresAt := time.Now().AddDate(0, 0, s.welcomeBonusExpiry)
+		_, err = s.walletSvc.AddBonus(ctx, wallet.ID, s.welcomeBonusAmount, domain.WalletTxWelcomeBonus, &expiresAt, "Приветственный бонус")
+		if err != nil {
+			s.logger.Warn("failed to credit welcome bonus on OAuth registration", "user_id", userID, "wallet_id", wallet.ID, "error", err)
+		}
+	}
 }

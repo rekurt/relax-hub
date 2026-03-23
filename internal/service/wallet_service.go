@@ -101,7 +101,7 @@ func (s *walletService) TopUp(ctx context.Context, userID uuid.UUID, amount int6
 		return nil, domain.ErrWalletLimitExceeded
 	}
 
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, newBalance, wallet.HeldAmount); err != nil {
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
 		return nil, err
 	}
 
@@ -141,7 +141,7 @@ func (s *walletService) Spend(ctx context.Context, walletID uuid.UUID, amount in
 	}
 
 	newBalance := wallet.Balance - amount
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, newBalance, wallet.HeldAmount); err != nil {
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
 		return nil, err
 	}
 
@@ -183,7 +183,7 @@ func (s *walletService) Hold(ctx context.Context, walletID uuid.UUID, amount int
 	}
 
 	newHeldAmount := wallet.HeldAmount + amount
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newHeldAmount); err != nil {
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, wallet.Balance, wallet.HeldAmount, newHeldAmount); err != nil {
 		return nil, err
 	}
 
@@ -238,7 +238,7 @@ func (s *walletService) CaptureHold(ctx context.Context, holdID uuid.UUID) (*dom
 	// If balance update succeeds but hold status update fails, the balance is deducted
 	// but the hold remains active -- a subsequent retry can still capture it safely.
 	// The reverse order (hold first, then balance) would leak money on partial failure.
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, newBalance, newHeldAmount); err != nil {
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, newHeldAmount); err != nil {
 		return nil, err
 	}
 
@@ -290,7 +290,7 @@ func (s *walletService) ReleaseHold(ctx context.Context, holdID uuid.UUID) error
 	// If balance update succeeds but hold status update fails, the held amount is reduced
 	// but hold remains active -- a subsequent retry can still release it safely.
 	// The reverse order (hold first, then balance) would permanently freeze funds on partial failure.
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newHeldAmount); err != nil {
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, wallet.Balance, wallet.HeldAmount, newHeldAmount); err != nil {
 		return err
 	}
 
@@ -318,7 +318,7 @@ func (s *walletService) Refund(ctx context.Context, walletID uuid.UUID, amount i
 		newBalance = maxBalance
 	}
 
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, newBalance, wallet.HeldAmount); err != nil {
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
 		return nil, err
 	}
 
@@ -361,7 +361,7 @@ func (s *walletService) AddBonus(ctx context.Context, walletID uuid.UUID, amount
 		return nil, domain.ErrWalletLimitExceeded
 	}
 
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, newBalance, wallet.HeldAmount); err != nil {
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
 		return nil, err
 	}
 
@@ -482,7 +482,7 @@ func (s *walletService) ExpireBonusesForWallet(ctx context.Context, walletID uui
 		newBalance = 0
 	}
 
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, newBalance, wallet.HeldAmount); err != nil {
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
 		return 0, err
 	}
 
@@ -532,7 +532,7 @@ func (s *walletService) FreezeAndZeroBalance(ctx context.Context, userID uuid.UU
 		return fmt.Errorf("freeze wallet: %w", err)
 	}
 
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, 0, 0); err != nil {
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, 0, wallet.HeldAmount, 0); err != nil {
 		return fmt.Errorf("zero wallet balance: %w", err)
 	}
 

@@ -21,23 +21,26 @@ type ListingDraftService interface {
 }
 
 type listingDraftService struct {
-	draftRepo repository.ListingDraftRepository
-	kycSvc    KYCService
-	offerSvc  OfferService
-	logger    *logger.Logger
+	draftRepo         repository.ListingDraftRepository
+	kycSvc            KYCService
+	offerSvc          OfferService
+	paymentDetailsSvc PaymentDetailsService
+	logger            *logger.Logger
 }
 
 func NewListingDraftService(
 	draftRepo repository.ListingDraftRepository,
 	kycSvc KYCService,
 	offerSvc OfferService,
+	paymentDetailsSvc PaymentDetailsService,
 	log *logger.Logger,
 ) ListingDraftService {
 	return &listingDraftService{
-		draftRepo: draftRepo,
-		kycSvc:    kycSvc,
-		offerSvc:  offerSvc,
-		logger:    log,
+		draftRepo:         draftRepo,
+		kycSvc:            kycSvc,
+		offerSvc:          offerSvc,
+		paymentDetailsSvc: paymentDetailsSvc,
+		logger:            log,
 	}
 }
 
@@ -58,6 +61,11 @@ func (s *listingDraftService) Create(ctx context.Context, userID uuid.UUID) (*do
 	}
 	if !accepted {
 		return nil, domain.ErrOfferNotAccepted
+	}
+
+	// Check payment details set
+	if err := s.paymentDetailsSvc.Validate(ctx, userID); err != nil {
+		return nil, err
 	}
 
 	now := time.Now()

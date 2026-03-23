@@ -83,13 +83,16 @@ func (r *WalletRepo) GetByUserID(_ context.Context, userID uuid.UUID) (*domain.W
 	return nil, domain.ErrWalletNotFound
 }
 
-func (r *WalletRepo) UpdateBalance(_ context.Context, walletID uuid.UUID, newBalance int64, newHeldAmount int64) error {
+func (r *WalletRepo) UpdateBalance(_ context.Context, walletID uuid.UUID, oldBalance, newBalance int64, oldHeldAmount, newHeldAmount int64) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	w, ok := r.wallets[walletID]
 	if !ok {
 		return domain.ErrWalletNotFound
+	}
+	if w.Balance != oldBalance || w.HeldAmount != oldHeldAmount {
+		return domain.ErrWalletConcurrentUpdate
 	}
 	w.Balance = newBalance
 	w.HeldAmount = newHeldAmount

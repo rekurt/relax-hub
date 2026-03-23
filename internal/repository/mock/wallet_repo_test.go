@@ -109,7 +109,7 @@ func TestWalletRepo_UpdateBalance(t *testing.T) {
 	repo := mock.NewWalletRepo().(*mock.WalletRepo)
 	w := createTestWallet(t, repo, uuid.Nil)
 
-	err := repo.UpdateBalance(context.Background(), w.ID, 100000, 20000)
+	err := repo.UpdateBalance(context.Background(), w.ID, 0, 100000, 0, 20000)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -126,7 +126,7 @@ func TestWalletRepo_UpdateBalance(t *testing.T) {
 func TestWalletRepo_UpdateBalance_NotFound(t *testing.T) {
 	repo := mock.NewWalletRepo().(*mock.WalletRepo)
 
-	err := repo.UpdateBalance(context.Background(), uuid.New(), 100000, 0)
+	err := repo.UpdateBalance(context.Background(), uuid.New(), 0, 100000, 0, 0)
 	if err != domain.ErrWalletNotFound {
 		t.Errorf("err = %v, want ErrWalletNotFound", err)
 	}

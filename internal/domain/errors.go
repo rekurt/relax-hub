@@ -52,6 +52,7 @@ var (
 	ErrInsufficientWalletBalance  = errors.New("insufficient wallet balance")
 	ErrWalletLimitExceeded        = errors.New("wallet balance limit exceeded")
 	ErrWalletFrozen               = errors.New("wallet is frozen")
+	ErrWalletConcurrentUpdate     = errors.New("wallet was modified concurrently, please retry")
 	ErrHoldNotFound               = errors.New("hold not found")
 	ErrHoldExpired                = errors.New("hold has expired")
 	ErrTopUpBelowMinimum          = errors.New("top-up amount below minimum")

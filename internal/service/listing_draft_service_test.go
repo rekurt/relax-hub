@@ -54,24 +54,42 @@ func (s *stubOfferService) IsAccepted(_ context.Context, _ uuid.UUID) (bool, err
 	return s.accepted, s.err
 }
 
+// stubPaymentDetailsService returns configurable payment details validation
+type stubPaymentDetailsService struct {
+	err error
+}
+
+func (s *stubPaymentDetailsService) Set(_ context.Context, _ uuid.UUID, _ service.SetPaymentDetailsInput) (*domain.PaymentDetails, error) {
+	return nil, nil
+}
+func (s *stubPaymentDetailsService) Get(_ context.Context, _ uuid.UUID) (*domain.PaymentDetails, error) {
+	return nil, nil
+}
+func (s *stubPaymentDetailsService) Validate(_ context.Context, _ uuid.UUID) error {
+	return s.err
+}
+
 type draftTestEnv struct {
-	svc      service.ListingDraftService
-	repo     *mock.ListingDraftRepo
-	kycStub  *stubKYCService
-	offerStub *stubOfferService
+	svc               service.ListingDraftService
+	repo              *mock.ListingDraftRepo
+	kycStub           *stubKYCService
+	offerStub         *stubOfferService
+	paymentDetailsStub *stubPaymentDetailsService
 }
 
 func newDraftTestEnv() *draftTestEnv {
 	repo := mock.NewListingDraftRepo()
 	kycStub := &stubKYCService{approved: true}
 	offerStub := &stubOfferService{accepted: true}
+	paymentDetailsStub := &stubPaymentDetailsService{}
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewListingDraftService(repo, kycStub, offerStub, log)
+	svc := service.NewListingDraftService(repo, kycStub, offerStub, paymentDetailsStub, log)
 	return &draftTestEnv{
-		svc:       svc,
-		repo:      repo,
-		kycStub:   kycStub,
-		offerStub: offerStub,
+		svc:                svc,
+		repo:               repo,
+		kycStub:            kycStub,
+		offerStub:          offerStub,
+		paymentDetailsStub: paymentDetailsStub,
 	}
 }
 

@@ -86,15 +86,22 @@ func (r *walletRepo) scanWallet(ctx context.Context, query string, arg interface
 	return &w, nil
 }
 
-func (r *walletRepo) UpdateBalance(ctx context.Context, walletID uuid.UUID, newBalance int64, newHeldAmount int64) error {
-	query := `UPDATE wallets SET balance = $2, held_amount = $3, updated_at = $4 WHERE id = $1`
+func (r *walletRepo) UpdateBalance(ctx context.Context, walletID uuid.UUID, oldBalance, newBalance int64, oldHeldAmount, newHeldAmount int64) error {
+	query := `UPDATE wallets SET balance = $2, held_amount = $3, updated_at = $4
+		WHERE id = $1 AND balance = $5 AND held_amount = $6`
 
-	tag, err := r.pool.Exec(ctx, query, walletID, newBalance, newHeldAmount, time.Now())
+	tag, err := r.pool.Exec(ctx, query, walletID, newBalance, newHeldAmount, time.Now(), oldBalance, oldHeldAmount)
 	if err != nil {
 		return fmt.Errorf("update wallet balance: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
-		return domain.ErrWalletNotFound
+		// Check if wallet exists to distinguish "not found" from "concurrent modification"
+		var exists bool
+		_ = r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM wallets WHERE id = $1)`, walletID).Scan(&exists)
+		if !exists {
+			return domain.ErrWalletNotFound
+		}
+		return domain.ErrWalletConcurrentUpdate
 	}
 	return nil
 }

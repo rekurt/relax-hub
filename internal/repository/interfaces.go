@@ -381,7 +381,7 @@ type WalletRepository interface {
 	Create(ctx context.Context, wallet *domain.Wallet) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Wallet, error)
 	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error)
-	UpdateBalance(ctx context.Context, walletID uuid.UUID, newBalance int64, newHeldAmount int64) error
+	UpdateBalance(ctx context.Context, walletID uuid.UUID, oldBalance, newBalance int64, oldHeldAmount, newHeldAmount int64) error
 	UpdateStatus(ctx context.Context, walletID uuid.UUID, status domain.WalletStatus) error
 	ListAllIDs(ctx context.Context) ([]uuid.UUID, error)
 
