@@ -15,8 +15,9 @@ import (
 type contextKey string
 
 const (
-	userIDKey contextKey = "user_id"
-	roleKey   contextKey = "user_role"
+	userIDKey    contextKey = "user_id"
+	roleKey      contextKey = "user_role"
+	sessionIDKey contextKey = "session_id"
 )
 
 func GetUserID(ctx context.Context) uuid.UUID {
@@ -31,6 +32,18 @@ func GetUserRole(ctx context.Context) domain.UserRole {
 		return role
 	}
 	return ""
+}
+
+func GetSessionID(ctx context.Context) uuid.UUID {
+	if id, ok := ctx.Value(sessionIDKey).(uuid.UUID); ok {
+		return id
+	}
+	return uuid.Nil
+}
+
+// SetSessionID sets the session ID in context.
+func SetSessionID(ctx context.Context, sessionID uuid.UUID) context.Context {
+	return context.WithValue(ctx, sessionIDKey, sessionID)
 }
 
 // SetUserID sets the user ID in context.
@@ -55,9 +68,19 @@ func SetUserRoleForTesting(ctx context.Context, role domain.UserRole) context.Co
 
 type AuthService interface {
 	ParseToken(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error)
+	ParseTokenWithSession(ctx context.Context, token string) (userID uuid.UUID, role domain.UserRole, sessionID uuid.UUID, err error)
+}
+
+// SessionValidator validates that a session is still active.
+type SessionValidator interface {
+	ValidateAndTouch(ctx context.Context, sessionID uuid.UUID) error
 }
 
 func RequireAuth(authService AuthService) func(http.Handler) http.Handler {
+	return RequireAuthWithSession(authService, nil)
+}
+
+func RequireAuthWithSession(authService AuthService, sessionValidator SessionValidator) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			header := r.Header.Get("Authorization")
@@ -73,14 +96,25 @@ func RequireAuth(authService AuthService) func(http.Handler) http.Handler {
 			}
 
 			token := parts[1]
-			userID, role, err := authService.ParseToken(r.Context(), token)
+			userID, role, sessionID, err := authService.ParseTokenWithSession(r.Context(), token)
 			if err != nil {
 				writeAuthError(w, http.StatusUnauthorized, "invalid or expired token")
 				return
 			}
 
+			// Validate session if present and validator is configured
+			if sessionValidator != nil && sessionID != uuid.Nil {
+				if err := sessionValidator.ValidateAndTouch(r.Context(), sessionID); err != nil {
+					writeAuthError(w, http.StatusUnauthorized, "session expired or invalid")
+					return
+				}
+			}
+
 			ctx := context.WithValue(r.Context(), userIDKey, userID)
 			ctx = context.WithValue(ctx, roleKey, role)
+			if sessionID != uuid.Nil {
+				ctx = context.WithValue(ctx, sessionIDKey, sessionID)
+			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -102,7 +136,7 @@ func OptionalAuth(authService AuthService) func(http.Handler) http.Handler {
 			}
 
 			token := parts[1]
-			userID, role, err := authService.ParseToken(r.Context(), token)
+			userID, role, sessionID, err := authService.ParseTokenWithSession(r.Context(), token)
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return
@@ -110,6 +144,9 @@ func OptionalAuth(authService AuthService) func(http.Handler) http.Handler {
 
 			ctx := context.WithValue(r.Context(), userIDKey, userID)
 			ctx = context.WithValue(ctx, roleKey, role)
+			if sessionID != uuid.Nil {
+				ctx = context.WithValue(ctx, sessionIDKey, sessionID)
+			}
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

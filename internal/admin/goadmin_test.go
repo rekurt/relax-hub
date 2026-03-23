@@ -25,6 +25,11 @@ func (m *mockAuthService) ParseToken(_ context.Context, _ string) (uuid.UUID, do
 	return m.userID, m.role, m.err
 }
 
+func (m *mockAuthService) ParseTokenWithSession(ctx context.Context, token string) (uuid.UUID, domain.UserRole, uuid.UUID, error) {
+	userID, role, err := m.ParseToken(ctx, token)
+	return userID, role, uuid.Nil, err
+}
+
 func testLogger() *logger.Logger {
 	return logger.New(logger.LevelError)
 }

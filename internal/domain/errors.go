@@ -75,4 +75,7 @@ var (
 	Err2FANotEnabled     = errors.New("two-factor authentication not enabled")
 	Err2FAInvalidCode    = errors.New("invalid two-factor authentication code")
 	Err2FAPhoneRequired  = errors.New("verified phone required for SMS 2FA")
+
+	ErrSessionNotFound = errors.New("session not found")
+	ErrSessionExpired  = errors.New("session expired")
 )

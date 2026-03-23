@@ -47,6 +47,11 @@ var Module = fx.Module("service",
 		fx.Annotate(NewWalletService, fx.As(new(WalletService))),
 		fx.Annotate(NewPayoutService, fx.As(new(PayoutService))),
 		fx.Annotate(
+			NewSessionService,
+			fx.As(new(SessionService)),
+			fx.As(new(middleware.SessionValidator)),
+		),
+		fx.Annotate(
 			func(paymentRepo repository.PaymentRepository, bookingRepo repository.BookingRepository, provider payment.PaymentProvider, notifSvc NotificationService, cfg *config.Config, log *logger.Logger) PaymentService {
 				return NewPaymentService(paymentRepo, bookingRepo, provider, notifSvc, cfg.Payment.ReturnURL, log)
 			},

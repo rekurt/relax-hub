@@ -28,6 +28,11 @@ func (m *mockWSAuthService) ParseToken(ctx context.Context, token string) (uuid.
 	return uuid.Nil, "", domain.ErrUnauthorized
 }
 
+func (m *mockWSAuthService) ParseTokenWithSession(ctx context.Context, token string) (uuid.UUID, domain.UserRole, uuid.UUID, error) {
+	userID, role, err := m.ParseToken(ctx, token)
+	return userID, role, uuid.Nil, err
+}
+
 type mockChatServiceForWS struct {
 	canAccessFn func(ctx context.Context, userID uuid.UUID, role domain.UserRole, conversationID uuid.UUID) bool
 }

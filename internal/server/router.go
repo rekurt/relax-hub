@@ -55,7 +55,9 @@ type RouterParams struct {
 	CalendarHandler       *handler.CalendarHandler
 	WalletHandler         *handler.WalletHandler
 	PayoutHandler         *handler.PayoutHandler
-	GoAdmin               *admin.GoAdmin `optional:"true"`
+	SessionHandler        *handler.SessionHandler
+	SessionValidator      middleware.SessionValidator `optional:"true"`
+	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -78,7 +80,7 @@ func NewRouter(p RouterParams) http.Handler {
 		))
 	}
 
-	auth := middleware.RequireAuth(p.AuthService)
+	auth := middleware.RequireAuthWithSession(p.AuthService, p.SessionValidator)
 	optionalAuth := middleware.OptionalAuth(p.AuthService)
 
 	// Create rate limiters
@@ -257,6 +259,11 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// User profile and statistics (authenticated)
 		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)
+
+		// Sessions (authenticated)
+		r.With(auth).Get("/my/sessions", p.SessionHandler.ListSessions)
+		r.With(auth).Delete("/my/sessions", p.SessionHandler.TerminateAllOtherSessions)
+		r.With(auth).Delete("/my/sessions/{id}", p.SessionHandler.TerminateSession)
 
 		// Wallet (authenticated)
 		r.With(auth).Get("/my/wallet", p.WalletHandler.GetWallet)

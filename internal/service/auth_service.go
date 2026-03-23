@@ -40,6 +40,7 @@ type AuthService interface {
 	Register(ctx context.Context, input RegisterInput) (*domain.User, string, error)
 	Login(ctx context.Context, email, password string) (*LoginResult, error)
 	ParseToken(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error)
+	ParseTokenWithSession(ctx context.Context, token string) (uuid.UUID, domain.UserRole, uuid.UUID, error)
 	ParsePartialToken(ctx context.Context, token string) (uuid.UUID, error)
 	RegisterPhone(ctx context.Context, input RegisterPhoneInput) error
 	LoginPhone(ctx context.Context, phone string) error
@@ -206,6 +207,52 @@ func (s *authService) ParseToken(_ context.Context, tokenString string) (uuid.UU
 	}
 
 	return userID, role, nil
+}
+
+func (s *authService) ParseTokenWithSession(_ context.Context, tokenString string) (uuid.UUID, domain.UserRole, uuid.UUID, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return s.jwtSecret, nil
+	})
+	if err != nil {
+		return uuid.Nil, "", uuid.Nil, domain.ErrUnauthorized
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return uuid.Nil, "", uuid.Nil, domain.ErrUnauthorized
+	}
+
+	userIDStr, ok := claims["user_id"].(string)
+	if !ok {
+		return uuid.Nil, "", uuid.Nil, domain.ErrUnauthorized
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return uuid.Nil, "", uuid.Nil, domain.ErrUnauthorized
+	}
+
+	roleStr, ok := claims["role"].(string)
+	if !ok {
+		return uuid.Nil, "", uuid.Nil, domain.ErrUnauthorized
+	}
+
+	role := domain.UserRole(roleStr)
+	if !role.IsValid() {
+		return uuid.Nil, "", uuid.Nil, domain.ErrUnauthorized
+	}
+
+	var sessionID uuid.UUID
+	if sidStr, ok := claims["session_id"].(string); ok {
+		if sid, err := uuid.Parse(sidStr); err == nil {
+			sessionID = sid
+		}
+	}
+
+	return userID, role, sessionID, nil
 }
 
 func (s *authService) RegisterPhone(ctx context.Context, input RegisterPhoneInput) error {

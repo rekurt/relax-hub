@@ -331,6 +331,16 @@ type PayoutRepository interface {
 	UpsertAutoPayoutSettings(ctx context.Context, settings *domain.AutoPayoutSettings) error
 }
 
+type SessionRepository interface {
+	Create(ctx context.Context, session *domain.Session) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Session, error)
+	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.Session, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+	DeleteAllExcept(ctx context.Context, userID uuid.UUID, exceptID uuid.UUID) error
+	UpdateLastActive(ctx context.Context, id uuid.UUID, lastActiveAt time.Time) error
+	DeleteExpired(ctx context.Context) (int64, error)
+}
+
 type WalletRepository interface {
 	Create(ctx context.Context, wallet *domain.Wallet) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Wallet, error)

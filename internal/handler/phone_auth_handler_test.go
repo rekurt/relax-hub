@@ -28,6 +28,10 @@ func (m *phoneAuthMock) Login(_ context.Context, _, _ string) (*service.LoginRes
 func (m *phoneAuthMock) ParseToken(_ context.Context, _ string) (uuid.UUID, domain.UserRole, error) {
 	return uuid.Nil, "", domain.ErrUnauthorized
 }
+func (m *phoneAuthMock) ParseTokenWithSession(ctx context.Context, token string) (uuid.UUID, domain.UserRole, uuid.UUID, error) {
+	userID, role, err := m.ParseToken(ctx, token)
+	return userID, role, uuid.Nil, err
+}
 func (m *phoneAuthMock) ParsePartialToken(_ context.Context, _ string) (uuid.UUID, error) {
 	return uuid.Nil, domain.ErrUnauthorized
 }

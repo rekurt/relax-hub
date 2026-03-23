@@ -147,10 +147,10 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Modify: `internal/repository/interfaces.go`, `internal/middleware/auth.go`
 - Create: `migrations/000042_sessions.up.sql`, `migrations/000042_sessions.down.sql`
 
-- [ ] Session model with device/browser/IP tracking
-- [ ] Session validation in auth middleware, auto-expire after 30 days
-- [ ] GET/DELETE /api/v1/my/sessions, DELETE /api/v1/my/sessions/{id}
-- [ ] Write tests, run `go test ./... -v`
+- [x] Session model with device/browser/IP tracking
+- [x] Session validation in auth middleware, auto-expire after 30 days
+- [x] GET/DELETE /api/v1/my/sessions, DELETE /api/v1/my/sessions/{id}
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 11: Password Reset (Task 2.4)
 

@@ -22,6 +22,11 @@ func (m *mockAuthServiceForRouter) ParseToken(_ context.Context, _ string) (uuid
 	return uuid.Nil, "", domain.ErrUnauthorized
 }
 
+func (m *mockAuthServiceForRouter) ParseTokenWithSession(ctx context.Context, token string) (uuid.UUID, domain.UserRole, uuid.UUID, error) {
+	userID, role, err := m.ParseToken(ctx, token)
+	return userID, role, uuid.Nil, err
+}
+
 func (m *mockAuthServiceForRouter) ParsePartialToken(_ context.Context, _ string) (uuid.UUID, error) {
 	return uuid.Nil, domain.ErrUnauthorized
 }
@@ -124,6 +129,7 @@ func testRouterParams() server.RouterParams {
 		SitemapHandler: handler.NewSitemapHandler(nil, nil, nil, log, ""),
 		PromoHandler:   handler.NewPromoHandler(nil),
 		MediaHandler:   handler.NewMediaHandler(nil),
+		SessionHandler: handler.NewSessionHandler(nil),
 	}
 }
 

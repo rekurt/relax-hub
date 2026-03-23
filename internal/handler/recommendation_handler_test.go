@@ -202,6 +202,11 @@ func (m *mockAuthService) ParseToken(ctx context.Context, token string) (uuid.UU
 	return m.userID, m.role, m.err
 }
 
+func (m *mockAuthService) ParseTokenWithSession(ctx context.Context, token string) (uuid.UUID, domain.UserRole, uuid.UUID, error) {
+	userID, role, err := m.ParseToken(ctx, token)
+	return userID, role, uuid.Nil, err
+}
+
 func TestRecommendationHandler_GetPersonalized(t *testing.T) {
 	userID := uuid.New()
 	bathID1 := uuid.New()

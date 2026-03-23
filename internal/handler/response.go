@@ -235,6 +235,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "2fa_invalid_code", err.Error())
 	case errors.Is(err, domain.Err2FAPhoneRequired):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "2fa_phone_required", err.Error())
+	case errors.Is(err, domain.ErrSessionNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "session_not_found", err.Error())
+	case errors.Is(err, domain.ErrSessionExpired):
+		writeErrorWithContext(w, r, http.StatusUnauthorized, "session_expired", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
