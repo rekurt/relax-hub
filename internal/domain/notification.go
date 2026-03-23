@@ -43,7 +43,8 @@ func (t NotificationType) IsValid() bool {
 		NotifLoyaltyUpgrade, NotifReferralBonus,
 		NotifSubscriptionExpiring, NotifSubscriptionExpired,
 		NotifBonusExpiring, NotifBonusExpired,
-		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal:
+		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal,
+		NotifSavedSearchMatch:
 		return true
 	}
 	return false
@@ -126,7 +127,8 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 	case NotifReminder:
 		return p.Reminders
 	case NotifSystem, NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected,
-		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal:
+		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal,
+		NotifSavedSearchMatch:
 		return true
 	}
 	return false

@@ -113,6 +113,8 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrKYCNotFound→404, ErrKYCNotApproved→403, ErrKYCPending→409
 - ErrOfferNotFound→404, ErrOfferNotAccepted→403, ErrOfferAlreadyAccepted→409
 - ErrPaymentDetailsNotFound→404, ErrPaymentDetailsNotSet→403
+- ErrAddOnNotFound→404, ErrAddOnLimitReached→409
+- ErrSavedSearchNotFound→404, ErrSavedSearchLimitReached→409
 
 ### Logging
 
@@ -372,3 +374,14 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Owner payment details**: entity-type-specific fields and validation, required before listing creation
 - **Listing draft wizard**: 7-step draft creation flow, step-based data storage with CRUD + submit
 - **Onboarding gate**: CreateBathhouse gated behind KYC approval + offer acceptance + payment details
+- **Listing completeness**: required/optional field checklist for bathhouse listings, blocks moderation submission if incomplete
+- **Audit log**: tracks bathhouse edits with JSONB diff, substantial changes (address/city/photos) auto-trigger re-moderation, admin and owner history views
+- **Listing duplication**: copy bathhouse with all fields as draft, name + " (копия)", new slug/UUID
+- **Listing lifecycle**: deactivate (inactive, keep bookings) / activate / archive (no active bookings, irreversible), search excludes inactive/archived
+- **Add-ons**: configurable per-bathhouse extras (per_item/per_hour/per_person pricing), max 20 per bathhouse, integrated into booking creation with denormalized pricing in booking_addons
+- **Full-text search**: PostgreSQL tsvector with Russian language config, pg_trgm for fuzzy matching, GIN indexes, prefix search support
+- **Search suggestions**: bathhouse names (trigram), city names, popular queries (Redis sorted set), 5-min cache
+- **Advanced ranking**: composite score (relevance 0.30 + bayesian_rating 0.25 + conversion_rate 0.20 + occupancy_rate 0.15 + promotion_boost 0.10), extended sort options
+- **Bathhouse comparison**: compare 2-3 bathhouses side by side (price, rating, capacity, amenities, etc.), optional distance calculation
+- **Saved searches**: JSONB filter storage, daily cron checks for new matches with notifications, max 50 per user
+- **Recently viewed**: Redis sorted set per user (last 20), recorded on bathhouse detail view

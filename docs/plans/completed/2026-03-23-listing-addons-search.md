@@ -238,6 +238,6 @@ Sequential execution of three independent subsystems: listing management enhance
 
 ### Task 14: Update documentation
 
-- [ ] Update CLAUDE.md if internal patterns changed (new subsystems, new domain errors, new config vars)
-- [ ] Run `make swagger` to regenerate OpenAPI spec
-- [ ] Move completed plans to `docs/plans/completed/`
+- [x] Update CLAUDE.md if internal patterns changed (new subsystems, new domain errors, new config vars)
+- [x] Run `make swagger` to regenerate OpenAPI spec
+- [x] Move completed plans to `docs/plans/completed/`
