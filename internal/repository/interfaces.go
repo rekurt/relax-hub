@@ -362,6 +362,11 @@ type OfferRepository interface {
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.OfferAcceptance, error)
 }
 
+type PaymentDetailsRepository interface {
+	Upsert(ctx context.Context, details *domain.PaymentDetails) error
+	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.PaymentDetails, error)
+}
+
 type WalletRepository interface {
 	Create(ctx context.Context, wallet *domain.Wallet) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Wallet, error)

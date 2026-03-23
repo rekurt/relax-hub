@@ -227,9 +227,9 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Modify: `internal/repository/interfaces.go`
 - Create: `migrations/000046_owner_payment_details.up.sql`, `migrations/000046_owner_payment_details.down.sql`
 
-- [ ] PaymentDetails with entity-type-specific fields and validation
-- [ ] PUT/GET /api/v1/my/payment-details
-- [ ] Write tests, run `go test ./... -v`
+- [x] PaymentDetails with entity-type-specific fields and validation
+- [x] PUT/GET /api/v1/my/payment-details
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 18: 7-Step Listing Draft Wizard (Task 3.4)
 

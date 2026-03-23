@@ -93,4 +93,7 @@ var (
 	ErrOfferNotFound        = errors.New("offer acceptance not found")
 	ErrOfferNotAccepted     = errors.New("offer not accepted")
 	ErrOfferAlreadyAccepted = errors.New("offer version already accepted")
+
+	ErrPaymentDetailsNotFound = errors.New("payment details not found")
+	ErrPaymentDetailsNotSet   = errors.New("payment details not set")
 )

@@ -261,6 +261,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusForbidden, "offer_not_accepted", err.Error())
 	case errors.Is(err, domain.ErrOfferAlreadyAccepted):
 		writeErrorWithContext(w, r, http.StatusConflict, "offer_already_accepted", err.Error())
+	case errors.Is(err, domain.ErrPaymentDetailsNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "payment_details_not_found", err.Error())
+	case errors.Is(err, domain.ErrPaymentDetailsNotSet):
+		writeErrorWithContext(w, r, http.StatusForbidden, "payment_details_not_set", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
