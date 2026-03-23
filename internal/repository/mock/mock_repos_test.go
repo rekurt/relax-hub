@@ -1659,3 +1659,91 @@ func TestLoyaltyRepo_Transactions(t *testing.T) {
 	}
 }
 
+func TestBathhouseRepo_IncrementViewCount(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBathhouseRepo()
+
+	bh := &domain.Bathhouse{
+		ID:           uuid.New(),
+		OwnerID:      uuid.New(),
+		Name:         "View Count Test",
+		Address:      "123 Street",
+		CityID:       1,
+		PricePerHour: 5000,
+		MinDuration:  1,
+		MaxGuests:    10,
+		Status:       domain.BathhouseStatusActive,
+	}
+	if err := repo.Create(ctx, bh); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// Initial view count should be 0
+	got, _ := repo.GetByID(ctx, bh.ID)
+	if got.ViewCount != 0 {
+		t.Errorf("initial ViewCount = %d, want 0", got.ViewCount)
+	}
+
+	// Increment
+	if err := repo.IncrementViewCount(ctx, bh.ID); err != nil {
+		t.Fatalf("IncrementViewCount: %v", err)
+	}
+	got, _ = repo.GetByID(ctx, bh.ID)
+	if got.ViewCount != 1 {
+		t.Errorf("ViewCount after increment = %d, want 1", got.ViewCount)
+	}
+
+	// Increment again
+	if err := repo.IncrementViewCount(ctx, bh.ID); err != nil {
+		t.Fatalf("IncrementViewCount: %v", err)
+	}
+	got, _ = repo.GetByID(ctx, bh.ID)
+	if got.ViewCount != 2 {
+		t.Errorf("ViewCount after 2nd increment = %d, want 2", got.ViewCount)
+	}
+
+	// Not found
+	err := repo.IncrementViewCount(ctx, uuid.New())
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("IncrementViewCount non-existent: got %v, want ErrNotFound", err)
+	}
+}
+
+func TestBathhouseRepo_UpdateRankingFields(t *testing.T) {
+	ctx := context.Background()
+	repo := NewBathhouseRepo()
+
+	bh := &domain.Bathhouse{
+		ID:           uuid.New(),
+		OwnerID:      uuid.New(),
+		Name:         "Ranking Test",
+		Address:      "123 Street",
+		CityID:       1,
+		PricePerHour: 5000,
+		MinDuration:  1,
+		MaxGuests:    10,
+		Status:       domain.BathhouseStatusActive,
+	}
+	if err := repo.Create(ctx, bh); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	// Update ranking fields
+	if err := repo.UpdateRankingFields(ctx, bh.ID, 0.75, 0.85); err != nil {
+		t.Fatalf("UpdateRankingFields: %v", err)
+	}
+	got, _ := repo.GetByID(ctx, bh.ID)
+	if got.ConversionRate != 0.75 {
+		t.Errorf("ConversionRate = %v, want 0.75", got.ConversionRate)
+	}
+	if got.OccupancyRate != 0.85 {
+		t.Errorf("OccupancyRate = %v, want 0.85", got.OccupancyRate)
+	}
+
+	// Not found
+	err := repo.UpdateRankingFields(ctx, uuid.New(), 0.5, 0.5)
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("UpdateRankingFields non-existent: got %v, want ErrNotFound", err)
+	}
+}
+

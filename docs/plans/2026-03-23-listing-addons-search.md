@@ -174,11 +174,11 @@ Sequential execution of three independent subsystems: listing management enhance
 - Modify: `internal/domain/bathhouse.go`
 - Create: `migrations/000052_ranking_fields.up.sql`, `migrations/000052_ranking_fields.down.sql`
 
-- [ ] Migration: add conversion_rate, occupancy_rate, view_count columns to bathhouses
-- [ ] Composite ranking score in SQL: relevance*0.30 + bayesian_rating*0.25 + conversion_rate*0.20 + occupancy_rate*0.15 + promotion_boost*0.10
-- [ ] Extend SortBy options: "relevance" (default), "price_asc", "price_desc", "rating", "distance", "newest"
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] Migration: add conversion_rate, occupancy_rate, view_count columns to bathhouses
+- [x] Composite ranking score in SQL: relevance*0.30 + bayesian_rating*0.25 + conversion_rate*0.20 + occupancy_rate*0.15 + promotion_boost*0.10
+- [x] Extend SortBy options: "relevance" (default), "price_asc", "price_desc", "rating", "distance", "newest"
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 11: Comparison (FR-046)
 

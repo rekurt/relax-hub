@@ -214,6 +214,14 @@ func (m *mockBathhouseRepository) SuggestNames(_ context.Context, _ repository.S
 	return nil, nil
 }
 
+func (m *mockBathhouseRepository) IncrementViewCount(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockBathhouseRepository) UpdateRankingFields(_ context.Context, _ uuid.UUID, _, _ float64) error {
+	return nil
+}
+
 // Mock AuthService for testing
 type mockAuthService struct {
 	userID uuid.UUID

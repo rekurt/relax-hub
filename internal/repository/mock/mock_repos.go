@@ -1036,6 +1036,29 @@ func (r *BathhouseRepo) SuggestNames(_ context.Context, filter repository.Sugges
 	return names, nil
 }
 
+func (r *BathhouseRepo) IncrementViewCount(_ context.Context, id uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	bh, ok := r.bathhouses[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	bh.ViewCount++
+	return nil
+}
+
+func (r *BathhouseRepo) UpdateRankingFields(_ context.Context, id uuid.UUID, conversionRate, occupancyRate float64) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	bh, ok := r.bathhouses[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	bh.ConversionRate = conversionRate
+	bh.OccupancyRate = occupancyRate
+	return nil
+}
+
 func (r *BathhouseRepo) ListIDsByOwner(_ context.Context, ownerID uuid.UUID) ([]uuid.UUID, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

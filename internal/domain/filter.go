@@ -26,7 +26,7 @@ type BathhouseFilter struct {
 	SearchQuery       *string
 	Status            *BathhouseStatus
 	ShowAllStatuses   bool   // when true, don't filter by status even if Status is nil
-	SortBy            string // "price", "rating", "distance"
+	SortBy            string // "relevance", "price_asc", "price_desc", "rating", "distance", "newest"
 	SortOrder         string // "asc", "desc"
 	Page              int
 	PageSize          int

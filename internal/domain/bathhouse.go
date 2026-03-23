@@ -49,9 +49,12 @@ type Bathhouse struct {
 	HasHotTub    bool
 	HasBBQ       bool
 	HasKaraoke   bool
-	Rating       float64
-	ReviewCount  int
-	Images       []string
+	Rating         float64
+	ReviewCount    int
+	ConversionRate float64
+	OccupancyRate  float64
+	ViewCount      int64
+	Images         []string
 	WorkingHours []WorkingHours
 	Status       BathhouseStatus
 	IsPromoted       bool // transient field, set during List queries

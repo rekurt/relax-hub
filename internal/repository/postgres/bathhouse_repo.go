@@ -331,48 +331,67 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	}
 
 	// Determine ORDER BY
+	// Composite ranking: relevance*0.30 + bayesian_rating*0.25 + conversion_rate*0.20 + occupancy_rate*0.15 + promotion_boost*0.10
+	// Bayesian rating: (C*m + R*v) / (C+v), where C=5 (prior count), m=3.5 (prior mean)
+	compositeRank := `(
+		COALESCE(bathhouses.conversion_rate, 0) * 0.20 +
+		((5 * 3.5 + bathhouses.rating * bathhouses.review_count) / (5 + bathhouses.review_count)) / 5.0 * 0.25 +
+		COALESCE(bathhouses.occupancy_rate, 0) * 0.15 +
+		CASE WHEN p.id IS NOT NULL THEN 1 ELSE 0 END * 0.10
+	)`
+
 	orderBy := "created_at DESC"
-	sortOrder := "ASC"
-	if filter.SortOrder == "desc" {
-		sortOrder = "DESC"
-	}
 
 	switch filter.SortBy {
 	case "relevance":
 		if filter.SearchQuery != nil && *filter.SearchQuery != "" {
 			q := strings.TrimSpace(*filter.SearchQuery)
+			// When searching: composite = text relevance * 0.30 + other factors
 			orderBy = fmt.Sprintf(
-				"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, ts_rank(search_vector, plainto_tsquery('russian', %s)) DESC, similarity(name, %s) DESC",
-				addArg(q), addArg(q),
-			)
-		}
-	case "price":
-		orderBy = fmt.Sprintf(
-			"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, CAST(price_per_hour AS FLOAT) %s",
-			sortOrder,
-		)
-	case "rating":
-		orderBy = fmt.Sprintf(
-			"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, rating %s",
-			sortOrder,
-		)
-	case "distance":
-		if filter.Latitude != nil && filter.Longitude != nil {
-			orderBy = fmt.Sprintf(
-				"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, ST_Distance(location, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) %s",
-				addArg(*filter.Longitude), addArg(*filter.Latitude), sortOrder,
-			)
-		}
-	default:
-		if filter.SearchQuery != nil && *filter.SearchQuery != "" {
-			// When searching without explicit sort, use relevance
-			q := strings.TrimSpace(*filter.SearchQuery)
-			orderBy = fmt.Sprintf(
-				"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, ts_rank(search_vector, plainto_tsquery('russian', %s)) DESC, similarity(name, %s) DESC",
-				addArg(q), addArg(q),
+				"(ts_rank(search_vector, plainto_tsquery('russian', %s)) * 0.30 + %s) DESC, similarity(name, %s) DESC",
+				addArg(q), compositeRank, addArg(q),
 			)
 		} else {
-			orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, created_at DESC"
+			orderBy = compositeRank + " DESC, created_at DESC"
+		}
+	case "price_asc":
+		orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, price_per_hour ASC"
+	case "price_desc":
+		orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, price_per_hour DESC"
+	case "price":
+		// Legacy support: use sort_order
+		sortDir := "ASC"
+		if filter.SortOrder == "desc" {
+			sortDir = "DESC"
+		}
+		orderBy = fmt.Sprintf(
+			"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, price_per_hour %s",
+			sortDir,
+		)
+	case "rating":
+		orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, rating DESC, review_count DESC"
+	case "distance":
+		if filter.Latitude != nil && filter.Longitude != nil {
+			sortDir := "ASC"
+			if filter.SortOrder == "desc" {
+				sortDir = "DESC"
+			}
+			orderBy = fmt.Sprintf(
+				"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, ST_Distance(location, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) %s",
+				addArg(*filter.Longitude), addArg(*filter.Latitude), sortDir,
+			)
+		}
+	case "newest":
+		orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, created_at DESC"
+	default:
+		if filter.SearchQuery != nil && *filter.SearchQuery != "" {
+			q := strings.TrimSpace(*filter.SearchQuery)
+			orderBy = fmt.Sprintf(
+				"(ts_rank(search_vector, plainto_tsquery('russian', %s)) * 0.30 + %s) DESC, similarity(name, %s) DESC",
+				addArg(q), compositeRank, addArg(q),
+			)
+		} else {
+			orderBy = compositeRank + " DESC, created_at DESC"
 		}
 	}
 
@@ -687,6 +706,31 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKeyOnly(rows pgx.Rows) (*doma
 	}
 
 	return &bh, nil
+}
+
+func (r *bathhouseRepo) IncrementViewCount(ctx context.Context, id uuid.UUID) error {
+	tag, err := r.pool.Exec(ctx, `UPDATE bathhouses SET view_count = view_count + 1 WHERE id = $1`, id)
+	if err != nil {
+		return fmt.Errorf("increment view count: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *bathhouseRepo) UpdateRankingFields(ctx context.Context, id uuid.UUID, conversionRate, occupancyRate float64) error {
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE bathhouses SET conversion_rate = $2, occupancy_rate = $3, updated_at = $4 WHERE id = $1`,
+		id, conversionRate, occupancyRate, time.Now(),
+	)
+	if err != nil {
+		return fmt.Errorf("update ranking fields: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
 }
 
 func (r *bathhouseRepo) SuggestNames(ctx context.Context, filter repository.SuggestionFilter) ([]string, error) {
