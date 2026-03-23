@@ -1,0 +1,231 @@
+# Ralphex Progress Log
+Plan: (no plan - review only)
+Branch: master
+Mode: plan
+Started: 2026-03-23 09:17:44
+------------------------------------------------------------
+
+starting interactive plan creation
+[26-03-23 09:17:44] plan request: реализуй выполнение этих планов docs/plans/2026-03-23-04-listing-management.md docs/plans/2026-03-23-05-addons.md docs/plans/2026-03-23-06-search-discovery.md
+
+--- plan iteration 1 ---
+[26-03-23 09:17:56] This is the first iteration. Let me read the three plan files to understand what needs to be implemented.
+[26-03-23 09:18:01] Now let me check if there's already a combined execution plan for these three subsystems.
+[26-03-23 09:18:04] No combined execution plan exists. Let me explore the current codebase to understand existing structures before creating the plan.
+[26-03-23 09:20:38] Now I have a clear picture. The three plans are independent subsystems, and the codebase is ready for implementation. Key findings:
+[26-03-23 09:20:38]   - BathhouseFilter already has SearchQuery and SortBy fields, but no tsvector full-text search
+[26-03-23 09:20:38]   - Bathhouse already has "inactive" status in the domain
+[26-03-23 09:20:38]   - Next migration number is 000049
+[26-03-23 09:20:38]   - None of the new files (addon, audit_log, saved_search) exist yet
+[26-03-23 09:20:38] Let me create the combined execution plan.
+[26-03-23 09:20:38] <<<RALPHEX:PLAN_DRAFT>>>
+[26-03-23 09:20:38] # Execution Plan: Subsystems 4, 5, 6 — Listing Management, Add-ons, Search & Discovery
+[26-03-23 09:20:38] ## Overview
+[26-03-23 09:20:38] Sequential execution of three independent subsystems: listing management enhancements (completeness check, audit log, duplication, deactivation/archival), configurable add-ons with booking integration, and search/discovery
+[26-03-23 09:20:38] improvements (full-text search, suggestions, ranking, comparison, saved searches).
+[26-03-23 09:20:38] ## Context
+[26-03-23 09:20:38]   - Files involved: 30+ files across domain, repository, service, handler, and migrations
+[26-03-23 09:20:38]   - Related patterns: existing handler->service->repository clean architecture, fx DI modules
+[26-03-23 09:20:38]   - Dependencies: no cross-subsystem dependencies; subsystem 5 (addons) will later integrate with subsystem 7 (booking enhancements)
+[26-03-23 09:20:38]   - BathhouseFilter already has SearchQuery (*string) and SortBy (string) fields — extend, not duplicate
+[26-03-23 09:20:38]   - Bathhouse domain already has "inactive" status — extend with "archived"
+[26-03-23 09:20:38]   - Next migration: 000049
+[26-03-23 09:20:38] ## Development Approach
+[26-03-23 09:20:38]   - **Testing approach**: Regular (code first, then tests)
+[26-03-23 09:20:38]   - Complete each task fully before moving to the next
+[26-03-23 09:20:38]   - Follow existing patterns: domain model -> repository interface -> postgres impl -> mock impl -> service -> handler -> router registration -> fx module registration
+[26-03-23 09:20:38]   - **CRITICAL: every task MUST include new/updated tests**
+[26-03-23 09:20:38]   - **CRITICAL: all tests must pass before starting next task**
+[26-03-23 09:20:38] ## Implementation Steps
+[26-03-23 09:20:38] ### Task 1: Listing Completeness Check (FR-025)
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Modify: `internal/service/bathhouse_service.go`
+[26-03-23 09:20:38]   - Modify: `internal/handler/bathhouse_handler.go`
+[26-03-23 09:20:38]   - Modify: `internal/server/router.go`
+[26-03-23 09:20:38]   - [x] Add CompletenessItem, CompletenessResult types to domain or service layer
+[26-03-23 09:20:38]   - [x] Add CheckCompleteness method to BathhouseService — checks required fields (name, description 50+ chars, type, geocoded address, city, 3+ verified photos, price > 0, schedule, capacity) and optional fields (3+ amenities,
+[26-03-23 09:20:38] contact phone, cancellation policy)
+[26-03-23 09:20:38]   - [x] Add GET /api/v1/my/bathhouses/{id}/completeness endpoint (RequireAuth, owner/rep)
+[26-03-23 09:20:38]   - [x] Block moderation submission if required items incomplete
+[26-03-23 09:20:38]   - [x] Write tests for completeness logic
+[26-03-23 09:20:38]   - [x] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38] ### Task 2: Audit Log for Edits (FR-029)
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Create: `internal/domain/audit_log.go`
+[26-03-23 09:20:38]   - Modify: `internal/repository/interfaces.go`
+[26-03-23 09:20:38]   - Create: `internal/repository/postgres/audit_log_repo.go`
+[26-03-23 09:20:38]   - Create: `internal/repository/mock/audit_log_repo.go`
+[26-03-23 09:20:38]   - Create: `internal/service/audit_log_service.go`
+[26-03-23 09:20:38]   - Modify: `internal/service/bathhouse_service.go`
+[26-03-23 09:20:38]   - Modify: `internal/handler/bathhouse_handler.go`
+[26-03-23 09:20:38]   - Modify: `internal/server/router.go`
+[26-03-23 09:20:38]   - Modify: `internal/service/module.go`, `internal/handler/module.go`, `internal/repository/postgres/module.go`
+[26-03-23 09:20:38]   - Create: `migrations/000049_audit_log.up.sql`, `migrations/000049_audit_log.down.sql`
+[26-03-23 09:20:38]   - [ ] AuditLog model: ID, EntityType, EntityID, UserID, Action, ChangedFields (JSONB), CreatedAt
+[26-03-23 09:20:38]   - [ ] AuditLogRepository interface: Create, ListByEntity, ListByUser
+[26-03-23 09:20:38]   - [ ] Postgres and mock implementations
+[26-03-23 09:20:38]   - [ ] AuditLogService: LogChange, GetHistory, IsSubstantialChange (address/type change or >50% photos replaced)
+[26-03-23 09:20:38]   - [ ] Hook into bathhouse Update: compare old vs new, log diff, auto-set status to pending on substantial change
+[26-03-23 09:20:38]   - [ ] GET /api/v1/admin/audit-log — admin view with filters
+[26-03-23 09:20:38]   - [ ] GET /api/v1/my/bathhouses/{id}/history — owner view
+[26-03-23 09:20:38]   - [ ] Register in fx modules
+[26-03-23 09:20:38]   - [ ] Write tests
+[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38] ### Task 3: Listing Duplication (FR-032)
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Modify: `internal/service/bathhouse_service.go`
+[26-03-23 09:20:38]   - Modify: `internal/handler/bathhouse_handler.go`
+[26-03-23 09:20:38]   - Modify: `internal/server/router.go`
+[26-03-23 09:20:38]   - [ ] POST /api/v1/my/bathhouses/{id}/duplicate (RequireAuth, owner/rep)
+[26-03-23 09:20:38]   - [ ] DuplicateBathhouse in service: copy all fields, name + " (копия)", new slug, status=draft, same photo URLs, new UUID
+[26-03-23 09:20:38]   - [ ] Write tests
+[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38] ### Task 4: Temporary Deactivation & Full Archival (FR-030, FR-031)
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Modify: `internal/domain/bathhouse.go`
+[26-03-23 09:20:38]   - Modify: `internal/service/bathhouse_service.go`
+[26-03-23 09:20:38]   - Modify: `internal/handler/bathhouse_handler.go`
+[26-03-23 09:20:38]   - Modify: `internal/server/router.go`
+[26-03-23 09:20:38]   - Modify: `internal/repository/postgres/bathhouse_repo.go`
+[26-03-23 09:20:38]   - [ ] Add "archived" status constant (inactive already exists)
+[26-03-23 09:20:38]   - [ ] POST /api/v1/my/bathhouses/{id}/deactivate — set status to inactive, keep bookings
+[26-03-23 09:20:38]   - [ ] POST /api/v1/my/bathhouses/{id}/activate — restore to active (only from inactive)
+[26-03-23 09:20:38]   - [ ] DELETE /api/v1/my/bathhouses/{id}/archive — archive if no active bookings, not reversible via API
+[26-03-23 09:20:38]   - [ ] Modify search queries to exclude inactive and archived listings
+[26-03-23 09:20:38]   - [ ] Write tests
+[26-03-23 09:20:38]   - [ ] Run `go test ./... -v -race` — must pass
+[26-03-23 09:20:38] ### Task 5: Add-ons Domain & Repository (FR-024)
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Create: `internal/domain/addon.go`
+[26-03-23 09:20:38]   - Modify: `internal/repository/interfaces.go`
+[26-03-23 09:20:38]   - Create: `internal/repository/postgres/addon_repo.go`
+[26-03-23 09:20:38]   - Create: `internal/repository/mock/addon_repo.go`
+[26-03-23 09:20:38]   - Create: `migrations/000050_addons.up.sql`, `migrations/000050_addons.down.sql`
+[26-03-23 09:20:38]   - [ ] AddOn model: ID, BathhouseID, Name, Description, Price (kopecks), Unit (per_item/per_hour/per_person), IsActive, SortOrder, CreatedAt, UpdatedAt
+[26-03-23 09:20:38]   - [ ] BookingAddOn model: ID, BookingID, AddOnID, Name (denormalized), Quantity, UnitPrice, TotalPrice
+[26-03-23 09:20:38]   - [ ] Migration: addons table + booking_addons table with indexes
+[26-03-23 09:20:38]   - [ ] AddOnRepository interface: Create, Update, Delete, GetByID, ListByBathhouse, CountByBathhouse, CreateBookingAddOn, ListByBooking
+[26-03-23 09:20:38]   - [ ] Postgres and mock implementations
+[26-03-23 09:20:38]   - [ ] Register in fx modules
+[26-03-23 09:20:38]   - [ ] Write tests
+[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38] ### Task 6: Add-ons Service & Handler
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Create: `internal/service/addon_service.go`
+[26-03-23 09:20:38]   - Create: `internal/handler/addon_handler.go`
+[26-03-23 09:20:38]   - Modify: `internal/server/router.go`
+[26-03-23 09:20:38]   - Modify: `internal/service/module.go`, `internal/handler/module.go`
+[26-03-23 09:20:38]   - [ ] AddOnService: CreateAddOn (check ownership + max 20 limit), UpdateAddOn, DeleteAddOn (soft), ListAddOns, CalculateAddOnTotal (per_item/per_hour/per_person pricing)
+[26-03-23 09:20:38]   - [ ] Owner endpoints: POST/PUT/DELETE /api/v1/my/bathhouses/{id}/addons, /api/v1/my/addons/{id}
+[26-03-23 09:20:38]   - [ ] Public endpoint: GET /api/v1/bathhouses/{id}/addons
+[26-03-23 09:20:38]   - [ ] Add swagger annotations
+[26-03-23 09:20:38]   - [ ] Register in fx modules
+[26-03-23 09:20:38]   - [ ] Write tests
+[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38] ### Task 7: Add-ons Booking Integration
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Modify: `internal/service/booking_service.go`
+[26-03-23 09:20:38]   - Modify: `internal/handler/booking_handler.go`
+[26-03-23 09:20:38]   - Modify: `internal/domain/booking.go`
+[26-03-23 09:20:38]   - [ ] Add AddOnTotal (int64) field to Booking model
+[26-03-23 09:20:38]   - [ ] Extend CreateBookingRequest with AddOns []AddOnSelection (addon_id + quantity)
+[26-03-23 09:20:38]   - [ ] In booking creation: validate add-on IDs belong to bathhouse, validate active, calculate totals by unit type, store booking_addons, update total price
+[26-03-23 09:20:38]   - [ ] Include add-ons in booking detail response
+[26-03-23 09:20:38]   - [ ] Write tests for booking with add-ons
+[26-03-23 09:20:38]   - [ ] Run `go test ./... -v -race` — must pass
+[26-03-23 09:20:38] ### Task 8: Full-text Search (FR-038)
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Modify: `internal/repository/postgres/bathhouse_repo.go`
+[26-03-23 09:20:38]   - Modify: `internal/domain/filters.go` (extend existing SearchQuery handling)
+[26-03-23 09:20:38]   - Create: `migrations/000051_fulltext_search.up.sql`, `migrations/000051_fulltext_search.down.sql`
+[26-03-23 09:20:38]   - [ ] Migration: pg_trgm extension, search_vector tsvector column, trigger for auto-update, GIN indexes
+[26-03-23 09:20:38]   - [ ] Modify bathhouse list query: when SearchQuery is set, use plainto_tsquery('russian', query) + ts_rank for relevance, fallback to trigram similarity for fuzzy matching
+[26-03-23 09:20:38]   - [ ] Support prefix search with to_tsquery('russian', query || ':*')
+[26-03-23 09:20:38]   - [ ] Write tests
+[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38] ### Task 9: Search Suggestions (FR-039)
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Create: `internal/service/search_suggestion_service.go`
+[26-03-23 09:20:38]   - Create: `internal/handler/search_handler.go`
+[26-03-23 09:20:38]   - Modify: `internal/server/router.go`
+[26-03-23 09:20:38]   - Modify: `internal/service/module.go`, `internal/handler/module.go`
+[26-03-23 09:20:38]   - [ ] SearchSuggestionService: GetSuggestions (bathhouse names via trigram, type names, city names, popular queries from Redis sorted set), RecordQuery (increment frequency in Redis)
+[26-03-23 09:20:38]   - [ ] GET /api/v1/search/suggestions?q=...&limit=10 — return typed suggestions
+[26-03-23 09:20:38]   - [ ] Cache in Redis with 5 min TTL
+[26-03-23 09:20:38]   - [ ] Register in fx modules
+[26-03-23 09:20:38]   - [ ] Write tests
+[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38] ### Task 10: Advanced Ranking (FR-041)
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Modify: `internal/repository/postgres/bathhouse_repo.go`
+[26-03-23 09:20:38]   - Modify: `internal/domain/bathhouse.go`
+[26-03-23 09:20:38]   - Create: `migrations/000052_ranking_fields.up.sql`, `migrations/000052_ranking_fields.down.sql`
+[26-03-23 09:20:38]   - [ ] Migration: add conversion_rate, occupancy_rate, view_count columns to bathhouses
+[26-03-23 09:20:38]   - [ ] Composite ranking score in SQL: relevance*0.30 + bayesian_rating*0.25 + conversion_rate*0.20 + occupancy_rate*0.15 + promotion_boost*0.10
+[26-03-23 09:20:38]   - [ ] Extend SortBy options: "relevance" (default), "price_asc", "price_desc", "rating", "distance", "newest"
+[26-03-23 09:20:38]   - [ ] Write tests
+[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38] ### Task 11: Comparison (FR-046)
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Create: `internal/handler/comparison_handler.go`
+[26-03-23 09:20:38]   - Modify: `internal/server/router.go`
+[26-03-23 09:20:38]   - Modify: `internal/handler/module.go`
+[26-03-23 09:20:38]   - [ ] POST /api/v1/bathhouses/compare — accept 2-3 bathhouse IDs
+[26-03-23 09:20:38]   - [ ] Return comparison table: name, price, rating, review_count, capacity, amenities, distance, cancellation_policy, type, photos
+[26-03-23 09:20:38]   - [ ] Validate 2-3 IDs, all must exist and be active
+[26-03-23 09:20:38]   - [ ] Optional user location for distance calculation
+[26-03-23 09:20:38]   - [ ] Register in fx modules
+[26-03-23 09:20:38]   - [ ] Write tests
+[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38] ### Task 12: Recently Viewed & Saved Searches (FR-051, FR-052)
+[26-03-23 09:20:38] **Files:**
+[26-03-23 09:20:38]   - Create: `internal/domain/saved_search.go`
+[26-03-23 09:20:38]   - Modify: `internal/repository/interfaces.go`
+[26-03-23 09:20:38]   - Create: `internal/repository/postgres/saved_search_repo.go`
+[26-03-23 09:20:38]   - Create: `internal/repository/mock/saved_search_repo.go`
+[26-03-23 09:20:38]   - Create: `internal/service/saved_search_service.go`
+[26-03-23 09:20:38]   - Create: `internal/handler/saved_search_handler.go`
+[26-03-23 09:20:38]   - Modify: `internal/handler/bathhouse_handler.go` (record views)
+[26-03-23 09:20:38]   - Modify: `internal/server/router.go`
+[26-03-23 09:20:38]   - Modify: `internal/service/module.go`, `internal/handler/module.go`, `internal/repository/postgres/module.go`
+[26-03-23 09:20:38]   - Create: `migrations/000053_saved_searches.up.sql`, `migrations/000053_saved_searches.down.sql`
+[26-03-23 09:20:38]   - [ ] Recently viewed: Redis sorted set per user (recently_viewed:{userID}), record on GET /bathhouses/{id}, keep last 20
+[26-03-23 09:20:38]   - [ ] GET /api/v1/my/recently-viewed — list recently viewed bathhouses
+[26-03-23 09:20:38]   - [ ] SavedSearch model: ID, UserID, Name, Filters (JSONB), NotifyOnNew, CreatedAt
+[26-03-23 09:20:38]   - [ ] SavedSearchRepository: Create, ListByUser, Delete, ListWithNotifications
+[26-03-23 09:20:38]   - [ ] SavedSearchService: Save, List, Delete, CheckNewMatches (cron)
+[26-03-23 09:20:38]   - [ ] POST/GET/DELETE /api/v1/my/saved-searches
+[26-03-23 09:20:38]   - [ ] Cron: daily check for new bathhouses matching saved searches
+[26-03-23 09:20:38]   - [ ] Register in fx modules
+[26-03-23 09:20:38]   - [ ] Write tests
+[26-03-23 09:20:38]   - [ ] Run `go test ./... -v -race` — must pass
+[26-03-23 09:20:38] ### Task 13: Verify acceptance criteria
+[26-03-23 09:20:38]   - [ ] Run full test suite: `go test ./... -v -race`
+[26-03-23 09:20:38]   - [ ] Run linter: `make lint`
+[26-03-23 09:20:38]   - [ ] Manual verification:
+[26-03-23 09:20:38]   - Listing completeness endpoint returns correct checklist
+[26-03-23 09:20:38]   - Audit log records changes and triggers re-moderation
+[26-03-23 09:20:38]   - Listing duplication creates proper copy
+[26-03-23 09:20:38]   - Deactivation/archival works with booking checks
+[26-03-23 09:20:38]   - Add-ons CRUD and booking integration work end-to-end
+[26-03-23 09:20:38]   - Full-text search returns relevant results with Russian language
+[26-03-23 09:20:38]   - Search suggestions return typed results
+[26-03-23 09:20:38]   - Ranking sorts by composite score
+[26-03-23 09:20:38]   - Comparison returns structured data for 2-3 bathhouses
+[26-03-23 09:20:38]   - Recently viewed and saved searches persist correctly
+[26-03-23 09:20:38] ### Task 14: Update documentation
+[26-03-23 09:20:38]   - [ ] Update CLAUDE.md if internal patterns changed (new subsystems, new domain errors, new config vars)
+[26-03-23 09:20:38]   - [ ] Run `make swagger` to regenerate OpenAPI spec
+[26-03-23 09:20:38]   - [ ] Move completed plans to `docs/plans/completed/`
+[26-03-23 09:20:38] <<<RALPHEX:END>>>
+[26-03-23 09:20:38] plan draft ready for review
+[26-03-23 09:20:43] DRAFT REVIEW: accept
+[26-03-23 09:20:43] draft accepted, continuing to write plan file...
+
+--- plan iteration 2 ---
+[26-03-23 09:20:58] The draft was accepted. Let me write the plan file to disk.
+[26-03-23 09:21:53] <<<RALPHEX:PLAN_READY>>>
+[26-03-23 09:21:53] plan creation completed
+
+------------------------------------------------------------
+Completed: 2026-03-23 11:35:36 (2h17m)
