@@ -110,16 +110,14 @@ func (s *accountDeletionService) ExecuteDeletion(ctx context.Context, userID uui
 		return domain.ErrAccountDeletionNotPending
 	}
 
-	// Return wallet funds and freeze wallet (best-effort)
+	// Freeze wallet and zero balance (best-effort)
 	if s.walletSvc != nil {
-		wallet, err := s.walletSvc.GetWallet(ctx, userID)
-		if err == nil && wallet.Balance > 0 {
-			s.logger.Info("Returning wallet balance on account deletion",
+		if err := s.walletSvc.FreezeAndZeroBalance(ctx, userID); err != nil {
+			s.logger.Warn("Failed to freeze/zero wallet on account deletion",
 				"user_id", userID,
-				"balance", wallet.Balance,
+				"error", err,
 			)
 		}
-		// Wallet balance is forfeited on deletion as balance is zeroed via anonymization
 	}
 
 	// Anonymize: hash email for uniqueness, clear personal data

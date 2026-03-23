@@ -150,6 +150,9 @@ func (h *KYCHandler) ListPendingKYC(w http.ResponseWriter, r *http.Request) {
 	if pageSize < 1 {
 		pageSize = 20
 	}
+	if pageSize > 100 {
+		pageSize = 100
+	}
 
 	result, err := h.kycService.ListPending(r.Context(), page, pageSize)
 	if err != nil {

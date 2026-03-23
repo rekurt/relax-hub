@@ -82,7 +82,11 @@ func (s *otpService) SendOTP(ctx context.Context, phone string) error {
 
 	message := fmt.Sprintf("Ваш код подтверждения: %s", code)
 	if err := s.smsProvider.SendSMS(ctx, phone, message); err != nil {
-		s.logger.Error("Failed to send OTP SMS", "phone", phone, "error", err)
+		maskedPhone := phone
+		if len(phone) > 4 {
+			maskedPhone = "***" + phone[len(phone)-4:]
+		}
+		s.logger.Error("Failed to send OTP SMS", "phone", maskedPhone, "error", err)
 		return fmt.Errorf("send OTP SMS: %w", err)
 	}
 

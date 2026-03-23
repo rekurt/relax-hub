@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,6 +35,7 @@ type WalletService interface {
 	GetActiveHolds(ctx context.Context, walletID uuid.UUID) ([]domain.WalletHold, error)
 	ExpireBonuses(ctx context.Context) (int, error)
 	ExpireBonusesForWallet(ctx context.Context, walletID uuid.UUID) (int, error)
+	FreezeAndZeroBalance(ctx context.Context, userID uuid.UUID) error
 }
 
 type walletService struct {
@@ -471,4 +473,21 @@ func (s *walletService) ExpireBonusesForWallet(ctx context.Context, walletID uui
 	}
 
 	return len(expiring), nil
+}
+
+func (s *walletService) FreezeAndZeroBalance(ctx context.Context, userID uuid.UUID) error {
+	wallet, err := s.walletRepo.GetByUserID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, 0, 0); err != nil {
+		return fmt.Errorf("zero wallet balance: %w", err)
+	}
+
+	if err := s.walletRepo.UpdateStatus(ctx, wallet.ID, domain.WalletStatusFrozen); err != nil {
+		return fmt.Errorf("freeze wallet: %w", err)
+	}
+
+	return nil
 }

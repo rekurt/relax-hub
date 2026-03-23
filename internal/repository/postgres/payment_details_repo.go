@@ -48,7 +48,6 @@ func (r *paymentDetailsRepo) Upsert(ctx context.Context, details *domain.Payment
 			inn = EXCLUDED.inn,
 			correspondent_account = EXCLUDED.correspondent_account,
 			bank_name = EXCLUDED.bank_name,
-			is_verified = EXCLUDED.is_verified,
 			updated_at = EXCLUDED.updated_at`
 	_, err := r.pool.Exec(ctx, query,
 		details.ID, details.UserID, details.EntityType,

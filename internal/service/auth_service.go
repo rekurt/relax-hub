@@ -529,6 +529,10 @@ func (s *authService) Complete2FALogin(ctx context.Context, userID uuid.UUID) (*
 		return nil, "", domain.ErrUserBlocked
 	}
 
+	if user.DeletionScheduledAt != nil {
+		return nil, "", domain.ErrAccountDeletionPending
+	}
+
 	token, err := s.generateTokenWithSession(ctx, user.ID, user.Role)
 	if err != nil {
 		return nil, "", err
