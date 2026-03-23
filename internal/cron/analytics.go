@@ -126,6 +126,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 	}
 	cs.logger.Info("Registered wallet bonus expiry notification job at 05:00 UTC")
 
+	// Expired hold cleanup every hour
+	if _, err := cs.c.AddFunc("0 * * * *", cs.handleExpiredHoldCleanup); err != nil {
+		cs.logger.Error("Failed to register expired hold cleanup job", "error", err)
+		return fmt.Errorf("failed to register expired hold cleanup: %w", err)
+	}
+	cs.logger.Info("Registered expired hold cleanup job every hour")
+
 	// Account deletion execution at 03:30 UTC daily
 	if _, err := cs.c.AddFunc("30 3 * * *", cs.handleAccountDeletionExecution); err != nil {
 		cs.logger.Error("Failed to register account deletion execution job", "error", err)

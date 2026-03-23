@@ -123,6 +123,10 @@ func (s *walletService) TopUp(ctx context.Context, userID uuid.UUID, amount int6
 }
 
 func (s *walletService) Spend(ctx context.Context, walletID uuid.UUID, amount int64, refType string, refID *uuid.UUID, description string) (*domain.WalletTransaction, error) {
+	if amount <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
 	wallet, err := s.walletRepo.GetByID(ctx, walletID)
 	if err != nil {
 		return nil, err
@@ -161,6 +165,10 @@ func (s *walletService) Spend(ctx context.Context, walletID uuid.UUID, amount in
 }
 
 func (s *walletService) Hold(ctx context.Context, walletID uuid.UUID, amount int64, refType string, refID *uuid.UUID, description string, expiresAt time.Time) (*domain.WalletHold, error) {
+	if amount <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
 	wallet, err := s.walletRepo.GetByID(ctx, walletID)
 	if err != nil {
 		return nil, err
@@ -295,6 +303,10 @@ func (s *walletService) ReleaseHold(ctx context.Context, holdID uuid.UUID) error
 }
 
 func (s *walletService) Refund(ctx context.Context, walletID uuid.UUID, amount int64, refType string, refID *uuid.UUID, description string) (*domain.WalletTransaction, error) {
+	if amount <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
 	wallet, err := s.walletRepo.GetByID(ctx, walletID)
 	if err != nil {
 		return nil, err
@@ -330,6 +342,10 @@ func (s *walletService) Refund(ctx context.Context, walletID uuid.UUID, amount i
 }
 
 func (s *walletService) AddBonus(ctx context.Context, walletID uuid.UUID, amount int64, bonusType domain.WalletTransactionType, expiresAt *time.Time, description string) (*domain.WalletTransaction, error) {
+	if amount <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
 	wallet, err := s.walletRepo.GetByID(ctx, walletID)
 	if err != nil {
 		return nil, err

@@ -122,6 +122,36 @@ func (cs *CronScheduler) handleBonusExpiryNotify() {
 	)
 }
 
+// handleExpiredHoldCleanup releases wallet holds that have passed their expiry time.
+func (cs *CronScheduler) handleExpiredHoldCleanup() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	start := time.Now()
+	cs.logger.Info("Starting expired hold cleanup")
+
+	holds, err := cs.walletRepo.GetExpiredHolds(ctx, time.Now())
+	if err != nil {
+		cs.logger.Error("Failed to get expired holds", "error", err, "duration", time.Since(start))
+		return
+	}
+
+	released := 0
+	for _, hold := range holds {
+		if err := cs.walletSvc.ReleaseHold(ctx, hold.ID); err != nil {
+			cs.logger.Error("Failed to release expired hold", "hold_id", hold.ID, "error", err)
+			continue
+		}
+		released++
+	}
+
+	cs.logger.Info("Expired hold cleanup completed",
+		"total_expired", len(holds),
+		"released", released,
+		"duration", time.Since(start),
+	)
+}
+
 // getBonusExpiryDays returns the configured bonus expiry period in days.
 func getBonusExpiryDays() int {
 	days := viper.GetInt("WALLET_BONUS_EXPIRY_DAYS")
