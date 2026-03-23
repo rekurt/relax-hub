@@ -46,6 +46,7 @@ type User struct {
 	ReferralCode         string
 	TOTPSecret           string      `json:"-"`
 	TwoFAMethod          TwoFAMethod
+	AgeConfirmed         bool
 	DeletionRequestedAt  *time.Time
 	DeletionScheduledAt  *time.Time
 	CreatedAt            time.Time

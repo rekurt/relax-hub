@@ -23,6 +23,7 @@ type RegisterInput struct {
 	Phone        string
 	Role         domain.UserRole // client or owner only
 	ReferralCode string          // optional referral code from inviter
+	AgeConfirmed bool            // required: user confirms they are 18+
 }
 
 type RegisterPhoneInput struct {
@@ -49,28 +50,38 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo    repository.UserRepository
-	referralSvc ReferralService
-	otpSvc      OTPService
-	logger      *logger.Logger
-	jwtSecret   []byte
-	tokenTTL    time.Duration
+	userRepo          repository.UserRepository
+	referralSvc       ReferralService
+	otpSvc            OTPService
+	walletSvc         WalletService
+	logger            *logger.Logger
+	jwtSecret         []byte
+	tokenTTL          time.Duration
+	welcomeBonusAmount int64
+	welcomeBonusExpiry int
 }
 
-func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralService, otpSvc OTPService, cfg *config.Config, log *logger.Logger) AuthService {
+func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralService, otpSvc OTPService, walletSvc WalletService, cfg *config.Config, log *logger.Logger) AuthService {
 	return &authService{
-		userRepo:    userRepo,
-		referralSvc: referralSvc,
-		otpSvc:      otpSvc,
-		logger:      log,
-		jwtSecret:   []byte(cfg.JWT.Secret),
-		tokenTTL:    cfg.JWT.TokenTTL,
+		userRepo:          userRepo,
+		referralSvc:       referralSvc,
+		otpSvc:            otpSvc,
+		walletSvc:         walletSvc,
+		logger:            log,
+		jwtSecret:         []byte(cfg.JWT.Secret),
+		tokenTTL:          cfg.JWT.TokenTTL,
+		welcomeBonusAmount: cfg.WelcomeBonus.Amount,
+		welcomeBonusExpiry: cfg.WelcomeBonus.ExpiryDays,
 	}
 }
 
 func (s *authService) Register(ctx context.Context, input RegisterInput) (*domain.User, string, error) {
 	if input.Role != domain.RoleClient && input.Role != domain.RoleOwner {
 		return nil, "", fmt.Errorf("%w: can only register as client or owner", domain.ErrInvalidInput)
+	}
+
+	if !input.AgeConfirmed {
+		return nil, "", fmt.Errorf("%w: age confirmation is required", domain.ErrInvalidInput)
 	}
 
 	if input.Email == "" || input.Password == "" || input.Name == "" {
@@ -110,6 +121,7 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 		Phone:        input.Phone,
 		Role:         input.Role,
 		IsActive:     true,
+		AgeConfirmed: true,
 		CreatedAt:    now,
 		UpdatedAt:    now,
 	}
@@ -125,12 +137,35 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 		}
 	}
 
+	// Create wallet and credit welcome bonus (best-effort, don't fail registration)
+	s.createWalletWithBonus(ctx, user.ID)
+
 	token, err := s.generateToken(user.ID, user.Role)
 	if err != nil {
 		return nil, "", err
 	}
 
 	return user, token, nil
+}
+
+func (s *authService) createWalletWithBonus(ctx context.Context, userID uuid.UUID) {
+	if s.walletSvc == nil {
+		return
+	}
+
+	wallet, err := s.walletSvc.CreateWallet(ctx, userID, domain.WalletCurrencyRUB)
+	if err != nil {
+		s.logger.Warn("failed to create wallet on registration", "user_id", userID, "error", err)
+		return
+	}
+
+	if s.welcomeBonusAmount > 0 {
+		expiresAt := time.Now().AddDate(0, 0, s.welcomeBonusExpiry)
+		_, err = s.walletSvc.AddBonus(ctx, wallet.ID, s.welcomeBonusAmount, domain.WalletTxWelcomeBonus, &expiresAt, "Приветственный бонус")
+		if err != nil {
+			s.logger.Warn("failed to credit welcome bonus", "user_id", userID, "wallet_id", wallet.ID, "error", err)
+		}
+	}
 }
 
 func (s *authService) Login(ctx context.Context, email, password string) (*LoginResult, error) {

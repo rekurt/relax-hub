@@ -24,14 +24,20 @@ type Config struct {
 	Moderation  ModerationConfig `mapstructure:"moderation"`
 	Telegram    TelegramConfig   `mapstructure:"telegram"`
 	Admin       AdminConfig      `mapstructure:"admin"`
-	Payment     PaymentConfig    `mapstructure:"payment"`
-	WebPush     WebPushConfig    `mapstructure:"webpush"`
-	SMS         SMSConfig        `mapstructure:"sms"`
+	Payment      PaymentConfig      `mapstructure:"payment"`
+	WebPush      WebPushConfig      `mapstructure:"webpush"`
+	SMS          SMSConfig          `mapstructure:"sms"`
+	WelcomeBonus WelcomeBonusConfig `mapstructure:"welcome_bonus"`
 }
 
 type SMSConfig struct {
 	Provider string `mapstructure:"provider"`
 	APIKey   string `mapstructure:"api_key"`
+}
+
+type WelcomeBonusConfig struct {
+	Amount    int64 `mapstructure:"amount"`     // in kopecks, default 50000 (500 RUB)
+	ExpiryDays int  `mapstructure:"expiry_days"` // default 30
 }
 
 type WebPushConfig struct {
@@ -173,6 +179,8 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("payment.return_url", "http://localhost:3000/payment/callback")
 	v.SetDefault("sms.provider", "smsru")
 	v.SetDefault("sms.api_key", "")
+	v.SetDefault("welcome_bonus.amount", 50000)      // 500 RUB in kopecks
+	v.SetDefault("welcome_bonus.expiry_days", 30)
 	v.SetDefault("frontend_url", "http://localhost:3000")
 
 	if err := v.ReadInConfig(); err != nil {

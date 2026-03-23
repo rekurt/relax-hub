@@ -179,10 +179,10 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 **Files:**
 - Modify: `internal/service/auth_service.go`, `internal/handler/auth_handler.go`, `internal/domain/user.go`
 
-- [ ] age_confirmed required on registration
-- [ ] Auto-create wallet + credit 500 RUB welcome bonus (30 day expiry)
-- [ ] Config: BANI_WELCOME_BONUS_AMOUNT, BANI_WELCOME_BONUS_EXPIRY_DAYS
-- [ ] Write tests, run `go test ./... -v`
+- [x] age_confirmed required on registration
+- [x] Auto-create wallet + credit 500 RUB welcome bonus (30 day expiry)
+- [x] Config: BANI_WELCOME_BONUS_AMOUNT, BANI_WELCOME_BONUS_EXPIRY_DAYS
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 14: Auth Phase Verify (Task 2.7)
 

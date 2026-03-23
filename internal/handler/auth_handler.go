@@ -40,6 +40,7 @@ type registerRequest struct {
 	Phone        string `json:"phone"`
 	Role         string `json:"role"`
 	ReferralCode string `json:"referral_code,omitempty"`
+	AgeConfirmed bool   `json:"age_confirmed"`
 }
 
 type loginRequest struct {
@@ -154,6 +155,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Phone:        req.Phone,
 		Role:         domain.UserRole(req.Role),
 		ReferralCode: req.ReferralCode,
+		AgeConfirmed: req.AgeConfirmed,
 	})
 	if err != nil {
 		handleServiceError(w, err)

@@ -623,12 +623,13 @@ func TestAuthHandler_Register(t *testing.T) {
 
 	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil, nil)
 
-	body := jsonBody(map[string]string{
-		"email":    "test@example.com",
-		"password": "password123",
-		"name":     "Test User",
-		"phone":    "+71234567890",
-		"role":     "client",
+	body := jsonBody(map[string]interface{}{
+		"email":         "test@example.com",
+		"password":      "password123",
+		"name":          "Test User",
+		"phone":         "+71234567890",
+		"role":          "client",
+		"age_confirmed": true,
 	})
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", body)
