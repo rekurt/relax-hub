@@ -47,14 +47,14 @@ func (r *userRepo) Create(ctx context.Context, user *domain.User) error {
 
 func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), created_at, updated_at
+		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), deletion_requested_at, deletion_scheduled_at, created_at, updated_at
 		FROM users WHERE id = $1`
 
 	var user domain.User
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone, &user.PhoneVerified,
 		&user.Role, &user.IsActive, &user.AvatarURL, &user.Bio, &user.CityID,
-		&user.ReferralCode, &user.CreatedAt, &user.UpdatedAt,
+		&user.ReferralCode, &user.DeletionRequestedAt, &user.DeletionScheduledAt, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -67,14 +67,14 @@ func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, err
 
 func (r *userRepo) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), created_at, updated_at
+		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), deletion_requested_at, deletion_scheduled_at, created_at, updated_at
 		FROM users WHERE email = $1`
 
 	var user domain.User
 	err := r.pool.QueryRow(ctx, query, email).Scan(
 		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone, &user.PhoneVerified,
 		&user.Role, &user.IsActive, &user.AvatarURL, &user.Bio, &user.CityID,
-		&user.ReferralCode, &user.CreatedAt, &user.UpdatedAt,
+		&user.ReferralCode, &user.DeletionRequestedAt, &user.DeletionScheduledAt, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -87,14 +87,14 @@ func (r *userRepo) GetByEmail(ctx context.Context, email string) (*domain.User, 
 
 func (r *userRepo) GetByPhone(ctx context.Context, phone string) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), created_at, updated_at
+		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), deletion_requested_at, deletion_scheduled_at, created_at, updated_at
 		FROM users WHERE phone = $1 AND phone != ''`
 
 	var user domain.User
 	err := r.pool.QueryRow(ctx, query, phone).Scan(
 		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone, &user.PhoneVerified,
 		&user.Role, &user.IsActive, &user.AvatarURL, &user.Bio, &user.CityID,
-		&user.ReferralCode, &user.CreatedAt, &user.UpdatedAt,
+		&user.ReferralCode, &user.DeletionRequestedAt, &user.DeletionScheduledAt, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -225,14 +225,14 @@ func (r *userRepo) GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.
 
 func (r *userRepo) GetByReferralCode(ctx context.Context, code string) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, referral_code, created_at, updated_at
+		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, referral_code, deletion_requested_at, deletion_scheduled_at, created_at, updated_at
 		FROM users WHERE referral_code = $1`
 
 	var user domain.User
 	err := r.pool.QueryRow(ctx, query, code).Scan(
 		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone, &user.PhoneVerified,
 		&user.Role, &user.IsActive, &user.AvatarURL, &user.Bio, &user.CityID,
-		&user.ReferralCode, &user.CreatedAt, &user.UpdatedAt,
+		&user.ReferralCode, &user.DeletionRequestedAt, &user.DeletionScheduledAt, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -251,6 +251,73 @@ func (r *userRepo) UpdateReferralCode(ctx context.Context, userID uuid.UUID, cod
 			return domain.ErrAlreadyExists
 		}
 		return fmt.Errorf("update referral code: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *userRepo) SetDeletionSchedule(ctx context.Context, userID uuid.UUID, requestedAt, scheduledAt *time.Time) error {
+	query := `UPDATE users SET deletion_requested_at = $2, deletion_scheduled_at = $3, updated_at = $4 WHERE id = $1`
+	tag, err := r.pool.Exec(ctx, query, userID, requestedAt, scheduledAt, time.Now())
+	if err != nil {
+		return fmt.Errorf("set deletion schedule: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *userRepo) ListPendingDeletions(ctx context.Context, before time.Time) ([]domain.User, error) {
+	query := `
+		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), deletion_requested_at, deletion_scheduled_at, created_at, updated_at
+		FROM users WHERE deletion_scheduled_at IS NOT NULL AND deletion_scheduled_at <= $1`
+
+	rows, err := r.pool.Query(ctx, query, before)
+	if err != nil {
+		return nil, fmt.Errorf("list pending deletions: %w", err)
+	}
+	defer rows.Close()
+
+	var users []domain.User
+	for rows.Next() {
+		var u domain.User
+		if err := rows.Scan(
+			&u.ID, &u.Email, &u.PasswordHash, &u.Name, &u.Phone, &u.PhoneVerified,
+			&u.Role, &u.IsActive, &u.AvatarURL, &u.Bio, &u.CityID,
+			&u.ReferralCode, &u.DeletionRequestedAt, &u.DeletionScheduledAt, &u.CreatedAt, &u.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan pending deletion user: %w", err)
+		}
+		users = append(users, u)
+	}
+	return users, rows.Err()
+}
+
+func (r *userRepo) AnonymizeUser(ctx context.Context, userID uuid.UUID, anonEmail string) error {
+	query := `
+		UPDATE users SET
+			name = 'Deleted User',
+			email = $2,
+			phone = '',
+			phone_verified = false,
+			password_hash = '',
+			avatar_url = '',
+			bio = '',
+			totp_secret = '',
+			two_fa_method = 'none',
+			referral_code = NULL,
+			is_active = false,
+			deletion_requested_at = NULL,
+			deletion_scheduled_at = NULL,
+			updated_at = $3
+		WHERE id = $1`
+
+	tag, err := r.pool.Exec(ctx, query, userID, anonEmail, time.Now())
+	if err != nil {
+		return fmt.Errorf("anonymize user: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
 		return domain.ErrNotFound

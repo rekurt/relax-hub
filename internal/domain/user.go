@@ -32,22 +32,24 @@ const (
 )
 
 type User struct {
-	ID            uuid.UUID
-	Email         string
-	PasswordHash  string `json:"-"`
-	Name          string
-	Phone         string
-	PhoneVerified bool
-	Role          UserRole
-	IsActive      bool
-	AvatarURL     string
-	Bio           string
-	CityID        *int64
-	ReferralCode  string
-	TOTPSecret    string      `json:"-"`
-	TwoFAMethod   TwoFAMethod
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID                   uuid.UUID
+	Email                string
+	PasswordHash         string `json:"-"`
+	Name                 string
+	Phone                string
+	PhoneVerified        bool
+	Role                 UserRole
+	IsActive             bool
+	AvatarURL            string
+	Bio                  string
+	CityID               *int64
+	ReferralCode         string
+	TOTPSecret           string      `json:"-"`
+	TwoFAMethod          TwoFAMethod
+	DeletionRequestedAt  *time.Time
+	DeletionScheduledAt  *time.Time
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
 }
 
 // UserProfile is a read-only aggregate for public user profiles.

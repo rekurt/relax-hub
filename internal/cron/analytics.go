@@ -15,16 +15,17 @@ import (
 
 // CronScheduler manages all scheduled tasks
 type CronScheduler struct {
-	c                *cron.Cron
-	logger           *logger.Logger
-	analyticsService service.AnalyticsService
-	analyticsRepo    repository.AnalyticsRepository
-	subscriptionRepo repository.SubscriptionRepository
-	promoRepo        repository.PromoCodeRepository
-	notifSvc         service.NotificationService
-	calendarSync     *calendar.CalendarSyncService
-	walletSvc        service.WalletService
-	walletRepo       repository.WalletRepository
+	c                  *cron.Cron
+	logger             *logger.Logger
+	analyticsService   service.AnalyticsService
+	analyticsRepo      repository.AnalyticsRepository
+	subscriptionRepo   repository.SubscriptionRepository
+	promoRepo          repository.PromoCodeRepository
+	notifSvc           service.NotificationService
+	calendarSync       *calendar.CalendarSyncService
+	walletSvc          service.WalletService
+	walletRepo         repository.WalletRepository
+	accountDeletionSvc service.AccountDeletionService
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -38,18 +39,20 @@ func NewCronScheduler(
 	calendarSync *calendar.CalendarSyncService,
 	walletSvc service.WalletService,
 	walletRepo repository.WalletRepository,
+	accountDeletionSvc service.AccountDeletionService,
 ) *CronScheduler {
 	return &CronScheduler{
-		c:                cron.New(),
-		logger:           l,
-		analyticsService: svc,
-		analyticsRepo:    repo,
-		subscriptionRepo: subscriptionRepo,
-		promoRepo:        promoRepo,
-		notifSvc:         notifSvc,
-		calendarSync:     calendarSync,
-		walletSvc:        walletSvc,
-		walletRepo:       walletRepo,
+		c:                  cron.New(),
+		logger:             l,
+		analyticsService:   svc,
+		analyticsRepo:      repo,
+		subscriptionRepo:   subscriptionRepo,
+		promoRepo:          promoRepo,
+		notifSvc:           notifSvc,
+		calendarSync:       calendarSync,
+		walletSvc:          walletSvc,
+		walletRepo:         walletRepo,
+		accountDeletionSvc: accountDeletionSvc,
 	}
 }
 
@@ -122,6 +125,20 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register bonus expiry notification: %w", err)
 	}
 	cs.logger.Info("Registered wallet bonus expiry notification job at 05:00 UTC")
+
+	// Account deletion execution at 03:30 UTC daily
+	if _, err := cs.c.AddFunc("30 3 * * *", cs.handleAccountDeletionExecution); err != nil {
+		cs.logger.Error("Failed to register account deletion execution job", "error", err)
+		return fmt.Errorf("failed to register account deletion execution: %w", err)
+	}
+	cs.logger.Info("Registered account deletion execution job at 03:30 UTC")
+
+	// Account deletion reminders at 07:00 UTC daily
+	if _, err := cs.c.AddFunc("0 7 * * *", cs.handleAccountDeletionReminders); err != nil {
+		cs.logger.Error("Failed to register account deletion reminders job", "error", err)
+		return fmt.Errorf("failed to register account deletion reminders: %w", err)
+	}
+	cs.logger.Info("Registered account deletion reminders job at 07:00 UTC")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")

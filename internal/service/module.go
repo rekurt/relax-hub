@@ -65,5 +65,6 @@ var Module = fx.Module("service",
 			},
 			fx.As(new(PasswordResetService)),
 		),
+		fx.Annotate(NewAccountDeletionService, fx.As(new(AccountDeletionService))),
 	),
 )

@@ -168,6 +168,56 @@ func (r *UserRepo) UpdateReferralCode(_ context.Context, userID uuid.UUID, code 
 	return nil
 }
 
+func (r *UserRepo) SetDeletionSchedule(_ context.Context, userID uuid.UUID, requestedAt, scheduledAt *time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	u, ok := r.users[userID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	u.DeletionRequestedAt = requestedAt
+	u.DeletionScheduledAt = scheduledAt
+	u.UpdatedAt = time.Now()
+	return nil
+}
+
+func (r *UserRepo) ListPendingDeletions(_ context.Context, before time.Time) ([]domain.User, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var result []domain.User
+	for _, u := range r.users {
+		if u.DeletionScheduledAt != nil && !u.DeletionScheduledAt.After(before) {
+			cp := *u
+			result = append(result, cp)
+		}
+	}
+	return result, nil
+}
+
+func (r *UserRepo) AnonymizeUser(_ context.Context, userID uuid.UUID, anonEmail string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	u, ok := r.users[userID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	u.Name = "Deleted User"
+	u.Email = anonEmail
+	u.Phone = ""
+	u.PhoneVerified = false
+	u.PasswordHash = ""
+	u.AvatarURL = ""
+	u.Bio = ""
+	u.TOTPSecret = ""
+	u.TwoFAMethod = domain.TwoFANone
+	u.ReferralCode = ""
+	u.IsActive = false
+	u.DeletionRequestedAt = nil
+	u.DeletionScheduledAt = nil
+	u.UpdatedAt = time.Now()
+	return nil
+}
+
 // CityRepo is an in-memory mock implementation of repository.CityRepository.
 type CityRepo struct {
 	mu     sync.RWMutex

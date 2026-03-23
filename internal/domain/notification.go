@@ -27,8 +27,11 @@ const (
 	NotifReferralBonus        NotificationType = "referral_bonus"
 	NotifSubscriptionExpiring NotificationType = "subscription_expiring"
 	NotifSubscriptionExpired  NotificationType = "subscription_expired"
-	NotifBonusExpiring        NotificationType = "bonus_expiring"
-	NotifBonusExpired         NotificationType = "bonus_expired"
+	NotifBonusExpiring            NotificationType = "bonus_expiring"
+	NotifBonusExpired             NotificationType = "bonus_expired"
+	NotifAccountDeletionRequested NotificationType = "account_deletion_requested"
+	NotifAccountDeletionReminder  NotificationType = "account_deletion_reminder"
+	NotifAccountDeletionFinal     NotificationType = "account_deletion_final"
 )
 
 func (t NotificationType) IsValid() bool {
@@ -38,7 +41,8 @@ func (t NotificationType) IsValid() bool {
 		NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected, NotifReviewHidden,
 		NotifLoyaltyUpgrade, NotifReferralBonus,
 		NotifSubscriptionExpiring, NotifSubscriptionExpired,
-		NotifBonusExpiring, NotifBonusExpired:
+		NotifBonusExpiring, NotifBonusExpired,
+		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal:
 		return true
 	}
 	return false
@@ -120,7 +124,8 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 		return p.PromoEvents
 	case NotifReminder:
 		return p.Reminders
-	case NotifSystem, NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected:
+	case NotifSystem, NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected,
+		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal:
 		return true
 	}
 	return false

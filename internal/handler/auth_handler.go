@@ -16,18 +16,20 @@ import (
 )
 
 type AuthHandler struct {
-	authService          service.AuthService
-	userService          service.UserService
-	twoFAService         service.TwoFAService
-	passwordResetService service.PasswordResetService
+	authService            service.AuthService
+	userService            service.UserService
+	twoFAService           service.TwoFAService
+	passwordResetService   service.PasswordResetService
+	accountDeletionService service.AccountDeletionService
 }
 
-func NewAuthHandler(authService service.AuthService, userService service.UserService, twoFAService service.TwoFAService, passwordResetService service.PasswordResetService) *AuthHandler {
+func NewAuthHandler(authService service.AuthService, userService service.UserService, twoFAService service.TwoFAService, passwordResetService service.PasswordResetService, accountDeletionService service.AccountDeletionService) *AuthHandler {
 	return &AuthHandler{
-		authService:          authService,
-		userService:          userService,
-		twoFAService:         twoFAService,
-		passwordResetService: passwordResetService,
+		authService:            authService,
+		userService:            userService,
+		twoFAService:           twoFAService,
+		passwordResetService:   passwordResetService,
+		accountDeletionService: accountDeletionService,
 	}
 }
 
@@ -728,4 +730,46 @@ func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, simpleMessageResponse{Message: "Password has been reset successfully"})
+}
+
+// DeleteAccount godoc
+// @Summary      Request account deletion
+// @Description  Requests account deletion with a 30-day grace period
+// @Tags         auth
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      409  {object}  APIResponse{error=APIError}
+// @Router       /auth/delete-account [post]
+func (h *AuthHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+
+	if err := h.accountDeletionService.RequestDeletion(r.Context(), userID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, simpleMessageResponse{Message: "Account deletion scheduled. You have 30 days to restore your account."})
+}
+
+// RestoreAccount godoc
+// @Summary      Restore account during grace period
+// @Description  Cancels a pending account deletion during the 30-day grace period
+// @Tags         auth
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /auth/restore-account [post]
+func (h *AuthHandler) RestoreAccount(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+
+	if err := h.accountDeletionService.RestoreAccount(r.Context(), userID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, simpleMessageResponse{Message: "Account deletion cancelled. Your account has been restored."})
 }

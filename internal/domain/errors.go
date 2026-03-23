@@ -81,4 +81,8 @@ var (
 
 	ErrResetTokenInvalid = errors.New("invalid or expired password reset token")
 	ErrResetRateLimited  = errors.New("too many password reset requests, try later")
+
+	ErrAccountDeletionPending    = errors.New("account deletion already requested")
+	ErrAccountDeletionNotPending = errors.New("no pending account deletion")
+	ErrAccountDeleted            = errors.New("account has been deleted")
 )

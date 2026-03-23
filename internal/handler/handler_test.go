@@ -621,7 +621,7 @@ func TestAuthHandler_Register(t *testing.T) {
 		},
 	}
 
-	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil, nil)
 
 	body := jsonBody(map[string]string{
 		"email":    "test@example.com",
@@ -654,7 +654,7 @@ func TestAuthHandler_Register_InvalidBody(t *testing.T) {
 		},
 	}
 
-	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", bytes.NewBufferString("invalid"))
 	req.Header.Set("Content-Type", "application/json")
@@ -684,7 +684,7 @@ func TestAuthHandler_Login(t *testing.T) {
 		},
 	}
 
-	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil, nil)
 
 	body := jsonBody(map[string]string{
 		"email":    "test@example.com",
@@ -714,7 +714,7 @@ func TestAuthHandler_Login_InvalidCredentials(t *testing.T) {
 		},
 	}
 
-	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil, nil)
 
 	body := jsonBody(map[string]string{
 		"email":    "test@example.com",
@@ -747,7 +747,7 @@ func TestAuthHandler_Me(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{}, nil, nil)
 
 	r := chi.NewRouter()
 	r.With(middleware.RequireAuth(authSvc)).Get("/auth/me", h.Me)
@@ -770,7 +770,7 @@ func TestAuthHandler_Me(t *testing.T) {
 
 func TestAuthHandler_Me_Unauthenticated(t *testing.T) {
 	authSvc := &mockAuthService{}
-	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil, nil)
 
 	r := chi.NewRouter()
 	r.With(middleware.RequireAuth(authSvc)).Get("/auth/me", h.Me)
@@ -801,7 +801,7 @@ func TestAuthHandler_UpdateProfile(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{}, nil, nil)
 
 	r := chi.NewRouter()
 	r.With(middleware.RequireAuth(authSvc)).Put("/auth/me", h.UpdateProfile)
@@ -836,7 +836,7 @@ func TestAuthHandler_DeleteAvatar(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{}, nil, nil)
 
 	r := chi.NewRouter()
 	r.With(middleware.RequireAuth(authSvc)).Delete("/auth/me/avatar", h.DeleteAvatar)
@@ -875,7 +875,7 @@ func TestAuthHandler_GetPublicProfile(t *testing.T) {
 		},
 	}
 
-	h := handler.NewAuthHandler(&mockAuthService{}, userSvc, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(&mockAuthService{}, userSvc, &noopTwoFAService{}, nil, nil)
 
 	r := chi.NewRouter()
 	r.Get("/users/{id}/profile", h.GetPublicProfile)
@@ -902,7 +902,7 @@ func TestAuthHandler_GetPublicProfile_NotFound(t *testing.T) {
 		},
 	}
 
-	h := handler.NewAuthHandler(&mockAuthService{}, userSvc, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(&mockAuthService{}, userSvc, &noopTwoFAService{}, nil, nil)
 
 	r := chi.NewRouter()
 	r.Get("/users/{id}/profile", h.GetPublicProfile)
@@ -918,7 +918,7 @@ func TestAuthHandler_GetPublicProfile_NotFound(t *testing.T) {
 }
 
 func TestAuthHandler_GetPublicProfile_InvalidID(t *testing.T) {
-	h := handler.NewAuthHandler(&mockAuthService{}, &mockUserService{}, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(&mockAuthService{}, &mockUserService{}, &noopTwoFAService{}, nil, nil)
 
 	r := chi.NewRouter()
 	r.Get("/users/{id}/profile", h.GetPublicProfile)
@@ -951,7 +951,7 @@ func TestAuthHandler_GetMyStats(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{}, nil)
+	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{}, nil, nil)
 
 	r := chi.NewRouter()
 	r.With(middleware.RequireAuth(authSvc)).Get("/my/stats", h.GetMyStats)
@@ -1544,7 +1544,7 @@ func TestHandleServiceError_MapsCorrectly(t *testing.T) {
 					return nil, tt.err
 				},
 			}
-			h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil)
+			h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{}, nil, nil)
 
 			body := jsonBody(map[string]string{"email": "a@b.com", "password": "x"})
 			req := httptest.NewRequest(http.MethodPost, "/login", body)

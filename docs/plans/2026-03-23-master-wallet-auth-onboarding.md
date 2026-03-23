@@ -168,11 +168,11 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Modify: `internal/handler/auth_handler.go`, `internal/domain/user.go`
 - Create: `migrations/000043_account_deletion.up.sql`, `migrations/000043_account_deletion.down.sql`
 
-- [ ] 30-day grace period with restore option
-- [ ] Data anonymization on execution, fund return for top-ups, burn bonuses
-- [ ] POST /api/v1/auth/delete-account, /restore-account
-- [ ] Cron: reminders at day 0/14/27, execute at day 30
-- [ ] Write tests, run `go test ./... -v`
+- [x] 30-day grace period with restore option
+- [x] Data anonymization on execution, fund return for top-ups, burn bonuses
+- [x] POST /api/v1/auth/delete-account, /restore-account
+- [x] Cron: reminders at day 0/14/27, execute at day 30
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 13: Age Verification & Welcome Bonus (Task 2.6)
 

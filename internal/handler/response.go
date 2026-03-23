@@ -243,6 +243,12 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "reset_token_invalid", err.Error())
 	case errors.Is(err, domain.ErrResetRateLimited):
 		writeErrorWithContext(w, r, http.StatusTooManyRequests, "reset_rate_limited", err.Error())
+	case errors.Is(err, domain.ErrAccountDeletionPending):
+		writeErrorWithContext(w, r, http.StatusConflict, "account_deletion_pending", err.Error())
+	case errors.Is(err, domain.ErrAccountDeletionNotPending):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "account_deletion_not_pending", err.Error())
+	case errors.Is(err, domain.ErrAccountDeleted):
+		writeErrorWithContext(w, r, http.StatusForbidden, "account_deleted", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

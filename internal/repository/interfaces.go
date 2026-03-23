@@ -19,6 +19,9 @@ type UserRepository interface {
 	GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.UserProfile, error)
 	GetByReferralCode(ctx context.Context, code string) (*domain.User, error)
 	UpdateReferralCode(ctx context.Context, userID uuid.UUID, code string) error
+	SetDeletionSchedule(ctx context.Context, userID uuid.UUID, requestedAt, scheduledAt *time.Time) error
+	ListPendingDeletions(ctx context.Context, before time.Time) ([]domain.User, error)
+	AnonymizeUser(ctx context.Context, userID uuid.UUID, anonEmail string) error
 }
 
 type CityRepository interface {

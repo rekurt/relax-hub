@@ -118,7 +118,7 @@ func testRouterParams() server.RouterParams {
 		Config:         &config.Config{Environment: "dev"},
 		CORS:           cors,
 		AuthService:    authSvc,
-		AuthHandler:    handler.NewAuthHandler(authSvc, nil, &noopTwoFAServiceForRouter{}, nil),
+		AuthHandler:    handler.NewAuthHandler(authSvc, nil, &noopTwoFAServiceForRouter{}, nil, nil),
 		BHHandler:      handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, ""),
 		BookingHandler: handler.NewBookingHandler(nil, nil),
 		ReviewHandler:  handler.NewReviewHandler(nil, nil, logger.New(logger.LevelError)),
