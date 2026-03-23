@@ -200,9 +200,9 @@ starting interactive plan creation
 [26-03-23 09:20:38]   - [x] Write tests
 [26-03-23 09:20:38]   - [x] Run `go test ./... -v -race` — must pass
 [26-03-23 09:20:38] ### Task 13: Verify acceptance criteria
-[26-03-23 09:20:38]   - [ ] Run full test suite: `go test ./... -v -race`
-[26-03-23 09:20:38]   - [ ] Run linter: `make lint`
-[26-03-23 09:20:38]   - [ ] Manual verification:
+[26-03-23 09:20:38]   - [x] Run full test suite: `go test ./... -v -race`
+[26-03-23 09:20:38]   - [x] Run linter: `make lint`
+[26-03-23 09:20:38]   - [x] Manual verification:
 [26-03-23 09:20:38]   - Listing completeness endpoint returns correct checklist
 [26-03-23 09:20:38]   - Audit log records changes and triggers re-moderation
 [26-03-23 09:20:38]   - Listing duplication creates proper copy
@@ -214,9 +214,9 @@ starting interactive plan creation
 [26-03-23 09:20:38]   - Comparison returns structured data for 2-3 bathhouses
 [26-03-23 09:20:38]   - Recently viewed and saved searches persist correctly
 [26-03-23 09:20:38] ### Task 14: Update documentation
-[26-03-23 09:20:38]   - [ ] Update CLAUDE.md if internal patterns changed (new subsystems, new domain errors, new config vars)
-[26-03-23 09:20:38]   - [ ] Run `make swagger` to regenerate OpenAPI spec
-[26-03-23 09:20:38]   - [ ] Move completed plans to `docs/plans/completed/`
+[26-03-23 09:20:38]   - [x] Update CLAUDE.md if internal patterns changed (new subsystems, new domain errors, new config vars)
+[26-03-23 09:20:38]   - [x] Run `make swagger` to regenerate OpenAPI spec
+[26-03-23 09:20:38]   - [x] Move completed plans to `docs/plans/completed/`
 [26-03-23 09:20:38] <<<RALPHEX:END>>>
 [26-03-23 09:20:38] plan draft ready for review
 [26-03-23 09:20:43] DRAFT REVIEW: accept
