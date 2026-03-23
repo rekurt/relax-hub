@@ -60,5 +60,6 @@ var Module = fx.Module("handler",
 		func(svc service.BathhouseService, cityService service.CityService, redisClient *redis.Client, log *logger.Logger, cfg *config.Config) *SitemapHandler {
 			return NewSitemapHandler(svc, cityService, redisClient, log, cfg.BaseURL)
 		},
+		NewKYCHandler,
 	),
 )

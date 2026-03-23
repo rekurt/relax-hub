@@ -345,6 +345,16 @@ type SessionRepository interface {
 	DeleteExpired(ctx context.Context) (int64, error)
 }
 
+type KYCRepository interface {
+	Create(ctx context.Context, kyc *domain.KYCApplication) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.KYCApplication, error)
+	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.KYCApplication, error)
+	Update(ctx context.Context, kyc *domain.KYCApplication) error
+	ListPending(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.KYCApplication], error)
+	Approve(ctx context.Context, id uuid.UUID, reviewedBy uuid.UUID, expiresAt time.Time) error
+	Reject(ctx context.Context, id uuid.UUID, reviewedBy uuid.UUID, reason string) error
+}
+
 type WalletRepository interface {
 	Create(ctx context.Context, wallet *domain.Wallet) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Wallet, error)

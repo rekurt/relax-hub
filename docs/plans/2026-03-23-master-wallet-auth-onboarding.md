@@ -201,11 +201,11 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Modify: `internal/repository/interfaces.go`
 - Create: `migrations/000044_kyc.up.sql`, `migrations/000044_kyc.down.sql`
 
-- [ ] KYC model with entity types (individual, sole_proprietor, self_employed, legal_entity)
-- [ ] Submit/approve/reject flow, expiry checking
-- [ ] POST /api/v1/my/kyc, GET /api/v1/my/kyc
-- [ ] GET /api/v1/admin/kyc/pending, PATCH /admin/kyc/{id}/approve, /reject
-- [ ] Write tests, run `go test ./... -v`
+- [x] KYC model with entity types (individual, sole_proprietor, self_employed, legal_entity)
+- [x] Submit/approve/reject flow, expiry checking
+- [x] POST /api/v1/my/kyc, GET /api/v1/my/kyc
+- [x] GET /api/v1/admin/kyc/pending, PATCH /admin/kyc/{id}/approve, /reject
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 16: Offer/Contract Acceptance (Task 3.2)
 

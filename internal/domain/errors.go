@@ -85,4 +85,8 @@ var (
 	ErrAccountDeletionPending    = errors.New("account deletion already requested")
 	ErrAccountDeletionNotPending = errors.New("no pending account deletion")
 	ErrAccountDeleted            = errors.New("account has been deleted")
+
+	ErrKYCNotFound    = errors.New("KYC application not found")
+	ErrKYCNotApproved = errors.New("KYC verification not approved")
+	ErrKYCPending     = errors.New("KYC application already pending review")
 )

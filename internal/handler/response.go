@@ -249,6 +249,12 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "account_deletion_not_pending", err.Error())
 	case errors.Is(err, domain.ErrAccountDeleted):
 		writeErrorWithContext(w, r, http.StatusForbidden, "account_deleted", err.Error())
+	case errors.Is(err, domain.ErrKYCNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "kyc_not_found", err.Error())
+	case errors.Is(err, domain.ErrKYCNotApproved):
+		writeErrorWithContext(w, r, http.StatusForbidden, "kyc_not_approved", err.Error())
+	case errors.Is(err, domain.ErrKYCPending):
+		writeErrorWithContext(w, r, http.StatusConflict, "kyc_pending", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

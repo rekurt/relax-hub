@@ -56,6 +56,7 @@ type RouterParams struct {
 	WalletHandler         *handler.WalletHandler
 	PayoutHandler         *handler.PayoutHandler
 	SessionHandler        *handler.SessionHandler
+	KYCHandler            *handler.KYCHandler
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
@@ -279,6 +280,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Post("/my/wallet/topup", p.WalletHandler.TopUp)
 		r.With(auth).Get("/my/wallet/holds", p.WalletHandler.ListHolds)
 
+		// KYC (authenticated owner)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/kyc", p.KYCHandler.SubmitKYC)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/kyc", p.KYCHandler.GetKYCStatus)
+
 		// Payouts (authenticated owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/wallet/payout", p.PayoutHandler.RequestPayout)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Put("/my/wallet/auto-payout", p.PayoutHandler.SetAutoPayoutThreshold)
@@ -388,6 +393,11 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Get("/photos/pending", p.PhotoHandler.GetPending)
 			r.Patch("/photos/{id}/verify", p.PhotoHandler.Verify)
 			r.Patch("/photos/{id}/reject", p.PhotoHandler.Reject)
+
+			// KYC moderation (admin only)
+			r.Get("/kyc/pending", p.KYCHandler.ListPendingKYC)
+			r.Patch("/kyc/{id}/approve", p.KYCHandler.ApproveKYC)
+			r.Patch("/kyc/{id}/reject", p.KYCHandler.RejectKYC)
 
 			// Promo codes (admin only)
 			r.Post("/promo-codes", p.PromoHandler.CreateGlobal)
