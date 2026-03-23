@@ -100,6 +100,18 @@ func (r *SessionRepo) DeleteAllExcept(_ context.Context, userID uuid.UUID, excep
 	return nil
 }
 
+func (r *SessionRepo) DeleteAllByUser(_ context.Context, userID uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for id, s := range r.sessions {
+		if s.UserID == userID {
+			delete(r.sessions, id)
+		}
+	}
+	return nil
+}
+
 func (r *SessionRepo) UpdateLastActive(_ context.Context, id uuid.UUID, lastActiveAt time.Time) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

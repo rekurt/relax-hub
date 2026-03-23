@@ -124,6 +124,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Post("/auth/me/avatar", p.AuthHandler.UploadAvatar)
 		r.With(auth).Delete("/auth/me/avatar", p.AuthHandler.DeleteAvatar)
 
+		// Password reset (public, rate-limited)
+		r.With(middleware.RateLimit(authRegisterRateLimiter, 3.0/60.0)).Post("/auth/forgot-password", p.AuthHandler.ForgotPassword) // 3/min
+		r.Post("/auth/reset-password", p.AuthHandler.ResetPassword)
+
 		// 2FA (authenticated)
 		r.With(auth).Post("/auth/2fa/totp/enable", p.AuthHandler.EnableTOTP)
 		r.With(auth).Post("/auth/2fa/totp/verify", p.AuthHandler.VerifyAndActivateTOTP)

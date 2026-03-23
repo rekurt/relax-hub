@@ -4,8 +4,10 @@ import (
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/notification"
 	"github.com/nikitaaldaev/bani/internal/payment"
 	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 )
 
@@ -56,6 +58,12 @@ var Module = fx.Module("service",
 				return NewPaymentService(paymentRepo, bookingRepo, provider, notifSvc, cfg.Payment.ReturnURL, log)
 			},
 			fx.As(new(PaymentService)),
+		),
+		fx.Annotate(
+			func(userRepo repository.UserRepository, sessionRepo repository.SessionRepository, redisClient *redis.Client, emailSender notification.EmailSender, cfg *config.Config, log *logger.Logger) PasswordResetService {
+				return NewPasswordResetService(userRepo, sessionRepo, redisClient, emailSender, log, cfg.FrontendURL)
+			},
+			fx.As(new(PasswordResetService)),
 		),
 	),
 )

@@ -78,4 +78,7 @@ var (
 
 	ErrSessionNotFound = errors.New("session not found")
 	ErrSessionExpired  = errors.New("session expired")
+
+	ErrResetTokenInvalid = errors.New("invalid or expired password reset token")
+	ErrResetRateLimited  = errors.New("too many password reset requests, try later")
 )

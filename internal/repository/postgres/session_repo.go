@@ -109,6 +109,12 @@ func (r *sessionRepo) DeleteAllExcept(ctx context.Context, userID uuid.UUID, exc
 	return err
 }
 
+func (r *sessionRepo) DeleteAllByUser(ctx context.Context, userID uuid.UUID) error {
+	query := `DELETE FROM sessions WHERE user_id = $1`
+	_, err := r.pool.Exec(ctx, query, userID)
+	return err
+}
+
 func (r *sessionRepo) UpdateLastActive(ctx context.Context, id uuid.UUID, lastActiveAt time.Time) error {
 	expiresAt := lastActiveAt.Add(domain.SessionMaxAge)
 	query := `UPDATE sessions SET last_active_at = $2, expires_at = $3 WHERE id = $1`

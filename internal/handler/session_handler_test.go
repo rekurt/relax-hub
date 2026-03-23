@@ -52,6 +52,10 @@ func (m *mockSessionService) TerminateAllExceptCurrent(ctx context.Context, user
 	return nil
 }
 
+func (m *mockSessionService) TerminateAllSessions(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
 func (m *mockSessionService) ValidateSession(ctx context.Context, sessionID uuid.UUID) (*domain.Session, error) {
 	if m.validateSessionFn != nil {
 		return m.validateSessionFn(ctx, sessionID)

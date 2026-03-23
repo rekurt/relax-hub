@@ -157,9 +157,9 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 **Files:**
 - Modify: `internal/service/auth_service.go`, `internal/handler/auth_handler.go`
 
-- [ ] POST /api/v1/auth/forgot-password (Redis token, email link, rate limited)
-- [ ] POST /api/v1/auth/reset-password (validate token, update password, terminate sessions)
-- [ ] Write tests, run `go test ./... -v`
+- [x] POST /api/v1/auth/forgot-password (Redis token, email link, rate limited)
+- [x] POST /api/v1/auth/reset-password (validate token, update password, terminate sessions)
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 12: Account Deletion (Task 2.5)
 

@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Environment string           `mapstructure:"environment"`
 	BaseURL     string           `mapstructure:"base_url"`
+	FrontendURL string           `mapstructure:"frontend_url"`
 	Server      ServerConfig     `mapstructure:"server"`
 	Database    DatabaseConfig   `mapstructure:"database"`
 	Redis       RedisConfig      `mapstructure:"redis"`
@@ -172,6 +173,7 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("payment.return_url", "http://localhost:3000/payment/callback")
 	v.SetDefault("sms.provider", "smsru")
 	v.SetDefault("sms.api_key", "")
+	v.SetDefault("frontend_url", "http://localhost:3000")
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {

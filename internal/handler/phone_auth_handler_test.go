@@ -80,7 +80,7 @@ func (n *noopTwoFAServicePhone) VerifySMS2FA(_ context.Context, _ uuid.UUID, _ s
 
 func TestRegisterPhone_Success(t *testing.T) {
 	authSvc := &phoneAuthMock{}
-	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{})
+	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{}, nil)
 
 	r := chi.NewRouter()
 	r.Post("/auth/register-phone", h.RegisterPhone)
@@ -102,7 +102,7 @@ func TestRegisterPhone_AlreadyExists(t *testing.T) {
 			return domain.ErrAlreadyExists
 		},
 	}
-	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{})
+	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{}, nil)
 
 	r := chi.NewRouter()
 	r.Post("/auth/register-phone", h.RegisterPhone)
@@ -120,7 +120,7 @@ func TestRegisterPhone_AlreadyExists(t *testing.T) {
 
 func TestLoginPhone_Success(t *testing.T) {
 	authSvc := &phoneAuthMock{}
-	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{})
+	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{}, nil)
 
 	r := chi.NewRouter()
 	r.Post("/auth/login-phone", h.LoginPhone)
@@ -142,7 +142,7 @@ func TestLoginPhone_Unauthorized(t *testing.T) {
 			return domain.ErrUnauthorized
 		},
 	}
-	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{})
+	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{}, nil)
 
 	r := chi.NewRouter()
 	r.Post("/auth/login-phone", h.LoginPhone)
@@ -172,7 +172,7 @@ func TestVerifyPhone_Success(t *testing.T) {
 			return &service.LoginResult{User: testUser, Token: "test-jwt-token"}, nil
 		},
 	}
-	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{})
+	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{}, nil)
 
 	r := chi.NewRouter()
 	r.Post("/auth/verify-phone", h.VerifyPhone)
@@ -194,7 +194,7 @@ func TestVerifyPhone_InvalidOTP(t *testing.T) {
 			return nil, domain.ErrOTPInvalid
 		},
 	}
-	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{})
+	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{}, nil)
 
 	r := chi.NewRouter()
 	r.Post("/auth/verify-phone", h.VerifyPhone)
@@ -216,7 +216,7 @@ func TestVerifyPhone_RateLimited(t *testing.T) {
 			return nil, domain.ErrOTPMaxAttempts
 		},
 	}
-	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{})
+	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{}, nil)
 
 	r := chi.NewRouter()
 	r.Post("/auth/verify-phone", h.VerifyPhone)

@@ -16,16 +16,18 @@ import (
 )
 
 type AuthHandler struct {
-	authService  service.AuthService
-	userService  service.UserService
-	twoFAService service.TwoFAService
+	authService          service.AuthService
+	userService          service.UserService
+	twoFAService         service.TwoFAService
+	passwordResetService service.PasswordResetService
 }
 
-func NewAuthHandler(authService service.AuthService, userService service.UserService, twoFAService service.TwoFAService) *AuthHandler {
+func NewAuthHandler(authService service.AuthService, userService service.UserService, twoFAService service.TwoFAService, passwordResetService service.PasswordResetService) *AuthHandler {
 	return &AuthHandler{
-		authService:  authService,
-		userService:  userService,
-		twoFAService: twoFAService,
+		authService:          authService,
+		userService:          userService,
+		twoFAService:         twoFAService,
+		passwordResetService: passwordResetService,
 	}
 }
 
@@ -666,4 +668,64 @@ func (h *AuthHandler) Verify2FALogin(w http.ResponseWriter, r *http.Request) {
 		User:  toUserResponse(user),
 		Token: token,
 	})
+}
+
+type forgotPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+type resetPasswordRequest struct {
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}
+
+// ForgotPassword godoc
+// @Summary      Request password reset
+// @Description  Sends a password reset link to the user's email
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      forgotPasswordRequest  true  "Email address"
+// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      429   {object}  APIResponse{error=APIError}  "Rate limited (3/15min)"
+// @Router       /auth/forgot-password [post]
+func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var req forgotPasswordRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	if err := h.passwordResetService.ForgotPassword(r.Context(), req.Email); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, simpleMessageResponse{Message: "If the email exists, a reset link has been sent"})
+}
+
+// ResetPassword godoc
+// @Summary      Reset password with token
+// @Description  Resets the user's password using a reset token from email
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      resetPasswordRequest  true  "Reset token and new password"
+// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Router       /auth/reset-password [post]
+func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req resetPasswordRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	if err := h.passwordResetService.ResetPassword(r.Context(), req.Token, req.NewPassword); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, simpleMessageResponse{Message: "Password has been reset successfully"})
 }

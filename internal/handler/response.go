@@ -239,6 +239,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusNotFound, "session_not_found", err.Error())
 	case errors.Is(err, domain.ErrSessionExpired):
 		writeErrorWithContext(w, r, http.StatusUnauthorized, "session_expired", err.Error())
+	case errors.Is(err, domain.ErrResetTokenInvalid):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "reset_token_invalid", err.Error())
+	case errors.Is(err, domain.ErrResetRateLimited):
+		writeErrorWithContext(w, r, http.StatusTooManyRequests, "reset_rate_limited", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

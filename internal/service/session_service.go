@@ -15,6 +15,7 @@ type SessionService interface {
 	ListSessions(ctx context.Context, userID uuid.UUID) ([]domain.Session, error)
 	TerminateSession(ctx context.Context, userID uuid.UUID, sessionID uuid.UUID) error
 	TerminateAllExceptCurrent(ctx context.Context, userID uuid.UUID, currentSessionID uuid.UUID) error
+	TerminateAllSessions(ctx context.Context, userID uuid.UUID) error
 	ValidateSession(ctx context.Context, sessionID uuid.UUID) (*domain.Session, error)
 	ValidateAndTouch(ctx context.Context, sessionID uuid.UUID) error
 	CleanExpired(ctx context.Context) (int64, error)
@@ -69,6 +70,10 @@ func (s *sessionService) TerminateSession(ctx context.Context, userID uuid.UUID,
 
 func (s *sessionService) TerminateAllExceptCurrent(ctx context.Context, userID uuid.UUID, currentSessionID uuid.UUID) error {
 	return s.sessionRepo.DeleteAllExcept(ctx, userID, currentSessionID)
+}
+
+func (s *sessionService) TerminateAllSessions(ctx context.Context, userID uuid.UUID) error {
+	return s.sessionRepo.DeleteAllByUser(ctx, userID)
 }
 
 // ValidateAndTouch implements middleware.SessionValidator.
