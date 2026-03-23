@@ -109,9 +109,12 @@ func TestAddOnRepo_Delete(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	_, err := repo.GetByID(ctx, addon.ID)
-	if err != domain.ErrAddOnNotFound {
-		t.Errorf("expected ErrAddOnNotFound after delete, got %v", err)
+	got, err := repo.GetByID(ctx, addon.ID)
+	if err != nil {
+		t.Fatalf("unexpected error after soft delete: %v", err)
+	}
+	if got.IsActive {
+		t.Errorf("expected IsActive=false after soft delete, got true")
 	}
 }
 

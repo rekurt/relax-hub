@@ -298,6 +298,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		}
 		if err := s.addonRepo.CreateBookingAddOn(ctx, ba); err != nil {
 			s.logger.Error("failed to store booking add-on", "booking_id", bookingID, "addon_id", item.AddOnID, "error", err)
+			return nil, fmt.Errorf("store booking add-on: %w", err)
 		}
 		bookingAddOns = append(bookingAddOns, *ba)
 	}

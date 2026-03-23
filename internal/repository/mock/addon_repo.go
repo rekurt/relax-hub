@@ -61,10 +61,12 @@ func (r *AddOnRepo) Delete(_ context.Context, id uuid.UUID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if _, ok := r.addons[id]; !ok {
+	a, ok := r.addons[id]
+	if !ok {
 		return domain.ErrAddOnNotFound
 	}
-	delete(r.addons, id)
+	a.IsActive = false
+	a.UpdatedAt = time.Now()
 	return nil
 }
 
@@ -87,6 +89,20 @@ func (r *AddOnRepo) ListByBathhouse(_ context.Context, bathhouseID uuid.UUID) ([
 	var result []domain.AddOn
 	for _, a := range r.addons {
 		if a.BathhouseID == bathhouseID {
+			cp := *a
+			result = append(result, cp)
+		}
+	}
+	return result, nil
+}
+
+func (r *AddOnRepo) ListActiveByBathhouse(_ context.Context, bathhouseID uuid.UUID) ([]domain.AddOn, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var result []domain.AddOn
+	for _, a := range r.addons {
+		if a.BathhouseID == bathhouseID && a.IsActive {
 			cp := *a
 			result = append(result, cp)
 		}

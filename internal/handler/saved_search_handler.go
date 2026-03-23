@@ -107,7 +107,7 @@ type createSavedSearchRequest struct {
 // @Router       /my/saved-searches [post]
 func (h *SavedSearchHandler) CreateSavedSearch(w http.ResponseWriter, r *http.Request) {
 	var req createSavedSearchRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := readJSON(w, r, &req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_input", "invalid request body")
 		return
 	}

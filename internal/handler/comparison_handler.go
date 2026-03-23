@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
@@ -94,6 +95,11 @@ func (h *ComparisonHandler) Compare(w http.ResponseWriter, r *http.Request) {
 		bh, err := h.bathhouseService.GetByID(r.Context(), id)
 		if err != nil {
 			handleServiceError(w, err)
+			return
+		}
+
+		if bh.Status != domain.BathhouseStatusActive {
+			writeError(w, http.StatusNotFound, "not_found", "bathhouse not found")
 			return
 		}
 

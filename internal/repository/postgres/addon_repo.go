@@ -88,7 +88,7 @@ func (r *addonRepo) Update(ctx context.Context, addon *domain.AddOn) error {
 }
 
 func (r *addonRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	ct, err := r.pool.Exec(ctx, `DELETE FROM addons WHERE id=$1`, id)
+	ct, err := r.pool.Exec(ctx, `UPDATE addons SET is_active = false, updated_at = NOW() WHERE id=$1`, id)
 	if err != nil {
 		return fmt.Errorf("delete addon: %w", err)
 	}
@@ -115,6 +115,16 @@ func (r *addonRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) 
 	rows, err := r.pool.Query(ctx, query, bathhouseID)
 	if err != nil {
 		return nil, fmt.Errorf("list addons by bathhouse: %w", err)
+	}
+	defer rows.Close()
+	return scanAddOns(rows)
+}
+
+func (r *addonRepo) ListActiveByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.AddOn, error) {
+	query := fmt.Sprintf(`SELECT %s FROM addons WHERE bathhouse_id=$1 AND is_active = true ORDER BY sort_order, created_at`, addonColumns)
+	rows, err := r.pool.Query(ctx, query, bathhouseID)
+	if err != nil {
+		return nil, fmt.Errorf("list active addons by bathhouse: %w", err)
 	}
 	defer rows.Close()
 	return scanAddOns(rows)

@@ -213,13 +213,16 @@ func (h *AddOnHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Failure      401 {object}  APIResponse{error=APIError}
 // @Router       /my/bathhouses/{id}/addons [get]
 func (h *AddOnHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
+
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
 		return
 	}
 
-	addons, err := h.addOnService.ListAddOns(r.Context(), bathhouseID)
+	addons, err := h.addOnService.ListAddOnsManaged(r.Context(), userID, userRole, bathhouseID)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -244,19 +247,11 @@ func (h *AddOnHandler) ListPublic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addons, err := h.addOnService.ListAddOns(r.Context(), bathhouseID)
+	addons, err := h.addOnService.ListActiveAddOns(r.Context(), bathhouseID)
 	if err != nil {
 		handleServiceError(w, err)
 		return
 	}
 
-	// Filter to active only for public endpoint
-	var active []domain.AddOn
-	for i := range addons {
-		if addons[i].IsActive {
-			active = append(active, addons[i])
-		}
-	}
-
-	writeJSON(w, http.StatusOK, toAddOnListResponse(active))
+	writeJSON(w, http.StatusOK, toAddOnListResponse(addons))
 }

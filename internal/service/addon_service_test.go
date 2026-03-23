@@ -200,9 +200,12 @@ func TestAddOnService_Delete_Success(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	_, err = env.svc.GetAddOn(context.Background(), created.ID)
-	if err != domain.ErrAddOnNotFound {
-		t.Fatalf("expected ErrAddOnNotFound after delete, got: %v", err)
+	got, err := env.svc.GetAddOn(context.Background(), created.ID)
+	if err != nil {
+		t.Fatalf("unexpected error after soft delete: %v", err)
+	}
+	if got.IsActive {
+		t.Fatalf("expected IsActive=false after soft delete, got true")
 	}
 }
 

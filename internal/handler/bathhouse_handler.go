@@ -31,6 +31,7 @@ type BathhouseHandler struct {
 	promotionService      service.PromotionService
 	cityService           service.CityService
 	savedSearchService    service.SavedSearchService
+	suggestionService     service.SearchSuggestionService
 	log                   *logger.Logger
 	baseURL               string
 }
@@ -46,6 +47,7 @@ func NewBathhouseHandler(
 	promotionService service.PromotionService,
 	cityService service.CityService,
 	savedSearchService service.SavedSearchService,
+	suggestionService service.SearchSuggestionService,
 	log *logger.Logger,
 	baseURL string,
 ) *BathhouseHandler {
@@ -60,6 +62,7 @@ func NewBathhouseHandler(
 		promotionService:      promotionService,
 		cityService:           cityService,
 		savedSearchService:    savedSearchService,
+		suggestionService:     suggestionService,
 		log:                   log,
 		baseURL:               baseURL,
 	}
@@ -359,6 +362,9 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := h.bathhouseService.Search(r.Context(), filter)
+	if err == nil && filter.SearchQuery != nil && h.suggestionService != nil {
+		_ = h.suggestionService.RecordQuery(r.Context(), *filter.SearchQuery)
+	}
 	if err != nil {
 		handleServiceError(w, err)
 		return

@@ -17,6 +17,8 @@ type AddOnService interface {
 	UpdateAddOn(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, addon *domain.AddOn) (*domain.AddOn, error)
 	DeleteAddOn(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, addonID uuid.UUID) error
 	ListAddOns(ctx context.Context, bathhouseID uuid.UUID) ([]domain.AddOn, error)
+	ListActiveAddOns(ctx context.Context, bathhouseID uuid.UUID) ([]domain.AddOn, error)
+	ListAddOnsManaged(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]domain.AddOn, error)
 	GetAddOn(ctx context.Context, id uuid.UUID) (*domain.AddOn, error)
 	CalculateAddOnTotal(ctx context.Context, selections []AddOnSelection, bathhouseID uuid.UUID, durationHours int, guests int) (int64, []AddOnLineItem, error)
 }
@@ -132,6 +134,17 @@ func (s *addOnService) DeleteAddOn(ctx context.Context, userID uuid.UUID, userRo
 }
 
 func (s *addOnService) ListAddOns(ctx context.Context, bathhouseID uuid.UUID) ([]domain.AddOn, error) {
+	return s.addonRepo.ListByBathhouse(ctx, bathhouseID)
+}
+
+func (s *addOnService) ListActiveAddOns(ctx context.Context, bathhouseID uuid.UUID) ([]domain.AddOn, error) {
+	return s.addonRepo.ListActiveByBathhouse(ctx, bathhouseID)
+}
+
+func (s *addOnService) ListAddOnsManaged(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]domain.AddOn, error) {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
+		return nil, err
+	}
 	return s.addonRepo.ListByBathhouse(ctx, bathhouseID)
 }
 

@@ -414,6 +414,7 @@ type AddOnRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.AddOn, error)
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.AddOn, error)
+	ListActiveByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.AddOn, error)
 	CountByBathhouse(ctx context.Context, bathhouseID uuid.UUID) (int64, error)
 	CreateBookingAddOn(ctx context.Context, ba *domain.BookingAddOn) error
 	ListByBooking(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingAddOn, error)
