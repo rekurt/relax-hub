@@ -451,7 +451,7 @@ func TestAuthService_VerifyPhone_Success(t *testing.T) {
 		IsActive: true,
 	})
 
-	result, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456")
+	result, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -472,7 +472,7 @@ func TestAuthService_VerifyPhone_NewUserCreated(t *testing.T) {
 	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	// VerifyPhone for non-existent user should create a new user (phone registration)
-	result, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456")
+	result, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456", "New User")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

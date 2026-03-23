@@ -433,7 +433,7 @@ func TestAuthService_VerifyPhone_With2FA(t *testing.T) {
 	}
 	userRepo.Create(context.Background(), user)
 
-	result, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456")
+	result, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

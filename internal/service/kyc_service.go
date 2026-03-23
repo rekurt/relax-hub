@@ -59,7 +59,7 @@ func (s *kycService) Submit(ctx context.Context, userID uuid.UUID, input SubmitK
 		// Block re-submission if user has a valid (non-expired) approved KYC
 		if existing.Status == domain.KYCStatusApproved {
 			if existing.ExpiresAt == nil || existing.ExpiresAt.After(time.Now()) {
-				return nil, domain.ErrKYCPending // already approved, no need to re-submit
+				return nil, domain.ErrAlreadyExists
 			}
 		}
 	}

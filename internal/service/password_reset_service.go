@@ -95,7 +95,7 @@ func (s *passwordResetService) ForgotPassword(ctx context.Context, email string)
 	// Increment rate limit counter
 	pipe := s.redis.Pipeline()
 	pipe.Incr(ctx, rateKey)
-	pipe.Expire(ctx, rateKey, resetRateWindow)
+	pipe.ExpireNX(ctx, rateKey, resetRateWindow)
 	if _, err := pipe.Exec(ctx); err != nil {
 		return fmt.Errorf("update reset rate limit: %w", err)
 	}

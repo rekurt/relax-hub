@@ -45,7 +45,7 @@ type AuthService interface {
 	ParsePartialToken(ctx context.Context, token string) (uuid.UUID, error)
 	RegisterPhone(ctx context.Context, input RegisterPhoneInput) error
 	LoginPhone(ctx context.Context, phone string) error
-	VerifyPhone(ctx context.Context, phone string, code string) (*LoginResult, error)
+	VerifyPhone(ctx context.Context, phone string, code string, name string) (*LoginResult, error)
 	Complete2FALogin(ctx context.Context, userID uuid.UUID) (*domain.User, string, error)
 }
 
@@ -343,7 +343,7 @@ func (s *authService) LoginPhone(ctx context.Context, phone string) error {
 	return s.otpSvc.SendOTP(ctx, phone)
 }
 
-func (s *authService) VerifyPhone(ctx context.Context, phone string, code string) (*LoginResult, error) {
+func (s *authService) VerifyPhone(ctx context.Context, phone string, code string, name string) (*LoginResult, error) {
 	phone = normalizePhone(phone)
 	if !isValidPhone(phone) {
 		return nil, domain.ErrPhoneInvalid
@@ -361,9 +361,13 @@ func (s *authService) VerifyPhone(ctx context.Context, phone string, code string
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
 			// New user registration via phone - create user account
+			if name == "" {
+				return nil, fmt.Errorf("%w: name is required for registration", domain.ErrInvalidInput)
+			}
 			now := time.Now()
 			user = &domain.User{
 				ID:            uuid.New(),
+				Name:          name,
 				Phone:         phone,
 				PhoneVerified: true,
 				Role:          domain.RoleClient,

@@ -214,14 +214,14 @@ func (s *walletService) CaptureHold(ctx context.Context, holdID uuid.UUID) (*dom
 		return nil, err
 	}
 
-	now := time.Now()
-	if err := s.walletRepo.UpdateHoldStatus(ctx, holdID, domain.WalletHoldStatusCaptured, &now, nil); err != nil {
-		return nil, err
-	}
-
 	newBalance := wallet.Balance - hold.Amount
 	if newBalance < 0 {
 		return nil, domain.ErrInsufficientWalletBalance
+	}
+
+	now := time.Now()
+	if err := s.walletRepo.UpdateHoldStatus(ctx, holdID, domain.WalletHoldStatusCaptured, &now, nil); err != nil {
+		return nil, err
 	}
 	newHeldAmount := wallet.HeldAmount - hold.Amount
 	if newHeldAmount < 0 {

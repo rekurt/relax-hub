@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -84,7 +85,7 @@ func (s *offerService) GetStatus(ctx context.Context, userID uuid.UUID) (*OfferS
 
 	acceptance, err := s.offerRepo.GetByUserAndVersion(ctx, userID, version)
 	if err != nil {
-		if err == domain.ErrOfferNotFound {
+		if errors.Is(err, domain.ErrOfferNotFound) {
 			return &OfferStatusResponse{
 				Accepted:       false,
 				CurrentVersion: version,
@@ -104,7 +105,7 @@ func (s *offerService) IsAccepted(ctx context.Context, userID uuid.UUID) (bool, 
 	version := s.currentVersion()
 	_, err := s.offerRepo.GetByUserAndVersion(ctx, userID, version)
 	if err != nil {
-		if err == domain.ErrOfferNotFound {
+		if errors.Is(err, domain.ErrOfferNotFound) {
 			return false, nil
 		}
 		return false, err

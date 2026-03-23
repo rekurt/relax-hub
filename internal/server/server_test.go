@@ -51,7 +51,7 @@ func (m *mockAuthServiceForRouter) LoginPhone(_ context.Context, _ string) error
 	return nil
 }
 
-func (m *mockAuthServiceForRouter) VerifyPhone(_ context.Context, _, _ string) (*service.LoginResult, error) {
+func (m *mockAuthServiceForRouter) VerifyPhone(_ context.Context, _, _, _ string) (*service.LoginResult, error) {
 	return &service.LoginResult{}, nil
 }
 
