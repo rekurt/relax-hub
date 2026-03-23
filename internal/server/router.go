@@ -64,6 +64,7 @@ type RouterParams struct {
 	AddOnHandler             *handler.AddOnHandler
 	SearchHandler            *handler.SearchHandler
 	ComparisonHandler        *handler.ComparisonHandler
+	SavedSearchHandler       *handler.SavedSearchHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
@@ -254,6 +255,12 @@ func NewRouter(p RouterParams) http.Handler {
 		// Favorites (authenticated)
 		r.With(auth).Post("/bathhouses/{id}/favorite", p.FavHandler.Toggle)
 		r.With(auth).Get("/my/favorites", p.FavHandler.List)
+
+		// Recently viewed & saved searches (authenticated)
+		r.With(auth).Get("/my/recently-viewed", p.SavedSearchHandler.ListRecentlyViewed)
+		r.With(auth).Post("/my/saved-searches", p.SavedSearchHandler.CreateSavedSearch)
+		r.With(auth).Get("/my/saved-searches", p.SavedSearchHandler.ListSavedSearches)
+		r.With(auth).Delete("/my/saved-searches/{id}", p.SavedSearchHandler.DeleteSavedSearch)
 
 		// Recommendations
 		r.With(auth).Get("/recommendations", p.RecommendationHandler.GetPersonalized)

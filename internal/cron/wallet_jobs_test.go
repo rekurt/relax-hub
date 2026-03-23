@@ -18,7 +18,7 @@ func newTestWalletCronScheduler(notifSvc *mockNotificationService, walletSvc ser
 	log := logger.New(logger.LevelInfo)
 	mockAnalyticsSvc := &MockAnalyticsService{}
 	mockAnalyticsRepo := mock.NewAnalyticsRepo()
-	return NewCronScheduler(log, mockAnalyticsSvc, mockAnalyticsRepo, nil, nil, notifSvc, nil, walletSvc, walletRepo, nil, nil)
+	return NewCronScheduler(log, mockAnalyticsSvc, mockAnalyticsRepo, nil, nil, notifSvc, nil, walletSvc, walletRepo, nil, nil, nil)
 }
 
 func TestHandleBonusExpiration_NoWallets(t *testing.T) {

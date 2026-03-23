@@ -281,6 +281,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusNotFound, "addon_not_found", err.Error())
 	case errors.Is(err, domain.ErrAddOnLimitReached):
 		writeErrorWithContext(w, r, http.StatusConflict, "addon_limit_reached", err.Error())
+	case errors.Is(err, domain.ErrSavedSearchNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "saved_search_not_found", err.Error())
+	case errors.Is(err, domain.ErrSavedSearchLimitReached):
+		writeErrorWithContext(w, r, http.StatusConflict, "saved_search_limit_reached", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

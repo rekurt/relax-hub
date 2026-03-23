@@ -32,6 +32,7 @@ const (
 	NotifAccountDeletionRequested NotificationType = "account_deletion_requested"
 	NotifAccountDeletionReminder  NotificationType = "account_deletion_reminder"
 	NotifAccountDeletionFinal     NotificationType = "account_deletion_final"
+	NotifSavedSearchMatch         NotificationType = "saved_search_match"
 )
 
 func (t NotificationType) IsValid() bool {

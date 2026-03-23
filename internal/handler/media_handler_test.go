@@ -182,7 +182,7 @@ func TestBathhouseHandler_GetByID_WithGalleryPreview(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, mediaSvc, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, mediaSvc, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}", h.GetByID)
@@ -230,7 +230,7 @@ func TestBathhouseHandler_GetByID_NoGalleryPreview(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, mediaSvc, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, mediaSvc, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}", h.GetByID)

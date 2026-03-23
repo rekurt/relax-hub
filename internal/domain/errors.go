@@ -107,4 +107,7 @@ var (
 
 	ErrAddOnNotFound    = errors.New("add-on not found")
 	ErrAddOnLimitReached = errors.New("add-on limit reached")
+
+	ErrSavedSearchNotFound    = errors.New("saved search not found")
+	ErrSavedSearchLimitReached = errors.New("saved search limit reached")
 )

@@ -209,16 +209,16 @@ Sequential execution of three independent subsystems: listing management enhance
 - Modify: `internal/service/module.go`, `internal/handler/module.go`, `internal/repository/postgres/module.go`
 - Create: `migrations/000053_saved_searches.up.sql`, `migrations/000053_saved_searches.down.sql`
 
-- [ ] Recently viewed: Redis sorted set per user (recently_viewed:{userID}), record on GET /bathhouses/{id}, keep last 20
-- [ ] GET /api/v1/my/recently-viewed — list recently viewed bathhouses
-- [ ] SavedSearch model: ID, UserID, Name, Filters (JSONB), NotifyOnNew, CreatedAt
-- [ ] SavedSearchRepository: Create, ListByUser, Delete, ListWithNotifications
-- [ ] SavedSearchService: Save, List, Delete, CheckNewMatches (cron)
-- [ ] POST/GET/DELETE /api/v1/my/saved-searches
-- [ ] Cron: daily check for new bathhouses matching saved searches
-- [ ] Register in fx modules
-- [ ] Write tests
-- [ ] Run `go test ./... -v -race` — must pass
+- [x] Recently viewed: Redis sorted set per user (recently_viewed:{userID}), record on GET /bathhouses/{id}, keep last 20
+- [x] GET /api/v1/my/recently-viewed — list recently viewed bathhouses
+- [x] SavedSearch model: ID, UserID, Name, Filters (JSONB), NotifyOnNew, CreatedAt
+- [x] SavedSearchRepository: Create, ListByUser, Delete, ListWithNotifications
+- [x] SavedSearchService: Save, List, Delete, CheckNewMatches (cron)
+- [x] POST/GET/DELETE /api/v1/my/saved-searches
+- [x] Cron: daily check for new bathhouses matching saved searches
+- [x] Register in fx modules
+- [x] Write tests
+- [x] Run `go test ./... -v -race` — must pass
 
 ### Task 13: Verify acceptance criteria
 

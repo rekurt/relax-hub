@@ -419,6 +419,14 @@ type AddOnRepository interface {
 	ListByBooking(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingAddOn, error)
 }
 
+type SavedSearchRepository interface {
+	Create(ctx context.Context, search *domain.SavedSearch) error
+	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.SavedSearch], error)
+	Delete(ctx context.Context, id uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.SavedSearch, error)
+	ListWithNotifications(ctx context.Context) ([]domain.SavedSearch, error)
+}
+
 type AuditLogRepository interface {
 	Create(ctx context.Context, log *domain.AuditLog) error
 	ListByEntity(ctx context.Context, entityType string, entityID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.AuditLog], error)

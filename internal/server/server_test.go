@@ -119,7 +119,7 @@ func testRouterParams() server.RouterParams {
 		CORS:           cors,
 		AuthService:    authSvc,
 		AuthHandler:    handler.NewAuthHandler(authSvc, nil, &noopTwoFAServiceForRouter{}, nil, nil),
-		BHHandler:      handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, ""),
+		BHHandler:      handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, ""),
 		BookingHandler: handler.NewBookingHandler(nil, nil),
 		ReviewHandler:  handler.NewReviewHandler(nil, nil, logger.New(logger.LevelError)),
 		FavHandler:     handler.NewFavoriteHandler(nil),
@@ -129,7 +129,8 @@ func testRouterParams() server.RouterParams {
 		SitemapHandler: handler.NewSitemapHandler(nil, nil, nil, log, ""),
 		PromoHandler:   handler.NewPromoHandler(nil),
 		MediaHandler:   handler.NewMediaHandler(nil),
-		SessionHandler: handler.NewSessionHandler(nil),
+		SessionHandler:     handler.NewSessionHandler(nil),
+		SavedSearchHandler: handler.NewSavedSearchHandler(nil, nil),
 	}
 }
 

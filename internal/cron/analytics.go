@@ -27,6 +27,7 @@ type CronScheduler struct {
 	walletRepo         repository.WalletRepository
 	accountDeletionSvc service.AccountDeletionService
 	sessionSvc         service.SessionService
+	savedSearchSvc     service.SavedSearchService
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -42,6 +43,7 @@ func NewCronScheduler(
 	walletRepo repository.WalletRepository,
 	accountDeletionSvc service.AccountDeletionService,
 	sessionSvc service.SessionService,
+	savedSearchSvc service.SavedSearchService,
 ) *CronScheduler {
 	return &CronScheduler{
 		c:                  cron.New(),
@@ -56,6 +58,7 @@ func NewCronScheduler(
 		walletRepo:         walletRepo,
 		accountDeletionSvc: accountDeletionSvc,
 		sessionSvc:         sessionSvc,
+		savedSearchSvc:     savedSearchSvc,
 	}
 }
 
@@ -156,6 +159,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register session cleanup: %w", err)
 	}
 	cs.logger.Info("Registered session cleanup job at 03:15 UTC")
+
+	// Saved search new matches check at 08:00 UTC daily
+	if _, err := cs.c.AddFunc("0 8 * * *", cs.handleSavedSearchCheck); err != nil {
+		cs.logger.Error("Failed to register saved search check job", "error", err)
+		return fmt.Errorf("failed to register saved search check: %w", err)
+	}
+	cs.logger.Info("Registered saved search check job at 08:00 UTC")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")

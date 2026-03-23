@@ -30,6 +30,7 @@ type BathhouseHandler struct {
 	mediaService          service.MediaService
 	promotionService      service.PromotionService
 	cityService           service.CityService
+	savedSearchService    service.SavedSearchService
 	log                   *logger.Logger
 	baseURL               string
 }
@@ -44,6 +45,7 @@ func NewBathhouseHandler(
 	mediaService service.MediaService,
 	promotionService service.PromotionService,
 	cityService service.CityService,
+	savedSearchService service.SavedSearchService,
 	log *logger.Logger,
 	baseURL string,
 ) *BathhouseHandler {
@@ -57,6 +59,7 @@ func NewBathhouseHandler(
 		mediaService:          mediaService,
 		promotionService:      promotionService,
 		cityService:           cityService,
+		savedSearchService:    savedSearchService,
 		log:                   log,
 		baseURL:               baseURL,
 	}
@@ -1291,6 +1294,10 @@ func (h *BathhouseHandler) recordBathhouseView(r *http.Request, bathhouseID uuid
 
 	if h.promotionService != nil {
 		_ = h.promotionService.RecordClick(ctx, bathhouseID)
+	}
+
+	if userID != uuid.Nil && h.savedSearchService != nil {
+		_ = h.savedSearchService.RecordView(ctx, userID, bathhouseID)
 	}
 }
 
