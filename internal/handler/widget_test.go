@@ -75,6 +75,15 @@ func (m *mockWidgetBathhouseService) SubmitForModeration(_ context.Context, _ uu
 func (m *mockWidgetBathhouseService) DuplicateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*domain.Bathhouse, error) {
 	return nil, nil
 }
+func (m *mockWidgetBathhouseService) DeactivateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockWidgetBathhouseService) ActivateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockWidgetBathhouseService) ArchiveBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
 
 // Mock BookingService for widget testing
 type mockWidgetBookingService struct {

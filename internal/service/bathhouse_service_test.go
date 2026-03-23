@@ -802,3 +802,207 @@ func TestBathhouseService_Duplicate_RepresentativeAllowed(t *testing.T) {
 		t.Errorf("name = %q, want %q", dup.Name, bh.Name+" (копия)")
 	}
 }
+
+// --- Deactivation & Archival Tests ---
+
+func TestBathhouseService_Deactivate_Success(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID) // active status
+
+	err := env.svc.DeactivateBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, _ := env.bhRepo.GetByID(context.Background(), bh.ID)
+	if updated.Status != domain.BathhouseStatusInactive {
+		t.Errorf("status = %q, want %q", updated.Status, domain.BathhouseStatusInactive)
+	}
+}
+
+func TestBathhouseService_Deactivate_NotActive(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Test", Address: "A", CityID: 1,
+		PricePerHour: 1000, MinDuration: 1, MaxGuests: 5, Status: domain.BathhouseStatusPending,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh)
+
+	err := env.svc.DeactivateBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput for non-active bathhouse, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Deactivate_Forbidden(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	otherID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	err := env.svc.DeactivateBathhouse(context.Background(), otherID, domain.RoleOwner, bh.ID)
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("expected ErrForbidden, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Activate_Success(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	// First deactivate
+	_ = env.svc.DeactivateBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+
+	// Then activate
+	err := env.svc.ActivateBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, _ := env.bhRepo.GetByID(context.Background(), bh.ID)
+	if updated.Status != domain.BathhouseStatusActive {
+		t.Errorf("status = %q, want %q", updated.Status, domain.BathhouseStatusActive)
+	}
+}
+
+func TestBathhouseService_Activate_NotInactive(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID) // active
+
+	err := env.svc.ActivateBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput for already-active bathhouse, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Activate_FromArchived(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Test", Address: "A", CityID: 1,
+		PricePerHour: 1000, MinDuration: 1, MaxGuests: 5, Status: domain.BathhouseStatusArchived,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh)
+
+	err := env.svc.ActivateBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput for archived bathhouse, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Archive_Success(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	err := env.svc.ArchiveBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, _ := env.bhRepo.GetByID(context.Background(), bh.ID)
+	if updated.Status != domain.BathhouseStatusArchived {
+		t.Errorf("status = %q, want %q", updated.Status, domain.BathhouseStatusArchived)
+	}
+}
+
+func TestBathhouseService_Archive_AlreadyArchived(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Test", Address: "A", CityID: 1,
+		PricePerHour: 1000, MinDuration: 1, MaxGuests: 5, Status: domain.BathhouseStatusArchived,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh)
+
+	err := env.svc.ArchiveBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput for already-archived bathhouse, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Archive_HasActiveBookings(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	// Create an active booking
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		BathhouseID: bh.ID,
+		UserID:      uuid.New(),
+		Status:      domain.BookingConfirmed,
+		StartTime:   time.Now().Add(24 * time.Hour),
+		EndTime:     time.Now().Add(26 * time.Hour),
+	}
+	_ = env.bookingRepo.Create(context.Background(), booking)
+
+	err := env.svc.ArchiveBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if !errors.Is(err, domain.ErrBathhouseHasBookings) {
+		t.Errorf("expected ErrBathhouseHasBookings, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Archive_Forbidden(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	otherID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	err := env.svc.ArchiveBathhouse(context.Background(), otherID, domain.RoleOwner, bh.ID)
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("expected ErrForbidden, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Deactivate_HiddenFromSearch(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	_ = env.svc.DeactivateBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+
+	// Public GetByID should not find inactive bathhouse
+	_, err := env.svc.GetByID(context.Background(), bh.ID)
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("inactive bathhouse should not be visible via GetByID, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Archive_HiddenFromSearch(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	_ = env.svc.ArchiveBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+
+	// Public GetByID should not find archived bathhouse
+	_, err := env.svc.GetByID(context.Background(), bh.ID)
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("archived bathhouse should not be visible via GetByID, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Deactivate_RepresentativeAllowed(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	repUserID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	rep := &domain.Representative{
+		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
+	}
+	_ = env.repRepo.Create(context.Background(), rep)
+
+	err := env.svc.DeactivateBathhouse(context.Background(), repUserID, domain.RoleRepresentative, bh.ID)
+	if err != nil {
+		t.Fatalf("representative should be allowed to deactivate, got: %v", err)
+	}
+}

@@ -127,6 +127,15 @@ func (m *mockBHService) SubmitForModeration(_ context.Context, _ uuid.UUID, _ do
 func (m *mockBHService) DuplicateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*domain.Bathhouse, error) {
 	return nil, nil
 }
+func (m *mockBHService) DeactivateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockBHService) ActivateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockBHService) ArchiveBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
 
 // mockBathhouseRepository implements repository.BathhouseRepository for AccessChecker tests.
 type mockBathhouseRepository struct {

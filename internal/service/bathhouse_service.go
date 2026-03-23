@@ -83,6 +83,9 @@ type BathhouseService interface {
 	CheckCompleteness(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (*CompletenessResult, error)
 	SubmitForModeration(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
 	DuplicateBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (*domain.Bathhouse, error)
+	DeactivateBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
+	ActivateBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
+	ArchiveBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
 	// Admin moderation:
 	Approve(ctx context.Context, id uuid.UUID) error
 	Reject(ctx context.Context, id uuid.UUID) error
@@ -531,6 +534,66 @@ func (s *bathhouseService) DuplicateBathhouse(ctx context.Context, userID uuid.U
 	}
 
 	return dup, nil
+}
+
+func (s *bathhouseService) DeactivateBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
+		return err
+	}
+
+	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
+		return err
+	}
+
+	if bh.Status != domain.BathhouseStatusActive {
+		return domain.ErrInvalidInput
+	}
+
+	return s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusInactive)
+}
+
+func (s *bathhouseService) ActivateBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
+		return err
+	}
+
+	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
+		return err
+	}
+
+	if bh.Status != domain.BathhouseStatusInactive {
+		return domain.ErrInvalidInput
+	}
+
+	return s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusActive)
+}
+
+func (s *bathhouseService) ArchiveBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
+		return err
+	}
+
+	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
+		return err
+	}
+
+	if bh.Status == domain.BathhouseStatusArchived {
+		return domain.ErrInvalidInput
+	}
+
+	// Cannot archive if there are active bookings
+	activeCount, err := s.bookingRepo.CountActiveByBathhouse(ctx, bathhouseID)
+	if err != nil {
+		return err
+	}
+	if activeCount > 0 {
+		return domain.ErrBathhouseHasBookings
+	}
+
+	return s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusArchived)
 }
 
 func buildChangedFields(old, new *domain.Bathhouse) map[string]interface{} {

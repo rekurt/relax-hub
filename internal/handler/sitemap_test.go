@@ -68,6 +68,15 @@ func (m *sitemapMockBHService) SubmitForModeration(_ context.Context, _ uuid.UUI
 func (m *sitemapMockBHService) DuplicateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*domain.Bathhouse, error) {
 	return nil, nil
 }
+func (m *sitemapMockBHService) DeactivateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+func (m *sitemapMockBHService) ActivateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+func (m *sitemapMockBHService) ArchiveBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
 func (m *sitemapMockBHService) GetByAPIKey(_ context.Context, _ string) (*domain.Bathhouse, error) {
 	return nil, domain.ErrNotFound
 }

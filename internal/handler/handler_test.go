@@ -285,6 +285,15 @@ func (m *mockBathhouseService) SubmitForModeration(_ context.Context, _ uuid.UUI
 func (m *mockBathhouseService) DuplicateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*domain.Bathhouse, error) {
 	return nil, nil
 }
+func (m *mockBathhouseService) DeactivateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockBathhouseService) ActivateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockBathhouseService) ArchiveBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
 
 type mockBookingService struct {
 	createFn          func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error)

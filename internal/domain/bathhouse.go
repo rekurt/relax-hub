@@ -13,11 +13,12 @@ const (
 	BathhouseStatusInactive BathhouseStatus = "inactive"
 	BathhouseStatusPending  BathhouseStatus = "pending"
 	BathhouseStatusRejected BathhouseStatus = "rejected"
+	BathhouseStatusArchived BathhouseStatus = "archived"
 )
 
 func (s BathhouseStatus) IsValid() bool {
 	switch s {
-	case BathhouseStatusActive, BathhouseStatusInactive, BathhouseStatusPending, BathhouseStatusRejected:
+	case BathhouseStatusActive, BathhouseStatusInactive, BathhouseStatusPending, BathhouseStatusRejected, BathhouseStatusArchived:
 		return true
 	}
 	return false

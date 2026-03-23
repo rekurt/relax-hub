@@ -1181,6 +1181,97 @@ func (h *BathhouseHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, toBathhouseResponse(bh))
 }
 
+// @Summary      Deactivate bathhouse
+// @Description  Temporarily deactivate a bathhouse. It will be hidden from search but existing bookings are kept.
+// @Tags         bathhouses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/deactivate [post]
+func (h *BathhouseHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	if err := h.bathhouseService.DeactivateBathhouse(r.Context(), userID, role, id); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "bathhouse deactivated"})
+}
+
+// @Summary      Activate bathhouse
+// @Description  Restore a temporarily deactivated bathhouse back to active status.
+// @Tags         bathhouses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/activate [post]
+func (h *BathhouseHandler) Activate(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	if err := h.bathhouseService.ActivateBathhouse(r.Context(), userID, role, id); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "bathhouse activated"})
+}
+
+// @Summary      Archive bathhouse
+// @Description  Permanently archive a bathhouse. Only possible if there are no active bookings. Not reversible via API.
+// @Tags         bathhouses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Failure      409  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/archive [delete]
+func (h *BathhouseHandler) Archive(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	if err := h.bathhouseService.ArchiveBathhouse(r.Context(), userID, role, id); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "bathhouse archived"})
+}
+
 func (h *BathhouseHandler) recordBathhouseView(r *http.Request, bathhouseID uuid.UUID, userID uuid.UUID) {
 	ctx := r.Context()
 

@@ -83,13 +83,13 @@ Sequential execution of three independent subsystems: listing management enhance
 - Modify: `internal/server/router.go`
 - Modify: `internal/repository/postgres/bathhouse_repo.go`
 
-- [ ] Add "archived" status constant (inactive already exists)
-- [ ] POST /api/v1/my/bathhouses/{id}/deactivate — set status to inactive, keep bookings
-- [ ] POST /api/v1/my/bathhouses/{id}/activate — restore to active (only from inactive)
-- [ ] DELETE /api/v1/my/bathhouses/{id}/archive — archive if no active bookings, not reversible via API
-- [ ] Modify search queries to exclude inactive and archived listings
-- [ ] Write tests
-- [ ] Run `go test ./... -v -race` — must pass
+- [x] Add "archived" status constant (inactive already exists)
+- [x] POST /api/v1/my/bathhouses/{id}/deactivate — set status to inactive, keep bookings
+- [x] POST /api/v1/my/bathhouses/{id}/activate — restore to active (only from inactive)
+- [x] DELETE /api/v1/my/bathhouses/{id}/archive — archive if no active bookings, not reversible via API
+- [x] Modify search queries to exclude inactive and archived listings
+- [x] Write tests
+- [x] Run `go test ./... -v -race` — must pass
 
 ### Task 5: Add-ons Domain & Repository (FR-024)
 

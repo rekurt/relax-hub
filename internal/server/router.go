@@ -179,6 +179,9 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/completeness", p.BHHandler.CheckCompleteness)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/submit", p.BHHandler.SubmitForModeration)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/duplicate", p.BHHandler.Duplicate)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/deactivate", p.BHHandler.Deactivate)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/activate", p.BHHandler.Activate)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/bathhouses/{id}/archive", p.BHHandler.Archive)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/history", p.AuditLogHandler.ListByBathhouse)
 
 		// Bathhouse photos (owner/representative)
