@@ -255,6 +255,12 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusForbidden, "kyc_not_approved", err.Error())
 	case errors.Is(err, domain.ErrKYCPending):
 		writeErrorWithContext(w, r, http.StatusConflict, "kyc_pending", err.Error())
+	case errors.Is(err, domain.ErrOfferNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "offer_not_found", err.Error())
+	case errors.Is(err, domain.ErrOfferNotAccepted):
+		writeErrorWithContext(w, r, http.StatusForbidden, "offer_not_accepted", err.Error())
+	case errors.Is(err, domain.ErrOfferAlreadyAccepted):
+		writeErrorWithContext(w, r, http.StatusConflict, "offer_already_accepted", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

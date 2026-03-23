@@ -57,6 +57,7 @@ type RouterParams struct {
 	PayoutHandler         *handler.PayoutHandler
 	SessionHandler        *handler.SessionHandler
 	KYCHandler            *handler.KYCHandler
+	OfferHandler          *handler.OfferHandler
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
@@ -283,6 +284,10 @@ func NewRouter(p RouterParams) http.Handler {
 		// KYC (authenticated owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/kyc", p.KYCHandler.SubmitKYC)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/kyc", p.KYCHandler.GetKYCStatus)
+
+		// Offer acceptance (authenticated owner)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/offer/accept", p.OfferHandler.AcceptOffer)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/offer/status", p.OfferHandler.GetOfferStatus)
 
 		// Payouts (authenticated owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/wallet/payout", p.PayoutHandler.RequestPayout)

@@ -355,6 +355,13 @@ type KYCRepository interface {
 	Reject(ctx context.Context, id uuid.UUID, reviewedBy uuid.UUID, reason string) error
 }
 
+type OfferRepository interface {
+	Create(ctx context.Context, acceptance *domain.OfferAcceptance) error
+	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.OfferAcceptance, error)
+	GetByUserAndVersion(ctx context.Context, userID uuid.UUID, version string) (*domain.OfferAcceptance, error)
+	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.OfferAcceptance, error)
+}
+
 type WalletRepository interface {
 	Create(ctx context.Context, wallet *domain.Wallet) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Wallet, error)

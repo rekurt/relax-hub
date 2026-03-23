@@ -215,9 +215,9 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Modify: `internal/repository/interfaces.go`
 - Create: `migrations/000045_offers.up.sql`, `migrations/000045_offers.down.sql`
 
-- [ ] OfferAcceptance model, versioned acceptance tracking
-- [ ] POST /api/v1/my/offer/accept, GET /api/v1/my/offer/status
-- [ ] Write tests, run `go test ./... -v`
+- [x] OfferAcceptance model, versioned acceptance tracking
+- [x] POST /api/v1/my/offer/accept, GET /api/v1/my/offer/status
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 17: Owner Payment Details (Task 3.3)
 

@@ -67,5 +67,6 @@ var Module = fx.Module("service",
 		),
 		fx.Annotate(NewAccountDeletionService, fx.As(new(AccountDeletionService))),
 		fx.Annotate(NewKYCService, fx.As(new(KYCService))),
+		fx.Annotate(NewOfferService, fx.As(new(OfferService))),
 	),
 )

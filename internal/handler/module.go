@@ -61,5 +61,6 @@ var Module = fx.Module("handler",
 			return NewSitemapHandler(svc, cityService, redisClient, log, cfg.BaseURL)
 		},
 		NewKYCHandler,
+		NewOfferHandler,
 	),
 )

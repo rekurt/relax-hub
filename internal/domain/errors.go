@@ -89,4 +89,8 @@ var (
 	ErrKYCNotFound    = errors.New("KYC application not found")
 	ErrKYCNotApproved = errors.New("KYC verification not approved")
 	ErrKYCPending     = errors.New("KYC application already pending review")
+
+	ErrOfferNotFound        = errors.New("offer acceptance not found")
+	ErrOfferNotAccepted     = errors.New("offer not accepted")
+	ErrOfferAlreadyAccepted = errors.New("offer version already accepted")
 )
