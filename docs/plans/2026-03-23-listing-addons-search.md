@@ -51,16 +51,16 @@ Sequential execution of three independent subsystems: listing management enhance
 - Modify: `internal/service/module.go`, `internal/handler/module.go`, `internal/repository/postgres/module.go`
 - Create: `migrations/000049_audit_log.up.sql`, `migrations/000049_audit_log.down.sql`
 
-- [ ] AuditLog model: ID, EntityType, EntityID, UserID, Action, ChangedFields (JSONB), CreatedAt
-- [ ] AuditLogRepository interface: Create, ListByEntity, ListByUser
-- [ ] Postgres and mock implementations
-- [ ] AuditLogService: LogChange, GetHistory, IsSubstantialChange (address/type change or >50% photos replaced)
-- [ ] Hook into bathhouse Update: compare old vs new, log diff, auto-set status to pending on substantial change
-- [ ] GET /api/v1/admin/audit-log — admin view with filters
-- [ ] GET /api/v1/my/bathhouses/{id}/history — owner view
-- [ ] Register in fx modules
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] AuditLog model: ID, EntityType, EntityID, UserID, Action, ChangedFields (JSONB), CreatedAt
+- [x] AuditLogRepository interface: Create, ListByEntity, ListByUser
+- [x] Postgres and mock implementations
+- [x] AuditLogService: LogChange, GetHistory, IsSubstantialChange (address/type change or >50% photos replaced)
+- [x] Hook into bathhouse Update: compare old vs new, log diff, auto-set status to pending on substantial change
+- [x] GET /api/v1/admin/audit-log — admin view with filters
+- [x] GET /api/v1/my/bathhouses/{id}/history — owner view
+- [x] Register in fx modules
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 3: Listing Duplication (FR-032)
 

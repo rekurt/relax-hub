@@ -37,7 +37,9 @@ func newBathhouseTestEnv() *bathhouseTestEnv {
 	kycSvc := service.NewKYCService(kycRepo, &noopNotifService{}, log)
 	offerSvc := service.NewOfferService(offerRepo, log)
 	pdSvc := service.NewPaymentDetailsService(pdRepo, log)
-	svc := service.NewBathhouseService(bhRepo, bookingRepo, photoRepo, access, kycSvc, offerSvc, pdSvc)
+	auditLogRepo := mock.NewAuditLogRepo()
+	auditSvc := service.NewAuditLogService(auditLogRepo, log)
+	svc := service.NewBathhouseService(bhRepo, bookingRepo, photoRepo, access, kycSvc, offerSvc, pdSvc, auditSvc)
 	return &bathhouseTestEnv{
 		svc: svc, bhRepo: bhRepo, repRepo: repRepo, bookingRepo: bookingRepo,
 		photoRepo: photoRepo, kycRepo: kycRepo, offerRepo: offerRepo, pdRepo: pdRepo,

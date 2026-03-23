@@ -60,6 +60,7 @@ type RouterParams struct {
 	OfferHandler          *handler.OfferHandler
 	PaymentDetailsHandler    *handler.PaymentDetailsHandler
 	ListingDraftHandler      *handler.ListingDraftHandler
+	AuditLogHandler          *handler.AuditLogHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
@@ -177,6 +178,7 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses", p.BHHandler.MyBathhouses)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/completeness", p.BHHandler.CheckCompleteness)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/submit", p.BHHandler.SubmitForModeration)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/history", p.AuditLogHandler.ListByBathhouse)
 
 		// Bathhouse photos (owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/photos", p.PhotoHandler.ListByBathhouseOwner)
@@ -419,6 +421,9 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Get("/kyc/pending", p.KYCHandler.ListPendingKYC)
 			r.Patch("/kyc/{id}/approve", p.KYCHandler.ApproveKYC)
 			r.Patch("/kyc/{id}/reject", p.KYCHandler.RejectKYC)
+
+			// Audit log (admin only)
+			r.Get("/audit-log", p.AuditLogHandler.ListAdmin)
 
 			// Promo codes (admin only)
 			r.Post("/promo-codes", p.PromoHandler.CreateGlobal)

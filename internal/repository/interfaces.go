@@ -398,3 +398,10 @@ type WalletRepository interface {
 	GetActiveHolds(ctx context.Context, walletID uuid.UUID) ([]domain.WalletHold, error)
 	GetExpiredHolds(ctx context.Context, before time.Time) ([]domain.WalletHold, error)
 }
+
+type AuditLogRepository interface {
+	Create(ctx context.Context, log *domain.AuditLog) error
+	ListByEntity(ctx context.Context, entityType string, entityID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.AuditLog], error)
+	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.AuditLog], error)
+	List(ctx context.Context, filter domain.AuditLogFilter) (*domain.PaginatedResult[domain.AuditLog], error)
+}

@@ -95,10 +95,11 @@ type bathhouseService struct {
 	kycSvc         KYCService
 	offerSvc       OfferService
 	paymentDetails PaymentDetailsService
+	auditSvc       AuditLogService
 }
 
-func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService) BathhouseService {
-	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, photoRepo: photoRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails}
+func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService, auditSvc AuditLogService) BathhouseService {
+	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, photoRepo: photoRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails, auditSvc: auditSvc}
 }
 
 func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error) {
@@ -209,6 +210,9 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 		return nil, err
 	}
 
+	// Capture old state for audit logging
+	oldBh := *bh
+
 	if input.Name != nil {
 		bh.Name = *input.Name
 		newSlug, err := seo.GenerateUniqueSlug(*input.Name, func(slug string) (bool, error) {
@@ -278,6 +282,18 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 
 	if err := s.bhRepo.Update(ctx, bh); err != nil {
 		return nil, err
+	}
+
+	// Log the change in audit log
+	changedFields := buildChangedFields(&oldBh, bh)
+	if len(changedFields) > 0 {
+		_ = s.auditSvc.LogChange(ctx, "bathhouse", id, userID, domain.AuditActionUpdate, changedFields)
+
+		// Auto-set status to pending on substantial change (if currently active)
+		if bh.Status == domain.BathhouseStatusActive && s.auditSvc.IsSubstantialChange(&oldBh, bh) {
+			_ = s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusPending)
+			bh.Status = domain.BathhouseStatusPending
+		}
 	}
 
 	return bh, nil
@@ -461,6 +477,58 @@ func (s *bathhouseService) SubmitForModeration(ctx context.Context, userID uuid.
 	}
 
 	return s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusPending)
+}
+
+func buildChangedFields(old, new *domain.Bathhouse) map[string]interface{} {
+	changes := make(map[string]interface{})
+
+	if old.Name != new.Name {
+		changes["name"] = map[string]string{"old": old.Name, "new": new.Name}
+	}
+	if old.Description != new.Description {
+		changes["description"] = map[string]string{"old": old.Description, "new": new.Description}
+	}
+	if old.Address != new.Address {
+		changes["address"] = map[string]string{"old": old.Address, "new": new.Address}
+	}
+	if old.CityID != new.CityID {
+		changes["city_id"] = map[string]int64{"old": old.CityID, "new": new.CityID}
+	}
+	if old.Latitude != new.Latitude {
+		changes["latitude"] = map[string]float64{"old": old.Latitude, "new": new.Latitude}
+	}
+	if old.Longitude != new.Longitude {
+		changes["longitude"] = map[string]float64{"old": old.Longitude, "new": new.Longitude}
+	}
+	if old.PricePerHour != new.PricePerHour {
+		changes["price_per_hour"] = map[string]int64{"old": old.PricePerHour, "new": new.PricePerHour}
+	}
+	if old.MinDuration != new.MinDuration {
+		changes["min_duration"] = map[string]int{"old": old.MinDuration, "new": new.MinDuration}
+	}
+	if old.MaxGuests != new.MaxGuests {
+		changes["max_guests"] = map[string]int{"old": old.MaxGuests, "new": new.MaxGuests}
+	}
+	if old.HasPool != new.HasPool {
+		changes["has_pool"] = map[string]bool{"old": old.HasPool, "new": new.HasPool}
+	}
+	if old.HasSauna != new.HasSauna {
+		changes["has_sauna"] = map[string]bool{"old": old.HasSauna, "new": new.HasSauna}
+	}
+	if old.HasSteamRoom != new.HasSteamRoom {
+		changes["has_steam_room"] = map[string]bool{"old": old.HasSteamRoom, "new": new.HasSteamRoom}
+	}
+	if old.HasHotTub != new.HasHotTub {
+		changes["has_hot_tub"] = map[string]bool{"old": old.HasHotTub, "new": new.HasHotTub}
+	}
+	if old.HasBBQ != new.HasBBQ {
+		changes["has_bbq"] = map[string]bool{"old": old.HasBBQ, "new": new.HasBBQ}
+	}
+	if old.HasKaraoke != new.HasKaraoke {
+		changes["has_karaoke"] = map[string]bool{"old": old.HasKaraoke, "new": new.HasKaraoke}
+	}
+
+	return changes
 }
 
 func countAmenities(bh *domain.Bathhouse) int {
