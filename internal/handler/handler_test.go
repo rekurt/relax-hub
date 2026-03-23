@@ -31,11 +31,11 @@ func createTestContext(userID uuid.UUID, role domain.UserRole) context.Context {
 
 type mockAuthService struct {
 	registerFn      func(ctx context.Context, input service.RegisterInput) (*domain.User, string, error)
-	loginFn         func(ctx context.Context, email, password string) (*domain.User, string, error)
+	loginFn         func(ctx context.Context, email, password string) (*service.LoginResult, error)
 	parseTokenFn    func(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error)
 	registerPhoneFn func(ctx context.Context, input service.RegisterPhoneInput) error
 	loginPhoneFn    func(ctx context.Context, phone string) error
-	verifyPhoneFn   func(ctx context.Context, phone, code string) (*domain.User, string, error)
+	verifyPhoneFn   func(ctx context.Context, phone, code string) (*service.LoginResult, error)
 }
 
 func (m *mockAuthService) Register(ctx context.Context, input service.RegisterInput) (*domain.User, string, error) {
@@ -45,11 +45,11 @@ func (m *mockAuthService) Register(ctx context.Context, input service.RegisterIn
 	return nil, "", nil
 }
 
-func (m *mockAuthService) Login(ctx context.Context, email, password string) (*domain.User, string, error) {
+func (m *mockAuthService) Login(ctx context.Context, email, password string) (*service.LoginResult, error) {
 	if m.loginFn != nil {
 		return m.loginFn(ctx, email, password)
 	}
-	return nil, "", nil
+	return &service.LoginResult{}, nil
 }
 
 func (m *mockAuthService) ParseToken(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error) {
@@ -57,6 +57,14 @@ func (m *mockAuthService) ParseToken(ctx context.Context, token string) (uuid.UU
 		return m.parseTokenFn(ctx, token)
 	}
 	return uuid.Nil, "", domain.ErrUnauthorized
+}
+
+func (m *mockAuthService) ParsePartialToken(_ context.Context, _ string) (uuid.UUID, error) {
+	return uuid.Nil, domain.ErrUnauthorized
+}
+
+func (m *mockAuthService) Complete2FALogin(_ context.Context, _ uuid.UUID) (*domain.User, string, error) {
+	return nil, "", nil
 }
 
 func (m *mockAuthService) RegisterPhone(ctx context.Context, input service.RegisterPhoneInput) error {
@@ -73,11 +81,28 @@ func (m *mockAuthService) LoginPhone(ctx context.Context, phone string) error {
 	return nil
 }
 
-func (m *mockAuthService) VerifyPhone(ctx context.Context, phone, code string) (*domain.User, string, error) {
+func (m *mockAuthService) VerifyPhone(ctx context.Context, phone, code string) (*service.LoginResult, error) {
 	if m.verifyPhoneFn != nil {
 		return m.verifyPhoneFn(ctx, phone, code)
 	}
-	return nil, "", nil
+	return &service.LoginResult{}, nil
+}
+
+// noopTwoFAService is a no-op TwoFAService for tests that don't test 2FA.
+type noopTwoFAService struct{}
+
+func (n *noopTwoFAService) GenerateTOTPSecret(_ context.Context, _ uuid.UUID) (string, string, error) {
+	return "", "", nil
+}
+func (n *noopTwoFAService) EnableTOTP(_ context.Context, _ uuid.UUID, _ string) error { return nil }
+func (n *noopTwoFAService) DisableTOTP(_ context.Context, _ uuid.UUID, _ string) error { return nil }
+func (n *noopTwoFAService) VerifyTOTP(_ context.Context, _ uuid.UUID, _ string) (bool, error) {
+	return false, nil
+}
+func (n *noopTwoFAService) EnableSMS2FA(_ context.Context, _ uuid.UUID) error  { return nil }
+func (n *noopTwoFAService) SendSMS2FA(_ context.Context, _ uuid.UUID) error    { return nil }
+func (n *noopTwoFAService) VerifySMS2FA(_ context.Context, _ uuid.UUID, _ string) (bool, error) {
+	return false, nil
 }
 
 type mockUserService struct {
@@ -591,7 +616,7 @@ func TestAuthHandler_Register(t *testing.T) {
 		},
 	}
 
-	h := handler.NewAuthHandler(authSvc, nil)
+	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{})
 
 	body := jsonBody(map[string]string{
 		"email":    "test@example.com",
@@ -624,7 +649,7 @@ func TestAuthHandler_Register_InvalidBody(t *testing.T) {
 		},
 	}
 
-	h := handler.NewAuthHandler(authSvc, nil)
+	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{})
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/register", bytes.NewBufferString("invalid"))
 	req.Header.Set("Content-Type", "application/json")
@@ -640,18 +665,21 @@ func TestAuthHandler_Register_InvalidBody(t *testing.T) {
 func TestAuthHandler_Login(t *testing.T) {
 	userID := uuid.New()
 	authSvc := &mockAuthService{
-		loginFn: func(_ context.Context, email, password string) (*domain.User, string, error) {
-			return &domain.User{
-				ID:       userID,
-				Email:    email,
-				Name:     "Test",
-				Role:     domain.RoleClient,
-				IsActive: true,
-			}, "jwt-token", nil
+		loginFn: func(_ context.Context, email, password string) (*service.LoginResult, error) {
+			return &service.LoginResult{
+				User: &domain.User{
+					ID:       userID,
+					Email:    email,
+					Name:     "Test",
+					Role:     domain.RoleClient,
+					IsActive: true,
+				},
+				Token: "jwt-token",
+			}, nil
 		},
 	}
 
-	h := handler.NewAuthHandler(authSvc, nil)
+	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{})
 
 	body := jsonBody(map[string]string{
 		"email":    "test@example.com",
@@ -676,12 +704,12 @@ func TestAuthHandler_Login(t *testing.T) {
 
 func TestAuthHandler_Login_InvalidCredentials(t *testing.T) {
 	authSvc := &mockAuthService{
-		loginFn: func(_ context.Context, email, password string) (*domain.User, string, error) {
-			return nil, "", domain.ErrUnauthorized
+		loginFn: func(_ context.Context, email, password string) (*service.LoginResult, error) {
+			return nil, domain.ErrUnauthorized
 		},
 	}
 
-	h := handler.NewAuthHandler(authSvc, nil)
+	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{})
 
 	body := jsonBody(map[string]string{
 		"email":    "test@example.com",
@@ -714,7 +742,7 @@ func TestAuthHandler_Me(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewAuthHandler(authSvc, userSvc)
+	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{})
 
 	r := chi.NewRouter()
 	r.With(middleware.RequireAuth(authSvc)).Get("/auth/me", h.Me)
@@ -737,7 +765,7 @@ func TestAuthHandler_Me(t *testing.T) {
 
 func TestAuthHandler_Me_Unauthenticated(t *testing.T) {
 	authSvc := &mockAuthService{}
-	h := handler.NewAuthHandler(authSvc, nil)
+	h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{})
 
 	r := chi.NewRouter()
 	r.With(middleware.RequireAuth(authSvc)).Get("/auth/me", h.Me)
@@ -768,7 +796,7 @@ func TestAuthHandler_UpdateProfile(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewAuthHandler(authSvc, userSvc)
+	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{})
 
 	r := chi.NewRouter()
 	r.With(middleware.RequireAuth(authSvc)).Put("/auth/me", h.UpdateProfile)
@@ -803,7 +831,7 @@ func TestAuthHandler_DeleteAvatar(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewAuthHandler(authSvc, userSvc)
+	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{})
 
 	r := chi.NewRouter()
 	r.With(middleware.RequireAuth(authSvc)).Delete("/auth/me/avatar", h.DeleteAvatar)
@@ -842,7 +870,7 @@ func TestAuthHandler_GetPublicProfile(t *testing.T) {
 		},
 	}
 
-	h := handler.NewAuthHandler(&mockAuthService{}, userSvc)
+	h := handler.NewAuthHandler(&mockAuthService{}, userSvc, &noopTwoFAService{})
 
 	r := chi.NewRouter()
 	r.Get("/users/{id}/profile", h.GetPublicProfile)
@@ -869,7 +897,7 @@ func TestAuthHandler_GetPublicProfile_NotFound(t *testing.T) {
 		},
 	}
 
-	h := handler.NewAuthHandler(&mockAuthService{}, userSvc)
+	h := handler.NewAuthHandler(&mockAuthService{}, userSvc, &noopTwoFAService{})
 
 	r := chi.NewRouter()
 	r.Get("/users/{id}/profile", h.GetPublicProfile)
@@ -885,7 +913,7 @@ func TestAuthHandler_GetPublicProfile_NotFound(t *testing.T) {
 }
 
 func TestAuthHandler_GetPublicProfile_InvalidID(t *testing.T) {
-	h := handler.NewAuthHandler(&mockAuthService{}, &mockUserService{})
+	h := handler.NewAuthHandler(&mockAuthService{}, &mockUserService{}, &noopTwoFAService{})
 
 	r := chi.NewRouter()
 	r.Get("/users/{id}/profile", h.GetPublicProfile)
@@ -918,7 +946,7 @@ func TestAuthHandler_GetMyStats(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(userID, domain.RoleClient)
-	h := handler.NewAuthHandler(authSvc, userSvc)
+	h := handler.NewAuthHandler(authSvc, userSvc, &noopTwoFAService{})
 
 	r := chi.NewRouter()
 	r.With(middleware.RequireAuth(authSvc)).Get("/my/stats", h.GetMyStats)
@@ -1507,11 +1535,11 @@ func TestHandleServiceError_MapsCorrectly(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test through auth handler login, since it calls handleServiceError
 			authSvc := &mockAuthService{
-				loginFn: func(_ context.Context, _, _ string) (*domain.User, string, error) {
-					return nil, "", tt.err
+				loginFn: func(_ context.Context, _, _ string) (*service.LoginResult, error) {
+					return nil, tt.err
 				},
 			}
-			h := handler.NewAuthHandler(authSvc, nil)
+			h := handler.NewAuthHandler(authSvc, nil, &noopTwoFAService{})
 
 			body := jsonBody(map[string]string{"email": "a@b.com", "password": "x"})
 			req := httptest.NewRequest(http.MethodPost, "/login", body)

@@ -23,6 +23,14 @@ func (r UserRole) IsValid() bool {
 	return false
 }
 
+type TwoFAMethod string
+
+const (
+	TwoFANone TwoFAMethod = "none"
+	TwoFATOTP TwoFAMethod = "totp"
+	TwoFASMS  TwoFAMethod = "sms"
+)
+
 type User struct {
 	ID            uuid.UUID
 	Email         string
@@ -36,6 +44,8 @@ type User struct {
 	Bio           string
 	CityID        *int64
 	ReferralCode  string
+	TOTPSecret    string      `json:"-"`
+	TwoFAMethod   TwoFAMethod
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

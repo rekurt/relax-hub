@@ -1,0 +1,2 @@
+ALTER TABLE users ADD COLUMN totp_secret TEXT DEFAULT '';
+ALTER TABLE users ADD COLUMN two_fa_method VARCHAR(10) DEFAULT 'none';

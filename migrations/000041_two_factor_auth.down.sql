@@ -1,0 +1,2 @@
+ALTER TABLE users DROP COLUMN IF EXISTS two_fa_method;
+ALTER TABLE users DROP COLUMN IF EXISTS totp_secret;

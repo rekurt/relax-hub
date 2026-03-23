@@ -22,11 +22,19 @@ func (m *mockAuthServiceForRouter) ParseToken(_ context.Context, _ string) (uuid
 	return uuid.Nil, "", domain.ErrUnauthorized
 }
 
+func (m *mockAuthServiceForRouter) ParsePartialToken(_ context.Context, _ string) (uuid.UUID, error) {
+	return uuid.Nil, domain.ErrUnauthorized
+}
+
 func (m *mockAuthServiceForRouter) Register(_ context.Context, _ service.RegisterInput) (*domain.User, string, error) {
 	return nil, "", nil
 }
 
-func (m *mockAuthServiceForRouter) Login(_ context.Context, _, _ string) (*domain.User, string, error) {
+func (m *mockAuthServiceForRouter) Login(_ context.Context, _, _ string) (*service.LoginResult, error) {
+	return &service.LoginResult{}, nil
+}
+
+func (m *mockAuthServiceForRouter) Complete2FALogin(_ context.Context, _ uuid.UUID) (*domain.User, string, error) {
 	return nil, "", nil
 }
 
@@ -38,8 +46,29 @@ func (m *mockAuthServiceForRouter) LoginPhone(_ context.Context, _ string) error
 	return nil
 }
 
-func (m *mockAuthServiceForRouter) VerifyPhone(_ context.Context, _, _ string) (*domain.User, string, error) {
-	return nil, "", nil
+func (m *mockAuthServiceForRouter) VerifyPhone(_ context.Context, _, _ string) (*service.LoginResult, error) {
+	return &service.LoginResult{}, nil
+}
+
+// noopTwoFAServiceForRouter is a no-op TwoFAService for router tests.
+type noopTwoFAServiceForRouter struct{}
+
+func (n *noopTwoFAServiceForRouter) GenerateTOTPSecret(_ context.Context, _ uuid.UUID) (string, string, error) {
+	return "", "", nil
+}
+func (n *noopTwoFAServiceForRouter) EnableTOTP(_ context.Context, _ uuid.UUID, _ string) error {
+	return nil
+}
+func (n *noopTwoFAServiceForRouter) DisableTOTP(_ context.Context, _ uuid.UUID, _ string) error {
+	return nil
+}
+func (n *noopTwoFAServiceForRouter) VerifyTOTP(_ context.Context, _ uuid.UUID, _ string) (bool, error) {
+	return false, nil
+}
+func (n *noopTwoFAServiceForRouter) EnableSMS2FA(_ context.Context, _ uuid.UUID) error  { return nil }
+func (n *noopTwoFAServiceForRouter) SendSMS2FA(_ context.Context, _ uuid.UUID) error    { return nil }
+func (n *noopTwoFAServiceForRouter) VerifySMS2FA(_ context.Context, _ uuid.UUID, _ string) (bool, error) {
+	return false, nil
 }
 
 type mockAdminNotificationService struct{}
@@ -84,7 +113,7 @@ func testRouterParams() server.RouterParams {
 		Config:         &config.Config{Environment: "dev"},
 		CORS:           cors,
 		AuthService:    authSvc,
-		AuthHandler:    handler.NewAuthHandler(authSvc, nil),
+		AuthHandler:    handler.NewAuthHandler(authSvc, nil, &noopTwoFAServiceForRouter{}),
 		BHHandler:      handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, ""),
 		BookingHandler: handler.NewBookingHandler(nil, nil),
 		ReviewHandler:  handler.NewReviewHandler(nil, nil, logger.New(logger.LevelError)),

@@ -225,6 +225,16 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "phone_required", err.Error())
 	case errors.Is(err, domain.ErrPhoneInvalid):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "phone_invalid", err.Error())
+	case errors.Is(err, domain.Err2FARequired):
+		writeErrorWithContext(w, r, http.StatusForbidden, "2fa_required", err.Error())
+	case errors.Is(err, domain.Err2FAAlreadyEnabled):
+		writeErrorWithContext(w, r, http.StatusConflict, "2fa_already_enabled", err.Error())
+	case errors.Is(err, domain.Err2FANotEnabled):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "2fa_not_enabled", err.Error())
+	case errors.Is(err, domain.Err2FAInvalidCode):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "2fa_invalid_code", err.Error())
+	case errors.Is(err, domain.Err2FAPhoneRequired):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "2fa_phone_required", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

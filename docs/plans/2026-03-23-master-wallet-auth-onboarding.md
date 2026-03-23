@@ -134,10 +134,10 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Modify: `internal/handler/auth_handler.go`, `internal/domain/user.go`
 - Create: `migrations/000041_two_factor_auth.up.sql`, `migrations/000041_two_factor_auth.down.sql`
 
-- [ ] TOTP via pquerna/otp + SMS 2FA
-- [ ] Partial token flow for 2FA during login
-- [ ] POST /api/v1/auth/2fa/totp/enable, /verify, DELETE /totp, POST /sms/enable, POST /2fa/verify
-- [ ] Write tests, run `go test ./... -v`
+- [x] TOTP via pquerna/otp + SMS 2FA
+- [x] Partial token flow for 2FA during login
+- [x] POST /api/v1/auth/2fa/totp/enable, /verify, DELETE /totp, POST /sms/enable, POST /2fa/verify
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 10: Session Management (Task 2.3)
 

@@ -69,4 +69,10 @@ var (
 	ErrOTPMaxAttempts    = errors.New("too many verification attempts")
 	ErrPhoneRequired     = errors.New("phone number is required")
 	ErrPhoneInvalid      = errors.New("invalid phone number format")
+
+	Err2FARequired       = errors.New("two-factor authentication required")
+	Err2FAAlreadyEnabled = errors.New("two-factor authentication already enabled")
+	Err2FANotEnabled     = errors.New("two-factor authentication not enabled")
+	Err2FAInvalidCode    = errors.New("invalid two-factor authentication code")
+	Err2FAPhoneRequired  = errors.New("verified phone required for SMS 2FA")
 )

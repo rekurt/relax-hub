@@ -135,11 +135,11 @@ func TestAuthService_Login_Success(t *testing.T) {
 		Role:     domain.RoleClient,
 	})
 
-	user, token, err := svc.Login(context.Background(), "login@example.com", "mypassword")
+	result, err := svc.Login(context.Background(), "login@example.com", "mypassword")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if user == nil || token == "" {
+	if result.User == nil || result.Token == "" {
 		t.Fatal("user and token should not be nil/empty")
 	}
 }
@@ -156,7 +156,7 @@ func TestAuthService_Login_WrongPassword(t *testing.T) {
 		Role:     domain.RoleClient,
 	})
 
-	_, _, err := svc.Login(context.Background(), "login@example.com", "wrongpassword")
+	_, err := svc.Login(context.Background(), "login@example.com", "wrongpassword")
 	if !errors.Is(err, domain.ErrUnauthorized) {
 		t.Errorf("should return ErrUnauthorized, got: %v", err)
 	}
@@ -167,7 +167,7 @@ func TestAuthService_Login_NonExistentUser(t *testing.T) {
 	cfg := newTestConfig()
 	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, cfg, logger.New(logger.LevelWarn))
 
-	_, _, err := svc.Login(context.Background(), "nonexistent@example.com", "password")
+	_, err := svc.Login(context.Background(), "nonexistent@example.com", "password")
 	if !errors.Is(err, domain.ErrUnauthorized) {
 		t.Errorf("should return ErrUnauthorized, got: %v", err)
 	}
@@ -187,7 +187,7 @@ func TestAuthService_Login_BlockedUser(t *testing.T) {
 
 	_ = userRepo.SetActive(context.Background(), user.ID, false)
 
-	_, _, err := svc.Login(context.Background(), "blocked@example.com", "password")
+	_, err := svc.Login(context.Background(), "blocked@example.com", "password")
 	if !errors.Is(err, domain.ErrUserBlocked) {
 		t.Errorf("should return ErrUserBlocked for blocked user, got: %v", err)
 	}
@@ -434,17 +434,17 @@ func TestAuthService_VerifyPhone_Success(t *testing.T) {
 		IsActive: true,
 	})
 
-	user, token, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456")
+	result, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if user == nil {
+	if result.User == nil {
 		t.Fatal("user should not be nil")
 	}
-	if token == "" {
+	if result.Token == "" {
 		t.Fatal("token should not be empty")
 	}
-	if !user.PhoneVerified {
+	if !result.User.PhoneVerified {
 		t.Error("phone should be verified after successful OTP")
 	}
 }
@@ -454,7 +454,7 @@ func TestAuthService_VerifyPhone_NonExistentUser(t *testing.T) {
 	cfg := newTestConfig()
 	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, cfg, logger.New(logger.LevelWarn))
 
-	_, _, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456")
+	_, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456")
 	if !errors.Is(err, domain.ErrUnauthorized) {
 		t.Errorf("expected ErrUnauthorized, got: %v", err)
 	}

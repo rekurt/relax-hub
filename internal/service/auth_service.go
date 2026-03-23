@@ -30,13 +30,21 @@ type RegisterPhoneInput struct {
 	Name  string
 }
 
+type LoginResult struct {
+	User        *domain.User
+	Token       string
+	Requires2FA bool
+}
+
 type AuthService interface {
 	Register(ctx context.Context, input RegisterInput) (*domain.User, string, error)
-	Login(ctx context.Context, email, password string) (*domain.User, string, error)
+	Login(ctx context.Context, email, password string) (*LoginResult, error)
 	ParseToken(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error)
+	ParsePartialToken(ctx context.Context, token string) (uuid.UUID, error)
 	RegisterPhone(ctx context.Context, input RegisterPhoneInput) error
 	LoginPhone(ctx context.Context, phone string) error
-	VerifyPhone(ctx context.Context, phone string, code string) (*domain.User, string, error)
+	VerifyPhone(ctx context.Context, phone string, code string) (*LoginResult, error)
+	Complete2FALogin(ctx context.Context, userID uuid.UUID) (*domain.User, string, error)
 }
 
 type authService struct {
@@ -124,26 +132,41 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 	return user, token, nil
 }
 
-func (s *authService) Login(ctx context.Context, email, password string) (*domain.User, string, error) {
+func (s *authService) Login(ctx context.Context, email, password string) (*LoginResult, error) {
 	user, err := s.userRepo.GetByEmail(ctx, email)
 	if err != nil {
-		return nil, "", domain.ErrUnauthorized
+		return nil, domain.ErrUnauthorized
 	}
 
 	if !user.IsActive {
-		return nil, "", domain.ErrUserBlocked
+		return nil, domain.ErrUserBlocked
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return nil, "", domain.ErrUnauthorized
+		return nil, domain.ErrUnauthorized
+	}
+
+	if user.TwoFAMethod != domain.TwoFANone && user.TwoFAMethod != "" {
+		partialToken, err := s.generatePartialToken(user.ID)
+		if err != nil {
+			return nil, err
+		}
+		return &LoginResult{
+			User:        user,
+			Token:       partialToken,
+			Requires2FA: true,
+		}, nil
 	}
 
 	token, err := s.generateToken(user.ID, user.Role)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	return user, token, nil
+	return &LoginResult{
+		User:  user,
+		Token: token,
+	}, nil
 }
 
 func (s *authService) ParseToken(_ context.Context, tokenString string) (uuid.UUID, domain.UserRole, error) {
@@ -226,30 +249,30 @@ func (s *authService) LoginPhone(ctx context.Context, phone string) error {
 	return s.otpSvc.SendOTP(ctx, phone)
 }
 
-func (s *authService) VerifyPhone(ctx context.Context, phone string, code string) (*domain.User, string, error) {
+func (s *authService) VerifyPhone(ctx context.Context, phone string, code string) (*LoginResult, error) {
 	phone = normalizePhone(phone)
 	if !isValidPhone(phone) {
-		return nil, "", domain.ErrPhoneInvalid
+		return nil, domain.ErrPhoneInvalid
 	}
 
 	valid, err := s.otpSvc.VerifyOTP(ctx, phone, code)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 	if !valid {
-		return nil, "", domain.ErrOTPInvalid
+		return nil, domain.ErrOTPInvalid
 	}
 
 	user, err := s.userRepo.GetByPhone(ctx, phone)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return nil, "", domain.ErrUnauthorized
+			return nil, domain.ErrUnauthorized
 		}
-		return nil, "", err
+		return nil, err
 	}
 
 	if !user.IsActive {
-		return nil, "", domain.ErrUserBlocked
+		return nil, domain.ErrUserBlocked
 	}
 
 	if !user.PhoneVerified {
@@ -259,12 +282,27 @@ func (s *authService) VerifyPhone(ctx context.Context, phone string, code string
 		}
 	}
 
-	token, err := s.generateToken(user.ID, user.Role)
-	if err != nil {
-		return nil, "", err
+	if user.TwoFAMethod != domain.TwoFANone && user.TwoFAMethod != "" {
+		partialToken, err := s.generatePartialToken(user.ID)
+		if err != nil {
+			return nil, err
+		}
+		return &LoginResult{
+			User:        user,
+			Token:       partialToken,
+			Requires2FA: true,
+		}, nil
 	}
 
-	return user, token, nil
+	token, err := s.generateToken(user.ID, user.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LoginResult{
+		User:  user,
+		Token: token,
+	}, nil
 }
 
 func normalizePhone(phone string) string {
@@ -297,8 +335,72 @@ func isValidPhone(phone string) bool {
 	return true
 }
 
+const partialTokenTTL = 5 * time.Minute
+
 func (s *authService) generateToken(userID uuid.UUID, role domain.UserRole) (string, error) {
 	return generateJWT(userID, role, s.jwtSecret, s.tokenTTL)
+}
+
+func (s *authService) generatePartialToken(userID uuid.UUID) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id":     userID.String(),
+		"2fa_pending": true,
+		"exp":         time.Now().Add(partialTokenTTL).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(s.jwtSecret)
+}
+
+func (s *authService) ParsePartialToken(_ context.Context, tokenString string) (uuid.UUID, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return s.jwtSecret, nil
+	})
+	if err != nil {
+		return uuid.Nil, domain.ErrUnauthorized
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return uuid.Nil, domain.ErrUnauthorized
+	}
+
+	pending, ok := claims["2fa_pending"].(bool)
+	if !ok || !pending {
+		return uuid.Nil, domain.ErrUnauthorized
+	}
+
+	userIDStr, ok := claims["user_id"].(string)
+	if !ok {
+		return uuid.Nil, domain.ErrUnauthorized
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return uuid.Nil, domain.ErrUnauthorized
+	}
+
+	return userID, nil
+}
+
+func (s *authService) Complete2FALogin(ctx context.Context, userID uuid.UUID) (*domain.User, string, error) {
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if !user.IsActive {
+		return nil, "", domain.ErrUserBlocked
+	}
+
+	token, err := s.generateToken(user.ID, user.Role)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return user, token, nil
 }
 
 func isValidEmail(email string) bool {
