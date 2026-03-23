@@ -21,51 +21,69 @@ func NewBookingHandler(bookingService service.BookingService, paymentService ser
 	return &BookingHandler{bookingService: bookingService, paymentService: paymentService}
 }
 
+type addOnSelectionRequest struct {
+	AddOnID  string `json:"addon_id"`
+	Quantity int    `json:"quantity"`
+}
+
 type createBookingRequest struct {
-	BathhouseID      string `json:"bathhouse_id"`
-	StartTime        string `json:"start_time"`
-	EndTime          string `json:"end_time"`
-	GuestCount       int    `json:"guest_count"`
-	Comment          string `json:"comment"`
-	UsePoints        int64  `json:"use_points,omitempty"`
-	UseReferralBonus int64  `json:"use_referral_bonus,omitempty"`
-	PromoCode        string `json:"promo_code,omitempty"`
-	CertificateCode  string `json:"certificate_code,omitempty"`
+	BathhouseID      string                  `json:"bathhouse_id"`
+	StartTime        string                  `json:"start_time"`
+	EndTime          string                  `json:"end_time"`
+	GuestCount       int                     `json:"guest_count"`
+	Comment          string                  `json:"comment"`
+	UsePoints        int64                   `json:"use_points,omitempty"`
+	UseReferralBonus int64                   `json:"use_referral_bonus,omitempty"`
+	PromoCode        string                  `json:"promo_code,omitempty"`
+	CertificateCode  string                  `json:"certificate_code,omitempty"`
+	AddOns           []addOnSelectionRequest `json:"addons,omitempty"`
+}
+
+type bookingAddOnResponse struct {
+	ID         string `json:"id"`
+	AddOnID    string `json:"addon_id"`
+	Name       string `json:"name"`
+	Quantity   int    `json:"quantity"`
+	UnitPrice  int64  `json:"unit_price"`
+	TotalPrice int64  `json:"total_price"`
 }
 
 type bookingResponse struct {
-	ID                string    `json:"id"`
-	UserID            string    `json:"user_id"`
-	BathhouseID       string    `json:"bathhouse_id"`
-	StartTime         time.Time `json:"start_time"`
-	EndTime           time.Time `json:"end_time"`
-	GuestCount        int       `json:"guest_count"`
-	TotalPrice        int64     `json:"total_price"`
-	OriginalPrice     int64     `json:"original_price,omitempty"`
-	PromoDiscount       int64     `json:"promo_discount,omitempty"`
-	CertificateDiscount int64     `json:"certificate_discount,omitempty"`
-	Status              string    `json:"status"`
-	PaymentStatus     string    `json:"payment_status,omitempty"`
-	Comment           string    `json:"comment"`
-	EarnedPoints      int64     `json:"earned_points,omitempty"`
-	LoyaltyDiscount   int64     `json:"loyalty_discount,omitempty"`
-	PointsSpent       int64     `json:"points_spent,omitempty"`
-	ReferralBonusUsed int64     `json:"referral_bonus_used,omitempty"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
+	ID                  string                `json:"id"`
+	UserID              string                `json:"user_id"`
+	BathhouseID         string                `json:"bathhouse_id"`
+	StartTime           time.Time             `json:"start_time"`
+	EndTime             time.Time             `json:"end_time"`
+	GuestCount          int                   `json:"guest_count"`
+	TotalPrice          int64                 `json:"total_price"`
+	AddOnTotal          int64                 `json:"addon_total,omitempty"`
+	OriginalPrice       int64                 `json:"original_price,omitempty"`
+	PromoDiscount       int64                 `json:"promo_discount,omitempty"`
+	CertificateDiscount int64                 `json:"certificate_discount,omitempty"`
+	Status              string                `json:"status"`
+	PaymentStatus       string                `json:"payment_status,omitempty"`
+	Comment             string                `json:"comment"`
+	EarnedPoints        int64                 `json:"earned_points,omitempty"`
+	LoyaltyDiscount     int64                 `json:"loyalty_discount,omitempty"`
+	PointsSpent         int64                 `json:"points_spent,omitempty"`
+	ReferralBonusUsed   int64                 `json:"referral_bonus_used,omitempty"`
+	AddOns              []bookingAddOnResponse `json:"addons,omitempty"`
+	CreatedAt           time.Time             `json:"created_at"`
+	UpdatedAt           time.Time             `json:"updated_at"`
 }
 
 func toBookingResponse(b *domain.Booking) bookingResponse {
 	return bookingResponse{
-		ID:          b.ID.String(),
-		UserID:      b.UserID.String(),
-		BathhouseID: b.BathhouseID.String(),
-		StartTime:   b.StartTime,
-		EndTime:     b.EndTime,
-		GuestCount:  b.GuestCount,
-		TotalPrice:  b.TotalPrice,
-		Status:      string(b.Status),
-		Comment:     b.Comment,
+		ID:                b.ID.String(),
+		UserID:            b.UserID.String(),
+		BathhouseID:       b.BathhouseID.String(),
+		StartTime:         b.StartTime,
+		EndTime:           b.EndTime,
+		GuestCount:        b.GuestCount,
+		TotalPrice:        b.TotalPrice,
+		AddOnTotal:        b.AddOnTotal,
+		Status:            string(b.Status),
+		Comment:           b.Comment,
 		PointsSpent:       b.PointsSpent,
 		ReferralBonusUsed: b.ReferralBonusUsed,
 		CreatedAt:         b.CreatedAt,
@@ -82,6 +100,19 @@ func toBookingResultResponse(r *service.BookingResult) bookingResponse {
 	resp.OriginalPrice = r.OriginalPrice
 	resp.PromoDiscount = r.PromoDiscount
 	resp.CertificateDiscount = r.CertificateDiscount
+	if len(r.AddOns) > 0 {
+		resp.AddOns = make([]bookingAddOnResponse, len(r.AddOns))
+		for i, a := range r.AddOns {
+			resp.AddOns[i] = bookingAddOnResponse{
+				ID:         a.ID.String(),
+				AddOnID:    a.AddOnID.String(),
+				Name:       a.Name,
+				Quantity:   a.Quantity,
+				UnitPrice:  a.UnitPrice,
+				TotalPrice: a.TotalPrice,
+			}
+		}
+	}
 	return resp
 }
 
@@ -142,6 +173,19 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	userID := middleware.GetUserID(r.Context())
 
+	var addOnSelections []service.AddOnSelection
+	for _, a := range req.AddOns {
+		addonID, err := uuid.Parse(a.AddOnID)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid addon_id")
+			return
+		}
+		addOnSelections = append(addOnSelections, service.AddOnSelection{
+			AddOnID:  addonID,
+			Quantity: a.Quantity,
+		})
+	}
+
 	result, err := h.bookingService.Create(r.Context(), userID, service.CreateBookingInput{
 		BathhouseID:      bathhouseID,
 		StartTime:        startTime,
@@ -152,6 +196,7 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 		UseReferralBonus: req.UseReferralBonus,
 		PromoCode:        req.PromoCode,
 		CertificateCode:  req.CertificateCode,
+		AddOns:           addOnSelections,
 	})
 	if err != nil {
 		handleServiceError(w, err)

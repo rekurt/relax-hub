@@ -24,7 +24,9 @@ func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.Boo
 	log := logger.New(logger.LevelWarn)
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
+	addonRepo := mock.NewAddOnRepo()
+	addonSvc := service.NewAddOnService(addonRepo, access, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, repRepo, pricingSvc, pricingRepo, loyaltySvc, loyaltyRepo
 }
 
@@ -766,7 +768,9 @@ func newBookingServiceWithReferral() (service.BookingService, *mock.BathhouseRep
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	userRepo := mock.NewUserRepo()
 	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), pricingSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
+	addonRepo := mock.NewAddOnRepo()
+	addonSvc := service.NewAddOnService(addonRepo, access, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, referralSvc, userRepo
 }
 
@@ -895,7 +899,9 @@ func newBookingServiceWithPromo() (service.BookingService, *mock.BathhouseRepo, 
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	promoSvc := service.NewPromoService(promoRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), pricingSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
+	addonRepo := mock.NewAddOnRepo()
+	addonSvc := service.NewAddOnService(addonRepo, access, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, promoSvc
 }
 
@@ -1115,7 +1121,9 @@ func newBookingServiceWithPayment() (service.BookingService, *mock.BathhouseRepo
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	paymentSvc := &trackingPaymentService{}
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, paymentSvc, access, &noopNotifService{}, log)
+	addonRepo := mock.NewAddOnRepo()
+	addonSvc := service.NewAddOnService(addonRepo, access, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, paymentSvc, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, paymentSvc
 }
 
@@ -1204,7 +1212,9 @@ func newBookingServiceWithSlotBlocks() (service.BookingService, *mock.BathhouseR
 	log := logger.New(logger.LevelWarn)
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, pricingSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
+	addonRepo := mock.NewAddOnRepo()
+	addonSvc := service.NewAddOnService(addonRepo, access, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, slotBlockRepo
 }
 
@@ -1369,5 +1379,235 @@ func TestBookingService_GetAvailableSlots_WithSlotBlock(t *testing.T) {
 		if slot.StartTime.Hour() == 12 && !slot.Available {
 			t.Error("12:00-13:00 slot should be available")
 		}
+	}
+}
+
+// --- Booking with Add-ons ---
+
+func newBookingServiceWithAddOns() (service.BookingService, *mock.BathhouseRepo, *mock.BookingRepo, *mock.AddOnRepo) {
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	pricingRepo := mock.NewPricingRuleRepo()
+	loyaltyRepo := mock.NewLoyaltyRepo()
+	addonRepo := mock.NewAddOnRepo()
+	access := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, access, log)
+	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
+	addonSvc := service.NewAddOnService(addonRepo, access, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, access, &noopNotifService{}, log)
+	return svc, bhRepo, bookingRepo, addonRepo
+}
+
+func TestBookingService_Create_WithAddOns_PerItem(t *testing.T) {
+	svc, bhRepo, _, addonRepo := newBookingServiceWithAddOns()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID) // PricePerHour = 5000
+
+	// Create add-on: broom 500 kopecks per item
+	addon := &domain.AddOn{
+		ID:          uuid.New(),
+		BathhouseID: bh.ID,
+		Name:        "Веник",
+		Price:       500,
+		Unit:        domain.AddOnUnitPerItem,
+		IsActive:    true,
+	}
+	_ = addonRepo.Create(context.Background(), addon)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+		AddOns: []service.AddOnSelection{
+			{AddOnID: addon.ID, Quantity: 3},
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Base price: 5000 * 2 = 10000
+	// Add-on: 500 * 3 = 1500
+	// Total: 11500
+	expectedAddOnTotal := int64(1500)
+	expectedTotal := int64(11500)
+
+	if result.Booking.AddOnTotal != expectedAddOnTotal {
+		t.Errorf("AddOnTotal = %d, want %d", result.Booking.AddOnTotal, expectedAddOnTotal)
+	}
+	if result.Booking.TotalPrice != expectedTotal {
+		t.Errorf("TotalPrice = %d, want %d", result.Booking.TotalPrice, expectedTotal)
+	}
+	if len(result.AddOns) != 1 {
+		t.Fatalf("expected 1 booking addon, got %d", len(result.AddOns))
+	}
+	if result.AddOns[0].Name != "Веник" {
+		t.Errorf("addon name = %q, want %q", result.AddOns[0].Name, "Веник")
+	}
+	if result.AddOns[0].Quantity != 3 {
+		t.Errorf("addon quantity = %d, want 3", result.AddOns[0].Quantity)
+	}
+	if result.AddOns[0].TotalPrice != 1500 {
+		t.Errorf("addon total = %d, want 1500", result.AddOns[0].TotalPrice)
+	}
+}
+
+func TestBookingService_Create_WithAddOns_PerHour(t *testing.T) {
+	svc, bhRepo, _, addonRepo := newBookingServiceWithAddOns()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	addon := &domain.AddOn{
+		ID:          uuid.New(),
+		BathhouseID: bh.ID,
+		Name:        "Аренда полотенец",
+		Price:       200,
+		Unit:        domain.AddOnUnitPerHour,
+		IsActive:    true,
+	}
+	_ = addonRepo.Create(context.Background(), addon)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(3 * time.Hour) // 3 hours
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  2,
+		AddOns: []service.AddOnSelection{
+			{AddOnID: addon.ID, Quantity: 2},
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Base: 5000 * 3 = 15000
+	// Add-on per_hour: 200 * 2 * 3 = 1200
+	expectedAddOnTotal := int64(1200)
+	if result.Booking.AddOnTotal != expectedAddOnTotal {
+		t.Errorf("AddOnTotal = %d, want %d", result.Booking.AddOnTotal, expectedAddOnTotal)
+	}
+	if result.Booking.TotalPrice != 15000+1200 {
+		t.Errorf("TotalPrice = %d, want %d", result.Booking.TotalPrice, 15000+1200)
+	}
+}
+
+func TestBookingService_Create_WithAddOns_PerPerson(t *testing.T) {
+	svc, bhRepo, _, addonRepo := newBookingServiceWithAddOns()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	addon := &domain.AddOn{
+		ID:          uuid.New(),
+		BathhouseID: bh.ID,
+		Name:        "Тапочки",
+		Price:       100,
+		Unit:        domain.AddOnUnitPerPerson,
+		IsActive:    true,
+	}
+	_ = addonRepo.Create(context.Background(), addon)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+		AddOns: []service.AddOnSelection{
+			{AddOnID: addon.ID, Quantity: 1},
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Base: 5000 * 2 = 10000
+	// Add-on per_person: 100 * 1 * 5 = 500
+	expectedAddOnTotal := int64(500)
+	if result.Booking.AddOnTotal != expectedAddOnTotal {
+		t.Errorf("AddOnTotal = %d, want %d", result.Booking.AddOnTotal, expectedAddOnTotal)
+	}
+}
+
+func TestBookingService_Create_WithAddOns_WrongBathhouse(t *testing.T) {
+	svc, bhRepo, _, addonRepo := newBookingServiceWithAddOns()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Create add-on for different bathhouse
+	addon := &domain.AddOn{
+		ID:          uuid.New(),
+		BathhouseID: uuid.New(), // different bathhouse
+		Name:        "Веник",
+		Price:       500,
+		Unit:        domain.AddOnUnitPerItem,
+		IsActive:    true,
+	}
+	_ = addonRepo.Create(context.Background(), addon)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	_, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+		AddOns: []service.AddOnSelection{
+			{AddOnID: addon.ID, Quantity: 1},
+		},
+	})
+
+	if !errors.Is(err, domain.ErrAddOnNotFound) {
+		t.Errorf("expected ErrAddOnNotFound, got: %v", err)
+	}
+}
+
+func TestBookingService_Create_WithoutAddOns_Works(t *testing.T) {
+	svc, bhRepo, _, _ := newBookingServiceWithAddOns()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Booking.AddOnTotal != 0 {
+		t.Errorf("AddOnTotal = %d, want 0", result.Booking.AddOnTotal)
+	}
+	if result.Booking.TotalPrice != 10000 {
+		t.Errorf("TotalPrice = %d, want 10000", result.Booking.TotalPrice)
+	}
+	if len(result.AddOns) != 0 {
+		t.Errorf("expected 0 booking add-ons, got %d", len(result.AddOns))
 	}
 }

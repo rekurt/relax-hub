@@ -129,6 +129,28 @@ func (n *noopCertificateService) ListByUser(_ context.Context, _ uuid.UUID, _, _
 	return &domain.PaginatedResult[domain.GiftCertificate]{}, nil
 }
 
+// noopAddOnService is a no-op AddOnService for tests that don't verify add-ons.
+type noopAddOnService struct{}
+
+func (n *noopAddOnService) CreateAddOn(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ *domain.AddOn) (*domain.AddOn, error) {
+	return &domain.AddOn{}, nil
+}
+func (n *noopAddOnService) UpdateAddOn(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ *domain.AddOn) (*domain.AddOn, error) {
+	return &domain.AddOn{}, nil
+}
+func (n *noopAddOnService) DeleteAddOn(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+func (n *noopAddOnService) ListAddOns(_ context.Context, _ uuid.UUID) ([]domain.AddOn, error) {
+	return nil, nil
+}
+func (n *noopAddOnService) GetAddOn(_ context.Context, _ uuid.UUID) (*domain.AddOn, error) {
+	return &domain.AddOn{}, nil
+}
+func (n *noopAddOnService) CalculateAddOnTotal(_ context.Context, _ []service.AddOnSelection, _ uuid.UUID, _ int, _ int) (int64, []service.AddOnLineItem, error) {
+	return 0, nil, nil
+}
+
 func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID) *domain.Bathhouse {
 	t.Helper()
 	wh := make([]domain.WorkingHours, 7)

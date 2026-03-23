@@ -1,0 +1,1 @@
+ALTER TABLE bookings ADD COLUMN addon_total BIGINT NOT NULL DEFAULT 0;

@@ -132,12 +132,12 @@ Sequential execution of three independent subsystems: listing management enhance
 - Modify: `internal/handler/booking_handler.go`
 - Modify: `internal/domain/booking.go`
 
-- [ ] Add AddOnTotal (int64) field to Booking model
-- [ ] Extend CreateBookingRequest with AddOns []AddOnSelection (addon_id + quantity)
-- [ ] In booking creation: validate add-on IDs belong to bathhouse, validate active, calculate totals by unit type, store booking_addons, update total price
-- [ ] Include add-ons in booking detail response
-- [ ] Write tests for booking with add-ons
-- [ ] Run `go test ./... -v -race` — must pass
+- [x] Add AddOnTotal (int64) field to Booking model
+- [x] Extend CreateBookingRequest with AddOns []AddOnSelection (addon_id + quantity)
+- [x] In booking creation: validate add-on IDs belong to bathhouse, validate active, calculate totals by unit type, store booking_addons, update total price
+- [x] Include add-ons in booking detail response
+- [x] Write tests for booking with add-ons
+- [x] Run `go test ./... -v -race` — must pass
 
 ### Task 8: Full-text Search (FR-038)
 

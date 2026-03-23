@@ -21,21 +21,23 @@ type CreateBookingInput struct {
 	EndTime          time.Time
 	GuestCount       int
 	Comment          string
-	UsePoints        int64  // Optional: loyalty points to spend (reduces total price)
-	UseReferralBonus int64  // Optional: referral bonus to spend (reduces total price)
-	PromoCode        string // Optional: promo code to apply for a discount
-	CertificateCode  string // Optional: gift certificate code to apply
+	UsePoints        int64            // Optional: loyalty points to spend (reduces total price)
+	UseReferralBonus int64            // Optional: referral bonus to spend (reduces total price)
+	PromoCode        string           // Optional: promo code to apply for a discount
+	CertificateCode  string           // Optional: gift certificate code to apply
+	AddOns           []AddOnSelection // Optional: add-ons to include in booking
 }
 
 type BookingResult struct {
-	Booking           *domain.Booking
-	EarnedPoints      int64 // Points earned (only on complete)
-	LoyaltyDiscount   int64 // Discount from loyalty level in kopecks
-	PointsSpent       int64 // Points spent on this booking
-	ReferralBonusUsed int64 // Referral bonus used on this booking
-	OriginalPrice     int64 // Price before promo code discount
-	PromoDiscount     int64 // Discount from promo code in kopecks
-	CertificateDiscount int64 // Discount from gift certificate in kopecks
+	Booking             *domain.Booking
+	AddOns              []domain.BookingAddOn // Add-ons included in the booking
+	EarnedPoints        int64                 // Points earned (only on complete)
+	LoyaltyDiscount     int64                 // Discount from loyalty level in kopecks
+	PointsSpent         int64                 // Points spent on this booking
+	ReferralBonusUsed   int64                 // Referral bonus used on this booking
+	OriginalPrice       int64                 // Price before promo code discount
+	PromoDiscount       int64                 // Discount from promo code in kopecks
+	CertificateDiscount int64                 // Discount from gift certificate in kopecks
 }
 
 type TimeSlot struct {
@@ -60,7 +62,9 @@ type bookingService struct {
 	bookingRepo   repository.BookingRepository
 	bhRepo        repository.BathhouseRepository
 	slotBlockRepo repository.SlotBlockRepository
+	addonRepo     repository.AddOnRepository
 	pricingSvc    PricingService
+	addonSvc      AddOnService
 	loyaltySvc    LoyaltyService
 	referralSvc   ReferralService
 	promoSvc      PromoService
@@ -75,7 +79,9 @@ func NewBookingService(
 	bookingRepo repository.BookingRepository,
 	bhRepo repository.BathhouseRepository,
 	slotBlockRepo repository.SlotBlockRepository,
+	addonRepo repository.AddOnRepository,
 	pricingSvc PricingService,
+	addonSvc AddOnService,
 	loyaltySvc LoyaltyService,
 	referralSvc ReferralService,
 	promoSvc PromoService,
@@ -89,7 +95,9 @@ func NewBookingService(
 		bookingRepo:   bookingRepo,
 		bhRepo:        bhRepo,
 		slotBlockRepo: slotBlockRepo,
+		addonRepo:     addonRepo,
 		pricingSvc:    pricingSvc,
+		addonSvc:      addonSvc,
 		loyaltySvc:    loyaltySvc,
 		referralSvc:   referralSvc,
 		promoSvc:      promoSvc,
@@ -159,6 +167,17 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	totalPrice, err := s.pricingSvc.CalculatePrice(ctx, input.BathhouseID, bh.PricePerHour, input.StartTime, input.EndTime)
 	if err != nil {
 		return nil, err
+	}
+
+	// Calculate add-on totals
+	var addOnTotal int64
+	var addOnLineItems []AddOnLineItem
+	if len(input.AddOns) > 0 {
+		addOnTotal, addOnLineItems, err = s.addonSvc.CalculateAddOnTotal(ctx, input.AddOns, input.BathhouseID, durationHours, input.GuestCount)
+		if err != nil {
+			return nil, err
+		}
+		totalPrice += addOnTotal
 	}
 
 	// Apply loyalty discount
@@ -246,6 +265,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		EndTime:           input.EndTime,
 		GuestCount:        input.GuestCount,
 		TotalPrice:        totalPrice,
+		AddOnTotal:        addOnTotal,
 		PointsSpent:       pointsSpent,
 		ReferralBonusUsed: referralBonusUsed,
 		Status:            domain.BookingPending,
@@ -261,6 +281,25 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	// Create booking first so loyalty_transactions FK on booking_id is valid
 	if err := s.bookingRepo.Create(ctx, booking); err != nil {
 		return nil, err
+	}
+
+	// Store booking add-ons
+	var bookingAddOns []domain.BookingAddOn
+	for _, item := range addOnLineItems {
+		ba := &domain.BookingAddOn{
+			ID:         uuid.New(),
+			BookingID:  bookingID,
+			AddOnID:    item.AddOnID,
+			Name:       item.Name,
+			Quantity:   item.Quantity,
+			UnitPrice:  item.UnitPrice,
+			TotalPrice: item.TotalPrice,
+			CreatedAt:  now,
+		}
+		if err := s.addonRepo.CreateBookingAddOn(ctx, ba); err != nil {
+			s.logger.Error("failed to store booking add-on", "booking_id", bookingID, "addon_id", item.AddOnID, "error", err)
+		}
+		bookingAddOns = append(bookingAddOns, *ba)
 	}
 
 	// Spend loyalty points after booking exists in DB
@@ -355,6 +394,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 
 	return &BookingResult{
 		Booking:             booking,
+		AddOns:              bookingAddOns,
 		LoyaltyDiscount:     loyaltyDiscount,
 		PointsSpent:         pointsSpent,
 		ReferralBonusUsed:   referralBonusUsed,
