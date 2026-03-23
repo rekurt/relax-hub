@@ -26,6 +26,7 @@ type CronScheduler struct {
 	walletSvc          service.WalletService
 	walletRepo         repository.WalletRepository
 	accountDeletionSvc service.AccountDeletionService
+	sessionSvc         service.SessionService
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -40,6 +41,7 @@ func NewCronScheduler(
 	walletSvc service.WalletService,
 	walletRepo repository.WalletRepository,
 	accountDeletionSvc service.AccountDeletionService,
+	sessionSvc service.SessionService,
 ) *CronScheduler {
 	return &CronScheduler{
 		c:                  cron.New(),
@@ -53,6 +55,7 @@ func NewCronScheduler(
 		walletSvc:          walletSvc,
 		walletRepo:         walletRepo,
 		accountDeletionSvc: accountDeletionSvc,
+		sessionSvc:         sessionSvc,
 	}
 }
 
@@ -146,6 +149,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register account deletion reminders: %w", err)
 	}
 	cs.logger.Info("Registered account deletion reminders job at 07:00 UTC")
+
+	// Session cleanup at 03:15 UTC daily
+	if _, err := cs.c.AddFunc("15 3 * * *", cs.handleSessionCleanup); err != nil {
+		cs.logger.Error("Failed to register session cleanup job", "error", err)
+		return fmt.Errorf("failed to register session cleanup: %w", err)
+	}
+	cs.logger.Info("Registered session cleanup job at 03:15 UTC")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")

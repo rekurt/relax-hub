@@ -72,14 +72,6 @@ func (s *otpService) SendOTP(ctx context.Context, phone string) error {
 		return fmt.Errorf("store OTP: %w", err)
 	}
 
-	// Use Incr + ExpireNX so the window TTL is only set on first request (fixed window)
-	pipe := s.redis.Pipeline()
-	pipe.Incr(ctx, rateKey)
-	pipe.ExpireNX(ctx, rateKey, otpRateWindow)
-	if _, err := pipe.Exec(ctx); err != nil {
-		return fmt.Errorf("update OTP rate limit: %w", err)
-	}
-
 	message := fmt.Sprintf("Ваш код подтверждения: %s", code)
 	if err := s.smsProvider.SendSMS(ctx, phone, message); err != nil {
 		maskedPhone := phone
@@ -88,6 +80,17 @@ func (s *otpService) SendOTP(ctx context.Context, phone string) error {
 		}
 		s.logger.Error("Failed to send OTP SMS", "phone", maskedPhone, "error", err)
 		return fmt.Errorf("send OTP SMS: %w", err)
+	}
+
+	// Increment rate limit only after successful SMS delivery.
+	// This prevents penalizing users for SMS provider failures.
+	// Use Incr + ExpireNX so the window TTL is only set on first request (fixed window).
+	pipe := s.redis.Pipeline()
+	pipe.Incr(ctx, rateKey)
+	pipe.ExpireNX(ctx, rateKey, otpRateWindow)
+	if _, err := pipe.Exec(ctx); err != nil {
+		s.logger.Error("failed to update OTP rate limit after send", "error", err)
+		// Don't fail the request -- the OTP was already sent successfully
 	}
 
 	return nil

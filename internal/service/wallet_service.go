@@ -234,17 +234,22 @@ func (s *walletService) CaptureHold(ctx context.Context, holdID uuid.UUID) (*dom
 		newHeldAmount = 0
 	}
 
-	// Update balance first, then mark hold as captured.
-	// If balance update succeeds but hold status update fails, the balance is deducted
-	// but the hold remains active -- a subsequent retry can still capture it safely.
-	// The reverse order (hold first, then balance) would leak money on partial failure.
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, newHeldAmount); err != nil {
-		return nil, err
-	}
-
+	// Mark hold as captured first, then deduct balance.
+	// If hold status update succeeds but balance update fails, the hold is "captured"
+	// but balance is unchanged -- we revert the hold status back to "active".
+	// This prevents double-deduction on retry (if balance were updated first and hold
+	// status update failed, a retry would deduct the balance again).
 	now := time.Now()
 	if err := s.walletRepo.UpdateHoldStatus(ctx, holdID, domain.WalletHoldStatusCaptured, &now, nil); err != nil {
-		s.logger.Error("hold captured but status update failed", "hold_id", holdID, "error", err)
+		return nil, fmt.Errorf("capture hold status: %w", err)
+	}
+
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, newHeldAmount); err != nil {
+		// Revert hold status on balance update failure
+		if revertErr := s.walletRepo.UpdateHoldStatus(ctx, holdID, domain.WalletHoldStatusActive, nil, nil); revertErr != nil {
+			s.logger.Error("failed to revert hold status after balance update failure", "hold_id", holdID, "error", revertErr)
+		}
+		return nil, err
 	}
 
 	tx := &domain.WalletTransaction{

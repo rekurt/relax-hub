@@ -107,7 +107,7 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrPaymentNotFound→404, ErrPaymentAlreadyProcessed→409, ErrRefundExceedsAmount→400, ErrPaymentFailed→400
 - ErrWalletNotFound→404, ErrInsufficientWalletBalance→400, ErrWalletLimitExceeded→400, ErrWalletFrozen→403
 - ErrHoldNotFound→404, ErrHoldExpired→400, ErrTopUpBelowMinimum→400, ErrTopUpAboveMaximum→400
-- ErrOTPRateLimited→429, ErrOTPInvalid→400, ErrOTPExpired→400, ErrOTPMaxAttempts→400
+- ErrOTPRateLimited→429, ErrOTPInvalid→400, ErrOTPExpired→400, ErrOTPMaxAttempts→429
 - ErrSessionNotFound→404, ErrSessionExpired→401
 - ErrAccountDeletionPending→409, ErrAccountDeletionNotPending→400, ErrAccountDeleted→403
 - ErrKYCNotFound→404, ErrKYCNotApproved→403, ErrKYCPending→409
