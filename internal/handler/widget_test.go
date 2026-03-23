@@ -72,6 +72,9 @@ func (m *mockWidgetBathhouseService) CheckCompleteness(_ context.Context, _ uuid
 func (m *mockWidgetBathhouseService) SubmitForModeration(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
 	return nil
 }
+func (m *mockWidgetBathhouseService) DuplicateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*domain.Bathhouse, error) {
+	return nil, nil
+}
 
 // Mock BookingService for widget testing
 type mockWidgetBookingService struct {

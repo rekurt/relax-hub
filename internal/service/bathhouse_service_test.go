@@ -724,3 +724,81 @@ func TestBathhouseService_SubmitForModeration_Success(t *testing.T) {
 		t.Errorf("status = %q, want %q", updated.Status, domain.BathhouseStatusPending)
 	}
 }
+
+func TestBathhouseService_Duplicate_Success(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	dup, err := env.svc.DuplicateBathhouse(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if dup.ID == bh.ID {
+		t.Error("duplicate should have a new ID")
+	}
+	if dup.Name != bh.Name+" (копия)" {
+		t.Errorf("name = %q, want %q", dup.Name, bh.Name+" (копия)")
+	}
+	if dup.Slug == bh.Slug {
+		t.Error("duplicate should have a different slug")
+	}
+	if dup.Status != domain.BathhouseStatusPending {
+		t.Errorf("status = %q, want %q", dup.Status, domain.BathhouseStatusPending)
+	}
+	if dup.OwnerID != ownerID {
+		t.Errorf("ownerID = %v, want %v", dup.OwnerID, ownerID)
+	}
+	if dup.PricePerHour != bh.PricePerHour {
+		t.Errorf("price = %d, want %d", dup.PricePerHour, bh.PricePerHour)
+	}
+	if dup.ApiKey == bh.ApiKey {
+		t.Error("duplicate should have a new API key")
+	}
+	if len(dup.WorkingHours) != len(bh.WorkingHours) {
+		t.Errorf("working hours count = %d, want %d", len(dup.WorkingHours), len(bh.WorkingHours))
+	}
+}
+
+func TestBathhouseService_Duplicate_Forbidden(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	otherOwnerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	_, err := env.svc.DuplicateBathhouse(context.Background(), otherOwnerID, domain.RoleOwner, bh.ID)
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("expected ErrForbidden, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Duplicate_NotFound(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	_, err := env.svc.DuplicateBathhouse(context.Background(), ownerID, domain.RoleOwner, uuid.New())
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("expected ErrNotFound, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Duplicate_RepresentativeAllowed(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	repUserID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	rep := &domain.Representative{
+		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
+	}
+	_ = env.repRepo.Create(context.Background(), rep)
+
+	dup, err := env.svc.DuplicateBathhouse(context.Background(), repUserID, domain.RoleRepresentative, bh.ID)
+	if err != nil {
+		t.Fatalf("representative should be allowed to duplicate, got: %v", err)
+	}
+	if dup.Name != bh.Name+" (копия)" {
+		t.Errorf("name = %q, want %q", dup.Name, bh.Name+" (копия)")
+	}
+}

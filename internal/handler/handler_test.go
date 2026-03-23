@@ -282,6 +282,9 @@ func (m *mockBathhouseService) CheckCompleteness(_ context.Context, _ uuid.UUID,
 func (m *mockBathhouseService) SubmitForModeration(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
 	return nil
 }
+func (m *mockBathhouseService) DuplicateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*domain.Bathhouse, error) {
+	return nil, nil
+}
 
 type mockBookingService struct {
 	createFn          func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error)

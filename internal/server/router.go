@@ -178,6 +178,7 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses", p.BHHandler.MyBathhouses)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/completeness", p.BHHandler.CheckCompleteness)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/submit", p.BHHandler.SubmitForModeration)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/duplicate", p.BHHandler.Duplicate)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/history", p.AuditLogHandler.ListByBathhouse)
 
 		// Bathhouse photos (owner/representative)

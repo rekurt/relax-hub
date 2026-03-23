@@ -82,6 +82,7 @@ type BathhouseService interface {
 	RegenerateWidgetKey(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (string, error)
 	CheckCompleteness(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (*CompletenessResult, error)
 	SubmitForModeration(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
+	DuplicateBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (*domain.Bathhouse, error)
 	// Admin moderation:
 	Approve(ctx context.Context, id uuid.UUID) error
 	Reject(ctx context.Context, id uuid.UUID) error
@@ -477,6 +478,59 @@ func (s *bathhouseService) SubmitForModeration(ctx context.Context, userID uuid.
 	}
 
 	return s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusPending)
+}
+
+func (s *bathhouseService) DuplicateBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (*domain.Bathhouse, error) {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
+		return nil, err
+	}
+
+	original, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
+		return nil, err
+	}
+
+	copyName := original.Name + " (копия)"
+	slug, err := seo.GenerateUniqueSlug(copyName, func(slug string) (bool, error) {
+		return s.bhRepo.SlugExists(ctx, slug)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	dup := &domain.Bathhouse{
+		ID:           uuid.New(),
+		OwnerID:      original.OwnerID,
+		Name:         copyName,
+		Slug:         slug,
+		Description:  original.Description,
+		Address:      original.Address,
+		CityID:       original.CityID,
+		Latitude:     original.Latitude,
+		Longitude:    original.Longitude,
+		PricePerHour: original.PricePerHour,
+		MinDuration:  original.MinDuration,
+		MaxGuests:    original.MaxGuests,
+		HasPool:      original.HasPool,
+		HasSauna:     original.HasSauna,
+		HasSteamRoom: original.HasSteamRoom,
+		HasHotTub:    original.HasHotTub,
+		HasBBQ:       original.HasBBQ,
+		HasKaraoke:   original.HasKaraoke,
+		Images:       original.Images,
+		WorkingHours: original.WorkingHours,
+		Status:       domain.BathhouseStatusPending,
+		ApiKey:       uuid.New().String(),
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+
+	if err := s.bhRepo.Create(ctx, dup); err != nil {
+		return nil, err
+	}
+
+	return dup, nil
 }
 
 func buildChangedFields(old, new *domain.Bathhouse) map[string]interface{} {

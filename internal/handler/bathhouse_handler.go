@@ -1150,6 +1150,37 @@ func (h *BathhouseHandler) SubmitForModeration(w http.ResponseWriter, r *http.Re
 	writeJSON(w, http.StatusOK, map[string]string{"message": "submitted for moderation"})
 }
 
+// @Summary      Duplicate bathhouse
+// @Description  Create a copy of an existing bathhouse listing with draft status.
+// @Tags         bathhouses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      201  {object}  APIResponse{data=bathhouseResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/duplicate [post]
+func (h *BathhouseHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	bh, err := h.bathhouseService.DuplicateBathhouse(r.Context(), userID, role, id)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, toBathhouseResponse(bh))
+}
+
 func (h *BathhouseHandler) recordBathhouseView(r *http.Request, bathhouseID uuid.UUID, userID uuid.UUID) {
 	ctx := r.Context()
 

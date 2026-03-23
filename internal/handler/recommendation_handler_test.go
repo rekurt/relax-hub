@@ -124,6 +124,9 @@ func (m *mockBHService) CheckCompleteness(_ context.Context, _ uuid.UUID, _ doma
 func (m *mockBHService) SubmitForModeration(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
 	return nil
 }
+func (m *mockBHService) DuplicateBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*domain.Bathhouse, error) {
+	return nil, nil
+}
 
 // mockBathhouseRepository implements repository.BathhouseRepository for AccessChecker tests.
 type mockBathhouseRepository struct {

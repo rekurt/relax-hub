@@ -69,10 +69,10 @@ Sequential execution of three independent subsystems: listing management enhance
 - Modify: `internal/handler/bathhouse_handler.go`
 - Modify: `internal/server/router.go`
 
-- [ ] POST /api/v1/my/bathhouses/{id}/duplicate (RequireAuth, owner/rep)
-- [ ] DuplicateBathhouse in service: copy all fields, name + " (копия)", new slug, status=draft, same photo URLs, new UUID
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] POST /api/v1/my/bathhouses/{id}/duplicate (RequireAuth, owner/rep)
+- [x] DuplicateBathhouse in service: copy all fields, name + " (копия)", new slug, status=draft, same photo URLs, new UUID
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 4: Temporary Deactivation & Full Archival (FR-030, FR-031)
 
