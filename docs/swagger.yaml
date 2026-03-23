@@ -648,6 +648,73 @@ definitions:
       user_email:
         type: string
     type: object
+  internal_handler.kycResponse:
+    properties:
+      company_name:
+        type: string
+      created_at:
+        type: string
+      document_urls:
+        items:
+          type: string
+        type: array
+      entity_type:
+        type: string
+      expires_at:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      inn:
+        type: string
+      ogrnip:
+        type: string
+      rejection_reason:
+        type: string
+      reviewed_at:
+        type: string
+      status:
+        type: string
+      submitted_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  internal_handler.listingDraftListItem:
+    properties:
+      created_at:
+        type: string
+      current_step:
+        type: integer
+      id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_handler.listingDraftResponse:
+    properties:
+      created_at:
+        type: string
+      current_step:
+        type: integer
+      id:
+        type: string
+      status:
+        type: string
+      step_data:
+        additionalProperties:
+          items:
+            type: integer
+          type: array
+        type: object
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
   internal_handler.loginPhoneRequest:
     properties:
       phone:
@@ -805,6 +872,26 @@ definitions:
       user:
         $ref: '#/definitions/internal_handler.userResponse'
     type: object
+  internal_handler.offerAcceptanceResponse:
+    properties:
+      accepted_at:
+        type: string
+      id:
+        type: string
+      offer_version:
+        type: string
+      user_id:
+        type: string
+    type: object
+  internal_handler.offerStatusResponse:
+    properties:
+      acceptance:
+        $ref: '#/definitions/internal_handler.offerAcceptanceResponse'
+      accepted:
+        type: boolean
+      current_version:
+        type: string
+    type: object
   internal_handler.otpSentResponse:
     properties:
       message:
@@ -813,6 +900,35 @@ definitions:
   internal_handler.ownerResponseRequest:
     properties:
       response:
+        type: string
+    type: object
+  internal_handler.paymentDetailsResponse:
+    properties:
+      bank_account:
+        type: string
+      bank_card_number:
+        type: string
+      bank_name:
+        type: string
+      bik:
+        type: string
+      card_holder_name:
+        type: string
+      correspondent_account:
+        type: string
+      created_at:
+        type: string
+      entity_type:
+        type: string
+      id:
+        type: string
+      inn:
+        type: string
+      is_verified:
+        type: boolean
+      updated_at:
+        type: string
+      user_id:
         type: string
     type: object
   internal_handler.paymentResponse:
@@ -1147,6 +1263,11 @@ definitions:
       role:
         type: string
     type: object
+  internal_handler.rejectKYCRequest:
+    properties:
+      reason:
+        type: string
+    type: object
   internal_handler.rejectPhotoRequest:
     properties:
       reason:
@@ -1233,6 +1354,13 @@ definitions:
       user_id:
         type: string
     type: object
+  internal_handler.saveStepRequest:
+    properties:
+      data:
+        items:
+          type: integer
+        type: array
+    type: object
   internal_handler.sendMessageRequest:
     properties:
       text:
@@ -1253,6 +1381,25 @@ definitions:
       is_current:
         type: boolean
       last_active_at:
+        type: string
+    type: object
+  internal_handler.setPaymentDetailsRequest:
+    properties:
+      bank_account:
+        type: string
+      bank_card_number:
+        type: string
+      bank_name:
+        type: string
+      bik:
+        type: string
+      card_holder_name:
+        type: string
+      correspondent_account:
+        type: string
+      entity_type:
+        type: string
+      inn:
         type: string
     type: object
   internal_handler.simpleMessageResponse:
@@ -1307,6 +1454,23 @@ definitions:
   internal_handler.statusResponse:
     properties:
       status:
+        type: string
+    type: object
+  internal_handler.submitKYCRequest:
+    properties:
+      company_name:
+        type: string
+      document_urls:
+        items:
+          type: string
+        type: array
+      entity_type:
+        type: string
+      full_name:
+        type: string
+      inn:
+        type: string
+      ogrnip:
         type: string
     type: object
   internal_handler.subscribeRequest:
@@ -2515,6 +2679,185 @@ paths:
       summary: Resolve complaint
       tags:
       - admin-complaints
+  /admin/kyc/{id}/approve:
+    patch:
+      description: Approve a pending KYC application (admin only)
+      parameters:
+      - description: KYC Application ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Approve KYC application
+      tags:
+      - kyc
+      - admin
+  /admin/kyc/{id}/reject:
+    patch:
+      consumes:
+      - application/json
+      description: Reject a pending KYC application with reason (admin only)
+      parameters:
+      - description: KYC Application ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Rejection reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.rejectKYCRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Reject KYC application
+      tags:
+      - kyc
+      - admin
+  /admin/kyc/pending:
+    get:
+      description: Get list of pending KYC applications for admin review
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.kycResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/internal_handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List pending KYC applications
+      tags:
+      - kyc
+      - admin
   /admin/photos/{id}/reject:
     patch:
       consumes:
@@ -8183,6 +8526,420 @@ paths:
       summary: List favorites
       tags:
       - favorites
+  /my/kyc:
+    get:
+      description: Get current user's KYC verification status (owner only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.kycResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get KYC status
+      tags:
+      - kyc
+    post:
+      consumes:
+      - application/json
+      description: Submit KYC documents for verification (owner only)
+      parameters:
+      - description: KYC application data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.submitKYCRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.kycResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Submit KYC application
+      tags:
+      - kyc
+  /my/listing-drafts:
+    get:
+      description: Get all listing drafts for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.listingDraftListItem'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List user's listing drafts
+      tags:
+      - listing-drafts
+    post:
+      description: Create a new listing draft (requires approved KYC and accepted
+        offer)
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.listingDraftResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create listing draft
+      tags:
+      - listing-drafts
+  /my/listing-drafts/{id}:
+    delete:
+      description: Delete (discard) a listing draft
+      parameters:
+      - description: Draft ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete listing draft
+      tags:
+      - listing-drafts
+    get:
+      description: Get a listing draft with all step data
+      parameters:
+      - description: Draft ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.listingDraftResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get listing draft
+      tags:
+      - listing-drafts
+  /my/listing-drafts/{id}/step/{step}:
+    put:
+      consumes:
+      - application/json
+      description: Save data for a specific step of the listing draft wizard
+      parameters:
+      - description: Draft ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Step number (1-7)
+        in: path
+        name: step
+        required: true
+        type: integer
+      - description: Step data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.saveStepRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Save draft step data
+      tags:
+      - listing-drafts
+  /my/listing-drafts/{id}/submit:
+    post:
+      description: Submit a completed draft to create a bathhouse listing (sends to
+        moderation)
+      parameters:
+      - description: Draft ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.listingDraftResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Submit listing draft
+      tags:
+      - listing-drafts
   /my/loyalty:
     get:
       description: Returns the loyalty account for the authenticated user, including
@@ -8513,6 +9270,161 @@ paths:
       summary: Get unread notifications count
       tags:
       - notifications
+  /my/offer/accept:
+    post:
+      description: Accept the current version of the platform offer/contract (owner
+        only)
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.offerAcceptanceResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Accept platform offer
+      tags:
+      - offer
+  /my/offer/status:
+    get:
+      description: Check if the current user has accepted the latest offer version
+        (owner only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.offerStatusResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get offer acceptance status
+      tags:
+      - offer
+  /my/payment-details:
+    get:
+      description: Get current payment details for the authenticated owner (sensitive
+        data is masked)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.paymentDetailsResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get owner payment details
+      tags:
+      - payment-details
+    put:
+      consumes:
+      - application/json
+      description: Create or update payment details for the current owner (required
+        for payouts)
+      parameters:
+      - description: Payment details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.setPaymentDetailsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.paymentDetailsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Set owner payment details
+      tags:
+      - payment-details
   /my/payments:
     get:
       description: Returns a paginated list of payments for the authenticated user
