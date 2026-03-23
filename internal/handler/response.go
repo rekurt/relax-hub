@@ -265,6 +265,14 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusNotFound, "payment_details_not_found", err.Error())
 	case errors.Is(err, domain.ErrPaymentDetailsNotSet):
 		writeErrorWithContext(w, r, http.StatusForbidden, "payment_details_not_set", err.Error())
+	case errors.Is(err, domain.ErrListingDraftNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "listing_draft_not_found", err.Error())
+	case errors.Is(err, domain.ErrListingDraftIncomplete):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "listing_draft_incomplete", err.Error())
+	case errors.Is(err, domain.ErrListingDraftSubmitted):
+		writeErrorWithContext(w, r, http.StatusConflict, "listing_draft_submitted", err.Error())
+	case errors.Is(err, domain.ErrListingDraftInvalidStep):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "listing_draft_invalid_step", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

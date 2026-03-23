@@ -96,4 +96,9 @@ var (
 
 	ErrPaymentDetailsNotFound = errors.New("payment details not found")
 	ErrPaymentDetailsNotSet   = errors.New("payment details not set")
+
+	ErrListingDraftNotFound   = errors.New("listing draft not found")
+	ErrListingDraftIncomplete = errors.New("listing draft has incomplete steps")
+	ErrListingDraftSubmitted  = errors.New("listing draft already submitted")
+	ErrListingDraftInvalidStep = errors.New("invalid listing draft step")
 )

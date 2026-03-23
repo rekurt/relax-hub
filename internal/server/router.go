@@ -58,8 +58,9 @@ type RouterParams struct {
 	SessionHandler        *handler.SessionHandler
 	KYCHandler            *handler.KYCHandler
 	OfferHandler          *handler.OfferHandler
-	PaymentDetailsHandler *handler.PaymentDetailsHandler
-	SessionValidator      middleware.SessionValidator `optional:"true"`
+	PaymentDetailsHandler    *handler.PaymentDetailsHandler
+	ListingDraftHandler      *handler.ListingDraftHandler
+	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
 
@@ -293,6 +294,14 @@ func NewRouter(p RouterParams) http.Handler {
 		// Payment details (authenticated owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Put("/my/payment-details", p.PaymentDetailsHandler.SetPaymentDetails)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/payment-details", p.PaymentDetailsHandler.GetPaymentDetails)
+
+		// Listing drafts (authenticated owner)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/listing-drafts", p.ListingDraftHandler.CreateDraft)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/listing-drafts", p.ListingDraftHandler.ListDrafts)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/listing-drafts/{id}", p.ListingDraftHandler.GetDraft)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Put("/my/listing-drafts/{id}/step/{step}", p.ListingDraftHandler.SaveStep)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/listing-drafts/{id}/submit", p.ListingDraftHandler.SubmitDraft)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Delete("/my/listing-drafts/{id}", p.ListingDraftHandler.DeleteDraft)
 
 		// Payouts (authenticated owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/wallet/payout", p.PayoutHandler.RequestPayout)

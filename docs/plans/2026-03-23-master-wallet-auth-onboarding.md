@@ -239,9 +239,9 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Modify: `internal/repository/interfaces.go`
 - Create: `migrations/000047_listing_drafts.up.sql`, `migrations/000047_listing_drafts.down.sql`
 
-- [ ] ListingDraft with step-based data storage (7 steps)
-- [ ] CRUD + submit endpoints for drafts
-- [ ] Write tests, run `go test ./... -v`
+- [x] ListingDraft with step-based data storage (7 steps)
+- [x] CRUD + submit endpoints for drafts
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 19: Onboarding Gate Integration (Task 3.5)
 

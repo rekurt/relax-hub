@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -365,6 +366,15 @@ type OfferRepository interface {
 type PaymentDetailsRepository interface {
 	Upsert(ctx context.Context, details *domain.PaymentDetails) error
 	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.PaymentDetails, error)
+}
+
+type ListingDraftRepository interface {
+	Create(ctx context.Context, draft *domain.ListingDraft) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.ListingDraft, error)
+	ListByUserID(ctx context.Context, userID uuid.UUID) ([]domain.ListingDraft, error)
+	UpdateStep(ctx context.Context, id uuid.UUID, step int, data json.RawMessage, currentStep int) error
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ListingDraftStatus) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 type WalletRepository interface {
