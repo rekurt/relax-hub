@@ -249,9 +249,9 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Modify: `internal/service/bathhouse_service.go`
 - Modify: `internal/domain/errors.go`, `internal/handler/response.go`
 
-- [ ] Gate CreateBathhouse behind KYC + Offer + PaymentDetails checks
-- [ ] New domain errors: ErrKYCNotApproved, ErrOfferNotAccepted, ErrPaymentDetailsNotSet
-- [ ] Write tests, run `go test ./... -v -race`, `make lint`
+- [x] Gate CreateBathhouse behind KYC + Offer + PaymentDetails checks
+- [x] New domain errors: ErrKYCNotApproved, ErrOfferNotAccepted, ErrPaymentDetailsNotSet
+- [x] Write tests, run `go test ./... -v -race`, `make lint`
 
 ### Task 20: Final Verification
 

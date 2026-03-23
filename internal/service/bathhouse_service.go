@@ -67,16 +67,42 @@ type BathhouseService interface {
 }
 
 type bathhouseService struct {
-	bhRepo      repository.BathhouseRepository
-	bookingRepo repository.BookingRepository
-	access      *AccessChecker
+	bhRepo         repository.BathhouseRepository
+	bookingRepo    repository.BookingRepository
+	access         *AccessChecker
+	kycSvc         KYCService
+	offerSvc       OfferService
+	paymentDetails PaymentDetailsService
 }
 
-func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, access *AccessChecker) BathhouseService {
-	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, access: access}
+func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService) BathhouseService {
+	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails}
 }
 
 func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error) {
+	// Onboarding gate: KYC must be approved
+	approved, err := s.kycSvc.IsApproved(ctx, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	if !approved {
+		return nil, domain.ErrKYCNotApproved
+	}
+
+	// Onboarding gate: offer must be accepted
+	accepted, err := s.offerSvc.IsAccepted(ctx, ownerID)
+	if err != nil {
+		return nil, err
+	}
+	if !accepted {
+		return nil, domain.ErrOfferNotAccepted
+	}
+
+	// Onboarding gate: payment details must be set and valid
+	if err := s.paymentDetails.Validate(ctx, ownerID); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 
 	slug, err := seo.GenerateUniqueSlug(input.Name, func(slug string) (bool, error) {

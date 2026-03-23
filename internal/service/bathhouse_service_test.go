@@ -4,27 +4,96 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
-func newBathhouseService() (service.BathhouseService, *mock.BathhouseRepo, *mock.RepresentativeRepo, *mock.BookingRepo) {
+type bathhouseTestEnv struct {
+	svc         service.BathhouseService
+	bhRepo      *mock.BathhouseRepo
+	repRepo     *mock.RepresentativeRepo
+	bookingRepo *mock.BookingRepo
+	kycRepo     *mock.KYCRepo
+	offerRepo   *mock.OfferRepo
+	pdRepo      *mock.PaymentDetailsRepo
+}
+
+func newBathhouseTestEnv() *bathhouseTestEnv {
 	bhRepo := mock.NewBathhouseRepo()
 	repRepo := mock.NewRepresentativeRepo()
 	bookingRepo := mock.NewBookingRepo()
+	kycRepo := mock.NewKYCRepo()
+	offerRepo := mock.NewOfferRepo()
+	pdRepo := mock.NewPaymentDetailsRepo()
 	access := service.NewAccessChecker(repRepo, bhRepo)
-	svc := service.NewBathhouseService(bhRepo, bookingRepo, access)
-	return svc, bhRepo, repRepo, bookingRepo
+	log := logger.New(logger.LevelWarn)
+	kycSvc := service.NewKYCService(kycRepo, &noopNotifService{}, log)
+	offerSvc := service.NewOfferService(offerRepo, log)
+	pdSvc := service.NewPaymentDetailsService(pdRepo, log)
+	svc := service.NewBathhouseService(bhRepo, bookingRepo, access, kycSvc, offerSvc, pdSvc)
+	return &bathhouseTestEnv{
+		svc: svc, bhRepo: bhRepo, repRepo: repRepo, bookingRepo: bookingRepo,
+		kycRepo: kycRepo, offerRepo: offerRepo, pdRepo: pdRepo,
+	}
+}
+
+// setupOnboardingGate prepares KYC, offer, and payment details for a user so they pass the gate.
+func (e *bathhouseTestEnv) setupOnboardingGate(t *testing.T, userID uuid.UUID) {
+	t.Helper()
+
+	// Approved KYC
+	expiresAt := time.Now().Add(365 * 24 * time.Hour)
+	kyc := &domain.KYCApplication{
+		ID:       uuid.New(),
+		UserID:   userID,
+		Status:   domain.KYCStatusApproved,
+		FullName: "Test User",
+		INN:      "123456789012",
+		ExpiresAt: &expiresAt,
+	}
+	if err := e.kycRepo.Create(context.Background(), kyc); err != nil {
+		t.Fatalf("setup KYC: %v", err)
+	}
+
+	// Accepted offer (version 1.0)
+	offer := &domain.OfferAcceptance{
+		ID:           uuid.New(),
+		UserID:       userID,
+		OfferVersion: "1.0",
+	}
+	if err := e.offerRepo.Create(context.Background(), offer); err != nil {
+		t.Fatalf("setup offer: %v", err)
+	}
+
+	// Payment details
+	pd := &domain.PaymentDetails{
+		ID:             uuid.New(),
+		UserID:         userID,
+		EntityType:     domain.KYCEntityIndividual,
+		BankCardNumber: "4111111111111111",
+		CardHolderName: "TEST USER",
+	}
+	if err := e.pdRepo.Upsert(context.Background(), pd); err != nil {
+		t.Fatalf("setup payment details: %v", err)
+	}
+}
+
+func newBathhouseService() (service.BathhouseService, *mock.BathhouseRepo, *mock.RepresentativeRepo, *mock.BookingRepo) {
+	env := newBathhouseTestEnv()
+	return env.svc, env.bhRepo, env.repRepo, env.bookingRepo
 }
 
 func TestBathhouseService_Create_PendingStatus(t *testing.T) {
-	svc, _, _, _ := newBathhouseService()
+	env := newBathhouseTestEnv()
 	ownerID := uuid.New()
+	env.setupOnboardingGate(t, ownerID)
 
-	bh, err := svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+	bh, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
 		Name:         "My Bathhouse",
 		Address:      "123 Street",
 		CityID:       1,
@@ -45,9 +114,11 @@ func TestBathhouseService_Create_PendingStatus(t *testing.T) {
 }
 
 func TestBathhouseService_Create_InvalidInput(t *testing.T) {
-	svc, _, _, _ := newBathhouseService()
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	env.setupOnboardingGate(t, ownerID)
 
-	_, err := svc.Create(context.Background(), uuid.New(), service.CreateBathhouseInput{
+	_, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
 		Name: "", // empty name
 	})
 
@@ -201,10 +272,11 @@ func TestBathhouseService_Reject(t *testing.T) {
 }
 
 func TestBathhouseService_GetWidgetKey_Success(t *testing.T) {
-	svc, _, _, _ := newBathhouseService()
+	env := newBathhouseTestEnv()
 	ownerID := uuid.New()
+	env.setupOnboardingGate(t, ownerID)
 
-	bh, err := svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+	bh, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
 		Name:         "Test Bath",
 		Address:      "123 St",
 		CityID:       1,
@@ -216,7 +288,7 @@ func TestBathhouseService_GetWidgetKey_Success(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	apiKey, err := svc.GetWidgetKey(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	apiKey, err := env.svc.GetWidgetKey(context.Background(), ownerID, domain.RoleOwner, bh.ID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -277,10 +349,11 @@ func TestBathhouseService_RegenerateWidgetKey_OtherOwnerForbidden(t *testing.T) 
 }
 
 func TestBathhouseService_Create_GeneratesSlug(t *testing.T) {
-	svc, _, _, _ := newBathhouseService()
+	env := newBathhouseTestEnv()
 	ownerID := uuid.New()
+	env.setupOnboardingGate(t, ownerID)
 
-	bh, err := svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+	bh, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
 		Name:         "Баня на Липовой",
 		Address:      "ул. Липовая 5",
 		CityID:       1,
@@ -301,10 +374,11 @@ func TestBathhouseService_Create_GeneratesSlug(t *testing.T) {
 }
 
 func TestBathhouseService_Create_UniqueSlug(t *testing.T) {
-	svc, _, _, _ := newBathhouseService()
+	env := newBathhouseTestEnv()
 	ownerID := uuid.New()
+	env.setupOnboardingGate(t, ownerID)
 
-	bh1, err := svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+	bh1, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
 		Name:         "Баня",
 		Address:      "ул. А",
 		CityID:       1,
@@ -316,7 +390,7 @@ func TestBathhouseService_Create_UniqueSlug(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	bh2, err := svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+	bh2, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
 		Name:         "Баня",
 		Address:      "ул. Б",
 		CityID:       1,
@@ -386,5 +460,95 @@ func TestBathhouseService_GetBySlug_NotFound(t *testing.T) {
 	_, err := svc.GetBySlug(context.Background(), "nonexistent-slug")
 	if !errors.Is(err, domain.ErrNotFound) {
 		t.Errorf("should return ErrNotFound for nonexistent slug, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Create_Gate_NoKYC(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	_, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+		Name: "Test", Address: "123 St", CityID: 1, PricePerHour: 5000, MinDuration: 1, MaxGuests: 10,
+	})
+	if !errors.Is(err, domain.ErrKYCNotFound) {
+		t.Errorf("expected KYC error without KYC, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Create_Gate_KYCNotApproved(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	kyc := &domain.KYCApplication{
+		ID: uuid.New(), UserID: ownerID, Status: domain.KYCStatusPending,
+		FullName: "Test", INN: "123456789012",
+	}
+	_ = env.kycRepo.Create(context.Background(), kyc)
+
+	_, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+		Name: "Test", Address: "123 St", CityID: 1, PricePerHour: 5000, MinDuration: 1, MaxGuests: 10,
+	})
+	if !errors.Is(err, domain.ErrKYCNotApproved) {
+		t.Errorf("expected ErrKYCNotApproved, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Create_Gate_NoOffer(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	// Set up approved KYC but no offer
+	expiresAt := time.Now().Add(365 * 24 * time.Hour)
+	kyc := &domain.KYCApplication{
+		ID: uuid.New(), UserID: ownerID, Status: domain.KYCStatusApproved,
+		FullName: "Test", INN: "123456789012", ExpiresAt: &expiresAt,
+	}
+	_ = env.kycRepo.Create(context.Background(), kyc)
+
+	_, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+		Name: "Test", Address: "123 St", CityID: 1, PricePerHour: 5000, MinDuration: 1, MaxGuests: 10,
+	})
+	if !errors.Is(err, domain.ErrOfferNotAccepted) {
+		t.Errorf("expected ErrOfferNotAccepted, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Create_Gate_NoPaymentDetails(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	// Set up KYC + offer but no payment details
+	expiresAt := time.Now().Add(365 * 24 * time.Hour)
+	kyc := &domain.KYCApplication{
+		ID: uuid.New(), UserID: ownerID, Status: domain.KYCStatusApproved,
+		FullName: "Test", INN: "123456789012", ExpiresAt: &expiresAt,
+	}
+	_ = env.kycRepo.Create(context.Background(), kyc)
+	offer := &domain.OfferAcceptance{
+		ID: uuid.New(), UserID: ownerID, OfferVersion: "1.0",
+	}
+	_ = env.offerRepo.Create(context.Background(), offer)
+
+	_, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+		Name: "Test", Address: "123 St", CityID: 1, PricePerHour: 5000, MinDuration: 1, MaxGuests: 10,
+	})
+	if !errors.Is(err, domain.ErrPaymentDetailsNotSet) {
+		t.Errorf("expected ErrPaymentDetailsNotSet, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Create_Gate_AllPassed(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	env.setupOnboardingGate(t, ownerID)
+
+	bh, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+		Name: "Gate Test Bath", Address: "123 St", CityID: 1, PricePerHour: 5000, MinDuration: 1, MaxGuests: 10,
+	})
+	if err != nil {
+		t.Fatalf("expected success with all gates passed, got: %v", err)
+	}
+	if bh.Status != domain.BathhouseStatusPending {
+		t.Errorf("status = %q, want %q", bh.Status, domain.BathhouseStatusPending)
 	}
 }
