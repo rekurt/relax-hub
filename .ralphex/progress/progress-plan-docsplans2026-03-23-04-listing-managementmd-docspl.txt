@@ -127,22 +127,22 @@ starting interactive plan creation
 [26-03-23 09:20:38]   - Modify: `internal/service/booking_service.go`
 [26-03-23 09:20:38]   - Modify: `internal/handler/booking_handler.go`
 [26-03-23 09:20:38]   - Modify: `internal/domain/booking.go`
-[26-03-23 09:20:38]   - [ ] Add AddOnTotal (int64) field to Booking model
-[26-03-23 09:20:38]   - [ ] Extend CreateBookingRequest with AddOns []AddOnSelection (addon_id + quantity)
-[26-03-23 09:20:38]   - [ ] In booking creation: validate add-on IDs belong to bathhouse, validate active, calculate totals by unit type, store booking_addons, update total price
-[26-03-23 09:20:38]   - [ ] Include add-ons in booking detail response
-[26-03-23 09:20:38]   - [ ] Write tests for booking with add-ons
-[26-03-23 09:20:38]   - [ ] Run `go test ./... -v -race` — must pass
+[26-03-23 09:20:38]   - [x] Add AddOnTotal (int64) field to Booking model
+[26-03-23 09:20:38]   - [x] Extend CreateBookingRequest with AddOns []AddOnSelection (addon_id + quantity)
+[26-03-23 09:20:38]   - [x] In booking creation: validate add-on IDs belong to bathhouse, validate active, calculate totals by unit type, store booking_addons, update total price
+[26-03-23 09:20:38]   - [x] Include add-ons in booking detail response
+[26-03-23 09:20:38]   - [x] Write tests for booking with add-ons
+[26-03-23 09:20:38]   - [x] Run `go test ./... -v -race` — must pass
 [26-03-23 09:20:38] ### Task 8: Full-text Search (FR-038)
 [26-03-23 09:20:38] **Files:**
 [26-03-23 09:20:38]   - Modify: `internal/repository/postgres/bathhouse_repo.go`
 [26-03-23 09:20:38]   - Modify: `internal/domain/filters.go` (extend existing SearchQuery handling)
 [26-03-23 09:20:38]   - Create: `migrations/000051_fulltext_search.up.sql`, `migrations/000051_fulltext_search.down.sql`
-[26-03-23 09:20:38]   - [ ] Migration: pg_trgm extension, search_vector tsvector column, trigger for auto-update, GIN indexes
-[26-03-23 09:20:38]   - [ ] Modify bathhouse list query: when SearchQuery is set, use plainto_tsquery('russian', query) + ts_rank for relevance, fallback to trigram similarity for fuzzy matching
-[26-03-23 09:20:38]   - [ ] Support prefix search with to_tsquery('russian', query || ':*')
-[26-03-23 09:20:38]   - [ ] Write tests
-[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38]   - [x] Migration: pg_trgm extension, search_vector tsvector column, trigger for auto-update, GIN indexes
+[26-03-23 09:20:38]   - [x] Modify bathhouse list query: when SearchQuery is set, use plainto_tsquery('russian', query) + ts_rank for relevance, fallback to trigram similarity for fuzzy matching
+[26-03-23 09:20:38]   - [x] Support prefix search with to_tsquery('russian', query || ':*')
+[26-03-23 09:20:38]   - [x] Write tests
+[26-03-23 09:20:38]   - [x] Run `go test ./... -v` — must pass
 [26-03-23 09:20:38] ### Task 9: Search Suggestions (FR-039)
 [26-03-23 09:20:38] **Files:**
 [26-03-23 09:20:38]   - Create: `internal/service/search_suggestion_service.go`

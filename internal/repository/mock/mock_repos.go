@@ -929,7 +929,32 @@ func (r *BathhouseRepo) List(_ context.Context, filter domain.BathhouseFilter) (
 		}
 		if filter.SearchQuery != nil && *filter.SearchQuery != "" {
 			q := strings.ToLower(*filter.SearchQuery)
-			if !strings.Contains(strings.ToLower(bh.Name), q) && !strings.Contains(strings.ToLower(bh.Description), q) {
+			name := strings.ToLower(bh.Name)
+			desc := strings.ToLower(bh.Description)
+			addr := strings.ToLower(bh.Address)
+			// Exact substring match
+			matched := strings.Contains(name, q) || strings.Contains(desc, q) || strings.Contains(addr, q)
+			// Prefix match: check if any word in name/description starts with any query word
+			if !matched {
+				queryWords := strings.Fields(q)
+				for _, qw := range queryWords {
+					for _, field := range []string{name, desc, addr} {
+						for _, fw := range strings.Fields(field) {
+							if strings.HasPrefix(fw, qw) {
+								matched = true
+								break
+							}
+						}
+						if matched {
+							break
+						}
+					}
+					if matched {
+						break
+					}
+				}
+			}
+			if !matched {
 				continue
 			}
 		}

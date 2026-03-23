@@ -7,6 +7,7 @@ import (
 	"math"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -201,6 +202,26 @@ func (r *bathhouseRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
+// buildPrefixTsQuery sanitizes a user query and builds a tsquery string with
+// prefix matching (:*) on each word, joined by & (AND). Returns empty string
+// if no valid words remain after sanitization.
+func buildPrefixTsQuery(q string) string {
+	words := strings.Fields(q)
+	var parts []string
+	for _, w := range words {
+		var cleaned strings.Builder
+		for _, r := range w {
+			if unicode.IsLetter(r) || unicode.IsDigit(r) {
+				cleaned.WriteRune(r)
+			}
+		}
+		if cleaned.Len() > 0 {
+			parts = append(parts, cleaned.String()+":*")
+		}
+	}
+	return strings.Join(parts, " & ")
+}
+
 func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
 	if filter.Page < 1 {
 		filter.Page = 1
@@ -263,12 +284,19 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	}
 	if filter.SearchQuery != nil && *filter.SearchQuery != "" {
 		q := strings.TrimSpace(*filter.SearchQuery)
-		// Full-text search with Russian config + trigram fallback
-		// ts_rank scores FTS relevance; similarity() scores fuzzy match
-		conditions = append(conditions, fmt.Sprintf(
-			"(search_vector @@ plainto_tsquery('russian', %s) OR similarity(name, %s) > 0.2 OR similarity(description, %s) > 0.1)",
-			addArg(q), addArg(q), addArg(q),
-		))
+		prefixQ := buildPrefixTsQuery(q)
+		// Full-text search: exact words via plainto_tsquery, prefix via to_tsquery(:*), trigram fallback
+		if prefixQ != "" {
+			conditions = append(conditions, fmt.Sprintf(
+				"(search_vector @@ plainto_tsquery('russian', %s) OR search_vector @@ to_tsquery('russian', %s) OR similarity(name, %s) > 0.2 OR similarity(description, %s) > 0.1)",
+				addArg(q), addArg(prefixQ), addArg(q), addArg(q),
+			))
+		} else {
+			conditions = append(conditions, fmt.Sprintf(
+				"(search_vector @@ plainto_tsquery('russian', %s) OR similarity(name, %s) > 0.2 OR similarity(description, %s) > 0.1)",
+				addArg(q), addArg(q), addArg(q),
+			))
+		}
 	}
 	if filter.OpenNow != nil && *filter.OpenNow {
 		dayArg := addArg(currentDayOfWeek())

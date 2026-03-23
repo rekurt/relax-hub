@@ -1137,3 +1137,74 @@ func TestBathhouseService_Search_DescriptionMatch(t *testing.T) {
 		t.Errorf("expected 1 result matching description, got %d", result.TotalCount)
 	}
 }
+
+func TestBathhouseService_Search_PrefixMatch(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh1 := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Русская баня на дровах",
+		Description: "Традиционная парная", Slug: "russkaya-banya",
+		Address: "ул. Ленина 1", CityID: 1, PricePerHour: 3000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+	}
+	bh2 := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Финская сауна",
+		Description: "Классическая сауна", Slug: "finskaya-sauna",
+		Address: "ул. Мира 5", CityID: 1, PricePerHour: 4000,
+		MaxGuests: 6, MinDuration: 1, Status: domain.BathhouseStatusActive,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh1)
+	_ = env.bhRepo.Create(context.Background(), bh2)
+
+	// Prefix "бан" should match "баня"
+	q := "бан"
+	result, err := env.svc.Search(context.Background(), domain.BathhouseFilter{
+		SearchQuery: &q, Page: 1, PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("Search prefix: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("expected 1 result for prefix 'бан', got %d", result.TotalCount)
+	}
+	if result.TotalCount == 1 && result.Items[0].ID != bh1.ID {
+		t.Errorf("expected bathhouse %s, got %s", bh1.ID, result.Items[0].ID)
+	}
+
+	// Prefix "сау" should match "сауна"
+	q2 := "сау"
+	result, err = env.svc.Search(context.Background(), domain.BathhouseFilter{
+		SearchQuery: &q2, Page: 1, PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("Search prefix: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("expected 1 result for prefix 'сау', got %d", result.TotalCount)
+	}
+}
+
+func TestBathhouseService_Search_AddressMatch(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Комплекс отдыха",
+		Description: "Отличный отдых", Slug: "kompleks",
+		Address: "Набережная улица 15", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 15, MinDuration: 2, Status: domain.BathhouseStatusActive,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh)
+
+	q := "Набережная"
+	result, err := env.svc.Search(context.Background(), domain.BathhouseFilter{
+		SearchQuery: &q, Page: 1, PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("Search address: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("expected 1 result matching address, got %d", result.TotalCount)
+	}
+}
