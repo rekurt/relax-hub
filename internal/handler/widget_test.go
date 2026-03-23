@@ -84,6 +84,9 @@ func (m *mockWidgetBathhouseService) ActivateBathhouse(_ context.Context, _ uuid
 func (m *mockWidgetBathhouseService) ArchiveBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
 	return nil
 }
+func (m *mockWidgetBathhouseService) IncrementViewCount(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
 
 // Mock BookingService for widget testing
 type mockWidgetBookingService struct {

@@ -87,6 +87,7 @@ type BathhouseService interface {
 	DeactivateBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
 	ActivateBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
 	ArchiveBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
+	IncrementViewCount(ctx context.Context, id uuid.UUID) error
 	// Admin moderation:
 	Approve(ctx context.Context, id uuid.UUID) error
 	Reject(ctx context.Context, id uuid.UUID) error
@@ -336,6 +337,10 @@ func (s *bathhouseService) ListByOwner(ctx context.Context, ownerID uuid.UUID, p
 	return s.bhRepo.ListByOwner(ctx, ownerID, page, pageSize)
 }
 
+func (s *bathhouseService) IncrementViewCount(ctx context.Context, id uuid.UUID) error {
+	return s.bhRepo.IncrementViewCount(ctx, id)
+}
+
 func (s *bathhouseService) Approve(ctx context.Context, id uuid.UUID) error {
 	bh, err := s.bhRepo.GetByID(ctx, id)
 	if err != nil {
@@ -421,7 +426,7 @@ func (s *bathhouseService) CheckCompleteness(ctx context.Context, userID uuid.UU
 
 	items := []CompletenessItem{
 		{Field: "name", Label: "Название", Complete: bh.Name != "", Required: true},
-		{Field: "description", Label: "Описание (50+ символов)", Complete: len(bh.Description) >= 50, Required: true},
+		{Field: "description", Label: "Описание (50+ символов)", Complete: len([]rune(bh.Description)) >= 50, Required: true},
 		{Field: "address", Label: "Адрес", Complete: bh.Address != "", Required: true},
 		{Field: "city", Label: "Город", Complete: bh.CityID > 0, Required: true},
 		{Field: "coordinates", Label: "Координаты", Complete: bh.Latitude != 0 && bh.Longitude != 0, Required: true},

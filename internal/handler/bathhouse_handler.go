@@ -1284,6 +1284,10 @@ func (h *BathhouseHandler) Archive(w http.ResponseWriter, r *http.Request) {
 func (h *BathhouseHandler) recordBathhouseView(r *http.Request, bathhouseID uuid.UUID, userID uuid.UUID) {
 	ctx := r.Context()
 
+	if err := h.bathhouseService.IncrementViewCount(ctx, bathhouseID); err != nil {
+		h.log.Warn("failed to increment view count", "bathhouse_id", bathhouseID, "error", err)
+	}
+
 	if userID != uuid.Nil && h.recommendationService != nil {
 		if err := h.recommendationService.RecordView(ctx, userID, bathhouseID); err != nil {
 			h.log.Warn("failed to record recommendation view", "bathhouse_id", bathhouseID, "error", err)

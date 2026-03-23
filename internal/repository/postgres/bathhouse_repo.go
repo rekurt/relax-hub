@@ -65,15 +65,13 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 
 func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
 	query := `
-		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
+		SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
 			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified,
-			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
+			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
-		LEFT JOIN subscriptions s ON bathhouses.id = s.bathhouse_id AND s.status = 'active'
-		LEFT JOIN promotions p ON bathhouses.id = p.bathhouse_id AND p.status = 'active'
 		WHERE bathhouses.id = $1`
 
 	rows, err := r.pool.Query(ctx, query, id)
@@ -94,15 +92,13 @@ func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bath
 
 func (r *bathhouseRepo) GetBySlug(ctx context.Context, slug string) (*domain.Bathhouse, error) {
 	query := `
-		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
+		SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
 			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified,
-			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
+			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
-		LEFT JOIN subscriptions s ON bathhouses.id = s.bathhouse_id AND s.status = 'active'
-		LEFT JOIN promotions p ON bathhouses.id = p.bathhouse_id AND p.status = 'active'
 		WHERE bathhouses.slug = $1`
 
 	rows, err := r.pool.Query(ctx, query, slug)
@@ -132,15 +128,13 @@ func (r *bathhouseRepo) SlugExists(ctx context.Context, slug string) (bool, erro
 
 func (r *bathhouseRepo) GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error) {
 	query := `
-		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
+		SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
 			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified, bathhouses.api_key,
-			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
+			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
-		LEFT JOIN subscriptions s ON bathhouses.id = s.bathhouse_id AND s.status = 'active'
-		LEFT JOIN promotions p ON bathhouses.id = p.bathhouse_id AND p.status = 'active'
 		WHERE bathhouses.api_key = $1`
 
 	rows, err := r.pool.Query(ctx, query, apiKey)

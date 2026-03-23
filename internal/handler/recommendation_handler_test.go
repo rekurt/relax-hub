@@ -137,6 +137,7 @@ func (m *mockBHService) ActivateBathhouse(_ context.Context, _ uuid.UUID, _ doma
 func (m *mockBHService) ArchiveBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
 	return nil
 }
+func (m *mockBHService) IncrementViewCount(_ context.Context, _ uuid.UUID) error { return nil }
 
 // mockBathhouseRepository implements repository.BathhouseRepository for AccessChecker tests.
 type mockBathhouseRepository struct {
