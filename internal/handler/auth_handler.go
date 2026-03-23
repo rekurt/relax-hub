@@ -393,8 +393,9 @@ func (h *AuthHandler) GetMyStats(w http.ResponseWriter, r *http.Request) {
 }
 
 type registerPhoneRequest struct {
-	Phone string `json:"phone"`
-	Name  string `json:"name"`
+	Phone        string `json:"phone"`
+	Name         string `json:"name"`
+	AgeConfirmed bool   `json:"age_confirmed"`
 }
 
 type loginPhoneRequest struct {
@@ -431,8 +432,9 @@ func (h *AuthHandler) RegisterPhone(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := h.authService.RegisterPhone(r.Context(), service.RegisterPhoneInput{
-		Phone: req.Phone,
-		Name:  req.Name,
+		Phone:        req.Phone,
+		Name:         req.Name,
+		AgeConfirmed: req.AgeConfirmed,
 	})
 	if err != nil {
 		handleServiceError(w, err)

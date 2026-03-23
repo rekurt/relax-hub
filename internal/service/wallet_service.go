@@ -221,17 +221,22 @@ func (s *walletService) CaptureHold(ctx context.Context, holdID uuid.UUID) (*dom
 		return nil, domain.ErrInsufficientWalletBalance
 	}
 
-	now := time.Now()
-	if err := s.walletRepo.UpdateHoldStatus(ctx, holdID, domain.WalletHoldStatusCaptured, &now, nil); err != nil {
-		return nil, err
-	}
 	newHeldAmount := wallet.HeldAmount - hold.Amount
 	if newHeldAmount < 0 {
 		newHeldAmount = 0
 	}
 
+	// Update balance first, then mark hold as captured.
+	// If balance update succeeds but hold status update fails, the balance is deducted
+	// but the hold remains active -- a subsequent retry can still capture it safely.
+	// The reverse order (hold first, then balance) would leak money on partial failure.
 	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, newBalance, newHeldAmount); err != nil {
 		return nil, err
+	}
+
+	now := time.Now()
+	if err := s.walletRepo.UpdateHoldStatus(ctx, holdID, domain.WalletHoldStatusCaptured, &now, nil); err != nil {
+		s.logger.Error("hold captured but status update failed", "hold_id", holdID, "error", err)
 	}
 
 	tx := &domain.WalletTransaction{
@@ -479,6 +484,19 @@ func (s *walletService) FreezeAndZeroBalance(ctx context.Context, userID uuid.UU
 	wallet, err := s.walletRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return err
+	}
+
+	// Release all active holds before zeroing balance to avoid orphaned hold records
+	activeHolds, err := s.walletRepo.GetActiveHolds(ctx, wallet.ID)
+	if err != nil {
+		s.logger.Error("failed to get active holds for freeze", "wallet_id", wallet.ID, "error", err)
+	} else {
+		now := time.Now()
+		for _, hold := range activeHolds {
+			if err := s.walletRepo.UpdateHoldStatus(ctx, hold.ID, domain.WalletHoldStatusReleased, nil, &now); err != nil {
+				s.logger.Error("failed to release hold during freeze", "hold_id", hold.ID, "error", err)
+			}
+		}
 	}
 
 	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, 0, 0); err != nil {

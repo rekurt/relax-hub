@@ -352,8 +352,9 @@ func TestAuthService_RegisterPhone_Success(t *testing.T) {
 	svc := service.NewAuthService(userRepo, &noopReferralService{}, otpSvc, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	err := svc.RegisterPhone(context.Background(), service.RegisterPhoneInput{
-		Phone: "+79001234567",
-		Name:  "Phone User",
+		Phone:        "+79001234567",
+		Name:         "Phone User",
+		AgeConfirmed: true,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

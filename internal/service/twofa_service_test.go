@@ -416,7 +416,9 @@ func TestAuthService_ParsePartialToken_FullTokenRejected(t *testing.T) {
 	}
 }
 
-func TestAuthService_VerifyPhone_With2FA(t *testing.T) {
+func TestAuthService_VerifyPhone_With2FA_SMS_Skipped(t *testing.T) {
+	// SMS 2FA is skipped for phone-based login because phone possession
+	// was already proven by verifying the OTP code.
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
 	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
@@ -437,7 +439,34 @@ func TestAuthService_VerifyPhone_With2FA(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	if result.Requires2FA {
+		t.Error("expected Requires2FA=false for SMS 2FA on phone-based login (phone already verified)")
+	}
+}
+
+func TestAuthService_VerifyPhone_With2FA_TOTP_Required(t *testing.T) {
+	// TOTP 2FA must still be required for phone-based login.
+	userRepo := mock.NewUserRepo()
+	cfg := newTestConfig()
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
+
+	user := &domain.User{
+		ID:            uuid.New(),
+		Name:          "Phone TOTP User",
+		Phone:         "+79001234568",
+		Email:         "phonetotp@test.com",
+		PhoneVerified: true,
+		Role:          domain.RoleClient,
+		IsActive:      true,
+		TwoFAMethod:   domain.TwoFATOTP,
+	}
+	userRepo.Create(context.Background(), user)
+
+	result, err := svc.VerifyPhone(context.Background(), "+79001234568", "123456", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if !result.Requires2FA {
-		t.Error("expected Requires2FA=true for user with SMS 2FA")
+		t.Error("expected Requires2FA=true for TOTP 2FA on phone-based login")
 	}
 }

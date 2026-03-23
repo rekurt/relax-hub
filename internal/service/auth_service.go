@@ -27,8 +27,9 @@ type RegisterInput struct {
 }
 
 type RegisterPhoneInput struct {
-	Phone string
-	Name  string
+	Phone        string
+	Name         string
+	AgeConfirmed bool
 }
 
 type LoginResult struct {
@@ -312,6 +313,10 @@ func (s *authService) RegisterPhone(ctx context.Context, input RegisterPhoneInpu
 		return fmt.Errorf("%w: name is required", domain.ErrInvalidInput)
 	}
 
+	if !input.AgeConfirmed {
+		return fmt.Errorf("%w: age confirmation is required", domain.ErrInvalidInput)
+	}
+
 	existing, err := s.userRepo.GetByPhone(ctx, phone)
 	if err != nil && !errors.Is(err, domain.ErrNotFound) {
 		return err
@@ -402,13 +407,9 @@ func (s *authService) VerifyPhone(ctx context.Context, phone string, code string
 		}
 	}
 
-	if user.TwoFAMethod != domain.TwoFANone && user.TwoFAMethod != "" {
-		// For SMS 2FA, auto-send the OTP code so user can verify
-		if user.TwoFAMethod == domain.TwoFASMS && user.Phone != "" {
-			if err := s.otpSvc.SendOTP(ctx, user.Phone); err != nil {
-				s.logger.Error("Failed to send SMS 2FA code during phone login", "user_id", user.ID, "error", err)
-			}
-		}
+	// For TOTP 2FA, require the second factor even for phone-based login.
+	// For SMS 2FA, skip it -- phone possession was already proven by the OTP above.
+	if user.TwoFAMethod == domain.TwoFATOTP {
 		partialToken, err := s.generatePartialToken(user.ID)
 		if err != nil {
 			return nil, err
