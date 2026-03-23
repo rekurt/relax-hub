@@ -222,9 +222,9 @@ Sequential execution of three independent subsystems: listing management enhance
 
 ### Task 13: Verify acceptance criteria
 
-- [ ] Run full test suite: `go test ./... -v -race`
-- [ ] Run linter: `make lint`
-- [ ] Manual verification:
+- [x] Run full test suite: `go test ./... -v -race`
+- [x] Run linter: `make lint`
+- [x] Manual verification:
   - Listing completeness endpoint returns correct checklist
   - Audit log records changes and triggers re-moderation
   - Listing duplication creates proper copy

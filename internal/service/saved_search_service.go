@@ -78,7 +78,12 @@ func (s *savedSearchService) ListRecentlyViewed(ctx context.Context, userID uuid
 	}
 
 	key := recentlyViewedKeyPrefix + userID.String()
-	members, err := s.redis.ZRevRange(ctx, key, 0, int64(limit-1)).Result()
+	members, err := s.redis.ZRangeArgs(ctx, redis.ZRangeArgs{
+		Key:   key,
+		Start: 0,
+		Stop:  int64(limit - 1),
+		Rev:   true,
+	}).Result()
 	if err != nil {
 		return nil, fmt.Errorf("list recently viewed: %w", err)
 	}
