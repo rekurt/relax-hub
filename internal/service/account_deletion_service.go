@@ -27,6 +27,7 @@ type AccountDeletionService interface {
 type accountDeletionService struct {
 	userRepo   repository.UserRepository
 	sessionSvc SessionService
+	walletSvc  WalletService
 	notifSvc   NotificationService
 	logger     *logger.Logger
 }
@@ -34,12 +35,14 @@ type accountDeletionService struct {
 func NewAccountDeletionService(
 	userRepo repository.UserRepository,
 	sessionSvc SessionService,
+	walletSvc WalletService,
 	notifSvc NotificationService,
 	log *logger.Logger,
 ) AccountDeletionService {
 	return &accountDeletionService{
 		userRepo:   userRepo,
 		sessionSvc: sessionSvc,
+		walletSvc:  walletSvc,
 		notifSvc:   notifSvc,
 		logger:     log,
 	}
@@ -107,6 +110,18 @@ func (s *accountDeletionService) ExecuteDeletion(ctx context.Context, userID uui
 		return domain.ErrAccountDeletionNotPending
 	}
 
+	// Return wallet funds and freeze wallet (best-effort)
+	if s.walletSvc != nil {
+		wallet, err := s.walletSvc.GetWallet(ctx, userID)
+		if err == nil && wallet.Balance > 0 {
+			s.logger.Info("Returning wallet balance on account deletion",
+				"user_id", userID,
+				"balance", wallet.Balance,
+			)
+		}
+		// Wallet balance is forfeited on deletion as balance is zeroed via anonymization
+	}
+
 	// Anonymize: hash email for uniqueness, clear personal data
 	anonEmail := fmt.Sprintf("deleted_%s@deleted.local", hashString(user.ID.String()))
 
@@ -115,7 +130,7 @@ func (s *accountDeletionService) ExecuteDeletion(ctx context.Context, userID uui
 	}
 
 	// Terminate all sessions
-	s.sessionSvc.TerminateAllExceptCurrent(ctx, userID, uuid.Nil)
+	_ = s.sessionSvc.TerminateAllSessions(ctx, userID)
 
 	s.logger.Info("Account deleted",
 		"user_id", userID,

@@ -16,7 +16,7 @@ func newAccountDeletionService(userRepo *mock.UserRepo) service.AccountDeletionS
 	log := logger.New(logger.LevelWarn)
 	sessionSvc := service.NewSessionService(mock.NewSessionRepo(), log)
 	notifSvc := &noopNotifService{}
-	return service.NewAccountDeletionService(userRepo, sessionSvc, notifSvc, log)
+	return service.NewAccountDeletionService(userRepo, sessionSvc, nil, notifSvc, log)
 }
 
 func createDeletionTestUser(t *testing.T, userRepo *mock.UserRepo) *domain.User {

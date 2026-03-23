@@ -29,7 +29,7 @@ func newTestConfig() *config.Config {
 func TestAuthService_Register_Success(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	user, token, err := svc.Register(context.Background(), service.RegisterInput{
 		Email:    "test@example.com",
@@ -60,7 +60,7 @@ func TestAuthService_Register_Success(t *testing.T) {
 func TestAuthService_Register_AsOwner(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	user, _, err := svc.Register(context.Background(), service.RegisterInput{
 		Email:    "owner@example.com",
@@ -81,7 +81,7 @@ func TestAuthService_Register_AsOwner(t *testing.T) {
 func TestAuthService_Register_InvalidRole(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	tests := []struct {
 		name string
@@ -109,7 +109,7 @@ func TestAuthService_Register_InvalidRole(t *testing.T) {
 func TestAuthService_Register_DuplicateEmail(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	_, _, _ = svc.Register(context.Background(), service.RegisterInput{
 		Email:    "dup@example.com",
@@ -135,7 +135,7 @@ func TestAuthService_Register_DuplicateEmail(t *testing.T) {
 func TestAuthService_Login_Success(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	_, _, _ = svc.Register(context.Background(), service.RegisterInput{
 		Email:    "login@example.com",
@@ -157,7 +157,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 func TestAuthService_Login_WrongPassword(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	_, _, _ = svc.Register(context.Background(), service.RegisterInput{
 		Email:    "login@example.com",
@@ -176,7 +176,7 @@ func TestAuthService_Login_WrongPassword(t *testing.T) {
 func TestAuthService_Login_NonExistentUser(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	_, err := svc.Login(context.Background(), "nonexistent@example.com", "password")
 	if !errors.Is(err, domain.ErrUnauthorized) {
@@ -187,7 +187,7 @@ func TestAuthService_Login_NonExistentUser(t *testing.T) {
 func TestAuthService_Login_BlockedUser(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	user, _, _ := svc.Register(context.Background(), service.RegisterInput{
 		Email:    "blocked@example.com",
@@ -208,7 +208,7 @@ func TestAuthService_Login_BlockedUser(t *testing.T) {
 func TestAuthService_ParseToken_Roundtrip(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	user, token, _ := svc.Register(context.Background(), service.RegisterInput{
 		Email:    "parse@example.com",
@@ -233,7 +233,7 @@ func TestAuthService_ParseToken_Roundtrip(t *testing.T) {
 func TestAuthService_ParseToken_InvalidToken(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	_, _, err := svc.ParseToken(context.Background(), "invalid-token")
 	if !errors.Is(err, domain.ErrUnauthorized) {
@@ -244,7 +244,7 @@ func TestAuthService_ParseToken_InvalidToken(t *testing.T) {
 func TestAuthService_ParseToken_WrongSecret(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	_, token, _ := svc.Register(context.Background(), service.RegisterInput{
 		Email:    "test@example.com",
@@ -260,7 +260,7 @@ func TestAuthService_ParseToken_WrongSecret(t *testing.T) {
 			TokenTTL: 3600_000_000_000,
 		},
 	}
-	svc2 := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg2, logger.New(logger.LevelWarn))
+	svc2 := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg2, logger.New(logger.LevelWarn))
 
 	_, _, err := svc2.ParseToken(context.Background(), token)
 	if !errors.Is(err, domain.ErrUnauthorized) {
@@ -274,7 +274,7 @@ func TestAuthService_Register_WithReferralCode(t *testing.T) {
 	cfg := newTestConfig()
 	log := logger.New(logger.LevelWarn)
 	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
-	svc := service.NewAuthService(userRepo, referralSvc, &noopOTPService{}, nil, cfg, log)
+	svc := service.NewAuthService(userRepo, referralSvc, &noopOTPService{}, nil, nil, cfg, log)
 
 	// First, register a referrer and generate a referral code
 	referrer, _, err := svc.Register(context.Background(), service.RegisterInput{
@@ -323,7 +323,7 @@ func TestAuthService_Register_WithInvalidReferralCode(t *testing.T) {
 	cfg := newTestConfig()
 	log := logger.New(logger.LevelWarn)
 	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
-	svc := service.NewAuthService(userRepo, referralSvc, &noopOTPService{}, nil, cfg, log)
+	svc := service.NewAuthService(userRepo, referralSvc, &noopOTPService{}, nil, nil, cfg, log)
 
 	// Register with an invalid referral code - should still succeed (best-effort)
 	user, token, err := svc.Register(context.Background(), service.RegisterInput{
@@ -349,7 +349,7 @@ func TestAuthService_RegisterPhone_Success(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
 	otpSvc := &noopOTPService{}
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, otpSvc, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, otpSvc, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	err := svc.RegisterPhone(context.Background(), service.RegisterPhoneInput{
 		Phone: "+79001234567",
@@ -363,7 +363,7 @@ func TestAuthService_RegisterPhone_Success(t *testing.T) {
 func TestAuthService_RegisterPhone_InvalidPhone(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	err := svc.RegisterPhone(context.Background(), service.RegisterPhoneInput{
 		Phone: "invalid",
@@ -377,7 +377,7 @@ func TestAuthService_RegisterPhone_InvalidPhone(t *testing.T) {
 func TestAuthService_RegisterPhone_EmptyName(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	err := svc.RegisterPhone(context.Background(), service.RegisterPhoneInput{
 		Phone: "+79001234567",
@@ -391,7 +391,7 @@ func TestAuthService_RegisterPhone_EmptyName(t *testing.T) {
 func TestAuthService_LoginPhone_NonExistent(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	err := svc.LoginPhone(context.Background(), "+79001234567")
 	if !errors.Is(err, domain.ErrUnauthorized) {
@@ -402,7 +402,7 @@ func TestAuthService_LoginPhone_NonExistent(t *testing.T) {
 func TestAuthService_LoginPhone_Success(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	// Create user with phone
 	userRepo.Create(context.Background(), &domain.User{
@@ -422,7 +422,7 @@ func TestAuthService_LoginPhone_Success(t *testing.T) {
 func TestAuthService_LoginPhone_BlockedUser(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	userRepo.Create(context.Background(), &domain.User{
 		Name:     "Blocked User",
@@ -441,7 +441,7 @@ func TestAuthService_LoginPhone_BlockedUser(t *testing.T) {
 func TestAuthService_VerifyPhone_Success(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	userRepo.Create(context.Background(), &domain.User{
 		Name:     "Phone User",
@@ -466,21 +466,37 @@ func TestAuthService_VerifyPhone_Success(t *testing.T) {
 	}
 }
 
-func TestAuthService_VerifyPhone_NonExistentUser(t *testing.T) {
+func TestAuthService_VerifyPhone_NewUserCreated(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
-	_, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456")
-	if !errors.Is(err, domain.ErrUnauthorized) {
-		t.Errorf("expected ErrUnauthorized, got: %v", err)
+	// VerifyPhone for non-existent user should create a new user (phone registration)
+	result, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result == nil || result.User == nil {
+		t.Fatal("expected user to be created")
+	}
+	if result.User.Phone != "+79001234567" {
+		t.Errorf("expected phone +79001234567, got %s", result.User.Phone)
+	}
+	if !result.User.PhoneVerified {
+		t.Error("phone should be verified")
+	}
+	if result.User.Role != domain.RoleClient {
+		t.Errorf("expected role client, got %s", result.User.Role)
+	}
+	if result.Token == "" {
+		t.Error("expected token to be generated")
 	}
 }
 
 func TestAuthService_PhoneNormalization(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	// Create user with normalized phone
 	userRepo.Create(context.Background(), &domain.User{
@@ -501,7 +517,7 @@ func TestAuthService_PhoneNormalization(t *testing.T) {
 func TestAuthService_Register_AgeNotConfirmed(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	_, _, err := svc.Register(context.Background(), service.RegisterInput{
 		Email:        "test@example.com",
@@ -518,7 +534,7 @@ func TestAuthService_Register_AgeNotConfirmed(t *testing.T) {
 func TestAuthService_Register_AgeConfirmedFlag(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	user, _, err := svc.Register(context.Background(), service.RegisterInput{
 		Email:        "test@example.com",
@@ -541,7 +557,7 @@ func TestAuthService_Register_WelcomeBonus(t *testing.T) {
 	cfg := newTestConfig()
 	log := logger.New(logger.LevelWarn)
 	walletSvc := service.NewWalletService(walletRepo, log)
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, walletSvc, cfg, log)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, walletSvc, nil, cfg, log)
 
 	user, _, err := svc.Register(context.Background(), service.RegisterInput{
 		Email:        "bonus@example.com",
@@ -604,7 +620,7 @@ func TestAuthService_Register_WelcomeBonusDisabled(t *testing.T) {
 	cfg.WelcomeBonus.Amount = 0 // disable welcome bonus
 	log := logger.New(logger.LevelWarn)
 	walletSvc := service.NewWalletService(walletRepo, log)
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, walletSvc, cfg, log)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, walletSvc, nil, cfg, log)
 
 	user, _, err := svc.Register(context.Background(), service.RegisterInput{
 		Email:        "nobonus@example.com",
@@ -630,7 +646,7 @@ func TestAuthService_Register_WelcomeBonusDisabled(t *testing.T) {
 func TestAuthService_Register_NilWalletService(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	// Registration should succeed even without wallet service
 	user, token, err := svc.Register(context.Background(), service.RegisterInput{

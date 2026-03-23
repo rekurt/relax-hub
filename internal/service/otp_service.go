@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -71,9 +72,10 @@ func (s *otpService) SendOTP(ctx context.Context, phone string) error {
 		return fmt.Errorf("store OTP: %w", err)
 	}
 
+	// Use Incr + ExpireNX so the window TTL is only set on first request (fixed window)
 	pipe := s.redis.Pipeline()
 	pipe.Incr(ctx, rateKey)
-	pipe.Expire(ctx, rateKey, otpRateWindow)
+	pipe.ExpireNX(ctx, rateKey, otpRateWindow)
 	if _, err := pipe.Exec(ctx); err != nil {
 		return fmt.Errorf("update OTP rate limit: %w", err)
 	}
@@ -107,7 +109,7 @@ func (s *otpService) VerifyOTP(ctx context.Context, phone string, code string) (
 		return false, domain.ErrOTPMaxAttempts
 	}
 
-	if data.Code != code {
+	if subtle.ConstantTimeCompare([]byte(data.Code), []byte(code)) != 1 {
 		data.Attempts++
 		updated, _ := json.Marshal(data)
 		ttl, _ := s.redis.TTL(ctx, otpKey).Result()

@@ -50,26 +50,28 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo          repository.UserRepository
-	referralSvc       ReferralService
-	otpSvc            OTPService
-	walletSvc         WalletService
-	logger            *logger.Logger
-	jwtSecret         []byte
-	tokenTTL          time.Duration
+	userRepo           repository.UserRepository
+	referralSvc        ReferralService
+	otpSvc             OTPService
+	walletSvc          WalletService
+	sessionSvc         SessionService
+	logger             *logger.Logger
+	jwtSecret          []byte
+	tokenTTL           time.Duration
 	welcomeBonusAmount int64
 	welcomeBonusExpiry int
 }
 
-func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralService, otpSvc OTPService, walletSvc WalletService, cfg *config.Config, log *logger.Logger) AuthService {
+func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralService, otpSvc OTPService, walletSvc WalletService, sessionSvc SessionService, cfg *config.Config, log *logger.Logger) AuthService {
 	return &authService{
-		userRepo:          userRepo,
-		referralSvc:       referralSvc,
-		otpSvc:            otpSvc,
-		walletSvc:         walletSvc,
-		logger:            log,
-		jwtSecret:         []byte(cfg.JWT.Secret),
-		tokenTTL:          cfg.JWT.TokenTTL,
+		userRepo:           userRepo,
+		referralSvc:        referralSvc,
+		otpSvc:             otpSvc,
+		walletSvc:          walletSvc,
+		sessionSvc:         sessionSvc,
+		logger:             log,
+		jwtSecret:          []byte(cfg.JWT.Secret),
+		tokenTTL:           cfg.JWT.TokenTTL,
 		welcomeBonusAmount: cfg.WelcomeBonus.Amount,
 		welcomeBonusExpiry: cfg.WelcomeBonus.ExpiryDays,
 	}
@@ -140,7 +142,7 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 	// Create wallet and credit welcome bonus (best-effort, don't fail registration)
 	s.createWalletWithBonus(ctx, user.ID)
 
-	token, err := s.generateToken(user.ID, user.Role)
+	token, err := s.generateTokenWithSession(ctx, user.ID, user.Role)
 	if err != nil {
 		return nil, "", err
 	}
@@ -178,11 +180,21 @@ func (s *authService) Login(ctx context.Context, email, password string) (*Login
 		return nil, domain.ErrUserBlocked
 	}
 
+	if user.DeletionScheduledAt != nil {
+		return nil, domain.ErrAccountDeletionPending
+	}
+
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return nil, domain.ErrUnauthorized
 	}
 
 	if user.TwoFAMethod != domain.TwoFANone && user.TwoFAMethod != "" {
+		// For SMS 2FA, auto-send the OTP code so user can verify
+		if user.TwoFAMethod == domain.TwoFASMS && user.Phone != "" {
+			if err := s.otpSvc.SendOTP(ctx, user.Phone); err != nil {
+				s.logger.Error("Failed to send SMS 2FA code during login", "user_id", user.ID, "error", err)
+			}
+		}
 		partialToken, err := s.generatePartialToken(user.ID)
 		if err != nil {
 			return nil, err
@@ -194,7 +206,7 @@ func (s *authService) Login(ctx context.Context, email, password string) (*Login
 		}, nil
 	}
 
-	token, err := s.generateToken(user.ID, user.Role)
+	token, err := s.generateTokenWithSession(ctx, user.ID, user.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -348,23 +360,51 @@ func (s *authService) VerifyPhone(ctx context.Context, phone string, code string
 	user, err := s.userRepo.GetByPhone(ctx, phone)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return nil, domain.ErrUnauthorized
+			// New user registration via phone - create user account
+			now := time.Now()
+			user = &domain.User{
+				ID:            uuid.New(),
+				Phone:         phone,
+				PhoneVerified: true,
+				Role:          domain.RoleClient,
+				IsActive:      true,
+				AgeConfirmed:  true,
+				CreatedAt:     now,
+				UpdatedAt:     now,
+			}
+			if err := s.userRepo.Create(ctx, user); err != nil {
+				return nil, err
+			}
+			// Create wallet and credit welcome bonus (best-effort)
+			s.createWalletWithBonus(ctx, user.ID)
+		} else {
+			return nil, err
 		}
-		return nil, err
-	}
+	} else {
+		// Existing user - check status
+		if !user.IsActive {
+			return nil, domain.ErrUserBlocked
+		}
 
-	if !user.IsActive {
-		return nil, domain.ErrUserBlocked
-	}
+		if user.DeletionScheduledAt != nil {
+			return nil, domain.ErrAccountDeletionPending
+		}
 
-	if !user.PhoneVerified {
-		user.PhoneVerified = true
-		if err := s.userRepo.Update(ctx, user); err != nil {
-			s.logger.Error("Failed to update phone_verified", "user_id", user.ID, "error", err)
+		if !user.PhoneVerified {
+			user.PhoneVerified = true
+			if err := s.userRepo.Update(ctx, user); err != nil {
+				s.logger.Error("Failed to update phone_verified", "user_id", user.ID, "error", err)
+			}
 		}
 	}
 
 	if user.TwoFAMethod != domain.TwoFANone && user.TwoFAMethod != "" {
+		// For SMS 2FA, auto-send the OTP code so user can verify
+		if user.TwoFAMethod == domain.TwoFASMS && user.Phone != "" {
+			if err := s.otpSvc.SendOTP(ctx, user.Phone); err != nil {
+				s.logger.Error("Failed to send SMS 2FA code during phone login", "user_id", user.ID, "error", err)
+			}
+		}
 		partialToken, err := s.generatePartialToken(user.ID)
 		if err != nil {
 			return nil, err
@@ -376,7 +416,7 @@ func (s *authService) VerifyPhone(ctx context.Context, phone string, code string
 		}, nil
 	}
 
-	token, err := s.generateToken(user.ID, user.Role)
+	token, err := s.generateTokenWithSession(ctx, user.ID, user.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +459,15 @@ func isValidPhone(phone string) bool {
 
 const partialTokenTTL = 5 * time.Minute
 
-func (s *authService) generateToken(userID uuid.UUID, role domain.UserRole) (string, error) {
+func (s *authService) generateTokenWithSession(ctx context.Context, userID uuid.UUID, role domain.UserRole) (string, error) {
+	if s.sessionSvc != nil {
+		session, err := s.sessionSvc.CreateSession(ctx, userID, "", "", "")
+		if err != nil {
+			s.logger.Warn("failed to create session during token generation", "user_id", userID, "error", err)
+			return generateJWT(userID, role, s.jwtSecret, s.tokenTTL)
+		}
+		return generateJWTWithSession(userID, role, session.ID, s.jwtSecret, s.tokenTTL)
+	}
 	return generateJWT(userID, role, s.jwtSecret, s.tokenTTL)
 }
 
@@ -477,7 +525,7 @@ func (s *authService) Complete2FALogin(ctx context.Context, userID uuid.UUID) (*
 		return nil, "", domain.ErrUserBlocked
 	}
 
-	token, err := s.generateToken(user.ID, user.Role)
+	token, err := s.generateTokenWithSession(ctx, user.ID, user.Role)
 	if err != nil {
 		return nil, "", err
 	}

@@ -297,7 +297,7 @@ func TestTwoFAService_EnableSMS2FA_AlreadyEnabled(t *testing.T) {
 func TestAuthService_Login_With2FA(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	// Register user
 	user, _, _ := svc.Register(context.Background(), service.RegisterInput{
@@ -359,7 +359,7 @@ func TestAuthService_Login_With2FA(t *testing.T) {
 func TestAuthService_Login_Without2FA(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	svc.Register(context.Background(), service.RegisterInput{
 		Email:    "normal@example.com",
@@ -387,7 +387,7 @@ func TestAuthService_Login_Without2FA(t *testing.T) {
 func TestAuthService_ParsePartialToken_Invalid(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	_, err := svc.ParsePartialToken(context.Background(), "invalid-token")
 	if !errors.Is(err, domain.ErrUnauthorized) {
@@ -398,7 +398,7 @@ func TestAuthService_ParsePartialToken_Invalid(t *testing.T) {
 func TestAuthService_ParsePartialToken_FullTokenRejected(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	// Register and get a full token
 	_, fullToken, _ := svc.Register(context.Background(), service.RegisterInput{
@@ -419,7 +419,7 @@ func TestAuthService_ParsePartialToken_FullTokenRejected(t *testing.T) {
 func TestAuthService_VerifyPhone_With2FA(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()
-	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, cfg, logger.New(logger.LevelWarn))
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
 	user := &domain.User{
 		ID:            uuid.New(),

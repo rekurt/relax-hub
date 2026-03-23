@@ -220,6 +220,9 @@ func (s *walletService) CaptureHold(ctx context.Context, holdID uuid.UUID) (*dom
 	}
 
 	newBalance := wallet.Balance - hold.Amount
+	if newBalance < 0 {
+		return nil, domain.ErrInsufficientWalletBalance
+	}
 	newHeldAmount := wallet.HeldAmount - hold.Amount
 	if newHeldAmount < 0 {
 		newHeldAmount = 0
@@ -396,22 +399,22 @@ func (s *walletService) GetActiveHolds(ctx context.Context, walletID uuid.UUID) 
 }
 
 func (s *walletService) ExpireBonuses(ctx context.Context) (int, error) {
-	// Find all wallets with expiring bonuses - we process by getting all expired
-	// This is called by the cron job and processes all wallets at once
-	now := time.Now()
+	walletIDs, err := s.walletRepo.ListAllIDs(ctx)
+	if err != nil {
+		return 0, err
+	}
 
-	// We need to iterate wallets; for cron we use a simpler approach:
-	// get all expired bonus transactions across all wallets via the repo method
-	// For now, we rely on the cron job to call this per-wallet or batch
-	// The repo method GetExpiringBonuses already handles wallet-scoped queries
+	totalExpired := 0
+	for _, wid := range walletIDs {
+		expired, err := s.ExpireBonusesForWallet(ctx, wid)
+		if err != nil {
+			s.logger.Error("failed to expire bonuses for wallet", "wallet_id", wid, "error", err)
+			continue
+		}
+		totalExpired += expired
+	}
 
-	// Since we can't iterate all wallets here without a ListAll method,
-	// this method is designed to be called with context from the cron layer
-	// which will handle the wallet iteration.
-	// For the service layer, we provide ExpireBonusesForWallet internally.
-
-	s.logger.Info("ExpireBonuses called - should be invoked per-wallet from cron", "time", now)
-	return 0, nil
+	return totalExpired, nil
 }
 
 func (s *walletService) ExpireBonusesForWallet(ctx context.Context, walletID uuid.UUID) (int, error) {

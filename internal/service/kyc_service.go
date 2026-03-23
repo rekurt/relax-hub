@@ -50,10 +50,18 @@ func NewKYCService(
 }
 
 func (s *kycService) Submit(ctx context.Context, userID uuid.UUID, input SubmitKYCInput) (*domain.KYCApplication, error) {
-	// Check if user already has a pending application
+	// Check if user already has a pending or valid approved application
 	existing, err := s.kycRepo.GetByUserID(ctx, userID)
-	if err == nil && existing.Status == domain.KYCStatusPending {
-		return nil, domain.ErrKYCPending
+	if err == nil {
+		if existing.Status == domain.KYCStatusPending {
+			return nil, domain.ErrKYCPending
+		}
+		// Block re-submission if user has a valid (non-expired) approved KYC
+		if existing.Status == domain.KYCStatusApproved {
+			if existing.ExpiresAt == nil || existing.ExpiresAt.After(time.Now()) {
+				return nil, domain.ErrKYCPending // already approved, no need to re-submit
+			}
+		}
 	}
 
 	now := time.Now()
