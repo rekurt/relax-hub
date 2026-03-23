@@ -146,11 +146,11 @@ Sequential execution of three independent subsystems: listing management enhance
 - Modify: `internal/domain/filters.go` (extend existing SearchQuery handling)
 - Create: `migrations/000051_fulltext_search.up.sql`, `migrations/000051_fulltext_search.down.sql`
 
-- [ ] Migration: pg_trgm extension, search_vector tsvector column, trigger for auto-update, GIN indexes
-- [ ] Modify bathhouse list query: when SearchQuery is set, use plainto_tsquery('russian', query) + ts_rank for relevance, fallback to trigram similarity for fuzzy matching
-- [ ] Support prefix search with to_tsquery('russian', query || ':*')
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] Migration: pg_trgm extension, search_vector tsvector column, trigger for auto-update, GIN indexes
+- [x] Modify bathhouse list query: when SearchQuery is set, use plainto_tsquery('russian', query) + ts_rank for relevance, fallback to trigram similarity for fuzzy matching
+- [x] Support prefix search with to_tsquery('russian', query || ':*')
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 9: Search Suggestions (FR-039)
 

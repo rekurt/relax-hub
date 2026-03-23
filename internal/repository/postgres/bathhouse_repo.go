@@ -262,11 +262,13 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		conditions = append(conditions, fmt.Sprintf("max_guests >= %s", addArg(*filter.GuestCount)))
 	}
 	if filter.SearchQuery != nil && *filter.SearchQuery != "" {
-		escaped := strings.ReplaceAll(*filter.SearchQuery, "\\", "\\\\")
-		escaped = strings.ReplaceAll(escaped, "%", "\\%")
-		escaped = strings.ReplaceAll(escaped, "_", "\\_")
-		likePattern := "%" + escaped + "%"
-		conditions = append(conditions, fmt.Sprintf("(name ILIKE %s OR description ILIKE %s)", addArg(likePattern), addArg(likePattern)))
+		q := strings.TrimSpace(*filter.SearchQuery)
+		// Full-text search with Russian config + trigram fallback
+		// ts_rank scores FTS relevance; similarity() scores fuzzy match
+		conditions = append(conditions, fmt.Sprintf(
+			"(search_vector @@ plainto_tsquery('russian', %s) OR similarity(name, %s) > 0.2 OR similarity(description, %s) > 0.1)",
+			addArg(q), addArg(q), addArg(q),
+		))
 	}
 	if filter.OpenNow != nil && *filter.OpenNow {
 		dayArg := addArg(currentDayOfWeek())
@@ -336,14 +338,20 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	}
 
 	switch filter.SortBy {
+	case "relevance":
+		if filter.SearchQuery != nil && *filter.SearchQuery != "" {
+			q := strings.TrimSpace(*filter.SearchQuery)
+			orderBy = fmt.Sprintf(
+				"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, ts_rank(search_vector, plainto_tsquery('russian', %s)) DESC, similarity(name, %s) DESC",
+				addArg(q), addArg(q),
+			)
+		}
 	case "price":
-		// Price sort: promoted first, then premium, then by price
 		orderBy = fmt.Sprintf(
 			"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, CAST(price_per_hour AS FLOAT) %s",
 			sortOrder,
 		)
 	case "rating":
-		// Rating sort: promoted first, then premium, then by rating
 		orderBy = fmt.Sprintf(
 			"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, rating %s",
 			sortOrder,
@@ -356,8 +364,16 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			)
 		}
 	default:
-		// Default sort: promoted first, then premium, then by created_at
-		orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, created_at DESC"
+		if filter.SearchQuery != nil && *filter.SearchQuery != "" {
+			// When searching without explicit sort, use relevance
+			q := strings.TrimSpace(*filter.SearchQuery)
+			orderBy = fmt.Sprintf(
+				"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, ts_rank(search_vector, plainto_tsquery('russian', %s)) DESC, similarity(name, %s) DESC",
+				addArg(q), addArg(q),
+			)
+		} else {
+			orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, CASE WHEN s.plan = 'premium' THEN 10 ELSE 0 END DESC, created_at DESC"
+		}
 	}
 
 	offset := (filter.Page - 1) * filter.PageSize

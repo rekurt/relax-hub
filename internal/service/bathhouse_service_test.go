@@ -1006,3 +1006,134 @@ func TestBathhouseService_Deactivate_RepresentativeAllowed(t *testing.T) {
 		t.Fatalf("representative should be allowed to deactivate, got: %v", err)
 	}
 }
+
+func TestBathhouseService_Search_FullTextQuery(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	// Create two bathhouses with different names
+	bh1 := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Русская баня на дровах",
+		Description: "Лучшая баня в городе", Slug: "russkaya-banya",
+		Address: "ул. Ленина 1", CityID: 1, PricePerHour: 3000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+	}
+	bh2 := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Финская сауна",
+		Description: "Настоящая финская сауна", Slug: "finskaya-sauna",
+		Address: "ул. Мира 5", CityID: 1, PricePerHour: 4000,
+		MaxGuests: 6, MinDuration: 1, Status: domain.BathhouseStatusActive,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh1)
+	_ = env.bhRepo.Create(context.Background(), bh2)
+
+	// Search for "баня" — should find only bh1
+	q := "баня"
+	result, err := env.svc.Search(context.Background(), domain.BathhouseFilter{
+		SearchQuery: &q, Page: 1, PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("Search: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("expected 1 result for 'баня', got %d", result.TotalCount)
+	}
+	if result.TotalCount == 1 && result.Items[0].ID != bh1.ID {
+		t.Errorf("expected bathhouse %s, got %s", bh1.ID, result.Items[0].ID)
+	}
+
+	// Search for "сауна" — should find only bh2
+	q2 := "сауна"
+	result, err = env.svc.Search(context.Background(), domain.BathhouseFilter{
+		SearchQuery: &q2, Page: 1, PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("Search: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("expected 1 result for 'сауна', got %d", result.TotalCount)
+	}
+
+	// Empty search — should return all
+	result, err = env.svc.Search(context.Background(), domain.BathhouseFilter{
+		Page: 1, PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("Search: %v", err)
+	}
+	if result.TotalCount != 2 {
+		t.Errorf("expected 2 results for empty search, got %d", result.TotalCount)
+	}
+}
+
+func TestBathhouseService_Search_SortByRelevance(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh1 := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Баня люкс",
+		Description: "Описание", Slug: "banya-lux",
+		Address: "ул. Ленина 1", CityID: 1, PricePerHour: 3000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh1)
+
+	q := "баня"
+	result, err := env.svc.Search(context.Background(), domain.BathhouseFilter{
+		SearchQuery: &q, SortBy: "relevance", Page: 1, PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("Search with relevance sort: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("expected 1 result, got %d", result.TotalCount)
+	}
+}
+
+func TestBathhouseService_Search_NoResultsForNonMatching(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Русская баня",
+		Description: "Классическая баня", Slug: "russkaya",
+		Address: "ул. Мира 1", CityID: 1, PricePerHour: 2000,
+		MaxGuests: 8, MinDuration: 1, Status: domain.BathhouseStatusActive,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh)
+
+	q := "бассейн"
+	result, err := env.svc.Search(context.Background(), domain.BathhouseFilter{
+		SearchQuery: &q, Page: 1, PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("Search: %v", err)
+	}
+	if result.TotalCount != 0 {
+		t.Errorf("expected 0 results for non-matching query, got %d", result.TotalCount)
+	}
+}
+
+func TestBathhouseService_Search_DescriptionMatch(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Комплекс отдыха",
+		Description: "Большой бассейн с подогревом", Slug: "kompleks",
+		Address: "ул. Центральная 10", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 15, MinDuration: 2, Status: domain.BathhouseStatusActive,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh)
+
+	q := "бассейн"
+	result, err := env.svc.Search(context.Background(), domain.BathhouseFilter{
+		SearchQuery: &q, Page: 1, PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("Search: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("expected 1 result matching description, got %d", result.TotalCount)
+	}
+}

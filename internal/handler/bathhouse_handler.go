@@ -221,7 +221,7 @@ type updateBathhouseRequest struct {
 // @Produce      json
 // @Param        page               query   int     false  "Page number"              default(1)
 // @Param        page_size          query   int     false  "Items per page"           default(20)
-// @Param        sort_by            query   string  false  "Sort field (price, rating, distance, created_at)"
+// @Param        sort_by            query   string  false  "Sort field (relevance, price, rating, distance, created_at)"
 // @Param        sort_order         query   string  false  "Sort order (asc, desc)"
 // @Param        city_id            query   int     false  "Filter by city ID"
 // @Param        city_slug          query   string  false  "Filter by city slug"
