@@ -102,4 +102,6 @@ var (
 	ErrListingDraftIncomplete = errors.New("listing draft has incomplete steps")
 	ErrListingDraftSubmitted  = errors.New("listing draft already submitted")
 	ErrListingDraftInvalidStep = errors.New("invalid listing draft step")
+
+	ErrListingIncomplete = errors.New("listing has incomplete required fields")
 )

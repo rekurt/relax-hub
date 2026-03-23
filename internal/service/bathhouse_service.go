@@ -50,6 +50,25 @@ type UpdateBathhouseInput struct {
 	WorkingHours []domain.WorkingHours
 }
 
+// CompletenessItem represents a single field check in the completeness result.
+type CompletenessItem struct {
+	Field    string `json:"field"`
+	Label    string `json:"label"`
+	Complete bool   `json:"complete"`
+	Required bool   `json:"required"`
+}
+
+// CompletenessResult is the result of a listing completeness check.
+type CompletenessResult struct {
+	Score         int                `json:"score"`
+	TotalRequired int                `json:"total_required"`
+	DoneRequired  int                `json:"done_required"`
+	TotalOptional int                `json:"total_optional"`
+	DoneOptional  int                `json:"done_optional"`
+	Ready         bool               `json:"ready"`
+	Items         []CompletenessItem `json:"items"`
+}
+
 type BathhouseService interface {
 	Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)
@@ -61,6 +80,8 @@ type BathhouseService interface {
 	ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error)
 	GetWidgetKey(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (string, error)
 	RegenerateWidgetKey(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (string, error)
+	CheckCompleteness(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (*CompletenessResult, error)
+	SubmitForModeration(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
 	// Admin moderation:
 	Approve(ctx context.Context, id uuid.UUID) error
 	Reject(ctx context.Context, id uuid.UUID) error
@@ -69,14 +90,15 @@ type BathhouseService interface {
 type bathhouseService struct {
 	bhRepo         repository.BathhouseRepository
 	bookingRepo    repository.BookingRepository
+	photoRepo      repository.BathhousePhotoRepository
 	access         *AccessChecker
 	kycSvc         KYCService
 	offerSvc       OfferService
 	paymentDetails PaymentDetailsService
 }
 
-func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService) BathhouseService {
-	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails}
+func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService) BathhouseService {
+	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, photoRepo: photoRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails}
 }
 
 func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error) {
@@ -352,4 +374,114 @@ func (s *bathhouseService) RegenerateWidgetKey(ctx context.Context, userID uuid.
 
 func (s *bathhouseService) GetByAPIKey(ctx context.Context, apiKey string) (*domain.Bathhouse, error) {
 	return s.bhRepo.GetByAPIKey(ctx, apiKey)
+}
+
+func (s *bathhouseService) CheckCompleteness(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (*CompletenessResult, error) {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
+		return nil, err
+	}
+
+	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
+		return nil, err
+	}
+
+	var verifiedPhotoCount int
+	if s.photoRepo != nil {
+		photos, err := s.photoRepo.ListVerifiedByBathhouse(ctx, bathhouseID)
+		if err == nil {
+			verifiedPhotoCount = len(photos)
+		}
+	}
+
+	amenityCount := countAmenities(bh)
+
+	items := []CompletenessItem{
+		{Field: "name", Label: "Название", Complete: bh.Name != "", Required: true},
+		{Field: "description", Label: "Описание (50+ символов)", Complete: len(bh.Description) >= 50, Required: true},
+		{Field: "address", Label: "Адрес", Complete: bh.Address != "", Required: true},
+		{Field: "city", Label: "Город", Complete: bh.CityID > 0, Required: true},
+		{Field: "coordinates", Label: "Координаты", Complete: bh.Latitude != 0 || bh.Longitude != 0, Required: true},
+		{Field: "photos", Label: "Фотографии (3+)", Complete: verifiedPhotoCount >= 3, Required: true},
+		{Field: "price", Label: "Цена за час", Complete: bh.PricePerHour > 0, Required: true},
+		{Field: "schedule", Label: "Расписание работы", Complete: len(bh.WorkingHours) > 0, Required: true},
+		{Field: "capacity", Label: "Вместимость", Complete: bh.MaxGuests > 0, Required: true},
+		{Field: "amenities", Label: "Удобства (3+)", Complete: amenityCount >= 3, Required: false},
+	}
+
+	var totalReq, doneReq, totalOpt, doneOpt int
+	for _, item := range items {
+		if item.Required {
+			totalReq++
+			if item.Complete {
+				doneReq++
+			}
+		} else {
+			totalOpt++
+			if item.Complete {
+				doneOpt++
+			}
+		}
+	}
+
+	total := totalReq + totalOpt
+	done := doneReq + doneOpt
+	score := 0
+	if total > 0 {
+		score = done * 100 / total
+	}
+
+	return &CompletenessResult{
+		Score:         score,
+		TotalRequired: totalReq,
+		DoneRequired:  doneReq,
+		TotalOptional: totalOpt,
+		DoneOptional:  doneOpt,
+		Ready:         doneReq == totalReq,
+		Items:         items,
+	}, nil
+}
+
+func (s *bathhouseService) SubmitForModeration(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error {
+	result, err := s.CheckCompleteness(ctx, userID, userRole, bathhouseID)
+	if err != nil {
+		return err
+	}
+	if !result.Ready {
+		return domain.ErrListingIncomplete
+	}
+
+	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
+		return err
+	}
+
+	if bh.Status == domain.BathhouseStatusPending {
+		return nil // already pending
+	}
+
+	return s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusPending)
+}
+
+func countAmenities(bh *domain.Bathhouse) int {
+	count := 0
+	if bh.HasPool {
+		count++
+	}
+	if bh.HasSauna {
+		count++
+	}
+	if bh.HasSteamRoom {
+		count++
+	}
+	if bh.HasHotTub {
+		count++
+	}
+	if bh.HasBBQ {
+		count++
+	}
+	if bh.HasKaraoke {
+		count++
+	}
+	return count
 }

@@ -1089,6 +1089,67 @@ func (h *BathhouseHandler) buildMeta(ctx context.Context, bh *domain.Bathhouse) 
 	return &meta
 }
 
+// @Summary      Check listing completeness
+// @Description  Check how complete a bathhouse listing is before submitting for moderation.
+// @Tags         bathhouses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse{data=service.CompletenessResult}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/completeness [get]
+func (h *BathhouseHandler) CheckCompleteness(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	result, err := h.bathhouseService.CheckCompleteness(r.Context(), userID, role, id)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
+
+// @Summary      Submit bathhouse for moderation
+// @Description  Submit a bathhouse listing for admin moderation. All required fields must be complete.
+// @Tags         bathhouses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Bathhouse ID (UUID)"
+// @Success      200  {object}  APIResponse
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /my/bathhouses/{id}/submit [post]
+func (h *BathhouseHandler) SubmitForModeration(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	if err := h.bathhouseService.SubmitForModeration(r.Context(), userID, role, id); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "submitted for moderation"})
+}
+
 func (h *BathhouseHandler) recordBathhouseView(r *http.Request, bathhouseID uuid.UUID, userID uuid.UUID) {
 	ctx := r.Context()
 

@@ -276,6 +276,13 @@ func (m *mockBathhouseService) GetByAPIKey(ctx context.Context, apiKey string) (
 	return nil, domain.ErrNotFound
 }
 
+func (m *mockBathhouseService) CheckCompleteness(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*service.CompletenessResult, error) {
+	return nil, nil
+}
+func (m *mockBathhouseService) SubmitForModeration(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+
 type mockBookingService struct {
 	createFn          func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error)
 	cancelFn          func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error

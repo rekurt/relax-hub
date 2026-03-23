@@ -118,6 +118,12 @@ func (m *mockBHService) RegenerateWidgetKey(_ context.Context, _ uuid.UUID, _ do
 
 func (m *mockBHService) Approve(_ context.Context, _ uuid.UUID) error { return nil }
 func (m *mockBHService) Reject(_ context.Context, _ uuid.UUID) error  { return nil }
+func (m *mockBHService) CheckCompleteness(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*service.CompletenessResult, error) {
+	return nil, nil
+}
+func (m *mockBHService) SubmitForModeration(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
 
 // mockBathhouseRepository implements repository.BathhouseRepository for AccessChecker tests.
 type mockBathhouseRepository struct {

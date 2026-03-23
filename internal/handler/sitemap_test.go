@@ -59,6 +59,12 @@ func (m *sitemapMockBHService) RegenerateWidgetKey(_ context.Context, _ uuid.UUI
 }
 func (m *sitemapMockBHService) Approve(_ context.Context, _ uuid.UUID) error { return nil }
 func (m *sitemapMockBHService) Reject(_ context.Context, _ uuid.UUID) error  { return nil }
+func (m *sitemapMockBHService) CheckCompleteness(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*service.CompletenessResult, error) {
+	return nil, nil
+}
+func (m *sitemapMockBHService) SubmitForModeration(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
 func (m *sitemapMockBHService) GetByAPIKey(_ context.Context, _ string) (*domain.Bathhouse, error) {
 	return nil, domain.ErrNotFound
 }

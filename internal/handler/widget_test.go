@@ -66,6 +66,12 @@ func (m *mockWidgetBathhouseService) RegenerateWidgetKey(_ context.Context, _ uu
 
 func (m *mockWidgetBathhouseService) Approve(_ context.Context, _ uuid.UUID) error { return nil }
 func (m *mockWidgetBathhouseService) Reject(_ context.Context, _ uuid.UUID) error  { return nil }
+func (m *mockWidgetBathhouseService) CheckCompleteness(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*service.CompletenessResult, error) {
+	return nil, nil
+}
+func (m *mockWidgetBathhouseService) SubmitForModeration(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
 
 // Mock BookingService for widget testing
 type mockWidgetBookingService struct {

@@ -275,6 +275,8 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusConflict, "listing_draft_submitted", err.Error())
 	case errors.Is(err, domain.ErrListingDraftInvalidStep):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "listing_draft_invalid_step", err.Error())
+	case errors.Is(err, domain.ErrListingIncomplete):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "listing_incomplete", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

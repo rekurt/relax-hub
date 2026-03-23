@@ -18,6 +18,7 @@ type bathhouseTestEnv struct {
 	bhRepo      *mock.BathhouseRepo
 	repRepo     *mock.RepresentativeRepo
 	bookingRepo *mock.BookingRepo
+	photoRepo   *mock.BathhousePhotoRepo
 	kycRepo     *mock.KYCRepo
 	offerRepo   *mock.OfferRepo
 	pdRepo      *mock.PaymentDetailsRepo
@@ -27,6 +28,7 @@ func newBathhouseTestEnv() *bathhouseTestEnv {
 	bhRepo := mock.NewBathhouseRepo()
 	repRepo := mock.NewRepresentativeRepo()
 	bookingRepo := mock.NewBookingRepo()
+	photoRepo := mock.NewBathhousePhotoRepo()
 	kycRepo := mock.NewKYCRepo()
 	offerRepo := mock.NewOfferRepo()
 	pdRepo := mock.NewPaymentDetailsRepo()
@@ -35,10 +37,10 @@ func newBathhouseTestEnv() *bathhouseTestEnv {
 	kycSvc := service.NewKYCService(kycRepo, &noopNotifService{}, log)
 	offerSvc := service.NewOfferService(offerRepo, log)
 	pdSvc := service.NewPaymentDetailsService(pdRepo, log)
-	svc := service.NewBathhouseService(bhRepo, bookingRepo, access, kycSvc, offerSvc, pdSvc)
+	svc := service.NewBathhouseService(bhRepo, bookingRepo, photoRepo, access, kycSvc, offerSvc, pdSvc)
 	return &bathhouseTestEnv{
 		svc: svc, bhRepo: bhRepo, repRepo: repRepo, bookingRepo: bookingRepo,
-		kycRepo: kycRepo, offerRepo: offerRepo, pdRepo: pdRepo,
+		photoRepo: photoRepo, kycRepo: kycRepo, offerRepo: offerRepo, pdRepo: pdRepo,
 	}
 }
 
@@ -550,5 +552,173 @@ func TestBathhouseService_Create_Gate_AllPassed(t *testing.T) {
 	}
 	if bh.Status != domain.BathhouseStatusPending {
 		t.Errorf("status = %q, want %q", bh.Status, domain.BathhouseStatusPending)
+	}
+}
+
+func TestBathhouseService_CheckCompleteness_AllRequired(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID:           uuid.New(),
+		OwnerID:      ownerID,
+		Name:         "Полная баня",
+		Description:  "Это описание бани длиной более пятидесяти символов для прохождения проверки",
+		Address:      "ул. Тестовая 123",
+		CityID:       1,
+		Latitude:     55.75,
+		Longitude:    37.62,
+		PricePerHour: 5000,
+		MaxGuests:    10,
+		MinDuration:  1,
+		HasPool:      true,
+		HasSauna:     true,
+		HasSteamRoom: true,
+		WorkingHours: []domain.WorkingHours{{DayOfWeek: 0, OpenTime: "09:00", CloseTime: "22:00"}},
+		Status:       domain.BathhouseStatusPending,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh)
+
+	// Add 3 verified photos
+	for i := 0; i < 3; i++ {
+		_ = env.photoRepo.Create(context.Background(), &domain.BathhousePhoto{
+			ID:          uuid.New(),
+			BathhouseID: bh.ID,
+			URL:         "https://example.com/photo.jpg",
+			Status:      domain.PhotoStatusVerified,
+			Position:    i,
+		})
+	}
+
+	result, err := env.svc.CheckCompleteness(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !result.Ready {
+		t.Errorf("expected Ready=true, got false")
+		for _, item := range result.Items {
+			if !item.Complete {
+				t.Logf("incomplete: %s (%s)", item.Field, item.Label)
+			}
+		}
+	}
+	if result.DoneRequired != result.TotalRequired {
+		t.Errorf("DoneRequired=%d, TotalRequired=%d", result.DoneRequired, result.TotalRequired)
+	}
+	if result.Score != 100 {
+		t.Errorf("expected score=100, got %d", result.Score)
+	}
+}
+
+func TestBathhouseService_CheckCompleteness_MissingFields(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID:           uuid.New(),
+		OwnerID:      ownerID,
+		Name:         "Баня",
+		Description:  "Короткое",
+		PricePerHour: 5000,
+		MaxGuests:    10,
+		MinDuration:  1,
+		Status:       domain.BathhouseStatusPending,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh)
+
+	result, err := env.svc.CheckCompleteness(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Ready {
+		t.Errorf("expected Ready=false for incomplete listing")
+	}
+
+	// Check specific incomplete fields
+	incomplete := map[string]bool{}
+	for _, item := range result.Items {
+		if !item.Complete {
+			incomplete[item.Field] = true
+		}
+	}
+	for _, field := range []string{"description", "address", "city", "coordinates", "photos", "schedule"} {
+		if !incomplete[field] {
+			t.Errorf("expected field %q to be incomplete", field)
+		}
+	}
+}
+
+func TestBathhouseService_CheckCompleteness_Forbidden(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	otherID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Test", Address: "A", CityID: 1,
+		PricePerHour: 1000, MinDuration: 1, MaxGuests: 5, Status: domain.BathhouseStatusPending,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh)
+
+	_, err := env.svc.CheckCompleteness(context.Background(), otherID, domain.RoleOwner, bh.ID)
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("expected ErrForbidden, got: %v", err)
+	}
+}
+
+func TestBathhouseService_SubmitForModeration_IncompleteBlocked(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Test", Description: "Short",
+		PricePerHour: 1000, MinDuration: 1, MaxGuests: 5, Status: domain.BathhouseStatusRejected,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh)
+
+	err := env.svc.SubmitForModeration(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if !errors.Is(err, domain.ErrListingIncomplete) {
+		t.Errorf("expected ErrListingIncomplete, got: %v", err)
+	}
+}
+
+func TestBathhouseService_SubmitForModeration_Success(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID:           uuid.New(),
+		OwnerID:      ownerID,
+		Name:         "Готовая баня",
+		Description:  "Это описание бани длиной более пятидесяти символов для прохождения проверки",
+		Address:      "ул. Тестовая 123",
+		CityID:       1,
+		Latitude:     55.75,
+		Longitude:    37.62,
+		PricePerHour: 5000,
+		MaxGuests:    10,
+		MinDuration:  1,
+		WorkingHours: []domain.WorkingHours{{DayOfWeek: 0, OpenTime: "09:00", CloseTime: "22:00"}},
+		Status:       domain.BathhouseStatusRejected,
+	}
+	_ = env.bhRepo.Create(context.Background(), bh)
+
+	for i := 0; i < 3; i++ {
+		_ = env.photoRepo.Create(context.Background(), &domain.BathhousePhoto{
+			ID: uuid.New(), BathhouseID: bh.ID, URL: "https://example.com/photo.jpg",
+			Status: domain.PhotoStatusVerified, Position: i,
+		})
+	}
+
+	err := env.svc.SubmitForModeration(context.Background(), ownerID, domain.RoleOwner, bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify status changed to pending
+	updated, _ := env.bhRepo.GetByID(context.Background(), bh.ID)
+	if updated.Status != domain.BathhouseStatusPending {
+		t.Errorf("status = %q, want %q", updated.Status, domain.BathhouseStatusPending)
 	}
 }
