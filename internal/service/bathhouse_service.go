@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -683,8 +684,40 @@ func buildChangedFields(old, new *domain.Bathhouse) map[string]interface{} {
 	if old.HasKaraoke != new.HasKaraoke {
 		changes["has_karaoke"] = map[string]bool{"old": old.HasKaraoke, "new": new.HasKaraoke}
 	}
+	if !stringSlicesEqual(old.Images, new.Images) {
+		changes["images"] = map[string]interface{}{"old": old.Images, "new": new.Images}
+	}
+	if !workingHoursEqual(old.WorkingHours, new.WorkingHours) {
+		oldWH, _ := json.Marshal(old.WorkingHours)
+		newWH, _ := json.Marshal(new.WorkingHours)
+		changes["working_hours"] = map[string]string{"old": string(oldWH), "new": string(newWH)}
+	}
 
 	return changes
+}
+
+func stringSlicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func workingHoursEqual(a, b []domain.WorkingHours) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func countAmenities(bh *domain.Bathhouse) int {

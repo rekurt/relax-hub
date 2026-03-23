@@ -139,6 +139,9 @@ func (s *searchSuggestionService) RecordQuery(ctx context.Context, query string)
 		return fmt.Errorf("record query: %w", err)
 	}
 
+	// Trim to top 10,000 entries to prevent unbounded growth
+	_ = s.redis.ZRemRangeByRank(ctx, popularQueriesKey, 0, -10001).Err()
+
 	return nil
 }
 
