@@ -156,7 +156,7 @@ func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error 
 			name = $2, slug = $3, description = $4, address = $5, city_id = $6,
 			latitude = $7, longitude = $8, price_per_hour = $9, min_duration = $10, max_guests = $11,
 			has_pool = $12, has_sauna = $13, has_steam_room = $14, has_hot_tub = $15, has_bbq = $16, has_karaoke = $17,
-			images = $18, working_hours = $19, api_key = $20, updated_at = $21
+			images = $18, working_hours = $19, api_key = $20, updated_at = $21, status = $22
 		WHERE id = $1`
 
 	bh.UpdatedAt = time.Now()
@@ -174,7 +174,7 @@ func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error 
 		bh.ID, bh.Name, bh.Slug, bh.Description, bh.Address, bh.CityID,
 		bh.Latitude, bh.Longitude, bh.PricePerHour, bh.MinDuration, bh.MaxGuests,
 		bh.HasPool, bh.HasSauna, bh.HasSteamRoom, bh.HasHotTub, bh.HasBBQ, bh.HasKaraoke,
-		imagesJSON, whJSON, bh.ApiKey, bh.UpdatedAt,
+		imagesJSON, whJSON, bh.ApiKey, bh.UpdatedAt, bh.Status,
 	)
 	if err != nil {
 		return fmt.Errorf("update bathhouse: %w", err)

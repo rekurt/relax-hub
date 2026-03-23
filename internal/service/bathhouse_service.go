@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/seo"
 )
@@ -101,10 +102,11 @@ type bathhouseService struct {
 	offerSvc       OfferService
 	paymentDetails PaymentDetailsService
 	auditSvc       AuditLogService
+	logger         *logger.Logger
 }
 
-func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService, auditSvc AuditLogService) BathhouseService {
-	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, photoRepo: photoRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails, auditSvc: auditSvc}
+func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService, auditSvc AuditLogService, log *logger.Logger) BathhouseService {
+	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, photoRepo: photoRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails, auditSvc: auditSvc, logger: log}
 }
 
 func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error) {
@@ -297,7 +299,9 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 
 	// Log the change in audit log
 	if len(changedFields) > 0 {
-		_ = s.auditSvc.LogChange(ctx, "bathhouse", id, userID, domain.AuditActionUpdate, changedFields)
+		if err := s.auditSvc.LogChange(ctx, "bathhouse", id, userID, domain.AuditActionUpdate, changedFields); err != nil {
+			s.logger.Error("failed to log audit change", "bathhouse_id", id, "error", err)
+		}
 	}
 
 	return bh, nil
@@ -562,8 +566,10 @@ func (s *bathhouseService) DeactivateBathhouse(ctx context.Context, userID uuid.
 		return err
 	}
 
-	_ = s.auditSvc.LogChange(ctx, "bathhouse", bathhouseID, userID, domain.AuditActionStatusChange,
-		map[string]interface{}{"status": map[string]string{"old": string(bh.Status), "new": string(domain.BathhouseStatusInactive)}})
+	if err := s.auditSvc.LogChange(ctx, "bathhouse", bathhouseID, userID, domain.AuditActionStatusChange,
+		map[string]interface{}{"status": map[string]string{"old": string(bh.Status), "new": string(domain.BathhouseStatusInactive)}}); err != nil {
+		s.logger.Error("failed to log audit change", "bathhouse_id", bathhouseID, "error", err)
+	}
 
 	return nil
 }
@@ -586,8 +592,10 @@ func (s *bathhouseService) ActivateBathhouse(ctx context.Context, userID uuid.UU
 		return err
 	}
 
-	_ = s.auditSvc.LogChange(ctx, "bathhouse", bathhouseID, userID, domain.AuditActionStatusChange,
-		map[string]interface{}{"status": map[string]string{"old": string(bh.Status), "new": string(domain.BathhouseStatusActive)}})
+	if err := s.auditSvc.LogChange(ctx, "bathhouse", bathhouseID, userID, domain.AuditActionStatusChange,
+		map[string]interface{}{"status": map[string]string{"old": string(bh.Status), "new": string(domain.BathhouseStatusActive)}}); err != nil {
+		s.logger.Error("failed to log audit change", "bathhouse_id", bathhouseID, "error", err)
+	}
 
 	return nil
 }
@@ -619,8 +627,10 @@ func (s *bathhouseService) ArchiveBathhouse(ctx context.Context, userID uuid.UUI
 		return err
 	}
 
-	_ = s.auditSvc.LogChange(ctx, "bathhouse", bathhouseID, userID, domain.AuditActionStatusChange,
-		map[string]interface{}{"status": map[string]string{"old": string(bh.Status), "new": string(domain.BathhouseStatusArchived)}})
+	if err := s.auditSvc.LogChange(ctx, "bathhouse", bathhouseID, userID, domain.AuditActionStatusChange,
+		map[string]interface{}{"status": map[string]string{"old": string(bh.Status), "new": string(domain.BathhouseStatusArchived)}}); err != nil {
+		s.logger.Error("failed to log audit change", "bathhouse_id", bathhouseID, "error", err)
+	}
 
 	return nil
 }
