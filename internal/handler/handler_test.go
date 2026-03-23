@@ -30,9 +30,12 @@ func createTestContext(userID uuid.UUID, role domain.UserRole) context.Context {
 // --- Mock services ---
 
 type mockAuthService struct {
-	registerFn   func(ctx context.Context, input service.RegisterInput) (*domain.User, string, error)
-	loginFn      func(ctx context.Context, email, password string) (*domain.User, string, error)
-	parseTokenFn func(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error)
+	registerFn      func(ctx context.Context, input service.RegisterInput) (*domain.User, string, error)
+	loginFn         func(ctx context.Context, email, password string) (*domain.User, string, error)
+	parseTokenFn    func(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error)
+	registerPhoneFn func(ctx context.Context, input service.RegisterPhoneInput) error
+	loginPhoneFn    func(ctx context.Context, phone string) error
+	verifyPhoneFn   func(ctx context.Context, phone, code string) (*domain.User, string, error)
 }
 
 func (m *mockAuthService) Register(ctx context.Context, input service.RegisterInput) (*domain.User, string, error) {
@@ -54,6 +57,27 @@ func (m *mockAuthService) ParseToken(ctx context.Context, token string) (uuid.UU
 		return m.parseTokenFn(ctx, token)
 	}
 	return uuid.Nil, "", domain.ErrUnauthorized
+}
+
+func (m *mockAuthService) RegisterPhone(ctx context.Context, input service.RegisterPhoneInput) error {
+	if m.registerPhoneFn != nil {
+		return m.registerPhoneFn(ctx, input)
+	}
+	return nil
+}
+
+func (m *mockAuthService) LoginPhone(ctx context.Context, phone string) error {
+	if m.loginPhoneFn != nil {
+		return m.loginPhoneFn(ctx, phone)
+	}
+	return nil
+}
+
+func (m *mockAuthService) VerifyPhone(ctx context.Context, phone, code string) (*domain.User, string, error) {
+	if m.verifyPhoneFn != nil {
+		return m.verifyPhoneFn(ctx, phone, code)
+	}
+	return nil, "", nil
 }
 
 type mockUserService struct {

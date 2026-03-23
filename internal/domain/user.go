@@ -24,19 +24,20 @@ func (r UserRole) IsValid() bool {
 }
 
 type User struct {
-	ID           uuid.UUID
-	Email        string
-	PasswordHash string `json:"-"`
-	Name         string
-	Phone        string
-	Role         UserRole
-	IsActive     bool
-	AvatarURL    string
-	Bio          string
-	CityID       *int64
-	ReferralCode string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID            uuid.UUID
+	Email         string
+	PasswordHash  string `json:"-"`
+	Name          string
+	Phone         string
+	PhoneVerified bool
+	Role          UserRole
+	IsActive      bool
+	AvatarURL     string
+	Bio           string
+	CityID        *int64
+	ReferralCode  string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 // UserProfile is a read-only aggregate for public user profiles.
@@ -66,7 +67,7 @@ type UserReviewStats struct {
 }
 
 func (u *User) Validate() error {
-	if u.Email == "" {
+	if u.Email == "" && u.Phone == "" {
 		return ErrInvalidInput
 	}
 	if u.Name == "" {

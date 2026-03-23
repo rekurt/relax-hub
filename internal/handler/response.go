@@ -213,6 +213,18 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "payout_monthly_limit_exceeded", err.Error())
 	case errors.Is(err, domain.ErrPayoutAlreadyProcessed):
 		writeErrorWithContext(w, r, http.StatusConflict, "payout_already_processed", err.Error())
+	case errors.Is(err, domain.ErrOTPRateLimited):
+		writeErrorWithContext(w, r, http.StatusTooManyRequests, "otp_rate_limited", err.Error())
+	case errors.Is(err, domain.ErrOTPInvalid):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "otp_invalid", err.Error())
+	case errors.Is(err, domain.ErrOTPExpired):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "otp_expired", err.Error())
+	case errors.Is(err, domain.ErrOTPMaxAttempts):
+		writeErrorWithContext(w, r, http.StatusTooManyRequests, "otp_max_attempts", err.Error())
+	case errors.Is(err, domain.ErrPhoneRequired):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "phone_required", err.Error())
+	case errors.Is(err, domain.ErrPhoneInvalid):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "phone_invalid", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

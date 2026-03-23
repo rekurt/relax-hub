@@ -121,11 +121,11 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 - Modify: `internal/handler/auth_handler.go`
 - Create: `migrations/000040_phone_auth.up.sql`, `migrations/000040_phone_auth.down.sql`
 
-- [ ] Phone + PhoneVerified fields on User model
-- [ ] OTPService: Redis-backed, 6-digit codes, 5 min TTL, 3 attempts, rate limiting
-- [ ] SMSProvider interface + SMS.ru adapter
-- [ ] POST /api/v1/auth/register-phone, /login-phone, /verify-phone
-- [ ] Write tests, run `go test ./... -v`
+- [x] Phone + PhoneVerified fields on User model
+- [x] OTPService: Redis-backed, 6-digit codes, 5 min TTL, 3 attempts, rate limiting
+- [x] SMSProvider interface + SMS.ru adapter
+- [x] POST /api/v1/auth/register-phone, /login-phone, /verify-phone
+- [x] Write tests, run `go test ./... -v`
 
 #### Task 9: Two-Factor Authentication (Task 2.2)
 

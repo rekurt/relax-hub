@@ -25,24 +25,34 @@ type RegisterInput struct {
 	ReferralCode string          // optional referral code from inviter
 }
 
+type RegisterPhoneInput struct {
+	Phone string
+	Name  string
+}
+
 type AuthService interface {
 	Register(ctx context.Context, input RegisterInput) (*domain.User, string, error)
 	Login(ctx context.Context, email, password string) (*domain.User, string, error)
 	ParseToken(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error)
+	RegisterPhone(ctx context.Context, input RegisterPhoneInput) error
+	LoginPhone(ctx context.Context, phone string) error
+	VerifyPhone(ctx context.Context, phone string, code string) (*domain.User, string, error)
 }
 
 type authService struct {
 	userRepo    repository.UserRepository
 	referralSvc ReferralService
+	otpSvc      OTPService
 	logger      *logger.Logger
 	jwtSecret   []byte
 	tokenTTL    time.Duration
 }
 
-func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralService, cfg *config.Config, log *logger.Logger) AuthService {
+func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralService, otpSvc OTPService, cfg *config.Config, log *logger.Logger) AuthService {
 	return &authService{
 		userRepo:    userRepo,
 		referralSvc: referralSvc,
+		otpSvc:      otpSvc,
 		logger:      log,
 		jwtSecret:   []byte(cfg.JWT.Secret),
 		tokenTTL:    cfg.JWT.TokenTTL,
@@ -173,6 +183,118 @@ func (s *authService) ParseToken(_ context.Context, tokenString string) (uuid.UU
 	}
 
 	return userID, role, nil
+}
+
+func (s *authService) RegisterPhone(ctx context.Context, input RegisterPhoneInput) error {
+	phone := normalizePhone(input.Phone)
+	if !isValidPhone(phone) {
+		return domain.ErrPhoneInvalid
+	}
+
+	if input.Name == "" {
+		return fmt.Errorf("%w: name is required", domain.ErrInvalidInput)
+	}
+
+	existing, err := s.userRepo.GetByPhone(ctx, phone)
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		return err
+	}
+	if existing != nil {
+		return domain.ErrAlreadyExists
+	}
+
+	return s.otpSvc.SendOTP(ctx, phone)
+}
+
+func (s *authService) LoginPhone(ctx context.Context, phone string) error {
+	phone = normalizePhone(phone)
+	if !isValidPhone(phone) {
+		return domain.ErrPhoneInvalid
+	}
+
+	existing, err := s.userRepo.GetByPhone(ctx, phone)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return domain.ErrUnauthorized
+		}
+		return err
+	}
+	if !existing.IsActive {
+		return domain.ErrUserBlocked
+	}
+
+	return s.otpSvc.SendOTP(ctx, phone)
+}
+
+func (s *authService) VerifyPhone(ctx context.Context, phone string, code string) (*domain.User, string, error) {
+	phone = normalizePhone(phone)
+	if !isValidPhone(phone) {
+		return nil, "", domain.ErrPhoneInvalid
+	}
+
+	valid, err := s.otpSvc.VerifyOTP(ctx, phone, code)
+	if err != nil {
+		return nil, "", err
+	}
+	if !valid {
+		return nil, "", domain.ErrOTPInvalid
+	}
+
+	user, err := s.userRepo.GetByPhone(ctx, phone)
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil, "", domain.ErrUnauthorized
+		}
+		return nil, "", err
+	}
+
+	if !user.IsActive {
+		return nil, "", domain.ErrUserBlocked
+	}
+
+	if !user.PhoneVerified {
+		user.PhoneVerified = true
+		if err := s.userRepo.Update(ctx, user); err != nil {
+			s.logger.Error("Failed to update phone_verified", "user_id", user.ID, "error", err)
+		}
+	}
+
+	token, err := s.generateToken(user.ID, user.Role)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return user, token, nil
+}
+
+func normalizePhone(phone string) string {
+	var digits []byte
+	for _, c := range []byte(phone) {
+		if c >= '0' && c <= '9' {
+			digits = append(digits, c)
+		}
+	}
+	s := string(digits)
+	if len(s) == 11 && s[0] == '8' {
+		s = "7" + s[1:]
+	}
+	return "+" + s
+}
+
+func isValidPhone(phone string) bool {
+	if len(phone) < 2 || phone[0] != '+' {
+		return false
+	}
+	digits := phone[1:]
+	if len(digits) < 10 || len(digits) > 15 {
+		return false
+	}
+	for _, c := range []byte(digits) {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *authService) generateToken(userID uuid.UUID, role domain.UserRole) (string, error) {

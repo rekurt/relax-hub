@@ -42,6 +42,7 @@ var Module = fx.Module("service",
 		fx.Annotate(NewCalendarService, fx.As(new(CalendarService))),
 		fx.Annotate(NewPromotionService, fx.As(new(PromotionService))),
 		fx.Annotate(NewDeviceTokenService, fx.As(new(DeviceTokenService))),
+		fx.Annotate(NewOTPService, fx.As(new(OTPService))),
 		fx.Annotate(NewWalletService, fx.As(new(WalletService))),
 		fx.Annotate(NewPayoutService, fx.As(new(PayoutService))),
 		fx.Annotate(

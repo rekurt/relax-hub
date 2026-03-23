@@ -29,7 +29,10 @@ func (r *UserRepo) Create(_ context.Context, user *domain.User) error {
 		user.ID = uuid.New()
 	}
 	for _, u := range r.users {
-		if u.Email == user.Email {
+		if u.Email != "" && u.Email == user.Email {
+			return domain.ErrAlreadyExists
+		}
+		if u.Phone != "" && u.Phone == user.Phone {
 			return domain.ErrAlreadyExists
 		}
 	}
@@ -57,6 +60,18 @@ func (r *UserRepo) GetByEmail(_ context.Context, email string) (*domain.User, er
 	defer r.mu.RUnlock()
 	for _, u := range r.users {
 		if u.Email == email {
+			cp := *u
+			return &cp, nil
+		}
+	}
+	return nil, domain.ErrNotFound
+}
+
+func (r *UserRepo) GetByPhone(_ context.Context, phone string) (*domain.User, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, u := range r.users {
+		if u.Phone == phone && u.Phone != "" {
 			cp := *u
 			return &cp, nil
 		}

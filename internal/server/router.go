@@ -114,6 +114,9 @@ func NewRouter(p RouterParams) http.Handler {
 		// Auth (public, rate-limited)
 		r.With(middleware.RateLimit(authRegisterRateLimiter, 5.0/60.0)).Post("/auth/register", p.AuthHandler.Register) // 5/min
 		r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/login", p.AuthHandler.Login)         // 10/min
+		r.With(middleware.RateLimit(authRegisterRateLimiter, 5.0/60.0)).Post("/auth/register-phone", p.AuthHandler.RegisterPhone)
+		r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/login-phone", p.AuthHandler.LoginPhone)
+		r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/verify-phone", p.AuthHandler.VerifyPhone)
 		r.With(auth).Get("/auth/me", p.AuthHandler.Me)
 		r.With(auth).Put("/auth/me", p.AuthHandler.UpdateProfile)
 		r.With(auth).Post("/auth/me/avatar", p.AuthHandler.UploadAvatar)

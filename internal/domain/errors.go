@@ -62,4 +62,11 @@ var (
 	ErrPayoutDailyLimitExceeded   = errors.New("daily payout limit exceeded")
 	ErrPayoutMonthlyLimitExceeded = errors.New("monthly payout limit exceeded")
 	ErrPayoutAlreadyProcessed     = errors.New("payout already processed")
+
+	ErrOTPRateLimited    = errors.New("too many OTP requests, try later")
+	ErrOTPInvalid        = errors.New("invalid OTP code")
+	ErrOTPExpired        = errors.New("OTP code expired")
+	ErrOTPMaxAttempts    = errors.New("too many verification attempts")
+	ErrPhoneRequired     = errors.New("phone number is required")
+	ErrPhoneInvalid      = errors.New("invalid phone number format")
 )

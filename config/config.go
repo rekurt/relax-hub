@@ -25,6 +25,12 @@ type Config struct {
 	Admin       AdminConfig      `mapstructure:"admin"`
 	Payment     PaymentConfig    `mapstructure:"payment"`
 	WebPush     WebPushConfig    `mapstructure:"webpush"`
+	SMS         SMSConfig        `mapstructure:"sms"`
+}
+
+type SMSConfig struct {
+	Provider string `mapstructure:"provider"`
+	APIKey   string `mapstructure:"api_key"`
 }
 
 type WebPushConfig struct {
@@ -164,6 +170,8 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("payment.yookassa.shop_id", "")
 	v.SetDefault("payment.yookassa.secret_key", "")
 	v.SetDefault("payment.return_url", "http://localhost:3000/payment/callback")
+	v.SetDefault("sms.provider", "smsru")
+	v.SetDefault("sms.api_key", "")
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {

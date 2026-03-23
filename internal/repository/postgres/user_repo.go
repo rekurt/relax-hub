@@ -24,15 +24,15 @@ func NewUserRepository(pool *pgxpool.Pool) repository.UserRepository {
 
 func (r *userRepo) Create(ctx context.Context, user *domain.User) error {
 	query := `
-		INSERT INTO users (id, email, password_hash, name, phone, role, is_active, avatar_url, bio, city_id, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
+		INSERT INTO users (id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
 
 	if user.ID == uuid.Nil {
 		user.ID = uuid.New()
 	}
 
 	_, err := r.pool.Exec(ctx, query,
-		user.ID, user.Email, user.PasswordHash, user.Name, user.Phone,
+		user.ID, user.Email, user.PasswordHash, user.Name, user.Phone, user.PhoneVerified,
 		user.Role, user.IsActive, user.AvatarURL, user.Bio, user.CityID,
 		user.CreatedAt, user.UpdatedAt,
 	)
@@ -47,12 +47,12 @@ func (r *userRepo) Create(ctx context.Context, user *domain.User) error {
 
 func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, name, phone, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), created_at, updated_at
+		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), created_at, updated_at
 		FROM users WHERE id = $1`
 
 	var user domain.User
 	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone,
+		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone, &user.PhoneVerified,
 		&user.Role, &user.IsActive, &user.AvatarURL, &user.Bio, &user.CityID,
 		&user.ReferralCode, &user.CreatedAt, &user.UpdatedAt,
 	)
@@ -67,12 +67,12 @@ func (r *userRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, err
 
 func (r *userRepo) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, name, phone, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), created_at, updated_at
+		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), created_at, updated_at
 		FROM users WHERE email = $1`
 
 	var user domain.User
 	err := r.pool.QueryRow(ctx, query, email).Scan(
-		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone,
+		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone, &user.PhoneVerified,
 		&user.Role, &user.IsActive, &user.AvatarURL, &user.Bio, &user.CityID,
 		&user.ReferralCode, &user.CreatedAt, &user.UpdatedAt,
 	)
@@ -85,14 +85,34 @@ func (r *userRepo) GetByEmail(ctx context.Context, email string) (*domain.User, 
 	return &user, nil
 }
 
+func (r *userRepo) GetByPhone(ctx context.Context, phone string) (*domain.User, error) {
+	query := `
+		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, COALESCE(referral_code, ''), created_at, updated_at
+		FROM users WHERE phone = $1 AND phone != ''`
+
+	var user domain.User
+	err := r.pool.QueryRow(ctx, query, phone).Scan(
+		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone, &user.PhoneVerified,
+		&user.Role, &user.IsActive, &user.AvatarURL, &user.Bio, &user.CityID,
+		&user.ReferralCode, &user.CreatedAt, &user.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("get user by phone: %w", err)
+	}
+	return &user, nil
+}
+
 func (r *userRepo) Update(ctx context.Context, user *domain.User) error {
 	query := `
-		UPDATE users SET email = $2, name = $3, phone = $4, role = $5, avatar_url = $6, bio = $7, city_id = $8, updated_at = $9
+		UPDATE users SET email = $2, name = $3, phone = $4, phone_verified = $5, role = $6, avatar_url = $7, bio = $8, city_id = $9, updated_at = $10
 		WHERE id = $1`
 
 	user.UpdatedAt = time.Now()
 	tag, err := r.pool.Exec(ctx, query,
-		user.ID, user.Email, user.Name, user.Phone, user.Role,
+		user.ID, user.Email, user.Name, user.Phone, user.PhoneVerified, user.Role,
 		user.AvatarURL, user.Bio, user.CityID, user.UpdatedAt,
 	)
 	if err != nil {
@@ -205,12 +225,12 @@ func (r *userRepo) GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.
 
 func (r *userRepo) GetByReferralCode(ctx context.Context, code string) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, name, phone, role, is_active, avatar_url, bio, city_id, referral_code, created_at, updated_at
+		SELECT id, email, password_hash, name, phone, phone_verified, role, is_active, avatar_url, bio, city_id, referral_code, created_at, updated_at
 		FROM users WHERE referral_code = $1`
 
 	var user domain.User
 	err := r.pool.QueryRow(ctx, query, code).Scan(
-		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone,
+		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Phone, &user.PhoneVerified,
 		&user.Role, &user.IsActive, &user.AvatarURL, &user.Bio, &user.CityID,
 		&user.ReferralCode, &user.CreatedAt, &user.UpdatedAt,
 	)

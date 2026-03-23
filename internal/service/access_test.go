@@ -60,6 +60,15 @@ func (n *noopReferralService) GetStats(_ context.Context, _ uuid.UUID) (*domain.
 	return &domain.ReferralStats{}, nil
 }
 
+type noopOTPService struct{}
+
+func (n *noopOTPService) SendOTP(_ context.Context, _ string) error {
+	return nil
+}
+func (n *noopOTPService) VerifyOTP(_ context.Context, _ string, _ string) (bool, error) {
+	return true, nil
+}
+
 // noopPromoService is a no-op PromoService for tests that don't verify promo codes.
 type noopPromoService struct{}
 

@@ -30,6 +30,18 @@ func (m *mockAuthServiceForRouter) Login(_ context.Context, _, _ string) (*domai
 	return nil, "", nil
 }
 
+func (m *mockAuthServiceForRouter) RegisterPhone(_ context.Context, _ service.RegisterPhoneInput) error {
+	return nil
+}
+
+func (m *mockAuthServiceForRouter) LoginPhone(_ context.Context, _ string) error {
+	return nil
+}
+
+func (m *mockAuthServiceForRouter) VerifyPhone(_ context.Context, _, _ string) (*domain.User, string, error) {
+	return nil, "", nil
+}
+
 type mockAdminNotificationService struct{}
 
 func (m *mockAdminNotificationService) Send(_ context.Context, _ uuid.UUID, _ domain.NotificationType, _, _ string, _ map[string]string) error {

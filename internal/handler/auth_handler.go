@@ -380,3 +380,111 @@ func (h *AuthHandler) GetMyStats(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, stats)
 }
+
+type registerPhoneRequest struct {
+	Phone string `json:"phone"`
+	Name  string `json:"name"`
+}
+
+type loginPhoneRequest struct {
+	Phone string `json:"phone"`
+}
+
+type verifyPhoneRequest struct {
+	Phone string `json:"phone"`
+	Code  string `json:"code"`
+}
+
+type otpSentResponse struct {
+	Message string `json:"message"`
+}
+
+// RegisterPhone godoc
+// @Summary      Register via phone
+// @Description  Registers a new user with phone number and sends OTP
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      registerPhoneRequest  true  "Phone registration data"
+// @Success      200   {object}  APIResponse{data=otpSentResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
+// @Failure      429   {object}  APIResponse{error=APIError}
+// @Router       /auth/register-phone [post]
+func (h *AuthHandler) RegisterPhone(w http.ResponseWriter, r *http.Request) {
+	var req registerPhoneRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	err := h.authService.RegisterPhone(r.Context(), service.RegisterPhoneInput{
+		Phone: req.Phone,
+		Name:  req.Name,
+	})
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, otpSentResponse{Message: "OTP sent"})
+}
+
+// LoginPhone godoc
+// @Summary      Login via phone
+// @Description  Sends OTP to an existing user's phone number
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      loginPhoneRequest  true  "Phone login data"
+// @Success      200   {object}  APIResponse{data=otpSentResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      429   {object}  APIResponse{error=APIError}
+// @Router       /auth/login-phone [post]
+func (h *AuthHandler) LoginPhone(w http.ResponseWriter, r *http.Request) {
+	var req loginPhoneRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	err := h.authService.LoginPhone(r.Context(), req.Phone)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, otpSentResponse{Message: "OTP sent"})
+}
+
+// VerifyPhone godoc
+// @Summary      Verify phone OTP
+// @Description  Verifies the OTP code and completes login/registration
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      verifyPhoneRequest  true  "Phone verification data"
+// @Success      200   {object}  APIResponse{data=authResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      429   {object}  APIResponse{error=APIError}
+// @Router       /auth/verify-phone [post]
+func (h *AuthHandler) VerifyPhone(w http.ResponseWriter, r *http.Request) {
+	var req verifyPhoneRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	user, token, err := h.authService.VerifyPhone(r.Context(), req.Phone, req.Code)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, authResponse{
+		User:  toUserResponse(user),
+		Token: token,
+	})
+}
