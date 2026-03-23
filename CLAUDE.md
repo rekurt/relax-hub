@@ -105,6 +105,14 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrPromoNotFound→404, ErrPromoExpired→400, ErrPromoMaxUses→409, ErrPromoMinAmount→400, ErrPromoInvalid→400
 - ErrMediaNotFound→404, ErrMediaFileTooLarge→400, ErrMediaInvalidType→400, ErrMediaLimitReached→409
 - ErrPaymentNotFound→404, ErrPaymentAlreadyProcessed→409, ErrRefundExceedsAmount→400, ErrPaymentFailed→400
+- ErrWalletNotFound→404, ErrInsufficientWalletBalance→400, ErrWalletLimitExceeded→400, ErrWalletFrozen→403
+- ErrHoldNotFound→404, ErrHoldExpired→400, ErrTopUpBelowMinimum→400, ErrTopUpAboveMaximum→400
+- ErrOTPRateLimited→429, ErrOTPInvalid→400, ErrOTPExpired→400, ErrOTPMaxAttempts→400
+- ErrSessionNotFound→404, ErrSessionExpired→401
+- ErrAccountDeletionPending→409, ErrAccountDeletionNotPending→400, ErrAccountDeleted→403
+- ErrKYCNotFound→404, ErrKYCNotApproved→403, ErrKYCPending→409
+- ErrOfferNotFound→404, ErrOfferNotAccepted→403, ErrOfferAlreadyAccepted→409
+- ErrPaymentDetailsNotFound→404, ErrPaymentDetailsNotSet→403
 
 ### Logging
 
@@ -352,3 +360,15 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Promo codes**: percentage/fixed_amount/free_hour discount types, bathhouse-scoped (owner/representative) and global (admin) codes, usage limits, validity periods, min amount checks, integrated into booking creation discount chain
 - **Review media**: photo/video attachments on reviews (max 10 photos, 1 video per review), file type/size validation, image resize and thumbnail generation, bathhouse gallery endpoint aggregates review media with review status filtering
 - **Online payments**: YooKassa integration via PaymentProvider interface, automatic refund on booking cancellation (100% if >24h, 50% if 2-24h, 0% if <2h), webhook processing. Config: `BANI_PAYMENT_YOOKASSA_SHOP_ID`, `BANI_PAYMENT_YOOKASSA_SECRET_KEY`, `BANI_PAYMENT_RETURN_URL`
+- **Wallet system**: user balance with top-up/spend/hold/refund, priority spending (expiring bonuses first), balance limits (max 100,000 RUB), top-up limits (min 500, max 30,000 RUB per tx), bonus expiration cron (180 days, configurable). Owner payouts with daily/monthly limits and auto-payout threshold
+- **Phone + OTP auth**: Redis-backed 6-digit codes, 5 min TTL, 3 attempts, rate limiting. SMSProvider interface + SMS.ru adapter. Config: `BANI_SMS_PROVIDER`, `BANI_SMS_API_KEY`
+- **Two-factor authentication**: TOTP (pquerna/otp) + SMS 2FA, partial token flow for 2FA during login
+- **Session management**: device/browser/IP tracking, auto-expire after 30 days, session validation in auth middleware
+- **Password reset**: Redis token, email link, rate limited, terminates all sessions on reset
+- **Account deletion**: 30-day grace period with restore, data anonymization on execution, fund return for top-ups, cron reminders at day 0/14/27
+- **Age verification**: `age_confirmed` required on registration, auto-create wallet + 500 RUB welcome bonus (30 day expiry). Config: `BANI_WELCOME_BONUS_AMOUNT`, `BANI_WELCOME_BONUS_EXPIRY_DAYS`
+- **KYC system**: entity types (individual, sole_proprietor, self_employed, legal_entity), submit/approve/reject flow with expiry checking, admin moderation queue
+- **Offer/contract acceptance**: versioned offer acceptance tracking, required before listing creation
+- **Owner payment details**: entity-type-specific fields and validation, required before listing creation
+- **Listing draft wizard**: 7-step draft creation flow, step-based data storage with CRUD + submit
+- **Onboarding gate**: CreateBathhouse gated behind KYC approval + offer acceptance + payment details

@@ -262,6 +262,6 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 
 ### Task 21: Update Documentation
 
-- [ ] Update CLAUDE.md with new subsystem patterns (wallet, KYC, OTP, sessions)
-- [ ] Move individual plan files to `docs/plans/completed/`
-- [ ] Move this master plan to `docs/plans/completed/`
+- [x] Update CLAUDE.md with new subsystem patterns (wallet, KYC, OTP, sessions)
+- [x] Move individual plan files to `docs/plans/completed/`
+- [x] Move this master plan to `docs/plans/completed/`
