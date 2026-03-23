@@ -186,10 +186,10 @@ Total: 21 tasks across 3 subsystems. Each subsystem has its own detailed plan fi
 
 #### Task 14: Auth Phase Verify (Task 2.7)
 
-- [ ] `go test ./... -v -race`
-- [ ] `make lint`
-- [ ] `go build ./...`
-- [ ] `make swagger`
+- [x] `go test ./... -v -race`
+- [x] `make lint`
+- [x] `go build ./...`
+- [x] `make swagger`
 
 ### Phase 3: Owner Onboarding (docs/plans/2026-03-23-03-owner-onboarding.md)
 

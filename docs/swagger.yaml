@@ -213,10 +213,24 @@ definitions:
     type: object
   internal_handler.authResponse:
     properties:
+      requires_2fa:
+        type: boolean
       token:
         type: string
       user:
         $ref: '#/definitions/internal_handler.userResponse'
+    type: object
+  internal_handler.autoPayoutRequest:
+    properties:
+      threshold:
+        type: integer
+    type: object
+  internal_handler.autoPayoutResponse:
+    properties:
+      threshold:
+        type: integer
+      updated_at:
+        type: string
     type: object
   internal_handler.batchIDsRequest:
     properties:
@@ -619,6 +633,11 @@ definitions:
       user_id:
         type: string
     type: object
+  internal_handler.forgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    type: object
   internal_handler.initiatePaymentResponse:
     properties:
       confirmation_url:
@@ -627,6 +646,11 @@ definitions:
   internal_handler.inviteRepresentativeRequest:
     properties:
       user_email:
+        type: string
+    type: object
+  internal_handler.loginPhoneRequest:
+    properties:
+      phone:
         type: string
     type: object
   internal_handler.loginRequest:
@@ -781,6 +805,11 @@ definitions:
       user:
         $ref: '#/definitions/internal_handler.userResponse'
     type: object
+  internal_handler.otpSentResponse:
+    properties:
+      message:
+        type: string
+    type: object
   internal_handler.ownerResponseRequest:
     properties:
       response:
@@ -813,6 +842,25 @@ definitions:
       updated_at:
         type: string
       user_id:
+        type: string
+    type: object
+  internal_handler.payoutResponse:
+    properties:
+      amount:
+        type: integer
+      bank_details:
+        items:
+          type: integer
+        type: array
+      failure_reason:
+        type: string
+      id:
+        type: string
+      processed_at:
+        type: string
+      requested_at:
+        type: string
+      status:
         type: string
     type: object
   internal_handler.pendingCountResponse:
@@ -1075,8 +1123,17 @@ definitions:
       token:
         type: string
     type: object
+  internal_handler.registerPhoneRequest:
+    properties:
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
   internal_handler.registerRequest:
     properties:
+      age_confirmed:
+        type: boolean
       email:
         type: string
       name:
@@ -1122,6 +1179,22 @@ definitions:
       user_id:
         type: string
     type: object
+  internal_handler.requestPayoutRequest:
+    properties:
+      amount:
+        type: integer
+      bank_details:
+        items:
+          type: integer
+        type: array
+    type: object
+  internal_handler.resetPasswordRequest:
+    properties:
+      new_password:
+        type: string
+      token:
+        type: string
+    type: object
   internal_handler.resolveRequest:
     properties:
       resolution:
@@ -1163,6 +1236,23 @@ definitions:
   internal_handler.sendMessageRequest:
     properties:
       text:
+        type: string
+    type: object
+  internal_handler.sessionResponse:
+    properties:
+      browser:
+        type: string
+      created_at:
+        type: string
+      device_info:
+        type: string
+      id:
+        type: string
+      ip:
+        type: string
+      is_current:
+        type: boolean
+      last_active_at:
         type: string
     type: object
   internal_handler.simpleMessageResponse:
@@ -1266,6 +1356,34 @@ definitions:
         type: string
       total_count:
         type: integer
+    type: object
+  internal_handler.topUpRequest:
+    properties:
+      amount:
+        type: integer
+    type: object
+  internal_handler.topUpResponse:
+    properties:
+      amount:
+        type: integer
+      balance_after:
+        type: integer
+      transaction_id:
+        type: string
+    type: object
+  internal_handler.totpEnableResponse:
+    properties:
+      qr_url:
+        type: string
+      secret:
+        type: string
+    type: object
+  internal_handler.twoFAVerifyLoginRequest:
+    properties:
+      code:
+        type: string
+      partial_token:
+        type: string
     type: object
   internal_handler.unreadCountResponse:
     properties:
@@ -1452,6 +1570,77 @@ definitions:
         type: string
       value:
         type: integer
+    type: object
+  internal_handler.verify2FARequest:
+    properties:
+      code:
+        type: string
+    type: object
+  internal_handler.verifyPhoneRequest:
+    properties:
+      code:
+        type: string
+      phone:
+        type: string
+    type: object
+  internal_handler.walletHoldResponse:
+    properties:
+      amount:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      reference_id:
+        type: string
+      reference_type:
+        type: string
+      status:
+        type: string
+    type: object
+  internal_handler.walletResponse:
+    properties:
+      available:
+        type: integer
+      balance:
+        type: integer
+      currency:
+        type: string
+      earliest_expiry:
+        type: string
+      expiring_soon:
+        type: integer
+      held_amount:
+        type: integer
+    type: object
+  internal_handler.walletTransactionResponse:
+    properties:
+      amount:
+        type: integer
+      balance_after:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      is_bonus:
+        type: boolean
+      reference_id:
+        type: string
+      reference_type:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
     type: object
   internal_handler.widgetBathhouseResponse:
     properties:
@@ -3108,6 +3297,314 @@ paths:
       summary: Unblock user
       tags:
       - admin-users
+  /auth/2fa/sms/enable:
+    post:
+      description: Enables SMS-based 2FA (requires verified phone)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Enable SMS 2FA
+      tags:
+      - 2fa
+  /auth/2fa/totp:
+    delete:
+      consumes:
+      - application/json
+      description: Disables TOTP 2FA (requires current TOTP code)
+      parameters:
+      - description: Current TOTP code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.verify2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Disable TOTP
+      tags:
+      - 2fa
+  /auth/2fa/totp/enable:
+    post:
+      description: Generates a TOTP secret and QR code URL for setting up 2FA
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.totpEnableResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Generate TOTP secret
+      tags:
+      - 2fa
+  /auth/2fa/totp/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verifies a TOTP code and activates 2FA for the user
+      parameters:
+      - description: TOTP verification code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.verify2FARequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Verify and activate TOTP
+      tags:
+      - 2fa
+  /auth/2fa/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verifies the 2FA code using a partial token and returns a full
+        JWT
+      parameters:
+      - description: Partial token and 2FA code
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.twoFAVerifyLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.authResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Verify 2FA during login
+      tags:
+      - 2fa
+  /auth/delete-account:
+    post:
+      description: Requests account deletion with a 30-day grace period
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Request account deletion
+      tags:
+      - auth
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Sends a password reset link to the user's email
+      parameters:
+      - description: Email address
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.forgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "429":
+          description: Rate limited (3/15min)
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Request password reset
+      tags:
+      - auth
   /auth/link/{provider}:
     delete:
       description: Unlinks a social account from the authenticated user
@@ -3273,6 +3770,60 @@ paths:
                   $ref: '#/definitions/internal_handler.APIError'
               type: object
       summary: Login
+      tags:
+      - auth
+  /auth/login-phone:
+    post:
+      consumes:
+      - application/json
+      description: Sends OTP to an existing user's phone number
+      parameters:
+      - description: Phone login data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.loginPhoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.otpSentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Login via phone
       tags:
       - auth
   /auth/me:
@@ -3581,6 +4132,188 @@ paths:
                   $ref: '#/definitions/internal_handler.APIError'
               type: object
       summary: Register a new user
+      tags:
+      - auth
+  /auth/register-phone:
+    post:
+      consumes:
+      - application/json
+      description: Registers a new user with phone number and sends OTP
+      parameters:
+      - description: Phone registration data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.registerPhoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.otpSentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Register via phone
+      tags:
+      - auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Resets the user's password using a reset token from email
+      parameters:
+      - description: Reset token and new password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.resetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Reset password with token
+      tags:
+      - auth
+  /auth/restore-account:
+    post:
+      description: Cancels a pending account deletion during the 30-day grace period
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Restore account during grace period
+      tags:
+      - auth
+  /auth/verify-phone:
+    post:
+      consumes:
+      - application/json
+      description: Verifies the OTP code and completes login/registration
+      parameters:
+      - description: Phone verification data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.verifyPhoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.authResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Verify phone OTP
       tags:
       - auth
   /bathhouses:
@@ -7991,6 +8724,118 @@ paths:
       summary: Get referral statistics
       tags:
       - referral
+  /my/sessions:
+    delete:
+      description: Terminates all sessions except the current one
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Terminate all other sessions
+      tags:
+      - sessions
+    get:
+      description: Returns all active sessions for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.sessionResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List active sessions
+      tags:
+      - sessions
+  /my/sessions/{id}:
+    delete:
+      description: Terminates a specific session by ID
+      parameters:
+      - description: Session ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Terminate a session
+      tags:
+      - sessions
   /my/slot-blocks/{id}:
     delete:
       description: Deletes a slot block, freeing the time period for bookings. Owner
@@ -8152,6 +8997,381 @@ paths:
       summary: Get unread messages count
       tags:
       - chat
+  /my/wallet:
+    get:
+      description: Returns the wallet balance summary for the authenticated user,
+        including held amount, available balance, and expiring bonuses
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.walletResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get wallet balance
+      tags:
+      - wallet
+  /my/wallet/auto-payout:
+    put:
+      consumes:
+      - application/json
+      description: Configure automatic payout when wallet balance exceeds threshold.
+        Set to 0 to disable. Threshold in kopecks.
+      parameters:
+      - description: Auto-payout settings
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.autoPayoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.autoPayoutResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Set auto-payout threshold
+      tags:
+      - wallet
+  /my/wallet/holds:
+    get:
+      description: Returns active holds (frozen amounts) on the authenticated user's
+        wallet
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.walletHoldResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List active wallet holds
+      tags:
+      - wallet
+  /my/wallet/payout:
+    post:
+      consumes:
+      - application/json
+      description: Request withdrawal of funds from wallet. Amount in kopecks (min
+        50000 = 500 RUB). Daily limit 500,000 RUB, monthly 3,000,000 RUB.
+      parameters:
+      - description: Payout request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.requestPayoutRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.payoutResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Request payout
+      tags:
+      - wallet
+  /my/wallet/payouts:
+    get:
+      description: Returns paginated payout history for the authenticated owner
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.payoutResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/internal_handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List payout history
+      tags:
+      - wallet
+  /my/wallet/topup:
+    post:
+      consumes:
+      - application/json
+      description: Initiates a wallet top-up. Amount is in kopecks (min 50000 = 500
+        RUB, max 3000000 = 30000 RUB)
+      parameters:
+      - description: Top-up amount in kopecks
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.topUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.topUpResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Top up wallet
+      tags:
+      - wallet
+  /my/wallet/transactions:
+    get:
+      description: Returns paginated transaction history for the authenticated user's
+        wallet
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      - description: Transaction type filter (topup, spend, refund, bonus, etc.)
+        in: query
+        name: type
+        type: string
+      - description: Filter bonus transactions only
+        in: query
+        name: is_bonus
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.walletTransactionResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/internal_handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List wallet transactions
+      tags:
+      - wallet
   /photos/{id}:
     delete:
       description: Delete a bathhouse photo by its ID.
