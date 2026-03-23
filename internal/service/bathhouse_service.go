@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -295,9 +296,10 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 
 		// Auto-set status to pending on substantial change (any non-pending status)
 		if bh.Status != domain.BathhouseStatusPending && s.auditSvc.IsSubstantialChange(&oldBh, bh) {
-			if err := s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusPending); err == nil {
-				bh.Status = domain.BathhouseStatusPending
+			if err := s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusPending); err != nil {
+				return nil, fmt.Errorf("re-moderation status update: %w", err)
 			}
+			bh.Status = domain.BathhouseStatusPending
 		}
 	}
 

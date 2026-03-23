@@ -341,14 +341,11 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		whereClause = "WHERE " + strings.Join(conditions, " AND ")
 	}
 
-	// Build joins for subscriptions and promotions
-	joinClause := `
-		LEFT JOIN subscriptions s ON bathhouses.id = s.bathhouse_id AND s.status = 'active'
-		LEFT JOIN promotions p ON bathhouses.id = p.bathhouse_id AND p.status = 'active'
-	`
+	// Promotion check as EXISTS subquery (avoids JOIN duplicates and DISTINCT issues)
+	promotionExists := `EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active')`
 
 	// Count query
-	countQuery := fmt.Sprintf("SELECT COUNT(DISTINCT bathhouses.id) FROM bathhouses %s %s", joinClause, whereClause)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM bathhouses %s", whereClause)
 	var totalCount int64
 	err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&totalCount)
 	if err != nil {
@@ -358,12 +355,12 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	// Determine ORDER BY
 	// Composite ranking: relevance*0.30 + bayesian_rating*0.25 + conversion_rate*0.20 + occupancy_rate*0.15 + promotion_boost*0.10
 	// Bayesian rating: (C*m + R*v) / (C+v), where C=5 (prior count), m=3.5 (prior mean)
-	compositeRank := `(
+	compositeRank := fmt.Sprintf(`(
 		COALESCE(bathhouses.conversion_rate, 0) * 0.20 +
 		((5 * 3.5 + bathhouses.rating * bathhouses.review_count) / (5 + bathhouses.review_count)) / 5.0 * 0.25 +
 		COALESCE(bathhouses.occupancy_rate, 0) * 0.15 +
-		CASE WHEN p.id IS NOT NULL THEN 1 ELSE 0 END * 0.10
-	)`
+		CASE WHEN %s THEN 1 ELSE 0 END * 0.10
+	)`, promotionExists)
 
 	orderBy := "created_at DESC"
 
@@ -380,9 +377,9 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			orderBy = compositeRank + " DESC, created_at DESC"
 		}
 	case "price_asc":
-		orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, price_per_hour ASC"
+		orderBy = "is_promoted DESC, price_per_hour ASC"
 	case "price_desc":
-		orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, price_per_hour DESC"
+		orderBy = "is_promoted DESC, price_per_hour DESC"
 	case "price":
 		// Legacy support: use sort_order
 		sortDir := "ASC"
@@ -390,11 +387,11 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			sortDir = "DESC"
 		}
 		orderBy = fmt.Sprintf(
-			"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, price_per_hour %s",
+			"is_promoted DESC, price_per_hour %s",
 			sortDir,
 		)
 	case "rating":
-		orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, rating DESC, review_count DESC"
+		orderBy = "is_promoted DESC, rating DESC, review_count DESC"
 	case "distance":
 		if filter.Latitude != nil && filter.Longitude != nil {
 			sortDir := "ASC"
@@ -402,12 +399,12 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 				sortDir = "DESC"
 			}
 			orderBy = fmt.Sprintf(
-				"CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, ST_Distance(location, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) %s",
+				"is_promoted DESC, ST_Distance(location, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) %s",
 				addArg(*filter.Longitude), addArg(*filter.Latitude), sortDir,
 			)
 		}
 	case "newest":
-		orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, created_at DESC"
+		orderBy = "is_promoted DESC, created_at DESC"
 	default:
 		// Default to relevance-based ranking
 		filter.SortBy = "relevance"
@@ -425,14 +422,14 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	offset := (filter.Page - 1) * filter.PageSize
 
 	selectQuery := fmt.Sprintf(`
-		SELECT DISTINCT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
+		SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
 			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
 			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified,
-			CASE WHEN p.id IS NOT NULL THEN true ELSE false END as is_promoted
-		FROM bathhouses %s %s ORDER BY %s LIMIT %s OFFSET %s`,
-		joinClause, whereClause, orderBy, addArg(filter.PageSize), addArg(offset),
+			%s as is_promoted
+		FROM bathhouses %s ORDER BY %s LIMIT %s OFFSET %s`,
+		promotionExists, whereClause, orderBy, addArg(filter.PageSize), addArg(offset),
 	)
 
 	rows, err := r.pool.Query(ctx, selectQuery, args...)

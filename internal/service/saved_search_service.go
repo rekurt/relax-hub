@@ -106,7 +106,7 @@ func (s *savedSearchService) SaveSearch(ctx context.Context, userID uuid.UUID, n
 	if name == "" {
 		return nil, fmt.Errorf("name is required: %w", domain.ErrInvalidInput)
 	}
-	if len(name) > 200 {
+	if len([]rune(name)) > 200 {
 		return nil, fmt.Errorf("name must be at most 200 characters: %w", domain.ErrInvalidInput)
 	}
 
