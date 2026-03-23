@@ -399,6 +399,17 @@ type WalletRepository interface {
 	GetExpiredHolds(ctx context.Context, before time.Time) ([]domain.WalletHold, error)
 }
 
+type AddOnRepository interface {
+	Create(ctx context.Context, addon *domain.AddOn) error
+	Update(ctx context.Context, addon *domain.AddOn) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.AddOn, error)
+	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.AddOn, error)
+	CountByBathhouse(ctx context.Context, bathhouseID uuid.UUID) (int64, error)
+	CreateBookingAddOn(ctx context.Context, ba *domain.BookingAddOn) error
+	ListByBooking(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingAddOn, error)
+}
+
 type AuditLogRepository interface {
 	Create(ctx context.Context, log *domain.AuditLog) error
 	ListByEntity(ctx context.Context, entityType string, entityID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.AuditLog], error)

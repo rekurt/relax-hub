@@ -100,14 +100,14 @@ Sequential execution of three independent subsystems: listing management enhance
 - Create: `internal/repository/mock/addon_repo.go`
 - Create: `migrations/000050_addons.up.sql`, `migrations/000050_addons.down.sql`
 
-- [ ] AddOn model: ID, BathhouseID, Name, Description, Price (kopecks), Unit (per_item/per_hour/per_person), IsActive, SortOrder, CreatedAt, UpdatedAt
-- [ ] BookingAddOn model: ID, BookingID, AddOnID, Name (denormalized), Quantity, UnitPrice, TotalPrice
-- [ ] Migration: addons table + booking_addons table with indexes
-- [ ] AddOnRepository interface: Create, Update, Delete, GetByID, ListByBathhouse, CountByBathhouse, CreateBookingAddOn, ListByBooking
-- [ ] Postgres and mock implementations
-- [ ] Register in fx modules
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] AddOn model: ID, BathhouseID, Name, Description, Price (kopecks), Unit (per_item/per_hour/per_person), IsActive, SortOrder, CreatedAt, UpdatedAt
+- [x] BookingAddOn model: ID, BookingID, AddOnID, Name (denormalized), Quantity, UnitPrice, TotalPrice
+- [x] Migration: addons table + booking_addons table with indexes
+- [x] AddOnRepository interface: Create, Update, Delete, GetByID, ListByBathhouse, CountByBathhouse, CreateBookingAddOn, ListByBooking
+- [x] Postgres and mock implementations
+- [x] Register in fx modules
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 6: Add-ons Service & Handler
 

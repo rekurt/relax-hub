@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS booking_addons;
+DROP TABLE IF EXISTS addons;

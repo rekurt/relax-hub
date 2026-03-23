@@ -43,5 +43,6 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewPaymentDetailsRepository, fx.As(new(repository.PaymentDetailsRepository))),
 		fx.Annotate(NewListingDraftRepository, fx.As(new(repository.ListingDraftRepository))),
 		fx.Annotate(NewAuditLogRepository, fx.As(new(repository.AuditLogRepository))),
+		fx.Annotate(NewAddOnRepository, fx.As(new(repository.AddOnRepository))),
 	),
 )

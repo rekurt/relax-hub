@@ -104,4 +104,7 @@ var (
 	ErrListingDraftInvalidStep = errors.New("invalid listing draft step")
 
 	ErrListingIncomplete = errors.New("listing has incomplete required fields")
+
+	ErrAddOnNotFound    = errors.New("add-on not found")
+	ErrAddOnLimitReached = errors.New("add-on limit reached")
 )
