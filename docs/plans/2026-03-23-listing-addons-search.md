@@ -187,13 +187,13 @@ Sequential execution of three independent subsystems: listing management enhance
 - Modify: `internal/server/router.go`
 - Modify: `internal/handler/module.go`
 
-- [ ] POST /api/v1/bathhouses/compare — accept 2-3 bathhouse IDs
-- [ ] Return comparison table: name, price, rating, review_count, capacity, amenities, distance, cancellation_policy, type, photos
-- [ ] Validate 2-3 IDs, all must exist and be active
-- [ ] Optional user location for distance calculation
-- [ ] Register in fx modules
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] POST /api/v1/bathhouses/compare — accept 2-3 bathhouse IDs
+- [x] Return comparison table: name, price, rating, review_count, capacity, amenities, distance, cancellation_policy, type, photos
+- [x] Validate 2-3 IDs, all must exist and be active
+- [x] Optional user location for distance calculation
+- [x] Register in fx modules
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 12: Recently Viewed & Saved Searches (FR-051, FR-052)
 

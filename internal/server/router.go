@@ -63,6 +63,7 @@ type RouterParams struct {
 	AuditLogHandler          *handler.AuditLogHandler
 	AddOnHandler             *handler.AddOnHandler
 	SearchHandler            *handler.SearchHandler
+	ComparisonHandler        *handler.ComparisonHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
@@ -162,6 +163,9 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// Search suggestions (public)
 		r.Get("/search/suggestions", p.SearchHandler.GetSuggestions)
+
+		// Bathhouse comparison (public)
+		r.Post("/bathhouses/compare", p.ComparisonHandler.Compare)
 
 		// Bathhouses (public, with optional auth for is_favorite)
 		r.With(optionalAuth).Get("/bathhouses", p.BHHandler.Search)
