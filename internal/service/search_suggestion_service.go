@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -234,30 +235,21 @@ func deduplicateSuggestions(suggestions []Suggestion) []Suggestion {
 	return result
 }
 
-// Simple JSON-like serialization for cache
 func serializeSuggestions(suggestions []Suggestion) (string, error) {
-	var parts []string
-	for _, s := range suggestions {
-		parts = append(parts, string(s.Type)+"|"+s.Text)
+	data, err := json.Marshal(suggestions)
+	if err != nil {
+		return "", fmt.Errorf("marshal suggestions: %w", err)
 	}
-	return strings.Join(parts, "\n"), nil
+	return string(data), nil
 }
 
 func parseCachedSuggestions(data string) ([]Suggestion, error) {
 	if data == "" {
 		return []Suggestion{}, nil
 	}
-	lines := strings.Split(data, "\n")
-	suggestions := make([]Suggestion, 0, len(lines))
-	for _, line := range lines {
-		parts := strings.SplitN(line, "|", 2)
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid cache format")
-		}
-		suggestions = append(suggestions, Suggestion{
-			Type: SuggestionType(parts[0]),
-			Text: parts[1],
-		})
+	var suggestions []Suggestion
+	if err := json.Unmarshal([]byte(data), &suggestions); err != nil {
+		return nil, fmt.Errorf("unmarshal suggestions: %w", err)
 	}
 	return suggestions, nil
 }

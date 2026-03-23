@@ -272,13 +272,10 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	}
 	if filter.OpenNow != nil && *filter.OpenNow {
 		dayArg := addArg(currentDayOfWeek())
-		timeArg1 := addArg(currentTimeHHMM())
-		timeArg2 := addArg(currentTimeHHMM())
-		timeArg3 := addArg(currentTimeHHMM())
-		timeArg4 := addArg(currentTimeHHMM())
+		timeArg := addArg(currentTimeHHMM())
 		conditions = append(conditions, fmt.Sprintf(
 			"EXISTS (SELECT 1 FROM jsonb_array_elements(working_hours) wh WHERE (wh->>'day_of_week')::int = %s AND ((wh->>'open_time' <= wh->>'close_time' AND wh->>'open_time' <= %s AND wh->>'close_time' > %s) OR (wh->>'open_time' > wh->>'close_time' AND (wh->>'open_time' <= %s OR wh->>'close_time' > %s))))",
-			dayArg, timeArg1, timeArg2, timeArg3, timeArg4,
+			dayArg, timeArg, timeArg, timeArg, timeArg,
 		))
 	}
 	if filter.AvailableDate != nil {
@@ -384,6 +381,8 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	case "newest":
 		orderBy = "CASE WHEN p.id IS NOT NULL THEN 0 ELSE 1 END ASC, created_at DESC"
 	default:
+		// Default to relevance-based ranking
+		filter.SortBy = "relevance"
 		if filter.SearchQuery != nil && *filter.SearchQuery != "" {
 			q := strings.TrimSpace(*filter.SearchQuery)
 			orderBy = fmt.Sprintf(

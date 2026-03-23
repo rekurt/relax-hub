@@ -163,14 +163,8 @@ func TestComparisonHandler_Compare_InactiveBathhouse(t *testing.T) {
 					Status:       domain.BathhouseStatusActive,
 				}, nil
 			}
-			return &domain.Bathhouse{
-				ID:           inactiveID,
-				Name:         "Inactive",
-				PricePerHour: 100000,
-				MaxGuests:    5,
-				MinDuration:  1,
-				Status:       domain.BathhouseStatusInactive,
-			}, nil
+			// Service returns ErrNotFound for non-active bathhouses
+			return nil, domain.ErrNotFound
 		},
 	}
 
@@ -185,8 +179,8 @@ func TestComparisonHandler_Compare_InactiveBathhouse(t *testing.T) {
 
 	h.Compare(rr, req)
 
-	if rr.Code != http.StatusBadRequest {
-		t.Errorf("got status %d, want %d for inactive bathhouse", rr.Code, http.StatusBadRequest)
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("got status %d, want %d for inactive bathhouse", rr.Code, http.StatusNotFound)
 	}
 }
 

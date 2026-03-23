@@ -100,6 +100,12 @@ func (s *savedSearchService) ListRecentlyViewed(ctx context.Context, userID uuid
 }
 
 func (s *savedSearchService) SaveSearch(ctx context.Context, userID uuid.UUID, name string, filters json.RawMessage, notifyOnNew bool) (*domain.SavedSearch, error) {
+	// Validate filters can be parsed as BathhouseFilter
+	var bf domain.BathhouseFilter
+	if err := json.Unmarshal(filters, &bf); err != nil {
+		return nil, domain.ErrInvalidInput
+	}
+
 	result, err := s.savedSearchRepo.ListByUser(ctx, userID, 1, 1)
 	if err != nil {
 		return nil, err

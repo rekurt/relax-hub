@@ -295,8 +295,9 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 
 		// Auto-set status to pending on substantial change (if currently active)
 		if bh.Status == domain.BathhouseStatusActive && s.auditSvc.IsSubstantialChange(&oldBh, bh) {
-			_ = s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusPending)
-			bh.Status = domain.BathhouseStatusPending
+			if err := s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusPending); err == nil {
+				bh.Status = domain.BathhouseStatusPending
+			}
 		}
 	}
 
@@ -421,7 +422,7 @@ func (s *bathhouseService) CheckCompleteness(ctx context.Context, userID uuid.UU
 		{Field: "description", Label: "Описание (50+ символов)", Complete: len(bh.Description) >= 50, Required: true},
 		{Field: "address", Label: "Адрес", Complete: bh.Address != "", Required: true},
 		{Field: "city", Label: "Город", Complete: bh.CityID > 0, Required: true},
-		{Field: "coordinates", Label: "Координаты", Complete: bh.Latitude != 0 || bh.Longitude != 0, Required: true},
+		{Field: "coordinates", Label: "Координаты", Complete: bh.Latitude != 0 && bh.Longitude != 0, Required: true},
 		{Field: "photos", Label: "Фотографии (3+)", Complete: verifiedPhotoCount >= 3, Required: true},
 		{Field: "price", Label: "Цена за час", Complete: bh.PricePerHour > 0, Required: true},
 		{Field: "schedule", Label: "Расписание работы", Complete: len(bh.WorkingHours) > 0, Required: true},
@@ -478,6 +479,10 @@ func (s *bathhouseService) SubmitForModeration(ctx context.Context, userID uuid.
 
 	if bh.Status == domain.BathhouseStatusPending {
 		return nil // already pending
+	}
+
+	if bh.Status == domain.BathhouseStatusArchived {
+		return domain.ErrInvalidInput
 	}
 
 	return s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusPending)

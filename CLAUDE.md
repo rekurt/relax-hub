@@ -115,6 +115,14 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrPaymentDetailsNotFound→404, ErrPaymentDetailsNotSet→403
 - ErrAddOnNotFound→404, ErrAddOnLimitReached→409
 - ErrSavedSearchNotFound→404, ErrSavedSearchLimitReached→409
+- ErrSubscriptionNotFound→404, ErrSubscriptionAlreadyActive→409, ErrPromotionBudgetExhausted→409
+- ErrWalletConcurrentUpdate→409
+- ErrPayoutNotFound→404, ErrPayoutBelowMinimum→400, ErrPayoutDailyLimitExceeded→400, ErrPayoutMonthlyLimitExceeded→400, ErrPayoutAlreadyProcessed→409
+- ErrPhoneRequired→400, ErrPhoneInvalid→400
+- Err2FARequired→403, Err2FAAlreadyEnabled→409, Err2FANotEnabled→400, Err2FAInvalidCode→400, Err2FAPhoneRequired→400
+- ErrResetTokenInvalid→400, ErrResetRateLimited→429
+- ErrListingDraftNotFound→404, ErrListingDraftIncomplete→400, ErrListingDraftSubmitted→409, ErrListingDraftInvalidStep→400
+- ErrListingIncomplete→400
 
 ### Logging
 
