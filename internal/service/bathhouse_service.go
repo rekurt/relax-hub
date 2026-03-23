@@ -282,8 +282,6 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 	if input.WorkingHours != nil {
 		bh.WorkingHours = input.WorkingHours
 	}
-	bh.UpdatedAt = time.Now()
-
 	// Detect substantial changes before persisting, so status update is atomic with data update
 	changedFields := buildChangedFields(&oldBh, bh)
 	if len(changedFields) > 0 && bh.Status != domain.BathhouseStatusPending && s.auditSvc.IsSubstantialChange(&oldBh, bh) {
@@ -536,7 +534,7 @@ func (s *bathhouseService) DuplicateBathhouse(ctx context.Context, userID uuid.U
 		HasKaraoke:   original.HasKaraoke,
 		Images:       original.Images,
 		WorkingHours: original.WorkingHours,
-		Status:       domain.BathhouseStatusPending,
+		Status:       domain.BathhouseStatusInactive,
 		ApiKey:       uuid.New().String(),
 		CreatedAt:    now,
 		UpdatedAt:    now,

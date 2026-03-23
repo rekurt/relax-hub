@@ -744,8 +744,8 @@ func TestBathhouseService_Duplicate_Success(t *testing.T) {
 	if dup.Slug == bh.Slug {
 		t.Error("duplicate should have a different slug")
 	}
-	if dup.Status != domain.BathhouseStatusPending {
-		t.Errorf("status = %q, want %q", dup.Status, domain.BathhouseStatusPending)
+	if dup.Status != domain.BathhouseStatusInactive {
+		t.Errorf("status = %q, want %q", dup.Status, domain.BathhouseStatusInactive)
 	}
 	if dup.OwnerID != ownerID {
 		t.Errorf("ownerID = %v, want %v", dup.OwnerID, ownerID)
