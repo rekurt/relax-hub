@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
 // UserRepo is an in-memory mock implementation of repository.UserRepository.
@@ -1016,6 +1017,23 @@ func (r *BathhouseRepo) GetByCalendarToken(_ context.Context, token string) (*do
 		}
 	}
 	return nil, domain.ErrNotFound
+}
+
+func (r *BathhouseRepo) SuggestNames(_ context.Context, filter repository.SuggestionFilter) ([]string, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	q := strings.ToLower(filter.Query)
+	var names []string
+	for _, bh := range r.bathhouses {
+		if bh.Status == domain.BathhouseStatusActive && strings.Contains(strings.ToLower(bh.Name), q) {
+			names = append(names, bh.Name)
+			if len(names) >= filter.Limit {
+				break
+			}
+		}
+	}
+	return names, nil
 }
 
 func (r *BathhouseRepo) ListIDsByOwner(_ context.Context, ownerID uuid.UUID) ([]uuid.UUID, error) {

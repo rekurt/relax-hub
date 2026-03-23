@@ -160,12 +160,12 @@ Sequential execution of three independent subsystems: listing management enhance
 - Modify: `internal/server/router.go`
 - Modify: `internal/service/module.go`, `internal/handler/module.go`
 
-- [ ] SearchSuggestionService: GetSuggestions (bathhouse names via trigram, type names, city names, popular queries from Redis sorted set), RecordQuery (increment frequency in Redis)
-- [ ] GET /api/v1/search/suggestions?q=...&limit=10 — return typed suggestions
-- [ ] Cache in Redis with 5 min TTL
-- [ ] Register in fx modules
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] SearchSuggestionService: GetSuggestions (bathhouse names via trigram, type names, city names, popular queries from Redis sorted set), RecordQuery (increment frequency in Redis)
+- [x] GET /api/v1/search/suggestions?q=...&limit=10 — return typed suggestions
+- [x] Cache in Redis with 5 min TTL
+- [x] Register in fx modules
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 10: Advanced Ranking (FR-041)
 

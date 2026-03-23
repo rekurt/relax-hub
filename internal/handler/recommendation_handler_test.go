@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
@@ -207,6 +208,10 @@ func (m *mockBathhouseRepository) SetCalendarToken(_ context.Context, _ uuid.UUI
 
 func (m *mockBathhouseRepository) GetByCalendarToken(_ context.Context, _ string) (*domain.Bathhouse, error) {
 	return nil, domain.ErrNotFound
+}
+
+func (m *mockBathhouseRepository) SuggestNames(_ context.Context, _ repository.SuggestionFilter) ([]string, error) {
+	return nil, nil
 }
 
 // Mock AuthService for testing

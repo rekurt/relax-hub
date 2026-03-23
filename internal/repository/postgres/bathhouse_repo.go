@@ -688,3 +688,36 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKeyOnly(rows pgx.Rows) (*doma
 
 	return &bh, nil
 }
+
+func (r *bathhouseRepo) SuggestNames(ctx context.Context, filter repository.SuggestionFilter) ([]string, error) {
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+
+	query := `
+		SELECT DISTINCT name
+		FROM bathhouses
+		WHERE status = 'active'
+		  AND (similarity(name, $1) > 0.2 OR name ILIKE '%' || $1 || '%')
+		ORDER BY similarity(name, $1) DESC
+		LIMIT $2
+	`
+
+	rows, err := r.pool.Query(ctx, query, filter.Query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("suggest names: %w", err)
+	}
+	defer rows.Close()
+
+	var names []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, fmt.Errorf("scan suggestion: %w", err)
+		}
+		names = append(names, name)
+	}
+
+	return names, rows.Err()
+}

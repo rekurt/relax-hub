@@ -51,6 +51,13 @@ type BathhouseRepository interface {
 	GetCalendarToken(ctx context.Context, bathhouseID uuid.UUID) (string, error)
 	SetCalendarToken(ctx context.Context, bathhouseID uuid.UUID, token string) error
 	GetByCalendarToken(ctx context.Context, token string) (*domain.Bathhouse, error)
+	SuggestNames(ctx context.Context, filter SuggestionFilter) ([]string, error)
+}
+
+// SuggestionFilter specifies parameters for name-based suggestions.
+type SuggestionFilter struct {
+	Query string
+	Limit int
 }
 
 type BookingRepository interface {
