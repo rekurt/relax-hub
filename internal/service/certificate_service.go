@@ -245,18 +245,20 @@ func (s *certificateService) sendCertificateEmail(ctx context.Context, cert *dom
 		return
 	}
 	amountRub := float64(cert.Amount) / 100
-	// Email to recipient
-	recipientSubject := "Вам подарили сертификат Bani!"
-	recipientBody := fmt.Sprintf(
-		"Вам подарен сертификат на %.0f руб.\n\nКод сертификата: %s\n\nСрок действия до: %s",
-		amountRub, cert.Code, cert.ValidUntil.Format("02.01.2006"),
-	)
-	if cert.Message != "" {
-		recipientBody += fmt.Sprintf("\n\nСообщение: %s", cert.Message)
-	}
-	if err := s.emailSender.Send(ctx, cert.RecipientEmail, recipientSubject, recipientBody); err != nil {
-		s.logger.Warn("failed to send certificate email to recipient",
-			"certificate_id", cert.ID, "recipient_email", cert.RecipientEmail, "error", err)
+	// Email to recipient (only if email provided)
+	if cert.RecipientEmail != "" {
+		recipientSubject := "Вам подарили сертификат Bani!"
+		recipientBody := fmt.Sprintf(
+			"Вам подарен сертификат на %.0f руб.\n\nКод сертификата: %s\n\nСрок действия до: %s",
+			amountRub, cert.Code, cert.ValidUntil.Format("02.01.2006"),
+		)
+		if cert.Message != "" {
+			recipientBody += fmt.Sprintf("\n\nСообщение: %s", cert.Message)
+		}
+		if err := s.emailSender.Send(ctx, cert.RecipientEmail, recipientSubject, recipientBody); err != nil {
+			s.logger.Warn("failed to send certificate email to recipient",
+				"certificate_id", cert.ID, "recipient_email", cert.RecipientEmail, "error", err)
+		}
 	}
 
 	// Email to purchaser
