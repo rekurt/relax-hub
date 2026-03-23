@@ -337,12 +337,17 @@ func (s *authService) LoginPhone(ctx context.Context, phone string) error {
 	existing, err := s.userRepo.GetByPhone(ctx, phone)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return domain.ErrUnauthorized
+			// Return nil to prevent phone enumeration — caller sees success
+			// but no OTP is sent for non-existent phones
+			s.logger.Debug("login attempt for non-existent phone", "phone", phone)
+			return nil
 		}
 		return err
 	}
 	if !existing.IsActive {
-		return domain.ErrUserBlocked
+		// Return nil to prevent leaking that a blocked user exists at this phone
+		s.logger.Debug("login attempt for blocked user", "phone", phone)
+		return nil
 	}
 
 	return s.otpSvc.SendOTP(ctx, phone)

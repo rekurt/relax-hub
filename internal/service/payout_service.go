@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -180,7 +181,13 @@ func (s *payoutService) ProcessPayout(ctx context.Context, payoutID uuid.UUID) e
 		ReferenceID:   &payout.ID,
 	}
 	if err := s.walletRepo.CreateTransaction(ctx, tx); err != nil {
-		s.logger.Error("failed to create payout transaction", "error", err)
+		// Balance was already deducted but transaction record failed - mark payout as failed
+		// so it can be investigated and reconciled
+		s.logger.Error("failed to create payout transaction after balance deduction, marking as failed for reconciliation",
+			"error", err, "payout_id", payoutID, "wallet_id", wallet.ID, "amount", payout.Amount)
+		failedAt := time.Now()
+		_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &failedAt, "transaction record failed after balance deduction - requires reconciliation")
+		return fmt.Errorf("create payout transaction: %w", err)
 	}
 
 	now := time.Now()

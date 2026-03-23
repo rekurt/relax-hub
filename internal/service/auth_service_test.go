@@ -394,9 +394,10 @@ func TestAuthService_LoginPhone_NonExistent(t *testing.T) {
 	cfg := newTestConfig()
 	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
 
+	// Returns nil for non-existent phone to prevent phone enumeration
 	err := svc.LoginPhone(context.Background(), "+79001234567")
-	if !errors.Is(err, domain.ErrUnauthorized) {
-		t.Errorf("expected ErrUnauthorized, got: %v", err)
+	if err != nil {
+		t.Errorf("expected nil (anti-enumeration), got: %v", err)
 	}
 }
 
@@ -433,9 +434,11 @@ func TestAuthService_LoginPhone_BlockedUser(t *testing.T) {
 		IsActive: false,
 	})
 
+	// Returns nil for blocked users to prevent phone enumeration
+	// (no OTP is sent, but caller sees success)
 	err := svc.LoginPhone(context.Background(), "+79001234567")
-	if !errors.Is(err, domain.ErrUserBlocked) {
-		t.Errorf("expected ErrUserBlocked, got: %v", err)
+	if err != nil {
+		t.Errorf("expected nil (anti-enumeration), got: %v", err)
 	}
 }
 

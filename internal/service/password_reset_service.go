@@ -75,6 +75,12 @@ func (s *passwordResetService) ForgotPassword(ctx context.Context, email string)
 	// Look up user - always return success to prevent email enumeration
 	user, err := s.userRepo.GetByEmail(ctx, email)
 	if err != nil {
+		// Increment rate limit even for non-existent emails to prevent
+		// unlimited probing and reduce timing differences
+		pipe := s.redis.Pipeline()
+		pipe.Incr(ctx, rateKey)
+		pipe.ExpireNX(ctx, rateKey, resetRateWindow)
+		_, _ = pipe.Exec(ctx) //nolint:errcheck // best-effort rate limit for non-existent email
 		s.logger.Debug("password reset requested for non-existent email", "email", email)
 		return nil
 	}
