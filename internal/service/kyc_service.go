@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -145,6 +146,9 @@ func (s *kycService) ListPending(ctx context.Context, page, pageSize int) (*doma
 func (s *kycService) IsApproved(ctx context.Context, userID uuid.UUID) (bool, error) {
 	app, err := s.kycRepo.GetByUserID(ctx, userID)
 	if err != nil {
+		if errors.Is(err, domain.ErrKYCNotFound) {
+			return false, nil
+		}
 		return false, err
 	}
 

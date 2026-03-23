@@ -205,10 +205,13 @@ func TestKYCService_IsApproved(t *testing.T) {
 	userID := uuid.New()
 	adminID := uuid.New()
 
-	// Not found -> false
+	// Not found -> false, nil (no KYC submitted yet)
 	approved, err := env.svc.IsApproved(context.Background(), userID)
-	if err == nil {
-		t.Fatalf("expected error for non-existent user, got approved=%v", approved)
+	if err != nil {
+		t.Fatalf("unexpected error for non-existent user: %v", err)
+	}
+	if approved {
+		t.Error("expected not approved for non-existent KYC")
 	}
 
 	// Submit + pending -> false

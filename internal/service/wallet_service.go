@@ -268,11 +268,6 @@ func (s *walletService) ReleaseHold(ctx context.Context, holdID uuid.UUID) error
 		return domain.ErrHoldNotFound
 	}
 
-	now := time.Now()
-	if err := s.walletRepo.UpdateHoldStatus(ctx, holdID, domain.WalletHoldStatusReleased, nil, &now); err != nil {
-		return err
-	}
-
 	wallet, err := s.walletRepo.GetByID(ctx, hold.WalletID)
 	if err != nil {
 		return err
@@ -283,7 +278,20 @@ func (s *walletService) ReleaseHold(ctx context.Context, holdID uuid.UUID) error
 		newHeldAmount = 0
 	}
 
-	return s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newHeldAmount)
+	// Update wallet balance first, then mark hold as released.
+	// If balance update succeeds but hold status update fails, the held amount is reduced
+	// but hold remains active -- a subsequent retry can still release it safely.
+	// The reverse order (hold first, then balance) would permanently freeze funds on partial failure.
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newHeldAmount); err != nil {
+		return err
+	}
+
+	now := time.Now()
+	if err := s.walletRepo.UpdateHoldStatus(ctx, holdID, domain.WalletHoldStatusReleased, nil, &now); err != nil {
+		s.logger.Error("hold released but status update failed", "hold_id", holdID, "error", err)
+	}
+
+	return nil
 }
 
 func (s *walletService) Refund(ctx context.Context, walletID uuid.UUID, amount int64, refType string, refID *uuid.UUID, description string) (*domain.WalletTransaction, error) {
@@ -499,12 +507,17 @@ func (s *walletService) FreezeAndZeroBalance(ctx context.Context, userID uuid.UU
 		}
 	}
 
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, 0, 0); err != nil {
-		return fmt.Errorf("zero wallet balance: %w", err)
-	}
-
+	// Freeze status first, then zero balance.
+	// If freeze succeeds but zeroing fails, the wallet is frozen with remaining balance --
+	// safe because no new operations are allowed on a frozen wallet.
+	// The reverse order (zero first, then freeze) would leave a zero-balance active wallet,
+	// allowing new top-ups/bonuses to be credited to a wallet pending deletion.
 	if err := s.walletRepo.UpdateStatus(ctx, wallet.ID, domain.WalletStatusFrozen); err != nil {
 		return fmt.Errorf("freeze wallet: %w", err)
+	}
+
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, 0, 0); err != nil {
+		return fmt.Errorf("zero wallet balance: %w", err)
 	}
 
 	return nil

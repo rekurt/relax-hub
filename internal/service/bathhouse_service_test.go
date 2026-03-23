@@ -470,8 +470,8 @@ func TestBathhouseService_Create_Gate_NoKYC(t *testing.T) {
 	_, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
 		Name: "Test", Address: "123 St", CityID: 1, PricePerHour: 5000, MinDuration: 1, MaxGuests: 10,
 	})
-	if !errors.Is(err, domain.ErrKYCNotFound) {
-		t.Errorf("expected KYC error without KYC, got: %v", err)
+	if !errors.Is(err, domain.ErrKYCNotApproved) {
+		t.Errorf("expected KYC not approved error without KYC, got: %v", err)
 	}
 }
 
