@@ -61,16 +61,16 @@ starting interactive plan creation
 [26-03-23 09:20:38]   - Modify: `internal/server/router.go`
 [26-03-23 09:20:38]   - Modify: `internal/service/module.go`, `internal/handler/module.go`, `internal/repository/postgres/module.go`
 [26-03-23 09:20:38]   - Create: `migrations/000049_audit_log.up.sql`, `migrations/000049_audit_log.down.sql`
-[26-03-23 09:20:38]   - [ ] AuditLog model: ID, EntityType, EntityID, UserID, Action, ChangedFields (JSONB), CreatedAt
-[26-03-23 09:20:38]   - [ ] AuditLogRepository interface: Create, ListByEntity, ListByUser
-[26-03-23 09:20:38]   - [ ] Postgres and mock implementations
-[26-03-23 09:20:38]   - [ ] AuditLogService: LogChange, GetHistory, IsSubstantialChange (address/type change or >50% photos replaced)
-[26-03-23 09:20:38]   - [ ] Hook into bathhouse Update: compare old vs new, log diff, auto-set status to pending on substantial change
-[26-03-23 09:20:38]   - [ ] GET /api/v1/admin/audit-log — admin view with filters
-[26-03-23 09:20:38]   - [ ] GET /api/v1/my/bathhouses/{id}/history — owner view
-[26-03-23 09:20:38]   - [ ] Register in fx modules
-[26-03-23 09:20:38]   - [ ] Write tests
-[26-03-23 09:20:38]   - [ ] Run `go test ./... -v` — must pass
+[26-03-23 09:20:38]   - [x] AuditLog model: ID, EntityType, EntityID, UserID, Action, ChangedFields (JSONB), CreatedAt
+[26-03-23 09:20:38]   - [x] AuditLogRepository interface: Create, ListByEntity, ListByUser
+[26-03-23 09:20:38]   - [x] Postgres and mock implementations
+[26-03-23 09:20:38]   - [x] AuditLogService: LogChange, GetHistory, IsSubstantialChange (address/type change or >50% photos replaced)
+[26-03-23 09:20:38]   - [x] Hook into bathhouse Update: compare old vs new, log diff, auto-set status to pending on substantial change
+[26-03-23 09:20:38]   - [x] GET /api/v1/admin/audit-log — admin view with filters
+[26-03-23 09:20:38]   - [x] GET /api/v1/my/bathhouses/{id}/history — owner view
+[26-03-23 09:20:38]   - [x] Register in fx modules
+[26-03-23 09:20:38]   - [x] Write tests
+[26-03-23 09:20:38]   - [x] Run `go test ./... -v` — must pass
 [26-03-23 09:20:38] ### Task 3: Listing Duplication (FR-032)
 [26-03-23 09:20:38] **Files:**
 [26-03-23 09:20:38]   - Modify: `internal/service/bathhouse_service.go`
