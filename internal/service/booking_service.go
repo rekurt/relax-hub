@@ -38,6 +38,7 @@ type BookingResult struct {
 	OriginalPrice       int64                 // Price before promo code discount
 	PromoDiscount       int64                 // Discount from promo code in kopecks
 	CertificateDiscount int64                 // Discount from gift certificate in kopecks
+	ServiceFeeAmount    int64                 // Platform service fee in kopecks
 }
 
 type TimeSlot struct {
@@ -70,6 +71,7 @@ type bookingService struct {
 	promoSvc      PromoService
 	certSvc       CertificateService
 	paymentSvc    PaymentService
+	serviceFeeSvc ServiceFeeService
 	access        *AccessChecker
 	notifSvc      NotificationService
 	logger        *logger.Logger
@@ -87,6 +89,7 @@ func NewBookingService(
 	promoSvc PromoService,
 	certSvc CertificateService,
 	paymentSvc PaymentService,
+	serviceFeeSvc ServiceFeeService,
 	access *AccessChecker,
 	notifSvc NotificationService,
 	log *logger.Logger,
@@ -103,6 +106,7 @@ func NewBookingService(
 		promoSvc:      promoSvc,
 		certSvc:       certSvc,
 		paymentSvc:    paymentSvc,
+		serviceFeeSvc: serviceFeeSvc,
 		access:        access,
 		notifSvc:      notifSvc,
 		logger:        log,
@@ -168,6 +172,15 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	if err != nil {
 		return nil, err
 	}
+
+	// Calculate service fee on base price only (before add-ons)
+	var serviceFeeAmount int64
+	serviceFeeAmount, err = s.serviceFeeSvc.CalculateFee(ctx, totalPrice, "*", nil)
+	if err != nil {
+		s.logger.Warn("failed to calculate service fee, defaulting to 0", "error", err)
+		serviceFeeAmount = 0
+	}
+	totalPrice += serviceFeeAmount
 
 	// Calculate add-on totals
 	var addOnTotal int64
@@ -266,6 +279,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		GuestCount:        input.GuestCount,
 		TotalPrice:        totalPrice,
 		AddOnTotal:        addOnTotal,
+		ServiceFeeAmount:  serviceFeeAmount,
 		PointsSpent:       pointsSpent,
 		ReferralBonusUsed: referralBonusUsed,
 		Status:            domain.BookingPending,
@@ -402,6 +416,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		OriginalPrice:       originalPriceBeforePromo,
 		PromoDiscount:       promoDiscount,
 		CertificateDiscount: certificateDiscount,
+		ServiceFeeAmount:    serviceFeeAmount,
 	}, nil
 }
 

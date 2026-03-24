@@ -151,6 +151,22 @@ func (n *noopAddOnService) CalculateAddOnTotal(_ context.Context, _ []service.Ad
 	return 0, nil, nil
 }
 
+// noopServiceFeeService is a no-op ServiceFeeService for tests that don't verify service fees.
+type noopServiceFeeService struct{}
+
+func (n *noopServiceFeeService) GetFeePercent(_ context.Context, _ string, _ *string) (float64, error) {
+	return 0, nil
+}
+func (n *noopServiceFeeService) CalculateFee(_ context.Context, _ int64, _ string, _ *string) (int64, error) {
+	return 0, nil
+}
+func (n *noopServiceFeeService) ListConfigs(_ context.Context) ([]domain.ServiceFeeConfig, error) {
+	return nil, nil
+}
+func (n *noopServiceFeeService) UpsertConfig(_ context.Context, _ *domain.ServiceFeeConfig) error {
+	return nil
+}
+
 func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID) *domain.Bathhouse {
 	t.Helper()
 	wh := make([]domain.WorkingHours, 7)

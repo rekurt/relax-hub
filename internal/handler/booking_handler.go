@@ -49,27 +49,28 @@ type bookingAddOnResponse struct {
 }
 
 type bookingResponse struct {
-	ID                  string                `json:"id"`
-	UserID              string                `json:"user_id"`
-	BathhouseID         string                `json:"bathhouse_id"`
-	StartTime           time.Time             `json:"start_time"`
-	EndTime             time.Time             `json:"end_time"`
-	GuestCount          int                   `json:"guest_count"`
-	TotalPrice          int64                 `json:"total_price"`
-	AddOnTotal          int64                 `json:"addon_total,omitempty"`
-	OriginalPrice       int64                 `json:"original_price,omitempty"`
-	PromoDiscount       int64                 `json:"promo_discount,omitempty"`
-	CertificateDiscount int64                 `json:"certificate_discount,omitempty"`
-	Status              string                `json:"status"`
-	PaymentStatus       string                `json:"payment_status,omitempty"`
-	Comment             string                `json:"comment"`
-	EarnedPoints        int64                 `json:"earned_points,omitempty"`
-	LoyaltyDiscount     int64                 `json:"loyalty_discount,omitempty"`
-	PointsSpent         int64                 `json:"points_spent,omitempty"`
-	ReferralBonusUsed   int64                 `json:"referral_bonus_used,omitempty"`
+	ID                  string                 `json:"id"`
+	UserID              string                 `json:"user_id"`
+	BathhouseID         string                 `json:"bathhouse_id"`
+	StartTime           time.Time              `json:"start_time"`
+	EndTime             time.Time              `json:"end_time"`
+	GuestCount          int                    `json:"guest_count"`
+	TotalPrice          int64                  `json:"total_price"`
+	AddOnTotal          int64                  `json:"addon_total,omitempty"`
+	ServiceFeeAmount    int64                  `json:"service_fee_amount,omitempty"`
+	OriginalPrice       int64                  `json:"original_price,omitempty"`
+	PromoDiscount       int64                  `json:"promo_discount,omitempty"`
+	CertificateDiscount int64                  `json:"certificate_discount,omitempty"`
+	Status              string                 `json:"status"`
+	PaymentStatus       string                 `json:"payment_status,omitempty"`
+	Comment             string                 `json:"comment"`
+	EarnedPoints        int64                  `json:"earned_points,omitempty"`
+	LoyaltyDiscount     int64                  `json:"loyalty_discount,omitempty"`
+	PointsSpent         int64                  `json:"points_spent,omitempty"`
+	ReferralBonusUsed   int64                  `json:"referral_bonus_used,omitempty"`
 	AddOns              []bookingAddOnResponse `json:"addons,omitempty"`
-	CreatedAt           time.Time             `json:"created_at"`
-	UpdatedAt           time.Time             `json:"updated_at"`
+	CreatedAt           time.Time              `json:"created_at"`
+	UpdatedAt           time.Time              `json:"updated_at"`
 }
 
 func toBookingResponse(b *domain.Booking) bookingResponse {
@@ -82,6 +83,7 @@ func toBookingResponse(b *domain.Booking) bookingResponse {
 		GuestCount:        b.GuestCount,
 		TotalPrice:        b.TotalPrice,
 		AddOnTotal:        b.AddOnTotal,
+		ServiceFeeAmount:  b.ServiceFeeAmount,
 		Status:            string(b.Status),
 		Comment:           b.Comment,
 		PointsSpent:       b.PointsSpent,
@@ -100,6 +102,7 @@ func toBookingResultResponse(r *service.BookingResult) bookingResponse {
 	resp.OriginalPrice = r.OriginalPrice
 	resp.PromoDiscount = r.PromoDiscount
 	resp.CertificateDiscount = r.CertificateDiscount
+	resp.ServiceFeeAmount = r.ServiceFeeAmount
 	if len(r.AddOns) > 0 {
 		resp.AddOns = make([]bookingAddOnResponse, len(r.AddOns))
 		for i, a := range r.AddOns {

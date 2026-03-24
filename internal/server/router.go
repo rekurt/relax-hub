@@ -65,6 +65,7 @@ type RouterParams struct {
 	SearchHandler            *handler.SearchHandler
 	ComparisonHandler        *handler.ComparisonHandler
 	SavedSearchHandler       *handler.SavedSearchHandler
+	ServiceFeeHandler        *handler.ServiceFeeHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
@@ -456,6 +457,10 @@ func NewRouter(p RouterParams) http.Handler {
 
 			// Promo codes (admin only)
 			r.Post("/promo-codes", p.PromoHandler.CreateGlobal)
+
+			// Service fee (admin only)
+			r.Get("/service-fee", p.ServiceFeeHandler.List)
+			r.Put("/service-fee", p.ServiceFeeHandler.Upsert)
 		})
 	})
 

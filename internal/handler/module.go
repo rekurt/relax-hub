@@ -71,5 +71,6 @@ var Module = fx.Module("handler",
 		NewSearchHandler,
 		NewComparisonHandler,
 		NewSavedSearchHandler,
+		NewServiceFeeHandler,
 	),
 )

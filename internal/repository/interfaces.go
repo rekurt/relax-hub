@@ -434,3 +434,11 @@ type AuditLogRepository interface {
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.AuditLog], error)
 	List(ctx context.Context, filter domain.AuditLogFilter) (*domain.PaginatedResult[domain.AuditLog], error)
 }
+
+type ServiceFeeRepository interface {
+	GetByRegionAndCategory(ctx context.Context, region string, category *string) (*domain.ServiceFeeConfig, error)
+	GetByRegion(ctx context.Context, region string) (*domain.ServiceFeeConfig, error)
+	GetGlobalDefault(ctx context.Context) (*domain.ServiceFeeConfig, error)
+	List(ctx context.Context) ([]domain.ServiceFeeConfig, error)
+	Upsert(ctx context.Context, config *domain.ServiceFeeConfig) error
+}
