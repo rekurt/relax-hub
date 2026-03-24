@@ -26,9 +26,12 @@ type PriceCalculationInput struct {
 }
 
 type PriceBreakdown struct {
-	BasePrice           int64 // price after dynamic rules (before discount/surcharge)
-	LongSessionDiscount int64 // discount amount (positive value)
-	ExtraGuestSurcharge int64 // surcharge amount
+	BasePrice           int64   // price after dynamic rules (before discount/surcharge)
+	LongSessionDiscount int64   // discount amount (positive value)
+	ExtraGuestSurcharge int64   // surcharge amount
+	IsHolidayPrice      bool    // whether holiday pricing was applied
+	HolidayName         string  // holiday name if applicable
+	HolidayMultiplier   float64 // holiday multiplier used (0 if not holiday)
 }
 
 type PricingService interface {
@@ -44,6 +47,7 @@ type PricingService interface {
 type pricingService struct {
 	priceRuleRepo repository.PricingRuleRepository
 	bhRepo        repository.BathhouseRepository
+	holidaySvc    HolidayService
 	access        *AccessChecker
 	logger        *logger.Logger
 }
@@ -51,12 +55,14 @@ type pricingService struct {
 func NewPricingService(
 	priceRuleRepo repository.PricingRuleRepository,
 	bhRepo repository.BathhouseRepository,
+	holidaySvc HolidayService,
 	access *AccessChecker,
 	log *logger.Logger,
 ) PricingService {
 	return &pricingService{
 		priceRuleRepo: priceRuleRepo,
 		bhRepo:        bhRepo,
+		holidaySvc:    holidaySvc,
 		access:        access,
 		logger:        log,
 	}
@@ -113,15 +119,29 @@ func (s *pricingService) CalculatePrice(ctx context.Context, bathhouseID uuid.UU
 
 // CalculateFullPrice calculates the total price including long session discount and extra guest surcharge
 func (s *pricingService) CalculateFullPrice(ctx context.Context, input PriceCalculationInput) (int64, *PriceBreakdown, error) {
-	// Calculate base price using dynamic pricing rules
-	basePrice, err := s.CalculatePrice(ctx, input.BathhouseID, input.BasePrice, input.StartTime, input.EndTime)
+	// Check if the booking date is a holiday and apply multiplier to base price before hourly slot iteration
+	effectiveBasePrice := input.BasePrice
+	breakdown := &PriceBreakdown{}
+
+	if s.holidaySvc != nil {
+		holiday, multiplier, err := s.holidaySvc.IsHolidayDate(ctx, input.StartTime, "RU", input.BathhouseID)
+		if err != nil {
+			s.logger.Warn("failed to check holiday pricing, continuing without", "error", err)
+		} else if holiday != nil && multiplier > 0 {
+			effectiveBasePrice = int64(math.Round(float64(input.BasePrice) * multiplier))
+			breakdown.IsHolidayPrice = true
+			breakdown.HolidayName = holiday.Name
+			breakdown.HolidayMultiplier = multiplier
+		}
+	}
+
+	// Calculate base price using dynamic pricing rules (with holiday-adjusted base price)
+	basePrice, err := s.CalculatePrice(ctx, input.BathhouseID, effectiveBasePrice, input.StartTime, input.EndTime)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	breakdown := &PriceBreakdown{
-		BasePrice: basePrice,
-	}
+	breakdown.BasePrice = basePrice
 
 	durationHours := int(input.EndTime.Sub(input.StartTime) / time.Hour)
 

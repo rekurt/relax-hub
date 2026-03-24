@@ -244,7 +244,7 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Create: `migrations/XXXXXX_holidays.up.sql` / `.down.sql`
 
 **Domain model (`internal/domain/holiday.go`):**
-- [ ] Define structs:
+- [x] Define structs:
   ```go
   type Holiday struct {
       ID          uuid.UUID
@@ -260,10 +260,10 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
       Multiplier  float64   // range 1.0-2.0, step 0.1, platform default 1.5
   }
   ```
-- [ ] Validate: Name non-empty, Region in ("RU", "BY"), Multiplier 1.0-2.0
+- [x] Validate: Name non-empty, Region in ("RU", "BY"), Multiplier 1.0-2.0
 
 **Migration:**
-- [ ] Create `holidays` table:
+- [x] Create `holidays` table:
   ```sql
   CREATE TABLE holidays (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -277,7 +277,7 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   CREATE INDEX idx_holidays_date ON holidays (date);
   CREATE INDEX idx_holidays_region ON holidays (region);
   ```
-- [ ] Create `bathhouse_holiday_prices` table:
+- [x] Create `bathhouse_holiday_prices` table:
   ```sql
   CREATE TABLE bathhouse_holiday_prices (
       bathhouse_id UUID NOT NULL REFERENCES bathhouses(id) ON DELETE CASCADE,
@@ -285,10 +285,10 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
       PRIMARY KEY (bathhouse_id)
   );
   ```
-- [ ] Seed initial Russian holidays: New Year (Jan 1-8), Defender of Fatherland (Feb 23), International Women's (Mar 8), Spring/Labour (May 1), Victory Day (May 9), Russia Day (Jun 12), National Unity (Nov 4) — all with is_recurring=true
+- [x] Seed initial Russian holidays: New Year (Jan 1-8), Defender of Fatherland (Feb 23), International Women's (Mar 8), Spring/Labour (May 1), Victory Day (May 9), Russia Day (Jun 12), National Unity (Nov 4) — all with is_recurring=true
 
 **Repository (`internal/repository/interfaces.go`):**
-- [ ] Add `HolidayRepository` interface:
+- [x] Add `HolidayRepository` interface:
   ```go
   type HolidayRepository interface {
       Create(ctx context.Context, holiday *domain.Holiday) error
@@ -302,45 +302,45 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
       SetBathhouseMultiplier(ctx context.Context, bathhouseID uuid.UUID, multiplier float64) error
   }
   ```
-- [ ] `IsHoliday` query: match exact date OR (is_recurring=true AND EXTRACT(MONTH)=month AND EXTRACT(DAY)=day)
+- [x] `IsHoliday` query: match exact date OR (is_recurring=true AND EXTRACT(MONTH)=month AND EXTRACT(DAY)=day)
 
 **Postgres implementation:**
-- [ ] Implement all HolidayRepository methods
-- [ ] `IsHoliday`: `SELECT * FROM holidays WHERE region=$1 AND (date = $2::date OR (is_recurring = true AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM $2::date) AND EXTRACT(DAY FROM date) = EXTRACT(DAY FROM $2::date))) LIMIT 1`
-- [ ] `GetBathhouseMultiplier`: SELECT multiplier FROM bathhouse_holiday_prices WHERE bathhouse_id=$1, return 1.5 default if not found
+- [x] Implement all HolidayRepository methods
+- [x] `IsHoliday`: `SELECT * FROM holidays WHERE region=$1 AND (date = $2::date OR (is_recurring = true AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM $2::date) AND EXTRACT(DAY FROM date) = EXTRACT(DAY FROM $2::date))) LIMIT 1`
+- [x] `GetBathhouseMultiplier`: SELECT multiplier FROM bathhouse_holiday_prices WHERE bathhouse_id=$1, return 1.5 default if not found
 
 **Mock implementation:**
-- [ ] In-memory implementation for testing
+- [x] In-memory implementation for testing
 
 **Service (`internal/service/holiday_service.go`):**
-- [ ] Define `HolidayService` interface and implementation
-- [ ] CRUD methods delegating to repo
-- [ ] `IsHolidayDate(ctx, date, region) (*domain.Holiday, float64, error)` — returns holiday info and applicable multiplier (bathhouse-specific or platform default 1.5)
+- [x] Define `HolidayService` interface and implementation
+- [x] CRUD methods delegating to repo
+- [x] `IsHolidayDate(ctx, date, region) (*domain.Holiday, float64, error)` — returns holiday info and applicable multiplier (bathhouse-specific or platform default 1.5)
 
 **Integrate into PricingService (`internal/service/pricing_service.go`):**
-- [ ] Inject `HolidayService` into pricingService
-- [ ] In `CalculatePrice`, before applying dynamic rules, check if the booking date is a holiday via `holidaySvc.IsHolidayDate(ctx, startTime, region)`
-- [ ] If holiday: multiply the base price by multiplier BEFORE hourly slot iteration
-- [ ] This means holiday multiplier stacks with dynamic pricing rules
+- [x] Inject `HolidayService` into pricingService
+- [x] In `CalculatePrice`, before applying dynamic rules, check if the booking date is a holiday via `holidaySvc.IsHolidayDate(ctx, startTime, region)`
+- [x] If holiday: multiply the base price by multiplier BEFORE hourly slot iteration
+- [x] This means holiday multiplier stacks with dynamic pricing rules
 
 **Handler (`internal/handler/holiday_handler.go`):**
-- [ ] Admin CRUD endpoints (RequireRole: admin):
+- [x] Admin CRUD endpoints (RequireRole: admin):
   - `GET /api/v1/admin/holidays` — list all holidays, optional ?region= filter
   - `POST /api/v1/admin/holidays` — create holiday (name, date, region, is_recurring)
   - `PUT /api/v1/admin/holidays/{id}` — update holiday
   - `DELETE /api/v1/admin/holidays/{id}` — delete holiday
-- [ ] Owner endpoint (RequireAuth + CanManageBathhouse):
+- [x] Owner endpoint (RequireAuth + CanManageBathhouse):
   - `PUT /api/v1/my/bathhouses/{id}/holiday-multiplier` — set custom multiplier { "multiplier": 1.3 }
-- [ ] Add swagger annotations
+- [x] Add swagger annotations
 
 **Modify price response:**
-- [ ] Add `is_holiday_price bool`, `holiday_name string`, `holiday_multiplier float64` to PriceBreakdown and booking response
+- [x] Add `is_holiday_price bool`, `holiday_name string`, `holiday_multiplier float64` to PriceBreakdown and booking response
 
 **Tests:**
-- [ ] `internal/service/holiday_service_test.go`: test IsHolidayDate with recurring vs non-recurring, test region filter, test bathhouse multiplier override vs default
-- [ ] `internal/service/pricing_service_test.go`: test CalculatePrice on a holiday (base 1000 kopecks/h * 1.5 multiplier = 1500/h), test holiday + dynamic rule stacking, test non-holiday date returns normal price
-- [ ] Test seeded holidays exist after migration
-- [ ] Run `go test ./... -v` — must pass
+- [x] `internal/service/holiday_service_test.go`: test IsHolidayDate with recurring vs non-recurring, test region filter, test bathhouse multiplier override vs default
+- [x] `internal/service/pricing_service_test.go`: test CalculatePrice on a holiday (base 1000 kopecks/h * 1.5 multiplier = 1500/h), test holiday + dynamic rule stacking, test non-holiday date returns normal price
+- [x] Test seeded holidays exist after migration
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 4: Last-Minute Discounts (FR-090)
 

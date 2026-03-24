@@ -435,6 +435,18 @@ type AuditLogRepository interface {
 	List(ctx context.Context, filter domain.AuditLogFilter) (*domain.PaginatedResult[domain.AuditLog], error)
 }
 
+type HolidayRepository interface {
+	Create(ctx context.Context, holiday *domain.Holiday) error
+	Update(ctx context.Context, holiday *domain.Holiday) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Holiday, error)
+	ListAll(ctx context.Context) ([]domain.Holiday, error)
+	ListByRegion(ctx context.Context, region string) ([]domain.Holiday, error)
+	IsHoliday(ctx context.Context, date time.Time, region string) (*domain.Holiday, error)
+	GetBathhouseMultiplier(ctx context.Context, bathhouseID uuid.UUID) (float64, error)
+	SetBathhouseMultiplier(ctx context.Context, bathhouseID uuid.UUID, multiplier float64) error
+}
+
 type ServiceFeeRepository interface {
 	GetByRegionAndCategory(ctx context.Context, region string, category *string) (*domain.ServiceFeeConfig, error)
 	GetByRegion(ctx context.Context, region string) (*domain.ServiceFeeConfig, error)

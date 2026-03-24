@@ -42,6 +42,9 @@ type BookingResult struct {
 	BasePrice           int64                 // Base price after dynamic rules
 	LongSessionDiscount int64                 // Long session discount amount
 	ExtraGuestSurcharge int64                 // Extra guest surcharge amount
+	IsHolidayPrice      bool                  // Whether holiday pricing was applied
+	HolidayName         string                // Holiday name if applicable
+	HolidayMultiplier   float64               // Holiday multiplier used
 }
 
 type TimeSlot struct {
@@ -436,6 +439,9 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		BasePrice:           priceBreakdown.BasePrice,
 		LongSessionDiscount: priceBreakdown.LongSessionDiscount,
 		ExtraGuestSurcharge: priceBreakdown.ExtraGuestSurcharge,
+		IsHolidayPrice:      priceBreakdown.IsHolidayPrice,
+		HolidayName:         priceBreakdown.HolidayName,
+		HolidayMultiplier:   priceBreakdown.HolidayMultiplier,
 	}, nil
 }
 

@@ -71,6 +71,9 @@ type bookingResponse struct {
 	LoyaltyDiscount     int64                  `json:"loyalty_discount,omitempty"`
 	PointsSpent         int64                  `json:"points_spent,omitempty"`
 	ReferralBonusUsed   int64                  `json:"referral_bonus_used,omitempty"`
+	IsHolidayPrice      bool                   `json:"is_holiday_price,omitempty"`
+	HolidayName         string                 `json:"holiday_name,omitempty"`
+	HolidayMultiplier   float64                `json:"holiday_multiplier,omitempty"`
 	AddOns              []bookingAddOnResponse `json:"addons,omitempty"`
 	CreatedAt           time.Time              `json:"created_at"`
 	UpdatedAt           time.Time              `json:"updated_at"`
@@ -112,6 +115,9 @@ func toBookingResultResponse(r *service.BookingResult) bookingResponse {
 	resp.BasePrice = r.BasePrice
 	resp.LongSessionDiscount = r.LongSessionDiscount
 	resp.ExtraGuestSurcharge = r.ExtraGuestSurcharge
+	resp.IsHolidayPrice = r.IsHolidayPrice
+	resp.HolidayName = r.HolidayName
+	resp.HolidayMultiplier = r.HolidayMultiplier
 	if len(r.AddOns) > 0 {
 		resp.AddOns = make([]bookingAddOnResponse, len(r.AddOns))
 		for i, a := range r.AddOns {

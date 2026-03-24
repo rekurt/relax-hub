@@ -65,6 +65,7 @@ type RouterParams struct {
 	SearchHandler            *handler.SearchHandler
 	ComparisonHandler        *handler.ComparisonHandler
 	SavedSearchHandler       *handler.SavedSearchHandler
+	HolidayHandler           *handler.HolidayHandler
 	ServiceFeeHandler        *handler.ServiceFeeHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
@@ -286,6 +287,9 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/pricing-rules/{id}", p.PricingHandler.UpdateRule)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/pricing-rules/{id}", p.PricingHandler.DeleteRule)
 
+		// Holiday multiplier (authenticated owner)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/bathhouses/{id}/holiday-multiplier", p.HolidayHandler.SetBathhouseMultiplier)
+
 		// Widget API keys (authenticated owner)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/widget-key", p.BHHandler.GetWidgetKey)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/widget-key/regenerate", p.BHHandler.RegenerateWidgetKey)
@@ -461,6 +465,12 @@ func NewRouter(p RouterParams) http.Handler {
 			// Service fee (admin only)
 			r.Get("/service-fee", p.ServiceFeeHandler.List)
 			r.Put("/service-fee", p.ServiceFeeHandler.Upsert)
+
+			// Holidays (admin only)
+			r.Get("/holidays", p.HolidayHandler.ListHolidays)
+			r.Post("/holidays", p.HolidayHandler.CreateHoliday)
+			r.Put("/holidays/{id}", p.HolidayHandler.UpdateHoliday)
+			r.Delete("/holidays/{id}", p.HolidayHandler.DeleteHoliday)
 		})
 	})
 
