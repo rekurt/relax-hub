@@ -106,6 +106,25 @@ func (r *CertificateRepo) ApplyToBooking(_ context.Context, id uuid.UUID, usage 
 	return nil
 }
 
+func (r *CertificateRepo) RefundUsage(_ context.Context, bookingID uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for id, usage := range r.usages {
+		if usage.BookingID == bookingID {
+			cert, ok := r.certs[usage.CertificateID]
+			if ok {
+				cert.Balance += usage.Amount
+				if cert.Status == domain.CertificateStatusUsed {
+					cert.Status = domain.CertificateStatusActive
+				}
+			}
+			delete(r.usages, id)
+		}
+	}
+	return nil
+}
+
 func (r *CertificateRepo) ListByUser(_ context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

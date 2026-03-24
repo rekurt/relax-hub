@@ -28,6 +28,7 @@ type CertificateService interface {
 	Purchase(ctx context.Context, amount int64, purchaserID *uuid.UUID, purchaserEmail, recipientEmail, recipientName, message string) (*domain.GiftCertificate, error)
 	Redeem(ctx context.Context, code string, userID uuid.UUID) (*domain.GiftCertificate, error)
 	Apply(ctx context.Context, certificateID, bookingID uuid.UUID, amount int64) error
+	RefundUsage(ctx context.Context, bookingID uuid.UUID) error
 	GetBalance(ctx context.Context, code string) (*domain.GiftCertificate, error)
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error)
 }
@@ -178,6 +179,10 @@ func (s *certificateService) Apply(ctx context.Context, certificateID, bookingID
 
 	s.logger.Info("certificate applied", "certificate_id", certificateID, "booking_id", bookingID, "amount", amount)
 	return nil
+}
+
+func (s *certificateService) RefundUsage(ctx context.Context, bookingID uuid.UUID) error {
+	return s.certRepo.RefundUsage(ctx, bookingID)
 }
 
 func (s *certificateService) GetBalance(ctx context.Context, code string) (*domain.GiftCertificate, error) {

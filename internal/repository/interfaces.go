@@ -254,6 +254,7 @@ type GiftCertificateRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.GiftCertificate, error)
 	GetByCode(ctx context.Context, code string) (*domain.GiftCertificate, error)
 	ApplyToBooking(ctx context.Context, id uuid.UUID, usage *domain.CertificateUsage) error
+	RefundUsage(ctx context.Context, bookingID uuid.UUID) error
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error)
 	Redeem(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }

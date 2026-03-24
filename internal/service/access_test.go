@@ -180,6 +180,9 @@ func (n *noopCertificateService) Apply(_ context.Context, _, _ uuid.UUID, _ int6
 func (n *noopCertificateService) GetBalance(_ context.Context, _ string) (*domain.GiftCertificate, error) {
 	return nil, nil
 }
+func (n *noopCertificateService) RefundUsage(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
 func (n *noopCertificateService) ListByUser(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.GiftCertificate], error) {
 	return &domain.PaginatedResult[domain.GiftCertificate]{}, nil
 }

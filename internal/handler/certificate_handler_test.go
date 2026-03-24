@@ -58,6 +58,10 @@ func (m *mockCertificateService) ListByUser(ctx context.Context, userID uuid.UUI
 	return &domain.PaginatedResult[domain.GiftCertificate]{}, nil
 }
 
+func (m *mockCertificateService) RefundUsage(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
 func TestCertificateHandler_Purchase(t *testing.T) {
 	certID := uuid.New()
 	now := time.Now()

@@ -520,8 +520,25 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 				// Payment succeeded but booking was cancelled - retry auto-refund
 				s.logger.Warn("retrying auto-refund for cancelled booking",
 					"booking_id", p.BookingID, "payment_id", p.ID)
-				if refundErr := s.provider.CreateRefund(ctx, p.ExternalID, p.Amount); refundErr != nil {
-					return fmt.Errorf("failed to auto-refund cancelled booking on retry: %w", refundErr)
+				cardRefundAmount := p.CardAmount
+				if cardRefundAmount == 0 {
+					cardRefundAmount = p.Amount
+				}
+				if cardRefundAmount > 0 && p.ExternalID != "" {
+					if refundErr := s.provider.CreateRefund(ctx, p.ExternalID, cardRefundAmount); refundErr != nil {
+						return fmt.Errorf("failed to auto-refund cancelled booking on retry: %w", refundErr)
+					}
+				}
+				if p.WalletAmount > 0 && s.walletSvc != nil {
+					wallet, wErr := s.walletSvc.GetWallet(ctx, booking.UserID)
+					if wErr == nil {
+						bookingIDRef := p.BookingID
+						if _, rErr := s.walletSvc.Refund(ctx, wallet.ID, p.WalletAmount, "auto_refund_cancelled_retry", &bookingIDRef,
+							fmt.Sprintf("Автовозврат (повтор): бронирование отменено %s", p.BookingID.String()[:8])); rErr != nil {
+							s.logger.Error("failed to auto-refund wallet on retry",
+								"payment_id", p.ID, "amount", p.WalletAmount, "error", rErr)
+						}
+					}
 				}
 				now := time.Now()
 				return s.paymentRepo.UpdateRefund(ctx, p.ID, p.Amount, now, domain.PaymentRefunded)
@@ -578,10 +595,29 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 			// Booking was cancelled while payment was processing - issue automatic refund
 			s.logger.Warn("booking already cancelled, issuing automatic refund",
 				"booking_id", p.BookingID, "payment_id", p.ID)
-			if refundErr := s.provider.CreateRefund(ctx, event.ExternalID, p.Amount); refundErr != nil {
-				s.logger.Error("failed to auto-refund cancelled booking payment",
-					"booking_id", p.BookingID, "payment_id", p.ID, "error", refundErr)
-				return fmt.Errorf("failed to auto-refund cancelled booking: %w", refundErr)
+			// For combo payments, only refund the card portion via provider
+			cardRefundAmount := p.CardAmount
+			if cardRefundAmount == 0 {
+				cardRefundAmount = p.Amount
+			}
+			if cardRefundAmount > 0 && p.ExternalID != "" {
+				if refundErr := s.provider.CreateRefund(ctx, event.ExternalID, cardRefundAmount); refundErr != nil {
+					s.logger.Error("failed to auto-refund cancelled booking payment",
+						"booking_id", p.BookingID, "payment_id", p.ID, "error", refundErr)
+					return fmt.Errorf("failed to auto-refund cancelled booking: %w", refundErr)
+				}
+			}
+			// Refund wallet portion for combo payments
+			if p.WalletAmount > 0 && s.walletSvc != nil {
+				wallet, wErr := s.walletSvc.GetWallet(ctx, booking.UserID)
+				if wErr == nil {
+					bookingIDRef := p.BookingID
+					if _, rErr := s.walletSvc.Refund(ctx, wallet.ID, p.WalletAmount, "auto_refund_cancelled", &bookingIDRef,
+						fmt.Sprintf("Автовозврат: бронирование отменено %s", p.BookingID.String()[:8])); rErr != nil {
+						s.logger.Error("failed to auto-refund wallet for cancelled booking",
+							"payment_id", p.ID, "wallet_id", wallet.ID, "amount", p.WalletAmount, "error", rErr)
+					}
+				}
 			}
 			now := time.Now()
 			return s.paymentRepo.UpdateRefund(ctx, p.ID, p.Amount, now, domain.PaymentRefunded)
@@ -601,6 +637,42 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 	case "canceled":
 		if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentFailed, event.ExternalID); err != nil {
 			return err
+		}
+		// Roll back wallet for combo payments where wallet was already debited/held
+		if p.WalletAmount > 0 && s.walletSvc != nil {
+			booking, bErr := s.bookingRepo.GetByID(ctx, p.BookingID)
+			if bErr != nil {
+				s.logger.Error("failed to get booking for wallet rollback on canceled payment",
+					"payment_id", p.ID, "booking_id", p.BookingID, "error", bErr)
+			} else {
+				wallet, wErr := s.walletSvc.GetWallet(ctx, booking.UserID)
+				if wErr != nil {
+					s.logger.Error("failed to get wallet for rollback on canceled payment",
+						"payment_id", p.ID, "user_id", booking.UserID, "error", wErr)
+				} else if p.IsHold {
+					// Release wallet hold
+					holds, hErr := s.walletSvc.GetActiveHolds(ctx, wallet.ID)
+					if hErr == nil {
+						for _, h := range holds {
+							if h.ReferenceID != nil && *h.ReferenceID == p.BookingID {
+								if rErr := s.walletSvc.ReleaseHold(ctx, h.ID); rErr != nil {
+									s.logger.Error("failed to release wallet hold on canceled payment",
+										"hold_id", h.ID, "error", rErr)
+								}
+								break
+							}
+						}
+					}
+				} else {
+					// Refund wallet debit
+					bookingIDRef := p.BookingID
+					if _, rErr := s.walletSvc.Refund(ctx, wallet.ID, p.WalletAmount, "payment_canceled_rollback", &bookingIDRef,
+						fmt.Sprintf("Возврат: оплата отменена %s", p.BookingID.String()[:8])); rErr != nil {
+						s.logger.Error("failed to refund wallet on canceled payment",
+							"payment_id", p.ID, "wallet_id", wallet.ID, "amount", p.WalletAmount, "error", rErr)
+					}
+				}
+			}
 		}
 	default:
 		s.logger.Warn("unknown webhook status", "external_id", event.ExternalID, "status", event.Status)

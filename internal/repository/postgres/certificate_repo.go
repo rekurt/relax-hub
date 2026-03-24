@@ -123,6 +123,62 @@ func (r *certificateRepo) ApplyToBooking(ctx context.Context, id uuid.UUID, usag
 	return tx.Commit(ctx)
 }
 
+func (r *certificateRepo) RefundUsage(ctx context.Context, bookingID uuid.UUID) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	// Find usages for this booking
+	rows, err := tx.Query(ctx,
+		`SELECT id, certificate_id, amount FROM certificate_usages WHERE booking_id = $1`, bookingID)
+	if err != nil {
+		return fmt.Errorf("find certificate usages: %w", err)
+	}
+
+	type usage struct {
+		id            uuid.UUID
+		certificateID uuid.UUID
+		amount        int64
+	}
+	var usages []usage
+	for rows.Next() {
+		var u usage
+		if err := rows.Scan(&u.id, &u.certificateID, &u.amount); err != nil {
+			rows.Close()
+			return fmt.Errorf("scan certificate usage: %w", err)
+		}
+		usages = append(usages, u)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate certificate usages: %w", err)
+	}
+
+	if len(usages) == 0 {
+		return nil
+	}
+
+	for _, u := range usages {
+		// Restore certificate balance
+		_, err := tx.Exec(ctx,
+			`UPDATE gift_certificates SET balance = balance + $2, status = 'active' WHERE id = $1`,
+			u.certificateID, u.amount)
+		if err != nil {
+			return fmt.Errorf("restore certificate balance: %w", err)
+		}
+		// Delete the usage record
+		_, err = tx.Exec(ctx,
+			`DELETE FROM certificate_usages WHERE id = $1`, u.id)
+		if err != nil {
+			return fmt.Errorf("delete certificate usage: %w", err)
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
 func (r *certificateRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error) {
 	if page < 1 {
 		page = 1

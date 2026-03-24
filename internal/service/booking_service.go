@@ -644,6 +644,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		s.refundBookingPoints(ctx, booking)
 		s.refundReferralBonus(ctx, booking)
 		s.refundPromoUsage(ctx, booking)
+		s.refundCertificateUsage(ctx, booking)
 		if booking.Status != domain.BookingPendingOwner {
 			s.refundPayment(ctx, booking, false, refundTo)
 		}
@@ -680,6 +681,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 	s.refundBookingPoints(ctx, booking)
 	s.refundReferralBonus(ctx, booking)
 	s.refundPromoUsage(ctx, booking)
+	s.refundCertificateUsage(ctx, booking)
 	if booking.Status != domain.BookingPendingOwner {
 		s.refundPayment(ctx, booking, true, "")
 	}
@@ -748,6 +750,7 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 	s.refundBookingPoints(ctx, booking)
 	s.refundReferralBonus(ctx, booking)
 	s.refundPromoUsage(ctx, booking)
+	s.refundCertificateUsage(ctx, booking)
 	if !wasRequestBased {
 		// Only refund non-hold payments; holds were already released above
 		s.refundPayment(ctx, booking, true, "")
@@ -1081,6 +1084,13 @@ func (s *bookingService) refundPromoUsage(ctx context.Context, booking *domain.B
 	}
 }
 
+func (s *bookingService) refundCertificateUsage(ctx context.Context, booking *domain.Booking) {
+	if err := s.certSvc.RefundUsage(ctx, booking.ID); err != nil {
+		s.logger.Error("failed to refund certificate usage on booking cancellation",
+			"booking_id", booking.ID, "user_id", booking.UserID, "error", err)
+	}
+}
+
 func (s *bookingService) refundPayment(ctx context.Context, booking *domain.Booking, forceFullRefund bool, refundTo string) {
 	if err := s.paymentSvc.RefundPayment(ctx, booking.ID, forceFullRefund, refundTo); err != nil {
 		if errors.Is(err, domain.ErrPaymentNotFound) {
@@ -1135,18 +1145,27 @@ func (s *bookingService) Approve(ctx context.Context, userID uuid.UUID, role dom
 	}
 
 	// Capture payment hold (card + wallet portions) if exists
+	paymentHoldCaptured := false
 	if err := s.paymentSvc.CaptureHoldPayment(ctx, bookingID); err != nil {
 		if !errors.Is(err, domain.ErrPaymentNotFound) {
 			s.logger.Error("failed to capture payment hold on approve", "booking_id", bookingID, "error", err)
 			return fmt.Errorf("failed to capture payment hold: %w", err)
 		}
 		// No payment record exists — booking relies on standalone wallet hold
+	} else {
+		paymentHoldCaptured = true
 	}
 
-	// Capture standalone wallet hold (from booking creation) if exists and no payment hold handled it
-	if booking.HoldID != nil && s.walletSvc != nil {
+	// Capture standalone wallet hold only if no payment hold was captured
+	// (payment hold already handles wallet via its own hold; capturing both would double-charge)
+	if !paymentHoldCaptured && booking.HoldID != nil && s.walletSvc != nil {
 		if _, err := s.walletSvc.CaptureHold(ctx, *booking.HoldID); err != nil {
-			s.logger.Warn("failed to capture booking wallet hold on approve (may already be captured by payment hold)", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
+			s.logger.Warn("failed to capture booking wallet hold on approve", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
+		}
+	} else if paymentHoldCaptured && booking.HoldID != nil && s.walletSvc != nil {
+		// Payment hold was captured — release the duplicate booking-level hold
+		if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
+			s.logger.Warn("failed to release duplicate booking wallet hold on approve", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
 		}
 	}
 
@@ -1190,6 +1209,7 @@ func (s *bookingService) AutoRejectTimedOutRequests(ctx context.Context) (int, e
 		s.refundBookingPoints(ctx, &b)
 		s.refundReferralBonus(ctx, &b)
 		s.refundPromoUsage(ctx, &b)
+		s.refundCertificateUsage(ctx, &b)
 
 		s.sendBookingNotificationWithReason(ctx, &b, domain.NotifBookingRejected, b.RejectionReason)
 		rejected++
@@ -1618,8 +1638,33 @@ func (s *bookingService) Extend(ctx context.Context, userID uuid.UUID, bookingID
 
 	newTotalPrice := booking.TotalPrice + extensionPrice
 
+	// Charge extension price via wallet
+	if s.walletSvc != nil && extensionPrice > 0 {
+		wallet, wErr := s.walletSvc.GetWallet(ctx, userID)
+		if wErr != nil {
+			return nil, fmt.Errorf("%w: wallet required for session extension payment", domain.ErrInvalidInput)
+		}
+		bookingIDRef := bookingID
+		_, spendErr := s.walletSvc.Spend(ctx, wallet.ID, extensionPrice, "booking_extension", &bookingIDRef,
+			fmt.Sprintf("Продление сессии %s на %dч", bookingID.String()[:8], extraHours))
+		if spendErr != nil {
+			return nil, fmt.Errorf("%w: insufficient wallet balance for extension (%d kopecks required)", domain.ErrInsufficientWalletBalance, extensionPrice)
+		}
+	}
+
 	// Update booking end time and total price
 	if err := s.bookingRepo.UpdateEndTime(ctx, bookingID, newEndTime, newTotalPrice); err != nil {
+		// Rollback wallet debit
+		if s.walletSvc != nil && extensionPrice > 0 {
+			wallet, wErr := s.walletSvc.GetWallet(ctx, userID)
+			if wErr == nil {
+				bookingIDRef := bookingID
+				if _, rErr := s.walletSvc.Refund(ctx, wallet.ID, extensionPrice, "extension_rollback", &bookingIDRef,
+					"Возврат: ошибка продления"); rErr != nil {
+					s.logger.Error("failed to rollback extension wallet debit", "booking_id", bookingID, "error", rErr)
+				}
+			}
+		}
 		return nil, fmt.Errorf("update booking end time: %w", err)
 	}
 

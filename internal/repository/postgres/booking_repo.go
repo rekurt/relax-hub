@@ -16,6 +16,8 @@ import (
 
 const bookingColumns = `id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, checked_in_at, checked_out_at, hold_id, rejection_reason, cancelled_by_owner, points_spent, referral_bonus_used, status, comment, created_at, updated_at`
 
+const bookingColumnsAliased = `b.id, b.user_id, b.bathhouse_id, b.start_time, b.end_time, b.guest_count, b.total_price, b.addon_total, b.base_price, b.long_session_discount, b.extra_guest_surcharge, b.last_minute_discount, b.service_fee_amount, b.checked_in_at, b.checked_out_at, b.hold_id, b.rejection_reason, b.cancelled_by_owner, b.points_spent, b.referral_bonus_used, b.status, b.comment, b.created_at, b.updated_at`
+
 type bookingRepo struct {
 	pool *pgxpool.Pool
 }
@@ -272,7 +274,7 @@ func (r *bookingRepo) GetUserStats(ctx context.Context, userID uuid.UUID) (*doma
 }
 
 func (r *bookingRepo) ListTimedOutRequests(ctx context.Context) ([]domain.Booking, error) {
-	query := `SELECT b.` + bookingColumns + `
+	query := `SELECT ` + bookingColumnsAliased + `
 		FROM bookings b
 		JOIN bathhouses bh ON b.bathhouse_id = bh.id
 		WHERE b.status = 'pending_owner'
