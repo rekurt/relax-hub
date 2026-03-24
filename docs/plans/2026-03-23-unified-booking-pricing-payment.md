@@ -354,27 +354,27 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Create: `migrations/XXXXXX_last_minute.up.sql` / `.down.sql`
 
 **Bathhouse model changes:**
-- [ ] Add fields to Bathhouse struct:
+- [x] Add fields to Bathhouse struct:
   ```go
   LastMinuteEnabled         bool  // default false
   LastMinuteDiscountPercent int   // default 20, range 5-50
   LastMinuteHoursThreshold  int   // default 6, range 2-24
   ```
-- [ ] Update Validate(): if LastMinuteEnabled, DiscountPercent must be 5-50, HoursThreshold must be 2-24
+- [x] Update Validate(): if LastMinuteEnabled, DiscountPercent must be 5-50, HoursThreshold must be 2-24
 
 **Migration:**
-- [ ] ALTER TABLE bathhouses ADD COLUMN:
+- [x] ALTER TABLE bathhouses ADD COLUMN:
   - `last_minute_enabled BOOLEAN NOT NULL DEFAULT false`
   - `last_minute_discount_percent INT NOT NULL DEFAULT 20`
   - `last_minute_hours_threshold INT NOT NULL DEFAULT 6`
-- [ ] CHECK constraints: `last_minute_discount_percent BETWEEN 5 AND 50`, `last_minute_hours_threshold BETWEEN 2 AND 24`
+- [x] CHECK constraints: `last_minute_discount_percent BETWEEN 5 AND 50`, `last_minute_hours_threshold BETWEEN 2 AND 24`
 
 **Modify GetAvailableSlots (`internal/service/booking_service.go`):**
-- [ ] In the slot iteration loop (~line 616-654), after calculating slotPrice:
+- [x] In the slot iteration loop (~line 616-654), after calculating slotPrice:
   - If `bh.LastMinuteEnabled && slot.StartTime.Sub(time.Now()).Hours() <= float64(bh.LastMinuteHoursThreshold)`:
     - `discountedPrice = slotPrice - (slotPrice * int64(bh.LastMinuteDiscountPercent) / 100)`
     - Set `slot.IsLastMinute = true`, `slot.OriginalPrice = slotPrice`, `slot.Price = discountedPrice`
-- [ ] Extend `TimeSlot` struct:
+- [x] Extend `TimeSlot` struct:
   ```go
   type TimeSlot struct {
       StartTime     time.Time `json:"start_time"`
@@ -387,29 +387,29 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   ```
 
 **Modify booking creation:**
-- [ ] When calculating total price for a booking, check if each hourly slot qualifies for last-minute discount
-- [ ] Apply discount per-slot, not flat on total (some slots may be within threshold, some not)
-- [ ] Add `LastMinuteDiscount int64` to BookingResult and response
+- [x] When calculating total price for a booking, check if each hourly slot qualifies for last-minute discount
+- [x] Apply discount per-slot, not flat on total (some slots may be within threshold, some not)
+- [x] Add `LastMinuteDiscount int64` to BookingResult and response
 
 **Search filter (`internal/domain/filters.go` or BathhouseFilter):**
-- [ ] Add `LastMinute *bool` field to BathhouseFilter
-- [ ] In bathhouse list query, if LastMinute=true: filter WHERE last_minute_enabled=true AND EXISTS (available slot within threshold hours)
-- [ ] Simpler approach: just filter `WHERE last_minute_enabled = true` and let client check available slots
+- [x] Add `LastMinute *bool` field to BathhouseFilter
+- [x] In bathhouse list query, if LastMinute=true: filter WHERE last_minute_enabled=true AND EXISTS (available slot within threshold hours)
+- [x] Simpler approach: just filter `WHERE last_minute_enabled = true` and let client check available slots
 
 **Bathhouse list response:**
-- [ ] Add `is_last_minute bool` and `last_minute_discount_percent int` to bathhouse response when applicable
-- [ ] Set `is_last_minute = true` when LastMinuteEnabled AND any slots are within threshold
+- [x] Add `is_last_minute bool` and `last_minute_discount_percent int` to bathhouse response when applicable
+- [x] Set `is_last_minute = true` when LastMinuteEnabled AND any slots are within threshold
 
 **Owner settings:**
-- [ ] Accept LastMinuteEnabled, LastMinuteDiscountPercent, LastMinuteHoursThreshold in PUT /api/v1/my/bathhouses/{id}
+- [x] Accept LastMinuteEnabled, LastMinuteDiscountPercent, LastMinuteHoursThreshold in PUT /api/v1/my/bathhouses/{id}
 
 **Tests:**
-- [ ] Test GetAvailableSlots with last-minute enabled: slot starting in 3h (threshold 6h) should have is_last_minute=true and discounted price
-- [ ] Test slot starting in 8h (threshold 6h) should have is_last_minute=false
-- [ ] Test booking creation applies last-minute discount correctly per-slot
-- [ ] Test BathhouseFilter with last_minute=true
-- [ ] Test disabled last-minute (LastMinuteEnabled=false) returns normal prices
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test GetAvailableSlots with last-minute enabled: slot starting in 3h (threshold 6h) should have is_last_minute=true and discounted price
+- [x] Test slot starting in 8h (threshold 6h) should have is_last_minute=false
+- [x] Test booking creation applies last-minute discount correctly per-slot
+- [x] Test BathhouseFilter with last_minute=true
+- [x] Test disabled last-minute (LastMinuteEnabled=false) returns normal prices
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 5: Buffer Time, Lead Time & Booking Settings (FR-073, FR-077, FR-078)
 

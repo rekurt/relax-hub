@@ -115,6 +115,9 @@ type bathhouseResponse struct {
 	LongSessionDiscountPercent int                `json:"long_session_discount_percent"`
 	BaseCapacity               int                `json:"base_capacity"`
 	ExtraGuestSurcharge        int64              `json:"extra_guest_surcharge"`
+	LastMinuteEnabled          bool               `json:"last_minute_enabled"`
+	LastMinuteDiscountPercent  int                `json:"last_minute_discount_percent,omitempty"`
+	LastMinuteHoursThreshold   int                `json:"last_minute_hours_threshold,omitempty"`
 	Rating                     float64            `json:"rating"`
 	ReviewCount  int                `json:"review_count"`
 	Images       []string           `json:"images"`
@@ -171,6 +174,9 @@ func toBathhouseResponse(b *domain.Bathhouse) bathhouseResponse {
 		LongSessionDiscountPercent: b.LongSessionDiscountPercent,
 		BaseCapacity:               b.BaseCapacity,
 		ExtraGuestSurcharge:        b.ExtraGuestSurcharge,
+		LastMinuteEnabled:          b.LastMinuteEnabled,
+		LastMinuteDiscountPercent:  b.LastMinuteDiscountPercent,
+		LastMinuteHoursThreshold:   b.LastMinuteHoursThreshold,
 		Rating:                     b.Rating,
 		ReviewCount:  b.ReviewCount,
 		Images:       images,
@@ -229,6 +235,9 @@ type updateBathhouseRequest struct {
 	LongSessionDiscountPercent *int                  `json:"long_session_discount_percent"`
 	BaseCapacity               *int                  `json:"base_capacity"`
 	ExtraGuestSurcharge        *int64                `json:"extra_guest_surcharge"`
+	LastMinuteEnabled          *bool                 `json:"last_minute_enabled"`
+	LastMinuteDiscountPercent  *int                  `json:"last_minute_discount_percent"`
+	LastMinuteHoursThreshold   *int                  `json:"last_minute_hours_threshold"`
 	Images                     []string              `json:"images"`
 	WorkingHours               []workingHoursRequest `json:"working_hours"`
 }
@@ -368,6 +377,10 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 	if v := q.Get("open_now"); v != "" {
 		val := v == "true"
 		filter.OpenNow = &val
+	}
+	if v := q.Get("last_minute"); v != "" {
+		val := v == "true"
+		filter.LastMinute = &val
 	}
 	if v := q.Get("q"); v != "" {
 		filter.SearchQuery = &v
@@ -682,6 +695,9 @@ func (h *BathhouseHandler) Update(w http.ResponseWriter, r *http.Request) {
 		LongSessionDiscountPercent: req.LongSessionDiscountPercent,
 		BaseCapacity:               req.BaseCapacity,
 		ExtraGuestSurcharge:        req.ExtraGuestSurcharge,
+		LastMinuteEnabled:          req.LastMinuteEnabled,
+		LastMinuteDiscountPercent:  req.LastMinuteDiscountPercent,
+		LastMinuteHoursThreshold:   req.LastMinuteHoursThreshold,
 		Images:                     req.Images,
 		WorkingHours:               wh,
 	})

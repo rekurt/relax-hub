@@ -59,6 +59,7 @@ type bookingResponse struct {
 	BasePrice           int64                  `json:"base_price,omitempty"`
 	LongSessionDiscount int64                  `json:"long_session_discount,omitempty"`
 	ExtraGuestSurcharge int64                  `json:"extra_guest_surcharge,omitempty"`
+	LastMinuteDiscount  int64                  `json:"last_minute_discount,omitempty"`
 	AddOnTotal          int64                  `json:"addon_total,omitempty"`
 	ServiceFeeAmount    int64                  `json:"service_fee_amount,omitempty"`
 	OriginalPrice       int64                  `json:"original_price,omitempty"`
@@ -91,6 +92,7 @@ func toBookingResponse(b *domain.Booking) bookingResponse {
 		BasePrice:           b.BasePrice,
 		LongSessionDiscount: b.LongSessionDiscount,
 		ExtraGuestSurcharge: b.ExtraGuestSurcharge,
+		LastMinuteDiscount:  b.LastMinuteDiscount,
 		AddOnTotal:          b.AddOnTotal,
 		ServiceFeeAmount:    b.ServiceFeeAmount,
 		Status:              string(b.Status),
@@ -115,6 +117,7 @@ func toBookingResultResponse(r *service.BookingResult) bookingResponse {
 	resp.BasePrice = r.BasePrice
 	resp.LongSessionDiscount = r.LongSessionDiscount
 	resp.ExtraGuestSurcharge = r.ExtraGuestSurcharge
+	resp.LastMinuteDiscount = r.LastMinuteDiscount
 	resp.IsHolidayPrice = r.IsHolidayPrice
 	resp.HolidayName = r.HolidayName
 	resp.HolidayMultiplier = r.HolidayMultiplier

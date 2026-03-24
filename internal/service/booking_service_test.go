@@ -1721,3 +1721,258 @@ func TestBookingService_Create_WithExtraGuestSurcharge(t *testing.T) {
 		t.Errorf("TotalPrice = %d, want at least %d", result.Booking.TotalPrice, expectedBase)
 	}
 }
+
+// --- Last-Minute Discount Tests ---
+
+func TestBookingService_GetAvailableSlots_LastMinuteEnabled(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Last Minute Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 10000,
+		MinDuration: 1, MaxGuests: 10, Status: domain.BathhouseStatusActive,
+		LastMinuteEnabled:         true,
+		LastMinuteDiscountPercent: 20,
+		LastMinuteHoursThreshold:  6,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: 0, OpenTime: "09:00", CloseTime: "18:00"},
+			{DayOfWeek: 1, OpenTime: "09:00", CloseTime: "18:00"},
+			{DayOfWeek: 2, OpenTime: "09:00", CloseTime: "18:00"},
+			{DayOfWeek: 3, OpenTime: "09:00", CloseTime: "18:00"},
+			{DayOfWeek: 4, OpenTime: "09:00", CloseTime: "18:00"},
+			{DayOfWeek: 5, OpenTime: "09:00", CloseTime: "18:00"},
+			{DayOfWeek: 6, OpenTime: "09:00", CloseTime: "18:00"},
+		},
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Use a date far enough in the future so that early slots (09:00) are beyond
+	// the threshold, but some slots might still be in range depending on "now".
+	// To test reliably, we use a day far in the future so ALL slots are beyond threshold.
+	now := time.Now()
+	futureDate := time.Date(now.Year(), now.Month(), now.Day()+30, 0, 0, 0, 0, time.UTC)
+	// Ensure it falls on a day with working hours
+	for futureDate.Weekday() == time.Sunday {
+		futureDate = futureDate.AddDate(0, 0, 1)
+	}
+
+	slots, err := svc.GetAvailableSlots(context.Background(), bh.ID, futureDate)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(slots) == 0 {
+		t.Fatal("expected slots, got 0")
+	}
+
+	// All slots are far in the future (>6h), so none should be last-minute
+	for _, slot := range slots {
+		if slot.IsLastMinute {
+			t.Errorf("slot at %s should NOT be last-minute (far future)", slot.StartTime.Format("15:04"))
+		}
+		if slot.OriginalPrice != 0 {
+			t.Errorf("slot at %s should have OriginalPrice=0, got %d", slot.StartTime.Format("15:04"), slot.OriginalPrice)
+		}
+		if slot.Price != 10000 {
+			t.Errorf("slot at %s: price = %d, want 10000", slot.StartTime.Format("15:04"), slot.Price)
+		}
+	}
+}
+
+func TestBookingService_GetAvailableSlots_LastMinuteDisabled(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "No Last Minute Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 10000,
+		MinDuration: 1, MaxGuests: 10, Status: domain.BathhouseStatusActive,
+		LastMinuteEnabled:         false,
+		LastMinuteDiscountPercent: 20,
+		LastMinuteHoursThreshold:  6,
+		WorkingHours:              wh,
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Use tomorrow
+	now := time.Now()
+	tomorrow := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.UTC)
+
+	slots, err := svc.GetAvailableSlots(context.Background(), bh.ID, tomorrow)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// No slot should have last-minute when disabled
+	for _, slot := range slots {
+		if slot.IsLastMinute {
+			t.Errorf("slot at %s should NOT be last-minute when disabled", slot.StartTime.Format("15:04"))
+		}
+	}
+}
+
+func TestBookingService_Create_WithLastMinuteDiscount(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+	bh := &domain.Bathhouse{
+		ID:                         uuid.New(),
+		OwnerID:                    ownerID,
+		Name:                       "Last Minute Booking",
+		Address:                    "123 St",
+		CityID:                     1,
+		PricePerHour:               10000,
+		MinDuration:                1,
+		MaxGuests:                  10,
+		BaseCapacity:               10,
+		LongSessionThresholdHours:  4,
+		LastMinuteEnabled:          true,
+		LastMinuteDiscountPercent:  20,
+		LastMinuteHoursThreshold:   6,
+		WorkingHours:               wh,
+		Status:                     domain.BathhouseStatusActive,
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Book starting 3 hours from now — all slots within threshold
+	now := time.Now()
+	start := now.Add(3 * time.Hour).Truncate(time.Hour)
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Both slots (2h) start within 6h threshold
+	// Each slot: 10000 * 20% = 2000 discount
+	// Total last-minute discount: 4000
+	expectedDiscount := int64(4000)
+	if result.LastMinuteDiscount != expectedDiscount {
+		t.Errorf("LastMinuteDiscount = %d, want %d", result.LastMinuteDiscount, expectedDiscount)
+	}
+	if result.Booking.LastMinuteDiscount != expectedDiscount {
+		t.Errorf("Booking.LastMinuteDiscount = %d, want %d", result.Booking.LastMinuteDiscount, expectedDiscount)
+	}
+	// Total should be base(20000) - lastMinute(4000) = 16000
+	if result.Booking.TotalPrice != 16000 {
+		t.Errorf("TotalPrice = %d, want 16000", result.Booking.TotalPrice)
+	}
+}
+
+func TestBookingService_Create_LastMinuteDisabled_NormalPrice(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+	bh := &domain.Bathhouse{
+		ID:                         uuid.New(),
+		OwnerID:                    ownerID,
+		Name:                       "No Discount",
+		Address:                    "123 St",
+		CityID:                     1,
+		PricePerHour:               10000,
+		MinDuration:                1,
+		MaxGuests:                  10,
+		BaseCapacity:               10,
+		LongSessionThresholdHours:  4,
+		LastMinuteEnabled:          false,
+		LastMinuteDiscountPercent:  20,
+		LastMinuteHoursThreshold:   6,
+		WorkingHours:               wh,
+		Status:                     domain.BathhouseStatusActive,
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	now := time.Now()
+	start := now.Add(3 * time.Hour).Truncate(time.Hour)
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.LastMinuteDiscount != 0 {
+		t.Errorf("LastMinuteDiscount = %d, want 0 (disabled)", result.LastMinuteDiscount)
+	}
+	if result.Booking.TotalPrice != 20000 {
+		t.Errorf("TotalPrice = %d, want 20000", result.Booking.TotalPrice)
+	}
+}
+
+func TestBookingService_Create_LastMinuteBeyondThreshold(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+	bh := &domain.Bathhouse{
+		ID:                         uuid.New(),
+		OwnerID:                    ownerID,
+		Name:                       "Far Future Booking",
+		Address:                    "123 St",
+		CityID:                     1,
+		PricePerHour:               10000,
+		MinDuration:                1,
+		MaxGuests:                  10,
+		BaseCapacity:               10,
+		LongSessionThresholdHours:  4,
+		LastMinuteEnabled:          true,
+		LastMinuteDiscountPercent:  20,
+		LastMinuteHoursThreshold:   6,
+		WorkingHours:               wh,
+		Status:                     domain.BathhouseStatusActive,
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Book starting 48 hours from now — way beyond 6h threshold
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+2, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Slots are >6h away, no last-minute discount
+	if result.LastMinuteDiscount != 0 {
+		t.Errorf("LastMinuteDiscount = %d, want 0 (beyond threshold)", result.LastMinuteDiscount)
+	}
+	if result.Booking.TotalPrice != 20000 {
+		t.Errorf("TotalPrice = %d, want 20000", result.Booking.TotalPrice)
+	}
+}

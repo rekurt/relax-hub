@@ -42,16 +42,19 @@ type BookingResult struct {
 	BasePrice           int64                 // Base price after dynamic rules
 	LongSessionDiscount int64                 // Long session discount amount
 	ExtraGuestSurcharge int64                 // Extra guest surcharge amount
+	LastMinuteDiscount  int64                 // Last-minute discount amount
 	IsHolidayPrice      bool                  // Whether holiday pricing was applied
 	HolidayName         string                // Holiday name if applicable
 	HolidayMultiplier   float64               // Holiday multiplier used
 }
 
 type TimeSlot struct {
-	StartTime time.Time `json:"startTime"`
-	EndTime   time.Time `json:"endTime"`
-	Available bool      `json:"available"`
-	Price     int64     `json:"price"` // Price in kopecks for this hour slot
+	StartTime     time.Time `json:"startTime"`
+	EndTime       time.Time `json:"endTime"`
+	Available     bool      `json:"available"`
+	Price         int64     `json:"price"`                        // Price in kopecks for this hour slot
+	IsLastMinute  bool      `json:"is_last_minute,omitempty"`     // Whether last-minute discount is applied
+	OriginalPrice int64     `json:"original_price,omitempty"`     // Original price before last-minute discount
 }
 
 type BookingService interface {
@@ -189,6 +192,34 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, err
 	}
 
+	// Calculate last-minute discount per slot
+	var lastMinuteDiscount int64
+	if bh.LastMinuteEnabled && bh.LastMinuteDiscountPercent > 0 {
+		now := time.Now()
+		slotStart := input.StartTime
+		for slotStart.Before(input.EndTime) {
+			slotEnd := slotStart.Add(time.Hour)
+			if slotEnd.After(input.EndTime) {
+				slotEnd = input.EndTime
+			}
+			hoursUntilStart := slotStart.Sub(now).Hours()
+			if hoursUntilStart >= 0 && hoursUntilStart <= float64(bh.LastMinuteHoursThreshold) {
+				// Calculate slot price using pricing service for accurate per-slot discount
+				slotPrice, calcErr := s.pricingSvc.CalculatePrice(ctx, input.BathhouseID, bh.PricePerHour, slotStart, slotEnd)
+				if calcErr == nil {
+					lastMinuteDiscount += slotPrice * int64(bh.LastMinuteDiscountPercent) / 100
+				}
+			}
+			slotStart = slotEnd
+		}
+		if lastMinuteDiscount > 0 {
+			totalPrice -= lastMinuteDiscount
+			if totalPrice <= 0 {
+				totalPrice = 1
+			}
+		}
+	}
+
 	// Calculate service fee on base price only (before add-ons)
 	var serviceFeeAmount int64
 	serviceFeeAmount, err = s.serviceFeeSvc.CalculateFee(ctx, totalPrice, "*", nil)
@@ -298,6 +329,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		BasePrice:           priceBreakdown.BasePrice,
 		LongSessionDiscount: priceBreakdown.LongSessionDiscount,
 		ExtraGuestSurcharge: priceBreakdown.ExtraGuestSurcharge,
+		LastMinuteDiscount:  lastMinuteDiscount,
 		ServiceFeeAmount:    serviceFeeAmount,
 		PointsSpent:         pointsSpent,
 		ReferralBonusUsed:   referralBonusUsed,
@@ -439,6 +471,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		BasePrice:           priceBreakdown.BasePrice,
 		LongSessionDiscount: priceBreakdown.LongSessionDiscount,
 		ExtraGuestSurcharge: priceBreakdown.ExtraGuestSurcharge,
+		LastMinuteDiscount:  lastMinuteDiscount,
 		IsHolidayPrice:      priceBreakdown.IsHolidayPrice,
 		HolidayName:         priceBreakdown.HolidayName,
 		HolidayMultiplier:   priceBreakdown.HolidayMultiplier,
@@ -685,12 +718,24 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 			return nil, err
 		}
 
-		slots = append(slots, TimeSlot{
+		slot := TimeSlot{
 			StartTime: t,
 			EndTime:   slotEnd,
 			Available: avail,
 			Price:     slotPrice,
-		})
+		}
+
+		// Apply last-minute discount if enabled and slot starts within threshold
+		if bh.LastMinuteEnabled && bh.LastMinuteDiscountPercent > 0 {
+			hoursUntilStart := t.Sub(now).Hours()
+			if hoursUntilStart >= 0 && hoursUntilStart <= float64(bh.LastMinuteHoursThreshold) {
+				slot.OriginalPrice = slotPrice
+				slot.Price = slotPrice - (slotPrice * int64(bh.LastMinuteDiscountPercent) / 100)
+				slot.IsLastMinute = true
+			}
+		}
+
+		slots = append(slots, slot)
 	}
 
 	return slots, nil

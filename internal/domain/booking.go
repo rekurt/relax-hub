@@ -38,6 +38,7 @@ type Booking struct {
 	BasePrice             int64
 	LongSessionDiscount   int64
 	ExtraGuestSurcharge   int64
+	LastMinuteDiscount    int64
 	ServiceFeeAmount      int64
 	Status                BookingStatus
 	Comment           string

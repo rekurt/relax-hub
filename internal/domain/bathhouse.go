@@ -62,9 +62,12 @@ type Bathhouse struct {
 	LongSessionDiscountPercent int   // 0-50, discount on hours beyond threshold
 	BaseCapacity               int   // default equals MaxGuests, guests included in base price
 	ExtraGuestSurcharge        int64 // kopecks per extra guest per hour
-	IsPhotoVerified  bool
-	ApiKey           string
-	CalendarToken    string
+	LastMinuteEnabled         bool  // default false
+	LastMinuteDiscountPercent int   // 5-50, discount for slots starting soon
+	LastMinuteHoursThreshold  int   // 2-24, hours before start to apply discount
+	IsPhotoVerified           bool
+	ApiKey                    string
+	CalendarToken             string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
@@ -112,6 +115,21 @@ func (b *Bathhouse) Validate() error {
 	}
 	if b.ExtraGuestSurcharge < 0 {
 		return ErrInvalidInput
+	}
+	// Apply defaults for last-minute fields when unset
+	if b.LastMinuteEnabled {
+		if b.LastMinuteDiscountPercent == 0 {
+			b.LastMinuteDiscountPercent = 20
+		}
+		if b.LastMinuteHoursThreshold == 0 {
+			b.LastMinuteHoursThreshold = 6
+		}
+		if b.LastMinuteDiscountPercent < 5 || b.LastMinuteDiscountPercent > 50 {
+			return ErrInvalidInput
+		}
+		if b.LastMinuteHoursThreshold < 2 || b.LastMinuteHoursThreshold > 24 {
+			return ErrInvalidInput
+		}
 	}
 	for _, wh := range b.WorkingHours {
 		if err := wh.Validate(); err != nil {

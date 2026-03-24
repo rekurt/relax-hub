@@ -24,6 +24,7 @@ type BathhouseFilter struct {
 	AvailableTimeTo   *string          `json:"available_time_to,omitempty"`
 	OpenNow           *bool            `json:"open_now,omitempty"`
 	SearchQuery       *string          `json:"search_query,omitempty"`
+	LastMinute        *bool            `json:"last_minute,omitempty"`
 	Status            *BathhouseStatus `json:"status,omitempty"`
 	ShowAllStatuses   bool             `json:"show_all_statuses,omitempty"` // when true, don't filter by status even if Status is nil
 	SortBy            string           `json:"sort_by,omitempty"`           // "relevance", "price_asc", "price_desc", "rating", "distance", "newest"

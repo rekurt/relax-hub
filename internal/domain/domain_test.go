@@ -189,6 +189,77 @@ func TestBathhouse_Validate(t *testing.T) {
 	}
 }
 
+func TestBathhouse_Validate_LastMinute(t *testing.T) {
+	base := func() Bathhouse {
+		return Bathhouse{
+			Name: "Test", Address: "addr", CityID: 1,
+			PricePerHour: 100, MaxGuests: 5, MinDuration: 1,
+			LastMinuteEnabled: true,
+		}
+	}
+
+	// Valid with defaults (should auto-set 20% and 6h)
+	bh := base()
+	if err := bh.Validate(); err != nil {
+		t.Errorf("valid last-minute bathhouse returned error: %v", err)
+	}
+	if bh.LastMinuteDiscountPercent != 20 {
+		t.Errorf("default discount = %d, want 20", bh.LastMinuteDiscountPercent)
+	}
+	if bh.LastMinuteHoursThreshold != 6 {
+		t.Errorf("default threshold = %d, want 6", bh.LastMinuteHoursThreshold)
+	}
+
+	// Valid with explicit values
+	bh2 := base()
+	bh2.LastMinuteDiscountPercent = 30
+	bh2.LastMinuteHoursThreshold = 12
+	if err := bh2.Validate(); err != nil {
+		t.Errorf("valid explicit last-minute returned error: %v", err)
+	}
+
+	// Invalid: discount too low
+	bh3 := base()
+	bh3.LastMinuteDiscountPercent = 3
+	bh3.LastMinuteHoursThreshold = 6
+	if err := bh3.Validate(); err == nil {
+		t.Error("expected error for discount percent < 5")
+	}
+
+	// Invalid: discount too high
+	bh4 := base()
+	bh4.LastMinuteDiscountPercent = 55
+	bh4.LastMinuteHoursThreshold = 6
+	if err := bh4.Validate(); err == nil {
+		t.Error("expected error for discount percent > 50")
+	}
+
+	// Invalid: threshold too low
+	bh5 := base()
+	bh5.LastMinuteDiscountPercent = 20
+	bh5.LastMinuteHoursThreshold = 1
+	if err := bh5.Validate(); err == nil {
+		t.Error("expected error for threshold < 2")
+	}
+
+	// Invalid: threshold too high
+	bh6 := base()
+	bh6.LastMinuteDiscountPercent = 20
+	bh6.LastMinuteHoursThreshold = 25
+	if err := bh6.Validate(); err == nil {
+		t.Error("expected error for threshold > 24")
+	}
+
+	// When disabled, no validation on discount/threshold values
+	bh7 := base()
+	bh7.LastMinuteEnabled = false
+	bh7.LastMinuteDiscountPercent = 99 // invalid but doesn't matter since disabled
+	bh7.LastMinuteHoursThreshold = 99
+	if err := bh7.Validate(); err != nil {
+		t.Errorf("disabled last-minute should not validate percent/threshold, got: %v", err)
+	}
+}
+
 func TestBookingStatus_IsValid(t *testing.T) {
 	tests := []struct {
 		status BookingStatus
