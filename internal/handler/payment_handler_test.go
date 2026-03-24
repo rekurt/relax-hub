@@ -56,6 +56,14 @@ func (m *mockPaymentService) RefundPayment(ctx context.Context, bookingID uuid.U
 	return nil
 }
 
+func (m *mockPaymentService) CaptureHoldPayment(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockPaymentService) ReleaseHoldPayment(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
 func (m *mockPaymentService) GetPaymentByBooking(ctx context.Context, userID, bookingID uuid.UUID) (*domain.Payment, error) {
 	if m.getByBookingFn != nil {
 		return m.getByBookingFn(ctx, userID, bookingID)

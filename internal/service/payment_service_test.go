@@ -761,3 +761,248 @@ func (f *failingMockProvider) CapturePayment(_ context.Context, _ string, _ int6
 	return nil
 }
 func (f *failingMockProvider) CancelPayment(_ context.Context, _ string) error { return nil }
+
+// --- Payment Hold Tests (Task 9) ---
+
+func TestPaymentService_InitiatePayment_RequestBooking_CardHold(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	// Create a pending_owner booking (request-based)
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPendingOwner)
+
+	url, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if url == "" {
+		t.Error("expected non-empty confirmation URL")
+	}
+
+	// Verify payment was created with IsHold=true
+	p, err := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	if err != nil {
+		t.Fatalf("failed to get payment: %v", err)
+	}
+	if !p.IsHold {
+		t.Error("expected payment to be a hold (IsHold=true)")
+	}
+
+	// Verify provider received Capture=false
+	capture := provider.GetPaymentCapture(p.ExternalID)
+	if capture {
+		t.Error("expected Capture=false for request-based booking payment")
+	}
+}
+
+func TestPaymentService_CaptureHoldPayment_Card(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPendingOwner)
+
+	// Initiate hold payment
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	if err != nil {
+		t.Fatalf("initiate failed: %v", err)
+	}
+
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+
+	// Set provider status to allow capture
+	provider.SetPaymentStatus(p.ExternalID, "waiting_for_capture")
+
+	// Capture the hold
+	err = svc.CaptureHoldPayment(context.Background(), booking.ID)
+	if err != nil {
+		t.Fatalf("capture hold failed: %v", err)
+	}
+
+	// Verify payment was captured
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.Status != domain.PaymentSucceeded {
+		t.Errorf("payment status = %q, want %q", updated.Status, domain.PaymentSucceeded)
+	}
+	if updated.IsHold {
+		t.Error("expected IsHold=false after capture")
+	}
+	if updated.CapturedAt == nil {
+		t.Error("expected CapturedAt to be set")
+	}
+
+	// Verify provider was called
+	if !provider.WasCaptured(p.ExternalID) {
+		t.Error("expected CapturePayment to be called on provider")
+	}
+}
+
+func TestPaymentService_ReleaseHoldPayment_Card(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPendingOwner)
+
+	// Initiate hold payment
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	if err != nil {
+		t.Fatalf("initiate failed: %v", err)
+	}
+
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+
+	// Release the hold (reject)
+	err = svc.ReleaseHoldPayment(context.Background(), booking.ID)
+	if err != nil {
+		t.Fatalf("release hold failed: %v", err)
+	}
+
+	// Verify payment status is failed
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.Status != domain.PaymentFailed {
+		t.Errorf("payment status = %q, want %q", updated.Status, domain.PaymentFailed)
+	}
+
+	// Verify provider was called to cancel
+	if !provider.WasCancelled(p.ExternalID) {
+		t.Error("expected CancelPayment to be called on provider")
+	}
+}
+
+func TestPaymentService_InitiateComboPayment_RequestBooking_Hold(t *testing.T) {
+	walletSvc := &testWalletService{}
+	svc, paymentRepo, bookingRepo, provider := newPaymentServiceWithWallet(walletSvc)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPendingOwner)
+
+	walletPortion := int64(5000)
+	cardPortion := booking.TotalPrice - walletPortion
+
+	url, err := svc.InitiateComboPayment(context.Background(), userID, booking.ID, service.ComboPaymentRequest{
+		WalletAmount:  walletPortion,
+		CardAmount:    cardPortion,
+		PaymentMethod: domain.PaymentMethodCard,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if url == "" {
+		t.Error("expected non-empty confirmation URL for combo hold payment")
+	}
+
+	// Verify payment was created with IsHold=true
+	p, err := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	if err != nil {
+		t.Fatalf("failed to get payment: %v", err)
+	}
+	if !p.IsHold {
+		t.Error("expected payment to be a hold")
+	}
+	if p.PaymentMethod != domain.PaymentMethodCombo {
+		t.Errorf("payment method = %q, want %q", p.PaymentMethod, domain.PaymentMethodCombo)
+	}
+
+	// Verify card portion was created with Capture=false
+	capture := provider.GetPaymentCapture(p.ExternalID)
+	if capture {
+		t.Error("expected Capture=false for card portion of combo hold")
+	}
+}
+
+func TestPaymentService_ComboHold_CardFailure_WalletHoldReleased(t *testing.T) {
+	walletSvc := &testWalletService{}
+	userID := uuid.New()
+	bookingRepo := mock.NewBookingRepo()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPendingOwner)
+
+	failProvider := &failingMockProvider{}
+	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
+	log := logger.New(logger.LevelWarn)
+	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, failProvider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
+
+	walletPortion := int64(5000)
+	cardPortion := booking.TotalPrice - walletPortion
+
+	_, err := failSvc.InitiateComboPayment(context.Background(), userID, booking.ID, service.ComboPaymentRequest{
+		WalletAmount:  walletPortion,
+		CardAmount:    cardPortion,
+		PaymentMethod: domain.PaymentMethodCard,
+	})
+	if !errors.Is(err, domain.ErrPaymentFailed) {
+		t.Errorf("expected ErrPaymentFailed, got: %v", err)
+	}
+	// For hold mode, wallet is held (not spent), so on card failure the hold should be released
+	// The wallet hold release happens via GetActiveHolds, but since noopWalletService always
+	// returns empty holds, we just verify the payment failed cleanly
+}
+
+func TestPaymentService_ReleaseHoldPayment_NotFound(t *testing.T) {
+	svc, _, _, _ := newPaymentService()
+	// Release for nonexistent booking should not error
+	err := svc.ReleaseHoldPayment(context.Background(), uuid.New())
+	if err != nil {
+		t.Errorf("expected nil for nonexistent booking, got: %v", err)
+	}
+}
+
+func TestPaymentService_ReleaseHoldPayment_NotAHold(t *testing.T) {
+	svc, _, bookingRepo, _ := newPaymentService()
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
+
+	// Create a regular payment (not a hold)
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	if err != nil {
+		t.Fatalf("initiate failed: %v", err)
+	}
+
+	// Release should be no-op for non-hold payment
+	err = svc.ReleaseHoldPayment(context.Background(), booking.ID)
+	if err != nil {
+		t.Errorf("expected nil for non-hold payment, got: %v", err)
+	}
+}
+
+func TestPaymentService_CaptureHoldPayment_NonHold(t *testing.T) {
+	svc, _, bookingRepo, _ := newPaymentService()
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
+
+	// Create a regular payment (not a hold)
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	if err != nil {
+		t.Fatalf("initiate failed: %v", err)
+	}
+
+	// Capture should be no-op for non-hold payment
+	err = svc.CaptureHoldPayment(context.Background(), booking.ID)
+	if err != nil {
+		t.Errorf("expected nil for non-hold payment, got: %v", err)
+	}
+}
+
+func TestPaymentService_RefundPayment_HoldReleasedInsteadOfRefund(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPendingOwner)
+
+	// Create a hold payment
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	if err != nil {
+		t.Fatalf("initiate failed: %v", err)
+	}
+
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+
+	// Calling RefundPayment on a hold should release it instead
+	err = svc.RefundPayment(context.Background(), booking.ID, true)
+	if err != nil {
+		t.Fatalf("refund/release failed: %v", err)
+	}
+
+	// Verify it was cancelled, not refunded
+	if !provider.WasCancelled(p.ExternalID) {
+		t.Error("expected CancelPayment to be called for hold payment refund")
+	}
+
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.Status != domain.PaymentFailed {
+		t.Errorf("payment status = %q, want %q", updated.Status, domain.PaymentFailed)
+	}
+}

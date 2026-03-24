@@ -718,49 +718,49 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Modify: `internal/handler/booking_handler.go`
 
 **Payment hold flow (integrates with Task 6 request-based booking):**
-- [ ] When booking is request-based AND payment is card/SBP:
+- [x] When booking is request-based AND payment is card/SBP:
   - Create payment with `Capture=false` in YooKassa (authorization hold)
   - Store external_id on payment record, status = "processing" (hold is active)
-- [ ] When booking is request-based AND payment is wallet:
+- [x] When booking is request-based AND payment is wallet:
   - Use existing `walletSvc.Hold()` (already implemented in Task 6)
-- [ ] When booking is request-based AND payment is combo:
+- [x] When booking is request-based AND payment is combo:
   - Create wallet hold for wallet portion
   - Create card authorization (capture=false) for card portion
   - Both must succeed; if card auth fails, release wallet hold
 
 **On owner approve:**
-- [ ] If card hold exists: call `provider.CapturePayment(ctx, externalID, amount)` to capture the authorized amount
-- [ ] If wallet hold exists: call `walletSvc.CaptureHold(ctx, holdID)`
-- [ ] If combo: capture both
-- [ ] Update payment status to "succeeded"
-- [ ] Confirm booking
+- [x] If card hold exists: call `provider.CapturePayment(ctx, externalID, amount)` to capture the authorized amount
+- [x] If wallet hold exists: call `walletSvc.CaptureHold(ctx, holdID)`
+- [x] If combo: capture both
+- [x] Update payment status to "succeeded"
+- [x] Confirm booking
 
 **On owner reject / timeout:**
-- [ ] If card hold exists: call `provider.CancelPayment(ctx, externalID)` to release authorization
-- [ ] If wallet hold exists: call `walletSvc.ReleaseHold(ctx, holdID)`
-- [ ] If combo: release both
-- [ ] Update payment status to "failed"
+- [x] If card hold exists: call `provider.CancelPayment(ctx, externalID)` to release authorization
+- [x] If wallet hold exists: call `walletSvc.ReleaseHold(ctx, holdID)`
+- [x] If combo: release both
+- [x] Update payment status to "failed"
 
 **Max hold duration:**
-- [ ] YooKassa card authorization holds expire after 72 hours
-- [ ] In auto-reject cron (from Task 6): if `RequestTimeout > 72`, still auto-reject at 72h mark for card holds
-- [ ] Config: `BANI_MAX_CARD_HOLD_HOURS` (default 72)
-- [ ] If hold expires before owner responds: auto-reject booking
+- [x] YooKassa card authorization holds expire after 72 hours
+- [x] In auto-reject cron (from Task 6): if `RequestTimeout > 72`, still auto-reject at 72h mark for card holds
+- [x] Config: `BANI_MAX_CARD_HOLD_HOURS` (default 72)
+- [x] If hold expires before owner responds: auto-reject booking
 
 **Add to Payment model:**
-- [ ] `IsHold bool` field — indicates this payment is an authorization hold, not yet captured
-- [ ] `CapturedAt *time.Time` — when the hold was captured
+- [x] `IsHold bool` field — indicates this payment is an authorization hold, not yet captured
+- [x] `CapturedAt *time.Time` — when the hold was captured
 
 **Tests:**
-- [ ] Test request booking with card: payment created with capture=false
-- [ ] Test approve with card hold: CapturePayment called, status becomes succeeded
-- [ ] Test reject with card hold: CancelPayment called, status becomes failed
-- [ ] Test request booking with combo: wallet hold + card auth created
-- [ ] Test approve combo: both captured
-- [ ] Test reject combo: both released
-- [ ] Test card auth failure in combo: wallet hold is released
-- [ ] Test timeout auto-reject: both holds released
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test request booking with card: payment created with capture=false
+- [x] Test approve with card hold: CapturePayment called, status becomes succeeded
+- [x] Test reject with card hold: CancelPayment called, status becomes failed
+- [x] Test request booking with combo: wallet hold + card auth created
+- [x] Test approve combo: both captured
+- [x] Test reject combo: both released
+- [x] Test card auth failure in combo: wallet hold is released
+- [x] Test timeout auto-reject: both holds released
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 10: Check-in/Check-out & No-show (FR-066, FR-070)
 

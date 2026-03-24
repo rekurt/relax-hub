@@ -24,8 +24,8 @@ func NewPaymentRepository(pool *pgxpool.Pool) repository.PaymentRepository {
 
 func (r *paymentRepo) Create(ctx context.Context, payment *domain.Payment) error {
 	query := `
-		INSERT INTO payments (id, booking_id, user_id, amount, currency, status, provider, external_id, payment_method, wallet_amount, card_amount, refund_amount, refunded_at, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`
+		INSERT INTO payments (id, booking_id, user_id, amount, currency, status, provider, external_id, payment_method, wallet_amount, card_amount, is_hold, captured_at, refund_amount, refunded_at, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`
 
 	if payment.ID == uuid.Nil {
 		payment.ID = uuid.New()
@@ -50,6 +50,7 @@ func (r *paymentRepo) Create(ctx context.Context, payment *domain.Payment) error
 		payment.Amount, payment.Currency, payment.Status,
 		payment.Provider, payment.ExternalID, payment.PaymentMethod,
 		payment.WalletAmount, payment.CardAmount,
+		payment.IsHold, payment.CapturedAt,
 		payment.RefundAmount, payment.RefundedAt, metadata,
 		payment.CreatedAt, payment.UpdatedAt,
 	)
@@ -59,7 +60,7 @@ func (r *paymentRepo) Create(ctx context.Context, payment *domain.Payment) error
 	return nil
 }
 
-const paymentSelectColumns = `id, booking_id, user_id, amount, currency, status, provider, external_id, payment_method, wallet_amount, card_amount, refund_amount, refunded_at, metadata, created_at, updated_at`
+const paymentSelectColumns = `id, booking_id, user_id, amount, currency, status, provider, external_id, payment_method, wallet_amount, card_amount, is_hold, captured_at, refund_amount, refunded_at, metadata, created_at, updated_at`
 
 func (r *paymentRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Payment, error) {
 	query := `SELECT ` + paymentSelectColumns + ` FROM payments WHERE id = $1`
@@ -83,6 +84,7 @@ func (r *paymentRepo) scanPayment(ctx context.Context, query string, arg interfa
 		&p.Amount, &p.Currency, &p.Status,
 		&p.Provider, &p.ExternalID, &p.PaymentMethod,
 		&p.WalletAmount, &p.CardAmount,
+		&p.IsHold, &p.CapturedAt,
 		&p.RefundAmount, &p.RefundedAt, &p.Metadata,
 		&p.CreatedAt, &p.UpdatedAt,
 	)
@@ -114,6 +116,19 @@ func (r *paymentRepo) UpdateRefund(ctx context.Context, id uuid.UUID, refundAmou
 	tag, err := r.pool.Exec(ctx, query, id, refundAmount, refundedAt, status, time.Now())
 	if err != nil {
 		return fmt.Errorf("update payment refund: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrPaymentNotFound
+	}
+	return nil
+}
+
+func (r *paymentRepo) UpdateCapture(ctx context.Context, id uuid.UUID, capturedAt time.Time, status domain.PaymentStatus) error {
+	query := `UPDATE payments SET captured_at = $2, is_hold = false, status = $3, updated_at = $4 WHERE id = $1`
+
+	tag, err := r.pool.Exec(ctx, query, id, capturedAt, status, time.Now())
+	if err != nil {
+		return fmt.Errorf("update payment capture: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
 		return domain.ErrPaymentNotFound
@@ -162,6 +177,8 @@ func (r *paymentRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pa
 			&p.ID, &p.BookingID, &p.UserID,
 			&p.Amount, &p.Currency, &p.Status,
 			&p.Provider, &p.ExternalID, &p.PaymentMethod,
+			&p.WalletAmount, &p.CardAmount,
+			&p.IsHold, &p.CapturedAt,
 			&p.RefundAmount, &p.RefundedAt, &p.Metadata,
 			&p.CreatedAt, &p.UpdatedAt,
 		); err != nil {

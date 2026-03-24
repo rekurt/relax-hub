@@ -294,6 +294,7 @@ type PaymentRepository interface {
 	GetByExternalID(ctx context.Context, externalID string) (*domain.Payment, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.PaymentStatus, externalID string) error
 	UpdateRefund(ctx context.Context, id uuid.UUID, refundAmount int64, refundedAt time.Time, status domain.PaymentStatus) error
+	UpdateCapture(ctx context.Context, id uuid.UUID, capturedAt time.Time, status domain.PaymentStatus) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
 }

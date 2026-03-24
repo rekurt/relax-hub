@@ -33,6 +33,8 @@ type paymentResponse struct {
 	PaymentMethod string            `json:"payment_method"`
 	WalletAmount  int64             `json:"wallet_amount"`
 	CardAmount    int64             `json:"card_amount"`
+	IsHold        bool              `json:"is_hold"`
+	CapturedAt    *time.Time        `json:"captured_at,omitempty"`
 	RefundAmount  int64             `json:"refund_amount"`
 	RefundedAt    *time.Time        `json:"refunded_at,omitempty"`
 	Metadata      map[string]string `json:"metadata,omitempty"`
@@ -62,6 +64,8 @@ func toPaymentResponse(p *domain.Payment) paymentResponse {
 		PaymentMethod: string(p.PaymentMethod),
 		WalletAmount:  p.WalletAmount,
 		CardAmount:    p.CardAmount,
+		IsHold:        p.IsHold,
+		CapturedAt:    p.CapturedAt,
 		RefundAmount:  p.RefundAmount,
 		RefundedAt:    p.RefundedAt,
 		Metadata:      p.Metadata,

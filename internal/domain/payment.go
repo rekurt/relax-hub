@@ -54,6 +54,8 @@ type Payment struct {
 	PaymentMethod PaymentMethod     // "card", "sbp", "wallet", "combo"
 	WalletAmount  int64             // копейки, оплачено из кошелька
 	CardAmount    int64             // копейки, оплачено картой/СБП
+	IsHold        bool              // true = authorization hold, not yet captured
+	CapturedAt    *time.Time        // when the hold was captured
 	RefundAmount  int64             // сумма возврата в копейках
 	RefundedAt    *time.Time
 	Metadata      map[string]string

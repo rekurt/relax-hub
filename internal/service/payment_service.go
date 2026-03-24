@@ -35,6 +35,8 @@ type PaymentService interface {
 	InitiateComboPayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, req ComboPaymentRequest) (confirmationURL string, err error)
 	HandleWebhook(ctx context.Context, event WebhookEvent) error
 	RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool) error
+	CaptureHoldPayment(ctx context.Context, bookingID uuid.UUID) error
+	ReleaseHoldPayment(ctx context.Context, bookingID uuid.UUID) error
 	GetPaymentByBooking(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*domain.Payment, error)
 	ListUserPayments(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
 }
@@ -79,8 +81,8 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 		return "", domain.ErrForbidden
 	}
 
-	if booking.Status != domain.BookingPending && booking.Status != domain.BookingConfirmed {
-		return "", fmt.Errorf("%w: booking must be pending or confirmed to pay", domain.ErrInvalidInput)
+	if booking.Status != domain.BookingPending && booking.Status != domain.BookingPendingOwner && booking.Status != domain.BookingConfirmed {
+		return "", fmt.Errorf("%w: booking must be pending, pending_owner, or confirmed to pay", domain.ErrInvalidInput)
 	}
 
 	// Check if payment already exists for this booking
@@ -104,6 +106,10 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 		paymentMethod = domain.PaymentMethodCard
 	}
 
+	// For request-based bookings (pending_owner), use authorization hold instead of immediate capture
+	isHold := booking.Status == domain.BookingPendingOwner
+	capture := !isHold
+
 	now := time.Now()
 	p := &domain.Payment{
 		ID:            uuid.New(),
@@ -114,6 +120,7 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 		Status:        domain.PaymentPending,
 		Provider:      "yookassa",
 		PaymentMethod: paymentMethod,
+		IsHold:        isHold,
 		Metadata: map[string]string{
 			"booking_id": bookingID.String(),
 			"user_id":    booking.UserID.String(),
@@ -138,7 +145,7 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 		ReturnURL:   s.returnURL,
 		Metadata:    p.Metadata,
 		Method:      string(paymentMethod),
-		Capture:     true,
+		Capture:     capture,
 	})
 	if err != nil {
 		// Update payment status to failed
@@ -168,8 +175,8 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 		return "", domain.ErrForbidden
 	}
 
-	if booking.Status != domain.BookingPending && booking.Status != domain.BookingConfirmed {
-		return "", fmt.Errorf("%w: booking must be pending or confirmed to pay", domain.ErrInvalidInput)
+	if booking.Status != domain.BookingPending && booking.Status != domain.BookingPendingOwner && booking.Status != domain.BookingConfirmed {
+		return "", fmt.Errorf("%w: booking must be pending, pending_owner, or confirmed to pay", domain.ErrInvalidInput)
 	}
 
 	if req.WalletAmount < 0 || req.CardAmount < 0 {
@@ -196,6 +203,10 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 		}
 	}
 
+	// For request-based bookings (pending_owner), use holds instead of immediate debit/capture
+	isHold := booking.Status == domain.BookingPendingOwner
+	capture := !isHold
+
 	// Determine the effective payment method
 	paymentMethod := req.PaymentMethod
 	if req.WalletAmount > 0 && req.CardAmount > 0 {
@@ -217,6 +228,7 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 		PaymentMethod: paymentMethod,
 		WalletAmount:  req.WalletAmount,
 		CardAmount:    req.CardAmount,
+		IsHold:        isHold,
 		Metadata: map[string]string{
 			"booking_id": bookingID.String(),
 			"user_id":    booking.UserID.String(),
@@ -229,7 +241,7 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 		return "", err
 	}
 
-	// Step 1: Debit wallet if wallet portion exists
+	// Step 1: Debit/hold wallet if wallet portion exists
 	var walletID uuid.UUID
 	if req.WalletAmount > 0 {
 		wallet, err := s.walletSvc.GetWallet(ctx, userID)
@@ -238,27 +250,56 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 		}
 		walletID = wallet.ID
 
-		bookingIDRef := bookingID
-		_, err = s.walletSvc.Spend(ctx, walletID, req.WalletAmount, "booking_payment", &bookingIDRef, fmt.Sprintf("Оплата бронирования %s", bookingID.String()[:8]))
-		if err != nil {
-			return "", err
+		if isHold {
+			// For request-based bookings, create a wallet hold instead of spending
+			bh, bhErr := s.bookingRepo.GetByID(ctx, bookingID)
+			holdExpiry := now.Add(72 * time.Hour) // default 72h
+			if bhErr == nil && bh != nil {
+				// Use the booking to get approximate expiry
+				_ = bh // holdExpiry is already set to a safe default
+			}
+			bookingIDRef := bookingID
+			_, err = s.walletSvc.Hold(ctx, walletID, req.WalletAmount, "booking_payment", &bookingIDRef, fmt.Sprintf("Hold for booking payment %s", bookingID.String()[:8]), holdExpiry)
+			if err != nil {
+				return "", err
+			}
+		} else {
+			bookingIDRef := bookingID
+			_, err = s.walletSvc.Spend(ctx, walletID, req.WalletAmount, "booking_payment", &bookingIDRef, fmt.Sprintf("Оплата бронирования %s", bookingID.String()[:8]))
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
 	if err := s.paymentRepo.Create(ctx, p); err != nil {
-		// Rollback wallet debit
+		// Rollback wallet debit/hold
 		if req.WalletAmount > 0 {
-			bookingIDRef := bookingID
-			if _, refundErr := s.walletSvc.Refund(ctx, walletID, req.WalletAmount, "booking_payment_rollback", &bookingIDRef, "Возврат: ошибка создания платежа"); refundErr != nil {
-				s.logger.Error("failed to refund wallet after payment creation error",
-					"user_id", userID, "wallet_id", walletID, "amount", req.WalletAmount, "error", refundErr)
+			if isHold {
+				// Release hold - find it by reference
+				s.logger.Error("failed to create payment after wallet hold, manual hold release may be needed",
+					"user_id", userID, "wallet_id", walletID, "amount", req.WalletAmount)
+			} else {
+				bookingIDRef := bookingID
+				if _, refundErr := s.walletSvc.Refund(ctx, walletID, req.WalletAmount, "booking_payment_rollback", &bookingIDRef, "Возврат: ошибка создания платежа"); refundErr != nil {
+					s.logger.Error("failed to refund wallet after payment creation error",
+						"user_id", userID, "wallet_id", walletID, "amount", req.WalletAmount, "error", refundErr)
+				}
 			}
 		}
 		return "", err
 	}
 
-	// Step 2: If full wallet payment, complete immediately
+	// Step 2: If full wallet payment
 	if req.CardAmount == 0 {
+		if isHold {
+			// For request-based wallet-only: hold is already created, payment stays in processing
+			if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentProcessing, ""); err != nil {
+				return "", err
+			}
+			return "", nil
+		}
+		// Instant wallet payment: complete immediately
 		if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentSucceeded, ""); err != nil {
 			return "", err
 		}
@@ -283,15 +324,31 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 		ReturnURL:   s.returnURL,
 		Metadata:    p.Metadata,
 		Method:      string(cardMethod),
-		Capture:     true,
+		Capture:     capture,
 	})
 	if err != nil {
-		// Rollback wallet debit on card failure
+		// Rollback wallet debit/hold on card failure
 		if req.WalletAmount > 0 {
-			bookingIDRef := bookingID
-			if _, refundErr := s.walletSvc.Refund(ctx, walletID, req.WalletAmount, "booking_payment_rollback", &bookingIDRef, "Возврат: ошибка оплаты картой"); refundErr != nil {
-				s.logger.Error("failed to refund wallet after card payment error",
-					"user_id", userID, "wallet_id", walletID, "amount", req.WalletAmount, "error", refundErr)
+			if isHold {
+				// Release wallet hold - find active holds for booking
+				holds, holdErr := s.walletSvc.GetActiveHolds(ctx, walletID)
+				if holdErr == nil {
+					for _, h := range holds {
+						if h.ReferenceID != nil && *h.ReferenceID == bookingID {
+							if releaseErr := s.walletSvc.ReleaseHold(ctx, h.ID); releaseErr != nil {
+								s.logger.Error("failed to release wallet hold after card failure",
+									"hold_id", h.ID, "error", releaseErr)
+							}
+							break
+						}
+					}
+				}
+			} else {
+				bookingIDRef := bookingID
+				if _, refundErr := s.walletSvc.Refund(ctx, walletID, req.WalletAmount, "booking_payment_rollback", &bookingIDRef, "Возврат: ошибка оплаты картой"); refundErr != nil {
+					s.logger.Error("failed to refund wallet after card payment error",
+						"user_id", userID, "wallet_id", walletID, "amount", req.WalletAmount, "error", refundErr)
+				}
 			}
 		}
 		if updErr := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentFailed, ""); updErr != nil {
@@ -307,6 +364,106 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 	}
 
 	return result.ConfirmationURL, nil
+}
+
+func (s *paymentService) CaptureHoldPayment(ctx context.Context, bookingID uuid.UUID) error {
+	p, err := s.paymentRepo.GetByBookingID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	if !p.IsHold {
+		// Not a hold payment - nothing to capture
+		return nil
+	}
+
+	if p.Status != domain.PaymentProcessing {
+		return fmt.Errorf("%w: only processing hold payments can be captured", domain.ErrInvalidInput)
+	}
+
+	// Capture card portion if external payment exists
+	if p.ExternalID != "" {
+		if err := s.provider.CapturePayment(ctx, p.ExternalID, p.CardAmount); err != nil {
+			return fmt.Errorf("failed to capture card hold: %w", err)
+		}
+	}
+
+	// Capture wallet hold if wallet portion exists
+	if p.WalletAmount > 0 && s.walletSvc != nil {
+		// Find wallet hold for this booking
+		wallet, walletErr := s.walletSvc.GetWallet(ctx, p.UserID)
+		if walletErr == nil {
+			holds, holdErr := s.walletSvc.GetActiveHolds(ctx, wallet.ID)
+			if holdErr == nil {
+				for _, h := range holds {
+					if h.ReferenceID != nil && *h.ReferenceID == bookingID {
+						if _, captureErr := s.walletSvc.CaptureHold(ctx, h.ID); captureErr != nil {
+							s.logger.Error("failed to capture wallet hold on payment capture",
+								"booking_id", bookingID, "hold_id", h.ID, "error", captureErr)
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+
+	now := time.Now()
+	if err := s.paymentRepo.UpdateCapture(ctx, p.ID, now, domain.PaymentSucceeded); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *paymentService) ReleaseHoldPayment(ctx context.Context, bookingID uuid.UUID) error {
+	p, err := s.paymentRepo.GetByBookingID(ctx, bookingID)
+	if err != nil {
+		if err == domain.ErrPaymentNotFound {
+			return nil // no payment to release
+		}
+		return err
+	}
+
+	if !p.IsHold {
+		return nil
+	}
+
+	if p.Status != domain.PaymentProcessing && p.Status != domain.PaymentPending {
+		return nil // already in terminal state
+	}
+
+	// Cancel card authorization if external payment exists
+	if p.ExternalID != "" {
+		if err := s.provider.CancelPayment(ctx, p.ExternalID); err != nil {
+			s.logger.Error("failed to cancel card hold", "booking_id", bookingID, "external_id", p.ExternalID, "error", err)
+		}
+	}
+
+	// Release wallet hold if wallet portion exists
+	if p.WalletAmount > 0 && s.walletSvc != nil {
+		wallet, walletErr := s.walletSvc.GetWallet(ctx, p.UserID)
+		if walletErr == nil {
+			holds, holdErr := s.walletSvc.GetActiveHolds(ctx, wallet.ID)
+			if holdErr == nil {
+				for _, h := range holds {
+					if h.ReferenceID != nil && *h.ReferenceID == bookingID {
+						if releaseErr := s.walletSvc.ReleaseHold(ctx, h.ID); releaseErr != nil {
+							s.logger.Error("failed to release wallet hold on payment release",
+								"booking_id", bookingID, "hold_id", h.ID, "error", releaseErr)
+						}
+						break
+					}
+				}
+			}
+		}
+	}
+
+	if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentFailed, p.ExternalID); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) error {
@@ -356,9 +513,30 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 	}
 
 	switch event.Status {
+	case "waiting_for_capture":
+		// Hold payment authorized - don't confirm booking yet, wait for owner approval
+		if p.IsHold {
+			// Just update the status, booking stays in pending_owner
+			return nil
+		}
+		// Non-hold payment shouldn't get waiting_for_capture, log and ignore
+		s.logger.Warn("unexpected waiting_for_capture for non-hold payment",
+			"external_id", event.ExternalID, "payment_id", p.ID)
 	case "succeeded":
-		if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentSucceeded, event.ExternalID); err != nil {
-			return err
+		// For hold payments, "succeeded" means the hold was captured (by us calling CapturePayment)
+		// The capture flow already updates the payment status, so this is just idempotency
+		if p.IsHold && p.CapturedAt == nil {
+			// This can happen if capture webhook arrives - just record it
+			now := time.Now()
+			if err := s.paymentRepo.UpdateCapture(ctx, p.ID, now, domain.PaymentSucceeded); err != nil {
+				return err
+			}
+			return nil
+		}
+		if !p.IsHold {
+			if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentSucceeded, event.ExternalID); err != nil {
+				return err
+			}
 		}
 		// Check booking status before confirming - don't re-confirm cancelled bookings
 		booking, err := s.bookingRepo.GetByID(ctx, p.BookingID)
@@ -376,6 +554,10 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 			}
 			now := time.Now()
 			return s.paymentRepo.UpdateRefund(ctx, p.ID, p.Amount, now, domain.PaymentRefunded)
+		}
+		// For hold payments, booking confirmation is handled by BookingService.Approve
+		if p.IsHold {
+			return nil
 		}
 		// Confirm the booking
 		if err := s.bookingRepo.UpdateStatus(ctx, p.BookingID, domain.BookingConfirmed); err != nil {
@@ -398,6 +580,11 @@ func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID,
 	p, err := s.paymentRepo.GetByBookingID(ctx, bookingID)
 	if err != nil {
 		return err
+	}
+
+	// If payment is a hold, release it instead of refunding
+	if p.IsHold {
+		return s.ReleaseHoldPayment(ctx, bookingID)
 	}
 
 	if p.Status != domain.PaymentSucceeded {

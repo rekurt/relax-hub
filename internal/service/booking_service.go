@@ -566,10 +566,15 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		if booking.Status != domain.BookingPendingOwner && time.Until(booking.StartTime) < cancelDeadline {
 			return domain.ErrBookingCancelLate
 		}
-		// Release wallet hold if pending_owner
-		if booking.Status == domain.BookingPendingOwner && booking.HoldID != nil && s.walletSvc != nil {
-			if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
-				s.logger.Error("failed to release wallet hold on client cancel", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
+		// Release payment holds and wallet hold if pending_owner
+		if booking.Status == domain.BookingPendingOwner {
+			if err := s.paymentSvc.ReleaseHoldPayment(ctx, bookingID); err != nil {
+				s.logger.Error("failed to release payment hold on client cancel", "booking_id", bookingID, "error", err)
+			}
+			if booking.HoldID != nil && s.walletSvc != nil {
+				if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
+					s.logger.Warn("failed to release booking wallet hold on client cancel", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
+				}
 			}
 		}
 		if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); err != nil {
@@ -578,7 +583,9 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		s.refundBookingPoints(ctx, booking)
 		s.refundReferralBonus(ctx, booking)
 		s.refundPromoUsage(ctx, booking)
-		s.refundPayment(ctx, booking, false)
+		if booking.Status != domain.BookingPendingOwner {
+			s.refundPayment(ctx, booking, false)
+		}
 		s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 		return nil
 	}
@@ -588,10 +595,15 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 
-	// Release wallet hold if pending_owner
-	if booking.Status == domain.BookingPendingOwner && booking.HoldID != nil && s.walletSvc != nil {
-		if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
-			s.logger.Error("failed to release wallet hold on owner cancel", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
+	// Release payment holds and wallet hold if pending_owner
+	if booking.Status == domain.BookingPendingOwner {
+		if err := s.paymentSvc.ReleaseHoldPayment(ctx, bookingID); err != nil {
+			s.logger.Error("failed to release payment hold on owner cancel", "booking_id", bookingID, "error", err)
+		}
+		if booking.HoldID != nil && s.walletSvc != nil {
+			if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
+				s.logger.Warn("failed to release booking wallet hold on owner cancel", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
+			}
 		}
 	}
 
@@ -601,7 +613,9 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 	s.refundBookingPoints(ctx, booking)
 	s.refundReferralBonus(ctx, booking)
 	s.refundPromoUsage(ctx, booking)
-	s.refundPayment(ctx, booking, true)
+	if booking.Status != domain.BookingPendingOwner {
+		s.refundPayment(ctx, booking, true)
+	}
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 	return nil
 }
@@ -641,10 +655,16 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 
-	// For pending_owner bookings, release wallet hold
-	if booking.Status == domain.BookingPendingOwner && booking.HoldID != nil && s.walletSvc != nil {
-		if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
-			s.logger.Error("failed to release wallet hold on reject", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
+	// For pending_owner bookings, release payment holds (card + wallet) and standalone wallet hold
+	wasRequestBased := booking.Status == domain.BookingPendingOwner
+	if wasRequestBased {
+		if err := s.paymentSvc.ReleaseHoldPayment(ctx, bookingID); err != nil {
+			s.logger.Error("failed to release payment hold on reject", "booking_id", bookingID, "error", err)
+		}
+		if booking.HoldID != nil && s.walletSvc != nil {
+			if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
+				s.logger.Warn("failed to release booking wallet hold on reject (may already be released by payment hold)", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
+			}
 		}
 	}
 
@@ -657,7 +677,10 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 	s.refundBookingPoints(ctx, booking)
 	s.refundReferralBonus(ctx, booking)
 	s.refundPromoUsage(ctx, booking)
-	s.refundPayment(ctx, booking, true)
+	if !wasRequestBased {
+		// Only refund non-hold payments; holds were already released above
+		s.refundPayment(ctx, booking, true)
+	}
 
 	if reason != "" {
 		s.sendBookingNotificationWithReason(ctx, booking, domain.NotifBookingRejected, reason)
@@ -1036,10 +1059,16 @@ func (s *bookingService) Approve(ctx context.Context, userID uuid.UUID, role dom
 		return err
 	}
 
-	// Capture wallet hold if exists
+	// Capture payment hold (card + wallet portions) if exists
+	if err := s.paymentSvc.CaptureHoldPayment(ctx, bookingID); err != nil {
+		s.logger.Error("failed to capture payment hold on approve", "booking_id", bookingID, "error", err)
+		return fmt.Errorf("failed to capture payment hold: %w", err)
+	}
+
+	// Capture standalone wallet hold (from booking creation) if exists and no payment hold handled it
 	if booking.HoldID != nil && s.walletSvc != nil {
 		if _, err := s.walletSvc.CaptureHold(ctx, *booking.HoldID); err != nil {
-			return fmt.Errorf("failed to capture wallet hold: %w", err)
+			s.logger.Warn("failed to capture booking wallet hold on approve (may already be captured by payment hold)", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
 		}
 	}
 
@@ -1060,10 +1089,16 @@ func (s *bookingService) AutoRejectTimedOutRequests(ctx context.Context) (int, e
 	rejected := 0
 	for _, booking := range bookings {
 		b := booking // copy for pointer stability
-		// Release wallet hold
+
+		// Release payment hold (card + wallet portions)
+		if err := s.paymentSvc.ReleaseHoldPayment(ctx, b.ID); err != nil {
+			s.logger.Error("failed to release payment hold on auto-reject", "booking_id", b.ID, "error", err)
+		}
+
+		// Release standalone wallet hold
 		if b.HoldID != nil && s.walletSvc != nil {
 			if err := s.walletSvc.ReleaseHold(ctx, *b.HoldID); err != nil {
-				s.logger.Error("failed to release wallet hold on auto-reject", "booking_id", b.ID, "hold_id", b.HoldID, "error", err)
+				s.logger.Warn("failed to release booking wallet hold on auto-reject", "booking_id", b.ID, "hold_id", b.HoldID, "error", err)
 			}
 		}
 
@@ -1077,7 +1112,6 @@ func (s *bookingService) AutoRejectTimedOutRequests(ctx context.Context) (int, e
 		s.refundBookingPoints(ctx, &b)
 		s.refundReferralBonus(ctx, &b)
 		s.refundPromoUsage(ctx, &b)
-		s.refundPayment(ctx, &b, true)
 
 		s.sendBookingNotificationWithReason(ctx, &b, domain.NotifBookingRejected, b.RejectionReason)
 		rejected++

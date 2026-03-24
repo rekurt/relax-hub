@@ -1,0 +1,2 @@
+ALTER TABLE payments DROP COLUMN IF EXISTS captured_at;
+ALTER TABLE payments DROP COLUMN IF EXISTS is_hold;

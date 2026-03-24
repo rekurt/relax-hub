@@ -109,6 +109,12 @@ func (n *noopPaymentService) GetPaymentByBooking(_ context.Context, _, _ uuid.UU
 func (n *noopPaymentService) InitiateComboPayment(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ service.ComboPaymentRequest) (string, error) {
 	return "", nil
 }
+func (n *noopPaymentService) CaptureHoldPayment(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+func (n *noopPaymentService) ReleaseHoldPayment(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
 func (n *noopPaymentService) ListUserPayments(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Payment], error) {
 	return &domain.PaginatedResult[domain.Payment]{}, nil
 }

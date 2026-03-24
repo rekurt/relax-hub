@@ -118,6 +118,22 @@ func (r *PaymentRepo) UpdateRefund(_ context.Context, id uuid.UUID, refundAmount
 	return nil
 }
 
+func (r *PaymentRepo) UpdateCapture(_ context.Context, id uuid.UUID, capturedAt time.Time, status domain.PaymentStatus) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	p, ok := r.payments[id]
+	if !ok {
+		return domain.ErrPaymentNotFound
+	}
+
+	p.CapturedAt = &capturedAt
+	p.IsHold = false
+	p.Status = status
+	p.UpdatedAt = time.Now()
+	return nil
+}
+
 func (r *PaymentRepo) Delete(_ context.Context, id uuid.UUID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -155,6 +171,10 @@ func (r *PaymentRepo) copyPayment(p *domain.Payment) domain.Payment {
 			cpMeta[k] = v
 		}
 		cp.Metadata = cpMeta
+	}
+	if p.CapturedAt != nil {
+		t := *p.CapturedAt
+		cp.CapturedAt = &t
 	}
 	if p.RefundedAt != nil {
 		t := *p.RefundedAt
