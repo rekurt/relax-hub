@@ -484,9 +484,20 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		bookingAddOns = append(bookingAddOns, *ba)
 	}
 
+	// Helper to release wallet hold during rollback
+	releaseHoldOnRollback := func() {
+		if booking.HoldID != nil && s.walletSvc != nil {
+			if releaseErr := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); releaseErr != nil {
+				s.logger.Error("failed to release wallet hold during booking rollback",
+					"booking_id", bookingID, "hold_id", *booking.HoldID, "error", releaseErr)
+			}
+		}
+	}
+
 	// Spend loyalty points after booking exists in DB
 	if pointsSpent > 0 {
 		if err := s.loyaltySvc.SpendPoints(ctx, userID, pointsSpent, bookingID); err != nil {
+			releaseHoldOnRollback()
 			// Roll back the booking since points couldn't be spent
 			if delErr := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); delErr != nil {
 				s.logger.Error("failed to cancel booking after loyalty spend failure",
@@ -499,6 +510,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	// Spend referral bonus after booking exists in DB
 	if referralBonusUsed > 0 {
 		if err := s.referralSvc.UseBalance(ctx, userID, referralBonusUsed, bookingID); err != nil {
+			releaseHoldOnRollback()
 			// Refund loyalty points if they were spent
 			if pointsSpent > 0 {
 				if refundErr := s.loyaltySvc.RefundPoints(ctx, userID, pointsSpent, bookingID); refundErr != nil {
@@ -518,6 +530,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	// Apply promo code after booking exists in DB
 	if input.PromoCode != "" && promoDiscount > 0 {
 		if _, err := s.promoSvc.Apply(ctx, userID, input.PromoCode, bookingID, input.BathhouseID, originalPriceBeforePromo); err != nil {
+			releaseHoldOnRollback()
 			// Refund loyalty points if they were spent
 			if pointsSpent > 0 {
 				if refundErr := s.loyaltySvc.RefundPoints(ctx, userID, pointsSpent, bookingID); refundErr != nil {
@@ -544,6 +557,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	// Apply gift certificate after booking exists in DB
 	if certificateForApply != nil && certificateDiscount > 0 {
 		if err := s.certSvc.Apply(ctx, certificateForApply.ID, bookingID, certificateDiscount); err != nil {
+			releaseHoldOnRollback()
 			// Refund promo usage
 			if input.PromoCode != "" && promoDiscount > 0 {
 				if refundErr := s.promoSvc.RefundUsage(ctx, bookingID); refundErr != nil {
@@ -891,9 +905,10 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 		}
 		avail := true
 		for _, b := range overlapping {
-			// Check booking overlap including buffer zone after the booking
+			// Check booking overlap including buffer zone both after and before the booking
 			bookingEndWithBuffer := b.EndTime.Add(bufferDuration)
-			if t.Before(bookingEndWithBuffer) && slotEnd.After(b.StartTime) {
+			bookingStartWithBuffer := b.StartTime.Add(-bufferDuration)
+			if t.Before(bookingEndWithBuffer) && slotEnd.After(bookingStartWithBuffer) {
 				avail = false
 				break
 			}

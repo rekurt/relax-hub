@@ -2029,10 +2029,13 @@ func TestBookingService_GetAvailableSlots_BufferTime(t *testing.T) {
 				t.Errorf("slot 12:00 should be unavailable (buffer zone after 10:00-12:00 booking)")
 			}
 		}
-		// 09:00 and 13:00+ should be available
-		if hour == 9 && !slot.Available {
-			t.Error("slot 09:00 should be available")
+		// 09:00 is also unavailable: ends at 10:00 with 0min gap before 10:00 booking (needs 30min buffer)
+		if hour == 9 {
+			if slot.Available {
+				t.Error("slot 09:00 should be unavailable (buffer zone before 10:00-12:00 booking)")
+			}
 		}
+		// 13:00+ should be available
 		if hour == 13 && !slot.Available {
 			t.Error("slot 13:00 should be available (past buffer zone)")
 		}

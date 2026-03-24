@@ -476,11 +476,9 @@ func (s *walletService) ExpireBonusesForWallet(ctx context.Context, walletID uui
 		totalExpired += tx.Amount
 	}
 
-	if err := s.walletRepo.ExpireBonuses(ctx, ids); err != nil {
-		return 0, err
-	}
-
-	// Deduct expired bonus amount from wallet balance
+	// Deduct expired bonus amount from wallet balance first, then mark bonuses expired.
+	// This ordering ensures that if the CAS balance update fails, bonuses remain active
+	// and will be retried on the next expiry run (avoiding balance drift).
 	wallet, err := s.walletRepo.GetByID(ctx, walletID)
 	if err != nil {
 		return 0, err
@@ -493,6 +491,11 @@ func (s *walletService) ExpireBonusesForWallet(ctx context.Context, walletID uui
 
 	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
 		return 0, err
+	}
+
+	if err := s.walletRepo.ExpireBonuses(ctx, ids); err != nil {
+		s.logger.Error("balance deducted but failed to mark bonuses as expired, will be retried",
+			"wallet_id", walletID, "bonus_ids", ids, "error", err)
 	}
 
 	// Record expiration transaction

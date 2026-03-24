@@ -289,9 +289,22 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 		// Rollback wallet debit/hold
 		if req.WalletAmount > 0 {
 			if isHold {
-				// Release hold - find it by reference
-				s.logger.Error("failed to create payment after wallet hold, manual hold release may be needed",
-					"user_id", userID, "wallet_id", walletID, "amount", req.WalletAmount)
+				// Release wallet hold - find active holds for booking
+				holds, holdErr := s.walletSvc.GetActiveHolds(ctx, walletID)
+				if holdErr == nil {
+					for _, h := range holds {
+						if h.ReferenceID != nil && *h.ReferenceID == bookingID {
+							if releaseErr := s.walletSvc.ReleaseHold(ctx, h.ID); releaseErr != nil {
+								s.logger.Error("failed to release wallet hold after payment creation error",
+									"hold_id", h.ID, "error", releaseErr)
+							}
+							break
+						}
+					}
+				} else {
+					s.logger.Error("failed to find wallet holds for rollback",
+						"user_id", userID, "wallet_id", walletID, "error", holdErr)
+				}
 			} else {
 				bookingIDRef := bookingID
 				if _, refundErr := s.walletSvc.Refund(ctx, walletID, req.WalletAmount, "booking_payment_rollback", &bookingIDRef, "Возврат: ошибка создания платежа"); refundErr != nil {
@@ -681,7 +694,7 @@ func (s *paymentService) executeRefund(ctx context.Context, p *domain.Payment, u
 	}
 
 	now := time.Now()
-	if err := s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now, refundStatus); err != nil {
+	if err := s.paymentRepo.UpdateRefund(ctx, p.ID, p.RefundAmount+refundAmount, now, refundStatus); err != nil {
 		return err
 	}
 	s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund)
@@ -705,7 +718,7 @@ func (s *paymentService) refundToWallet(ctx context.Context, p *domain.Payment, 
 	}
 
 	now := time.Now()
-	return s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now, refundStatus)
+	return s.paymentRepo.UpdateRefund(ctx, p.ID, p.RefundAmount+refundAmount, now, refundStatus)
 }
 
 func (s *paymentService) executeComboRefund(ctx context.Context, p *domain.Payment, userID uuid.UUID, refundAmount int64, refundStatus domain.PaymentStatus, refundTo string) error {
@@ -751,7 +764,7 @@ func (s *paymentService) executeComboRefund(ctx context.Context, p *domain.Payme
 	}
 
 	now := time.Now()
-	return s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now, refundStatus)
+	return s.paymentRepo.UpdateRefund(ctx, p.ID, p.RefundAmount+refundAmount, now, refundStatus)
 }
 
 func (s *paymentService) AdminRefund(ctx context.Context, adminUserID uuid.UUID, bookingID uuid.UUID, amount int64, reason string, refundTo string) error {
