@@ -313,9 +313,9 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		}
 	}
 
-	// Calculate service fee on base price only (before add-ons)
+	// Calculate service fee on base price (before discounts and add-ons)
 	var serviceFeeAmount int64
-	serviceFeeAmount, err = s.serviceFeeSvc.CalculateFee(ctx, totalPrice, "*", nil)
+	serviceFeeAmount, err = s.serviceFeeSvc.CalculateFee(ctx, priceBreakdown.BasePrice, "*", nil)
 	if err != nil {
 		s.logger.Warn("failed to calculate service fee, defaulting to 0", "error", err)
 		serviceFeeAmount = 0
@@ -1342,6 +1342,10 @@ func (s *bookingService) CheckOut(ctx context.Context, userID uuid.UUID, role do
 		return err
 	}
 
+	if booking.Status != domain.BookingConfirmed {
+		return fmt.Errorf("%w: only confirmed bookings can be checked out", domain.ErrInvalidInput)
+	}
+
 	if booking.CheckedInAt == nil {
 		return domain.ErrNotCheckedIn
 	}
@@ -1411,6 +1415,13 @@ func (s *bookingService) MarkNoShows(ctx context.Context) (int, error) {
 				"Гость не прибыл", ownerBody,
 				map[string]string{"booking_id": b.ID.String()}); err != nil {
 				s.logger.Warn("failed to send no-show owner notification", "booking_id", b.ID, "error", err)
+			}
+		}
+
+		// Create escrow so funds flow to owner after claim period
+		if s.escrowSvc != nil {
+			if _, escrowErr := s.escrowSvc.CreateEscrow(ctx, b.ID, b.TotalPrice, b.ServiceFeeAmount); escrowErr != nil {
+				s.logger.Warn("failed to create escrow for no-show booking", "booking_id", b.ID, "error", escrowErr)
 			}
 		}
 

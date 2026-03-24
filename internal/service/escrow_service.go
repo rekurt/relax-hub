@@ -36,14 +36,18 @@ func NewEscrowService(
 	bhRepo repository.BathhouseRepository,
 	walletSvc WalletService,
 	log *logger.Logger,
+	claimHours int,
 ) EscrowService {
+	if claimHours < 24 || claimHours > 168 {
+		claimHours = defaultEscrowClaimHours
+	}
 	return &escrowService{
 		escrowRepo:  escrowRepo,
 		bookingRepo: bookingRepo,
 		bhRepo:      bhRepo,
 		walletSvc:   walletSvc,
 		logger:      log,
-		claimHours:  defaultEscrowClaimHours,
+		claimHours:  claimHours,
 	}
 }
 

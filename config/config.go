@@ -24,6 +24,7 @@ type Config struct {
 	Moderation  ModerationConfig `mapstructure:"moderation"`
 	Telegram    TelegramConfig   `mapstructure:"telegram"`
 	Admin       AdminConfig      `mapstructure:"admin"`
+	Escrow       EscrowConfig       `mapstructure:"escrow"`
 	Payment      PaymentConfig      `mapstructure:"payment"`
 	WebPush      WebPushConfig      `mapstructure:"webpush"`
 	SMS          SMSConfig          `mapstructure:"sms"`
@@ -84,9 +85,14 @@ type AdminConfig struct {
 	Theme    string `mapstructure:"theme"`
 }
 
+type EscrowConfig struct {
+	ClaimHours int `mapstructure:"claim_hours"` // hours to hold funds before release (24-168, default 48)
+}
+
 type PaymentConfig struct {
-	YooKassa  YooKassaConfig `mapstructure:"yookassa"`
-	ReturnURL string         `mapstructure:"return_url"`
+	YooKassa               YooKassaConfig `mapstructure:"yookassa"`
+	ReturnURL              string         `mapstructure:"return_url"`
+	WalletRefundBonusPercent int          `mapstructure:"wallet_refund_bonus_percent"` // bonus % for wallet refund (0-15, default 5)
 }
 
 type YooKassaConfig struct {
@@ -189,6 +195,8 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("sms.api_key", "")
 	v.SetDefault("welcome_bonus.amount", 50000)      // 500 RUB in kopecks
 	v.SetDefault("welcome_bonus.expiry_days", 30)
+	v.SetDefault("escrow.claim_hours", 48)
+	v.SetDefault("payment.wallet_refund_bonus_percent", 5)
 	v.SetDefault("fiscal.provider", "none")
 	v.SetDefault("fiscal.atol_login", "")
 	v.SetDefault("fiscal.atol_password", "")

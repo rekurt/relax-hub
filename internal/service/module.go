@@ -57,7 +57,7 @@ var Module = fx.Module("service",
 		),
 		fx.Annotate(
 			func(paymentRepo repository.PaymentRepository, bookingRepo repository.BookingRepository, auditLogRepo repository.AuditLogRepository, provider payment.PaymentProvider, fiscalProvider fiscal.FiscalProvider, walletSvc WalletService, notifSvc NotificationService, cfg *config.Config, log *logger.Logger) PaymentService {
-				return NewPaymentService(paymentRepo, bookingRepo, auditLogRepo, provider, fiscalProvider, walletSvc, notifSvc, cfg.Payment.ReturnURL, log)
+				return NewPaymentService(paymentRepo, bookingRepo, auditLogRepo, provider, fiscalProvider, walletSvc, notifSvc, cfg.Payment.ReturnURL, cfg.Payment.WalletRefundBonusPercent, log)
 			},
 			fx.As(new(PaymentService)),
 		),
@@ -77,6 +77,11 @@ var Module = fx.Module("service",
 		fx.Annotate(NewSavedSearchService, fx.As(new(SavedSearchService))),
 		fx.Annotate(NewHolidayService, fx.As(new(HolidayService))),
 		fx.Annotate(NewServiceFeeService, fx.As(new(ServiceFeeService))),
-		fx.Annotate(NewEscrowService, fx.As(new(EscrowService))),
+		fx.Annotate(
+			func(escrowRepo repository.EscrowRepository, bookingRepo repository.BookingRepository, bhRepo repository.BathhouseRepository, walletSvc WalletService, cfg *config.Config, log *logger.Logger) EscrowService {
+				return NewEscrowService(escrowRepo, bookingRepo, bhRepo, walletSvc, log, cfg.Escrow.ClaimHours)
+			},
+			fx.As(new(EscrowService)),
+		),
 	),
 )

@@ -69,8 +69,12 @@ func NewPaymentService(
 	walletSvc WalletService,
 	notifSvc NotificationService,
 	returnURL string,
+	walletRefundBonusPercent int,
 	log *logger.Logger,
 ) PaymentService {
+	if walletRefundBonusPercent < 0 || walletRefundBonusPercent > 15 {
+		walletRefundBonusPercent = defaultWalletRefundBonusPercent
+	}
 	return &paymentService{
 		paymentRepo:              paymentRepo,
 		bookingRepo:              bookingRepo,
@@ -80,7 +84,7 @@ func NewPaymentService(
 		walletSvc:                walletSvc,
 		notifSvc:                 notifSvc,
 		returnURL:                returnURL,
-		walletRefundBonusPercent: defaultWalletRefundBonusPercent,
+		walletRefundBonusPercent: walletRefundBonusPercent,
 		logger:                   log,
 	}
 }
@@ -392,7 +396,12 @@ func (s *paymentService) CaptureHoldPayment(ctx context.Context, bookingID uuid.
 
 	// Capture card portion if external payment exists
 	if p.ExternalID != "" {
-		if err := s.provider.CapturePayment(ctx, p.ExternalID, p.CardAmount); err != nil {
+		// For non-combo payments, CardAmount is 0 — use full Amount instead
+		captureAmount := p.CardAmount
+		if captureAmount == 0 {
+			captureAmount = p.Amount
+		}
+		if err := s.provider.CapturePayment(ctx, p.ExternalID, captureAmount); err != nil {
 			return fmt.Errorf("failed to capture card hold: %w", err)
 		}
 	}

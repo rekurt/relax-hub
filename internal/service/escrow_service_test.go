@@ -113,7 +113,7 @@ func setupEscrowTest(t *testing.T) (service.EscrowService, *mock.EscrowRepo, *mo
 	walletSvc := newMockWalletService()
 	log := logger.New(logger.LevelWarn)
 
-	svc := service.NewEscrowService(escrowRepo, bookingRepo, bhRepo, walletSvc, log)
+	svc := service.NewEscrowService(escrowRepo, bookingRepo, bhRepo, walletSvc, log, 48)
 	return svc, escrowRepo, bookingRepo, bhRepo, walletSvc
 }
 

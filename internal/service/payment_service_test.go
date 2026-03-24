@@ -53,7 +53,7 @@ func newPaymentService() (service.PaymentService, *mock.PaymentRepo, *mock.Booki
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fiscal.NewNoOpProvider(), &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fiscal.NewNoOpProvider(), &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 
@@ -62,7 +62,7 @@ func newPaymentServiceWithWallet(walletSvc *testWalletService) (service.PaymentS
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 
@@ -105,7 +105,7 @@ func newPaymentServiceWithFiscal(fp fiscal.FiscalProvider) (service.PaymentServi
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fp, &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fp, &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 
@@ -710,7 +710,7 @@ func TestPaymentService_ComboPayment_CardFailure_WalletRefunded(t *testing.T) {
 	failProvider := &failingMockProvider{}
 	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
 	log := logger.New(logger.LevelWarn)
-	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
+	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
 
 	walletPortion := int64(5000)
 	cardPortion := booking.TotalPrice - walletPortion
@@ -938,7 +938,7 @@ func TestPaymentService_ComboHold_CardFailure_WalletHoldReleased(t *testing.T) {
 	failProvider := &failingMockProvider{}
 	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
 	log := logger.New(logger.LevelWarn)
-	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
+	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
 
 	walletPortion := int64(5000)
 	cardPortion := booking.TotalPrice - walletPortion
