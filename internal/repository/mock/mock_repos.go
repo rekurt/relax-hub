@@ -374,12 +374,16 @@ func (r *BookingRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domai
 	return nil
 }
 
+func isActiveBookingStatus(s domain.BookingStatus) bool {
+	return s == domain.BookingPending || s == domain.BookingPendingOwner || s == domain.BookingConfirmed
+}
+
 func (r *BookingRepo) CheckAvailability(_ context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) (bool, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	for _, b := range r.bookings {
 		if b.BathhouseID == bathhouseID &&
-			(b.Status == domain.BookingPending || b.Status == domain.BookingConfirmed) &&
+			isActiveBookingStatus(b.Status) &&
 			b.StartTime.Before(endTime) && b.EndTime.After(startTime) {
 			return false, nil
 		}
@@ -393,7 +397,7 @@ func (r *BookingRepo) GetOverlapping(_ context.Context, bathhouseID uuid.UUID, s
 	var result []domain.Booking
 	for _, b := range r.bookings {
 		if b.BathhouseID == bathhouseID &&
-			(b.Status == domain.BookingPending || b.Status == domain.BookingConfirmed) &&
+			isActiveBookingStatus(b.Status) &&
 			b.StartTime.Before(endTime) && b.EndTime.After(startTime) {
 			result = append(result, *b)
 		}
@@ -406,8 +410,7 @@ func (r *BookingRepo) CountActiveByBathhouse(_ context.Context, bathhouseID uuid
 	defer r.mu.RUnlock()
 	var count int64
 	for _, b := range r.bookings {
-		if b.BathhouseID == bathhouseID &&
-			(b.Status == domain.BookingPending || b.Status == domain.BookingConfirmed) {
+		if b.BathhouseID == bathhouseID && isActiveBookingStatus(b.Status) {
 			count++
 		}
 	}
@@ -430,6 +433,36 @@ func (r *BookingRepo) GetUserStats(_ context.Context, userID uuid.UUID) (*domain
 	return &stats, nil
 }
 
+func (r *BookingRepo) Update(_ context.Context, booking *domain.Booking) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.bookings[booking.ID]; !ok {
+		return domain.ErrNotFound
+	}
+	booking.UpdatedAt = time.Now()
+	cp := *booking
+	r.bookings[booking.ID] = &cp
+	return nil
+}
+
+func (r *BookingRepo) ListTimedOutRequests(_ context.Context) ([]domain.Booking, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var result []domain.Booking
+	now := time.Now()
+	for _, b := range r.bookings {
+		if b.Status != domain.BookingPendingOwner {
+			continue
+		}
+		// We can't know the bathhouse's RequestTimeout here, so we use a default check.
+		// In practice, the postgres impl joins with bathhouses table.
+		// For mock testing, we consider bookings older than 24h as timed out.
+		if now.Sub(b.CreatedAt).Hours() >= 24 {
+			result = append(result, *b)
+		}
+	}
+	return result, nil
+}
 
 // RepresentativeRepo is an in-memory mock implementation of repository.RepresentativeRepository.
 type RepresentativeRepo struct {

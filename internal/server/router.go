@@ -230,6 +230,7 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Get("/bookings/{id}/payment", p.PaymentHandler.GetBookingPayment)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/confirm", p.BookingHandler.Confirm)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/reject", p.BookingHandler.Reject)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/approve", p.BookingHandler.Approve)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/complete", p.BookingHandler.Complete)
 
 		// Bathhouse bookings (owner/representative/admin)

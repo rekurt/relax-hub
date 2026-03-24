@@ -61,11 +61,13 @@ type BookingService interface {
 	Create(ctx context.Context, userID uuid.UUID, input CreateBookingInput) (*BookingResult, error)
 	Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	Confirm(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
-	Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
+	Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, reason string) error
+	Approve(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*BookingResult, error)
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	ListByBathhouse(ctx context.Context, userID uuid.UUID, role domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	GetAvailableSlots(ctx context.Context, bathhouseID uuid.UUID, date time.Time) ([]TimeSlot, error)
+	AutoRejectTimedOutRequests(ctx context.Context) (int, error)
 }
 
 type bookingService struct {
@@ -81,6 +83,7 @@ type bookingService struct {
 	certSvc       CertificateService
 	paymentSvc    PaymentService
 	serviceFeeSvc ServiceFeeService
+	walletSvc     WalletService
 	access        *AccessChecker
 	notifSvc      NotificationService
 	logger        *logger.Logger
@@ -99,6 +102,7 @@ func NewBookingService(
 	certSvc CertificateService,
 	paymentSvc PaymentService,
 	serviceFeeSvc ServiceFeeService,
+	walletSvc WalletService,
 	access *AccessChecker,
 	notifSvc NotificationService,
 	log *logger.Logger,
@@ -116,6 +120,7 @@ func NewBookingService(
 		certSvc:       certSvc,
 		paymentSvc:    paymentSvc,
 		serviceFeeSvc: serviceFeeSvc,
+		walletSvc:     walletSvc,
 		access:        access,
 		notifSvc:      notifSvc,
 		logger:        log,
@@ -380,6 +385,11 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		UpdatedAt:           now,
 	}
 
+	// For request-based booking mode, set status to pending_owner and create wallet hold
+	if bh.BookingMode == domain.BookingModeRequest {
+		booking.Status = domain.BookingPendingOwner
+	}
+
 	if err := booking.Validate(); err != nil {
 		return nil, err
 	}
@@ -387,6 +397,24 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	// Create booking first so loyalty_transactions FK on booking_id is valid
 	if err := s.bookingRepo.Create(ctx, booking); err != nil {
 		return nil, err
+	}
+
+	// For request-based bookings, create wallet hold and notify owner
+	if bh.BookingMode == domain.BookingModeRequest && s.walletSvc != nil {
+		wallet, walletErr := s.walletSvc.GetWallet(ctx, userID)
+		if walletErr == nil && wallet != nil {
+			holdExpiry := now.Add(time.Duration(bh.RequestTimeout) * time.Hour)
+			hold, holdErr := s.walletSvc.Hold(ctx, wallet.ID, totalPrice, "booking", &bookingID, fmt.Sprintf("Hold for booking request %s", bookingID), holdExpiry)
+			if holdErr != nil {
+				s.logger.Warn("failed to create wallet hold for request booking", "booking_id", bookingID, "error", holdErr)
+			} else {
+				booking.HoldID = &hold.ID
+				if updateErr := s.bookingRepo.Update(ctx, booking); updateErr != nil {
+					s.logger.Warn("failed to update booking with hold_id", "booking_id", bookingID, "error", updateErr)
+				}
+			}
+		}
+		s.sendBookingRequestNotification(ctx, booking, bh)
 	}
 
 	// Store booking add-ons
@@ -525,17 +553,24 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 
-	if booking.Status != domain.BookingPending && booking.Status != domain.BookingConfirmed {
+	if booking.Status != domain.BookingPending && booking.Status != domain.BookingPendingOwner && booking.Status != domain.BookingConfirmed {
 		return domain.ErrInvalidInput
 	}
 
-	// Client cancels their own booking (at least 2 hours before start)
+	// Client cancels their own booking (at least 2 hours before start, unless pending_owner)
 	if role == domain.RoleClient {
 		if booking.UserID != userID {
 			return domain.ErrForbidden
 		}
-		if time.Until(booking.StartTime) < cancelDeadline {
+		// pending_owner bookings can be cancelled anytime by client (request not yet approved)
+		if booking.Status != domain.BookingPendingOwner && time.Until(booking.StartTime) < cancelDeadline {
 			return domain.ErrBookingCancelLate
+		}
+		// Release wallet hold if pending_owner
+		if booking.Status == domain.BookingPendingOwner && booking.HoldID != nil && s.walletSvc != nil {
+			if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
+				s.logger.Error("failed to release wallet hold on client cancel", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
+			}
 		}
 		if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); err != nil {
 			return err
@@ -551,6 +586,13 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 	// Owner/representative cancels booking for their bathhouse
 	if err := s.access.CanManageBathhouse(ctx, userID, role, booking.BathhouseID); err != nil {
 		return err
+	}
+
+	// Release wallet hold if pending_owner
+	if booking.Status == domain.BookingPendingOwner && booking.HoldID != nil && s.walletSvc != nil {
+		if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
+			s.logger.Error("failed to release wallet hold on owner cancel", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
+		}
 	}
 
 	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); err != nil {
@@ -585,13 +627,13 @@ func (s *bookingService) Confirm(ctx context.Context, userID uuid.UUID, role dom
 	return nil
 }
 
-func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, reason string) error {
 	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
 	if err != nil {
 		return err
 	}
 
-	if booking.Status != domain.BookingPending {
+	if booking.Status != domain.BookingPending && booking.Status != domain.BookingPendingOwner {
 		return domain.ErrInvalidInput
 	}
 
@@ -599,14 +641,29 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 
-	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingRejected); err != nil {
+	// For pending_owner bookings, release wallet hold
+	if booking.Status == domain.BookingPendingOwner && booking.HoldID != nil && s.walletSvc != nil {
+		if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
+			s.logger.Error("failed to release wallet hold on reject", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
+		}
+	}
+
+	booking.Status = domain.BookingRejected
+	booking.RejectionReason = reason
+	if err := s.bookingRepo.Update(ctx, booking); err != nil {
 		return err
 	}
+
 	s.refundBookingPoints(ctx, booking)
 	s.refundReferralBonus(ctx, booking)
 	s.refundPromoUsage(ctx, booking)
 	s.refundPayment(ctx, booking, true)
-	s.sendBookingNotification(ctx, booking, domain.NotifBookingRejected)
+
+	if reason != "" {
+		s.sendBookingNotificationWithReason(ctx, booking, domain.NotifBookingRejected, reason)
+	} else {
+		s.sendBookingNotification(ctx, booking, domain.NotifBookingRejected)
+	}
 	return nil
 }
 
@@ -962,6 +1019,97 @@ func (s *bookingService) sendBookingNotification(ctx context.Context, booking *d
 
 	if err := s.notifSvc.Send(ctx, booking.UserID, notifType, title, body, data); err != nil {
 		s.logger.Warn("failed to send booking notification", "booking_id", booking.ID, "type", notifType, "error", err)
+	}
+}
+
+func (s *bookingService) Approve(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	if booking.Status != domain.BookingPendingOwner {
+		return fmt.Errorf("%w: only pending_owner bookings can be approved", domain.ErrInvalidInput)
+	}
+
+	if err := s.access.CanManageBathhouse(ctx, userID, role, booking.BathhouseID); err != nil {
+		return err
+	}
+
+	// Capture wallet hold if exists
+	if booking.HoldID != nil && s.walletSvc != nil {
+		if _, err := s.walletSvc.CaptureHold(ctx, *booking.HoldID); err != nil {
+			return fmt.Errorf("failed to capture wallet hold: %w", err)
+		}
+	}
+
+	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingConfirmed); err != nil {
+		return err
+	}
+
+	s.sendBookingNotification(ctx, booking, domain.NotifBookingConfirmed)
+	return nil
+}
+
+func (s *bookingService) AutoRejectTimedOutRequests(ctx context.Context) (int, error) {
+	bookings, err := s.bookingRepo.ListTimedOutRequests(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("list timed out requests: %w", err)
+	}
+
+	rejected := 0
+	for _, booking := range bookings {
+		b := booking // copy for pointer stability
+		// Release wallet hold
+		if b.HoldID != nil && s.walletSvc != nil {
+			if err := s.walletSvc.ReleaseHold(ctx, *b.HoldID); err != nil {
+				s.logger.Error("failed to release wallet hold on auto-reject", "booking_id", b.ID, "hold_id", b.HoldID, "error", err)
+			}
+		}
+
+		b.Status = domain.BookingRejected
+		b.RejectionReason = "Время ожидания ответа истекло"
+		if err := s.bookingRepo.Update(ctx, &b); err != nil {
+			s.logger.Error("failed to auto-reject booking", "booking_id", b.ID, "error", err)
+			continue
+		}
+
+		s.refundBookingPoints(ctx, &b)
+		s.refundReferralBonus(ctx, &b)
+		s.refundPromoUsage(ctx, &b)
+		s.refundPayment(ctx, &b, true)
+
+		s.sendBookingNotificationWithReason(ctx, &b, domain.NotifBookingRejected, b.RejectionReason)
+		rejected++
+	}
+
+	return rejected, nil
+}
+
+func (s *bookingService) sendBookingRequestNotification(ctx context.Context, booking *domain.Booking, bh *domain.Bathhouse) {
+	title := "Новая заявка на бронирование"
+	body := fmt.Sprintf("Новая заявка на бронирование от %s", booking.StartTime.Format("02.01.2006 15:04"))
+	data := map[string]string{
+		"booking_id":   booking.ID.String(),
+		"bathhouse_id": booking.BathhouseID.String(),
+	}
+
+	// Notify the bathhouse owner
+	if err := s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifBookingRequest, title, body, data); err != nil {
+		s.logger.Warn("failed to send booking request notification", "booking_id", booking.ID, "owner_id", bh.OwnerID, "error", err)
+	}
+}
+
+func (s *bookingService) sendBookingNotificationWithReason(ctx context.Context, booking *domain.Booking, notifType domain.NotificationType, reason string) {
+	title := "Бронирование отклонено"
+	body := fmt.Sprintf("К сожалению, ваша заявка на %s отклонена. Причина: %s", booking.StartTime.Format("02.01.2006 15:04"), reason)
+	data := map[string]string{
+		"booking_id":   booking.ID.String(),
+		"bathhouse_id": booking.BathhouseID.String(),
+	}
+
+	if err := s.notifSvc.Send(ctx, booking.UserID, notifType, title, body, data); err != nil {
+		s.logger.Warn("failed to send booking notification with reason", "booking_id", booking.ID, "type", notifType, "error", err)
 	}
 }
 

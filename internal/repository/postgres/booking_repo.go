@@ -14,6 +14,8 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
+const bookingColumns = `id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, hold_id, rejection_reason, points_spent, referral_bonus_used, status, comment, created_at, updated_at`
+
 type bookingRepo struct {
 	pool *pgxpool.Pool
 }
@@ -22,10 +24,26 @@ func NewBookingRepository(pool *pgxpool.Pool) repository.BookingRepository {
 	return &bookingRepo{pool: pool}
 }
 
+func scanBooking(row interface{ Scan(dest ...any) error }) (*domain.Booking, error) {
+	var b domain.Booking
+	err := row.Scan(
+		&b.ID, &b.UserID, &b.BathhouseID,
+		&b.StartTime, &b.EndTime, &b.GuestCount,
+		&b.TotalPrice, &b.AddOnTotal, &b.BasePrice, &b.LongSessionDiscount, &b.ExtraGuestSurcharge, &b.LastMinuteDiscount, &b.ServiceFeeAmount,
+		&b.HoldID, &b.RejectionReason,
+		&b.PointsSpent, &b.ReferralBonusUsed, &b.Status, &b.Comment,
+		&b.CreatedAt, &b.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &b, nil
+}
+
 func (r *bookingRepo) Create(ctx context.Context, booking *domain.Booking) error {
 	query := `
-		INSERT INTO bookings (id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, points_spent, referral_bonus_used, status, comment, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`
+		INSERT INTO bookings (` + bookingColumns + `)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`
 
 	if booking.ID == uuid.Nil {
 		booking.ID = uuid.New()
@@ -34,7 +52,9 @@ func (r *bookingRepo) Create(ctx context.Context, booking *domain.Booking) error
 	_, err := r.pool.Exec(ctx, query,
 		booking.ID, booking.UserID, booking.BathhouseID,
 		booking.StartTime, booking.EndTime, booking.GuestCount,
-		booking.TotalPrice, booking.AddOnTotal, booking.BasePrice, booking.LongSessionDiscount, booking.ExtraGuestSurcharge, booking.LastMinuteDiscount, booking.ServiceFeeAmount, booking.PointsSpent, booking.ReferralBonusUsed, booking.Status, booking.Comment,
+		booking.TotalPrice, booking.AddOnTotal, booking.BasePrice, booking.LongSessionDiscount, booking.ExtraGuestSurcharge, booking.LastMinuteDiscount, booking.ServiceFeeAmount,
+		booking.HoldID, booking.RejectionReason,
+		booking.PointsSpent, booking.ReferralBonusUsed, booking.Status, booking.Comment,
 		booking.CreatedAt, booking.UpdatedAt,
 	)
 	if err != nil {
@@ -44,24 +64,34 @@ func (r *bookingRepo) Create(ctx context.Context, booking *domain.Booking) error
 }
 
 func (r *bookingRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Booking, error) {
-	query := `
-		SELECT id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, points_spent, referral_bonus_used, status, comment, created_at, updated_at
-		FROM bookings WHERE id = $1`
+	query := `SELECT ` + bookingColumns + ` FROM bookings WHERE id = $1`
 
-	var b domain.Booking
-	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&b.ID, &b.UserID, &b.BathhouseID,
-		&b.StartTime, &b.EndTime, &b.GuestCount,
-		&b.TotalPrice, &b.AddOnTotal, &b.BasePrice, &b.LongSessionDiscount, &b.ExtraGuestSurcharge, &b.LastMinuteDiscount, &b.ServiceFeeAmount, &b.PointsSpent, &b.ReferralBonusUsed, &b.Status, &b.Comment,
-		&b.CreatedAt, &b.UpdatedAt,
-	)
+	b, err := scanBooking(r.pool.QueryRow(ctx, query, id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("get booking by id: %w", err)
 	}
-	return &b, nil
+	return b, nil
+}
+
+func (r *bookingRepo) Update(ctx context.Context, booking *domain.Booking) error {
+	query := `
+		UPDATE bookings SET
+			total_price = $2, status = $3, hold_id = $4, rejection_reason = $5, updated_at = $6
+		WHERE id = $1`
+
+	tag, err := r.pool.Exec(ctx, query,
+		booking.ID, booking.TotalPrice, booking.Status, booking.HoldID, booking.RejectionReason, time.Now(),
+	)
+	if err != nil {
+		return fmt.Errorf("update booking: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
 }
 
 func (r *bookingRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {
@@ -79,9 +109,7 @@ func (r *bookingRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pa
 	}
 
 	offset := (page - 1) * pageSize
-	query := `
-		SELECT id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, points_spent, referral_bonus_used, status, comment, created_at, updated_at
-		FROM bookings WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+	query := `SELECT ` + bookingColumns + ` FROM bookings WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, query, userID, pageSize, offset)
 	if err != nil {
@@ -91,16 +119,11 @@ func (r *bookingRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pa
 
 	var bookings []domain.Booking
 	for rows.Next() {
-		var b domain.Booking
-		if err := rows.Scan(
-			&b.ID, &b.UserID, &b.BathhouseID,
-			&b.StartTime, &b.EndTime, &b.GuestCount,
-			&b.TotalPrice, &b.AddOnTotal, &b.BasePrice, &b.LongSessionDiscount, &b.ExtraGuestSurcharge, &b.LastMinuteDiscount, &b.ServiceFeeAmount, &b.PointsSpent, &b.ReferralBonusUsed, &b.Status, &b.Comment,
-			&b.CreatedAt, &b.UpdatedAt,
-		); err != nil {
+		b, err := scanBooking(rows)
+		if err != nil {
 			return nil, fmt.Errorf("scan booking: %w", err)
 		}
-		bookings = append(bookings, b)
+		bookings = append(bookings, *b)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate booking rows: %w", err)
@@ -130,9 +153,7 @@ func (r *bookingRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID
 	}
 
 	offset := (page - 1) * pageSize
-	query := `
-		SELECT id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, points_spent, referral_bonus_used, status, comment, created_at, updated_at
-		FROM bookings WHERE bathhouse_id = $1 ORDER BY start_time DESC LIMIT $2 OFFSET $3`
+	query := `SELECT ` + bookingColumns + ` FROM bookings WHERE bathhouse_id = $1 ORDER BY start_time DESC LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, query, bathhouseID, pageSize, offset)
 	if err != nil {
@@ -142,16 +163,11 @@ func (r *bookingRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID
 
 	var bookings []domain.Booking
 	for rows.Next() {
-		var b domain.Booking
-		if err := rows.Scan(
-			&b.ID, &b.UserID, &b.BathhouseID,
-			&b.StartTime, &b.EndTime, &b.GuestCount,
-			&b.TotalPrice, &b.AddOnTotal, &b.BasePrice, &b.LongSessionDiscount, &b.ExtraGuestSurcharge, &b.LastMinuteDiscount, &b.ServiceFeeAmount, &b.PointsSpent, &b.ReferralBonusUsed, &b.Status, &b.Comment,
-			&b.CreatedAt, &b.UpdatedAt,
-		); err != nil {
+		b, err := scanBooking(rows)
+		if err != nil {
 			return nil, fmt.Errorf("scan booking: %w", err)
 		}
-		bookings = append(bookings, b)
+		bookings = append(bookings, *b)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate booking rows: %w", err)
@@ -183,7 +199,7 @@ func (r *bookingRepo) CheckAvailability(ctx context.Context, bathhouseID uuid.UU
 	query := `
 		SELECT COUNT(*) FROM bookings
 		WHERE bathhouse_id = $1
-			AND status IN ('pending', 'confirmed')
+			AND status IN ('pending', 'pending_owner', 'confirmed')
 			AND start_time < $3
 			AND end_time > $2`
 
@@ -196,11 +212,10 @@ func (r *bookingRepo) CheckAvailability(ctx context.Context, bathhouseID uuid.UU
 }
 
 func (r *bookingRepo) GetOverlapping(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) ([]domain.Booking, error) {
-	query := `
-		SELECT id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, points_spent, referral_bonus_used, status, comment, created_at, updated_at
+	query := `SELECT ` + bookingColumns + `
 		FROM bookings
 		WHERE bathhouse_id = $1
-			AND status IN ('pending', 'confirmed')
+			AND status IN ('pending', 'pending_owner', 'confirmed')
 			AND start_time < $3
 			AND end_time > $2
 		ORDER BY start_time`
@@ -213,16 +228,11 @@ func (r *bookingRepo) GetOverlapping(ctx context.Context, bathhouseID uuid.UUID,
 
 	var bookings []domain.Booking
 	for rows.Next() {
-		var b domain.Booking
-		if err := rows.Scan(
-			&b.ID, &b.UserID, &b.BathhouseID,
-			&b.StartTime, &b.EndTime, &b.GuestCount,
-			&b.TotalPrice, &b.AddOnTotal, &b.BasePrice, &b.LongSessionDiscount, &b.ExtraGuestSurcharge, &b.LastMinuteDiscount, &b.ServiceFeeAmount, &b.PointsSpent, &b.ReferralBonusUsed, &b.Status, &b.Comment,
-			&b.CreatedAt, &b.UpdatedAt,
-		); err != nil {
+		b, err := scanBooking(rows)
+		if err != nil {
 			return nil, fmt.Errorf("scan overlapping booking: %w", err)
 		}
-		bookings = append(bookings, b)
+		bookings = append(bookings, *b)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate overlapping booking rows: %w", err)
@@ -233,7 +243,7 @@ func (r *bookingRepo) GetOverlapping(ctx context.Context, bathhouseID uuid.UUID,
 func (r *bookingRepo) CountActiveByBathhouse(ctx context.Context, bathhouseID uuid.UUID) (int64, error) {
 	query := `
 		SELECT COUNT(*) FROM bookings
-		WHERE bathhouse_id = $1 AND status IN ('pending', 'confirmed')`
+		WHERE bathhouse_id = $1 AND status IN ('pending', 'pending_owner', 'confirmed')`
 
 	var count int64
 	err := r.pool.QueryRow(ctx, query, bathhouseID).Scan(&count)
@@ -257,4 +267,31 @@ func (r *bookingRepo) GetUserStats(ctx context.Context, userID uuid.UUID) (*doma
 	}
 	stats.AvgCheck = int64(math.Round(avgCheck))
 	return &stats, nil
+}
+
+func (r *bookingRepo) ListTimedOutRequests(ctx context.Context) ([]domain.Booking, error) {
+	query := `SELECT b.` + bookingColumns + `
+		FROM bookings b
+		JOIN bathhouses bh ON b.bathhouse_id = bh.id
+		WHERE b.status = 'pending_owner'
+			AND b.created_at + (bh.request_timeout || ' hours')::interval < now()`
+
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("list timed out requests: %w", err)
+	}
+	defer rows.Close()
+
+	var bookings []domain.Booking
+	for rows.Next() {
+		b, err := scanBooking(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan timed out booking: %w", err)
+		}
+		bookings = append(bookings, *b)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate timed out booking rows: %w", err)
+	}
+	return bookings, nil
 }

@@ -26,7 +26,7 @@ func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.Boo
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, repRepo, pricingSvc, pricingRepo, loyaltySvc, loyaltyRepo
 }
 
@@ -283,7 +283,7 @@ func TestBookingService_Reject_OwnerAllowed(t *testing.T) {
 	}
 	_ = bookingRepo.Create(context.Background(), booking)
 
-	err := svc.Reject(context.Background(), ownerID, domain.RoleOwner, booking.ID)
+	err := svc.Reject(context.Background(), ownerID, domain.RoleOwner, booking.ID, "")
 	if err != nil {
 		t.Fatalf("owner should reject: %v", err)
 	}
@@ -770,7 +770,7 @@ func newBookingServiceWithReferral() (service.BookingService, *mock.BathhouseRep
 	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, referralSvc, userRepo
 }
 
@@ -901,7 +901,7 @@ func newBookingServiceWithPromo() (service.BookingService, *mock.BathhouseRepo, 
 	promoSvc := service.NewPromoService(promoRepo, access, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, promoSvc
 }
 
@@ -1123,7 +1123,7 @@ func newBookingServiceWithPayment() (service.BookingService, *mock.BathhouseRepo
 	paymentSvc := &trackingPaymentService{}
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, paymentSvc, &noopServiceFeeService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, paymentSvc, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, paymentSvc
 }
 
@@ -1214,7 +1214,7 @@ func newBookingServiceWithSlotBlocks() (service.BookingService, *mock.BathhouseR
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, slotBlockRepo
 }
 
@@ -1396,7 +1396,7 @@ func newBookingServiceWithAddOns() (service.BookingService, *mock.BathhouseRepo,
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, nil, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, addonRepo
 }
 
@@ -2286,5 +2286,312 @@ func TestBathhouse_Validate_BookingSettings(t *testing.T) {
 				t.Errorf("Validate() error = %v, wantErr = %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+// --- Request-based Booking Mode ---
+
+func createRequestModeBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID) *domain.Bathhouse {
+	t.Helper()
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+	bh := &domain.Bathhouse{
+		ID:                        uuid.New(),
+		OwnerID:                   ownerID,
+		Name:                      "Request Mode Bathhouse",
+		Address:                   "456 Street",
+		CityID:                    1,
+		PricePerHour:              5000,
+		MinDuration:               1,
+		MaxGuests:                 10,
+		LongSessionThresholdHours: 4,
+		BaseCapacity:              10,
+		BookingMode:               domain.BookingModeRequest,
+		RequestTimeout:            24,
+		WorkingHours:              wh,
+		Status:                    domain.BathhouseStatusActive,
+		CreatedAt:                 time.Now(),
+		UpdatedAt:                 time.Now(),
+	}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatal(err)
+	}
+	return bh
+}
+
+func TestBookingService_Create_RequestMode_SetsPendingOwner(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createRequestModeBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Booking.Status != domain.BookingPendingOwner {
+		t.Errorf("status = %q, want %q", result.Booking.Status, domain.BookingPendingOwner)
+	}
+}
+
+func TestBookingService_Create_InstantMode_SetsPending(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID) // default instant mode
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Booking.Status != domain.BookingPending {
+		t.Errorf("status = %q, want %q", result.Booking.Status, domain.BookingPending)
+	}
+}
+
+func TestBookingService_Approve_Success(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createRequestModeBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error creating booking: %v", err)
+	}
+
+	if result.Booking.Status != domain.BookingPendingOwner {
+		t.Fatalf("precondition: status = %q, want pending_owner", result.Booking.Status)
+	}
+
+	err = svc.Approve(context.Background(), ownerID, domain.RoleOwner, result.Booking.ID)
+	if err != nil {
+		t.Fatalf("unexpected error approving: %v", err)
+	}
+
+	// Verify status changed to confirmed
+	updated, err := bookingRepo.GetByID(context.Background(), result.Booking.ID)
+	if err != nil {
+		t.Fatalf("unexpected error getting booking: %v", err)
+	}
+	if updated.Status != domain.BookingConfirmed {
+		t.Errorf("status after approve = %q, want %q", updated.Status, domain.BookingConfirmed)
+	}
+}
+
+func TestBookingService_Approve_WrongStatus(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID) // instant mode
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Booking is 'pending' (instant mode), not 'pending_owner'
+	err = svc.Approve(context.Background(), ownerID, domain.RoleOwner, result.Booking.ID)
+	if err == nil {
+		t.Error("expected error when approving non-pending_owner booking")
+	}
+}
+
+func TestBookingService_Reject_WithReason(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createRequestModeBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	reason := "Fully booked, sorry"
+	err = svc.Reject(context.Background(), ownerID, domain.RoleOwner, result.Booking.ID, reason)
+	if err != nil {
+		t.Fatalf("unexpected error rejecting: %v", err)
+	}
+
+	updated, err := bookingRepo.GetByID(context.Background(), result.Booking.ID)
+	if err != nil {
+		t.Fatalf("unexpected error getting booking: %v", err)
+	}
+	if updated.Status != domain.BookingRejected {
+		t.Errorf("status = %q, want %q", updated.Status, domain.BookingRejected)
+	}
+	if updated.RejectionReason != reason {
+		t.Errorf("rejection_reason = %q, want %q", updated.RejectionReason, reason)
+	}
+}
+
+func TestBookingService_Cancel_PendingOwner_NoDeadline(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createRequestModeBathhouse(t, bhRepo, ownerID)
+
+	// Create booking starting in 1 hour (would normally be within cancel deadline)
+	now := time.Now()
+	start := now.Add(90 * time.Minute)
+	// Round to next hour
+	start = time.Date(start.Year(), start.Month(), start.Day(), start.Hour()+1, 0, 0, 0, start.Location())
+	end := start.Add(1 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Booking.Status != domain.BookingPendingOwner {
+		t.Fatalf("precondition: status = %q, want pending_owner", result.Booking.Status)
+	}
+
+	// Client should be able to cancel pending_owner booking even within 2-hour deadline
+	err = svc.Cancel(context.Background(), clientID, domain.RoleClient, result.Booking.ID)
+	if err != nil {
+		t.Fatalf("expected no error cancelling pending_owner booking, got: %v", err)
+	}
+
+	updated, err := bookingRepo.GetByID(context.Background(), result.Booking.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.Status != domain.BookingCancelled {
+		t.Errorf("status = %q, want %q", updated.Status, domain.BookingCancelled)
+	}
+}
+
+func TestBookingService_AutoRejectTimedOutRequests(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createRequestModeBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+2, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Manually set the booking's created_at to >24h ago to simulate timeout
+	booking, _ := bookingRepo.GetByID(context.Background(), result.Booking.ID)
+	booking.CreatedAt = now.Add(-25 * time.Hour)
+	if err := bookingRepo.Update(context.Background(), booking); err != nil {
+		t.Fatalf("unexpected error updating booking: %v", err)
+	}
+
+	rejected, err := svc.AutoRejectTimedOutRequests(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if rejected != 1 {
+		t.Errorf("rejected = %d, want 1", rejected)
+	}
+
+	updated, err := bookingRepo.GetByID(context.Background(), result.Booking.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.Status != domain.BookingRejected {
+		t.Errorf("status = %q, want %q", updated.Status, domain.BookingRejected)
+	}
+	if updated.RejectionReason == "" {
+		t.Error("expected rejection reason to be set")
+	}
+}
+
+func TestBookingService_PendingOwner_BlocksSlot(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createRequestModeBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	_, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Try to create another booking for the same slot - should fail
+	_, err = svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  3,
+	})
+	if !errors.Is(err, domain.ErrSlotUnavailable) {
+		t.Errorf("expected ErrSlotUnavailable, got: %v", err)
 	}
 }

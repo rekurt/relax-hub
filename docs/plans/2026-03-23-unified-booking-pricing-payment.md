@@ -476,34 +476,34 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Create: `migrations/XXXXXX_booking_request_mode.up.sql` / `.down.sql`
 
 **Bathhouse model changes:**
-- [ ] Add fields:
+- [x] Add fields:
   ```go
   BookingMode    string // "instant" or "request", default "instant"
   RequestTimeout int    // hours, default 24, range 1-72
   ```
-- [ ] Add `BookingModeInstant = "instant"` and `BookingModeRequest = "request"` constants
-- [ ] Update Validate(): BookingMode must be "instant" or "request", RequestTimeout 1-72
+- [x] Add `BookingModeInstant = "instant"` and `BookingModeRequest = "request"` constants
+- [x] Update Validate(): BookingMode must be "instant" or "request", RequestTimeout 1-72
 
 **Booking model changes (`internal/domain/booking.go`):**
-- [ ] Add fields:
+- [x] Add fields:
   ```go
   HoldID          *uuid.UUID // reference to wallet hold (for request-based bookings)
   RejectionReason string     // owner's reason for rejection
   ```
-- [ ] Add status constant: `BookingPendingOwner BookingStatus = "pending_owner"`
-- [ ] Update `IsValid()` to include `BookingPendingOwner`
+- [x] Add status constant: `BookingPendingOwner BookingStatus = "pending_owner"`
+- [x] Update `IsValid()` to include `BookingPendingOwner`
 
 **Migration:**
-- [ ] ALTER TABLE bathhouses:
+- [x] ALTER TABLE bathhouses:
   - `ADD COLUMN booking_mode VARCHAR(10) NOT NULL DEFAULT 'instant'`
   - `ADD COLUMN request_timeout INT NOT NULL DEFAULT 24`
   - CHECK: `booking_mode IN ('instant', 'request')`, `request_timeout BETWEEN 1 AND 72`
-- [ ] ALTER TABLE bookings:
+- [x] ALTER TABLE bookings:
   - `ADD COLUMN hold_id UUID`
   - `ADD COLUMN rejection_reason TEXT`
 
 **Modify CreateBooking (`internal/service/booking_service.go`):**
-- [ ] After all price calculations and validation (around line ~258), add branching:
+- [x] After all price calculations and validation (around line ~258), add branching:
   ```go
   if bh.BookingMode == domain.BookingModeRequest {
       // 1. Create booking with status "pending_owner" instead of "pending"
@@ -520,53 +520,53 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   }
   // existing instant flow continues...
   ```
-- [ ] Inject `walletSvc WalletService` into bookingService (add to struct and constructor)
+- [x] Inject `walletSvc WalletService` into bookingService (add to struct and constructor)
 
 **New owner endpoints (handler + service):**
-- [ ] Add to BookingService interface:
+- [x] Add to BookingService interface:
   ```go
   Approve(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
   ```
-- [ ] `Approve` implementation:
+- [x] `Approve` implementation:
   1. Get booking, verify status == "pending_owner"
   2. CanManageBathhouse check
   3. If booking.HoldID != nil: `walletSvc.CaptureHold(ctx, *booking.HoldID)`
   4. `bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingConfirmed)`
   5. Notify client: "Ваша заявка одобрена!"
-- [ ] Modify existing `Reject` method:
+- [x] Modify existing `Reject` method:
   - If booking status is "pending_owner":
     1. If booking.HoldID != nil: `walletSvc.ReleaseHold(ctx, *booking.HoldID)`
     2. Accept optional rejection reason
     3. Update status to "rejected" with reason
     4. Notify client: "К сожалению, ваша заявка отклонена. Причина: {reason}"
-- [ ] Handler routes:
+- [x] Handler routes:
   - `PATCH /api/v1/bookings/{id}/approve` — calls Approve (RequireAuth + owner/rep)
   - Existing `PATCH /api/v1/bookings/{id}/reject` — updated to handle rejection_reason
   - Request body for reject: `{ "reason": "optional text" }`
 
 **Cron — auto-reject timed-out requests:**
-- [ ] In `internal/cron/booking_jobs.go` (or new file):
+- [x] In `internal/cron/booking_jobs.go` (or new file):
   - Query bookings WHERE status='pending_owner' AND created_at + request_timeout < now()
   - For each: release wallet hold, set status='rejected', notify both parties
   - Add `ListTimedOutRequests(ctx context.Context, timeout time.Duration) ([]domain.Booking, error)` to BookingRepository
   - Run every 15 minutes
 
 **Modify booking repo (`internal/repository/interfaces.go`):**
-- [ ] Add `Update(ctx context.Context, booking *domain.Booking) error` method (or use specific field updates)
-- [ ] Add `ListTimedOutRequests(ctx context.Context) ([]domain.Booking, error)` — returns pending_owner bookings past their timeout
+- [x] Add `Update(ctx context.Context, booking *domain.Booking) error` method (or use specific field updates)
+- [x] Add `ListTimedOutRequests(ctx context.Context) ([]domain.Booking, error)` — returns pending_owner bookings past their timeout
 
 **Notification helpers:**
-- [ ] `sendBookingRequestNotification(ctx, booking, bh)` — notify owner: "Новая заявка на бронирование от {date} {time}"
-- [ ] Add `domain.NotifBookingRequest` notification type
+- [x] `sendBookingRequestNotification(ctx, booking, bh)` — notify owner: "Новая заявка на бронирование от {date} {time}"
+- [x] Add `domain.NotifBookingRequest` notification type
 
 **Tests:**
-- [ ] Test instant mode: booking creation with BookingMode="instant" uses existing flow, status="pending"
-- [ ] Test request mode: booking creation with BookingMode="request" creates booking with status="pending_owner" and wallet hold
-- [ ] Test approve: status changes to confirmed, hold is captured, client notified
-- [ ] Test reject: status changes to rejected, hold released, client notified, rejection reason stored
-- [ ] Test auto-reject: request older than timeout is auto-rejected, hold released
-- [ ] Test approve with expired hold: should return error
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test instant mode: booking creation with BookingMode="instant" uses existing flow, status="pending"
+- [x] Test request mode: booking creation with BookingMode="request" creates booking with status="pending_owner" and wallet hold
+- [x] Test approve: status changes to confirmed, hold is captured, client notified
+- [x] Test reject: status changes to rejected, hold released, client notified, rejection reason stored
+- [x] Test auto-reject: request older than timeout is auto-rejected, hold released
+- [x] Test approve with expired hold: should return error
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 7: SBP Payment Support (FR-092)
 

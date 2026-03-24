@@ -28,6 +28,7 @@ type CronScheduler struct {
 	accountDeletionSvc service.AccountDeletionService
 	sessionSvc         service.SessionService
 	savedSearchSvc     service.SavedSearchService
+	bookingSvc         service.BookingService
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -44,6 +45,7 @@ func NewCronScheduler(
 	accountDeletionSvc service.AccountDeletionService,
 	sessionSvc service.SessionService,
 	savedSearchSvc service.SavedSearchService,
+	bookingSvc service.BookingService,
 ) *CronScheduler {
 	return &CronScheduler{
 		c:                  cron.New(),
@@ -59,6 +61,7 @@ func NewCronScheduler(
 		accountDeletionSvc: accountDeletionSvc,
 		sessionSvc:         sessionSvc,
 		savedSearchSvc:     savedSearchSvc,
+		bookingSvc:         bookingSvc,
 	}
 }
 
@@ -166,6 +169,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register saved search check: %w", err)
 	}
 	cs.logger.Info("Registered saved search check job at 08:00 UTC")
+
+	// Auto-reject timed out booking requests every 15 minutes
+	if _, err := cs.c.AddFunc("*/15 * * * *", cs.handleAutoRejectTimedOutRequests); err != nil {
+		cs.logger.Error("Failed to register auto-reject timed out requests job", "error", err)
+		return fmt.Errorf("failed to register auto-reject timed out requests: %w", err)
+	}
+	cs.logger.Info("Registered auto-reject timed out requests job every 15 minutes")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")

@@ -16,6 +16,11 @@ const (
 	BathhouseStatusArchived BathhouseStatus = "archived"
 )
 
+const (
+	BookingModeInstant = "instant"
+	BookingModeRequest = "request"
+)
+
 func (s BathhouseStatus) IsValid() bool {
 	switch s {
 	case BathhouseStatusActive, BathhouseStatusInactive, BathhouseStatusPending, BathhouseStatusRejected, BathhouseStatusArchived:
@@ -68,6 +73,8 @@ type Bathhouse struct {
 	BufferMinutes             int   // 0-120 step 15, cleanup time between bookings
 	LeadTimeHours             int   // 0-48, minimum hours before booking start
 	MaxAdvanceDays            int   // 7-365, max days ahead for booking
+	BookingMode               string // "instant" or "request", default "instant"
+	RequestTimeout            int    // hours, default 24, range 1-72
 	IsPhotoVerified           bool
 	ApiKey                    string
 	CalendarToken             string
@@ -134,6 +141,19 @@ func (b *Bathhouse) Validate() error {
 		return ErrInvalidInput
 	}
 	if b.MaxAdvanceDays < 7 || b.MaxAdvanceDays > 365 {
+		return ErrInvalidInput
+	}
+	// Apply defaults for booking mode
+	if b.BookingMode == "" {
+		b.BookingMode = BookingModeInstant
+	}
+	if b.BookingMode != BookingModeInstant && b.BookingMode != BookingModeRequest {
+		return ErrInvalidInput
+	}
+	if b.RequestTimeout == 0 {
+		b.RequestTimeout = 24
+	}
+	if b.RequestTimeout < 1 || b.RequestTimeout > 72 {
 		return ErrInvalidInput
 	}
 	// Apply defaults for last-minute fields when unset

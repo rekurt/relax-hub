@@ -122,8 +122,16 @@ func (m *mockWidgetBookingService) Confirm(ctx context.Context, userID uuid.UUID
 	return nil
 }
 
-func (m *mockWidgetBookingService) Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+func (m *mockWidgetBookingService) Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, reason string) error {
 	return nil
+}
+
+func (m *mockWidgetBookingService) Approve(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+	return nil
+}
+
+func (m *mockWidgetBookingService) AutoRejectTimedOutRequests(ctx context.Context) (int, error) {
+	return 0, nil
 }
 
 func (m *mockWidgetBookingService) Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*service.BookingResult, error) {

@@ -34,6 +34,7 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 			long_session_threshold_hours, long_session_discount_percent, base_capacity, extra_guest_surcharge,
 			last_minute_enabled, last_minute_discount_percent, last_minute_hours_threshold,
 			buffer_minutes, lead_time_hours, max_advance_days,
+			booking_mode, request_timeout,
 			created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7,
@@ -43,7 +44,8 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 			$25, $26, $27, $28,
 			$29, $30, $31,
 			$32, $33, $34,
-			$35, $36
+			$35, $36,
+			$37, $38
 		)`
 
 	if bh.ID == uuid.Nil {
@@ -67,6 +69,7 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 		bh.LongSessionThresholdHours, bh.LongSessionDiscountPercent, bh.BaseCapacity, bh.ExtraGuestSurcharge,
 		bh.LastMinuteEnabled, bh.LastMinuteDiscountPercent, bh.LastMinuteHoursThreshold,
 		bh.BufferMinutes, bh.LeadTimeHours, bh.MaxAdvanceDays,
+		bh.BookingMode, bh.RequestTimeout,
 		bh.CreatedAt, bh.UpdatedAt,
 	)
 	if err != nil {
@@ -85,6 +88,7 @@ func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bath
 			bathhouses.long_session_threshold_hours, bathhouses.long_session_discount_percent, bathhouses.base_capacity, bathhouses.extra_guest_surcharge,
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
+			bathhouses.booking_mode, bathhouses.request_timeout,
 			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
 		WHERE bathhouses.id = $1`
@@ -115,6 +119,7 @@ func (r *bathhouseRepo) GetBySlug(ctx context.Context, slug string) (*domain.Bat
 			bathhouses.long_session_threshold_hours, bathhouses.long_session_discount_percent, bathhouses.base_capacity, bathhouses.extra_guest_surcharge,
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
+			bathhouses.booking_mode, bathhouses.request_timeout,
 			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
 		WHERE bathhouses.slug = $1`
@@ -154,6 +159,7 @@ func (r *bathhouseRepo) GetByAPIKey(ctx context.Context, apiKey string) (*domain
 			bathhouses.long_session_threshold_hours, bathhouses.long_session_discount_percent, bathhouses.base_capacity, bathhouses.extra_guest_surcharge,
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
+			bathhouses.booking_mode, bathhouses.request_timeout,
 			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
 		WHERE bathhouses.api_key = $1`
@@ -180,7 +186,8 @@ func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error 
 			images = $18, working_hours = $19, api_key = $20, updated_at = $21, status = $22,
 			long_session_threshold_hours = $23, long_session_discount_percent = $24, base_capacity = $25, extra_guest_surcharge = $26,
 			last_minute_enabled = $27, last_minute_discount_percent = $28, last_minute_hours_threshold = $29,
-			buffer_minutes = $30, lead_time_hours = $31, max_advance_days = $32
+			buffer_minutes = $30, lead_time_hours = $31, max_advance_days = $32,
+			booking_mode = $33, request_timeout = $34
 		WHERE id = $1`
 
 	bh.UpdatedAt = time.Now()
@@ -202,6 +209,7 @@ func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error 
 		bh.LongSessionThresholdHours, bh.LongSessionDiscountPercent, bh.BaseCapacity, bh.ExtraGuestSurcharge,
 		bh.LastMinuteEnabled, bh.LastMinuteDiscountPercent, bh.LastMinuteHoursThreshold,
 		bh.BufferMinutes, bh.LeadTimeHours, bh.MaxAdvanceDays,
+		bh.BookingMode, bh.RequestTimeout,
 	)
 	if err != nil {
 		return fmt.Errorf("update bathhouse: %w", err)
@@ -454,6 +462,7 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			bathhouses.long_session_threshold_hours, bathhouses.long_session_discount_percent, bathhouses.base_capacity, bathhouses.extra_guest_surcharge,
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
+			bathhouses.booking_mode, bathhouses.request_timeout,
 			%s as is_promoted
 		FROM bathhouses %s ORDER BY %s LIMIT %s OFFSET %s`,
 		promotionExists, whereClause, orderBy, addArg(filter.PageSize), addArg(offset),
@@ -509,6 +518,7 @@ func (r *bathhouseRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 			long_session_threshold_hours, long_session_discount_percent, base_capacity, extra_guest_surcharge,
 			last_minute_enabled, last_minute_discount_percent, last_minute_hours_threshold,
 			buffer_minutes, lead_time_hours, max_advance_days,
+			booking_mode, request_timeout,
 			created_at, updated_at
 		FROM bathhouses WHERE owner_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
@@ -636,7 +646,8 @@ func (r *bathhouseRepo) GetByCalendarToken(ctx context.Context, token string) (*
 			created_at, updated_at, is_photo_verified,
 			long_session_threshold_hours, long_session_discount_percent, base_capacity, extra_guest_surcharge,
 			last_minute_enabled, last_minute_discount_percent, last_minute_hours_threshold,
-			buffer_minutes, lead_time_hours, max_advance_days
+			buffer_minutes, lead_time_hours, max_advance_days,
+			booking_mode, request_timeout
 		FROM bathhouses
 		WHERE calendar_token = $1`
 
@@ -670,6 +681,7 @@ func (r *bathhouseRepo) scanBathhouseMinimal(rows pgx.Rows) (*domain.Bathhouse, 
 		&bh.LongSessionThresholdHours, &bh.LongSessionDiscountPercent, &bh.BaseCapacity, &bh.ExtraGuestSurcharge,
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
+		&bh.BookingMode, &bh.RequestTimeout,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan bathhouse row: %w", err)
@@ -699,6 +711,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*do
 		&bh.LongSessionThresholdHours, &bh.LongSessionDiscountPercent, &bh.BaseCapacity, &bh.ExtraGuestSurcharge,
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
+		&bh.BookingMode, &bh.RequestTimeout,
 		&isPromoted,
 	)
 	if err != nil {
@@ -733,6 +746,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKey(rows pgx.Rows) (*domain.B
 		&bh.LongSessionThresholdHours, &bh.LongSessionDiscountPercent, &bh.BaseCapacity, &bh.ExtraGuestSurcharge,
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
+		&bh.BookingMode, &bh.RequestTimeout,
 		&isPromoted,
 	)
 	if err != nil {
@@ -765,6 +779,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKeyOnly(rows pgx.Rows) (*doma
 		&bh.LongSessionThresholdHours, &bh.LongSessionDiscountPercent, &bh.BaseCapacity, &bh.ExtraGuestSurcharge,
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
+		&bh.BookingMode, &bh.RequestTimeout,
 		&bh.CreatedAt, &bh.UpdatedAt,
 	)
 	if err != nil {

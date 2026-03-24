@@ -65,6 +65,7 @@ type SuggestionFilter struct {
 type BookingRepository interface {
 	Create(ctx context.Context, booking *domain.Booking) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Booking, error)
+	Update(ctx context.Context, booking *domain.Booking) error
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BookingStatus) error
@@ -72,6 +73,7 @@ type BookingRepository interface {
 	GetOverlapping(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) ([]domain.Booking, error)
 	CountActiveByBathhouse(ctx context.Context, bathhouseID uuid.UUID) (int64, error)
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*domain.UserBookingStats, error)
+	ListTimedOutRequests(ctx context.Context) ([]domain.Booking, error)
 }
 
 type ReviewRepository interface {

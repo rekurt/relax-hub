@@ -33,11 +33,13 @@ const (
 	NotifAccountDeletionReminder  NotificationType = "account_deletion_reminder"
 	NotifAccountDeletionFinal     NotificationType = "account_deletion_final"
 	NotifSavedSearchMatch         NotificationType = "saved_search_match"
+	NotifBookingRequest           NotificationType = "booking_request"
 )
 
 func (t NotificationType) IsValid() bool {
 	switch t {
-	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected, NotifNewReview,
+	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected, NotifBookingRequest,
+		NotifNewReview,
 		NotifReviewResponse, NotifReviewApproved, NotifReviewRejected, NotifPromo, NotifReminder, NotifSystem,
 		NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected, NotifReviewHidden,
 		NotifLoyaltyUpgrade, NotifReferralBonus,
@@ -114,7 +116,7 @@ func (p *NotificationPreferences) Validate() error {
 // WantsEventType checks if the user wants notifications for the given event type.
 func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 	switch t {
-	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected,
+	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected, NotifBookingRequest,
 		NotifLoyaltyUpgrade, NotifReferralBonus,
 		NotifSubscriptionExpiring, NotifSubscriptionExpired,
 		NotifBonusExpiring, NotifBonusExpired:

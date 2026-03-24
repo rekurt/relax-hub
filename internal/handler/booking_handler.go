@@ -65,6 +65,8 @@ type bookingResponse struct {
 	OriginalPrice       int64                  `json:"original_price,omitempty"`
 	PromoDiscount       int64                  `json:"promo_discount,omitempty"`
 	CertificateDiscount int64                  `json:"certificate_discount,omitempty"`
+	HoldID              string                 `json:"hold_id,omitempty"`
+	RejectionReason     string                 `json:"rejection_reason,omitempty"`
 	Status              string                 `json:"status"`
 	PaymentStatus       string                 `json:"payment_status,omitempty"`
 	Comment             string                 `json:"comment"`
@@ -95,6 +97,7 @@ func toBookingResponse(b *domain.Booking) bookingResponse {
 		LastMinuteDiscount:  b.LastMinuteDiscount,
 		AddOnTotal:          b.AddOnTotal,
 		ServiceFeeAmount:    b.ServiceFeeAmount,
+		RejectionReason:     b.RejectionReason,
 		Status:              string(b.Status),
 		Comment:             b.Comment,
 		PointsSpent:         b.PointsSpent,
@@ -106,6 +109,9 @@ func toBookingResponse(b *domain.Booking) bookingResponse {
 
 func toBookingResultResponse(r *service.BookingResult) bookingResponse {
 	resp := toBookingResponse(r.Booking)
+	if r.Booking.HoldID != nil {
+		resp.HoldID = r.Booking.HoldID.String()
+	}
 	resp.EarnedPoints = r.EarnedPoints
 	resp.LoyaltyDiscount = r.LoyaltyDiscount
 	resp.PointsSpent = r.PointsSpent
@@ -325,9 +331,50 @@ func (h *BookingHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "confirmed"})
 }
 
+type rejectBookingRequest struct {
+	Reason string `json:"reason"`
+}
+
 // Reject godoc
 // @Summary      Reject booking
-// @Description  Rejects a pending booking. Only available to bathhouse owners and representatives.
+// @Description  Rejects a pending or pending_owner booking. Only available to bathhouse owners and representatives. Optional rejection reason.
+// @Tags         bookings
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string                true  "Booking ID (UUID)"
+// @Param        body  body      rejectBookingRequest  false "Rejection reason"
+// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/reject [patch]
+func (h *BookingHandler) Reject(w http.ResponseWriter, r *http.Request) {
+	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking id")
+		return
+	}
+
+	var req rejectBookingRequest
+	// Body is optional for reject
+	_ = readJSON(w, r, &req)
+
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	if err := h.bookingService.Reject(r.Context(), userID, role, bookingID, req.Reason); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "rejected"})
+}
+
+// Approve godoc
+// @Summary      Approve booking request
+// @Description  Approves a pending_owner booking request. Captures wallet hold. Only available to bathhouse owners and representatives.
 // @Tags         bookings
 // @Produce      json
 // @Security     BearerAuth
@@ -337,8 +384,8 @@ func (h *BookingHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 // @Failure      401  {object}  APIResponse{error=APIError}
 // @Failure      403  {object}  APIResponse{error=APIError}
 // @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/reject [patch]
-func (h *BookingHandler) Reject(w http.ResponseWriter, r *http.Request) {
+// @Router       /bookings/{id}/approve [patch]
+func (h *BookingHandler) Approve(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking id")
@@ -348,12 +395,12 @@ func (h *BookingHandler) Reject(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
 
-	if err := h.bookingService.Reject(r.Context(), userID, role, bookingID); err != nil {
+	if err := h.bookingService.Approve(r.Context(), userID, role, bookingID); err != nil {
 		handleServiceError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"message": "rejected"})
+	writeJSON(w, http.StatusOK, map[string]string{"message": "approved"})
 }
 
 // Complete godoc

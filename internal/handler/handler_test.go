@@ -330,11 +330,19 @@ func (m *mockBookingService) Confirm(ctx context.Context, userID uuid.UUID, role
 	return nil
 }
 
-func (m *mockBookingService) Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+func (m *mockBookingService) Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, reason string) error {
 	if m.rejectFn != nil {
 		return m.rejectFn(ctx, userID, role, bookingID)
 	}
 	return nil
+}
+
+func (m *mockBookingService) Approve(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+	return nil
+}
+
+func (m *mockBookingService) AutoRejectTimedOutRequests(ctx context.Context) (int, error) {
+	return 0, nil
 }
 
 func (m *mockBookingService) Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*service.BookingResult, error) {
