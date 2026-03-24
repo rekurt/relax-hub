@@ -316,7 +316,7 @@ func (m *mockBookingService) Create(ctx context.Context, userID uuid.UUID, input
 	return nil, nil
 }
 
-func (m *mockBookingService) Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+func (m *mockBookingService) Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, refundTo string) error {
 	if m.cancelFn != nil {
 		return m.cancelFn(ctx, userID, role, bookingID)
 	}

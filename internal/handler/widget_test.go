@@ -114,7 +114,7 @@ func (m *mockWidgetBookingService) Create(ctx context.Context, userID uuid.UUID,
 	}, nil
 }
 
-func (m *mockWidgetBookingService) Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+func (m *mockWidgetBookingService) Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, refundTo string) error {
 	return nil
 }
 

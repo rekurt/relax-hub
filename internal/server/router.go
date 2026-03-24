@@ -475,6 +475,9 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Post("/holidays", p.HolidayHandler.CreateHoliday)
 			r.Put("/holidays/{id}", p.HolidayHandler.UpdateHoliday)
 			r.Delete("/holidays/{id}", p.HolidayHandler.DeleteHoliday)
+
+			// Admin refund
+			r.Post("/bookings/{id}/refund", p.PaymentHandler.AdminRefund)
 		})
 	})
 

@@ -59,7 +59,7 @@ type TimeSlot struct {
 
 type BookingService interface {
 	Create(ctx context.Context, userID uuid.UUID, input CreateBookingInput) (*BookingResult, error)
-	Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
+	Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, refundTo string) error
 	Confirm(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, reason string) error
 	Approve(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
@@ -557,7 +557,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	}, nil
 }
 
-func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, refundTo string) error {
 	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
 	if err != nil {
 		return err
@@ -594,7 +594,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		s.refundReferralBonus(ctx, booking)
 		s.refundPromoUsage(ctx, booking)
 		if booking.Status != domain.BookingPendingOwner {
-			s.refundPayment(ctx, booking, false)
+			s.refundPayment(ctx, booking, false, refundTo)
 		}
 		s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 		return nil
@@ -624,7 +624,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 	s.refundReferralBonus(ctx, booking)
 	s.refundPromoUsage(ctx, booking)
 	if booking.Status != domain.BookingPendingOwner {
-		s.refundPayment(ctx, booking, true)
+		s.refundPayment(ctx, booking, true, "")
 	}
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 	return nil
@@ -689,7 +689,7 @@ func (s *bookingService) Reject(ctx context.Context, userID uuid.UUID, role doma
 	s.refundPromoUsage(ctx, booking)
 	if !wasRequestBased {
 		// Only refund non-hold payments; holds were already released above
-		s.refundPayment(ctx, booking, true)
+		s.refundPayment(ctx, booking, true, "")
 	}
 
 	if reason != "" {
@@ -1019,8 +1019,8 @@ func (s *bookingService) refundPromoUsage(ctx context.Context, booking *domain.B
 	}
 }
 
-func (s *bookingService) refundPayment(ctx context.Context, booking *domain.Booking, forceFullRefund bool) {
-	if err := s.paymentSvc.RefundPayment(ctx, booking.ID, forceFullRefund); err != nil {
+func (s *bookingService) refundPayment(ctx context.Context, booking *domain.Booking, forceFullRefund bool, refundTo string) {
+	if err := s.paymentSvc.RefundPayment(ctx, booking.ID, forceFullRefund, refundTo); err != nil {
 		if errors.Is(err, domain.ErrPaymentNotFound) {
 			return
 		}

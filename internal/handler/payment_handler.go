@@ -283,3 +283,55 @@ func (h *PaymentHandler) GetBookingPayment(w http.ResponseWriter, r *http.Reques
 
 	writeJSON(w, http.StatusOK, toPaymentResponse(p))
 }
+
+type adminRefundRequest struct {
+	Amount   int64  `json:"amount"`
+	Reason   string `json:"reason"`
+	RefundTo string `json:"refund_to"` // "wallet" or "card", default "card"
+}
+
+// AdminRefund godoc
+// @Summary      Admin manual refund
+// @Description  Allows admin to refund a booking payment with a specified amount and reason. Creates an audit log entry.
+// @Tags         payments
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string              true  "Booking ID (UUID)"
+// @Param        body  body      adminRefundRequest  true  "Refund details"
+// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /admin/bookings/{id}/refund [post]
+func (h *PaymentHandler) AdminRefund(w http.ResponseWriter, r *http.Request) {
+	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking id")
+		return
+	}
+
+	var req adminRefundRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	if req.Amount <= 0 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "amount must be positive")
+		return
+	}
+
+	if req.RefundTo != "" && req.RefundTo != "wallet" && req.RefundTo != "card" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "refund_to must be 'wallet' or 'card'")
+		return
+	}
+
+	if err := h.paymentService.AdminRefund(r.Context(), bookingID, req.Amount, req.Reason, req.RefundTo); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "refund_processed"})
+}

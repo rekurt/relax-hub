@@ -997,7 +997,7 @@ func (b *Bot) doCancelBooking(ctx context.Context, chatID int64, sid string) {
 		return
 	}
 
-	err := b.bookingService.Cancel(ctx, userID, domain.RoleClient, bkID)
+	err := b.bookingService.Cancel(ctx, userID, domain.RoleClient, bkID, "")
 	if err != nil {
 		b.logger.Error("failed to cancel booking", "error", err, "booking_id", bkID)
 		b.sendPlainMessage(chatID, "Ошибка при отмене бронирования. Попробуйте позже.")

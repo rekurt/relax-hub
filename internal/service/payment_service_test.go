@@ -52,7 +52,7 @@ func newPaymentService() (service.PaymentService, *mock.PaymentRepo, *mock.Booki
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, provider, &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 
@@ -61,7 +61,7 @@ func newPaymentServiceWithWallet(walletSvc *testWalletService) (service.PaymentS
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, provider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 
@@ -284,7 +284,7 @@ func TestPaymentService_RefundPayment_FullRefund(t *testing.T) {
 	})
 
 	// Now refund
-	err := svc.RefundPayment(context.Background(), booking.ID, false)
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
 	if err != nil {
 		t.Fatalf("refund failed: %v", err)
 	}
@@ -316,7 +316,7 @@ func TestPaymentService_RefundPayment_PartialRefund(t *testing.T) {
 		Status:     "succeeded",
 	})
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false)
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
 	if err != nil {
 		t.Fatalf("refund failed: %v", err)
 	}
@@ -345,7 +345,7 @@ func TestPaymentService_RefundPayment_NoRefundTooLate(t *testing.T) {
 		Status:     "succeeded",
 	})
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false)
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
 	if err != nil {
 		t.Fatalf("expected no error (just no refund), got: %v", err)
 	}
@@ -364,7 +364,7 @@ func TestPaymentService_RefundPayment_NotSucceeded(t *testing.T) {
 	// Initiate but don't complete payment
 	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false)
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
 	if !errors.Is(err, domain.ErrInvalidInput) {
 		t.Errorf("expected ErrInvalidInput for non-succeeded payment, got: %v", err)
 	}
@@ -375,7 +375,7 @@ func TestPaymentService_RefundPayment_NoPayment(t *testing.T) {
 	userID := uuid.New()
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false)
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
 	if !errors.Is(err, domain.ErrPaymentNotFound) {
 		t.Errorf("expected ErrPaymentNotFound, got: %v", err)
 	}
@@ -686,7 +686,7 @@ func TestPaymentService_ComboPayment_CardFailure_WalletRefunded(t *testing.T) {
 	failProvider := &failingMockProvider{}
 	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
 	log := logger.New(logger.LevelWarn)
-	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, failProvider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
+	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
 
 	walletPortion := int64(5000)
 	cardPortion := booking.TotalPrice - walletPortion
@@ -914,7 +914,7 @@ func TestPaymentService_ComboHold_CardFailure_WalletHoldReleased(t *testing.T) {
 	failProvider := &failingMockProvider{}
 	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
 	log := logger.New(logger.LevelWarn)
-	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, failProvider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
+	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
 
 	walletPortion := int64(5000)
 	cardPortion := booking.TotalPrice - walletPortion
@@ -991,7 +991,7 @@ func TestPaymentService_RefundPayment_HoldReleasedInsteadOfRefund(t *testing.T) 
 	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
 
 	// Calling RefundPayment on a hold should release it instead
-	err = svc.RefundPayment(context.Background(), booking.ID, true)
+	err = svc.RefundPayment(context.Background(), booking.ID, true, "")
 	if err != nil {
 		t.Fatalf("refund/release failed: %v", err)
 	}
@@ -1004,5 +1004,235 @@ func TestPaymentService_RefundPayment_HoldReleasedInsteadOfRefund(t *testing.T) 
 	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
 	if updated.Status != domain.PaymentFailed {
 		t.Errorf("payment status = %q, want %q", updated.Status, domain.PaymentFailed)
+	}
+}
+
+// --- Enhanced Refund Tests (Task 12) ---
+
+func TestPaymentService_RefundPayment_WalletRefundWithBonus(t *testing.T) {
+	walletSvc := &testWalletService{}
+	svc, paymentRepo, bookingRepo, provider := newPaymentServiceWithWallet(walletSvc)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "wallet")
+	if err != nil {
+		t.Fatalf("wallet refund failed: %v", err)
+	}
+
+	if !walletSvc.refundCalled {
+		t.Error("expected wallet Refund to be called")
+	}
+	expectedRefund := int64(10500) // 10000 + 5%
+	if walletSvc.refundAmount != expectedRefund {
+		t.Errorf("wallet refund amount = %d, want %d (refund + 5%% bonus)", walletSvc.refundAmount, expectedRefund)
+	}
+
+	updated2, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated2.RefundAmount != 10000 {
+		t.Errorf("payment refund amount = %d, want 10000", updated2.RefundAmount)
+	}
+	if updated2.Status != domain.PaymentRefunded {
+		t.Errorf("payment status = %q, want %q", updated2.Status, domain.PaymentRefunded)
+	}
+}
+
+func TestPaymentService_RefundPayment_CardRefundDefault(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
+	if err != nil {
+		t.Fatalf("card refund failed: %v", err)
+	}
+
+	updated2, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated2.RefundAmount != 10000 {
+		t.Errorf("refund amount = %d, want 10000", updated2.RefundAmount)
+	}
+	if updated2.Status != domain.PaymentRefunded {
+		t.Errorf("payment status = %q, want %q", updated2.Status, domain.PaymentRefunded)
+	}
+}
+
+func TestPaymentService_ComboRefund_Proportional(t *testing.T) {
+	walletSvc := &testWalletService{}
+	svc, paymentRepo, bookingRepo, provider := newPaymentServiceWithWallet(walletSvc)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+
+	_, _ = svc.InitiateComboPayment(context.Background(), userID, booking.ID, service.ComboPaymentRequest{
+		WalletAmount:  3000,
+		CardAmount:    7000,
+		PaymentMethod: domain.PaymentMethodCard,
+	})
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+
+	walletSvc.refundCalled = false
+	walletSvc.refundAmount = 0
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "card")
+	if err != nil {
+		t.Fatalf("combo refund failed: %v", err)
+	}
+
+	if !walletSvc.refundCalled {
+		t.Error("expected wallet Refund to be called for wallet portion")
+	}
+	// Wallet portion: 3000 + 5% = 3150
+	if walletSvc.refundAmount != 3150 {
+		t.Errorf("wallet refund = %d, want 3150 (3000 + 5%% bonus)", walletSvc.refundAmount)
+	}
+
+	updated2, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated2.RefundAmount != 10000 {
+		t.Errorf("payment refund amount = %d, want 10000", updated2.RefundAmount)
+	}
+}
+
+func TestPaymentService_ComboRefund_AllToWallet(t *testing.T) {
+	walletSvc := &testWalletService{}
+	svc, paymentRepo, bookingRepo, provider := newPaymentServiceWithWallet(walletSvc)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+
+	_, _ = svc.InitiateComboPayment(context.Background(), userID, booking.ID, service.ComboPaymentRequest{
+		WalletAmount:  3000,
+		CardAmount:    7000,
+		PaymentMethod: domain.PaymentMethodCard,
+	})
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+
+	walletSvc.refundCalled = false
+	walletSvc.refundAmount = 0
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "wallet")
+	if err != nil {
+		t.Fatalf("combo all-to-wallet refund failed: %v", err)
+	}
+
+	if !walletSvc.refundCalled {
+		t.Error("expected wallet Refund to be called")
+	}
+	// Last refund call: card portion redirected to wallet: 7000 + 5% = 7350
+	if walletSvc.refundAmount != 7350 {
+		t.Errorf("last wallet refund = %d, want 7350 (card portion + 5%% bonus)", walletSvc.refundAmount)
+	}
+
+	updated2, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated2.Status != domain.PaymentRefunded {
+		t.Errorf("payment status = %q, want %q", updated2.Status, domain.PaymentRefunded)
+	}
+}
+
+func TestPaymentService_AdminRefund(t *testing.T) {
+	walletSvc := &testWalletService{}
+	svc, paymentRepo, bookingRepo, provider := newPaymentServiceWithWallet(walletSvc)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+
+	err := svc.AdminRefund(context.Background(), booking.ID, 5000, "customer complaint", "wallet")
+	if err != nil {
+		t.Fatalf("admin refund failed: %v", err)
+	}
+
+	if !walletSvc.refundCalled {
+		t.Error("expected wallet Refund to be called")
+	}
+	if walletSvc.refundAmount != 5250 {
+		t.Errorf("wallet refund = %d, want 5250 (5000 + 5%%)", walletSvc.refundAmount)
+	}
+
+	updated2, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated2.RefundAmount != 5000 {
+		t.Errorf("payment refund amount = %d, want 5000", updated2.RefundAmount)
+	}
+	if updated2.Status != domain.PaymentPartiallyRefunded {
+		t.Errorf("payment status = %q, want %q", updated2.Status, domain.PaymentPartiallyRefunded)
+	}
+}
+
+func TestPaymentService_AdminRefund_ExceedsAmount(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+
+	err := svc.AdminRefund(context.Background(), booking.ID, 20000, "test", "card")
+	if !errors.Is(err, domain.ErrRefundExceedsAmount) {
+		t.Errorf("expected ErrRefundExceedsAmount, got: %v", err)
+	}
+}
+
+func TestPaymentService_RefundPayment_NoRefundTier_IgnoresRefundTo(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(1*time.Hour), domain.BookingPending)
+
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "wallet")
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	updated2, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated2.RefundAmount != 0 {
+		t.Errorf("refund amount = %d, want 0 (no refund within 2h)", updated2.RefundAmount)
 	}
 }

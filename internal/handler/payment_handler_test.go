@@ -49,10 +49,14 @@ func (m *mockPaymentService) HandleWebhook(ctx context.Context, event service.We
 	return nil
 }
 
-func (m *mockPaymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool) error {
+func (m *mockPaymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool, refundTo string) error {
 	if m.refundFn != nil {
 		return m.refundFn(ctx, bookingID)
 	}
+	return nil
+}
+
+func (m *mockPaymentService) AdminRefund(_ context.Context, _ uuid.UUID, _ int64, _ string, _ string) error {
 	return nil
 }
 

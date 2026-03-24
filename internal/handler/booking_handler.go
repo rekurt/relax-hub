@@ -273,18 +273,24 @@ func (h *BookingHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+type cancelBookingRequest struct {
+	RefundTo string `json:"refund_to"` // "wallet" or "card", default "card"
+}
+
 // Cancel godoc
 // @Summary      Cancel booking
-// @Description  Cancels a booking. Clients can cancel their own bookings, owners/representatives can cancel bookings for their bathhouses.
+// @Description  Cancels a booking. Clients can cancel their own bookings, owners/representatives can cancel bookings for their bathhouses. Optional refund_to parameter to choose refund destination.
 // @Tags         bookings
+// @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
+// @Param        id    path      string                true  "Booking ID (UUID)"
+// @Param        body  body      cancelBookingRequest  false "Cancel options"
+// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
 // @Router       /bookings/{id}/cancel [patch]
 func (h *BookingHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
@@ -293,10 +299,19 @@ func (h *BookingHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var req cancelBookingRequest
+	// Body is optional for cancel
+	_ = readJSON(w, r, &req)
+
+	if req.RefundTo != "" && req.RefundTo != "wallet" && req.RefundTo != "card" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "refund_to must be 'wallet' or 'card'")
+		return
+	}
+
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
 
-	if err := h.bookingService.Cancel(r.Context(), userID, role, bookingID); err != nil {
+	if err := h.bookingService.Cancel(r.Context(), userID, role, bookingID, req.RefundTo); err != nil {
 		handleServiceError(w, err)
 		return
 	}

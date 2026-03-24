@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,26 +36,32 @@ type PaymentService interface {
 	InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, paymentMethod domain.PaymentMethod) (confirmationURL string, err error)
 	InitiateComboPayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, req ComboPaymentRequest) (confirmationURL string, err error)
 	HandleWebhook(ctx context.Context, event WebhookEvent) error
-	RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool) error
+	RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool, refundTo string) error
+	AdminRefund(ctx context.Context, bookingID uuid.UUID, amount int64, reason string, refundTo string) error
 	CaptureHoldPayment(ctx context.Context, bookingID uuid.UUID) error
 	ReleaseHoldPayment(ctx context.Context, bookingID uuid.UUID) error
 	GetPaymentByBooking(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*domain.Payment, error)
 	ListUserPayments(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
 }
 
+const defaultWalletRefundBonusPercent = 5
+
 type paymentService struct {
-	paymentRepo repository.PaymentRepository
-	bookingRepo repository.BookingRepository
-	provider    payment.PaymentProvider
-	walletSvc   WalletService
-	notifSvc    NotificationService
-	returnURL   string
-	logger      *logger.Logger
+	paymentRepo             repository.PaymentRepository
+	bookingRepo             repository.BookingRepository
+	auditLogRepo            repository.AuditLogRepository
+	provider                payment.PaymentProvider
+	walletSvc               WalletService
+	notifSvc                NotificationService
+	returnURL               string
+	walletRefundBonusPercent int
+	logger                  *logger.Logger
 }
 
 func NewPaymentService(
 	paymentRepo repository.PaymentRepository,
 	bookingRepo repository.BookingRepository,
+	auditLogRepo repository.AuditLogRepository,
 	provider payment.PaymentProvider,
 	walletSvc WalletService,
 	notifSvc NotificationService,
@@ -61,13 +69,15 @@ func NewPaymentService(
 	log *logger.Logger,
 ) PaymentService {
 	return &paymentService{
-		paymentRepo: paymentRepo,
-		bookingRepo: bookingRepo,
-		provider:    provider,
-		walletSvc:   walletSvc,
-		notifSvc:    notifSvc,
-		returnURL:   returnURL,
-		logger:      log,
+		paymentRepo:              paymentRepo,
+		bookingRepo:              bookingRepo,
+		auditLogRepo:             auditLogRepo,
+		provider:                 provider,
+		walletSvc:                walletSvc,
+		notifSvc:                 notifSvc,
+		returnURL:                returnURL,
+		walletRefundBonusPercent: defaultWalletRefundBonusPercent,
+		logger:                   log,
 	}
 }
 
@@ -576,7 +586,7 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 	return nil
 }
 
-func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool) error {
+func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool, refundTo string) error {
 	p, err := s.paymentRepo.GetByBookingID(ctx, bookingID)
 	if err != nil {
 		return err
@@ -600,35 +610,175 @@ func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID,
 	var refundStatus domain.PaymentStatus
 
 	if forceFullRefund {
-		// Owner/representative-initiated cancellation: always full refund
 		refundAmount = p.Amount
 		refundStatus = domain.PaymentRefunded
 	} else {
 		timeUntilStart := time.Until(booking.StartTime)
 
-		// No refund if less than 2 hours until start
 		if timeUntilStart < noRefundDeadline {
 			return nil
 		}
 
-		// Full refund if more than 24 hours until start
 		if timeUntilStart >= fullRefundDeadline {
 			refundAmount = p.Amount
 			refundStatus = domain.PaymentRefunded
 		} else {
-			// Partial refund: 50% between 2h and 24h
 			refundAmount = p.Amount / 2
 			refundStatus = domain.PaymentPartiallyRefunded
 		}
 	}
 
-	if err := s.provider.CreateRefund(ctx, p.ExternalID, refundAmount); err != nil {
-		return fmt.Errorf("failed to create refund: %w", err)
+	return s.executeRefund(ctx, p, booking.UserID, refundAmount, refundStatus, refundTo)
+}
+
+func (s *paymentService) executeRefund(ctx context.Context, p *domain.Payment, userID uuid.UUID, refundAmount int64, refundStatus domain.PaymentStatus, refundTo string) error {
+	if refundTo == "" {
+		refundTo = "card"
+	}
+
+	// For combo payments, split refund proportionally
+	if p.WalletAmount > 0 && p.CardAmount > 0 {
+		return s.executeComboRefund(ctx, p, userID, refundAmount, refundStatus, refundTo)
+	}
+
+	// Pure wallet payment — always refund to wallet
+	if p.PaymentMethod == domain.PaymentMethodWallet {
+		return s.refundToWallet(ctx, p, userID, refundAmount, refundStatus)
+	}
+
+	// Pure card/SBP payment
+	if refundTo == "wallet" {
+		return s.refundToWallet(ctx, p, userID, refundAmount, refundStatus)
+	}
+
+	// Default: refund to card
+	if p.ExternalID != "" {
+		if err := s.provider.CreateRefund(ctx, p.ExternalID, refundAmount); err != nil {
+			return fmt.Errorf("failed to create refund: %w", err)
+		}
 	}
 
 	now := time.Now()
-	if err := s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now, refundStatus); err != nil {
+	return s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now, refundStatus)
+}
+
+func (s *paymentService) refundToWallet(ctx context.Context, p *domain.Payment, userID uuid.UUID, refundAmount int64, refundStatus domain.PaymentStatus) error {
+	wallet, err := s.walletSvc.GetWallet(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to get wallet for refund: %w", err)
+	}
+
+	bonusAmount := int64(math.Round(float64(refundAmount) * float64(s.walletRefundBonusPercent) / 100))
+	totalCredit := refundAmount + bonusAmount
+
+	bookingIDRef := p.BookingID
+	_, err = s.walletSvc.Refund(ctx, wallet.ID, totalCredit, "booking_refund", &bookingIDRef,
+		fmt.Sprintf("Возврат за бронирование %s (бонус %d%%)", p.BookingID.String()[:8], s.walletRefundBonusPercent))
+	if err != nil {
+		return fmt.Errorf("failed to refund to wallet: %w", err)
+	}
+
+	now := time.Now()
+	return s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now, refundStatus)
+}
+
+func (s *paymentService) executeComboRefund(ctx context.Context, p *domain.Payment, userID uuid.UUID, refundAmount int64, refundStatus domain.PaymentStatus, refundTo string) error {
+	// Calculate proportional split
+	walletRefundRatio := float64(p.WalletAmount) / float64(p.Amount)
+	walletRefund := int64(math.Round(float64(refundAmount) * walletRefundRatio))
+	cardRefund := refundAmount - walletRefund
+
+	wallet, err := s.walletSvc.GetWallet(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to get wallet for combo refund: %w", err)
+	}
+
+	// Wallet portion always goes back to wallet with bonus
+	if walletRefund > 0 {
+		bonusAmount := int64(math.Round(float64(walletRefund) * float64(s.walletRefundBonusPercent) / 100))
+		totalCredit := walletRefund + bonusAmount
+		bookingIDRef := p.BookingID
+		_, err = s.walletSvc.Refund(ctx, wallet.ID, totalCredit, "booking_refund", &bookingIDRef,
+			fmt.Sprintf("Возврат кошелёк за %s (бонус %d%%)", p.BookingID.String()[:8], s.walletRefundBonusPercent))
+		if err != nil {
+			return fmt.Errorf("failed to refund wallet portion: %w", err)
+		}
+	}
+
+	// Card portion follows refundTo preference
+	if cardRefund > 0 {
+		if refundTo == "wallet" {
+			// Redirect card portion to wallet too (with bonus on this portion)
+			bonusAmount := int64(math.Round(float64(cardRefund) * float64(s.walletRefundBonusPercent) / 100))
+			totalCredit := cardRefund + bonusAmount
+			bookingIDRef := p.BookingID
+			_, err = s.walletSvc.Refund(ctx, wallet.ID, totalCredit, "booking_refund_card_to_wallet", &bookingIDRef,
+				fmt.Sprintf("Возврат карта→кошелёк за %s (бонус %d%%)", p.BookingID.String()[:8], s.walletRefundBonusPercent))
+			if err != nil {
+				return fmt.Errorf("failed to redirect card refund to wallet: %w", err)
+			}
+		} else if p.ExternalID != "" {
+			if err := s.provider.CreateRefund(ctx, p.ExternalID, cardRefund); err != nil {
+				return fmt.Errorf("failed to create card refund: %w", err)
+			}
+		}
+	}
+
+	now := time.Now()
+	return s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now, refundStatus)
+}
+
+func (s *paymentService) AdminRefund(ctx context.Context, bookingID uuid.UUID, amount int64, reason string, refundTo string) error {
+	p, err := s.paymentRepo.GetByBookingID(ctx, bookingID)
+	if err != nil {
 		return err
+	}
+
+	if p.Status != domain.PaymentSucceeded && p.Status != domain.PaymentPartiallyRefunded {
+		return fmt.Errorf("%w: only succeeded or partially refunded payments can be refunded", domain.ErrInvalidInput)
+	}
+
+	if amount <= 0 {
+		return fmt.Errorf("%w: refund amount must be positive", domain.ErrInvalidInput)
+	}
+
+	maxRefundable := p.Amount - p.RefundAmount
+	if amount > maxRefundable {
+		return domain.ErrRefundExceedsAmount
+	}
+
+	var refundStatus domain.PaymentStatus
+	if amount == maxRefundable {
+		refundStatus = domain.PaymentRefunded
+	} else {
+		refundStatus = domain.PaymentPartiallyRefunded
+	}
+
+	if err := s.executeRefund(ctx, p, p.UserID, amount, refundStatus, refundTo); err != nil {
+		return err
+	}
+
+	// Create audit log entry
+	if s.auditLogRepo != nil {
+		changedFields, _ := json.Marshal(map[string]interface{}{
+			"refund_amount": amount,
+			"reason":        reason,
+			"refund_to":     refundTo,
+			"booking_id":    bookingID.String(),
+		})
+		auditLog := &domain.AuditLog{
+			ID:            uuid.New(),
+			EntityType:    "payment",
+			EntityID:      p.ID,
+			UserID:        uuid.Nil, // admin user ID should be passed via context in production
+			Action:        domain.AuditActionUpdate,
+			ChangedFields: changedFields,
+			CreatedAt:     time.Now(),
+		}
+		if err := s.auditLogRepo.Create(ctx, auditLog); err != nil {
+			s.logger.Error("failed to create audit log for admin refund",
+				"payment_id", p.ID, "error", err)
+		}
 	}
 
 	return nil

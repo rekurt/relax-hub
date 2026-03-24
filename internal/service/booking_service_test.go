@@ -144,7 +144,7 @@ func TestBookingService_Cancel_ClientOwnBooking(t *testing.T) {
 	}
 	_ = bookingRepo.Create(context.Background(), booking)
 
-	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID)
+	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID, "")
 	if err != nil {
 		t.Fatalf("client should cancel own booking: %v", err)
 	}
@@ -163,7 +163,7 @@ func TestBookingService_Cancel_ClientOtherBookingForbidden(t *testing.T) {
 	}
 	_ = bookingRepo.Create(context.Background(), booking)
 
-	err := svc.Cancel(context.Background(), otherClientID, domain.RoleClient, booking.ID)
+	err := svc.Cancel(context.Background(), otherClientID, domain.RoleClient, booking.ID, "")
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Errorf("client should be forbidden from cancelling other's booking, got: %v", err)
 	}
@@ -182,7 +182,7 @@ func TestBookingService_Cancel_ClientTooLate(t *testing.T) {
 	}
 	_ = bookingRepo.Create(context.Background(), booking)
 
-	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID)
+	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID, "")
 	if !errors.Is(err, domain.ErrBookingCancelLate) {
 		t.Errorf("should fail for too late cancel, got: %v", err)
 	}
@@ -201,7 +201,7 @@ func TestBookingService_Cancel_OwnerCanCancelAnytime(t *testing.T) {
 	}
 	_ = bookingRepo.Create(context.Background(), booking)
 
-	err := svc.Cancel(context.Background(), ownerID, domain.RoleOwner, booking.ID)
+	err := svc.Cancel(context.Background(), ownerID, domain.RoleOwner, booking.ID, "")
 	if err != nil {
 		t.Errorf("owner should cancel booking for own bathhouse anytime, got: %v", err)
 	}
@@ -428,7 +428,7 @@ func TestBookingService_Cancel_AlreadyCancelled(t *testing.T) {
 	}
 	_ = bookingRepo.Create(context.Background(), booking)
 
-	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID)
+	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID, "")
 	if !errors.Is(err, domain.ErrInvalidInput) {
 		t.Errorf("should fail for already cancelled booking, got: %v", err)
 	}
@@ -1098,7 +1098,7 @@ type trackingPaymentService struct {
 	payment      *domain.Payment
 }
 
-func (t *trackingPaymentService) RefundPayment(_ context.Context, _ uuid.UUID, _ bool) error {
+func (t *trackingPaymentService) RefundPayment(_ context.Context, _ uuid.UUID, _ bool, _ string) error {
 	t.refundCalled = true
 	return t.refundErr
 }
@@ -1140,7 +1140,7 @@ func TestBookingService_Cancel_RefundsPayment(t *testing.T) {
 	}
 	_ = bookingRepo.Create(context.Background(), booking)
 
-	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID)
+	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID, "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1163,7 +1163,7 @@ func TestBookingService_Cancel_OwnerRefundsPayment(t *testing.T) {
 	}
 	_ = bookingRepo.Create(context.Background(), booking)
 
-	err := svc.Cancel(context.Background(), ownerID, domain.RoleOwner, booking.ID)
+	err := svc.Cancel(context.Background(), ownerID, domain.RoleOwner, booking.ID, "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1189,7 +1189,7 @@ func TestBookingService_Cancel_RefundErrorDoesNotBlockCancel(t *testing.T) {
 	_ = bookingRepo.Create(context.Background(), booking)
 
 	// Cancel should succeed even if refund fails
-	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID)
+	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID, "")
 	if err != nil {
 		t.Fatalf("cancel should succeed even when refund fails: %v", err)
 	}
@@ -2503,7 +2503,7 @@ func TestBookingService_Cancel_PendingOwner_NoDeadline(t *testing.T) {
 	}
 
 	// Client should be able to cancel pending_owner booking even within 2-hour deadline
-	err = svc.Cancel(context.Background(), clientID, domain.RoleClient, result.Booking.ID)
+	err = svc.Cancel(context.Background(), clientID, domain.RoleClient, result.Booking.ID, "")
 	if err != nil {
 		t.Fatalf("expected no error cancelling pending_owner booking, got: %v", err)
 	}

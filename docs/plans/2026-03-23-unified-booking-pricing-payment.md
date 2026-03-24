@@ -959,55 +959,55 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Modify: `internal/handler/payment_handler.go`
 
 **Refund destination choice:**
-- [ ] Modify cancel endpoint request to accept `refund_to`:
+- [x] Modify cancel endpoint request to accept `refund_to`:
   ```go
   type cancelBookingRequest struct {
       RefundTo string `json:"refund_to"` // "wallet" or "card", default "card"
   }
   ```
-- [ ] Modify `Cancel` in BookingService to accept `refundTo string` parameter
-- [ ] Update handler to pass refund preference
+- [x] Modify `Cancel` in BookingService to accept `refundTo string` parameter
+- [x] Update handler to pass refund preference
 
 **Wallet refund with bonus:**
-- [ ] When `refundTo == "wallet"`:
+- [x] When `refundTo == "wallet"`:
   - Calculate refund amount per existing tiers (100% if >24h, 50% if 2-24h)
   - Add bonus: `bonusAmount = refundAmount * BANI_WALLET_REFUND_BONUS_PERCENT / 100` (default 5%, range 0-15%)
   - Credit wallet: `walletSvc.Credit(ctx, userID, refundAmount + bonusAmount)`
   - Skip card refund via provider
   - Instant, no 3-10 day wait
-- [ ] When `refundTo == "card"`: existing flow via YooKassa CreateRefund
+- [x] When `refundTo == "card"`: existing flow via YooKassa CreateRefund
 
 **Combo refund (proportional):**
-- [ ] When original payment was combo (WalletAmount > 0 AND CardAmount > 0):
+- [x] When original payment was combo (WalletAmount > 0 AND CardAmount > 0):
   - Calculate total refund per tiers
   - `walletRefundRatio = originalPayment.WalletAmount / originalPayment.Amount`
   - `walletRefund = totalRefund * walletRefundRatio`
   - `cardRefund = totalRefund - walletRefund`
   - If `refundTo == "wallet"`: redirect card portion to wallet too (with bonus on wallet portion only)
   - If `refundTo == "card"`: wallet portion to wallet (with bonus), card portion to card
-- [ ] Actually simplify: wallet portion always refunds to wallet (with bonus), card portion follows refundTo preference
+- [x] Actually simplify: wallet portion always refunds to wallet (with bonus), card portion follows refundTo preference
 
 **Admin manual refund:**
-- [ ] Add to PaymentService:
+- [x] Add to PaymentService:
   ```go
   AdminRefund(ctx context.Context, bookingID uuid.UUID, amount int64, reason string, refundTo string) error
   ```
-- [ ] Handler: `POST /api/v1/admin/bookings/{id}/refund` (RequireRole: admin)
+- [x] Handler: `POST /api/v1/admin/bookings/{id}/refund` (RequireRole: admin)
   - Request: `{ "amount": 50000, "reason": "customer complaint", "refund_to": "wallet" }`
-- [ ] Create audit log entry with: refund amount, reason, initiator (admin user), destination
+- [x] Create audit log entry with: refund amount, reason, initiator (admin user), destination
 
 **Modify RefundPayment in PaymentService:**
-- [ ] Add `refundTo` parameter: `RefundPayment(ctx, bookingID, forceFullRefund, refundTo string) error`
-- [ ] Branch on refundTo for wallet vs card vs proportional combo refund
+- [x] Add `refundTo` parameter: `RefundPayment(ctx, bookingID, forceFullRefund, refundTo string) error`
+- [x] Branch on refundTo for wallet vs card vs proportional combo refund
 
 **Tests:**
-- [ ] Test wallet refund: 10000 kopecks refund with 5% bonus = 10500 credited to wallet
-- [ ] Test card refund: existing behavior via provider
-- [ ] Test combo refund proportional: paid 3000 wallet + 7000 card, refund 100% = 3150 to wallet (3000 + 5% bonus) + 7000 to card
-- [ ] Test combo refund all-to-wallet: 10000 total to wallet = 10500 (10000 + 5%)
-- [ ] Test admin manual refund: arbitrary amount, audit log created
-- [ ] Test refund with no refund tier (<2h): returns nil, no refund
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test wallet refund: 10000 kopecks refund with 5% bonus = 10500 credited to wallet
+- [x] Test card refund: existing behavior via provider
+- [x] Test combo refund proportional: paid 3000 wallet + 7000 card, refund 100% = 3150 to wallet (3000 + 5% bonus) + 7000 to card
+- [x] Test combo refund all-to-wallet: 10000 total to wallet = 10500 (10000 + 5%)
+- [x] Test admin manual refund: arbitrary amount, audit log created
+- [x] Test refund with no refund tier (<2h): returns nil, no refund
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 13: Booking Reminders (FR-064)
 
