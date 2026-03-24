@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/redis/go-redis/v9"
 )
 
 func (cs *CronScheduler) handleAutoRejectTimedOutRequests() {
@@ -139,18 +140,16 @@ func (cs *CronScheduler) sendReminders(ctx context.Context, from, to time.Time, 
 		redisKey := fmt.Sprintf("reminder_sent:%s:%s", b.Booking.ID.String(), reminderType)
 
 		if cs.redisClient != nil {
-			// Use Exists + Set pattern for deduplication
-			exists, err := cs.redisClient.Exists(ctx, redisKey).Result()
-			if err != nil {
-				cs.logger.Warn("Redis Exists failed for reminder dedup, sending anyway",
+			// Atomic check-and-set deduplication using SET with NX mode
+			wasSet, err := cs.redisClient.SetArgs(ctx, redisKey, "1", redis.SetArgs{
+				Mode: "NX",
+				TTL:  48 * time.Hour,
+			}).Result()
+			if err != nil && err != redis.Nil {
+				cs.logger.Warn("Redis SET NX failed for reminder dedup, sending anyway",
 					"key", redisKey, "error", err)
-			} else if exists > 0 {
+			} else if wasSet != "OK" {
 				continue // already sent
-			}
-			// Mark as sent
-			if err := cs.redisClient.Set(ctx, redisKey, "1", 48*time.Hour).Err(); err != nil {
-				cs.logger.Warn("Redis Set failed for reminder dedup",
-					"key", redisKey, "error", err)
 			}
 		}
 

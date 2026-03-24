@@ -608,6 +608,7 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 				}
 			}
 			// Refund wallet portion for combo payments
+			actualRefunded := cardRefundAmount
 			if p.WalletAmount > 0 && s.walletSvc != nil {
 				wallet, wErr := s.walletSvc.GetWallet(ctx, booking.UserID)
 				if wErr == nil {
@@ -616,11 +617,13 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 						fmt.Sprintf("Автовозврат: бронирование отменено %s", p.BookingID.String()[:8])); rErr != nil {
 						s.logger.Error("failed to auto-refund wallet for cancelled booking",
 							"payment_id", p.ID, "wallet_id", wallet.ID, "amount", p.WalletAmount, "error", rErr)
+					} else {
+						actualRefunded += p.WalletAmount
 					}
 				}
 			}
 			now := time.Now()
-			return s.paymentRepo.UpdateRefund(ctx, p.ID, p.Amount, now, domain.PaymentRefunded)
+			return s.paymentRepo.UpdateRefund(ctx, p.ID, actualRefunded, now, domain.PaymentRefunded)
 		}
 		// For hold payments, booking confirmation is handled by BookingService.Approve
 		if p.IsHold {

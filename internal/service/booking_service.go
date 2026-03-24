@@ -297,8 +297,15 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 			}
 			hoursUntilStart := slotStart.Sub(now).Hours()
 			if hoursUntilStart >= 0 && hoursUntilStart <= float64(bh.LastMinuteHoursThreshold) {
-				// Calculate slot price using pricing service for accurate per-slot discount
-				slotPrice, calcErr := s.pricingSvc.CalculatePrice(ctx, input.BathhouseID, bh.PricePerHour, slotStart, slotEnd)
+				// Calculate slot price using full pricing (includes holiday multiplier) for accurate per-slot discount
+				slotPrice, _, calcErr := s.pricingSvc.CalculateFullPrice(ctx, PriceCalculationInput{
+					BathhouseID:  input.BathhouseID,
+					BasePrice:    bh.PricePerHour,
+					StartTime:    slotStart,
+					EndTime:      slotEnd,
+					GuestCount:   1,
+					BaseCapacity: 1,
+				})
 				if calcErr == nil {
 					lastMinuteDiscount += slotPrice * int64(bh.LastMinuteDiscountPercent) / 100
 				}
@@ -926,8 +933,15 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 			}
 		}
 
-		// Calculate price for this hour slot using pricing service
-		slotPrice, err := s.pricingSvc.CalculatePrice(ctx, bathhouseID, bh.PricePerHour, t, slotEnd)
+		// Calculate price for this hour slot using full pricing (includes holiday multiplier)
+		slotPrice, _, err := s.pricingSvc.CalculateFullPrice(ctx, PriceCalculationInput{
+			BathhouseID: bathhouseID,
+			BasePrice:   bh.PricePerHour,
+			StartTime:   t,
+			EndTime:     slotEnd,
+			GuestCount:  1,
+			BaseCapacity: 1,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -1630,8 +1644,15 @@ func (s *bookingService) Extend(ctx context.Context, userID uuid.UUID, bookingID
 		return nil, fmt.Errorf("%w: extension period is blocked", domain.ErrSlotUnavailable)
 	}
 
-	// Calculate extension price using the pricing service
-	extensionPrice, err := s.pricingSvc.CalculatePrice(ctx, booking.BathhouseID, bh.PricePerHour, booking.EndTime, newEndTime)
+	// Calculate extension price using full pricing (includes holiday multiplier)
+	extensionPrice, _, err := s.pricingSvc.CalculateFullPrice(ctx, PriceCalculationInput{
+		BathhouseID:  booking.BathhouseID,
+		BasePrice:    bh.PricePerHour,
+		StartTime:    booking.EndTime,
+		EndTime:      newEndTime,
+		GuestCount:   1,
+		BaseCapacity: 1,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("calculate extension price: %w", err)
 	}
@@ -1648,7 +1669,7 @@ func (s *bookingService) Extend(ctx context.Context, userID uuid.UUID, bookingID
 		_, spendErr := s.walletSvc.Spend(ctx, wallet.ID, extensionPrice, "booking_extension", &bookingIDRef,
 			fmt.Sprintf("Продление сессии %s на %dч", bookingID.String()[:8], extraHours))
 		if spendErr != nil {
-			return nil, fmt.Errorf("%w: insufficient wallet balance for extension (%d kopecks required)", domain.ErrInsufficientWalletBalance, extensionPrice)
+			return nil, spendErr
 		}
 	}
 

@@ -317,9 +317,8 @@ func (s *walletService) Refund(ctx context.Context, walletID uuid.UUID, amount i
 		return nil, err
 	}
 
-	if wallet.IsFrozen() {
-		return nil, domain.ErrWalletFrozen
-	}
+	// No frozen check — refunds must always succeed
+	// (e.g., booking cancellation refund for account pending deletion)
 
 	newBalance := wallet.Balance + amount
 	maxBalance := domain.MaxBalanceForCurrency(wallet.Currency)
@@ -476,9 +475,15 @@ func (s *walletService) ExpireBonusesForWallet(ctx context.Context, walletID uui
 		totalExpired += tx.Amount
 	}
 
-	// Deduct expired bonus amount from wallet balance first, then mark bonuses expired.
-	// This ordering ensures that if the CAS balance update fails, bonuses remain active
-	// and will be retried on the next expiry run (avoiding balance drift).
+	// Mark bonuses expired first, then deduct balance.
+	// This ordering ensures that if the CAS balance update fails, bonuses are already
+	// marked expired and won't be found by GetExpiringBonuses on the next run,
+	// preventing double-deduction. The balance deduction will be retried via a
+	// reconciliation process or manual intervention.
+	if err := s.walletRepo.ExpireBonuses(ctx, ids); err != nil {
+		return 0, fmt.Errorf("mark bonuses as expired: %w", err)
+	}
+
 	wallet, err := s.walletRepo.GetByID(ctx, walletID)
 	if err != nil {
 		return 0, err
@@ -490,12 +495,9 @@ func (s *walletService) ExpireBonusesForWallet(ctx context.Context, walletID uui
 	}
 
 	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
+		s.logger.Error("bonuses marked expired but failed to deduct balance, needs reconciliation",
+			"wallet_id", walletID, "amount", totalExpired, "error", err)
 		return 0, err
-	}
-
-	if err := s.walletRepo.ExpireBonuses(ctx, ids); err != nil {
-		s.logger.Error("balance deducted but failed to mark bonuses as expired, will be retried",
-			"wallet_id", walletID, "bonus_ids", ids, "error", err)
 	}
 
 	// Record expiration transaction
