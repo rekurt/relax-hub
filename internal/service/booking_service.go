@@ -1523,6 +1523,13 @@ func (s *bookingService) DisputeNoShow(ctx context.Context, userID uuid.UUID, bo
 		}
 	}
 
+	// Mark escrow as disputed to prevent automatic release to owner during dispute resolution
+	if s.escrowSvc != nil {
+		if err := s.escrowSvc.MarkDisputedByBookingID(ctx, bookingID); err != nil {
+			s.logger.Warn("failed to mark escrow as disputed for no-show dispute", "booking_id", bookingID, "error", err)
+		}
+	}
+
 	return nil
 }
 
@@ -1644,14 +1651,15 @@ func (s *bookingService) Extend(ctx context.Context, userID uuid.UUID, bookingID
 		return nil, fmt.Errorf("%w: extension period is blocked", domain.ErrSlotUnavailable)
 	}
 
-	// Calculate extension price using full pricing (includes holiday multiplier)
+	// Calculate extension price using full pricing (includes holiday multiplier and extra guest surcharge)
 	extensionPrice, _, err := s.pricingSvc.CalculateFullPrice(ctx, PriceCalculationInput{
-		BathhouseID:  booking.BathhouseID,
-		BasePrice:    bh.PricePerHour,
-		StartTime:    booking.EndTime,
-		EndTime:      newEndTime,
-		GuestCount:   1,
-		BaseCapacity: 1,
+		BathhouseID:         booking.BathhouseID,
+		BasePrice:           bh.PricePerHour,
+		StartTime:           booking.EndTime,
+		EndTime:             newEndTime,
+		GuestCount:          booking.GuestCount,
+		BaseCapacity:        bh.BaseCapacity,
+		ExtraGuestSurcharge: bh.ExtraGuestSurcharge,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("calculate extension price: %w", err)

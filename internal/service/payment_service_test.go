@@ -1169,9 +1169,9 @@ func TestPaymentService_ComboRefund_AllToWallet(t *testing.T) {
 	if !walletSvc.refundCalled {
 		t.Error("expected wallet Refund to be called")
 	}
-	// Last refund call: card portion redirected to wallet: 7000 + 5% = 7350
-	if walletSvc.refundAmount != 7350 {
-		t.Errorf("last wallet refund = %d, want 7350 (card portion + 5%% bonus)", walletSvc.refundAmount)
+	// Last refund call: card portion redirected to wallet without bonus (bonus applies only to wallet portion)
+	if walletSvc.refundAmount != 7000 {
+		t.Errorf("last wallet refund = %d, want 7000 (card portion without bonus)", walletSvc.refundAmount)
 	}
 
 	updated2, _ := paymentRepo.GetByID(context.Background(), p.ID)

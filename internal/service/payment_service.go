@@ -822,12 +822,10 @@ func (s *paymentService) executeComboRefund(ctx context.Context, p *domain.Payme
 	// Card portion follows refundTo preference
 	if cardRefund > 0 {
 		if refundTo == "wallet" {
-			// Redirect card portion to wallet too (with bonus on this portion)
-			bonusAmount := int64(math.Round(float64(cardRefund) * float64(s.walletRefundBonusPercent) / 100))
-			totalCredit := cardRefund + bonusAmount
+			// Redirect card portion to wallet without bonus (bonus applies only to wallet portion)
 			bookingIDRef := p.BookingID
-			_, err = s.walletSvc.Refund(ctx, wallet.ID, totalCredit, "booking_refund_card_to_wallet", &bookingIDRef,
-				fmt.Sprintf("Возврат карта→кошелёк за %s (бонус %d%%)", p.BookingID.String()[:8], s.walletRefundBonusPercent))
+			_, err = s.walletSvc.Refund(ctx, wallet.ID, cardRefund, "booking_refund_card_to_wallet", &bookingIDRef,
+				fmt.Sprintf("Возврат карта→кошелёк за %s", p.BookingID.String()[:8]))
 			if err != nil {
 				return fmt.Errorf("failed to redirect card refund to wallet: %w", err)
 			}

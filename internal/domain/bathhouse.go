@@ -128,10 +128,7 @@ func (b *Bathhouse) Validate() error {
 	if b.ExtraGuestSurcharge < 0 {
 		return ErrInvalidInput
 	}
-	// Apply defaults for booking settings when unset
-	if b.BufferMinutes == 0 {
-		b.BufferMinutes = 30
-	}
+	// Apply defaults for booking settings when unset (BufferMinutes=0 is valid, means no buffer)
 	if b.MaxAdvanceDays == 0 {
 		b.MaxAdvanceDays = 90
 	}

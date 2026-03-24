@@ -17,6 +17,7 @@ type EscrowService interface {
 	CreateEscrow(ctx context.Context, bookingID uuid.UUID, amount int64, serviceFee int64) (*domain.Escrow, error)
 	ReleaseToOwner(ctx context.Context, escrowID uuid.UUID) error
 	MarkDisputed(ctx context.Context, escrowID uuid.UUID) error
+	MarkDisputedByBookingID(ctx context.Context, bookingID uuid.UUID) error
 	ProcessRefund(ctx context.Context, escrowID uuid.UUID, refundAmount int64) error
 	ProcessMaturedEscrows(ctx context.Context) (int, error)
 }
@@ -149,6 +150,14 @@ func (s *escrowService) MarkDisputed(ctx context.Context, escrowID uuid.UUID) er
 
 	s.logger.Info("Escrow marked as disputed", "escrow_id", escrowID, "booking_id", escrow.BookingID)
 	return nil
+}
+
+func (s *escrowService) MarkDisputedByBookingID(ctx context.Context, bookingID uuid.UUID) error {
+	escrow, err := s.escrowRepo.GetByBookingID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+	return s.MarkDisputed(ctx, escrow.ID)
 }
 
 func (s *escrowService) ProcessRefund(ctx context.Context, escrowID uuid.UUID, refundAmount int64) error {
