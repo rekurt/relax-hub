@@ -123,6 +123,8 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrResetTokenInvalid→400, ErrResetRateLimited→429
 - ErrListingDraftNotFound→404, ErrListingDraftIncomplete→400, ErrListingDraftSubmitted→409, ErrListingDraftInvalidStep→400
 - ErrListingIncomplete→400
+- ErrCheckinTooEarly→400, ErrCheckinTooLate→400, ErrNotCheckedIn→400, ErrNoShowDisputeExpired→400
+- ErrEscrowNotFound→404, ErrEscrowNotMatured→400, ErrEscrowAlreadyReleased→409, ErrEscrowDisputed→409
 
 ### Logging
 
@@ -143,6 +145,11 @@ Key config variables:
 - `BANI_DATABASE_MAX_CONNS` (default 20), `BANI_DATABASE_MIN_CONNS` (default 2), `BANI_DATABASE_MAX_CONN_LIFETIME` (default 1h) — connection pool tuning
 - `BANI_LOGGER_FORMAT` — `json` (default) or `console`
 - `BANI_ENVIRONMENT` — `dev` (default) or `production` (enables stricter validation)
+- `BANI_ESCROW_CLAIM_HOURS` — escrow hold period before release to owner (default 48, range 24-168)
+- `BANI_WALLET_REFUND_BONUS_PERCENT` — bonus % when client chooses wallet refund (default 5, range 0-15)
+- `BANI_MAX_CARD_HOLD_HOURS` — max card authorization hold duration (default 72, YooKassa limit)
+- `BANI_FISCAL_PROVIDER` — fiscalization provider: `none` (default) or `atol`
+- `BANI_FISCAL_ATOL_LOGIN`, `BANI_FISCAL_ATOL_PASSWORD`, `BANI_FISCAL_ATOL_GROUP_CODE` — ATOL Online credentials
 
 ### Database
 
@@ -359,7 +366,7 @@ Each subsystem follows the same handler→service→repository pattern:
 - **OAuth**: VK, Yandex, Google social login. Config: `BANI_OAUTH_{PROVIDER}_{CLIENT_ID,CLIENT_SECRET,REDIRECT_URL}`
 - **Recommendations**: collaborative filtering + user preferences scoring
 - **Subscriptions**: free/premium/promoted tiers, affects feed sorting (+10 boost for premium, promoted first)
-- **Dynamic pricing**: rules with priority, multipliers applied per hourly slot
+- **Dynamic pricing**: rules with priority, multipliers applied per hourly slot. Extended with long session discounts (threshold hours + discount %), extra guest surcharges (per extra guest per hour), holiday pricing (recurring holidays with per-bathhouse multipliers, default 1.5x), last-minute discounts (configurable threshold hours + discount %). Full price breakdown in booking response: base_price, long_session_discount, extra_guest_surcharge, service_fee, holiday info
 - **Loyalty**: bronze/silver/gold/platinum tiers based on visit count, points system
 - **Chat**: real-time via WebSocket, conversations tied to bathhouse+client pair
 - **Telegram bot**: booking wizard with in-memory state, short ID cache for callback data (64-byte limit)
@@ -369,7 +376,7 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Photo verification**: admin-verified bathhouse photos with pending/verified/rejected statuses, `is_photo_verified` badge on bathhouse cards, owner/representative upload with admin moderation queue
 - **Promo codes**: percentage/fixed_amount/free_hour discount types, bathhouse-scoped (owner/representative) and global (admin) codes, usage limits, validity periods, min amount checks, integrated into booking creation discount chain
 - **Review media**: photo/video attachments on reviews (max 10 photos, 1 video per review), file type/size validation, image resize and thumbnail generation, bathhouse gallery endpoint aggregates review media with review status filtering
-- **Online payments**: YooKassa integration via PaymentProvider interface, automatic refund on booking cancellation (100% if >24h, 50% if 2-24h, 0% if <2h), webhook processing. Config: `BANI_PAYMENT_YOOKASSA_SHOP_ID`, `BANI_PAYMENT_YOOKASSA_SECRET_KEY`, `BANI_PAYMENT_RETURN_URL`
+- **Online payments**: YooKassa integration via PaymentProvider interface, automatic refund on booking cancellation (100% if >24h, 50% if 2-24h, 0% if <2h), webhook processing. Payment methods: card, SBP (sbp), wallet, combo (wallet + card/SBP). Combo payments: wallet debited first, card payment for remainder, rollback on failure. Payment holds for request-based bookings (capture=false). Enhanced refunds: wallet refund with bonus (default 5%), proportional combo refund, admin manual refund. Config: `BANI_PAYMENT_YOOKASSA_SHOP_ID`, `BANI_PAYMENT_YOOKASSA_SECRET_KEY`, `BANI_PAYMENT_RETURN_URL`
 - **Wallet system**: user balance with top-up/spend/hold/refund, priority spending (expiring bonuses first), balance limits (max 100,000 RUB), top-up limits (min 500, max 30,000 RUB per tx), bonus expiration cron (180 days, configurable). Owner payouts with daily/monthly limits and auto-payout threshold
 - **Phone + OTP auth**: Redis-backed 6-digit codes, 5 min TTL, 3 attempts, rate limiting. SMSProvider interface + SMS.ru adapter. Config: `BANI_SMS_PROVIDER`, `BANI_SMS_API_KEY`
 - **Two-factor authentication**: TOTP (pquerna/otp) + SMS 2FA, partial token flow for 2FA during login
@@ -393,3 +400,14 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Bathhouse comparison**: compare 2-3 bathhouses side by side (price, rating, capacity, amenities, etc.), optional distance calculation
 - **Saved searches**: JSONB filter storage, daily cron checks for new matches with notifications, max 50 per user
 - **Recently viewed**: Redis sorted set per user (last 20), recorded on bathhouse detail view
+- **Service fee**: platform fee on booking base price (not add-ons), configurable by region+category with global default (10%). Admin CRUD via `ServiceFeeConfig`. Config stored in `service_fee_configs` table
+- **Booking modes**: instant (default, immediate confirmation) and request (owner approval required within timeout). Request-based: status `pending_owner`, wallet/card hold, auto-reject on timeout. Booking statuses: pending, pending_owner, confirmed, cancelled, rejected, completed, no_show
+- **Buffer/lead time**: configurable per-bathhouse buffer between bookings (0-120 min, step 15), lead time before booking (0-48h), max advance days (7-365)
+- **Check-in/check-out**: owner/rep marks guest arrival (window: start-15min to start+30min) and departure. No-show detection cron (30min after start without check-in). No-show dispute within 2h
+- **Escrow**: payment held after check-out, released to owner after claim period (default 48h). Dispute blocks release. Cron auto-releases matured escrows hourly. `internal/service/escrow_service.go`
+- **Session extension**: client extends active booking by 1-2h if next slots available, respects buffer/working hours. Creates separate extension payment
+- **Re-booking**: `GET /api/v1/bookings/{id}/rebook-data` returns past booking parameters (duration, time, guests, add-ons) for quick re-creation
+- **Owner penalties**: owner cancellation credits client 10% compensation. 4+ cancellations/30 days = warning, 6+ = auto-deactivation of all bathhouses. Response rate tracking for request-mode bathhouses (daily cron), low rate warnings and enforcement
+- **Fiscalization**: FiscalProvider interface with ATOL placeholder and no-op provider. Receipt creation on payment success and refund (best-effort). `internal/fiscal/`
+- **Booking reminders**: cron every 15min sends 24h reminder (push+email), 2h reminder (push), 5min owner reminder. Redis-based deduplication
+- **Cron jobs (booking/payment)**: auto-reject timed-out requests (15min), no-show detection (15min), booking reminders (15min), escrow release (hourly), response rate recalculation (daily)

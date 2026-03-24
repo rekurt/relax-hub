@@ -1333,11 +1333,11 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 
 ### Task 19: Update documentation
 
-- [ ] Update CLAUDE.md:
+- [x] Update CLAUDE.md:
   - Add new domain errors: ErrEscrowNotFound, ErrEscrowAlreadyReleased, etc.
   - Add new config vars: BANI_ESCROW_CLAIM_HOURS, BANI_WALLET_REFUND_BONUS_PERCENT, BANI_FISCAL_PROVIDER, BANI_MAX_CARD_HOLD_HOURS
   - Document new booking statuses: pending_owner, no_show
   - Document new payment methods: sbp, wallet, combo
   - Add cron jobs: reminder, no-show detection, escrow release, response rate calculation, auto-reject timed-out requests
-- [ ] Run `make swagger` to regenerate OpenAPI spec
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Run `make swagger` to regenerate OpenAPI spec
+- [x] Move this plan to `docs/plans/completed/`

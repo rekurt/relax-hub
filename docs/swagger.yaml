@@ -145,6 +145,12 @@ definitions:
         type: boolean
       endTime:
         type: string
+      is_last_minute:
+        description: Whether last-minute discount is applied
+        type: boolean
+      original_price:
+        description: Original price before last-minute discount
+        type: integer
       price:
         description: Price in kopecks for this hour slot
         type: integer
@@ -232,6 +238,16 @@ definitions:
         type: string
       quantity:
         type: integer
+    type: object
+  internal_handler.adminRefundRequest:
+    properties:
+      amount:
+        type: integer
+      reason:
+        type: string
+      refund_to:
+        description: '"wallet" or "card", default "card"'
+        type: string
     type: object
   internal_handler.adminReviewResponse:
     properties:
@@ -338,12 +354,18 @@ definitions:
     properties:
       address:
         type: string
+      base_capacity:
+        type: integer
+      buffer_minutes:
+        type: integer
       city_id:
         type: integer
       created_at:
         type: string
       description:
         type: string
+      extra_guest_surcharge:
+        type: integer
       gallery_preview:
         items:
           $ref: '#/definitions/internal_handler.mediaResponse'
@@ -372,10 +394,24 @@ definitions:
         type: boolean
       is_promoted:
         type: boolean
+      last_minute_discount_percent:
+        type: integer
+      last_minute_enabled:
+        type: boolean
+      last_minute_hours_threshold:
+        type: integer
       latitude:
         type: number
+      lead_time_hours:
+        type: integer
+      long_session_discount_percent:
+        type: integer
+      long_session_threshold_hours:
+        type: integer
       longitude:
         type: number
+      max_advance_days:
+        type: integer
       max_guests:
         type: integer
       meta:
@@ -426,10 +462,16 @@ definitions:
         items:
           $ref: '#/definitions/internal_handler.bookingAddOnResponse'
         type: array
+      base_price:
+        type: integer
       bathhouse_id:
         type: string
       certificate_discount:
         type: integer
+      checked_in_at:
+        type: string
+      checked_out_at:
+        type: string
       comment:
         type: string
       created_at:
@@ -438,10 +480,24 @@ definitions:
         type: integer
       end_time:
         type: string
+      extra_guest_surcharge:
+        type: integer
       guest_count:
         type: integer
+      hold_id:
+        type: string
+      holiday_multiplier:
+        type: number
+      holiday_name:
+        type: string
       id:
         type: string
+      is_holiday_price:
+        type: boolean
+      last_minute_discount:
+        type: integer
+      long_session_discount:
+        type: integer
       loyalty_discount:
         type: integer
       original_price:
@@ -453,6 +509,10 @@ definitions:
       promo_discount:
         type: integer
       referral_bonus_used:
+        type: integer
+      rejection_reason:
+        type: string
+      service_fee_amount:
         type: integer
       start_time:
         type: string
@@ -472,6 +532,12 @@ definitions:
         type: string
       url:
         example: /calendar/abc123def456.ics
+        type: string
+    type: object
+  internal_handler.cancelBookingRequest:
+    properties:
+      refund_to:
+        description: '"wallet" or "card", default "card"'
         type: string
     type: object
   internal_handler.certificateBalanceResponse:
@@ -714,6 +780,17 @@ definitions:
       slug:
         type: string
     type: object
+  internal_handler.createHolidayRequest:
+    properties:
+      date:
+        type: string
+      is_recurring:
+        type: boolean
+      name:
+        type: string
+      region:
+        type: string
+    type: object
   internal_handler.createPromoRequest:
     properties:
       code:
@@ -785,6 +862,29 @@ definitions:
       user_id:
         type: string
     type: object
+  internal_handler.disputeNoShowRequest:
+    properties:
+      comment:
+        type: string
+      gps_lat:
+        type: number
+      gps_lon:
+        type: number
+    type: object
+  internal_handler.extendBookingRequest:
+    properties:
+      extra_hours:
+        type: integer
+      payment_method:
+        type: string
+    type: object
+  internal_handler.extendBookingResponse:
+    properties:
+      booking:
+        $ref: '#/definitions/internal_handler.bookingResponse'
+      extension_price:
+        type: integer
+    type: object
   internal_handler.externalCalendarResponse:
     properties:
       bathhouse_id:
@@ -824,6 +924,35 @@ definitions:
     properties:
       email:
         type: string
+    type: object
+  internal_handler.holidayResponse:
+    properties:
+      created_at:
+        type: string
+      date:
+        type: string
+      id:
+        type: string
+      is_recurring:
+        type: boolean
+      name:
+        type: string
+      region:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_handler.initiatePaymentRequest:
+    properties:
+      card_amount:
+        description: for combo
+        type: integer
+      payment_method:
+        description: '"card", "sbp", "wallet", "combo"'
+        type: string
+      wallet_amount:
+        description: for combo/wallet
+        type: integer
     type: object
   internal_handler.initiatePaymentResponse:
     properties:
@@ -1124,16 +1253,24 @@ definitions:
         type: integer
       booking_id:
         type: string
+      captured_at:
+        type: string
+      card_amount:
+        type: integer
       created_at:
         type: string
       currency:
         type: string
       id:
         type: string
+      is_hold:
+        type: boolean
       metadata:
         additionalProperties:
           type: string
         type: object
+      payment_method:
+        type: string
       provider:
         type: string
       refund_amount:
@@ -1146,6 +1283,8 @@ definitions:
         type: string
       user_id:
         type: string
+      wallet_amount:
+        type: integer
     type: object
   internal_handler.payoutResponse:
     properties:
@@ -1368,6 +1507,30 @@ definitions:
       recipient_name:
         type: string
     type: object
+  internal_handler.rebookAddOnResponse:
+    properties:
+      addon_id:
+        type: string
+      quantity:
+        type: integer
+    type: object
+  internal_handler.rebookDataResponse:
+    properties:
+      addons:
+        items:
+          $ref: '#/definitions/internal_handler.rebookAddOnResponse'
+        type: array
+      bathhouse_id:
+        type: string
+      duration_hours:
+        type: integer
+      guest_count:
+        type: integer
+      time_from:
+        type: string
+      time_to:
+        type: string
+    type: object
   internal_handler.recentlyViewedResponse:
     properties:
       id:
@@ -1461,6 +1624,11 @@ definitions:
       referral_code:
         type: string
       role:
+        type: string
+    type: object
+  internal_handler.rejectBookingRequest:
+    properties:
+      reason:
         type: string
     type: object
   internal_handler.rejectKYCRequest:
@@ -1583,6 +1751,21 @@ definitions:
       text:
         type: string
     type: object
+  internal_handler.serviceFeeConfigResponse:
+    properties:
+      category:
+        type: string
+      created_at:
+        type: string
+      fee_percent:
+        type: number
+      id:
+        type: string
+      region:
+        type: string
+      updated_at:
+        type: string
+    type: object
   internal_handler.sessionResponse:
     properties:
       browser:
@@ -1599,6 +1782,11 @@ definitions:
         type: boolean
       last_active_at:
         type: string
+    type: object
+  internal_handler.setMultiplierRequest:
+    properties:
+      multiplier:
+        type: number
     type: object
   internal_handler.setPaymentDetailsRequest:
     properties:
@@ -1797,10 +1985,16 @@ definitions:
     properties:
       address:
         type: string
+      base_capacity:
+        type: integer
+      buffer_minutes:
+        type: integer
       city_id:
         type: integer
       description:
         type: string
+      extra_guest_surcharge:
+        type: integer
       has_bbq:
         type: boolean
       has_hot_tub:
@@ -1817,10 +2011,24 @@ definitions:
         items:
           type: string
         type: array
+      last_minute_discount_percent:
+        type: integer
+      last_minute_enabled:
+        type: boolean
+      last_minute_hours_threshold:
+        type: integer
       latitude:
         type: number
+      lead_time_hours:
+        type: integer
+      long_session_discount_percent:
+        type: integer
+      long_session_threshold_hours:
+        type: integer
       longitude:
         type: number
+      max_advance_days:
+        type: integer
       max_guests:
         type: integer
       min_duration:
@@ -1843,6 +2051,17 @@ definitions:
       name:
         type: string
       slug:
+        type: string
+    type: object
+  internal_handler.updateHolidayRequest:
+    properties:
+      date:
+        type: string
+      is_recurring:
+        type: boolean
+      name:
+        type: string
+      region:
         type: string
     type: object
   internal_handler.updatePreferencesRequest:
@@ -1910,6 +2129,15 @@ definitions:
       thumbnail_url:
         type: string
       url:
+        type: string
+    type: object
+  internal_handler.upsertServiceFeeRequest:
+    properties:
+      category:
+        type: string
+      fee_percent:
+        type: number
+      region:
         type: string
     type: object
   internal_handler.userPreferencesResponse:
@@ -2539,6 +2767,77 @@ paths:
       summary: Reject bathhouse
       tags:
       - admin-bathhouses
+  /admin/bookings/{id}/refund:
+    post:
+      consumes:
+      - application/json
+      description: Allows admin to refund a booking payment with a specified amount
+        and reason. Creates an audit log entry.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Refund details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.adminRefundRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Admin manual refund
+      tags:
+      - payments
   /admin/cities:
     post:
       consumes:
@@ -3007,6 +3306,236 @@ paths:
       summary: Resolve complaint
       tags:
       - admin-complaints
+  /admin/holidays:
+    get:
+      description: Returns all holidays, optionally filtered by region
+      parameters:
+      - description: Filter by region (RU, BY)
+        in: query
+        name: region
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.holidayResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List holidays
+      tags:
+      - admin
+      - holidays
+    post:
+      consumes:
+      - application/json
+      description: Creates a new holiday entry
+      parameters:
+      - description: Holiday data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createHolidayRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.holidayResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create holiday
+      tags:
+      - admin
+      - holidays
+  /admin/holidays/{id}:
+    delete:
+      description: Deletes a holiday entry
+      parameters:
+      - description: Holiday ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete holiday
+      tags:
+      - admin
+      - holidays
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing holiday entry
+      parameters:
+      - description: Holiday ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated holiday data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updateHolidayRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.holidayResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update holiday
+      tags:
+      - admin
+      - holidays
   /admin/kyc/{id}/approve:
     patch:
       description: Approve a pending KYC application (admin only)
@@ -3800,6 +4329,103 @@ paths:
       summary: Get pending reviews count
       tags:
       - admin-reviews
+  /admin/service-fee:
+    get:
+      description: Returns all service fee configurations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.serviceFeeConfigResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List service fee configs
+      tags:
+      - admin
+      - service-fee
+    put:
+      consumes:
+      - application/json
+      description: Creates or updates a service fee configuration by region and category
+      parameters:
+      - description: Service fee config
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.upsertServiceFeeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.serviceFeeConfigResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create or update service fee config
+      tags:
+      - admin
+      - service-fee
   /admin/users:
     get:
       description: Returns a paginated list of all users. Admin only.
@@ -6362,10 +6988,10 @@ paths:
       summary: Create booking
       tags:
       - bookings
-  /bookings/{id}/cancel:
+  /bookings/{id}/approve:
     patch:
-      description: Cancels a booking. Clients can cancel their own bookings, owners/representatives
-        can cancel bookings for their bathhouses.
+      description: Approves a pending_owner booking request. Captures wallet hold.
+        Only available to bathhouse owners and representatives.
       parameters:
       - description: Booking ID (UUID)
         in: path
@@ -6422,7 +7048,204 @@ paths:
               type: object
       security:
       - BearerAuth: []
+      summary: Approve booking request
+      tags:
+      - bookings
+  /bookings/{id}/cancel:
+    patch:
+      consumes:
+      - application/json
+      description: Cancels a booking. Clients can cancel their own bookings, owners/representatives
+        can cancel bookings for their bathhouses. Optional refund_to parameter to
+        choose refund destination.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Cancel options
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/internal_handler.cancelBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
       summary: Cancel booking
+      tags:
+      - bookings
+  /bookings/{id}/check-in:
+    patch:
+      description: Marks a guest as arrived for a confirmed booking. Available 15
+        min before to 30 min after booking start time. Only owners/representatives.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Check-in guest
+      tags:
+      - bookings
+  /bookings/{id}/check-out:
+    patch:
+      description: Marks a guest as departed, completing the booking. Requires prior
+        check-in. Awards loyalty points. Only owners/representatives.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Check-out guest
       tags:
       - bookings
   /bookings/{id}/complete:
@@ -6551,16 +7374,176 @@ paths:
       summary: Confirm booking
       tags:
       - bookings
-  /bookings/{id}/pay:
+  /bookings/{id}/dispute-noshow:
     post:
-      description: Creates a payment for a booking via YooKassa and returns the confirmation
-        URL for redirect
+      consumes:
+      - application/json
+      description: Client disputes a no-show status within 2 hours. Creates a support
+        ticket with GPS coordinates.
       parameters:
       - description: Booking ID (UUID)
         in: path
         name: id
         required: true
         type: string
+      - description: Dispute details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.disputeNoShowRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Dispute no-show
+      tags:
+      - bookings
+  /bookings/{id}/extend:
+    post:
+      consumes:
+      - application/json
+      description: Extends an active booking session by 1-2 hours. Only the booking
+        owner (client) can extend. Booking must be confirmed or checked-in. Extension
+        slots must be available.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Extension details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.extendBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.extendBookingResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Extend booking session
+      tags:
+      - bookings
+  /bookings/{id}/pay:
+    post:
+      consumes:
+      - application/json
+      description: Creates a payment for a booking. Supports card, SBP, wallet, and
+        combo (wallet+card/SBP) payment methods. For wallet/combo, provide wallet_amount
+        and card_amount fields.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Payment options
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/internal_handler.initiatePaymentRequest'
       produces:
       - application/json
       responses:
@@ -6667,16 +7650,87 @@ paths:
       summary: Get booking payment
       tags:
       - payments
-  /bookings/{id}/reject:
-    patch:
-      description: Rejects a pending booking. Only available to bathhouse owners and
-        representatives.
+  /bookings/{id}/rebook-data:
+    get:
+      description: Returns pre-filled booking parameters from a past booking (completed
+        or cancelled) for quick re-booking. Prices are not included as they are recalculated
+        at booking time.
       parameters:
       - description: Booking ID (UUID)
         in: path
         name: id
         required: true
         type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.rebookDataResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get re-booking data
+      tags:
+      - bookings
+  /bookings/{id}/reject:
+    patch:
+      consumes:
+      - application/json
+      description: Rejects a pending or pending_owner booking. Only available to bathhouse
+        owners and representatives. Optional rejection reason.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Rejection reason
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/internal_handler.rejectBookingRequest'
       produces:
       - application/json
       responses:
@@ -8367,6 +9421,64 @@ paths:
       summary: Get bathhouse edit history
       tags:
       - bathhouses
+  /my/bathhouses/{id}/holiday-multiplier:
+    put:
+      consumes:
+      - application/json
+      description: Sets a custom holiday price multiplier for a bathhouse. Owner or
+        representative only.
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Multiplier data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.setMultiplierRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Set bathhouse holiday multiplier
+      tags:
+      - pricing
+      - holidays
   /my/bathhouses/{id}/photos:
     get:
       description: Get all photos (pending, verified, rejected) for a bathhouse. Owner
