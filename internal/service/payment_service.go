@@ -293,7 +293,7 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 				holds, holdErr := s.walletSvc.GetActiveHolds(ctx, walletID)
 				if holdErr == nil {
 					for _, h := range holds {
-						if h.ReferenceID != nil && *h.ReferenceID == bookingID {
+						if h.ReferenceID != nil && *h.ReferenceID == bookingID && h.ReferenceType == "booking_payment" {
 							if releaseErr := s.walletSvc.ReleaseHold(ctx, h.ID); releaseErr != nil {
 								s.logger.Error("failed to release wallet hold after payment creation error",
 									"hold_id", h.ID, "error", releaseErr)
@@ -360,7 +360,7 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 				holds, holdErr := s.walletSvc.GetActiveHolds(ctx, walletID)
 				if holdErr == nil {
 					for _, h := range holds {
-						if h.ReferenceID != nil && *h.ReferenceID == bookingID {
+						if h.ReferenceID != nil && *h.ReferenceID == bookingID && h.ReferenceType == "booking_payment" {
 							if releaseErr := s.walletSvc.ReleaseHold(ctx, h.ID); releaseErr != nil {
 								s.logger.Error("failed to release wallet hold after card failure",
 									"hold_id", h.ID, "error", releaseErr)
@@ -427,7 +427,7 @@ func (s *paymentService) CaptureHoldPayment(ctx context.Context, bookingID uuid.
 			holds, holdErr := s.walletSvc.GetActiveHolds(ctx, wallet.ID)
 			if holdErr == nil {
 				for _, h := range holds {
-					if h.ReferenceID != nil && *h.ReferenceID == bookingID {
+					if h.ReferenceID != nil && *h.ReferenceID == bookingID && h.ReferenceType == "booking_payment" {
 						if _, captureErr := s.walletSvc.CaptureHold(ctx, h.ID); captureErr != nil {
 							s.logger.Error("failed to capture wallet hold on payment capture",
 								"booking_id", bookingID, "hold_id", h.ID, "error", captureErr)
@@ -478,7 +478,7 @@ func (s *paymentService) ReleaseHoldPayment(ctx context.Context, bookingID uuid.
 			holds, holdErr := s.walletSvc.GetActiveHolds(ctx, wallet.ID)
 			if holdErr == nil {
 				for _, h := range holds {
-					if h.ReferenceID != nil && *h.ReferenceID == bookingID {
+					if h.ReferenceID != nil && *h.ReferenceID == bookingID && h.ReferenceType == "booking_payment" {
 						if releaseErr := s.walletSvc.ReleaseHold(ctx, h.ID); releaseErr != nil {
 							s.logger.Error("failed to release wallet hold on payment release",
 								"booking_id", bookingID, "hold_id", h.ID, "error", releaseErr)

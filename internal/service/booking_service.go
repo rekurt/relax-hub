@@ -1181,6 +1181,8 @@ func (s *bookingService) Approve(ctx context.Context, userID uuid.UUID, role dom
 		if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
 			s.logger.Warn("failed to release duplicate booking wallet hold on approve", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
 		}
+	} else if !paymentHoldCaptured && booking.HoldID == nil {
+		return fmt.Errorf("%w: no payment or wallet hold found for booking", domain.ErrInvalidInput)
 	}
 
 	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingConfirmed); err != nil {
