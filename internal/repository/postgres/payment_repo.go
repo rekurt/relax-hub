@@ -24,8 +24,8 @@ func NewPaymentRepository(pool *pgxpool.Pool) repository.PaymentRepository {
 
 func (r *paymentRepo) Create(ctx context.Context, payment *domain.Payment) error {
 	query := `
-		INSERT INTO payments (id, booking_id, user_id, amount, currency, status, provider, external_id, payment_method, refund_amount, refunded_at, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+		INSERT INTO payments (id, booking_id, user_id, amount, currency, status, provider, external_id, payment_method, wallet_amount, card_amount, refund_amount, refunded_at, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`
 
 	if payment.ID == uuid.Nil {
 		payment.ID = uuid.New()
@@ -49,6 +49,7 @@ func (r *paymentRepo) Create(ctx context.Context, payment *domain.Payment) error
 		payment.ID, payment.BookingID, payment.UserID,
 		payment.Amount, payment.Currency, payment.Status,
 		payment.Provider, payment.ExternalID, payment.PaymentMethod,
+		payment.WalletAmount, payment.CardAmount,
 		payment.RefundAmount, payment.RefundedAt, metadata,
 		payment.CreatedAt, payment.UpdatedAt,
 	)
@@ -58,7 +59,7 @@ func (r *paymentRepo) Create(ctx context.Context, payment *domain.Payment) error
 	return nil
 }
 
-const paymentSelectColumns = `id, booking_id, user_id, amount, currency, status, provider, external_id, payment_method, refund_amount, refunded_at, metadata, created_at, updated_at`
+const paymentSelectColumns = `id, booking_id, user_id, amount, currency, status, provider, external_id, payment_method, wallet_amount, card_amount, refund_amount, refunded_at, metadata, created_at, updated_at`
 
 func (r *paymentRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Payment, error) {
 	query := `SELECT ` + paymentSelectColumns + ` FROM payments WHERE id = $1`
@@ -81,6 +82,7 @@ func (r *paymentRepo) scanPayment(ctx context.Context, query string, arg interfa
 		&p.ID, &p.BookingID, &p.UserID,
 		&p.Amount, &p.Currency, &p.Status,
 		&p.Provider, &p.ExternalID, &p.PaymentMethod,
+		&p.WalletAmount, &p.CardAmount,
 		&p.RefundAmount, &p.RefundedAt, &p.Metadata,
 		&p.CreatedAt, &p.UpdatedAt,
 	)

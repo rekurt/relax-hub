@@ -52,6 +52,8 @@ type Payment struct {
 	Provider      string            // "yookassa"
 	ExternalID    string            // ID транзакции в платежной системе
 	PaymentMethod PaymentMethod     // "card", "sbp", "wallet", "combo"
+	WalletAmount  int64             // копейки, оплачено из кошелька
+	CardAmount    int64             // копейки, оплачено картой/СБП
 	RefundAmount  int64             // сумма возврата в копейках
 	RefundedAt    *time.Time
 	Metadata      map[string]string

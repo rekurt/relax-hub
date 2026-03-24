@@ -21,6 +21,7 @@ import (
 
 type mockPaymentService struct {
 	initiateFn       func(ctx context.Context, userID, bookingID uuid.UUID, method domain.PaymentMethod) (string, error)
+	initiateComboFn  func(ctx context.Context, userID, bookingID uuid.UUID, req service.ComboPaymentRequest) (string, error)
 	handleWebhookFn  func(ctx context.Context, event service.WebhookEvent) error
 	refundFn         func(ctx context.Context, bookingID uuid.UUID) error
 	getByBookingFn   func(ctx context.Context, userID, bookingID uuid.UUID) (*domain.Payment, error)
@@ -30,6 +31,13 @@ type mockPaymentService struct {
 func (m *mockPaymentService) InitiatePayment(ctx context.Context, userID, bookingID uuid.UUID, method domain.PaymentMethod) (string, error) {
 	if m.initiateFn != nil {
 		return m.initiateFn(ctx, userID, bookingID, method)
+	}
+	return "", nil
+}
+
+func (m *mockPaymentService) InitiateComboPayment(ctx context.Context, userID, bookingID uuid.UUID, req service.ComboPaymentRequest) (string, error) {
+	if m.initiateComboFn != nil {
+		return m.initiateComboFn(ctx, userID, bookingID, req)
 	}
 	return "", nil
 }

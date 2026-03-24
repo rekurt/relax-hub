@@ -106,9 +106,55 @@ func (n *noopPaymentService) RefundPayment(_ context.Context, _ uuid.UUID, _ boo
 func (n *noopPaymentService) GetPaymentByBooking(_ context.Context, _, _ uuid.UUID) (*domain.Payment, error) {
 	return nil, domain.ErrPaymentNotFound
 }
+func (n *noopPaymentService) InitiateComboPayment(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ service.ComboPaymentRequest) (string, error) {
+	return "", nil
+}
 func (n *noopPaymentService) ListUserPayments(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Payment], error) {
 	return &domain.PaginatedResult[domain.Payment]{}, nil
 }
+
+// noopWalletService is a no-op WalletService for tests that don't verify wallet operations.
+type noopWalletService struct{}
+
+func (n *noopWalletService) CreateWallet(_ context.Context, _ uuid.UUID, _ domain.WalletCurrency) (*domain.Wallet, error) {
+	return &domain.Wallet{ID: uuid.New()}, nil
+}
+func (n *noopWalletService) GetWallet(_ context.Context, _ uuid.UUID) (*domain.Wallet, error) {
+	return &domain.Wallet{ID: uuid.New(), Balance: 1000000}, nil
+}
+func (n *noopWalletService) TopUp(_ context.Context, _ uuid.UUID, _ int64) (*domain.WalletTransaction, error) {
+	return &domain.WalletTransaction{}, nil
+}
+func (n *noopWalletService) Spend(_ context.Context, _ uuid.UUID, _ int64, _ string, _ *uuid.UUID, _ string) (*domain.WalletTransaction, error) {
+	return &domain.WalletTransaction{}, nil
+}
+func (n *noopWalletService) Hold(_ context.Context, _ uuid.UUID, _ int64, _ string, _ *uuid.UUID, _ string, _ time.Time) (*domain.WalletHold, error) {
+	return &domain.WalletHold{}, nil
+}
+func (n *noopWalletService) CaptureHold(_ context.Context, _ uuid.UUID) (*domain.WalletTransaction, error) {
+	return &domain.WalletTransaction{}, nil
+}
+func (n *noopWalletService) ReleaseHold(_ context.Context, _ uuid.UUID) error { return nil }
+func (n *noopWalletService) Refund(_ context.Context, _ uuid.UUID, _ int64, _ string, _ *uuid.UUID, _ string) (*domain.WalletTransaction, error) {
+	return &domain.WalletTransaction{}, nil
+}
+func (n *noopWalletService) AddBonus(_ context.Context, _ uuid.UUID, _ int64, _ domain.WalletTransactionType, _ *time.Time, _ string) (*domain.WalletTransaction, error) {
+	return &domain.WalletTransaction{}, nil
+}
+func (n *noopWalletService) GetBalance(_ context.Context, _ uuid.UUID) (*service.WalletBalanceSummary, error) {
+	return &service.WalletBalanceSummary{}, nil
+}
+func (n *noopWalletService) ListTransactions(_ context.Context, _ uuid.UUID, _ domain.WalletTransactionFilter) (*domain.PaginatedResult[domain.WalletTransaction], error) {
+	return &domain.PaginatedResult[domain.WalletTransaction]{}, nil
+}
+func (n *noopWalletService) GetActiveHolds(_ context.Context, _ uuid.UUID) ([]domain.WalletHold, error) {
+	return nil, nil
+}
+func (n *noopWalletService) ExpireBonuses(_ context.Context) (int, error) { return 0, nil }
+func (n *noopWalletService) ExpireBonusesForWallet(_ context.Context, _ uuid.UUID) (int, error) {
+	return 0, nil
+}
+func (n *noopWalletService) FreezeAndZeroBalance(_ context.Context, _ uuid.UUID) error { return nil }
 
 // noopCertificateService is a no-op CertificateService for tests that don't verify certificates.
 type noopCertificateService struct{}

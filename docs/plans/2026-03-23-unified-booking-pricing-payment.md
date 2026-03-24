@@ -653,19 +653,19 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Create: `migrations/XXXXXX_combo_payments.up.sql` / `.down.sql`
 
 **Payment model changes:**
-- [ ] Add fields to Payment struct:
+- [x] Add fields to Payment struct:
   ```go
   WalletAmount int64  // kopecks paid from wallet
   CardAmount   int64  // kopecks paid by card/SBP
   ```
 
 **Migration:**
-- [ ] ALTER TABLE payments:
+- [x] ALTER TABLE payments:
   - `ADD COLUMN wallet_amount BIGINT NOT NULL DEFAULT 0`
   - `ADD COLUMN card_amount BIGINT NOT NULL DEFAULT 0`
 
 **Modify PaymentService:**
-- [ ] New interface method:
+- [x] New interface method:
   ```go
   InitiateComboPayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, req ComboPaymentRequest) (confirmationURL string, err error)
   ```
@@ -676,8 +676,8 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
       PaymentMethod PaymentMethod // "card", "sbp" (for card portion)
   }
   ```
-- [ ] Inject `walletSvc WalletService` into paymentService
-- [ ] Combo payment flow implementation:
+- [x] Inject `walletSvc WalletService` into paymentService
+- [x] Combo payment flow implementation:
   1. Validate: `WalletAmount + CardAmount == booking.TotalPrice`
   2. Validate: `WalletAmount >= 0 && CardAmount >= 0`
   3. If `WalletAmount > 0`: check wallet balance, call `walletSvc.Spend(ctx, userID, WalletAmount, bookingID)`
@@ -687,7 +687,7 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   7. Store WalletAmount, CardAmount, PaymentMethod on Payment record
 
 **Handler changes:**
-- [ ] New request struct:
+- [x] New request struct:
   ```go
   type initiatePaymentRequest struct {
       BookingID     string `json:"booking_id"`
@@ -696,19 +696,19 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
       CardAmount    int64  `json:"card_amount,omitempty"`   // for combo
   }
   ```
-- [ ] Route to appropriate method based on payment_method:
+- [x] Route to appropriate method based on payment_method:
   - "card"/"sbp": existing InitiatePayment flow
   - "wallet": call InitiateComboPayment with CardAmount=0
   - "combo": call InitiateComboPayment with both amounts
 
 **Tests:**
-- [ ] Test full card payment: WalletAmount=0, CardAmount=total — existing flow
-- [ ] Test full wallet payment: WalletAmount=total, CardAmount=0 — wallet debited, booking confirmed immediately, no card charge
-- [ ] Test combo: WalletAmount=5000, CardAmount=10000 — wallet debited first, card payment created for remainder
-- [ ] Test combo with card failure: wallet debited, card fails — verify wallet is refunded
-- [ ] Test invalid amounts: WalletAmount + CardAmount != total — should return error
-- [ ] Test insufficient wallet balance: should return ErrInsufficientWalletBalance
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test full card payment: WalletAmount=0, CardAmount=total — existing flow
+- [x] Test full wallet payment: WalletAmount=total, CardAmount=0 — wallet debited, booking confirmed immediately, no card charge
+- [x] Test combo: WalletAmount=5000, CardAmount=10000 — wallet debited first, card payment created for remainder
+- [x] Test combo with card failure: wallet debited, card fails — verify wallet is refunded
+- [x] Test invalid amounts: WalletAmount + CardAmount != total — should return error
+- [x] Test insufficient wallet balance: should return ErrInsufficientWalletBalance
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 9: Payment Hold for Request Bookings (FR-094)
 

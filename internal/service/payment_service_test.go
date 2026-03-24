@@ -14,12 +14,54 @@ import (
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
+// testWalletService is a configurable mock for wallet operations in payment tests.
+type testWalletService struct {
+	noopWalletService
+	wallet       *domain.Wallet
+	spendErr     error
+	refundCalled bool
+	spendCalled  bool
+	spendAmount  int64
+	refundAmount int64
+}
+
+func (w *testWalletService) GetWallet(_ context.Context, _ uuid.UUID) (*domain.Wallet, error) {
+	if w.wallet != nil {
+		return w.wallet, nil
+	}
+	return &domain.Wallet{ID: uuid.New(), Balance: 1000000}, nil
+}
+
+func (w *testWalletService) Spend(_ context.Context, _ uuid.UUID, amount int64, _ string, _ *uuid.UUID, _ string) (*domain.WalletTransaction, error) {
+	w.spendCalled = true
+	w.spendAmount = amount
+	if w.spendErr != nil {
+		return nil, w.spendErr
+	}
+	return &domain.WalletTransaction{}, nil
+}
+
+func (w *testWalletService) Refund(_ context.Context, _ uuid.UUID, amount int64, _ string, _ *uuid.UUID, _ string) (*domain.WalletTransaction, error) {
+	w.refundCalled = true
+	w.refundAmount = amount
+	return &domain.WalletTransaction{}, nil
+}
+
 func newPaymentService() (service.PaymentService, *mock.PaymentRepo, *mock.BookingRepo, *payment.MockProvider) {
 	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, provider, &noopNotifService{}, "http://localhost:3000/callback", log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, provider, &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", log)
+	return svc, paymentRepo, bookingRepo, provider
+}
+
+func newPaymentServiceWithWallet(walletSvc *testWalletService) (service.PaymentService, *mock.PaymentRepo, *mock.BookingRepo, *payment.MockProvider) {
+	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
+	bookingRepo := mock.NewBookingRepo()
+	provider := payment.NewMockProvider()
+	log := logger.New(logger.LevelWarn)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, provider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 
@@ -525,3 +567,197 @@ func TestPaymentService_CancelPayment(t *testing.T) {
 		t.Errorf("status after cancel = %q, want canceled", status)
 	}
 }
+
+// --- Combo Payment Tests ---
+
+func TestPaymentService_ComboPayment_FullCard(t *testing.T) {
+	walletSvc := &testWalletService{}
+	svc, paymentRepo, bookingRepo, _ := newPaymentServiceWithWallet(walletSvc)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
+
+	url, err := svc.InitiateComboPayment(context.Background(), userID, booking.ID, service.ComboPaymentRequest{
+		WalletAmount:  0,
+		CardAmount:    booking.TotalPrice,
+		PaymentMethod: domain.PaymentMethodCard,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if url == "" {
+		t.Error("expected non-empty confirmation URL for full card payment")
+	}
+	if walletSvc.spendCalled {
+		t.Error("wallet Spend should not be called for full card payment")
+	}
+
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	if p.WalletAmount != 0 {
+		t.Errorf("wallet_amount = %d, want 0", p.WalletAmount)
+	}
+	if p.CardAmount != booking.TotalPrice {
+		t.Errorf("card_amount = %d, want %d", p.CardAmount, booking.TotalPrice)
+	}
+}
+
+func TestPaymentService_ComboPayment_FullWallet(t *testing.T) {
+	walletSvc := &testWalletService{}
+	svc, paymentRepo, bookingRepo, _ := newPaymentServiceWithWallet(walletSvc)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
+
+	url, err := svc.InitiateComboPayment(context.Background(), userID, booking.ID, service.ComboPaymentRequest{
+		WalletAmount:  booking.TotalPrice,
+		CardAmount:    0,
+		PaymentMethod: domain.PaymentMethodWallet,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if url != "" {
+		t.Error("expected empty confirmation URL for full wallet payment")
+	}
+	if !walletSvc.spendCalled {
+		t.Error("wallet Spend should be called for full wallet payment")
+	}
+	if walletSvc.spendAmount != booking.TotalPrice {
+		t.Errorf("spend amount = %d, want %d", walletSvc.spendAmount, booking.TotalPrice)
+	}
+
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	if p.Status != domain.PaymentSucceeded {
+		t.Errorf("payment status = %q, want %q", p.Status, domain.PaymentSucceeded)
+	}
+	if p.PaymentMethod != domain.PaymentMethodWallet {
+		t.Errorf("payment method = %q, want %q", p.PaymentMethod, domain.PaymentMethodWallet)
+	}
+
+	updatedBooking, _ := bookingRepo.GetByID(context.Background(), booking.ID)
+	if updatedBooking.Status != domain.BookingConfirmed {
+		t.Errorf("booking status = %q, want %q", updatedBooking.Status, domain.BookingConfirmed)
+	}
+}
+
+func TestPaymentService_ComboPayment_WalletPlusCard(t *testing.T) {
+	walletSvc := &testWalletService{}
+	svc, paymentRepo, bookingRepo, _ := newPaymentServiceWithWallet(walletSvc)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
+
+	walletPortion := int64(5000)
+	cardPortion := booking.TotalPrice - walletPortion
+
+	url, err := svc.InitiateComboPayment(context.Background(), userID, booking.ID, service.ComboPaymentRequest{
+		WalletAmount:  walletPortion,
+		CardAmount:    cardPortion,
+		PaymentMethod: domain.PaymentMethodCard,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if url == "" {
+		t.Error("expected non-empty confirmation URL for combo payment")
+	}
+	if !walletSvc.spendCalled {
+		t.Error("wallet Spend should be called for combo payment")
+	}
+	if walletSvc.spendAmount != walletPortion {
+		t.Errorf("spend amount = %d, want %d", walletSvc.spendAmount, walletPortion)
+	}
+
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	if p.PaymentMethod != domain.PaymentMethodCombo {
+		t.Errorf("payment method = %q, want %q", p.PaymentMethod, domain.PaymentMethodCombo)
+	}
+	if p.WalletAmount != walletPortion {
+		t.Errorf("wallet_amount = %d, want %d", p.WalletAmount, walletPortion)
+	}
+	if p.CardAmount != cardPortion {
+		t.Errorf("card_amount = %d, want %d", p.CardAmount, cardPortion)
+	}
+}
+
+func TestPaymentService_ComboPayment_CardFailure_WalletRefunded(t *testing.T) {
+	walletSvc := &testWalletService{}
+	userID := uuid.New()
+	bookingRepo := mock.NewBookingRepo()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
+
+	failProvider := &failingMockProvider{}
+	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
+	log := logger.New(logger.LevelWarn)
+	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, failProvider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
+
+	walletPortion := int64(5000)
+	cardPortion := booking.TotalPrice - walletPortion
+
+	_, err := failSvc.InitiateComboPayment(context.Background(), userID, booking.ID, service.ComboPaymentRequest{
+		WalletAmount:  walletPortion,
+		CardAmount:    cardPortion,
+		PaymentMethod: domain.PaymentMethodCard,
+	})
+	if !errors.Is(err, domain.ErrPaymentFailed) {
+		t.Errorf("expected ErrPaymentFailed, got: %v", err)
+	}
+	if !walletSvc.spendCalled {
+		t.Error("wallet Spend should have been called before card failure")
+	}
+	if !walletSvc.refundCalled {
+		t.Error("wallet Refund should be called after card failure")
+	}
+	if walletSvc.refundAmount != walletPortion {
+		t.Errorf("refund amount = %d, want %d", walletSvc.refundAmount, walletPortion)
+	}
+}
+
+func TestPaymentService_ComboPayment_InvalidAmounts(t *testing.T) {
+	walletSvc := &testWalletService{}
+	svc, _, bookingRepo, _ := newPaymentServiceWithWallet(walletSvc)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
+
+	// Amounts don't sum to total
+	_, err := svc.InitiateComboPayment(context.Background(), userID, booking.ID, service.ComboPaymentRequest{
+		WalletAmount:  1000,
+		CardAmount:    2000,
+		PaymentMethod: domain.PaymentMethodCard,
+	})
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput for mismatched amounts, got: %v", err)
+	}
+}
+
+func TestPaymentService_ComboPayment_InsufficientWallet(t *testing.T) {
+	walletSvc := &testWalletService{
+		spendErr: domain.ErrInsufficientWalletBalance,
+	}
+	svc, _, bookingRepo, _ := newPaymentServiceWithWallet(walletSvc)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
+
+	_, err := svc.InitiateComboPayment(context.Background(), userID, booking.ID, service.ComboPaymentRequest{
+		WalletAmount:  booking.TotalPrice,
+		CardAmount:    0,
+		PaymentMethod: domain.PaymentMethodWallet,
+	})
+	if !errors.Is(err, domain.ErrInsufficientWalletBalance) {
+		t.Errorf("expected ErrInsufficientWalletBalance, got: %v", err)
+	}
+}
+
+// failingMockProvider is a PaymentProvider that always fails on CreatePayment.
+type failingMockProvider struct{}
+
+func (f *failingMockProvider) CreatePayment(_ context.Context, _ payment.CreatePaymentRequest) (*payment.PaymentResult, error) {
+	return nil, errors.New("provider unavailable")
+}
+func (f *failingMockProvider) GetPaymentStatus(_ context.Context, _ string) (string, error) {
+	return "", errors.New("not found")
+}
+func (f *failingMockProvider) CreateRefund(_ context.Context, _ string, _ int64) error {
+	return nil
+}
+func (f *failingMockProvider) CapturePayment(_ context.Context, _ string, _ int64) error {
+	return nil
+}
+func (f *failingMockProvider) CancelPayment(_ context.Context, _ string) error { return nil }

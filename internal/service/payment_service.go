@@ -23,8 +23,16 @@ type WebhookEvent struct {
 	Status     string // "succeeded", "canceled", etc.
 }
 
+// ComboPaymentRequest describes how a booking payment should be split between wallet and card/SBP.
+type ComboPaymentRequest struct {
+	WalletAmount  int64             // amount to pay from wallet (0 = card only)
+	CardAmount    int64             // amount to pay by card/SBP (0 = wallet only)
+	PaymentMethod domain.PaymentMethod // "card" or "sbp" (for card portion)
+}
+
 type PaymentService interface {
 	InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, paymentMethod domain.PaymentMethod) (confirmationURL string, err error)
+	InitiateComboPayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, req ComboPaymentRequest) (confirmationURL string, err error)
 	HandleWebhook(ctx context.Context, event WebhookEvent) error
 	RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool) error
 	GetPaymentByBooking(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*domain.Payment, error)
@@ -35,6 +43,7 @@ type paymentService struct {
 	paymentRepo repository.PaymentRepository
 	bookingRepo repository.BookingRepository
 	provider    payment.PaymentProvider
+	walletSvc   WalletService
 	notifSvc    NotificationService
 	returnURL   string
 	logger      *logger.Logger
@@ -44,6 +53,7 @@ func NewPaymentService(
 	paymentRepo repository.PaymentRepository,
 	bookingRepo repository.BookingRepository,
 	provider payment.PaymentProvider,
+	walletSvc WalletService,
 	notifSvc NotificationService,
 	returnURL string,
 	log *logger.Logger,
@@ -52,6 +62,7 @@ func NewPaymentService(
 		paymentRepo: paymentRepo,
 		bookingRepo: bookingRepo,
 		provider:    provider,
+		walletSvc:   walletSvc,
 		notifSvc:    notifSvc,
 		returnURL:   returnURL,
 		logger:      log,
@@ -140,6 +151,157 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 	}
 
 	// Update with external ID and processing status
+	if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentProcessing, result.ExternalID); err != nil {
+		return "", err
+	}
+
+	return result.ConfirmationURL, nil
+}
+
+func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, req ComboPaymentRequest) (string, error) {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return "", err
+	}
+
+	if booking.UserID != userID {
+		return "", domain.ErrForbidden
+	}
+
+	if booking.Status != domain.BookingPending && booking.Status != domain.BookingConfirmed {
+		return "", fmt.Errorf("%w: booking must be pending or confirmed to pay", domain.ErrInvalidInput)
+	}
+
+	if req.WalletAmount < 0 || req.CardAmount < 0 {
+		return "", fmt.Errorf("%w: payment amounts must be non-negative", domain.ErrInvalidInput)
+	}
+
+	if req.WalletAmount+req.CardAmount != booking.TotalPrice {
+		return "", fmt.Errorf("%w: wallet_amount + card_amount must equal total price", domain.ErrInvalidInput)
+	}
+
+	// Check if payment already exists for this booking
+	existing, err := s.paymentRepo.GetByBookingID(ctx, bookingID)
+	if err == nil && existing != nil {
+		if existing.Status == domain.PaymentSucceeded {
+			return "", domain.ErrPaymentAlreadyProcessed
+		}
+		if existing.Status == domain.PaymentPending || existing.Status == domain.PaymentProcessing {
+			return "", domain.ErrPaymentAlreadyProcessed
+		}
+		if existing.Status == domain.PaymentFailed {
+			if err := s.paymentRepo.Delete(ctx, existing.ID); err != nil {
+				return "", fmt.Errorf("failed to delete failed payment: %w", err)
+			}
+		}
+	}
+
+	// Determine the effective payment method
+	paymentMethod := req.PaymentMethod
+	if req.WalletAmount > 0 && req.CardAmount > 0 {
+		paymentMethod = domain.PaymentMethodCombo
+	} else if req.WalletAmount > 0 && req.CardAmount == 0 {
+		paymentMethod = domain.PaymentMethodWallet
+	}
+	// If CardAmount only, keep the provided method (card/sbp)
+
+	now := time.Now()
+	p := &domain.Payment{
+		ID:            uuid.New(),
+		BookingID:     bookingID,
+		UserID:        booking.UserID,
+		Amount:        booking.TotalPrice,
+		Currency:      "RUB",
+		Status:        domain.PaymentPending,
+		Provider:      "yookassa",
+		PaymentMethod: paymentMethod,
+		WalletAmount:  req.WalletAmount,
+		CardAmount:    req.CardAmount,
+		Metadata: map[string]string{
+			"booking_id": bookingID.String(),
+			"user_id":    booking.UserID.String(),
+		},
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	if err := p.Validate(); err != nil {
+		return "", err
+	}
+
+	// Step 1: Debit wallet if wallet portion exists
+	var walletID uuid.UUID
+	if req.WalletAmount > 0 {
+		wallet, err := s.walletSvc.GetWallet(ctx, userID)
+		if err != nil {
+			return "", err
+		}
+		walletID = wallet.ID
+
+		bookingIDRef := bookingID
+		_, err = s.walletSvc.Spend(ctx, walletID, req.WalletAmount, "booking_payment", &bookingIDRef, fmt.Sprintf("Оплата бронирования %s", bookingID.String()[:8]))
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if err := s.paymentRepo.Create(ctx, p); err != nil {
+		// Rollback wallet debit
+		if req.WalletAmount > 0 {
+			bookingIDRef := bookingID
+			if _, refundErr := s.walletSvc.Refund(ctx, walletID, req.WalletAmount, "booking_payment_rollback", &bookingIDRef, "Возврат: ошибка создания платежа"); refundErr != nil {
+				s.logger.Error("failed to refund wallet after payment creation error",
+					"user_id", userID, "wallet_id", walletID, "amount", req.WalletAmount, "error", refundErr)
+			}
+		}
+		return "", err
+	}
+
+	// Step 2: If full wallet payment, complete immediately
+	if req.CardAmount == 0 {
+		if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentSucceeded, ""); err != nil {
+			return "", err
+		}
+		if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingConfirmed); err != nil {
+			return "", fmt.Errorf("failed to confirm booking after wallet payment: %w", err)
+		}
+		s.sendPaymentConfirmationNotification(ctx, booking)
+		return "", nil
+	}
+
+	// Step 3: Create card/SBP payment for the card portion
+	cardMethod := req.PaymentMethod
+	if cardMethod == "" || cardMethod == domain.PaymentMethodWallet || cardMethod == domain.PaymentMethodCombo {
+		cardMethod = domain.PaymentMethodCard
+	}
+
+	description := fmt.Sprintf("Оплата бронирования %s", bookingID.String()[:8])
+	result, err := s.provider.CreatePayment(ctx, payment.CreatePaymentRequest{
+		Amount:      req.CardAmount,
+		Currency:    p.Currency,
+		Description: description,
+		ReturnURL:   s.returnURL,
+		Metadata:    p.Metadata,
+		Method:      string(cardMethod),
+		Capture:     true,
+	})
+	if err != nil {
+		// Rollback wallet debit on card failure
+		if req.WalletAmount > 0 {
+			bookingIDRef := bookingID
+			if _, refundErr := s.walletSvc.Refund(ctx, walletID, req.WalletAmount, "booking_payment_rollback", &bookingIDRef, "Возврат: ошибка оплаты картой"); refundErr != nil {
+				s.logger.Error("failed to refund wallet after card payment error",
+					"user_id", userID, "wallet_id", walletID, "amount", req.WalletAmount, "error", refundErr)
+			}
+		}
+		if updErr := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentFailed, ""); updErr != nil {
+			s.logger.Error("failed to update payment status after provider error",
+				"payment_id", p.ID, "error", updErr)
+		}
+		s.logger.Error("payment provider error", "payment_id", p.ID, "error", err)
+		return "", domain.ErrPaymentFailed
+	}
+
 	if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentProcessing, result.ExternalID); err != nil {
 		return "", err
 	}

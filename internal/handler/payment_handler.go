@@ -31,6 +31,8 @@ type paymentResponse struct {
 	Status        string            `json:"status"`
 	Provider      string            `json:"provider"`
 	PaymentMethod string            `json:"payment_method"`
+	WalletAmount  int64             `json:"wallet_amount"`
+	CardAmount    int64             `json:"card_amount"`
 	RefundAmount  int64             `json:"refund_amount"`
 	RefundedAt    *time.Time        `json:"refunded_at,omitempty"`
 	Metadata      map[string]string `json:"metadata,omitempty"`
@@ -39,7 +41,9 @@ type paymentResponse struct {
 }
 
 type initiatePaymentRequest struct {
-	PaymentMethod string `json:"payment_method"` // "card" or "sbp", default "card"
+	PaymentMethod string `json:"payment_method"`                  // "card", "sbp", "wallet", "combo"
+	WalletAmount  int64  `json:"wallet_amount,omitempty"`         // for combo/wallet
+	CardAmount    int64  `json:"card_amount,omitempty"`           // for combo
 }
 
 type initiatePaymentResponse struct {
@@ -56,6 +60,8 @@ func toPaymentResponse(p *domain.Payment) paymentResponse {
 		Status:        string(p.Status),
 		Provider:      p.Provider,
 		PaymentMethod: string(p.PaymentMethod),
+		WalletAmount:  p.WalletAmount,
+		CardAmount:    p.CardAmount,
 		RefundAmount:  p.RefundAmount,
 		RefundedAt:    p.RefundedAt,
 		Metadata:      p.Metadata,
@@ -66,7 +72,7 @@ func toPaymentResponse(p *domain.Payment) paymentResponse {
 
 // InitiatePayment godoc
 // @Summary      Initiate payment
-// @Description  Creates a payment for a booking via YooKassa and returns the confirmation URL for redirect. Supports card and SBP payment methods.
+// @Description  Creates a payment for a booking. Supports card, SBP, wallet, and combo (wallet+card/SBP) payment methods. For wallet/combo, provide wallet_amount and card_amount fields.
 // @Tags         payments
 // @Accept       json
 // @Produce      json
@@ -99,21 +105,54 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 	if paymentMethod == "" {
 		paymentMethod = domain.PaymentMethodCard
 	}
-	if paymentMethod != domain.PaymentMethodCard && paymentMethod != domain.PaymentMethodSBP {
-		writeError(w, http.StatusBadRequest, "invalid_input", "payment_method must be 'card' or 'sbp'")
+
+	if !paymentMethod.IsValid() {
+		writeError(w, http.StatusBadRequest, "invalid_input", "payment_method must be 'card', 'sbp', 'wallet', or 'combo'")
 		return
 	}
 
 	userID := middleware.GetUserID(r.Context())
-	confirmationURL, err := h.paymentService.InitiatePayment(r.Context(), userID, bookingID, paymentMethod)
-	if err != nil {
-		handleServiceError(w, err)
-		return
-	}
 
-	writeJSON(w, http.StatusOK, initiatePaymentResponse{
-		ConfirmationURL: confirmationURL,
-	})
+	switch paymentMethod {
+	case domain.PaymentMethodWallet:
+		comboReq := service.ComboPaymentRequest{
+			WalletAmount:  req.WalletAmount,
+			CardAmount:    0,
+			PaymentMethod: domain.PaymentMethodWallet,
+		}
+		_, err := h.paymentService.InitiateComboPayment(r.Context(), userID, bookingID, comboReq)
+		if err != nil {
+			handleServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, initiatePaymentResponse{})
+
+	case domain.PaymentMethodCombo:
+		comboReq := service.ComboPaymentRequest{
+			WalletAmount:  req.WalletAmount,
+			CardAmount:    req.CardAmount,
+			PaymentMethod: domain.PaymentMethodCard, // default card for card portion
+		}
+		confirmationURL, err := h.paymentService.InitiateComboPayment(r.Context(), userID, bookingID, comboReq)
+		if err != nil {
+			handleServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, initiatePaymentResponse{
+			ConfirmationURL: confirmationURL,
+		})
+
+	default:
+		// card or sbp — existing flow
+		confirmationURL, err := h.paymentService.InitiatePayment(r.Context(), userID, bookingID, paymentMethod)
+		if err != nil {
+			handleServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, initiatePaymentResponse{
+			ConfirmationURL: confirmationURL,
+		})
+	}
 }
 
 // HandleWebhook godoc
