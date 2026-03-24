@@ -132,8 +132,22 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, domain.ErrBathhouseNotActive
 	}
 
-	if input.StartTime.Before(time.Now().Add(5 * time.Minute)) {
-		return nil, fmt.Errorf("%w: start time must be at least 5 minutes in the future", domain.ErrInvalidInput)
+	// Enforce lead time (configurable per bathhouse, minimum 5 minutes fallback)
+	leadTime := time.Duration(bh.LeadTimeHours) * time.Hour
+	if leadTime < 5*time.Minute {
+		leadTime = 5 * time.Minute
+	}
+	if input.StartTime.Before(time.Now().Add(leadTime)) {
+		return nil, fmt.Errorf("%w: start time must be at least %v in the future", domain.ErrInvalidInput, leadTime)
+	}
+
+	// Enforce max advance days (default 90 if not set)
+	maxAdvanceDays := bh.MaxAdvanceDays
+	if maxAdvanceDays <= 0 {
+		maxAdvanceDays = 90
+	}
+	if input.StartTime.After(time.Now().AddDate(0, 0, maxAdvanceDays)) {
+		return nil, fmt.Errorf("%w: booking exceeds maximum advance days (%d)", domain.ErrInvalidInput, maxAdvanceDays)
 	}
 
 	if input.GuestCount <= 0 || input.GuestCount > bh.MaxGuests {
@@ -159,12 +173,39 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, err
 	}
 
+	// Check availability with buffer zone: expand the time range by buffer duration
+	bufferDuration := time.Duration(bh.BufferMinutes) * time.Minute
+	checkStart := input.StartTime
+	checkEnd := input.EndTime
+	if bufferDuration > 0 {
+		checkStart = input.StartTime.Add(-bufferDuration)
+		checkEnd = input.EndTime.Add(bufferDuration)
+	}
+
 	available, err := s.bookingRepo.CheckAvailability(ctx, input.BathhouseID, input.StartTime, input.EndTime)
 	if err != nil {
 		return nil, err
 	}
 	if !available {
 		return nil, domain.ErrSlotUnavailable
+	}
+
+	// Check buffer zone conflicts with adjacent bookings
+	if bufferDuration > 0 {
+		overlapping, err := s.bookingRepo.GetOverlapping(ctx, input.BathhouseID, checkStart, checkEnd)
+		if err != nil {
+			return nil, err
+		}
+		for _, b := range overlapping {
+			// Skip if the overlapping booking is exactly our time range (already checked above)
+			if b.StartTime.Equal(input.StartTime) && b.EndTime.Equal(input.EndTime) {
+				continue
+			}
+			// If a booking ends within buffer before our start, or starts within buffer after our end
+			if b.EndTime.After(input.StartTime.Add(-bufferDuration)) && b.StartTime.Before(input.EndTime.Add(bufferDuration)) {
+				return nil, fmt.Errorf("%w: conflicts with buffer time between bookings", domain.ErrSlotUnavailable)
+			}
+		}
 	}
 
 	// Check for slot blocks (external calendar events, manual blocks)
@@ -685,6 +726,14 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 	}
 
 	now := time.Now()
+	bufferDuration := time.Duration(bh.BufferMinutes) * time.Minute
+	leadTimeCutoff := now.Add(time.Duration(bh.LeadTimeHours) * time.Hour)
+	maxAdvDays := bh.MaxAdvanceDays
+	if maxAdvDays <= 0 {
+		maxAdvDays = 90
+	}
+	maxAdvanceCutoff := now.AddDate(0, 0, maxAdvDays)
+
 	var slots []TimeSlot
 	for t := dayStart; t.Before(dayEnd); t = t.Add(time.Hour) {
 		slotEnd := t.Add(time.Hour)
@@ -695,9 +744,19 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 		if slotEnd.Before(now) {
 			continue
 		}
+		// Enforce lead time: skip slots starting before the minimum lead time
+		if t.Before(leadTimeCutoff) {
+			continue
+		}
+		// Enforce max advance days: skip slots beyond the max booking horizon
+		if t.After(maxAdvanceCutoff) || t.Equal(maxAdvanceCutoff) {
+			continue
+		}
 		avail := true
 		for _, b := range overlapping {
-			if t.Before(b.EndTime) && slotEnd.After(b.StartTime) {
+			// Check booking overlap including buffer zone after the booking
+			bookingEndWithBuffer := b.EndTime.Add(bufferDuration)
+			if t.Before(bookingEndWithBuffer) && slotEnd.After(b.StartTime) {
 				avail = false
 				break
 			}

@@ -55,6 +55,9 @@ type UpdateBathhouseInput struct {
 	LastMinuteEnabled          *bool
 	LastMinuteDiscountPercent  *int
 	LastMinuteHoursThreshold   *int
+	BufferMinutes              *int
+	LeadTimeHours              *int
+	MaxAdvanceDays             *int
 	Images                     []string
 	WorkingHours               []domain.WorkingHours
 }
@@ -313,6 +316,15 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 	}
 	if input.LastMinuteHoursThreshold != nil {
 		bh.LastMinuteHoursThreshold = *input.LastMinuteHoursThreshold
+	}
+	if input.BufferMinutes != nil {
+		bh.BufferMinutes = *input.BufferMinutes
+	}
+	if input.LeadTimeHours != nil {
+		bh.LeadTimeHours = *input.LeadTimeHours
+	}
+	if input.MaxAdvanceDays != nil {
+		bh.MaxAdvanceDays = *input.MaxAdvanceDays
 	}
 	// Detect substantial changes before persisting, so status update is atomic with data update
 	changedFields := buildChangedFields(&oldBh, bh)

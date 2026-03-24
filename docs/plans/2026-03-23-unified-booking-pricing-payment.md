@@ -422,49 +422,49 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Create: `migrations/XXXXXX_booking_settings.up.sql` / `.down.sql`
 
 **Bathhouse model changes:**
-- [ ] Add fields to Bathhouse struct:
+- [x] Add fields to Bathhouse struct:
   ```go
   BufferMinutes   int     // default 30, range 0-120, step 15 — cleanup time between bookings
   LeadTimeHours   int     // default 2, range 0-48 — minimum hours before booking start
   MaxAdvanceDays  int     // default 90, range 7-365 — max days ahead for booking
   ```
-- [ ] Note: MinDuration already exists as `MinDuration int` on Bathhouse, re-use it (rename to MinDurationHours if needed for clarity, but keep backward compatibility)
-- [ ] Update Validate(): BufferMinutes 0-120 and divisible by 15, LeadTimeHours 0-48, MaxAdvanceDays 7-365
+- [x] Note: MinDuration already exists as `MinDuration int` on Bathhouse, re-use it (rename to MinDurationHours if needed for clarity, but keep backward compatibility)
+- [x] Update Validate(): BufferMinutes 0-120 and divisible by 15, LeadTimeHours 0-48, MaxAdvanceDays 7-365
 
 **Migration:**
-- [ ] ALTER TABLE bathhouses ADD COLUMN:
+- [x] ALTER TABLE bathhouses ADD COLUMN:
   - `buffer_minutes INT NOT NULL DEFAULT 30`
   - `lead_time_hours INT NOT NULL DEFAULT 2`
   - `max_advance_days INT NOT NULL DEFAULT 90`
-- [ ] CHECK: `buffer_minutes BETWEEN 0 AND 120`, `lead_time_hours BETWEEN 0 AND 48`, `max_advance_days BETWEEN 7 AND 365`
+- [x] CHECK: `buffer_minutes BETWEEN 0 AND 120`, `lead_time_hours BETWEEN 0 AND 48`, `max_advance_days BETWEEN 7 AND 365`
 
 **Modify GetAvailableSlots (`internal/service/booking_service.go`):**
-- [ ] After checking overlapping bookings (line ~626-631), also add buffer zone: mark slots as unavailable if they fall within BufferMinutes before/after a booked slot
+- [x] After checking overlapping bookings (line ~626-631), also add buffer zone: mark slots as unavailable if they fall within BufferMinutes before/after a booked slot
   - For each booked slot [B.StartTime, B.EndTime], mark as unavailable: [B.EndTime, B.EndTime + BufferMinutes]
-- [ ] Only show slots where `slot.StartTime >= time.Now().Add(time.Duration(bh.LeadTimeHours) * time.Hour)` — enforce lead time
-- [ ] Only show slots where `slot.StartTime.Before(time.Now().AddDate(0, 0, bh.MaxAdvanceDays))` — enforce max advance days
+- [x] Only show slots where `slot.StartTime >= time.Now().Add(time.Duration(bh.LeadTimeHours) * time.Hour)` — enforce lead time
+- [x] Only show slots where `slot.StartTime.Before(time.Now().AddDate(0, 0, bh.MaxAdvanceDays))` — enforce max advance days
 
 **Modify booking validation in Create (`internal/service/booking_service.go`):**
-- [ ] Replace hardcoded `5 * time.Minute` lead time check (line 122) with `time.Duration(bh.LeadTimeHours) * time.Hour`
-- [ ] Add validation: `if input.StartTime.After(time.Now().AddDate(0, 0, bh.MaxAdvanceDays))` return ErrInvalidInput("exceeds max advance days")
-- [ ] Add buffer conflict validation: check that new booking doesn't overlap with buffer zone of adjacent bookings
+- [x] Replace hardcoded `5 * time.Minute` lead time check (line 122) with `time.Duration(bh.LeadTimeHours) * time.Hour`
+- [x] Add validation: `if input.StartTime.After(time.Now().AddDate(0, 0, bh.MaxAdvanceDays))` return ErrInvalidInput("exceeds max advance days")
+- [x] Add buffer conflict validation: check that new booking doesn't overlap with buffer zone of adjacent bookings
   - Query bookings that end within BufferMinutes before the new start or start within BufferMinutes after the new end
   - Use `bookingRepo.GetOverlapping(ctx, bathhouseID, startTime.Add(-bufferDuration), endTime.Add(bufferDuration))` and check for conflicts
 
 **Owner settings:**
-- [ ] Accept BufferMinutes, LeadTimeHours, MaxAdvanceDays in PUT /api/v1/my/bathhouses/{id}
-- [ ] Validate step: BufferMinutes must be multiple of 15
+- [x] Accept BufferMinutes, LeadTimeHours, MaxAdvanceDays in PUT /api/v1/my/bathhouses/{id}
+- [x] Validate step: BufferMinutes must be multiple of 15
 
 **Postgres repo:**
-- [ ] Add new columns to all bathhouse queries
+- [x] Add new columns to all bathhouse queries
 
 **Tests:**
-- [ ] Test GetAvailableSlots with buffer: booking 10:00-12:00 with 30min buffer should block 12:00-12:30
-- [ ] Test lead time: booking starting in 1h with lead_time_hours=2 should be rejected
-- [ ] Test max advance: booking 100 days ahead with max_advance_days=90 should be rejected
-- [ ] Test buffer conflict: new booking 12:00-14:00 when existing is 10:00-12:00 with 30min buffer should be rejected (buffer zone 12:00-12:30 overlaps)
-- [ ] Test BookingSettings with 0 values (buffer=0 means no buffer, lead_time=0 means immediate booking OK)
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test GetAvailableSlots with buffer: booking 10:00-12:00 with 30min buffer should block 12:00-12:30
+- [x] Test lead time: booking starting in 1h with lead_time_hours=2 should be rejected
+- [x] Test max advance: booking 100 days ahead with max_advance_days=90 should be rejected
+- [x] Test buffer conflict: new booking 12:00-14:00 when existing is 10:00-12:00 with 30min buffer should be rejected (buffer zone 12:00-12:30 overlaps)
+- [x] Test BookingSettings with 0 values (buffer=0 means no buffer, lead_time=0 means immediate booking OK)
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 6: Booking Mode & Request-based Booking (FR-058)
 

@@ -65,6 +65,9 @@ type Bathhouse struct {
 	LastMinuteEnabled         bool  // default false
 	LastMinuteDiscountPercent int   // 5-50, discount for slots starting soon
 	LastMinuteHoursThreshold  int   // 2-24, hours before start to apply discount
+	BufferMinutes             int   // 0-120 step 15, cleanup time between bookings
+	LeadTimeHours             int   // 0-48, minimum hours before booking start
+	MaxAdvanceDays            int   // 7-365, max days ahead for booking
 	IsPhotoVerified           bool
 	ApiKey                    string
 	CalendarToken             string
@@ -114,6 +117,23 @@ func (b *Bathhouse) Validate() error {
 		return ErrInvalidInput
 	}
 	if b.ExtraGuestSurcharge < 0 {
+		return ErrInvalidInput
+	}
+	// Apply defaults for booking settings when unset
+	if b.BufferMinutes == 0 {
+		b.BufferMinutes = 30
+	}
+	if b.MaxAdvanceDays == 0 {
+		b.MaxAdvanceDays = 90
+	}
+	// LeadTimeHours defaults to 2 but 0 is valid (immediate booking), so default only on creation
+	if b.BufferMinutes < 0 || b.BufferMinutes > 120 || b.BufferMinutes%15 != 0 {
+		return ErrInvalidInput
+	}
+	if b.LeadTimeHours < 0 || b.LeadTimeHours > 48 {
+		return ErrInvalidInput
+	}
+	if b.MaxAdvanceDays < 7 || b.MaxAdvanceDays > 365 {
 		return ErrInvalidInput
 	}
 	// Apply defaults for last-minute fields when unset

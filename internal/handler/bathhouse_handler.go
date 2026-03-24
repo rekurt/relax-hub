@@ -118,6 +118,9 @@ type bathhouseResponse struct {
 	LastMinuteEnabled          bool               `json:"last_minute_enabled"`
 	LastMinuteDiscountPercent  int                `json:"last_minute_discount_percent,omitempty"`
 	LastMinuteHoursThreshold   int                `json:"last_minute_hours_threshold,omitempty"`
+	BufferMinutes              int                `json:"buffer_minutes"`
+	LeadTimeHours              int                `json:"lead_time_hours"`
+	MaxAdvanceDays             int                `json:"max_advance_days"`
 	Rating                     float64            `json:"rating"`
 	ReviewCount  int                `json:"review_count"`
 	Images       []string           `json:"images"`
@@ -177,6 +180,9 @@ func toBathhouseResponse(b *domain.Bathhouse) bathhouseResponse {
 		LastMinuteEnabled:          b.LastMinuteEnabled,
 		LastMinuteDiscountPercent:  b.LastMinuteDiscountPercent,
 		LastMinuteHoursThreshold:   b.LastMinuteHoursThreshold,
+		BufferMinutes:              b.BufferMinutes,
+		LeadTimeHours:              b.LeadTimeHours,
+		MaxAdvanceDays:             b.MaxAdvanceDays,
 		Rating:                     b.Rating,
 		ReviewCount:  b.ReviewCount,
 		Images:       images,
@@ -238,6 +244,9 @@ type updateBathhouseRequest struct {
 	LastMinuteEnabled          *bool                 `json:"last_minute_enabled"`
 	LastMinuteDiscountPercent  *int                  `json:"last_minute_discount_percent"`
 	LastMinuteHoursThreshold   *int                  `json:"last_minute_hours_threshold"`
+	BufferMinutes              *int                  `json:"buffer_minutes"`
+	LeadTimeHours              *int                  `json:"lead_time_hours"`
+	MaxAdvanceDays             *int                  `json:"max_advance_days"`
 	Images                     []string              `json:"images"`
 	WorkingHours               []workingHoursRequest `json:"working_hours"`
 }
@@ -698,6 +707,9 @@ func (h *BathhouseHandler) Update(w http.ResponseWriter, r *http.Request) {
 		LastMinuteEnabled:          req.LastMinuteEnabled,
 		LastMinuteDiscountPercent:  req.LastMinuteDiscountPercent,
 		LastMinuteHoursThreshold:   req.LastMinuteHoursThreshold,
+		BufferMinutes:              req.BufferMinutes,
+		LeadTimeHours:              req.LeadTimeHours,
+		MaxAdvanceDays:             req.MaxAdvanceDays,
 		Images:                     req.Images,
 		WorkingHours:               wh,
 	})

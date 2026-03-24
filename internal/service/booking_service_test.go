@@ -1976,3 +1976,315 @@ func TestBookingService_Create_LastMinuteBeyondThreshold(t *testing.T) {
 		t.Errorf("TotalPrice = %d, want 20000", result.Booking.TotalPrice)
 	}
 }
+
+// ==================== Booking Settings Tests ====================
+
+func TestBookingService_GetAvailableSlots_BufferTime(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Buffer Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, Status: domain.BathhouseStatusActive,
+		BufferMinutes: 30, // 30 min buffer between bookings
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: 0, OpenTime: "09:00", CloseTime: "15:00"}, // Monday
+		},
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Find next Monday
+	now := time.Now()
+	daysUntilMonday := (8 - int(now.Weekday())) % 7
+	if daysUntilMonday == 0 {
+		daysUntilMonday = 7
+	}
+	monday := time.Date(now.Year(), now.Month(), now.Day()+daysUntilMonday, 0, 0, 0, 0, time.UTC)
+
+	// Booking at 10:00-12:00, with 30min buffer the 12:00-13:00 slot should be marked unavailable
+	existingBooking := &domain.Booking{
+		ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID,
+		StartTime:  time.Date(monday.Year(), monday.Month(), monday.Day(), 10, 0, 0, 0, time.UTC),
+		EndTime:    time.Date(monday.Year(), monday.Month(), monday.Day(), 12, 0, 0, 0, time.UTC),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	_ = bookingRepo.Create(context.Background(), existingBooking)
+
+	slots, err := svc.GetAvailableSlots(context.Background(), bh.ID, monday)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	for _, slot := range slots {
+		hour := slot.StartTime.Hour()
+		// 10:00-11:00 and 11:00-12:00 are booked; 12:00-13:00 should be blocked by buffer
+		if hour == 10 || hour == 11 {
+			if slot.Available {
+				t.Errorf("slot %d:00 should be unavailable (booked)", hour)
+			}
+		}
+		if hour == 12 {
+			if slot.Available {
+				t.Errorf("slot 12:00 should be unavailable (buffer zone after 10:00-12:00 booking)")
+			}
+		}
+		// 09:00 and 13:00+ should be available
+		if hour == 9 && !slot.Available {
+			t.Error("slot 09:00 should be available")
+		}
+		if hour == 13 && !slot.Available {
+			t.Error("slot 13:00 should be available (past buffer zone)")
+		}
+	}
+}
+
+func TestBookingService_Create_LeadTimeRejection(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Lead Time Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, Status: domain.BathhouseStatusActive,
+		LeadTimeHours: 2, // 2 hours lead time
+		MaxAdvanceDays: 90,
+		LongSessionThresholdHours: 4, BaseCapacity: 10,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: 0, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 1, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 2, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 3, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 4, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 5, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 6, OpenTime: "00:00", CloseTime: "23:59"},
+		},
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Booking starting in 1h should be rejected (lead time is 2h)
+	start := time.Now().Add(1 * time.Hour)
+	_, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     start.Add(2 * time.Hour),
+		GuestCount:  2,
+	})
+
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("booking within lead time should be rejected, got: %v", err)
+	}
+}
+
+func TestBookingService_Create_MaxAdvanceDaysRejection(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Max Advance Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, Status: domain.BathhouseStatusActive,
+		MaxAdvanceDays: 30, // only 30 days ahead
+		LongSessionThresholdHours: 4, BaseCapacity: 10,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: 0, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 1, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 2, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 3, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 4, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 5, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 6, OpenTime: "00:00", CloseTime: "23:59"},
+		},
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Booking 60 days out should be rejected (max advance is 30 days)
+	start := time.Now().Add(60 * 24 * time.Hour)
+	_, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     start.Add(2 * time.Hour),
+		GuestCount:  2,
+	})
+
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("booking beyond max advance days should be rejected, got: %v", err)
+	}
+}
+
+func TestBookingService_Create_BufferConflict(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Buffer Conflict Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, Status: domain.BathhouseStatusActive,
+		BufferMinutes: 30,
+		MaxAdvanceDays: 90,
+		LongSessionThresholdHours: 4, BaseCapacity: 10,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: 0, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 1, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 2, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 3, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 4, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 5, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 6, OpenTime: "00:00", CloseTime: "23:59"},
+		},
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+
+	// Existing booking: 10:00-12:00
+	existingBooking := &domain.Booking{
+		ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID,
+		StartTime: start, EndTime: start.Add(2 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	_ = bookingRepo.Create(context.Background(), existingBooking)
+
+	// New booking at 12:00-14:00 should conflict with 30min buffer (12:00-12:30 is buffer zone)
+	newStart := start.Add(2 * time.Hour) // 12:00
+	_, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   newStart,
+		EndTime:     newStart.Add(2 * time.Hour),
+		GuestCount:  2,
+	})
+
+	if !errors.Is(err, domain.ErrSlotUnavailable) {
+		t.Errorf("booking within buffer zone should be rejected, got: %v", err)
+	}
+}
+
+func TestBookingService_Create_NoBufferConflict(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "No Buffer Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, Status: domain.BathhouseStatusActive,
+		BufferMinutes: 0, // no buffer
+		MaxAdvanceDays: 90,
+		LongSessionThresholdHours: 4, BaseCapacity: 10,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: 0, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 1, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 2, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 3, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 4, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 5, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 6, OpenTime: "00:00", CloseTime: "23:59"},
+		},
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+
+	// Existing booking: 10:00-12:00
+	existingBooking := &domain.Booking{
+		ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID,
+		StartTime: start, EndTime: start.Add(2 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	_ = bookingRepo.Create(context.Background(), existingBooking)
+
+	// With buffer=0, booking at 12:00-14:00 should succeed
+	newStart := start.Add(2 * time.Hour) // 12:00
+	result, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   newStart,
+		EndTime:     newStart.Add(2 * time.Hour),
+		GuestCount:  2,
+	})
+
+	if err != nil {
+		t.Fatalf("booking without buffer should succeed, got: %v", err)
+	}
+	if result.Booking.Status != domain.BookingPending {
+		t.Errorf("status = %q, want %q", result.Booking.Status, domain.BookingPending)
+	}
+}
+
+func TestBookingService_Create_ZeroLeadTimeAllowsImmediate(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Immediate Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, Status: domain.BathhouseStatusActive,
+		LeadTimeHours: 0, // lead time 0 = minimum 5 min fallback
+		MaxAdvanceDays: 90,
+		LongSessionThresholdHours: 4, BaseCapacity: 10,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: 0, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 1, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 2, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 3, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 4, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 5, OpenTime: "00:00", CloseTime: "23:59"},
+			{DayOfWeek: 6, OpenTime: "00:00", CloseTime: "23:59"},
+		},
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Booking starting in 10 minutes should succeed with lead_time=0 (5 min fallback)
+	start := time.Now().Add(10 * time.Minute)
+	// Round up to the nearest hour for valid duration
+	start = time.Date(start.Year(), start.Month(), start.Day(), start.Hour()+1, 0, 0, 0, start.Location())
+
+	result, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     start.Add(1 * time.Hour),
+		GuestCount:  2,
+	})
+
+	if err != nil {
+		t.Fatalf("booking with lead_time=0 should allow near-future booking, got: %v", err)
+	}
+	if result.Booking.Status != domain.BookingPending {
+		t.Errorf("status = %q, want %q", result.Booking.Status, domain.BookingPending)
+	}
+}
+
+func TestBathhouse_Validate_BookingSettings(t *testing.T) {
+	tests := []struct {
+		name          string
+		bufferMinutes int
+		leadTimeHours int
+		maxAdvanceDays int
+		wantErr       bool
+	}{
+		{"valid defaults", 30, 2, 90, false},
+		{"zero buffer defaults to 30", 0, 0, 90, false}, // buffer 0 defaults to 30 in Validate, maxAdvDays 0 defaults to 90
+		{"buffer not multiple of 15", 25, 0, 90, true},
+		{"buffer too high", 150, 0, 90, true},
+		{"lead time too high", 30, 50, 90, true},
+		{"max advance too low", 30, 0, 5, true},
+		{"max advance too high", 30, 0, 400, true},
+		{"max advance min boundary", 30, 0, 7, false},
+		{"max advance max boundary", 30, 0, 365, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			bh := &domain.Bathhouse{
+				Name: "Test", Address: "123", CityID: 1,
+				PricePerHour: 5000, MinDuration: 1, MaxGuests: 10,
+				LongSessionThresholdHours: 4, BaseCapacity: 10,
+				BufferMinutes: tt.bufferMinutes, LeadTimeHours: tt.leadTimeHours, MaxAdvanceDays: tt.maxAdvanceDays,
+			}
+			err := bh.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr = %v", err, tt.wantErr)
+			}
+		})
+	}
+}
