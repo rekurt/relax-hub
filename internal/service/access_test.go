@@ -219,6 +219,24 @@ func (n *noopServiceFeeService) UpsertConfig(_ context.Context, _ *domain.Servic
 	return nil
 }
 
+type noopComplaintService struct{}
+
+func (n *noopComplaintService) Report(_ context.Context, _ uuid.UUID, _ service.CreateComplaintInput) (*domain.Complaint, error) {
+	return &domain.Complaint{}, nil
+}
+func (n *noopComplaintService) Resolve(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ string) (*domain.Complaint, error) {
+	return &domain.Complaint{}, nil
+}
+func (n *noopComplaintService) Dismiss(_ context.Context, _ uuid.UUID, _ uuid.UUID) (*domain.Complaint, error) {
+	return &domain.Complaint{}, nil
+}
+func (n *noopComplaintService) List(_ context.Context, _ domain.ComplaintFilter) (*domain.PaginatedResult[domain.Complaint], error) {
+	return &domain.PaginatedResult[domain.Complaint]{}, nil
+}
+func (n *noopComplaintService) GetByID(_ context.Context, _ uuid.UUID) (*domain.Complaint, error) {
+	return &domain.Complaint{}, nil
+}
+
 func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID) *domain.Bathhouse {
 	t.Helper()
 	wh := make([]domain.WorkingHours, 7)

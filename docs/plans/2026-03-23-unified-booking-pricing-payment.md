@@ -772,28 +772,28 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Create: `migrations/XXXXXX_booking_checkin.up.sql` / `.down.sql`
 
 **Booking model changes:**
-- [ ] Add fields:
+- [x] Add fields:
   ```go
   CheckedInAt  *time.Time
   CheckedOutAt *time.Time
   ```
-- [ ] Add status: `BookingNoShow BookingStatus = "no_show"`
-- [ ] Update `IsValid()` to include `BookingNoShow`
+- [x] Add status: `BookingNoShow BookingStatus = "no_show"`
+- [x] Update `IsValid()` to include `BookingNoShow`
 
 **Migration:**
-- [ ] ALTER TABLE bookings:
+- [x] ALTER TABLE bookings:
   - `ADD COLUMN checked_in_at TIMESTAMPTZ`
   - `ADD COLUMN checked_out_at TIMESTAMPTZ`
 
 **New service methods (add to BookingService interface):**
-- [ ] `CheckIn(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error`:
+- [x] `CheckIn(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error`:
   1. Get booking, verify status == "confirmed"
   2. CanManageBathhouse check (only owner/rep can check-in)
   3. Validate time window: `booking.StartTime.Add(-15*time.Minute) <= now <= booking.StartTime.Add(30*time.Minute)`
   4. Set `booking.CheckedInAt = &now`
   5. Save via `bookingRepo.Update(ctx, booking)` — need to add Update method to BookingRepo that can update specific fields
   6. Notify client: "Вы отмечены как прибывший"
-- [ ] `CheckOut(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error`:
+- [x] `CheckOut(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error`:
   1. Get booking, verify CheckedInAt != nil (guest has checked in)
   2. CanManageBathhouse check
   3. Set `booking.CheckedOutAt = &now`, status = "completed"
@@ -801,47 +801,47 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   5. Trigger escrow creation (in Task 11)
 
 **BookingRepository changes (`internal/repository/interfaces.go`):**
-- [ ] Add `UpdateCheckin(ctx context.Context, bookingID uuid.UUID, checkedInAt *time.Time) error`
-- [ ] Add `UpdateCheckout(ctx context.Context, bookingID uuid.UUID, checkedOutAt *time.Time, status domain.BookingStatus) error`
-- [ ] Add `ListConfirmedWithoutCheckin(ctx context.Context, noShowCutoff time.Time) ([]domain.Booking, error)` — for no-show cron
+- [x] Add `UpdateCheckin(ctx context.Context, bookingID uuid.UUID, checkedInAt *time.Time) error`
+- [x] Add `UpdateCheckout(ctx context.Context, bookingID uuid.UUID, checkedOutAt *time.Time, status domain.BookingStatus) error`
+- [x] Add `ListConfirmedWithoutCheckin(ctx context.Context, noShowCutoff time.Time) ([]domain.Booking, error)` — for no-show cron
 
 **Handler routes:**
-- [ ] `PATCH /api/v1/bookings/{id}/check-in` (RequireAuth + owner/rep)
-- [ ] `PATCH /api/v1/bookings/{id}/check-out` (RequireAuth + owner/rep)
-- [ ] `POST /api/v1/bookings/{id}/dispute-noshow` (RequireAuth, client only)
+- [x] `PATCH /api/v1/bookings/{id}/check-in` (RequireAuth + owner/rep)
+- [x] `PATCH /api/v1/bookings/{id}/check-out` (RequireAuth + owner/rep)
+- [x] `POST /api/v1/bookings/{id}/dispute-noshow` (RequireAuth, client only)
   - Request: `{ "gps_lat": 55.7, "gps_lon": 37.6, "comment": "optional" }`
   - Creates high-priority support ticket / complaint
-- [ ] Add swagger annotations
+- [x] Add swagger annotations
 
 **No-show detection cron (in `internal/cron/booking_jobs.go`):**
-- [ ] Run every 15 minutes
-- [ ] Query: `ListConfirmedWithoutCheckin(ctx, time.Now().Add(-30*time.Minute))`
+- [x] Run every 15 minutes
+- [x] Query: `ListConfirmedWithoutCheckin(ctx, time.Now().Add(-30*time.Minute))`
   - Find bookings WHERE status='confirmed' AND start_time + 30min < now AND checked_in_at IS NULL
-- [ ] For each no-show:
+- [x] For each no-show:
   1. Set status = "no_show"
   2. Do NOT refund (client is charged)
   3. Notify owner: "Гость не прибыл на бронирование {date} {time}, оплата сохранена"
   4. Notify client: "Вы не прибыли на бронирование. Если это ошибка, оспорьте в течение 2 часов"
 
 **Owner reminder notification:**
-- [ ] In the reminder cron (Task 13), add: 5 min before session start, send push to owner: "Гость скоро прибудет в {bathhouse_name}!"
+- [x] In the reminder cron (Task 13), add: 5 min before session start, send push to owner: "Гость скоро прибудет в {bathhouse_name}!"
 
 **No-show dispute:**
-- [ ] Client can dispute within 2 hours after no-show status set
-- [ ] Validate: booking.Status == "no_show" AND time.Since(booking.UpdatedAt) <= 2*time.Hour
-- [ ] Creates a complaint/support ticket with type "no_show_dispute"
-- [ ] Admin reviews and can reverse no-show to completed + refund if warranted
+- [x] Client can dispute within 2 hours after no-show status set
+- [x] Validate: booking.Status == "no_show" AND time.Since(booking.UpdatedAt) <= 2*time.Hour
+- [x] Creates a complaint/support ticket with type "no_show_dispute"
+- [x] Admin reviews and can reverse no-show to completed + refund if warranted
 
 **Tests:**
-- [ ] Test check-in: valid window (start-15min to start+30min), owner role, status changes
-- [ ] Test check-in too early: 1 hour before — rejected
-- [ ] Test check-in too late: 45 minutes after start — rejected
-- [ ] Test check-out: sets CheckedOutAt, status=completed
-- [ ] Test check-out without check-in: rejected
-- [ ] Test no-show cron: confirmed booking 35 min past start without check-in -> marked no_show
-- [ ] Test no-show dispute: within 2h window succeeds, after 2h rejected
-- [ ] Test no-show for already checked-in booking: should not be affected
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test check-in: valid window (start-15min to start+30min), owner role, status changes
+- [x] Test check-in too early: 1 hour before — rejected
+- [x] Test check-in too late: 45 minutes after start — rejected
+- [x] Test check-out: sets CheckedOutAt, status=completed
+- [x] Test check-out without check-in: rejected
+- [x] Test no-show cron: confirmed booking 35 min past start without check-in -> marked no_show
+- [x] Test no-show dispute: within 2h window succeeds, after 2h rejected
+- [x] Test no-show for already checked-in booking: should not be affected
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 11: Escrow System (FR-124)
 

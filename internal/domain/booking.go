@@ -15,11 +15,12 @@ const (
 	BookingCancelled    BookingStatus = "cancelled"
 	BookingRejected     BookingStatus = "rejected"
 	BookingCompleted    BookingStatus = "completed"
+	BookingNoShow       BookingStatus = "no_show"
 )
 
 func (s BookingStatus) IsValid() bool {
 	switch s {
-	case BookingPending, BookingPendingOwner, BookingConfirmed, BookingCancelled, BookingRejected, BookingCompleted:
+	case BookingPending, BookingPendingOwner, BookingConfirmed, BookingCancelled, BookingRejected, BookingCompleted, BookingNoShow:
 		return true
 	}
 	return false
@@ -41,6 +42,8 @@ type Booking struct {
 	ExtraGuestSurcharge   int64
 	LastMinuteDiscount    int64
 	ServiceFeeAmount      int64
+	CheckedInAt           *time.Time
+	CheckedOutAt          *time.Time
 	HoldID                *uuid.UUID
 	RejectionReason       string
 	Status                BookingStatus

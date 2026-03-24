@@ -316,8 +316,12 @@ func (r *BookingRepo) Create(_ context.Context, booking *domain.Booking) error {
 		booking.ID = uuid.New()
 	}
 	now := time.Now()
-	booking.CreatedAt = now
-	booking.UpdatedAt = now
+	if booking.CreatedAt.IsZero() {
+		booking.CreatedAt = now
+	}
+	if booking.UpdatedAt.IsZero() {
+		booking.UpdatedAt = now
+	}
 	cp := *booking
 	r.bookings[booking.ID] = &cp
 	return nil
@@ -458,6 +462,43 @@ func (r *BookingRepo) ListTimedOutRequests(_ context.Context) ([]domain.Booking,
 		// In practice, the postgres impl joins with bathhouses table.
 		// For mock testing, we consider bookings older than 24h as timed out.
 		if now.Sub(b.CreatedAt).Hours() >= 24 {
+			result = append(result, *b)
+		}
+	}
+	return result, nil
+}
+
+func (r *BookingRepo) UpdateCheckin(_ context.Context, bookingID uuid.UUID, checkedInAt *time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	b, ok := r.bookings[bookingID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	b.CheckedInAt = checkedInAt
+	b.UpdatedAt = time.Now()
+	return nil
+}
+
+func (r *BookingRepo) UpdateCheckout(_ context.Context, bookingID uuid.UUID, checkedOutAt *time.Time, status domain.BookingStatus) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	b, ok := r.bookings[bookingID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	b.CheckedOutAt = checkedOutAt
+	b.Status = status
+	b.UpdatedAt = time.Now()
+	return nil
+}
+
+func (r *BookingRepo) ListConfirmedWithoutCheckin(_ context.Context, noShowCutoff time.Time) ([]domain.Booking, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var result []domain.Booking
+	for _, b := range r.bookings {
+		if b.Status == domain.BookingConfirmed && b.CheckedInAt == nil && b.StartTime.Before(noShowCutoff) {
 			result = append(result, *b)
 		}
 	}

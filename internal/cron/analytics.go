@@ -177,6 +177,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 	}
 	cs.logger.Info("Registered auto-reject timed out requests job every 15 minutes")
 
+	// No-show detection every 15 minutes
+	if _, err := cs.c.AddFunc("*/15 * * * *", cs.handleNoShowDetection); err != nil {
+		cs.logger.Error("Failed to register no-show detection job", "error", err)
+		return fmt.Errorf("failed to register no-show detection: %w", err)
+	}
+	cs.logger.Info("Registered no-show detection job every 15 minutes")
+
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")
 	return nil

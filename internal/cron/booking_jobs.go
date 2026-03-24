@@ -20,3 +20,19 @@ func (cs *CronScheduler) handleAutoRejectTimedOutRequests() {
 
 	cs.logger.Info("Auto-reject timed out requests completed", "rejected", rejected, "duration", time.Since(start))
 }
+
+func (cs *CronScheduler) handleNoShowDetection() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	start := time.Now()
+	cs.logger.Info("Starting no-show detection")
+
+	marked, err := cs.bookingSvc.MarkNoShows(ctx)
+	if err != nil {
+		cs.logger.Error("No-show detection failed", "error", err, "duration", time.Since(start))
+		return
+	}
+
+	cs.logger.Info("No-show detection completed", "marked", marked, "duration", time.Since(start))
+}

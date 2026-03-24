@@ -65,6 +65,8 @@ type bookingResponse struct {
 	OriginalPrice       int64                  `json:"original_price,omitempty"`
 	PromoDiscount       int64                  `json:"promo_discount,omitempty"`
 	CertificateDiscount int64                  `json:"certificate_discount,omitempty"`
+	CheckedInAt         *time.Time             `json:"checked_in_at,omitempty"`
+	CheckedOutAt        *time.Time             `json:"checked_out_at,omitempty"`
 	HoldID              string                 `json:"hold_id,omitempty"`
 	RejectionReason     string                 `json:"rejection_reason,omitempty"`
 	Status              string                 `json:"status"`
@@ -97,6 +99,8 @@ func toBookingResponse(b *domain.Booking) bookingResponse {
 		LastMinuteDiscount:  b.LastMinuteDiscount,
 		AddOnTotal:          b.AddOnTotal,
 		ServiceFeeAmount:    b.ServiceFeeAmount,
+		CheckedInAt:         b.CheckedInAt,
+		CheckedOutAt:        b.CheckedOutAt,
 		RejectionReason:     b.RejectionReason,
 		Status:              string(b.Status),
 		Comment:             b.Comment,
@@ -479,4 +483,110 @@ func (h *BookingHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request)
 		TotalCount: result.TotalCount,
 		TotalPages: result.TotalPages,
 	})
+}
+
+// CheckIn godoc
+// @Summary      Check-in guest
+// @Description  Marks a guest as arrived for a confirmed booking. Available 15 min before to 30 min after booking start time. Only owners/representatives.
+// @Tags         bookings
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Booking ID (UUID)"
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/check-in [patch]
+func (h *BookingHandler) CheckIn(w http.ResponseWriter, r *http.Request) {
+	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	if err := h.bookingService.CheckIn(r.Context(), userID, role, bookingID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "checked_in"})
+}
+
+// CheckOut godoc
+// @Summary      Check-out guest
+// @Description  Marks a guest as departed, completing the booking. Requires prior check-in. Awards loyalty points. Only owners/representatives.
+// @Tags         bookings
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Booking ID (UUID)"
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/check-out [patch]
+func (h *BookingHandler) CheckOut(w http.ResponseWriter, r *http.Request) {
+	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	if err := h.bookingService.CheckOut(r.Context(), userID, role, bookingID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "checked_out"})
+}
+
+type disputeNoShowRequest struct {
+	GPSLat  float64 `json:"gps_lat"`
+	GPSLon  float64 `json:"gps_lon"`
+	Comment string  `json:"comment"`
+}
+
+// DisputeNoShow godoc
+// @Summary      Dispute no-show
+// @Description  Client disputes a no-show status within 2 hours. Creates a support ticket with GPS coordinates.
+// @Tags         bookings
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string                 true  "Booking ID (UUID)"
+// @Param        body  body      disputeNoShowRequest   true  "Dispute details"
+// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/dispute-noshow [post]
+func (h *BookingHandler) DisputeNoShow(w http.ResponseWriter, r *http.Request) {
+	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking id")
+		return
+	}
+
+	var req disputeNoShowRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+
+	if err := h.bookingService.DisputeNoShow(r.Context(), userID, bookingID, req.GPSLat, req.GPSLon, req.Comment); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "dispute_created"})
 }

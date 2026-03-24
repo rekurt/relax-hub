@@ -285,6 +285,14 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusNotFound, "saved_search_not_found", err.Error())
 	case errors.Is(err, domain.ErrSavedSearchLimitReached):
 		writeErrorWithContext(w, r, http.StatusConflict, "saved_search_limit_reached", err.Error())
+	case errors.Is(err, domain.ErrCheckinTooEarly):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "checkin_too_early", err.Error())
+	case errors.Is(err, domain.ErrCheckinTooLate):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "checkin_too_late", err.Error())
+	case errors.Is(err, domain.ErrNotCheckedIn):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "not_checked_in", err.Error())
+	case errors.Is(err, domain.ErrNoShowDisputeExpired):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "noshow_dispute_expired", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

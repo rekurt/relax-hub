@@ -68,6 +68,10 @@ type BookingService interface {
 	ListByBathhouse(ctx context.Context, userID uuid.UUID, role domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	GetAvailableSlots(ctx context.Context, bathhouseID uuid.UUID, date time.Time) ([]TimeSlot, error)
 	AutoRejectTimedOutRequests(ctx context.Context) (int, error)
+	CheckIn(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
+	CheckOut(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
+	MarkNoShows(ctx context.Context) (int, error)
+	DisputeNoShow(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, gpsLat, gpsLon float64, comment string) error
 }
 
 type bookingService struct {
@@ -84,6 +88,7 @@ type bookingService struct {
 	paymentSvc    PaymentService
 	serviceFeeSvc ServiceFeeService
 	walletSvc     WalletService
+	complaintSvc  ComplaintService
 	access        *AccessChecker
 	notifSvc      NotificationService
 	logger        *logger.Logger
@@ -103,6 +108,7 @@ func NewBookingService(
 	paymentSvc PaymentService,
 	serviceFeeSvc ServiceFeeService,
 	walletSvc WalletService,
+	complaintSvc ComplaintService,
 	access *AccessChecker,
 	notifSvc NotificationService,
 	log *logger.Logger,
@@ -121,6 +127,7 @@ func NewBookingService(
 		paymentSvc:    paymentSvc,
 		serviceFeeSvc: serviceFeeSvc,
 		walletSvc:     walletSvc,
+		complaintSvc:  complaintSvc,
 		access:        access,
 		notifSvc:      notifSvc,
 		logger:        log,
@@ -1158,6 +1165,168 @@ func (s *bookingService) sendLoyaltyUpgradeNotification(ctx context.Context, use
 	if err := s.notifSvc.Send(ctx, userID, domain.NotifLoyaltyUpgrade, title, body, data); err != nil {
 		s.logger.Warn("failed to send loyalty upgrade notification", "user_id", userID, "error", err)
 	}
+}
+
+const (
+	checkinEarlyWindow = 15 * time.Minute
+	checkinLateWindow  = 30 * time.Minute
+	noShowGracePeriod  = 30 * time.Minute
+	noShowDisputeWindow = 2 * time.Hour
+)
+
+func (s *bookingService) CheckIn(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	if booking.Status != domain.BookingConfirmed {
+		return fmt.Errorf("%w: only confirmed bookings can be checked in", domain.ErrInvalidInput)
+	}
+
+	if err := s.access.CanManageBathhouse(ctx, userID, role, booking.BathhouseID); err != nil {
+		return err
+	}
+
+	now := time.Now()
+	earliest := booking.StartTime.Add(-checkinEarlyWindow)
+	latest := booking.StartTime.Add(checkinLateWindow)
+
+	if now.Before(earliest) {
+		return domain.ErrCheckinTooEarly
+	}
+	if now.After(latest) {
+		return domain.ErrCheckinTooLate
+	}
+
+	if err := s.bookingRepo.UpdateCheckin(ctx, bookingID, &now); err != nil {
+		return err
+	}
+
+	s.sendBookingNotification(ctx, booking, domain.NotifBookingCheckedIn)
+	return nil
+}
+
+func (s *bookingService) CheckOut(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	if booking.CheckedInAt == nil {
+		return domain.ErrNotCheckedIn
+	}
+
+	if err := s.access.CanManageBathhouse(ctx, userID, role, booking.BathhouseID); err != nil {
+		return err
+	}
+
+	now := time.Now()
+	if err := s.bookingRepo.UpdateCheckout(ctx, bookingID, &now, domain.BookingCompleted); err != nil {
+		return err
+	}
+
+	// Earn loyalty points
+	earned, err := s.loyaltySvc.EarnPoints(ctx, booking.UserID, bookingID, booking.TotalPrice)
+	if err != nil {
+		s.logger.Warn("failed to earn loyalty points on checkout", "booking_id", bookingID, "error", err)
+	} else if earned > 0 {
+		levelChange, err := s.loyaltySvc.RecalculateLevel(ctx, booking.UserID)
+		if err != nil {
+			s.logger.Warn("failed to recalculate loyalty level on checkout", "booking_id", bookingID, "error", err)
+		} else if levelChange != nil && levelChange.Changed {
+			s.sendLoyaltyUpgradeNotification(ctx, booking.UserID, levelChange)
+		}
+	}
+
+	// Complete referral if applicable
+	referralResult, err := s.referralSvc.CompleteReferral(ctx, booking.UserID)
+	if err != nil {
+		s.logger.Warn("failed to complete referral on checkout", "booking_id", bookingID, "error", err)
+	} else if referralResult != nil && referralResult.Completed {
+		s.sendReferralBonusNotifications(ctx, referralResult)
+	}
+
+	return nil
+}
+
+func (s *bookingService) MarkNoShows(ctx context.Context) (int, error) {
+	cutoff := time.Now().Add(-noShowGracePeriod)
+	bookings, err := s.bookingRepo.ListConfirmedWithoutCheckin(ctx, cutoff)
+	if err != nil {
+		return 0, fmt.Errorf("list no-show candidates: %w", err)
+	}
+
+	marked := 0
+	for _, booking := range bookings {
+		b := booking
+		if err := s.bookingRepo.UpdateStatus(ctx, b.ID, domain.BookingNoShow); err != nil {
+			s.logger.Error("failed to mark booking as no-show", "booking_id", b.ID, "error", err)
+			continue
+		}
+
+		// Notify owner: payment is kept
+		bh, err := s.bhRepo.GetByID(ctx, b.BathhouseID)
+		if err == nil {
+			ownerBody := fmt.Sprintf("Гость не прибыл на бронирование %s %s, оплата сохранена",
+				b.StartTime.Format("02.01.2006"), b.StartTime.Format("15:04"))
+			if err := s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifBookingNoShowOwner,
+				"Гость не прибыл", ownerBody,
+				map[string]string{"booking_id": b.ID.String()}); err != nil {
+				s.logger.Warn("failed to send no-show owner notification", "booking_id", b.ID, "error", err)
+			}
+		}
+
+		// Notify client
+		clientBody := "Вы не прибыли на бронирование. Если это ошибка, оспорьте в течение 2 часов"
+		if err := s.notifSvc.Send(ctx, b.UserID, domain.NotifBookingNoShow,
+			"Неявка на бронирование", clientBody,
+			map[string]string{"booking_id": b.ID.String()}); err != nil {
+			s.logger.Warn("failed to send no-show client notification", "booking_id", b.ID, "error", err)
+		}
+
+		marked++
+	}
+
+	return marked, nil
+}
+
+func (s *bookingService) DisputeNoShow(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, gpsLat, gpsLon float64, comment string) error {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	if booking.UserID != userID {
+		return domain.ErrForbidden
+	}
+
+	if booking.Status != domain.BookingNoShow {
+		return fmt.Errorf("%w: only no-show bookings can be disputed", domain.ErrInvalidInput)
+	}
+
+	if time.Since(booking.UpdatedAt) > noShowDisputeWindow {
+		return domain.ErrNoShowDisputeExpired
+	}
+
+	description := fmt.Sprintf("GPS: %.6f, %.6f", gpsLat, gpsLon)
+	if comment != "" {
+		description += "\n" + comment
+	}
+
+	if s.complaintSvc != nil {
+		_, err = s.complaintSvc.Report(ctx, userID, CreateComplaintInput{
+			TargetType:  domain.ComplaintTargetNoShowDispute,
+			TargetID:    bookingID,
+			Reason:      domain.ComplaintReasonOther,
+			Description: description,
+		})
+		if err != nil {
+			return fmt.Errorf("create no-show dispute: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *bookingService) sendReferralBonusNotifications(ctx context.Context, result *ReferralCompletionResult) {

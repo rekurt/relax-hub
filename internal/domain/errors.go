@@ -110,4 +110,9 @@ var (
 
 	ErrSavedSearchNotFound    = errors.New("saved search not found")
 	ErrSavedSearchLimitReached = errors.New("saved search limit reached")
+
+	ErrCheckinTooEarly      = errors.New("check-in is not yet available")
+	ErrCheckinTooLate       = errors.New("check-in window has passed")
+	ErrNotCheckedIn         = errors.New("guest has not checked in")
+	ErrNoShowDisputeExpired = errors.New("no-show dispute window has expired")
 )

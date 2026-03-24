@@ -26,7 +26,7 @@ func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.Boo
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, repRepo, pricingSvc, pricingRepo, loyaltySvc, loyaltyRepo
 }
 
@@ -770,7 +770,7 @@ func newBookingServiceWithReferral() (service.BookingService, *mock.BathhouseRep
 	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, referralSvc, userRepo
 }
 
@@ -901,7 +901,7 @@ func newBookingServiceWithPromo() (service.BookingService, *mock.BathhouseRepo, 
 	promoSvc := service.NewPromoService(promoRepo, access, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, promoSvc
 }
 
@@ -1123,7 +1123,7 @@ func newBookingServiceWithPayment() (service.BookingService, *mock.BathhouseRepo
 	paymentSvc := &trackingPaymentService{}
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, paymentSvc, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, paymentSvc, &noopServiceFeeService{}, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, paymentSvc
 }
 
@@ -1214,7 +1214,7 @@ func newBookingServiceWithSlotBlocks() (service.BookingService, *mock.BathhouseR
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, slotBlockRepo
 }
 
@@ -1396,7 +1396,7 @@ func newBookingServiceWithAddOns() (service.BookingService, *mock.BathhouseRepo,
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, nil, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, addonRepo
 }
 
@@ -2593,5 +2593,284 @@ func TestBookingService_PendingOwner_BlocksSlot(t *testing.T) {
 	})
 	if !errors.Is(err, domain.ErrSlotUnavailable) {
 		t.Errorf("expected ErrSlotUnavailable, got: %v", err)
+	}
+}
+
+// --- Check-in / Check-out / No-show tests ---
+
+func TestBookingService_CheckIn_ValidWindow(t *testing.T) {
+	svc, bhRepo, bookingRepo, repRepo, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Create a confirmed booking starting "now + 5 minutes" so we're within -15..+30 window
+	now := time.Now()
+	start := now.Add(5 * time.Minute)
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      uuid.New(),
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     start.Add(2 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	// Owner checks in
+	repRepo.Create(context.Background(), &domain.Representative{
+		UserID:      ownerID,
+		BathhouseID: bh.ID,
+	})
+
+	err := svc.CheckIn(context.Background(), ownerID, domain.RoleOwner, booking.ID)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	updated, _ := bookingRepo.GetByID(context.Background(), booking.ID)
+	if updated.CheckedInAt == nil {
+		t.Fatal("expected CheckedInAt to be set")
+	}
+}
+
+func TestBookingService_CheckIn_TooEarly(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Booking starts in 1 hour — well outside -15 min window
+	start := time.Now().Add(1 * time.Hour)
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      uuid.New(),
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     start.Add(2 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	err := svc.CheckIn(context.Background(), ownerID, domain.RoleOwner, booking.ID)
+	if !errors.Is(err, domain.ErrCheckinTooEarly) {
+		t.Errorf("expected ErrCheckinTooEarly, got: %v", err)
+	}
+}
+
+func TestBookingService_CheckIn_TooLate(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Booking started 45 minutes ago — outside +30 min window
+	start := time.Now().Add(-45 * time.Minute)
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      uuid.New(),
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     start.Add(2 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	err := svc.CheckIn(context.Background(), ownerID, domain.RoleOwner, booking.ID)
+	if !errors.Is(err, domain.ErrCheckinTooLate) {
+		t.Errorf("expected ErrCheckinTooLate, got: %v", err)
+	}
+}
+
+func TestBookingService_CheckOut_Success(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	checkedIn := now.Add(-1 * time.Hour)
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      uuid.New(),
+		BathhouseID: bh.ID,
+		StartTime:   now.Add(-2 * time.Hour),
+		EndTime:     now.Add(-30 * time.Minute),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		CheckedInAt: &checkedIn,
+		Status:      domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	err := svc.CheckOut(context.Background(), ownerID, domain.RoleOwner, booking.ID)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	updated, _ := bookingRepo.GetByID(context.Background(), booking.ID)
+	if updated.CheckedOutAt == nil {
+		t.Fatal("expected CheckedOutAt to be set")
+	}
+	if updated.Status != domain.BookingCompleted {
+		t.Errorf("expected status completed, got %s", updated.Status)
+	}
+}
+
+func TestBookingService_CheckOut_WithoutCheckIn(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      uuid.New(),
+		BathhouseID: bh.ID,
+		StartTime:   time.Now().Add(-2 * time.Hour),
+		EndTime:     time.Now().Add(-30 * time.Minute),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	err := svc.CheckOut(context.Background(), ownerID, domain.RoleOwner, booking.ID)
+	if !errors.Is(err, domain.ErrNotCheckedIn) {
+		t.Errorf("expected ErrNotCheckedIn, got: %v", err)
+	}
+}
+
+func TestBookingService_MarkNoShows(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Confirmed booking that started 35 minutes ago, no check-in → should become no_show
+	start := time.Now().Add(-35 * time.Minute)
+	noShowBooking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      uuid.New(),
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     start.Add(2 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), noShowBooking)
+
+	// Confirmed booking that started 10 minutes ago (within grace) → should NOT become no_show
+	recentStart := time.Now().Add(-10 * time.Minute)
+	okBooking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      uuid.New(),
+		BathhouseID: bh.ID,
+		StartTime:   recentStart,
+		EndTime:     recentStart.Add(2 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), okBooking)
+
+	marked, err := svc.MarkNoShows(context.Background())
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if marked != 1 {
+		t.Errorf("expected 1 no-show, got %d", marked)
+	}
+
+	updated, _ := bookingRepo.GetByID(context.Background(), noShowBooking.ID)
+	if updated.Status != domain.BookingNoShow {
+		t.Errorf("expected no_show status, got %s", updated.Status)
+	}
+
+	stillOk, _ := bookingRepo.GetByID(context.Background(), okBooking.ID)
+	if stillOk.Status != domain.BookingConfirmed {
+		t.Errorf("expected confirmed status, got %s", stillOk.Status)
+	}
+}
+
+func TestBookingService_MarkNoShows_CheckedInNotAffected(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Confirmed booking started 35 min ago but already checked in → should NOT be marked
+	start := time.Now().Add(-35 * time.Minute)
+	checkedIn := start.Add(5 * time.Minute)
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      uuid.New(),
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     start.Add(2 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		CheckedInAt: &checkedIn,
+		Status:      domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	marked, err := svc.MarkNoShows(context.Background())
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+	if marked != 0 {
+		t.Errorf("expected 0 no-shows, got %d", marked)
+	}
+}
+
+func TestBookingService_DisputeNoShow_WithinWindow(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+	clientID := uuid.New()
+
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      clientID,
+		BathhouseID: bh.ID,
+		StartTime:   time.Now().Add(-1 * time.Hour),
+		EndTime:     time.Now().Add(1 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingNoShow,
+		UpdatedAt:   time.Now().Add(-30 * time.Minute), // 30 min ago, within 2h window
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	// complaintSvc is nil so no actual complaint created, but no error expected
+	err := svc.DisputeNoShow(context.Background(), clientID, booking.ID, 55.7, 37.6, "I was there")
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+}
+
+func TestBookingService_DisputeNoShow_Expired(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+	clientID := uuid.New()
+
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      clientID,
+		BathhouseID: bh.ID,
+		StartTime:   time.Now().Add(-4 * time.Hour),
+		EndTime:     time.Now().Add(-2 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingNoShow,
+		UpdatedAt:   time.Now().Add(-3 * time.Hour), // 3 hours ago, past 2h window
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	err := svc.DisputeNoShow(context.Background(), clientID, booking.ID, 55.7, 37.6, "")
+	if !errors.Is(err, domain.ErrNoShowDisputeExpired) {
+		t.Errorf("expected ErrNoShowDisputeExpired, got: %v", err)
 	}
 }

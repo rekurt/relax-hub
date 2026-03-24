@@ -9,14 +9,15 @@ import (
 type ComplaintTargetType string
 
 const (
-	ComplaintTargetReview    ComplaintTargetType = "review"
-	ComplaintTargetBathhouse ComplaintTargetType = "bathhouse"
-	ComplaintTargetUser      ComplaintTargetType = "user"
+	ComplaintTargetReview        ComplaintTargetType = "review"
+	ComplaintTargetBathhouse     ComplaintTargetType = "bathhouse"
+	ComplaintTargetUser          ComplaintTargetType = "user"
+	ComplaintTargetNoShowDispute ComplaintTargetType = "no_show_dispute"
 )
 
 func (t ComplaintTargetType) IsValid() bool {
 	switch t {
-	case ComplaintTargetReview, ComplaintTargetBathhouse, ComplaintTargetUser:
+	case ComplaintTargetReview, ComplaintTargetBathhouse, ComplaintTargetUser, ComplaintTargetNoShowDispute:
 		return true
 	}
 	return false

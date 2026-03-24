@@ -373,6 +373,22 @@ func (m *mockBookingService) GetAvailableSlots(ctx context.Context, bathhouseID 
 	return nil, nil
 }
 
+func (m *mockBookingService) CheckIn(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockBookingService) CheckOut(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockBookingService) MarkNoShows(_ context.Context) (int, error) {
+	return 0, nil
+}
+
+func (m *mockBookingService) DisputeNoShow(_ context.Context, _ uuid.UUID, _ uuid.UUID, _, _ float64, _ string) error {
+	return nil
+}
+
 type mockReviewService struct {
 	createFn           func(ctx context.Context, userID uuid.UUID, input service.CreateReviewInput) (*domain.Review, error)
 	getByIDFn          func(ctx context.Context, id uuid.UUID) (*domain.Review, error)

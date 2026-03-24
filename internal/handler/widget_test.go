@@ -153,6 +153,22 @@ func (m *mockWidgetBookingService) GetAvailableSlots(ctx context.Context, bathho
 	return []service.TimeSlot{}, nil
 }
 
+func (m *mockWidgetBookingService) CheckIn(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockWidgetBookingService) CheckOut(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockWidgetBookingService) MarkNoShows(_ context.Context) (int, error) {
+	return 0, nil
+}
+
+func (m *mockWidgetBookingService) DisputeNoShow(_ context.Context, _ uuid.UUID, _ uuid.UUID, _, _ float64, _ string) error {
+	return nil
+}
+
 func TestWidgetHandler_GetBathhouse(t *testing.T) {
 	apiKey := "test-api-key"
 	bathhouseID := uuid.New()

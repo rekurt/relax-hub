@@ -74,6 +74,9 @@ type BookingRepository interface {
 	CountActiveByBathhouse(ctx context.Context, bathhouseID uuid.UUID) (int64, error)
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*domain.UserBookingStats, error)
 	ListTimedOutRequests(ctx context.Context) ([]domain.Booking, error)
+	UpdateCheckin(ctx context.Context, bookingID uuid.UUID, checkedInAt *time.Time) error
+	UpdateCheckout(ctx context.Context, bookingID uuid.UUID, checkedOutAt *time.Time, status domain.BookingStatus) error
+	ListConfirmedWithoutCheckin(ctx context.Context, noShowCutoff time.Time) ([]domain.Booking, error)
 }
 
 type ReviewRepository interface {

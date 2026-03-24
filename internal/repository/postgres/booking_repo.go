@@ -14,7 +14,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
-const bookingColumns = `id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, hold_id, rejection_reason, points_spent, referral_bonus_used, status, comment, created_at, updated_at`
+const bookingColumns = `id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, checked_in_at, checked_out_at, hold_id, rejection_reason, points_spent, referral_bonus_used, status, comment, created_at, updated_at`
 
 type bookingRepo struct {
 	pool *pgxpool.Pool
@@ -30,6 +30,7 @@ func scanBooking(row interface{ Scan(dest ...any) error }) (*domain.Booking, err
 		&b.ID, &b.UserID, &b.BathhouseID,
 		&b.StartTime, &b.EndTime, &b.GuestCount,
 		&b.TotalPrice, &b.AddOnTotal, &b.BasePrice, &b.LongSessionDiscount, &b.ExtraGuestSurcharge, &b.LastMinuteDiscount, &b.ServiceFeeAmount,
+		&b.CheckedInAt, &b.CheckedOutAt,
 		&b.HoldID, &b.RejectionReason,
 		&b.PointsSpent, &b.ReferralBonusUsed, &b.Status, &b.Comment,
 		&b.CreatedAt, &b.UpdatedAt,
@@ -43,7 +44,7 @@ func scanBooking(row interface{ Scan(dest ...any) error }) (*domain.Booking, err
 func (r *bookingRepo) Create(ctx context.Context, booking *domain.Booking) error {
 	query := `
 		INSERT INTO bookings (` + bookingColumns + `)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)`
 
 	if booking.ID == uuid.Nil {
 		booking.ID = uuid.New()
@@ -53,6 +54,7 @@ func (r *bookingRepo) Create(ctx context.Context, booking *domain.Booking) error
 		booking.ID, booking.UserID, booking.BathhouseID,
 		booking.StartTime, booking.EndTime, booking.GuestCount,
 		booking.TotalPrice, booking.AddOnTotal, booking.BasePrice, booking.LongSessionDiscount, booking.ExtraGuestSurcharge, booking.LastMinuteDiscount, booking.ServiceFeeAmount,
+		booking.CheckedInAt, booking.CheckedOutAt,
 		booking.HoldID, booking.RejectionReason,
 		booking.PointsSpent, booking.ReferralBonusUsed, booking.Status, booking.Comment,
 		booking.CreatedAt, booking.UpdatedAt,
@@ -292,6 +294,56 @@ func (r *bookingRepo) ListTimedOutRequests(ctx context.Context) ([]domain.Bookin
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate timed out booking rows: %w", err)
+	}
+	return bookings, nil
+}
+
+func (r *bookingRepo) UpdateCheckin(ctx context.Context, bookingID uuid.UUID, checkedInAt *time.Time) error {
+	query := `UPDATE bookings SET checked_in_at = $2, updated_at = $3 WHERE id = $1`
+	tag, err := r.pool.Exec(ctx, query, bookingID, checkedInAt, time.Now())
+	if err != nil {
+		return fmt.Errorf("update checkin: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *bookingRepo) UpdateCheckout(ctx context.Context, bookingID uuid.UUID, checkedOutAt *time.Time, status domain.BookingStatus) error {
+	query := `UPDATE bookings SET checked_out_at = $2, status = $3, updated_at = $4 WHERE id = $1`
+	tag, err := r.pool.Exec(ctx, query, bookingID, checkedOutAt, status, time.Now())
+	if err != nil {
+		return fmt.Errorf("update checkout: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *bookingRepo) ListConfirmedWithoutCheckin(ctx context.Context, noShowCutoff time.Time) ([]domain.Booking, error) {
+	query := `SELECT ` + bookingColumns + ` FROM bookings
+		WHERE status = 'confirmed'
+			AND start_time < $1
+			AND checked_in_at IS NULL`
+
+	rows, err := r.pool.Query(ctx, query, noShowCutoff)
+	if err != nil {
+		return nil, fmt.Errorf("list confirmed without checkin: %w", err)
+	}
+	defer rows.Close()
+
+	var bookings []domain.Booking
+	for rows.Next() {
+		b, err := scanBooking(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan no-show booking: %w", err)
+		}
+		bookings = append(bookings, *b)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate no-show booking rows: %w", err)
 	}
 	return bookings, nil
 }

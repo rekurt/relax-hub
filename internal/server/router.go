@@ -232,6 +232,9 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/reject", p.BookingHandler.Reject)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/approve", p.BookingHandler.Approve)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/complete", p.BookingHandler.Complete)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/check-in", p.BookingHandler.CheckIn)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/{id}/check-out", p.BookingHandler.CheckOut)
+		r.With(auth).Post("/bookings/{id}/dispute-noshow", p.BookingHandler.DisputeNoShow)
 
 		// Bathhouse bookings (owner/representative/admin)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/bathhouses/{id}/bookings", p.BookingHandler.ListByBathhouse)
