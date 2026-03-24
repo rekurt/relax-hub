@@ -519,6 +519,19 @@ func (r *BookingRepo) ListUpcoming(_ context.Context, from, to time.Time) ([]dom
 	return result, nil
 }
 
+func (r *BookingRepo) UpdateEndTime(_ context.Context, bookingID uuid.UUID, newEndTime time.Time, newTotalPrice int64) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	b, ok := r.bookings[bookingID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	b.EndTime = newEndTime
+	b.TotalPrice = newTotalPrice
+	b.UpdatedAt = time.Now()
+	return nil
+}
+
 // RepresentativeRepo is an in-memory mock implementation of repository.RepresentativeRepository.
 type RepresentativeRepo struct {
 	mu   sync.RWMutex

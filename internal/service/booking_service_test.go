@@ -2940,3 +2940,246 @@ func TestBookingService_DisputeNoShow_Expired(t *testing.T) {
 		t.Errorf("expected ErrNoShowDisputeExpired, got: %v", err)
 	}
 }
+
+// --- Session Extension Tests ---
+
+func TestBookingService_Extend_Success_1Hour(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	result, err := svc.Extend(context.Background(), clientID, booking.ID, 1)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expectedNewEnd := end.Add(1 * time.Hour)
+	if !result.NewEndTime.Equal(expectedNewEnd) {
+		t.Errorf("new end time = %v, want %v", result.NewEndTime, expectedNewEnd)
+	}
+	if result.ExtensionPrice != bh.PricePerHour {
+		t.Errorf("extension price = %d, want %d", result.ExtensionPrice, bh.PricePerHour)
+	}
+	if result.NewTotalPrice != 10000+bh.PricePerHour {
+		t.Errorf("new total price = %d, want %d", result.NewTotalPrice, 10000+bh.PricePerHour)
+	}
+}
+
+func TestBookingService_Extend_Success_2Hours(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	result, err := svc.Extend(context.Background(), clientID, booking.ID, 2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expectedNewEnd := end.Add(2 * time.Hour)
+	if !result.NewEndTime.Equal(expectedNewEnd) {
+		t.Errorf("new end time = %v, want %v", result.NewEndTime, expectedNewEnd)
+	}
+	if result.ExtensionPrice != bh.PricePerHour*2 {
+		t.Errorf("extension price = %d, want %d", result.ExtensionPrice, bh.PricePerHour*2)
+	}
+}
+
+func TestBookingService_Extend_ConflictWithNextBooking(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	// Create a conflicting booking right after
+	nextBooking := &domain.Booking{
+		ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID,
+		StartTime: end, EndTime: end.Add(2 * time.Hour), GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), nextBooking)
+
+	_, err := svc.Extend(context.Background(), clientID, booking.ID, 1)
+	if !errors.Is(err, domain.ErrSlotUnavailable) {
+		t.Errorf("expected ErrSlotUnavailable, got: %v", err)
+	}
+}
+
+func TestBookingService_Extend_BeyondWorkingHours(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+
+	// Create bathhouse with working hours 08:00-22:00
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "08:00", CloseTime: "22:00"}
+	}
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Limited Hours",
+		Address: "123 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10,
+		LongSessionThresholdHours: 4, BaseCapacity: 10,
+		WorkingHours: wh,
+		Status:       domain.BathhouseStatusActive,
+	}
+	bhRepo.Create(context.Background(), bh)
+
+	now := time.Now()
+	// Booking ends at 21:00, extending by 2h would go to 23:00 (past 22:00 close)
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 19, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour) // 21:00
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	_, err := svc.Extend(context.Background(), clientID, booking.ID, 2)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput (beyond working hours), got: %v", err)
+	}
+}
+
+func TestBookingService_Extend_WrongStatus(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingPending,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	_, err := svc.Extend(context.Background(), clientID, booking.ID, 1)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput (wrong status), got: %v", err)
+	}
+}
+
+func TestBookingService_Extend_NotOwner(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	otherUserID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	_, err := svc.Extend(context.Background(), otherUserID, booking.ID, 1)
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("expected ErrForbidden, got: %v", err)
+	}
+}
+
+func TestBookingService_Extend_CheckedIn(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	checkedIn := now
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingConfirmed,
+		CheckedInAt: &checkedIn,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	result, err := svc.Extend(context.Background(), clientID, booking.ID, 1)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expectedNewEnd := end.Add(1 * time.Hour)
+	if !result.NewEndTime.Equal(expectedNewEnd) {
+		t.Errorf("new end time = %v, want %v", result.NewEndTime, expectedNewEnd)
+	}
+}
+
+func TestBookingService_Extend_InvalidExtraHours(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	// Test 0 hours
+	_, err := svc.Extend(context.Background(), clientID, booking.ID, 0)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput for 0 hours, got: %v", err)
+	}
+
+	// Test 3 hours
+	_, err = svc.Extend(context.Background(), clientID, booking.ID, 3)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput for 3 hours, got: %v", err)
+	}
+}

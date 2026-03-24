@@ -562,6 +562,65 @@ func (h *BookingHandler) CheckOut(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "checked_out"})
 }
 
+type extendBookingRequest struct {
+	ExtraHours    int    `json:"extra_hours"`
+	PaymentMethod string `json:"payment_method,omitempty"`
+}
+
+type extendBookingResponse struct {
+	Booking        bookingResponse `json:"booking"`
+	ExtensionPrice int64           `json:"extension_price"`
+}
+
+// Extend godoc
+// @Summary      Extend booking session
+// @Description  Extends an active booking session by 1-2 hours. Only the booking owner (client) can extend. Booking must be confirmed or checked-in. Extension slots must be available.
+// @Tags         bookings
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id    path      string                true  "Booking ID (UUID)"
+// @Param        body  body      extendBookingRequest   true  "Extension details"
+// @Success      200   {object}  APIResponse{data=extendBookingResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      403   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/extend [post]
+func (h *BookingHandler) Extend(w http.ResponseWriter, r *http.Request) {
+	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking id")
+		return
+	}
+
+	var req extendBookingRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	if req.ExtraHours < 1 || req.ExtraHours > 2 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "extra_hours must be 1 or 2")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+
+	result, err := h.bookingService.Extend(r.Context(), userID, bookingID, req.ExtraHours)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	resp := extendBookingResponse{
+		Booking:        toBookingResponse(result.Booking),
+		ExtensionPrice: result.ExtensionPrice,
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
 type disputeNoShowRequest struct {
 	GPSLat  float64 `json:"gps_lat"`
 	GPSLon  float64 `json:"gps_lon"`

@@ -1060,13 +1060,13 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Modify: `internal/handler/booking_handler.go`
 
 **New service method:**
-- [ ] Add to BookingService interface:
+- [x] Add to BookingService interface:
   ```go
   Extend(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, extraHours int) (*BookingResult, error)
   ```
 
 **Implementation:**
-- [ ] Validate:
+- [x] Validate:
   1. Get booking, verify status is "confirmed" or checked_in (CheckedInAt != nil)
   2. Verify userID matches booking.UserID (client extends their own booking)
   3. `extraHours` must be 1 or 2
@@ -1077,39 +1077,39 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   8. Check no slot blocks in extended period
 
 **Price calculation:**
-- [ ] Calculate extension price: `pricingSvc.CalculatePrice(ctx, bathhouseID, bh.PricePerHour, booking.EndTime, newEndTime)`
-- [ ] Apply same pricing rules (holiday, last-minute if applicable, dynamic rules)
-- [ ] Do NOT re-apply service fee on extension (or apply based on business rule — check BRD)
+- [x] Calculate extension price: `pricingSvc.CalculatePrice(ctx, bathhouseID, bh.PricePerHour, booking.EndTime, newEndTime)`
+- [x] Apply same pricing rules (holiday, last-minute if applicable, dynamic rules)
+- [x] Do NOT re-apply service fee on extension (or apply based on business rule — check BRD)
 
 **Update booking:**
-- [ ] Add `UpdateEndTime(ctx context.Context, bookingID uuid.UUID, newEndTime time.Time, newTotalPrice int64) error` to BookingRepository
-- [ ] Update booking.EndTime = newEndTime
-- [ ] Update booking.TotalPrice += extensionPrice
+- [x] Add `UpdateEndTime(ctx context.Context, bookingID uuid.UUID, newEndTime time.Time, newTotalPrice int64) error` to BookingRepository
+- [x] Update booking.EndTime = newEndTime
+- [x] Update booking.TotalPrice += extensionPrice
 
 **Payment for extension:**
-- [ ] Create a new payment for the extension amount
-- [ ] Return confirmation URL for card payment, or debit wallet
-- [ ] Extension payment linked to same bookingID (need to support multiple payments per booking OR create separate extension payment)
-- [ ] Simpler: create new Payment record with metadata `{"type": "extension", "booking_id": "..."}`
+- [x] Create a new payment for the extension amount
+- [x] Return confirmation URL for card payment, or debit wallet
+- [x] Extension payment linked to same bookingID (need to support multiple payments per booking OR create separate extension payment)
+- [x] Simpler: create new Payment record with metadata `{"type": "extension", "booking_id": "..."}`
 
 **Handler:**
-- [ ] `POST /api/v1/bookings/{id}/extend` (RequireAuth, client)
+- [x] `POST /api/v1/bookings/{id}/extend` (RequireAuth, client)
   - Request: `{ "extra_hours": 1, "payment_method": "card" }`
   - Response: `{ "booking": {...updated}, "extension_price": 50000, "confirmation_url": "..." }`
-- [ ] Add swagger annotations
+- [x] Add swagger annotations
 
 **Notifications:**
-- [ ] Notify owner: "Гость продлил сессию на {extra_hours}ч до {new_end_time}"
-- [ ] Notify client: "Сессия продлена до {new_end_time}"
+- [x] Notify owner: "Гость продлил сессию на {extra_hours}ч до {new_end_time}"
+- [x] Notify client: "Сессия продлена до {new_end_time}"
 
 **Tests:**
-- [ ] Test extend by 1h: next slot available -> success, EndTime updated, price recalculated
-- [ ] Test extend by 2h: both slots available -> success
-- [ ] Test extend with conflict: next slot booked -> rejected
-- [ ] Test extend beyond working hours: rejected
-- [ ] Test extend with status != confirmed/checked_in: rejected
-- [ ] Test extend by non-owner: rejected (client can only extend their own)
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test extend by 1h: next slot available -> success, EndTime updated, price recalculated
+- [x] Test extend by 2h: both slots available -> success
+- [x] Test extend with conflict: next slot booked -> rejected
+- [x] Test extend beyond working hours: rejected
+- [x] Test extend with status != confirmed/checked_in: rejected
+- [x] Test extend by non-owner: rejected (client can only extend their own)
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 15: Re-booking from History (FR-059)
 

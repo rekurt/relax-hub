@@ -48,6 +48,13 @@ type BookingResult struct {
 	HolidayMultiplier   float64               // Holiday multiplier used
 }
 
+type ExtendResult struct {
+	Booking        *domain.Booking
+	ExtensionPrice int64
+	NewEndTime     time.Time
+	NewTotalPrice  int64
+}
+
 type TimeSlot struct {
 	StartTime     time.Time `json:"startTime"`
 	EndTime       time.Time `json:"endTime"`
@@ -83,6 +90,7 @@ type BookingService interface {
 	MarkNoShows(ctx context.Context) (int, error)
 	DisputeNoShow(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, gpsLat, gpsLon float64, comment string) error
 	ListUpcomingWithBathhouse(ctx context.Context, from, to time.Time) ([]UpcomingBookingInfo, error)
+	Extend(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, extraHours int) (*ExtendResult, error)
 }
 
 type bookingService struct {
@@ -1398,4 +1406,119 @@ func (s *bookingService) ListUpcomingWithBathhouse(ctx context.Context, from, to
 		})
 	}
 	return result, nil
+}
+
+func (s *bookingService) Extend(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, extraHours int) (*ExtendResult, error) {
+	if extraHours < 1 || extraHours > 2 {
+		return nil, fmt.Errorf("%w: extra_hours must be 1 or 2", domain.ErrInvalidInput)
+	}
+
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Only the booking owner can extend
+	if booking.UserID != userID {
+		return nil, domain.ErrForbidden
+	}
+
+	// Must be confirmed or checked-in
+	if booking.Status != domain.BookingConfirmed && booking.CheckedInAt == nil {
+		return nil, fmt.Errorf("%w: only confirmed or checked-in bookings can be extended", domain.ErrInvalidInput)
+	}
+
+	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+	if err != nil {
+		return nil, err
+	}
+
+	if bh.Status != domain.BathhouseStatusActive {
+		return nil, domain.ErrBathhouseNotActive
+	}
+
+	newEndTime := booking.EndTime.Add(time.Duration(extraHours) * time.Hour)
+
+	// Validate extended time is within working hours
+	if err := validateWithinWorkingHours(bh, booking.StartTime, newEndTime); err != nil {
+		return nil, fmt.Errorf("%w: extension exceeds working hours", domain.ErrInvalidInput)
+	}
+
+	// Check availability for the extension period (from current end to new end)
+	available, err := s.bookingRepo.CheckAvailability(ctx, booking.BathhouseID, booking.EndTime, newEndTime)
+	if err != nil {
+		return nil, err
+	}
+	if !available {
+		return nil, fmt.Errorf("%w: extension period is not available", domain.ErrSlotUnavailable)
+	}
+
+	// Check buffer time conflicts
+	bufferDuration := time.Duration(bh.BufferMinutes) * time.Minute
+	if bufferDuration > 0 {
+		overlapping, err := s.bookingRepo.GetOverlapping(ctx, booking.BathhouseID, booking.EndTime, newEndTime.Add(bufferDuration))
+		if err != nil {
+			return nil, err
+		}
+		for _, b := range overlapping {
+			if b.ID == booking.ID {
+				continue
+			}
+			return nil, fmt.Errorf("%w: extension conflicts with buffer time", domain.ErrSlotUnavailable)
+		}
+	}
+
+	// Check for slot blocks in the extension period
+	blocked, err := s.slotBlockRepo.HasOverlapping(ctx, booking.BathhouseID, booking.EndTime, newEndTime)
+	if err != nil {
+		return nil, err
+	}
+	if blocked {
+		return nil, fmt.Errorf("%w: extension period is blocked", domain.ErrSlotUnavailable)
+	}
+
+	// Calculate extension price using the pricing service
+	extensionPrice, err := s.pricingSvc.CalculatePrice(ctx, booking.BathhouseID, bh.PricePerHour, booking.EndTime, newEndTime)
+	if err != nil {
+		return nil, fmt.Errorf("calculate extension price: %w", err)
+	}
+
+	newTotalPrice := booking.TotalPrice + extensionPrice
+
+	// Update booking end time and total price
+	if err := s.bookingRepo.UpdateEndTime(ctx, bookingID, newEndTime, newTotalPrice); err != nil {
+		return nil, fmt.Errorf("update booking end time: %w", err)
+	}
+
+	booking.EndTime = newEndTime
+	booking.TotalPrice = newTotalPrice
+
+	// Notify owner about extension
+	if ownerBh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID); err == nil {
+		ownerBody := fmt.Sprintf("Гость продлил сессию на %dч до %s", extraHours, newEndTime.Format("15:04"))
+		data := map[string]string{
+			"booking_id":   booking.ID.String(),
+			"bathhouse_id": booking.BathhouseID.String(),
+		}
+		if err := s.notifSvc.Send(ctx, ownerBh.OwnerID, domain.NotifBookingExtendedOwner, "Сессия продлена", ownerBody, data); err != nil {
+			s.logger.Warn("failed to send extension notification to owner", "booking_id", bookingID, "error", err)
+		}
+	}
+
+	// Notify client
+	clientBody := fmt.Sprintf("Сессия продлена до %s", newEndTime.Format("15:04"))
+	data := map[string]string{
+		"booking_id":   booking.ID.String(),
+		"bathhouse_id": booking.BathhouseID.String(),
+	}
+	if err := s.notifSvc.Send(ctx, booking.UserID, domain.NotifBookingExtended, "Сессия продлена", clientBody, data); err != nil {
+		s.logger.Warn("failed to send extension notification to client", "booking_id", bookingID, "error", err)
+	}
+
+	return &ExtendResult{
+		Booking:        booking,
+		ExtensionPrice: extensionPrice,
+		NewEndTime:     newEndTime,
+		NewTotalPrice:  newTotalPrice,
+	}, nil
 }

@@ -66,6 +66,9 @@ func (m *mockBookingServiceForReminders) DisputeNoShow(_ context.Context, _ uuid
 func (m *mockBookingServiceForReminders) ListUpcomingWithBathhouse(_ context.Context, _, _ time.Time) ([]service.UpcomingBookingInfo, error) {
 	return m.upcomingBookings, m.upcomingErr
 }
+func (m *mockBookingServiceForReminders) Extend(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ int) (*service.ExtendResult, error) {
+	return nil, nil
+}
 
 func newTestReminderScheduler(notifSvc *mockNotificationService, bookingSvc service.BookingService, redisClient *redis.Client) *CronScheduler {
 	log := logger.New(logger.LevelInfo)

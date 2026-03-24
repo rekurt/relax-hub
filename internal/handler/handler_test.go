@@ -393,6 +393,10 @@ func (m *mockBookingService) ListUpcomingWithBathhouse(_ context.Context, _, _ t
 	return nil, nil
 }
 
+func (m *mockBookingService) Extend(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ int) (*service.ExtendResult, error) {
+	return nil, nil
+}
+
 type mockReviewService struct {
 	createFn           func(ctx context.Context, userID uuid.UUID, input service.CreateReviewInput) (*domain.Review, error)
 	getByIDFn          func(ctx context.Context, id uuid.UUID) (*domain.Review, error)
