@@ -54,6 +54,8 @@ type BathhouseRepository interface {
 	SuggestNames(ctx context.Context, filter SuggestionFilter) ([]string, error)
 	IncrementViewCount(ctx context.Context, id uuid.UUID) error
 	UpdateRankingFields(ctx context.Context, id uuid.UUID, conversionRate, occupancyRate float64) error
+	UpdateResponseRate(ctx context.Context, id uuid.UUID, responseRate float64, avgResponseMinutes int) error
+	ListRequestModeBathhouses(ctx context.Context) ([]domain.Bathhouse, error)
 }
 
 // SuggestionFilter specifies parameters for name-based suggestions.
@@ -79,6 +81,9 @@ type BookingRepository interface {
 	ListConfirmedWithoutCheckin(ctx context.Context, noShowCutoff time.Time) ([]domain.Booking, error)
 	ListUpcoming(ctx context.Context, from, to time.Time) ([]domain.Booking, error)
 	UpdateEndTime(ctx context.Context, bookingID uuid.UUID, newEndTime time.Time, newTotalPrice int64) error
+	UpdateCancelledByOwner(ctx context.Context, bookingID uuid.UUID) error
+	CountOwnerCancellations(ctx context.Context, ownerID uuid.UUID, since time.Time) (int, error)
+	GetResponseStats(ctx context.Context, bathhouseID uuid.UUID, since time.Time) (totalRequests int, respondedInTime int, avgResponseMinutes int, err error)
 }
 
 type ReviewRepository interface {

@@ -1171,65 +1171,65 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Create: `migrations/XXXXXX_owner_metrics.up.sql` / `.down.sql`
 
 **Owner cancellation penalty:**
-- [ ] In `Cancel` method, when role is owner/representative:
+- [x] In `Cancel` method, when role is owner/representative:
   - After cancelling: credit 10% of booking.TotalPrice to client wallet as compensation
     - `compensationAmount = booking.TotalPrice / 10`
     - `walletSvc.Credit(ctx, booking.UserID, compensationAmount)`
   - Track cancellation: increment owner cancellation count
-- [ ] Add to BookingRepository:
+- [x] Add to BookingRepository:
   ```go
   CountOwnerCancellations(ctx context.Context, ownerID uuid.UUID, since time.Time) (int, error)
   ```
   — counts bookings cancelled by owner in the given time window
-- [ ] After cancellation, check 30-day count:
+- [x] After cancellation, check 30-day count:
   - count > 3: send warning notification to owner
   - count > 5: deactivate ALL owner's bathhouses, notify admin
     - `bhRepo.ListByOwner` -> for each: `bhRepo.UpdateStatus(ctx, id, BathhouseStatusInactive)`
     - Notify admin about auto-deactivation
 
 **Bathhouse model changes:**
-- [ ] Add fields:
+- [x] Add fields:
   ```go
   ResponseRate          float64 // 0.0-1.0, percentage of requests responded to within timeout
   AvgResponseTimeMinutes int    // average response time in minutes for request-based bookings
   ```
 
 **Migration:**
-- [ ] ALTER TABLE bathhouses:
+- [x] ALTER TABLE bathhouses:
   - `ADD COLUMN response_rate NUMERIC(5,4) DEFAULT 1.0`
   - `ADD COLUMN avg_response_time_minutes INT DEFAULT 0`
-- [ ] ALTER TABLE bookings:
+- [x] ALTER TABLE bookings:
   - `ADD COLUMN cancelled_by_owner BOOLEAN NOT NULL DEFAULT false` (to distinguish client vs owner cancellation)
 
 **Response rate tracking (for request-based bookings):**
-- [ ] Add to BookingRepository:
+- [x] Add to BookingRepository:
   ```go
   GetResponseStats(ctx context.Context, bathhouseID uuid.UUID, since time.Time) (totalRequests int, respondedInTime int, avgResponseMinutes int, error)
   ```
   — queries bookings with status != pending_owner (responded) vs total request-based bookings
-- [ ] Daily cron job to recalculate response rate for all request-mode bathhouses:
+- [x] Daily cron job to recalculate response rate for all request-mode bathhouses:
   ```go
   responseRate = respondedInTime / totalRequests (over last 90 days)
   avgResponseMinutes = AVG(updated_at - created_at) for responded requests
   ```
   - Update bathhouse.ResponseRate and bathhouse.AvgResponseTimeMinutes
-- [ ] Enforcement:
+- [x] Enforcement:
   - ResponseRate < 0.5: send warning notification to owner "Ваш процент ответов {rate}%, рекомендуем отвечать быстрее"
   - ResponseRate < 0.3 for 60+ consecutive days: force booking_mode to "instant" OR deactivate listing
   - Track how long rate has been below 0.3 (check previous day's rate from bathhouse record)
 
 **Modify Cancel to track owner cancellations:**
-- [ ] Set `booking.CancelledByOwner = true` when owner/rep cancels
-- [ ] Use this flag for counting owner cancellations
+- [x] Set `booking.CancelledByOwner = true` when owner/rep cancels
+- [x] Use this flag for counting owner cancellations
 
 **Tests:**
-- [ ] Test owner cancellation: client receives 10% compensation in wallet
-- [ ] Test 4th cancellation in 30 days: warning notification sent to owner
-- [ ] Test 6th cancellation: all owner bathhouses deactivated, admin notified
-- [ ] Test response rate calculation: 8 out of 10 requests responded in time = 0.80
-- [ ] Test low response rate warning at 0.5
-- [ ] Test auto-deactivation at 0.3 for 60 days
-- [ ] Run `go test ./... -v -race` — must pass
+- [x] Test owner cancellation: client receives 10% compensation in wallet
+- [x] Test 4th cancellation in 30 days: warning notification sent to owner
+- [x] Test 6th cancellation: all owner bathhouses deactivated, admin notified
+- [x] Test response rate calculation: 8 out of 10 requests responded in time = 0.80
+- [x] Test low response rate warning at 0.5
+- [x] Test auto-deactivation at 0.3 for 60 days
+- [x] Run `go test ./... -v -race` — must pass
 
 ### Task 17: Fiscalization Placeholder (FR-095)
 

@@ -14,7 +14,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
-const bookingColumns = `id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, checked_in_at, checked_out_at, hold_id, rejection_reason, points_spent, referral_bonus_used, status, comment, created_at, updated_at`
+const bookingColumns = `id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, checked_in_at, checked_out_at, hold_id, rejection_reason, cancelled_by_owner, points_spent, referral_bonus_used, status, comment, created_at, updated_at`
 
 type bookingRepo struct {
 	pool *pgxpool.Pool
@@ -31,7 +31,7 @@ func scanBooking(row interface{ Scan(dest ...any) error }) (*domain.Booking, err
 		&b.StartTime, &b.EndTime, &b.GuestCount,
 		&b.TotalPrice, &b.AddOnTotal, &b.BasePrice, &b.LongSessionDiscount, &b.ExtraGuestSurcharge, &b.LastMinuteDiscount, &b.ServiceFeeAmount,
 		&b.CheckedInAt, &b.CheckedOutAt,
-		&b.HoldID, &b.RejectionReason,
+		&b.HoldID, &b.RejectionReason, &b.CancelledByOwner,
 		&b.PointsSpent, &b.ReferralBonusUsed, &b.Status, &b.Comment,
 		&b.CreatedAt, &b.UpdatedAt,
 	)
@@ -44,7 +44,7 @@ func scanBooking(row interface{ Scan(dest ...any) error }) (*domain.Booking, err
 func (r *bookingRepo) Create(ctx context.Context, booking *domain.Booking) error {
 	query := `
 		INSERT INTO bookings (` + bookingColumns + `)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)`
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)`
 
 	if booking.ID == uuid.Nil {
 		booking.ID = uuid.New()
@@ -55,7 +55,7 @@ func (r *bookingRepo) Create(ctx context.Context, booking *domain.Booking) error
 		booking.StartTime, booking.EndTime, booking.GuestCount,
 		booking.TotalPrice, booking.AddOnTotal, booking.BasePrice, booking.LongSessionDiscount, booking.ExtraGuestSurcharge, booking.LastMinuteDiscount, booking.ServiceFeeAmount,
 		booking.CheckedInAt, booking.CheckedOutAt,
-		booking.HoldID, booking.RejectionReason,
+		booking.HoldID, booking.RejectionReason, booking.CancelledByOwner,
 		booking.PointsSpent, booking.ReferralBonusUsed, booking.Status, booking.Comment,
 		booking.CreatedAt, booking.UpdatedAt,
 	)
@@ -372,6 +372,58 @@ func (r *bookingRepo) ListUpcoming(ctx context.Context, from, to time.Time) ([]d
 		return nil, fmt.Errorf("iterate upcoming booking rows: %w", err)
 	}
 	return bookings, nil
+}
+
+func (r *bookingRepo) UpdateCancelledByOwner(ctx context.Context, bookingID uuid.UUID) error {
+	query := `UPDATE bookings SET cancelled_by_owner = true, updated_at = $2 WHERE id = $1`
+	tag, err := r.pool.Exec(ctx, query, bookingID, time.Now())
+	if err != nil {
+		return fmt.Errorf("update cancelled_by_owner: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *bookingRepo) CountOwnerCancellations(ctx context.Context, ownerID uuid.UUID, since time.Time) (int, error) {
+	query := `
+		SELECT COUNT(*) FROM bookings b
+		JOIN bathhouses bh ON bh.id = b.bathhouse_id
+		WHERE bh.owner_id = $1
+			AND b.cancelled_by_owner = true
+			AND b.status = 'cancelled'
+			AND b.updated_at >= $2`
+	var count int
+	err := r.pool.QueryRow(ctx, query, ownerID, since).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count owner cancellations: %w", err)
+	}
+	return count, nil
+}
+
+func (r *bookingRepo) GetResponseStats(ctx context.Context, bathhouseID uuid.UUID, since time.Time) (totalRequests int, respondedInTime int, avgResponseMinutes int, err error) {
+	// Total request-based bookings (those that were ever pending_owner)
+	// We identify them by: booking_mode='request' on the bathhouse AND booking was created after 'since'
+	// Since pending_owner bookings transition to confirmed/rejected/cancelled, we count all bookings
+	// that have hold_id (indicating request mode was used) or were explicitly request-based
+	query := `
+		SELECT
+			COUNT(*) as total_requests,
+			COUNT(*) FILTER (WHERE b.status IN ('confirmed', 'rejected', 'cancelled', 'completed', 'no_show')) as responded,
+			COALESCE(AVG(EXTRACT(EPOCH FROM (b.updated_at - b.created_at)) / 60)
+				FILTER (WHERE b.status IN ('confirmed', 'rejected')), 0)::INT as avg_response_minutes
+		FROM bookings b
+		JOIN bathhouses bh ON bh.id = b.bathhouse_id
+		WHERE b.bathhouse_id = $1
+			AND b.created_at >= $2
+			AND bh.booking_mode = 'request'`
+
+	err = r.pool.QueryRow(ctx, query, bathhouseID, since).Scan(&totalRequests, &respondedInTime, &avgResponseMinutes)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("get response stats: %w", err)
+	}
+	return totalRequests, respondedInTime, avgResponseMinutes, nil
 }
 
 func (r *bookingRepo) UpdateEndTime(ctx context.Context, bookingID uuid.UUID, newEndTime time.Time, newTotalPrice int64) error {

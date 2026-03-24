@@ -399,6 +399,9 @@ func (m *mockBookingService) Extend(_ context.Context, _ uuid.UUID, _ uuid.UUID,
 func (m *mockBookingService) GetRebookData(_ context.Context, _ uuid.UUID, _ uuid.UUID) (*service.RebookData, error) {
 	return nil, nil
 }
+func (m *mockBookingService) RecalculateResponseRates(_ context.Context) (int, error) {
+	return 0, nil
+}
 
 type mockReviewService struct {
 	createFn           func(ctx context.Context, userID uuid.UUID, input service.CreateReviewInput) (*domain.Review, error)

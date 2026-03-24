@@ -3392,3 +3392,348 @@ func TestGetRebookData_WithAddOns(t *testing.T) {
 		t.Errorf("addon2 quantity = %d, want 1", addonMap[addonID2])
 	}
 }
+
+// --- Owner Cancellation Penalty & Response Rate Tests ---
+
+type trackingWalletService struct {
+	noopWalletService
+	refundCalls []walletRefundCall
+}
+
+type walletRefundCall struct {
+	WalletID    uuid.UUID
+	Amount      int64
+	RefType     string
+	Description string
+}
+
+func (t *trackingWalletService) Refund(_ context.Context, walletID uuid.UUID, amount int64, refType string, _ *uuid.UUID, description string) (*domain.WalletTransaction, error) {
+	t.refundCalls = append(t.refundCalls, walletRefundCall{
+		WalletID:    walletID,
+		Amount:      amount,
+		RefType:     refType,
+		Description: description,
+	})
+	return &domain.WalletTransaction{}, nil
+}
+
+type trackingNotifService struct {
+	noopNotifService
+	sent []sentNotif
+}
+
+type sentNotif struct {
+	UserID uuid.UUID
+	Type   domain.NotificationType
+	Title  string
+	Body   string
+}
+
+func (t *trackingNotifService) Send(_ context.Context, userID uuid.UUID, notifType domain.NotificationType, title, body string, _ map[string]string) error {
+	t.sent = append(t.sent, sentNotif{UserID: userID, Type: notifType, Title: title, Body: body})
+	return nil
+}
+
+func newBookingServiceWithWallet() (service.BookingService, *mock.BathhouseRepo, *mock.BookingRepo, *trackingWalletService, *trackingNotifService) {
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	pricingRepo := mock.NewPricingRuleRepo()
+	loyaltyRepo := mock.NewLoyaltyRepo()
+	slotBlockRepo := mock.NewSlotBlockRepo()
+	addonRepo := mock.NewAddOnRepo()
+	access := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, nil, access, log)
+	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
+	addonSvc := service.NewAddOnService(addonRepo, access, log)
+	walletSvc := &trackingWalletService{}
+	notifSvc := &trackingNotifService{}
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, walletSvc, nil, nil, access, notifSvc, log)
+	return svc, bhRepo, bookingRepo, walletSvc, notifSvc
+}
+
+func TestOwnerCancellation_CompensatesClient(t *testing.T) {
+	svc, bhRepo, bookingRepo, walletSvc, _ := newBookingServiceWithWallet()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	start := time.Now().Add(48 * time.Hour)
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: start.Add(2 * time.Hour),
+		GuestCount: 2, TotalPrice: 100000, Status: domain.BookingConfirmed,
+	}
+	_ = bookingRepo.Create(context.Background(), booking)
+
+	err := svc.Cancel(context.Background(), ownerID, domain.RoleOwner, booking.ID, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify booking is cancelled
+	b, _ := bookingRepo.GetByID(context.Background(), booking.ID)
+	if b.Status != domain.BookingCancelled {
+		t.Errorf("status = %q, want %q", b.Status, domain.BookingCancelled)
+	}
+	if !b.CancelledByOwner {
+		t.Error("CancelledByOwner should be true")
+	}
+
+	// Verify 10% compensation was refunded to client wallet
+	if len(walletSvc.refundCalls) == 0 {
+		t.Fatal("expected at least one wallet refund call for compensation")
+	}
+
+	found := false
+	for _, call := range walletSvc.refundCalls {
+		if call.RefType == "owner_cancellation" {
+			found = true
+			expectedAmount := int64(10000) // 10% of 100000
+			if call.Amount != expectedAmount {
+				t.Errorf("compensation amount = %d, want %d", call.Amount, expectedAmount)
+			}
+		}
+	}
+	if !found {
+		t.Error("expected wallet refund call with ref_type 'owner_cancellation'")
+	}
+}
+
+func TestOwnerCancellation_WarningAt4thCancellation(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, notifSvc := newBookingServiceWithWallet()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Create 4 bookings and cancel them as owner
+	for i := 0; i < 4; i++ {
+		clientID := uuid.New()
+		start := time.Now().Add(48 * time.Hour)
+		booking := &domain.Booking{
+			ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+			StartTime: start, EndTime: start.Add(2 * time.Hour),
+			GuestCount: 2, TotalPrice: 10000, Status: domain.BookingConfirmed,
+		}
+		_ = bookingRepo.Create(context.Background(), booking)
+		err := svc.Cancel(context.Background(), ownerID, domain.RoleOwner, booking.ID, "")
+		if err != nil {
+			t.Fatalf("cancel %d: unexpected error: %v", i+1, err)
+		}
+	}
+
+	// Check that warning was sent (after 4th cancellation, count > 3)
+	warningFound := false
+	for _, n := range notifSvc.sent {
+		if n.Type == domain.NotifOwnerCancellationWarning && n.UserID == ownerID {
+			warningFound = true
+		}
+	}
+	if !warningFound {
+		t.Error("expected owner cancellation warning notification after 4th cancellation")
+	}
+}
+
+func TestOwnerCancellation_DeactivatesAt6thCancellation(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, notifSvc := newBookingServiceWithWallet()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Create a second bathhouse for the same owner
+	bh2 := createBathhouse(t, bhRepo, ownerID)
+
+	// Create 6 bookings and cancel them as owner
+	for i := 0; i < 6; i++ {
+		clientID := uuid.New()
+		start := time.Now().Add(48 * time.Hour)
+		booking := &domain.Booking{
+			ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+			StartTime: start, EndTime: start.Add(2 * time.Hour),
+			GuestCount: 2, TotalPrice: 10000, Status: domain.BookingConfirmed,
+		}
+		_ = bookingRepo.Create(context.Background(), booking)
+		err := svc.Cancel(context.Background(), ownerID, domain.RoleOwner, booking.ID, "")
+		if err != nil {
+			t.Fatalf("cancel %d: unexpected error: %v", i+1, err)
+		}
+	}
+
+	// Check both bathhouses are deactivated
+	updatedBh1, _ := bhRepo.GetByID(context.Background(), bh.ID)
+	updatedBh2, _ := bhRepo.GetByID(context.Background(), bh2.ID)
+
+	if updatedBh1.Status != domain.BathhouseStatusInactive {
+		t.Errorf("bh1 status = %q, want %q", updatedBh1.Status, domain.BathhouseStatusInactive)
+	}
+	if updatedBh2.Status != domain.BathhouseStatusInactive {
+		t.Errorf("bh2 status = %q, want %q", updatedBh2.Status, domain.BathhouseStatusInactive)
+	}
+
+	// Check penalty notification
+	penaltyFound := false
+	for _, n := range notifSvc.sent {
+		if n.Type == domain.NotifOwnerCancellationPenalty && n.UserID == ownerID {
+			penaltyFound = true
+		}
+	}
+	if !penaltyFound {
+		t.Error("expected owner cancellation penalty notification after 6th cancellation")
+	}
+}
+
+func TestResponseRateCalculation(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _ := newBookingServiceWithWallet()
+	ownerID := uuid.New()
+
+	// Create a request-mode bathhouse
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Request Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, BaseCapacity: 10,
+		LongSessionThresholdHours: 4,
+		BookingMode: domain.BookingModeRequest, RequestTimeout: 24,
+		WorkingHours: wh, Status: domain.BathhouseStatusActive,
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Create 10 request-based bookings (simulated by having HoldID set)
+	holdID := uuid.New()
+	for i := 0; i < 10; i++ {
+		status := domain.BookingConfirmed
+		if i >= 8 {
+			status = domain.BookingPendingOwner // 2 still pending (not responded)
+		}
+		booking := &domain.Booking{
+			ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID,
+			StartTime: time.Now().Add(time.Duration(i+1) * 24 * time.Hour),
+			EndTime:   time.Now().Add(time.Duration(i+1)*24*time.Hour + 2*time.Hour),
+			GuestCount: 2, TotalPrice: 10000, Status: status,
+			HoldID:    &holdID,
+			CreatedAt: time.Now().Add(-time.Duration(i) * time.Hour),
+			UpdatedAt: time.Now().Add(-time.Duration(i)*time.Hour + 30*time.Minute),
+		}
+		_ = bookingRepo.Create(context.Background(), booking)
+	}
+
+	updated, err := svc.RecalculateResponseRates(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated != 1 {
+		t.Errorf("updated = %d, want 1", updated)
+	}
+}
+
+func TestResponseRate_WarningBelow50(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, notifSvc := newBookingServiceWithWallet()
+	ownerID := uuid.New()
+
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Slow Bath",
+		Address: "456 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, BaseCapacity: 10,
+		LongSessionThresholdHours: 4,
+		BookingMode: domain.BookingModeRequest, RequestTimeout: 24,
+		WorkingHours: wh, Status: domain.BathhouseStatusActive,
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Create 10 bookings: only 4 responded (40% rate, < 50%)
+	holdID := uuid.New()
+	for i := 0; i < 10; i++ {
+		status := domain.BookingPendingOwner // not responded
+		if i < 4 {
+			status = domain.BookingConfirmed // responded
+		}
+		booking := &domain.Booking{
+			ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID,
+			StartTime: time.Now().Add(time.Duration(i+1) * 24 * time.Hour),
+			EndTime:   time.Now().Add(time.Duration(i+1)*24*time.Hour + 2*time.Hour),
+			GuestCount: 2, TotalPrice: 10000, Status: status,
+			HoldID: &holdID,
+		}
+		_ = bookingRepo.Create(context.Background(), booking)
+	}
+
+	_, err := svc.RecalculateResponseRates(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	warningFound := false
+	for _, n := range notifSvc.sent {
+		if n.Type == domain.NotifOwnerResponseRateWarning && n.UserID == ownerID {
+			warningFound = true
+		}
+	}
+	if !warningFound {
+		t.Error("expected response rate warning notification for rate < 50%")
+	}
+}
+
+func TestResponseRate_AutoDeactivateBelow30(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, notifSvc := newBookingServiceWithWallet()
+	ownerID := uuid.New()
+
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Very Slow Bath",
+		Address: "789 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, BaseCapacity: 10,
+		LongSessionThresholdHours: 4,
+		BookingMode:  domain.BookingModeRequest, RequestTimeout: 24,
+		ResponseRate: 0.2, // Previously below 0.3 too
+		WorkingHours: wh, Status: domain.BathhouseStatusActive,
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Create 10 bookings: only 2 responded (20% rate, < 30%)
+	holdID := uuid.New()
+	for i := 0; i < 10; i++ {
+		status := domain.BookingPendingOwner
+		if i < 2 {
+			status = domain.BookingConfirmed
+		}
+		booking := &domain.Booking{
+			ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID,
+			StartTime: time.Now().Add(time.Duration(i+1) * 24 * time.Hour),
+			EndTime:   time.Now().Add(time.Duration(i+1)*24*time.Hour + 2*time.Hour),
+			GuestCount: 2, TotalPrice: 10000, Status: status,
+			HoldID: &holdID,
+		}
+		_ = bookingRepo.Create(context.Background(), booking)
+	}
+
+	_, err := svc.RecalculateResponseRates(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should force to instant mode
+	updatedBh, _ := bhRepo.GetByID(context.Background(), bh.ID)
+	if updatedBh.BookingMode != domain.BookingModeInstant {
+		t.Errorf("booking_mode = %q, want %q", updatedBh.BookingMode, domain.BookingModeInstant)
+	}
+
+	// Should send notification
+	notifFound := false
+	for _, n := range notifSvc.sent {
+		if n.Type == domain.NotifOwnerResponseRateWarning && n.UserID == ownerID {
+			notifFound = true
+		}
+	}
+	if !notifFound {
+		t.Error("expected response rate warning notification for auto-deactivation")
+	}
+}

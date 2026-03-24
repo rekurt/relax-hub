@@ -223,6 +223,14 @@ func (m *mockBathhouseRepository) UpdateRankingFields(_ context.Context, _ uuid.
 	return nil
 }
 
+func (m *mockBathhouseRepository) UpdateResponseRate(_ context.Context, _ uuid.UUID, _ float64, _ int) error {
+	return nil
+}
+
+func (m *mockBathhouseRepository) ListRequestModeBathhouses(_ context.Context) ([]domain.Bathhouse, error) {
+	return nil, nil
+}
+
 // Mock AuthService for testing
 type mockAuthService struct {
 	userID uuid.UUID

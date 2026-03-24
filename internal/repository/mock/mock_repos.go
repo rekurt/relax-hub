@@ -532,6 +532,53 @@ func (r *BookingRepo) UpdateEndTime(_ context.Context, bookingID uuid.UUID, newE
 	return nil
 }
 
+func (r *BookingRepo) UpdateCancelledByOwner(_ context.Context, bookingID uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	b, ok := r.bookings[bookingID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	b.CancelledByOwner = true
+	b.UpdatedAt = time.Now()
+	return nil
+}
+
+func (r *BookingRepo) CountOwnerCancellations(_ context.Context, ownerID uuid.UUID, since time.Time) (int, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	count := 0
+	for _, b := range r.bookings {
+		if b.CancelledByOwner && b.Status == domain.BookingCancelled && !b.UpdatedAt.Before(since) {
+			count++
+		}
+	}
+	return count, nil
+}
+
+func (r *BookingRepo) GetResponseStats(_ context.Context, bathhouseID uuid.UUID, since time.Time) (totalRequests int, respondedInTime int, avgResponseMinutes int, err error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var totalMinutes int
+	responded := 0
+	total := 0
+	for _, b := range r.bookings {
+		if b.BathhouseID == bathhouseID && !b.CreatedAt.Before(since) && b.HoldID != nil {
+			total++
+			if b.Status == domain.BookingConfirmed || b.Status == domain.BookingRejected {
+				responded++
+				minutes := int(b.UpdatedAt.Sub(b.CreatedAt).Minutes())
+				totalMinutes += minutes
+			}
+		}
+	}
+	avg := 0
+	if responded > 0 {
+		avg = totalMinutes / responded
+	}
+	return total, responded, avg, nil
+}
+
 // RepresentativeRepo is an in-memory mock implementation of repository.RepresentativeRepository.
 type RepresentativeRepo struct {
 	mu   sync.RWMutex
@@ -1196,6 +1243,31 @@ func (r *BathhouseRepo) ListIDsByOwner(_ context.Context, ownerID uuid.UUID) ([]
 		}
 	}
 	return ids, nil
+}
+
+func (r *BathhouseRepo) UpdateResponseRate(_ context.Context, id uuid.UUID, responseRate float64, avgResponseMinutes int) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	bh, ok := r.bathhouses[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	bh.ResponseRate = responseRate
+	bh.AvgResponseTimeMinutes = avgResponseMinutes
+	return nil
+}
+
+func (r *BathhouseRepo) ListRequestModeBathhouses(_ context.Context) ([]domain.Bathhouse, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var result []domain.Bathhouse
+	for _, bh := range r.bathhouses {
+		if bh.BookingMode == domain.BookingModeRequest {
+			cp := *bh
+			result = append(result, cp)
+		}
+	}
+	return result, nil
 }
 
 func isBathhouseOpenNow(bh *domain.Bathhouse) bool {

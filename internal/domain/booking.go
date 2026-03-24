@@ -46,6 +46,7 @@ type Booking struct {
 	CheckedOutAt          *time.Time
 	HoldID                *uuid.UUID
 	RejectionReason       string
+	CancelledByOwner      bool
 	Status                BookingStatus
 	Comment           string
 	CreatedAt         time.Time

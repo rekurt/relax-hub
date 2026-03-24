@@ -42,6 +42,10 @@ const (
 	NotifBookingReminderOwner5min NotificationType = "booking_reminder_owner_5min"
 	NotifBookingExtended         NotificationType = "booking_extended"
 	NotifBookingExtendedOwner    NotificationType = "booking_extended_owner"
+	NotifOwnerCancellationWarning  NotificationType = "owner_cancellation_warning"
+	NotifOwnerCancellationPenalty  NotificationType = "owner_cancellation_penalty"
+	NotifOwnerResponseRateWarning  NotificationType = "owner_response_rate_warning"
+	NotifOwnerCancellationCompensation NotificationType = "owner_cancellation_compensation"
 )
 
 func (t NotificationType) IsValid() bool {
@@ -50,6 +54,8 @@ func (t NotificationType) IsValid() bool {
 		NotifBookingCheckedIn, NotifBookingNoShow, NotifBookingNoShowOwner,
 		NotifBookingReminder24h, NotifBookingReminder2h, NotifBookingReminderOwner5min,
 		NotifBookingExtended, NotifBookingExtendedOwner,
+		NotifOwnerCancellationWarning, NotifOwnerCancellationPenalty,
+		NotifOwnerResponseRateWarning, NotifOwnerCancellationCompensation,
 		NotifNewReview,
 		NotifReviewResponse, NotifReviewApproved, NotifReviewRejected, NotifPromo, NotifReminder, NotifSystem,
 		NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected, NotifReviewHidden,
@@ -130,6 +136,8 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected, NotifBookingRequest,
 		NotifBookingCheckedIn, NotifBookingNoShow, NotifBookingNoShowOwner,
 		NotifBookingExtended, NotifBookingExtendedOwner,
+		NotifOwnerCancellationWarning, NotifOwnerCancellationPenalty,
+		NotifOwnerResponseRateWarning, NotifOwnerCancellationCompensation,
 		NotifLoyaltyUpgrade, NotifReferralBonus,
 		NotifSubscriptionExpiring, NotifSubscriptionExpired,
 		NotifBonusExpiring, NotifBonusExpired:

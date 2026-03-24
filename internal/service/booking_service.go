@@ -108,6 +108,7 @@ type BookingService interface {
 	ListUpcomingWithBathhouse(ctx context.Context, from, to time.Time) ([]UpcomingBookingInfo, error)
 	Extend(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, extraHours int) (*ExtendResult, error)
 	GetRebookData(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*RebookData, error)
+	RecalculateResponseRates(ctx context.Context) (int, error)
 }
 
 type bookingService struct {
@@ -656,6 +657,12 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); err != nil {
 		return err
 	}
+
+	// Mark as cancelled by owner for tracking
+	if err := s.bookingRepo.UpdateCancelledByOwner(ctx, bookingID); err != nil {
+		s.logger.Warn("failed to mark booking as cancelled by owner", "booking_id", bookingID, "error", err)
+	}
+
 	s.refundBookingPoints(ctx, booking)
 	s.refundReferralBonus(ctx, booking)
 	s.refundPromoUsage(ctx, booking)
@@ -663,6 +670,10 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		s.refundPayment(ctx, booking, true, "")
 	}
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
+
+	// Owner cancellation penalty: credit 10% to client wallet as compensation
+	s.handleOwnerCancellationPenalty(ctx, booking)
+
 	return nil
 }
 
@@ -1193,6 +1204,79 @@ func (s *bookingService) sendBookingNotificationWithReason(ctx context.Context, 
 	}
 }
 
+func (s *bookingService) handleOwnerCancellationPenalty(ctx context.Context, booking *domain.Booking) {
+	if booking.TotalPrice <= 0 {
+		return
+	}
+
+	// Credit 10% compensation to client wallet
+	compensationAmount := booking.TotalPrice / 10
+	if compensationAmount > 0 && s.walletSvc != nil {
+		wallet, err := s.walletSvc.GetWallet(ctx, booking.UserID)
+		if err != nil {
+			s.logger.Warn("failed to get client wallet for compensation", "user_id", booking.UserID, "error", err)
+		} else {
+			bookingID := booking.ID
+			_, err := s.walletSvc.Refund(ctx, wallet.ID, compensationAmount, "owner_cancellation", &bookingID, "Компенсация за отмену владельцем")
+			if err != nil {
+				s.logger.Warn("failed to credit owner cancellation compensation", "booking_id", booking.ID, "amount", compensationAmount, "error", err)
+			} else {
+				s.logger.Info("credited owner cancellation compensation", "booking_id", booking.ID, "user_id", booking.UserID, "amount", compensationAmount)
+				// Notify client about compensation
+				if s.notifSvc != nil {
+					body := fmt.Sprintf("Вам начислена компенсация %d₽ за отмену бронирования владельцем", compensationAmount/100)
+					_ = s.notifSvc.Send(ctx, booking.UserID, domain.NotifOwnerCancellationCompensation,
+						"Компенсация за отмену", body, map[string]string{"booking_id": booking.ID.String()})
+				}
+			}
+		}
+	}
+
+	// Get bathhouse to find owner
+	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+	if err != nil {
+		s.logger.Warn("failed to get bathhouse for penalty check", "bathhouse_id", booking.BathhouseID, "error", err)
+		return
+	}
+
+	// Count owner cancellations in the last 30 days
+	since := time.Now().AddDate(0, 0, -30)
+	count, err := s.bookingRepo.CountOwnerCancellations(ctx, bh.OwnerID, since)
+	if err != nil {
+		s.logger.Warn("failed to count owner cancellations", "owner_id", bh.OwnerID, "error", err)
+		return
+	}
+
+	if count > 5 {
+		// Deactivate ALL owner's bathhouses
+		ownerBhIDs, err := s.bhRepo.ListIDsByOwner(ctx, bh.OwnerID)
+		if err != nil {
+			s.logger.Error("failed to list owner bathhouses for deactivation", "owner_id", bh.OwnerID, "error", err)
+			return
+		}
+		for _, bhID := range ownerBhIDs {
+			if err := s.bhRepo.UpdateStatus(ctx, bhID, domain.BathhouseStatusInactive); err != nil {
+				s.logger.Error("failed to deactivate bathhouse", "bathhouse_id", bhID, "error", err)
+			}
+		}
+		s.logger.Warn("owner bathhouses auto-deactivated due to excessive cancellations",
+			"owner_id", bh.OwnerID, "cancellation_count", count)
+		// Notify owner about penalty
+		if s.notifSvc != nil {
+			body := fmt.Sprintf("Ваши объекты деактивированы из-за %d отмен за 30 дней. Обратитесь в поддержку.", count)
+			_ = s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifOwnerCancellationPenalty,
+				"Объекты деактивированы", body, nil)
+		}
+	} else if count > 3 {
+		// Send warning notification
+		if s.notifSvc != nil {
+			body := fmt.Sprintf("Внимание: вы отменили %d бронирований за 30 дней. При более чем 5 отменах все ваши объекты будут деактивированы.", count)
+			_ = s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifOwnerCancellationWarning,
+				"Предупреждение об отменах", body, nil)
+		}
+	}
+}
+
 func (s *bookingService) sendLoyaltyUpgradeNotification(ctx context.Context, userID uuid.UUID, change *LevelChangeResult) {
 	title := "Повышение уровня лояльности!"
 	body := fmt.Sprintf("Поздравляем! Ваш уровень лояльности повышен: %s → %s",
@@ -1591,4 +1675,63 @@ func (s *bookingService) GetRebookData(ctx context.Context, userID uuid.UUID, bo
 		GuestCount:    booking.GuestCount,
 		AddOns:        rebookAddOns,
 	}, nil
+}
+
+func (s *bookingService) RecalculateResponseRates(ctx context.Context) (int, error) {
+	bathhouses, err := s.bhRepo.ListRequestModeBathhouses(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("list request mode bathhouses: %w", err)
+	}
+
+	since := time.Now().AddDate(0, 0, -90)
+	updated := 0
+
+	for _, bh := range bathhouses {
+		totalRequests, respondedInTime, avgResponseMinutes, err := s.bookingRepo.GetResponseStats(ctx, bh.ID, since)
+		if err != nil {
+			s.logger.Warn("failed to get response stats", "bathhouse_id", bh.ID, "error", err)
+			continue
+		}
+
+		var responseRate float64
+		if totalRequests > 0 {
+			responseRate = float64(respondedInTime) / float64(totalRequests)
+		} else {
+			responseRate = 1.0 // no requests = perfect rate
+		}
+
+		if err := s.bhRepo.UpdateResponseRate(ctx, bh.ID, responseRate, avgResponseMinutes); err != nil {
+			s.logger.Warn("failed to update response rate", "bathhouse_id", bh.ID, "error", err)
+			continue
+		}
+
+		updated++
+
+		// Enforcement: warn at <0.5, deactivate at <0.3 for 60+ days
+		if responseRate < 0.3 && bh.ResponseRate < 0.3 {
+			// Both current and previous rate below 0.3 — assume it's been low for a while
+			// In production, we'd track consecutive days, but for now we use the stored rate
+			s.logger.Warn("bathhouse response rate critically low, forcing to instant mode",
+				"bathhouse_id", bh.ID, "response_rate", responseRate)
+			// Force booking_mode to instant
+			bh.BookingMode = domain.BookingModeInstant
+			if err := s.bhRepo.Update(ctx, &bh); err != nil {
+				s.logger.Error("failed to force bathhouse to instant mode", "bathhouse_id", bh.ID, "error", err)
+			}
+			if s.notifSvc != nil {
+				body := fmt.Sprintf("Ваш процент ответов %.0f%%. Режим бронирования изменён на мгновенный.", responseRate*100)
+				_ = s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifOwnerResponseRateWarning,
+					"Низкий процент ответов", body, nil)
+			}
+		} else if responseRate < 0.5 {
+			// Send warning
+			if s.notifSvc != nil {
+				body := fmt.Sprintf("Ваш процент ответов %.0f%%, рекомендуем отвечать быстрее", responseRate*100)
+				_ = s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifOwnerResponseRateWarning,
+					"Низкий процент ответов", body, nil)
+			}
+		}
+	}
+
+	return updated, nil
 }

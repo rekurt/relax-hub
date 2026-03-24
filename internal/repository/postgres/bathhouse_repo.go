@@ -821,6 +821,55 @@ func (r *bathhouseRepo) UpdateRankingFields(ctx context.Context, id uuid.UUID, c
 	return nil
 }
 
+func (r *bathhouseRepo) UpdateResponseRate(ctx context.Context, id uuid.UUID, responseRate float64, avgResponseMinutes int) error {
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE bathhouses SET response_rate = $2, avg_response_time_minutes = $3, updated_at = $4 WHERE id = $1`,
+		id, responseRate, avgResponseMinutes, time.Now(),
+	)
+	if err != nil {
+		return fmt.Errorf("update response rate: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *bathhouseRepo) ListRequestModeBathhouses(ctx context.Context) ([]domain.Bathhouse, error) {
+	query := `
+		SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
+			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
+			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
+			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
+			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified,
+			bathhouses.long_session_threshold_hours, bathhouses.long_session_discount_percent, bathhouses.base_capacity, bathhouses.extra_guest_surcharge,
+			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
+			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
+			bathhouses.booking_mode, bathhouses.request_timeout
+		FROM bathhouses
+		WHERE bathhouses.booking_mode = 'request'
+			AND bathhouses.status = 'active'`
+
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("list request mode bathhouses: %w", err)
+	}
+	defer rows.Close()
+
+	var result []domain.Bathhouse
+	for rows.Next() {
+		bh, err := r.scanBathhouseMinimal(rows)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, *bh)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate request mode bathhouse rows: %w", err)
+	}
+	return result, nil
+}
+
 func (r *bathhouseRepo) SuggestNames(ctx context.Context, filter repository.SuggestionFilter) ([]string, error) {
 	limit := filter.Limit
 	if limit <= 0 {

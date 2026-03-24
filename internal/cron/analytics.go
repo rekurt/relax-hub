@@ -205,6 +205,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 	}
 	cs.logger.Info("Registered booking reminders job every 15 minutes")
 
+	// Response rate recalculation daily at 3:00 AM
+	if _, err := cs.c.AddFunc("0 3 * * *", cs.handleResponseRateRecalculation); err != nil {
+		cs.logger.Error("Failed to register response rate recalculation job", "error", err)
+		return fmt.Errorf("failed to register response rate recalculation: %w", err)
+	}
+	cs.logger.Info("Registered response rate recalculation job daily at 3:00 AM")
+
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")
 	return nil

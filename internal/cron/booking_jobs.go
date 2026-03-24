@@ -98,6 +98,22 @@ func (cs *CronScheduler) handleBookingReminders() {
 	cs.logger.Info("Booking reminders completed", "sent", sent, "duration", time.Since(start))
 }
 
+func (cs *CronScheduler) handleResponseRateRecalculation() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	start := time.Now()
+	cs.logger.Info("Starting response rate recalculation")
+
+	updated, err := cs.bookingSvc.RecalculateResponseRates(ctx)
+	if err != nil {
+		cs.logger.Error("Response rate recalculation failed", "error", err, "duration", time.Since(start))
+		return
+	}
+
+	cs.logger.Info("Response rate recalculation completed", "updated", updated, "duration", time.Since(start))
+}
+
 type reminderInfo struct {
 	BookingID     uuid.UUID
 	UserID        uuid.UUID
