@@ -56,7 +56,7 @@ func (m *mockPaymentService) RefundPayment(ctx context.Context, bookingID uuid.U
 	return nil
 }
 
-func (m *mockPaymentService) AdminRefund(_ context.Context, _ uuid.UUID, _ int64, _ string, _ string) error {
+func (m *mockPaymentService) AdminRefund(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ int64, _ string, _ string) error {
 	return nil
 }
 

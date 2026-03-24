@@ -317,6 +317,10 @@ func (s *walletService) Refund(ctx context.Context, walletID uuid.UUID, amount i
 		return nil, err
 	}
 
+	if wallet.IsFrozen() {
+		return nil, domain.ErrWalletFrozen
+	}
+
 	newBalance := wallet.Balance + amount
 	maxBalance := domain.MaxBalanceForCurrency(wallet.Currency)
 	if newBalance > maxBalance {

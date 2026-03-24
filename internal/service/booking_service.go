@@ -234,7 +234,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		checkEnd = input.EndTime.Add(bufferDuration)
 	}
 
-	available, err := s.bookingRepo.CheckAvailability(ctx, input.BathhouseID, input.StartTime, input.EndTime)
+	available, err := s.bookingRepo.CheckAvailability(ctx, input.BathhouseID, checkStart, checkEnd)
 	if err != nil {
 		return nil, err
 	}
@@ -1088,6 +1088,9 @@ func (s *bookingService) sendBookingNotification(ctx context.Context, booking *d
 	case domain.NotifBookingRejected:
 		title = "Бронирование отклонено"
 		body = fmt.Sprintf("Ваше бронирование на %s отклонено", booking.StartTime.Format("02.01.2006 15:04"))
+	case domain.NotifBookingCheckedIn:
+		title = "Вы отмечены как прибывший"
+		body = fmt.Sprintf("Отмечено прибытие на бронирование %s", booking.StartTime.Format("02.01.2006 15:04"))
 	default:
 		return
 	}
@@ -1118,8 +1121,11 @@ func (s *bookingService) Approve(ctx context.Context, userID uuid.UUID, role dom
 
 	// Capture payment hold (card + wallet portions) if exists
 	if err := s.paymentSvc.CaptureHoldPayment(ctx, bookingID); err != nil {
-		s.logger.Error("failed to capture payment hold on approve", "booking_id", bookingID, "error", err)
-		return fmt.Errorf("failed to capture payment hold: %w", err)
+		if !errors.Is(err, domain.ErrPaymentNotFound) {
+			s.logger.Error("failed to capture payment hold on approve", "booking_id", bookingID, "error", err)
+			return fmt.Errorf("failed to capture payment hold: %w", err)
+		}
+		// No payment record exists — booking relies on standalone wallet hold
 	}
 
 	// Capture standalone wallet hold (from booking creation) if exists and no payment hold handled it
@@ -1524,9 +1530,9 @@ func (s *bookingService) Extend(ctx context.Context, userID uuid.UUID, bookingID
 		return nil, domain.ErrForbidden
 	}
 
-	// Must be confirmed or checked-in
-	if booking.Status != domain.BookingConfirmed && booking.CheckedInAt == nil {
-		return nil, fmt.Errorf("%w: only confirmed or checked-in bookings can be extended", domain.ErrInvalidInput)
+	// Must be confirmed (possibly checked-in, which keeps confirmed status)
+	if booking.Status != domain.BookingConfirmed {
+		return nil, fmt.Errorf("%w: only confirmed bookings can be extended", domain.ErrInvalidInput)
 	}
 
 	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)

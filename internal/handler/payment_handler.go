@@ -328,7 +328,8 @@ func (h *PaymentHandler) AdminRefund(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.paymentService.AdminRefund(r.Context(), bookingID, req.Amount, req.Reason, req.RefundTo); err != nil {
+	adminUserID := middleware.GetUserID(r.Context())
+	if err := h.paymentService.AdminRefund(r.Context(), adminUserID, bookingID, req.Amount, req.Reason, req.RefundTo); err != nil {
 		handleServiceError(w, err)
 		return
 	}

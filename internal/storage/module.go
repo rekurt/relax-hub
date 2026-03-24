@@ -15,8 +15,8 @@ var Module = fx.Module("storage",
 func provideFileStorage(cfg *config.Config, log *logger.Logger) (FileStorage, error) {
 	s, err := NewS3Storage(cfg, log)
 	if err != nil && !strings.EqualFold(cfg.Environment, "production") {
-		log.Warn("S3 storage unavailable, storage operations will be no-ops", "error", err)
-		return (*S3Storage)(nil), nil
+		log.Warn("S3 storage unavailable, using in-memory mock storage", "error", err)
+		return NewMockStorage(), nil
 	}
 	return s, err
 }

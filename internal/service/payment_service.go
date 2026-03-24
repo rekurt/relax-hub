@@ -38,7 +38,7 @@ type PaymentService interface {
 	InitiateComboPayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, req ComboPaymentRequest) (confirmationURL string, err error)
 	HandleWebhook(ctx context.Context, event WebhookEvent) error
 	RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool, refundTo string) error
-	AdminRefund(ctx context.Context, bookingID uuid.UUID, amount int64, reason string, refundTo string) error
+	AdminRefund(ctx context.Context, adminUserID uuid.UUID, bookingID uuid.UUID, amount int64, reason string, refundTo string) error
 	CaptureHoldPayment(ctx context.Context, bookingID uuid.UUID) error
 	ReleaseHoldPayment(ctx context.Context, bookingID uuid.UUID) error
 	GetPaymentByBooking(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*domain.Payment, error)
@@ -266,12 +266,7 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 
 		if isHold {
 			// For request-based bookings, create a wallet hold instead of spending
-			bh, bhErr := s.bookingRepo.GetByID(ctx, bookingID)
 			holdExpiry := now.Add(72 * time.Hour) // default 72h
-			if bhErr == nil && bh != nil {
-				// Use the booking to get approximate expiry
-				_ = bh // holdExpiry is already set to a safe default
-			}
 			bookingIDRef := bookingID
 			_, err = s.walletSvc.Hold(ctx, walletID, req.WalletAmount, "booking_payment", &bookingIDRef, fmt.Sprintf("Hold for booking payment %s", bookingID.String()[:8]), holdExpiry)
 			if err != nil {
@@ -750,7 +745,7 @@ func (s *paymentService) executeComboRefund(ctx context.Context, p *domain.Payme
 	return s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now, refundStatus)
 }
 
-func (s *paymentService) AdminRefund(ctx context.Context, bookingID uuid.UUID, amount int64, reason string, refundTo string) error {
+func (s *paymentService) AdminRefund(ctx context.Context, adminUserID uuid.UUID, bookingID uuid.UUID, amount int64, reason string, refundTo string) error {
 	p, err := s.paymentRepo.GetByBookingID(ctx, bookingID)
 	if err != nil {
 		return err
@@ -792,7 +787,7 @@ func (s *paymentService) AdminRefund(ctx context.Context, bookingID uuid.UUID, a
 			ID:            uuid.New(),
 			EntityType:    "payment",
 			EntityID:      p.ID,
-			UserID:        uuid.Nil, // admin user ID should be passed via context in production
+			UserID:        adminUserID,
 			Action:        domain.AuditActionUpdate,
 			ChangedFields: changedFields,
 			CreatedAt:     time.Now(),

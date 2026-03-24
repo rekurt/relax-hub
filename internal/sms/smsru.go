@@ -25,11 +25,6 @@ func NewSMSRuProvider(apiKey string, log *logger.Logger) Provider {
 }
 
 func (s *smsruProvider) SendSMS(ctx context.Context, phone string, message string) error {
-	if s.apiKey == "" {
-		s.logger.Warn("SMS.ru API key not configured, skipping SMS send", "phone", phone)
-		return nil
-	}
-
 	params := url.Values{}
 	params.Set("api_id", s.apiKey)
 	params.Set("to", phone)

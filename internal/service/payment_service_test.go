@@ -1195,7 +1195,8 @@ func TestPaymentService_AdminRefund(t *testing.T) {
 		Status:     "succeeded",
 	})
 
-	err := svc.AdminRefund(context.Background(), booking.ID, 5000, "customer complaint", "wallet")
+	adminID := uuid.New()
+	err := svc.AdminRefund(context.Background(), adminID, booking.ID, 5000, "customer complaint", "wallet")
 	if err != nil {
 		t.Fatalf("admin refund failed: %v", err)
 	}
@@ -1230,7 +1231,7 @@ func TestPaymentService_AdminRefund_ExceedsAmount(t *testing.T) {
 		Status:     "succeeded",
 	})
 
-	err := svc.AdminRefund(context.Background(), booking.ID, 20000, "test", "card")
+	err := svc.AdminRefund(context.Background(), uuid.New(), booking.ID, 20000, "test", "card")
 	if !errors.Is(err, domain.ErrRefundExceedsAmount) {
 		t.Errorf("expected ErrRefundExceedsAmount, got: %v", err)
 	}
