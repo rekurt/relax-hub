@@ -389,6 +389,10 @@ func (m *mockBookingService) DisputeNoShow(_ context.Context, _ uuid.UUID, _ uui
 	return nil
 }
 
+func (m *mockBookingService) ListUpcomingWithBathhouse(_ context.Context, _, _ time.Time) ([]service.UpcomingBookingInfo, error) {
+	return nil, nil
+}
+
 type mockReviewService struct {
 	createFn           func(ctx context.Context, userID uuid.UUID, input service.CreateReviewInput) (*domain.Review, error)
 	getByIDFn          func(ctx context.Context, id uuid.UUID) (*domain.Review, error)

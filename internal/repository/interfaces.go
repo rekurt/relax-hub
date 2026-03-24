@@ -77,6 +77,7 @@ type BookingRepository interface {
 	UpdateCheckin(ctx context.Context, bookingID uuid.UUID, checkedInAt *time.Time) error
 	UpdateCheckout(ctx context.Context, bookingID uuid.UUID, checkedOutAt *time.Time, status domain.BookingStatus) error
 	ListConfirmedWithoutCheckin(ctx context.Context, noShowCutoff time.Time) ([]domain.Booking, error)
+	ListUpcoming(ctx context.Context, from, to time.Time) ([]domain.Booking, error)
 }
 
 type ReviewRepository interface {

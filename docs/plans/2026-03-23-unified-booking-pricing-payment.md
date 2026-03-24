@@ -1015,43 +1015,43 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Create: `internal/cron/booking_jobs.go` (or extend if created in Task 10)
 
 **Reminder cron job:**
-- [ ] Run every 15 minutes
-- [ ] Query upcoming confirmed bookings:
+- [x] Run every 15 minutes
+- [x] Query upcoming confirmed bookings:
   - 24h reminder: bookings where `start_time BETWEEN now() + interval '23h 45m' AND now() + interval '24h 15m'` (15-min window)
   - 2h reminder: bookings where `start_time BETWEEN now() + interval '1h 45m' AND now() + interval '2h 15m'`
 
 **Deduplication:**
-- [ ] Use Redis set key: `reminder_sent:{bookingID}:{type}` (type = "24h" or "2h")
-- [ ] SETNX with TTL 48h — if key exists, skip (already sent)
-- [ ] This prevents duplicate sends on cron overlap
+- [x] Use Redis set key: `reminder_sent:{bookingID}:{type}` (type = "24h" or "2h")
+- [x] SETNX with TTL 48h — if key exists, skip (already sent)
+- [x] This prevents duplicate sends on cron overlap
 
 **24h reminder content:**
-- [ ] Channel: push notification + email
-- [ ] Title: "Напоминание о бронировании"
-- [ ] Body: "Завтра в {time} — бронирование в {bathhouse_name}. Адрес: {address}"
-- [ ] Data includes: booking_id, bathhouse_id, maps_url (Yandex Maps link with lat/lon: `https://yandex.ru/maps/?pt={lon},{lat}&z=16`)
+- [x] Channel: push notification + email
+- [x] Title: "Напоминание о бронировании"
+- [x] Body: "Завтра в {time} — бронирование в {bathhouse_name}. Адрес: {address}"
+- [x] Data includes: booking_id, bathhouse_id, maps_url (Yandex Maps link with lat/lon: `https://yandex.ru/maps/?pt={lon},{lat}&z=16`)
 
 **2h reminder content:**
-- [ ] Channel: push notification only
-- [ ] Title: "Скоро бронирование"
-- [ ] Body: "Через 2 часа — {bathhouse_name}. Не забудьте!"
-- [ ] Data includes: booking_id, bathhouse_id
+- [x] Channel: push notification only
+- [x] Title: "Скоро бронирование"
+- [x] Body: "Через 2 часа — {bathhouse_name}. Не забудьте!"
+- [x] Data includes: booking_id, bathhouse_id
 
 **Owner reminder (5 min before):**
-- [ ] Additional reminder to owner/rep: "Гость скоро прибудет в {bathhouse_name}!"
-- [ ] Push only, deduplicated with key `reminder_sent:{bookingID}:owner_5min`
+- [x] Additional reminder to owner/rep: "Гость скоро прибудет в {bathhouse_name}!"
+- [x] Push only, deduplicated with key `reminder_sent:{bookingID}:owner_5min`
 
 **BookingRepository changes:**
-- [ ] Add `ListUpcoming(ctx context.Context, from, to time.Time) ([]domain.Booking, error)` — returns confirmed bookings with start_time in range
-- [ ] Need to join/fetch bathhouse data (name, address, lat, lon) for reminder content — may return enriched struct or fetch separately
+- [x] Add `ListUpcoming(ctx context.Context, from, to time.Time) ([]domain.Booking, error)` — returns confirmed bookings with start_time in range
+- [x] Need to join/fetch bathhouse data (name, address, lat, lon) for reminder content — may return enriched struct or fetch separately
 
 **Tests:**
-- [ ] Test reminder scheduling: booking at 10:00 tomorrow, cron at 10:00 today -> 24h reminder triggered
-- [ ] Test deduplication: same booking, same type -> second call skipped
-- [ ] Test 2h reminder: booking at 14:00, cron at 12:00 -> 2h reminder triggered
-- [ ] Test owner 5-min reminder
-- [ ] Test no reminder for cancelled bookings
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test reminder scheduling: booking at 10:00 tomorrow, cron at 10:00 today -> 24h reminder triggered
+- [x] Test deduplication: same booking, same type -> second call skipped
+- [x] Test 2h reminder: booking at 14:00, cron at 12:00 -> 2h reminder triggered
+- [x] Test owner 5-min reminder
+- [x] Test no reminder for cancelled bookings
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 14: Session Extension (FR-065)
 

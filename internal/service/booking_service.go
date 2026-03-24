@@ -57,6 +57,16 @@ type TimeSlot struct {
 	OriginalPrice int64     `json:"original_price,omitempty"`     // Original price before last-minute discount
 }
 
+// UpcomingBookingInfo contains booking data enriched with bathhouse info for reminders.
+type UpcomingBookingInfo struct {
+	Booking       domain.Booking
+	BathhouseName string
+	Address       string
+	Latitude      float64
+	Longitude     float64
+	OwnerID       uuid.UUID
+}
+
 type BookingService interface {
 	Create(ctx context.Context, userID uuid.UUID, input CreateBookingInput) (*BookingResult, error)
 	Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, refundTo string) error
@@ -72,6 +82,7 @@ type BookingService interface {
 	CheckOut(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	MarkNoShows(ctx context.Context) (int, error)
 	DisputeNoShow(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, gpsLat, gpsLon float64, comment string) error
+	ListUpcomingWithBathhouse(ctx context.Context, from, to time.Time) ([]UpcomingBookingInfo, error)
 }
 
 type bookingService struct {
@@ -1357,4 +1368,34 @@ func (s *bookingService) sendReferralBonusNotifications(ctx context.Context, res
 		s.logger.Warn("failed to send referral bonus notification to referee",
 			"referee_id", result.RefereeID, "error", err)
 	}
+}
+
+func (s *bookingService) ListUpcomingWithBathhouse(ctx context.Context, from, to time.Time) ([]UpcomingBookingInfo, error) {
+	bookings, err := s.bookingRepo.ListUpcoming(ctx, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("list upcoming bookings: %w", err)
+	}
+
+	bhCache := make(map[uuid.UUID]*domain.Bathhouse)
+	var result []UpcomingBookingInfo
+	for _, b := range bookings {
+		bh, ok := bhCache[b.BathhouseID]
+		if !ok {
+			bh, err = s.bhRepo.GetByID(ctx, b.BathhouseID)
+			if err != nil {
+				s.logger.Warn("failed to get bathhouse for reminder", "bathhouse_id", b.BathhouseID, "error", err)
+				continue
+			}
+			bhCache[b.BathhouseID] = bh
+		}
+		result = append(result, UpcomingBookingInfo{
+			Booking:       b,
+			BathhouseName: bh.Name,
+			Address:       bh.Address,
+			Latitude:      bh.Latitude,
+			Longitude:     bh.Longitude,
+			OwnerID:       bh.OwnerID,
+		})
+	}
+	return result, nil
 }

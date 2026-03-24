@@ -347,3 +347,29 @@ func (r *bookingRepo) ListConfirmedWithoutCheckin(ctx context.Context, noShowCut
 	}
 	return bookings, nil
 }
+
+func (r *bookingRepo) ListUpcoming(ctx context.Context, from, to time.Time) ([]domain.Booking, error) {
+	query := `SELECT ` + bookingColumns + ` FROM bookings
+		WHERE status = 'confirmed'
+			AND start_time >= $1
+			AND start_time <= $2`
+
+	rows, err := r.pool.Query(ctx, query, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("list upcoming bookings: %w", err)
+	}
+	defer rows.Close()
+
+	var bookings []domain.Booking
+	for rows.Next() {
+		b, err := scanBooking(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan upcoming booking: %w", err)
+		}
+		bookings = append(bookings, *b)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate upcoming booking rows: %w", err)
+	}
+	return bookings, nil
+}

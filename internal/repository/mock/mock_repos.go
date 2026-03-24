@@ -505,6 +505,20 @@ func (r *BookingRepo) ListConfirmedWithoutCheckin(_ context.Context, noShowCutof
 	return result, nil
 }
 
+func (r *BookingRepo) ListUpcoming(_ context.Context, from, to time.Time) ([]domain.Booking, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var result []domain.Booking
+	for _, b := range r.bookings {
+		if b.Status == domain.BookingConfirmed &&
+			!b.StartTime.Before(from) &&
+			!b.StartTime.After(to) {
+			result = append(result, *b)
+		}
+	}
+	return result, nil
+}
+
 // RepresentativeRepo is an in-memory mock implementation of repository.RepresentativeRepository.
 type RepresentativeRepo struct {
 	mu   sync.RWMutex

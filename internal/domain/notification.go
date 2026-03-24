@@ -37,12 +37,16 @@ const (
 	NotifBookingCheckedIn         NotificationType = "booking_checked_in"
 	NotifBookingNoShow            NotificationType = "booking_no_show"
 	NotifBookingNoShowOwner       NotificationType = "booking_no_show_owner"
+	NotifBookingReminder24h       NotificationType = "booking_reminder_24h"
+	NotifBookingReminder2h        NotificationType = "booking_reminder_2h"
+	NotifBookingReminderOwner5min NotificationType = "booking_reminder_owner_5min"
 )
 
 func (t NotificationType) IsValid() bool {
 	switch t {
 	case NotifBookingConfirmed, NotifBookingCancelled, NotifBookingRejected, NotifBookingRequest,
 		NotifBookingCheckedIn, NotifBookingNoShow, NotifBookingNoShowOwner,
+		NotifBookingReminder24h, NotifBookingReminder2h, NotifBookingReminderOwner5min,
 		NotifNewReview,
 		NotifReviewResponse, NotifReviewApproved, NotifReviewRejected, NotifPromo, NotifReminder, NotifSystem,
 		NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected, NotifReviewHidden,
@@ -131,7 +135,7 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 		return p.ReviewEvents
 	case NotifPromo:
 		return p.PromoEvents
-	case NotifReminder:
+	case NotifReminder, NotifBookingReminder24h, NotifBookingReminder2h, NotifBookingReminderOwner5min:
 		return p.Reminders
 	case NotifSystem, NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected,
 		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal,

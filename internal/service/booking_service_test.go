@@ -2850,6 +2850,72 @@ func TestBookingService_DisputeNoShow_WithinWindow(t *testing.T) {
 	}
 }
 
+func TestBookingService_ListUpcomingWithBathhouse(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+	clientID := uuid.New()
+
+	now := time.Now()
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      clientID,
+		BathhouseID: bh.ID,
+		StartTime:   now.Add(24 * time.Hour),
+		EndTime:     now.Add(26 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingConfirmed,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	// Add a cancelled booking that should NOT appear
+	cancelledBooking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      clientID,
+		BathhouseID: bh.ID,
+		StartTime:   now.Add(24 * time.Hour),
+		EndTime:     now.Add(26 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingCancelled,
+	}
+	bookingRepo.Create(context.Background(), cancelledBooking)
+
+	from := now.Add(23 * time.Hour)
+	to := now.Add(25 * time.Hour)
+	result, err := svc.ListUpcomingWithBathhouse(context.Background(), from, to)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result) != 1 {
+		t.Fatalf("expected 1 upcoming booking, got %d", len(result))
+	}
+	if result[0].Booking.ID != booking.ID {
+		t.Errorf("expected booking ID %s, got %s", booking.ID, result[0].Booking.ID)
+	}
+	if result[0].BathhouseName != bh.Name {
+		t.Errorf("expected bathhouse name %s, got %s", bh.Name, result[0].BathhouseName)
+	}
+	if result[0].OwnerID != ownerID {
+		t.Errorf("expected owner ID %s, got %s", ownerID, result[0].OwnerID)
+	}
+}
+
+func TestBookingService_ListUpcomingWithBathhouse_Empty(t *testing.T) {
+	svc, _, _, _, _, _, _, _ := newBookingService()
+
+	now := time.Now()
+	result, err := svc.ListUpcomingWithBathhouse(context.Background(), now, now.Add(24*time.Hour))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result) != 0 {
+		t.Errorf("expected 0 upcoming bookings, got %d", len(result))
+	}
+}
+
 func TestBookingService_DisputeNoShow_Expired(t *testing.T) {
 	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
 	ownerID := uuid.New()

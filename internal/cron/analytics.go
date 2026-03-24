@@ -9,6 +9,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/fx"
 )
@@ -30,6 +31,7 @@ type CronScheduler struct {
 	savedSearchSvc     service.SavedSearchService
 	bookingSvc         service.BookingService
 	escrowSvc          service.EscrowService
+	redisClient        *redis.Client
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -48,6 +50,7 @@ func NewCronScheduler(
 	savedSearchSvc service.SavedSearchService,
 	bookingSvc service.BookingService,
 	escrowSvc service.EscrowService,
+	redisClient *redis.Client,
 ) *CronScheduler {
 	return &CronScheduler{
 		c:                  cron.New(),
@@ -65,6 +68,7 @@ func NewCronScheduler(
 		savedSearchSvc:     savedSearchSvc,
 		bookingSvc:         bookingSvc,
 		escrowSvc:          escrowSvc,
+		redisClient:        redisClient,
 	}
 }
 
@@ -193,6 +197,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register escrow release: %w", err)
 	}
 	cs.logger.Info("Registered escrow release job every hour at :30")
+
+	// Booking reminders every 15 minutes
+	if _, err := cs.c.AddFunc("*/15 * * * *", cs.handleBookingReminders); err != nil {
+		cs.logger.Error("Failed to register booking reminders job", "error", err)
+		return fmt.Errorf("failed to register booking reminders: %w", err)
+	}
+	cs.logger.Info("Registered booking reminders job every 15 minutes")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")

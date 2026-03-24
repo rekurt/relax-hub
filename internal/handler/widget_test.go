@@ -169,6 +169,10 @@ func (m *mockWidgetBookingService) DisputeNoShow(_ context.Context, _ uuid.UUID,
 	return nil
 }
 
+func (m *mockWidgetBookingService) ListUpcomingWithBathhouse(_ context.Context, _, _ time.Time) ([]service.UpcomingBookingInfo, error) {
+	return nil, nil
+}
+
 func TestWidgetHandler_GetBathhouse(t *testing.T) {
 	apiKey := "test-api-key"
 	bathhouseID := uuid.New()
