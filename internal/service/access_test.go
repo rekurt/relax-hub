@@ -174,18 +174,20 @@ func createBathhouse(t *testing.T, bhRepo *mock.BathhouseRepo, ownerID uuid.UUID
 		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
 	}
 	bh := &domain.Bathhouse{
-		ID:           uuid.New(),
-		OwnerID:      ownerID,
-		Name:         "Test Bathhouse",
-		Address:      "123 Street",
-		CityID:       1,
-		PricePerHour: 5000,
-		MinDuration:  1,
-		MaxGuests:    10,
-		WorkingHours: wh,
-		Status:       domain.BathhouseStatusActive,
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		ID:                        uuid.New(),
+		OwnerID:                   ownerID,
+		Name:                      "Test Bathhouse",
+		Address:                   "123 Street",
+		CityID:                    1,
+		PricePerHour:              5000,
+		MinDuration:               1,
+		MaxGuests:                 10,
+		LongSessionThresholdHours: 4,
+		BaseCapacity:              10,
+		WorkingHours:              wh,
+		Status:                    domain.BathhouseStatusActive,
+		CreatedAt:                 time.Now(),
+		UpdatedAt:                 time.Now(),
 	}
 	if err := bhRepo.Create(context.Background(), bh); err != nil {
 		t.Fatal(err)

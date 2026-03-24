@@ -47,9 +47,13 @@ type UpdateBathhouseInput struct {
 	HasSteamRoom *bool
 	HasHotTub    *bool
 	HasBBQ       *bool
-	HasKaraoke   *bool
-	Images       []string
-	WorkingHours []domain.WorkingHours
+	HasKaraoke                 *bool
+	LongSessionThresholdHours  *int
+	LongSessionDiscountPercent *int
+	BaseCapacity               *int
+	ExtraGuestSurcharge        *int64
+	Images                     []string
+	WorkingHours               []domain.WorkingHours
 }
 
 // CompletenessItem represents a single field check in the completeness result.
@@ -164,6 +168,10 @@ func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input 
 		HasKaraoke:   input.HasKaraoke,
 		Images:       input.Images,
 		WorkingHours: input.WorkingHours,
+		LongSessionThresholdHours:  4,
+		LongSessionDiscountPercent: 0,
+		BaseCapacity:               input.MaxGuests,
+		ExtraGuestSurcharge:        0,
 		Status:       domain.BathhouseStatusPending,
 		ApiKey:       uuid.New().String(),
 		CreatedAt:    now,
@@ -281,6 +289,18 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 	}
 	if input.WorkingHours != nil {
 		bh.WorkingHours = input.WorkingHours
+	}
+	if input.LongSessionThresholdHours != nil {
+		bh.LongSessionThresholdHours = *input.LongSessionThresholdHours
+	}
+	if input.LongSessionDiscountPercent != nil {
+		bh.LongSessionDiscountPercent = *input.LongSessionDiscountPercent
+	}
+	if input.BaseCapacity != nil {
+		bh.BaseCapacity = *input.BaseCapacity
+	}
+	if input.ExtraGuestSurcharge != nil {
+		bh.ExtraGuestSurcharge = *input.ExtraGuestSurcharge
 	}
 	// Detect substantial changes before persisting, so status update is atomic with data update
 	changedFields := buildChangedFields(&oldBh, bh)

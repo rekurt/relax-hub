@@ -13,8 +13,27 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
+type PriceCalculationInput struct {
+	BathhouseID                uuid.UUID
+	BasePrice                  int64
+	StartTime                  time.Time
+	EndTime                    time.Time
+	GuestCount                 int
+	BaseCapacity               int
+	ExtraGuestSurcharge        int64
+	LongSessionThresholdHours  int
+	LongSessionDiscountPercent int
+}
+
+type PriceBreakdown struct {
+	BasePrice           int64 // price after dynamic rules (before discount/surcharge)
+	LongSessionDiscount int64 // discount amount (positive value)
+	ExtraGuestSurcharge int64 // surcharge amount
+}
+
 type PricingService interface {
 	CalculatePrice(ctx context.Context, bathhouseID uuid.UUID, basePrice int64, startTime, endTime time.Time) (int64, error)
+	CalculateFullPrice(ctx context.Context, input PriceCalculationInput) (int64, *PriceBreakdown, error)
 	CreateRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) (*domain.PricingRule, error)
 	UpdateRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) error
 	DeleteRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, ruleID uuid.UUID) error
@@ -90,6 +109,44 @@ func (s *pricingService) CalculatePrice(ctx context.Context, bathhouseID uuid.UU
 	}
 
 	return totalPrice, nil
+}
+
+// CalculateFullPrice calculates the total price including long session discount and extra guest surcharge
+func (s *pricingService) CalculateFullPrice(ctx context.Context, input PriceCalculationInput) (int64, *PriceBreakdown, error) {
+	// Calculate base price using dynamic pricing rules
+	basePrice, err := s.CalculatePrice(ctx, input.BathhouseID, input.BasePrice, input.StartTime, input.EndTime)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	breakdown := &PriceBreakdown{
+		BasePrice: basePrice,
+	}
+
+	durationHours := int(input.EndTime.Sub(input.StartTime) / time.Hour)
+
+	// Long session discount: discount hours beyond the threshold
+	if durationHours >= input.LongSessionThresholdHours && input.LongSessionDiscountPercent > 0 {
+		discountableHours := durationHours - input.LongSessionThresholdHours
+		if discountableHours > 0 {
+			// Calculate average hourly rate from the base price
+			avgHourlyRate := basePrice / int64(durationHours)
+			breakdown.LongSessionDiscount = avgHourlyRate * int64(discountableHours) * int64(input.LongSessionDiscountPercent) / 100
+		}
+	}
+
+	// Extra guest surcharge
+	if input.GuestCount > input.BaseCapacity && input.ExtraGuestSurcharge > 0 {
+		extraGuests := input.GuestCount - input.BaseCapacity
+		breakdown.ExtraGuestSurcharge = input.ExtraGuestSurcharge * int64(extraGuests) * int64(durationHours)
+	}
+
+	totalPrice := basePrice - breakdown.LongSessionDiscount + breakdown.ExtraGuestSurcharge
+	if totalPrice <= 0 {
+		totalPrice = 1
+	}
+
+	return totalPrice, breakdown, nil
 }
 
 // CreateRule creates a new pricing rule for a bathhouse

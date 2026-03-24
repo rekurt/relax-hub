@@ -56,6 +56,9 @@ type bookingResponse struct {
 	EndTime             time.Time              `json:"end_time"`
 	GuestCount          int                    `json:"guest_count"`
 	TotalPrice          int64                  `json:"total_price"`
+	BasePrice           int64                  `json:"base_price,omitempty"`
+	LongSessionDiscount int64                  `json:"long_session_discount,omitempty"`
+	ExtraGuestSurcharge int64                  `json:"extra_guest_surcharge,omitempty"`
 	AddOnTotal          int64                  `json:"addon_total,omitempty"`
 	ServiceFeeAmount    int64                  `json:"service_fee_amount,omitempty"`
 	OriginalPrice       int64                  `json:"original_price,omitempty"`
@@ -75,21 +78,24 @@ type bookingResponse struct {
 
 func toBookingResponse(b *domain.Booking) bookingResponse {
 	return bookingResponse{
-		ID:                b.ID.String(),
-		UserID:            b.UserID.String(),
-		BathhouseID:       b.BathhouseID.String(),
-		StartTime:         b.StartTime,
-		EndTime:           b.EndTime,
-		GuestCount:        b.GuestCount,
-		TotalPrice:        b.TotalPrice,
-		AddOnTotal:        b.AddOnTotal,
-		ServiceFeeAmount:  b.ServiceFeeAmount,
-		Status:            string(b.Status),
-		Comment:           b.Comment,
-		PointsSpent:       b.PointsSpent,
-		ReferralBonusUsed: b.ReferralBonusUsed,
-		CreatedAt:         b.CreatedAt,
-		UpdatedAt:         b.UpdatedAt,
+		ID:                  b.ID.String(),
+		UserID:              b.UserID.String(),
+		BathhouseID:         b.BathhouseID.String(),
+		StartTime:           b.StartTime,
+		EndTime:             b.EndTime,
+		GuestCount:          b.GuestCount,
+		TotalPrice:          b.TotalPrice,
+		BasePrice:           b.BasePrice,
+		LongSessionDiscount: b.LongSessionDiscount,
+		ExtraGuestSurcharge: b.ExtraGuestSurcharge,
+		AddOnTotal:          b.AddOnTotal,
+		ServiceFeeAmount:    b.ServiceFeeAmount,
+		Status:              string(b.Status),
+		Comment:             b.Comment,
+		PointsSpent:         b.PointsSpent,
+		ReferralBonusUsed:   b.ReferralBonusUsed,
+		CreatedAt:           b.CreatedAt,
+		UpdatedAt:           b.UpdatedAt,
 	}
 }
 
@@ -103,6 +109,9 @@ func toBookingResultResponse(r *service.BookingResult) bookingResponse {
 	resp.PromoDiscount = r.PromoDiscount
 	resp.CertificateDiscount = r.CertificateDiscount
 	resp.ServiceFeeAmount = r.ServiceFeeAmount
+	resp.BasePrice = r.BasePrice
+	resp.LongSessionDiscount = r.LongSessionDiscount
+	resp.ExtraGuestSurcharge = r.ExtraGuestSurcharge
 	if len(r.AddOns) > 0 {
 		resp.AddOns = make([]bookingAddOnResponse, len(r.AddOns))
 		for i, a := range r.AddOns {

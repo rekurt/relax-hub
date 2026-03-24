@@ -39,6 +39,9 @@ type BookingResult struct {
 	PromoDiscount       int64                 // Discount from promo code in kopecks
 	CertificateDiscount int64                 // Discount from gift certificate in kopecks
 	ServiceFeeAmount    int64                 // Platform service fee in kopecks
+	BasePrice           int64                 // Base price after dynamic rules
+	LongSessionDiscount int64                 // Long session discount amount
+	ExtraGuestSurcharge int64                 // Extra guest surcharge amount
 }
 
 type TimeSlot struct {
@@ -167,8 +170,18 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, domain.ErrSlotUnavailable
 	}
 
-	// Calculate price using pricing service (which applies any dynamic pricing rules)
-	totalPrice, err := s.pricingSvc.CalculatePrice(ctx, input.BathhouseID, bh.PricePerHour, input.StartTime, input.EndTime)
+	// Calculate price using pricing service (which applies dynamic pricing, long session discount, extra guest surcharge)
+	totalPrice, priceBreakdown, err := s.pricingSvc.CalculateFullPrice(ctx, PriceCalculationInput{
+		BathhouseID:                input.BathhouseID,
+		BasePrice:                  bh.PricePerHour,
+		StartTime:                  input.StartTime,
+		EndTime:                    input.EndTime,
+		GuestCount:                 input.GuestCount,
+		BaseCapacity:               bh.BaseCapacity,
+		ExtraGuestSurcharge:        bh.ExtraGuestSurcharge,
+		LongSessionThresholdHours:  bh.LongSessionThresholdHours,
+		LongSessionDiscountPercent: bh.LongSessionDiscountPercent,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -271,21 +284,24 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	bookingID := uuid.New()
 	now := time.Now()
 	booking := &domain.Booking{
-		ID:                bookingID,
-		UserID:            userID,
-		BathhouseID:       input.BathhouseID,
-		StartTime:         input.StartTime,
-		EndTime:           input.EndTime,
-		GuestCount:        input.GuestCount,
-		TotalPrice:        totalPrice,
-		AddOnTotal:        addOnTotal,
-		ServiceFeeAmount:  serviceFeeAmount,
-		PointsSpent:       pointsSpent,
-		ReferralBonusUsed: referralBonusUsed,
-		Status:            domain.BookingPending,
-		Comment:           input.Comment,
-		CreatedAt:         now,
-		UpdatedAt:         now,
+		ID:                  bookingID,
+		UserID:              userID,
+		BathhouseID:         input.BathhouseID,
+		StartTime:           input.StartTime,
+		EndTime:             input.EndTime,
+		GuestCount:          input.GuestCount,
+		TotalPrice:          totalPrice,
+		AddOnTotal:          addOnTotal,
+		BasePrice:           priceBreakdown.BasePrice,
+		LongSessionDiscount: priceBreakdown.LongSessionDiscount,
+		ExtraGuestSurcharge: priceBreakdown.ExtraGuestSurcharge,
+		ServiceFeeAmount:    serviceFeeAmount,
+		PointsSpent:         pointsSpent,
+		ReferralBonusUsed:   referralBonusUsed,
+		Status:              domain.BookingPending,
+		Comment:             input.Comment,
+		CreatedAt:           now,
+		UpdatedAt:           now,
 	}
 
 	if err := booking.Validate(); err != nil {
@@ -417,6 +433,9 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		PromoDiscount:       promoDiscount,
 		CertificateDiscount: certificateDiscount,
 		ServiceFeeAmount:    serviceFeeAmount,
+		BasePrice:           priceBreakdown.BasePrice,
+		LongSessionDiscount: priceBreakdown.LongSessionDiscount,
+		ExtraGuestSurcharge: priceBreakdown.ExtraGuestSurcharge,
 	}, nil
 }
 

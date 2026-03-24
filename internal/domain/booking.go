@@ -35,8 +35,11 @@ type Booking struct {
 	AddOnTotal        int64
 	PointsSpent       int64
 	ReferralBonusUsed int64
-	ServiceFeeAmount  int64
-	Status            BookingStatus
+	BasePrice             int64
+	LongSessionDiscount   int64
+	ExtraGuestSurcharge   int64
+	ServiceFeeAmount      int64
+	Status                BookingStatus
 	Comment           string
 	CreatedAt         time.Time
 	UpdatedAt         time.Time

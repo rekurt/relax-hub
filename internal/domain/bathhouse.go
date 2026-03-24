@@ -58,6 +58,10 @@ type Bathhouse struct {
 	WorkingHours []WorkingHours
 	Status       BathhouseStatus
 	IsPromoted       bool // transient field, set during List queries
+	LongSessionThresholdHours  int   // default 4, minimum hours before discount kicks in
+	LongSessionDiscountPercent int   // 0-50, discount on hours beyond threshold
+	BaseCapacity               int   // default equals MaxGuests, guests included in base price
+	ExtraGuestSurcharge        int64 // kopecks per extra guest per hour
 	IsPhotoVerified  bool
 	ApiKey           string
 	CalendarToken    string
@@ -88,6 +92,25 @@ func (b *Bathhouse) Validate() error {
 		return ErrInvalidInput
 	}
 	if b.Longitude < -180 || b.Longitude > 180 {
+		return ErrInvalidInput
+	}
+	// Apply defaults for pricing fields when unset (zero value)
+	if b.LongSessionThresholdHours == 0 {
+		b.LongSessionThresholdHours = 4
+	}
+	if b.BaseCapacity == 0 {
+		b.BaseCapacity = b.MaxGuests
+	}
+	if b.LongSessionDiscountPercent < 0 || b.LongSessionDiscountPercent > 50 {
+		return ErrInvalidInput
+	}
+	if b.LongSessionThresholdHours < 1 || b.LongSessionThresholdHours > 12 {
+		return ErrInvalidInput
+	}
+	if b.BaseCapacity < 1 || b.BaseCapacity > b.MaxGuests {
+		return ErrInvalidInput
+	}
+	if b.ExtraGuestSurcharge < 0 {
 		return ErrInvalidInput
 	}
 	for _, wh := range b.WorkingHours {

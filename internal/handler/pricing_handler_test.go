@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 // Mock PricingService for testing
@@ -31,6 +32,11 @@ func (m *mockPricingService) CalculatePrice(ctx context.Context, bathhouseID uui
 		return m.calculatePriceFn(ctx, bathhouseID, basePrice, startTime, endTime)
 	}
 	return basePrice * int64(endTime.Sub(startTime).Hours()), nil
+}
+
+func (m *mockPricingService) CalculateFullPrice(ctx context.Context, input service.PriceCalculationInput) (int64, *service.PriceBreakdown, error) {
+	price, err := m.CalculatePrice(ctx, input.BathhouseID, input.BasePrice, input.StartTime, input.EndTime)
+	return price, &service.PriceBreakdown{BasePrice: price}, err
 }
 
 func (m *mockPricingService) CreateRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, rule *domain.PricingRule) (*domain.PricingRule, error) {

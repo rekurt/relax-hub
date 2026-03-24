@@ -1611,3 +1611,113 @@ func TestBookingService_Create_WithoutAddOns_Works(t *testing.T) {
 		t.Errorf("expected 0 booking add-ons, got %d", len(result.AddOns))
 	}
 }
+
+func TestBookingService_Create_WithLongSessionDiscount(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+	bh := &domain.Bathhouse{
+		ID:                         uuid.New(),
+		OwnerID:                    ownerID,
+		Name:                       "Discount Bath",
+		Address:                    "123 St",
+		CityID:                     1,
+		PricePerHour:               1000,
+		MinDuration:                1,
+		MaxGuests:                  10,
+		BaseCapacity:               10,
+		LongSessionThresholdHours:  4,
+		LongSessionDiscountPercent: 10,
+		WorkingHours:               wh,
+		Status:                     domain.BathhouseStatusActive,
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(6 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// BasePrice = 6000 (1000 * 6h)
+	// LongSessionDiscount = 200 (avgRate=1000, 2 discountable hours * 10% = 200)
+	if result.BasePrice != 6000 {
+		t.Errorf("BasePrice = %d, want 6000", result.BasePrice)
+	}
+	if result.LongSessionDiscount != 200 {
+		t.Errorf("LongSessionDiscount = %d, want 200", result.LongSessionDiscount)
+	}
+	if result.Booking.LongSessionDiscount != 200 {
+		t.Errorf("Booking.LongSessionDiscount = %d, want 200", result.Booking.LongSessionDiscount)
+	}
+}
+
+func TestBookingService_Create_WithExtraGuestSurcharge(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+	bh := &domain.Bathhouse{
+		ID:                         uuid.New(),
+		OwnerID:                    ownerID,
+		Name:                       "Surcharge Bath",
+		Address:                    "123 St",
+		CityID:                     1,
+		PricePerHour:               1000,
+		MinDuration:                1,
+		MaxGuests:                  10,
+		BaseCapacity:               3,
+		ExtraGuestSurcharge:        500,
+		LongSessionThresholdHours:  4,
+		LongSessionDiscountPercent: 0,
+		WorkingHours:               wh,
+		Status:                     domain.BathhouseStatusActive,
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(3 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5, // 2 extra guests
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// BasePrice = 3000 (1000 * 3h)
+	// ExtraGuestSurcharge = 3000 (2 extra * 500 * 3h)
+	// Total = 3000 + 3000 = 6000
+	if result.ExtraGuestSurcharge != 3000 {
+		t.Errorf("ExtraGuestSurcharge = %d, want 3000", result.ExtraGuestSurcharge)
+	}
+	if result.Booking.ExtraGuestSurcharge != 3000 {
+		t.Errorf("Booking.ExtraGuestSurcharge = %d, want 3000", result.Booking.ExtraGuestSurcharge)
+	}
+	// total = base(3000) + surcharge(3000) = 6000, but service fee may be added
+	expectedBase := int64(6000)
+	if result.Booking.TotalPrice < expectedBase {
+		t.Errorf("TotalPrice = %d, want at least %d", result.Booking.TotalPrice, expectedBase)
+	}
+}

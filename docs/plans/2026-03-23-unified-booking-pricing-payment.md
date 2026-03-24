@@ -150,25 +150,25 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Create: `migrations/XXXXXX_pricing_enhancements.up.sql` / `.down.sql`
 
 **Bathhouse model changes (`internal/domain/bathhouse.go`):**
-- [ ] Add fields to Bathhouse struct:
+- [x] Add fields to Bathhouse struct:
   ```go
   LongSessionThresholdHours  int   // default 4, range 1-12
   LongSessionDiscountPercent int   // default 0, range 0-50
   BaseCapacity               int   // default equals MaxGuests, minimum 1
   ExtraGuestSurcharge        int64 // kopecks per extra guest per hour, default 0
   ```
-- [ ] Update Validate(): LongSessionDiscountPercent 0-50, LongSessionThresholdHours 1-12, BaseCapacity >= 1 && BaseCapacity <= MaxGuests, ExtraGuestSurcharge >= 0
+- [x] Update Validate(): LongSessionDiscountPercent 0-50, LongSessionThresholdHours 1-12, BaseCapacity >= 1 && BaseCapacity <= MaxGuests, ExtraGuestSurcharge >= 0
 
 **Migration:**
-- [ ] ALTER TABLE bathhouses ADD COLUMN:
+- [x] ALTER TABLE bathhouses ADD COLUMN:
   - `long_session_threshold_hours INT NOT NULL DEFAULT 4`
   - `long_session_discount_percent INT NOT NULL DEFAULT 0`
   - `base_capacity INT` (initially set to max_guests via UPDATE, then NOT NULL)
   - `extra_guest_surcharge BIGINT NOT NULL DEFAULT 0`
-- [ ] CHECK constraints: `long_session_discount_percent BETWEEN 0 AND 50`, `long_session_threshold_hours BETWEEN 1 AND 12`, `base_capacity >= 1`, `extra_guest_surcharge >= 0`
+- [x] CHECK constraints: `long_session_discount_percent BETWEEN 0 AND 50`, `long_session_threshold_hours BETWEEN 1 AND 12`, `base_capacity >= 1`, `extra_guest_surcharge >= 0`
 
 **Modify PricingService (`internal/service/pricing_service.go`):**
-- [ ] Extend `CalculatePrice` signature or create new `CalculateFullPrice` method that accepts additional params:
+- [x] Extend `CalculatePrice` signature or create new `CalculateFullPrice` method that accepts additional params:
   ```go
   type PriceCalculationInput struct {
       BathhouseID   uuid.UUID
@@ -187,25 +187,25 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
       ExtraGuestSurcharge  int64
   }
   ```
-- [ ] Long session discount logic:
+- [x] Long session discount logic:
   - `durationHours = EndTime.Sub(StartTime) / time.Hour`
   - If `durationHours >= LongSessionThresholdHours && LongSessionDiscountPercent > 0`:
     - `discountableHours = durationHours - LongSessionThresholdHours`
     - `discount = hourlyRate * discountableHours * LongSessionDiscountPercent / 100`
-- [ ] Extra guest surcharge logic:
+- [x] Extra guest surcharge logic:
   - If `GuestCount > BaseCapacity`:
     - `extraGuests = GuestCount - BaseCapacity`
     - `surcharge = ExtraGuestSurcharge * int64(extraGuests) * int64(durationHours)`
 
 **Modify booking creation (`internal/service/booking_service.go`):**
-- [ ] After base price calculation (~line 167), calculate long session discount and extra guest surcharge
-- [ ] Apply: `totalPrice = basePrice - longSessionDiscount + extraGuestSurcharge`
-- [ ] Pass breakdown to BookingResult
+- [x] After base price calculation (~line 167), calculate long session discount and extra guest surcharge
+- [x] Apply: `totalPrice = basePrice - longSessionDiscount + extraGuestSurcharge`
+- [x] Pass breakdown to BookingResult
 
 **Modify BookingResult and response:**
-- [ ] Add `LongSessionDiscount int64`, `ExtraGuestSurcharge int64`, `BasePrice int64` fields to BookingResult
-- [ ] Add corresponding fields to `bookingResponse` in handler
-- [ ] Return full price breakdown in API response:
+- [x] Add `LongSessionDiscount int64`, `ExtraGuestSurcharge int64`, `BasePrice int64` fields to BookingResult
+- [x] Add corresponding fields to `bookingResponse` in handler
+- [x] Return full price breakdown in API response:
   ```json
   {
     "base_price": 1000000,
@@ -219,17 +219,17 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   ```
 
 **Modify bathhouse update handler:**
-- [ ] Accept new fields in PUT /api/v1/my/bathhouses/{id} request
-- [ ] Validate ranges in handler before passing to service
+- [x] Accept new fields in PUT /api/v1/my/bathhouses/{id} request
+- [x] Validate ranges in handler before passing to service
 
 **Postgres repo (`internal/repository/postgres/bathhouse_repo.go`):**
-- [ ] Add new columns to SELECT queries (GetByID, List, etc.)
-- [ ] Add new columns to INSERT/UPDATE queries
+- [x] Add new columns to SELECT queries (GetByID, List, etc.)
+- [x] Add new columns to INSERT/UPDATE queries
 
 **Tests:**
-- [ ] `internal/service/pricing_service_test.go`: test long session discount (3h booking with 4h threshold = no discount; 6h booking with 4h threshold and 10% = discount on 2h; 8h booking); test extra guest surcharge (2 guests with base_capacity=2 = no surcharge; 5 guests with base_capacity=3 = 2 extra guests * surcharge * hours); test combined discount + surcharge
-- [ ] Update booking service tests for new price breakdown fields
-- [ ] Run `go test ./... -v` — must pass
+- [x] `internal/service/pricing_service_test.go`: test long session discount (3h booking with 4h threshold = no discount; 6h booking with 4h threshold and 10% = discount on 2h; 8h booking); test extra guest surcharge (2 guests with base_capacity=2 = no surcharge; 5 guests with base_capacity=3 = 2 extra guests * surcharge * hours); test combined discount + surcharge
+- [x] Update booking service tests for new price breakdown fields
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 3: Holiday Prices (FR-088)
 

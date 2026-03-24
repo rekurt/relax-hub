@@ -110,8 +110,12 @@ type bathhouseResponse struct {
 	HasSteamRoom bool               `json:"has_steam_room"`
 	HasHotTub    bool               `json:"has_hot_tub"`
 	HasBBQ       bool               `json:"has_bbq"`
-	HasKaraoke   bool               `json:"has_karaoke"`
-	Rating       float64            `json:"rating"`
+	HasKaraoke                 bool               `json:"has_karaoke"`
+	LongSessionThresholdHours  int                `json:"long_session_threshold_hours"`
+	LongSessionDiscountPercent int                `json:"long_session_discount_percent"`
+	BaseCapacity               int                `json:"base_capacity"`
+	ExtraGuestSurcharge        int64              `json:"extra_guest_surcharge"`
+	Rating                     float64            `json:"rating"`
 	ReviewCount  int                `json:"review_count"`
 	Images       []string           `json:"images"`
 	WorkingHours []workingHoursResp `json:"working_hours"`
@@ -162,8 +166,12 @@ func toBathhouseResponse(b *domain.Bathhouse) bathhouseResponse {
 		HasSteamRoom: b.HasSteamRoom,
 		HasHotTub:    b.HasHotTub,
 		HasBBQ:       b.HasBBQ,
-		HasKaraoke:   b.HasKaraoke,
-		Rating:       b.Rating,
+		HasKaraoke:                 b.HasKaraoke,
+		LongSessionThresholdHours:  b.LongSessionThresholdHours,
+		LongSessionDiscountPercent: b.LongSessionDiscountPercent,
+		BaseCapacity:               b.BaseCapacity,
+		ExtraGuestSurcharge:        b.ExtraGuestSurcharge,
+		Rating:                     b.Rating,
 		ReviewCount:  b.ReviewCount,
 		Images:       images,
 		WorkingHours: wh,
@@ -215,10 +223,14 @@ type updateBathhouseRequest struct {
 	HasSauna     *bool                 `json:"has_sauna"`
 	HasSteamRoom *bool                 `json:"has_steam_room"`
 	HasHotTub    *bool                 `json:"has_hot_tub"`
-	HasBBQ       *bool                 `json:"has_bbq"`
-	HasKaraoke   *bool                 `json:"has_karaoke"`
-	Images       []string              `json:"images"`
-	WorkingHours []workingHoursRequest `json:"working_hours"`
+	HasBBQ                     *bool                 `json:"has_bbq"`
+	HasKaraoke                 *bool                 `json:"has_karaoke"`
+	LongSessionThresholdHours  *int                  `json:"long_session_threshold_hours"`
+	LongSessionDiscountPercent *int                  `json:"long_session_discount_percent"`
+	BaseCapacity               *int                  `json:"base_capacity"`
+	ExtraGuestSurcharge        *int64                `json:"extra_guest_surcharge"`
+	Images                     []string              `json:"images"`
+	WorkingHours               []workingHoursRequest `json:"working_hours"`
 }
 
 // @Summary      Search bathhouses
@@ -651,23 +663,27 @@ func (h *BathhouseHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bh, err := h.bathhouseService.Update(r.Context(), userID, role, id, service.UpdateBathhouseInput{
-		Name:         req.Name,
-		Description:  req.Description,
-		Address:      req.Address,
-		CityID:       req.CityID,
-		Latitude:     req.Latitude,
-		Longitude:    req.Longitude,
-		PricePerHour: req.PricePerHour,
-		MinDuration:  req.MinDuration,
-		MaxGuests:    req.MaxGuests,
-		HasPool:      req.HasPool,
-		HasSauna:     req.HasSauna,
-		HasSteamRoom: req.HasSteamRoom,
-		HasHotTub:    req.HasHotTub,
-		HasBBQ:       req.HasBBQ,
-		HasKaraoke:   req.HasKaraoke,
-		Images:       req.Images,
-		WorkingHours: wh,
+		Name:                       req.Name,
+		Description:                req.Description,
+		Address:                    req.Address,
+		CityID:                     req.CityID,
+		Latitude:                   req.Latitude,
+		Longitude:                  req.Longitude,
+		PricePerHour:               req.PricePerHour,
+		MinDuration:                req.MinDuration,
+		MaxGuests:                  req.MaxGuests,
+		HasPool:                    req.HasPool,
+		HasSauna:                   req.HasSauna,
+		HasSteamRoom:               req.HasSteamRoom,
+		HasHotTub:                  req.HasHotTub,
+		HasBBQ:                     req.HasBBQ,
+		HasKaraoke:                 req.HasKaraoke,
+		LongSessionThresholdHours:  req.LongSessionThresholdHours,
+		LongSessionDiscountPercent: req.LongSessionDiscountPercent,
+		BaseCapacity:               req.BaseCapacity,
+		ExtraGuestSurcharge:        req.ExtraGuestSurcharge,
+		Images:                     req.Images,
+		WorkingHours:               wh,
 	})
 	if err != nil {
 		handleServiceError(w, err)

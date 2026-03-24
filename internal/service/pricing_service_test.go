@@ -755,3 +755,246 @@ func TestPricingService_CalculatePrice_DateRangeBoundary(t *testing.T) {
 		t.Errorf("expected price %d for Jan 9 booking, got %d", expected, price)
 	}
 }
+
+func TestPricingService_CalculateFullPrice_LongSessionDiscount(t *testing.T) {
+	priceRepo := mock.NewPricingRuleRepo()
+	bhRepo := mock.NewBathhouseRepo()
+	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
+
+	svc := NewPricingService(priceRepo, bhRepo, access, testPricingLogger)
+
+	bathhouseID := uuid.New()
+	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	tests := []struct {
+		name                string
+		durationHours       int
+		thresholdHours      int
+		discountPercent     int
+		basePrice           int64
+		expectedDiscount    int64
+		expectedTotal       int64
+	}{
+		{
+			name:            "3h booking with 4h threshold = no discount",
+			durationHours:   3,
+			thresholdHours:  4,
+			discountPercent: 10,
+			basePrice:       1000,
+			expectedDiscount: 0,
+			expectedTotal:   3000,
+		},
+		{
+			name:            "6h booking with 4h threshold and 10% = discount on 2h",
+			durationHours:   6,
+			thresholdHours:  4,
+			discountPercent: 10,
+			basePrice:       1000,
+			expectedDiscount: 200, // avgRate=1000, 2 discountable hours * 1000 * 10% = 200
+			expectedTotal:   5800,
+		},
+		{
+			name:            "8h booking with 4h threshold and 20% = discount on 4h",
+			durationHours:   8,
+			thresholdHours:  4,
+			discountPercent: 20,
+			basePrice:       1000,
+			expectedDiscount: 800, // avgRate=1000, 4 discountable hours * 1000 * 20% = 800
+			expectedTotal:   7200,
+		},
+		{
+			name:            "4h booking at exactly threshold = no discount (not beyond threshold)",
+			durationHours:   4,
+			thresholdHours:  4,
+			discountPercent: 10,
+			basePrice:       1000,
+			expectedDiscount: 0,
+			expectedTotal:   4000,
+		},
+		{
+			name:            "5h booking with 0% discount = no discount",
+			durationHours:   5,
+			thresholdHours:  4,
+			discountPercent: 0,
+			basePrice:       1000,
+			expectedDiscount: 0,
+			expectedTotal:   5000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			start := time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC)
+			end := start.Add(time.Duration(tt.durationHours) * time.Hour)
+
+			total, breakdown, err := svc.CalculateFullPrice(context.Background(), PriceCalculationInput{
+				BathhouseID:                bathhouseID,
+				BasePrice:                  tt.basePrice,
+				StartTime:                  start,
+				EndTime:                    end,
+				GuestCount:                 2,
+				BaseCapacity:               5,
+				ExtraGuestSurcharge:        0,
+				LongSessionThresholdHours:  tt.thresholdHours,
+				LongSessionDiscountPercent: tt.discountPercent,
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if breakdown.LongSessionDiscount != tt.expectedDiscount {
+				t.Errorf("expected discount %d, got %d", tt.expectedDiscount, breakdown.LongSessionDiscount)
+			}
+			if total != tt.expectedTotal {
+				t.Errorf("expected total %d, got %d", tt.expectedTotal, total)
+			}
+		})
+	}
+}
+
+func TestPricingService_CalculateFullPrice_ExtraGuestSurcharge(t *testing.T) {
+	priceRepo := mock.NewPricingRuleRepo()
+	bhRepo := mock.NewBathhouseRepo()
+	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
+
+	svc := NewPricingService(priceRepo, bhRepo, access, testPricingLogger)
+
+	bathhouseID := uuid.New()
+	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	tests := []struct {
+		name               string
+		guestCount         int
+		baseCapacity       int
+		surchargePerGuest  int64
+		durationHours      int
+		basePrice          int64
+		expectedSurcharge  int64
+		expectedTotal      int64
+	}{
+		{
+			name:              "2 guests with base_capacity=2 = no surcharge",
+			guestCount:        2,
+			baseCapacity:      2,
+			surchargePerGuest: 500,
+			durationHours:     3,
+			basePrice:         1000,
+			expectedSurcharge: 0,
+			expectedTotal:     3000,
+		},
+		{
+			name:              "5 guests with base_capacity=3 = 2 extra * 500 * 3h",
+			guestCount:        5,
+			baseCapacity:      3,
+			surchargePerGuest: 500,
+			durationHours:     3,
+			basePrice:         1000,
+			expectedSurcharge: 3000, // 2 extra * 500 * 3 hours
+			expectedTotal:     6000, // 3000 base + 3000 surcharge
+		},
+		{
+			name:              "1 extra guest for 1 hour",
+			guestCount:        4,
+			baseCapacity:      3,
+			surchargePerGuest: 200,
+			durationHours:     1,
+			basePrice:         1000,
+			expectedSurcharge: 200, // 1 extra * 200 * 1 hour
+			expectedTotal:     1200,
+		},
+		{
+			name:              "no surcharge when surcharge is 0",
+			guestCount:        10,
+			baseCapacity:      3,
+			surchargePerGuest: 0,
+			durationHours:     3,
+			basePrice:         1000,
+			expectedSurcharge: 0,
+			expectedTotal:     3000,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			start := time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC)
+			end := start.Add(time.Duration(tt.durationHours) * time.Hour)
+
+			total, breakdown, err := svc.CalculateFullPrice(context.Background(), PriceCalculationInput{
+				BathhouseID:                bathhouseID,
+				BasePrice:                  tt.basePrice,
+				StartTime:                  start,
+				EndTime:                    end,
+				GuestCount:                 tt.guestCount,
+				BaseCapacity:               tt.baseCapacity,
+				ExtraGuestSurcharge:        tt.surchargePerGuest,
+				LongSessionThresholdHours:  4,
+				LongSessionDiscountPercent: 0,
+			})
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if breakdown.ExtraGuestSurcharge != tt.expectedSurcharge {
+				t.Errorf("expected surcharge %d, got %d", tt.expectedSurcharge, breakdown.ExtraGuestSurcharge)
+			}
+			if total != tt.expectedTotal {
+				t.Errorf("expected total %d, got %d", tt.expectedTotal, total)
+			}
+		})
+	}
+}
+
+func TestPricingService_CalculateFullPrice_Combined(t *testing.T) {
+	// Test combined discount + surcharge
+	priceRepo := mock.NewPricingRuleRepo()
+	bhRepo := mock.NewBathhouseRepo()
+	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
+
+	svc := NewPricingService(priceRepo, bhRepo, access, testPricingLogger)
+
+	bathhouseID := uuid.New()
+	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	// 6h booking, threshold=4, discount=10%, 5 guests, capacity=3, surcharge=500/guest/h
+	start := time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC)
+	end := start.Add(6 * time.Hour)
+
+	total, breakdown, err := svc.CalculateFullPrice(context.Background(), PriceCalculationInput{
+		BathhouseID:                bathhouseID,
+		BasePrice:                  1000,
+		StartTime:                  start,
+		EndTime:                    end,
+		GuestCount:                 5,
+		BaseCapacity:               3,
+		ExtraGuestSurcharge:        500,
+		LongSessionThresholdHours:  4,
+		LongSessionDiscountPercent: 10,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Base: 6000 (1000 * 6h)
+	// Discount: 200 (avgRate=1000, 2 discountable hours * 1000 * 10% = 200)
+	// Surcharge: 6000 (2 extra * 500 * 6h)
+	// Total: 6000 - 200 + 6000 = 11800
+	if breakdown.BasePrice != 6000 {
+		t.Errorf("expected base price 6000, got %d", breakdown.BasePrice)
+	}
+	if breakdown.LongSessionDiscount != 200 {
+		t.Errorf("expected discount 200, got %d", breakdown.LongSessionDiscount)
+	}
+	if breakdown.ExtraGuestSurcharge != 6000 {
+		t.Errorf("expected surcharge 6000, got %d", breakdown.ExtraGuestSurcharge)
+	}
+	if total != 11800 {
+		t.Errorf("expected total 11800, got %d", total)
+	}
+}
