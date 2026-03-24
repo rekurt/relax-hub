@@ -24,8 +24,8 @@ func NewPaymentRepository(pool *pgxpool.Pool) repository.PaymentRepository {
 
 func (r *paymentRepo) Create(ctx context.Context, payment *domain.Payment) error {
 	query := `
-		INSERT INTO payments (id, booking_id, user_id, amount, currency, status, provider, external_id, refund_amount, refunded_at, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
+		INSERT INTO payments (id, booking_id, user_id, amount, currency, status, provider, external_id, payment_method, refund_amount, refunded_at, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
 
 	if payment.ID == uuid.Nil {
 		payment.ID = uuid.New()
@@ -36,6 +36,9 @@ func (r *paymentRepo) Create(ctx context.Context, payment *domain.Payment) error
 	if payment.UpdatedAt.IsZero() {
 		payment.UpdatedAt = time.Now()
 	}
+	if payment.PaymentMethod == "" {
+		payment.PaymentMethod = domain.PaymentMethodCard
+	}
 
 	metadata := payment.Metadata
 	if metadata == nil {
@@ -45,8 +48,8 @@ func (r *paymentRepo) Create(ctx context.Context, payment *domain.Payment) error
 	_, err := r.pool.Exec(ctx, query,
 		payment.ID, payment.BookingID, payment.UserID,
 		payment.Amount, payment.Currency, payment.Status,
-		payment.Provider, payment.ExternalID, payment.RefundAmount,
-		payment.RefundedAt, metadata,
+		payment.Provider, payment.ExternalID, payment.PaymentMethod,
+		payment.RefundAmount, payment.RefundedAt, metadata,
 		payment.CreatedAt, payment.UpdatedAt,
 	)
 	if err != nil {
@@ -55,27 +58,20 @@ func (r *paymentRepo) Create(ctx context.Context, payment *domain.Payment) error
 	return nil
 }
 
-func (r *paymentRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Payment, error) {
-	query := `
-		SELECT id, booking_id, user_id, amount, currency, status, provider, external_id, refund_amount, refunded_at, metadata, created_at, updated_at
-		FROM payments WHERE id = $1`
+const paymentSelectColumns = `id, booking_id, user_id, amount, currency, status, provider, external_id, payment_method, refund_amount, refunded_at, metadata, created_at, updated_at`
 
+func (r *paymentRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Payment, error) {
+	query := `SELECT ` + paymentSelectColumns + ` FROM payments WHERE id = $1`
 	return r.scanPayment(ctx, query, id)
 }
 
 func (r *paymentRepo) GetByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.Payment, error) {
-	query := `
-		SELECT id, booking_id, user_id, amount, currency, status, provider, external_id, refund_amount, refunded_at, metadata, created_at, updated_at
-		FROM payments WHERE booking_id = $1`
-
+	query := `SELECT ` + paymentSelectColumns + ` FROM payments WHERE booking_id = $1`
 	return r.scanPayment(ctx, query, bookingID)
 }
 
 func (r *paymentRepo) GetByExternalID(ctx context.Context, externalID string) (*domain.Payment, error) {
-	query := `
-		SELECT id, booking_id, user_id, amount, currency, status, provider, external_id, refund_amount, refunded_at, metadata, created_at, updated_at
-		FROM payments WHERE external_id = $1`
-
+	query := `SELECT ` + paymentSelectColumns + ` FROM payments WHERE external_id = $1`
 	return r.scanPayment(ctx, query, externalID)
 }
 
@@ -84,8 +80,8 @@ func (r *paymentRepo) scanPayment(ctx context.Context, query string, arg interfa
 	err := r.pool.QueryRow(ctx, query, arg).Scan(
 		&p.ID, &p.BookingID, &p.UserID,
 		&p.Amount, &p.Currency, &p.Status,
-		&p.Provider, &p.ExternalID, &p.RefundAmount,
-		&p.RefundedAt, &p.Metadata,
+		&p.Provider, &p.ExternalID, &p.PaymentMethod,
+		&p.RefundAmount, &p.RefundedAt, &p.Metadata,
 		&p.CreatedAt, &p.UpdatedAt,
 	)
 	if err != nil {
@@ -149,9 +145,7 @@ func (r *paymentRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pa
 	}
 
 	offset := (page - 1) * pageSize
-	query := `
-		SELECT id, booking_id, user_id, amount, currency, status, provider, external_id, refund_amount, refunded_at, metadata, created_at, updated_at
-		FROM payments WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+	query := `SELECT ` + paymentSelectColumns + ` FROM payments WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, query, userID, pageSize, offset)
 	if err != nil {
@@ -165,8 +159,8 @@ func (r *paymentRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pa
 		if err := rows.Scan(
 			&p.ID, &p.BookingID, &p.UserID,
 			&p.Amount, &p.Currency, &p.Status,
-			&p.Provider, &p.ExternalID, &p.RefundAmount,
-			&p.RefundedAt, &p.Metadata,
+			&p.Provider, &p.ExternalID, &p.PaymentMethod,
+			&p.RefundAmount, &p.RefundedAt, &p.Metadata,
 			&p.CreatedAt, &p.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan payment: %w", err)

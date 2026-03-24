@@ -23,18 +23,23 @@ func NewPaymentHandler(paymentService service.PaymentService) *PaymentHandler {
 }
 
 type paymentResponse struct {
-	ID           string            `json:"id"`
-	BookingID    string            `json:"booking_id"`
-	UserID       string            `json:"user_id"`
-	Amount       int64             `json:"amount"`
-	Currency     string            `json:"currency"`
-	Status       string            `json:"status"`
-	Provider     string            `json:"provider"`
-	RefundAmount int64             `json:"refund_amount"`
-	RefundedAt   *time.Time        `json:"refunded_at,omitempty"`
-	Metadata     map[string]string `json:"metadata,omitempty"`
-	CreatedAt    time.Time         `json:"created_at"`
-	UpdatedAt    time.Time         `json:"updated_at"`
+	ID            string            `json:"id"`
+	BookingID     string            `json:"booking_id"`
+	UserID        string            `json:"user_id"`
+	Amount        int64             `json:"amount"`
+	Currency      string            `json:"currency"`
+	Status        string            `json:"status"`
+	Provider      string            `json:"provider"`
+	PaymentMethod string            `json:"payment_method"`
+	RefundAmount  int64             `json:"refund_amount"`
+	RefundedAt    *time.Time        `json:"refunded_at,omitempty"`
+	Metadata      map[string]string `json:"metadata,omitempty"`
+	CreatedAt     time.Time         `json:"created_at"`
+	UpdatedAt     time.Time         `json:"updated_at"`
+}
+
+type initiatePaymentRequest struct {
+	PaymentMethod string `json:"payment_method"` // "card" or "sbp", default "card"
 }
 
 type initiatePaymentResponse struct {
@@ -43,33 +48,36 @@ type initiatePaymentResponse struct {
 
 func toPaymentResponse(p *domain.Payment) paymentResponse {
 	return paymentResponse{
-		ID:           p.ID.String(),
-		BookingID:    p.BookingID.String(),
-		UserID:       p.UserID.String(),
-		Amount:       p.Amount,
-		Currency:     p.Currency,
-		Status:       string(p.Status),
-		Provider:     p.Provider,
-		RefundAmount: p.RefundAmount,
-		RefundedAt:   p.RefundedAt,
-		Metadata:     p.Metadata,
-		CreatedAt:    p.CreatedAt,
-		UpdatedAt:    p.UpdatedAt,
+		ID:            p.ID.String(),
+		BookingID:     p.BookingID.String(),
+		UserID:        p.UserID.String(),
+		Amount:        p.Amount,
+		Currency:      p.Currency,
+		Status:        string(p.Status),
+		Provider:      p.Provider,
+		PaymentMethod: string(p.PaymentMethod),
+		RefundAmount:  p.RefundAmount,
+		RefundedAt:    p.RefundedAt,
+		Metadata:      p.Metadata,
+		CreatedAt:     p.CreatedAt,
+		UpdatedAt:     p.UpdatedAt,
 	}
 }
 
 // InitiatePayment godoc
 // @Summary      Initiate payment
-// @Description  Creates a payment for a booking via YooKassa and returns the confirmation URL for redirect
+// @Description  Creates a payment for a booking via YooKassa and returns the confirmation URL for redirect. Supports card and SBP payment methods.
 // @Tags         payments
+// @Accept       json
 // @Produce      json
 // @Security     BearerAuth
-// @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=initiatePaymentResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Failure      409  {object}  APIResponse{error=APIError}
+// @Param        id    path      string                   true  "Booking ID (UUID)"
+// @Param        body  body      initiatePaymentRequest   false "Payment options"
+// @Success      200   {object}  APIResponse{data=initiatePaymentResponse}
+// @Failure      400   {object}  APIResponse{error=APIError}
+// @Failure      401   {object}  APIResponse{error=APIError}
+// @Failure      404   {object}  APIResponse{error=APIError}
+// @Failure      409   {object}  APIResponse{error=APIError}
 // @Router       /bookings/{id}/pay [post]
 // InitiatePayment handles POST /api/v1/bookings/{id}/pay
 func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request) {
@@ -79,8 +87,25 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	var req initiatePaymentRequest
+	if r.Body != nil && r.ContentLength > 0 {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid request body")
+			return
+		}
+	}
+
+	paymentMethod := domain.PaymentMethod(req.PaymentMethod)
+	if paymentMethod == "" {
+		paymentMethod = domain.PaymentMethodCard
+	}
+	if paymentMethod != domain.PaymentMethodCard && paymentMethod != domain.PaymentMethodSBP {
+		writeError(w, http.StatusBadRequest, "invalid_input", "payment_method must be 'card' or 'sbp'")
+		return
+	}
+
 	userID := middleware.GetUserID(r.Context())
-	confirmationURL, err := h.paymentService.InitiatePayment(r.Context(), userID, bookingID)
+	confirmationURL, err := h.paymentService.InitiatePayment(r.Context(), userID, bookingID, paymentMethod)
 	if err != nil {
 		handleServiceError(w, err)
 		return

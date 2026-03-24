@@ -6,6 +6,23 @@ import (
 	"github.com/google/uuid"
 )
 
+type PaymentMethod string
+
+const (
+	PaymentMethodCard   PaymentMethod = "card"
+	PaymentMethodSBP    PaymentMethod = "sbp"
+	PaymentMethodWallet PaymentMethod = "wallet"
+	PaymentMethodCombo  PaymentMethod = "combo"
+)
+
+func (m PaymentMethod) IsValid() bool {
+	switch m {
+	case PaymentMethodCard, PaymentMethodSBP, PaymentMethodWallet, PaymentMethodCombo:
+		return true
+	}
+	return false
+}
+
 type PaymentStatus string
 
 const (
@@ -26,19 +43,20 @@ func (s PaymentStatus) IsValid() bool {
 }
 
 type Payment struct {
-	ID           uuid.UUID
-	BookingID    uuid.UUID
-	UserID       uuid.UUID
-	Amount       int64             // в копейках
-	Currency     string            // "RUB"
-	Status       PaymentStatus
-	Provider     string            // "yookassa"
-	ExternalID   string            // ID транзакции в платежной системе
-	RefundAmount int64             // сумма возврата в копейках
-	RefundedAt   *time.Time
-	Metadata     map[string]string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID            uuid.UUID
+	BookingID     uuid.UUID
+	UserID        uuid.UUID
+	Amount        int64             // в копейках
+	Currency      string            // "RUB"
+	Status        PaymentStatus
+	Provider      string            // "yookassa"
+	ExternalID    string            // ID транзакции в платежной системе
+	PaymentMethod PaymentMethod     // "card", "sbp", "wallet", "combo"
+	RefundAmount  int64             // сумма возврата в копейках
+	RefundedAt    *time.Time
+	Metadata      map[string]string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 func (p *Payment) Validate() error {
@@ -58,6 +76,9 @@ func (p *Payment) Validate() error {
 		return ErrInvalidInput
 	}
 	if p.Provider == "" {
+		return ErrInvalidInput
+	}
+	if p.PaymentMethod != "" && !p.PaymentMethod.IsValid() {
 		return ErrInvalidInput
 	}
 	if p.RefundAmount < 0 {

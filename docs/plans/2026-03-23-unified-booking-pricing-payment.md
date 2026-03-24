@@ -578,7 +578,7 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Modify: `internal/service/payment_service.go`
 
 **Payment model changes (`internal/domain/payment.go`):**
-- [ ] Add PaymentMethod type and constants:
+- [x] Add PaymentMethod type and constants:
   ```go
   type PaymentMethod string
   const (
@@ -588,11 +588,11 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
       PaymentMethodCombo  PaymentMethod = "combo"
   )
   ```
-- [ ] Add `PaymentMethod PaymentMethod` field to Payment struct (default "card")
-- [ ] Update Validate(): PaymentMethod must be valid
+- [x] Add `PaymentMethod PaymentMethod` field to Payment struct (default "card")
+- [x] Update Validate(): PaymentMethod must be valid
 
 **Modify PaymentProvider interface (`internal/payment/provider.go`):**
-- [ ] Add `PaymentMethod` parameter to CreatePayment:
+- [x] Add `PaymentMethod` parameter to CreatePayment:
   ```go
   CreatePayment(ctx context.Context, req CreatePaymentRequest) (*PaymentResult, error)
   ```
@@ -608,41 +608,41 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
       Capture     bool    // true for instant charge, false for hold
   }
   ```
-- [ ] Add `CapturePayment(ctx context.Context, externalID string, amount int64) error` for holds
-- [ ] Add `CancelPayment(ctx context.Context, externalID string) error` for releasing holds
+- [x] Add `CapturePayment(ctx context.Context, externalID string, amount int64) error` for holds
+- [x] Add `CancelPayment(ctx context.Context, externalID string) error` for releasing holds
 
 **YooKassa implementation (`internal/payment/yookassa.go`):**
-- [ ] Update CreatePayment to use CreatePaymentRequest:
+- [x] Update CreatePayment to use CreatePaymentRequest:
   - For "sbp": set `confirmation.type = "redirect"` (same as card, YooKassa handles SBP redirect)
   - For "card": existing flow
   - Set `Capture` from request (true = immediate charge, false = hold for request bookings)
-- [ ] Implement `CapturePayment`: call YooKassa capture API `POST /payments/{id}/capture`
-- [ ] Implement `CancelPayment`: call YooKassa cancel API `POST /payments/{id}/cancel`
+- [x] Implement `CapturePayment`: call YooKassa capture API `POST /payments/{id}/capture`
+- [x] Implement `CancelPayment`: call YooKassa cancel API `POST /payments/{id}/cancel`
 
 **Modify PaymentService (`internal/service/payment_service.go`):**
-- [ ] Update `InitiatePayment` to accept payment method parameter
-- [ ] Pass method to provider.CreatePayment
+- [x] Update `InitiatePayment` to accept payment method parameter
+- [x] Pass method to provider.CreatePayment
 
 **Handler (`internal/handler/payment_handler.go`):**
-- [ ] Add `payment_method` field to payment initiation request:
+- [x] Add `payment_method` field to payment initiation request:
   ```go
   type initiatePaymentRequest struct {
       BookingID     string `json:"booking_id"`
       PaymentMethod string `json:"payment_method"` // "card" or "sbp", default "card"
   }
   ```
-- [ ] Validate payment method in handler
+- [x] Validate payment method in handler
 
 **Migration:**
-- [ ] ALTER TABLE payments ADD COLUMN `payment_method VARCHAR(10) NOT NULL DEFAULT 'card'`
+- [x] ALTER TABLE payments ADD COLUMN `payment_method VARCHAR(10) NOT NULL DEFAULT 'card'`
 
 **Tests:**
-- [ ] Test CreatePayment with method="card": existing behavior
-- [ ] Test CreatePayment with method="sbp": confirmation URL returned
-- [ ] Test CapturePayment: successful capture
-- [ ] Test CancelPayment: successful cancellation
-- [ ] Test webhook handling for SBP payments (status transitions are the same)
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test CreatePayment with method="card": existing behavior
+- [x] Test CreatePayment with method="sbp": confirmation URL returned
+- [x] Test CapturePayment: successful capture
+- [x] Test CancelPayment: successful cancellation
+- [x] Test webhook handling for SBP payments (status transitions are the same)
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 8: Combo Payment — Wallet + Card/SBP (FR-093)
 

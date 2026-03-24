@@ -848,7 +848,7 @@ func (b *Bot) doConfirmBooking(ctx context.Context, chatID int64) {
 
 	// Try to get a payment link
 	if b.paymentService != nil {
-		payURL, err := b.paymentService.InitiatePayment(ctx, userID, result.Booking.ID)
+		payURL, err := b.paymentService.InitiatePayment(ctx, userID, result.Booking.ID, domain.PaymentMethodCard)
 		if err == nil && payURL != "" {
 			text += fmt.Sprintf("\n\n[Оплатить онлайн](%s)", escapeMD(payURL))
 		}

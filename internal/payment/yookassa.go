@@ -27,19 +27,24 @@ func NewYooKassaProvider(shopID, secretKey string) *YooKassaProvider {
 }
 
 // CreatePayment creates a payment in YooKassa and returns the external ID and confirmation URL.
-func (p *YooKassaProvider) CreatePayment(ctx context.Context, amount int64, currency string, description string, returnURL string, metadata map[string]string) (*PaymentResult, error) {
+func (p *YooKassaProvider) CreatePayment(ctx context.Context, req CreatePaymentRequest) (*PaymentResult, error) {
 	payment := &yoopayment.Payment{
 		Amount: &yoocommon.Amount{
-			Value:    kopecksToString(amount),
-			Currency: currency,
+			Value:    kopecksToString(req.Amount),
+			Currency: req.Currency,
 		},
-		Capture:     true,
-		Description: description,
+		Capture:     req.Capture,
+		Description: req.Description,
 		Confirmation: &yoopayment.Redirect{
 			Type:      yoopayment.TypeRedirect,
-			ReturnURL: returnURL,
+			ReturnURL: req.ReturnURL,
 		},
-		Metadata: metadata,
+		Metadata: req.Metadata,
+	}
+
+	// Set payment method type for SBP
+	if req.Method == "sbp" {
+		payment.PaymentMethod = &yoopayment.SBP{}
 	}
 
 	handler := p.paymentHandler.WithIdempotencyKey(uuid.New().String())
@@ -84,6 +89,34 @@ func (p *YooKassaProvider) CreateRefund(ctx context.Context, externalID string, 
 	_, err := handler.CreateRefund(ctx, refund)
 	if err != nil {
 		return fmt.Errorf("yookassa create refund: %w", err)
+	}
+	return nil
+}
+
+// CapturePayment captures a previously authorized payment hold.
+func (p *YooKassaProvider) CapturePayment(ctx context.Context, externalID string, amount int64) error {
+	payment := &yoopayment.Payment{
+		ID: externalID,
+		Amount: &yoocommon.Amount{
+			Value:    kopecksToString(amount),
+			Currency: "RUB",
+		},
+	}
+
+	handler := p.paymentHandler.WithIdempotencyKey(fmt.Sprintf("capture-%s", externalID))
+	_, err := handler.CapturePayment(ctx, payment)
+	if err != nil {
+		return fmt.Errorf("yookassa capture payment: %w", err)
+	}
+	return nil
+}
+
+// CancelPayment cancels a previously authorized payment hold.
+func (p *YooKassaProvider) CancelPayment(ctx context.Context, externalID string) error {
+	handler := p.paymentHandler.WithIdempotencyKey(fmt.Sprintf("cancel-%s", externalID))
+	_, err := handler.CancelPayment(ctx, externalID)
+	if err != nil {
+		return fmt.Errorf("yookassa cancel payment: %w", err)
 	}
 	return nil
 }

@@ -24,7 +24,7 @@ type WebhookEvent struct {
 }
 
 type PaymentService interface {
-	InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (confirmationURL string, err error)
+	InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, paymentMethod domain.PaymentMethod) (confirmationURL string, err error)
 	HandleWebhook(ctx context.Context, event WebhookEvent) error
 	RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool) error
 	GetPaymentByBooking(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*domain.Payment, error)
@@ -58,7 +58,7 @@ func NewPaymentService(
 	}
 }
 
-func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (string, error) {
+func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, paymentMethod domain.PaymentMethod) (string, error) {
 	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
 	if err != nil {
 		return "", err
@@ -89,15 +89,20 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 		}
 	}
 
+	if paymentMethod == "" {
+		paymentMethod = domain.PaymentMethodCard
+	}
+
 	now := time.Now()
 	p := &domain.Payment{
-		ID:        uuid.New(),
-		BookingID: bookingID,
-		UserID:    booking.UserID,
-		Amount:    booking.TotalPrice,
-		Currency:  "RUB",
-		Status:    domain.PaymentPending,
-		Provider:  "yookassa",
+		ID:            uuid.New(),
+		BookingID:     bookingID,
+		UserID:        booking.UserID,
+		Amount:        booking.TotalPrice,
+		Currency:      "RUB",
+		Status:        domain.PaymentPending,
+		Provider:      "yookassa",
+		PaymentMethod: paymentMethod,
 		Metadata: map[string]string{
 			"booking_id": bookingID.String(),
 			"user_id":    booking.UserID.String(),
@@ -115,7 +120,15 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 	}
 
 	description := fmt.Sprintf("Оплата бронирования %s", bookingID.String()[:8])
-	result, err := s.provider.CreatePayment(ctx, p.Amount, p.Currency, description, s.returnURL, p.Metadata)
+	result, err := s.provider.CreatePayment(ctx, payment.CreatePaymentRequest{
+		Amount:      p.Amount,
+		Currency:    p.Currency,
+		Description: description,
+		ReturnURL:   s.returnURL,
+		Metadata:    p.Metadata,
+		Method:      string(paymentMethod),
+		Capture:     true,
+	})
 	if err != nil {
 		// Update payment status to failed
 		if updErr := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentFailed, ""); updErr != nil {

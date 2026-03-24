@@ -48,7 +48,7 @@ func TestPaymentService_InitiatePayment_Success(t *testing.T) {
 	userID := uuid.New()
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
 
-	url, err := svc.InitiatePayment(context.Background(), userID, booking.ID)
+	url, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestPaymentService_InitiatePayment_Success(t *testing.T) {
 func TestPaymentService_InitiatePayment_BookingNotFound(t *testing.T) {
 	svc, _, _, _ := newPaymentService()
 
-	_, err := svc.InitiatePayment(context.Background(), uuid.New(), uuid.New())
+	_, err := svc.InitiatePayment(context.Background(), uuid.New(), uuid.New(), domain.PaymentMethodCard)
 	if !errors.Is(err, domain.ErrNotFound) {
 		t.Errorf("expected ErrNotFound, got: %v", err)
 	}
@@ -71,7 +71,7 @@ func TestPaymentService_InitiatePayment_InvalidStatus(t *testing.T) {
 	userID := uuid.New()
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingCancelled)
 
-	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID)
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 	if !errors.Is(err, domain.ErrInvalidInput) {
 		t.Errorf("expected ErrInvalidInput for cancelled booking, got: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestPaymentService_InitiatePayment_Forbidden(t *testing.T) {
 	otherID := uuid.New()
 	booking := createTestBooking(t, bookingRepo, ownerID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
 
-	_, err := svc.InitiatePayment(context.Background(), otherID, booking.ID)
+	_, err := svc.InitiatePayment(context.Background(), otherID, booking.ID, domain.PaymentMethodCard)
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Errorf("expected ErrForbidden when another user tries to pay, got: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestPaymentService_InitiatePayment_AlreadyPaid(t *testing.T) {
 	}
 	_ = paymentRepo.Create(context.Background(), existingPayment)
 
-	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID)
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 	if !errors.Is(err, domain.ErrPaymentAlreadyProcessed) {
 		t.Errorf("expected ErrPaymentAlreadyProcessed, got: %v", err)
 	}
@@ -121,7 +121,7 @@ func TestPaymentService_HandleWebhook_Succeeded(t *testing.T) {
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
 
 	// Initiate payment to get external ID
-	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID)
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 	if err != nil {
 		t.Fatalf("initiate failed: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestPaymentService_HandleWebhook_Canceled(t *testing.T) {
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
 
 	// Initiate payment
-	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID)
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 	if err != nil {
 		t.Fatalf("initiate failed: %v", err)
 	}
@@ -191,7 +191,7 @@ func TestPaymentService_HandleWebhook_AlreadyProcessed(t *testing.T) {
 	userID := uuid.New()
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
 
-	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
 
 	// Simulate provider confirming the payment
@@ -231,7 +231,7 @@ func TestPaymentService_RefundPayment_FullRefund(t *testing.T) {
 	// Booking starts in 48 hours - should get full refund
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
 
-	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
 
 	// Simulate successful payment
@@ -265,7 +265,7 @@ func TestPaymentService_RefundPayment_PartialRefund(t *testing.T) {
 	// Booking starts in 12 hours - between 2h and 24h, should get 50% refund
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(12*time.Hour), domain.BookingPending)
 
-	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
 
 	provider.SetPaymentStatus(p.ExternalID, "succeeded")
@@ -294,7 +294,7 @@ func TestPaymentService_RefundPayment_NoRefundTooLate(t *testing.T) {
 	// Booking starts in 1 hour - less than 2h deadline, no refund
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(1*time.Hour), domain.BookingPending)
 
-	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
 
 	provider.SetPaymentStatus(p.ExternalID, "succeeded")
@@ -320,7 +320,7 @@ func TestPaymentService_RefundPayment_NotSucceeded(t *testing.T) {
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
 
 	// Initiate but don't complete payment
-	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 
 	err := svc.RefundPayment(context.Background(), booking.ID, false)
 	if !errors.Is(err, domain.ErrInvalidInput) {
@@ -344,7 +344,7 @@ func TestPaymentService_GetPaymentByBooking(t *testing.T) {
 	userID := uuid.New()
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
 
-	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 
 	p, err := svc.GetPaymentByBooking(context.Background(), userID, booking.ID)
 	if err != nil {
@@ -361,7 +361,7 @@ func TestPaymentService_GetPaymentByBooking_Forbidden(t *testing.T) {
 	otherID := uuid.New()
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
 
-	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 
 	_, err := svc.GetPaymentByBooking(context.Background(), otherID, booking.ID)
 	if !errors.Is(err, domain.ErrForbidden) {
@@ -376,8 +376,8 @@ func TestPaymentService_ListUserPayments(t *testing.T) {
 	// Create two bookings and initiate payment for both
 	b1 := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
 	b2 := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
-	_, _ = svc.InitiatePayment(context.Background(), userID, b1.ID)
-	_, _ = svc.InitiatePayment(context.Background(), userID, b2.ID)
+	_, _ = svc.InitiatePayment(context.Background(), userID, b1.ID, domain.PaymentMethodCard)
+	_, _ = svc.InitiatePayment(context.Background(), userID, b2.ID, domain.PaymentMethodCard)
 
 	result, err := svc.ListUserPayments(context.Background(), userID, 1, 10)
 	if err != nil {
@@ -385,5 +385,143 @@ func TestPaymentService_ListUserPayments(t *testing.T) {
 	}
 	if result.TotalCount != 2 {
 		t.Errorf("total count = %d, want 2", result.TotalCount)
+	}
+}
+
+func TestPaymentService_InitiatePayment_SBP(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
+
+	url, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodSBP)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if url == "" {
+		t.Error("expected non-empty confirmation URL for SBP payment")
+	}
+
+	// Verify payment method was stored
+	p, err := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	if err != nil {
+		t.Fatalf("failed to get payment: %v", err)
+	}
+	if p.PaymentMethod != domain.PaymentMethodSBP {
+		t.Errorf("payment method = %q, want %q", p.PaymentMethod, domain.PaymentMethodSBP)
+	}
+
+	// Verify provider received SBP method
+	method := provider.GetLastPaymentMethod()
+	if method != "sbp" {
+		t.Errorf("provider method = %q, want %q", method, "sbp")
+	}
+}
+
+func TestPaymentService_InitiatePayment_DefaultsToCard(t *testing.T) {
+	svc, paymentRepo, bookingRepo, _ := newPaymentService()
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
+
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	p, err := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	if err != nil {
+		t.Fatalf("failed to get payment: %v", err)
+	}
+	if p.PaymentMethod != domain.PaymentMethodCard {
+		t.Errorf("payment method = %q, want %q (default)", p.PaymentMethod, domain.PaymentMethodCard)
+	}
+}
+
+func TestPaymentService_HandleWebhook_SBP_Succeeded(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(24*time.Hour), domain.BookingPending)
+
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodSBP)
+	if err != nil {
+		t.Fatalf("initiate failed: %v", err)
+	}
+
+	p, err := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	if err != nil {
+		t.Fatalf("failed to get payment: %v", err)
+	}
+
+	// SBP webhook handling is identical to card - status transitions are the same
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+
+	err = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+	if err != nil {
+		t.Fatalf("webhook handling failed: %v", err)
+	}
+
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.Status != domain.PaymentSucceeded {
+		t.Errorf("payment status = %q, want %q", updated.Status, domain.PaymentSucceeded)
+	}
+	if updated.PaymentMethod != domain.PaymentMethodSBP {
+		t.Errorf("payment method after webhook = %q, want %q", updated.PaymentMethod, domain.PaymentMethodSBP)
+	}
+
+	updatedBooking, _ := bookingRepo.GetByID(context.Background(), booking.ID)
+	if updatedBooking.Status != domain.BookingConfirmed {
+		t.Errorf("booking status = %q, want %q", updatedBooking.Status, domain.BookingConfirmed)
+	}
+}
+
+func TestPaymentService_CapturePayment(t *testing.T) {
+	// This test verifies that MockProvider.CapturePayment works correctly
+	// (used by request-based booking flow in Task 9)
+	provider := payment.NewMockProvider()
+	ctx := context.Background()
+
+	result, _ := provider.CreatePayment(ctx, payment.CreatePaymentRequest{
+		Amount:   10000,
+		Currency: "RUB",
+		Method:   "card",
+		Capture:  false,
+	})
+
+	provider.SetPaymentStatus(result.ExternalID, "waiting_for_capture")
+
+	err := provider.CapturePayment(ctx, result.ExternalID, 10000)
+	if err != nil {
+		t.Fatalf("capture failed: %v", err)
+	}
+
+	status, _ := provider.GetPaymentStatus(ctx, result.ExternalID)
+	if status != "succeeded" {
+		t.Errorf("status after capture = %q, want succeeded", status)
+	}
+}
+
+func TestPaymentService_CancelPayment(t *testing.T) {
+	// This test verifies that MockProvider.CancelPayment works correctly
+	// (used by request-based booking rejection in Task 9)
+	provider := payment.NewMockProvider()
+	ctx := context.Background()
+
+	result, _ := provider.CreatePayment(ctx, payment.CreatePaymentRequest{
+		Amount:   10000,
+		Currency: "RUB",
+		Method:   "card",
+		Capture:  false,
+	})
+
+	err := provider.CancelPayment(ctx, result.ExternalID)
+	if err != nil {
+		t.Fatalf("cancel failed: %v", err)
+	}
+
+	status, _ := provider.GetPaymentStatus(ctx, result.ExternalID)
+	if status != "canceled" {
+		t.Errorf("status after cancel = %q, want canceled", status)
 	}
 }
