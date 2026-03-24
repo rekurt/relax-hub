@@ -855,7 +855,7 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Create: `migrations/XXXXXX_escrow.up.sql` / `.down.sql`
 
 **Domain model (`internal/domain/escrow.go`):**
-- [ ] Define types:
+- [x] Define types:
   ```go
   type EscrowStatus string
   const (
@@ -877,7 +877,7 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   ```
 
 **Migration:**
-- [ ] CREATE TABLE escrows:
+- [x] CREATE TABLE escrows:
   ```sql
   CREATE TABLE escrows (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -894,7 +894,7 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   ```
 
 **Repository (`internal/repository/interfaces.go`):**
-- [ ] Add `EscrowRepository` interface:
+- [x] Add `EscrowRepository` interface:
   ```go
   type EscrowRepository interface {
       Create(ctx context.Context, escrow *domain.Escrow) error
@@ -906,10 +906,10 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   ```
 
 **Postgres & mock implementations:**
-- [ ] Implement EscrowRepository in postgres and mock
+- [x] Implement EscrowRepository in postgres and mock
 
 **Service (`internal/service/escrow_service.go`):**
-- [ ] Define `EscrowService` interface:
+- [x] Define `EscrowService` interface:
   ```go
   type EscrowService interface {
       CreateEscrow(ctx context.Context, bookingID uuid.UUID, amount int64, serviceFee int64) (*domain.Escrow, error)
@@ -919,36 +919,36 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
       ProcessMaturedEscrows(ctx context.Context) error // cron method
   }
   ```
-- [ ] `CreateEscrow`:
+- [x] `CreateEscrow`:
   - Create escrow with status "held"
   - ClaimPeriodEndsAt = now + BANI_ESCROW_CLAIM_HOURS (default 48h)
   - Config: `BANI_ESCROW_CLAIM_HOURS` (default 48, configurable 24-168)
-- [ ] `ReleaseToOwner`:
+- [x] `ReleaseToOwner`:
   1. Get escrow, verify status == "held" and ClaimPeriodEndsAt < now
   2. Credit owner wallet: `walletSvc.Credit(ctx, ownerID, escrow.Amount - escrow.ServiceFee)`
   3. Credit platform wallet: service fee (or just log it — platform doesn't have a wallet yet)
   4. Update status to "released", set ReleasedAt
-- [ ] `MarkDisputed`: update status to "disputed" (prevents auto-release)
-- [ ] `ProcessRefund`: refund client, update status to "refunded"
-- [ ] `ProcessMaturedEscrows`: query ListMatured(), call ReleaseToOwner for each
+- [x] `MarkDisputed`: update status to "disputed" (prevents auto-release)
+- [x] `ProcessRefund`: refund client, update status to "refunded"
+- [x] `ProcessMaturedEscrows`: query ListMatured(), call ReleaseToOwner for each
 
 **Integrate with check-out (Task 10):**
-- [ ] In `CheckOut` method, after setting status=completed:
+- [x] In `CheckOut` method, after setting status=completed:
   - Get payment for booking to get amount and service fee
   - Call `escrowSvc.CreateEscrow(ctx, bookingID, payment.Amount, booking.ServiceFeeAmount)`
 
 **Cron:**
-- [ ] Hourly job calling `escrowSvc.ProcessMaturedEscrows(ctx)`
-- [ ] Log each release: escrow_id, booking_id, owner_id, amount, service_fee
+- [x] Hourly job calling `escrowSvc.ProcessMaturedEscrows(ctx)`
+- [x] Log each release: escrow_id, booking_id, owner_id, amount, service_fee
 
 **Tests:**
-- [ ] Test CreateEscrow: correct claim period, status=held
-- [ ] Test ReleaseToOwner: after claim period, owner wallet credited with amount-fee
-- [ ] Test ReleaseToOwner before claim period: should be rejected
-- [ ] Test MarkDisputed: prevents release
-- [ ] Test ProcessMaturedEscrows: finds and releases all matured escrows
-- [ ] Test ProcessMaturedEscrows skips disputed escrows
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test CreateEscrow: correct claim period, status=held
+- [x] Test ReleaseToOwner: after claim period, owner wallet credited with amount-fee
+- [x] Test ReleaseToOwner before claim period: should be rejected
+- [x] Test MarkDisputed: prevents release
+- [x] Test ProcessMaturedEscrows: finds and releases all matured escrows
+- [x] Test ProcessMaturedEscrows skips disputed escrows
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 12: Enhanced Refund Logic (FR-106-109)
 

@@ -89,6 +89,7 @@ type bookingService struct {
 	serviceFeeSvc ServiceFeeService
 	walletSvc     WalletService
 	complaintSvc  ComplaintService
+	escrowSvc     EscrowService
 	access        *AccessChecker
 	notifSvc      NotificationService
 	logger        *logger.Logger
@@ -109,6 +110,7 @@ func NewBookingService(
 	serviceFeeSvc ServiceFeeService,
 	walletSvc WalletService,
 	complaintSvc ComplaintService,
+	escrowSvc EscrowService,
 	access *AccessChecker,
 	notifSvc NotificationService,
 	log *logger.Logger,
@@ -128,6 +130,7 @@ func NewBookingService(
 		serviceFeeSvc: serviceFeeSvc,
 		walletSvc:     walletSvc,
 		complaintSvc:  complaintSvc,
+		escrowSvc:     escrowSvc,
 		access:        access,
 		notifSvc:      notifSvc,
 		logger:        log,
@@ -1245,6 +1248,14 @@ func (s *bookingService) CheckOut(ctx context.Context, userID uuid.UUID, role do
 		s.logger.Warn("failed to complete referral on checkout", "booking_id", bookingID, "error", err)
 	} else if referralResult != nil && referralResult.Completed {
 		s.sendReferralBonusNotifications(ctx, referralResult)
+	}
+
+	// Create escrow to hold funds during claim period before releasing to owner
+	if s.escrowSvc != nil {
+		_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, booking.TotalPrice, booking.ServiceFeeAmount)
+		if escrowErr != nil {
+			s.logger.Warn("failed to create escrow on checkout", "booking_id", bookingID, "error", escrowErr)
+		}
 	}
 
 	return nil

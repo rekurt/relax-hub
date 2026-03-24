@@ -293,6 +293,14 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "not_checked_in", err.Error())
 	case errors.Is(err, domain.ErrNoShowDisputeExpired):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "noshow_dispute_expired", err.Error())
+	case errors.Is(err, domain.ErrEscrowNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "escrow_not_found", err.Error())
+	case errors.Is(err, domain.ErrEscrowNotMatured):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "escrow_not_matured", err.Error())
+	case errors.Is(err, domain.ErrEscrowAlreadyReleased):
+		writeErrorWithContext(w, r, http.StatusConflict, "escrow_already_released", err.Error())
+	case errors.Is(err, domain.ErrEscrowDisputed):
+		writeErrorWithContext(w, r, http.StatusConflict, "escrow_disputed", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

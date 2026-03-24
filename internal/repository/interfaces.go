@@ -453,6 +453,14 @@ type HolidayRepository interface {
 	SetBathhouseMultiplier(ctx context.Context, bathhouseID uuid.UUID, multiplier float64) error
 }
 
+type EscrowRepository interface {
+	Create(ctx context.Context, escrow *domain.Escrow) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Escrow, error)
+	GetByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.Escrow, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EscrowStatus, releasedAt *time.Time) error
+	ListMatured(ctx context.Context) ([]domain.Escrow, error) // status=held AND claim_period_ends_at < now
+}
+
 type ServiceFeeRepository interface {
 	GetByRegionAndCategory(ctx context.Context, region string, category *string) (*domain.ServiceFeeConfig, error)
 	GetByRegion(ctx context.Context, region string) (*domain.ServiceFeeConfig, error)

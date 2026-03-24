@@ -115,4 +115,9 @@ var (
 	ErrCheckinTooLate       = errors.New("check-in window has passed")
 	ErrNotCheckedIn         = errors.New("guest has not checked in")
 	ErrNoShowDisputeExpired = errors.New("no-show dispute window has expired")
+
+	ErrEscrowNotFound        = errors.New("escrow not found")
+	ErrEscrowNotMatured      = errors.New("escrow claim period has not ended")
+	ErrEscrowAlreadyReleased = errors.New("escrow already released")
+	ErrEscrowDisputed        = errors.New("escrow is disputed and cannot be released")
 )

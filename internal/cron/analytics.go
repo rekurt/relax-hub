@@ -29,6 +29,7 @@ type CronScheduler struct {
 	sessionSvc         service.SessionService
 	savedSearchSvc     service.SavedSearchService
 	bookingSvc         service.BookingService
+	escrowSvc          service.EscrowService
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -46,6 +47,7 @@ func NewCronScheduler(
 	sessionSvc service.SessionService,
 	savedSearchSvc service.SavedSearchService,
 	bookingSvc service.BookingService,
+	escrowSvc service.EscrowService,
 ) *CronScheduler {
 	return &CronScheduler{
 		c:                  cron.New(),
@@ -62,6 +64,7 @@ func NewCronScheduler(
 		sessionSvc:         sessionSvc,
 		savedSearchSvc:     savedSearchSvc,
 		bookingSvc:         bookingSvc,
+		escrowSvc:          escrowSvc,
 	}
 }
 
@@ -183,6 +186,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register no-show detection: %w", err)
 	}
 	cs.logger.Info("Registered no-show detection job every 15 minutes")
+
+	// Escrow release every hour
+	if _, err := cs.c.AddFunc("30 * * * *", cs.handleEscrowRelease); err != nil {
+		cs.logger.Error("Failed to register escrow release job", "error", err)
+		return fmt.Errorf("failed to register escrow release: %w", err)
+	}
+	cs.logger.Info("Registered escrow release job every hour at :30")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")
