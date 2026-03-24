@@ -175,6 +175,9 @@ func (m *mockWidgetBookingService) ListUpcomingWithBathhouse(_ context.Context, 
 func (m *mockWidgetBookingService) Extend(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ int) (*service.ExtendResult, error) {
 	return nil, nil
 }
+func (m *mockWidgetBookingService) GetRebookData(_ context.Context, _ uuid.UUID, _ uuid.UUID) (*service.RebookData, error) {
+	return nil, nil
+}
 
 func TestWidgetHandler_GetBathhouse(t *testing.T) {
 	apiKey := "test-api-key"

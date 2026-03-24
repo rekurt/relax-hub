@@ -64,6 +64,22 @@ type TimeSlot struct {
 	OriginalPrice int64     `json:"original_price,omitempty"`     // Original price before last-minute discount
 }
 
+// RebookData contains pre-filled booking parameters extracted from a historical booking.
+type RebookData struct {
+	BathhouseID   uuid.UUID     `json:"bathhouse_id"`
+	DurationHours int           `json:"duration_hours"`
+	TimeFrom      string        `json:"time_from"`
+	TimeTo        string        `json:"time_to"`
+	GuestCount    int           `json:"guest_count"`
+	AddOns        []RebookAddOn `json:"addons,omitempty"`
+}
+
+// RebookAddOn represents an add-on from the original booking for re-booking.
+type RebookAddOn struct {
+	AddOnID  uuid.UUID `json:"addon_id"`
+	Quantity int       `json:"quantity"`
+}
+
 // UpcomingBookingInfo contains booking data enriched with bathhouse info for reminders.
 type UpcomingBookingInfo struct {
 	Booking       domain.Booking
@@ -91,6 +107,7 @@ type BookingService interface {
 	DisputeNoShow(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, gpsLat, gpsLon float64, comment string) error
 	ListUpcomingWithBathhouse(ctx context.Context, from, to time.Time) ([]UpcomingBookingInfo, error)
 	Extend(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, extraHours int) (*ExtendResult, error)
+	GetRebookData(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*RebookData, error)
 }
 
 type bookingService struct {
@@ -1520,5 +1537,58 @@ func (s *bookingService) Extend(ctx context.Context, userID uuid.UUID, bookingID
 		ExtensionPrice: extensionPrice,
 		NewEndTime:     newEndTime,
 		NewTotalPrice:  newTotalPrice,
+	}, nil
+}
+
+func (s *bookingService) GetRebookData(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*RebookData, error) {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Only the booking owner can get rebook data
+	if booking.UserID != userID {
+		return nil, domain.ErrForbidden
+	}
+
+	// Only completed or cancelled bookings can be rebooked
+	if booking.Status != domain.BookingCompleted && booking.Status != domain.BookingCancelled {
+		return nil, fmt.Errorf("%w: only completed or cancelled bookings can be rebooked", domain.ErrInvalidInput)
+	}
+
+	// Check that the bathhouse still exists and is active
+	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+	if err != nil {
+		return nil, err
+	}
+	if bh.Status != domain.BathhouseStatusActive {
+		return nil, domain.ErrBathhouseNotActive
+	}
+
+	durationHours := int(booking.EndTime.Sub(booking.StartTime) / time.Hour)
+	timeFrom := booking.StartTime.Format("15:04")
+	timeTo := booking.EndTime.Format("15:04")
+
+	// Fetch add-ons from the original booking
+	bookingAddOns, err := s.addonRepo.ListByBooking(ctx, bookingID)
+	if err != nil {
+		return nil, err
+	}
+
+	var rebookAddOns []RebookAddOn
+	for _, a := range bookingAddOns {
+		rebookAddOns = append(rebookAddOns, RebookAddOn{
+			AddOnID:  a.AddOnID,
+			Quantity: a.Quantity,
+		})
+	}
+
+	return &RebookData{
+		BathhouseID:   booking.BathhouseID,
+		DurationHours: durationHours,
+		TimeFrom:      timeFrom,
+		TimeTo:        timeTo,
+		GuestCount:    booking.GuestCount,
+		AddOns:        rebookAddOns,
 	}, nil
 }

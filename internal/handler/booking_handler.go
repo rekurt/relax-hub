@@ -621,6 +621,65 @@ func (h *BookingHandler) Extend(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
+type rebookAddOnResponse struct {
+	AddOnID  string `json:"addon_id"`
+	Quantity int    `json:"quantity"`
+}
+
+type rebookDataResponse struct {
+	BathhouseID   string                `json:"bathhouse_id"`
+	DurationHours int                   `json:"duration_hours"`
+	TimeFrom      string                `json:"time_from"`
+	TimeTo        string                `json:"time_to"`
+	GuestCount    int                   `json:"guest_count"`
+	AddOns        []rebookAddOnResponse `json:"addons,omitempty"`
+}
+
+// GetRebookData godoc
+// @Summary      Get re-booking data
+// @Description  Returns pre-filled booking parameters from a past booking (completed or cancelled) for quick re-booking. Prices are not included as they are recalculated at booking time.
+// @Tags         bookings
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Booking ID (UUID)"
+// @Success      200  {object}  APIResponse{data=rebookDataResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /bookings/{id}/rebook-data [get]
+func (h *BookingHandler) GetRebookData(w http.ResponseWriter, r *http.Request) {
+	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+
+	data, err := h.bookingService.GetRebookData(r.Context(), userID, bookingID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	resp := rebookDataResponse{
+		BathhouseID:   data.BathhouseID.String(),
+		DurationHours: data.DurationHours,
+		TimeFrom:      data.TimeFrom,
+		TimeTo:        data.TimeTo,
+		GuestCount:    data.GuestCount,
+	}
+	for _, a := range data.AddOns {
+		resp.AddOns = append(resp.AddOns, rebookAddOnResponse{
+			AddOnID:  a.AddOnID.String(),
+			Quantity: a.Quantity,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
 type disputeNoShowRequest struct {
 	GPSLat  float64 `json:"gps_lat"`
 	GPSLon  float64 `json:"gps_lon"`

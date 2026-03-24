@@ -1118,7 +1118,7 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Modify: `internal/handler/booking_handler.go`
 
 **New service method:**
-- [ ] Add to BookingService interface:
+- [x] Add to BookingService interface:
   ```go
   GetRebookData(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*RebookData, error)
   ```
@@ -1138,28 +1138,28 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   ```
 
 **Implementation:**
-- [ ] Get booking, verify:
+- [x] Get booking, verify:
   1. booking.UserID == userID
   2. booking.Status is "completed" or "cancelled" (only rebook from past bookings)
   3. bathhouse exists and is active
-- [ ] Calculate duration: `booking.EndTime.Sub(booking.StartTime) / time.Hour`
-- [ ] Extract time-of-day: `booking.StartTime.Format("15:04")`, `booking.EndTime.Format("15:04")`
-- [ ] Fetch add-ons from `addonRepo.ListByBooking(ctx, bookingID)`
-- [ ] Return data WITHOUT prices (recalculated at booking time with current rates)
+- [x] Calculate duration: `booking.EndTime.Sub(booking.StartTime) / time.Hour`
+- [x] Extract time-of-day: `booking.StartTime.Format("15:04")`, `booking.EndTime.Format("15:04")`
+- [x] Fetch add-ons from `addonRepo.ListByBooking(ctx, bookingID)`
+- [x] Return data WITHOUT prices (recalculated at booking time with current rates)
 
 **Handler:**
-- [ ] `GET /api/v1/bookings/{id}/rebook-data` (RequireAuth, client)
-- [ ] Response: RebookData as JSON
-- [ ] Add swagger annotations
+- [x] `GET /api/v1/bookings/{id}/rebook-data` (RequireAuth, client)
+- [x] Response: RebookData as JSON
+- [x] Add swagger annotations
 
 **Tests:**
-- [ ] Test rebook from completed booking: returns correct data
-- [ ] Test rebook from cancelled booking: returns correct data
-- [ ] Test rebook from pending booking: rejected
-- [ ] Test rebook from other user's booking: forbidden
-- [ ] Test rebook with inactive bathhouse: appropriate error
-- [ ] Test rebook with add-ons: add-on IDs and quantities returned
-- [ ] Run `go test ./... -v` — must pass
+- [x] Test rebook from completed booking: returns correct data
+- [x] Test rebook from cancelled booking: returns correct data
+- [x] Test rebook from pending booking: rejected
+- [x] Test rebook from other user's booking: forbidden
+- [x] Test rebook with inactive bathhouse: appropriate error
+- [x] Test rebook with add-ons: add-on IDs and quantities returned
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 16: Owner Cancellation Penalty & Response Rate (FR-069, FR-079)
 

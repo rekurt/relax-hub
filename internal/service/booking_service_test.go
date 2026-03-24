@@ -3183,3 +3183,212 @@ func TestBookingService_Extend_InvalidExtraHours(t *testing.T) {
 		t.Errorf("expected ErrInvalidInput for 3 hours, got: %v", err)
 	}
 }
+
+// --- GetRebookData tests ---
+
+func newBookingServiceWithAddonRepo() (service.BookingService, *mock.BathhouseRepo, *mock.BookingRepo, *mock.AddOnRepo) {
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	pricingRepo := mock.NewPricingRuleRepo()
+	loyaltyRepo := mock.NewLoyaltyRepo()
+	slotBlockRepo := mock.NewSlotBlockRepo()
+	addonRepo := mock.NewAddOnRepo()
+	access := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, nil, access, log)
+	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
+	addonSvc := service.NewAddOnService(addonRepo, access, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, access, &noopNotifService{}, log)
+	return svc, bhRepo, bookingRepo, addonRepo
+}
+
+func TestGetRebookData_CompletedBooking(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newBookingServiceWithAddonRepo()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	start := time.Date(2026, 3, 20, 10, 0, 0, 0, time.UTC)
+	end := start.Add(3 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 4,
+		TotalPrice: 15000, Status: domain.BookingCompleted,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	data, err := svc.GetRebookData(context.Background(), clientID, booking.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if data.BathhouseID != bh.ID {
+		t.Errorf("BathhouseID = %v, want %v", data.BathhouseID, bh.ID)
+	}
+	if data.DurationHours != 3 {
+		t.Errorf("DurationHours = %d, want 3", data.DurationHours)
+	}
+	if data.TimeFrom != "10:00" {
+		t.Errorf("TimeFrom = %q, want %q", data.TimeFrom, "10:00")
+	}
+	if data.TimeTo != "13:00" {
+		t.Errorf("TimeTo = %q, want %q", data.TimeTo, "13:00")
+	}
+	if data.GuestCount != 4 {
+		t.Errorf("GuestCount = %d, want 4", data.GuestCount)
+	}
+	if len(data.AddOns) != 0 {
+		t.Errorf("AddOns length = %d, want 0", len(data.AddOns))
+	}
+}
+
+func TestGetRebookData_CancelledBooking(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newBookingServiceWithAddonRepo()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	start := time.Date(2026, 3, 20, 14, 0, 0, 0, time.UTC)
+	end := start.Add(2 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingCancelled,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	data, err := svc.GetRebookData(context.Background(), clientID, booking.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if data.DurationHours != 2 {
+		t.Errorf("DurationHours = %d, want 2", data.DurationHours)
+	}
+}
+
+func TestGetRebookData_PendingBooking_Rejected(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newBookingServiceWithAddonRepo()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	start := time.Date(2026, 3, 25, 10, 0, 0, 0, time.UTC)
+	end := start.Add(2 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 3,
+		TotalPrice: 10000, Status: domain.BookingPending,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	_, err := svc.GetRebookData(context.Background(), clientID, booking.ID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput for pending booking, got: %v", err)
+	}
+}
+
+func TestGetRebookData_OtherUserForbidden(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newBookingServiceWithAddonRepo()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	otherUserID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	start := time.Date(2026, 3, 20, 10, 0, 0, 0, time.UTC)
+	end := start.Add(2 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingCompleted,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	_, err := svc.GetRebookData(context.Background(), otherUserID, booking.ID)
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("expected ErrForbidden, got: %v", err)
+	}
+}
+
+func TestGetRebookData_InactiveBathhouse(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newBookingServiceWithAddonRepo()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Inactive Bath",
+		Address: "123 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, BaseCapacity: 10,
+		LongSessionThresholdHours: 4,
+		WorkingHours: wh,
+		Status:       domain.BathhouseStatusInactive,
+	}
+	bhRepo.Create(context.Background(), bh)
+
+	start := time.Date(2026, 3, 20, 10, 0, 0, 0, time.UTC)
+	end := start.Add(2 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 10000, Status: domain.BookingCompleted,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	_, err := svc.GetRebookData(context.Background(), clientID, booking.ID)
+	if !errors.Is(err, domain.ErrBathhouseNotActive) {
+		t.Errorf("expected ErrBathhouseNotActive, got: %v", err)
+	}
+}
+
+func TestGetRebookData_WithAddOns(t *testing.T) {
+	svc, bhRepo, bookingRepo, addonRepo := newBookingServiceWithAddonRepo()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	start := time.Date(2026, 3, 20, 10, 0, 0, 0, time.UTC)
+	end := start.Add(2 * time.Hour)
+
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bh.ID,
+		StartTime: start, EndTime: end, GuestCount: 2,
+		TotalPrice: 15000, Status: domain.BookingCompleted,
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	addonID1 := uuid.New()
+	addonID2 := uuid.New()
+	addonRepo.CreateBookingAddOn(context.Background(), &domain.BookingAddOn{
+		BookingID: booking.ID, AddOnID: addonID1, Name: "Веник", Quantity: 3, UnitPrice: 500, TotalPrice: 1500,
+	})
+	addonRepo.CreateBookingAddOn(context.Background(), &domain.BookingAddOn{
+		BookingID: booking.ID, AddOnID: addonID2, Name: "Полотенце", Quantity: 1, UnitPrice: 200, TotalPrice: 200,
+	})
+
+	data, err := svc.GetRebookData(context.Background(), clientID, booking.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(data.AddOns) != 2 {
+		t.Fatalf("AddOns length = %d, want 2", len(data.AddOns))
+	}
+
+	addonMap := make(map[uuid.UUID]int)
+	for _, a := range data.AddOns {
+		addonMap[a.AddOnID] = a.Quantity
+	}
+	if addonMap[addonID1] != 3 {
+		t.Errorf("addon1 quantity = %d, want 3", addonMap[addonID1])
+	}
+	if addonMap[addonID2] != 1 {
+		t.Errorf("addon2 quantity = %d, want 1", addonMap[addonID2])
+	}
+}
