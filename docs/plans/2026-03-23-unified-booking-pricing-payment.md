@@ -1240,7 +1240,7 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
 - Modify: `internal/service/payment_service.go`
 
 **Interface (`internal/fiscal/fiscal.go`):**
-- [ ] Define:
+- [x] Define:
   ```go
   type ReceiptType string
   const (
@@ -1273,7 +1273,7 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   ```
 
 **ATOL placeholder (`internal/fiscal/atol.go`):**
-- [ ] Implement `ATOLProvider` struct:
+- [x] Implement `ATOLProvider` struct:
   ```go
   type ATOLProvider struct {
       login     string
@@ -1282,16 +1282,16 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
       logger    *logger.Logger
   }
   ```
-- [ ] `CreateReceipt`: log the request, return mock Receipt with generated ID
+- [x] `CreateReceipt`: log the request, return mock Receipt with generated ID
   - `logger.Info("ATOL receipt created (placeholder)", "type", req.Type, "amount", req.Amount)`
   - Return `&Receipt{ID: uuid.New().String(), Status: "pending"}`
-- [ ] Config vars: `BANI_FISCAL_PROVIDER` (default "none"), `BANI_FISCAL_ATOL_LOGIN`, `BANI_FISCAL_ATOL_PASSWORD`, `BANI_FISCAL_ATOL_GROUP_CODE`
+- [x] Config vars: `BANI_FISCAL_PROVIDER` (default "none"), `BANI_FISCAL_ATOL_LOGIN`, `BANI_FISCAL_ATOL_PASSWORD`, `BANI_FISCAL_ATOL_GROUP_CODE`
 
 **No-op provider:**
-- [ ] When `BANI_FISCAL_PROVIDER == "none"`: use no-op provider that does nothing and returns nil
+- [x] When `BANI_FISCAL_PROVIDER == "none"`: use no-op provider that does nothing and returns nil
 
 **fx module (`internal/fiscal/module.go`):**
-- [ ] Register FiscalProvider based on config:
+- [x] Register FiscalProvider based on config:
   ```go
   fx.Module("fiscal",
       fx.Provide(func(cfg *config.Config, log *logger.Logger) FiscalProvider {
@@ -1304,21 +1304,21 @@ combo payments, payment holds, escrow, enhanced refunds, fiscalization).
   ```
 
 **Hook into payment flow (`internal/service/payment_service.go`):**
-- [ ] Inject `fiscalProvider fiscal.FiscalProvider` into paymentService
-- [ ] On successful payment (HandleWebhook, status "succeeded"):
+- [x] Inject `fiscalProvider fiscal.FiscalProvider` into paymentService
+- [x] On successful payment (HandleWebhook, status "succeeded"):
   - Call `fiscalProvider.CreateReceipt(ctx, ReceiptRequest{Type: ReceiptAdvance, Amount: payment.Amount, ...})`
   - Log receipt ID on payment metadata
-- [ ] On refund (RefundPayment):
+- [x] On refund (RefundPayment):
   - Call `fiscalProvider.CreateReceipt(ctx, ReceiptRequest{Type: ReceiptRefund, Amount: refundAmount, ...})`
   - Best-effort: don't fail the refund if receipt creation fails (log error)
 
 **Tests:**
-- [ ] Test ATOLProvider.CreateReceipt: returns receipt with ID
-- [ ] Test NoOpProvider.CreateReceipt: returns nil, no error
-- [ ] Test payment webhook triggers receipt creation
-- [ ] Test refund triggers refund receipt creation
-- [ ] Test receipt failure doesn't block payment/refund flow
-- [ ] Run `go test ./... -v -race` — must pass
+- [x] Test ATOLProvider.CreateReceipt: returns receipt with ID
+- [x] Test NoOpProvider.CreateReceipt: returns nil, no error
+- [x] Test payment webhook triggers receipt creation
+- [x] Test refund triggers refund receipt creation
+- [x] Test receipt failure doesn't block payment/refund flow
+- [x] Run `go test ./... -v -race` — must pass
 
 ### Task 18: Verify acceptance criteria
 

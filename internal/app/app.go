@@ -5,6 +5,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/admin"
 	"github.com/nikitaaldaev/bani/internal/calendar"
 	"github.com/nikitaaldaev/bani/internal/cron"
+	"github.com/nikitaaldaev/bani/internal/fiscal"
 	"github.com/nikitaaldaev/bani/internal/database"
 	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/logger"
@@ -32,6 +33,7 @@ func New(cfg *config.Config) *fx.App {
 		moderation.Module,
 		notification.Module,
 		payment.Module,
+		fiscal.Module,
 		sms.Module,
 		service.Module,
 		handler.Module,

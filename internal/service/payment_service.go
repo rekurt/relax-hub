@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/fiscal"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/payment"
 	"github.com/nikitaaldaev/bani/internal/repository"
@@ -51,6 +52,7 @@ type paymentService struct {
 	bookingRepo             repository.BookingRepository
 	auditLogRepo            repository.AuditLogRepository
 	provider                payment.PaymentProvider
+	fiscalProvider          fiscal.FiscalProvider
 	walletSvc               WalletService
 	notifSvc                NotificationService
 	returnURL               string
@@ -63,6 +65,7 @@ func NewPaymentService(
 	bookingRepo repository.BookingRepository,
 	auditLogRepo repository.AuditLogRepository,
 	provider payment.PaymentProvider,
+	fiscalProvider fiscal.FiscalProvider,
 	walletSvc WalletService,
 	notifSvc NotificationService,
 	returnURL string,
@@ -73,6 +76,7 @@ func NewPaymentService(
 		bookingRepo:              bookingRepo,
 		auditLogRepo:             auditLogRepo,
 		provider:                 provider,
+		fiscalProvider:           fiscalProvider,
 		walletSvc:                walletSvc,
 		notifSvc:                 notifSvc,
 		returnURL:                returnURL,
@@ -575,6 +579,8 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 		}
 		// Send notification about successful payment and booking confirmation
 		s.sendPaymentConfirmationNotification(ctx, booking)
+		// Create fiscal receipt (best-effort)
+		s.createFiscalReceipt(ctx, p, fiscal.ReceiptAdvance)
 	case "canceled":
 		if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentFailed, event.ExternalID); err != nil {
 			return err
@@ -638,17 +644,29 @@ func (s *paymentService) executeRefund(ctx context.Context, p *domain.Payment, u
 
 	// For combo payments, split refund proportionally
 	if p.WalletAmount > 0 && p.CardAmount > 0 {
-		return s.executeComboRefund(ctx, p, userID, refundAmount, refundStatus, refundTo)
+		if err := s.executeComboRefund(ctx, p, userID, refundAmount, refundStatus, refundTo); err != nil {
+			return err
+		}
+		s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund)
+		return nil
 	}
 
 	// Pure wallet payment — always refund to wallet
 	if p.PaymentMethod == domain.PaymentMethodWallet {
-		return s.refundToWallet(ctx, p, userID, refundAmount, refundStatus)
+		if err := s.refundToWallet(ctx, p, userID, refundAmount, refundStatus); err != nil {
+			return err
+		}
+		s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund)
+		return nil
 	}
 
 	// Pure card/SBP payment
 	if refundTo == "wallet" {
-		return s.refundToWallet(ctx, p, userID, refundAmount, refundStatus)
+		if err := s.refundToWallet(ctx, p, userID, refundAmount, refundStatus); err != nil {
+			return err
+		}
+		s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund)
+		return nil
 	}
 
 	// Default: refund to card
@@ -659,7 +677,11 @@ func (s *paymentService) executeRefund(ctx context.Context, p *domain.Payment, u
 	}
 
 	now := time.Now()
-	return s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now, refundStatus)
+	if err := s.paymentRepo.UpdateRefund(ctx, p.ID, refundAmount, now, refundStatus); err != nil {
+		return err
+	}
+	s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund)
+	return nil
 }
 
 func (s *paymentService) refundToWallet(ctx context.Context, p *domain.Payment, userID uuid.UUID, refundAmount int64, refundStatus domain.PaymentStatus) error {
@@ -797,6 +819,34 @@ func (s *paymentService) GetPaymentByBooking(ctx context.Context, userID uuid.UU
 
 func (s *paymentService) ListUserPayments(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error) {
 	return s.paymentRepo.ListByUser(ctx, userID, page, pageSize)
+}
+
+func (s *paymentService) createFiscalReceipt(ctx context.Context, p *domain.Payment, receiptType fiscal.ReceiptType) {
+	if s.fiscalProvider == nil {
+		return
+	}
+	req := fiscal.ReceiptRequest{
+		Type:   receiptType,
+		Amount: p.Amount,
+		Items: []fiscal.ReceiptItem{
+			{
+				Name:     fmt.Sprintf("Бронирование %s", p.BookingID.String()[:8]),
+				Quantity: 1,
+				Price:    p.Amount,
+				VAT:      "none",
+			},
+		},
+	}
+	receipt, err := s.fiscalProvider.CreateReceipt(ctx, req)
+	if err != nil {
+		s.logger.Error("failed to create fiscal receipt",
+			"payment_id", p.ID, "receipt_type", string(receiptType), "error", err)
+		return
+	}
+	if receipt != nil {
+		s.logger.Info("fiscal receipt created",
+			"payment_id", p.ID, "receipt_id", receipt.ID, "receipt_type", string(receiptType))
+	}
 }
 
 func (s *paymentService) sendPaymentConfirmationNotification(ctx context.Context, booking *domain.Booking) {

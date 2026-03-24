@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/nikitaaldaev/bani/config"
+	"github.com/nikitaaldaev/bani/internal/fiscal"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/notification"
@@ -55,8 +56,8 @@ var Module = fx.Module("service",
 			fx.As(new(middleware.SessionValidator)),
 		),
 		fx.Annotate(
-			func(paymentRepo repository.PaymentRepository, bookingRepo repository.BookingRepository, auditLogRepo repository.AuditLogRepository, provider payment.PaymentProvider, walletSvc WalletService, notifSvc NotificationService, cfg *config.Config, log *logger.Logger) PaymentService {
-				return NewPaymentService(paymentRepo, bookingRepo, auditLogRepo, provider, walletSvc, notifSvc, cfg.Payment.ReturnURL, log)
+			func(paymentRepo repository.PaymentRepository, bookingRepo repository.BookingRepository, auditLogRepo repository.AuditLogRepository, provider payment.PaymentProvider, fiscalProvider fiscal.FiscalProvider, walletSvc WalletService, notifSvc NotificationService, cfg *config.Config, log *logger.Logger) PaymentService {
+				return NewPaymentService(paymentRepo, bookingRepo, auditLogRepo, provider, fiscalProvider, walletSvc, notifSvc, cfg.Payment.ReturnURL, log)
 			},
 			fx.As(new(PaymentService)),
 		),

@@ -28,6 +28,14 @@ type Config struct {
 	WebPush      WebPushConfig      `mapstructure:"webpush"`
 	SMS          SMSConfig          `mapstructure:"sms"`
 	WelcomeBonus WelcomeBonusConfig `mapstructure:"welcome_bonus"`
+	Fiscal       FiscalConfig       `mapstructure:"fiscal"`
+}
+
+type FiscalConfig struct {
+	Provider      string `mapstructure:"provider"`       // "none" or "atol"
+	ATOLLogin     string `mapstructure:"atol_login"`
+	ATOLPassword  string `mapstructure:"atol_password"`
+	ATOLGroupCode string `mapstructure:"atol_group_code"`
 }
 
 type SMSConfig struct {
@@ -181,6 +189,10 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("sms.api_key", "")
 	v.SetDefault("welcome_bonus.amount", 50000)      // 500 RUB in kopecks
 	v.SetDefault("welcome_bonus.expiry_days", 30)
+	v.SetDefault("fiscal.provider", "none")
+	v.SetDefault("fiscal.atol_login", "")
+	v.SetDefault("fiscal.atol_password", "")
+	v.SetDefault("fiscal.atol_group_code", "")
 	v.SetDefault("frontend_url", "http://localhost:3000")
 
 	if err := v.ReadInConfig(); err != nil {

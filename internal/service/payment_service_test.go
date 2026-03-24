@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/fiscal"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/payment"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
@@ -52,7 +53,7 @@ func newPaymentService() (service.PaymentService, *mock.PaymentRepo, *mock.Booki
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fiscal.NewNoOpProvider(), &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 
@@ -61,7 +62,7 @@ func newPaymentServiceWithWallet(walletSvc *testWalletService) (service.PaymentS
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 
@@ -83,6 +84,29 @@ func createTestBooking(t *testing.T, bookingRepo *mock.BookingRepo, userID, bath
 		t.Fatal(err)
 	}
 	return booking
+}
+
+// mockFiscalProvider records calls for testing fiscal integration.
+type mockFiscalProvider struct {
+	receipts []fiscal.ReceiptRequest
+	err      error
+}
+
+func (m *mockFiscalProvider) CreateReceipt(_ context.Context, req fiscal.ReceiptRequest) (*fiscal.Receipt, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	m.receipts = append(m.receipts, req)
+	return &fiscal.Receipt{ID: "test-receipt-id", Status: "pending"}, nil
+}
+
+func newPaymentServiceWithFiscal(fp fiscal.FiscalProvider) (service.PaymentService, *mock.PaymentRepo, *mock.BookingRepo, *payment.MockProvider) {
+	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
+	bookingRepo := mock.NewBookingRepo()
+	provider := payment.NewMockProvider()
+	log := logger.New(logger.LevelWarn)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fp, &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", log)
+	return svc, paymentRepo, bookingRepo, provider
 }
 
 func TestPaymentService_InitiatePayment_Success(t *testing.T) {
@@ -686,7 +710,7 @@ func TestPaymentService_ComboPayment_CardFailure_WalletRefunded(t *testing.T) {
 	failProvider := &failingMockProvider{}
 	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
 	log := logger.New(logger.LevelWarn)
-	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
+	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
 
 	walletPortion := int64(5000)
 	cardPortion := booking.TotalPrice - walletPortion
@@ -914,7 +938,7 @@ func TestPaymentService_ComboHold_CardFailure_WalletHoldReleased(t *testing.T) {
 	failProvider := &failingMockProvider{}
 	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
 	log := logger.New(logger.LevelWarn)
-	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
+	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", log)
 
 	walletPortion := int64(5000)
 	cardPortion := booking.TotalPrice - walletPortion
@@ -1234,5 +1258,138 @@ func TestPaymentService_RefundPayment_NoRefundTier_IgnoresRefundTo(t *testing.T)
 	updated2, _ := paymentRepo.GetByID(context.Background(), p.ID)
 	if updated2.RefundAmount != 0 {
 		t.Errorf("refund amount = %d, want 0 (no refund within 2h)", updated2.RefundAmount)
+	}
+}
+
+func TestPaymentService_Webhook_TriggersFiscalReceipt(t *testing.T) {
+	fp := &mockFiscalProvider{}
+	svc, paymentRepo, bookingRepo, provider := newPaymentServiceWithFiscal(fp)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	if err != nil {
+		t.Fatalf("initiate failed: %v", err)
+	}
+
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+
+	err = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+	if err != nil {
+		t.Fatalf("webhook failed: %v", err)
+	}
+
+	if len(fp.receipts) != 1 {
+		t.Fatalf("expected 1 fiscal receipt, got %d", len(fp.receipts))
+	}
+	if fp.receipts[0].Type != fiscal.ReceiptAdvance {
+		t.Errorf("expected receipt type %q, got %q", fiscal.ReceiptAdvance, fp.receipts[0].Type)
+	}
+	if fp.receipts[0].Amount != booking.TotalPrice {
+		t.Errorf("expected receipt amount %d, got %d", booking.TotalPrice, fp.receipts[0].Amount)
+	}
+}
+
+func TestPaymentService_Refund_TriggersFiscalReceipt(t *testing.T) {
+	fp := &mockFiscalProvider{}
+	svc, paymentRepo, bookingRepo, provider := newPaymentServiceWithFiscal(fp)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	if err != nil {
+		t.Fatalf("initiate failed: %v", err)
+	}
+
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+
+	err = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+	if err != nil {
+		t.Fatalf("webhook failed: %v", err)
+	}
+
+	// Reset receipts to only track refund receipt
+	fp.receipts = nil
+
+	err = svc.RefundPayment(context.Background(), booking.ID, true, "card")
+	if err != nil {
+		t.Fatalf("refund failed: %v", err)
+	}
+
+	if len(fp.receipts) != 1 {
+		t.Fatalf("expected 1 fiscal receipt for refund, got %d", len(fp.receipts))
+	}
+	if fp.receipts[0].Type != fiscal.ReceiptRefund {
+		t.Errorf("expected receipt type %q, got %q", fiscal.ReceiptRefund, fp.receipts[0].Type)
+	}
+}
+
+func TestPaymentService_FiscalFailure_DoesNotBlockPayment(t *testing.T) {
+	fp := &mockFiscalProvider{err: errors.New("ATOL service unavailable")}
+	svc, paymentRepo, bookingRepo, provider := newPaymentServiceWithFiscal(fp)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	if err != nil {
+		t.Fatalf("initiate failed: %v", err)
+	}
+
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+
+	// Webhook should succeed even if fiscal receipt creation fails
+	err = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+	if err != nil {
+		t.Fatalf("webhook should not fail due to fiscal error, got: %v", err)
+	}
+
+	// Verify booking was still confirmed
+	updatedBooking, _ := bookingRepo.GetByID(context.Background(), booking.ID)
+	if updatedBooking.Status != domain.BookingConfirmed {
+		t.Errorf("expected booking to be confirmed, got %s", updatedBooking.Status)
+	}
+}
+
+func TestPaymentService_FiscalFailure_DoesNotBlockRefund(t *testing.T) {
+	// Start with working fiscal, then break it for refund
+	fp := &mockFiscalProvider{}
+	svc, paymentRepo, bookingRepo, provider := newPaymentServiceWithFiscal(fp)
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+
+	// Now make fiscal fail
+	fp.err = errors.New("ATOL timeout")
+	fp.receipts = nil
+
+	// Refund should still succeed
+	err := svc.RefundPayment(context.Background(), booking.ID, true, "card")
+	if err != nil {
+		t.Fatalf("refund should not fail due to fiscal error, got: %v", err)
+	}
+
+	// Verify refund was recorded
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.Status != domain.PaymentRefunded {
+		t.Errorf("expected payment status refunded, got %s", updated.Status)
 	}
 }
