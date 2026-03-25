@@ -12,6 +12,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/repository"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.uber.org/fx"
 )
@@ -74,6 +75,7 @@ type RouterParams struct {
 	TicketHandler            *handler.TicketHandler
 	DisputeHandler           *handler.DisputeHandler
 	AntiFraudHandler         *handler.AntiFraudHandler
+	AuditLogRepo             repository.AuditLogRepository
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
@@ -470,6 +472,7 @@ func NewRouter(p RouterParams) http.Handler {
 		r.Route("/admin", func(r chi.Router) {
 			r.Use(auth)
 			r.Use(middleware.RequireRole(domain.RoleAdmin))
+			r.Use(middleware.AdminAudit(p.AuditLogRepo, p.Log))
 
 			r.Get("/users", p.AdminHandler.ListUsers)
 			r.Patch("/users/{id}/block", p.AdminHandler.BlockUser)
@@ -513,6 +516,7 @@ func NewRouter(p RouterParams) http.Handler {
 
 			// Audit log (admin only)
 			r.Get("/audit-log", p.AuditLogHandler.ListAdmin)
+			r.Get("/audit-log/actions", p.AuditLogHandler.ListAdminActions)
 
 			// Promo codes (admin only)
 			r.Post("/promo-codes", p.PromoHandler.CreateGlobal)

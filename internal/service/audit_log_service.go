@@ -15,6 +15,7 @@ type AuditLogService interface {
 	LogChange(ctx context.Context, entityType string, entityID, userID uuid.UUID, action domain.AuditAction, changedFields map[string]interface{}) error
 	GetHistory(ctx context.Context, entityType string, entityID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.AuditLog], error)
 	ListAll(ctx context.Context, filter domain.AuditLogFilter) (*domain.PaginatedResult[domain.AuditLog], error)
+	ListAdminActions(ctx context.Context, filter domain.AuditLogFilter) (*domain.PaginatedResult[domain.AuditLog], error)
 	IsSubstantialChange(old, new *domain.Bathhouse) bool
 }
 
@@ -61,6 +62,14 @@ func (s *auditLogService) GetHistory(ctx context.Context, entityType string, ent
 }
 
 func (s *auditLogService) ListAll(ctx context.Context, filter domain.AuditLogFilter) (*domain.PaginatedResult[domain.AuditLog], error) {
+	return s.repo.List(ctx, filter)
+}
+
+// ListAdminActions returns audit log entries filtered to admin_action entity type.
+// The filter.UserID is treated as admin_id for convenience.
+func (s *auditLogService) ListAdminActions(ctx context.Context, filter domain.AuditLogFilter) (*domain.PaginatedResult[domain.AuditLog], error) {
+	entityType := "admin_action"
+	filter.EntityType = &entityType
 	return s.repo.List(ctx, filter)
 }
 

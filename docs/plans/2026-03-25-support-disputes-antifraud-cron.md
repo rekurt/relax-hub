@@ -133,13 +133,13 @@ Combined implementation plan covering: support ticket system with escalation and
 - Modify: `internal/service/audit_log_service.go`
 - Modify: `internal/server/router.go`
 
-- [ ] AdminAuditMiddleware: intercept POST/PUT/PATCH/DELETE on admin routes, log admin UserID, method, path, target entity, timestamp, IP, redacted request body
-- [ ] Store as AuditLog entries with EntityType="admin_action"
-- [ ] Modify AuditLogService: ListAdminActions with filters (admin_id, action, entity_type, date range)
-- [ ] GET /api/v1/admin/audit-log with admin action filters
-- [ ] Sensitive data redaction: strip passwords, tokens, bank details; keep IDs, statuses, amounts, reasons
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] AdminAuditMiddleware: intercept POST/PUT/PATCH/DELETE on admin routes, log admin UserID, method, path, target entity, timestamp, IP, redacted request body
+- [x] Store as AuditLog entries with EntityType="admin_action"
+- [x] Modify AuditLogService: ListAdminActions with filters (admin_id, action, entity_type, date range)
+- [x] GET /api/v1/admin/audit-log with admin action filters
+- [x] Sensitive data redaction: strip passwords, tokens, bank details; keep IDs, statuses, amounts, reasons
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 8: Cron Scheduler Infrastructure
 

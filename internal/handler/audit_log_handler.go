@@ -44,6 +44,20 @@ func toAuditLogResponse(a *domain.AuditLog) auditLogResponse {
 	}
 }
 
+func writeAuditLogList(w http.ResponseWriter, result *domain.PaginatedResult[domain.AuditLog]) {
+	items := make([]auditLogResponse, len(result.Items))
+	for i := range result.Items {
+		items[i] = toAuditLogResponse(&result.Items[i])
+	}
+
+	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
+		Page:       result.Page,
+		PageSize:   result.PageSize,
+		TotalCount: result.TotalCount,
+		TotalPages: result.TotalPages,
+	})
+}
+
 // ListAdmin godoc
 // @Summary      List audit logs
 // @Description  Returns a paginated list of all audit log entries. Admin only. Supports filtering by entity_type, entity_id, user_id, action, and date range.
@@ -123,17 +137,76 @@ func (h *AuditLogHandler) ListAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	items := make([]auditLogResponse, len(result.Items))
-	for i := range result.Items {
-		items[i] = toAuditLogResponse(&result.Items[i])
+	writeAuditLogList(w, result)
+}
+
+// ListAdminActions godoc
+// @Summary      List admin action audit logs
+// @Description  Returns a paginated list of admin action audit entries (POST/PUT/PATCH/DELETE on admin routes). Supports filtering by admin_id, action, and date range.
+// @Tags         admin-audit
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page         query     int     false  "Page number"                          default(1)
+// @Param        page_size    query     int     false  "Page size"                            default(20)
+// @Param        admin_id     query     string  false  "Filter by admin user ID (UUID)"
+// @Param        action       query     string  false  "Filter by action (create, update, delete)"
+// @Param        from_date    query     string  false  "Filter from date (RFC3339)"
+// @Param        to_date      query     string  false  "Filter to date (RFC3339)"
+// @Success      200          {object}  APIResponse{data=[]auditLogResponse,meta=Meta}
+// @Failure      400          {object}  APIResponse{error=APIError}
+// @Failure      401          {object}  APIResponse{error=APIError}
+// @Failure      403          {object}  APIResponse{error=APIError}
+// @Router       /admin/audit-log/actions [get]
+func (h *AuditLogHandler) ListAdminActions(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	page := getPage(q.Get("page"))
+	pageSize := getPageSize(q.Get("page_size"), 20)
+
+	filter := domain.AuditLogFilter{
+		Page:     page,
+		PageSize: pageSize,
 	}
 
-	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
-		Page:       result.Page,
-		PageSize:   result.PageSize,
-		TotalCount: result.TotalCount,
-		TotalPages: result.TotalPages,
-	})
+	if v := q.Get("admin_id"); v != "" {
+		id, err := uuid.Parse(v)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid admin_id")
+			return
+		}
+		filter.UserID = &id
+	}
+	if v := q.Get("action"); v != "" {
+		action := domain.AuditAction(v)
+		if !action.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid action filter")
+			return
+		}
+		filter.Action = &action
+	}
+	if v := q.Get("from_date"); v != "" {
+		t, err := time.Parse(time.RFC3339, v)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid from_date, expected RFC3339 format")
+			return
+		}
+		filter.FromDate = &t
+	}
+	if v := q.Get("to_date"); v != "" {
+		t, err := time.Parse(time.RFC3339, v)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid to_date, expected RFC3339 format")
+			return
+		}
+		filter.ToDate = &t
+	}
+
+	result, err := h.auditSvc.ListAdminActions(r.Context(), filter)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeAuditLogList(w, result)
 }
 
 // ListByBathhouse godoc
@@ -175,15 +248,5 @@ func (h *AuditLogHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	items := make([]auditLogResponse, len(result.Items))
-	for i := range result.Items {
-		items[i] = toAuditLogResponse(&result.Items[i])
-	}
-
-	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
-		Page:       result.Page,
-		PageSize:   result.PageSize,
-		TotalCount: result.TotalCount,
-		TotalPages: result.TotalPages,
-	})
+	writeAuditLogList(w, result)
 }
