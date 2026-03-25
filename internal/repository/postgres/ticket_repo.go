@@ -327,9 +327,17 @@ func (r *ticketRepo) CountByStatus(ctx context.Context) (*domain.TicketStatusCou
 }
 
 func (r *ticketRepo) ListStaleTickets(ctx context.Context, level domain.TicketLevel, olderThan time.Time) ([]domain.Ticket, error) {
-	query := fmt.Sprintf(`SELECT %s FROM support_tickets
-		WHERE level = $1 AND status IN ('open', 'in_progress', 'escalated') AND updated_at < $2
-		ORDER BY created_at ASC`, ticketColumns)
+	// Use the last admin/support response time (from ticket_messages) for staleness check
+	// instead of updated_at, which is reset by any message including user messages.
+	// This ensures user follow-ups ("any update?") don't prevent SLA-based escalation.
+	query := fmt.Sprintf(`SELECT %s FROM support_tickets t
+		WHERE t.level = $1 AND t.status IN ('open', 'in_progress', 'escalated')
+		AND COALESCE(
+			(SELECT MAX(tm.created_at) FROM ticket_messages tm
+			 WHERE tm.ticket_id = t.id AND tm.sender_type IN ('admin', 'support')),
+			t.created_at
+		) < $2
+		ORDER BY t.created_at ASC`, prefixColumns("t", ticketColumns))
 
 	rows, err := r.pool.Query(ctx, query, level, olderThan)
 	if err != nil {
