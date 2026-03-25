@@ -68,13 +68,13 @@ Combined implementation plan covering: support ticket system with escalation and
 - Modify: `internal/repository/interfaces.go`
 - Create: `migrations/XXXXXX_disputes.up.sql`
 
-- [ ] Dispute model: ID, BookingID, InitiatorID, RespondentID, Reason(service_not_provided/poor_quality/damage/safety_issue/billing_error/other), Description, Status(open/evidence_collection/under_review/resolved/appealed/closed), Resolution(*full_refund/partial_refund/no_refund/compensation), RefundAmount, CompensationAmount, MediatorID, MediatorNotes, CreatedAt, ResolvedAt, AppealDeadline
-- [ ] DisputeEvidence model: ID, DisputeID, UserID, Type(photo/screenshot/gps/message/receipt), URL, Description, CreatedAt
-- [ ] Migration: disputes, dispute_evidence tables with indexes
-- [ ] DisputeRepository: Create, GetByID, GetByBookingID, UpdateStatus, AddEvidence, ListEvidence, ListAll
-- [ ] Mock repository
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] Dispute model: ID, BookingID, InitiatorID, RespondentID, Reason(service_not_provided/poor_quality/damage/safety_issue/billing_error/other), Description, Status(open/evidence_collection/under_review/resolved/appealed/closed), Resolution(*full_refund/partial_refund/no_refund/compensation), RefundAmount, CompensationAmount, MediatorID, MediatorNotes, CreatedAt, ResolvedAt, AppealDeadline
+- [x] DisputeEvidence model: ID, DisputeID, UserID, Type(photo/screenshot/gps/message/receipt), URL, Description, CreatedAt
+- [x] Migration: disputes, dispute_evidence tables with indexes
+- [x] DisputeRepository: Create, GetByID, GetByBookingID, UpdateStatus, AddEvidence, ListEvidence, ListAll
+- [x] Mock repository
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 4: Disputes — Service & Handler
 
