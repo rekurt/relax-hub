@@ -483,3 +483,31 @@ func (h *DisputeHandler) AdminResolveDispute(w http.ResponseWriter, r *http.Requ
 
 	writeJSON(w, http.StatusOK, simpleMessageResponse{Message: "dispute resolved"})
 }
+
+// AdminCloseDispute godoc
+// @Summary      Close a dispute
+// @Description  Close a dispute (after resolution or appeal)
+// @Tags         disputes-admin
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Dispute ID (UUID)"
+// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Failure      409  {object}  APIResponse{error=APIError}
+// @Router       /admin/disputes/{id}/close [patch]
+func (h *DisputeHandler) AdminCloseDispute(w http.ResponseWriter, r *http.Request) {
+	disputeID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_id", "invalid dispute ID")
+		return
+	}
+
+	if err := h.disputeService.CloseDispute(r.Context(), disputeID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, simpleMessageResponse{Message: "dispute closed"})
+}

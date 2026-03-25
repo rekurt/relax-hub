@@ -260,7 +260,8 @@ func (s *guestCardService) GetGuestsInSegment(ctx context.Context, userID uuid.U
 // setCRMOwnerFilter sets the appropriate owner/bathhouse filter based on the user's role.
 // For owners: filter by owner_id. For representatives: filter by their managed bathhouse IDs.
 func (s *guestCardService) setCRMOwnerFilter(ctx context.Context, userID uuid.UUID, role domain.UserRole, filter *domain.GuestCardFilter) error {
-	if role == domain.RoleRepresentative {
+	switch role {
+	case domain.RoleRepresentative:
 		bhIDs, err := s.access.GetManagedBathhouseIDs(ctx, userID)
 		if err != nil {
 			return fmt.Errorf("get managed bathhouses: %w", err)
@@ -269,7 +270,9 @@ func (s *guestCardService) setCRMOwnerFilter(ctx context.Context, userID uuid.UU
 			return domain.ErrForbidden
 		}
 		filter.BathhouseIDs = bhIDs
-	} else {
+	case domain.RoleAdmin:
+		// Admin can see all guest cards — no owner filter applied
+	default:
 		filter.OwnerID = userID
 	}
 	return nil

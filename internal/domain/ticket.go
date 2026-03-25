@@ -135,12 +135,13 @@ func AutoPriority(category TicketCategory) TicketPriority {
 }
 
 type TicketMessage struct {
-	ID         uuid.UUID
-	TicketID   uuid.UUID
-	SenderID   uuid.UUID
-	SenderType TicketSenderType
-	Body       string
-	CreatedAt  time.Time
+	ID          uuid.UUID
+	TicketID    uuid.UUID
+	SenderID    uuid.UUID
+	SenderType  TicketSenderType
+	Body        string
+	Attachments []string
+	CreatedAt   time.Time
 }
 
 func (m *TicketMessage) Validate() error {

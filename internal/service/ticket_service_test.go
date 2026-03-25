@@ -182,7 +182,7 @@ func TestTicketService_AddMessage(t *testing.T) {
 	_ = svc.CreateTicket(ctx, userID, ticket, "Initial")
 
 	// User adds message
-	msg, err := svc.AddMessage(ctx, userID, domain.RoleClient, ticket.ID, "Follow up")
+	msg, err := svc.AddMessage(ctx, userID, domain.RoleClient, ticket.ID, "Follow up", nil)
 	if err != nil {
 		t.Fatalf("AddMessage: %v", err)
 	}
@@ -192,7 +192,7 @@ func TestTicketService_AddMessage(t *testing.T) {
 
 	// Admin adds message
 	adminID := uuid.New()
-	msg, err = svc.AddMessage(ctx, adminID, domain.RoleAdmin, ticket.ID, "Admin response")
+	msg, err = svc.AddMessage(ctx, adminID, domain.RoleAdmin, ticket.ID, "Admin response", nil)
 	if err != nil {
 		t.Fatalf("AddMessage admin: %v", err)
 	}
@@ -220,7 +220,7 @@ func TestTicketService_AddMessage_Forbidden(t *testing.T) {
 	_ = svc.CreateTicket(ctx, userID, ticket, "")
 
 	// Other non-admin user cannot add message
-	_, err := svc.AddMessage(ctx, uuid.New(), domain.RoleClient, ticket.ID, "Hijack")
+	_, err := svc.AddMessage(ctx, uuid.New(), domain.RoleClient, ticket.ID, "Hijack", nil)
 	if !errors.Is(err, domain.ErrForbidden) {
 		t.Errorf("expected ErrForbidden, got %v", err)
 	}
@@ -239,7 +239,7 @@ func TestTicketService_AddMessage_ClosedTicket(t *testing.T) {
 	_ = svc.CreateTicket(ctx, userID, ticket, "")
 	_ = svc.CloseTicket(ctx, ticket.ID)
 
-	_, err := svc.AddMessage(ctx, userID, domain.RoleClient, ticket.ID, "After close")
+	_, err := svc.AddMessage(ctx, userID, domain.RoleClient, ticket.ID, "After close", nil)
 	if !errors.Is(err, domain.ErrTicketAlreadyClosed) {
 		t.Errorf("expected ErrTicketAlreadyClosed, got %v", err)
 	}
@@ -646,9 +646,9 @@ func TestTicketService_ListMessages(t *testing.T) {
 	_ = svc.CreateTicket(ctx, userID, ticket, "Initial msg")
 
 	// Add a few more messages
-	_, _ = svc.AddMessage(ctx, userID, domain.RoleClient, ticket.ID, "Second msg")
+	_, _ = svc.AddMessage(ctx, userID, domain.RoleClient, ticket.ID, "Second msg", nil)
 	adminID := uuid.New()
-	_, _ = svc.AddMessage(ctx, adminID, domain.RoleAdmin, ticket.ID, "Admin reply")
+	_, _ = svc.AddMessage(ctx, adminID, domain.RoleAdmin, ticket.ID, "Admin reply", nil)
 
 	// User can list their messages
 	msgs, err := svc.ListMessages(ctx, userID, domain.RoleClient, ticket.ID)

@@ -16,7 +16,7 @@ type TicketService interface {
 	GetTicket(ctx context.Context, userID uuid.UUID, role domain.UserRole, ticketID uuid.UUID) (*domain.Ticket, error)
 	ListUserTickets(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Ticket], error)
 	ListAllTickets(ctx context.Context, filter domain.TicketFilter) (*domain.PaginatedResult[domain.Ticket], error)
-	AddMessage(ctx context.Context, userID uuid.UUID, role domain.UserRole, ticketID uuid.UUID, body string) (*domain.TicketMessage, error)
+	AddMessage(ctx context.Context, userID uuid.UUID, role domain.UserRole, ticketID uuid.UUID, body string, attachments []string) (*domain.TicketMessage, error)
 	ListMessages(ctx context.Context, userID uuid.UUID, role domain.UserRole, ticketID uuid.UUID) ([]domain.TicketMessage, error)
 	AssignTicket(ctx context.Context, ticketID uuid.UUID, assignedTo uuid.UUID) error
 	EscalateTicket(ctx context.Context, ticketID uuid.UUID) error
@@ -101,7 +101,7 @@ func (s *ticketService) ListAllTickets(ctx context.Context, filter domain.Ticket
 	return s.ticketRepo.ListAll(ctx, filter)
 }
 
-func (s *ticketService) AddMessage(ctx context.Context, userID uuid.UUID, role domain.UserRole, ticketID uuid.UUID, body string) (*domain.TicketMessage, error) {
+func (s *ticketService) AddMessage(ctx context.Context, userID uuid.UUID, role domain.UserRole, ticketID uuid.UUID, body string, attachments []string) (*domain.TicketMessage, error) {
 	ticket, err := s.ticketRepo.GetByID(ctx, ticketID)
 	if err != nil {
 		return nil, err
@@ -122,11 +122,12 @@ func (s *ticketService) AddMessage(ctx context.Context, userID uuid.UUID, role d
 	}
 
 	msg := &domain.TicketMessage{
-		ID:         uuid.New(),
-		TicketID:   ticketID,
-		SenderID:   userID,
-		SenderType: senderType,
-		Body:       body,
+		ID:          uuid.New(),
+		TicketID:    ticketID,
+		SenderID:    userID,
+		SenderType:  senderType,
+		Body:        body,
+		Attachments: attachments,
 	}
 
 	if err := msg.Validate(); err != nil {

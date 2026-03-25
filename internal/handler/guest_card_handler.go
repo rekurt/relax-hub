@@ -123,7 +123,7 @@ func (h *GuestCardHandler) ListGuests(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
-	if pageSize < 1 {
+	if pageSize < 1 || pageSize > 50 {
 		pageSize = 20
 	}
 	filter.Page = page
@@ -303,7 +303,7 @@ func (h *GuestCardHandler) GetGuestsInSegment(w http.ResponseWriter, r *http.Req
 		page = 1
 	}
 	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
-	if pageSize < 1 {
+	if pageSize < 1 || pageSize > 50 {
 		pageSize = 20
 	}
 

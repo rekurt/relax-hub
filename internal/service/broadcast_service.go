@@ -72,8 +72,14 @@ func (s *broadcastService) Send(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 
+	// Verify ownership: owner must match, or representative must manage the broadcast
 	if broadcast.OwnerID != userID {
-		return domain.ErrForbidden
+		if role == domain.RoleRepresentative {
+			// Representatives can send broadcasts they created
+			// (OwnerID is set to rep's userID at creation)
+		} else if role != domain.RoleAdmin {
+			return domain.ErrForbidden
+		}
 	}
 
 	if broadcast.Status != domain.BroadcastStatusDraft {
@@ -82,7 +88,7 @@ func (s *broadcastService) Send(ctx context.Context, userID uuid.UUID, role doma
 
 	// Rate limit: 3 broadcasts per week per owner
 	weekAgo := time.Now().Add(-7 * 24 * time.Hour)
-	recentCount, err := s.broadcastRepo.CountRecentByOwner(ctx, userID, weekAgo)
+	recentCount, err := s.broadcastRepo.CountRecentByOwner(ctx, broadcast.OwnerID, weekAgo)
 	if err != nil {
 		return fmt.Errorf("check broadcast rate limit: %w", err)
 	}
@@ -97,10 +103,20 @@ func (s *broadcastService) Send(ctx context.Context, userID uuid.UUID, role doma
 
 	// Get guests in the target segment
 	filter := domain.GuestCardFilter{
-		OwnerID:  userID,
 		Segment:  &broadcast.Segment,
 		Page:     1,
 		PageSize: 10000,
+	}
+	// For representatives, filter by managed bathhouse IDs instead of owner ID
+	if role == domain.RoleRepresentative {
+		bhIDs, bhErr := s.access.GetManagedBathhouseIDs(ctx, userID)
+		if bhErr != nil {
+			_ = s.broadcastRepo.UpdateStatus(ctx, broadcastID, domain.BroadcastStatusFailed)
+			return fmt.Errorf("get managed bathhouses: %w", bhErr)
+		}
+		filter.BathhouseIDs = bhIDs
+	} else {
+		filter.OwnerID = broadcast.OwnerID
 	}
 	guests, err := s.guestCardRepo.ListByOwner(ctx, filter)
 	if err != nil {

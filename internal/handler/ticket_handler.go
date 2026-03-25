@@ -28,7 +28,8 @@ type createTicketRequest struct {
 }
 
 type addTicketMessageRequest struct {
-	Body string `json:"body"`
+	Body        string   `json:"body"`
+	Attachments []string `json:"attachments,omitempty"`
 }
 
 type submitCSATRequest struct {
@@ -56,12 +57,13 @@ type ticketResponse struct {
 }
 
 type ticketMessageResponse struct {
-	ID         string `json:"id"`
-	TicketID   string `json:"ticket_id"`
-	SenderID   string `json:"sender_id"`
-	SenderType string `json:"sender_type"`
-	Body       string `json:"body"`
-	CreatedAt  string `json:"created_at"`
+	ID          string   `json:"id"`
+	TicketID    string   `json:"ticket_id"`
+	SenderID    string   `json:"sender_id"`
+	SenderType  string   `json:"sender_type"`
+	Body        string   `json:"body"`
+	Attachments []string `json:"attachments"`
+	CreatedAt   string   `json:"created_at"`
 }
 
 type ticketStatsResponse struct {
@@ -101,13 +103,18 @@ func toTicketResponse(t *domain.Ticket) ticketResponse {
 }
 
 func toTicketMessageResponse(m *domain.TicketMessage) ticketMessageResponse {
+	attachments := m.Attachments
+	if attachments == nil {
+		attachments = []string{}
+	}
 	return ticketMessageResponse{
-		ID:         m.ID.String(),
-		TicketID:   m.TicketID.String(),
-		SenderID:   m.SenderID.String(),
-		SenderType: string(m.SenderType),
-		Body:       m.Body,
-		CreatedAt:  m.CreatedAt.Format(time.RFC3339),
+		ID:          m.ID.String(),
+		TicketID:    m.TicketID.String(),
+		SenderID:    m.SenderID.String(),
+		SenderType:  string(m.SenderType),
+		Body:        m.Body,
+		Attachments: attachments,
+		CreatedAt:   m.CreatedAt.Format(time.RFC3339),
 	}
 }
 
@@ -262,7 +269,7 @@ func (h *TicketHandler) AddUserMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg, err := h.ticketService.AddMessage(r.Context(), userID, role, ticketID, req.Body)
+	msg, err := h.ticketService.AddMessage(r.Context(), userID, role, ticketID, req.Body, req.Attachments)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -545,7 +552,7 @@ func (h *TicketHandler) AdminAddMessage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	msg, err := h.ticketService.AddMessage(r.Context(), userID, role, ticketID, req.Body)
+	msg, err := h.ticketService.AddMessage(r.Context(), userID, role, ticketID, req.Body, req.Attachments)
 	if err != nil {
 		handleServiceError(w, err)
 		return

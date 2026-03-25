@@ -268,10 +268,14 @@ func (r *ticketRepo) AddMessage(ctx context.Context, msg *domain.TicketMessage) 
 		msg.CreatedAt = now
 	}
 
-	query := `INSERT INTO ticket_messages (id, ticket_id, sender_id, sender_type, body, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)`
+	query := `INSERT INTO ticket_messages (id, ticket_id, sender_id, sender_type, body, attachments, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
-	_, err := r.pool.Exec(ctx, query, msg.ID, msg.TicketID, msg.SenderID, msg.SenderType, msg.Body, msg.CreatedAt)
+	attachments := msg.Attachments
+	if attachments == nil {
+		attachments = []string{}
+	}
+	_, err := r.pool.Exec(ctx, query, msg.ID, msg.TicketID, msg.SenderID, msg.SenderType, msg.Body, attachments, msg.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("add ticket message: %w", err)
 	}
@@ -283,7 +287,7 @@ func (r *ticketRepo) AddMessage(ctx context.Context, msg *domain.TicketMessage) 
 }
 
 func (r *ticketRepo) ListMessages(ctx context.Context, ticketID uuid.UUID) ([]domain.TicketMessage, error) {
-	query := `SELECT id, ticket_id, sender_id, sender_type, body, created_at
+	query := `SELECT id, ticket_id, sender_id, sender_type, body, attachments, created_at
 		FROM ticket_messages WHERE ticket_id = $1 ORDER BY created_at ASC`
 
 	rows, err := r.pool.Query(ctx, query, ticketID)
@@ -295,7 +299,7 @@ func (r *ticketRepo) ListMessages(ctx context.Context, ticketID uuid.UUID) ([]do
 	var messages []domain.TicketMessage
 	for rows.Next() {
 		var m domain.TicketMessage
-		if err := rows.Scan(&m.ID, &m.TicketID, &m.SenderID, &m.SenderType, &m.Body, &m.CreatedAt); err != nil {
+		if err := rows.Scan(&m.ID, &m.TicketID, &m.SenderID, &m.SenderType, &m.Body, &m.Attachments, &m.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan ticket message: %w", err)
 		}
 		messages = append(messages, m)

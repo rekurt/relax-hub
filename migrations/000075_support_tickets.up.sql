@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS ticket_messages (
     sender_id UUID NOT NULL REFERENCES users(id),
     sender_type VARCHAR(20) NOT NULL CHECK (sender_type IN ('user', 'admin')),
     body TEXT NOT NULL,
+    attachments TEXT[] NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
