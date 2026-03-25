@@ -481,6 +481,16 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		s.sendBookingRequestNotification(ctx, booking, bh)
 	}
 
+	// Helper to release wallet hold during rollback
+	releaseHoldOnRollback := func() {
+		if booking.HoldID != nil && s.walletSvc != nil {
+			if releaseErr := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); releaseErr != nil {
+				s.logger.Error("failed to release wallet hold during booking rollback",
+					"booking_id", bookingID, "hold_id", *booking.HoldID, "error", releaseErr)
+			}
+		}
+	}
+
 	// Store booking add-ons
 	var bookingAddOns []domain.BookingAddOn
 	for _, item := range addOnLineItems {
@@ -496,19 +506,14 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		}
 		if err := s.addonRepo.CreateBookingAddOn(ctx, ba); err != nil {
 			s.logger.Error("failed to store booking add-on", "booking_id", bookingID, "addon_id", item.AddOnID, "error", err)
+			releaseHoldOnRollback()
+			if cancelErr := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); cancelErr != nil {
+				s.logger.Error("failed to cancel booking after add-on failure",
+					"booking_id", bookingID, "error", cancelErr)
+			}
 			return nil, fmt.Errorf("store booking add-on: %w", err)
 		}
 		bookingAddOns = append(bookingAddOns, *ba)
-	}
-
-	// Helper to release wallet hold during rollback
-	releaseHoldOnRollback := func() {
-		if booking.HoldID != nil && s.walletSvc != nil {
-			if releaseErr := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); releaseErr != nil {
-				s.logger.Error("failed to release wallet hold during booking rollback",
-					"booking_id", bookingID, "hold_id", *booking.HoldID, "error", releaseErr)
-			}
-		}
 	}
 
 	// Spend loyalty points after booking exists in DB

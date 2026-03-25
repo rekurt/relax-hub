@@ -238,17 +238,18 @@ func (s *disputeService) ResolveDispute(ctx context.Context, disputeID uuid.UUID
 		return fmt.Errorf("update resolution: %w", err)
 	}
 
-	// Credit compensation to initiator's wallet if applicable
+	// Credit compensation to initiator's wallet if applicable.
+	// Best-effort: dispute is already resolved, so we log errors but don't fail.
+	// Admin can manually compensate if this fails.
 	if compensationAmount > 0 {
 		wallet, err := s.walletSvc.GetWallet(ctx, dispute.InitiatorID)
 		if err != nil {
 			s.logger.Error("get wallet for dispute compensation", "dispute_id", disputeID, "initiator_id", dispute.InitiatorID, "error", err)
-			return fmt.Errorf("get wallet for dispute compensation: %w", err)
-		}
-		_, err = s.walletSvc.AddBonus(ctx, wallet.ID, compensationAmount, domain.WalletTxBonus, nil, fmt.Sprintf("Компенсация по спору %s", disputeID))
-		if err != nil {
-			s.logger.Error("credit dispute compensation", "dispute_id", disputeID, "amount", compensationAmount, "error", err)
-			return fmt.Errorf("credit dispute compensation: %w", err)
+		} else {
+			_, err = s.walletSvc.AddBonus(ctx, wallet.ID, compensationAmount, domain.WalletTxBonus, nil, fmt.Sprintf("Компенсация по спору %s", disputeID))
+			if err != nil {
+				s.logger.Error("credit dispute compensation", "dispute_id", disputeID, "amount", compensationAmount, "error", err)
+			}
 		}
 	}
 
