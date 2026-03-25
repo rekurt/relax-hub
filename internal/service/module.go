@@ -76,6 +76,7 @@ var Module = fx.Module("service",
 		fx.Annotate(NewSearchSuggestionService, fx.As(new(SearchSuggestionService))),
 		fx.Annotate(NewSavedSearchService, fx.As(new(SavedSearchService))),
 		fx.Annotate(NewGuestCardService, fx.As(new(GuestCardService))),
+		fx.Annotate(NewBroadcastService, fx.As(new(BroadcastService))),
 		fx.Annotate(NewHolidayService, fx.As(new(HolidayService))),
 		fx.Annotate(NewServiceFeeService, fx.As(new(ServiceFeeService))),
 		fx.Annotate(

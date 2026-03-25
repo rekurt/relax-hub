@@ -301,6 +301,12 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusConflict, "escrow_already_released", err.Error())
 	case errors.Is(err, domain.ErrEscrowDisputed):
 		writeErrorWithContext(w, r, http.StatusConflict, "escrow_disputed", err.Error())
+	case errors.Is(err, domain.ErrBroadcastNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "broadcast_not_found", err.Error())
+	case errors.Is(err, domain.ErrBroadcastRateLimit):
+		writeErrorWithContext(w, r, http.StatusTooManyRequests, "broadcast_rate_limit", err.Error())
+	case errors.Is(err, domain.ErrBroadcastNotDraft):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "broadcast_not_draft", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

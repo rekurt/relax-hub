@@ -138,13 +138,13 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 - Modify: `internal/repository/interfaces.go`
 - Create: `migrations/XXXXXX_broadcasts.up.sql`
 
-- [ ] Broadcast model: ID, OwnerID, Segment, Title, Body, ImageURL, PromoCodeID, Channels, Status (draft/sending/sent/failed), Stats (Delivered, Read)
-- [ ] BroadcastRepository: Create, GetByID, ListByOwner, UpdateStatus, UpdateStats
-- [ ] BroadcastService: Create, Send (rate limit: 3/week per owner, 1/3 days per guest), ListBroadcasts, TrackDelivery
-- [ ] Endpoints: POST/GET /api/v1/my/crm/broadcasts, POST /api/v1/my/crm/broadcasts/{id}/send, GET /api/v1/my/crm/broadcasts/{id}
-- [ ] Respect user notification preferences (unsubscribe)
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] Broadcast model: ID, OwnerID, Segment, Title, Body, ImageURL, PromoCodeID, Channels, Status (draft/sending/sent/failed), Stats (Delivered, Read)
+- [x] BroadcastRepository: Create, GetByID, ListByOwner, UpdateStatus, UpdateStats
+- [x] BroadcastService: Create, Send (rate limit: 3/week per owner, 1/3 days per guest), ListBroadcasts, TrackDelivery
+- [x] Endpoints: POST/GET /api/v1/my/crm/broadcasts, POST /api/v1/my/crm/broadcasts/{id}/send, GET /api/v1/my/crm/broadcasts/{id}
+- [x] Respect user notification preferences (unsubscribe)
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 9: Auto-scenarios (CRM)
 

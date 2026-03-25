@@ -67,6 +67,7 @@ type RouterParams struct {
 	SavedSearchHandler       *handler.SavedSearchHandler
 	HolidayHandler           *handler.HolidayHandler
 	GuestCardHandler         *handler.GuestCardHandler
+	BroadcastHandler         *handler.BroadcastHandler
 	ServiceFeeHandler        *handler.ServiceFeeHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
@@ -393,6 +394,12 @@ func NewRouter(p RouterParams) http.Handler {
 		// CRM Segments (owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/segments", p.GuestCardHandler.ListSegments)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/segments/{slug}/guests", p.GuestCardHandler.GetGuestsInSegment)
+
+		// CRM Broadcasts (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/crm/broadcasts", p.BroadcastHandler.CreateBroadcast)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/broadcasts", p.BroadcastHandler.ListBroadcasts)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/broadcasts/{id}", p.BroadcastHandler.GetBroadcast)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/crm/broadcasts/{id}/send", p.BroadcastHandler.SendBroadcast)
 
 		// Notifications (authenticated)
 		r.With(auth).Get("/my/notifications", p.NotifHandler.List)

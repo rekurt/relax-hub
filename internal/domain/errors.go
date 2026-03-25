@@ -120,4 +120,8 @@ var (
 	ErrEscrowNotMatured      = errors.New("escrow claim period has not ended")
 	ErrEscrowAlreadyReleased = errors.New("escrow already released")
 	ErrEscrowDisputed        = errors.New("escrow is disputed and cannot be released")
+
+	ErrBroadcastNotFound    = errors.New("broadcast not found")
+	ErrBroadcastRateLimit   = errors.New("broadcast rate limit exceeded")
+	ErrBroadcastNotDraft    = errors.New("broadcast is not in draft status")
 )

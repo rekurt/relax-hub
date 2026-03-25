@@ -49,6 +49,7 @@ const (
 	NotifReviewRequest                 NotificationType = "review_request"
 	NotifLowRatingWarning              NotificationType = "low_rating_warning"
 	NotifBathhouseDepublished          NotificationType = "bathhouse_depublished"
+	NotifBroadcast                     NotificationType = "broadcast"
 )
 
 func (t NotificationType) IsValid() bool {
@@ -68,7 +69,8 @@ func (t NotificationType) IsValid() bool {
 		NotifBonusExpiring, NotifBonusExpired,
 		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal,
 		NotifSavedSearchMatch,
-		NotifLowRatingWarning, NotifBathhouseDepublished:
+		NotifLowRatingWarning, NotifBathhouseDepublished,
+		NotifBroadcast:
 		return true
 	}
 	return false
@@ -150,7 +152,7 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 	case NotifNewReview, NotifReviewResponse, NotifReviewApproved, NotifReviewRejected,
 		NotifReviewHidden:
 		return p.ReviewEvents
-	case NotifPromo:
+	case NotifPromo, NotifBroadcast:
 		return p.PromoEvents
 	case NotifReminder, NotifBookingReminder24h, NotifBookingReminder2h, NotifBookingReminderOwner5min,
 		NotifReviewRequest:
