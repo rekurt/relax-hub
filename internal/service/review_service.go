@@ -15,16 +15,24 @@ import (
 )
 
 type CreateReviewInput struct {
-	BookingID   uuid.UUID
-	BathhouseID uuid.UUID
-	Rating      int
-	Text        string
+	BookingID     uuid.UUID
+	BathhouseID   uuid.UUID
+	Rating        int
+	Cleanliness   *float64
+	Accuracy      *float64
+	Communication *float64
+	ValueForMoney *float64
+	Text          string
 }
 
 type UpdateReviewInput struct {
-	Rating *int
-	Text   *string
-	Images []string
+	Rating        *int
+	Cleanliness   *float64
+	Accuracy      *float64
+	Communication *float64
+	ValueForMoney *float64
+	Text          *string
+	Images        []string
 }
 
 type ReviewService interface {
@@ -34,6 +42,7 @@ type ReviewService interface {
 	Delete(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, reviewID uuid.UUID) error
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Review], error)
 	AddOwnerResponse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, reviewID uuid.UUID, response string) (*domain.Review, error)
+	GetCriteriaAverages(ctx context.Context, bathhouseID uuid.UUID) (*domain.ReviewCriteriaAverages, error)
 	// Admin moderation:
 	ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error)
 	CountPendingReviews(ctx context.Context) (int64, error)
@@ -105,15 +114,22 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 
 	now := time.Now()
 	review := &domain.Review{
-		ID:          uuid.New(),
-		UserID:      userID,
-		BathhouseID: booking.BathhouseID,
-		BookingID:   input.BookingID,
-		Rating:      input.Rating,
-		Text:        input.Text,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		ID:            uuid.New(),
+		UserID:        userID,
+		BathhouseID:   booking.BathhouseID,
+		BookingID:     input.BookingID,
+		Rating:        input.Rating,
+		Cleanliness:   input.Cleanliness,
+		Accuracy:      input.Accuracy,
+		Communication: input.Communication,
+		ValueForMoney: input.ValueForMoney,
+		Text:          input.Text,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
+
+	// If criteria are provided, compute the overall rating from them
+	review.ComputeOverallRating()
 
 	// Apply content filtering if moderation is enabled
 	if s.contentFilter.IsEnabled() {
@@ -185,12 +201,27 @@ func (s *reviewService) Update(ctx context.Context, userID uuid.UUID, reviewID u
 	if input.Rating != nil {
 		review.Rating = *input.Rating
 	}
+	if input.Cleanliness != nil {
+		review.Cleanliness = input.Cleanliness
+	}
+	if input.Accuracy != nil {
+		review.Accuracy = input.Accuracy
+	}
+	if input.Communication != nil {
+		review.Communication = input.Communication
+	}
+	if input.ValueForMoney != nil {
+		review.ValueForMoney = input.ValueForMoney
+	}
 	if input.Text != nil {
 		review.Text = *input.Text
 	}
 	if input.Images != nil {
 		review.Images = input.Images
 	}
+
+	// Recompute overall rating from criteria if they are present
+	review.ComputeOverallRating()
 
 	if err := review.Validate(); err != nil {
 		return nil, err
@@ -201,7 +232,8 @@ func (s *reviewService) Update(ctx context.Context, userID uuid.UUID, reviewID u
 		return nil, err
 	}
 
-	if input.Rating != nil {
+	criteriaChanged := input.Cleanliness != nil || input.Accuracy != nil || input.Communication != nil || input.ValueForMoney != nil
+	if input.Rating != nil || criteriaChanged {
 		if err := s.bhRepo.UpdateRating(ctx, review.BathhouseID); err != nil {
 			s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", review.BathhouseID, "error", err)
 		}
@@ -311,6 +343,10 @@ func (s *reviewService) cleanupReviewMedia(ctx context.Context, reviewID uuid.UU
 			}
 		}
 	}
+}
+
+func (s *reviewService) GetCriteriaAverages(ctx context.Context, bathhouseID uuid.UUID) (*domain.ReviewCriteriaAverages, error) {
+	return s.reviewRepo.GetCriteriaAverages(ctx, bathhouseID)
 }
 
 func (s *reviewService) ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error) {

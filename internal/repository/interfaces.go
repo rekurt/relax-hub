@@ -100,6 +100,7 @@ type ReviewRepository interface {
 	GetUserReviewStats(ctx context.Context, userID uuid.UUID) (*domain.UserReviewStats, error)
 	CountPendingReviews(ctx context.Context) (int64, error)
 	ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error)
+	GetCriteriaAverages(ctx context.Context, bathhouseID uuid.UUID) (*domain.ReviewCriteriaAverages, error)
 }
 
 type FavoriteRepository interface {

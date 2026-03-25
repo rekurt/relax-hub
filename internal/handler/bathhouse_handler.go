@@ -32,6 +32,7 @@ type BathhouseHandler struct {
 	cityService           service.CityService
 	savedSearchService    service.SavedSearchService
 	suggestionService     service.SearchSuggestionService
+	reviewService         service.ReviewService
 	log                   *logger.Logger
 	baseURL               string
 }
@@ -48,6 +49,7 @@ func NewBathhouseHandler(
 	cityService service.CityService,
 	savedSearchService service.SavedSearchService,
 	suggestionService service.SearchSuggestionService,
+	reviewService service.ReviewService,
 	log *logger.Logger,
 	baseURL string,
 ) *BathhouseHandler {
@@ -63,6 +65,7 @@ func NewBathhouseHandler(
 		cityService:           cityService,
 		savedSearchService:    savedSearchService,
 		suggestionService:     suggestionService,
+		reviewService:         reviewService,
 		log:                   log,
 		baseURL:               baseURL,
 	}
@@ -126,6 +129,10 @@ type bathhouseResponse struct {
 	ResponseRate               float64            `json:"response_rate"`
 	AvgResponseTimeMinutes     int                `json:"avg_response_time_minutes"`
 	Rating                     float64            `json:"rating"`
+	AvgCleanliness             float64            `json:"avg_cleanliness,omitempty"`
+	AvgAccuracy                float64            `json:"avg_accuracy,omitempty"`
+	AvgCommunication           float64            `json:"avg_communication,omitempty"`
+	AvgValueForMoney           float64            `json:"avg_value_for_money,omitempty"`
 	ReviewCount  int                `json:"review_count"`
 	Images       []string           `json:"images"`
 	WorkingHours []workingHoursResp `json:"working_hours"`
@@ -546,6 +553,17 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Load review criteria averages
+	if h.reviewService != nil {
+		avgs, err := h.reviewService.GetCriteriaAverages(r.Context(), bh.ID)
+		if err == nil {
+			resp.AvgCleanliness = avgs.AvgCleanliness
+			resp.AvgAccuracy = avgs.AvgAccuracy
+			resp.AvgCommunication = avgs.AvgCommunication
+			resp.AvgValueForMoney = avgs.AvgValueForMoney
+		}
+	}
+
 	writeJSON(w, http.StatusOK, resp)
 }
 
@@ -589,6 +607,17 @@ func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 		gallery, err := h.mediaService.ListByBathhouse(r.Context(), bh.ID, 1, 4)
 		if err == nil && len(gallery.Items) > 0 {
 			resp.GalleryPreview = toMediaResponses(gallery.Items)
+		}
+	}
+
+	// Load review criteria averages
+	if h.reviewService != nil {
+		avgs, err := h.reviewService.GetCriteriaAverages(r.Context(), bh.ID)
+		if err == nil {
+			resp.AvgCleanliness = avgs.AvgCleanliness
+			resp.AvgAccuracy = avgs.AvgAccuracy
+			resp.AvgCommunication = avgs.AvgCommunication
+			resp.AvgValueForMoney = avgs.AvgValueForMoney
 		}
 	}
 

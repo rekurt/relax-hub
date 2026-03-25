@@ -561,3 +561,213 @@ func TestReviewService_ListByBathhouse_FiltersNonApprovedReviews(t *testing.T) {
 		t.Errorf("expected review2 in results, got %v", result.Items[0].ID)
 	}
 }
+
+// --- Multi-criteria rating tests ---
+
+func ptrFloat(v float64) *float64 { return &v }
+
+func TestReviewService_Create_WithCriteria(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newReviewService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+	booking := createCompletedBooking(t, bookingRepo, clientID, bh.ID)
+
+	review, err := svc.Create(context.Background(), clientID, service.CreateReviewInput{
+		BookingID:     booking.ID,
+		Rating:        3, // will be overridden by criteria average
+		Cleanliness:   ptrFloat(5.0),
+		Accuracy:      ptrFloat(4.0),
+		Communication: ptrFloat(3.5),
+		ValueForMoney: ptrFloat(4.5),
+		Text:          "Good with criteria",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Overall rating should be computed as average of criteria: (5+4+3.5+4.5)/4 = 4.25 -> 4
+	if review.Rating != 4 {
+		t.Errorf("rating = %d, want 4 (computed from criteria)", review.Rating)
+	}
+	if review.Cleanliness == nil || *review.Cleanliness != 5.0 {
+		t.Errorf("cleanliness = %v, want 5.0", review.Cleanliness)
+	}
+	if review.ValueForMoney == nil || *review.ValueForMoney != 4.5 {
+		t.Errorf("value_for_money = %v, want 4.5", review.ValueForMoney)
+	}
+}
+
+func TestReviewService_Create_WithPartialCriteria_Fails(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newReviewService()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, uuid.New())
+	booking := createCompletedBooking(t, bookingRepo, clientID, bh.ID)
+
+	_, err := svc.Create(context.Background(), clientID, service.CreateReviewInput{
+		BookingID:   booking.ID,
+		Rating:      4,
+		Cleanliness: ptrFloat(5.0),
+		// Missing other criteria
+		Text: "Partial criteria",
+	})
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("should fail with partial criteria, got: %v", err)
+	}
+}
+
+func TestReviewService_Create_WithInvalidCriterion_Fails(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newReviewService()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, uuid.New())
+	booking := createCompletedBooking(t, bookingRepo, clientID, bh.ID)
+
+	_, err := svc.Create(context.Background(), clientID, service.CreateReviewInput{
+		BookingID:     booking.ID,
+		Rating:        4,
+		Cleanliness:   ptrFloat(5.5), // invalid: max 5.0
+		Accuracy:      ptrFloat(4.0),
+		Communication: ptrFloat(3.5),
+		ValueForMoney: ptrFloat(4.5),
+		Text:          "Invalid criterion",
+	})
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("should fail with invalid criterion value, got: %v", err)
+	}
+}
+
+func TestReviewService_Create_WithInvalidStep_Fails(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newReviewService()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, uuid.New())
+	booking := createCompletedBooking(t, bookingRepo, clientID, bh.ID)
+
+	_, err := svc.Create(context.Background(), clientID, service.CreateReviewInput{
+		BookingID:     booking.ID,
+		Rating:        4,
+		Cleanliness:   ptrFloat(4.3), // invalid: must be step 0.5
+		Accuracy:      ptrFloat(4.0),
+		Communication: ptrFloat(3.5),
+		ValueForMoney: ptrFloat(4.5),
+		Text:          "Invalid step",
+	})
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("should fail with non-0.5 step, got: %v", err)
+	}
+}
+
+func TestReviewService_Create_WithoutCriteria_BackwardsCompat(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newReviewService()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, uuid.New())
+	booking := createCompletedBooking(t, bookingRepo, clientID, bh.ID)
+
+	review, err := svc.Create(context.Background(), clientID, service.CreateReviewInput{
+		BookingID: booking.ID,
+		Rating:    5,
+		Text:      "No criteria, old style",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if review.Rating != 5 {
+		t.Errorf("rating = %d, want 5", review.Rating)
+	}
+	if review.Cleanliness != nil {
+		t.Error("cleanliness should be nil for reviews without criteria")
+	}
+}
+
+func TestReviewService_Update_WithCriteria(t *testing.T) {
+	env := newReviewTestEnv()
+	clientID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, uuid.New())
+	booking := createCompletedBooking(t, env.bookingRepo, clientID, bh.ID)
+	review := createReview(t, env.svc, clientID, booking.ID)
+
+	updated, err := env.svc.Update(context.Background(), clientID, review.ID, service.UpdateReviewInput{
+		Cleanliness:   ptrFloat(4.0),
+		Accuracy:      ptrFloat(3.5),
+		Communication: ptrFloat(4.5),
+		ValueForMoney: ptrFloat(5.0),
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// (4+3.5+4.5+5)/4 = 4.25 -> 4
+	if updated.Rating != 4 {
+		t.Errorf("rating = %d, want 4 (recomputed from criteria)", updated.Rating)
+	}
+	if updated.Cleanliness == nil || *updated.Cleanliness != 4.0 {
+		t.Errorf("cleanliness = %v, want 4.0", updated.Cleanliness)
+	}
+}
+
+func TestReviewService_GetCriteriaAverages(t *testing.T) {
+	svc, bhRepo, bookingRepo, _ := newReviewService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	// Create 2 reviews with criteria
+	client1 := uuid.New()
+	booking1 := createCompletedBooking(t, bookingRepo, client1, bh.ID)
+	_, err := svc.Create(context.Background(), client1, service.CreateReviewInput{
+		BookingID:     booking1.ID,
+		Rating:        4,
+		Cleanliness:   ptrFloat(5.0),
+		Accuracy:      ptrFloat(4.0),
+		Communication: ptrFloat(3.0),
+		ValueForMoney: ptrFloat(4.0),
+		Text:          "Review 1",
+	})
+	if err != nil {
+		t.Fatalf("create review 1: %v", err)
+	}
+
+	client2 := uuid.New()
+	booking2 := createCompletedBooking(t, bookingRepo, client2, bh.ID)
+	_, err = svc.Create(context.Background(), client2, service.CreateReviewInput{
+		BookingID:     booking2.ID,
+		Rating:        3,
+		Cleanliness:   ptrFloat(3.0),
+		Accuracy:      ptrFloat(4.0),
+		Communication: ptrFloat(5.0),
+		ValueForMoney: ptrFloat(2.0),
+		Text:          "Review 2",
+	})
+	if err != nil {
+		t.Fatalf("create review 2: %v", err)
+	}
+
+	avgs, err := svc.GetCriteriaAverages(context.Background(), bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Expected averages: cleanliness (5+3)/2=4.0, accuracy (4+4)/2=4.0, communication (3+5)/2=4.0, value_for_money (4+2)/2=3.0
+	if avgs.AvgCleanliness != 4.0 {
+		t.Errorf("avg_cleanliness = %f, want 4.0", avgs.AvgCleanliness)
+	}
+	if avgs.AvgAccuracy != 4.0 {
+		t.Errorf("avg_accuracy = %f, want 4.0", avgs.AvgAccuracy)
+	}
+	if avgs.AvgCommunication != 4.0 {
+		t.Errorf("avg_communication = %f, want 4.0", avgs.AvgCommunication)
+	}
+	if avgs.AvgValueForMoney != 3.0 {
+		t.Errorf("avg_value_for_money = %f, want 3.0", avgs.AvgValueForMoney)
+	}
+}
+
+func TestReviewService_GetCriteriaAverages_Empty(t *testing.T) {
+	svc, bhRepo, _, _ := newReviewService()
+	bh := createBathhouse(t, bhRepo, uuid.New())
+
+	avgs, err := svc.GetCriteriaAverages(context.Background(), bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if avgs.AvgCleanliness != 0 || avgs.AvgAccuracy != 0 || avgs.AvgCommunication != 0 || avgs.AvgValueForMoney != 0 {
+		t.Errorf("averages should all be 0 for bathhouse with no criteria reviews, got %+v", avgs)
+	}
+}

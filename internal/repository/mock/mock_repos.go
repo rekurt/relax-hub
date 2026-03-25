@@ -884,6 +884,30 @@ func (r *ReviewRepo) ListAllReviews(_ context.Context, filter domain.AdminReview
 	return paginate(items, filter.Page, filter.PageSize), nil
 }
 
+func (r *ReviewRepo) GetCriteriaAverages(_ context.Context, bathhouseID uuid.UUID) (*domain.ReviewCriteriaAverages, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var avgs domain.ReviewCriteriaAverages
+	var count float64
+	for _, rev := range r.reviews {
+		if rev.BathhouseID == bathhouseID && rev.Status == domain.ReviewStatusApproved && rev.Cleanliness != nil {
+			avgs.AvgCleanliness += *rev.Cleanliness
+			avgs.AvgAccuracy += *rev.Accuracy
+			avgs.AvgCommunication += *rev.Communication
+			avgs.AvgValueForMoney += *rev.ValueForMoney
+			count++
+		}
+	}
+	if count > 0 {
+		avgs.AvgCleanliness /= count
+		avgs.AvgAccuracy /= count
+		avgs.AvgCommunication /= count
+		avgs.AvgValueForMoney /= count
+	}
+	return &avgs, nil
+}
+
 // FavoriteRepo is an in-memory mock implementation of repository.FavoriteRepository.
 type FavoriteRepo struct {
 	mu        sync.RWMutex

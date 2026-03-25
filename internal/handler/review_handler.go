@@ -32,15 +32,23 @@ func NewReviewHandler(reviewService service.ReviewService, mediaService service.
 }
 
 type createReviewRequest struct {
-	BookingID string `json:"booking_id"`
-	Rating    int    `json:"rating"`
-	Text      string `json:"text"`
+	BookingID     string   `json:"booking_id"`
+	Rating        int      `json:"rating"`
+	Cleanliness   *float64 `json:"cleanliness,omitempty"`
+	Accuracy      *float64 `json:"accuracy,omitempty"`
+	Communication *float64 `json:"communication,omitempty"`
+	ValueForMoney *float64 `json:"value_for_money,omitempty"`
+	Text          string   `json:"text"`
 }
 
 type updateReviewRequest struct {
-	Rating *int     `json:"rating,omitempty"`
-	Text   *string  `json:"text,omitempty"`
-	Images []string `json:"images,omitempty"`
+	Rating        *int     `json:"rating,omitempty"`
+	Cleanliness   *float64 `json:"cleanliness,omitempty"`
+	Accuracy      *float64 `json:"accuracy,omitempty"`
+	Communication *float64 `json:"communication,omitempty"`
+	ValueForMoney *float64 `json:"value_for_money,omitempty"`
+	Text          *string  `json:"text,omitempty"`
+	Images        []string `json:"images,omitempty"`
 }
 
 type ownerResponseRequest struct {
@@ -67,6 +75,10 @@ type reviewResponse struct {
 	BathhouseID     string           `json:"bathhouse_id"`
 	BookingID       string           `json:"booking_id"`
 	Rating          int              `json:"rating"`
+	Cleanliness     *float64         `json:"cleanliness,omitempty"`
+	Accuracy        *float64         `json:"accuracy,omitempty"`
+	Communication   *float64         `json:"communication,omitempty"`
+	ValueForMoney   *float64         `json:"value_for_money,omitempty"`
 	Text            string           `json:"text"`
 	Status          string           `json:"status"`
 	OwnerResponse   string           `json:"owner_response,omitempty"`
@@ -108,6 +120,10 @@ func toReviewResponse(rev *domain.Review) reviewResponse {
 		BathhouseID:     rev.BathhouseID.String(),
 		BookingID:       rev.BookingID.String(),
 		Rating:          rev.Rating,
+		Cleanliness:     rev.Cleanliness,
+		Accuracy:        rev.Accuracy,
+		Communication:   rev.Communication,
+		ValueForMoney:   rev.ValueForMoney,
 		Text:            rev.Text,
 		Status:          string(rev.Status),
 		OwnerResponse:   rev.OwnerResponse,
@@ -155,10 +171,14 @@ func (h *ReviewHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
 	review, err := h.reviewService.Create(r.Context(), userID, service.CreateReviewInput{
-		BookingID:   bookingID,
-		BathhouseID: bathhouseID,
-		Rating:      req.Rating,
-		Text:        req.Text,
+		BookingID:     bookingID,
+		BathhouseID:   bathhouseID,
+		Rating:        req.Rating,
+		Cleanliness:   req.Cleanliness,
+		Accuracy:      req.Accuracy,
+		Communication: req.Communication,
+		ValueForMoney: req.ValueForMoney,
+		Text:          req.Text,
 	})
 	if err != nil {
 		handleServiceError(w, err)
@@ -199,9 +219,13 @@ func (h *ReviewHandler) Update(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
 	review, err := h.reviewService.Update(r.Context(), userID, reviewID, service.UpdateReviewInput{
-		Rating: req.Rating,
-		Text:   req.Text,
-		Images: req.Images,
+		Rating:        req.Rating,
+		Cleanliness:   req.Cleanliness,
+		Accuracy:      req.Accuracy,
+		Communication: req.Communication,
+		ValueForMoney: req.ValueForMoney,
+		Text:          req.Text,
+		Images:        req.Images,
 	})
 	if err != nil {
 		handleServiceError(w, err)

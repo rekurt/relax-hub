@@ -102,6 +102,10 @@ func (m *adminReviewServiceMock) UpdateStatusWithReasons(ctx context.Context, id
 	return m.repo.UpdateStatusWithReasons(ctx, id, status, reasons)
 }
 
+func (m *adminReviewServiceMock) GetCriteriaAverages(_ context.Context, _ uuid.UUID) (*domain.ReviewCriteriaAverages, error) {
+	return &domain.ReviewCriteriaAverages{}, nil
+}
+
 func TestAdminHandler_ListReviews(t *testing.T) {
 	adminID := uuid.New()
 	authSvc := makeAuthToken(adminID, domain.RoleAdmin)

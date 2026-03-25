@@ -23,10 +23,11 @@ var Module = fx.Module("handler",
 			cityService service.CityService,
 			savedSearchService service.SavedSearchService,
 			suggestionService service.SearchSuggestionService,
+			reviewService service.ReviewService,
 			log *logger.Logger,
 			cfg *config.Config,
 		) *BathhouseHandler {
-			return NewBathhouseHandler(bathhouseService, bookingService, representativeService, favoriteService, recommendationService, analyticsService, mediaService, promotionService, cityService, savedSearchService, suggestionService, log, cfg.BaseURL)
+			return NewBathhouseHandler(bathhouseService, bookingService, representativeService, favoriteService, recommendationService, analyticsService, mediaService, promotionService, cityService, savedSearchService, suggestionService, reviewService, log, cfg.BaseURL)
 		},
 		NewBookingHandler,
 		NewReviewHandler,
