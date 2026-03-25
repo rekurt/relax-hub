@@ -213,6 +213,113 @@ func (h *GuestCardHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type segmentResponse struct {
+	Slug        string `json:"slug"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Count       int64  `json:"count"`
+}
+
+// ListSegments godoc
+// @Summary      List CRM segments
+// @Description  Get all predefined CRM segments with guest counts
+// @Tags         crm
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  APIResponse{data=[]segmentResponse}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /my/crm/segments [get]
+func (h *GuestCardHandler) ListSegments(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	segments, err := h.guestCardService.ListSegments(r.Context(), userID, role)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	var items []segmentResponse
+	for _, s := range segments {
+		items = append(items, segmentResponse{
+			Slug:        string(s.Slug),
+			Name:        s.Name,
+			Description: s.Description,
+			Count:       s.Count,
+		})
+	}
+	if items == nil {
+		items = []segmentResponse{}
+	}
+
+	writeJSON(w, http.StatusOK, items)
+}
+
+// GetGuestsInSegment godoc
+// @Summary      Get guests in segment
+// @Description  Get paginated list of guests in a specific CRM segment
+// @Tags         crm
+// @Produce      json
+// @Security     BearerAuth
+// @Param        slug       path      string  true  "Segment slug (new, regular, lost, vip, birthday_soon)"
+// @Param        page       query     int     false "Page number"
+// @Param        page_size  query     int     false "Page size"
+// @Success      200  {object}  APIResponse{data=[]guestCardResponse}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
+// @Router       /my/crm/segments/{slug}/guests [get]
+func (h *GuestCardHandler) GetGuestsInSegment(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	slug := chi.URLParam(r, "slug")
+	segment := domain.GuestSegmentSlug(slug)
+
+	// Validate segment slug
+	valid := false
+	for _, s := range domain.AllSegments() {
+		if s == segment {
+			valid = true
+			break
+		}
+	}
+	if !valid {
+		writeError(w, http.StatusBadRequest, "invalid_segment", "invalid segment slug")
+		return
+	}
+
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	if page < 1 {
+		page = 1
+	}
+	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	result, err := h.guestCardService.GetGuestsInSegment(r.Context(), userID, role, segment, page, pageSize)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	var items []guestCardResponse
+	for _, c := range result.Items {
+		items = append(items, toGuestCardResponse(&c))
+	}
+	if items == nil {
+		items = []guestCardResponse{}
+	}
+
+	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
+		Page:       result.Page,
+		PageSize:   result.PageSize,
+		TotalCount: result.TotalCount,
+		TotalPages: result.TotalPages,
+	})
+}
+
 // GetStats godoc
 // @Summary      Get CRM guest stats
 // @Description  Get summary statistics for all guest cards

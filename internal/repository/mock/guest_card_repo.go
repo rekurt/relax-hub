@@ -83,6 +83,23 @@ func (r *GuestCardRepo) GetByOwnerAndClient(_ context.Context, ownerID, clientID
 	return nil, domain.ErrNotFound
 }
 
+func matchesSegment(c *domain.GuestCard, seg domain.GuestSegmentSlug) bool {
+	switch seg {
+	case domain.SegmentNew:
+		return c.VisitCount == 1
+	case domain.SegmentRegular:
+		return c.VisitCount >= 3
+	case domain.SegmentLost:
+		return time.Since(c.LastVisitAt) > 90*24*time.Hour
+	case domain.SegmentVIP:
+		return c.TotalSpent > 5000000 // 50,000 RUB in kopecks
+	case domain.SegmentBirthdaySoon:
+		return false // no birthday data available
+	default:
+		return false
+	}
+}
+
 func (r *GuestCardRepo) ListByOwner(_ context.Context, filter domain.GuestCardFilter) (*domain.PaginatedResult[domain.GuestCard], error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -93,6 +110,9 @@ func (r *GuestCardRepo) ListByOwner(_ context.Context, filter domain.GuestCardFi
 			continue
 		}
 		if filter.BathhouseID != nil && c.BathhouseID != *filter.BathhouseID {
+			continue
+		}
+		if filter.Segment != nil && !matchesSegment(c, *filter.Segment) {
 			continue
 		}
 		if filter.Tag != nil && *filter.Tag != "" {
@@ -144,6 +164,22 @@ func (r *GuestCardRepo) UpdateNotes(_ context.Context, id uuid.UUID, notes strin
 	c.Tags = tags
 	c.UpdatedAt = time.Now()
 	return nil
+}
+
+func (r *GuestCardRepo) CountBySegment(_ context.Context, ownerID uuid.UUID, segment domain.GuestSegmentSlug) (int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var count int64
+	for _, c := range r.cards {
+		if c.OwnerID != ownerID {
+			continue
+		}
+		if matchesSegment(c, segment) {
+			count++
+		}
+	}
+	return count, nil
 }
 
 func (r *GuestCardRepo) GetStats(_ context.Context, ownerID uuid.UUID) (*domain.GuestCardStats, error) {

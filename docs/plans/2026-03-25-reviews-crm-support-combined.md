@@ -122,11 +122,11 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 - Modify: `internal/service/guest_card_service.go`
 - Modify: `internal/handler/guest_card_handler.go`
 
-- [ ] Predefined segments (dynamic): "new" (1 visit), "regular" (>= 3), "lost" (> 90 days), "vip" (> 50,000 RUB), "birthday_soon" (7 days)
-- [ ] SegmentService: ListSegments (with counts), GetGuestsInSegment
-- [ ] Endpoints: GET /api/v1/my/crm/segments, GET /api/v1/my/crm/segments/{slug}/guests
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] Predefined segments (dynamic): "new" (1 visit), "regular" (>= 3), "lost" (> 90 days), "vip" (> 50,000 RUB), "birthday_soon" (7 days)
+- [x] SegmentService: ListSegments (with counts), GetGuestsInSegment
+- [x] Endpoints: GET /api/v1/my/crm/segments, GET /api/v1/my/crm/segments/{slug}/guests
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 8: Broadcasts (CRM)
 

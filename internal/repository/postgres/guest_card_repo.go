@@ -132,6 +132,17 @@ func (r *guestCardRepo) ListByOwner(ctx context.Context, filter domain.GuestCard
 		argIdx++
 	}
 
+	if filter.Segment != nil {
+		cond := segmentCondition(*filter.Segment)
+		if cond != "" {
+			// Prefix "gc." for segment conditions that use column names
+			gcCond := strings.ReplaceAll(cond, "visit_count", "gc.visit_count")
+			gcCond = strings.ReplaceAll(gcCond, "last_visit_at", "gc.last_visit_at")
+			gcCond = strings.ReplaceAll(gcCond, "total_spent", "gc.total_spent")
+			conditions = append(conditions, gcCond)
+		}
+	}
+
 	if filter.DateFrom != nil {
 		conditions = append(conditions, fmt.Sprintf("gc.last_visit_at >= $%d", argIdx))
 		args = append(args, *filter.DateFrom)
@@ -235,6 +246,39 @@ func (r *guestCardRepo) GetStats(ctx context.Context, ownerID uuid.UUID) (*domai
 		return nil, fmt.Errorf("get guest card stats: %w", err)
 	}
 	return &stats, nil
+}
+
+func (r *guestCardRepo) CountBySegment(ctx context.Context, ownerID uuid.UUID, segment domain.GuestSegmentSlug) (int64, error) {
+	cond := segmentCondition(segment)
+	if cond == "" {
+		return 0, nil
+	}
+
+	query := fmt.Sprintf(`SELECT COUNT(*) FROM guest_cards WHERE owner_id = $1 AND %s`, cond)
+	var count int64
+	if err := r.pool.QueryRow(ctx, query, ownerID).Scan(&count); err != nil {
+		return 0, fmt.Errorf("count by segment %s: %w", segment, err)
+	}
+	return count, nil
+}
+
+// segmentCondition returns SQL WHERE condition for a segment slug (without the owner_id filter).
+func segmentCondition(segment domain.GuestSegmentSlug) string {
+	switch segment {
+	case domain.SegmentNew:
+		return "visit_count = 1"
+	case domain.SegmentRegular:
+		return "visit_count >= 3"
+	case domain.SegmentLost:
+		return "last_visit_at < NOW() - INTERVAL '90 days'"
+	case domain.SegmentVIP:
+		return "total_spent > 5000000" // 50,000 RUB in kopecks
+	case domain.SegmentBirthdaySoon:
+		// Requires birthday field on users table; currently always returns 0
+		return "FALSE"
+	default:
+		return ""
+	}
 }
 
 // prefixColumns adds a table alias prefix to each column in a comma-separated column list.

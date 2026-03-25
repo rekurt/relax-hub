@@ -20,6 +20,8 @@ type GuestCardService interface {
 	UpdateGuestNotes(ctx context.Context, userID uuid.UUID, role domain.UserRole, cardID uuid.UUID, notes string, tags []string) error
 	ExportCSV(ctx context.Context, userID uuid.UUID, role domain.UserRole, filter domain.GuestCardFilter, w io.Writer) error
 	GetStats(ctx context.Context, userID uuid.UUID, role domain.UserRole) (*domain.GuestCardStats, error)
+	ListSegments(ctx context.Context, userID uuid.UUID, role domain.UserRole) ([]domain.GuestSegment, error)
+	GetGuestsInSegment(ctx context.Context, userID uuid.UUID, role domain.UserRole, segment domain.GuestSegmentSlug, page, pageSize int) (*domain.PaginatedResult[domain.GuestCard], error)
 }
 
 type guestCardService struct {
@@ -150,4 +152,52 @@ func (s *guestCardService) GetStats(ctx context.Context, userID uuid.UUID, role 
 	}
 
 	return s.guestCardRepo.GetStats(ctx, userID)
+}
+
+func (s *guestCardService) ListSegments(ctx context.Context, userID uuid.UUID, role domain.UserRole) ([]domain.GuestSegment, error) {
+	if role != domain.RoleOwner && role != domain.RoleRepresentative && role != domain.RoleAdmin {
+		return nil, domain.ErrForbidden
+	}
+
+	slugs := domain.AllSegments()
+	segments := make([]domain.GuestSegment, 0, len(slugs))
+
+	for _, slug := range slugs {
+		count, err := s.guestCardRepo.CountBySegment(ctx, userID, slug)
+		if err != nil {
+			s.logger.Error("count segment", "segment", slug, "error", err)
+			count = 0
+		}
+		name, description := domain.SegmentMeta(slug)
+		segments = append(segments, domain.GuestSegment{
+			Slug:        slug,
+			Name:        name,
+			Description: description,
+			Count:       count,
+		})
+	}
+
+	return segments, nil
+}
+
+func (s *guestCardService) GetGuestsInSegment(ctx context.Context, userID uuid.UUID, role domain.UserRole, segment domain.GuestSegmentSlug, page, pageSize int) (*domain.PaginatedResult[domain.GuestCard], error) {
+	if role != domain.RoleOwner && role != domain.RoleRepresentative && role != domain.RoleAdmin {
+		return nil, domain.ErrForbidden
+	}
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	filter := domain.GuestCardFilter{
+		OwnerID:  userID,
+		Segment:  &segment,
+		Page:     page,
+		PageSize: pageSize,
+	}
+
+	return s.guestCardRepo.ListByOwner(ctx, filter)
 }

@@ -390,6 +390,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/guests/export", p.GuestCardHandler.ExportCSV)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/stats", p.GuestCardHandler.GetStats)
 
+		// CRM Segments (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/segments", p.GuestCardHandler.ListSegments)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/segments/{slug}/guests", p.GuestCardHandler.GetGuestsInSegment)
+
 		// Notifications (authenticated)
 		r.With(auth).Get("/my/notifications", p.NotifHandler.List)
 		r.With(auth).Get("/my/notifications/unread-count", p.NotifHandler.UnreadCount)

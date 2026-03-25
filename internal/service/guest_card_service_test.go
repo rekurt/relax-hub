@@ -299,3 +299,150 @@ func TestGuestCardService_MultipleVisitsSameGuest(t *testing.T) {
 		t.Errorf("expected avg_check=%d, got %d", expectedAvg, card.AvgCheck)
 	}
 }
+
+func TestGuestCardService_ListSegments(t *testing.T) {
+	svc, _ := newGuestCardTestService()
+	ctx := context.Background()
+
+	ownerID := uuid.New()
+	bathhouseID := uuid.New()
+
+	// Create guests with different profiles:
+	// client1: 1 visit (new segment)
+	client1 := uuid.New()
+	_ = svc.RecordVisit(ctx, ownerID, client1, bathhouseID, 100000)
+
+	// client2: 3 visits (regular segment)
+	client2 := uuid.New()
+	_ = svc.RecordVisit(ctx, ownerID, client2, bathhouseID, 200000)
+	_ = svc.RecordVisit(ctx, ownerID, client2, bathhouseID, 200000)
+	_ = svc.RecordVisit(ctx, ownerID, client2, bathhouseID, 200000)
+
+	// client3: VIP (> 50,000 RUB = 5,000,000 kopecks)
+	client3 := uuid.New()
+	_ = svc.RecordVisit(ctx, ownerID, client3, bathhouseID, 5100000)
+
+	segments, err := svc.ListSegments(ctx, ownerID, domain.RoleOwner)
+	if err != nil {
+		t.Fatalf("ListSegments: %v", err)
+	}
+
+	if len(segments) != 5 {
+		t.Fatalf("expected 5 segments, got %d", len(segments))
+	}
+
+	// Build a map for easier assertions
+	segMap := make(map[domain.GuestSegmentSlug]int64)
+	for _, s := range segments {
+		segMap[s.Slug] = s.Count
+	}
+
+	if segMap[domain.SegmentNew] != 2 { // client1 (1 visit) and client3 (1 visit)
+		t.Errorf("expected new=2, got %d", segMap[domain.SegmentNew])
+	}
+	if segMap[domain.SegmentRegular] != 1 { // client2
+		t.Errorf("expected regular=1, got %d", segMap[domain.SegmentRegular])
+	}
+	if segMap[domain.SegmentVIP] != 1 { // client3
+		t.Errorf("expected vip=1, got %d", segMap[domain.SegmentVIP])
+	}
+	if segMap[domain.SegmentLost] != 0 { // no one is lost (all recent)
+		t.Errorf("expected lost=0, got %d", segMap[domain.SegmentLost])
+	}
+	if segMap[domain.SegmentBirthdaySoon] != 0 { // no birthday data
+		t.Errorf("expected birthday_soon=0, got %d", segMap[domain.SegmentBirthdaySoon])
+	}
+}
+
+func TestGuestCardService_ListSegments_ForbiddenForClient(t *testing.T) {
+	svc, _ := newGuestCardTestService()
+	ctx := context.Background()
+
+	_, err := svc.ListSegments(ctx, uuid.New(), domain.RoleClient)
+	if err != domain.ErrForbidden {
+		t.Errorf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestGuestCardService_GetGuestsInSegment(t *testing.T) {
+	svc, _ := newGuestCardTestService()
+	ctx := context.Background()
+
+	ownerID := uuid.New()
+	bathhouseID := uuid.New()
+
+	// client1: 1 visit (new)
+	_ = svc.RecordVisit(ctx, ownerID, uuid.New(), bathhouseID, 100000)
+
+	// client2: 3 visits (regular)
+	client2 := uuid.New()
+	_ = svc.RecordVisit(ctx, ownerID, client2, bathhouseID, 200000)
+	_ = svc.RecordVisit(ctx, ownerID, client2, bathhouseID, 200000)
+	_ = svc.RecordVisit(ctx, ownerID, client2, bathhouseID, 200000)
+
+	// Get new segment guests
+	result, err := svc.GetGuestsInSegment(ctx, ownerID, domain.RoleOwner, domain.SegmentNew, 1, 10)
+	if err != nil {
+		t.Fatalf("GetGuestsInSegment new: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("expected 1 new guest, got %d", result.TotalCount)
+	}
+
+	// Get regular segment guests
+	result, err = svc.GetGuestsInSegment(ctx, ownerID, domain.RoleOwner, domain.SegmentRegular, 1, 10)
+	if err != nil {
+		t.Fatalf("GetGuestsInSegment regular: %v", err)
+	}
+	if result.TotalCount != 1 {
+		t.Errorf("expected 1 regular guest, got %d", result.TotalCount)
+	}
+	if len(result.Items) > 0 && result.Items[0].VisitCount < 3 {
+		t.Errorf("expected visit_count >= 3, got %d", result.Items[0].VisitCount)
+	}
+}
+
+func TestGuestCardService_GetGuestsInSegment_ForbiddenForClient(t *testing.T) {
+	svc, _ := newGuestCardTestService()
+	ctx := context.Background()
+
+	_, err := svc.GetGuestsInSegment(ctx, uuid.New(), domain.RoleClient, domain.SegmentNew, 1, 10)
+	if err != domain.ErrForbidden {
+		t.Errorf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestGuestCardService_GetGuestsInSegment_EmptySegment(t *testing.T) {
+	svc, _ := newGuestCardTestService()
+	ctx := context.Background()
+
+	ownerID := uuid.New()
+
+	result, err := svc.GetGuestsInSegment(ctx, ownerID, domain.RoleOwner, domain.SegmentVIP, 1, 10)
+	if err != nil {
+		t.Fatalf("GetGuestsInSegment: %v", err)
+	}
+	if result.TotalCount != 0 {
+		t.Errorf("expected 0 VIP guests, got %d", result.TotalCount)
+	}
+}
+
+func TestGuestCardService_ListSegments_SegmentMetadata(t *testing.T) {
+	svc, _ := newGuestCardTestService()
+	ctx := context.Background()
+
+	segments, err := svc.ListSegments(ctx, uuid.New(), domain.RoleOwner)
+	if err != nil {
+		t.Fatalf("ListSegments: %v", err)
+	}
+
+	// Verify all segments have name and description
+	for _, seg := range segments {
+		if seg.Name == "" {
+			t.Errorf("segment %s has empty name", seg.Slug)
+		}
+		if seg.Description == "" {
+			t.Errorf("segment %s has empty description", seg.Slug)
+		}
+	}
+}

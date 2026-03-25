@@ -471,6 +471,7 @@ type GuestCardRepository interface {
 	ListByOwner(ctx context.Context, filter domain.GuestCardFilter) (*domain.PaginatedResult[domain.GuestCard], error)
 	UpdateNotes(ctx context.Context, id uuid.UUID, notes string, tags []string) error
 	GetStats(ctx context.Context, ownerID uuid.UUID) (*domain.GuestCardStats, error)
+	CountBySegment(ctx context.Context, ownerID uuid.UUID, segment domain.GuestSegmentSlug) (int64, error)
 }
 
 type EscrowRepository interface {
