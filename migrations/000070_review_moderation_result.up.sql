@@ -1,0 +1,2 @@
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS moderation_score DECIMAL(3,2);
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS moderation_flags TEXT[] DEFAULT '{}';

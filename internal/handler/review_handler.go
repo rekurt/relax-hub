@@ -81,6 +81,8 @@ type reviewResponse struct {
 	ValueForMoney   *float64         `json:"value_for_money,omitempty"`
 	Text            string           `json:"text"`
 	Status          string           `json:"status"`
+	ModerationScore *float64         `json:"moderation_score,omitempty"`
+	ModerationFlags []string         `json:"moderation_flags,omitempty"`
 	OwnerResponse   string           `json:"owner_response,omitempty"`
 	OwnerResponseAt *time.Time       `json:"owner_response_at,omitempty"`
 	Images          []string         `json:"images,omitempty"`
@@ -126,6 +128,8 @@ func toReviewResponse(rev *domain.Review) reviewResponse {
 		ValueForMoney:   rev.ValueForMoney,
 		Text:            rev.Text,
 		Status:          string(rev.Status),
+		ModerationScore: rev.ModerationScore,
+		ModerationFlags: rev.ModerationFlags,
 		OwnerResponse:   rev.OwnerResponse,
 		OwnerResponseAt: rev.OwnerResponseAt,
 		Images:          rev.Images,

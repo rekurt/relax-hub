@@ -89,12 +89,12 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 - Create: `internal/moderation/text_moderator.go`
 - Modify: `internal/service/review_service.go`
 
-- [ ] Define TextModerationService interface with Analyze(ctx, text) -> ModerationResult (Flagged, Score, Flags)
-- [ ] Regex-based v1: profanity filter, URL/phone/email detection, spam patterns (repeated chars, ALL CAPS > 50%)
-- [ ] Integration: score > 0.7 → set review to "pending_moderation"; otherwise auto-publish
-- [ ] Store moderation result for admin reference
-- [ ] Write tests with various text samples
-- [ ] Run `go test ./... -v -race` — must pass
+- [x] Define TextModerationService interface with Analyze(ctx, text) -> ModerationResult (Flagged, Score, Flags)
+- [x] Regex-based v1: profanity filter, URL/phone/email detection, spam patterns (repeated chars, ALL CAPS > 50%)
+- [x] Integration: score > 0.7 → set review to "pending_moderation"; otherwise auto-publish
+- [x] Store moderation result for admin reference
+- [x] Write tests with various text samples
+- [x] Run `go test ./... -v -race` — must pass
 
 ### Task 6: Guest Cards (CRM)
 

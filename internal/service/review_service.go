@@ -68,16 +68,17 @@ const (
 )
 
 type reviewService struct {
-	reviewRepo     repository.ReviewRepository
-	bookingRepo    repository.BookingRepository
-	bhRepo         repository.BathhouseRepository
-	mediaRepo      repository.MediaRepository
-	fileStorage    storage.FileStorage
-	accessChecker  *AccessChecker
-	notifSvc       NotificationService
-	contentFilter  *moderation.ContentFilter
-	redisClient    *redis.Client
-	logger         *logger.Logger
+	reviewRepo      repository.ReviewRepository
+	bookingRepo     repository.BookingRepository
+	bhRepo          repository.BathhouseRepository
+	mediaRepo       repository.MediaRepository
+	fileStorage     storage.FileStorage
+	accessChecker   *AccessChecker
+	notifSvc        NotificationService
+	contentFilter   *moderation.ContentFilter
+	textModerator   moderation.TextModerationService
+	redisClient     *redis.Client
+	logger          *logger.Logger
 }
 
 func NewReviewService(
@@ -89,6 +90,7 @@ func NewReviewService(
 	accessChecker *AccessChecker,
 	notifSvc NotificationService,
 	contentFilter *moderation.ContentFilter,
+	textModerator moderation.TextModerationService,
 	redisClient *redis.Client,
 	log *logger.Logger,
 ) ReviewService {
@@ -101,6 +103,7 @@ func NewReviewService(
 		accessChecker: accessChecker,
 		notifSvc:      notifSvc,
 		contentFilter: contentFilter,
+		textModerator: textModerator,
 		redisClient:   redisClient,
 		logger:        log,
 	}
@@ -151,8 +154,21 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 	// If criteria are provided, compute the overall rating from them
 	review.ComputeOverallRating()
 
-	// Apply content filtering if moderation is enabled
-	if s.contentFilter.IsEnabled() {
+	// Apply text moderation (NLP auto-moderation)
+	if s.textModerator != nil && s.contentFilter.IsEnabled() {
+		modResult := s.textModerator.Analyze(ctx, input.Text)
+		score := modResult.Score
+		review.ModerationScore = &score
+		review.ModerationFlags = modResult.Flags
+
+		if modResult.Flagged {
+			// Score >= 0.7: needs manual review
+			review.Status = domain.ReviewStatusPending
+		} else {
+			review.Status = domain.ReviewStatusApproved
+		}
+	} else if s.contentFilter.IsEnabled() {
+		// Fallback to legacy content filter (no text moderator)
 		filterResult := s.contentFilter.CheckText(input.Text)
 		if !filterResult.IsClean {
 			review.Status = domain.ReviewStatusRejected

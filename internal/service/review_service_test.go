@@ -34,7 +34,7 @@ func newReviewTestEnv() *reviewTestEnv {
 	contentFilter := moderation.NewContentFilter(false, false)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
 	return &reviewTestEnv{
 		svc:         svc,
 		bhRepo:      bhRepo,
@@ -440,7 +440,7 @@ func TestReviewService_Create_WithModeration_CleanText(t *testing.T) {
 	contentFilter := moderation.NewContentFilter(true, true)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())
@@ -471,7 +471,7 @@ func TestReviewService_Create_WithModeration_AutoRejectProfanity(t *testing.T) {
 	contentFilter := moderation.NewContentFilter(true, false)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())
@@ -505,7 +505,7 @@ func TestReviewService_Create_WithModeration_PendingCleanText(t *testing.T) {
 	contentFilter := moderation.NewContentFilter(true, false)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())
@@ -1137,7 +1137,7 @@ func newReviewTestEnvWithTracking() *reviewTestEnvWithTracking {
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
 	notifSvc := &trackingNotifService{}
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, notifSvc, contentFilter, nil, log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, notifSvc, contentFilter, nil, nil, log)
 	return &reviewTestEnvWithTracking{
 		svc: svc, bhRepo: bhRepo, bookingRepo: bookingRepo, reviewRepo: reviewRepo, notifSvc: notifSvc,
 	}
@@ -1283,5 +1283,189 @@ func TestQualityMonitoring_NoActionUnderThreshold(t *testing.T) {
 	updatedBh, _ := env.bhRepo.GetByID(ctx, bathhouseID)
 	if updatedBh.Status != domain.BathhouseStatusActive {
 		t.Errorf("expected status active, got %s", updatedBh.Status)
+	}
+}
+
+// --- Text Moderation Integration Tests ---
+
+func newReviewTestEnvWithModeration() *reviewTestEnv {
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	reviewRepo := mock.NewReviewRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	ac := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	contentFilter := moderation.NewContentFilter(true, false) // moderation enabled
+	textModerator := moderation.NewRegexTextModerator()
+	mediaRepo := mock.NewMediaRepo()
+	noopStore := storage.NewMockStorage()
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, textModerator, nil, log)
+	return &reviewTestEnv{
+		svc:         svc,
+		bhRepo:      bhRepo,
+		bookingRepo: bookingRepo,
+		reviewRepo:  reviewRepo,
+		repRepo:     repRepo,
+	}
+}
+
+func TestTextModeration_CleanReviewAutoApproved(t *testing.T) {
+	env := newReviewTestEnvWithModeration()
+	ctx := context.Background()
+	clientID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: uuid.New(), Name: "Тест Баня", Slug: "test-mod-1",
+		Address: "ул. Тестовая 1", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	booking := createCompletedBooking(t, env.bookingRepo, clientID, bathhouseID)
+
+	review, err := env.svc.Create(ctx, clientID, service.CreateReviewInput{
+		BookingID: booking.ID, Rating: 5, Text: "Отличное место для отдыха! Рекомендую всем.",
+	})
+	if err != nil {
+		t.Fatalf("create review: %v", err)
+	}
+
+	if review.Status != domain.ReviewStatusApproved {
+		t.Errorf("expected approved, got %s", review.Status)
+	}
+	if review.ModerationScore == nil {
+		t.Fatal("expected moderation score to be set")
+	}
+	if *review.ModerationScore >= 0.7 {
+		t.Errorf("expected score < 0.7, got %f", *review.ModerationScore)
+	}
+}
+
+func TestTextModeration_ProfanitySetsPending(t *testing.T) {
+	env := newReviewTestEnvWithModeration()
+	ctx := context.Background()
+	clientID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: uuid.New(), Name: "Тест Баня", Slug: "test-mod-2",
+		Address: "ул. Тестовая 2", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	booking := createCompletedBooking(t, env.bookingRepo, clientID, bathhouseID)
+
+	review, err := env.svc.Create(ctx, clientID, service.CreateReviewInput{
+		BookingID: booking.ID, Rating: 1,
+		Text: "Это просто пиздец, ужасное обслуживание в этом заведении https://example.com",
+	})
+	if err != nil {
+		t.Fatalf("create review: %v", err)
+	}
+
+	if review.Status != domain.ReviewStatusPending {
+		t.Errorf("expected pending (moderation flagged), got %s", review.Status)
+	}
+	if review.ModerationScore == nil {
+		t.Fatal("expected moderation score to be set")
+	}
+	if *review.ModerationScore < 0.7 {
+		t.Errorf("expected score >= 0.7, got %f", *review.ModerationScore)
+	}
+	if len(review.ModerationFlags) == 0 {
+		t.Error("expected moderation flags to be set")
+	}
+}
+
+func TestTextModeration_StoredForAdminReference(t *testing.T) {
+	env := newReviewTestEnvWithModeration()
+	ctx := context.Background()
+	clientID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: uuid.New(), Name: "Тест Баня", Slug: "test-mod-3",
+		Address: "ул. Тестовая 3", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	booking := createCompletedBooking(t, env.bookingRepo, clientID, bathhouseID)
+
+	review, err := env.svc.Create(ctx, clientID, service.CreateReviewInput{
+		BookingID: booking.ID, Rating: 3,
+		Text: "Позвоните на +7 999 123-45-67 для записи в другое место",
+	})
+	if err != nil {
+		t.Fatalf("create review: %v", err)
+	}
+
+	// Score should be stored even if not flagged (phone = 0.3, < 0.7)
+	if review.ModerationScore == nil {
+		t.Fatal("expected moderation score to be stored")
+	}
+
+	// Fetch from repo to verify persistence
+	stored, err := env.reviewRepo.GetByID(ctx, review.ID)
+	if err != nil {
+		t.Fatalf("get review: %v", err)
+	}
+	if stored.ModerationScore == nil {
+		t.Error("expected moderation score persisted in repo")
+	}
+	found := false
+	for _, f := range stored.ModerationFlags {
+		if f == "contains_phone_numbers" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("expected phone flag in stored review, got %v", stored.ModerationFlags)
+	}
+}
+
+func TestTextModeration_DisabledFallsBackToContentFilter(t *testing.T) {
+	// When textModerator is nil but contentFilter is enabled, legacy path is used
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	reviewRepo := mock.NewReviewRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	ac := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	contentFilter := moderation.NewContentFilter(true, true) // enabled + auto-approve
+	mediaRepo := mock.NewMediaRepo()
+	noopStore := storage.NewMockStorage()
+	// textModerator is nil - legacy path
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
+
+	ctx := context.Background()
+	clientID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: uuid.New(), Name: "Тест Баня", Slug: "test-mod-4",
+		Address: "ул. Тестовая 4", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+	}
+	_ = bhRepo.Create(ctx, bh)
+
+	booking := createCompletedBooking(t, bookingRepo, clientID, bathhouseID)
+
+	review, err := svc.Create(ctx, clientID, service.CreateReviewInput{
+		BookingID: booking.ID, Rating: 4, Text: "Хороший сервис, всё понравилось!",
+	})
+	if err != nil {
+		t.Fatalf("create review: %v", err)
+	}
+
+	// Should use legacy content filter auto-approve path
+	if review.Status != domain.ReviewStatusApproved {
+		t.Errorf("expected approved via legacy path, got %s", review.Status)
+	}
+	// No moderation score since textModerator was nil
+	if review.ModerationScore != nil {
+		t.Error("expected nil moderation score when textModerator is nil")
 	}
 }

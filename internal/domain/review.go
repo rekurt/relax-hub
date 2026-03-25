@@ -39,6 +39,8 @@ type Review struct {
 	RejectionReasons []string
 	OwnerResponse    string
 	OwnerResponseAt  *time.Time
+	ModerationScore  *float64
+	ModerationFlags  []string
 	Images           []string
 	CreatedAt        time.Time
 	UpdatedAt        time.Time

@@ -8,6 +8,9 @@ import (
 var Module = fx.Module("moderation",
 	fx.Provide(
 		NewContentFilterProvider,
+		func() TextModerationService {
+			return NewRegexTextModerator()
+		},
 	),
 )
 
