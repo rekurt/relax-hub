@@ -33,6 +33,7 @@ type DisputeService interface {
 type disputeService struct {
 	disputeRepo   repository.DisputeRepository
 	escrowSvc     EscrowService
+	walletSvc     WalletService
 	bookingRepo   repository.BookingRepository
 	bathhouseRepo repository.BathhouseRepository
 	logger        *logger.Logger
@@ -41,6 +42,7 @@ type disputeService struct {
 func NewDisputeService(
 	disputeRepo repository.DisputeRepository,
 	escrowSvc EscrowService,
+	walletSvc WalletService,
 	bookingRepo repository.BookingRepository,
 	bathhouseRepo repository.BathhouseRepository,
 	log *logger.Logger,
@@ -48,6 +50,7 @@ func NewDisputeService(
 	return &disputeService{
 		disputeRepo:   disputeRepo,
 		escrowSvc:     escrowSvc,
+		walletSvc:     walletSvc,
 		bookingRepo:   bookingRepo,
 		bathhouseRepo: bathhouseRepo,
 		logger:        log,
@@ -216,8 +219,21 @@ func (s *disputeService) ResolveDispute(ctx context.Context, disputeID uuid.UUID
 	// Process refund via escrow if applicable
 	if resolution == domain.DisputeResolutionFullRefund || resolution == domain.DisputeResolutionPartialRefund {
 		if refundAmount > 0 {
-			if escrowErr := s.escrowSvc.MarkDisputedByBookingID(ctx, dispute.BookingID); escrowErr != nil {
+			if escrowErr := s.escrowSvc.ProcessRefundByBookingID(ctx, dispute.BookingID, refundAmount); escrowErr != nil {
 				s.logger.Error("process dispute refund", "dispute_id", disputeID, "error", escrowErr)
+			}
+		}
+	}
+
+	// Credit compensation to initiator's wallet if applicable
+	if compensationAmount > 0 {
+		wallet, err := s.walletSvc.GetWallet(ctx, dispute.InitiatorID)
+		if err != nil {
+			s.logger.Error("get wallet for dispute compensation", "dispute_id", disputeID, "initiator_id", dispute.InitiatorID, "error", err)
+		} else {
+			_, err = s.walletSvc.AddBonus(ctx, wallet.ID, compensationAmount, domain.WalletTxBonus, nil, fmt.Sprintf("Компенсация по спору %s", disputeID))
+			if err != nil {
+				s.logger.Error("credit dispute compensation", "dispute_id", disputeID, "amount", compensationAmount, "error", err)
 			}
 		}
 	}

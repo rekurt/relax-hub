@@ -19,6 +19,7 @@ type EscrowService interface {
 	MarkDisputed(ctx context.Context, escrowID uuid.UUID) error
 	MarkDisputedByBookingID(ctx context.Context, bookingID uuid.UUID) error
 	ProcessRefund(ctx context.Context, escrowID uuid.UUID, refundAmount int64) error
+	ProcessRefundByBookingID(ctx context.Context, bookingID uuid.UUID, refundAmount int64) error
 	ProcessMaturedEscrows(ctx context.Context) (int, error)
 }
 
@@ -175,6 +176,14 @@ func (s *escrowService) MarkDisputedByBookingID(ctx context.Context, bookingID u
 		return err
 	}
 	return s.MarkDisputed(ctx, escrow.ID)
+}
+
+func (s *escrowService) ProcessRefundByBookingID(ctx context.Context, bookingID uuid.UUID, refundAmount int64) error {
+	escrow, err := s.escrowRepo.GetByBookingID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+	return s.ProcessRefund(ctx, escrow.ID, refundAmount)
 }
 
 func (s *escrowService) ProcessRefund(ctx context.Context, escrowID uuid.UUID, refundAmount int64) error {

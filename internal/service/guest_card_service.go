@@ -91,6 +91,17 @@ func (s *guestCardService) UpdateGuestNotes(ctx context.Context, userID uuid.UUI
 		tags = []string{}
 	}
 
+	// Verify ownership: the guest card must belong to the calling user (or admin)
+	if role != domain.RoleAdmin {
+		card, err := s.guestCardRepo.GetByID(ctx, cardID)
+		if err != nil {
+			return err
+		}
+		if card.OwnerID != userID {
+			return domain.ErrForbidden
+		}
+	}
+
 	return s.guestCardRepo.UpdateNotes(ctx, cardID, notes, tags)
 }
 

@@ -70,6 +70,18 @@ func (r *GuestCardRepo) Upsert(_ context.Context, card *domain.GuestCard) error 
 	return nil
 }
 
+func (r *GuestCardRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.GuestCard, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	c, ok := r.cards[id]
+	if !ok {
+		return nil, domain.ErrNotFound
+	}
+	cp := *c
+	return &cp, nil
+}
+
 func (r *GuestCardRepo) GetByOwnerAndClient(_ context.Context, ownerID, clientID, bathhouseID uuid.UUID) (*domain.GuestCard, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

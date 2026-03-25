@@ -93,6 +93,18 @@ func (r *guestCardRepo) Upsert(ctx context.Context, card *domain.GuestCard) erro
 	return nil
 }
 
+func (r *guestCardRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.GuestCard, error) {
+	query := `SELECT ` + guestCardColumns + ` FROM guest_cards WHERE id = $1`
+	card, err := scanGuestCard(r.pool.QueryRow(ctx, query, id))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, fmt.Errorf("get guest card by id: %w", err)
+	}
+	return card, nil
+}
+
 func (r *guestCardRepo) GetByOwnerAndClient(ctx context.Context, ownerID, clientID, bathhouseID uuid.UUID) (*domain.GuestCard, error) {
 	query := `SELECT ` + guestCardColumns + ` FROM guest_cards WHERE owner_id = $1 AND client_id = $2 AND bathhouse_id = $3`
 	card, err := scanGuestCard(r.pool.QueryRow(ctx, query, ownerID, clientID, bathhouseID))
@@ -121,8 +133,9 @@ func (r *guestCardRepo) ListByOwner(ctx context.Context, filter domain.GuestCard
 	}
 
 	if filter.Search != nil && *filter.Search != "" {
-		conditions = append(conditions, fmt.Sprintf("(u.name ILIKE $%d OR u.email ILIKE $%d OR u.phone ILIKE $%d)", argIdx, argIdx, argIdx))
-		args = append(args, "%"+*filter.Search+"%")
+		escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(*filter.Search)
+		conditions = append(conditions, fmt.Sprintf("(u.name ILIKE $%d ESCAPE '\\' OR u.email ILIKE $%d ESCAPE '\\' OR u.phone ILIKE $%d ESCAPE '\\')", argIdx, argIdx, argIdx))
+		args = append(args, "%"+escaped+"%")
 		argIdx++
 	}
 

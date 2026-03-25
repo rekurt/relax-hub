@@ -467,6 +467,7 @@ type HolidayRepository interface {
 
 type GuestCardRepository interface {
 	Upsert(ctx context.Context, card *domain.GuestCard) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.GuestCard, error)
 	GetByOwnerAndClient(ctx context.Context, ownerID, clientID, bathhouseID uuid.UUID) (*domain.GuestCard, error)
 	ListByOwner(ctx context.Context, filter domain.GuestCardFilter) (*domain.PaginatedResult[domain.GuestCard], error)
 	UpdateNotes(ctx context.Context, id uuid.UUID, notes string, tags []string) error

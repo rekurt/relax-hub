@@ -16,6 +16,7 @@ import (
 // mockEscrowService implements service.EscrowService for testing
 type mockEscrowService struct {
 	disputedBookings []uuid.UUID
+	refundedBookings []uuid.UUID
 }
 
 func (m *mockEscrowService) CreateEscrow(_ context.Context, _ uuid.UUID, _ int64, _ int64) (*domain.Escrow, error) {
@@ -39,8 +40,72 @@ func (m *mockEscrowService) ProcessRefund(_ context.Context, _ uuid.UUID, _ int6
 	return nil
 }
 
+func (m *mockEscrowService) ProcessRefundByBookingID(_ context.Context, bookingID uuid.UUID, _ int64) error {
+	m.refundedBookings = append(m.refundedBookings, bookingID)
+	return nil
+}
+
 func (m *mockEscrowService) ProcessMaturedEscrows(_ context.Context) (int, error) {
 	return 0, nil
+}
+
+// mockDisputeWalletService implements service.WalletService for dispute testing
+type mockDisputeWalletService struct {
+	wallets map[uuid.UUID]*domain.Wallet
+}
+
+func newMockDisputeWalletService() *mockDisputeWalletService {
+	return &mockDisputeWalletService{wallets: make(map[uuid.UUID]*domain.Wallet)}
+}
+
+func (m *mockDisputeWalletService) CreateWallet(_ context.Context, userID uuid.UUID, currency domain.WalletCurrency) (*domain.Wallet, error) {
+	w := &domain.Wallet{ID: uuid.New(), UserID: userID, Currency: currency}
+	m.wallets[userID] = w
+	return w, nil
+}
+
+func (m *mockDisputeWalletService) GetWallet(_ context.Context, userID uuid.UUID) (*domain.Wallet, error) {
+	w, ok := m.wallets[userID]
+	if !ok {
+		return nil, domain.ErrWalletNotFound
+	}
+	return w, nil
+}
+
+func (m *mockDisputeWalletService) TopUp(_ context.Context, _ uuid.UUID, _ int64) (*domain.WalletTransaction, error) {
+	return &domain.WalletTransaction{ID: uuid.New()}, nil
+}
+func (m *mockDisputeWalletService) Spend(_ context.Context, _ uuid.UUID, _ int64, _ string, _ *uuid.UUID, _ string) (*domain.WalletTransaction, error) {
+	return &domain.WalletTransaction{ID: uuid.New()}, nil
+}
+func (m *mockDisputeWalletService) Hold(_ context.Context, _ uuid.UUID, _ int64, _ string, _ *uuid.UUID, _ string, _ time.Time) (*domain.WalletHold, error) {
+	return &domain.WalletHold{ID: uuid.New()}, nil
+}
+func (m *mockDisputeWalletService) CaptureHold(_ context.Context, _ uuid.UUID) (*domain.WalletTransaction, error) {
+	return &domain.WalletTransaction{ID: uuid.New()}, nil
+}
+func (m *mockDisputeWalletService) ReleaseHold(_ context.Context, _ uuid.UUID) error { return nil }
+func (m *mockDisputeWalletService) Refund(_ context.Context, _ uuid.UUID, _ int64, _ string, _ *uuid.UUID, _ string) (*domain.WalletTransaction, error) {
+	return &domain.WalletTransaction{ID: uuid.New()}, nil
+}
+func (m *mockDisputeWalletService) AddBonus(_ context.Context, _ uuid.UUID, _ int64, _ domain.WalletTransactionType, _ *time.Time, _ string) (*domain.WalletTransaction, error) {
+	return &domain.WalletTransaction{ID: uuid.New()}, nil
+}
+func (m *mockDisputeWalletService) GetBalance(_ context.Context, _ uuid.UUID) (*service.WalletBalanceSummary, error) {
+	return &service.WalletBalanceSummary{}, nil
+}
+func (m *mockDisputeWalletService) ListTransactions(_ context.Context, _ uuid.UUID, _ domain.WalletTransactionFilter) (*domain.PaginatedResult[domain.WalletTransaction], error) {
+	return &domain.PaginatedResult[domain.WalletTransaction]{}, nil
+}
+func (m *mockDisputeWalletService) GetActiveHolds(_ context.Context, _ uuid.UUID) ([]domain.WalletHold, error) {
+	return nil, nil
+}
+func (m *mockDisputeWalletService) ExpireBonuses(_ context.Context) (int, error) { return 0, nil }
+func (m *mockDisputeWalletService) ExpireBonusesForWallet(_ context.Context, _ uuid.UUID) (int, error) {
+	return 0, nil
+}
+func (m *mockDisputeWalletService) FreezeAndZeroBalance(_ context.Context, _ uuid.UUID) error {
+	return nil
 }
 
 func newDisputeTestService() (service.DisputeService, *mock.DisputeRepo, *mock.BookingRepo, *mock.BathhouseRepo, *mockEscrowService) {
@@ -48,8 +113,9 @@ func newDisputeTestService() (service.DisputeService, *mock.DisputeRepo, *mock.B
 	bookingRepo := mock.NewBookingRepo()
 	bhRepo := mock.NewBathhouseRepo()
 	escrowSvc := &mockEscrowService{}
+	walletSvc := newMockDisputeWalletService()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewDisputeService(disputeRepo, escrowSvc, bookingRepo, bhRepo, log)
+	svc := service.NewDisputeService(disputeRepo, escrowSvc, walletSvc, bookingRepo, bhRepo, log)
 	return svc, disputeRepo, bookingRepo, bhRepo, escrowSvc
 }
 
