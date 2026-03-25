@@ -126,4 +126,7 @@ var (
 	ErrBroadcastNotDraft    = errors.New("broadcast is not in draft status")
 
 	ErrAutoScenarioNotFound = errors.New("auto scenario not found")
+
+	ErrTemplateNotFound    = errors.New("response template not found")
+	ErrTemplateLimitReached = errors.New("response template limit reached")
 )

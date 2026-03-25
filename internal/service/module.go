@@ -80,6 +80,7 @@ var Module = fx.Module("service",
 		fx.Annotate(NewAutoScenarioService, fx.As(new(AutoScenarioService))),
 		fx.Annotate(NewHolidayService, fx.As(new(HolidayService))),
 		fx.Annotate(NewServiceFeeService, fx.As(new(ServiceFeeService))),
+		fx.Annotate(NewTemplateService, fx.As(new(TemplateService))),
 		fx.Annotate(
 			func(escrowRepo repository.EscrowRepository, bookingRepo repository.BookingRepository, bhRepo repository.BathhouseRepository, walletSvc WalletService, cfg *config.Config, log *logger.Logger) EscrowService {
 				return NewEscrowService(escrowRepo, bookingRepo, bhRepo, walletSvc, log, cfg.Escrow.ClaimHours)

@@ -69,6 +69,7 @@ type RouterParams struct {
 	GuestCardHandler         *handler.GuestCardHandler
 	BroadcastHandler         *handler.BroadcastHandler
 	AutoScenarioHandler      *handler.AutoScenarioHandler
+	TemplateHandler          *handler.TemplateHandler
 	ServiceFeeHandler        *handler.ServiceFeeHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
@@ -405,6 +406,12 @@ func NewRouter(p RouterParams) http.Handler {
 		// CRM Auto-scenarios (owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/auto-scenarios", p.AutoScenarioHandler.ListAutoScenarios)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/crm/auto-scenarios/{type}", p.AutoScenarioHandler.UpdateAutoScenario)
+
+		// CRM Response Templates (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/crm/templates", p.TemplateHandler.CreateTemplate)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/templates", p.TemplateHandler.ListTemplates)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/crm/templates/{id}", p.TemplateHandler.UpdateTemplate)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/crm/templates/{id}", p.TemplateHandler.DeleteTemplate)
 
 		// Notifications (authenticated)
 		r.With(auth).Get("/my/notifications", p.NotifHandler.List)

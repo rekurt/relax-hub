@@ -174,12 +174,12 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 - Modify: `internal/repository/interfaces.go`
 - Create: `migrations/XXXXXX_response_templates.up.sql`
 
-- [ ] ResponseTemplate model: ID, OwnerID, Title, Body, IsDefault, SortOrder, CreatedAt
-- [ ] TemplateRepository: Create, Update, Delete, ListByOwner, GetByID
-- [ ] TemplateService: Create, Update, Delete, List, SeedDefaults (3 default templates on first use)
-- [ ] Endpoints: POST/GET/PUT/DELETE /api/v1/my/crm/templates
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] ResponseTemplate model: ID, OwnerID, Title, Body, IsDefault, SortOrder, CreatedAt
+- [x] TemplateRepository: Create, Update, Delete, ListByOwner, GetByID
+- [x] TemplateService: Create, Update, Delete, List, SeedDefaults (3 default templates on first use)
+- [x] Endpoints: POST/GET/PUT/DELETE /api/v1/my/crm/templates
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 11: Support Tickets
 

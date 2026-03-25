@@ -492,6 +492,15 @@ type AutoScenarioRepository interface {
 	HasBeenExecuted(ctx context.Context, scenarioID, guestCardID uuid.UUID) (bool, error)
 }
 
+type ResponseTemplateRepository interface {
+	Create(ctx context.Context, template *domain.ResponseTemplate) error
+	Update(ctx context.Context, template *domain.ResponseTemplate) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	ListByOwner(ctx context.Context, ownerID uuid.UUID) ([]domain.ResponseTemplate, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.ResponseTemplate, error)
+	CountByOwner(ctx context.Context, ownerID uuid.UUID) (int64, error)
+}
+
 type EscrowRepository interface {
 	Create(ctx context.Context, escrow *domain.Escrow) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Escrow, error)

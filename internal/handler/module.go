@@ -77,5 +77,6 @@ var Module = fx.Module("handler",
 		NewAutoScenarioHandler,
 		NewHolidayHandler,
 		NewServiceFeeHandler,
+		NewTemplateHandler,
 	),
 )
