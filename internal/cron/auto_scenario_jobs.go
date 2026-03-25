@@ -2,21 +2,14 @@ package cron
 
 import (
 	"context"
-	"time"
+	"fmt"
 )
 
-func (cs *CronScheduler) handleAutoScenarioExecution() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting auto scenario execution")
-
+func (cs *CronScheduler) autoScenarioExecution(ctx context.Context) error {
 	sent, err := cs.autoScenarioSvc.ExecuteScenarios(ctx)
 	if err != nil {
-		cs.logger.Error("Auto scenario execution failed", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("execute scenarios: %w", err)
 	}
-
-	cs.logger.Info("Auto scenario execution completed", "sent", sent, "duration", time.Since(start))
+	cs.logger.Info("Auto scenario execution done", "sent", sent)
+	return nil
 }

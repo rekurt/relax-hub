@@ -10,45 +10,25 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func (cs *CronScheduler) handleAutoRejectTimedOutRequests() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting auto-reject timed out booking requests")
-
+func (cs *CronScheduler) autoRejectTimedOutRequests(ctx context.Context) error {
 	rejected, err := cs.bookingSvc.AutoRejectTimedOutRequests(ctx)
 	if err != nil {
-		cs.logger.Error("Auto-reject timed out requests failed", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("auto reject timed out requests: %w", err)
 	}
-
-	cs.logger.Info("Auto-reject timed out requests completed", "rejected", rejected, "duration", time.Since(start))
+	cs.logger.Info("Auto-reject done", "rejected", rejected)
+	return nil
 }
 
-func (cs *CronScheduler) handleNoShowDetection() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting no-show detection")
-
+func (cs *CronScheduler) noShowDetection(ctx context.Context) error {
 	marked, err := cs.bookingSvc.MarkNoShows(ctx)
 	if err != nil {
-		cs.logger.Error("No-show detection failed", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("mark no-shows: %w", err)
 	}
-
-	cs.logger.Info("No-show detection completed", "marked", marked, "duration", time.Since(start))
+	cs.logger.Info("No-show detection done", "marked", marked)
+	return nil
 }
 
-func (cs *CronScheduler) handleBookingReminders() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting booking reminders")
-
+func (cs *CronScheduler) bookingRemindersJob(ctx context.Context) error {
 	now := time.Now()
 	sent := 0
 
@@ -96,23 +76,17 @@ func (cs *CronScheduler) handleBookingReminders() {
 		}
 	})
 
-	cs.logger.Info("Booking reminders completed", "sent", sent, "duration", time.Since(start))
+	cs.logger.Info("Booking reminders done", "sent", sent)
+	return nil
 }
 
-func (cs *CronScheduler) handleResponseRateRecalculation() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting response rate recalculation")
-
+func (cs *CronScheduler) responseRateRecalculation(ctx context.Context) error {
 	updated, err := cs.bookingSvc.RecalculateResponseRates(ctx)
 	if err != nil {
-		cs.logger.Error("Response rate recalculation failed", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("recalculate response rates: %w", err)
 	}
-
-	cs.logger.Info("Response rate recalculation completed", "updated", updated, "duration", time.Since(start))
+	cs.logger.Info("Response rate recalculation done", "updated", updated)
+	return nil
 }
 
 type reminderInfo struct {

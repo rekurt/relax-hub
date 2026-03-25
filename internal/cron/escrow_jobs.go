@@ -2,21 +2,14 @@ package cron
 
 import (
 	"context"
-	"time"
+	"fmt"
 )
 
-func (cs *CronScheduler) handleEscrowRelease() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting escrow release processing")
-
+func (cs *CronScheduler) escrowReleaseJob(ctx context.Context) error {
 	released, err := cs.escrowSvc.ProcessMaturedEscrows(ctx)
 	if err != nil {
-		cs.logger.Error("Escrow release processing failed", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("process matured escrows: %w", err)
 	}
-
-	cs.logger.Info("Escrow release processing completed", "released", released, "duration", time.Since(start))
+	cs.logger.Info("Escrow release done", "released", released)
+	return nil
 }

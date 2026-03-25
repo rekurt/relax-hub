@@ -8,30 +8,21 @@ import (
 	"github.com/nikitaaldaev/bani/internal/domain"
 )
 
-// handleSubscriptionExpiryNotify notifies owners about subscriptions expiring within 3 days.
-func (cs *CronScheduler) handleSubscriptionExpiryNotify() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting subscription expiry notification check")
-
+// subscriptionExpiryNotify notifies owners about subscriptions expiring within 3 days.
+func (cs *CronScheduler) subscriptionExpiryNotify(ctx context.Context) error {
 	now := time.Now()
-	threshold := now.Add(3 * 24 * time.Hour) // 3 days from now
+	threshold := now.Add(3 * 24 * time.Hour)
 
 	subs, err := cs.subscriptionRepo.GetExpiring(ctx, threshold)
 	if err != nil {
-		cs.logger.Error("Failed to get expiring subscriptions", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("get expiring subscriptions: %w", err)
 	}
 
 	notified := 0
 	for _, sub := range subs {
-		// Skip already expired subscriptions — they'll be handled by handleExpiredSubscriptionUpdate
 		if sub.EndDate != nil && sub.EndDate.Before(now) {
 			continue
 		}
-		// Skip non-active subscriptions
 		if sub.Status != domain.SubscriptionActive {
 			continue
 		}
@@ -56,23 +47,17 @@ func (cs *CronScheduler) handleSubscriptionExpiryNotify() {
 		notified++
 	}
 
-	cs.logger.Info("Subscription expiry notification check completed", "notified", notified, "duration", time.Since(start))
+	cs.logger.Info("Subscription expiry notify done", "notified", notified)
+	return nil
 }
 
-// handleExpiredSubscriptionUpdate marks expired subscriptions as expired and notifies owners.
-func (cs *CronScheduler) handleExpiredSubscriptionUpdate() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting expired subscription update")
-
+// expiredSubscriptionUpdate marks expired subscriptions as expired and notifies owners.
+func (cs *CronScheduler) expiredSubscriptionUpdate(ctx context.Context) error {
 	now := time.Now()
 
 	subs, err := cs.subscriptionRepo.GetExpiring(ctx, now)
 	if err != nil {
-		cs.logger.Error("Failed to get expired subscriptions", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("get expired subscriptions: %w", err)
 	}
 
 	updated := 0
@@ -101,24 +86,19 @@ func (cs *CronScheduler) handleExpiredSubscriptionUpdate() {
 		updated++
 	}
 
-	cs.logger.Info("Expired subscription update completed", "updated", updated, "duration", time.Since(start))
+	cs.logger.Info("Expired subscription update done", "updated", updated)
+	return nil
 }
 
-// handlePromoDeactivation deactivates promo codes that have passed their valid_until date.
-func (cs *CronScheduler) handlePromoDeactivation() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting promo code deactivation")
-
+// promoDeactivation deactivates promo codes that have passed their valid_until date.
+func (cs *CronScheduler) promoDeactivation(ctx context.Context) error {
 	count, err := cs.promoRepo.DeactivateExpired(ctx, time.Now())
 	if err != nil {
-		cs.logger.Error("Promo code deactivation failed", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("deactivate expired promos: %w", err)
 	}
 
-	cs.logger.Info("Promo code deactivation completed", "deactivated", count, "duration", time.Since(start))
+	cs.logger.Info("Promo deactivation done", "deactivated", count)
+	return nil
 }
 
 func formatDays(days int) string {

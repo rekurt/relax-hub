@@ -2,7 +2,6 @@ package cron
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/nikitaaldaev/bani/config"
@@ -20,6 +19,7 @@ type CronScheduler struct {
 	c                  *cron.Cron
 	cfg                *config.Config
 	logger             *logger.Logger
+	jobs               []RegisteredJob
 	analyticsService   service.AnalyticsService
 	analyticsRepo      repository.AnalyticsRepository
 	subscriptionRepo   repository.SubscriptionRepository
@@ -61,8 +61,13 @@ func NewCronScheduler(
 	ticketSvc service.TicketService,
 	redisClient *redis.Client,
 ) *CronScheduler {
+	timezone := cfg.Cron.Timezone
+	if timezone == "" {
+		timezone = "Europe/Moscow"
+	}
+
 	return &CronScheduler{
-		c:                  cron.New(),
+		c:                  newCronWithTimezone(timezone, l),
 		cfg:                cfg,
 		logger:             l,
 		analyticsService:   svc,
@@ -99,211 +104,78 @@ func RegisterCron(lc fx.Lifecycle, cs *CronScheduler) {
 
 // Start begins the cron scheduler and registers jobs
 func (cs *CronScheduler) Start(ctx context.Context) error {
-	// Daily aggregation at 02:00 UTC
-	if _, err := cs.c.AddFunc("0 2 * * *", cs.handleDailyAggregation); err != nil {
-		cs.logger.Error("Failed to register daily aggregation job", "error", err)
-		return fmt.Errorf("failed to register daily aggregation: %w", err)
+	if !cs.cfg.Cron.Enabled {
+		cs.logger.Info("Cron scheduler is disabled via config")
+		return nil
 	}
-	cs.logger.Info("Registered daily aggregation job at 02:00 UTC")
 
-	// Weekly cleanup at 03:00 UTC on Sunday
-	if _, err := cs.c.AddFunc("0 3 * * 0", cs.handleWeeklyCleanup); err != nil {
-		cs.logger.Error("Failed to register weekly cleanup job", "error", err)
-		return fmt.Errorf("failed to register weekly cleanup: %w", err)
+	// Register all jobs using the new Register method with automatic
+	// panic recovery, structured logging, and distributed locking
+	jobs := []struct {
+		spec string
+		name string
+		fn   JobFunc
+	}{
+		{"0 2 * * *", "daily_aggregation", cs.dailyAggregation},
+		{"0 3 * * 0", "weekly_cleanup", cs.weeklyCleanup},
+		{"0 6 * * *", "subscription_expiry_notify", cs.subscriptionExpiryNotify},
+		{"5 6 * * *", "expired_subscription_update", cs.expiredSubscriptionUpdate},
+		{"10 6 * * *", "promo_deactivation", cs.promoDeactivation},
+		{"*/15 * * * *", "calendar_sync", cs.calendarSyncJob},
+		{"0 4 * * *", "bonus_expiration", cs.bonusExpiration},
+		{"0 5 * * *", "bonus_expiry_notify", cs.bonusExpiryNotify},
+		{"0 * * * *", "expired_hold_cleanup", cs.expiredHoldCleanup},
+		{"30 3 * * *", "account_deletion_execution", cs.accountDeletionExecution},
+		{"0 7 * * *", "account_deletion_reminders", cs.accountDeletionReminders},
+		{"15 3 * * *", "session_cleanup", cs.sessionCleanupJob},
+		{"0 8 * * *", "saved_search_check", cs.savedSearchCheck},
+		{"*/15 * * * *", "auto_reject_timed_out_requests", cs.autoRejectTimedOutRequests},
+		{"*/15 * * * *", "no_show_detection", cs.noShowDetection},
+		{"30 * * * *", "escrow_release", cs.escrowReleaseJob},
+		{"*/15 * * * *", "booking_reminders", cs.bookingRemindersJob},
+		{"0 3 * * *", "response_rate_recalculation", cs.responseRateRecalculation},
+		{"30 2 * * *", "platform_average_refresh", cs.platformAverageRefresh},
+		{"45 * * * *", "auto_review_requests", cs.autoReviewRequests},
+		{"15 * * * *", "auto_scenario_execution", cs.autoScenarioExecution},
+		{"*/15 * * * *", "ticket_auto_escalation", cs.ticketAutoEscalation},
+		{"30 4 * * *", "ticket_auto_close", cs.ticketAutoCloseJob},
 	}
-	cs.logger.Info("Registered weekly cleanup job at 03:00 UTC on Sunday")
 
-	// Subscription expiry notification at 06:00 UTC daily
-	if _, err := cs.c.AddFunc("0 6 * * *", cs.handleSubscriptionExpiryNotify); err != nil {
-		cs.logger.Error("Failed to register subscription expiry notify job", "error", err)
-		return fmt.Errorf("failed to register subscription expiry notify: %w", err)
+	for _, j := range jobs {
+		if err := cs.Register(j.spec, j.name, j.fn); err != nil {
+			return err
+		}
 	}
-	cs.logger.Info("Registered subscription expiry notification job at 06:00 UTC")
-
-	// Expired subscription update at 06:05 UTC daily
-	if _, err := cs.c.AddFunc("5 6 * * *", cs.handleExpiredSubscriptionUpdate); err != nil {
-		cs.logger.Error("Failed to register expired subscription update job", "error", err)
-		return fmt.Errorf("failed to register expired subscription update: %w", err)
-	}
-	cs.logger.Info("Registered expired subscription update job at 06:05 UTC")
-
-	// Promo code deactivation at 06:10 UTC daily
-	if _, err := cs.c.AddFunc("10 6 * * *", cs.handlePromoDeactivation); err != nil {
-		cs.logger.Error("Failed to register promo deactivation job", "error", err)
-		return fmt.Errorf("failed to register promo deactivation: %w", err)
-	}
-	cs.logger.Info("Registered promo deactivation job at 06:10 UTC")
-
-	// Calendar sync every 15 minutes
-	if _, err := cs.c.AddFunc("*/15 * * * *", cs.handleCalendarSync); err != nil {
-		cs.logger.Error("Failed to register calendar sync job", "error", err)
-		return fmt.Errorf("failed to register calendar sync: %w", err)
-	}
-	cs.logger.Info("Registered calendar sync job every 15 minutes")
-
-	// Wallet bonus expiration at 04:00 UTC daily
-	if _, err := cs.c.AddFunc("0 4 * * *", cs.handleBonusExpiration); err != nil {
-		cs.logger.Error("Failed to register bonus expiration job", "error", err)
-		return fmt.Errorf("failed to register bonus expiration: %w", err)
-	}
-	cs.logger.Info("Registered wallet bonus expiration job at 04:00 UTC")
-
-	// Wallet bonus expiry notification at 05:00 UTC daily
-	if _, err := cs.c.AddFunc("0 5 * * *", cs.handleBonusExpiryNotify); err != nil {
-		cs.logger.Error("Failed to register bonus expiry notification job", "error", err)
-		return fmt.Errorf("failed to register bonus expiry notification: %w", err)
-	}
-	cs.logger.Info("Registered wallet bonus expiry notification job at 05:00 UTC")
-
-	// Expired hold cleanup every hour
-	if _, err := cs.c.AddFunc("0 * * * *", cs.handleExpiredHoldCleanup); err != nil {
-		cs.logger.Error("Failed to register expired hold cleanup job", "error", err)
-		return fmt.Errorf("failed to register expired hold cleanup: %w", err)
-	}
-	cs.logger.Info("Registered expired hold cleanup job every hour")
-
-	// Account deletion execution at 03:30 UTC daily
-	if _, err := cs.c.AddFunc("30 3 * * *", cs.handleAccountDeletionExecution); err != nil {
-		cs.logger.Error("Failed to register account deletion execution job", "error", err)
-		return fmt.Errorf("failed to register account deletion execution: %w", err)
-	}
-	cs.logger.Info("Registered account deletion execution job at 03:30 UTC")
-
-	// Account deletion reminders at 07:00 UTC daily
-	if _, err := cs.c.AddFunc("0 7 * * *", cs.handleAccountDeletionReminders); err != nil {
-		cs.logger.Error("Failed to register account deletion reminders job", "error", err)
-		return fmt.Errorf("failed to register account deletion reminders: %w", err)
-	}
-	cs.logger.Info("Registered account deletion reminders job at 07:00 UTC")
-
-	// Session cleanup at 03:15 UTC daily
-	if _, err := cs.c.AddFunc("15 3 * * *", cs.handleSessionCleanup); err != nil {
-		cs.logger.Error("Failed to register session cleanup job", "error", err)
-		return fmt.Errorf("failed to register session cleanup: %w", err)
-	}
-	cs.logger.Info("Registered session cleanup job at 03:15 UTC")
-
-	// Saved search new matches check at 08:00 UTC daily
-	if _, err := cs.c.AddFunc("0 8 * * *", cs.handleSavedSearchCheck); err != nil {
-		cs.logger.Error("Failed to register saved search check job", "error", err)
-		return fmt.Errorf("failed to register saved search check: %w", err)
-	}
-	cs.logger.Info("Registered saved search check job at 08:00 UTC")
-
-	// Auto-reject timed out booking requests every 15 minutes
-	if _, err := cs.c.AddFunc("*/15 * * * *", cs.handleAutoRejectTimedOutRequests); err != nil {
-		cs.logger.Error("Failed to register auto-reject timed out requests job", "error", err)
-		return fmt.Errorf("failed to register auto-reject timed out requests: %w", err)
-	}
-	cs.logger.Info("Registered auto-reject timed out requests job every 15 minutes")
-
-	// No-show detection every 15 minutes
-	if _, err := cs.c.AddFunc("*/15 * * * *", cs.handleNoShowDetection); err != nil {
-		cs.logger.Error("Failed to register no-show detection job", "error", err)
-		return fmt.Errorf("failed to register no-show detection: %w", err)
-	}
-	cs.logger.Info("Registered no-show detection job every 15 minutes")
-
-	// Escrow release every hour
-	if _, err := cs.c.AddFunc("30 * * * *", cs.handleEscrowRelease); err != nil {
-		cs.logger.Error("Failed to register escrow release job", "error", err)
-		return fmt.Errorf("failed to register escrow release: %w", err)
-	}
-	cs.logger.Info("Registered escrow release job every hour at :30")
-
-	// Booking reminders every 15 minutes
-	if _, err := cs.c.AddFunc("*/15 * * * *", cs.handleBookingReminders); err != nil {
-		cs.logger.Error("Failed to register booking reminders job", "error", err)
-		return fmt.Errorf("failed to register booking reminders: %w", err)
-	}
-	cs.logger.Info("Registered booking reminders job every 15 minutes")
-
-	// Response rate recalculation daily at 3:00 AM
-	if _, err := cs.c.AddFunc("0 3 * * *", cs.handleResponseRateRecalculation); err != nil {
-		cs.logger.Error("Failed to register response rate recalculation job", "error", err)
-		return fmt.Errorf("failed to register response rate recalculation: %w", err)
-	}
-	cs.logger.Info("Registered response rate recalculation job daily at 3:00 AM")
-
-	// Platform average rating refresh daily at 02:30 UTC
-	if _, err := cs.c.AddFunc("30 2 * * *", cs.handlePlatformAverageRefresh); err != nil {
-		cs.logger.Error("Failed to register platform average refresh job", "error", err)
-		return fmt.Errorf("failed to register platform average refresh: %w", err)
-	}
-	cs.logger.Info("Registered platform average rating refresh job at 02:30 UTC")
-
-	// Auto review requests every hour at :45
-	if _, err := cs.c.AddFunc("45 * * * *", cs.handleAutoReviewRequests); err != nil {
-		cs.logger.Error("Failed to register auto review requests job", "error", err)
-		return fmt.Errorf("failed to register auto review requests: %w", err)
-	}
-	cs.logger.Info("Registered auto review requests job every hour at :45")
-
-	// Auto-scenario execution every hour at :15
-	if _, err := cs.c.AddFunc("15 * * * *", cs.handleAutoScenarioExecution); err != nil {
-		cs.logger.Error("Failed to register auto scenario execution job", "error", err)
-		return fmt.Errorf("failed to register auto scenario execution: %w", err)
-	}
-	cs.logger.Info("Registered auto scenario execution job every hour at :15")
-
-	// Ticket auto-escalation every 15 minutes
-	if _, err := cs.c.AddFunc("*/15 * * * *", cs.handleTicketAutoEscalation); err != nil {
-		cs.logger.Error("Failed to register ticket auto-escalation job", "error", err)
-		return fmt.Errorf("failed to register ticket auto-escalation: %w", err)
-	}
-	cs.logger.Info("Registered ticket auto-escalation job every 15 minutes")
-
-	// Ticket auto-close daily at 04:30 UTC
-	if _, err := cs.c.AddFunc("30 4 * * *", cs.handleTicketAutoClose); err != nil {
-		cs.logger.Error("Failed to register ticket auto-close job", "error", err)
-		return fmt.Errorf("failed to register ticket auto-close: %w", err)
-	}
-	cs.logger.Info("Registered ticket auto-close job daily at 04:30 UTC")
 
 	cs.c.Start()
-	cs.logger.Info("Cron scheduler started")
+	cs.logger.Info("Cron scheduler started", "timezone", cs.cfg.Cron.Timezone, "jobs", len(cs.jobs))
 	return nil
 }
 
 // Stop gracefully stops the cron scheduler
 func (cs *CronScheduler) Stop(ctx context.Context) error {
-	cs.c.Stop()
-	cs.logger.Info("Cron scheduler stopped")
+	stopCtx := cs.c.Stop()
+	select {
+	case <-stopCtx.Done():
+		cs.logger.Info("Cron scheduler stopped gracefully")
+	case <-ctx.Done():
+		cs.logger.Warn("Cron scheduler stop timed out")
+	}
 	return nil
 }
 
-// handleDailyAggregation runs daily analytics aggregation
-func (cs *CronScheduler) handleDailyAggregation() {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting daily analytics aggregation")
-
-	if err := cs.analyticsService.AggregateDaily(ctx); err != nil {
-		cs.logger.Error("Daily analytics aggregation failed", "error", err, "duration", time.Since(start))
-		return
-	}
-
-	cs.logger.Info("Daily analytics aggregation completed", "duration", time.Since(start))
+// dailyAggregation runs daily analytics aggregation
+func (cs *CronScheduler) dailyAggregation(ctx context.Context) error {
+	return cs.analyticsService.AggregateDaily(ctx)
 }
 
-// handleWeeklyCleanup removes old bathhouse view records (older than 90 days)
-func (cs *CronScheduler) handleWeeklyCleanup() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting weekly analytics cleanup")
-
-	// Calculate the cutoff date (90 days ago)
+// weeklyCleanup removes old bathhouse view records (older than 90 days)
+func (cs *CronScheduler) weeklyCleanup(ctx context.Context) error {
 	cutoffDate := time.Now().AddDate(0, 0, -90)
-
 	deletedCount, err := cs.analyticsRepo.DeleteOldViews(ctx, cutoffDate)
 	if err != nil {
-		cs.logger.Error("Weekly analytics cleanup failed", "error", err, "duration", time.Since(start))
-		return
+		return err
 	}
-
-	cs.logger.Info("Weekly analytics cleanup completed", "deleted_count", deletedCount, "cutoff_date", cutoffDate, "duration", time.Since(start))
+	cs.logger.Info("Weekly cleanup done", "deleted_count", deletedCount, "cutoff_date", cutoffDate)
+	return nil
 }

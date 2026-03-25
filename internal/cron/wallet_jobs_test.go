@@ -28,7 +28,7 @@ func TestHandleBonusExpiration_NoWallets(t *testing.T) {
 	walletSvc := service.NewWalletService(walletRepo, logger.New(logger.LevelInfo))
 
 	cs := newTestWalletCronScheduler(notifSvc, walletSvc, walletRepo)
-	cs.handleBonusExpiration()
+	_ = cs.bonusExpiration(context.Background())
 
 	assert.Empty(t, notifSvc.sent)
 }
@@ -66,7 +66,7 @@ func TestHandleBonusExpiration_ExpiresOldBonuses(t *testing.T) {
 	require.NoError(t, err)
 
 	cs := newTestWalletCronScheduler(notifSvc, walletSvc, walletRepo)
-	cs.handleBonusExpiration()
+	_ = cs.bonusExpiration(context.Background())
 
 	// Should have sent a notification about expired bonuses
 	assert.Equal(t, 1, len(notifSvc.sent))
@@ -112,7 +112,7 @@ func TestHandleBonusExpiration_SkipsActiveBonuses(t *testing.T) {
 	require.NoError(t, err)
 
 	cs := newTestWalletCronScheduler(notifSvc, walletSvc, walletRepo)
-	cs.handleBonusExpiration()
+	_ = cs.bonusExpiration(context.Background())
 
 	// Should NOT send notification - bonuses are still active
 	assert.Empty(t, notifSvc.sent)
@@ -156,7 +156,7 @@ func TestHandleBonusExpiryNotify_NotifiesAt14And3Days(t *testing.T) {
 	require.NoError(t, err)
 
 	cs := newTestWalletCronScheduler(notifSvc, walletSvc, walletRepo)
-	cs.handleBonusExpiryNotify()
+	_ = cs.bonusExpiryNotify(context.Background())
 
 	// Should send notification for the 3-day window
 	assert.GreaterOrEqual(t, len(notifSvc.sent), 1)
@@ -203,7 +203,7 @@ func TestHandleBonusExpiryNotify_NoNotificationForDistantBonuses(t *testing.T) {
 	require.NoError(t, err)
 
 	cs := newTestWalletCronScheduler(notifSvc, walletSvc, walletRepo)
-	cs.handleBonusExpiryNotify()
+	_ = cs.bonusExpiryNotify(context.Background())
 
 	// Should NOT send any notification - bonus is too far from expiry
 	assert.Empty(t, notifSvc.sent)

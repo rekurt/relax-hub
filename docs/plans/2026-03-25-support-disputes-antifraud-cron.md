@@ -148,12 +148,12 @@ Combined implementation plan covering: support ticket system with escalation and
 - Create: `internal/cron/module.go`
 - Modify: `internal/app/app.go`
 
-- [ ] CronScheduler struct wrapping robfig/cron: NewCronScheduler, Register(spec, name, job), Start, Stop
-- [ ] Job wrapper: panic recovery, structured logging (start/end/duration/error), distributed lock via Redis SETNX with TTL, context with timeout
-- [ ] Config: BANI_CRON_ENABLED (default true), BANI_CRON_TIMEZONE (default "Europe/Moscow")
-- [ ] fx module: register scheduler, start on app start, stop on shutdown
-- [ ] Write tests for scheduler infrastructure
-- [ ] Run `go test ./... -v` — must pass
+- [x] CronScheduler struct wrapping robfig/cron: NewCronScheduler, Register(spec, name, job), Start, Stop
+- [x] Job wrapper: panic recovery, structured logging (start/end/duration/error), distributed lock via Redis SETNX with TTL, context with timeout
+- [x] Config: BANI_CRON_ENABLED (default true), BANI_CRON_TIMEZONE (default "Europe/Moscow")
+- [x] fx module: register scheduler, start on app start, stop on shutdown
+- [x] Write tests for scheduler infrastructure
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 9: Register All Cron Jobs
 

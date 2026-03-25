@@ -8,19 +8,11 @@ import (
 	"github.com/nikitaaldaev/bani/internal/domain"
 )
 
-// handleBonusExpiration expires bonus transactions that have passed their expiry date.
-// Runs daily, iterates all active wallets and delegates to WalletService.ExpireBonusesForWallet.
-func (cs *CronScheduler) handleBonusExpiration() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting wallet bonus expiration")
-
+// bonusExpiration expires bonus transactions that have passed their expiry date.
+func (cs *CronScheduler) bonusExpiration(ctx context.Context) error {
 	walletIDs, err := cs.walletRepo.ListAllIDs(ctx)
 	if err != nil {
-		cs.logger.Error("Failed to list wallet IDs for bonus expiration", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("list wallet IDs: %w", err)
 	}
 
 	totalExpired := 0
@@ -50,25 +42,18 @@ func (cs *CronScheduler) handleBonusExpiration() {
 		walletsProcessed++
 	}
 
-	cs.logger.Info("Wallet bonus expiration completed",
+	cs.logger.Info("Bonus expiration done",
 		"wallets_processed", walletsProcessed,
 		"total_expired", totalExpired,
-		"duration", time.Since(start),
 	)
+	return nil
 }
 
-// handleBonusExpiryNotify warns users about bonuses expiring soon (at 14 and 3 days before expiry).
-func (cs *CronScheduler) handleBonusExpiryNotify() {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting wallet bonus expiry notifications")
-
+// bonusExpiryNotify warns users about bonuses expiring soon (at 14 and 3 days before expiry).
+func (cs *CronScheduler) bonusExpiryNotify(ctx context.Context) error {
 	walletIDs, err := cs.walletRepo.ListAllIDs(ctx)
 	if err != nil {
-		cs.logger.Error("Failed to list wallet IDs for bonus expiry notify", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("list wallet IDs: %w", err)
 	}
 
 	now := time.Now()
@@ -115,24 +100,15 @@ func (cs *CronScheduler) handleBonusExpiryNotify() {
 		}
 	}
 
-	cs.logger.Info("Wallet bonus expiry notifications completed",
-		"notified", notified,
-		"duration", time.Since(start),
-	)
+	cs.logger.Info("Bonus expiry notifications done", "notified", notified)
+	return nil
 }
 
-// handleExpiredHoldCleanup releases wallet holds that have passed their expiry time.
-func (cs *CronScheduler) handleExpiredHoldCleanup() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting expired hold cleanup")
-
+// expiredHoldCleanup releases wallet holds that have passed their expiry time.
+func (cs *CronScheduler) expiredHoldCleanup(ctx context.Context) error {
 	holds, err := cs.walletRepo.GetExpiredHolds(ctx, time.Now())
 	if err != nil {
-		cs.logger.Error("Failed to get expired holds", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("get expired holds: %w", err)
 	}
 
 	released := 0
@@ -144,11 +120,8 @@ func (cs *CronScheduler) handleExpiredHoldCleanup() {
 		released++
 	}
 
-	cs.logger.Info("Expired hold cleanup completed",
-		"total_expired", len(holds),
-		"released", released,
-		"duration", time.Since(start),
-	)
+	cs.logger.Info("Expired hold cleanup done", "total_expired", len(holds), "released", released)
+	return nil
 }
 
 // getBonusExpiryDays returns the configured bonus expiry period in days.

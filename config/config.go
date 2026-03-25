@@ -32,6 +32,12 @@ type Config struct {
 	Fiscal       FiscalConfig       `mapstructure:"fiscal"`
 	Review       ReviewConfig       `mapstructure:"review"`
 	Wallet       WalletConfig       `mapstructure:"wallet"`
+	Cron         CronConfig         `mapstructure:"cron"`
+}
+
+type CronConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	Timezone string `mapstructure:"timezone"`
 }
 
 type ReviewConfig struct {
@@ -213,6 +219,8 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("fiscal.atol_group_code", "")
 	v.SetDefault("review.request_delay_hours", 2)
 	v.SetDefault("wallet.bonus_expiry_days", 180)
+	v.SetDefault("cron.enabled", true)
+	v.SetDefault("cron.timezone", "Europe/Moscow")
 	v.SetDefault("frontend_url", "http://localhost:3000")
 
 	if err := v.ReadInConfig(); err != nil {

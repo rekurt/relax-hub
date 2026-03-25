@@ -66,13 +66,15 @@ func TestCronSchedulerStart(t *testing.T) {
 	mockSvc := &MockAnalyticsService{}
 	mockRepo := mock.NewAnalyticsRepo()
 
-	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	cfg := &config.Config{}
+	cfg.Cron.Enabled = true
+	cfg.Cron.Timezone = "UTC"
+	cs := NewCronScheduler(cfg, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	err := cs.Start(context.Background())
 	assert.NoError(t, err)
 
-	// Verify jobs are registered
-	jobs := cs.c.Entries()
-	assert.True(t, len(jobs) >= 7, "Expected at least 7 jobs registered")
+	// Verify jobs are registered via the Register method
+	assert.True(t, len(cs.Jobs()) >= 7, "Expected at least 7 jobs registered")
 
 	// Clean up
 	err = cs.Stop(context.Background())
@@ -105,7 +107,7 @@ func TestHandleDailyAggregation(t *testing.T) {
 	mockRepo := mock.NewAnalyticsRepo()
 
 	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	cs.handleDailyAggregation()
+	_ = cs.dailyAggregation(context.Background())
 
 	assert.True(t, aggregationCalled, "Expected AggregateDaily to be called")
 }
@@ -122,7 +124,7 @@ func TestHandleDailyAggregationError(t *testing.T) {
 
 	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	// Should not panic even with error
-	cs.handleDailyAggregation()
+	_ = cs.dailyAggregation(context.Background())
 }
 
 func TestHandleWeeklyCleanup(t *testing.T) {
@@ -154,7 +156,7 @@ func TestHandleWeeklyCleanup(t *testing.T) {
 	require.NoError(t, err)
 
 	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	cs.handleWeeklyCleanup()
+	_ = cs.weeklyCleanup(context.Background())
 
 	// Verify old views are deleted by trying to delete again (should return 0)
 	cutoffDate := time.Now().AddDate(0, 0, -90)

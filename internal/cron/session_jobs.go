@@ -2,25 +2,15 @@ package cron
 
 import (
 	"context"
-	"time"
+	"fmt"
 )
 
-// handleSessionCleanup removes expired sessions from the database.
-func (cs *CronScheduler) handleSessionCleanup() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	start := time.Now()
-	cs.logger.Info("Starting session cleanup")
-
+// sessionCleanupJob removes expired sessions from the database.
+func (cs *CronScheduler) sessionCleanupJob(ctx context.Context) error {
 	cleaned, err := cs.sessionSvc.CleanExpired(ctx)
 	if err != nil {
-		cs.logger.Error("Session cleanup failed", "error", err, "duration", time.Since(start))
-		return
+		return fmt.Errorf("clean expired sessions: %w", err)
 	}
-
-	cs.logger.Info("Session cleanup completed",
-		"cleaned", cleaned,
-		"duration", time.Since(start),
-	)
+	cs.logger.Info("Session cleanup done", "cleaned", cleaned)
+	return nil
 }
