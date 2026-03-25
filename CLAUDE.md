@@ -54,10 +54,12 @@ Clean architecture: **handler → service → repository**
 - `internal/repository/mock/` — in-memory mocks for testing
 - `internal/service/` — business logic, RBAC checks via AccessChecker
 - `internal/handler/` — HTTP handlers, one file per entity
-- `internal/middleware/` — auth (JWT), RBAC, CORS (configurable origins), rate limiting, logging, panic recovery
+- `internal/middleware/` — auth (JWT), RBAC, CORS (configurable origins), rate limiting, logging, panic recovery, admin audit
 - `internal/server/` — chi router setup
 - `internal/notification/` — dispatcher, email sender, WebSocket hub, telegram sender
 - `internal/payment/` — payment provider abstraction (YooKassa integration)
+- `internal/antifraud/` — fraud detection engine, rules (wallet/booking/payout), chat content filtering
+- `internal/cron/` — centralized cron scheduler with distributed locking, all background jobs
 - `internal/bot/` — Telegram bot (separate binary: `cmd/bot/`)
 - `internal/app/` — Uber fx DI container
 
@@ -158,6 +160,8 @@ Key config variables:
 - `BANI_MAX_CARD_HOLD_HOURS` — max card authorization hold duration (default 72, YooKassa limit)
 - `BANI_FISCAL_PROVIDER` — fiscalization provider: `none` (default) or `atol`
 - `BANI_FISCAL_ATOL_LOGIN`, `BANI_FISCAL_ATOL_PASSWORD`, `BANI_FISCAL_ATOL_GROUP_CODE` — ATOL Online credentials
+- `BANI_CRON_ENABLED` (default `true`) — enable/disable cron scheduler
+- `BANI_CRON_TIMEZONE` (default `Europe/Moscow`) — timezone for cron job scheduling
 
 ### Database
 
@@ -418,7 +422,8 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Owner penalties**: owner cancellation credits client 10% compensation. 4+ cancellations/30 days = warning, 6+ = auto-deactivation of all bathhouses. Response rate tracking for request-mode bathhouses (daily cron), low rate warnings and enforcement
 - **Fiscalization**: FiscalProvider interface with ATOL placeholder and no-op provider. Receipt creation on payment success and refund (best-effort). `internal/fiscal/`
 - **Booking reminders**: cron every 15min sends 24h reminder (push+email), 2h reminder (push), 5min owner reminder. Redis-based deduplication
-- **Cron jobs (booking/payment)**: auto-reject timed-out requests (15min), no-show detection (15min), booking reminders (15min), escrow release (hourly), response rate recalculation (daily)
+- **Cron scheduler**: centralized robfig/cron scheduler (`internal/cron/`) with distributed Redis locking, panic recovery, structured logging. 26 registered jobs: every 15min (booking timeout, no-show, reminders), hourly (escrow release, review requests, auto-scenarios, anti-fraud patterns), daily midnight Moscow (bonus expiry, session cleanup, KYC check, owner response rate, promo deactivation, saved searches, metrics, ticket auto-close). Config: `BANI_CRON_ENABLED`, `BANI_CRON_TIMEZONE`
+- **Anti-fraud engine**: rule-based fraud detection (`internal/antifraud/`). Client rules: multi-card top-up, top-up/cancel cycles, dormant balance, rapid bookings. Owner rules: self-booking, structuring, fake reviews. Actions: block (prevents operation), flag (allows + notifies admin), freeze_wallet. Hooked into wallet/booking/payout services. Admin review at `/api/v1/admin/antifraud/flags`
 - **Reviews multi-criteria**: 4-criteria ratings (cleanliness, accuracy, communication, value_for_money) with 0.5 step, overall = average. Bayesian average rating per bathhouse (m=5, C=platform avg, cached in Redis). Auto review request cron (2h after check-out, configurable). Quality monitoring: rating < 3.0 warns owner, < 2.0 auto-depublishes. Computed badges: Verified, Top, Premium, New. NLP auto-moderation: regex profanity/spam filter, score > 0.7 → pending_moderation. Config: `BANI_REVIEW_REQUEST_DELAY_HOURS`
 - **CRM for owners**: guest cards (auto-created on booking completion, visit count, LTV, avg check, notes, tags, CSV export). Dynamic segments: new (1 visit), regular (>=3), lost (>90 days), vip (>50k RUB), birthday_soon (7 days). Broadcasts to segments (rate limit 3/week per owner, 1/3 days per guest, respects notification prefs). Auto-scenarios: thank_after_visit, request_review, remind_revisit_30d, reactivate_lost_90d, birthday_greeting (hourly cron). Response templates with default seeding (max 50 per owner). Endpoints under `/api/v1/my/crm/`
 - **Support tickets**: category-based (question/problem/complaint/refund_request/account_issue), auto-priority, 3-level escalation (L1→L2 at 24h, L2→L3 at 48h, critical auto-L2). Ticket messages with attachments. CSAT survey 24h after resolution. Auto-close after 7 days resolved. User endpoints: `/api/v1/my/tickets`, admin endpoints: `/api/v1/admin/tickets`

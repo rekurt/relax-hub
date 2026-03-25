@@ -191,6 +191,6 @@ Combined implementation plan covering: support ticket system with escalation and
 
 ### Task 11: Update documentation
 
-- [ ] Update CLAUDE.md if internal patterns changed
-- [ ] Run `make swagger` to regenerate API docs
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Update CLAUDE.md if internal patterns changed
+- [x] Run `make swagger` to regenerate API docs
+- [x] Move this plan to `docs/plans/completed/`
