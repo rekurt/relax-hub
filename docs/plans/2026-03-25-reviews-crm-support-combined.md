@@ -226,13 +226,13 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 
 ### Task 13: Verify acceptance criteria
 
-- [ ] Manual test: create review with multi-criteria, verify Bayesian rating recalculation
-- [ ] Manual test: create guest card via booking completion, verify segment assignment
-- [ ] Manual test: open support ticket, escalate, resolve, submit CSAT
-- [ ] Manual test: open dispute on booking, submit evidence, resolve, test appeal
-- [ ] Run full test suite: `go test ./... -v -race`
-- [ ] Run linter: `make lint`
-- [ ] Verify test coverage meets 80%+
+- [x] Manual test: create review with multi-criteria, verify Bayesian rating recalculation
+- [x] Manual test: create guest card via booking completion, verify segment assignment
+- [x] Manual test: open support ticket, escalate, resolve, submit CSAT
+- [x] Manual test: open dispute on booking, submit evidence, resolve, test appeal
+- [x] Run full test suite: `go test ./... -v -race`
+- [x] Run linter: `make lint`
+- [x] Verify test coverage meets 80%+
 
 ### Task 14: Update documentation
 
