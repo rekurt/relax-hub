@@ -32,6 +32,7 @@ type CronScheduler struct {
 	bookingSvc         service.BookingService
 	escrowSvc          service.EscrowService
 	reviewSvc          service.ReviewService
+	autoScenarioSvc    service.AutoScenarioService
 	redisClient        *redis.Client
 }
 
@@ -52,6 +53,7 @@ func NewCronScheduler(
 	bookingSvc service.BookingService,
 	escrowSvc service.EscrowService,
 	reviewSvc service.ReviewService,
+	autoScenarioSvc service.AutoScenarioService,
 	redisClient *redis.Client,
 ) *CronScheduler {
 	return &CronScheduler{
@@ -71,6 +73,7 @@ func NewCronScheduler(
 		bookingSvc:         bookingSvc,
 		escrowSvc:          escrowSvc,
 		reviewSvc:          reviewSvc,
+		autoScenarioSvc:    autoScenarioSvc,
 		redisClient:        redisClient,
 	}
 }
@@ -228,6 +231,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register auto review requests: %w", err)
 	}
 	cs.logger.Info("Registered auto review requests job every hour at :45")
+
+	// Auto-scenario execution every hour at :15
+	if _, err := cs.c.AddFunc("15 * * * *", cs.handleAutoScenarioExecution); err != nil {
+		cs.logger.Error("Failed to register auto scenario execution job", "error", err)
+		return fmt.Errorf("failed to register auto scenario execution: %w", err)
+	}
+	cs.logger.Info("Registered auto scenario execution job every hour at :15")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")

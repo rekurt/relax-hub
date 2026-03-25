@@ -68,6 +68,7 @@ type RouterParams struct {
 	HolidayHandler           *handler.HolidayHandler
 	GuestCardHandler         *handler.GuestCardHandler
 	BroadcastHandler         *handler.BroadcastHandler
+	AutoScenarioHandler      *handler.AutoScenarioHandler
 	ServiceFeeHandler        *handler.ServiceFeeHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
@@ -400,6 +401,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/broadcasts", p.BroadcastHandler.ListBroadcasts)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/broadcasts/{id}", p.BroadcastHandler.GetBroadcast)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/crm/broadcasts/{id}/send", p.BroadcastHandler.SendBroadcast)
+
+		// CRM Auto-scenarios (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/auto-scenarios", p.AutoScenarioHandler.ListAutoScenarios)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/crm/auto-scenarios/{type}", p.AutoScenarioHandler.UpdateAutoScenario)
 
 		// Notifications (authenticated)
 		r.With(auth).Get("/my/notifications", p.NotifHandler.List)

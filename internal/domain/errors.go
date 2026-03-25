@@ -124,4 +124,6 @@ var (
 	ErrBroadcastNotFound    = errors.New("broadcast not found")
 	ErrBroadcastRateLimit   = errors.New("broadcast rate limit exceeded")
 	ErrBroadcastNotDraft    = errors.New("broadcast is not in draft status")
+
+	ErrAutoScenarioNotFound = errors.New("auto scenario not found")
 )

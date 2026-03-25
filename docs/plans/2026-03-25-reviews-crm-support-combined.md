@@ -156,13 +156,13 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 - Modify: `internal/repository/interfaces.go`
 - Create: `migrations/XXXXXX_auto_scenarios.up.sql`
 
-- [ ] Predefined scenarios: thank_after_visit (1h), request_review (2h), remind_revisit_30d, reactivate_lost_90d, birthday_greeting
-- [ ] AutoScenario model: ID, OwnerID, Type, Enabled, CustomText, Channel, DelayHours, PromoCodeID, timestamps
-- [ ] AutoScenarioRepository: Upsert, ListByOwner, GetByOwnerAndType
-- [ ] AutoScenarioService: ListScenarios, UpdateScenario, ExecuteScenarios (hourly cron)
-- [ ] Endpoints: GET /api/v1/my/crm/auto-scenarios, PUT /api/v1/my/crm/auto-scenarios/{type}
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] Predefined scenarios: thank_after_visit (1h), request_review (2h), remind_revisit_30d, reactivate_lost_90d, birthday_greeting
+- [x] AutoScenario model: ID, OwnerID, Type, Enabled, CustomText, Channel, DelayHours, PromoCodeID, timestamps
+- [x] AutoScenarioRepository: Upsert, ListByOwner, GetByOwnerAndType
+- [x] AutoScenarioService: ListScenarios, UpdateScenario, ExecuteScenarios (hourly cron)
+- [x] Endpoints: GET /api/v1/my/crm/auto-scenarios, PUT /api/v1/my/crm/auto-scenarios/{type}
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 10: Response Templates (CRM)
 

@@ -483,6 +483,15 @@ type BroadcastRepository interface {
 	CountRecentByOwner(ctx context.Context, ownerID uuid.UUID, since time.Time) (int64, error)
 }
 
+type AutoScenarioRepository interface {
+	Upsert(ctx context.Context, scenario *domain.AutoScenario) error
+	ListByOwner(ctx context.Context, ownerID uuid.UUID) ([]domain.AutoScenario, error)
+	GetByOwnerAndType(ctx context.Context, ownerID uuid.UUID, scenarioType domain.AutoScenarioType) (*domain.AutoScenario, error)
+	ListEnabled(ctx context.Context) ([]domain.AutoScenario, error)
+	RecordExecution(ctx context.Context, scenarioID, guestCardID uuid.UUID) error
+	HasBeenExecuted(ctx context.Context, scenarioID, guestCardID uuid.UUID) (bool, error)
+}
+
 type EscrowRepository interface {
 	Create(ctx context.Context, escrow *domain.Escrow) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Escrow, error)

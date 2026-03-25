@@ -50,5 +50,6 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewEscrowRepository, fx.As(new(repository.EscrowRepository))),
 		fx.Annotate(NewGuestCardRepository, fx.As(new(repository.GuestCardRepository))),
 		fx.Annotate(NewBroadcastRepository, fx.As(new(repository.BroadcastRepository))),
+		fx.Annotate(NewAutoScenarioRepository, fx.As(new(repository.AutoScenarioRepository))),
 	),
 )

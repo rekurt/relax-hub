@@ -307,6 +307,8 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusTooManyRequests, "broadcast_rate_limit", err.Error())
 	case errors.Is(err, domain.ErrBroadcastNotDraft):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "broadcast_not_draft", err.Error())
+	case errors.Is(err, domain.ErrAutoScenarioNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "auto_scenario_not_found", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
