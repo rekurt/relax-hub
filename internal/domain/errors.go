@@ -129,4 +129,11 @@ var (
 
 	ErrTemplateNotFound    = errors.New("response template not found")
 	ErrTemplateLimitReached = errors.New("response template limit reached")
+
+	ErrTicketNotFound       = errors.New("support ticket not found")
+	ErrTicketAlreadyClosed  = errors.New("ticket is already closed")
+	ErrTicketAlreadyResolved = errors.New("ticket is already resolved")
+	ErrCSATAlreadySubmitted = errors.New("CSAT score already submitted")
+	ErrCSATNotResolved      = errors.New("ticket must be resolved to submit CSAT")
+	ErrCSATInvalidScore     = errors.New("CSAT score must be between 1 and 5")
 )

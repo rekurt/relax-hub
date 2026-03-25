@@ -71,6 +71,7 @@ type RouterParams struct {
 	AutoScenarioHandler      *handler.AutoScenarioHandler
 	TemplateHandler          *handler.TemplateHandler
 	ServiceFeeHandler        *handler.ServiceFeeHandler
+	TicketHandler            *handler.TicketHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
@@ -413,6 +414,14 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/crm/templates/{id}", p.TemplateHandler.UpdateTemplate)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/crm/templates/{id}", p.TemplateHandler.DeleteTemplate)
 
+		// Support Tickets (authenticated)
+		r.With(auth).Post("/my/tickets", p.TicketHandler.CreateTicket)
+		r.With(auth).Get("/my/tickets", p.TicketHandler.ListUserTickets)
+		r.With(auth).Get("/my/tickets/{id}", p.TicketHandler.GetTicket)
+		r.With(auth).Post("/my/tickets/{id}/messages", p.TicketHandler.AddUserMessage)
+		r.With(auth).Get("/my/tickets/{id}/messages", p.TicketHandler.ListMessages)
+		r.With(auth).Post("/my/tickets/{id}/csat", p.TicketHandler.SubmitCSAT)
+
 		// Notifications (authenticated)
 		r.With(auth).Get("/my/notifications", p.NotifHandler.List)
 		r.With(auth).Get("/my/notifications/unread-count", p.NotifHandler.UnreadCount)
@@ -510,6 +519,14 @@ func NewRouter(p RouterParams) http.Handler {
 
 			// Admin refund
 			r.Post("/bookings/{id}/refund", p.PaymentHandler.AdminRefund)
+
+			// Support tickets (admin only)
+			r.Get("/tickets", p.TicketHandler.AdminListTickets)
+			r.Get("/tickets/stats", p.TicketHandler.AdminGetStats)
+			r.Patch("/tickets/{id}/assign", p.TicketHandler.AdminAssignTicket)
+			r.Patch("/tickets/{id}/escalate", p.TicketHandler.AdminEscalateTicket)
+			r.Patch("/tickets/{id}/resolve", p.TicketHandler.AdminResolveTicket)
+			r.Post("/tickets/{id}/messages", p.TicketHandler.AdminAddMessage)
 		})
 	})
 

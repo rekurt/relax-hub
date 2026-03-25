@@ -516,3 +516,20 @@ type ServiceFeeRepository interface {
 	List(ctx context.Context) ([]domain.ServiceFeeConfig, error)
 	Upsert(ctx context.Context, config *domain.ServiceFeeConfig) error
 }
+
+type TicketRepository interface {
+	Create(ctx context.Context, ticket *domain.Ticket) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Ticket, error)
+	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Ticket], error)
+	ListAll(ctx context.Context, filter domain.TicketFilter) (*domain.PaginatedResult[domain.Ticket], error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.TicketStatus) error
+	UpdateLevel(ctx context.Context, id uuid.UUID, level domain.TicketLevel) error
+	Assign(ctx context.Context, id uuid.UUID, assignedTo uuid.UUID) error
+	Resolve(ctx context.Context, id uuid.UUID, resolvedAt time.Time) error
+	SubmitCSAT(ctx context.Context, id uuid.UUID, score int) error
+	AddMessage(ctx context.Context, msg *domain.TicketMessage) error
+	ListMessages(ctx context.Context, ticketID uuid.UUID) ([]domain.TicketMessage, error)
+	CountByStatus(ctx context.Context) (*domain.TicketStatusCounts, error)
+	ListStaleTickets(ctx context.Context, level domain.TicketLevel, olderThan time.Time) ([]domain.Ticket, error)
+	ListResolvedForAutoClose(ctx context.Context, resolvedBefore time.Time) ([]domain.Ticket, error)
+}

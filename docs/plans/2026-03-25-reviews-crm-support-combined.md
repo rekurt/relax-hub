@@ -193,16 +193,16 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 - Modify: `internal/server/router.go`
 - Create: `migrations/XXXXXX_support_tickets.up.sql`
 
-- [ ] Ticket model: ID, UserID, BookingID, Category (question/problem/complaint/refund_request/account_issue), Status (open/in_progress/escalated/resolved/closed), Priority (low/medium/high/critical), Level (L1/L2/L3), Subject, AssignedTo, CSATScore, timestamps
-- [ ] TicketMessage model: ID, TicketID, SenderID, SenderType, Body, Attachments, CreatedAt
-- [ ] TicketRepository: Create, GetByID, ListByUser, ListAll, UpdateStatus, Assign, AddMessage, ListMessages, CountByStatus
-- [ ] TicketService: CreateTicket (auto-priority by category), GetTicket, ListUserTickets, AddMessage, AssignTicket, EscalateTicket, ResolveTicket, CloseTicket (auto 7 days), SubmitCSAT
-- [ ] User endpoints: POST/GET /api/v1/my/tickets, GET /api/v1/my/tickets/{id}, POST messages, POST csat
-- [ ] Admin endpoints: GET /api/v1/admin/tickets, PATCH assign/escalate/resolve, POST messages, GET stats
-- [ ] Auto-escalation: no response 24h → L2, 48h at L2 → L3, critical → auto L2
-- [ ] CSAT survey notification 24h after resolution
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] Ticket model: ID, UserID, BookingID, Category (question/problem/complaint/refund_request/account_issue), Status (open/in_progress/escalated/resolved/closed), Priority (low/medium/high/critical), Level (L1/L2/L3), Subject, AssignedTo, CSATScore, timestamps
+- [x] TicketMessage model: ID, TicketID, SenderID, SenderType, Body, Attachments, CreatedAt
+- [x] TicketRepository: Create, GetByID, ListByUser, ListAll, UpdateStatus, Assign, AddMessage, ListMessages, CountByStatus
+- [x] TicketService: CreateTicket (auto-priority by category), GetTicket, ListUserTickets, AddMessage, AssignTicket, EscalateTicket, ResolveTicket, CloseTicket (auto 7 days), SubmitCSAT
+- [x] User endpoints: POST/GET /api/v1/my/tickets, GET /api/v1/my/tickets/{id}, POST messages, POST csat
+- [x] Admin endpoints: GET /api/v1/admin/tickets, PATCH assign/escalate/resolve, POST messages, GET stats
+- [x] Auto-escalation: no response 24h → L2, 48h at L2 → L3, critical → auto L2
+- [x] CSAT survey notification 24h after resolution
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 12: Disputes
 

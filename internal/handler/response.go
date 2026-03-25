@@ -313,6 +313,18 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusNotFound, "template_not_found", err.Error())
 	case errors.Is(err, domain.ErrTemplateLimitReached):
 		writeErrorWithContext(w, r, http.StatusConflict, "template_limit_reached", err.Error())
+	case errors.Is(err, domain.ErrTicketNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "ticket_not_found", err.Error())
+	case errors.Is(err, domain.ErrTicketAlreadyClosed):
+		writeErrorWithContext(w, r, http.StatusConflict, "ticket_already_closed", err.Error())
+	case errors.Is(err, domain.ErrTicketAlreadyResolved):
+		writeErrorWithContext(w, r, http.StatusConflict, "ticket_already_resolved", err.Error())
+	case errors.Is(err, domain.ErrCSATAlreadySubmitted):
+		writeErrorWithContext(w, r, http.StatusConflict, "csat_already_submitted", err.Error())
+	case errors.Is(err, domain.ErrCSATNotResolved):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "csat_not_resolved", err.Error())
+	case errors.Is(err, domain.ErrCSATInvalidScore):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "csat_invalid_score", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
