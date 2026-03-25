@@ -108,13 +108,13 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 - Modify: `internal/server/router.go`
 - Create: `migrations/XXXXXX_guest_cards.up.sql`
 
-- [ ] GuestCard model: ID, OwnerID, ClientID, BathhouseID, FirstVisitAt, LastVisitAt, VisitCount, TotalSpent, AvgCheck, Notes, Tags, timestamps
-- [ ] GuestCardRepository: Upsert, GetByOwnerAndClient, ListByOwner (search, tag filter, date range, LTV sort), UpdateNotes, GetStats
-- [ ] GuestCardService: RecordVisit (on booking completion), ListGuests, GetGuestDetail, UpdateGuestNotes, ExportCSV
-- [ ] Hook into booking completion: call RecordVisit
-- [ ] Endpoints (RequireRole: owner/representative): GET/PUT /api/v1/my/crm/guests, GET /api/v1/my/crm/guests/export, GET /api/v1/my/crm/stats
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] GuestCard model: ID, OwnerID, ClientID, BathhouseID, FirstVisitAt, LastVisitAt, VisitCount, TotalSpent, AvgCheck, Notes, Tags, timestamps
+- [x] GuestCardRepository: Upsert, GetByOwnerAndClient, ListByOwner (search, tag filter, date range, LTV sort), UpdateNotes, GetStats
+- [x] GuestCardService: RecordVisit (on booking completion), ListGuests, GetGuestDetail, UpdateGuestNotes, ExportCSV
+- [x] Hook into booking completion: call RecordVisit
+- [x] Endpoints (RequireRole: owner/representative): GET/PUT /api/v1/my/crm/guests, GET /api/v1/my/crm/guests/export, GET /api/v1/my/crm/stats
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 7: Segments (CRM)
 

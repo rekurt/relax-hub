@@ -66,6 +66,7 @@ type RouterParams struct {
 	ComparisonHandler        *handler.ComparisonHandler
 	SavedSearchHandler       *handler.SavedSearchHandler
 	HolidayHandler           *handler.HolidayHandler
+	GuestCardHandler         *handler.GuestCardHandler
 	ServiceFeeHandler        *handler.ServiceFeeHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
@@ -382,6 +383,12 @@ func NewRouter(p RouterParams) http.Handler {
 		// Analytics (authenticated owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/analytics", p.AnalyticsHandler.GetOwnerDashboard)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/analytics/daily", p.AnalyticsHandler.GetOwnerDailyStats)
+
+		// CRM Guest Cards (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/guests", p.GuestCardHandler.ListGuests)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/crm/guests/{id}", p.GuestCardHandler.UpdateGuestNotes)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/guests/export", p.GuestCardHandler.ExportCSV)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/stats", p.GuestCardHandler.GetStats)
 
 		// Notifications (authenticated)
 		r.With(auth).Get("/my/notifications", p.NotifHandler.List)

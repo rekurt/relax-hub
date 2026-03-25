@@ -465,6 +465,14 @@ type HolidayRepository interface {
 	SetBathhouseMultiplier(ctx context.Context, bathhouseID uuid.UUID, multiplier float64) error
 }
 
+type GuestCardRepository interface {
+	Upsert(ctx context.Context, card *domain.GuestCard) error
+	GetByOwnerAndClient(ctx context.Context, ownerID, clientID, bathhouseID uuid.UUID) (*domain.GuestCard, error)
+	ListByOwner(ctx context.Context, filter domain.GuestCardFilter) (*domain.PaginatedResult[domain.GuestCard], error)
+	UpdateNotes(ctx context.Context, id uuid.UUID, notes string, tags []string) error
+	GetStats(ctx context.Context, ownerID uuid.UUID) (*domain.GuestCardStats, error)
+}
+
 type EscrowRepository interface {
 	Create(ctx context.Context, escrow *domain.Escrow) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Escrow, error)

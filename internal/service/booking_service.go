@@ -127,6 +127,7 @@ type bookingService struct {
 	walletSvc     WalletService
 	complaintSvc  ComplaintService
 	escrowSvc     EscrowService
+	guestCardSvc  GuestCardService
 	access        *AccessChecker
 	notifSvc      NotificationService
 	logger        *logger.Logger
@@ -148,6 +149,7 @@ func NewBookingService(
 	walletSvc WalletService,
 	complaintSvc ComplaintService,
 	escrowSvc EscrowService,
+	guestCardSvc GuestCardService,
 	access *AccessChecker,
 	notifSvc NotificationService,
 	log *logger.Logger,
@@ -168,6 +170,7 @@ func NewBookingService(
 		walletSvc:     walletSvc,
 		complaintSvc:  complaintSvc,
 		escrowSvc:     escrowSvc,
+		guestCardSvc:  guestCardSvc,
 		access:        access,
 		notifSvc:      notifSvc,
 		logger:        log,
@@ -837,6 +840,18 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 			_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, booking.TotalPrice, booking.ServiceFeeAmount)
 			if escrowErr != nil {
 				return nil, fmt.Errorf("failed to create escrow on complete: %w", escrowErr)
+			}
+		}
+	}
+
+	// Record guest visit in CRM
+	if s.guestCardSvc != nil {
+		bh, bhErr := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+		if bhErr != nil {
+			s.logger.Warn("failed to get bathhouse for guest card", "booking_id", bookingID, "error", bhErr)
+		} else {
+			if gcErr := s.guestCardSvc.RecordVisit(ctx, bh.OwnerID, booking.UserID, booking.BathhouseID, booking.TotalPrice); gcErr != nil {
+				s.logger.Warn("failed to record guest visit", "booking_id", bookingID, "error", gcErr)
 			}
 		}
 	}

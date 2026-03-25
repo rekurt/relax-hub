@@ -26,7 +26,7 @@ func newBookingService() (service.BookingService, *mock.BathhouseRepo, *mock.Boo
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, repRepo, pricingSvc, pricingRepo, loyaltySvc, loyaltyRepo
 }
 
@@ -770,7 +770,7 @@ func newBookingServiceWithReferral() (service.BookingService, *mock.BathhouseRep
 	referralSvc := service.NewReferralService(referralRepo, userRepo, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, referralSvc, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, referralSvc, userRepo
 }
 
@@ -901,7 +901,7 @@ func newBookingServiceWithPromo() (service.BookingService, *mock.BathhouseRepo, 
 	promoSvc := service.NewPromoService(promoRepo, access, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, promoSvc
 }
 
@@ -1123,7 +1123,7 @@ func newBookingServiceWithPayment() (service.BookingService, *mock.BathhouseRepo
 	paymentSvc := &trackingPaymentService{}
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, paymentSvc, &noopServiceFeeService{}, nil, nil, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, paymentSvc, &noopServiceFeeService{}, nil, nil, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, paymentSvc
 }
 
@@ -1214,7 +1214,7 @@ func newBookingServiceWithSlotBlocks() (service.BookingService, *mock.BathhouseR
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	addonRepo := mock.NewAddOnRepo()
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, slotBlockRepo
 }
 
@@ -1396,7 +1396,7 @@ func newBookingServiceWithAddOns() (service.BookingService, *mock.BathhouseRepo,
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, nil, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, addonRepo
 }
 
@@ -3202,7 +3202,7 @@ func newBookingServiceWithAddonRepo() (service.BookingService, *mock.BathhouseRe
 	pricingSvc := service.NewPricingService(pricingRepo, bhRepo, nil, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
-	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, access, &noopNotifService{}, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, addonRepo
 }
 
@@ -3452,7 +3452,7 @@ func newBookingServiceWithWallet() (service.BookingService, *mock.BathhouseRepo,
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
 	walletSvc := &trackingWalletService{}
 	notifSvc := &trackingNotifService{}
-	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, walletSvc, nil, nil, access, notifSvc, log)
+	svc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, walletSvc, nil, nil, nil, access, notifSvc, log)
 	return svc, bhRepo, bookingRepo, walletSvc, notifSvc
 }
 
