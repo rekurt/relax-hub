@@ -3723,13 +3723,13 @@ func TestResponseRate_AutoDeactivateBelow30(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Should force to instant mode
+	// Should NOT force to instant mode (requires LowResponseRateSince tracking for 60+ days)
 	updatedBh, _ := bhRepo.GetByID(context.Background(), bh.ID)
-	if updatedBh.BookingMode != domain.BookingModeInstant {
-		t.Errorf("booking_mode = %q, want %q", updatedBh.BookingMode, domain.BookingModeInstant)
+	if updatedBh.BookingMode != domain.BookingModeRequest {
+		t.Errorf("booking_mode = %q, want %q (should not auto-force without 60-day tracking)", updatedBh.BookingMode, domain.BookingModeRequest)
 	}
 
-	// Should send notification
+	// Should send critical warning notification
 	notifFound := false
 	for _, n := range notifSvc.sent {
 		if n.Type == domain.NotifOwnerResponseRateWarning && n.UserID == ownerID {
@@ -3737,6 +3737,6 @@ func TestResponseRate_AutoDeactivateBelow30(t *testing.T) {
 		}
 	}
 	if !notifFound {
-		t.Error("expected response rate warning notification for auto-deactivation")
+		t.Error("expected response rate critical warning notification")
 	}
 }

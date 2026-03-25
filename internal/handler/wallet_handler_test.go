@@ -249,7 +249,7 @@ func TestWalletHandler_TopUp(t *testing.T) {
 	}
 
 	h := NewWalletHandler(walletSvc)
-	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
+	authService := &mockAuthService{userID: userID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequireAuth(authService))
@@ -288,6 +288,29 @@ func TestWalletHandler_TopUp(t *testing.T) {
 	}
 }
 
+func TestWalletHandler_TopUp_NonAdminForbidden(t *testing.T) {
+	userID := uuid.New()
+
+	walletSvc := &mockWalletService{}
+	h := NewWalletHandler(walletSvc)
+	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Post("/my/wallet/topup", h.TopUp)
+
+	body, _ := json.Marshal(topUpRequest{Amount: 100_000})
+	req := httptest.NewRequest(http.MethodPost, "/my/wallet/topup", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Errorf("expected status 403, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestWalletHandler_TopUp_BelowMinimum(t *testing.T) {
 	userID := uuid.New()
 
@@ -298,7 +321,7 @@ func TestWalletHandler_TopUp_BelowMinimum(t *testing.T) {
 	}
 
 	h := NewWalletHandler(walletSvc)
-	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
+	authService := &mockAuthService{userID: userID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequireAuth(authService))
@@ -321,7 +344,7 @@ func TestWalletHandler_TopUp_InvalidBody(t *testing.T) {
 
 	walletSvc := &mockWalletService{}
 	h := NewWalletHandler(walletSvc)
-	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
+	authService := &mockAuthService{userID: userID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequireAuth(authService))
@@ -343,7 +366,7 @@ func TestWalletHandler_TopUp_ZeroAmount(t *testing.T) {
 
 	walletSvc := &mockWalletService{}
 	h := NewWalletHandler(walletSvc)
-	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
+	authService := &mockAuthService{userID: userID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequireAuth(authService))
@@ -611,7 +634,7 @@ func TestWalletHandler_TopUp_WalletFrozen(t *testing.T) {
 	}
 
 	h := NewWalletHandler(walletSvc)
-	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
+	authService := &mockAuthService{userID: userID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequireAuth(authService))

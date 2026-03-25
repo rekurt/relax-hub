@@ -211,6 +211,15 @@ func (h *WalletHandler) ListTransactions(w http.ResponseWriter, r *http.Request)
 // @Failure      404   {object}  APIResponse{error=APIError}
 // @Router       /my/wallet/topup [post]
 func (h *WalletHandler) TopUp(w http.ResponseWriter, r *http.Request) {
+	// TODO: This endpoint directly credits the wallet without payment verification.
+	// Must be integrated with YooKassa: create payment -> return confirmation_url ->
+	// credit wallet only on successful webhook callback. Until then, restrict to admin.
+	userRole := middleware.GetUserRole(r.Context())
+	if userRole != domain.RoleAdmin {
+		writeError(w, http.StatusForbidden, "forbidden", "wallet top-up via API is not yet available")
+		return
+	}
+
 	userID := middleware.GetUserID(r.Context())
 
 	var req topUpRequest

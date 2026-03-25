@@ -115,6 +115,15 @@ func (s *escrowService) ReleaseToOwner(ctx context.Context, escrowID uuid.UUID) 
 			return fmt.Errorf("get owner wallet for escrow release: %w", err)
 		}
 
+		// Check if owner wallet can accommodate the full payout
+		maxBalance := domain.MaxBalanceForCurrency(wallet.Currency)
+		if wallet.Balance+ownerAmount > maxBalance {
+			s.logger.Error("owner wallet would exceed max balance on escrow release, payout blocked",
+				"escrow_id", escrowID, "owner_id", bh.OwnerID,
+				"owner_amount", ownerAmount, "wallet_balance", wallet.Balance, "max_balance", maxBalance)
+			return fmt.Errorf("owner wallet balance would exceed limit: %w", domain.ErrWalletLimitExceeded)
+		}
+
 		bookingID := escrow.BookingID
 		_, err = s.walletSvc.Refund(ctx, wallet.ID, ownerAmount, "escrow_release", &bookingID, fmt.Sprintf("Выплата за бронирование %s", escrow.BookingID))
 		if err != nil {

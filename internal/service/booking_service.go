@@ -1829,21 +1829,16 @@ func (s *bookingService) RecalculateResponseRates(ctx context.Context) (int, err
 
 		updated++
 
-		// Enforcement: warn at <0.5, deactivate at <0.3 for 60+ days
-		if responseRate < 0.3 && bh.ResponseRate < 0.3 {
-			// Both current and previous rate below 0.3 — assume it's been low for a while
-			// In production, we'd track consecutive days, but for now we use the stored rate
-			s.logger.Warn("bathhouse response rate critically low, forcing to instant mode",
+		// Enforcement: warn at <0.5, warn critically at <0.3
+		// NOTE: Auto-forcing to instant mode requires tracking LowResponseRateSince timestamp
+		// (60+ consecutive days below 30%). Currently only warns — needs DB column to enforce properly.
+		if responseRate < 0.3 {
+			s.logger.Warn("bathhouse response rate critically low",
 				"bathhouse_id", bh.ID, "response_rate", responseRate)
-			// Force booking_mode to instant
-			bh.BookingMode = domain.BookingModeInstant
-			if err := s.bhRepo.Update(ctx, &bh); err != nil {
-				s.logger.Error("failed to force bathhouse to instant mode", "bathhouse_id", bh.ID, "error", err)
-			}
 			if s.notifSvc != nil {
-				body := fmt.Sprintf("Ваш процент ответов %.0f%%. Режим бронирования изменён на мгновенный.", responseRate*100)
+				body := fmt.Sprintf("Ваш процент ответов %.0f%%. При сохранении низкого показателя режим бронирования будет изменён на мгновенный.", responseRate*100)
 				_ = s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifOwnerResponseRateWarning,
-					"Низкий процент ответов", body, nil)
+					"Критически низкий процент ответов", body, nil)
 			}
 		} else if responseRate < 0.5 {
 			// Send warning
