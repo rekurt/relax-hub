@@ -31,6 +31,17 @@ definitions:
       views:
         type: integer
     type: object
+  github_com_nikitaaldaev_bani_internal_domain.GuestCardStats:
+    properties:
+      avg_spent:
+        type: integer
+      avg_visit_count:
+        type: integer
+      new_this_month:
+        type: integer
+      total_guests:
+        type: integer
+    type: object
   github_com_nikitaaldaev_bani_internal_seo.MetaTags:
     properties:
       canonical:
@@ -239,6 +250,11 @@ definitions:
       quantity:
         type: integer
     type: object
+  internal_handler.addTicketMessageRequest:
+    properties:
+      body:
+        type: string
+    type: object
   internal_handler.adminRefundRequest:
     properties:
       amount:
@@ -287,6 +303,16 @@ definitions:
       reason:
         type: string
     type: object
+  internal_handler.assignDisputeRequest:
+    properties:
+      mediator_id:
+        type: string
+    type: object
+  internal_handler.assignTicketRequest:
+    properties:
+      assigned_to:
+        type: string
+    type: object
   internal_handler.auditLogResponse:
     properties:
       action:
@@ -327,6 +353,33 @@ definitions:
       updated_at:
         type: string
     type: object
+  internal_handler.autoScenarioResponse:
+    properties:
+      channel:
+        type: string
+      created_at:
+        type: string
+      custom_text:
+        type: string
+      delay_hours:
+        type: integer
+      description:
+        type: string
+      enabled:
+        type: boolean
+      id:
+        type: string
+      name:
+        type: string
+      owner_id:
+        type: string
+      promo_code_id:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+    type: object
   internal_handler.batchIDsRequest:
     properties:
       ids:
@@ -354,8 +407,26 @@ definitions:
     properties:
       address:
         type: string
+      avg_accuracy:
+        type: number
+      avg_cleanliness:
+        type: number
+      avg_communication:
+        type: number
+      avg_response_time_minutes:
+        type: integer
+      avg_value_for_money:
+        type: number
+      badges:
+        items:
+          type: string
+        type: array
       base_capacity:
         type: integer
+      bayesian_rating:
+        type: number
+      booking_mode:
+        type: string
       buffer_minutes:
         type: integer
       city_id:
@@ -425,6 +496,10 @@ definitions:
       price_per_hour:
         type: integer
       rating:
+        type: number
+      request_timeout:
+        type: integer
+      response_rate:
         type: number
       review_count:
         type: integer
@@ -523,6 +598,39 @@ definitions:
       updated_at:
         type: string
       user_id:
+        type: string
+    type: object
+  internal_handler.broadcastResponse:
+    properties:
+      body:
+        type: string
+      channels:
+        items:
+          type: string
+        type: array
+      created_at:
+        type: string
+      delivered:
+        type: integer
+      id:
+        type: string
+      image_url:
+        type: string
+      owner_id:
+        type: string
+      promo_code_id:
+        type: string
+      read:
+        type: integer
+      segment:
+        type: string
+      sent_at:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+      updated_at:
         type: string
     type: object
   internal_handler.calendarTokenResponse:
@@ -769,6 +877,23 @@ definitions:
       use_referral_bonus:
         type: integer
     type: object
+  internal_handler.createBroadcastRequest:
+    properties:
+      body:
+        type: string
+      channels:
+        items:
+          type: string
+        type: array
+      image_url:
+        type: string
+      promo_code_id:
+        type: string
+      segment:
+        type: string
+      title:
+        type: string
+    type: object
   internal_handler.createCityRequest:
     properties:
       latitude:
@@ -819,12 +944,20 @@ definitions:
     type: object
   internal_handler.createReviewRequest:
     properties:
+      accuracy:
+        type: number
       booking_id:
         type: string
+      cleanliness:
+        type: number
+      communication:
+        type: number
       rating:
         type: integer
       text:
         type: string
+      value_for_money:
+        type: number
     type: object
   internal_handler.createSavedSearchRequest:
     properties:
@@ -849,6 +982,26 @@ definitions:
         example: "2026-03-20T10:00:00Z"
         type: string
     type: object
+  internal_handler.createTemplateRequest:
+    properties:
+      body:
+        type: string
+      sort_order:
+        type: integer
+      title:
+        type: string
+    type: object
+  internal_handler.createTicketRequest:
+    properties:
+      booking_id:
+        type: string
+      category:
+        type: string
+      message:
+        type: string
+      subject:
+        type: string
+    type: object
   internal_handler.deviceTokenResponse:
     properties:
       created_at:
@@ -862,6 +1015,23 @@ definitions:
       user_id:
         type: string
     type: object
+  internal_handler.disputeEvidenceResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      dispute_id:
+        type: string
+      id:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+      user_id:
+        type: string
+    type: object
   internal_handler.disputeNoShowRequest:
     properties:
       comment:
@@ -870,6 +1040,43 @@ definitions:
         type: number
       gps_lon:
         type: number
+    type: object
+  internal_handler.disputeResponse:
+    properties:
+      appeal_deadline:
+        type: string
+      booking_id:
+        type: string
+      compensation_amount:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      evidence_deadline:
+        type: string
+      id:
+        type: string
+      initiator_id:
+        type: string
+      mediator_id:
+        type: string
+      mediator_notes:
+        type: string
+      reason:
+        type: string
+      refund_amount:
+        type: integer
+      resolution:
+        type: string
+      resolved_at:
+        type: string
+      respondent_id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
     type: object
   internal_handler.extendBookingRequest:
     properties:
@@ -925,6 +1132,37 @@ definitions:
       email:
         type: string
     type: object
+  internal_handler.guestCardResponse:
+    properties:
+      avg_check:
+        type: integer
+      bathhouse_id:
+        type: string
+      client_id:
+        type: string
+      created_at:
+        type: string
+      first_visit_at:
+        type: string
+      id:
+        type: string
+      last_visit_at:
+        type: string
+      notes:
+        type: string
+      owner_id:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      total_spent:
+        type: integer
+      updated_at:
+        type: string
+      visit_count:
+        type: integer
+    type: object
   internal_handler.holidayResponse:
     properties:
       created_at:
@@ -947,6 +1185,9 @@ definitions:
       card_amount:
         description: for combo
         type: integer
+      card_payment_method:
+        description: 'for combo: "card" (default) or "sbp"'
+        type: string
       payment_method:
         description: '"card", "sbp", "wallet", "combo"'
         type: string
@@ -1206,6 +1447,13 @@ definitions:
       accepted:
         type: boolean
       current_version:
+        type: string
+    type: object
+  internal_handler.openDisputeRequest:
+    properties:
+      description:
+        type: string
+      reason:
         type: string
     type: object
   internal_handler.otpSentResponse:
@@ -1684,6 +1932,17 @@ definitions:
       token:
         type: string
     type: object
+  internal_handler.resolveDisputeRequest:
+    properties:
+      compensation_amount:
+        type: integer
+      mediator_notes:
+        type: string
+      refund_amount:
+        type: integer
+      resolution:
+        type: string
+    type: object
   internal_handler.resolveRequest:
     properties:
       resolution:
@@ -1691,10 +1950,16 @@ definitions:
     type: object
   internal_handler.reviewResponse:
     properties:
+      accuracy:
+        type: number
       bathhouse_id:
         type: string
       booking_id:
         type: string
+      cleanliness:
+        type: number
+      communication:
+        type: number
       created_at:
         type: string
       id:
@@ -1707,6 +1972,12 @@ definitions:
         items:
           $ref: '#/definitions/internal_handler.mediaResponse'
         type: array
+      moderation_flags:
+        items:
+          type: string
+        type: array
+      moderation_score:
+        type: number
       owner_response:
         type: string
       owner_response_at:
@@ -1721,6 +1992,8 @@ definitions:
         type: string
       user_id:
         type: string
+      value_for_money:
+        type: number
     type: object
   internal_handler.saveStepRequest:
     properties:
@@ -1744,6 +2017,17 @@ definitions:
       notify_on_new:
         type: boolean
       user_id:
+        type: string
+    type: object
+  internal_handler.segmentResponse:
+    properties:
+      count:
+        type: integer
+      description:
+        type: string
+      name:
+        type: string
+      slug:
         type: string
     type: object
   internal_handler.sendMessageRequest:
@@ -1861,6 +2145,20 @@ definitions:
       status:
         type: string
     type: object
+  internal_handler.submitCSATRequest:
+    properties:
+      score:
+        type: integer
+    type: object
+  internal_handler.submitEvidenceRequest:
+    properties:
+      description:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+    type: object
   internal_handler.submitKYCRequest:
     properties:
       company_name:
@@ -1914,6 +2212,80 @@ definitions:
         type: string
       type:
         type: string
+    type: object
+  internal_handler.templateResponse:
+    properties:
+      body:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      is_default:
+        type: boolean
+      owner_id:
+        type: string
+      sort_order:
+        type: integer
+      title:
+        type: string
+    type: object
+  internal_handler.ticketMessageResponse:
+    properties:
+      body:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      sender_id:
+        type: string
+      sender_type:
+        type: string
+      ticket_id:
+        type: string
+    type: object
+  internal_handler.ticketResponse:
+    properties:
+      assigned_to:
+        type: string
+      booking_id:
+        type: string
+      category:
+        type: string
+      created_at:
+        type: string
+      csat_score:
+        type: integer
+      id:
+        type: string
+      level:
+        type: string
+      priority:
+        type: string
+      resolved_at:
+        type: string
+      status:
+        type: string
+      subject:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  internal_handler.ticketStatsResponse:
+    properties:
+      closed:
+        type: integer
+      escalated:
+        type: integer
+      in_progress:
+        type: integer
+      open:
+        type: integer
+      resolved:
+        type: integer
     type: object
   internal_handler.toggleFavoriteResponse:
     properties:
@@ -1981,12 +2353,27 @@ definitions:
       unit:
         type: string
     type: object
+  internal_handler.updateAutoScenarioRequest:
+    properties:
+      channel:
+        type: string
+      custom_text:
+        type: string
+      delay_hours:
+        type: integer
+      enabled:
+        type: boolean
+      promo_code_id:
+        type: string
+    type: object
   internal_handler.updateBathhouseRequest:
     properties:
       address:
         type: string
       base_capacity:
         type: integer
+      booking_mode:
+        type: string
       buffer_minutes:
         type: integer
       city_id:
@@ -2037,6 +2424,8 @@ definitions:
         type: string
       price_per_hour:
         type: integer
+      request_timeout:
+        type: integer
       working_hours:
         items:
           $ref: '#/definitions/internal_handler.workingHoursRequest'
@@ -2052,6 +2441,15 @@ definitions:
         type: string
       slug:
         type: string
+    type: object
+  internal_handler.updateGuestNotesRequest:
+    properties:
+      notes:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
     type: object
   internal_handler.updateHolidayRequest:
     properties:
@@ -2115,6 +2513,12 @@ definitions:
     type: object
   internal_handler.updateReviewRequest:
     properties:
+      accuracy:
+        type: number
+      cleanliness:
+        type: number
+      communication:
+        type: number
       images:
         items:
           type: string
@@ -2122,6 +2526,17 @@ definitions:
       rating:
         type: integer
       text:
+        type: string
+      value_for_money:
+        type: number
+    type: object
+  internal_handler.updateTemplateRequest:
+    properties:
+      body:
+        type: string
+      sort_order:
+        type: integer
+      title:
         type: string
     type: object
   internal_handler.uploadPhotoRequest:
@@ -3306,6 +3721,192 @@ paths:
       summary: Resolve complaint
       tags:
       - admin-complaints
+  /admin/disputes:
+    get:
+      description: List all disputes with optional status filter
+      parameters:
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.disputeResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all disputes (admin)
+      tags:
+      - disputes-admin
+  /admin/disputes/{id}/assign:
+    patch:
+      consumes:
+      - application/json
+      description: Assign a dispute to an admin mediator
+      parameters:
+      - description: Dispute ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Assignment data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.assignDisputeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Assign dispute to mediator
+      tags:
+      - disputes-admin
+  /admin/disputes/{id}/resolve:
+    patch:
+      consumes:
+      - application/json
+      description: Resolve a dispute with a decision (full/partial/no refund)
+      parameters:
+      - description: Dispute ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Resolution data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.resolveDisputeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Resolve a dispute
+      tags:
+      - disputes-admin
   /admin/holidays:
     get:
       description: Returns all holidays, optionally filtered by region
@@ -4426,6 +5027,339 @@ paths:
       tags:
       - admin
       - service-fee
+  /admin/tickets:
+    get:
+      description: List all support tickets with filters
+      parameters:
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by priority
+        in: query
+        name: priority
+        type: string
+      - description: Filter by level
+        in: query
+        name: level
+        type: string
+      - description: Filter by category
+        in: query
+        name: category
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.ticketResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all tickets (admin)
+      tags:
+      - support-admin
+  /admin/tickets/{id}/assign:
+    patch:
+      consumes:
+      - application/json
+      description: Assign a support ticket to an admin user
+      parameters:
+      - description: Ticket ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Assignment data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.assignTicketRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Assign ticket to admin
+      tags:
+      - support-admin
+  /admin/tickets/{id}/escalate:
+    patch:
+      description: Escalate a ticket to the next support level
+      parameters:
+      - description: Ticket ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Escalate ticket
+      tags:
+      - support-admin
+  /admin/tickets/{id}/messages:
+    post:
+      consumes:
+      - application/json
+      description: Add an admin response to a support ticket
+      parameters:
+      - description: Ticket ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.addTicketMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.ticketMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Add admin message to ticket
+      tags:
+      - support-admin
+  /admin/tickets/{id}/resolve:
+    patch:
+      description: Mark a support ticket as resolved
+      parameters:
+      - description: Ticket ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Resolve ticket
+      tags:
+      - support-admin
+  /admin/tickets/stats:
+    get:
+      description: Get counts of tickets by status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.ticketStatsResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get ticket statistics
+      tags:
+      - support-admin
   /admin/users:
     get:
       description: Returns a paginated list of all users. Admin only.
@@ -7374,6 +8308,76 @@ paths:
       summary: Confirm booking
       tags:
       - bookings
+  /bookings/{id}/dispute:
+    post:
+      consumes:
+      - application/json
+      description: Open a dispute for a specific booking
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dispute data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.openDisputeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.disputeResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Open a dispute on a booking
+      tags:
+      - disputes
   /bookings/{id}/dispute-noshow:
     post:
       consumes:
@@ -10622,6 +11626,1147 @@ paths:
       summary: List conversations
       tags:
       - chat
+  /my/crm/auto-scenarios:
+    get:
+      description: Get all predefined auto-scenarios with their current configuration
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.autoScenarioResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List auto-scenarios
+      tags:
+      - crm
+  /my/crm/auto-scenarios/{type}:
+    put:
+      consumes:
+      - application/json
+      description: Update configuration for a specific auto-scenario type
+      parameters:
+      - description: Scenario type
+        in: path
+        name: type
+        required: true
+        type: string
+      - description: Scenario configuration
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updateAutoScenarioRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.autoScenarioResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update auto-scenario
+      tags:
+      - crm
+  /my/crm/broadcasts:
+    get:
+      description: Get paginated list of broadcasts for the owner
+      parameters:
+      - description: Filter by status (draft, sending, sent, failed)
+        in: query
+        name: status
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.broadcastResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List broadcasts
+      tags:
+      - crm
+    post:
+      consumes:
+      - application/json
+      description: Create a new broadcast message for a guest segment
+      parameters:
+      - description: Broadcast data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createBroadcastRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.broadcastResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a broadcast
+      tags:
+      - crm
+  /my/crm/broadcasts/{id}:
+    get:
+      description: Get a specific broadcast by ID
+      parameters:
+      - description: Broadcast ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.broadcastResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get broadcast details
+      tags:
+      - crm
+  /my/crm/broadcasts/{id}/send:
+    post:
+      description: Send a draft broadcast to the target segment
+      parameters:
+      - description: Broadcast ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.broadcastResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Send a broadcast
+      tags:
+      - crm
+  /my/crm/guests:
+    get:
+      description: Get paginated list of guest cards for the owner
+      parameters:
+      - description: Filter by bathhouse ID
+        in: query
+        name: bathhouse_id
+        type: string
+      - description: Search by client name/email/phone
+        in: query
+        name: search
+        type: string
+      - description: Filter by tag
+        in: query
+        name: tag
+        type: string
+      - description: Filter by last visit date from (RFC3339)
+        in: query
+        name: date_from
+        type: string
+      - description: Filter by last visit date to (RFC3339)
+        in: query
+        name: date_to
+        type: string
+      - description: 'Sort by: last_visit, total_spent, visit_count, avg_check'
+        in: query
+        name: sort_by
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.guestCardResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List CRM guest cards
+      tags:
+      - crm
+  /my/crm/guests/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Update notes and tags for a specific guest card
+      parameters:
+      - description: Guest card ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Notes and tags
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updateGuestNotesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update guest card notes and tags
+      tags:
+      - crm
+  /my/crm/guests/export:
+    get:
+      description: Export all guest cards as a CSV file
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Export guest cards as CSV
+      tags:
+      - crm
+  /my/crm/segments:
+    get:
+      description: Get all predefined CRM segments with guest counts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.segmentResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List CRM segments
+      tags:
+      - crm
+  /my/crm/segments/{slug}/guests:
+    get:
+      description: Get paginated list of guests in a specific CRM segment
+      parameters:
+      - description: Segment slug (new, regular, lost, vip, birthday_soon)
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.guestCardResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get guests in segment
+      tags:
+      - crm
+  /my/crm/stats:
+    get:
+      description: Get summary statistics for all guest cards
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.GuestCardStats'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get CRM guest stats
+      tags:
+      - crm
+  /my/crm/templates:
+    get:
+      description: Get all response templates for the owner (seeds defaults on first
+        use)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.templateResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List response templates
+      tags:
+      - crm
+    post:
+      consumes:
+      - application/json
+      description: Create a new response template for review responses
+      parameters:
+      - description: Template data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createTemplateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.templateResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a response template
+      tags:
+      - crm
+  /my/crm/templates/{id}:
+    delete:
+      description: Delete a response template
+      parameters:
+      - description: Template ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a response template
+      tags:
+      - crm
+    put:
+      consumes:
+      - application/json
+      description: Update an existing response template
+      parameters:
+      - description: Template ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Template data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updateTemplateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.templateResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update a response template
+      tags:
+      - crm
+  /my/disputes:
+    get:
+      description: Get all disputes for the authenticated user
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.disputeResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List my disputes
+      tags:
+      - disputes
+  /my/disputes/{id}:
+    get:
+      description: Get details of a specific dispute
+      parameters:
+      - description: Dispute ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.disputeResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get dispute details
+      tags:
+      - disputes
+  /my/disputes/{id}/appeal:
+    post:
+      description: Appeal a resolved dispute within the appeal window (7 days)
+      parameters:
+      - description: Dispute ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Appeal a dispute resolution
+      tags:
+      - disputes
+  /my/disputes/{id}/evidence:
+    get:
+      description: Get all evidence for a dispute
+      parameters:
+      - description: Dispute ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.disputeEvidenceResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List dispute evidence
+      tags:
+      - disputes
+    post:
+      consumes:
+      - application/json
+      description: Submit evidence for an open dispute within the evidence collection
+        window
+      parameters:
+      - description: Dispute ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Evidence data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.submitEvidenceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Submit evidence for a dispute
+      tags:
+      - disputes
   /my/external-calendars/{id}:
     delete:
       description: Removes an external calendar link. Owner or representative only.
@@ -12275,6 +14420,341 @@ paths:
       summary: List my subscriptions
       tags:
       - subscriptions
+  /my/tickets:
+    get:
+      description: Get all support tickets for the authenticated user
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.ticketResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List my support tickets
+      tags:
+      - support
+    post:
+      consumes:
+      - application/json
+      description: Create a new support ticket with an initial message
+      parameters:
+      - description: Ticket data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createTicketRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.ticketResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a support ticket
+      tags:
+      - support
+  /my/tickets/{id}:
+    get:
+      description: Get a specific support ticket by ID
+      parameters:
+      - description: Ticket ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.ticketResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get support ticket details
+      tags:
+      - support
+  /my/tickets/{id}/csat:
+    post:
+      consumes:
+      - application/json
+      description: Submit customer satisfaction score for a resolved ticket
+      parameters:
+      - description: Ticket ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: CSAT score (1-5)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.submitCSATRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Submit CSAT score
+      tags:
+      - support
+  /my/tickets/{id}/messages:
+    get:
+      description: Get all messages for a support ticket
+      parameters:
+      - description: Ticket ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.ticketMessageResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List ticket messages
+      tags:
+      - support
+    post:
+      consumes:
+      - application/json
+      description: Add a message to a support ticket
+      parameters:
+      - description: Ticket ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Message data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.addTicketMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.ticketMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Add message to ticket
+      tags:
+      - support
   /my/unread-messages-count:
     get:
       description: Returns the total number of unread messages across all conversations

@@ -236,6 +236,6 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 
 ### Task 14: Update documentation
 
-- [ ] Update CLAUDE.md: add Reviews multi-criteria, CRM subsystem, Support & Disputes subsystem descriptions
-- [ ] Run `make swagger` to regenerate OpenAPI spec with all new endpoints
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Update CLAUDE.md: add Reviews multi-criteria, CRM subsystem, Support & Disputes subsystem descriptions
+- [x] Run `make swagger` to regenerate OpenAPI spec with all new endpoints
+- [x] Move this plan to `docs/plans/completed/`
