@@ -73,6 +73,7 @@ type RouterParams struct {
 	ServiceFeeHandler        *handler.ServiceFeeHandler
 	TicketHandler            *handler.TicketHandler
 	DisputeHandler           *handler.DisputeHandler
+	AntiFraudHandler         *handler.AntiFraudHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
@@ -543,6 +544,10 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Patch("/disputes/{id}/assign", p.DisputeHandler.AdminAssignDispute)
 			r.Patch("/disputes/{id}/resolve", p.DisputeHandler.AdminResolveDispute)
 			r.Patch("/disputes/{id}/close", p.DisputeHandler.AdminCloseDispute)
+
+			// Anti-fraud (admin only)
+			r.Get("/antifraud/flags", p.AntiFraudHandler.ListFlags)
+			r.Patch("/antifraud/flags/{id}", p.AntiFraudHandler.UpdateFlag)
 		})
 	})
 

@@ -80,5 +80,6 @@ var Module = fx.Module("handler",
 		NewTemplateHandler,
 		NewTicketHandler,
 		NewDisputeHandler,
+		NewAntiFraudHandler,
 	),
 )

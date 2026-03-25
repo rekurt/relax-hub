@@ -54,5 +54,6 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewResponseTemplateRepository, fx.As(new(repository.ResponseTemplateRepository))),
 		fx.Annotate(NewTicketRepository, fx.As(new(repository.TicketRepository))),
 		fx.Annotate(NewDisputeRepository, fx.As(new(repository.DisputeRepository))),
+		fx.Annotate(NewFraudFlagRepository, fx.As(new(repository.FraudFlagRepository))),
 	),
 )

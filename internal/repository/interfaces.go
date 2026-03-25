@@ -533,6 +533,14 @@ type DisputeRepository interface {
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Dispute], error)
 }
 
+type FraudFlagRepository interface {
+	Create(ctx context.Context, flag *domain.FraudFlag) error
+	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.FraudFlag], error)
+	ListPending(ctx context.Context, filter domain.FraudFlagFilter) (*domain.PaginatedResult[domain.FraudFlag], error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.FraudFlagStatus, reviewedBy uuid.UUID) error
+	CountByUserAndRule(ctx context.Context, userID uuid.UUID, rule domain.FraudRuleName, since time.Time) (int64, error)
+}
+
 type TicketRepository interface {
 	Create(ctx context.Context, ticket *domain.Ticket) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Ticket, error)

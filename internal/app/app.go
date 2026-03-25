@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/admin"
+	"github.com/nikitaaldaev/bani/internal/antifraud"
 	"github.com/nikitaaldaev/bani/internal/calendar"
 	"github.com/nikitaaldaev/bani/internal/cron"
 	"github.com/nikitaaldaev/bani/internal/fiscal"
@@ -36,6 +37,7 @@ func New(cfg *config.Config) *fx.App {
 		fiscal.Module,
 		sms.Module,
 		service.Module,
+		antifraud.Module,
 		handler.Module,
 		cron.Module,
 		server.Module,

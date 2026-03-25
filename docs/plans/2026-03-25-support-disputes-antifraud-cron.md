@@ -101,16 +101,16 @@ Combined implementation plan covering: support ticket system with escalation and
 - Modify: `internal/repository/interfaces.go`
 - Create: `migrations/XXXXXX_antifraud.up.sql`
 
-- [ ] FraudFlag model: ID, UserID, Rule, Severity(low/medium/high/critical), Status(pending/reviewed/dismissed/action_taken), Action(flag/freeze_wallet/block_user/notify_admin), Details(JSONB), CreatedAt, ReviewedAt, ReviewedBy
-- [ ] FraudFlagRepository: Create, ListByUser, ListPending, UpdateStatus, CountByUserAndRule
-- [ ] FraudEngine interface: CheckWalletTopUp, CheckBookingCreate, CheckBookingCancel, CheckPayoutRequest
-- [ ] Client rules: RULE_MULTI_CARD_TOPUP (>3 cards/24h), RULE_TOPUP_CANCEL_CYCLE (>2 cycles/7d), RULE_DORMANT_BALANCE (>50k no bookings/30d), RULE_RAPID_BOOKINGS (>5/hour)
-- [ ] Owner rules: RULE_SELF_BOOKING (owner books own bathhouse), RULE_STRUCTURING (>3 small withdrawals/day), RULE_FAKE_REVIEWS (same IP)
-- [ ] Hook into WalletService.TopUp, BookingService.CreateBooking, BookingService.CancelBooking, PayoutService.RequestPayout
-- [ ] Action handling: "block" prevents operation (ErrFraudDetected), "flag"/"freeze_wallet" allows but creates flag + notifies admin
-- [ ] Admin endpoints: GET /api/v1/admin/antifraud/flags, PATCH .../{id}
-- [ ] Write tests for each rule
-- [ ] Run `go test ./... -v` — must pass
+- [x] FraudFlag model: ID, UserID, Rule, Severity(low/medium/high/critical), Status(pending/reviewed/dismissed/action_taken), Action(flag/freeze_wallet/block_user/notify_admin), Details(JSONB), CreatedAt, ReviewedAt, ReviewedBy
+- [x] FraudFlagRepository: Create, ListByUser, ListPending, UpdateStatus, CountByUserAndRule
+- [x] FraudEngine interface: CheckWalletTopUp, CheckBookingCreate, CheckBookingCancel, CheckPayoutRequest
+- [x] Client rules: RULE_MULTI_CARD_TOPUP (>3 cards/24h), RULE_TOPUP_CANCEL_CYCLE (>2 cycles/7d), RULE_DORMANT_BALANCE (>50k no bookings/30d), RULE_RAPID_BOOKINGS (>5/hour)
+- [x] Owner rules: RULE_SELF_BOOKING (owner books own bathhouse), RULE_STRUCTURING (>3 small withdrawals/day), RULE_FAKE_REVIEWS (same IP)
+- [x] Hook into WalletService.TopUp, BookingService.CreateBooking, BookingService.CancelBooking, PayoutService.RequestPayout
+- [x] Action handling: "block" prevents operation (ErrFraudDetected), "flag"/"freeze_wallet" allows but creates flag + notifies admin
+- [x] Admin endpoints: GET /api/v1/admin/antifraud/flags, PATCH .../{id}
+- [x] Write tests for each rule
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 6: Chat Content Filtering
 

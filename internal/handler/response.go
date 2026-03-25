@@ -343,6 +343,8 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "dispute_not_resolved", err.Error())
 	case errors.Is(err, domain.ErrDisputeAlreadyAppealed):
 		writeErrorWithContext(w, r, http.StatusConflict, "dispute_already_appealed", err.Error())
+	case errors.Is(err, domain.ErrFraudDetected):
+		writeErrorWithContext(w, r, http.StatusForbidden, "fraud_detected", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
