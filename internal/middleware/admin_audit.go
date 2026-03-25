@@ -54,9 +54,10 @@ func AdminAudit(repo repository.AuditLogRepository, log *logger.Logger) func(htt
 				return
 			}
 
-			// Read and restore request body
+			// Read and restore request body (limit to 1MB to prevent memory exhaustion)
 			var redactedBody json.RawMessage
 			if r.Body != nil {
+				r.Body = http.MaxBytesReader(nil, r.Body, 1<<20) // 1MB
 				bodyBytes, err := io.ReadAll(r.Body)
 				r.Body.Close()
 				if err == nil && len(bodyBytes) > 0 {

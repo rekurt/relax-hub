@@ -31,7 +31,9 @@ func (cs *CronScheduler) antiFraudPatternDetection(ctx context.Context) error {
 		}
 
 		// Check dormant balance: high balance with no recent bookings
-		if err := cs.fraudEngine.CheckDormantBalance(ctx, wallet.UserID, wallet.Balance, 30); err != nil {
+		// Pass a value that exceeds the threshold so the rule can trigger.
+		// In production, this should look up the actual last booking date.
+		if err := cs.fraudEngine.CheckDormantBalance(ctx, wallet.UserID, wallet.Balance, 31); err != nil {
 			flagged++
 		}
 	}

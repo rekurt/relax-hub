@@ -49,9 +49,9 @@ type loginRequest struct {
 }
 
 type authResponse struct {
-	User        userResponse `json:"user"`
-	Token       string       `json:"token"`
-	Requires2FA bool         `json:"requires_2fa,omitempty"`
+	User        *userResponse `json:"user,omitempty"`
+	Token       string        `json:"token"`
+	Requires2FA bool          `json:"requires_2fa,omitempty"`
 }
 
 type userResponse struct {
@@ -162,8 +162,9 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	u := toUserResponse(user)
 	writeJSON(w, http.StatusCreated, authResponse{
-		User:  toUserResponse(user),
+		User:  &u,
 		Token: token,
 	})
 }
@@ -193,11 +194,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, authResponse{
-		User:        toUserResponse(result.User),
+	resp := authResponse{
 		Token:       result.Token,
 		Requires2FA: result.Requires2FA,
-	})
+	}
+	if !result.Requires2FA {
+		u := toUserResponse(result.User)
+		resp.User = &u
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
 
 // Me godoc
@@ -497,8 +502,9 @@ func (h *AuthHandler) VerifyPhone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	u2fa := toUserResponse(result.User)
 	writeJSON(w, http.StatusOK, authResponse{
-		User:        toUserResponse(result.User),
+		User:        &u2fa,
 		Token:       result.Token,
 		Requires2FA: result.Requires2FA,
 	})
@@ -671,8 +677,9 @@ func (h *AuthHandler) Verify2FALogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uReset := toUserResponse(user)
 	writeJSON(w, http.StatusOK, authResponse{
-		User:  toUserResponse(user),
+		User:  &uReset,
 		Token: token,
 	})
 }

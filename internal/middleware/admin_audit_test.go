@@ -301,13 +301,13 @@ func TestAdminAudit_TargetTypeInferred(t *testing.T) {
 		t.Fatalf("failed to unmarshal details: %v", err)
 	}
 
-	if details["target_type"] != "citie" {
-		// "cities" -> singular "citie" is close enough; we just verify the field is present
-		// The singularization is best-effort
-		if _, ok := details["target_type"]; !ok {
-			t.Error("target_type should be present in audit details")
-		}
+	targetType, ok := details["target_type"]
+	if !ok {
+		t.Error("target_type should be present in audit details")
+	} else if targetType == "" {
+		t.Error("target_type should not be empty")
 	}
+	// "cities" -> "citie" via simple TrimSuffix("s") — best-effort singularization
 }
 
 func TestAdminAudit_NoUserID_NotLogged(t *testing.T) {

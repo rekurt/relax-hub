@@ -97,7 +97,7 @@ func (h *AntiFraudHandler) ListFlags(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var items []fraudFlagResponse
+	items := make([]fraudFlagResponse, 0, len(result.Items))
 	for i := range result.Items {
 		items = append(items, toFraudFlagResponse(&result.Items[i]))
 	}

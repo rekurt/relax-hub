@@ -201,7 +201,7 @@ func TestOwnerJob_ResponseRateMonitoring(t *testing.T) {
 		nil, nil, nil, nil, nil, nil, nil, nil, nil, bookingSvc, nil, nil, nil, nil, nil, nil, nil,
 	)
 
-	err := cs.ownerResponseRateMonitoring(context.Background())
+	err := cs.responseRateRecalculation(context.Background())
 	assert.NoError(t, err)
 }
 
