@@ -210,6 +210,10 @@ func (s *disputeService) ResolveDispute(ctx context.Context, disputeID uuid.UUID
 		return domain.ErrInvalidInput
 	}
 
+	if refundAmount < 0 || compensationAmount < 0 {
+		return domain.ErrInvalidInput
+	}
+
 	dispute, err := s.disputeRepo.GetByID(ctx, disputeID)
 	if err != nil {
 		return err
@@ -229,6 +233,7 @@ func (s *disputeService) ResolveDispute(ctx context.Context, disputeID uuid.UUID
 		if refundAmount > 0 {
 			if escrowErr := s.escrowSvc.ProcessRefundByBookingID(ctx, dispute.BookingID, refundAmount); escrowErr != nil {
 				s.logger.Error("process dispute refund", "dispute_id", disputeID, "error", escrowErr)
+				return fmt.Errorf("process dispute refund: %w", escrowErr)
 			}
 		}
 	}
@@ -238,11 +243,12 @@ func (s *disputeService) ResolveDispute(ctx context.Context, disputeID uuid.UUID
 		wallet, err := s.walletSvc.GetWallet(ctx, dispute.InitiatorID)
 		if err != nil {
 			s.logger.Error("get wallet for dispute compensation", "dispute_id", disputeID, "initiator_id", dispute.InitiatorID, "error", err)
-		} else {
-			_, err = s.walletSvc.AddBonus(ctx, wallet.ID, compensationAmount, domain.WalletTxBonus, nil, fmt.Sprintf("Компенсация по спору %s", disputeID))
-			if err != nil {
-				s.logger.Error("credit dispute compensation", "dispute_id", disputeID, "amount", compensationAmount, "error", err)
-			}
+			return fmt.Errorf("get wallet for dispute compensation: %w", err)
+		}
+		_, err = s.walletSvc.AddBonus(ctx, wallet.ID, compensationAmount, domain.WalletTxBonus, nil, fmt.Sprintf("Компенсация по спору %s", disputeID))
+		if err != nil {
+			s.logger.Error("credit dispute compensation", "dispute_id", disputeID, "amount", compensationAmount, "error", err)
+			return fmt.Errorf("credit dispute compensation: %w", err)
 		}
 	}
 

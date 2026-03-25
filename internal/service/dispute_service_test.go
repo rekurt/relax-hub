@@ -108,7 +108,7 @@ func (m *mockDisputeWalletService) FreezeAndZeroBalance(_ context.Context, _ uui
 	return nil
 }
 
-func newDisputeTestService() (service.DisputeService, *mock.DisputeRepo, *mock.BookingRepo, *mock.BathhouseRepo, *mockEscrowService) {
+func newDisputeTestService() (service.DisputeService, *mock.DisputeRepo, *mock.BookingRepo, *mock.BathhouseRepo, *mockEscrowService, *mockDisputeWalletService) {
 	disputeRepo := mock.NewDisputeRepo().(*mock.DisputeRepo)
 	bookingRepo := mock.NewBookingRepo()
 	bhRepo := mock.NewBathhouseRepo()
@@ -118,7 +118,7 @@ func newDisputeTestService() (service.DisputeService, *mock.DisputeRepo, *mock.B
 	access := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
 	svc := service.NewDisputeService(disputeRepo, escrowSvc, walletSvc, bookingRepo, bhRepo, access, log)
-	return svc, disputeRepo, bookingRepo, bhRepo, escrowSvc
+	return svc, disputeRepo, bookingRepo, bhRepo, escrowSvc, walletSvc
 }
 
 func createTestBookingAndBathhouse(ctx context.Context, bookingRepo *mock.BookingRepo, bhRepo *mock.BathhouseRepo, clientID, ownerID uuid.UUID) *domain.Booking {
@@ -148,7 +148,7 @@ func createTestBookingAndBathhouse(ctx context.Context, bookingRepo *mock.Bookin
 }
 
 func TestDisputeService_OpenDispute(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, escrowSvc := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, escrowSvc, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -183,7 +183,7 @@ func TestDisputeService_OpenDispute(t *testing.T) {
 }
 
 func TestDisputeService_OpenDispute_OwnerInitiates(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -204,7 +204,7 @@ func TestDisputeService_OpenDispute_OwnerInitiates(t *testing.T) {
 }
 
 func TestDisputeService_OpenDispute_Forbidden(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -219,7 +219,7 @@ func TestDisputeService_OpenDispute_Forbidden(t *testing.T) {
 }
 
 func TestDisputeService_OpenDispute_Duplicate(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -238,7 +238,7 @@ func TestDisputeService_OpenDispute_Duplicate(t *testing.T) {
 }
 
 func TestDisputeService_SubmitEvidence(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -282,7 +282,7 @@ func TestDisputeService_SubmitEvidence(t *testing.T) {
 }
 
 func TestDisputeService_SubmitEvidence_Forbidden(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -303,7 +303,7 @@ func TestDisputeService_SubmitEvidence_Forbidden(t *testing.T) {
 }
 
 func TestDisputeService_ResolveDispute(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -336,7 +336,7 @@ func TestDisputeService_ResolveDispute(t *testing.T) {
 }
 
 func TestDisputeService_ResolveDispute_AlreadyResolved(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -353,7 +353,7 @@ func TestDisputeService_ResolveDispute_AlreadyResolved(t *testing.T) {
 }
 
 func TestDisputeService_AppealDispute(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -375,7 +375,7 @@ func TestDisputeService_AppealDispute(t *testing.T) {
 }
 
 func TestDisputeService_AppealDispute_NotResolved(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -390,7 +390,7 @@ func TestDisputeService_AppealDispute_NotResolved(t *testing.T) {
 }
 
 func TestDisputeService_AppealDispute_Forbidden(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -407,7 +407,7 @@ func TestDisputeService_AppealDispute_Forbidden(t *testing.T) {
 }
 
 func TestDisputeService_AssignDispute(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -432,7 +432,7 @@ func TestDisputeService_AssignDispute(t *testing.T) {
 }
 
 func TestDisputeService_CloseDispute(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -458,7 +458,7 @@ func TestDisputeService_CloseDispute(t *testing.T) {
 }
 
 func TestDisputeService_GetDispute_Forbidden(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -480,7 +480,7 @@ func TestDisputeService_GetDispute_Forbidden(t *testing.T) {
 }
 
 func TestDisputeService_ListUserDisputes(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, _ := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, _, _ := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
@@ -501,11 +501,18 @@ func TestDisputeService_ListUserDisputes(t *testing.T) {
 }
 
 func TestDisputeService_FullLifecycle(t *testing.T) {
-	svc, _, bookingRepo, bhRepo, escrowSvc := newDisputeTestService()
+	svc, _, bookingRepo, bhRepo, escrowSvc, walletSvc := newDisputeTestService()
 	ctx := context.Background()
 	clientID := uuid.New()
 	ownerID := uuid.New()
 	mediatorID := uuid.New()
+
+	// Create wallet for initiator (needed for compensation)
+	walletSvc.wallets[clientID] = &domain.Wallet{
+		ID:       uuid.New(),
+		UserID:   clientID,
+		Currency: domain.WalletCurrencyRUB,
+	}
 
 	// 1. Open dispute
 	booking := createTestBookingAndBathhouse(ctx, bookingRepo, bhRepo, clientID, ownerID)

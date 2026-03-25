@@ -326,6 +326,8 @@ func (s *walletService) Refund(ctx context.Context, walletID uuid.UUID, amount i
 		newBalance = maxBalance
 	}
 
+	actualAmount := newBalance - wallet.Balance
+
 	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
 		return nil, err
 	}
@@ -334,7 +336,7 @@ func (s *walletService) Refund(ctx context.Context, walletID uuid.UUID, amount i
 		ID:            uuid.New(),
 		WalletID:      wallet.ID,
 		Type:          domain.WalletTxRefund,
-		Amount:        amount,
+		Amount:        actualAmount,
 		BalanceAfter:  newBalance,
 		Status:        domain.WalletTxStatusCompleted,
 		Description:   description,
