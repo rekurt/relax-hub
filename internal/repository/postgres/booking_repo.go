@@ -435,14 +435,14 @@ func (r *bookingRepo) GetResponseStats(ctx context.Context, bathhouseID uuid.UUI
 	return totalRequests, respondedInTime, avgResponseMinutes, nil
 }
 
-func (r *bookingRepo) UpdateEndTime(ctx context.Context, bookingID uuid.UUID, newEndTime time.Time, newTotalPrice int64) error {
-	query := `UPDATE bookings SET end_time = $2, total_price = $3, updated_at = $4 WHERE id = $1`
-	tag, err := r.pool.Exec(ctx, query, bookingID, newEndTime, newTotalPrice, time.Now())
+func (r *bookingRepo) UpdateEndTime(ctx context.Context, bookingID uuid.UUID, oldEndTime, newEndTime time.Time, newTotalPrice int64) error {
+	query := `UPDATE bookings SET end_time = $2, total_price = $3, updated_at = $4 WHERE id = $1 AND end_time = $5`
+	tag, err := r.pool.Exec(ctx, query, bookingID, newEndTime, newTotalPrice, time.Now(), oldEndTime)
 	if err != nil {
 		return fmt.Errorf("update end time: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
-		return domain.ErrNotFound
+		return domain.ErrWalletConcurrentUpdate
 	}
 	return nil
 }

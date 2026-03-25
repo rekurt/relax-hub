@@ -80,7 +80,7 @@ type BookingRepository interface {
 	UpdateCheckout(ctx context.Context, bookingID uuid.UUID, checkedOutAt *time.Time, status domain.BookingStatus) error
 	ListConfirmedWithoutCheckin(ctx context.Context, noShowCutoff time.Time) ([]domain.Booking, error)
 	ListUpcoming(ctx context.Context, from, to time.Time) ([]domain.Booking, error)
-	UpdateEndTime(ctx context.Context, bookingID uuid.UUID, newEndTime time.Time, newTotalPrice int64) error
+	UpdateEndTime(ctx context.Context, bookingID uuid.UUID, oldEndTime, newEndTime time.Time, newTotalPrice int64) error
 	UpdateCancelledByOwner(ctx context.Context, bookingID uuid.UUID) error
 	CountOwnerCancellations(ctx context.Context, ownerID uuid.UUID, since time.Time) (int, error)
 	GetResponseStats(ctx context.Context, bathhouseID uuid.UUID, since time.Time) (totalRequests int, respondedInTime int, avgResponseMinutes int, err error)

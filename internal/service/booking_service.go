@@ -825,12 +825,13 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 
 	// Create escrow to hold funds during claim period before releasing to owner.
 	// Only create escrow if a succeeded payment exists -- no funds to escrow otherwise.
+	// Use booking.TotalPrice (not payment.Amount) to include session extension charges.
 	if s.escrowSvc != nil {
 		payment, payErr := s.paymentSvc.GetPaymentByBooking(ctx, booking.UserID, bookingID)
 		if payErr != nil {
 			s.logger.Warn("no payment found for escrow on complete", "booking_id", bookingID, "error", payErr)
 		} else if payment.Status == domain.PaymentSucceeded {
-			_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, payment.Amount, booking.ServiceFeeAmount)
+			_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, booking.TotalPrice, booking.ServiceFeeAmount)
 			if escrowErr != nil {
 				return nil, fmt.Errorf("failed to create escrow on complete: %w", escrowErr)
 			}
@@ -1484,12 +1485,13 @@ func (s *bookingService) CheckOut(ctx context.Context, userID uuid.UUID, role do
 
 	// Create escrow to hold funds during claim period before releasing to owner.
 	// Only create escrow if a succeeded payment exists -- no funds to escrow otherwise.
+	// Use booking.TotalPrice (not payment.Amount) to include session extension charges.
 	if s.escrowSvc != nil {
 		payment, payErr := s.paymentSvc.GetPaymentByBooking(ctx, booking.UserID, bookingID)
 		if payErr != nil {
 			s.logger.Warn("no payment found for escrow on checkout", "booking_id", bookingID, "error", payErr)
 		} else if payment.Status == domain.PaymentSucceeded {
-			_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, payment.Amount, booking.ServiceFeeAmount)
+			_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, booking.TotalPrice, booking.ServiceFeeAmount)
 			if escrowErr != nil {
 				return fmt.Errorf("failed to create escrow on checkout: %w", escrowErr)
 			}
@@ -1752,7 +1754,7 @@ func (s *bookingService) Extend(ctx context.Context, userID uuid.UUID, bookingID
 	}
 
 	// Update booking end time and total price
-	if err := s.bookingRepo.UpdateEndTime(ctx, bookingID, newEndTime, newTotalPrice); err != nil {
+	if err := s.bookingRepo.UpdateEndTime(ctx, bookingID, booking.EndTime, newEndTime, newTotalPrice); err != nil {
 		// Rollback wallet debit
 		if s.walletSvc != nil && extensionPrice > 0 {
 			wallet, wErr := s.walletSvc.GetWallet(ctx, userID)
