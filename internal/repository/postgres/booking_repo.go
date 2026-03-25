@@ -325,12 +325,17 @@ func (r *bookingRepo) UpdateCheckout(ctx context.Context, bookingID uuid.UUID, c
 }
 
 func (r *bookingRepo) ListConfirmedWithoutCheckin(ctx context.Context, noShowCutoff time.Time) ([]domain.Booking, error) {
+	// Only consider bookings whose start_time is between noShowCutoff and 24h before it.
+	// This prevents marking very old confirmed bookings (e.g., from days ago) as no-show.
+	// Those should be handled by the Complete flow or manual intervention.
+	upperBound := noShowCutoff.Add(-24 * time.Hour)
 	query := `SELECT ` + bookingColumns + ` FROM bookings
 		WHERE status = 'confirmed'
 			AND start_time < $1
+			AND start_time > $2
 			AND checked_in_at IS NULL`
 
-	rows, err := r.pool.Query(ctx, query, noShowCutoff)
+	rows, err := r.pool.Query(ctx, query, noShowCutoff, upperBound)
 	if err != nil {
 		return nil, fmt.Errorf("list confirmed without checkin: %w", err)
 	}

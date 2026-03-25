@@ -817,11 +817,17 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 		s.sendReferralBonusNotifications(ctx, referralResult)
 	}
 
-	// Create escrow to hold funds during claim period before releasing to owner
+	// Create escrow to hold funds during claim period before releasing to owner.
+	// Only create escrow if a succeeded payment exists -- no funds to escrow otherwise.
 	if s.escrowSvc != nil {
-		_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, booking.TotalPrice, booking.ServiceFeeAmount)
-		if escrowErr != nil {
-			s.logger.Warn("failed to create escrow on complete", "booking_id", bookingID, "error", escrowErr)
+		payment, payErr := s.paymentSvc.GetPaymentByBooking(ctx, booking.UserID, bookingID)
+		if payErr != nil {
+			s.logger.Warn("no payment found for escrow on complete", "booking_id", bookingID, "error", payErr)
+		} else if payment.Status == domain.PaymentSucceeded {
+			_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, payment.Amount, booking.ServiceFeeAmount)
+			if escrowErr != nil {
+				s.logger.Warn("failed to create escrow on complete", "booking_id", bookingID, "error", escrowErr)
+			}
 		}
 	}
 
@@ -1275,9 +1281,29 @@ func (s *bookingService) handleOwnerCancellationPenalty(ctx context.Context, boo
 		return
 	}
 
-	// Credit 10% compensation to client wallet
+	// Credit 10% compensation to client wallet, funded by deducting from owner wallet.
+	// This ensures the platform doesn't absorb the cost -- the penalty comes from the owner.
 	compensationAmount := booking.TotalPrice / 10
 	if compensationAmount > 0 && s.walletSvc != nil {
+		// First, deduct from owner's wallet
+		bh2, bhErr := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+		if bhErr != nil {
+			s.logger.Warn("failed to get bathhouse for owner penalty debit", "bathhouse_id", booking.BathhouseID, "error", bhErr)
+		} else {
+			ownerWallet, owErr := s.walletSvc.GetWallet(ctx, bh2.OwnerID)
+			if owErr != nil {
+				s.logger.Warn("failed to get owner wallet for penalty debit", "owner_id", bh2.OwnerID, "error", owErr)
+			} else {
+				bookingID := booking.ID
+				_, spendErr := s.walletSvc.Spend(ctx, ownerWallet.ID, compensationAmount, "owner_cancellation_penalty", &bookingID, fmt.Sprintf("Штраф за отмену бронирования %s", bookingID.String()[:8]))
+				if spendErr != nil {
+					s.logger.Warn("failed to debit owner for cancellation penalty (insufficient balance?)", "owner_id", bh2.OwnerID, "amount", compensationAmount, "error", spendErr)
+					// If owner has insufficient funds, still credit client but log the shortfall
+				}
+			}
+		}
+
+		// Credit compensation to client wallet
 		wallet, err := s.walletSvc.GetWallet(ctx, booking.UserID)
 		if err != nil {
 			s.logger.Warn("failed to get client wallet for compensation", "user_id", booking.UserID, "error", err)
@@ -1478,10 +1504,16 @@ func (s *bookingService) MarkNoShows(ctx context.Context) (int, error) {
 			}
 		}
 
-		// Create escrow so funds flow to owner after claim period
+		// Create escrow so funds flow to owner after claim period.
+		// Only if payment was actually collected.
 		if s.escrowSvc != nil {
-			if _, escrowErr := s.escrowSvc.CreateEscrow(ctx, b.ID, b.TotalPrice, b.ServiceFeeAmount); escrowErr != nil {
-				s.logger.Warn("failed to create escrow for no-show booking", "booking_id", b.ID, "error", escrowErr)
+			payment, payErr := s.paymentSvc.GetPaymentByBooking(ctx, b.UserID, b.ID)
+			if payErr != nil {
+				s.logger.Warn("no payment found for escrow on no-show", "booking_id", b.ID, "error", payErr)
+			} else if payment.Status == domain.PaymentSucceeded {
+				if _, escrowErr := s.escrowSvc.CreateEscrow(ctx, b.ID, payment.Amount, b.ServiceFeeAmount); escrowErr != nil {
+					s.logger.Warn("failed to create escrow for no-show booking", "booking_id", b.ID, "error", escrowErr)
+				}
 			}
 		}
 

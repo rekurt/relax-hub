@@ -546,6 +546,13 @@ func (s *walletService) FreezeAndZeroBalance(ctx context.Context, userID uuid.UU
 		return fmt.Errorf("freeze wallet: %w", err)
 	}
 
+	// Re-read wallet after releasing holds, because hold releases changed held_amount in DB.
+	// Using the original wallet.HeldAmount as the CAS "old" value would cause a mismatch.
+	wallet, err = s.walletRepo.GetByUserID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("re-read wallet after freeze: %w", err)
+	}
+
 	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, 0, wallet.HeldAmount, 0); err != nil {
 		return fmt.Errorf("zero wallet balance: %w", err)
 	}
