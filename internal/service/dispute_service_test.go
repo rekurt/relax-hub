@@ -112,10 +112,12 @@ func newDisputeTestService() (service.DisputeService, *mock.DisputeRepo, *mock.B
 	disputeRepo := mock.NewDisputeRepo().(*mock.DisputeRepo)
 	bookingRepo := mock.NewBookingRepo()
 	bhRepo := mock.NewBathhouseRepo()
+	repRepo := mock.NewRepresentativeRepo()
 	escrowSvc := &mockEscrowService{}
 	walletSvc := newMockDisputeWalletService()
+	access := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewDisputeService(disputeRepo, escrowSvc, walletSvc, bookingRepo, bhRepo, log)
+	svc := service.NewDisputeService(disputeRepo, escrowSvc, walletSvc, bookingRepo, bhRepo, access, log)
 	return svc, disputeRepo, bookingRepo, bhRepo, escrowSvc
 }
 

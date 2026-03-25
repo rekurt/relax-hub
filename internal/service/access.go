@@ -44,3 +44,8 @@ func (a *AccessChecker) CanManageBathhouse(ctx context.Context, userID uuid.UUID
 
 	return domain.ErrForbidden
 }
+
+// GetManagedBathhouseIDs returns bathhouse IDs the representative is assigned to.
+func (a *AccessChecker) GetManagedBathhouseIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	return a.repRepo.ListBathhouseIDsByUser(ctx, userID)
+}

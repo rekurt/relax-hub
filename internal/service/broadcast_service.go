@@ -108,10 +108,21 @@ func (s *broadcastService) Send(ctx context.Context, userID uuid.UUID, role doma
 		return fmt.Errorf("list guests for broadcast: %w", err)
 	}
 
-	// Send notifications to each guest (respecting their preferences via NotificationService)
+	// Send notifications to each guest (respecting per-guest cooldown and preferences)
+	cooldownSince := time.Now().Add(-time.Duration(broadcastGuestCooldownH) * time.Hour)
 	var delivered int64
 	for _, guest := range guests.Items {
-		err := s.notifSvc.Send(ctx, guest.ClientID, domain.NotifBroadcast, broadcast.Title, broadcast.Body, map[string]string{
+		// Per-guest rate limit: 1 broadcast per 3 days
+		recent, err := s.notifSvc.HasRecentByType(ctx, guest.ClientID, domain.NotifBroadcast, cooldownSince)
+		if err != nil {
+			s.logger.Error("check guest broadcast cooldown", "client_id", guest.ClientID, "error", err)
+			continue
+		}
+		if recent {
+			continue
+		}
+
+		err = s.notifSvc.Send(ctx, guest.ClientID, domain.NotifBroadcast, broadcast.Title, broadcast.Body, map[string]string{
 			"broadcast_id": broadcastID.String(),
 			"owner_id":     userID.String(),
 		})

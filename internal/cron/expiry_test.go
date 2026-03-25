@@ -53,6 +53,10 @@ func (m *mockNotificationService) UpdatePreferences(_ context.Context, _ uuid.UU
 	return nil
 }
 
+func (m *mockNotificationService) HasRecentByType(_ context.Context, _ uuid.UUID, _ domain.NotificationType, _ time.Time) (bool, error) {
+	return false, nil
+}
+
 func TestHandleSubscriptionExpiryNotify(t *testing.T) {
 	log := logger.New(logger.LevelInfo)
 	subRepo := mock.NewSubscriptionRepo()

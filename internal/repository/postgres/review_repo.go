@@ -111,11 +111,13 @@ func (r *reviewRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Review,
 
 func (r *reviewRepo) Update(ctx context.Context, review *domain.Review) error {
 	query := `
-		UPDATE reviews SET rating = $2, cleanliness = $3, accuracy = $4, communication = $5, value_for_money = $6, text = $7, images = $8, updated_at = $9
+		UPDATE reviews SET rating = $2, cleanliness = $3, accuracy = $4, communication = $5, value_for_money = $6,
+		text = $7, images = $8, updated_at = $9, status = $10, moderation_score = $11, moderation_flags = $12
 		WHERE id = $1`
 
 	result, err := r.pool.Exec(ctx, query,
-		review.ID, review.Rating, review.Cleanliness, review.Accuracy, review.Communication, review.ValueForMoney, review.Text, review.Images, review.UpdatedAt,
+		review.ID, review.Rating, review.Cleanliness, review.Accuracy, review.Communication, review.ValueForMoney,
+		review.Text, review.Images, review.UpdatedAt, review.Status, review.ModerationScore, review.ModerationFlags,
 	)
 	if err != nil {
 		return fmt.Errorf("update review: %w", err)

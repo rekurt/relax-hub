@@ -443,7 +443,8 @@ func (r *bookingRepo) ListCompletedForReviewRequests(ctx context.Context, checke
 		  AND checked_out_at IS NOT NULL
 		  AND checked_out_at <= $1
 		  AND NOT EXISTS (SELECT 1 FROM reviews WHERE reviews.booking_id = bookings.id)
-		ORDER BY checked_out_at ASC`
+		ORDER BY checked_out_at ASC
+		LIMIT 1000`
 
 	rows, err := r.pool.Query(ctx, query, checkedOutBefore)
 	if err != nil {

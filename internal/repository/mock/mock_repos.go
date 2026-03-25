@@ -1504,6 +1504,18 @@ func (r *NotificationRepo) UpdatePreferences(_ context.Context, prefs *domain.No
 	return nil
 }
 
+func (r *NotificationRepo) HasRecentByType(_ context.Context, userID uuid.UUID, notifType domain.NotificationType, since time.Time) (bool, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, n := range r.notifications {
+		if n.UserID == userID && n.Type == notifType && !n.CreatedAt.Before(since) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // SocialAccountRepo is an in-memory mock implementation of repository.SocialAccountRepository.
 type SocialAccountRepo struct {
 	mu       sync.RWMutex

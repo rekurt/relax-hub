@@ -122,9 +122,19 @@ func (r *guestCardRepo) ListByOwner(ctx context.Context, filter domain.GuestCard
 	var args []interface{}
 	argIdx := 1
 
-	conditions = append(conditions, fmt.Sprintf("gc.owner_id = $%d", argIdx))
-	args = append(args, filter.OwnerID)
-	argIdx++
+	if len(filter.BathhouseIDs) > 0 {
+		placeholders := make([]string, len(filter.BathhouseIDs))
+		for i, id := range filter.BathhouseIDs {
+			placeholders[i] = fmt.Sprintf("$%d", argIdx)
+			args = append(args, id)
+			argIdx++
+		}
+		conditions = append(conditions, fmt.Sprintf("gc.bathhouse_id IN (%s)", strings.Join(placeholders, ",")))
+	} else {
+		conditions = append(conditions, fmt.Sprintf("gc.owner_id = $%d", argIdx))
+		args = append(args, filter.OwnerID)
+		argIdx++
+	}
 
 	if filter.BathhouseID != nil {
 		conditions = append(conditions, fmt.Sprintf("gc.bathhouse_id = $%d", argIdx))

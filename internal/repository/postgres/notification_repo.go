@@ -219,3 +219,12 @@ func (r *notificationRepo) UpdatePreferences(ctx context.Context, prefs *domain.
 	}
 	return nil
 }
+
+func (r *notificationRepo) HasRecentByType(ctx context.Context, userID uuid.UUID, notifType domain.NotificationType, since time.Time) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM notifications WHERE user_id = $1 AND type = $2 AND created_at >= $3)`
+	var exists bool
+	if err := r.pool.QueryRow(ctx, query, userID, notifType, since).Scan(&exists); err != nil {
+		return false, fmt.Errorf("has recent notification by type: %w", err)
+	}
+	return exists, nil
+}

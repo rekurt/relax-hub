@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"bytes"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -209,13 +211,15 @@ func (h *GuestCardHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 
 	filter := domain.GuestCardFilter{}
 
-	w.Header().Set("Content-Type", "text/csv")
-	w.Header().Set("Content-Disposition", "attachment; filename=guests.csv")
-
-	if err := h.guestCardService.ExportCSV(r.Context(), userID, role, filter, w); err != nil {
+	var buf bytes.Buffer
+	if err := h.guestCardService.ExportCSV(r.Context(), userID, role, filter, &buf); err != nil {
 		handleServiceError(w, err)
 		return
 	}
+
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", "attachment; filename=guests.csv")
+	_, _ = io.Copy(w, &buf)
 }
 
 type segmentResponse struct {

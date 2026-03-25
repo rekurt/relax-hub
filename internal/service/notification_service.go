@@ -19,6 +19,7 @@ type NotificationService interface {
 	GetUnreadCount(ctx context.Context, userID uuid.UUID) (int64, error)
 	GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.NotificationPreferences, error)
 	UpdatePreferences(ctx context.Context, userID uuid.UUID, prefs *domain.NotificationPreferences) error
+	HasRecentByType(ctx context.Context, userID uuid.UUID, notifType domain.NotificationType, since time.Time) (bool, error)
 }
 
 type notificationService struct {
@@ -109,4 +110,8 @@ func (s *notificationService) UpdatePreferences(ctx context.Context, userID uuid
 		return err
 	}
 	return s.notifRepo.UpdatePreferences(ctx, prefs)
+}
+
+func (s *notificationService) HasRecentByType(ctx context.Context, userID uuid.UUID, notifType domain.NotificationType, since time.Time) (bool, error) {
+	return s.notifRepo.HasRecentByType(ctx, userID, notifType, since)
 }

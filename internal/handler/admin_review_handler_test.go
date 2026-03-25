@@ -53,6 +53,10 @@ func (m *mockAdminNotificationService) UpdatePreferences(ctx context.Context, us
 	return nil
 }
 
+func (m *mockAdminNotificationService) HasRecentByType(_ context.Context, _ uuid.UUID, _ domain.NotificationType, _ time.Time) (bool, error) {
+	return false, nil
+}
+
 // adminReviewServiceMock wraps mock.ReviewRepo to implement service.ReviewService for admin tests.
 type adminReviewServiceMock struct {
 	repo *mock.ReviewRepo

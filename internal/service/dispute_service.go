@@ -36,6 +36,7 @@ type disputeService struct {
 	walletSvc     WalletService
 	bookingRepo   repository.BookingRepository
 	bathhouseRepo repository.BathhouseRepository
+	access        *AccessChecker
 	logger        *logger.Logger
 }
 
@@ -45,6 +46,7 @@ func NewDisputeService(
 	walletSvc WalletService,
 	bookingRepo repository.BookingRepository,
 	bathhouseRepo repository.BathhouseRepository,
+	access *AccessChecker,
 	log *logger.Logger,
 ) DisputeService {
 	return &disputeService{
@@ -53,6 +55,7 @@ func NewDisputeService(
 		walletSvc:     walletSvc,
 		bookingRepo:   bookingRepo,
 		bathhouseRepo: bathhouseRepo,
+		access:        access,
 		logger:        log,
 	}
 }
@@ -62,6 +65,11 @@ func (s *disputeService) OpenDispute(ctx context.Context, userID uuid.UUID, book
 	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
 	if err != nil {
 		return nil, fmt.Errorf("get booking: %w", err)
+	}
+
+	// Only completed or no-show bookings can be disputed
+	if booking.Status != domain.BookingCompleted && booking.Status != domain.BookingNoShow {
+		return nil, domain.ErrInvalidInput
 	}
 
 	// Look up bathhouse to get owner
@@ -74,7 +82,7 @@ func (s *disputeService) OpenDispute(ctx context.Context, userID uuid.UUID, book
 	var respondentID uuid.UUID
 	if booking.UserID == userID {
 		respondentID = bathhouse.OwnerID
-	} else if bathhouse.OwnerID == userID {
+	} else if bathhouse.OwnerID == userID || s.access.CanManageBathhouse(ctx, userID, domain.RoleRepresentative, booking.BathhouseID) == nil {
 		respondentID = booking.UserID
 	} else {
 		return nil, domain.ErrForbidden

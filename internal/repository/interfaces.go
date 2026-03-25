@@ -123,6 +123,7 @@ type NotificationRepository interface {
 	CountUnread(ctx context.Context, userID uuid.UUID) (int64, error)
 	GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.NotificationPreferences, error)
 	UpdatePreferences(ctx context.Context, prefs *domain.NotificationPreferences) error
+	HasRecentByType(ctx context.Context, userID uuid.UUID, notifType domain.NotificationType, since time.Time) (bool, error)
 }
 
 type SocialAccountRepository interface {

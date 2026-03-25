@@ -71,8 +71,9 @@ type GuestCard struct {
 }
 
 type GuestCardFilter struct {
-	OwnerID     uuid.UUID
-	BathhouseID *uuid.UUID
+	OwnerID      uuid.UUID
+	BathhouseID  *uuid.UUID
+	BathhouseIDs []uuid.UUID // for representatives: filter by managed bathhouse IDs
 	Search      *string
 	Tag         *string
 	Segment     *GuestSegmentSlug

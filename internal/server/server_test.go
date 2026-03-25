@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/config"
@@ -104,6 +105,10 @@ func (m *mockAdminNotificationService) GetPreferences(_ context.Context, _ uuid.
 
 func (m *mockAdminNotificationService) UpdatePreferences(_ context.Context, _ uuid.UUID, _ *domain.NotificationPreferences) error {
 	return nil
+}
+
+func (m *mockAdminNotificationService) HasRecentByType(_ context.Context, _ uuid.UUID, _ domain.NotificationType, _ time.Time) (bool, error) {
+	return false, nil
 }
 
 func testRouterParams() server.RouterParams {

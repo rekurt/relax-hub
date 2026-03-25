@@ -76,6 +76,10 @@ func (m *mockNotificationService) UpdatePreferences(ctx context.Context, userID 
 	return nil
 }
 
+func (m *mockNotificationService) HasRecentByType(_ context.Context, _ uuid.UUID, _ domain.NotificationType, _ time.Time) (bool, error) {
+	return false, nil
+}
+
 // --- Notification Handler Tests ---
 
 func TestNotificationHandler_List(t *testing.T) {

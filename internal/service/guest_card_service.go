@@ -70,13 +70,36 @@ func (s *guestCardService) ListGuests(ctx context.Context, userID uuid.UUID, rol
 		return nil, domain.ErrForbidden
 	}
 
-	filter.OwnerID = userID
+	if err := s.setCRMOwnerFilter(ctx, userID, role, &filter); err != nil {
+		return nil, err
+	}
 	return s.guestCardRepo.ListByOwner(ctx, filter)
 }
 
 func (s *guestCardService) GetGuestDetail(ctx context.Context, userID uuid.UUID, role domain.UserRole, ownerID, clientID, bathhouseID uuid.UUID) (*domain.GuestCard, error) {
 	if role != domain.RoleOwner && role != domain.RoleRepresentative && role != domain.RoleAdmin {
 		return nil, domain.ErrForbidden
+	}
+
+	// Verify the requesting user has access to this data
+	if role == domain.RoleOwner && ownerID != userID {
+		return nil, domain.ErrForbidden
+	}
+	if role == domain.RoleRepresentative {
+		bhIDs, err := s.access.GetManagedBathhouseIDs(ctx, userID)
+		if err != nil {
+			return nil, fmt.Errorf("get managed bathhouses: %w", err)
+		}
+		found := false
+		for _, id := range bhIDs {
+			if id == bathhouseID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, domain.ErrForbidden
+		}
 	}
 
 	return s.guestCardRepo.GetByOwnerAndClient(ctx, ownerID, clientID, bathhouseID)
@@ -97,8 +120,24 @@ func (s *guestCardService) UpdateGuestNotes(ctx context.Context, userID uuid.UUI
 		if err != nil {
 			return err
 		}
-		if card.OwnerID != userID {
+		if role == domain.RoleOwner && card.OwnerID != userID {
 			return domain.ErrForbidden
+		}
+		if role == domain.RoleRepresentative {
+			bhIDs, err := s.access.GetManagedBathhouseIDs(ctx, userID)
+			if err != nil {
+				return fmt.Errorf("get managed bathhouses: %w", err)
+			}
+			found := false
+			for _, id := range bhIDs {
+				if id == card.BathhouseID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return domain.ErrForbidden
+			}
 		}
 	}
 
@@ -111,7 +150,9 @@ func (s *guestCardService) ExportCSV(ctx context.Context, userID uuid.UUID, role
 	}
 
 	// Fetch all guests (large page to get all)
-	filter.OwnerID = userID
+	if err := s.setCRMOwnerFilter(ctx, userID, role, &filter); err != nil {
+		return err
+	}
 	filter.Page = 1
 	filter.PageSize = 10000
 
@@ -204,11 +245,32 @@ func (s *guestCardService) GetGuestsInSegment(ctx context.Context, userID uuid.U
 	}
 
 	filter := domain.GuestCardFilter{
-		OwnerID:  userID,
 		Segment:  &segment,
 		Page:     page,
 		PageSize: pageSize,
 	}
 
+	if err := s.setCRMOwnerFilter(ctx, userID, role, &filter); err != nil {
+		return nil, err
+	}
+
 	return s.guestCardRepo.ListByOwner(ctx, filter)
+}
+
+// setCRMOwnerFilter sets the appropriate owner/bathhouse filter based on the user's role.
+// For owners: filter by owner_id. For representatives: filter by their managed bathhouse IDs.
+func (s *guestCardService) setCRMOwnerFilter(ctx context.Context, userID uuid.UUID, role domain.UserRole, filter *domain.GuestCardFilter) error {
+	if role == domain.RoleRepresentative {
+		bhIDs, err := s.access.GetManagedBathhouseIDs(ctx, userID)
+		if err != nil {
+			return fmt.Errorf("get managed bathhouses: %w", err)
+		}
+		if len(bhIDs) == 0 {
+			return domain.ErrForbidden
+		}
+		filter.BathhouseIDs = bhIDs
+	} else {
+		filter.OwnerID = userID
+	}
+	return nil
 }
