@@ -62,6 +62,9 @@ const (
 	bayesianDisplayMinReviews    = 3     // show Bayesian rating only when >= 3 reviews
 	redisPlatformAvgKey          = "platform:avg_rating"
 	redisPlatformAvgTTL          = 24 * time.Hour
+	qualityMinReviews            = 10    // minimum reviews before quality thresholds apply
+	qualityWarningThreshold      = 3.0   // rating below this triggers owner warning
+	qualityDepublishThreshold    = 2.0   // rating below this triggers auto-depublish
 )
 
 type reviewService struct {
@@ -177,6 +180,7 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 	if err := s.RecalculateBayesianRating(ctx, booking.BathhouseID); err != nil {
 		s.logger.Warn("Failed to recalculate bayesian rating", "bathhouse_id", booking.BathhouseID, "error", err)
 	}
+	s.checkQualityThresholds(ctx, booking.BathhouseID)
 
 	// Notify bathhouse owner about new review (regardless of status)
 	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
@@ -260,6 +264,7 @@ func (s *reviewService) Update(ctx context.Context, userID uuid.UUID, reviewID u
 		if err := s.RecalculateBayesianRating(ctx, review.BathhouseID); err != nil {
 			s.logger.Warn("Failed to recalculate bayesian rating", "bathhouse_id", review.BathhouseID, "error", err)
 		}
+		s.checkQualityThresholds(ctx, review.BathhouseID)
 	}
 
 	return review, nil
@@ -292,6 +297,7 @@ func (s *reviewService) Delete(ctx context.Context, userID uuid.UUID, userRole d
 	if err := s.RecalculateBayesianRating(ctx, review.BathhouseID); err != nil {
 		s.logger.Warn("Failed to recalculate bayesian rating", "bathhouse_id", review.BathhouseID, "error", err)
 	}
+	s.checkQualityThresholds(ctx, review.BathhouseID)
 
 	return nil
 }
@@ -395,6 +401,56 @@ func (s *reviewService) RecalculateBayesianRating(ctx context.Context, bathhouse
 	}
 
 	return s.bhRepo.UpdateBayesianRating(ctx, bathhouseID, bayesian)
+}
+
+func (s *reviewService) checkQualityThresholds(ctx context.Context, bathhouseID uuid.UUID) {
+	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
+		s.logger.Warn("failed to get bathhouse for quality check", "bathhouse_id", bathhouseID, "error", err)
+		return
+	}
+
+	if bh.ReviewCount < qualityMinReviews {
+		return
+	}
+
+	if bh.Status != domain.BathhouseStatusActive {
+		return
+	}
+
+	data := map[string]string{
+		"bathhouse_id":   bathhouseID.String(),
+		"bathhouse_name": bh.Name,
+		"rating":         fmt.Sprintf("%.1f", bh.Rating),
+		"review_count":   strconv.Itoa(bh.ReviewCount),
+	}
+
+	if bh.Rating < qualityDepublishThreshold {
+		// Auto-depublish: set status to inactive
+		if err := s.bhRepo.UpdateStatus(ctx, bathhouseID, domain.BathhouseStatusInactive); err != nil {
+			s.logger.Error("failed to auto-depublish bathhouse", "bathhouse_id", bathhouseID, "error", err)
+			return
+		}
+		// Notify owner
+		if err := s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifBathhouseDepublished,
+			"Баня снята с публикации",
+			fmt.Sprintf("Ваша баня «%s» была автоматически снята с публикации из-за низкого рейтинга (%.1f)", bh.Name, bh.Rating),
+			data,
+		); err != nil {
+			s.logger.Warn("failed to send depublish notification", "bathhouse_id", bathhouseID, "error", err)
+		}
+		s.logger.Info("bathhouse auto-depublished due to low rating",
+			"bathhouse_id", bathhouseID, "rating", bh.Rating, "review_count", bh.ReviewCount)
+	} else if bh.Rating < qualityWarningThreshold {
+		// Warn owner
+		if err := s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifLowRatingWarning,
+			"Низкий рейтинг",
+			fmt.Sprintf("Рейтинг вашей бани «%s» упал до %.1f. Улучшите качество сервиса, чтобы избежать снятия с публикации.", bh.Name, bh.Rating),
+			data,
+		); err != nil {
+			s.logger.Warn("failed to send low rating warning", "bathhouse_id", bathhouseID, "error", err)
+		}
+	}
 }
 
 func (s *reviewService) getPlatformAverage(ctx context.Context) float64 {

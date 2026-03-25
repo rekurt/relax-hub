@@ -77,11 +77,11 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 - Modify: `internal/service/bathhouse_service.go`
 - Modify: `internal/domain/bathhouse.go`
 
-- [ ] On rating recalculation: rating < 3.0 (>= 10 reviews) → warn owner; rating < 2.0 (>= 10 reviews) → auto-depublish + notify owner + admin
-- [ ] Computed badges: "Verified" (photos moderated + KYC), "Top" (Bayesian >= 4.5 AND count >= 10), "Premium" (active subscription), "New" (< 30 days AND < 3 reviews)
-- [ ] Add Badges ([]string) to bathhouse response (computed, not stored)
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] On rating recalculation: rating < 3.0 (>= 10 reviews) → warn owner; rating < 2.0 (>= 10 reviews) → auto-depublish + notify owner + admin
+- [x] Computed badges: "Verified" (photos moderated + KYC), "Top" (Bayesian >= 4.5 AND count >= 10), "Premium" (active subscription), "New" (< 30 days AND < 3 reviews)
+- [x] Add Badges ([]string) to bathhouse response (computed, not stored)
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 5: NLP Auto-moderation Placeholder (Reviews)
 

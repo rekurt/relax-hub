@@ -141,6 +141,7 @@ type bathhouseResponse struct {
 	IsFavorite   bool               `json:"is_favorite"`
 	IsPromoted       bool               `json:"is_promoted"`
 	IsPhotoVerified  bool               `json:"is_photo_verified"`
+	Badges           []string           `json:"badges"`
 	GalleryPreview   []mediaResponse    `json:"gallery_preview,omitempty"`
 	Meta         *seo.MetaTags      `json:"meta,omitempty"`
 	CreatedAt    time.Time          `json:"created_at"`
@@ -438,6 +439,15 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Compute badges for each bathhouse
+	for i := range result.Items {
+		badges := h.bathhouseService.ComputeBadges(r.Context(), &result.Items[i])
+		if badges == nil {
+			badges = []string{}
+		}
+		items[i].Badges = badges
+	}
+
 	// Record impressions for promoted bathhouses
 	if h.promotionService != nil {
 		for _, bh := range result.Items {
@@ -504,6 +514,15 @@ func (h *BathhouseHandler) SearchByCitySlug(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
+	// Compute badges for each bathhouse
+	for i := range result.Items {
+		badges := h.bathhouseService.ComputeBadges(r.Context(), &result.Items[i])
+		if badges == nil {
+			badges = []string{}
+		}
+		items[i].Badges = badges
+	}
+
 	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
 		Page:       result.Page,
 		PageSize:   result.PageSize,
@@ -566,6 +585,13 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Compute badges
+	badges := h.bathhouseService.ComputeBadges(r.Context(), bh)
+	if badges == nil {
+		badges = []string{}
+	}
+	resp.Badges = badges
+
 	writeJSON(w, http.StatusOK, resp)
 }
 
@@ -622,6 +648,13 @@ func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 			resp.AvgValueForMoney = avgs.AvgValueForMoney
 		}
 	}
+
+	// Compute badges
+	badges := h.bathhouseService.ComputeBadges(r.Context(), bh)
+	if badges == nil {
+		badges = []string{}
+	}
+	resp.Badges = badges
 
 	writeJSON(w, http.StatusOK, resp)
 }

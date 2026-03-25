@@ -80,6 +80,9 @@ func (m *sitemapMockBHService) ArchiveBathhouse(_ context.Context, _ uuid.UUID, 
 func (m *sitemapMockBHService) IncrementViewCount(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
+func (m *sitemapMockBHService) ComputeBadges(_ context.Context, _ *domain.Bathhouse) []string {
+	return nil
+}
 func (m *sitemapMockBHService) GetByAPIKey(_ context.Context, _ string) (*domain.Bathhouse, error) {
 	return nil, domain.ErrNotFound
 }

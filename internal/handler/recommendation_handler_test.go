@@ -138,6 +138,7 @@ func (m *mockBHService) ArchiveBathhouse(_ context.Context, _ uuid.UUID, _ domai
 	return nil
 }
 func (m *mockBHService) IncrementViewCount(_ context.Context, _ uuid.UUID) error { return nil }
+func (m *mockBHService) ComputeBadges(_ context.Context, _ *domain.Bathhouse) []string { return nil }
 
 // mockBathhouseRepository implements repository.BathhouseRepository for AccessChecker tests.
 type mockBathhouseRepository struct {

@@ -297,6 +297,9 @@ func (m *mockBathhouseService) ArchiveBathhouse(_ context.Context, _ uuid.UUID, 
 func (m *mockBathhouseService) IncrementViewCount(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
+func (m *mockBathhouseService) ComputeBadges(_ context.Context, _ *domain.Bathhouse) []string {
+	return nil
+}
 
 type mockBookingService struct {
 	createFn          func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error)

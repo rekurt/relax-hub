@@ -1115,3 +1115,173 @@ func TestReviewService_SendReviewRequests_MultipleBookings(t *testing.T) {
 		t.Errorf("sent = %d, want 2", sent)
 	}
 }
+
+// --- Quality Monitoring Tests ---
+
+type reviewTestEnvWithTracking struct {
+	svc         service.ReviewService
+	bhRepo      *mock.BathhouseRepo
+	bookingRepo *mock.BookingRepo
+	reviewRepo  *mock.ReviewRepo
+	notifSvc    *trackingNotifService
+}
+
+func newReviewTestEnvWithTracking() *reviewTestEnvWithTracking {
+	bhRepo := mock.NewBathhouseRepo()
+	bookingRepo := mock.NewBookingRepo()
+	reviewRepo := mock.NewReviewRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	ac := service.NewAccessChecker(repRepo, bhRepo)
+	log := logger.New(logger.LevelWarn)
+	contentFilter := moderation.NewContentFilter(false, false)
+	mediaRepo := mock.NewMediaRepo()
+	noopStore := storage.NewMockStorage()
+	notifSvc := &trackingNotifService{}
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, notifSvc, contentFilter, nil, log)
+	return &reviewTestEnvWithTracking{
+		svc: svc, bhRepo: bhRepo, bookingRepo: bookingRepo, reviewRepo: reviewRepo, notifSvc: notifSvc,
+	}
+}
+
+func TestQualityMonitoring_LowRatingWarning(t *testing.T) {
+	env := newReviewTestEnvWithTracking()
+	ctx := context.Background()
+	ownerID := uuid.New()
+	bathhouseID := uuid.New()
+	clientID := uuid.New()
+
+	// Pre-set bathhouse with 10 reviews and rating 2.5 (< 3.0 but >= 2.0)
+	// Mock UpdateRating is a no-op, so we set rating/review_count directly
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: ownerID, Name: "Тест Баня", Slug: "test-banya",
+		Address: "ул. Тестовая 1", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+		Rating: 2.5, ReviewCount: 10,
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	// Create one review to trigger quality check
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bathhouseID,
+		StartTime: time.Now().Add(-48 * time.Hour), EndTime: time.Now().Add(-46 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingCompleted,
+	}
+	_ = env.bookingRepo.Create(ctx, booking)
+	_, err := env.svc.Create(ctx, clientID, service.CreateReviewInput{
+		BookingID: booking.ID, Rating: 2, Text: "Не понравилось",
+	})
+	if err != nil {
+		t.Fatalf("create review: %v", err)
+	}
+
+	// Check that a low rating warning was sent
+	found := false
+	for _, n := range env.notifSvc.sent {
+		if n.Type == domain.NotifLowRatingWarning {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected low rating warning notification, got none")
+	}
+
+	// Bathhouse should still be active (rating 2.5 is not < 2.0)
+	updatedBh, _ := env.bhRepo.GetByID(ctx, bathhouseID)
+	if updatedBh.Status != domain.BathhouseStatusActive {
+		t.Errorf("expected status active, got %s", updatedBh.Status)
+	}
+}
+
+func TestQualityMonitoring_AutoDepublish(t *testing.T) {
+	env := newReviewTestEnvWithTracking()
+	ctx := context.Background()
+	ownerID := uuid.New()
+	bathhouseID := uuid.New()
+	clientID := uuid.New()
+
+	// Pre-set bathhouse with 10 reviews and rating 1.5 (< 2.0) to trigger depublish
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: ownerID, Name: "Тест Баня 2", Slug: "test-banya-2",
+		Address: "ул. Тестовая 2", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+		Rating: 1.5, ReviewCount: 10,
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	// Create one review to trigger quality check
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bathhouseID,
+		StartTime: time.Now().Add(-48 * time.Hour), EndTime: time.Now().Add(-46 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingCompleted,
+	}
+	_ = env.bookingRepo.Create(ctx, booking)
+	_, err := env.svc.Create(ctx, clientID, service.CreateReviewInput{
+		BookingID: booking.ID, Rating: 1, Text: "Ужасно",
+	})
+	if err != nil {
+		t.Fatalf("create review: %v", err)
+	}
+
+	// Check bathhouse was depublished
+	updatedBh, _ := env.bhRepo.GetByID(ctx, bathhouseID)
+	if updatedBh.Status != domain.BathhouseStatusInactive {
+		t.Errorf("expected status inactive (depublished), got %s", updatedBh.Status)
+	}
+
+	// Check depublish notification was sent
+	found := false
+	for _, n := range env.notifSvc.sent {
+		if n.Type == domain.NotifBathhouseDepublished {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected bathhouse depublished notification, got none")
+	}
+}
+
+func TestQualityMonitoring_NoActionUnderThreshold(t *testing.T) {
+	env := newReviewTestEnvWithTracking()
+	ctx := context.Background()
+	ownerID := uuid.New()
+	bathhouseID := uuid.New()
+	clientID := uuid.New()
+
+	// Pre-set bathhouse with only 5 reviews (below threshold of 10)
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: ownerID, Name: "Тест Баня 3", Slug: "test-banya-3",
+		Address: "ул. Тестовая 3", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+		Rating: 1.0, ReviewCount: 5,
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	// Create one review - quality check should not trigger because review count < 10
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bathhouseID,
+		StartTime: time.Now().Add(-48 * time.Hour), EndTime: time.Now().Add(-46 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingCompleted,
+	}
+	_ = env.bookingRepo.Create(ctx, booking)
+	_, err := env.svc.Create(ctx, clientID, service.CreateReviewInput{
+		BookingID: booking.ID, Rating: 1, Text: "Плохо",
+	})
+	if err != nil {
+		t.Fatalf("create review: %v", err)
+	}
+
+	// No quality-related notifications should be sent
+	for _, n := range env.notifSvc.sent {
+		if n.Type == domain.NotifLowRatingWarning || n.Type == domain.NotifBathhouseDepublished {
+			t.Errorf("unexpected quality notification with < 10 reviews: type=%s", n.Type)
+		}
+	}
+
+	// Bathhouse should still be active
+	updatedBh, _ := env.bhRepo.GetByID(ctx, bathhouseID)
+	if updatedBh.Status != domain.BathhouseStatusActive {
+		t.Errorf("expected status active, got %s", updatedBh.Status)
+	}
+}

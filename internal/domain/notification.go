@@ -47,6 +47,8 @@ const (
 	NotifOwnerResponseRateWarning  NotificationType = "owner_response_rate_warning"
 	NotifOwnerCancellationCompensation NotificationType = "owner_cancellation_compensation"
 	NotifReviewRequest                 NotificationType = "review_request"
+	NotifLowRatingWarning              NotificationType = "low_rating_warning"
+	NotifBathhouseDepublished          NotificationType = "bathhouse_depublished"
 )
 
 func (t NotificationType) IsValid() bool {
@@ -65,7 +67,8 @@ func (t NotificationType) IsValid() bool {
 		NotifSubscriptionExpiring, NotifSubscriptionExpired,
 		NotifBonusExpiring, NotifBonusExpired,
 		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal,
-		NotifSavedSearchMatch:
+		NotifSavedSearchMatch,
+		NotifLowRatingWarning, NotifBathhouseDepublished:
 		return true
 	}
 	return false
@@ -154,7 +157,8 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 		return p.Reminders
 	case NotifSystem, NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected,
 		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal,
-		NotifSavedSearchMatch:
+		NotifSavedSearchMatch,
+		NotifLowRatingWarning, NotifBathhouseDepublished:
 		return true
 	}
 	return false

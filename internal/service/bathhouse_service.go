@@ -101,6 +101,7 @@ type BathhouseService interface {
 	ActivateBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
 	ArchiveBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
 	IncrementViewCount(ctx context.Context, id uuid.UUID) error
+	ComputeBadges(ctx context.Context, bh *domain.Bathhouse) []string
 	// Admin moderation:
 	Approve(ctx context.Context, id uuid.UUID) error
 	Reject(ctx context.Context, id uuid.UUID) error
@@ -110,6 +111,7 @@ type bathhouseService struct {
 	bhRepo         repository.BathhouseRepository
 	bookingRepo    repository.BookingRepository
 	photoRepo      repository.BathhousePhotoRepository
+	subRepo        repository.SubscriptionRepository
 	access         *AccessChecker
 	kycSvc         KYCService
 	offerSvc       OfferService
@@ -118,8 +120,8 @@ type bathhouseService struct {
 	logger         *logger.Logger
 }
 
-func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService, auditSvc AuditLogService, log *logger.Logger) BathhouseService {
-	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, photoRepo: photoRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails, auditSvc: auditSvc, logger: log}
+func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, subRepo repository.SubscriptionRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService, auditSvc AuditLogService, log *logger.Logger) BathhouseService {
+	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, photoRepo: photoRepo, subRepo: subRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails, auditSvc: auditSvc, logger: log}
 }
 
 func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error) {
@@ -768,6 +770,49 @@ func workingHoursEqual(a, b []domain.WorkingHours) bool {
 		}
 	}
 	return true
+}
+
+const (
+	badgeVerified = "verified"
+	badgeTop      = "top"
+	badgePremium  = "premium"
+	badgeNew      = "new"
+
+	badgeTopMinRating  = 4.5
+	badgeTopMinReviews = 10
+	badgeNewMaxDays    = 30
+	badgeNewMaxReviews = 3
+)
+
+func (s *bathhouseService) ComputeBadges(ctx context.Context, bh *domain.Bathhouse) []string {
+	var badges []string
+
+	// "Verified": photos moderated + KYC approved
+	if bh.IsPhotoVerified {
+		if approved, err := s.kycSvc.IsApproved(ctx, bh.OwnerID); err == nil && approved {
+			badges = append(badges, badgeVerified)
+		}
+	}
+
+	// "Top": Bayesian >= 4.5 AND review count >= 10
+	if bh.BayesianRating >= badgeTopMinRating && bh.ReviewCount >= badgeTopMinReviews {
+		badges = append(badges, badgeTop)
+	}
+
+	// "Premium": active subscription (premium or promoted plan)
+	if s.subRepo != nil {
+		sub, err := s.subRepo.GetActiveBybathhouse(ctx, bh.ID)
+		if err == nil && sub != nil && (sub.Plan == domain.PlanPremium || sub.Plan == domain.PlanPromoted) {
+			badges = append(badges, badgePremium)
+		}
+	}
+
+	// "New": < 30 days old AND < 3 reviews
+	if time.Since(bh.CreatedAt) < badgeNewMaxDays*24*time.Hour && bh.ReviewCount < badgeNewMaxReviews {
+		badges = append(badges, badgeNew)
+	}
+
+	return badges
 }
 
 func countAmenities(bh *domain.Bathhouse) int {

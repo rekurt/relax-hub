@@ -39,7 +39,8 @@ func newBathhouseTestEnv() *bathhouseTestEnv {
 	pdSvc := service.NewPaymentDetailsService(pdRepo, log)
 	auditLogRepo := mock.NewAuditLogRepo()
 	auditSvc := service.NewAuditLogService(auditLogRepo, log)
-	svc := service.NewBathhouseService(bhRepo, bookingRepo, photoRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, log)
+	subRepo := mock.NewSubscriptionRepo()
+	svc := service.NewBathhouseService(bhRepo, bookingRepo, photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, log)
 	return &bathhouseTestEnv{
 		svc: svc, bhRepo: bhRepo, repRepo: repRepo, bookingRepo: bookingRepo,
 		photoRepo: photoRepo, kycRepo: kycRepo, offerRepo: offerRepo, pdRepo: pdRepo,
@@ -1206,5 +1207,156 @@ func TestBathhouseService_Search_AddressMatch(t *testing.T) {
 	}
 	if result.TotalCount != 1 {
 		t.Errorf("expected 1 result matching address, got %d", result.TotalCount)
+	}
+}
+
+// --- Badge Tests ---
+
+func containsBadge(badges []string, badge string) bool {
+	for _, b := range badges {
+		if b == badge {
+			return true
+		}
+	}
+	return false
+}
+
+func TestComputeBadges_New(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ctx := context.Background()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: uuid.New(), Name: "Новая Баня", Slug: "novaya",
+		Address: "ул. Новая 1", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+		ReviewCount: 0, CreatedAt: time.Now(),
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	badges := env.svc.ComputeBadges(ctx, bh)
+	if !containsBadge(badges, "new") {
+		t.Error("expected 'new' badge for recently created bathhouse with 0 reviews")
+	}
+	if containsBadge(badges, "top") {
+		t.Error("unexpected 'top' badge")
+	}
+}
+
+func TestComputeBadges_Top(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ctx := context.Background()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: uuid.New(), Name: "Топ Баня", Slug: "top",
+		Address: "ул. Топовая 1", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+		BayesianRating: 4.7, ReviewCount: 15,
+		CreatedAt: time.Now().Add(-60 * 24 * time.Hour),
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	badges := env.svc.ComputeBadges(ctx, bh)
+	if !containsBadge(badges, "top") {
+		t.Error("expected 'top' badge for bathhouse with Bayesian >= 4.5 and 15 reviews")
+	}
+	if containsBadge(badges, "new") {
+		t.Error("unexpected 'new' badge for 60-day-old bathhouse")
+	}
+}
+
+func TestComputeBadges_Verified(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ctx := context.Background()
+	ownerID := uuid.New()
+	env.setupOnboardingGate(t, ownerID)
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Верифицированная Баня", Slug: "verified",
+		Address: "ул. Верная 1", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+		IsPhotoVerified: true,
+		CreatedAt:       time.Now().Add(-60 * 24 * time.Hour),
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	badges := env.svc.ComputeBadges(ctx, bh)
+	if !containsBadge(badges, "verified") {
+		t.Error("expected 'verified' badge for photo-verified bathhouse with KYC approved")
+	}
+}
+
+func TestComputeBadges_VerifiedNoKYC(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ctx := context.Background()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: uuid.New(), Name: "Фото Баня", Slug: "photo",
+		Address: "ул. Фотовая 1", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+		IsPhotoVerified: true,
+		CreatedAt:       time.Now().Add(-60 * 24 * time.Hour),
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	badges := env.svc.ComputeBadges(ctx, bh)
+	if containsBadge(badges, "verified") {
+		t.Error("unexpected 'verified' badge - owner has no KYC")
+	}
+}
+
+func TestComputeBadges_Premium(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ctx := context.Background()
+	bathhouseID := uuid.New()
+	ownerID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: ownerID, Name: "Премиум Баня", Slug: "premium",
+		Address: "ул. Премиум 1", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+		CreatedAt: time.Now().Add(-60 * 24 * time.Hour),
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	// Create active premium subscription
+	sub := &domain.Subscription{
+		ID: uuid.New(), BathhouseID: bathhouseID, OwnerID: ownerID,
+		Plan: domain.PlanPremium, Status: domain.SubscriptionActive,
+		StartDate: time.Now().Add(-24 * time.Hour), PriceKopecks: 100000,
+	}
+	subRepo := mock.NewSubscriptionRepo()
+	_ = subRepo.Create(ctx, sub)
+
+	// Create a service with subscription repo
+	access := service.NewAccessChecker(env.repRepo, env.bhRepo)
+	log := logger.New(logger.LevelWarn)
+	kycSvc := service.NewKYCService(env.kycRepo, &noopNotifService{}, log)
+	offerSvc := service.NewOfferService(env.offerRepo, log)
+	pdSvc := service.NewPaymentDetailsService(env.pdRepo, log)
+	auditLogRepo := mock.NewAuditLogRepo()
+	auditSvc := service.NewAuditLogService(auditLogRepo, log)
+	svcWithSub := service.NewBathhouseService(env.bhRepo, env.bookingRepo, env.photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, log)
+
+	badges := svcWithSub.ComputeBadges(ctx, bh)
+	if !containsBadge(badges, "premium") {
+		t.Error("expected 'premium' badge for bathhouse with active premium subscription")
+	}
+}
+
+func TestComputeBadges_NoPremiumWithoutSubscription(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ctx := context.Background()
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: uuid.New(), Name: "Обычная Баня", Slug: "usual",
+		Address: "ул. Обычная 1", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+		CreatedAt: time.Now().Add(-60 * 24 * time.Hour),
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	badges := env.svc.ComputeBadges(ctx, bh)
+	if containsBadge(badges, "premium") {
+		t.Error("unexpected 'premium' badge - no active subscription")
 	}
 }
