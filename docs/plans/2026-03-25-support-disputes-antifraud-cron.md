@@ -178,16 +178,16 @@ Combined implementation plan covering: support ticket system with escalation and
 
 ### Task 10: Verify acceptance criteria
 
-- [ ] Manual test: create support ticket, escalate, resolve, submit CSAT
-- [ ] Manual test: open dispute on booking, submit evidence, admin resolves, appeal
-- [ ] Manual test: trigger anti-fraud rule, verify flag created, admin reviews
-- [ ] Manual test: send chat message with phone number, verify filtered
-- [ ] Manual test: verify admin audit log captures admin actions
-- [ ] Manual test: verify cron scheduler starts and runs jobs on schedule
-- [ ] Run full test suite: `go test ./... -race`
-- [ ] Run linter: `make lint`
-- [ ] Verify build: `go build ./...`
-- [ ] Verify test coverage meets 80%+
+- [x] Manual test: create support ticket, escalate, resolve, submit CSAT
+- [x] Manual test: open dispute on booking, submit evidence, admin resolves, appeal
+- [x] Manual test: trigger anti-fraud rule, verify flag created, admin reviews
+- [x] Manual test: send chat message with phone number, verify filtered
+- [x] Manual test: verify admin audit log captures admin actions
+- [x] Manual test: verify cron scheduler starts and runs jobs on schedule
+- [x] Run full test suite: `go test ./... -race`
+- [x] Run linter: `make lint`
+- [x] Verify build: `go build ./...`
+- [x] Verify test coverage meets 80%+
 
 ### Task 11: Update documentation
 
