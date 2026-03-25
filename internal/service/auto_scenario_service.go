@@ -119,11 +119,13 @@ func (s *autoScenarioService) executeScenario(ctx context.Context, scenario doma
 	// Apply segment filter based on scenario type
 	switch scenario.Type {
 	case domain.ScenarioThankAfterVisit:
-		// Guests with recent visits (within delay hours)
-		cutoff := now.Add(-time.Duration(scenario.DelayHours+1) * time.Hour)
+		// Guests with recent visits: fetch window must cover the full shouldExecute range
+		// shouldExecute checks [LastVisitAt + delayHours, LastVisitAt + delayHours + 2h)
+		// so LastVisitAt must be >= now - delayHours - 2h
+		cutoff := now.Add(-time.Duration(scenario.DelayHours+2) * time.Hour)
 		filter.DateFrom = &cutoff
 	case domain.ScenarioRequestReview:
-		cutoff := now.Add(-time.Duration(scenario.DelayHours+1) * time.Hour)
+		cutoff := now.Add(-time.Duration(scenario.DelayHours+2) * time.Hour)
 		filter.DateFrom = &cutoff
 	case domain.ScenarioRemindRevisit30d:
 		seg := domain.SegmentRegular

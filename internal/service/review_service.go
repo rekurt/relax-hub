@@ -190,13 +190,16 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 		return nil, err
 	}
 
-	if err := s.bhRepo.UpdateRating(ctx, booking.BathhouseID); err != nil {
-		s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", booking.BathhouseID, "error", err)
+	// Only update ratings for approved reviews; pending/rejected reviews should not affect scores
+	if review.Status == domain.ReviewStatusApproved {
+		if err := s.bhRepo.UpdateRating(ctx, booking.BathhouseID); err != nil {
+			s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", booking.BathhouseID, "error", err)
+		}
+		if err := s.RecalculateBayesianRating(ctx, booking.BathhouseID); err != nil {
+			s.logger.Warn("Failed to recalculate bayesian rating", "bathhouse_id", booking.BathhouseID, "error", err)
+		}
+		s.checkQualityThresholds(ctx, booking.BathhouseID)
 	}
-	if err := s.RecalculateBayesianRating(ctx, booking.BathhouseID); err != nil {
-		s.logger.Warn("Failed to recalculate bayesian rating", "bathhouse_id", booking.BathhouseID, "error", err)
-	}
-	s.checkQualityThresholds(ctx, booking.BathhouseID)
 
 	// Notify bathhouse owner about new review (only for approved reviews)
 	if review.Status == domain.ReviewStatusApproved {
@@ -288,7 +291,7 @@ func (s *reviewService) Update(ctx context.Context, userID uuid.UUID, reviewID u
 	}
 
 	criteriaChanged := input.Cleanliness != nil || input.Accuracy != nil || input.Communication != nil || input.ValueForMoney != nil
-	if input.Rating != nil || criteriaChanged {
+	if (input.Rating != nil || criteriaChanged) && review.Status == domain.ReviewStatusApproved {
 		if err := s.bhRepo.UpdateRating(ctx, review.BathhouseID); err != nil {
 			s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", review.BathhouseID, "error", err)
 		}
@@ -535,7 +538,28 @@ func (s *reviewService) CountPendingReviews(ctx context.Context) (int64, error) 
 }
 
 func (s *reviewService) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReviewStatus) error {
-	return s.reviewRepo.UpdateStatus(ctx, id, status)
+	// Get the review first so we can recalculate ratings if approving
+	review, err := s.reviewRepo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if err := s.reviewRepo.UpdateStatus(ctx, id, status); err != nil {
+		return err
+	}
+
+	// When a pending review is approved, recalculate bathhouse ratings
+	if status == domain.ReviewStatusApproved && review.Status != domain.ReviewStatusApproved {
+		if err := s.bhRepo.UpdateRating(ctx, review.BathhouseID); err != nil {
+			s.logger.Warn("Failed to update bathhouse rating after approval", "bathhouse_id", review.BathhouseID, "error", err)
+		}
+		if err := s.RecalculateBayesianRating(ctx, review.BathhouseID); err != nil {
+			s.logger.Warn("Failed to recalculate bayesian rating after approval", "bathhouse_id", review.BathhouseID, "error", err)
+		}
+		s.checkQualityThresholds(ctx, review.BathhouseID)
+	}
+
+	return nil
 }
 
 func (s *reviewService) UpdateStatusWithReasons(ctx context.Context, id uuid.UUID, status domain.ReviewStatus, reasons []string) error {

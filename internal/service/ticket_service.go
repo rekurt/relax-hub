@@ -180,8 +180,11 @@ func (s *ticketService) EscalateTicket(ctx context.Context, ticketID uuid.UUID) 
 		return err
 	}
 
-	if ticket.Status == domain.TicketStatusClosed || ticket.Status == domain.TicketStatusResolved {
+	if ticket.Status == domain.TicketStatusClosed {
 		return domain.ErrTicketAlreadyClosed
+	}
+	if ticket.Status == domain.TicketStatusResolved {
+		return domain.ErrTicketAlreadyResolved
 	}
 
 	if ticket.Level == domain.TicketLevelL3 {

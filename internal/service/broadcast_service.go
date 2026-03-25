@@ -108,6 +108,7 @@ func (s *broadcastService) Send(ctx context.Context, userID uuid.UUID, role doma
 		PageSize: 10000,
 	}
 	// For representatives, filter by managed bathhouse IDs instead of owner ID
+	// For admins, no OwnerID filter = targets all guests in the segment
 	if role == domain.RoleRepresentative {
 		bhIDs, bhErr := s.access.GetManagedBathhouseIDs(ctx, userID)
 		if bhErr != nil {
@@ -115,7 +116,7 @@ func (s *broadcastService) Send(ctx context.Context, userID uuid.UUID, role doma
 			return fmt.Errorf("get managed bathhouses: %w", bhErr)
 		}
 		filter.BathhouseIDs = bhIDs
-	} else {
+	} else if role != domain.RoleAdmin {
 		filter.OwnerID = broadcast.OwnerID
 	}
 	guests, err := s.guestCardRepo.ListByOwner(ctx, filter)
@@ -165,7 +166,10 @@ func (s *broadcastService) ListBroadcasts(ctx context.Context, userID uuid.UUID,
 		return nil, domain.ErrForbidden
 	}
 
-	filter.OwnerID = userID
+	// Admins can see all broadcasts; owners/reps see only their own
+	if role != domain.RoleAdmin {
+		filter.OwnerID = userID
+	}
 	return s.broadcastRepo.ListByOwner(ctx, filter)
 }
 
@@ -179,7 +183,8 @@ func (s *broadcastService) GetBroadcast(ctx context.Context, userID uuid.UUID, r
 		return nil, err
 	}
 
-	if broadcast.OwnerID != userID {
+	// Admins can view any broadcast; owners/reps can only view their own
+	if broadcast.OwnerID != userID && role != domain.RoleAdmin {
 		return nil, domain.ErrForbidden
 	}
 

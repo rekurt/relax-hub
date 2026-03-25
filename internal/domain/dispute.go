@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -141,6 +142,9 @@ func (e *DisputeEvidence) Validate() error {
 		return ErrInvalidInput
 	}
 	if e.URL == "" || len(e.URL) > 2000 {
+		return ErrInvalidInput
+	}
+	if !strings.HasPrefix(e.URL, "https://") && !strings.HasPrefix(e.URL, "http://") {
 		return ErrInvalidInput
 	}
 	if len(e.Description) > 2000 {

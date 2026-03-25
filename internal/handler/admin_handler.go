@@ -378,8 +378,14 @@ type adminReviewResponse struct {
 	BathhouseID      string     `json:"bathhouse_id"`
 	BookingID        string     `json:"booking_id"`
 	Rating           int        `json:"rating"`
+	Cleanliness      *float64   `json:"cleanliness,omitempty"`
+	Accuracy         *float64   `json:"accuracy,omitempty"`
+	Communication    *float64   `json:"communication,omitempty"`
+	ValueForMoney    *float64   `json:"value_for_money,omitempty"`
 	Text             string     `json:"text"`
 	Status           string     `json:"status"`
+	ModerationScore  *float64   `json:"moderation_score,omitempty"`
+	ModerationFlags  []string   `json:"moderation_flags,omitempty"`
 	RejectionReasons []string   `json:"rejection_reasons,omitempty"`
 	OwnerResponse    string     `json:"owner_response,omitempty"`
 	OwnerResponseAt  *time.Time `json:"owner_response_at,omitempty"`
@@ -395,8 +401,14 @@ func toAdminReviewResponse(rev *domain.Review) adminReviewResponse {
 		BathhouseID:      rev.BathhouseID.String(),
 		BookingID:        rev.BookingID.String(),
 		Rating:           rev.Rating,
+		Cleanliness:      rev.Cleanliness,
+		Accuracy:         rev.Accuracy,
+		Communication:    rev.Communication,
+		ValueForMoney:    rev.ValueForMoney,
 		Text:             rev.Text,
 		Status:           string(rev.Status),
+		ModerationScore:  rev.ModerationScore,
+		ModerationFlags:  rev.ModerationFlags,
 		RejectionReasons: rev.RejectionReasons,
 		OwnerResponse:    rev.OwnerResponse,
 		OwnerResponseAt:  rev.OwnerResponseAt,
