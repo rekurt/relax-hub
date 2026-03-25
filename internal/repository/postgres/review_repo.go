@@ -327,6 +327,15 @@ func (r *reviewRepo) GetCriteriaAverages(ctx context.Context, bathhouseID uuid.U
 	return &avgs, nil
 }
 
+func (r *reviewRepo) GetPlatformAverageRating(ctx context.Context) (float64, error) {
+	var avg float64
+	err := r.pool.QueryRow(ctx, `SELECT COALESCE(AVG(rating)::double precision, 0) FROM reviews WHERE status = 'approved'`).Scan(&avg)
+	if err != nil {
+		return 0, fmt.Errorf("get platform average rating: %w", err)
+	}
+	return avg, nil
+}
+
 func (r *reviewRepo) ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error) {
 	if filter.Page < 1 {
 		filter.Page = 1

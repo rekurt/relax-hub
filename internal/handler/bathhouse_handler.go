@@ -129,6 +129,7 @@ type bathhouseResponse struct {
 	ResponseRate               float64            `json:"response_rate"`
 	AvgResponseTimeMinutes     int                `json:"avg_response_time_minutes"`
 	Rating                     float64            `json:"rating"`
+	BayesianRating             float64            `json:"bayesian_rating"`
 	AvgCleanliness             float64            `json:"avg_cleanliness,omitempty"`
 	AvgAccuracy                float64            `json:"avg_accuracy,omitempty"`
 	AvgCommunication           float64            `json:"avg_communication,omitempty"`
@@ -199,6 +200,7 @@ func toBathhouseResponse(b *domain.Bathhouse) bathhouseResponse {
 		ResponseRate:               b.ResponseRate,
 		AvgResponseTimeMinutes:     b.AvgResponseTimeMinutes,
 		Rating:                     b.Rating,
+		BayesianRating:             b.BayesianRating,
 		ReviewCount:  b.ReviewCount,
 		Images:       images,
 		WorkingHours: wh,

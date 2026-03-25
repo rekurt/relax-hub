@@ -473,6 +473,12 @@ func (m *mockReviewService) UpdateStatusWithReasons(ctx context.Context, id uuid
 func (m *mockReviewService) GetCriteriaAverages(_ context.Context, _ uuid.UUID) (*domain.ReviewCriteriaAverages, error) {
 	return &domain.ReviewCriteriaAverages{}, nil
 }
+func (m *mockReviewService) RecalculateBayesianRating(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockReviewService) RefreshPlatformAverage(_ context.Context) error {
+	return nil
+}
 
 type mockMediaService struct {
 	uploadFn           func(ctx context.Context, userID uuid.UUID, input service.UploadMediaInput) (*domain.Media, error)

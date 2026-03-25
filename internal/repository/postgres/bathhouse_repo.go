@@ -83,7 +83,7 @@ func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bath
 		SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
-			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
+			bathhouses.rating, bathhouses.bayesian_rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
 			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified,
 			bathhouses.long_session_threshold_hours, bathhouses.long_session_discount_percent, bathhouses.base_capacity, bathhouses.extra_guest_surcharge,
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
@@ -115,7 +115,7 @@ func (r *bathhouseRepo) GetBySlug(ctx context.Context, slug string) (*domain.Bat
 		SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
-			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
+			bathhouses.rating, bathhouses.bayesian_rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
 			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified,
 			bathhouses.long_session_threshold_hours, bathhouses.long_session_discount_percent, bathhouses.base_capacity, bathhouses.extra_guest_surcharge,
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
@@ -156,7 +156,7 @@ func (r *bathhouseRepo) GetByAPIKey(ctx context.Context, apiKey string) (*domain
 		SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
-			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
+			bathhouses.rating, bathhouses.bayesian_rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
 			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified, bathhouses.api_key,
 			bathhouses.long_session_threshold_hours, bathhouses.long_session_discount_percent, bathhouses.base_capacity, bathhouses.extra_guest_surcharge,
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
@@ -392,7 +392,7 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	// Bayesian rating: (C*m + R*v) / (C+v), where C=5 (prior count), m=3.5 (prior mean)
 	compositeRank := fmt.Sprintf(`(
 		COALESCE(bathhouses.conversion_rate, 0) * 0.20 +
-		((5 * 3.5 + bathhouses.rating * bathhouses.review_count) / (5 + bathhouses.review_count)) / 5.0 * 0.25 +
+		COALESCE(bathhouses.bayesian_rating, 0) / 5.0 * 0.25 +
 		COALESCE(bathhouses.occupancy_rate, 0) * 0.15 +
 		CASE WHEN %s THEN 1 ELSE 0 END * 0.10
 	)`, promotionExists)
@@ -460,7 +460,7 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
-			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
+			bathhouses.rating, bathhouses.bayesian_rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
 			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified,
 			bathhouses.long_session_threshold_hours, bathhouses.long_session_discount_percent, bathhouses.base_capacity, bathhouses.extra_guest_surcharge,
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
@@ -518,7 +518,7 @@ func (r *bathhouseRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 		SELECT id, owner_id, name, slug, description, address, city_id,
 			latitude, longitude, price_per_hour, min_duration, max_guests,
 			has_pool, has_sauna, has_steam_room, has_hot_tub, has_bbq, has_karaoke,
-			rating, review_count, images, working_hours, status, api_key, is_photo_verified,
+			rating, bayesian_rating, review_count, images, working_hours, status, api_key, is_photo_verified,
 			long_session_threshold_hours, long_session_discount_percent, base_capacity, extra_guest_surcharge,
 			last_minute_enabled, last_minute_discount_percent, last_minute_hours_threshold,
 			buffer_minutes, lead_time_hours, max_advance_days,
@@ -594,6 +594,20 @@ func (r *bathhouseRepo) UpdateRating(ctx context.Context, bathhouseID uuid.UUID)
 	return nil
 }
 
+func (r *bathhouseRepo) UpdateBayesianRating(ctx context.Context, bathhouseID uuid.UUID, bayesianRating float64) error {
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE bathhouses SET bayesian_rating = $2, updated_at = $3 WHERE id = $1`,
+		bathhouseID, bayesianRating, time.Now(),
+	)
+	if err != nil {
+		return fmt.Errorf("update bayesian rating: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
 func (r *bathhouseRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BathhouseStatus) error {
 	query := `UPDATE bathhouses SET status = $2, updated_at = $3 WHERE id = $1`
 
@@ -647,7 +661,7 @@ func (r *bathhouseRepo) GetByCalendarToken(ctx context.Context, token string) (*
 		SELECT id, owner_id, name, slug, description, address, city_id,
 			latitude, longitude, price_per_hour, min_duration, max_guests,
 			has_pool, has_sauna, has_steam_room, has_hot_tub, has_bbq, has_karaoke,
-			rating, review_count, images, working_hours, status,
+			rating, bayesian_rating, review_count, images, working_hours, status,
 			created_at, updated_at, is_photo_verified,
 			long_session_threshold_hours, long_session_discount_percent, base_capacity, extra_guest_surcharge,
 			last_minute_enabled, last_minute_discount_percent, last_minute_hours_threshold,
@@ -682,7 +696,7 @@ func (r *bathhouseRepo) scanBathhouseMinimal(rows pgx.Rows) (*domain.Bathhouse, 
 		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Slug, &bh.Description, &bh.Address, &bh.CityID,
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
-		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status,
+		&bh.Rating, &bh.BayesianRating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status,
 		&bh.CreatedAt, &bh.UpdatedAt, &bh.IsPhotoVerified,
 		&bh.LongSessionThresholdHours, &bh.LongSessionDiscountPercent, &bh.BaseCapacity, &bh.ExtraGuestSurcharge,
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
@@ -713,7 +727,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*do
 		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Slug, &bh.Description, &bh.Address, &bh.CityID,
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
-		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
+		&bh.Rating, &bh.BayesianRating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
 		&bh.IsPhotoVerified,
 		&bh.LongSessionThresholdHours, &bh.LongSessionDiscountPercent, &bh.BaseCapacity, &bh.ExtraGuestSurcharge,
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
@@ -749,7 +763,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKey(rows pgx.Rows) (*domain.B
 		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Slug, &bh.Description, &bh.Address, &bh.CityID,
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
-		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
+		&bh.Rating, &bh.BayesianRating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.CreatedAt, &bh.UpdatedAt,
 		&bh.IsPhotoVerified, &bh.ApiKey,
 		&bh.LongSessionThresholdHours, &bh.LongSessionDiscountPercent, &bh.BaseCapacity, &bh.ExtraGuestSurcharge,
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
@@ -784,7 +798,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKeyOnly(rows pgx.Rows) (*doma
 		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Slug, &bh.Description, &bh.Address, &bh.CityID,
 		&bh.Latitude, &bh.Longitude, &bh.PricePerHour, &bh.MinDuration, &bh.MaxGuests,
 		&bh.HasPool, &bh.HasSauna, &bh.HasSteamRoom, &bh.HasHotTub, &bh.HasBBQ, &bh.HasKaraoke,
-		&bh.Rating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.ApiKey, &bh.IsPhotoVerified,
+		&bh.Rating, &bh.BayesianRating, &bh.ReviewCount, &imagesJSON, &whJSON, &bh.Status, &bh.ApiKey, &bh.IsPhotoVerified,
 		&bh.LongSessionThresholdHours, &bh.LongSessionDiscountPercent, &bh.BaseCapacity, &bh.ExtraGuestSurcharge,
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
@@ -850,7 +864,7 @@ func (r *bathhouseRepo) ListRequestModeBathhouses(ctx context.Context) ([]domain
 		SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
 			bathhouses.has_pool, bathhouses.has_sauna, bathhouses.has_steam_room, bathhouses.has_hot_tub, bathhouses.has_bbq, bathhouses.has_karaoke,
-			bathhouses.rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
+			bathhouses.rating, bathhouses.bayesian_rating, bathhouses.review_count, bathhouses.images, bathhouses.working_hours, bathhouses.status,
 			bathhouses.created_at, bathhouses.updated_at, bathhouses.is_photo_verified,
 			bathhouses.long_session_threshold_hours, bathhouses.long_session_discount_percent, bathhouses.base_capacity, bathhouses.extra_guest_surcharge,
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,

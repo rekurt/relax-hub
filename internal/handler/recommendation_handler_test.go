@@ -183,6 +183,10 @@ func (m *mockBathhouseRepository) UpdateRating(_ context.Context, _ uuid.UUID) e
 	return nil
 }
 
+func (m *mockBathhouseRepository) UpdateBayesianRating(_ context.Context, _ uuid.UUID, _ float64) error {
+	return nil
+}
+
 func (m *mockBathhouseRepository) UpdateStatus(_ context.Context, _ uuid.UUID, _ domain.BathhouseStatus) error {
 	return nil
 }

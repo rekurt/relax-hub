@@ -46,6 +46,7 @@ type BathhouseRepository interface {
 	ListIDsByOwner(ctx context.Context, ownerID uuid.UUID) ([]uuid.UUID, error)
 	SlugExists(ctx context.Context, slug string) (bool, error)
 	UpdateRating(ctx context.Context, bathhouseID uuid.UUID) error
+	UpdateBayesianRating(ctx context.Context, bathhouseID uuid.UUID, bayesianRating float64) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BathhouseStatus) error
 	UpdatePhotoVerified(ctx context.Context, id uuid.UUID, verified bool) error
 	GetCalendarToken(ctx context.Context, bathhouseID uuid.UUID) (string, error)
@@ -101,6 +102,7 @@ type ReviewRepository interface {
 	CountPendingReviews(ctx context.Context) (int64, error)
 	ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error)
 	GetCriteriaAverages(ctx context.Context, bathhouseID uuid.UUID) (*domain.ReviewCriteriaAverages, error)
+	GetPlatformAverageRating(ctx context.Context) (float64, error)
 }
 
 type FavoriteRepository interface {

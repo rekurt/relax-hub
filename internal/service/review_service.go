@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,6 +14,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/moderation"
 	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/storage"
+	"github.com/redis/go-redis/v9"
 )
 
 type CreateReviewInput struct {
@@ -43,12 +46,21 @@ type ReviewService interface {
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Review], error)
 	AddOwnerResponse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, reviewID uuid.UUID, response string) (*domain.Review, error)
 	GetCriteriaAverages(ctx context.Context, bathhouseID uuid.UUID) (*domain.ReviewCriteriaAverages, error)
+	RecalculateBayesianRating(ctx context.Context, bathhouseID uuid.UUID) error
+	RefreshPlatformAverage(ctx context.Context) error
 	// Admin moderation:
 	ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error)
 	CountPendingReviews(ctx context.Context) (int64, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ReviewStatus) error
 	UpdateStatusWithReasons(ctx context.Context, id uuid.UUID, status domain.ReviewStatus, reasons []string) error
 }
+
+const (
+	bayesianMinReviews           = 5     // m: minimum reviews threshold
+	bayesianDisplayMinReviews    = 3     // show Bayesian rating only when >= 3 reviews
+	redisPlatformAvgKey          = "platform:avg_rating"
+	redisPlatformAvgTTL          = 24 * time.Hour
+)
 
 type reviewService struct {
 	reviewRepo     repository.ReviewRepository
@@ -59,6 +71,7 @@ type reviewService struct {
 	accessChecker  *AccessChecker
 	notifSvc       NotificationService
 	contentFilter  *moderation.ContentFilter
+	redisClient    *redis.Client
 	logger         *logger.Logger
 }
 
@@ -71,6 +84,7 @@ func NewReviewService(
 	accessChecker *AccessChecker,
 	notifSvc NotificationService,
 	contentFilter *moderation.ContentFilter,
+	redisClient *redis.Client,
 	log *logger.Logger,
 ) ReviewService {
 	return &reviewService{
@@ -82,6 +96,7 @@ func NewReviewService(
 		accessChecker: accessChecker,
 		notifSvc:      notifSvc,
 		contentFilter: contentFilter,
+		redisClient:   redisClient,
 		logger:        log,
 	}
 }
@@ -156,6 +171,9 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 
 	if err := s.bhRepo.UpdateRating(ctx, booking.BathhouseID); err != nil {
 		s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", booking.BathhouseID, "error", err)
+	}
+	if err := s.RecalculateBayesianRating(ctx, booking.BathhouseID); err != nil {
+		s.logger.Warn("Failed to recalculate bayesian rating", "bathhouse_id", booking.BathhouseID, "error", err)
 	}
 
 	// Notify bathhouse owner about new review (regardless of status)
@@ -237,6 +255,9 @@ func (s *reviewService) Update(ctx context.Context, userID uuid.UUID, reviewID u
 		if err := s.bhRepo.UpdateRating(ctx, review.BathhouseID); err != nil {
 			s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", review.BathhouseID, "error", err)
 		}
+		if err := s.RecalculateBayesianRating(ctx, review.BathhouseID); err != nil {
+			s.logger.Warn("Failed to recalculate bayesian rating", "bathhouse_id", review.BathhouseID, "error", err)
+		}
 	}
 
 	return review, nil
@@ -265,6 +286,9 @@ func (s *reviewService) Delete(ctx context.Context, userID uuid.UUID, userRole d
 
 	if err := s.bhRepo.UpdateRating(ctx, review.BathhouseID); err != nil {
 		s.logger.Warn("Failed to update bathhouse rating", "bathhouse_id", review.BathhouseID, "error", err)
+	}
+	if err := s.RecalculateBayesianRating(ctx, review.BathhouseID); err != nil {
+		s.logger.Warn("Failed to recalculate bayesian rating", "bathhouse_id", review.BathhouseID, "error", err)
 	}
 
 	return nil
@@ -347,6 +371,70 @@ func (s *reviewService) cleanupReviewMedia(ctx context.Context, reviewID uuid.UU
 
 func (s *reviewService) GetCriteriaAverages(ctx context.Context, bathhouseID uuid.UUID) (*domain.ReviewCriteriaAverages, error) {
 	return s.reviewRepo.GetCriteriaAverages(ctx, bathhouseID)
+}
+
+func (s *reviewService) RecalculateBayesianRating(ctx context.Context, bathhouseID uuid.UUID) error {
+	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
+	if err != nil {
+		return fmt.Errorf("get bathhouse for bayesian: %w", err)
+	}
+
+	n := float64(bh.ReviewCount)
+	R := bh.Rating
+
+	// Get platform average from Redis cache, fallback to DB
+	C := s.getPlatformAverage(ctx)
+
+	m := float64(bayesianMinReviews)
+	bayesian := 0.0
+	if n+m > 0 {
+		bayesian = (n*R + m*C) / (n + m)
+		bayesian = math.Round(bayesian*10) / 10 // round to 1 decimal
+	}
+
+	return s.bhRepo.UpdateBayesianRating(ctx, bathhouseID, bayesian)
+}
+
+func (s *reviewService) getPlatformAverage(ctx context.Context) float64 {
+	if s.redisClient != nil {
+		val, err := s.redisClient.Get(ctx, redisPlatformAvgKey).Result()
+		if err == nil {
+			if avg, parseErr := strconv.ParseFloat(val, 64); parseErr == nil {
+				return avg
+			}
+		}
+	}
+
+	// Fallback: compute from DB
+	avg, err := s.reviewRepo.GetPlatformAverageRating(ctx)
+	if err != nil {
+		s.logger.Warn("failed to get platform average rating from DB", "error", err)
+		return 3.5 // sensible default
+	}
+
+	// Cache in Redis
+	if s.redisClient != nil {
+		if err := s.redisClient.Set(ctx, redisPlatformAvgKey, strconv.FormatFloat(avg, 'f', 2, 64), redisPlatformAvgTTL).Err(); err != nil {
+			s.logger.Warn("failed to cache platform average in Redis", "error", err)
+		}
+	}
+
+	return avg
+}
+
+func (s *reviewService) RefreshPlatformAverage(ctx context.Context) error {
+	avg, err := s.reviewRepo.GetPlatformAverageRating(ctx)
+	if err != nil {
+		return fmt.Errorf("get platform average rating: %w", err)
+	}
+
+	if s.redisClient != nil {
+		if err := s.redisClient.Set(ctx, redisPlatformAvgKey, strconv.FormatFloat(avg, 'f', 2, 64), redisPlatformAvgTTL).Err(); err != nil {
+			return fmt.Errorf("cache platform average: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *reviewService) ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error) {

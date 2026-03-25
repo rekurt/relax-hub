@@ -105,6 +105,12 @@ func (m *adminReviewServiceMock) UpdateStatusWithReasons(ctx context.Context, id
 func (m *adminReviewServiceMock) GetCriteriaAverages(_ context.Context, _ uuid.UUID) (*domain.ReviewCriteriaAverages, error) {
 	return &domain.ReviewCriteriaAverages{}, nil
 }
+func (m *adminReviewServiceMock) RecalculateBayesianRating(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+func (m *adminReviewServiceMock) RefreshPlatformAverage(_ context.Context) error {
+	return nil
+}
 
 func TestAdminHandler_ListReviews(t *testing.T) {
 	adminID := uuid.New()

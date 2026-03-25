@@ -55,6 +55,7 @@ type Bathhouse struct {
 	HasBBQ       bool
 	HasKaraoke   bool
 	Rating         float64
+	BayesianRating float64
 	ReviewCount    int
 	ConversionRate float64
 	OccupancyRate  float64

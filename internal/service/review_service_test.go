@@ -34,7 +34,7 @@ func newReviewTestEnv() *reviewTestEnv {
 	contentFilter := moderation.NewContentFilter(false, false)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, log)
 	return &reviewTestEnv{
 		svc:         svc,
 		bhRepo:      bhRepo,
@@ -440,7 +440,7 @@ func TestReviewService_Create_WithModeration_CleanText(t *testing.T) {
 	contentFilter := moderation.NewContentFilter(true, true)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())
@@ -471,7 +471,7 @@ func TestReviewService_Create_WithModeration_AutoRejectProfanity(t *testing.T) {
 	contentFilter := moderation.NewContentFilter(true, false)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())
@@ -505,7 +505,7 @@ func TestReviewService_Create_WithModeration_PendingCleanText(t *testing.T) {
 	contentFilter := moderation.NewContentFilter(true, false)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, log)
+	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())
@@ -769,5 +769,156 @@ func TestReviewService_GetCriteriaAverages_Empty(t *testing.T) {
 	}
 	if avgs.AvgCleanliness != 0 || avgs.AvgAccuracy != 0 || avgs.AvgCommunication != 0 || avgs.AvgValueForMoney != 0 {
 		t.Errorf("averages should all be 0 for bathhouse with no criteria reviews, got %+v", avgs)
+	}
+}
+
+// --- Bayesian rating tests ---
+
+func TestReviewService_BayesianRating_ZeroReviews(t *testing.T) {
+	env := newReviewTestEnv()
+	bh := createBathhouse(t, env.bhRepo, uuid.New())
+
+	err := env.svc.RecalculateBayesianRating(context.Background(), bh.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, _ := env.bhRepo.GetByID(context.Background(), bh.ID)
+	// 0 reviews: (0*0 + 5*0) / (0+5) = 0
+	if updated.BayesianRating != 0 {
+		t.Errorf("bayesian_rating = %f, want 0 for bathhouse with no reviews", updated.BayesianRating)
+	}
+}
+
+func TestReviewService_BayesianRating_OneReview(t *testing.T) {
+	env := newReviewTestEnv()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+	clientID := uuid.New()
+	booking := createCompletedBooking(t, env.bookingRepo, clientID, bh.ID)
+
+	_, err := env.svc.Create(context.Background(), clientID, service.CreateReviewInput{
+		BookingID: booking.ID,
+		Rating:    5,
+		Text:      "Perfect!",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, _ := env.bhRepo.GetByID(context.Background(), bh.ID)
+	// 1 review (rating 5), platform avg=5 (only review), m=5
+	// bayesian = (1*5 + 5*5) / (1+5) = 30/6 = 5.0
+	if updated.BayesianRating != 5.0 {
+		t.Errorf("bayesian_rating = %f, want 5.0 for single 5-star review with platform avg=5", updated.BayesianRating)
+	}
+}
+
+func TestReviewService_BayesianRating_ManyReviews(t *testing.T) {
+	env := newReviewTestEnv()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	// Create 10 reviews with rating 4
+	for i := 0; i < 10; i++ {
+		clientID := uuid.New()
+		booking := createCompletedBooking(t, env.bookingRepo, clientID, bh.ID)
+		_, err := env.svc.Create(context.Background(), clientID, service.CreateReviewInput{
+			BookingID: booking.ID,
+			Rating:    4,
+			Text:      "Good bathhouse",
+		})
+		if err != nil {
+			t.Fatalf("create review %d: %v", i, err)
+		}
+	}
+
+	updated, _ := env.bhRepo.GetByID(context.Background(), bh.ID)
+	// 10 reviews all rating 4, platform avg = 4.0, m = 5
+	// bayesian = (10*4 + 5*4) / (10+5) = 60/15 = 4.0
+	if updated.BayesianRating != 4.0 {
+		t.Errorf("bayesian_rating = %f, want 4.0", updated.BayesianRating)
+	}
+}
+
+func TestReviewService_BayesianRating_PullsTowardPlatformAvg(t *testing.T) {
+	env := newReviewTestEnv()
+
+	// First create a bathhouse with many reviews to establish platform avg
+	ownerA := uuid.New()
+	bhA := createBathhouse(t, env.bhRepo, ownerA)
+	for i := 0; i < 10; i++ {
+		clientID := uuid.New()
+		booking := createCompletedBooking(t, env.bookingRepo, clientID, bhA.ID)
+		_, _ = env.svc.Create(context.Background(), clientID, service.CreateReviewInput{
+			BookingID: booking.ID,
+			Rating:    3,
+			Text:      "Average",
+		})
+	}
+
+	// Now create a new bathhouse with 1 five-star review
+	ownerB := uuid.New()
+	bhB := createBathhouse(t, env.bhRepo, ownerB)
+	clientB := uuid.New()
+	bookingB := createCompletedBooking(t, env.bookingRepo, clientB, bhB.ID)
+	_, err := env.svc.Create(context.Background(), clientB, service.CreateReviewInput{
+		BookingID: bookingB.ID,
+		Rating:    5,
+		Text:      "Amazing!",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updatedB, _ := env.bhRepo.GetByID(context.Background(), bhB.ID)
+	// Platform avg is about 3.0 (10 reviews of 3 + 1 review of 5 = 35/11 ≈ 3.18)
+	// For bhB: n=1, R=5, C≈3.18, m=5
+	// bayesian = (1*5 + 5*3.18) / (1+5) = (5+15.9)/6 ≈ 3.5
+	// The Bayesian should be much lower than the raw 5.0, pulled toward platform avg
+	if updatedB.BayesianRating >= 5.0 {
+		t.Errorf("bayesian_rating = %f, should be pulled below 5.0 toward platform avg", updatedB.BayesianRating)
+	}
+	if updatedB.BayesianRating <= 3.0 {
+		t.Errorf("bayesian_rating = %f, should be above platform avg (3.0) since review is 5", updatedB.BayesianRating)
+	}
+}
+
+func TestReviewService_BayesianRating_UpdateOnDelete(t *testing.T) {
+	env := newReviewTestEnv()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+	clientID := uuid.New()
+	booking := createCompletedBooking(t, env.bookingRepo, clientID, bh.ID)
+
+	review, err := env.svc.Create(context.Background(), clientID, service.CreateReviewInput{
+		BookingID: booking.ID,
+		Rating:    5,
+		Text:      "Will be deleted",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Delete the review
+	err = env.svc.Delete(context.Background(), clientID, domain.RoleClient, review.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, _ := env.bhRepo.GetByID(context.Background(), bh.ID)
+	// After deleting all reviews, bayesian should be 0
+	if updated.BayesianRating != 0 {
+		t.Errorf("bayesian_rating = %f, want 0 after deleting all reviews", updated.BayesianRating)
+	}
+}
+
+func TestReviewService_RefreshPlatformAverage(t *testing.T) {
+	env := newReviewTestEnv()
+
+	// No reviews: should not error
+	err := env.svc.RefreshPlatformAverage(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

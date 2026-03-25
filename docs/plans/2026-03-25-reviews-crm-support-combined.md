@@ -51,12 +51,12 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 - Modify: `internal/repository/postgres/review_repo.go`
 - Modify: `internal/domain/bathhouse.go`
 
-- [ ] Implement Bayesian average: R_bayesian = (n * R + m * C) / (n + m), where m = min reviews threshold (default 5), C = platform-wide average
-- [ ] Display rules: < 3 reviews show "Новое" badge, >= 3 show Bayesian average
-- [ ] Recalculate on every review create/update/delete; cache platform average C in Redis (recalc daily)
-- [ ] Add BayesianRating field to Bathhouse
-- [ ] Write tests with edge cases (0, 1, many reviews)
-- [ ] Run `go test ./... -v` — must pass
+- [x] Implement Bayesian average: R_bayesian = (n * R + m * C) / (n + m), where m = min reviews threshold (default 5), C = platform-wide average
+- [x] Display rules: < 3 reviews show "Новое" badge, >= 3 show Bayesian average
+- [x] Recalculate on every review create/update/delete; cache platform average C in Redis (recalc daily)
+- [x] Add BayesianRating field to Bathhouse
+- [x] Write tests with edge cases (0, 1, many reviews)
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 3: Auto Review Request (Reviews)
 

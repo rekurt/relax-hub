@@ -80,7 +80,7 @@ func newTestReminderScheduler(notifSvc *mockNotificationService, bookingSvc serv
 	log := logger.New(logger.LevelInfo)
 	mockAnalyticsSvc := &MockAnalyticsService{}
 	mockAnalyticsRepo := mock.NewAnalyticsRepo()
-	return NewCronScheduler(log, mockAnalyticsSvc, mockAnalyticsRepo, nil, nil, notifSvc, nil, nil, nil, nil, nil, nil, bookingSvc, nil, redisClient)
+	return NewCronScheduler(log, mockAnalyticsSvc, mockAnalyticsRepo, nil, nil, notifSvc, nil, nil, nil, nil, nil, nil, bookingSvc, nil, nil, redisClient)
 }
 
 func TestHandleBookingReminders_24hReminder(t *testing.T) {

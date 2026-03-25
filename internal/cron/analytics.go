@@ -31,6 +31,7 @@ type CronScheduler struct {
 	savedSearchSvc     service.SavedSearchService
 	bookingSvc         service.BookingService
 	escrowSvc          service.EscrowService
+	reviewSvc          service.ReviewService
 	redisClient        *redis.Client
 }
 
@@ -50,6 +51,7 @@ func NewCronScheduler(
 	savedSearchSvc service.SavedSearchService,
 	bookingSvc service.BookingService,
 	escrowSvc service.EscrowService,
+	reviewSvc service.ReviewService,
 	redisClient *redis.Client,
 ) *CronScheduler {
 	return &CronScheduler{
@@ -68,6 +70,7 @@ func NewCronScheduler(
 		savedSearchSvc:     savedSearchSvc,
 		bookingSvc:         bookingSvc,
 		escrowSvc:          escrowSvc,
+		reviewSvc:          reviewSvc,
 		redisClient:        redisClient,
 	}
 }
@@ -211,6 +214,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register response rate recalculation: %w", err)
 	}
 	cs.logger.Info("Registered response rate recalculation job daily at 3:00 AM")
+
+	// Platform average rating refresh daily at 02:30 UTC
+	if _, err := cs.c.AddFunc("30 2 * * *", cs.handlePlatformAverageRefresh); err != nil {
+		cs.logger.Error("Failed to register platform average refresh job", "error", err)
+		return fmt.Errorf("failed to register platform average refresh: %w", err)
+	}
+	cs.logger.Info("Registered platform average rating refresh job at 02:30 UTC")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")

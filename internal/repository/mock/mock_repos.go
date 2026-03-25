@@ -908,6 +908,24 @@ func (r *ReviewRepo) GetCriteriaAverages(_ context.Context, bathhouseID uuid.UUI
 	return &avgs, nil
 }
 
+func (r *ReviewRepo) GetPlatformAverageRating(_ context.Context) (float64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var total float64
+	var count float64
+	for _, rev := range r.reviews {
+		if rev.Status == domain.ReviewStatusApproved {
+			total += float64(rev.Rating)
+			count++
+		}
+	}
+	if count == 0 {
+		return 0, nil
+	}
+	return total / count, nil
+}
+
 // FavoriteRepo is an in-memory mock implementation of repository.FavoriteRepository.
 type FavoriteRepo struct {
 	mu        sync.RWMutex
@@ -1159,6 +1177,18 @@ func (r *BathhouseRepo) ListByOwner(_ context.Context, ownerID uuid.UUID, page, 
 }
 
 func (r *BathhouseRepo) UpdateRating(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
+func (r *BathhouseRepo) UpdateBayesianRating(_ context.Context, id uuid.UUID, bayesianRating float64) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	bh, ok := r.bathhouses[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	bh.BayesianRating = bayesianRating
+	bh.UpdatedAt = time.Now()
 	return nil
 }
 
