@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
@@ -52,7 +53,7 @@ func TestNewCronScheduler(t *testing.T) {
 	mockSvc := &MockAnalyticsService{}
 	mockRepo := mock.NewAnalyticsRepo()
 
-	cs := NewCronScheduler(log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.NotNil(t, cs)
 	assert.NotNil(t, cs.c)
 	assert.Equal(t, log, cs.logger)
@@ -65,7 +66,7 @@ func TestCronSchedulerStart(t *testing.T) {
 	mockSvc := &MockAnalyticsService{}
 	mockRepo := mock.NewAnalyticsRepo()
 
-	cs := NewCronScheduler(log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	err := cs.Start(context.Background())
 	assert.NoError(t, err)
 
@@ -83,7 +84,7 @@ func TestCronSchedulerStop(t *testing.T) {
 	mockSvc := &MockAnalyticsService{}
 	mockRepo := mock.NewAnalyticsRepo()
 
-	cs := NewCronScheduler(log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	err := cs.Start(context.Background())
 	assert.NoError(t, err)
 
@@ -103,7 +104,7 @@ func TestHandleDailyAggregation(t *testing.T) {
 	}
 	mockRepo := mock.NewAnalyticsRepo()
 
-	cs := NewCronScheduler(log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cs.handleDailyAggregation()
 
 	assert.True(t, aggregationCalled, "Expected AggregateDaily to be called")
@@ -119,7 +120,7 @@ func TestHandleDailyAggregationError(t *testing.T) {
 	}
 	mockRepo := mock.NewAnalyticsRepo()
 
-	cs := NewCronScheduler(log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	// Should not panic even with error
 	cs.handleDailyAggregation()
 }
@@ -152,7 +153,7 @@ func TestHandleWeeklyCleanup(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cs := NewCronScheduler(log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	cs.handleWeeklyCleanup()
 
 	// Verify old views are deleted by trying to delete again (should return 0)

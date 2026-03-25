@@ -30,6 +30,16 @@ type Config struct {
 	SMS          SMSConfig          `mapstructure:"sms"`
 	WelcomeBonus WelcomeBonusConfig `mapstructure:"welcome_bonus"`
 	Fiscal       FiscalConfig       `mapstructure:"fiscal"`
+	Review       ReviewConfig       `mapstructure:"review"`
+	Wallet       WalletConfig       `mapstructure:"wallet"`
+}
+
+type ReviewConfig struct {
+	RequestDelayHours int `mapstructure:"request_delay_hours"` // hours after check-out to send review request (default 2)
+}
+
+type WalletConfig struct {
+	BonusExpiryDays int `mapstructure:"bonus_expiry_days"` // days before bonus expires (default 180)
 }
 
 type FiscalConfig struct {
@@ -201,6 +211,8 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("fiscal.atol_login", "")
 	v.SetDefault("fiscal.atol_password", "")
 	v.SetDefault("fiscal.atol_group_code", "")
+	v.SetDefault("review.request_delay_hours", 2)
+	v.SetDefault("wallet.bonus_expiry_days", 180)
 	v.SetDefault("frontend_url", "http://localhost:3000")
 
 	if err := v.ReadInConfig(); err != nil {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/calendar"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
@@ -17,6 +18,7 @@ import (
 // CronScheduler manages all scheduled tasks
 type CronScheduler struct {
 	c                  *cron.Cron
+	cfg                *config.Config
 	logger             *logger.Logger
 	analyticsService   service.AnalyticsService
 	analyticsRepo      repository.AnalyticsRepository
@@ -39,6 +41,7 @@ type CronScheduler struct {
 
 // NewCronScheduler creates a new cron scheduler
 func NewCronScheduler(
+	cfg *config.Config,
 	l *logger.Logger,
 	svc service.AnalyticsService,
 	repo repository.AnalyticsRepository,
@@ -60,6 +63,7 @@ func NewCronScheduler(
 ) *CronScheduler {
 	return &CronScheduler{
 		c:                  cron.New(),
+		cfg:                cfg,
 		logger:             l,
 		analyticsService:   svc,
 		analyticsRepo:      repo,

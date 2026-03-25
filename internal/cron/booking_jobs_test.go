@@ -7,6 +7,7 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
@@ -80,7 +81,7 @@ func newTestReminderScheduler(notifSvc *mockNotificationService, bookingSvc serv
 	log := logger.New(logger.LevelInfo)
 	mockAnalyticsSvc := &MockAnalyticsService{}
 	mockAnalyticsRepo := mock.NewAnalyticsRepo()
-	return NewCronScheduler(log, mockAnalyticsSvc, mockAnalyticsRepo, nil, nil, notifSvc, nil, nil, nil, nil, nil, nil, bookingSvc, nil, nil, nil, nil, redisClient)
+	return NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo, nil, nil, notifSvc, nil, nil, nil, nil, nil, nil, bookingSvc, nil, nil, nil, nil, redisClient)
 }
 
 func TestHandleBookingReminders_24hReminder(t *testing.T) {

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/spf13/viper"
 )
 
 // handleBonusExpiration expires bonus transactions that have passed their expiry date.
@@ -101,7 +100,7 @@ func (cs *CronScheduler) handleBonusExpiryNotify() {
 				continue
 			}
 
-			expiryDays := getBonusExpiryDays()
+			expiryDays := cs.getBonusExpiryDays()
 			_ = cs.notifSvc.Send(ctx, wallet.UserID, domain.NotifBonusExpiring,
 				"Бонусы скоро истекут",
 				fmt.Sprintf("Через %s истекут бонусы на сумму %d ₽. Срок действия бонусов — %d дней.",
@@ -153,8 +152,8 @@ func (cs *CronScheduler) handleExpiredHoldCleanup() {
 }
 
 // getBonusExpiryDays returns the configured bonus expiry period in days.
-func getBonusExpiryDays() int {
-	days := viper.GetInt("WALLET_BONUS_EXPIRY_DAYS")
+func (cs *CronScheduler) getBonusExpiryDays() int {
+	days := cs.cfg.Wallet.BonusExpiryDays
 	if days <= 0 {
 		return 180
 	}

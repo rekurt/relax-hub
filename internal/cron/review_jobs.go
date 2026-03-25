@@ -3,8 +3,6 @@ package cron
 import (
 	"context"
 	"time"
-
-	"github.com/spf13/viper"
 )
 
 func (cs *CronScheduler) handlePlatformAverageRefresh() {
@@ -29,7 +27,7 @@ func (cs *CronScheduler) handleAutoReviewRequests() {
 	start := time.Now()
 	cs.logger.Info("Starting auto review requests")
 
-	delayHours := viper.GetInt("REVIEW_REQUEST_DELAY_HOURS")
+	delayHours := cs.cfg.Review.RequestDelayHours
 	if delayHours <= 0 {
 		delayHours = 2
 	}

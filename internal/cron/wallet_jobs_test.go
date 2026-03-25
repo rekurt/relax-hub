@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
@@ -18,7 +19,7 @@ func newTestWalletCronScheduler(notifSvc *mockNotificationService, walletSvc ser
 	log := logger.New(logger.LevelInfo)
 	mockAnalyticsSvc := &MockAnalyticsService{}
 	mockAnalyticsRepo := mock.NewAnalyticsRepo()
-	return NewCronScheduler(log, mockAnalyticsSvc, mockAnalyticsRepo, nil, nil, notifSvc, nil, walletSvc, walletRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	return NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo, nil, nil, notifSvc, nil, walletSvc, walletRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 func TestHandleBonusExpiration_NoWallets(t *testing.T) {
@@ -209,6 +210,7 @@ func TestHandleBonusExpiryNotify_NoNotificationForDistantBonuses(t *testing.T) {
 }
 
 func TestGetBonusExpiryDays_Default(t *testing.T) {
-	days := getBonusExpiryDays()
+	cs := newTestWalletCronScheduler(&mockNotificationService{}, nil, nil)
+	days := cs.getBonusExpiryDays()
 	assert.Equal(t, 180, days)
 }
