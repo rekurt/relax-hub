@@ -118,13 +118,13 @@ Combined implementation plan covering: support ticket system with escalation and
 - Create: `internal/antifraud/chat_filter.go`
 - Modify: `internal/service/chat_service.go`
 
-- [ ] ChatFilter interface: Filter(ctx, text) -> (filtered, wasFiltered, detections)
-- [ ] Detection patterns (Russian formats): phone (+7/8 variations), email, URLs (http/https/www/t.me/vk.com/wa.me), messenger keywords ("напиши в вотсап", "мой телеграм")
-- [ ] Replace detected content with "[контактные данные скрыты]"
-- [ ] Integrate into chat message sending: filter before save, log original + detections
-- [ ] Admin endpoint: GET /api/v1/admin/chat/filtered
-- [ ] Write tests with various Russian phone/email/URL formats
-- [ ] Run `go test ./... -v` — must pass
+- [x] ChatFilter interface: Filter(ctx, text) -> (filtered, wasFiltered, detections)
+- [x] Detection patterns (Russian formats): phone (+7/8 variations), email, URLs (http/https/www/t.me/vk.com/wa.me), messenger keywords ("напиши в вотсап", "мой телеграм")
+- [x] Replace detected content with "[контактные данные скрыты]"
+- [x] Integrate into chat message sending: filter before save, log original + detections
+- [x] Admin endpoint: GET /api/v1/admin/chat/filtered
+- [x] Write tests with various Russian phone/email/URL formats
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 7: Enhanced Admin Audit Log
 

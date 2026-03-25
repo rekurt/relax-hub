@@ -548,6 +548,9 @@ func NewRouter(p RouterParams) http.Handler {
 			// Anti-fraud (admin only)
 			r.Get("/antifraud/flags", p.AntiFraudHandler.ListFlags)
 			r.Patch("/antifraud/flags/{id}", p.AntiFraudHandler.UpdateFlag)
+
+			// Chat content filtering (admin only)
+			r.Get("/chat/filtered", p.AntiFraudHandler.ListFilteredMessages)
 		})
 	})
 

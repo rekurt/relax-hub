@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/antifraud"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/notification"
@@ -29,9 +30,10 @@ type chatService struct {
 	bhRepo      repository.BathhouseRepository
 	repRepo     repository.RepresentativeRepository
 	access      *AccessChecker
-	notifSvc NotificationService
-	hub      *notification.Hub
-	logger   *logger.Logger
+	notifSvc    NotificationService
+	hub         *notification.Hub
+	chatFilter  antifraud.ChatFilter
+	logger      *logger.Logger
 }
 
 func NewChatService(
@@ -42,17 +44,19 @@ func NewChatService(
 	access *AccessChecker,
 	notifSvc NotificationService,
 	hub *notification.Hub,
+	chatFilter antifraud.ChatFilter,
 	log *logger.Logger,
 ) ChatService {
 	return &chatService{
-		convRepo: convRepo,
-		msgRepo:  msgRepo,
-		bhRepo:   bhRepo,
-		repRepo:  repRepo,
-		access:   access,
-		notifSvc: notifSvc,
-		hub:      hub,
-		logger:   log,
+		convRepo:   convRepo,
+		msgRepo:    msgRepo,
+		bhRepo:     bhRepo,
+		repRepo:    repRepo,
+		access:     access,
+		notifSvc:   notifSvc,
+		hub:        hub,
+		chatFilter: chatFilter,
+		logger:     log,
 	}
 }
 
@@ -94,6 +98,14 @@ func (s *chatService) SendMessage(ctx context.Context, senderID uuid.UUID, role 
 
 	if err := s.checkConversationAccess(ctx, senderID, role, conv); err != nil {
 		return nil, err
+	}
+
+	// Filter contact information from the message text.
+	originalText := text
+	filterResult := s.chatFilter.Filter(ctx, text)
+	if filterResult.WasFiltered {
+		text = filterResult.Filtered
+		s.chatFilter.LogFiltered(ctx, conversationID, senderID, originalText, filterResult)
 	}
 
 	msg := &domain.Message{

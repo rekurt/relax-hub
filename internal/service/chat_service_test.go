@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/antifraud"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/notification"
@@ -30,7 +31,8 @@ func newChatTestEnv() *chatTestEnv {
 	ac := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
 	hub := notification.NewHub(log)
-	svc := service.NewChatService(convRepo, msgRepo, bhRepo, repRepo, ac, &noopNotifService{}, hub, log)
+	chatFilter := antifraud.NewChatFilter(log)
+	svc := service.NewChatService(convRepo, msgRepo, bhRepo, repRepo, ac, &noopNotifService{}, hub, chatFilter, log)
 	return &chatTestEnv{
 		svc:      svc,
 		convRepo: convRepo,

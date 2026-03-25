@@ -6,17 +6,19 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/antifraud"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
 type AntiFraudHandler struct {
-	flagRepo repository.FraudFlagRepository
+	flagRepo   repository.FraudFlagRepository
+	chatFilter antifraud.ChatFilter
 }
 
-func NewAntiFraudHandler(flagRepo repository.FraudFlagRepository) *AntiFraudHandler {
-	return &AntiFraudHandler{flagRepo: flagRepo}
+func NewAntiFraudHandler(flagRepo repository.FraudFlagRepository, chatFilter antifraud.ChatFilter) *AntiFraudHandler {
+	return &AntiFraudHandler{flagRepo: flagRepo, chatFilter: chatFilter}
 }
 
 type fraudFlagResponse struct {
@@ -139,4 +141,38 @@ func (h *AntiFraudHandler) UpdateFlag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+}
+
+// ListFilteredMessages godoc
+// @Summary      List filtered chat messages
+// @Description  Returns paginated list of chat messages that had contact information filtered
+// @Tags         admin-antifraud
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page       query     int  false  "Page number"  default(1)
+// @Param        page_size  query     int  false  "Page size"    default(20)
+// @Success      200  {object}  APIResponse{data=[]antifraud.FilteredChatMessage,meta=Meta}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Router       /admin/chat/filtered [get]
+func (h *AntiFraudHandler) ListFilteredMessages(w http.ResponseWriter, r *http.Request) {
+	page := getPage(r.URL.Query().Get("page"))
+	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)
+
+	items, total, err := h.chatFilter.ListFiltered(r.Context(), page, pageSize)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	totalPages := 0
+	if total > 0 {
+		totalPages = int((total + int64(pageSize) - 1) / int64(pageSize))
+	}
+
+	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
+		Page:       page,
+		PageSize:   pageSize,
+		TotalCount: total,
+		TotalPages: totalPages,
+	})
 }
