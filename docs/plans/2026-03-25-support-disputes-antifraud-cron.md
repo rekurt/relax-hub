@@ -50,14 +50,14 @@ Combined implementation plan covering: support ticket system with escalation and
 - Create: `internal/handler/ticket_handler.go`
 - Modify: `internal/server/router.go`
 
-- [ ] TicketService: CreateTicket (auto-priority by category), GetTicket, ListUserTickets, AddMessage, AssignTicket, EscalateTicket (L1->L2->L3), ResolveTicket, CloseTicket, SubmitCSAT
-- [ ] Auto-escalation: no response 24h -> L2, 48h at L2 -> L3, critical -> auto L2
-- [ ] CSAT: notification 24h after resolution, score validation (1-5), ErrCSATAlreadySubmitted/ErrCSATNotResolved/ErrCSATInvalidScore
-- [ ] User endpoints: POST/GET /api/v1/my/tickets, GET /api/v1/my/tickets/{id}, POST .../messages, POST .../csat
-- [ ] Admin endpoints: GET /api/v1/admin/tickets, GET .../{id}, PATCH .../assign, PATCH .../escalate, PATCH .../resolve, POST .../messages, GET .../stats
-- [ ] Wire into fx module and router
-- [ ] Write tests for service and handler
-- [ ] Run `go test ./... -v` — must pass
+- [x] TicketService: CreateTicket (auto-priority by category), GetTicket, ListUserTickets, AddMessage, AssignTicket, EscalateTicket (L1->L2->L3), ResolveTicket, CloseTicket, SubmitCSAT
+- [x] Auto-escalation: no response 24h -> L2, 48h at L2 -> L3, critical -> auto L2
+- [x] CSAT: notification 24h after resolution, score validation (1-5), ErrCSATAlreadySubmitted/ErrCSATNotResolved/ErrCSATInvalidScore
+- [x] User endpoints: POST/GET /api/v1/my/tickets, GET /api/v1/my/tickets/{id}, POST .../messages, POST .../csat
+- [x] Admin endpoints: GET /api/v1/admin/tickets, GET .../{id}, PATCH .../assign, PATCH .../escalate, PATCH .../resolve, POST .../messages, GET .../stats
+- [x] Wire into fx module and router
+- [x] Write tests for service and handler
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 3: Disputes — Domain, Repository, Migration
 
