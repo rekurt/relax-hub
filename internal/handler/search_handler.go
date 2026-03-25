@@ -44,6 +44,9 @@ func (h *SearchHandler) GetSuggestions(w http.ResponseWriter, r *http.Request) {
 			limit = parsed
 		}
 	}
+	if limit > 20 {
+		limit = 20
+	}
 
 	suggestions, err := h.suggestionService.GetSuggestions(r.Context(), query, limit)
 	if err != nil {

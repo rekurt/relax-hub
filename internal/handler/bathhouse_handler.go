@@ -121,6 +121,10 @@ type bathhouseResponse struct {
 	BufferMinutes              int                `json:"buffer_minutes"`
 	LeadTimeHours              int                `json:"lead_time_hours"`
 	MaxAdvanceDays             int                `json:"max_advance_days"`
+	BookingMode                string             `json:"booking_mode"`
+	RequestTimeout             int                `json:"request_timeout"`
+	ResponseRate               float64            `json:"response_rate"`
+	AvgResponseTimeMinutes     int                `json:"avg_response_time_minutes"`
 	Rating                     float64            `json:"rating"`
 	ReviewCount  int                `json:"review_count"`
 	Images       []string           `json:"images"`
@@ -183,6 +187,10 @@ func toBathhouseResponse(b *domain.Bathhouse) bathhouseResponse {
 		BufferMinutes:              b.BufferMinutes,
 		LeadTimeHours:              b.LeadTimeHours,
 		MaxAdvanceDays:             b.MaxAdvanceDays,
+		BookingMode:                b.BookingMode,
+		RequestTimeout:             b.RequestTimeout,
+		ResponseRate:               b.ResponseRate,
+		AvgResponseTimeMinutes:     b.AvgResponseTimeMinutes,
 		Rating:                     b.Rating,
 		ReviewCount:  b.ReviewCount,
 		Images:       images,
@@ -247,6 +255,8 @@ type updateBathhouseRequest struct {
 	BufferMinutes              *int                  `json:"buffer_minutes"`
 	LeadTimeHours              *int                  `json:"lead_time_hours"`
 	MaxAdvanceDays             *int                  `json:"max_advance_days"`
+	BookingMode                *string               `json:"booking_mode"`
+	RequestTimeout             *int                  `json:"request_timeout"`
 	Images                     []string              `json:"images"`
 	WorkingHours               []workingHoursRequest `json:"working_hours"`
 }
@@ -710,6 +720,8 @@ func (h *BathhouseHandler) Update(w http.ResponseWriter, r *http.Request) {
 		BufferMinutes:              req.BufferMinutes,
 		LeadTimeHours:              req.LeadTimeHours,
 		MaxAdvanceDays:             req.MaxAdvanceDays,
+		BookingMode:                req.BookingMode,
+		RequestTimeout:             req.RequestTimeout,
 		Images:                     req.Images,
 		WorkingHours:               wh,
 	})

@@ -197,23 +197,26 @@ func (s *escrowService) ProcessRefund(ctx context.Context, escrowID uuid.UUID, r
 		return fmt.Errorf("get booking for escrow refund: %w", err)
 	}
 
+	// Mark escrow as refunded before performing wallet refund to prevent double-refund on retry
+	now := time.Now()
+	if err := s.escrowRepo.UpdateStatus(ctx, escrowID, domain.EscrowRefunded, &now); err != nil {
+		return fmt.Errorf("update escrow status to refunded: %w", err)
+	}
+
 	// Refund client wallet
 	if refundAmount > 0 {
 		wallet, err := s.walletSvc.GetWallet(ctx, booking.UserID)
 		if err != nil {
+			s.logger.Error("Escrow marked refunded but wallet lookup failed — needs reconciliation", "escrow_id", escrowID, "error", err)
 			return fmt.Errorf("get client wallet for escrow refund: %w", err)
 		}
 
 		bookingID := escrow.BookingID
 		_, err = s.walletSvc.Refund(ctx, wallet.ID, refundAmount, "escrow_refund", &bookingID, fmt.Sprintf("Возврат по бронированию %s", escrow.BookingID))
 		if err != nil {
+			s.logger.Error("Escrow marked refunded but wallet refund failed — needs reconciliation", "escrow_id", escrowID, "error", err)
 			return fmt.Errorf("refund client wallet: %w", err)
 		}
-	}
-
-	now := time.Now()
-	if err := s.escrowRepo.UpdateStatus(ctx, escrowID, domain.EscrowRefunded, &now); err != nil {
-		return fmt.Errorf("update escrow status to refunded: %w", err)
 	}
 
 	s.logger.Info("Escrow refunded", "escrow_id", escrowID, "booking_id", escrow.BookingID, "refund_amount", refundAmount)

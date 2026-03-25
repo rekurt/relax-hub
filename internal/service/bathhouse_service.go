@@ -58,6 +58,8 @@ type UpdateBathhouseInput struct {
 	BufferMinutes              *int
 	LeadTimeHours              *int
 	MaxAdvanceDays             *int
+	BookingMode                *string
+	RequestTimeout             *int
 	Images                     []string
 	WorkingHours               []domain.WorkingHours
 }
@@ -325,6 +327,12 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 	}
 	if input.MaxAdvanceDays != nil {
 		bh.MaxAdvanceDays = *input.MaxAdvanceDays
+	}
+	if input.BookingMode != nil {
+		bh.BookingMode = *input.BookingMode
+	}
+	if input.RequestTimeout != nil {
+		bh.RequestTimeout = *input.RequestTimeout
 	}
 	// Detect substantial changes before persisting, so status update is atomic with data update
 	changedFields := buildChangedFields(&oldBh, bh)

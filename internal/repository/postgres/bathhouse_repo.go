@@ -89,6 +89,7 @@ func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bath
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
 			bathhouses.booking_mode, bathhouses.request_timeout,
+			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
 			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
 		WHERE bathhouses.id = $1`
@@ -120,6 +121,7 @@ func (r *bathhouseRepo) GetBySlug(ctx context.Context, slug string) (*domain.Bat
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
 			bathhouses.booking_mode, bathhouses.request_timeout,
+			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
 			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
 		WHERE bathhouses.slug = $1`
@@ -160,6 +162,7 @@ func (r *bathhouseRepo) GetByAPIKey(ctx context.Context, apiKey string) (*domain
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
 			bathhouses.booking_mode, bathhouses.request_timeout,
+			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
 			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
 		WHERE bathhouses.api_key = $1`
@@ -338,7 +341,7 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	if filter.AvailableDate != nil {
 		dateStr := filter.AvailableDate.Format("2006-01-02")
 		subConditions := fmt.Sprintf(
-			"NOT EXISTS (SELECT 1 FROM bookings b WHERE b.bathhouse_id = bathhouses.id AND b.status IN ('pending','confirmed') AND b.start_time::date = %s",
+			"NOT EXISTS (SELECT 1 FROM bookings b WHERE b.bathhouse_id = bathhouses.id AND b.status IN ('pending','pending_owner','confirmed') AND b.start_time::date = %s",
 			addArg(dateStr),
 		)
 		if filter.AvailableTimeFrom != nil {
@@ -463,6 +466,7 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
 			bathhouses.booking_mode, bathhouses.request_timeout,
+			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
 			%s as is_promoted
 		FROM bathhouses %s ORDER BY %s LIMIT %s OFFSET %s`,
 		promotionExists, whereClause, orderBy, addArg(filter.PageSize), addArg(offset),
@@ -519,6 +523,7 @@ func (r *bathhouseRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 			last_minute_enabled, last_minute_discount_percent, last_minute_hours_threshold,
 			buffer_minutes, lead_time_hours, max_advance_days,
 			booking_mode, request_timeout,
+			response_rate, avg_response_time_minutes,
 			created_at, updated_at
 		FROM bathhouses WHERE owner_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
@@ -647,7 +652,8 @@ func (r *bathhouseRepo) GetByCalendarToken(ctx context.Context, token string) (*
 			long_session_threshold_hours, long_session_discount_percent, base_capacity, extra_guest_surcharge,
 			last_minute_enabled, last_minute_discount_percent, last_minute_hours_threshold,
 			buffer_minutes, lead_time_hours, max_advance_days,
-			booking_mode, request_timeout
+			booking_mode, request_timeout,
+			response_rate, avg_response_time_minutes
 		FROM bathhouses
 		WHERE calendar_token = $1`
 
@@ -682,6 +688,7 @@ func (r *bathhouseRepo) scanBathhouseMinimal(rows pgx.Rows) (*domain.Bathhouse, 
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
 		&bh.BookingMode, &bh.RequestTimeout,
+		&bh.ResponseRate, &bh.AvgResponseTimeMinutes,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan bathhouse row: %w", err)
@@ -712,6 +719,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*do
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
 		&bh.BookingMode, &bh.RequestTimeout,
+		&bh.ResponseRate, &bh.AvgResponseTimeMinutes,
 		&isPromoted,
 	)
 	if err != nil {
@@ -747,6 +755,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKey(rows pgx.Rows) (*domain.B
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
 		&bh.BookingMode, &bh.RequestTimeout,
+		&bh.ResponseRate, &bh.AvgResponseTimeMinutes,
 		&isPromoted,
 	)
 	if err != nil {
@@ -780,6 +789,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKeyOnly(rows pgx.Rows) (*doma
 		&bh.LastMinuteEnabled, &bh.LastMinuteDiscountPercent, &bh.LastMinuteHoursThreshold,
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
 		&bh.BookingMode, &bh.RequestTimeout,
+		&bh.ResponseRate, &bh.AvgResponseTimeMinutes,
 		&bh.CreatedAt, &bh.UpdatedAt,
 	)
 	if err != nil {
@@ -845,7 +855,8 @@ func (r *bathhouseRepo) ListRequestModeBathhouses(ctx context.Context) ([]domain
 			bathhouses.long_session_threshold_hours, bathhouses.long_session_discount_percent, bathhouses.base_capacity, bathhouses.extra_guest_surcharge,
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
-			bathhouses.booking_mode, bathhouses.request_timeout
+			bathhouses.booking_mode, bathhouses.request_timeout,
+			bathhouses.response_rate, bathhouses.avg_response_time_minutes
 		FROM bathhouses
 		WHERE bathhouses.booking_mode = 'request'
 			AND bathhouses.status = 'active'`
