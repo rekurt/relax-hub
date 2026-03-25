@@ -107,18 +107,29 @@ func (s *escrowService) ReleaseToOwner(ctx context.Context, escrowID uuid.UUID) 
 		return fmt.Errorf("get bathhouse for escrow release: %w", err)
 	}
 
-	// Credit owner wallet with amount minus service fee
+	// Credit owner wallet with amount minus service fee.
+	// IMPORTANT: Mark escrow as released FIRST, then credit wallet.
+	// This prevents double-payout if the wallet credit succeeds but a subsequent
+	// step fails -- ProcessMaturedEscrows would otherwise re-process the escrow.
 	ownerAmount := escrow.Amount - escrow.ServiceFee
+
+	now := time.Now()
+	if err := s.escrowRepo.UpdateStatus(ctx, escrowID, domain.EscrowReleased, &now); err != nil {
+		return fmt.Errorf("update escrow status to released: %w", err)
+	}
+
 	if ownerAmount > 0 {
 		wallet, err := s.walletSvc.GetWallet(ctx, bh.OwnerID)
 		if err != nil {
+			s.logger.Error("escrow marked released but failed to get owner wallet — manual reconciliation needed",
+				"escrow_id", escrowID, "owner_id", bh.OwnerID, "amount", ownerAmount, "error", err)
 			return fmt.Errorf("get owner wallet for escrow release: %w", err)
 		}
 
 		// Check if owner wallet can accommodate the full payout
 		maxBalance := domain.MaxBalanceForCurrency(wallet.Currency)
 		if wallet.Balance+ownerAmount > maxBalance {
-			s.logger.Error("owner wallet would exceed max balance on escrow release, payout blocked",
+			s.logger.Error("escrow marked released but owner wallet would exceed max balance — manual reconciliation needed",
 				"escrow_id", escrowID, "owner_id", bh.OwnerID,
 				"owner_amount", ownerAmount, "wallet_balance", wallet.Balance, "max_balance", maxBalance)
 			return fmt.Errorf("owner wallet balance would exceed limit: %w", domain.ErrWalletLimitExceeded)
@@ -127,13 +138,10 @@ func (s *escrowService) ReleaseToOwner(ctx context.Context, escrowID uuid.UUID) 
 		bookingID := escrow.BookingID
 		_, err = s.walletSvc.Refund(ctx, wallet.ID, ownerAmount, "escrow_release", &bookingID, fmt.Sprintf("Выплата за бронирование %s", escrow.BookingID))
 		if err != nil {
+			s.logger.Error("escrow marked released but wallet credit failed — manual reconciliation needed",
+				"escrow_id", escrowID, "owner_id", bh.OwnerID, "amount", ownerAmount, "error", err)
 			return fmt.Errorf("credit owner wallet: %w", err)
 		}
-	}
-
-	now := time.Now()
-	if err := s.escrowRepo.UpdateStatus(ctx, escrowID, domain.EscrowReleased, &now); err != nil {
-		return fmt.Errorf("update escrow status to released: %w", err)
 	}
 
 	s.logger.Info("Escrow released to owner",

@@ -1282,9 +1282,11 @@ func (s *bookingService) handleOwnerCancellationPenalty(ctx context.Context, boo
 	}
 
 	// Credit 10% compensation to client wallet, funded by deducting from owner wallet.
-	// This ensures the platform doesn't absorb the cost -- the penalty comes from the owner.
+	// Only credit client if owner debit succeeds -- platform must not absorb the cost.
 	compensationAmount := booking.TotalPrice / 10
 	if compensationAmount > 0 && s.walletSvc != nil {
+		ownerDebited := false
+
 		// First, deduct from owner's wallet
 		bh2, bhErr := s.bhRepo.GetByID(ctx, booking.BathhouseID)
 		if bhErr != nil {
@@ -1297,28 +1299,30 @@ func (s *bookingService) handleOwnerCancellationPenalty(ctx context.Context, boo
 				bookingID := booking.ID
 				_, spendErr := s.walletSvc.Spend(ctx, ownerWallet.ID, compensationAmount, "owner_cancellation_penalty", &bookingID, fmt.Sprintf("Штраф за отмену бронирования %s", bookingID.String()[:8]))
 				if spendErr != nil {
-					s.logger.Warn("failed to debit owner for cancellation penalty (insufficient balance?)", "owner_id", bh2.OwnerID, "amount", compensationAmount, "error", spendErr)
-					// If owner has insufficient funds, still credit client but log the shortfall
+					s.logger.Warn("failed to debit owner for cancellation penalty — skipping client credit", "owner_id", bh2.OwnerID, "amount", compensationAmount, "error", spendErr)
+				} else {
+					ownerDebited = true
 				}
 			}
 		}
 
-		// Credit compensation to client wallet
-		wallet, err := s.walletSvc.GetWallet(ctx, booking.UserID)
-		if err != nil {
-			s.logger.Warn("failed to get client wallet for compensation", "user_id", booking.UserID, "error", err)
-		} else {
-			bookingID := booking.ID
-			_, err := s.walletSvc.Refund(ctx, wallet.ID, compensationAmount, "owner_cancellation", &bookingID, "Компенсация за отмену владельцем")
+		// Credit compensation to client wallet only if owner was successfully debited
+		if ownerDebited {
+			wallet, err := s.walletSvc.GetWallet(ctx, booking.UserID)
 			if err != nil {
-				s.logger.Warn("failed to credit owner cancellation compensation", "booking_id", booking.ID, "amount", compensationAmount, "error", err)
+				s.logger.Warn("failed to get client wallet for compensation", "user_id", booking.UserID, "error", err)
 			} else {
-				s.logger.Info("credited owner cancellation compensation", "booking_id", booking.ID, "user_id", booking.UserID, "amount", compensationAmount)
-				// Notify client about compensation
-				if s.notifSvc != nil {
-					body := fmt.Sprintf("Вам начислена компенсация %d₽ за отмену бронирования владельцем", compensationAmount/100)
-					_ = s.notifSvc.Send(ctx, booking.UserID, domain.NotifOwnerCancellationCompensation,
-						"Компенсация за отмену", body, map[string]string{"booking_id": booking.ID.String()})
+				bookingID := booking.ID
+				_, err := s.walletSvc.Refund(ctx, wallet.ID, compensationAmount, "owner_cancellation", &bookingID, "Компенсация за отмену владельцем")
+				if err != nil {
+					s.logger.Warn("failed to credit owner cancellation compensation", "booking_id", booking.ID, "amount", compensationAmount, "error", err)
+				} else {
+					s.logger.Info("credited owner cancellation compensation", "booking_id", booking.ID, "user_id", booking.UserID, "amount", compensationAmount)
+					if s.notifSvc != nil {
+						body := fmt.Sprintf("Вам начислена компенсация %d₽ за отмену бронирования владельцем", compensationAmount/100)
+						_ = s.notifSvc.Send(ctx, booking.UserID, domain.NotifOwnerCancellationCompensation,
+							"Компенсация за отмену", body, map[string]string{"booking_id": booking.ID.String()})
+					}
 				}
 			}
 		}
@@ -1466,11 +1470,17 @@ func (s *bookingService) CheckOut(ctx context.Context, userID uuid.UUID, role do
 		s.sendReferralBonusNotifications(ctx, referralResult)
 	}
 
-	// Create escrow to hold funds during claim period before releasing to owner
+	// Create escrow to hold funds during claim period before releasing to owner.
+	// Only create escrow if a succeeded payment exists -- no funds to escrow otherwise.
 	if s.escrowSvc != nil {
-		_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, booking.TotalPrice, booking.ServiceFeeAmount)
-		if escrowErr != nil {
-			s.logger.Warn("failed to create escrow on checkout", "booking_id", bookingID, "error", escrowErr)
+		payment, payErr := s.paymentSvc.GetPaymentByBooking(ctx, booking.UserID, bookingID)
+		if payErr != nil {
+			s.logger.Warn("no payment found for escrow on checkout", "booking_id", bookingID, "error", payErr)
+		} else if payment.Status == domain.PaymentSucceeded {
+			_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, payment.Amount, booking.ServiceFeeAmount)
+			if escrowErr != nil {
+				s.logger.Warn("failed to create escrow on checkout", "booking_id", bookingID, "error", escrowErr)
+			}
 		}
 	}
 
