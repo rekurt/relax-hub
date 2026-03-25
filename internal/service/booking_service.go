@@ -909,7 +909,11 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 
 	now := time.Now()
 	bufferDuration := time.Duration(bh.BufferMinutes) * time.Minute
-	leadTimeCutoff := now.Add(time.Duration(bh.LeadTimeHours) * time.Hour)
+	leadTime := time.Duration(bh.LeadTimeHours) * time.Hour
+	if leadTime < 5*time.Minute {
+		leadTime = 5 * time.Minute
+	}
+	leadTimeCutoff := now.Add(leadTime)
 	maxAdvDays := bh.MaxAdvanceDays
 	if maxAdvDays <= 0 {
 		maxAdvDays = 90
