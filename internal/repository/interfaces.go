@@ -517,6 +517,20 @@ type ServiceFeeRepository interface {
 	Upsert(ctx context.Context, config *domain.ServiceFeeConfig) error
 }
 
+type DisputeRepository interface {
+	Create(ctx context.Context, dispute *domain.Dispute) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Dispute, error)
+	GetByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.Dispute, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.DisputeStatus) error
+	UpdateResolution(ctx context.Context, id uuid.UUID, resolution domain.DisputeResolution, refundAmount, compensationAmount int64, mediatorNotes string, resolvedAt time.Time) error
+	UpdateAppeal(ctx context.Context, id uuid.UUID, status domain.DisputeStatus) error
+	Assign(ctx context.Context, id uuid.UUID, mediatorID uuid.UUID) error
+	AddEvidence(ctx context.Context, evidence *domain.DisputeEvidence) error
+	ListEvidence(ctx context.Context, disputeID uuid.UUID) ([]domain.DisputeEvidence, error)
+	ListAll(ctx context.Context, filter domain.DisputeFilter) (*domain.PaginatedResult[domain.Dispute], error)
+	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Dispute], error)
+}
+
 type TicketRepository interface {
 	Create(ctx context.Context, ticket *domain.Ticket) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Ticket, error)

@@ -215,14 +215,14 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 - Modify: `internal/repository/interfaces.go`
 - Create: `migrations/XXXXXX_disputes.up.sql`
 
-- [ ] Dispute model: ID, BookingID, InitiatorID, RespondentID, Reason (service_not_provided/poor_quality/damage/safety_issue/billing_error/other), Status (open/evidence_collection/under_review/resolved/appealed/closed), Resolution, RefundAmount, CompensationAmount, MediatorID, MediatorNotes, AppealDeadline (7 days)
-- [ ] DisputeEvidence model: ID, DisputeID, UserID, Type (photo/screenshot/gps/message/receipt), URL, Description
-- [ ] DisputeRepository: Create, GetByID, GetByBookingID, UpdateStatus, AddEvidence, ListEvidence, ListAll
-- [ ] DisputeService: OpenDispute (block escrow), SubmitEvidence (72h window), Resolve (full/partial/no refund, compensation), Appeal (within 7 days), CloseDispute
-- [ ] User endpoints: POST /api/v1/bookings/{id}/dispute, POST evidence, GET detail, POST appeal, GET /api/v1/my/disputes
-- [ ] Admin endpoints: GET /api/v1/admin/disputes, PATCH assign, PATCH resolve
-- [ ] Write tests for full dispute lifecycle
-- [ ] Run `go test ./... -v -race` — must pass
+- [x] Dispute model: ID, BookingID, InitiatorID, RespondentID, Reason (service_not_provided/poor_quality/damage/safety_issue/billing_error/other), Status (open/evidence_collection/under_review/resolved/appealed/closed), Resolution, RefundAmount, CompensationAmount, MediatorID, MediatorNotes, AppealDeadline (7 days)
+- [x] DisputeEvidence model: ID, DisputeID, UserID, Type (photo/screenshot/gps/message/receipt), URL, Description
+- [x] DisputeRepository: Create, GetByID, GetByBookingID, UpdateStatus, AddEvidence, ListEvidence, ListAll
+- [x] DisputeService: OpenDispute (block escrow), SubmitEvidence (72h window), Resolve (full/partial/no refund, compensation), Appeal (within 7 days), CloseDispute
+- [x] User endpoints: POST /api/v1/bookings/{id}/dispute, POST evidence, GET detail, POST appeal, GET /api/v1/my/disputes
+- [x] Admin endpoints: GET /api/v1/admin/disputes, PATCH assign, PATCH resolve
+- [x] Write tests for full dispute lifecycle
+- [x] Run `go test ./... -v -race` — must pass
 
 ### Task 13: Verify acceptance criteria
 

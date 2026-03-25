@@ -325,6 +325,22 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "csat_not_resolved", err.Error())
 	case errors.Is(err, domain.ErrCSATInvalidScore):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "csat_invalid_score", err.Error())
+	case errors.Is(err, domain.ErrDisputeNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "dispute_not_found", err.Error())
+	case errors.Is(err, domain.ErrDisputeAlreadyExists):
+		writeErrorWithContext(w, r, http.StatusConflict, "dispute_already_exists", err.Error())
+	case errors.Is(err, domain.ErrDisputeAlreadyResolved):
+		writeErrorWithContext(w, r, http.StatusConflict, "dispute_already_resolved", err.Error())
+	case errors.Is(err, domain.ErrDisputeAlreadyClosed):
+		writeErrorWithContext(w, r, http.StatusConflict, "dispute_already_closed", err.Error())
+	case errors.Is(err, domain.ErrDisputeEvidenceWindowExpired):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "dispute_evidence_window_expired", err.Error())
+	case errors.Is(err, domain.ErrDisputeAppealExpired):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "dispute_appeal_expired", err.Error())
+	case errors.Is(err, domain.ErrDisputeNotResolved):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "dispute_not_resolved", err.Error())
+	case errors.Is(err, domain.ErrDisputeAlreadyAppealed):
+		writeErrorWithContext(w, r, http.StatusConflict, "dispute_already_appealed", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

@@ -72,6 +72,7 @@ type RouterParams struct {
 	TemplateHandler          *handler.TemplateHandler
 	ServiceFeeHandler        *handler.ServiceFeeHandler
 	TicketHandler            *handler.TicketHandler
+	DisputeHandler           *handler.DisputeHandler
 	SessionValidator         middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin             `optional:"true"`
 }
@@ -422,6 +423,14 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Get("/my/tickets/{id}/messages", p.TicketHandler.ListMessages)
 		r.With(auth).Post("/my/tickets/{id}/csat", p.TicketHandler.SubmitCSAT)
 
+		// Disputes (authenticated)
+		r.With(auth).Post("/bookings/{id}/dispute", p.DisputeHandler.OpenDispute)
+		r.With(auth).Get("/my/disputes", p.DisputeHandler.ListUserDisputes)
+		r.With(auth).Get("/my/disputes/{id}", p.DisputeHandler.GetDispute)
+		r.With(auth).Post("/my/disputes/{id}/evidence", p.DisputeHandler.SubmitEvidence)
+		r.With(auth).Get("/my/disputes/{id}/evidence", p.DisputeHandler.ListEvidence)
+		r.With(auth).Post("/my/disputes/{id}/appeal", p.DisputeHandler.AppealDispute)
+
 		// Notifications (authenticated)
 		r.With(auth).Get("/my/notifications", p.NotifHandler.List)
 		r.With(auth).Get("/my/notifications/unread-count", p.NotifHandler.UnreadCount)
@@ -527,6 +536,11 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Patch("/tickets/{id}/escalate", p.TicketHandler.AdminEscalateTicket)
 			r.Patch("/tickets/{id}/resolve", p.TicketHandler.AdminResolveTicket)
 			r.Post("/tickets/{id}/messages", p.TicketHandler.AdminAddMessage)
+
+			// Disputes (admin only)
+			r.Get("/disputes", p.DisputeHandler.AdminListDisputes)
+			r.Patch("/disputes/{id}/assign", p.DisputeHandler.AdminAssignDispute)
+			r.Patch("/disputes/{id}/resolve", p.DisputeHandler.AdminResolveDispute)
 		})
 	})
 

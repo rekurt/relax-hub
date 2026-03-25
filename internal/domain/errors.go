@@ -136,4 +136,13 @@ var (
 	ErrCSATAlreadySubmitted = errors.New("CSAT score already submitted")
 	ErrCSATNotResolved      = errors.New("ticket must be resolved to submit CSAT")
 	ErrCSATInvalidScore     = errors.New("CSAT score must be between 1 and 5")
+
+	ErrDisputeNotFound          = errors.New("dispute not found")
+	ErrDisputeAlreadyExists     = errors.New("dispute already exists for this booking")
+	ErrDisputeAlreadyResolved   = errors.New("dispute is already resolved")
+	ErrDisputeAlreadyClosed     = errors.New("dispute is already closed")
+	ErrDisputeEvidenceWindowExpired = errors.New("evidence submission window has expired")
+	ErrDisputeAppealExpired     = errors.New("appeal deadline has passed")
+	ErrDisputeNotResolved       = errors.New("dispute must be resolved to appeal")
+	ErrDisputeAlreadyAppealed   = errors.New("dispute has already been appealed")
 )
