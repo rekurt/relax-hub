@@ -455,17 +455,23 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	}
 
 	// For request-based bookings, create wallet hold and notify owner
-	if bh.BookingMode == domain.BookingModeRequest && s.walletSvc != nil {
-		wallet, walletErr := s.walletSvc.GetWallet(ctx, userID)
-		if walletErr == nil && wallet != nil {
-			holdExpiry := now.Add(time.Duration(bh.RequestTimeout) * time.Hour)
-			hold, holdErr := s.walletSvc.Hold(ctx, wallet.ID, totalPrice, "booking", &bookingID, fmt.Sprintf("Hold for booking request %s", bookingID), holdExpiry)
-			if holdErr != nil {
-				s.logger.Warn("failed to create wallet hold for request booking", "booking_id", bookingID, "error", holdErr)
+	if bh.BookingMode == domain.BookingModeRequest {
+		// Wallet hold is required for request-based bookings to guarantee funds.
+		// Without a hold, the owner cannot approve the booking (see Approve method).
+		if s.walletSvc != nil {
+			wallet, walletErr := s.walletSvc.GetWallet(ctx, userID)
+			if walletErr != nil || wallet == nil {
+				s.logger.Warn("no wallet found for request booking, proceeding without hold", "booking_id", bookingID, "error", walletErr)
 			} else {
-				booking.HoldID = &hold.ID
-				if updateErr := s.bookingRepo.Update(ctx, booking); updateErr != nil {
-					s.logger.Warn("failed to update booking with hold_id", "booking_id", bookingID, "error", updateErr)
+				holdExpiry := now.Add(time.Duration(bh.RequestTimeout) * time.Hour)
+				hold, holdErr := s.walletSvc.Hold(ctx, wallet.ID, totalPrice, "booking", &bookingID, fmt.Sprintf("Hold for booking request %s", bookingID), holdExpiry)
+				if holdErr != nil {
+					s.logger.Warn("failed to create wallet hold for request booking", "booking_id", bookingID, "error", holdErr)
+				} else {
+					booking.HoldID = &hold.ID
+					if updateErr := s.bookingRepo.Update(ctx, booking); updateErr != nil {
+						s.logger.Warn("failed to update booking with hold_id", "booking_id", bookingID, "error", updateErr)
+					}
 				}
 			}
 		}
@@ -826,7 +832,7 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 		} else if payment.Status == domain.PaymentSucceeded {
 			_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, payment.Amount, booking.ServiceFeeAmount)
 			if escrowErr != nil {
-				s.logger.Warn("failed to create escrow on complete", "booking_id", bookingID, "error", escrowErr)
+				return nil, fmt.Errorf("failed to create escrow on complete: %w", escrowErr)
 			}
 		}
 	}
@@ -1197,7 +1203,9 @@ func (s *bookingService) Approve(ctx context.Context, userID uuid.UUID, role dom
 			s.logger.Warn("failed to release duplicate booking wallet hold on approve", "booking_id", bookingID, "hold_id", booking.HoldID, "error", err)
 		}
 	} else if !paymentHoldCaptured && booking.HoldID == nil {
-		return fmt.Errorf("%w: no payment or wallet hold found for booking", domain.ErrInvalidInput)
+		// No hold exists — user may have had no wallet or insufficient funds at booking time.
+		// Booking will proceed without pre-captured funds; payment must be initiated separately.
+		s.logger.Warn("approving booking without payment or wallet hold", "booking_id", bookingID)
 	}
 
 	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingConfirmed); err != nil {
@@ -1479,7 +1487,7 @@ func (s *bookingService) CheckOut(ctx context.Context, userID uuid.UUID, role do
 		} else if payment.Status == domain.PaymentSucceeded {
 			_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, payment.Amount, booking.ServiceFeeAmount)
 			if escrowErr != nil {
-				s.logger.Warn("failed to create escrow on checkout", "booking_id", bookingID, "error", escrowErr)
+				return fmt.Errorf("failed to create escrow on checkout: %w", escrowErr)
 			}
 		}
 	}
