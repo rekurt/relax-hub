@@ -412,7 +412,7 @@ func (r *bookingRepo) GetResponseStats(ctx context.Context, bathhouseID uuid.UUI
 	query := `
 		SELECT
 			COUNT(*) as total_requests,
-			COUNT(*) FILTER (WHERE b.status IN ('confirmed', 'rejected', 'cancelled', 'completed', 'no_show')) as responded,
+			COUNT(*) FILTER (WHERE b.status IN ('confirmed', 'rejected')) as responded,
 			COALESCE(AVG(EXTRACT(EPOCH FROM (b.updated_at - b.created_at)) / 60)
 				FILTER (WHERE b.status IN ('confirmed', 'rejected')), 0)::INT as avg_response_minutes
 		FROM bookings b

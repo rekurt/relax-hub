@@ -69,10 +69,21 @@ func (r *serviceFeeRepo) List(ctx context.Context) ([]domain.ServiceFeeConfig, e
 
 func (r *serviceFeeRepo) Upsert(ctx context.Context, config *domain.ServiceFeeConfig) error {
 	now := time.Now()
-	query := `
+	var query string
+	if config.Category == nil {
+		// Use partial unique index for NULL category
+		query = `
+			INSERT INTO service_fee_configs (region, category, fee_percent, created_at, updated_at)
+			VALUES ($1, NULL, $2, $3, $3)
+			ON CONFLICT (region) WHERE category IS NULL DO UPDATE SET fee_percent = $2, updated_at = $3
+			RETURNING id, created_at, updated_at`
+		return r.pool.QueryRow(ctx, query, config.Region, config.FeePercent, now).
+			Scan(&config.ID, &config.CreatedAt, &config.UpdatedAt)
+	}
+	query = `
 		INSERT INTO service_fee_configs (region, category, fee_percent, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $4)
-		ON CONFLICT (region, category) DO UPDATE SET fee_percent = $3, updated_at = $4
+		ON CONFLICT (region, category) WHERE category IS NOT NULL DO UPDATE SET fee_percent = $3, updated_at = $4
 		RETURNING id, created_at, updated_at`
 	return r.pool.QueryRow(ctx, query, config.Region, config.Category, config.FeePercent, now).
 		Scan(&config.ID, &config.CreatedAt, &config.UpdatedAt)

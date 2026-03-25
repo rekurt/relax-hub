@@ -322,7 +322,8 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 
 	// Calculate service fee on base price (before discounts and add-ons)
 	var serviceFeeAmount int64
-	serviceFeeAmount, err = s.serviceFeeSvc.CalculateFee(ctx, priceBreakdown.BasePrice, "*", nil)
+	region := fmt.Sprintf("%d", bh.CityID)
+	serviceFeeAmount, err = s.serviceFeeSvc.CalculateFee(ctx, priceBreakdown.BasePrice, region, nil)
 	if err != nil {
 		s.logger.Warn("failed to calculate service fee, defaulting to 0", "error", err)
 		serviceFeeAmount = 0
@@ -814,6 +815,14 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 		s.logger.Warn("failed to complete referral", "booking_id", bookingID, "user_id", booking.UserID, "error", err)
 	} else if referralResult != nil && referralResult.Completed {
 		s.sendReferralBonusNotifications(ctx, referralResult)
+	}
+
+	// Create escrow to hold funds during claim period before releasing to owner
+	if s.escrowSvc != nil {
+		_, escrowErr := s.escrowSvc.CreateEscrow(ctx, bookingID, booking.TotalPrice, booking.ServiceFeeAmount)
+		if escrowErr != nil {
+			s.logger.Warn("failed to create escrow on complete", "booking_id", bookingID, "error", escrowErr)
+		}
 	}
 
 	return &BookingResult{

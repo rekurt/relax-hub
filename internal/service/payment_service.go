@@ -421,21 +421,27 @@ func (s *paymentService) CaptureHoldPayment(ctx context.Context, bookingID uuid.
 
 	// Capture wallet hold if wallet portion exists
 	if p.WalletAmount > 0 && s.walletSvc != nil {
-		// Find wallet hold for this booking
 		wallet, walletErr := s.walletSvc.GetWallet(ctx, p.UserID)
-		if walletErr == nil {
-			holds, holdErr := s.walletSvc.GetActiveHolds(ctx, wallet.ID)
-			if holdErr == nil {
-				for _, h := range holds {
-					if h.ReferenceID != nil && *h.ReferenceID == bookingID && h.ReferenceType == "booking_payment" {
-						if _, captureErr := s.walletSvc.CaptureHold(ctx, h.ID); captureErr != nil {
-							s.logger.Error("failed to capture wallet hold on payment capture",
-								"booking_id", bookingID, "hold_id", h.ID, "error", captureErr)
-						}
-						break
-					}
+		if walletErr != nil {
+			return fmt.Errorf("failed to get wallet for hold capture: %w", walletErr)
+		}
+		holds, holdErr := s.walletSvc.GetActiveHolds(ctx, wallet.ID)
+		if holdErr != nil {
+			return fmt.Errorf("failed to get active holds for capture: %w", holdErr)
+		}
+		walletHoldCaptured := false
+		for _, h := range holds {
+			if h.ReferenceID != nil && *h.ReferenceID == bookingID && h.ReferenceType == "booking_payment" {
+				if _, captureErr := s.walletSvc.CaptureHold(ctx, h.ID); captureErr != nil {
+					return fmt.Errorf("failed to capture wallet hold after card capture: %w", captureErr)
 				}
+				walletHoldCaptured = true
+				break
 			}
+		}
+		if !walletHoldCaptured {
+			s.logger.Warn("wallet hold not found for capture, wallet portion may not be debited",
+				"booking_id", bookingID, "user_id", p.UserID)
 		}
 	}
 
@@ -739,7 +745,7 @@ func (s *paymentService) executeRefund(ctx context.Context, p *domain.Payment, u
 		if err := s.executeComboRefund(ctx, p, userID, refundAmount, refundStatus, refundTo); err != nil {
 			return err
 		}
-		s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund)
+		s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund, refundAmount)
 		return nil
 	}
 
@@ -748,7 +754,7 @@ func (s *paymentService) executeRefund(ctx context.Context, p *domain.Payment, u
 		if err := s.refundToWallet(ctx, p, userID, refundAmount, refundStatus); err != nil {
 			return err
 		}
-		s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund)
+		s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund, refundAmount)
 		return nil
 	}
 
@@ -757,7 +763,7 @@ func (s *paymentService) executeRefund(ctx context.Context, p *domain.Payment, u
 		if err := s.refundToWallet(ctx, p, userID, refundAmount, refundStatus); err != nil {
 			return err
 		}
-		s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund)
+		s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund, refundAmount)
 		return nil
 	}
 
@@ -772,7 +778,7 @@ func (s *paymentService) executeRefund(ctx context.Context, p *domain.Payment, u
 	if err := s.paymentRepo.UpdateRefund(ctx, p.ID, p.RefundAmount+refundAmount, now, refundStatus); err != nil {
 		return err
 	}
-	s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund)
+	s.createFiscalReceipt(ctx, p, fiscal.ReceiptRefund, refundAmount)
 	return nil
 }
 
@@ -911,18 +917,23 @@ func (s *paymentService) ListUserPayments(ctx context.Context, userID uuid.UUID,
 	return s.paymentRepo.ListByUser(ctx, userID, page, pageSize)
 }
 
-func (s *paymentService) createFiscalReceipt(ctx context.Context, p *domain.Payment, receiptType fiscal.ReceiptType) {
+func (s *paymentService) createFiscalReceipt(ctx context.Context, p *domain.Payment, receiptType fiscal.ReceiptType, amounts ...int64) {
 	if s.fiscalProvider == nil {
 		return
 	}
+	// Use provided amount (e.g. actual refund amount) or fall back to full payment amount
+	amount := p.Amount
+	if len(amounts) > 0 && amounts[0] > 0 {
+		amount = amounts[0]
+	}
 	req := fiscal.ReceiptRequest{
 		Type:   receiptType,
-		Amount: p.Amount,
+		Amount: amount,
 		Items: []fiscal.ReceiptItem{
 			{
 				Name:     fmt.Sprintf("Бронирование %s", p.BookingID.String()[:8]),
 				Quantity: 1,
-				Price:    p.Amount,
+				Price:    amount,
 				VAT:      "none",
 			},
 		},

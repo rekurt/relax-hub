@@ -43,9 +43,10 @@ type paymentResponse struct {
 }
 
 type initiatePaymentRequest struct {
-	PaymentMethod string `json:"payment_method"`                  // "card", "sbp", "wallet", "combo"
-	WalletAmount  int64  `json:"wallet_amount,omitempty"`         // for combo/wallet
-	CardAmount    int64  `json:"card_amount,omitempty"`           // for combo
+	PaymentMethod     string `json:"payment_method"`                  // "card", "sbp", "wallet", "combo"
+	WalletAmount      int64  `json:"wallet_amount,omitempty"`         // for combo/wallet
+	CardAmount        int64  `json:"card_amount,omitempty"`           // for combo
+	CardPaymentMethod string `json:"card_payment_method,omitempty"`   // for combo: "card" (default) or "sbp"
 }
 
 type initiatePaymentResponse struct {
@@ -132,10 +133,14 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 		writeJSON(w, http.StatusOK, initiatePaymentResponse{})
 
 	case domain.PaymentMethodCombo:
+		cardMethod := domain.PaymentMethodCard
+		if req.CardPaymentMethod == string(domain.PaymentMethodSBP) {
+			cardMethod = domain.PaymentMethodSBP
+		}
 		comboReq := service.ComboPaymentRequest{
 			WalletAmount:  req.WalletAmount,
 			CardAmount:    req.CardAmount,
-			PaymentMethod: domain.PaymentMethodCard, // default card for card portion
+			PaymentMethod: cardMethod,
 		}
 		confirmationURL, err := h.paymentService.InitiateComboPayment(r.Context(), userID, bookingID, comboReq)
 		if err != nil {
