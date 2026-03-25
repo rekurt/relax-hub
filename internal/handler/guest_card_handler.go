@@ -202,6 +202,11 @@ func (h *GuestCardHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
 
+	if role != domain.RoleOwner && role != domain.RoleRepresentative && role != domain.RoleAdmin {
+		handleServiceError(w, domain.ErrForbidden)
+		return
+	}
+
 	filter := domain.GuestCardFilter{}
 
 	w.Header().Set("Content-Type", "text/csv")

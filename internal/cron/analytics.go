@@ -33,6 +33,7 @@ type CronScheduler struct {
 	escrowSvc          service.EscrowService
 	reviewSvc          service.ReviewService
 	autoScenarioSvc    service.AutoScenarioService
+	ticketSvc          service.TicketService
 	redisClient        *redis.Client
 }
 
@@ -54,6 +55,7 @@ func NewCronScheduler(
 	escrowSvc service.EscrowService,
 	reviewSvc service.ReviewService,
 	autoScenarioSvc service.AutoScenarioService,
+	ticketSvc service.TicketService,
 	redisClient *redis.Client,
 ) *CronScheduler {
 	return &CronScheduler{
@@ -74,6 +76,7 @@ func NewCronScheduler(
 		escrowSvc:          escrowSvc,
 		reviewSvc:          reviewSvc,
 		autoScenarioSvc:    autoScenarioSvc,
+		ticketSvc:          ticketSvc,
 		redisClient:        redisClient,
 	}
 }
@@ -238,6 +241,20 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to register auto scenario execution: %w", err)
 	}
 	cs.logger.Info("Registered auto scenario execution job every hour at :15")
+
+	// Ticket auto-escalation every 15 minutes
+	if _, err := cs.c.AddFunc("*/15 * * * *", cs.handleTicketAutoEscalation); err != nil {
+		cs.logger.Error("Failed to register ticket auto-escalation job", "error", err)
+		return fmt.Errorf("failed to register ticket auto-escalation: %w", err)
+	}
+	cs.logger.Info("Registered ticket auto-escalation job every 15 minutes")
+
+	// Ticket auto-close daily at 04:30 UTC
+	if _, err := cs.c.AddFunc("30 4 * * *", cs.handleTicketAutoClose); err != nil {
+		cs.logger.Error("Failed to register ticket auto-close job", "error", err)
+		return fmt.Errorf("failed to register ticket auto-close: %w", err)
+	}
+	cs.logger.Info("Registered ticket auto-close job daily at 04:30 UTC")
 
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")

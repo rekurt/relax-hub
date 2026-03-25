@@ -319,6 +319,8 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusConflict, "ticket_already_closed", err.Error())
 	case errors.Is(err, domain.ErrTicketAlreadyResolved):
 		writeErrorWithContext(w, r, http.StatusConflict, "ticket_already_resolved", err.Error())
+	case errors.Is(err, domain.ErrTicketAlreadyEscalated):
+		writeErrorWithContext(w, r, http.StatusConflict, "ticket_already_escalated", err.Error())
 	case errors.Is(err, domain.ErrCSATAlreadySubmitted):
 		writeErrorWithContext(w, r, http.StatusConflict, "csat_already_submitted", err.Error())
 	case errors.Is(err, domain.ErrCSATNotResolved):

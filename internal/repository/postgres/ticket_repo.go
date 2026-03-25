@@ -324,7 +324,7 @@ func (r *ticketRepo) CountByStatus(ctx context.Context) (*domain.TicketStatusCou
 
 func (r *ticketRepo) ListStaleTickets(ctx context.Context, level domain.TicketLevel, olderThan time.Time) ([]domain.Ticket, error) {
 	query := fmt.Sprintf(`SELECT %s FROM support_tickets
-		WHERE level = $1 AND status IN ('open', 'in_progress') AND updated_at < $2
+		WHERE level = $1 AND status IN ('open', 'in_progress', 'escalated') AND updated_at < $2
 		ORDER BY created_at ASC`, ticketColumns)
 
 	rows, err := r.pool.Query(ctx, query, level, olderThan)

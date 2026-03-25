@@ -176,6 +176,10 @@ func (s *ticketService) EscalateTicket(ctx context.Context, ticketID uuid.UUID) 
 		return domain.ErrTicketAlreadyClosed
 	}
 
+	if ticket.Level == domain.TicketLevelL3 {
+		return domain.ErrTicketAlreadyEscalated
+	}
+
 	nextLevel := domain.TicketLevelL2
 	if ticket.Level == domain.TicketLevelL2 {
 		nextLevel = domain.TicketLevelL3

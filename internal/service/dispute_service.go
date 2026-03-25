@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -80,6 +81,9 @@ func (s *disputeService) OpenDispute(ctx context.Context, userID uuid.UUID, book
 	_, err = s.disputeRepo.GetByBookingID(ctx, bookingID)
 	if err == nil {
 		return nil, domain.ErrDisputeAlreadyExists
+	}
+	if !errors.Is(err, domain.ErrDisputeNotFound) {
+		return nil, fmt.Errorf("check existing dispute: %w", err)
 	}
 
 	now := time.Now()
@@ -232,12 +236,12 @@ func (s *disputeService) AppealDispute(ctx context.Context, userID uuid.UUID, di
 		return domain.ErrForbidden
 	}
 
-	if dispute.Status != domain.DisputeStatusResolved {
-		return domain.ErrDisputeNotResolved
-	}
-
 	if dispute.Status == domain.DisputeStatusAppealed {
 		return domain.ErrDisputeAlreadyAppealed
+	}
+
+	if dispute.Status != domain.DisputeStatusResolved {
+		return domain.ErrDisputeNotResolved
 	}
 
 	// Check appeal deadline

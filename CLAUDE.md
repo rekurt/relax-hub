@@ -125,6 +125,14 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrListingIncomplete→400
 - ErrCheckinTooEarly→400, ErrCheckinTooLate→400, ErrNotCheckedIn→400, ErrNoShowDisputeExpired→400
 - ErrEscrowNotFound→404, ErrEscrowNotMatured→400, ErrEscrowAlreadyReleased→409, ErrEscrowDisputed→409
+- ErrBroadcastNotFound→404, ErrBroadcastRateLimit→429, ErrBroadcastNotDraft→400
+- ErrAutoScenarioNotFound→404
+- ErrTemplateNotFound→404, ErrTemplateLimitReached→409
+- ErrTicketNotFound→404, ErrTicketAlreadyClosed→409, ErrTicketAlreadyResolved→409, ErrTicketAlreadyEscalated→409
+- ErrCSATAlreadySubmitted→409, ErrCSATNotResolved→400, ErrCSATInvalidScore→400
+- ErrDisputeNotFound→404, ErrDisputeAlreadyExists→409, ErrDisputeAlreadyResolved→409
+- ErrDisputeAlreadyClosed→409, ErrDisputeEvidenceWindowExpired→400
+- ErrDisputeAppealExpired→400, ErrDisputeNotResolved→400, ErrDisputeAlreadyAppealed→409
 
 ### Logging
 

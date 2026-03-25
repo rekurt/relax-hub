@@ -198,22 +198,24 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 	}
 	s.checkQualityThresholds(ctx, booking.BathhouseID)
 
-	// Notify bathhouse owner about new review (regardless of status)
-	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
-	if err != nil {
-		s.logger.Warn("failed to get bathhouse for review notification", "bathhouse_id", booking.BathhouseID, "error", err)
-	} else {
-		data := map[string]string{
-			"review_id":    review.ID.String(),
-			"bathhouse_id": booking.BathhouseID.String(),
-		}
-		notifErr := s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifNewReview,
-			"Новый отзыв",
-			fmt.Sprintf("Получен новый отзыв с оценкой %d для %s", review.Rating, bh.Name),
-			data,
-		)
-		if notifErr != nil {
-			s.logger.Warn("failed to send review notification", "review_id", review.ID, "error", notifErr)
+	// Notify bathhouse owner about new review (only for approved reviews)
+	if review.Status == domain.ReviewStatusApproved {
+		bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+		if err != nil {
+			s.logger.Warn("failed to get bathhouse for review notification", "bathhouse_id", booking.BathhouseID, "error", err)
+		} else {
+			data := map[string]string{
+				"review_id":    review.ID.String(),
+				"bathhouse_id": booking.BathhouseID.String(),
+			}
+			notifErr := s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifNewReview,
+				"Новый отзыв",
+				fmt.Sprintf("Получен новый отзыв с оценкой %d для %s", review.Rating, bh.Name),
+				data,
+			)
+			if notifErr != nil {
+				s.logger.Warn("failed to send review notification", "review_id", review.ID, "error", notifErr)
+			}
 		}
 	}
 
@@ -255,6 +257,19 @@ func (s *reviewService) Update(ctx context.Context, userID uuid.UUID, reviewID u
 	}
 	if input.Text != nil {
 		review.Text = *input.Text
+
+		// Re-run moderation on updated text
+		if s.textModerator != nil && s.contentFilter.IsEnabled() {
+			modResult := s.textModerator.Analyze(ctx, review.Text)
+			score := modResult.Score
+			review.ModerationScore = &score
+			review.ModerationFlags = modResult.Flags
+			if modResult.Flagged {
+				review.Status = domain.ReviewStatusPending
+			} else {
+				review.Status = domain.ReviewStatusApproved
+			}
+		}
 	}
 	if input.Images != nil {
 		review.Images = input.Images
