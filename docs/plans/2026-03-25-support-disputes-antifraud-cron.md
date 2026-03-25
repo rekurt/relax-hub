@@ -83,12 +83,12 @@ Combined implementation plan covering: support ticket system with escalation and
 - Create: `internal/handler/dispute_handler.go`
 - Modify: `internal/server/router.go`
 
-- [ ] DisputeService: OpenDispute (validate claim period, block escrow, notify other party, status -> evidence_collection), SubmitEvidence (within 72h window), Resolve (full/partial/no refund or compensation via wallet), Appeal (within 7 days, re-opens to L3), CloseDispute
-- [ ] User endpoints: POST /api/v1/bookings/{id}/dispute, POST /api/v1/disputes/{id}/evidence, GET /api/v1/disputes/{id}, POST .../appeal, GET /api/v1/my/disputes
-- [ ] Admin endpoints: GET /api/v1/admin/disputes, GET .../{id}, PATCH .../assign, PATCH .../resolve
-- [ ] Wire into fx module and router
-- [ ] Write tests for full dispute lifecycle
-- [ ] Run `go test ./... -v` — must pass
+- [x] DisputeService: OpenDispute (validate claim period, block escrow, notify other party, status -> evidence_collection), SubmitEvidence (within 72h window), Resolve (full/partial/no refund or compensation via wallet), Appeal (within 7 days, re-opens to L3), CloseDispute
+- [x] User endpoints: POST /api/v1/bookings/{id}/dispute, POST /api/v1/disputes/{id}/evidence, GET /api/v1/disputes/{id}, POST .../appeal, GET /api/v1/my/disputes
+- [x] Admin endpoints: GET /api/v1/admin/disputes, GET .../{id}, PATCH .../assign, PATCH .../resolve
+- [x] Wire into fx module and router
+- [x] Write tests for full dispute lifecycle
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 5: Anti-fraud Rules Engine
 

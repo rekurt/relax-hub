@@ -352,6 +352,36 @@ func (h *DisputeHandler) AppealDispute(w http.ResponseWriter, r *http.Request) {
 
 // --- Admin endpoints ---
 
+// AdminGetDispute godoc
+// @Summary      Get dispute details (admin)
+// @Description  Get details of a specific dispute as admin
+// @Tags         disputes-admin
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Dispute ID (UUID)"
+// @Success      200  {object}  APIResponse{data=disputeResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /admin/disputes/{id} [get]
+func (h *DisputeHandler) AdminGetDispute(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+
+	disputeID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_id", "invalid dispute ID")
+		return
+	}
+
+	dispute, err := h.disputeService.GetDispute(r.Context(), userID, domain.RoleAdmin, disputeID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toDisputeResponse(dispute))
+}
+
 // AdminListDisputes godoc
 // @Summary      List all disputes (admin)
 // @Description  List all disputes with optional status filter

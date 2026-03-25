@@ -539,6 +539,7 @@ func NewRouter(p RouterParams) http.Handler {
 
 			// Disputes (admin only)
 			r.Get("/disputes", p.DisputeHandler.AdminListDisputes)
+			r.Get("/disputes/{id}", p.DisputeHandler.AdminGetDispute)
 			r.Patch("/disputes/{id}/assign", p.DisputeHandler.AdminAssignDispute)
 			r.Patch("/disputes/{id}/resolve", p.DisputeHandler.AdminResolveDispute)
 			r.Patch("/disputes/{id}/close", p.DisputeHandler.AdminCloseDispute)
