@@ -11,7 +11,10 @@ import (
 	"github.com/nikitaaldaev/bani/internal/logger"
 )
 
-const replacementText = "[контактные данные скрыты]"
+const (
+	replacementText   = "[контактные данные скрыты]"
+	maxFilteredRecords = 10000
+)
 
 // Detection describes a single detected contact info pattern in a message.
 type Detection struct {
@@ -141,6 +144,10 @@ func (f *chatFilter) LogFiltered(_ context.Context, conversationID, senderID uui
 
 	f.mu.Lock()
 	f.records = append(f.records, record)
+	// Cap in-memory records to prevent unbounded growth.
+	if len(f.records) > maxFilteredRecords {
+		f.records = f.records[len(f.records)-maxFilteredRecords:]
+	}
 	f.mu.Unlock()
 
 	types := make([]string, len(result.Detections))

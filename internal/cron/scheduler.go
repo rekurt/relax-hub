@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
@@ -60,12 +61,13 @@ func (cs *CronScheduler) wrapJob(name string, job JobFunc) func() {
 		start := time.Now()
 		cs.logger.Info("Cron job starting", "job", name)
 
-		// Distributed lock via Redis SETNX
+		// Distributed lock via Redis SETNX with unique value per invocation
 		lockKey := fmt.Sprintf("cron_lock:%s", name)
+		lockValue := uuid.New().String()
 		lockTTL := 10 * time.Minute
 
 		if cs.redisClient != nil {
-			acquired, err := cs.acquireLock(lockKey, lockTTL)
+			acquired, err := cs.acquireLock(lockKey, lockValue, lockTTL)
 			if err != nil {
 				cs.logger.Warn("Failed to acquire distributed lock, running anyway",
 					"job", name, "error", err)
@@ -74,7 +76,7 @@ func (cs *CronScheduler) wrapJob(name string, job JobFunc) func() {
 					"job", name)
 				return
 			}
-			defer cs.releaseLock(lockKey)
+			defer cs.releaseLock(lockKey, lockValue)
 		}
 
 		// Context with timeout
@@ -92,11 +94,11 @@ func (cs *CronScheduler) wrapJob(name string, job JobFunc) func() {
 	}
 }
 
-func (cs *CronScheduler) acquireLock(key string, ttl time.Duration) (bool, error) {
+func (cs *CronScheduler) acquireLock(key, value string, ttl time.Duration) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	result, err := cs.redisClient.SetArgs(ctx, key, "1", redis.SetArgs{
+	result, err := cs.redisClient.SetArgs(ctx, key, value, redis.SetArgs{
 		Mode: "NX",
 		TTL:  ttl,
 	}).Result()
@@ -106,11 +108,21 @@ func (cs *CronScheduler) acquireLock(key string, ttl time.Duration) (bool, error
 	return result == "OK", nil
 }
 
-func (cs *CronScheduler) releaseLock(key string) {
+// releaseLockScript atomically deletes the key only if it holds the expected value.
+// This prevents releasing a lock acquired by another instance after TTL expiry.
+var releaseLockScript = redis.NewScript(`
+if redis.call("get", KEYS[1]) == ARGV[1] then
+	return redis.call("del", KEYS[1])
+else
+	return 0
+end
+`)
+
+func (cs *CronScheduler) releaseLock(key, value string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	if err := cs.redisClient.Del(ctx, key).Err(); err != nil {
+	if err := releaseLockScript.Run(ctx, cs.redisClient, []string{key}, value).Err(); err != nil && err != redis.Nil {
 		cs.logger.Warn("Failed to release distributed lock", "key", key, "error", err)
 	}
 }

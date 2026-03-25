@@ -181,12 +181,16 @@ func (s *payoutService) ProcessPayout(ctx context.Context, payoutID uuid.UUID) e
 		ReferenceID:   &payout.ID,
 	}
 	if err := s.walletRepo.CreateTransaction(ctx, tx); err != nil {
-		// Balance was already deducted but transaction record failed - mark payout as failed
-		// so it can be investigated and reconciled
-		s.logger.Error("failed to create payout transaction after balance deduction, marking as failed for reconciliation",
+		// Balance was already deducted but transaction record failed - rollback balance
+		s.logger.Error("failed to create payout transaction, rolling back balance",
 			"error", err, "payout_id", payoutID, "wallet_id", wallet.ID, "amount", payout.Amount)
+		if rbErr := s.walletRepo.UpdateBalance(ctx, wallet.ID, newBalance, wallet.Balance, wallet.HeldAmount, wallet.HeldAmount); rbErr != nil {
+			s.logger.Error("CRITICAL: balance rollback failed after payout transaction failure, requires manual reconciliation",
+				"error", rbErr, "payout_id", payoutID, "wallet_id", wallet.ID, "amount", payout.Amount,
+				"deducted_balance", newBalance, "original_balance", wallet.Balance)
+		}
 		failedAt := time.Now()
-		_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &failedAt, "transaction record failed after balance deduction - requires reconciliation")
+		_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &failedAt, "transaction record failed")
 		return fmt.Errorf("create payout transaction: %w", err)
 	}
 
