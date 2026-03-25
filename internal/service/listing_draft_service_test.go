@@ -37,6 +37,9 @@ func (s *stubKYCService) GetByID(_ context.Context, _ uuid.UUID) (*domain.KYCApp
 func (s *stubKYCService) IsApproved(_ context.Context, _ uuid.UUID) (bool, error) {
 	return s.approved, s.err
 }
+func (s *stubKYCService) CheckExpiredApplications(_ context.Context) (int, error) {
+	return 0, nil
+}
 
 // stubOfferService returns configurable offer acceptance status
 type stubOfferService struct {

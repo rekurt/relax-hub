@@ -169,12 +169,12 @@ Combined implementation plan covering: support ticket system with escalation and
 - Create: `internal/cron/owner_jobs.go`
 - Create: `internal/cron/ticket_jobs.go`
 
-- [ ] Every 15 minutes: BookingRequestTimeout, NoShowDetection, BookingReminders
-- [ ] Hourly: EscrowRelease, ReviewRequest, AutoScenarioExecution, AntiFraudPatternDetection
-- [ ] Daily (midnight Moscow): BonusExpiration, BonusExpiryNotification, AccountDeletionExecution, SessionCleanup, KYCExpiryCheck, OwnerResponseRateMonitoring, PromoCodeDeactivation, SavedSearchNotification, BathhouseMetricsUpdate, PlatformAverageRating, TicketAutoClose
-- [ ] Each job calls relevant service method, all use distributed locking
-- [ ] Write tests for job registration
-- [ ] Run `go test ./... -v -race` — must pass
+- [x] Every 15 minutes: BookingRequestTimeout, NoShowDetection, BookingReminders
+- [x] Hourly: EscrowRelease, ReviewRequest, AutoScenarioExecution, AntiFraudPatternDetection
+- [x] Daily (midnight Moscow): BonusExpiration, BonusExpiryNotification, AccountDeletionExecution, SessionCleanup, KYCExpiryCheck, OwnerResponseRateMonitoring, PromoCodeDeactivation, SavedSearchNotification, BathhouseMetricsUpdate, PlatformAverageRating, TicketAutoClose
+- [x] Each job calls relevant service method, all use distributed locking
+- [x] Write tests for job registration
+- [x] Run `go test ./... -v -race` — must pass
 
 ### Task 10: Verify acceptance criteria
 

@@ -66,6 +66,10 @@ func (m *mockAnalyticsService) AggregateDaily(ctx context.Context) error {
 	return nil
 }
 
+func (m *mockAnalyticsService) UpdateBathhouseMetrics(_ context.Context) (int, error) {
+	return 0, nil
+}
+
 func TestGetAdminDashboard_ValidRequest(t *testing.T) {
 	mock := &mockAnalyticsService{}
 	mock.getAdminDashboardFn = func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.AdminDashboard, error) {

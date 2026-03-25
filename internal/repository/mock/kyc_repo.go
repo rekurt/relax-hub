@@ -163,3 +163,16 @@ func (r *KYCRepo) Reject(_ context.Context, id uuid.UUID, reviewedBy uuid.UUID, 
 	app.UpdatedAt = now
 	return nil
 }
+
+func (r *KYCRepo) ListExpiredApproved(_ context.Context, before time.Time) ([]domain.KYCApplication, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var result []domain.KYCApplication
+	for _, app := range r.apps {
+		if app.Status == domain.KYCStatusApproved && app.ExpiresAt != nil && app.ExpiresAt.Before(before) {
+			result = append(result, *app)
+		}
+	}
+	return result, nil
+}

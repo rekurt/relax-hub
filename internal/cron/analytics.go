@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/nikitaaldaev/bani/config"
+	"github.com/nikitaaldaev/bani/internal/antifraud"
 	"github.com/nikitaaldaev/bani/internal/calendar"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
@@ -36,6 +37,8 @@ type CronScheduler struct {
 	reviewSvc          service.ReviewService
 	autoScenarioSvc    service.AutoScenarioService
 	ticketSvc          service.TicketService
+	kycSvc             service.KYCService
+	fraudEngine        antifraud.FraudEngine
 	redisClient        *redis.Client
 }
 
@@ -59,6 +62,8 @@ func NewCronScheduler(
 	reviewSvc service.ReviewService,
 	autoScenarioSvc service.AutoScenarioService,
 	ticketSvc service.TicketService,
+	kycSvc service.KYCService,
+	fraudEngine antifraud.FraudEngine,
 	redisClient *redis.Client,
 ) *CronScheduler {
 	timezone := cfg.Cron.Timezone
@@ -86,6 +91,8 @@ func NewCronScheduler(
 		reviewSvc:          reviewSvc,
 		autoScenarioSvc:    autoScenarioSvc,
 		ticketSvc:          ticketSvc,
+		kycSvc:             kycSvc,
+		fraudEngine:        fraudEngine,
 		redisClient:        redisClient,
 	}
 }
@@ -139,6 +146,9 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		{"15 * * * *", "auto_scenario_execution", cs.autoScenarioExecution},
 		{"*/15 * * * *", "ticket_auto_escalation", cs.ticketAutoEscalation},
 		{"30 4 * * *", "ticket_auto_close", cs.ticketAutoCloseJob},
+		{"0 * * * *", "antifraud_pattern_detection", cs.antiFraudPatternDetection},
+		{"45 3 * * *", "kyc_expiry_check", cs.kycExpiryCheck},
+		{"0 6 * * *", "bathhouse_metrics_update", cs.bathhouseMetricsUpdate},
 	}
 
 	for _, j := range jobs {

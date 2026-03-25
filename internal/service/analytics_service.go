@@ -77,6 +77,7 @@ type AnalyticsService interface {
 	GetAdminDashboard(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*AdminDashboard, error)
 	GetTopBathhousesByMetric(ctx context.Context, userRole domain.UserRole, metric domain.TopMetric, limit int64) ([]TopBathhouseInfo, error)
 	AggregateDaily(ctx context.Context) error
+	UpdateBathhouseMetrics(ctx context.Context) (int, error)
 }
 
 type analyticsService struct {
@@ -543,4 +544,51 @@ func (s *analyticsService) countNewUsers(ctx context.Context, from, to time.Time
 		}
 	}
 	return count
+}
+
+func (s *analyticsService) UpdateBathhouseMetrics(ctx context.Context) (int, error) {
+	allBhs, err := s.bhRepo.List(ctx, domain.BathhouseFilter{Page: 1, PageSize: 10000})
+	if err != nil {
+		return 0, fmt.Errorf("list bathhouses: %w", err)
+	}
+
+	now := time.Now()
+	from := now.AddDate(0, 0, -30)
+	updated := 0
+
+	for _, bh := range allBhs.Items {
+		stats, err := s.analyticsRepo.GetBathhouseStats(ctx, bh.ID, from, now)
+		if err != nil {
+			s.logger.Warn("Failed to get bathhouse stats for metrics", "bathhouse_id", bh.ID, "error", err)
+			continue
+		}
+
+		var conversionRate float64
+		if stats != nil && stats.Views > 0 {
+			conversionRate = float64(stats.Bookings) / float64(stats.Views)
+		}
+
+		bookingsList, err := s.bookingRepo.ListByBathhouse(ctx, bh.ID, 1, 1)
+		if err != nil {
+			s.logger.Warn("Failed to get bookings for occupancy", "bathhouse_id", bh.ID, "error", err)
+			continue
+		}
+
+		var occupancyRate float64
+		if bookingsList != nil && bookingsList.TotalCount > 0 {
+			totalAvailableHours := float64(30 * 12) // 30 days * 12 hours average
+			occupancyRate = float64(bookingsList.TotalCount) / totalAvailableHours
+			if occupancyRate > 1.0 {
+				occupancyRate = 1.0
+			}
+		}
+
+		if err := s.bhRepo.UpdateRankingFields(ctx, bh.ID, conversionRate, occupancyRate); err != nil {
+			s.logger.Error("Failed to update ranking fields", "bathhouse_id", bh.ID, "error", err)
+			continue
+		}
+		updated++
+	}
+
+	return updated, nil
 }

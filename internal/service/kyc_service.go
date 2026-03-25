@@ -30,6 +30,7 @@ type KYCService interface {
 	ListPending(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.KYCApplication], error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.KYCApplication, error)
 	IsApproved(ctx context.Context, userID uuid.UUID) (bool, error)
+	CheckExpiredApplications(ctx context.Context) (int, error)
 }
 
 type kycService struct {
@@ -141,6 +142,33 @@ func (s *kycService) Reject(ctx context.Context, kycID uuid.UUID, adminID uuid.U
 
 func (s *kycService) ListPending(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.KYCApplication], error) {
 	return s.kycRepo.ListPending(ctx, page, pageSize)
+}
+
+func (s *kycService) CheckExpiredApplications(ctx context.Context) (int, error) {
+	now := time.Now()
+	expired, err := s.kycRepo.ListExpiredApproved(ctx, now)
+	if err != nil {
+		return 0, err
+	}
+
+	count := 0
+	for _, app := range expired {
+		app.Status = domain.KYCStatusExpired
+		app.UpdatedAt = now
+		if err := s.kycRepo.Update(ctx, &app); err != nil {
+			s.logger.Error("failed to expire KYC application", "kyc_id", app.ID, "error", err)
+			continue
+		}
+
+		_ = s.notifSvc.Send(ctx, app.UserID, domain.NotifSystem,
+			"KYC верификация истекла",
+			"Срок действия вашей KYC верификации истёк. Пожалуйста, подайте заявку повторно.",
+			nil,
+		)
+		count++
+	}
+
+	return count, nil
 }
 
 func (s *kycService) IsApproved(ctx context.Context, userID uuid.UUID) (bool, error) {

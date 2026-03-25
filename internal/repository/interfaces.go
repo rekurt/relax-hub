@@ -382,6 +382,7 @@ type KYCRepository interface {
 	ListPending(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.KYCApplication], error)
 	Approve(ctx context.Context, id uuid.UUID, reviewedBy uuid.UUID, expiresAt time.Time) error
 	Reject(ctx context.Context, id uuid.UUID, reviewedBy uuid.UUID, reason string) error
+	ListExpiredApproved(ctx context.Context, before time.Time) ([]domain.KYCApplication, error)
 }
 
 type OfferRepository interface {

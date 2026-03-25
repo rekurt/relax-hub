@@ -168,3 +168,13 @@ func (r *kycRepo) Reject(ctx context.Context, id uuid.UUID, reviewedBy uuid.UUID
 	}
 	return nil
 }
+
+func (r *kycRepo) ListExpiredApproved(ctx context.Context, before time.Time) ([]domain.KYCApplication, error) {
+	query := fmt.Sprintf("SELECT %s FROM kyc_applications WHERE status = 'approved' AND expires_at IS NOT NULL AND expires_at < $1", kycColumns)
+	rows, err := r.pool.Query(ctx, query, before)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanKYCs(rows)
+}
