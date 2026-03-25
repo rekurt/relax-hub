@@ -143,7 +143,7 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// Password reset (public, rate-limited)
 		r.With(middleware.RateLimit(authRegisterRateLimiter, 3.0/60.0)).Post("/auth/forgot-password", p.AuthHandler.ForgotPassword) // 3/min
-		r.Post("/auth/reset-password", p.AuthHandler.ResetPassword)
+		r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/reset-password", p.AuthHandler.ResetPassword) // 10/min
 
 		// Account deletion (authenticated)
 		r.With(auth).Post("/auth/delete-account", p.AuthHandler.DeleteAccount)

@@ -138,6 +138,13 @@ func (s *ticketService) AddMessage(ctx context.Context, userID uuid.UUID, role d
 		return nil, fmt.Errorf("add message: %w", err)
 	}
 
+	// Auto-transition to in_progress when admin replies to an open ticket
+	if senderType == domain.TicketSenderAdmin && ticket.Status == domain.TicketStatusOpen {
+		if err := s.ticketRepo.UpdateStatus(ctx, ticketID, domain.TicketStatusInProgress); err != nil {
+			s.logger.Error("auto-update ticket status to in_progress", "ticket_id", ticketID, "error", err)
+		}
+	}
+
 	return msg, nil
 }
 

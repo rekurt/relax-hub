@@ -334,7 +334,7 @@ func (r *ticketRepo) ListStaleTickets(ctx context.Context, level domain.TicketLe
 		WHERE t.level = $1 AND t.status IN ('open', 'in_progress', 'escalated')
 		AND COALESCE(
 			(SELECT MAX(tm.created_at) FROM ticket_messages tm
-			 WHERE tm.ticket_id = t.id AND tm.sender_type IN ('admin', 'support')),
+			 WHERE tm.ticket_id = t.id AND tm.sender_type = 'admin'),
 			t.created_at
 		) < $2
 		ORDER BY t.created_at ASC`, prefixColumns("t", ticketColumns))
