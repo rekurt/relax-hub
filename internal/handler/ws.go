@@ -45,6 +45,7 @@ type WSHandler struct {
 // NewWSHandler creates a new WebSocket handler.
 func NewWSHandler(hub *notification.Hub, authService middleware.AuthService, chatService service.ChatService, log *logger.Logger, cfg *config.Config) *WSHandler {
 	isDev := middleware.IsDevEnvironment(cfg.Environment)
+	allowedOrigins := cfg.CORS.AllowedOrigins
 	return &WSHandler{
 		hub:         hub,
 		authService: authService,
@@ -54,28 +55,21 @@ func NewWSHandler(hub *notification.Hub, authService middleware.AuthService, cha
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
 			CheckOrigin: func(r *http.Request) bool {
-				origin := r.Header.Get("Origin")
-				if origin == "" {
-					return isDev
-				}
-
-				host := r.Header.Get("Host")
-				if host == "" {
-					return false
-				}
-
-				scheme := "http"
-				if r.TLS != nil {
-					scheme = "https"
-				}
-
-				expectedOrigin := scheme + "://" + host
-
-				if scheme == "https" && origin == "http://"+host && isDev {
+				if isDev {
 					return true
 				}
 
-				return origin == expectedOrigin
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					return false
+				}
+
+				for _, allowed := range allowedOrigins {
+					if allowed == "*" || allowed == origin {
+						return true
+					}
+				}
+				return false
 			},
 		},
 	}

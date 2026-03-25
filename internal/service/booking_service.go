@@ -702,7 +702,10 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 
 	// Owner cancellation penalty: credit 10% to client wallet as compensation
-	s.handleOwnerCancellationPenalty(ctx, booking)
+	// Skip penalty when admin cancels — only penalize actual owner/representative
+	if role != domain.RoleAdmin {
+		s.handleOwnerCancellationPenalty(ctx, booking)
+	}
 
 	return nil
 }
