@@ -663,7 +663,7 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 					holds, hErr := s.walletSvc.GetActiveHolds(ctx, wallet.ID)
 					if hErr == nil {
 						for _, h := range holds {
-							if h.ReferenceID != nil && *h.ReferenceID == p.BookingID {
+							if h.ReferenceID != nil && *h.ReferenceID == p.BookingID && h.ReferenceType == "booking_payment" {
 								if rErr := s.walletSvc.ReleaseHold(ctx, h.ID); rErr != nil {
 									s.logger.Error("failed to release wallet hold on canceled payment",
 										"hold_id", h.ID, "error", rErr)

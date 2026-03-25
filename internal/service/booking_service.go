@@ -321,9 +321,9 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	}
 
 	// Calculate service fee on base price (before discounts and add-ons)
+	// Use global default "*" — City has no region field; per-city fees require adding region to City model
 	var serviceFeeAmount int64
-	region := fmt.Sprintf("%d", bh.CityID)
-	serviceFeeAmount, err = s.serviceFeeSvc.CalculateFee(ctx, priceBreakdown.BasePrice, region, nil)
+	serviceFeeAmount, err = s.serviceFeeSvc.CalculateFee(ctx, priceBreakdown.BasePrice, "*", nil)
 	if err != nil {
 		s.logger.Warn("failed to calculate service fee, defaulting to 0", "error", err)
 		serviceFeeAmount = 0
@@ -1611,6 +1611,11 @@ func (s *bookingService) Extend(ctx context.Context, userID uuid.UUID, bookingID
 	// Must be confirmed (possibly checked-in, which keeps confirmed status)
 	if booking.Status != domain.BookingConfirmed {
 		return nil, fmt.Errorf("%w: only confirmed bookings can be extended", domain.ErrInvalidInput)
+	}
+
+	// Prevent extending a booking whose end time has already passed
+	if time.Now().After(booking.EndTime) {
+		return nil, fmt.Errorf("%w: cannot extend a session that has already ended", domain.ErrInvalidInput)
 	}
 
 	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)

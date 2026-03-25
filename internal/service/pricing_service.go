@@ -146,7 +146,7 @@ func (s *pricingService) CalculateFullPrice(ctx context.Context, input PriceCalc
 	durationHours := int(input.EndTime.Sub(input.StartTime) / time.Hour)
 
 	// Long session discount: discount hours beyond the threshold
-	if durationHours >= input.LongSessionThresholdHours && input.LongSessionDiscountPercent > 0 {
+	if durationHours > 0 && durationHours >= input.LongSessionThresholdHours && input.LongSessionDiscountPercent > 0 {
 		discountableHours := durationHours - input.LongSessionThresholdHours
 		if discountableHours > 0 {
 			// Calculate average hourly rate from the base price

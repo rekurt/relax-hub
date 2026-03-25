@@ -182,7 +182,14 @@ func (h *HolidayHandler) UpdateHoliday(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, toHolidayResponse(holiday))
+	// Fetch updated holiday to get correct CreatedAt
+	updated, err := h.svc.GetByID(r.Context(), id)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toHolidayResponse(updated))
 }
 
 // DeleteHoliday godoc
