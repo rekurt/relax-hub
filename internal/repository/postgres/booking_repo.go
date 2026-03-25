@@ -435,6 +435,33 @@ func (r *bookingRepo) GetResponseStats(ctx context.Context, bathhouseID uuid.UUI
 	return totalRequests, respondedInTime, avgResponseMinutes, nil
 }
 
+func (r *bookingRepo) ListCompletedForReviewRequests(ctx context.Context, checkedOutBefore time.Time) ([]domain.Booking, error) {
+	query := `
+		SELECT ` + bookingColumns + `
+		FROM bookings
+		WHERE status = 'completed'
+		  AND checked_out_at IS NOT NULL
+		  AND checked_out_at <= $1
+		  AND NOT EXISTS (SELECT 1 FROM reviews WHERE reviews.booking_id = bookings.id)
+		ORDER BY checked_out_at ASC`
+
+	rows, err := r.pool.Query(ctx, query, checkedOutBefore)
+	if err != nil {
+		return nil, fmt.Errorf("list completed for review requests: %w", err)
+	}
+	defer rows.Close()
+
+	var bookings []domain.Booking
+	for rows.Next() {
+		b, err := scanBooking(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan booking for review request: %w", err)
+		}
+		bookings = append(bookings, *b)
+	}
+	return bookings, nil
+}
+
 func (r *bookingRepo) UpdateEndTime(ctx context.Context, bookingID uuid.UUID, oldEndTime, newEndTime time.Time, newTotalPrice int64) error {
 	query := `UPDATE bookings SET end_time = $2, total_price = $3, updated_at = $4 WHERE id = $1 AND end_time = $5`
 	tag, err := r.pool.Exec(ctx, query, bookingID, newEndTime, newTotalPrice, time.Now(), oldEndTime)

@@ -222,6 +222,13 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 	}
 	cs.logger.Info("Registered platform average rating refresh job at 02:30 UTC")
 
+	// Auto review requests every hour at :45
+	if _, err := cs.c.AddFunc("45 * * * *", cs.handleAutoReviewRequests); err != nil {
+		cs.logger.Error("Failed to register auto review requests job", "error", err)
+		return fmt.Errorf("failed to register auto review requests: %w", err)
+	}
+	cs.logger.Info("Registered auto review requests job every hour at :45")
+
 	cs.c.Start()
 	cs.logger.Info("Cron scheduler started")
 	return nil

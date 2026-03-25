@@ -112,6 +112,10 @@ func (m *adminReviewServiceMock) RefreshPlatformAverage(_ context.Context) error
 	return nil
 }
 
+func (m *adminReviewServiceMock) SendReviewRequests(_ context.Context, _ int) (int, error) {
+	return 0, nil
+}
+
 func TestAdminHandler_ListReviews(t *testing.T) {
 	adminID := uuid.New()
 	authSvc := makeAuthToken(adminID, domain.RoleAdmin)

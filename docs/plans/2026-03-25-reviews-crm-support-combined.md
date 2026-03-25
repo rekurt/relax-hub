@@ -64,11 +64,11 @@ Three interconnected subsystems: (1) Reviews & Rating enhancements with multi-cr
 - Create: `internal/cron/review_jobs.go`
 - Modify: `internal/service/review_service.go`
 
-- [ ] Cron job (hourly): find completed bookings with check-out + configurable delay (BANI_REVIEW_REQUEST_DELAY_HOURS, default 2), no existing review, no request sent (Redis dedup)
-- [ ] Send push + email notification with pre-filled data (booking ID, bathhouse name)
-- [ ] Max 1 review request per booking
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] Cron job (hourly): find completed bookings with check-out + configurable delay (BANI_REVIEW_REQUEST_DELAY_HOURS, default 2), no existing review, no request sent (Redis dedup)
+- [x] Send push + email notification with pre-filled data (booking ID, bathhouse name)
+- [x] Max 1 review request per booking
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 4: Quality Monitoring & Badges (Reviews)
 

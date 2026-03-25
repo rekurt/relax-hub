@@ -48,6 +48,8 @@ type ReviewService interface {
 	GetCriteriaAverages(ctx context.Context, bathhouseID uuid.UUID) (*domain.ReviewCriteriaAverages, error)
 	RecalculateBayesianRating(ctx context.Context, bathhouseID uuid.UUID) error
 	RefreshPlatformAverage(ctx context.Context) error
+	// Auto review requests:
+	SendReviewRequests(ctx context.Context, delayHours int) (int, error)
 	// Admin moderation:
 	ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error)
 	CountPendingReviews(ctx context.Context) (int64, error)
@@ -451,4 +453,56 @@ func (s *reviewService) UpdateStatus(ctx context.Context, id uuid.UUID, status d
 
 func (s *reviewService) UpdateStatusWithReasons(ctx context.Context, id uuid.UUID, status domain.ReviewStatus, reasons []string) error {
 	return s.reviewRepo.UpdateStatusWithReasons(ctx, id, status, reasons)
+}
+
+func (s *reviewService) SendReviewRequests(ctx context.Context, delayHours int) (int, error) {
+	if delayHours <= 0 {
+		delayHours = 2
+	}
+	checkedOutBefore := time.Now().Add(-time.Duration(delayHours) * time.Hour)
+
+	bookings, err := s.bookingRepo.ListCompletedForReviewRequests(ctx, checkedOutBefore)
+	if err != nil {
+		return 0, fmt.Errorf("list completed bookings for review requests: %w", err)
+	}
+
+	sent := 0
+	for _, b := range bookings {
+		redisKey := fmt.Sprintf("review_request_sent:%s", b.ID.String())
+
+		if s.redisClient != nil {
+			wasSet, err := s.redisClient.SetArgs(ctx, redisKey, "1", redis.SetArgs{
+				Mode: "NX",
+				TTL:  30 * 24 * time.Hour, // 30 days TTL
+			}).Result()
+			if err != nil && err != redis.Nil {
+				s.logger.Warn("Redis SET NX failed for review request dedup, sending anyway",
+					"key", redisKey, "error", err)
+			} else if wasSet != "OK" {
+				continue // already sent
+			}
+		}
+
+		bh, err := s.bhRepo.GetByID(ctx, b.BathhouseID)
+		if err != nil {
+			s.logger.Warn("failed to get bathhouse for review request",
+				"booking_id", b.ID, "bathhouse_id", b.BathhouseID, "error", err)
+			continue
+		}
+
+		body := fmt.Sprintf("Как вам визит в %s? Поделитесь впечатлениями — это поможет другим гостям!", bh.Name)
+		data := map[string]string{
+			"booking_id":     b.ID.String(),
+			"bathhouse_id":   b.BathhouseID.String(),
+			"bathhouse_name": bh.Name,
+		}
+		if err := s.notifSvc.Send(ctx, b.UserID, domain.NotifReviewRequest,
+			"Оставьте отзыв", body, data); err != nil {
+			s.logger.Warn("failed to send review request notification",
+				"booking_id", b.ID, "user_id", b.UserID, "error", err)
+			continue
+		}
+		sent++
+	}
+	return sent, nil
 }

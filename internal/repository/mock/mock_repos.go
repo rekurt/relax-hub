@@ -582,6 +582,21 @@ func (r *BookingRepo) GetResponseStats(_ context.Context, bathhouseID uuid.UUID,
 	return total, responded, avg, nil
 }
 
+func (r *BookingRepo) ListCompletedForReviewRequests(_ context.Context, checkedOutBefore time.Time) ([]domain.Booking, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var result []domain.Booking
+	for _, b := range r.bookings {
+		if b.Status == domain.BookingCompleted &&
+			b.CheckedOutAt != nil &&
+			!b.CheckedOutAt.After(checkedOutBefore) {
+			result = append(result, *b)
+		}
+	}
+	return result, nil
+}
+
 // RepresentativeRepo is an in-memory mock implementation of repository.RepresentativeRepository.
 type RepresentativeRepo struct {
 	mu   sync.RWMutex

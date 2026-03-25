@@ -480,6 +480,10 @@ func (m *mockReviewService) RefreshPlatformAverage(_ context.Context) error {
 	return nil
 }
 
+func (m *mockReviewService) SendReviewRequests(_ context.Context, _ int) (int, error) {
+	return 0, nil
+}
+
 type mockMediaService struct {
 	uploadFn           func(ctx context.Context, userID uuid.UUID, input service.UploadMediaInput) (*domain.Media, error)
 	deleteFn           func(ctx context.Context, mediaID uuid.UUID, userID uuid.UUID, userRole domain.UserRole) error

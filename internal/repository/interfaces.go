@@ -85,6 +85,7 @@ type BookingRepository interface {
 	UpdateCancelledByOwner(ctx context.Context, bookingID uuid.UUID) error
 	CountOwnerCancellations(ctx context.Context, ownerID uuid.UUID, since time.Time) (int, error)
 	GetResponseStats(ctx context.Context, bathhouseID uuid.UUID, since time.Time) (totalRequests int, respondedInTime int, avgResponseMinutes int, err error)
+	ListCompletedForReviewRequests(ctx context.Context, checkedOutBefore time.Time) ([]domain.Booking, error)
 }
 
 type ReviewRepository interface {

@@ -922,3 +922,196 @@ func TestReviewService_RefreshPlatformAverage(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestReviewService_SendReviewRequests_NoBookings(t *testing.T) {
+	env := newReviewTestEnv()
+
+	sent, err := env.svc.SendReviewRequests(context.Background(), 2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if sent != 0 {
+		t.Errorf("sent = %d, want 0", sent)
+	}
+}
+
+func TestReviewService_SendReviewRequests_SendsForEligibleBooking(t *testing.T) {
+	env := newReviewTestEnv()
+
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: ownerID, Name: "Тестовая баня",
+		Status: domain.BathhouseStatusActive, PricePerHour: 5000,
+	}
+	if err := env.bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("create bathhouse: %v", err)
+	}
+
+	// Booking completed and checked out 3 hours ago
+	checkedOutAt := time.Now().Add(-3 * time.Hour)
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bathhouseID,
+		StartTime: time.Now().Add(-6 * time.Hour), EndTime: time.Now().Add(-4 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingCompleted,
+		CheckedOutAt: &checkedOutAt,
+	}
+	if err := env.bookingRepo.Create(context.Background(), booking); err != nil {
+		t.Fatalf("create booking: %v", err)
+	}
+
+	sent, err := env.svc.SendReviewRequests(context.Background(), 2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if sent != 1 {
+		t.Errorf("sent = %d, want 1", sent)
+	}
+}
+
+func TestReviewService_SendReviewRequests_SkipsTooRecent(t *testing.T) {
+	env := newReviewTestEnv()
+
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: ownerID, Name: "Тестовая баня",
+		Status: domain.BathhouseStatusActive, PricePerHour: 5000,
+	}
+	if err := env.bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("create bathhouse: %v", err)
+	}
+
+	// Booking checked out only 30 minutes ago (less than 2h delay)
+	checkedOutAt := time.Now().Add(-30 * time.Minute)
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bathhouseID,
+		StartTime: time.Now().Add(-3 * time.Hour), EndTime: time.Now().Add(-1 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingCompleted,
+		CheckedOutAt: &checkedOutAt,
+	}
+	if err := env.bookingRepo.Create(context.Background(), booking); err != nil {
+		t.Fatalf("create booking: %v", err)
+	}
+
+	sent, err := env.svc.SendReviewRequests(context.Background(), 2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if sent != 0 {
+		t.Errorf("sent = %d, want 0 (booking too recent)", sent)
+	}
+}
+
+func TestReviewService_SendReviewRequests_SkipsNonCompleted(t *testing.T) {
+	env := newReviewTestEnv()
+
+	clientID := uuid.New()
+	bathhouseID := uuid.New()
+
+	// Booking is confirmed, not completed
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bathhouseID,
+		StartTime: time.Now().Add(-6 * time.Hour), EndTime: time.Now().Add(-4 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingConfirmed,
+	}
+	if err := env.bookingRepo.Create(context.Background(), booking); err != nil {
+		t.Fatalf("create booking: %v", err)
+	}
+
+	sent, err := env.svc.SendReviewRequests(context.Background(), 2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if sent != 0 {
+		t.Errorf("sent = %d, want 0 (booking not completed)", sent)
+	}
+}
+
+func TestReviewService_SendReviewRequests_DefaultDelay(t *testing.T) {
+	env := newReviewTestEnv()
+
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: ownerID, Name: "Тестовая баня",
+		Status: domain.BathhouseStatusActive, PricePerHour: 5000,
+	}
+	if err := env.bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("create bathhouse: %v", err)
+	}
+
+	checkedOutAt := time.Now().Add(-3 * time.Hour)
+	booking := &domain.Booking{
+		ID: uuid.New(), UserID: clientID, BathhouseID: bathhouseID,
+		StartTime: time.Now().Add(-6 * time.Hour), EndTime: time.Now().Add(-4 * time.Hour),
+		GuestCount: 2, TotalPrice: 10000, Status: domain.BookingCompleted,
+		CheckedOutAt: &checkedOutAt,
+	}
+	if err := env.bookingRepo.Create(context.Background(), booking); err != nil {
+		t.Fatalf("create booking: %v", err)
+	}
+
+	// Pass 0 to trigger default delay (2h)
+	sent, err := env.svc.SendReviewRequests(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if sent != 1 {
+		t.Errorf("sent = %d, want 1 (default delay should be 2h)", sent)
+	}
+}
+
+func TestReviewService_SendReviewRequests_MultipleBookings(t *testing.T) {
+	env := newReviewTestEnv()
+
+	ownerID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID: bathhouseID, OwnerID: ownerID, Name: "Тестовая баня",
+		Status: domain.BathhouseStatusActive, PricePerHour: 5000,
+	}
+	if err := env.bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("create bathhouse: %v", err)
+	}
+
+	// 3 bookings: 2 eligible, 1 too recent
+	for i := 0; i < 2; i++ {
+		checkedOutAt := time.Now().Add(-time.Duration(3+i) * time.Hour)
+		booking := &domain.Booking{
+			ID: uuid.New(), UserID: uuid.New(), BathhouseID: bathhouseID,
+			StartTime: time.Now().Add(-6 * time.Hour), EndTime: time.Now().Add(-4 * time.Hour),
+			GuestCount: 2, TotalPrice: 10000, Status: domain.BookingCompleted,
+			CheckedOutAt: &checkedOutAt,
+		}
+		if err := env.bookingRepo.Create(context.Background(), booking); err != nil {
+			t.Fatalf("create booking %d: %v", i, err)
+		}
+	}
+	// Too recent
+	recentCheckout := time.Now().Add(-30 * time.Minute)
+	recentBooking := &domain.Booking{
+		ID: uuid.New(), UserID: uuid.New(), BathhouseID: bathhouseID,
+		StartTime: time.Now().Add(-3 * time.Hour), EndTime: time.Now().Add(-1 * time.Hour),
+		GuestCount: 1, TotalPrice: 5000, Status: domain.BookingCompleted,
+		CheckedOutAt: &recentCheckout,
+	}
+	if err := env.bookingRepo.Create(context.Background(), recentBooking); err != nil {
+		t.Fatalf("create recent booking: %v", err)
+	}
+
+	sent, err := env.svc.SendReviewRequests(context.Background(), 2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if sent != 2 {
+		t.Errorf("sent = %d, want 2", sent)
+	}
+}
