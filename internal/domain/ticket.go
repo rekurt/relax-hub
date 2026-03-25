@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -150,6 +151,14 @@ func (m *TicketMessage) Validate() error {
 	}
 	if m.Body == "" || len(m.Body) > 5000 {
 		return ErrInvalidInput
+	}
+	if len(m.Attachments) > 10 {
+		return ErrInvalidInput
+	}
+	for _, a := range m.Attachments {
+		if len(a) > 2048 || (!strings.HasPrefix(a, "https://") && !strings.HasPrefix(a, "http://")) {
+			return ErrInvalidInput
+		}
 	}
 	return nil
 }

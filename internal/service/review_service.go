@@ -261,17 +261,13 @@ func (s *reviewService) Update(ctx context.Context, userID uuid.UUID, reviewID u
 	if input.Text != nil {
 		review.Text = *input.Text
 
-		// Re-run moderation on updated text
+		// Re-run moderation on updated text — always require re-moderation on text change
+		review.Status = domain.ReviewStatusPending
 		if s.textModerator != nil && s.contentFilter.IsEnabled() {
 			modResult := s.textModerator.Analyze(ctx, review.Text)
 			score := modResult.Score
 			review.ModerationScore = &score
 			review.ModerationFlags = modResult.Flags
-			if modResult.Flagged {
-				review.Status = domain.ReviewStatusPending
-			} else {
-				review.Status = domain.ReviewStatusApproved
-			}
 		}
 	}
 	if input.Images != nil {

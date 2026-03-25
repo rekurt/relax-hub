@@ -122,7 +122,9 @@ func (r *guestCardRepo) ListByOwner(ctx context.Context, filter domain.GuestCard
 	var args []interface{}
 	argIdx := 1
 
-	if len(filter.BathhouseIDs) > 0 {
+	if filter.NoOwnerFilter {
+		// Admin: no owner/bathhouse scoping
+	} else if len(filter.BathhouseIDs) > 0 {
 		placeholders := make([]string, len(filter.BathhouseIDs))
 		for i, id := range filter.BathhouseIDs {
 			placeholders[i] = fmt.Sprintf("$%d", argIdx)
@@ -251,18 +253,19 @@ func (r *guestCardRepo) UpdateNotes(ctx context.Context, id uuid.UUID, notes str
 	return nil
 }
 
-func (r *guestCardRepo) GetStats(ctx context.Context, ownerID uuid.UUID) (*domain.GuestCardStats, error) {
-	query := `
+func (r *guestCardRepo) GetStats(ctx context.Context, filter domain.GuestCardFilter) (*domain.GuestCardStats, error) {
+	where, args := buildGuestCardOwnerCondition(filter)
+	query := fmt.Sprintf(`
 		SELECT
 			COUNT(*) AS total_guests,
 			COUNT(*) FILTER (WHERE created_at >= date_trunc('month', NOW())) AS new_this_month,
 			COALESCE(AVG(visit_count), 0)::BIGINT AS avg_visit_count,
 			COALESCE(AVG(total_spent), 0)::BIGINT AS avg_spent
 		FROM guest_cards
-		WHERE owner_id = $1`
+		WHERE %s`, where)
 
 	var stats domain.GuestCardStats
-	err := r.pool.QueryRow(ctx, query, ownerID).Scan(
+	err := r.pool.QueryRow(ctx, query, args...).Scan(
 		&stats.TotalGuests, &stats.NewThisMonth, &stats.AvgVisitCount, &stats.AvgSpent,
 	)
 	if err != nil {
@@ -271,18 +274,36 @@ func (r *guestCardRepo) GetStats(ctx context.Context, ownerID uuid.UUID) (*domai
 	return &stats, nil
 }
 
-func (r *guestCardRepo) CountBySegment(ctx context.Context, ownerID uuid.UUID, segment domain.GuestSegmentSlug) (int64, error) {
+func (r *guestCardRepo) CountBySegment(ctx context.Context, filter domain.GuestCardFilter, segment domain.GuestSegmentSlug) (int64, error) {
 	cond := segmentCondition(segment)
 	if cond == "" {
 		return 0, nil
 	}
 
-	query := fmt.Sprintf(`SELECT COUNT(*) FROM guest_cards WHERE owner_id = $1 AND %s`, cond)
+	where, args := buildGuestCardOwnerCondition(filter)
+	query := fmt.Sprintf(`SELECT COUNT(*) FROM guest_cards WHERE %s AND %s`, where, cond)
 	var count int64
-	if err := r.pool.QueryRow(ctx, query, ownerID).Scan(&count); err != nil {
+	if err := r.pool.QueryRow(ctx, query, args...).Scan(&count); err != nil {
 		return 0, fmt.Errorf("count by segment %s: %w", segment, err)
 	}
 	return count, nil
+}
+
+// buildGuestCardOwnerCondition returns the owner/bathhouse WHERE clause and args for guest card queries.
+func buildGuestCardOwnerCondition(filter domain.GuestCardFilter) (string, []interface{}) {
+	if filter.NoOwnerFilter {
+		return "TRUE", nil
+	}
+	if len(filter.BathhouseIDs) > 0 {
+		placeholders := make([]string, len(filter.BathhouseIDs))
+		args := make([]interface{}, len(filter.BathhouseIDs))
+		for i, id := range filter.BathhouseIDs {
+			placeholders[i] = fmt.Sprintf("$%d", i+1)
+			args[i] = id
+		}
+		return fmt.Sprintf("bathhouse_id IN (%s)", strings.Join(placeholders, ",")), args
+	}
+	return "owner_id = $1", []interface{}{filter.OwnerID}
 }
 
 // segmentCondition returns SQL WHERE condition for a segment slug (without the owner_id filter).

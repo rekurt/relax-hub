@@ -178,13 +178,28 @@ func (r *GuestCardRepo) UpdateNotes(_ context.Context, id uuid.UUID, notes strin
 	return nil
 }
 
-func (r *GuestCardRepo) CountBySegment(_ context.Context, ownerID uuid.UUID, segment domain.GuestSegmentSlug) (int64, error) {
+func (r *GuestCardRepo) matchesFilter(c *domain.GuestCard, filter domain.GuestCardFilter) bool {
+	if filter.NoOwnerFilter {
+		return true
+	}
+	if len(filter.BathhouseIDs) > 0 {
+		for _, id := range filter.BathhouseIDs {
+			if c.BathhouseID == id {
+				return true
+			}
+		}
+		return false
+	}
+	return c.OwnerID == filter.OwnerID
+}
+
+func (r *GuestCardRepo) CountBySegment(_ context.Context, filter domain.GuestCardFilter, segment domain.GuestSegmentSlug) (int64, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	var count int64
 	for _, c := range r.cards {
-		if c.OwnerID != ownerID {
+		if !r.matchesFilter(c, filter) {
 			continue
 		}
 		if matchesSegment(c, segment) {
@@ -194,7 +209,7 @@ func (r *GuestCardRepo) CountBySegment(_ context.Context, ownerID uuid.UUID, seg
 	return count, nil
 }
 
-func (r *GuestCardRepo) GetStats(_ context.Context, ownerID uuid.UUID) (*domain.GuestCardStats, error) {
+func (r *GuestCardRepo) GetStats(_ context.Context, filter domain.GuestCardFilter) (*domain.GuestCardStats, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -204,7 +219,7 @@ func (r *GuestCardRepo) GetStats(_ context.Context, ownerID uuid.UUID) (*domain.
 	monthStart := time.Date(time.Now().Year(), time.Now().Month(), 1, 0, 0, 0, 0, time.UTC)
 
 	for _, c := range r.cards {
-		if c.OwnerID != ownerID {
+		if !r.matchesFilter(c, filter) {
 			continue
 		}
 		stats.TotalGuests++

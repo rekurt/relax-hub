@@ -203,7 +203,11 @@ func (s *guestCardService) GetStats(ctx context.Context, userID uuid.UUID, role 
 		return nil, domain.ErrForbidden
 	}
 
-	return s.guestCardRepo.GetStats(ctx, userID)
+	var filter domain.GuestCardFilter
+	if err := s.setCRMOwnerFilter(ctx, userID, role, &filter); err != nil {
+		return nil, err
+	}
+	return s.guestCardRepo.GetStats(ctx, filter)
 }
 
 func (s *guestCardService) ListSegments(ctx context.Context, userID uuid.UUID, role domain.UserRole) ([]domain.GuestSegment, error) {
@@ -211,11 +215,16 @@ func (s *guestCardService) ListSegments(ctx context.Context, userID uuid.UUID, r
 		return nil, domain.ErrForbidden
 	}
 
+	var filter domain.GuestCardFilter
+	if err := s.setCRMOwnerFilter(ctx, userID, role, &filter); err != nil {
+		return nil, err
+	}
+
 	slugs := domain.AllSegments()
 	segments := make([]domain.GuestSegment, 0, len(slugs))
 
 	for _, slug := range slugs {
-		count, err := s.guestCardRepo.CountBySegment(ctx, userID, slug)
+		count, err := s.guestCardRepo.CountBySegment(ctx, filter, slug)
 		if err != nil {
 			s.logger.Error("count segment", "segment", slug, "error", err)
 			count = 0
@@ -271,7 +280,7 @@ func (s *guestCardService) setCRMOwnerFilter(ctx context.Context, userID uuid.UU
 		}
 		filter.BathhouseIDs = bhIDs
 	case domain.RoleAdmin:
-		// Admin can see all guest cards — no owner filter applied
+		filter.NoOwnerFilter = true
 	default:
 		filter.OwnerID = userID
 	}

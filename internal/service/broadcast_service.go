@@ -107,16 +107,18 @@ func (s *broadcastService) Send(ctx context.Context, userID uuid.UUID, role doma
 		Page:     1,
 		PageSize: 10000,
 	}
-	// For representatives, filter by managed bathhouse IDs instead of owner ID
-	// For admins, no OwnerID filter = targets all guests in the segment
-	if role == domain.RoleRepresentative {
+	// Scope guest card query by role
+	switch role {
+	case domain.RoleRepresentative:
 		bhIDs, bhErr := s.access.GetManagedBathhouseIDs(ctx, userID)
 		if bhErr != nil {
 			_ = s.broadcastRepo.UpdateStatus(ctx, broadcastID, domain.BroadcastStatusFailed)
 			return fmt.Errorf("get managed bathhouses: %w", bhErr)
 		}
 		filter.BathhouseIDs = bhIDs
-	} else if role != domain.RoleAdmin {
+	case domain.RoleAdmin:
+		filter.NoOwnerFilter = true
+	default:
 		filter.OwnerID = broadcast.OwnerID
 	}
 	guests, err := s.guestCardRepo.ListByOwner(ctx, filter)

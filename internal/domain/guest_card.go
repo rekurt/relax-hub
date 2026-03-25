@@ -71,17 +71,18 @@ type GuestCard struct {
 }
 
 type GuestCardFilter struct {
-	OwnerID      uuid.UUID
-	BathhouseID  *uuid.UUID
-	BathhouseIDs []uuid.UUID // for representatives: filter by managed bathhouse IDs
-	Search      *string
-	Tag         *string
-	Segment     *GuestSegmentSlug
-	DateFrom    *time.Time
-	DateTo      *time.Time
-	SortBy      string // "last_visit", "total_spent", "visit_count", "avg_check"
-	Page        int
-	PageSize    int
+	OwnerID       uuid.UUID
+	BathhouseID   *uuid.UUID
+	BathhouseIDs  []uuid.UUID // for representatives: filter by managed bathhouse IDs
+	NoOwnerFilter bool        // for admins: skip owner/bathhouse filtering
+	Search        *string
+	Tag           *string
+	Segment       *GuestSegmentSlug
+	DateFrom      *time.Time
+	DateTo        *time.Time
+	SortBy        string // "last_visit", "total_spent", "visit_count", "avg_check"
+	Page          int
+	PageSize      int
 }
 
 type GuestCardStats struct {

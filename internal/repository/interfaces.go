@@ -472,8 +472,8 @@ type GuestCardRepository interface {
 	GetByOwnerAndClient(ctx context.Context, ownerID, clientID, bathhouseID uuid.UUID) (*domain.GuestCard, error)
 	ListByOwner(ctx context.Context, filter domain.GuestCardFilter) (*domain.PaginatedResult[domain.GuestCard], error)
 	UpdateNotes(ctx context.Context, id uuid.UUID, notes string, tags []string) error
-	GetStats(ctx context.Context, ownerID uuid.UUID) (*domain.GuestCardStats, error)
-	CountBySegment(ctx context.Context, ownerID uuid.UUID, segment domain.GuestSegmentSlug) (int64, error)
+	GetStats(ctx context.Context, filter domain.GuestCardFilter) (*domain.GuestCardStats, error)
+	CountBySegment(ctx context.Context, filter domain.GuestCardFilter, segment domain.GuestSegmentSlug) (int64, error)
 }
 
 type BroadcastRepository interface {

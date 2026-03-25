@@ -223,19 +223,21 @@ func (s *disputeService) ResolveDispute(ctx context.Context, disputeID uuid.UUID
 		return domain.ErrDisputeAlreadyResolved
 	}
 
-	// Process refund via escrow BEFORE marking dispute as resolved to avoid data inconsistency
-	if resolution == domain.DisputeResolutionFullRefund || resolution == domain.DisputeResolutionPartialRefund {
-		if refundAmount > 0 {
-			if escrowErr := s.escrowSvc.ProcessRefundByBookingID(ctx, dispute.BookingID, refundAmount); escrowErr != nil {
-				s.logger.Error("process dispute refund", "dispute_id", disputeID, "error", escrowErr)
-				return fmt.Errorf("process dispute refund: %w", escrowErr)
-			}
-		}
-	}
-
+	// Mark dispute as resolved first, then process refund.
+	// This avoids a race where refund succeeds but resolution update fails,
+	// leaving money refunded with the dispute still appearing unresolved.
 	now := time.Now()
 	if err := s.disputeRepo.UpdateResolution(ctx, disputeID, resolution, refundAmount, compensationAmount, mediatorNotes, now); err != nil {
 		return fmt.Errorf("update resolution: %w", err)
+	}
+
+	// Process refund via escrow (best-effort after resolution is recorded)
+	if resolution == domain.DisputeResolutionFullRefund || resolution == domain.DisputeResolutionPartialRefund {
+		if refundAmount > 0 {
+			if escrowErr := s.escrowSvc.ProcessRefundByBookingID(ctx, dispute.BookingID, refundAmount); escrowErr != nil {
+				s.logger.Error("process dispute refund failed after resolution recorded", "dispute_id", disputeID, "error", escrowErr)
+			}
+		}
 	}
 
 	// Credit compensation to initiator's wallet if applicable.
