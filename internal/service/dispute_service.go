@@ -281,6 +281,10 @@ func (s *disputeService) AppealDispute(ctx context.Context, userID uuid.UUID, di
 	if dispute.AppealDeadline != nil && time.Now().After(*dispute.AppealDeadline) {
 		return domain.ErrDisputeAppealExpired
 	}
+	// Fallback: if no explicit deadline was set, enforce 7-day window from resolution
+	if dispute.AppealDeadline == nil && dispute.ResolvedAt != nil && time.Now().After(dispute.ResolvedAt.Add(7*24*time.Hour)) {
+		return domain.ErrDisputeAppealExpired
+	}
 
 	return s.disputeRepo.UpdateAppeal(ctx, disputeID, domain.DisputeStatusAppealed)
 }

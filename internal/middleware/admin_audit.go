@@ -64,7 +64,8 @@ func AdminAudit(repo repository.AuditLogRepository, log *logger.Logger) func(htt
 					r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 					redactedBody = redactRequestBody(bodyBytes)
 				} else {
-					r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+					// On read error (e.g. body exceeds 1MB), restore empty body
+					r.Body = io.NopCloser(bytes.NewReader(nil))
 				}
 			}
 

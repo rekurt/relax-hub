@@ -64,7 +64,7 @@ func (h *AntiFraudHandler) ListFlags(w http.ResponseWriter, r *http.Request) {
 	if page < 1 {
 		page = 1
 	}
-	if pageSize < 1 {
+	if pageSize < 1 || pageSize > 50 {
 		pageSize = 20
 	}
 

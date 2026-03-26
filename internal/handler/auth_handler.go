@@ -502,12 +502,15 @@ func (h *AuthHandler) VerifyPhone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u2fa := toUserResponse(result.User)
-	writeJSON(w, http.StatusOK, authResponse{
-		User:        &u2fa,
+	resp := authResponse{
 		Token:       result.Token,
 		Requires2FA: result.Requires2FA,
-	})
+	}
+	if !result.Requires2FA {
+		u := toUserResponse(result.User)
+		resp.User = &u
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
 
 type totpEnableResponse struct {
