@@ -3,6 +3,7 @@ package cron
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 // antiFraudPatternDetection runs batch anti-fraud checks: dormant balances,
@@ -30,10 +31,25 @@ func (cs *CronScheduler) antiFraudPatternDetection(ctx context.Context) error {
 			continue
 		}
 
-		// Check dormant balance: high balance with no recent bookings
-		// Pass a value that exceeds the threshold so the rule can trigger.
-		// In production, this should look up the actual last booking date.
-		if err := cs.fraudEngine.CheckDormantBalance(ctx, wallet.UserID, wallet.Balance, 31); err != nil {
+		// Look up actual last booking date for dormant balance check
+		if cs.bookingRepo == nil {
+			cs.logger.Warn("Booking repo not available, skipping dormant balance check")
+			continue
+		}
+		lastDate, err := cs.bookingRepo.GetLastBookingDateByUser(ctx, wallet.UserID)
+		if err != nil {
+			cs.logger.Warn("Failed to get last booking date", "user_id", wallet.UserID, "error", err)
+			continue
+		}
+		var lastBookingDaysAgo int
+		if lastDate != nil {
+			lastBookingDaysAgo = int(time.Since(*lastDate).Hours() / 24)
+		} else {
+			// No bookings at all — treat as dormant if balance is high
+			lastBookingDaysAgo = 365
+		}
+
+		if err := cs.fraudEngine.CheckDormantBalance(ctx, wallet.UserID, wallet.Balance, lastBookingDaysAgo); err != nil {
 			flagged++
 		}
 	}

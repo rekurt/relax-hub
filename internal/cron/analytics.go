@@ -39,6 +39,7 @@ type CronScheduler struct {
 	ticketSvc          service.TicketService
 	kycSvc             service.KYCService
 	fraudEngine        antifraud.FraudEngine
+	bookingRepo        repository.BookingRepository
 	redisClient        *redis.Client
 }
 
@@ -64,6 +65,7 @@ func NewCronScheduler(
 	ticketSvc service.TicketService,
 	kycSvc service.KYCService,
 	fraudEngine antifraud.FraudEngine,
+	bookingRepo repository.BookingRepository,
 	redisClient *redis.Client,
 ) *CronScheduler {
 	timezone := cfg.Cron.Timezone
@@ -93,6 +95,7 @@ func NewCronScheduler(
 		ticketSvc:          ticketSvc,
 		kycSvc:             kycSvc,
 		fraudEngine:        fraudEngine,
+		bookingRepo:        bookingRepo,
 		redisClient:        redisClient,
 	}
 }

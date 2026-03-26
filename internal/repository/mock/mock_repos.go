@@ -597,6 +597,22 @@ func (r *BookingRepo) ListCompletedForReviewRequests(_ context.Context, checkedO
 	return result, nil
 }
 
+func (r *BookingRepo) GetLastBookingDateByUser(_ context.Context, userID uuid.UUID) (*time.Time, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var latest *time.Time
+	for _, b := range r.bookings {
+		if b.UserID == userID && (b.Status == domain.BookingCompleted || b.Status == domain.BookingConfirmed) {
+			t := b.CreatedAt
+			if latest == nil || t.After(*latest) {
+				latest = &t
+			}
+		}
+	}
+	return latest, nil
+}
+
 // RepresentativeRepo is an in-memory mock implementation of repository.RepresentativeRepository.
 type RepresentativeRepo struct {
 	mu   sync.RWMutex

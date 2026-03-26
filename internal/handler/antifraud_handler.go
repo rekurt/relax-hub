@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -42,13 +43,13 @@ func toFraudFlagResponse(f *domain.FraudFlag) fraudFlagResponse {
 		Severity:  string(f.Severity),
 		Status:    string(f.Status),
 		Action:    string(f.Action),
-		CreatedAt: f.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		CreatedAt: f.CreatedAt.Format(time.RFC3339),
 	}
 	if f.Details != nil {
 		resp.Details = f.Details
 	}
 	if f.ReviewedAt != nil {
-		t := f.ReviewedAt.Format("2006-01-02T15:04:05Z")
+		t := f.ReviewedAt.Format(time.RFC3339)
 		resp.ReviewedAt = &t
 	}
 	if f.ReviewedBy != nil {

@@ -72,7 +72,7 @@ func (s *ticketService) CreateTicket(ctx context.Context, userID uuid.UUID, tick
 			Body:       initialMessage,
 		}
 		if err := s.ticketRepo.AddMessage(ctx, msg); err != nil {
-			s.logger.Error("add initial ticket message", "ticket_id", ticket.ID, "error", err)
+			return fmt.Errorf("add initial ticket message: %w", err)
 		}
 	}
 
@@ -271,6 +271,10 @@ func (s *ticketService) AutoEscalateStaleTickets(ctx context.Context) error {
 	for _, t := range staleL1 {
 		if err := s.ticketRepo.UpdateLevel(ctx, t.ID, domain.TicketLevelL2); err != nil {
 			s.logger.Error("auto-escalate L1->L2", "ticket_id", t.ID, "error", err)
+			continue
+		}
+		if err := s.ticketRepo.UpdateStatus(ctx, t.ID, domain.TicketStatusEscalated); err != nil {
+			s.logger.Error("auto-escalate L1->L2 status update", "ticket_id", t.ID, "error", err)
 		}
 	}
 
@@ -282,6 +286,10 @@ func (s *ticketService) AutoEscalateStaleTickets(ctx context.Context) error {
 	for _, t := range staleL2 {
 		if err := s.ticketRepo.UpdateLevel(ctx, t.ID, domain.TicketLevelL3); err != nil {
 			s.logger.Error("auto-escalate L2->L3", "ticket_id", t.ID, "error", err)
+			continue
+		}
+		if err := s.ticketRepo.UpdateStatus(ctx, t.ID, domain.TicketStatusEscalated); err != nil {
+			s.logger.Error("auto-escalate L2->L3 status update", "ticket_id", t.ID, "error", err)
 		}
 	}
 

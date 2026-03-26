@@ -474,3 +474,18 @@ func (r *bookingRepo) UpdateEndTime(ctx context.Context, bookingID uuid.UUID, ol
 	}
 	return nil
 }
+
+func (r *bookingRepo) GetLastBookingDateByUser(ctx context.Context, userID uuid.UUID) (*time.Time, error) {
+	var lastDate time.Time
+	err := r.pool.QueryRow(ctx,
+		`SELECT MAX(created_at) FROM bookings WHERE user_id = $1 AND status IN ('completed', 'confirmed')`,
+		userID,
+	).Scan(&lastDate)
+	if err != nil {
+		return nil, fmt.Errorf("get last booking date: %w", err)
+	}
+	if lastDate.IsZero() {
+		return nil, nil
+	}
+	return &lastDate, nil
+}

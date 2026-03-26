@@ -115,13 +115,17 @@ func (s *disputeService) OpenDispute(ctx context.Context, userID uuid.UUID, book
 		return nil, err
 	}
 
-	if err := s.disputeRepo.Create(ctx, dispute); err != nil {
-		return nil, fmt.Errorf("create dispute: %w", err)
+	// Block escrow release BEFORE creating dispute to prevent funds being released
+	if err := s.escrowSvc.MarkDisputedByBookingID(ctx, bookingID); err != nil {
+		return nil, fmt.Errorf("block escrow for dispute: %w", err)
 	}
 
-	// Block escrow release
-	if err := s.escrowSvc.MarkDisputedByBookingID(ctx, bookingID); err != nil {
-		s.logger.Error("mark escrow disputed", "booking_id", bookingID, "error", err)
+	if err := s.disputeRepo.Create(ctx, dispute); err != nil {
+		// Escrow was marked disputed but dispute creation failed — this is the safer failure mode
+		// (escrow stays blocked rather than dispute existing without escrow protection)
+		s.logger.Error("dispute creation failed after escrow was marked disputed",
+			"booking_id", bookingID, "error", err)
+		return nil, fmt.Errorf("create dispute: %w", err)
 	}
 
 	return dispute, nil
