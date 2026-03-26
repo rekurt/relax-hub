@@ -2,10 +2,12 @@ package middleware
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/chi/v5"
@@ -114,7 +116,12 @@ func AdminAudit(repo repository.AuditLogRepository, log *logger.Logger) func(htt
 				ChangedFields: detailsJSON,
 			}
 
-			if err := repo.Create(r.Context(), entry); err != nil {
+			// Use a detached context so the audit write completes even if the
+			// request context is cancelled after the handler returns.
+			auditCtx, auditCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer auditCancel()
+
+			if err := repo.Create(auditCtx, entry); err != nil {
 				log.Error("admin audit: failed to create audit log",
 					"admin_id", adminID,
 					"method", r.Method,
@@ -144,10 +151,29 @@ func extractEntityID(r *http.Request) uuid.UUID {
 	return uuid.Nil
 }
 
+// adminResourceSingular maps known admin resource path segments to their singular forms.
+var adminResourceSingular = map[string]string{
+	"bathhouses":  "bathhouse",
+	"bookings":    "booking",
+	"reviews":     "review",
+	"users":       "user",
+	"cities":      "city",
+	"complaints":  "complaint",
+	"photos":      "photo",
+	"tickets":     "ticket",
+	"disputes":    "dispute",
+	"holidays":    "holiday",
+	"promo-codes": "promo_code",
+	"antifraud":   "antifraud",
+	"chat":        "chat",
+	"kyc":         "kyc",
+	"audit-log":   "audit_log",
+	"service-fee": "service_fee",
+}
+
 // inferTargetType extracts the admin sub-resource from the URL path.
 // e.g., "/api/v1/admin/bathhouses/xxx/approve" -> "bathhouse"
 func inferTargetType(path string) string {
-	// Find /admin/ segment and take the next path component
 	idx := strings.Index(path, "/admin/")
 	if idx < 0 {
 		return ""
@@ -158,8 +184,9 @@ func inferTargetType(path string) string {
 		return ""
 	}
 	resource := parts[0]
-	// Singularize common admin resources
-	resource = strings.TrimSuffix(resource, "s")
+	if singular, ok := adminResourceSingular[resource]; ok {
+		return singular
+	}
 	return resource
 }
 

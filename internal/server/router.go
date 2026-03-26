@@ -537,6 +537,7 @@ func NewRouter(p RouterParams) http.Handler {
 			// Support tickets (admin only)
 			r.Get("/tickets", p.TicketHandler.AdminListTickets)
 			r.Get("/tickets/stats", p.TicketHandler.AdminGetStats)
+			r.Get("/tickets/{id}", p.TicketHandler.AdminGetTicket)
 			r.Patch("/tickets/{id}/assign", p.TicketHandler.AdminAssignTicket)
 			r.Patch("/tickets/{id}/escalate", p.TicketHandler.AdminEscalateTicket)
 			r.Patch("/tickets/{id}/resolve", p.TicketHandler.AdminResolveTicket)

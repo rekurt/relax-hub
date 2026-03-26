@@ -357,6 +357,37 @@ func (h *TicketHandler) SubmitCSAT(w http.ResponseWriter, r *http.Request) {
 
 // --- Admin endpoints ---
 
+// AdminGetTicket godoc
+// @Summary      Get ticket details (admin)
+// @Description  Get a specific support ticket by ID as admin
+// @Tags         support-admin
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Ticket ID (UUID)"
+// @Success      200  {object}  APIResponse{data=ticketResponse}
+// @Failure      400  {object}  APIResponse{error=APIError}
+// @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      404  {object}  APIResponse{error=APIError}
+// @Router       /admin/tickets/{id} [get]
+func (h *TicketHandler) AdminGetTicket(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	ticketID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_id", "invalid ticket ID")
+		return
+	}
+
+	ticket, err := h.ticketService.GetTicket(r.Context(), userID, role, ticketID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toTicketResponse(ticket))
+}
+
 // AdminListTickets godoc
 // @Summary      List all tickets (admin)
 // @Description  List all support tickets with filters
@@ -390,18 +421,34 @@ func (h *TicketHandler) AdminListTickets(w http.ResponseWriter, r *http.Request)
 
 	if s := r.URL.Query().Get("status"); s != "" {
 		status := domain.TicketStatus(s)
+		if !status.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_status", "invalid ticket status")
+			return
+		}
 		filter.Status = &status
 	}
 	if p := r.URL.Query().Get("priority"); p != "" {
 		priority := domain.TicketPriority(p)
+		if !priority.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_priority", "invalid ticket priority")
+			return
+		}
 		filter.Priority = &priority
 	}
 	if l := r.URL.Query().Get("level"); l != "" {
 		level := domain.TicketLevel(l)
+		if !level.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_level", "invalid ticket level")
+			return
+		}
 		filter.Level = &level
 	}
 	if c := r.URL.Query().Get("category"); c != "" {
 		category := domain.TicketCategory(c)
+		if !category.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_category", "invalid ticket category")
+			return
+		}
 		filter.Category = &category
 	}
 

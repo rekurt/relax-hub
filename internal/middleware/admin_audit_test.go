@@ -304,10 +304,9 @@ func TestAdminAudit_TargetTypeInferred(t *testing.T) {
 	targetType, ok := details["target_type"]
 	if !ok {
 		t.Error("target_type should be present in audit details")
-	} else if targetType == "" {
-		t.Error("target_type should not be empty")
+	} else if targetType != "city" {
+		t.Errorf("target_type = %q, want %q", targetType, "city")
 	}
-	// "cities" -> "citie" via simple TrimSuffix("s") — best-effort singularization
 }
 
 func TestAdminAudit_NoUserID_NotLogged(t *testing.T) {

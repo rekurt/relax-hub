@@ -366,6 +366,7 @@ func (h *DisputeHandler) AppealDispute(w http.ResponseWriter, r *http.Request) {
 // @Router       /admin/disputes/{id} [get]
 func (h *DisputeHandler) AdminGetDispute(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
 
 	disputeID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -373,7 +374,7 @@ func (h *DisputeHandler) AdminGetDispute(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	dispute, err := h.disputeService.GetDispute(r.Context(), userID, domain.RoleAdmin, disputeID)
+	dispute, err := h.disputeService.GetDispute(r.Context(), userID, role, disputeID)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -412,6 +413,10 @@ func (h *DisputeHandler) AdminListDisputes(w http.ResponseWriter, r *http.Reques
 
 	if s := r.URL.Query().Get("status"); s != "" {
 		status := domain.DisputeStatus(s)
+		if !status.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_status", "invalid dispute status")
+			return
+		}
 		filter.Status = &status
 	}
 
