@@ -440,7 +440,17 @@ func TestDisputeService_CloseDispute(t *testing.T) {
 	booking := createTestBookingAndBathhouse(ctx, bookingRepo, bhRepo, clientID, ownerID)
 	dispute, _ := svc.OpenDispute(ctx, clientID, booking.ID, domain.DisputeReasonOther, "Issue")
 
+	// Cannot close a dispute that is not resolved or appealed
 	err := svc.CloseDispute(ctx, dispute.ID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Fatalf("expected ErrInvalidInput for closing open dispute, got %v", err)
+	}
+
+	// Resolve the dispute first
+	_ = svc.ResolveDispute(ctx, dispute.ID, domain.DisputeResolutionNoRefund, 0, 0, "No issues found")
+
+	// Now close should succeed
+	err = svc.CloseDispute(ctx, dispute.ID)
 	if err != nil {
 		t.Fatalf("CloseDispute: %v", err)
 	}

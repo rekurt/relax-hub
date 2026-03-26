@@ -75,20 +75,27 @@ func (h *AntiFraudHandler) ListFlags(w http.ResponseWriter, r *http.Request) {
 
 	if s := r.URL.Query().Get("status"); s != "" {
 		status := domain.FraudFlagStatus(s)
-		if status.IsValid() {
-			filter.Status = &status
+		if !status.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_status", "invalid fraud flag status")
+			return
 		}
+		filter.Status = &status
 	}
 	if s := r.URL.Query().Get("rule"); s != "" {
 		rule := domain.FraudRuleName(s)
-		if rule.IsValid() {
-			filter.Rule = &rule
+		if !rule.IsValid() {
+			writeError(w, http.StatusBadRequest, "invalid_rule", "invalid fraud rule name")
+			return
 		}
+		filter.Rule = &rule
 	}
 	if s := r.URL.Query().Get("user_id"); s != "" {
-		if uid, err := uuid.Parse(s); err == nil {
-			filter.UserID = &uid
+		uid, err := uuid.Parse(s)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_user_id", "invalid user ID format")
+			return
 		}
+		filter.UserID = &uid
 	}
 
 	result, err := h.flagRepo.ListPending(r.Context(), filter)

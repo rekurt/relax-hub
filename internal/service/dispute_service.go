@@ -223,6 +223,15 @@ func (s *disputeService) ResolveDispute(ctx context.Context, disputeID uuid.UUID
 		return domain.ErrDisputeAlreadyResolved
 	}
 
+	// Validate refund does not exceed booking total price
+	booking, err := s.bookingRepo.GetByID(ctx, dispute.BookingID)
+	if err != nil {
+		return fmt.Errorf("get booking for refund validation: %w", err)
+	}
+	if refundAmount > booking.TotalPrice {
+		return domain.ErrRefundExceedsAmount
+	}
+
 	// Mark dispute as resolved first, then process refund.
 	// This avoids a race where refund succeeds but resolution update fails,
 	// leaving money refunded with the dispute still appearing unresolved.
@@ -297,6 +306,10 @@ func (s *disputeService) CloseDispute(ctx context.Context, disputeID uuid.UUID) 
 
 	if dispute.Status == domain.DisputeStatusClosed {
 		return domain.ErrDisputeAlreadyClosed
+	}
+
+	if dispute.Status != domain.DisputeStatusResolved && dispute.Status != domain.DisputeStatusAppealed {
+		return domain.ErrInvalidInput
 	}
 
 	return s.disputeRepo.UpdateStatus(ctx, disputeID, domain.DisputeStatusClosed)
