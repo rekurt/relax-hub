@@ -196,7 +196,10 @@ func (s *ticketService) EscalateTicket(ctx context.Context, ticketID uuid.UUID) 
 		nextLevel = domain.TicketLevelL3
 	}
 
-	return s.ticketRepo.UpdateLevel(ctx, ticketID, nextLevel)
+	if err := s.ticketRepo.UpdateLevel(ctx, ticketID, nextLevel); err != nil {
+		return fmt.Errorf("escalate ticket: %w", err)
+	}
+	return s.ticketRepo.UpdateStatus(ctx, ticketID, domain.TicketStatusEscalated)
 }
 
 func (s *ticketService) ResolveTicket(ctx context.Context, ticketID uuid.UUID) error {

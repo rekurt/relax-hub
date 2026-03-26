@@ -14,6 +14,11 @@ func (cs *CronScheduler) antiFraudPatternDetection(ctx context.Context) error {
 		return nil
 	}
 
+	if cs.bookingRepo == nil {
+		cs.logger.Warn("Booking repo not available, skipping dormant balance check")
+		return nil
+	}
+
 	walletIDs, err := cs.walletRepo.ListAllIDs(ctx)
 	if err != nil {
 		return fmt.Errorf("list wallet IDs for antifraud: %w", err)
@@ -31,11 +36,6 @@ func (cs *CronScheduler) antiFraudPatternDetection(ctx context.Context) error {
 			continue
 		}
 
-		// Look up actual last booking date for dormant balance check
-		if cs.bookingRepo == nil {
-			cs.logger.Warn("Booking repo not available, skipping dormant balance check")
-			continue
-		}
 		lastDate, err := cs.bookingRepo.GetLastBookingDateByUser(ctx, wallet.UserID)
 		if err != nil {
 			cs.logger.Warn("Failed to get last booking date", "user_id", wallet.UserID, "error", err)
