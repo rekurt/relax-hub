@@ -531,8 +531,8 @@ func TestAuditLogHandler_ListByBathhouse_InvalidID(t *testing.T) {
 	}
 }
 
-func TestAuditLogHandler_ListByBathhouse_Forbidden(t *testing.T) {
-	// Use default handler with no seeded bathhouse - access check will fail
+func TestAuditLogHandler_ListByBathhouse_NotFound(t *testing.T) {
+	// Use default handler with no seeded bathhouse - access check returns ErrNotFound
 	svc := &mockAuditLogService{}
 	h := newTestAuditLogHandler(svc)
 

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -76,14 +75,8 @@ func toFraudFlagResponse(f *domain.FraudFlag) fraudFlagResponse {
 // @Failure      403  {object}  APIResponse{error=APIError}
 // @Router       /admin/antifraud/flags [get]
 func (h *AntiFraudHandler) ListFlags(w http.ResponseWriter, r *http.Request) {
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 || pageSize > 50 {
-		pageSize = 20
-	}
+	page := getPage(r.URL.Query().Get("page"))
+	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)
 
 	filter := domain.FraudFlagFilter{
 		Page:     page,
@@ -167,8 +160,8 @@ func (h *AntiFraudHandler) UpdateFlag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status := domain.FraudFlagStatus(req.Status)
-	if !status.IsValid() {
-		writeError(w, http.StatusBadRequest, "invalid_status", "invalid flag status")
+	if status != domain.FraudFlagStatusReviewed && status != domain.FraudFlagStatusDismissed {
+		writeError(w, http.StatusBadRequest, "invalid_status", "status must be 'reviewed' or 'dismissed'")
 		return
 	}
 
