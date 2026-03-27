@@ -48,10 +48,10 @@ All three subsystems (Cron Jobs, Support & Disputes, Anti-fraud & Audit) are ful
 **Files:**
 - Create: `internal/handler/audit_log_handler_test.go`
 
-- [ ] Test ListAuditLog: default pagination, with entity_type/entity_id/user_id/date filters
-- [ ] Test ListAdminActions: default pagination, with admin_id/action/date filters
-- [ ] Test GetEntityHistory: success, invalid entity ID
-- [ ] Run `go test ./internal/handler/ -v -run TestAuditLog` — must pass
+- [x] Test ListAuditLog: default pagination, with entity_type/entity_id/user_id/date filters
+- [x] Test ListAdminActions: default pagination, with admin_id/action/date filters
+- [x] Test GetEntityHistory: success, invalid entity ID
+- [x] Run `go test ./internal/handler/ -v -run TestAuditLog` — must pass
 
 ### Task 4: Final Verification
 
