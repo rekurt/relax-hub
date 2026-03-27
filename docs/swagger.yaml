@@ -239,6 +239,17 @@ definitions:
       total_pages:
         type: integer
     type: object
+  internal_handler.activateForceMajeureRequest:
+    properties:
+      date_from:
+        type: string
+      date_to:
+        type: string
+      reason:
+        type: string
+      region:
+        type: string
+    type: object
   internal_handler.addExternalCalendarRequest:
     properties:
       source:
@@ -742,6 +753,8 @@ definitions:
         type: number
       name:
         type: string
+      region:
+        type: string
       slug:
         type: string
     type: object
@@ -947,6 +960,8 @@ definitions:
       longitude:
         type: number
       name:
+        type: string
+      region:
         type: string
       slug:
         type: string
@@ -1172,6 +1187,42 @@ definitions:
         type: string
       user_id:
         type: string
+    type: object
+  internal_handler.featureFlagResponse:
+    properties:
+      description:
+        type: string
+      enabled:
+        type: boolean
+      key:
+        type: string
+      region:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
+  internal_handler.forceMajeureEventResponse:
+    properties:
+      admin_id:
+        type: string
+      affected_count:
+        type: integer
+      created_at:
+        type: string
+      date_from:
+        type: string
+      date_to:
+        type: string
+      id:
+        type: string
+      reason:
+        type: string
+      region:
+        type: string
+      total_refund:
+        type: integer
     type: object
   internal_handler.forgotPasswordRequest:
     properties:
@@ -1647,6 +1698,21 @@ definitions:
       verified_at:
         type: string
       verified_by_id:
+        type: string
+    type: object
+  internal_handler.platformSettingResponse:
+    properties:
+      description:
+        type: string
+      key:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+      value:
         type: string
     type: object
   internal_handler.preferencesResponse:
@@ -2511,7 +2577,16 @@ definitions:
         type: number
       name:
         type: string
+      region:
+        type: string
       slug:
+        type: string
+    type: object
+  internal_handler.updateFeatureFlagRequest:
+    properties:
+      enabled:
+        type: boolean
+      region:
         type: string
     type: object
   internal_handler.updateFraudFlagRequest:
@@ -2606,6 +2681,11 @@ definitions:
         type: string
       value_for_money:
         type: number
+    type: object
+  internal_handler.updateSettingRequest:
+    properties:
+      value:
+        type: string
     type: object
   internal_handler.updateTemplateRequest:
     properties:
@@ -4377,6 +4457,217 @@ paths:
       summary: Resolve a dispute
       tags:
       - disputes-admin
+  /admin/feature-flags:
+    get:
+      description: Returns all feature flags (admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.featureFlagResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all feature flags
+      tags:
+      - admin
+      - feature-flags
+  /admin/feature-flags/{key}:
+    put:
+      consumes:
+      - application/json
+      description: Updates the enabled state and optional region of a feature flag
+        (admin only)
+      parameters:
+      - description: Feature flag key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: New state
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updateFeatureFlagRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update a feature flag
+      tags:
+      - admin
+      - feature-flags
+  /admin/force-majeure:
+    get:
+      description: Returns all force majeure events ordered by creation date desc
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.forceMajeureEventResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List force majeure events
+      tags:
+      - admin
+      - force-majeure
+    post:
+      consumes:
+      - application/json
+      description: Mass-cancel bookings in a region for a date range due to force
+        majeure
+      parameters:
+      - description: Force majeure parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.activateForceMajeureRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.forceMajeureEventResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Activate force majeure
+      tags:
+      - admin
+      - force-majeure
   /admin/holidays:
     get:
       description: Returns all holidays, optionally filtered by region
@@ -5497,6 +5788,118 @@ paths:
       tags:
       - admin
       - service-fee
+  /admin/settings:
+    get:
+      description: Returns all platform settings (admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.platformSettingResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all platform settings
+      tags:
+      - admin
+      - platform-settings
+  /admin/settings/{key}:
+    put:
+      consumes:
+      - application/json
+      description: Updates the value of a platform setting by key (admin only)
+      parameters:
+      - description: Setting key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: New value
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updateSettingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.platformSettingResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update a platform setting
+      tags:
+      - admin
+      - platform-settings
   /admin/tickets:
     get:
       description: List all support tickets with filters

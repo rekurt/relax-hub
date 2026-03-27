@@ -137,11 +137,11 @@ Admin-configurable platform settings (key-value store with Redis cache), feature
 
 ### Task 5: Verify acceptance criteria
 
-- [ ] Run full test suite: `go test ./... -v -race`
-- [ ] Run linter: `make lint`
-- [ ] Verify build: `go build ./...`
-- [ ] Regenerate swagger: `make swagger`
-- [ ] Manual verification: all admin endpoints return correct JSON format { success, data, error, meta }
+- [x] Run full test suite: `go test ./... -v -race`
+- [x] Run linter: `make lint`
+- [x] Verify build: `go build ./...`
+- [x] Regenerate swagger: `make swagger`
+- [x] Manual verification: all admin endpoints return correct JSON format { success, data, error, meta }
 
 ### Task 6: Update documentation
 
