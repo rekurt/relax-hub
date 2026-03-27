@@ -27,7 +27,7 @@ type featureFlagResponse struct {
 }
 
 type updateFeatureFlagRequest struct {
-	Enabled bool    `json:"enabled"`
+	Enabled *bool   `json:"enabled"`
 	Region  *string `json:"region,omitempty"`
 }
 
@@ -93,9 +93,14 @@ func (h *FeatureFlagHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Enabled == nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "enabled field is required")
+		return
+	}
+
 	adminID := middleware.GetUserID(r.Context())
 
-	if err := h.svc.SetFlag(r.Context(), key, req.Enabled, req.Region, adminID); err != nil {
+	if err := h.svc.SetFlag(r.Context(), key, *req.Enabled, req.Region, adminID); err != nil {
 		handleServiceError(w, err)
 		return
 	}

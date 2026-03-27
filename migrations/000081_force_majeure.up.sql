@@ -1,3 +1,6 @@
+-- Widen bookings.status to accommodate 'force_majeure_cancelled' (23 chars > old VARCHAR(20))
+ALTER TABLE bookings ALTER COLUMN status TYPE VARCHAR(30);
+
 CREATE TABLE IF NOT EXISTS force_majeure_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     admin_id UUID NOT NULL REFERENCES users(id),
