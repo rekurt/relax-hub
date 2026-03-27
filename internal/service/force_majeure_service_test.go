@@ -150,27 +150,36 @@ func (m *mockFMWalletService) FreezeAndZeroBalance(_ context.Context, _ uuid.UUI
 	return nil
 }
 
-func setupForceMajeureTest(t *testing.T) (service.ForceMajeureService, *mock.ForceMajeureRepo, *mock.BookingRepo, *mockFMWalletService, *mockFMNotificationService) {
+func setupForceMajeureTest(t *testing.T) (service.ForceMajeureService, *mock.ForceMajeureRepo, *mock.BookingRepo, *mock.BathhouseRepo, *mock.CityRepo, *mockFMWalletService, *mockFMNotificationService) {
 	t.Helper()
 
 	fmRepo := mock.NewForceMajeureRepo()
 	bookingRepo := mock.NewBookingRepo()
+	bathhouseRepo := mock.NewBathhouseRepo()
+	cityRepo := mock.NewCityRepo()
 	walletSvc := newMockFMWalletService()
 	notifSvc := &mockFMNotificationService{}
 	log := logger.New(logger.LevelWarn)
 
-	svc := service.NewForceMajeureService(fmRepo, bookingRepo, walletSvc, notifSvc, log)
-	return svc, fmRepo, bookingRepo, walletSvc, notifSvc
+	svc := service.NewForceMajeureService(fmRepo, bookingRepo, bathhouseRepo, cityRepo, walletSvc, notifSvc, log)
+	return svc, fmRepo, bookingRepo, bathhouseRepo, cityRepo, walletSvc, notifSvc
 }
 
 func TestForceMajeure_Activate_Success(t *testing.T) {
-	svc, fmRepo, bookingRepo, walletSvc, notifSvc := setupForceMajeureTest(t)
+	svc, fmRepo, bookingRepo, bathhouseRepo, cityRepo, walletSvc, notifSvc := setupForceMajeureTest(t)
 	ctx := context.Background()
 
 	adminID := uuid.New()
+	ownerID := uuid.New()
 	bathhouseID := uuid.New()
 	userID1 := uuid.New()
 	userID2 := uuid.New()
+
+	// Setup city with region
+	require.NoError(t, cityRepo.Create(ctx, &domain.City{Name: "Москва", Slug: "moscow", Region: "Москва"}))
+
+	// Setup bathhouse with owner
+	require.NoError(t, bathhouseRepo.Create(ctx, &domain.Bathhouse{ID: bathhouseID, OwnerID: ownerID, Name: "Test Banya", Slug: "test-banya"}))
 
 	// Setup region mapping
 	bookingRepo.SetBathhouseRegion(bathhouseID, "Москва")
@@ -234,11 +243,16 @@ func TestForceMajeure_Activate_Success(t *testing.T) {
 	assert.Equal(t, int64(500000), refundAmounts[wallet1.ID])
 	assert.Equal(t, int64(300000), refundAmounts[wallet2.ID])
 
-	// Verify notifications were sent
-	assert.Len(t, notifSvc.notifications, 2)
+	// Verify notifications: 2 client + 1 owner (deduplicated)
+	assert.Len(t, notifSvc.notifications, 3)
+	ownerNotifs := 0
 	for _, n := range notifSvc.notifications {
 		assert.Equal(t, domain.NotifSystem, n.Type)
+		if n.UserID == ownerID {
+			ownerNotifs++
+		}
 	}
+	assert.Equal(t, 1, ownerNotifs, "owner should receive exactly 1 deduplicated notification")
 
 	// Verify event was persisted
 	events, err := fmRepo.List(ctx)
@@ -248,12 +262,15 @@ func TestForceMajeure_Activate_Success(t *testing.T) {
 }
 
 func TestForceMajeure_Activate_NoBookings(t *testing.T) {
-	svc, fmRepo, _, _, _ := setupForceMajeureTest(t)
+	svc, fmRepo, _, _, cityRepo, _, _ := setupForceMajeureTest(t)
 	ctx := context.Background()
 
 	adminID := uuid.New()
 	dateFrom := time.Now().Add(24 * time.Hour)
 	dateTo := time.Now().Add(48 * time.Hour)
+
+	// Region must exist in cities
+	require.NoError(t, cityRepo.Create(ctx, &domain.City{Name: "Новосибирск", Slug: "novosibirsk", Region: "Сибирь"}))
 
 	event, err := svc.Activate(ctx, adminID, "Сибирь", dateFrom, dateTo, "Мороз")
 	require.NoError(t, err)
@@ -267,10 +284,13 @@ func TestForceMajeure_Activate_NoBookings(t *testing.T) {
 }
 
 func TestForceMajeure_Activate_InvalidInput(t *testing.T) {
-	svc, _, _, _, _ := setupForceMajeureTest(t)
+	svc, _, _, _, cityRepo, _, _ := setupForceMajeureTest(t)
 	ctx := context.Background()
 	adminID := uuid.New()
 	now := time.Now()
+
+	// Setup city for region validation tests
+	require.NoError(t, cityRepo.Create(ctx, &domain.City{Name: "Москва", Slug: "moscow", Region: "Москва"}))
 
 	// Empty region
 	_, err := svc.Activate(ctx, adminID, "", now, now.Add(time.Hour), "reason")
@@ -283,15 +303,23 @@ func TestForceMajeure_Activate_InvalidInput(t *testing.T) {
 	// dateTo before dateFrom
 	_, err = svc.Activate(ctx, adminID, "Москва", now.Add(time.Hour), now, "reason")
 	assert.ErrorIs(t, err, domain.ErrInvalidInput)
+
+	// Non-existent region
+	_, err = svc.Activate(ctx, adminID, "НесуществующийРегион", now, now.Add(time.Hour), "reason")
+	assert.ErrorIs(t, err, domain.ErrInvalidInput)
 }
 
 func TestForceMajeure_Activate_SkipsNonMatchingRegion(t *testing.T) {
-	svc, _, bookingRepo, _, _ := setupForceMajeureTest(t)
+	svc, _, bookingRepo, _, cityRepo, _, _ := setupForceMajeureTest(t)
 	ctx := context.Background()
 
 	adminID := uuid.New()
 	bathhouseID := uuid.New()
 	userID := uuid.New()
+
+	// Setup cities for both regions
+	require.NoError(t, cityRepo.Create(ctx, &domain.City{Name: "Москва", Slug: "moscow", Region: "Москва"}))
+	require.NoError(t, cityRepo.Create(ctx, &domain.City{Name: "СПб", Slug: "spb", Region: "СПб"}))
 
 	// Bathhouse is in "СПб", not "Москва"
 	bookingRepo.SetBathhouseRegion(bathhouseID, "СПб")
@@ -321,7 +349,7 @@ func TestForceMajeure_Activate_SkipsNonMatchingRegion(t *testing.T) {
 }
 
 func TestForceMajeure_List(t *testing.T) {
-	svc, fmRepo, _, _, _ := setupForceMajeureTest(t)
+	svc, fmRepo, _, _, _, _, _ := setupForceMajeureTest(t)
 	ctx := context.Background()
 
 	// Create multiple events

@@ -17,26 +17,32 @@ type ForceMajeureService interface {
 }
 
 type forceMajeureService struct {
-	fmRepo      repository.ForceMajeureRepository
-	bookingRepo repository.BookingRepository
-	walletSvc   WalletService
-	notifSvc    NotificationService
-	log         *logger.Logger
+	fmRepo        repository.ForceMajeureRepository
+	bookingRepo   repository.BookingRepository
+	bathhouseRepo repository.BathhouseRepository
+	cityRepo      repository.CityRepository
+	walletSvc     WalletService
+	notifSvc      NotificationService
+	log           *logger.Logger
 }
 
 func NewForceMajeureService(
 	fmRepo repository.ForceMajeureRepository,
 	bookingRepo repository.BookingRepository,
+	bathhouseRepo repository.BathhouseRepository,
+	cityRepo repository.CityRepository,
 	walletSvc WalletService,
 	notifSvc NotificationService,
 	log *logger.Logger,
 ) ForceMajeureService {
 	return &forceMajeureService{
-		fmRepo:      fmRepo,
-		bookingRepo: bookingRepo,
-		walletSvc:   walletSvc,
-		notifSvc:    notifSvc,
-		log:         log,
+		fmRepo:        fmRepo,
+		bookingRepo:   bookingRepo,
+		bathhouseRepo: bathhouseRepo,
+		cityRepo:      cityRepo,
+		walletSvc:     walletSvc,
+		notifSvc:      notifSvc,
+		log:           log,
 	}
 }
 
@@ -51,6 +57,22 @@ func (s *forceMajeureService) Activate(ctx context.Context, adminID uuid.UUID, r
 		return nil, domain.ErrInvalidInput
 	}
 
+	// Validate that region exists in the cities table
+	cities, err := s.cityRepo.GetAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("validate region: %w", err)
+	}
+	regionExists := false
+	for _, c := range cities {
+		if c.Region == region {
+			regionExists = true
+			break
+		}
+	}
+	if !regionExists {
+		return nil, domain.ErrInvalidInput
+	}
+
 	bookings, err := s.bookingRepo.ListConfirmedByRegionAndDateRange(ctx, region, dateFrom, dateTo)
 	if err != nil {
 		return nil, fmt.Errorf("list bookings for force majeure: %w", err)
@@ -58,6 +80,7 @@ func (s *forceMajeureService) Activate(ctx context.Context, adminID uuid.UUID, r
 
 	var totalRefund int64
 	affectedCount := 0
+	notifiedOwners := make(map[uuid.UUID]bool)
 
 	for _, booking := range bookings {
 		if err := s.bookingRepo.UpdateStatus(ctx, booking.ID, domain.BookingForceMajeure); err != nil {
@@ -86,7 +109,20 @@ func (s *forceMajeureService) Activate(ctx context.Context, adminID uuid.UUID, r
 			fmt.Sprintf("Ваше бронирование отменено по причине: %s. Средства возвращены на кошелёк.", reason),
 			map[string]string{"booking_id": booking.ID.String()})
 
+		// Notify bathhouse owner (deduplicated below)
+		if bh, bhErr := s.bathhouseRepo.GetByID(ctx, booking.BathhouseID); bhErr == nil {
+			notifiedOwners[bh.OwnerID] = true
+		}
+
 		affectedCount++
+	}
+
+	// Send owner notifications (deduplicated)
+	for ownerID := range notifiedOwners {
+		_ = s.notifSvc.Send(ctx, ownerID, domain.NotifSystem,
+			"Бронирования отменены по форс-мажору",
+			fmt.Sprintf("Бронирования в регионе %q отменены по причине: %s", region, reason),
+			map[string]string{"region": region})
 	}
 
 	event := &domain.ForceMajeureEvent{

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -91,6 +92,15 @@ func (s *platformSettingsService) GetBool(ctx context.Context, key string) (bool
 }
 
 func (s *platformSettingsService) Set(ctx context.Context, key, value string, updatedBy uuid.UUID) error {
+	// Validate value against the setting's declared type
+	setting, err := s.repo.Get(ctx, key)
+	if err != nil {
+		return err
+	}
+	if err := validateSettingValue(value, setting.Type); err != nil {
+		return err
+	}
+
 	if err := s.repo.Set(ctx, key, value, &updatedBy); err != nil {
 		return err
 	}
@@ -128,4 +138,29 @@ func (s *platformSettingsService) getValue(ctx context.Context, key string) (str
 	}
 
 	return setting.Value, nil
+}
+
+// validateSettingValue checks that value can be parsed as the declared type.
+func validateSettingValue(value string, settingType domain.SettingType) error {
+	switch settingType {
+	case domain.SettingTypeInt:
+		if _, err := strconv.Atoi(value); err != nil {
+			return fmt.Errorf("value %q is not a valid int: %w", value, domain.ErrInvalidInput)
+		}
+	case domain.SettingTypeFloat:
+		if _, err := strconv.ParseFloat(value, 64); err != nil {
+			return fmt.Errorf("value %q is not a valid float: %w", value, domain.ErrInvalidInput)
+		}
+	case domain.SettingTypeBool:
+		if _, err := strconv.ParseBool(value); err != nil {
+			return fmt.Errorf("value %q is not a valid bool: %w", value, domain.ErrInvalidInput)
+		}
+	case domain.SettingTypeJSON:
+		if !json.Valid([]byte(value)) {
+			return fmt.Errorf("value is not valid JSON: %w", domain.ErrInvalidInput)
+		}
+	case domain.SettingTypeString:
+		// No validation needed
+	}
+	return nil
 }

@@ -197,6 +197,53 @@ func TestPlatformSettingsService_CacheInvalidation(t *testing.T) {
 	}
 }
 
+func TestPlatformSettingsService_Set_TypeValidation(t *testing.T) {
+	svc, repo, _ := setupPlatformSettings(t)
+	adminID := uuid.New()
+	ctx := context.Background()
+
+	// Seed settings of different types
+	repo.Seed("int_setting", "42", "An int", domain.SettingTypeInt)
+	repo.Seed("float_setting", "3.14", "A float", domain.SettingTypeFloat)
+	repo.Seed("bool_setting", "true", "A bool", domain.SettingTypeBool)
+	repo.Seed("json_setting", `{"key":"val"}`, "A JSON", domain.SettingTypeJSON)
+	repo.Seed("string_setting", "hello", "A string", domain.SettingTypeString)
+
+	// Invalid int
+	err := svc.Set(ctx, "int_setting", "not_a_number", adminID)
+	if err == nil {
+		t.Fatal("expected error setting non-int value for int setting")
+	}
+
+	// Valid int should succeed
+	if err := svc.Set(ctx, "int_setting", "100", adminID); err != nil {
+		t.Fatalf("valid int Set failed: %v", err)
+	}
+
+	// Invalid float
+	err = svc.Set(ctx, "float_setting", "not_a_float", adminID)
+	if err == nil {
+		t.Fatal("expected error setting non-float value for float setting")
+	}
+
+	// Invalid bool
+	err = svc.Set(ctx, "bool_setting", "maybe", adminID)
+	if err == nil {
+		t.Fatal("expected error setting non-bool value for bool setting")
+	}
+
+	// Invalid JSON
+	err = svc.Set(ctx, "json_setting", "{invalid", adminID)
+	if err == nil {
+		t.Fatal("expected error setting invalid JSON for json setting")
+	}
+
+	// String accepts anything
+	if err := svc.Set(ctx, "string_setting", "anything goes", adminID); err != nil {
+		t.Fatalf("string Set failed: %v", err)
+	}
+}
+
 func TestPlatformSettingsService_CacheHit(t *testing.T) {
 	svc, repo, mr := setupPlatformSettings(t)
 	repo.Seed("cached_key", "db_value", "test", domain.SettingTypeString)
