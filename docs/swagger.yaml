@@ -1178,6 +1178,28 @@ definitions:
       email:
         type: string
     type: object
+  internal_handler.fraudFlagResponse:
+    properties:
+      action:
+        type: string
+      created_at:
+        type: string
+      details: {}
+      id:
+        type: string
+      reviewed_at:
+        type: string
+      reviewed_by:
+        type: string
+      rule:
+        type: string
+      severity:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: string
+    type: object
   internal_handler.guestCardResponse:
     properties:
       avg_check:
@@ -2492,6 +2514,11 @@ definitions:
       slug:
         type: string
     type: object
+  internal_handler.updateFraudFlagRequest:
+    properties:
+      status:
+        type: string
+    type: object
   internal_handler.updateGuestNotesRequest:
     properties:
       notes:
@@ -2964,6 +2991,151 @@ paths:
       summary: Get top bathhouses
       tags:
       - admin-analytics
+  /admin/antifraud/flags:
+    get:
+      description: Returns paginated list of fraud flags with optional filters by
+        status, rule, and user
+      parameters:
+      - description: Filter by flag status (pending, reviewed, dismissed)
+        in: query
+        name: status
+        type: string
+      - description: Filter by fraud rule name
+        in: query
+        name: rule
+        type: string
+      - description: Filter by user ID (UUID)
+        in: query
+        name: user_id
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.fraudFlagResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/internal_handler.Meta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List fraud flags
+      tags:
+      - admin-antifraud
+  /admin/antifraud/flags/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Update the status of a fraud flag (reviewed or dismissed)
+      parameters:
+      - description: Fraud flag ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New status
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updateFraudFlagRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update fraud flag status
+      tags:
+      - admin-antifraud
   /admin/audit-log:
     get:
       description: Returns a paginated list of all audit log entries. Admin only.
@@ -5381,6 +5553,59 @@ paths:
       security:
       - BearerAuth: []
       summary: List all tickets (admin)
+      tags:
+      - support-admin
+  /admin/tickets/{id}:
+    get:
+      description: Get a specific support ticket by ID as admin
+      parameters:
+      - description: Ticket ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.ticketResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get ticket details (admin)
       tags:
       - support-admin
   /admin/tickets/{id}/assign:
