@@ -59,9 +59,9 @@ type TimeSlot struct {
 	StartTime     time.Time `json:"startTime"`
 	EndTime       time.Time `json:"endTime"`
 	Available     bool      `json:"available"`
-	Price         int64     `json:"price"`                        // Price in kopecks for this hour slot
-	IsLastMinute  bool      `json:"is_last_minute,omitempty"`     // Whether last-minute discount is applied
-	OriginalPrice int64     `json:"original_price,omitempty"`     // Original price before last-minute discount
+	Price         int64     `json:"price"`                    // Price in kopecks for this hour slot
+	IsLastMinute  bool      `json:"is_last_minute,omitempty"` // Whether last-minute discount is applied
+	OriginalPrice int64     `json:"original_price,omitempty"` // Original price before last-minute discount
 }
 
 // RebookData contains pre-filled booking parameters extracted from a historical booking.
@@ -984,11 +984,11 @@ func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid
 
 		// Calculate price for this hour slot using full pricing (includes holiday multiplier)
 		slotPrice, _, err := s.pricingSvc.CalculateFullPrice(ctx, PriceCalculationInput{
-			BathhouseID: bathhouseID,
-			BasePrice:   bh.PricePerHour,
-			StartTime:   t,
-			EndTime:     slotEnd,
-			GuestCount:  1,
+			BathhouseID:  bathhouseID,
+			BasePrice:    bh.PricePerHour,
+			StartTime:    t,
+			EndTime:      slotEnd,
+			GuestCount:   1,
 			BaseCapacity: 1,
 		})
 		if err != nil {
@@ -1423,9 +1423,9 @@ func (s *bookingService) sendLoyaltyUpgradeNotification(ctx context.Context, use
 }
 
 const (
-	checkinEarlyWindow = 15 * time.Minute
-	checkinLateWindow  = 30 * time.Minute
-	noShowGracePeriod  = 30 * time.Minute
+	checkinEarlyWindow  = 15 * time.Minute
+	checkinLateWindow   = 30 * time.Minute
+	noShowGracePeriod   = 30 * time.Minute
 	noShowDisputeWindow = 2 * time.Hour
 )
 
@@ -1504,6 +1504,18 @@ func (s *bookingService) CheckOut(ctx context.Context, userID uuid.UUID, role do
 		s.logger.Warn("failed to complete referral on checkout", "booking_id", bookingID, "error", err)
 	} else if referralResult != nil && referralResult.Completed {
 		s.sendReferralBonusNotifications(ctx, referralResult)
+	}
+
+	// Record guest visit in CRM
+	if s.guestCardSvc != nil {
+		bh, bhErr := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+		if bhErr != nil {
+			s.logger.Warn("failed to get bathhouse for guest card", "booking_id", bookingID, "error", bhErr)
+		} else {
+			if gcErr := s.guestCardSvc.RecordVisit(ctx, bh.OwnerID, booking.UserID, booking.BathhouseID, booking.TotalPrice); gcErr != nil {
+				s.logger.Warn("failed to record guest visit", "booking_id", bookingID, "error", gcErr)
+			}
+		}
 	}
 
 	// Create escrow to hold funds during claim period before releasing to owner.
