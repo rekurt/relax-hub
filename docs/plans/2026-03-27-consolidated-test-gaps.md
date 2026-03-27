@@ -38,10 +38,10 @@ All three subsystems (Cron Jobs, Support & Disputes, Anti-fraud & Audit) are ful
 **Files:**
 - Create: `internal/handler/antifraud_handler_test.go`
 
-- [ ] Test ListFlags: default pagination, with status/rule/user_id filters, invalid status, invalid rule, invalid user_id
-- [ ] Test UpdateFlag: success, invalid flag ID, invalid status, flag not found
-- [ ] Test ListFilteredMessages: default pagination, custom page/page_size
-- [ ] Run `go test ./internal/handler/ -v -run TestAntiFraud` — must pass
+- [x] Test ListFlags: default pagination, with status/rule/user_id filters, invalid status, invalid rule, invalid user_id
+- [x] Test UpdateFlag: success, invalid flag ID, invalid status, flag not found
+- [x] Test ListFilteredMessages: default pagination, custom page/page_size
+- [x] Run `go test ./internal/handler/ -v -run TestAntiFraud` — must pass
 
 ### Task 3: Handler Tests for AuditLogHandler
 
