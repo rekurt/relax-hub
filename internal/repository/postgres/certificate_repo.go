@@ -163,7 +163,7 @@ func (r *certificateRepo) RefundUsage(ctx context.Context, bookingID uuid.UUID) 
 	for _, u := range usages {
 		// Restore certificate balance; only reactivate if not expired
 		_, err := tx.Exec(ctx,
-			`UPDATE gift_certificates SET balance = balance + $2, status = CASE WHEN valid_until > NOW() THEN 'active' ELSE status END WHERE id = $1`,
+			`UPDATE gift_certificates SET balance = LEAST(balance + $2, amount), status = CASE WHEN valid_until > NOW() THEN 'active' ELSE status END WHERE id = $1`,
 			u.certificateID, u.amount)
 		if err != nil {
 			return fmt.Errorf("restore certificate balance: %w", err)
@@ -249,4 +249,3 @@ func (r *certificateRepo) Redeem(ctx context.Context, id uuid.UUID, userID uuid.
 	}
 	return nil
 }
-

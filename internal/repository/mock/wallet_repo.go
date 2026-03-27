@@ -317,10 +317,12 @@ func (r *WalletRepo) UpdateHoldStatus(_ context.Context, holdID uuid.UUID, statu
 		return domain.ErrHoldNotFound
 	}
 	h.Status = status
+	h.CapturedAt = nil
 	if capturedAt != nil {
 		t := *capturedAt
 		h.CapturedAt = &t
 	}
+	h.ReleasedAt = nil
 	if releasedAt != nil {
 		t := *releasedAt
 		h.ReleasedAt = &t

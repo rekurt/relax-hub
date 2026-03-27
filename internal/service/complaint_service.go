@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	autoHideReviewThreshold    = 3
+	autoHideReviewThreshold       = 3
 	notifyAdminBathhouseThreshold = 5
 )
 
@@ -54,14 +54,14 @@ func NewComplaintService(
 
 func (s *complaintService) Report(ctx context.Context, reporterID uuid.UUID, input CreateComplaintInput) (*domain.Complaint, error) {
 	complaint := &domain.Complaint{
-		ID:         uuid.New(),
-		ReporterID: reporterID,
-		TargetType: input.TargetType,
-		TargetID:   input.TargetID,
-		Reason:     input.Reason,
+		ID:          uuid.New(),
+		ReporterID:  reporterID,
+		TargetType:  input.TargetType,
+		TargetID:    input.TargetID,
+		Reason:      input.Reason,
 		Description: input.Description,
-		Status:     domain.ComplaintStatusPending,
-		CreatedAt:  time.Now(),
+		Status:      domain.ComplaintStatusPending,
+		CreatedAt:   time.Now(),
 	}
 
 	if err := complaint.Validate(); err != nil {
@@ -147,7 +147,7 @@ func (s *complaintService) checkAutoActions(ctx context.Context, targetType doma
 
 	switch targetType {
 	case domain.ComplaintTargetReview:
-		if count == autoHideReviewThreshold {
+		if count >= autoHideReviewThreshold {
 			if err := s.reviewRepo.UpdateStatus(ctx, targetID, domain.ReviewStatusHidden); err != nil {
 				s.logger.Error("failed to auto-hide review", "review_id", targetID, "error", err)
 			} else {

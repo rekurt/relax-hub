@@ -1570,7 +1570,7 @@ func (s *bookingService) MarkNoShows(ctx context.Context) (int, error) {
 			if payErr != nil {
 				s.logger.Warn("no payment found for escrow on no-show", "booking_id", b.ID, "error", payErr)
 			} else if payment.Status == domain.PaymentSucceeded {
-				if _, escrowErr := s.escrowSvc.CreateEscrow(ctx, b.ID, payment.Amount, b.ServiceFeeAmount); escrowErr != nil {
+				if _, escrowErr := s.escrowSvc.CreateEscrow(ctx, b.ID, b.TotalPrice, b.ServiceFeeAmount); escrowErr != nil {
 					s.logger.Warn("failed to create escrow for no-show booking", "booking_id", b.ID, "error", escrowErr)
 				}
 			}
