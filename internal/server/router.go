@@ -77,6 +77,7 @@ type RouterParams struct {
 	AntiFraudHandler          *handler.AntiFraudHandler
 	PlatformSettingsHandler   *handler.PlatformSettingsHandler
 	FeatureFlagHandler        *handler.FeatureFlagHandler
+	ForceMajeureHandler       *handler.ForceMajeureHandler
 	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
@@ -566,6 +567,10 @@ func NewRouter(p RouterParams) http.Handler {
 			// Feature flags (admin only)
 			r.Get("/feature-flags", p.FeatureFlagHandler.List)
 			r.Put("/feature-flags/{key}", p.FeatureFlagHandler.Update)
+
+			// Force majeure (admin only)
+			r.Post("/force-majeure", p.ForceMajeureHandler.Activate)
+			r.Get("/force-majeure", p.ForceMajeureHandler.List)
 		})
 	})
 

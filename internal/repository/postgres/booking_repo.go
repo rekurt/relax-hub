@@ -486,3 +486,33 @@ func (r *bookingRepo) GetLastBookingDateByUser(ctx context.Context, userID uuid.
 	}
 	return lastDate, nil
 }
+
+func (r *bookingRepo) ListConfirmedByRegionAndDateRange(ctx context.Context, region string, dateFrom, dateTo time.Time) ([]domain.Booking, error) {
+	query := `SELECT ` + bookingColumnsAliased + `
+		FROM bookings b
+		JOIN bathhouses bh ON b.bathhouse_id = bh.id
+		JOIN cities c ON bh.city_id = c.id
+		WHERE b.status = 'confirmed'
+			AND c.region = $1
+			AND b.start_time <= $3
+			AND b.end_time >= $2`
+
+	rows, err := r.pool.Query(ctx, query, region, dateFrom, dateTo)
+	if err != nil {
+		return nil, fmt.Errorf("list confirmed by region and date range: %w", err)
+	}
+	defer rows.Close()
+
+	var bookings []domain.Booking
+	for rows.Next() {
+		b, err := scanBooking(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan booking: %w", err)
+		}
+		bookings = append(bookings, *b)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate booking rows: %w", err)
+	}
+	return bookings, nil
+}

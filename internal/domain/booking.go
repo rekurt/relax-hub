@@ -15,42 +15,43 @@ const (
 	BookingCancelled    BookingStatus = "cancelled"
 	BookingRejected     BookingStatus = "rejected"
 	BookingCompleted    BookingStatus = "completed"
-	BookingNoShow       BookingStatus = "no_show"
+	BookingNoShow          BookingStatus = "no_show"
+	BookingForceMajeure    BookingStatus = "force_majeure_cancelled"
 )
 
 func (s BookingStatus) IsValid() bool {
 	switch s {
-	case BookingPending, BookingPendingOwner, BookingConfirmed, BookingCancelled, BookingRejected, BookingCompleted, BookingNoShow:
+	case BookingPending, BookingPendingOwner, BookingConfirmed, BookingCancelled, BookingRejected, BookingCompleted, BookingNoShow, BookingForceMajeure:
 		return true
 	}
 	return false
 }
 
 type Booking struct {
-	ID                uuid.UUID
-	UserID            uuid.UUID
-	BathhouseID       uuid.UUID
-	StartTime         time.Time
-	EndTime           time.Time
-	GuestCount        int
-	TotalPrice        int64
-	AddOnTotal        int64
-	PointsSpent       int64
-	ReferralBonusUsed int64
-	BasePrice             int64
-	LongSessionDiscount   int64
-	ExtraGuestSurcharge   int64
-	LastMinuteDiscount    int64
-	ServiceFeeAmount      int64
-	CheckedInAt           *time.Time
-	CheckedOutAt          *time.Time
-	HoldID                *uuid.UUID
-	RejectionReason       string
-	CancelledByOwner      bool
-	Status                BookingStatus
-	Comment           string
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ID                  uuid.UUID
+	UserID              uuid.UUID
+	BathhouseID         uuid.UUID
+	StartTime           time.Time
+	EndTime             time.Time
+	GuestCount          int
+	TotalPrice          int64
+	AddOnTotal          int64
+	PointsSpent         int64
+	ReferralBonusUsed   int64
+	BasePrice           int64
+	LongSessionDiscount int64
+	ExtraGuestSurcharge int64
+	LastMinuteDiscount  int64
+	ServiceFeeAmount    int64
+	CheckedInAt         *time.Time
+	CheckedOutAt        *time.Time
+	HoldID              *uuid.UUID
+	RejectionReason     string
+	CancelledByOwner    bool
+	Status              BookingStatus
+	Comment             string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 }
 
 func (b *Booking) Validate() error {

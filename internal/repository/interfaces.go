@@ -87,6 +87,7 @@ type BookingRepository interface {
 	GetResponseStats(ctx context.Context, bathhouseID uuid.UUID, since time.Time) (totalRequests int, respondedInTime int, avgResponseMinutes int, err error)
 	ListCompletedForReviewRequests(ctx context.Context, checkedOutBefore time.Time) ([]domain.Booking, error)
 	GetLastBookingDateByUser(ctx context.Context, userID uuid.UUID) (*time.Time, error)
+	ListConfirmedByRegionAndDateRange(ctx context.Context, region string, dateFrom, dateTo time.Time) ([]domain.Booking, error)
 }
 
 type ReviewRepository interface {
@@ -570,4 +571,9 @@ type TicketRepository interface {
 	CountByStatus(ctx context.Context) (*domain.TicketStatusCounts, error)
 	ListStaleTickets(ctx context.Context, level domain.TicketLevel, olderThan time.Time) ([]domain.Ticket, error)
 	ListResolvedForAutoClose(ctx context.Context, resolvedBefore time.Time) ([]domain.Ticket, error)
+}
+
+type ForceMajeureRepository interface {
+	Create(ctx context.Context, event *domain.ForceMajeureEvent) error
+	List(ctx context.Context) ([]domain.ForceMajeureEvent, error)
 }

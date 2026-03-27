@@ -301,8 +301,9 @@ func (r *CityRepo) Delete(_ context.Context, id int64) error {
 
 // BookingRepo is an in-memory mock implementation of repository.BookingRepository.
 type BookingRepo struct {
-	mu       sync.RWMutex
-	bookings map[uuid.UUID]*domain.Booking
+	mu               sync.RWMutex
+	bookings         map[uuid.UUID]*domain.Booking
+	bathhouseRegions map[uuid.UUID]string // test helper: bathhouseID -> region
 }
 
 func NewBookingRepo() *BookingRepo {
@@ -611,6 +612,36 @@ func (r *BookingRepo) GetLastBookingDateByUser(_ context.Context, userID uuid.UU
 		}
 	}
 	return latest, nil
+}
+
+func (r *BookingRepo) ListConfirmedByRegionAndDateRange(_ context.Context, region string, dateFrom, dateTo time.Time) ([]domain.Booking, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var result []domain.Booking
+	for _, b := range r.bookings {
+		if b.Status == domain.BookingConfirmed &&
+			!b.StartTime.After(dateTo) &&
+			!b.EndTime.Before(dateFrom) {
+			if r.bathhouseRegions != nil {
+				if r.bathhouseRegions[b.BathhouseID] == region {
+					result = append(result, *b)
+				}
+			} else {
+				result = append(result, *b)
+			}
+		}
+	}
+	return result, nil
+}
+
+// SetBathhouseRegion sets the region for a bathhouse ID (test helper for ListConfirmedByRegionAndDateRange).
+func (r *BookingRepo) SetBathhouseRegion(bathhouseID uuid.UUID, region string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.bathhouseRegions == nil {
+		r.bathhouseRegions = make(map[uuid.UUID]string)
+	}
+	r.bathhouseRegions[bathhouseID] = region
 }
 
 // RepresentativeRepo is an in-memory mock implementation of repository.RepresentativeRepository.
@@ -1600,7 +1631,7 @@ func (r *SocialAccountRepo) Delete(_ context.Context, userID uuid.UUID, provider
 
 // RecommendationRepo is an in-memory mock implementation of repository.RecommendationRepository.
 type RecommendationRepo struct {
-	mu         sync.RWMutex
+	mu          sync.RWMutex
 	preferences map[uuid.UUID]*domain.UserPreferences
 	activities  []domain.UserActivity
 	bookings    map[uuid.UUID][]uuid.UUID // userID -> list of bathhouse IDs
@@ -2209,4 +2240,37 @@ func (r *LoyaltyRepo) CreateTransaction(_ context.Context, tx *domain.LoyaltyTra
 	tx.CreatedAt = time.Now()
 	r.transactions = append(r.transactions, *tx)
 	return nil
+}
+
+// ForceMajeureRepo is an in-memory mock implementation of repository.ForceMajeureRepository.
+type ForceMajeureRepo struct {
+	mu     sync.RWMutex
+	events []domain.ForceMajeureEvent
+}
+
+func NewForceMajeureRepo() *ForceMajeureRepo {
+	return &ForceMajeureRepo{}
+}
+
+func (r *ForceMajeureRepo) Create(_ context.Context, event *domain.ForceMajeureEvent) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if event.ID == uuid.Nil {
+		event.ID = uuid.New()
+	}
+	event.CreatedAt = time.Now()
+	r.events = append(r.events, *event)
+	return nil
+}
+
+func (r *ForceMajeureRepo) List(_ context.Context) ([]domain.ForceMajeureEvent, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	result := make([]domain.ForceMajeureEvent, len(r.events))
+	copy(result, r.events)
+	// Return in reverse order (newest first)
+	for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
+		result[i], result[j] = result[j], result[i]
+	}
+	return result, nil
 }

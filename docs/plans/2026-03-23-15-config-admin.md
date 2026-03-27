@@ -115,11 +115,11 @@ Admin-configurable platform settings (key-value store with Redis cache), feature
 - Create: `migrations/000081_force_majeure.up.sql`
 - Create: `migrations/000081_force_majeure.down.sql`
 
-- [ ] Add `BookingForceMajeure BookingStatus = "force_majeure_cancelled"` to domain/booking.go, update IsValid()
-- [ ] ForceMajeureEvent domain model: ID (uuid), AdminID (uuid), Region (string), DateFrom/DateTo (time.Time), Reason (string), AffectedCount (int), TotalRefund (int64), CreatedAt
-- [ ] Migration: create force_majeure_events table, add 'force_majeure_cancelled' to any CHECK constraints if they exist
-- [ ] Add BookingRepository.ListConfirmedByRegionAndDateRange(ctx, region, dateFrom, dateTo) - joins bookings -> bathhouses -> cities to filter by cities.region
-- [ ] ForceMajeureService.Activate(ctx, adminID, region, dateFrom, dateTo, reason):
+- [x] Add `BookingForceMajeure BookingStatus = "force_majeure_cancelled"` to domain/booking.go, update IsValid()
+- [x] ForceMajeureEvent domain model: ID (uuid), AdminID (uuid), Region (string), DateFrom/DateTo (time.Time), Reason (string), AffectedCount (int), TotalRefund (int64), CreatedAt
+- [x] Migration: create force_majeure_events table, add 'force_majeure_cancelled' to any CHECK constraints if they exist
+- [x] Add BookingRepository.ListConfirmedByRegionAndDateRange(ctx, region, dateFrom, dateTo) - joins bookings -> bathhouses -> cities to filter by cities.region
+- [x] ForceMajeureService.Activate(ctx, adminID, region, dateFrom, dateTo, reason):
   - Find confirmed bookings in region for date range
   - Cancel each with force_majeure_cancelled status
   - 100% refund to wallet for each client
@@ -127,13 +127,13 @@ Admin-configurable platform settings (key-value store with Redis cache), feature
   - Create audit log entry
   - Save ForceMajeureEvent record
   - Return affected count and total refund amount
-- [ ] ForceMajeureService.List(ctx) - return all events ordered by created_at desc
-- [ ] POST /api/v1/admin/force-majeure - activate (RequireRole: admin)
-- [ ] GET /api/v1/admin/force-majeure - list events (RequireRole: admin)
-- [ ] Register in fx modules and router
-- [ ] Swagger annotations
-- [ ] Write tests for service (mock repos, verify cancellation + refund + notification logic)
-- [ ] Run `go test ./... -v` - must pass
+- [x] ForceMajeureService.List(ctx) - return all events ordered by created_at desc
+- [x] POST /api/v1/admin/force-majeure - activate (RequireRole: admin)
+- [x] GET /api/v1/admin/force-majeure - list events (RequireRole: admin)
+- [x] Register in fx modules and router
+- [x] Swagger annotations
+- [x] Write tests for service (mock repos, verify cancellation + refund + notification logic)
+- [x] Run `go test ./... -v` - must pass
 
 ### Task 5: Verify acceptance criteria
 
