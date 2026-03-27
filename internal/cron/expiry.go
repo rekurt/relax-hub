@@ -105,10 +105,12 @@ func formatDays(days int) string {
 	if days <= 0 {
 		return "менее суток"
 	}
-	if days == 1 {
-		return "1 день"
+	mod10 := days % 10
+	mod100 := days % 100
+	if mod10 == 1 && mod100 != 11 {
+		return fmt.Sprintf("%d день", days)
 	}
-	if days >= 2 && days <= 4 {
+	if mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) {
 		return fmt.Sprintf("%d дня", days)
 	}
 	return fmt.Sprintf("%d дней", days)
