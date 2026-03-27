@@ -59,9 +59,9 @@ All five subsystems (Booking Enhancements, Pricing, Payment/Financial, Reviews/R
 
 ### Task 5: Verify acceptance criteria
 
-- [ ] run full test suite: `go test ./... -v -race`
-- [ ] run linter: `make lint`
-- [ ] confirm all 5 plan files archived to docs/plans/completed/
+- [x] run full test suite: `go test ./... -v -race`
+- [x] run linter: `make lint`
+- [x] confirm all 5 plan files archived to docs/plans/completed/
 
 ### Task 6: Update documentation
 
