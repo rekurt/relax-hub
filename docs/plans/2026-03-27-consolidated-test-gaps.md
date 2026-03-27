@@ -55,10 +55,10 @@ All three subsystems (Cron Jobs, Support & Disputes, Anti-fraud & Audit) are ful
 
 ### Task 4: Final Verification
 
-- [ ] Run full test suite: `go test ./... -v -race`
-- [ ] Run linter: `make lint`
-- [ ] Run build: `go build ./...`
-- [ ] Verify swagger spec is up to date: `make swagger`
+- [x] Run full test suite: `go test ./... -v -race`
+- [x] Run linter: `make lint`
+- [x] Run build: `go build ./...`
+- [x] Verify swagger spec is up to date: `make swagger`
 
 ### Task 5: Update Documentation
 
