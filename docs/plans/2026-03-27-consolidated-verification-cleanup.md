@@ -51,11 +51,11 @@ All five subsystems (Booking Enhancements, Pricing, Payment/Financial, Reviews/R
 **Files:**
 - Move: all 5 plan files to `docs/plans/completed/`
 
-- [ ] move 2026-03-23-07-booking-enhancements.md to completed/
-- [ ] move 2026-03-23-08-pricing-enhancements.md to completed/
-- [ ] move 2026-03-23-09-payment-financial.md to completed/
-- [ ] move 2026-03-23-10-reviews-rating.md to completed/
-- [ ] move 2026-03-23-11-crm-owners.md to completed/
+- [x] move 2026-03-23-07-booking-enhancements.md to completed/
+- [x] move 2026-03-23-08-pricing-enhancements.md to completed/
+- [x] move 2026-03-23-09-payment-financial.md to completed/
+- [x] move 2026-03-23-10-reviews-rating.md to completed/
+- [x] move 2026-03-23-11-crm-owners.md to completed/
 
 ### Task 5: Verify acceptance criteria
 
