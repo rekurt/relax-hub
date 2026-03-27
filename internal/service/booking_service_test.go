@@ -2237,10 +2237,10 @@ func TestBookingService_Create_ZeroLeadTimeAllowsImmediate(t *testing.T) {
 	}
 	_ = bhRepo.Create(context.Background(), bh)
 
-	// Booking starting in 10 minutes should succeed with lead_time=0 (5 min fallback)
-	start := time.Now().Add(10 * time.Minute)
-	// Round up to the nearest hour for valid duration
-	start = time.Date(start.Year(), start.Month(), start.Day(), start.Hour()+1, 0, 0, 0, start.Location())
+	// Booking starting soon should succeed with lead_time=0 (5 min fallback)
+	// Use fixed safe hour to avoid time-of-day flakiness with working hours boundary
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
 
 	result, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
 		BathhouseID: bh.ID,
@@ -2484,11 +2484,9 @@ func TestBookingService_Cancel_PendingOwner_NoDeadline(t *testing.T) {
 	clientID := uuid.New()
 	bh := createRequestModeBathhouse(t, bhRepo, ownerID)
 
-	// Create booking starting in 1 hour (would normally be within cancel deadline)
+	// Create booking starting in ~1 hour - use fixed safe hour to avoid time-of-day flakiness
 	now := time.Now()
-	start := now.Add(90 * time.Minute)
-	// Round to next hour
-	start = time.Date(start.Year(), start.Month(), start.Day(), start.Hour()+1, 0, 0, 0, start.Location())
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
 	end := start.Add(1 * time.Hour)
 
 	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{

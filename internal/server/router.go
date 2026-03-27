@@ -59,25 +59,25 @@ type RouterParams struct {
 	SessionHandler        *handler.SessionHandler
 	KYCHandler            *handler.KYCHandler
 	OfferHandler          *handler.OfferHandler
-	PaymentDetailsHandler    *handler.PaymentDetailsHandler
-	ListingDraftHandler      *handler.ListingDraftHandler
-	AuditLogHandler          *handler.AuditLogHandler
-	AddOnHandler             *handler.AddOnHandler
-	SearchHandler            *handler.SearchHandler
-	ComparisonHandler        *handler.ComparisonHandler
-	SavedSearchHandler       *handler.SavedSearchHandler
-	HolidayHandler           *handler.HolidayHandler
-	GuestCardHandler         *handler.GuestCardHandler
-	BroadcastHandler         *handler.BroadcastHandler
-	AutoScenarioHandler      *handler.AutoScenarioHandler
-	TemplateHandler          *handler.TemplateHandler
-	ServiceFeeHandler        *handler.ServiceFeeHandler
-	TicketHandler            *handler.TicketHandler
-	DisputeHandler           *handler.DisputeHandler
-	AntiFraudHandler         *handler.AntiFraudHandler
-	AuditLogRepo             repository.AuditLogRepository
-	SessionValidator         middleware.SessionValidator `optional:"true"`
-	GoAdmin               *admin.GoAdmin             `optional:"true"`
+	PaymentDetailsHandler *handler.PaymentDetailsHandler
+	ListingDraftHandler   *handler.ListingDraftHandler
+	AuditLogHandler       *handler.AuditLogHandler
+	AddOnHandler          *handler.AddOnHandler
+	SearchHandler         *handler.SearchHandler
+	ComparisonHandler     *handler.ComparisonHandler
+	SavedSearchHandler    *handler.SavedSearchHandler
+	HolidayHandler        *handler.HolidayHandler
+	GuestCardHandler      *handler.GuestCardHandler
+	BroadcastHandler      *handler.BroadcastHandler
+	AutoScenarioHandler   *handler.AutoScenarioHandler
+	TemplateHandler       *handler.TemplateHandler
+	ServiceFeeHandler     *handler.ServiceFeeHandler
+	TicketHandler         *handler.TicketHandler
+	DisputeHandler        *handler.DisputeHandler
+	AntiFraudHandler      *handler.AntiFraudHandler
+	AuditLogRepo          repository.AuditLogRepository
+	SessionValidator      middleware.SessionValidator `optional:"true"`
+	GoAdmin               *admin.GoAdmin              `optional:"true"`
 }
 
 func NewRouter(p RouterParams) http.Handler {
@@ -146,7 +146,7 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// Password reset (public, rate-limited)
 		r.With(middleware.RateLimit(authRegisterRateLimiter, 3.0/60.0)).Post("/auth/forgot-password", p.AuthHandler.ForgotPassword) // 3/min
-		r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/reset-password", p.AuthHandler.ResetPassword) // 10/min
+		r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/reset-password", p.AuthHandler.ResetPassword)     // 10/min
 
 		// Account deletion (authenticated)
 		r.With(auth).Post("/auth/delete-account", p.AuthHandler.DeleteAccount)
@@ -217,7 +217,7 @@ func NewRouter(p RouterParams) http.Handler {
 		// Bathhouse photos (owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/photos", p.PhotoHandler.ListByBathhouseOwner)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/photos", p.PhotoHandler.Upload)
-		r.With(auth).Delete("/photos/{id}", p.PhotoHandler.Delete)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/photos/{id}", p.PhotoHandler.Delete)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/bathhouses/{id}/photos/reorder", p.PhotoHandler.Reorder)
 
 		// Bathhouse photos (public)
