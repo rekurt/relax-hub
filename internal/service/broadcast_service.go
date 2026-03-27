@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	broadcastWeeklyLimit     = 3
-	broadcastGuestCooldownH  = 72 // 3 days in hours
+	broadcastWeeklyLimit    = 3
+	broadcastGuestCooldownH = 72 // 3 days in hours
 )
 
 type BroadcastService interface {
@@ -72,14 +72,9 @@ func (s *broadcastService) Send(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 
-	// Verify ownership: owner must match, or representative must manage the broadcast
-	if broadcast.OwnerID != userID {
-		if role == domain.RoleRepresentative {
-			// Representatives can send broadcasts they created
-			// (OwnerID is set to rep's userID at creation)
-		} else if role != domain.RoleAdmin {
-			return domain.ErrForbidden
-		}
+	// Verify ownership: owner must match, admins can send any broadcast
+	if broadcast.OwnerID != userID && role != domain.RoleAdmin {
+		return domain.ErrForbidden
 	}
 
 	if broadcast.Status != domain.BroadcastStatusDraft {
