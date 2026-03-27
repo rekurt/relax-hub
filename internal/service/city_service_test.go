@@ -15,7 +15,7 @@ func TestCityService_Create_Success(t *testing.T) {
 	svc := service.NewCityService(cityRepo)
 
 	city, err := svc.Create(context.Background(), service.CreateCityInput{
-		Name: "Moscow", Slug: "moscow", Latitude: 55.75, Longitude: 37.62,
+		Name: "Moscow", Slug: "moscow", Region: "central", Latitude: 55.75, Longitude: 37.62,
 	})
 
 	if err != nil {
@@ -23,6 +23,9 @@ func TestCityService_Create_Success(t *testing.T) {
 	}
 	if city.Name != "Moscow" {
 		t.Errorf("name = %q, want %q", city.Name, "Moscow")
+	}
+	if city.Region != "central" {
+		t.Errorf("region = %q, want %q", city.Region, "central")
 	}
 	if city.ID == 0 {
 		t.Error("city ID should be assigned")
@@ -47,10 +50,10 @@ func TestCityService_GetAll(t *testing.T) {
 	svc := service.NewCityService(cityRepo)
 
 	_, _ = svc.Create(context.Background(), service.CreateCityInput{
-		Name: "Moscow", Slug: "moscow", Latitude: 55.75, Longitude: 37.62,
+		Name: "Moscow", Slug: "moscow", Region: "central", Latitude: 55.75, Longitude: 37.62,
 	})
 	_, _ = svc.Create(context.Background(), service.CreateCityInput{
-		Name: "Saint Petersburg", Slug: "spb", Latitude: 59.93, Longitude: 30.32,
+		Name: "Saint Petersburg", Slug: "spb", Region: "northwest", Latitude: 59.93, Longitude: 30.32,
 	})
 
 	cities, err := svc.GetAll(context.Background())
@@ -83,6 +86,46 @@ func TestCityService_Update(t *testing.T) {
 	}
 }
 
+func TestCityService_Update_Region(t *testing.T) {
+	cityRepo := mock.NewCityRepo()
+	svc := service.NewCityService(cityRepo)
+
+	city, _ := svc.Create(context.Background(), service.CreateCityInput{
+		Name: "Moscow", Slug: "moscow", Region: "central", Latitude: 55.75, Longitude: 37.62,
+	})
+
+	newRegion := "moscow-region"
+	updated, err := svc.Update(context.Background(), city.ID, service.UpdateCityInput{
+		Region: &newRegion,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if updated.Region != "moscow-region" {
+		t.Errorf("region = %q, want %q", updated.Region, "moscow-region")
+	}
+	if updated.Name != "Moscow" {
+		t.Errorf("name should be preserved, got %q", updated.Name)
+	}
+}
+
+func TestCityService_Create_EmptyRegion(t *testing.T) {
+	cityRepo := mock.NewCityRepo()
+	svc := service.NewCityService(cityRepo)
+
+	city, err := svc.Create(context.Background(), service.CreateCityInput{
+		Name: "Moscow", Slug: "moscow", Latitude: 55.75, Longitude: 37.62,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if city.Region != "" {
+		t.Errorf("region = %q, want empty string", city.Region)
+	}
+}
+
 func TestCityService_Delete(t *testing.T) {
 	cityRepo := mock.NewCityRepo()
 	svc := service.NewCityService(cityRepo)
@@ -107,7 +150,7 @@ func TestCityService_GetBySlug(t *testing.T) {
 	svc := service.NewCityService(cityRepo)
 
 	_, _ = svc.Create(context.Background(), service.CreateCityInput{
-		Name: "Moscow", Slug: "moscow", Latitude: 55.75, Longitude: 37.62,
+		Name: "Moscow", Slug: "moscow", Region: "central", Latitude: 55.75, Longitude: 37.62,
 	})
 
 	city, err := svc.GetBySlug(context.Background(), "moscow")
@@ -116,5 +159,8 @@ func TestCityService_GetBySlug(t *testing.T) {
 	}
 	if city.Name != "Moscow" {
 		t.Errorf("name = %q, want %q", city.Name, "Moscow")
+	}
+	if city.Region != "central" {
+		t.Errorf("region = %q, want %q", city.Region, "central")
 	}
 }

@@ -2,145 +2,148 @@
 # Subsystem 15: Configuration & Admin Enhancements
 
 ## Overview
-Admin-configurable platform settings (key-value store), feature flags for gradual rollout, and force majeure handling for mass cancellations.
+Admin-configurable platform settings (key-value store with Redis cache), feature flags for gradual rollout (with region support via cities.region), and force majeure handling for mass booking cancellations by region.
 
 ## Context
-- Existing config: Viper with BANI_ env prefix
-- Existing admin panel: GoAdmin-based at `internal/admin/`
-- Existing admin routes in `internal/server/router.go`
-- Many new features need admin-configurable parameters (service fee, bonus expiry, claim period, etc.)
-- Currently all config is via env vars — no runtime admin changes possible
-
-## Dependencies
-- No dependencies on other new subsystems (but many subsystems read from platform settings)
-- Should be implemented EARLY so other subsystems can use it
+- Files involved: internal/domain/, internal/service/, internal/handler/, internal/repository/postgres/, internal/repository/interfaces.go, internal/server/router.go, migrations/
+- Related patterns: ServiceFeeService (simple CRUD + admin handler), SearchSuggestionService (Redis caching), CityService (simple entity)
+- Dependencies: redis/go-redis v9, pgxpool, existing domain/booking/wallet/notification infrastructure
+- Latest migration: 000077. Next: 000078
+- fx DI via module.go files in each layer
+- Region: new field in cities table (user chose this approach)
 
 ## Development Approach
 - **Testing approach**: Regular (code first, then tests)
+- Follow existing patterns: handler -> service -> repository with fx DI
+- Redis caching: best-effort (ignore cache errors), JSON for complex values, plain strings for scalars
 - **CRITICAL: every task MUST include new/updated tests**
 - **CRITICAL: all tests must pass before starting next task**
 
 ## Implementation Steps
 
-### Task 15.1: Platform Settings (Admin-configurable)
+### Task 1: Add region field to cities
+
+**Files:**
+- Modify: `internal/domain/city.go`
+- Modify: `internal/repository/postgres/city_repo.go`
+- Modify: `internal/repository/mock/mock_repos.go` (city mock)
+- Modify: `internal/handler/city_handler.go`
+- Modify: `internal/service/city_service.go`
+- Create: `migrations/000078_city_region.up.sql`
+- Create: `migrations/000078_city_region.down.sql`
+
+- [x] Add `Region string` field to `domain.City`
+- [x] Migration: `ALTER TABLE cities ADD COLUMN region VARCHAR(100) NOT NULL DEFAULT ''`
+- [x] Update city repo CRUD to include region in queries
+- [x] Update city handler create/update to accept region
+- [x] Update city service CreateCityInput/UpdateCityInput
+- [x] Update mock repo if needed
+- [x] Write tests for city service with region field
+- [x] Run `go test ./... -v` - must pass
+
+### Task 2: Platform Settings (key-value store with Redis cache)
 
 **Files:**
 - Create: `internal/domain/platform_settings.go`
-- Create: `internal/service/platform_settings_service.go`
-- Create: `internal/handler/platform_settings_handler.go`
 - Create: `internal/repository/postgres/platform_settings_repo.go`
 - Create: `internal/repository/mock/platform_settings_repo.go`
+- Create: `internal/service/platform_settings_service.go`
+- Create: `internal/handler/platform_settings_handler.go`
 - Modify: `internal/repository/interfaces.go`
+- Modify: `internal/repository/postgres/module.go`
+- Modify: `internal/service/module.go`
+- Modify: `internal/handler/module.go`
 - Modify: `internal/server/router.go`
-- Create: `migrations/XXXXXX_platform_settings.up.sql`
+- Create: `migrations/000079_platform_settings.up.sql`
+- Create: `migrations/000079_platform_settings.down.sql`
 
-- [ ] PlatformSetting model:
-  - Key (string, primary key), Value (string — JSON encoded), Description (string)
-  - Type (enum: int/float/string/bool/json), UpdatedAt, UpdatedBy (*uuid)
-- [ ] Migration:
-  ```sql
-  CREATE TABLE platform_settings (
-      key VARCHAR(100) PRIMARY KEY,
-      value TEXT NOT NULL,
-      description TEXT,
-      type VARCHAR(10) NOT NULL DEFAULT 'string',
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-      updated_by UUID REFERENCES users(id)
-  );
-  ```
-- [ ] Seed initial settings:
-  - service_fee_percent: 10.0
-  - welcome_bonus_amount: 50000 (kopecks)
-  - welcome_bonus_expiry_days: 30
-  - wallet_bonus_expiry_days: 180
-  - wallet_refund_bonus_percent: 5
-  - max_wallet_balance_rub: 10000000 (kopecks)
-  - escrow_claim_hours: 48
-  - min_payout_amount: 50000 (kopecks)
-  - bayesian_min_reviews: 5
-  - review_request_delay_hours: 2
-  - noshow_grace_minutes: 30
-  - offer_version: "v1.0"
-- [ ] PlatformSettingsRepository: Get(key), GetAll(), Set(key, value, updatedBy)
-- [ ] PlatformSettingsService:
-  - GetString(ctx, key) (string, error) — with Redis cache (5 min TTL)
-  - GetInt(ctx, key) (int64, error)
-  - GetFloat(ctx, key) (float64, error)
-  - GetBool(ctx, key) (bool, error)
-  - Set(ctx, key, value, adminID) — update DB + invalidate Redis cache
-  - GetAll(ctx) — return all settings
-- [ ] Endpoints:
-  - GET /api/v1/admin/settings — list all settings (RequireRole: admin)
-  - PUT /api/v1/admin/settings/{key} — update setting value (RequireRole: admin)
-- [ ] Integrate: other services should use PlatformSettingsService instead of hardcoded values
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [ ] PlatformSetting domain model: Key (string PK), Value (string/JSON), Description (string), Type (enum: int/float/string/bool/json), UpdatedAt, UpdatedBy (*uuid)
+- [ ] Migration: create platform_settings table + seed 12 initial settings (service_fee_percent, welcome_bonus_amount, welcome_bonus_expiry_days, wallet_bonus_expiry_days, wallet_refund_bonus_percent, max_wallet_balance, escrow_claim_hours, min_payout_amount, bayesian_min_reviews, review_request_delay_hours, noshow_grace_minutes, offer_version)
+- [ ] PlatformSettingsRepository interface: Get(key), GetAll(), Set(key, value, updatedBy)
+- [ ] Postgres repo implementation following city_repo.go pattern
+- [ ] Mock repo for testing
+- [ ] PlatformSettingsService with typed getters (GetString, GetInt, GetFloat, GetBool) + Redis cache (5 min TTL, key prefix "platform:settings:")
+- [ ] Set method: update DB + invalidate Redis cache
+- [ ] GetAll method: return all settings (no cache, admin-only)
+- [ ] Admin handler: GET /api/v1/admin/settings, PUT /api/v1/admin/settings/{key}
+- [ ] Register in fx modules (repo, service, handler) and router
+- [ ] Swagger annotations on endpoints
+- [ ] Write tests for service (mock repo, typed getters, cache invalidation)
+- [ ] Run `go test ./... -v` - must pass
 
-### Task 15.2: Feature Flags
+### Task 3: Feature Flags (with region support)
 
 **Files:**
 - Create: `internal/domain/feature_flag.go`
+- Create: `internal/repository/postgres/feature_flag_repo.go`
+- Create: `internal/repository/mock/feature_flag_repo.go`
 - Create: `internal/service/feature_flag_service.go`
 - Create: `internal/handler/feature_flag_handler.go`
-- Create: `internal/repository/postgres/feature_flag_repo.go`
 - Modify: `internal/repository/interfaces.go`
-- Create: `migrations/XXXXXX_feature_flags.up.sql`
+- Modify: `internal/repository/postgres/module.go`
+- Modify: `internal/service/module.go`
+- Modify: `internal/handler/module.go`
+- Modify: `internal/server/router.go`
+- Create: `migrations/000080_feature_flags.up.sql`
+- Create: `migrations/000080_feature_flags.down.sql`
 
-- [ ] FeatureFlag model:
-  - Key (string, primary key), Enabled (bool), Description (string)
-  - Region (*string — optional, for region-specific flags)
-  - UpdatedAt, UpdatedBy (*uuid)
-- [ ] Migration + seed flags for all new subsystems:
-  - wallet_enabled: false
-  - phone_auth_enabled: false
-  - two_fa_enabled: false
-  - kyc_required: false
-  - addons_enabled: false
-  - request_booking_enabled: false
-  - escrow_enabled: false
-  - crm_enabled: false
-  - disputes_enabled: false
-  - antifraud_enabled: false
-  - sbp_payments_enabled: false
-  - last_minute_enabled: false
-  - fulltext_search_enabled: false
-- [ ] FeatureFlagRepository: Get, GetAll, Set
-- [ ] FeatureFlagService:
-  - IsEnabled(ctx, key) (bool) — with Redis cache (1 min TTL)
-  - IsEnabledForRegion(ctx, key, region) (bool)
-  - SetFlag(ctx, key, enabled, adminID)
-  - GetAll(ctx) — return all flags
-- [ ] Endpoints:
-  - GET /api/v1/admin/feature-flags — list all (RequireRole: admin)
-  - PUT /api/v1/admin/feature-flags/{key} — toggle (RequireRole: admin)
-- [ ] Integrate: check feature flags before enabling new functionality
-  - Example: in booking service, check "request_booking_enabled" before allowing request mode
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [ ] FeatureFlag domain model: Key (string PK), Enabled (bool), Description (string), Region (*string - optional), UpdatedAt, UpdatedBy (*uuid)
+- [ ] Migration: create feature_flags table + seed 13 flags (wallet_enabled, phone_auth_enabled, two_fa_enabled, kyc_required, addons_enabled, request_booking_enabled, escrow_enabled, crm_enabled, disputes_enabled, antifraud_enabled, sbp_payments_enabled, last_minute_enabled, fulltext_search_enabled) - all false by default
+- [ ] FeatureFlagRepository interface: Get(key), GetAll(), Set(key, enabled, region, updatedBy)
+- [ ] Postgres repo implementation
+- [ ] Mock repo for testing
+- [ ] FeatureFlagService: IsEnabled(ctx, key) bool with Redis cache (1 min TTL), IsEnabledForRegion(ctx, key, region) bool, SetFlag(ctx, key, enabled, region, adminID), GetAll(ctx)
+- [ ] Admin handler: GET /api/v1/admin/feature-flags, PUT /api/v1/admin/feature-flags/{key}
+- [ ] Register in fx modules and router
+- [ ] Swagger annotations
+- [ ] Write tests for service (mock repo, region matching, cache behavior)
+- [ ] Run `go test ./... -v` - must pass
 
-### Task 15.3: Force Majeure (FR-080)
+### Task 4: Force Majeure
 
 **Files:**
+- Create: `internal/domain/force_majeure.go`
 - Create: `internal/service/force_majeure_service.go`
 - Create: `internal/handler/force_majeure_handler.go`
+- Modify: `internal/domain/booking.go` (add BookingForceMajeure status)
+- Modify: `internal/repository/interfaces.go` (add ListConfirmedByRegionAndDateRange to BookingRepository)
+- Modify: `internal/repository/postgres/booking_repo.go`
+- Modify: `internal/repository/mock/mock_repos.go`
+- Modify: `internal/service/module.go`
+- Modify: `internal/handler/module.go`
 - Modify: `internal/server/router.go`
+- Create: `migrations/000081_force_majeure.up.sql`
+- Create: `migrations/000081_force_majeure.down.sql`
 
-- [ ] ForceMajeureService:
-  - Activate(ctx, adminID, region, dateFrom, dateTo, reason)
-    1. Find all confirmed bookings in region for date range
-    2. Cancel all bookings with status "force_majeure_cancelled"
-    3. 100% refund to all clients (to wallet, instant)
-    4. Notify all affected clients: "Бронирование отменено по форс-мажору: {reason}"
-    5. Notify all affected owners: "Все бронирования на {dates} отменены по форс-мажору"
-    6. Log in audit log
-  - GetActive(ctx) — return currently active force majeure events
-- [ ] POST /api/v1/admin/force-majeure — activate (RequireRole: admin)
-  - Request: { region, date_from, date_to, reason }
-  - Response: { affected_bookings_count, total_refund_amount }
-- [ ] GET /api/v1/admin/force-majeure — list active/past events
-- [ ] Add "force_majeure_cancelled" to booking status enum
-- [ ] Write tests
-- [ ] Run `go test ./... -v -race` — must pass
+- [ ] Add `BookingForceMajeure BookingStatus = "force_majeure_cancelled"` to domain/booking.go, update IsValid()
+- [ ] ForceMajeureEvent domain model: ID (uuid), AdminID (uuid), Region (string), DateFrom/DateTo (time.Time), Reason (string), AffectedCount (int), TotalRefund (int64), CreatedAt
+- [ ] Migration: create force_majeure_events table, add 'force_majeure_cancelled' to any CHECK constraints if they exist
+- [ ] Add BookingRepository.ListConfirmedByRegionAndDateRange(ctx, region, dateFrom, dateTo) - joins bookings -> bathhouses -> cities to filter by cities.region
+- [ ] ForceMajeureService.Activate(ctx, adminID, region, dateFrom, dateTo, reason):
+  - Find confirmed bookings in region for date range
+  - Cancel each with force_majeure_cancelled status
+  - 100% refund to wallet for each client
+  - Notify affected clients and owners
+  - Create audit log entry
+  - Save ForceMajeureEvent record
+  - Return affected count and total refund amount
+- [ ] ForceMajeureService.List(ctx) - return all events ordered by created_at desc
+- [ ] POST /api/v1/admin/force-majeure - activate (RequireRole: admin)
+- [ ] GET /api/v1/admin/force-majeure - list events (RequireRole: admin)
+- [ ] Register in fx modules and router
+- [ ] Swagger annotations
+- [ ] Write tests for service (mock repos, verify cancellation + refund + notification logic)
+- [ ] Run `go test ./... -v` - must pass
+
+### Task 5: Verify acceptance criteria
+
+- [ ] Run full test suite: `go test ./... -v -race`
 - [ ] Run linter: `make lint`
 - [ ] Verify build: `go build ./...`
 - [ ] Regenerate swagger: `make swagger`
+- [ ] Manual verification: all admin endpoints return correct JSON format { success, data, error, meta }
+
+### Task 6: Update documentation
+
+- [ ] Update CLAUDE.md: add platform settings, feature flags, force majeure to feature subsystems section
+- [ ] Move this plan to `docs/plans/completed/`

@@ -18,17 +18,18 @@ type cityResponse struct {
 	ID        int64   `json:"id"`
 	Name      string  `json:"name"`
 	Slug      string  `json:"slug"`
+	Region    string  `json:"region"`
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 }
 
-// @Summary      List cities
-// @Description  Get all available cities.
-// @Tags         cities
-// @Produce      json
-// @Success      200  {object}  APIResponse{data=[]cityResponse}
-// @Failure      500  {object}  APIResponse{error=APIError}
-// @Router       /cities [get]
+// @Summary		List cities
+// @Description	Get all available cities.
+// @Tags			cities
+// @Produce		json
+// @Success		200	{object}	APIResponse{data=[]cityResponse}
+// @Failure		500	{object}	APIResponse{error=APIError}
+// @Router			/cities [get]
 func (h *CityHandler) List(w http.ResponseWriter, r *http.Request) {
 	cities, err := h.cityService.GetAll(r.Context())
 	if err != nil {
@@ -42,6 +43,7 @@ func (h *CityHandler) List(w http.ResponseWriter, r *http.Request) {
 			ID:        c.ID,
 			Name:      c.Name,
 			Slug:      c.Slug,
+			Region:    c.Region,
 			Latitude:  c.Latitude,
 			Longitude: c.Longitude,
 		}

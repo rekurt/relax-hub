@@ -37,17 +37,18 @@ func NewAdminHandler(
 }
 
 // ListUsers godoc
-// @Summary      List users
-// @Description  Returns a paginated list of all users. Admin only.
-// @Tags         admin-users
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query     int  false  "Page number"   default(1)
-// @Param        page_size  query     int  false  "Page size"     default(20)
-// @Success      200        {object}  APIResponse{data=[]userResponse,meta=Meta}
-// @Failure      401        {object}  APIResponse{error=APIError}
-// @Failure      403        {object}  APIResponse{error=APIError}
-// @Router       /admin/users [get]
+//
+//	@Summary		List users
+//	@Description	Returns a paginated list of all users. Admin only.
+//	@Tags			admin-users
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int	false	"Page number"	default(1)
+//	@Param			page_size	query		int	false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]userResponse,meta=Meta}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/users [get]
 func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	page := getPage(r.URL.Query().Get("page"))
 	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)
@@ -72,18 +73,19 @@ func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 // BlockUser godoc
-// @Summary      Block user
-// @Description  Blocks a user account, preventing them from logging in. Cannot block yourself. Admin only.
-// @Tags         admin-users
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "User ID (UUID)"
-// @Success      200  {object}  APIResponse
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /admin/users/{id}/block [patch]
+//
+//	@Summary		Block user
+//	@Description	Blocks a user account, preventing them from logging in. Cannot block yourself. Admin only.
+//	@Tags			admin-users
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"User ID (UUID)"
+//	@Success		200	{object}	APIResponse
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/admin/users/{id}/block [patch]
 func (h *AdminHandler) BlockUser(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -106,18 +108,19 @@ func (h *AdminHandler) BlockUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // UnblockUser godoc
-// @Summary      Unblock user
-// @Description  Unblocks a previously blocked user account. Admin only.
-// @Tags         admin-users
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "User ID (UUID)"
-// @Success      200  {object}  APIResponse
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /admin/users/{id}/unblock [patch]
+//
+//	@Summary		Unblock user
+//	@Description	Unblocks a previously blocked user account. Admin only.
+//	@Tags			admin-users
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"User ID (UUID)"
+//	@Success		200	{object}	APIResponse
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/admin/users/{id}/unblock [patch]
 func (h *AdminHandler) UnblockUser(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -134,18 +137,19 @@ func (h *AdminHandler) UnblockUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // ApproveBathhouse godoc
-// @Summary      Approve bathhouse
-// @Description  Approves a bathhouse, changing its status to active. Admin only.
-// @Tags         admin-bathhouses
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Bathhouse ID (UUID)"
-// @Success      200  {object}  APIResponse
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /admin/bathhouses/{id}/approve [patch]
+//
+//	@Summary		Approve bathhouse
+//	@Description	Approves a bathhouse, changing its status to active. Admin only.
+//	@Tags			admin-bathhouses
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Bathhouse ID (UUID)"
+//	@Success		200	{object}	APIResponse
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/admin/bathhouses/{id}/approve [patch]
 func (h *AdminHandler) ApproveBathhouse(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -162,18 +166,19 @@ func (h *AdminHandler) ApproveBathhouse(w http.ResponseWriter, r *http.Request) 
 }
 
 // RejectBathhouse godoc
-// @Summary      Reject bathhouse
-// @Description  Rejects a bathhouse registration. Admin only.
-// @Tags         admin-bathhouses
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Bathhouse ID (UUID)"
-// @Success      200  {object}  APIResponse
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /admin/bathhouses/{id}/reject [patch]
+//
+//	@Summary		Reject bathhouse
+//	@Description	Rejects a bathhouse registration. Admin only.
+//	@Tags			admin-bathhouses
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Bathhouse ID (UUID)"
+//	@Success		200	{object}	APIResponse
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/admin/bathhouses/{id}/reject [patch]
 func (h *AdminHandler) RejectBathhouse(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -190,19 +195,20 @@ func (h *AdminHandler) RejectBathhouse(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListBathhouses godoc
-// @Summary      List bathhouses (admin)
-// @Description  Returns a paginated list of bathhouses with optional status filter. Shows all statuses by default. Admin only.
-// @Tags         admin-bathhouses
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query     int     false  "Page number"                                       default(1)
-// @Param        page_size  query     int     false  "Page size"                                         default(20)
-// @Param        status     query     string  false  "Filter by status (pending, active, rejected, blocked)"
-// @Success      200        {object}  APIResponse{data=[]bathhouseResponse,meta=Meta}
-// @Failure      400        {object}  APIResponse{error=APIError}
-// @Failure      401        {object}  APIResponse{error=APIError}
-// @Failure      403        {object}  APIResponse{error=APIError}
-// @Router       /admin/bathhouses [get]
+//
+//	@Summary		List bathhouses (admin)
+//	@Description	Returns a paginated list of bathhouses with optional status filter. Shows all statuses by default. Admin only.
+//	@Tags			admin-bathhouses
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int		false	"Page number"	default(1)
+//	@Param			page_size	query		int		false	"Page size"		default(20)
+//	@Param			status		query		string	false	"Filter by status (pending, active, rejected, blocked)"
+//	@Success		200			{object}	APIResponse{data=[]bathhouseResponse,meta=Meta}
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/bathhouses [get]
 func (h *AdminHandler) ListBathhouses(w http.ResponseWriter, r *http.Request) {
 	filter := domain.BathhouseFilter{
 		Page:     getPage(r.URL.Query().Get("page")),
@@ -242,6 +248,7 @@ func (h *AdminHandler) ListBathhouses(w http.ResponseWriter, r *http.Request) {
 type createCityRequest struct {
 	Name      string  `json:"name"`
 	Slug      string  `json:"slug"`
+	Region    string  `json:"region"`
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
 }
@@ -249,24 +256,26 @@ type createCityRequest struct {
 type updateCityRequest struct {
 	Name      *string  `json:"name"`
 	Slug      *string  `json:"slug"`
+	Region    *string  `json:"region"`
 	Latitude  *float64 `json:"latitude"`
 	Longitude *float64 `json:"longitude"`
 }
 
 // CreateCity godoc
-// @Summary      Create city
-// @Description  Create a new city. Admin only.
-// @Tags         admin-cities
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      createCityRequest  true  "City data"
-// @Success      201   {object}  APIResponse{data=cityResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Router       /admin/cities [post]
+//
+//	@Summary		Create city
+//	@Description	Create a new city. Admin only.
+//	@Tags			admin-cities
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		createCityRequest	true	"City data"
+//	@Success		201		{object}	APIResponse{data=cityResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Router			/admin/cities [post]
 func (h *AdminHandler) CreateCity(w http.ResponseWriter, r *http.Request) {
 	var req createCityRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -277,6 +286,7 @@ func (h *AdminHandler) CreateCity(w http.ResponseWriter, r *http.Request) {
 	city, err := h.cityService.Create(r.Context(), service.CreateCityInput{
 		Name:      req.Name,
 		Slug:      req.Slug,
+		Region:    req.Region,
 		Latitude:  req.Latitude,
 		Longitude: req.Longitude,
 	})
@@ -289,26 +299,28 @@ func (h *AdminHandler) CreateCity(w http.ResponseWriter, r *http.Request) {
 		ID:        city.ID,
 		Name:      city.Name,
 		Slug:      city.Slug,
+		Region:    city.Region,
 		Latitude:  city.Latitude,
 		Longitude: city.Longitude,
 	})
 }
 
 // UpdateCity godoc
-// @Summary      Update city
-// @Description  Update an existing city. Admin only.
-// @Tags         admin-cities
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      int                true  "City ID"
-// @Param        body  body      updateCityRequest  true  "Fields to update"
-// @Success      200   {object}  APIResponse{data=cityResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /admin/cities/{id} [put]
+//
+//	@Summary		Update city
+//	@Description	Update an existing city. Admin only.
+//	@Tags			admin-cities
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		int					true	"City ID"
+//	@Param			body	body		updateCityRequest	true	"Fields to update"
+//	@Success		200		{object}	APIResponse{data=cityResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/cities/{id} [put]
 func (h *AdminHandler) UpdateCity(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -325,6 +337,7 @@ func (h *AdminHandler) UpdateCity(w http.ResponseWriter, r *http.Request) {
 	city, err := h.cityService.Update(r.Context(), id, service.UpdateCityInput{
 		Name:      req.Name,
 		Slug:      req.Slug,
+		Region:    req.Region,
 		Latitude:  req.Latitude,
 		Longitude: req.Longitude,
 	})
@@ -337,24 +350,26 @@ func (h *AdminHandler) UpdateCity(w http.ResponseWriter, r *http.Request) {
 		ID:        city.ID,
 		Name:      city.Name,
 		Slug:      city.Slug,
+		Region:    city.Region,
 		Latitude:  city.Latitude,
 		Longitude: city.Longitude,
 	})
 }
 
 // DeleteCity godoc
-// @Summary      Delete city
-// @Description  Delete a city. Admin only.
-// @Tags         admin-cities
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      int  true  "City ID"
-// @Success      200  {object}  APIResponse
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /admin/cities/{id} [delete]
+//
+//	@Summary		Delete city
+//	@Description	Delete a city. Admin only.
+//	@Tags			admin-cities
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		int	true	"City ID"
+//	@Success		200	{object}	APIResponse
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/admin/cities/{id} [delete]
 func (h *AdminHandler) DeleteCity(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -419,24 +434,25 @@ func toAdminReviewResponse(rev *domain.Review) adminReviewResponse {
 }
 
 // ListReviews godoc
-// @Summary      List reviews (admin)
-// @Description  Returns a paginated list of all reviews for moderation. Supports filtering by status, bathhouse, rating range, and date range. Admin only.
-// @Tags         admin-reviews
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page          query     int     false  "Page number"                    default(1)
-// @Param        page_size     query     int     false  "Page size"                      default(20)
-// @Param        status        query     string  false  "Filter by status (pending, approved, rejected, hidden)"
-// @Param        bathhouse_id  query     string  false  "Filter by bathhouse ID (UUID)"
-// @Param        min_rating    query     int     false  "Minimum rating"
-// @Param        max_rating    query     int     false  "Maximum rating"
-// @Param        from_date     query     string  false  "Filter from date (RFC3339)"
-// @Param        to_date       query     string  false  "Filter to date (RFC3339)"
-// @Success      200           {object}  APIResponse{data=[]adminReviewResponse,meta=Meta}
-// @Failure      400           {object}  APIResponse{error=APIError}
-// @Failure      401           {object}  APIResponse{error=APIError}
-// @Failure      403           {object}  APIResponse{error=APIError}
-// @Router       /admin/reviews [get]
+//
+//	@Summary		List reviews (admin)
+//	@Description	Returns a paginated list of all reviews for moderation. Supports filtering by status, bathhouse, rating range, and date range. Admin only.
+//	@Tags			admin-reviews
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page			query		int		false	"Page number"	default(1)
+//	@Param			page_size		query		int		false	"Page size"		default(20)
+//	@Param			status			query		string	false	"Filter by status (pending, approved, rejected, hidden)"
+//	@Param			bathhouse_id	query		string	false	"Filter by bathhouse ID (UUID)"
+//	@Param			min_rating		query		int		false	"Minimum rating"
+//	@Param			max_rating		query		int		false	"Maximum rating"
+//	@Param			from_date		query		string	false	"Filter from date (RFC3339)"
+//	@Param			to_date			query		string	false	"Filter to date (RFC3339)"
+//	@Success		200				{object}	APIResponse{data=[]adminReviewResponse,meta=Meta}
+//	@Failure		400				{object}	APIResponse{error=APIError}
+//	@Failure		401				{object}	APIResponse{error=APIError}
+//	@Failure		403				{object}	APIResponse{error=APIError}
+//	@Router			/admin/reviews [get]
 func (h *AdminHandler) ListReviews(w http.ResponseWriter, r *http.Request) {
 	page := getPage(r.URL.Query().Get("page"))
 	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)
@@ -510,15 +526,16 @@ func (h *AdminHandler) ListReviews(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetPendingCount godoc
-// @Summary      Get pending reviews count
-// @Description  Returns the number of reviews awaiting moderation. Admin only.
-// @Tags         admin-reviews
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=pendingCountResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /admin/reviews/pending-count [get]
+//
+//	@Summary		Get pending reviews count
+//	@Description	Returns the number of reviews awaiting moderation. Admin only.
+//	@Tags			admin-reviews
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=pendingCountResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Router			/admin/reviews/pending-count [get]
 func (h *AdminHandler) GetPendingCount(w http.ResponseWriter, r *http.Request) {
 	count, err := h.reviewService.CountPendingReviews(r.Context())
 	if err != nil {
@@ -534,18 +551,19 @@ type approveRejectRequest struct {
 }
 
 // ApproveReview godoc
-// @Summary      Approve review
-// @Description  Approves a pending review and notifies the author. Admin only.
-// @Tags         admin-reviews
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Review ID (UUID)"
-// @Success      200  {object}  APIResponse{data=adminReviewResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /admin/reviews/{id}/approve [patch]
+//
+//	@Summary		Approve review
+//	@Description	Approves a pending review and notifies the author. Admin only.
+//	@Tags			admin-reviews
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Review ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=adminReviewResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/admin/reviews/{id}/approve [patch]
 func (h *AdminHandler) ApproveReview(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -581,20 +599,21 @@ func (h *AdminHandler) ApproveReview(w http.ResponseWriter, r *http.Request) {
 }
 
 // RejectReview godoc
-// @Summary      Reject review
-// @Description  Rejects a review with an optional reason and notifies the author. Admin only.
-// @Tags         admin-reviews
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                true  "Review ID (UUID)"
-// @Param        body  body      approveRejectRequest  true  "Rejection reason (optional)"
-// @Success      200   {object}  APIResponse{data=adminReviewResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /admin/reviews/{id}/reject [patch]
+//
+//	@Summary		Reject review
+//	@Description	Rejects a review with an optional reason and notifies the author. Admin only.
+//	@Tags			admin-reviews
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Review ID (UUID)"
+//	@Param			body	body		approveRejectRequest	true	"Rejection reason (optional)"
+//	@Success		200		{object}	APIResponse{data=adminReviewResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/reviews/{id}/reject [patch]
 func (h *AdminHandler) RejectReview(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -655,18 +674,19 @@ type batchResult struct {
 }
 
 // BatchApproveReviews godoc
-// @Summary      Batch approve reviews
-// @Description  Approves multiple reviews at once (max 100). Notifies each author. Admin only.
-// @Tags         admin-reviews
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      batchIDsRequest  true  "List of review IDs to approve"
-// @Success      200   {object}  APIResponse{data=batchResult}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Router       /admin/reviews/batch-approve [post]
+//
+//	@Summary		Batch approve reviews
+//	@Description	Approves multiple reviews at once (max 100). Notifies each author. Admin only.
+//	@Tags			admin-reviews
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		batchIDsRequest	true	"List of review IDs to approve"
+//	@Success		200		{object}	APIResponse{data=batchResult}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/reviews/batch-approve [post]
 func (h *AdminHandler) BatchApproveReviews(w http.ResponseWriter, r *http.Request) {
 	var req batchIDsRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -726,18 +746,19 @@ type batchRejectRequest struct {
 }
 
 // BatchRejectReviews godoc
-// @Summary      Batch reject reviews
-// @Description  Rejects multiple reviews at once (max 100) with an optional reason. Notifies each author. Admin only.
-// @Tags         admin-reviews
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      batchRejectRequest  true  "List of review IDs and optional rejection reason"
-// @Success      200   {object}  APIResponse{data=batchResult}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Router       /admin/reviews/batch-reject [post]
+//
+//	@Summary		Batch reject reviews
+//	@Description	Rejects multiple reviews at once (max 100) with an optional reason. Notifies each author. Admin only.
+//	@Tags			admin-reviews
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		batchRejectRequest	true	"List of review IDs and optional rejection reason"
+//	@Success		200		{object}	APIResponse{data=batchResult}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/reviews/batch-reject [post]
 func (h *AdminHandler) BatchRejectReviews(w http.ResponseWriter, r *http.Request) {
 	var req batchRejectRequest
 	if err := readJSON(w, r, &req); err != nil {

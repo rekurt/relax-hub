@@ -4,6 +4,7 @@ type City struct {
 	ID        int64
 	Name      string
 	Slug      string
+	Region    string
 	Latitude  float64
 	Longitude float64
 }

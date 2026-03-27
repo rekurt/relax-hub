@@ -10,6 +10,7 @@ import (
 type CreateCityInput struct {
 	Name      string
 	Slug      string
+	Region    string
 	Latitude  float64
 	Longitude float64
 }
@@ -17,6 +18,7 @@ type CreateCityInput struct {
 type UpdateCityInput struct {
 	Name      *string
 	Slug      *string
+	Region    *string
 	Latitude  *float64
 	Longitude *float64
 }
@@ -55,6 +57,7 @@ func (s *cityService) Create(ctx context.Context, input CreateCityInput) (*domai
 	city := &domain.City{
 		Name:      input.Name,
 		Slug:      input.Slug,
+		Region:    input.Region,
 		Latitude:  input.Latitude,
 		Longitude: input.Longitude,
 	}
@@ -81,6 +84,9 @@ func (s *cityService) Update(ctx context.Context, id int64, input UpdateCityInpu
 	}
 	if input.Slug != nil {
 		city.Slug = *input.Slug
+	}
+	if input.Region != nil {
+		city.Region = *input.Region
 	}
 	if input.Latitude != nil {
 		city.Latitude = *input.Latitude

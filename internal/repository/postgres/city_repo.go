@@ -21,12 +21,12 @@ func NewCityRepository(pool *pgxpool.Pool) repository.CityRepository {
 
 func (r *cityRepo) Create(ctx context.Context, city *domain.City) error {
 	query := `
-		INSERT INTO cities (name, slug, latitude, longitude)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO cities (name, slug, region, latitude, longitude)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id`
 
 	err := r.pool.QueryRow(ctx, query,
-		city.Name, city.Slug, city.Latitude, city.Longitude,
+		city.Name, city.Slug, city.Region, city.Latitude, city.Longitude,
 	).Scan(&city.ID)
 	if err != nil {
 		if isDuplicateKeyError(err) {
@@ -38,7 +38,7 @@ func (r *cityRepo) Create(ctx context.Context, city *domain.City) error {
 }
 
 func (r *cityRepo) GetAll(ctx context.Context) ([]domain.City, error) {
-	query := `SELECT id, name, slug, latitude, longitude FROM cities ORDER BY name`
+	query := `SELECT id, name, slug, region, latitude, longitude FROM cities ORDER BY name`
 
 	rows, err := r.pool.Query(ctx, query)
 	if err != nil {
@@ -49,7 +49,7 @@ func (r *cityRepo) GetAll(ctx context.Context) ([]domain.City, error) {
 	var cities []domain.City
 	for rows.Next() {
 		var c domain.City
-		if err := rows.Scan(&c.ID, &c.Name, &c.Slug, &c.Latitude, &c.Longitude); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.Slug, &c.Region, &c.Latitude, &c.Longitude); err != nil {
 			return nil, fmt.Errorf("scan city: %w", err)
 		}
 		cities = append(cities, c)
@@ -61,11 +61,11 @@ func (r *cityRepo) GetAll(ctx context.Context) ([]domain.City, error) {
 }
 
 func (r *cityRepo) GetBySlug(ctx context.Context, slug string) (*domain.City, error) {
-	query := `SELECT id, name, slug, latitude, longitude FROM cities WHERE slug = $1`
+	query := `SELECT id, name, slug, region, latitude, longitude FROM cities WHERE slug = $1`
 
 	var city domain.City
 	err := r.pool.QueryRow(ctx, query, slug).Scan(
-		&city.ID, &city.Name, &city.Slug, &city.Latitude, &city.Longitude,
+		&city.ID, &city.Name, &city.Slug, &city.Region, &city.Latitude, &city.Longitude,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -77,11 +77,11 @@ func (r *cityRepo) GetBySlug(ctx context.Context, slug string) (*domain.City, er
 }
 
 func (r *cityRepo) GetByID(ctx context.Context, id int64) (*domain.City, error) {
-	query := `SELECT id, name, slug, latitude, longitude FROM cities WHERE id = $1`
+	query := `SELECT id, name, slug, region, latitude, longitude FROM cities WHERE id = $1`
 
 	var city domain.City
 	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&city.ID, &city.Name, &city.Slug, &city.Latitude, &city.Longitude,
+		&city.ID, &city.Name, &city.Slug, &city.Region, &city.Latitude, &city.Longitude,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -93,10 +93,10 @@ func (r *cityRepo) GetByID(ctx context.Context, id int64) (*domain.City, error) 
 }
 
 func (r *cityRepo) Update(ctx context.Context, city *domain.City) error {
-	query := `UPDATE cities SET name = $2, slug = $3, latitude = $4, longitude = $5 WHERE id = $1`
+	query := `UPDATE cities SET name = $2, slug = $3, region = $4, latitude = $5, longitude = $6 WHERE id = $1`
 
 	tag, err := r.pool.Exec(ctx, query,
-		city.ID, city.Name, city.Slug, city.Latitude, city.Longitude,
+		city.ID, city.Name, city.Slug, city.Region, city.Latitude, city.Longitude,
 	)
 	if err != nil {
 		if isDuplicateKeyError(err) {
