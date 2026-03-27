@@ -31,16 +31,16 @@ Bayesian average rating, multi-criteria ratings (cleanliness, accuracy, communic
 - Modify: `internal/repository/postgres/review_repo.go`
 - Create: `migrations/XXXXXX_review_criteria.up.sql`
 
-- [ ] Add criteria fields to Review model:
+- [x] Add criteria fields to Review model:
   - Cleanliness (float64, 1.0-5.0, step 0.5)
   - Accuracy (float64, 1.0-5.0, step 0.5) — matches listing description
   - Communication (float64, 1.0-5.0, step 0.5) — owner responsiveness
   - ValueForMoney (float64, 1.0-5.0, step 0.5)
-- [ ] Overall Rating = average of 4 criteria (rounded to 1 decimal)
-- [ ] Migration: add `cleanliness DECIMAL(2,1)`, `accuracy DECIMAL(2,1)`, `communication DECIMAL(2,1)`, `value_for_money DECIMAL(2,1)` to reviews
-- [ ] Modify review creation: require all 4 criteria (or overall rating as before for backwards compat)
-- [ ] Modify review response: include criteria breakdown
-- [ ] Modify bathhouse detail: include average per criteria
+- [x] Overall Rating = average of 4 criteria (rounded to 1 decimal)
+- [x] Migration: add `cleanliness DECIMAL(2,1)`, `accuracy DECIMAL(2,1)`, `communication DECIMAL(2,1)`, `value_for_money DECIMAL(2,1)` to reviews
+- [x] Modify review creation: require all 4 criteria (or overall rating as before for backwards compat)
+- [x] Modify review response: include criteria breakdown
+- [x] Modify bathhouse detail: include average per criteria
   ```json
   {
     "avg_rating": 4.3,
@@ -51,8 +51,8 @@ Bayesian average rating, multi-criteria ratings (cleanliness, accuracy, communic
     "review_count": 42
   }
   ```
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 10.2: Bayesian Average Rating (FR-136)
 
@@ -61,7 +61,7 @@ Bayesian average rating, multi-criteria ratings (cleanliness, accuracy, communic
 - Modify: `internal/repository/postgres/review_repo.go`
 - Modify: `internal/domain/bathhouse.go`
 
-- [ ] Implement Bayesian average calculation:
+- [x] Implement Bayesian average calculation:
   ```
   R_bayesian = (n * R + m * C) / (n + m)
   where:
@@ -70,15 +70,15 @@ Bayesian average rating, multi-criteria ratings (cleanliness, accuracy, communic
     m = minimum reviews threshold (configurable, default 5)
     C = platform-wide average rating
   ```
-- [ ] Display rules:
+- [x] Display rules:
   - < 3 reviews: show "Новое" badge instead of rating
   - >= 3 reviews: show Bayesian average
-- [ ] Recalculate on every review create/update/delete:
+- [x] Recalculate on every review create/update/delete:
   - Update bathhouse.AvgRating with Bayesian value
   - Recalculate platform average C (cache in Redis, recalc daily)
-- [ ] Add BayesianRating field to Bathhouse (or rename existing AvgRating)
-- [ ] Write tests with edge cases (0 reviews, 1 review, many reviews)
-- [ ] Run `go test ./... -v` — must pass
+- [x] Add BayesianRating field to Bathhouse (or rename existing AvgRating)
+- [x] Write tests with edge cases (0 reviews, 1 review, many reviews)
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 10.3: Auto Review Request (FR-129)
 
@@ -86,19 +86,19 @@ Bayesian average rating, multi-criteria ratings (cleanliness, accuracy, communic
 - Create: `internal/cron/review_jobs.go`
 - Modify: `internal/service/review_service.go`
 
-- [ ] Cron job (hourly): find bookings where:
+- [x] Cron job (hourly): find bookings where:
   - Status = completed
   - CheckedOutAt is not null
   - CheckedOutAt + 2 hours < now (configurable: BANI_REVIEW_REQUEST_DELAY_HOURS, default 2, range 2-24)
   - No review exists for this booking
   - No review request sent yet (track in Redis: `review_request_sent:{bookingID}`)
-- [ ] Send notification:
+- [x] Send notification:
   - Push: "Как вам визит в {bathhouse_name}? Оставьте отзыв!"
   - Email: include link to review form
-- [ ] Include pre-filled data: booking ID, bathhouse name
-- [ ] Max 1 review request per booking
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] Include pre-filled data: booking ID, bathhouse name
+- [x] Max 1 review request per booking
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 10.4: Quality Monitoring (FR-137, FR-138)
 
@@ -107,21 +107,21 @@ Bayesian average rating, multi-criteria ratings (cleanliness, accuracy, communic
 - Modify: `internal/service/bathhouse_service.go`
 - Modify: `internal/domain/bathhouse.go`
 
-- [ ] On rating recalculation, check thresholds:
+- [x] On rating recalculation, check thresholds:
   - Rating < 3.0 (and >= 10 reviews): send warning to owner
     - "Рейтинг {bathhouse_name} опустился ниже 3.0. Обратите внимание на отзывы."
   - Rating < 2.0 (and >= 10 reviews): auto-depublish listing
     - Set status to "inactive"
     - Notify owner: "Объявление снято с публикации из-за низкого рейтинга"
     - Notify admin
-- [ ] Badges system:
+- [x] Badges system:
   - "Verified" — all photos moderated + KYC approved
   - "Top" — Bayesian rating >= 4.5 AND review_count >= 10
   - "Premium" — active premium/promoted subscription
   - "New" — created within last 30 days AND < 3 reviews
-- [ ] Add Badges ([]string) to bathhouse response (computed, not stored)
-- [ ] Write tests
-- [ ] Run `go test ./... -v` — must pass
+- [x] Add Badges ([]string) to bathhouse response (computed, not stored)
+- [x] Write tests
+- [x] Run `go test ./... -v` — must pass
 
 ### Task 10.5: NLP Auto-moderation Placeholder (FR-133)
 
@@ -129,7 +129,7 @@ Bayesian average rating, multi-criteria ratings (cleanliness, accuracy, communic
 - Create: `internal/moderation/text_moderator.go`
 - Modify: `internal/service/review_service.go`
 
-- [ ] Define TextModerationService interface:
+- [x] Define TextModerationService interface:
   ```go
   type TextModerationService interface {
       Analyze(ctx context.Context, text string) (*ModerationResult, error)
@@ -140,17 +140,17 @@ Bayesian average rating, multi-criteria ratings (cleanliness, accuracy, communic
       Flags    []string `json:"flags"`    // "profanity", "spam", "contact_info", etc.
   }
   ```
-- [ ] Regex-based implementation (v1):
+- [x] Regex-based implementation (v1):
   - Profanity filter: common Russian profanity word list
   - URL detection: http/https/www patterns
   - Phone detection: Russian phone patterns (+7, 8-, etc.)
   - Email detection
   - Spam patterns: repeated characters, ALL CAPS > 50%
-- [ ] Integration with review creation:
+- [x] Integration with review creation:
   - If flagged (score > 0.7): set review status to "pending_moderation" instead of auto-publish
   - If clean: auto-publish as before
-- [ ] Store moderation result for admin reference
-- [ ] Future: replace regex with ML model after accumulating 10,000+ moderated texts
-- [ ] Write tests with various text samples
-- [ ] Run `go test ./... -v -race` — must pass
-- [ ] Run linter: `make lint`
+- [x] Store moderation result for admin reference
+- [x] Future: replace regex with ML model after accumulating 10,000+ moderated texts
+- [x] Write tests with various text samples
+- [x] Run `go test ./... -v -race` — must pass
+- [x] Run linter: `make lint`

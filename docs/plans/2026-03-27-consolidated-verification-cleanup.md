@@ -43,8 +43,8 @@ All five subsystems (Booking Enhancements, Pricing, Payment/Financial, Reviews/R
 - Modify: `docs/plans/2026-03-23-10-reviews-rating.md`
 - Modify: `docs/plans/2026-03-23-11-crm-owners.md`
 
-- [ ] mark all tasks in plan 10 as [x] (all implemented)
-- [ ] mark all tasks in plan 11 as [x] (all implemented)
+- [x] mark all tasks in plan 10 as [x] (all implemented)
+- [x] mark all tasks in plan 11 as [x] (all implemented)
 
 ### Task 4: Archive all 5 completed plans
 
