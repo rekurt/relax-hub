@@ -57,19 +57,19 @@ Admin-configurable platform settings (key-value store with Redis cache), feature
 - Create: `migrations/000079_platform_settings.up.sql`
 - Create: `migrations/000079_platform_settings.down.sql`
 
-- [ ] PlatformSetting domain model: Key (string PK), Value (string/JSON), Description (string), Type (enum: int/float/string/bool/json), UpdatedAt, UpdatedBy (*uuid)
-- [ ] Migration: create platform_settings table + seed 12 initial settings (service_fee_percent, welcome_bonus_amount, welcome_bonus_expiry_days, wallet_bonus_expiry_days, wallet_refund_bonus_percent, max_wallet_balance, escrow_claim_hours, min_payout_amount, bayesian_min_reviews, review_request_delay_hours, noshow_grace_minutes, offer_version)
-- [ ] PlatformSettingsRepository interface: Get(key), GetAll(), Set(key, value, updatedBy)
-- [ ] Postgres repo implementation following city_repo.go pattern
-- [ ] Mock repo for testing
-- [ ] PlatformSettingsService with typed getters (GetString, GetInt, GetFloat, GetBool) + Redis cache (5 min TTL, key prefix "platform:settings:")
-- [ ] Set method: update DB + invalidate Redis cache
-- [ ] GetAll method: return all settings (no cache, admin-only)
-- [ ] Admin handler: GET /api/v1/admin/settings, PUT /api/v1/admin/settings/{key}
-- [ ] Register in fx modules (repo, service, handler) and router
-- [ ] Swagger annotations on endpoints
-- [ ] Write tests for service (mock repo, typed getters, cache invalidation)
-- [ ] Run `go test ./... -v` - must pass
+- [x] PlatformSetting domain model: Key (string PK), Value (string/JSON), Description (string), Type (enum: int/float/string/bool/json), UpdatedAt, UpdatedBy (*uuid)
+- [x] Migration: create platform_settings table + seed 12 initial settings (service_fee_percent, welcome_bonus_amount, welcome_bonus_expiry_days, wallet_bonus_expiry_days, wallet_refund_bonus_percent, max_wallet_balance, escrow_claim_hours, min_payout_amount, bayesian_min_reviews, review_request_delay_hours, noshow_grace_minutes, offer_version)
+- [x] PlatformSettingsRepository interface: Get(key), GetAll(), Set(key, value, updatedBy)
+- [x] Postgres repo implementation following city_repo.go pattern
+- [x] Mock repo for testing
+- [x] PlatformSettingsService with typed getters (GetString, GetInt, GetFloat, GetBool) + Redis cache (5 min TTL, key prefix "platform:settings:")
+- [x] Set method: update DB + invalidate Redis cache
+- [x] GetAll method: return all settings (no cache, admin-only)
+- [x] Admin handler: GET /api/v1/admin/settings, PUT /api/v1/admin/settings/{key}
+- [x] Register in fx modules (repo, service, handler) and router
+- [x] Swagger annotations on endpoints
+- [x] Write tests for service (mock repo, typed getters, cache invalidation)
+- [x] Run `go test ./... -v` - must pass
 
 ### Task 3: Feature Flags (with region support)
 

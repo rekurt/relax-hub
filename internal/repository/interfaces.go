@@ -543,6 +543,12 @@ type FraudFlagRepository interface {
 	CountByUserAndRule(ctx context.Context, userID uuid.UUID, rule domain.FraudRuleName, since time.Time) (int64, error)
 }
 
+type PlatformSettingsRepository interface {
+	Get(ctx context.Context, key string) (*domain.PlatformSetting, error)
+	GetAll(ctx context.Context) ([]domain.PlatformSetting, error)
+	Set(ctx context.Context, key, value string, updatedBy *uuid.UUID) error
+}
+
 type TicketRepository interface {
 	Create(ctx context.Context, ticket *domain.Ticket) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Ticket, error)

@@ -74,8 +74,9 @@ type RouterParams struct {
 	ServiceFeeHandler     *handler.ServiceFeeHandler
 	TicketHandler         *handler.TicketHandler
 	DisputeHandler        *handler.DisputeHandler
-	AntiFraudHandler      *handler.AntiFraudHandler
-	AuditLogRepo          repository.AuditLogRepository
+	AntiFraudHandler          *handler.AntiFraudHandler
+	PlatformSettingsHandler   *handler.PlatformSettingsHandler
+	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
 }
@@ -556,6 +557,10 @@ func NewRouter(p RouterParams) http.Handler {
 
 			// Chat content filtering (admin only)
 			r.Get("/chat/filtered", p.AntiFraudHandler.ListFilteredMessages)
+
+			// Platform settings (admin only)
+			r.Get("/settings", p.PlatformSettingsHandler.List)
+			r.Put("/settings/{key}", p.PlatformSettingsHandler.Update)
 		})
 	})
 
