@@ -145,5 +145,5 @@ Admin-configurable platform settings (key-value store with Redis cache), feature
 
 ### Task 6: Update documentation
 
-- [ ] Update CLAUDE.md: add platform settings, feature flags, force majeure to feature subsystems section
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Update CLAUDE.md: add platform settings, feature flags, force majeure to feature subsystems section
+- [x] Move this plan to `docs/plans/completed/`
