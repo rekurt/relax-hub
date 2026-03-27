@@ -76,6 +76,7 @@ type RouterParams struct {
 	DisputeHandler        *handler.DisputeHandler
 	AntiFraudHandler          *handler.AntiFraudHandler
 	PlatformSettingsHandler   *handler.PlatformSettingsHandler
+	FeatureFlagHandler        *handler.FeatureFlagHandler
 	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
@@ -561,6 +562,10 @@ func NewRouter(p RouterParams) http.Handler {
 			// Platform settings (admin only)
 			r.Get("/settings", p.PlatformSettingsHandler.List)
 			r.Put("/settings/{key}", p.PlatformSettingsHandler.Update)
+
+			// Feature flags (admin only)
+			r.Get("/feature-flags", p.FeatureFlagHandler.List)
+			r.Put("/feature-flags/{key}", p.FeatureFlagHandler.Update)
 		})
 	})
 

@@ -549,6 +549,12 @@ type PlatformSettingsRepository interface {
 	Set(ctx context.Context, key, value string, updatedBy *uuid.UUID) error
 }
 
+type FeatureFlagRepository interface {
+	Get(ctx context.Context, key string) (*domain.FeatureFlag, error)
+	GetAll(ctx context.Context) ([]domain.FeatureFlag, error)
+	Set(ctx context.Context, key string, enabled bool, region *string, updatedBy *uuid.UUID) error
+}
+
 type TicketRepository interface {
 	Create(ctx context.Context, ticket *domain.Ticket) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Ticket, error)

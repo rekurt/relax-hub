@@ -87,17 +87,17 @@ Admin-configurable platform settings (key-value store with Redis cache), feature
 - Create: `migrations/000080_feature_flags.up.sql`
 - Create: `migrations/000080_feature_flags.down.sql`
 
-- [ ] FeatureFlag domain model: Key (string PK), Enabled (bool), Description (string), Region (*string - optional), UpdatedAt, UpdatedBy (*uuid)
-- [ ] Migration: create feature_flags table + seed 13 flags (wallet_enabled, phone_auth_enabled, two_fa_enabled, kyc_required, addons_enabled, request_booking_enabled, escrow_enabled, crm_enabled, disputes_enabled, antifraud_enabled, sbp_payments_enabled, last_minute_enabled, fulltext_search_enabled) - all false by default
-- [ ] FeatureFlagRepository interface: Get(key), GetAll(), Set(key, enabled, region, updatedBy)
-- [ ] Postgres repo implementation
-- [ ] Mock repo for testing
-- [ ] FeatureFlagService: IsEnabled(ctx, key) bool with Redis cache (1 min TTL), IsEnabledForRegion(ctx, key, region) bool, SetFlag(ctx, key, enabled, region, adminID), GetAll(ctx)
-- [ ] Admin handler: GET /api/v1/admin/feature-flags, PUT /api/v1/admin/feature-flags/{key}
-- [ ] Register in fx modules and router
-- [ ] Swagger annotations
-- [ ] Write tests for service (mock repo, region matching, cache behavior)
-- [ ] Run `go test ./... -v` - must pass
+- [x] FeatureFlag domain model: Key (string PK), Enabled (bool), Description (string), Region (*string - optional), UpdatedAt, UpdatedBy (*uuid)
+- [x] Migration: create feature_flags table + seed 13 flags (wallet_enabled, phone_auth_enabled, two_fa_enabled, kyc_required, addons_enabled, request_booking_enabled, escrow_enabled, crm_enabled, disputes_enabled, antifraud_enabled, sbp_payments_enabled, last_minute_enabled, fulltext_search_enabled) - all false by default
+- [x] FeatureFlagRepository interface: Get(key), GetAll(), Set(key, enabled, region, updatedBy)
+- [x] Postgres repo implementation
+- [x] Mock repo for testing
+- [x] FeatureFlagService: IsEnabled(ctx, key) bool with Redis cache (1 min TTL), IsEnabledForRegion(ctx, key, region) bool, SetFlag(ctx, key, enabled, region, adminID), GetAll(ctx)
+- [x] Admin handler: GET /api/v1/admin/feature-flags, PUT /api/v1/admin/feature-flags/{key}
+- [x] Register in fx modules and router
+- [x] Swagger annotations
+- [x] Write tests for service (mock repo, region matching, cache behavior)
+- [x] Run `go test ./... -v` - must pass
 
 ### Task 4: Force Majeure
 

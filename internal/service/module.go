@@ -87,6 +87,7 @@ var Module = fx.Module("service",
 		fx.Annotate(NewTicketService, fx.As(new(TicketService))),
 		fx.Annotate(NewDisputeService, fx.As(new(DisputeService))),
 		fx.Annotate(NewPlatformSettingsService, fx.As(new(PlatformSettingsService))),
+		fx.Annotate(NewFeatureFlagService, fx.As(new(FeatureFlagService))),
 		fx.Annotate(
 			func(escrowRepo repository.EscrowRepository, bookingRepo repository.BookingRepository, bhRepo repository.BathhouseRepository, walletSvc WalletService, cfg *config.Config, log *logger.Logger) EscrowService {
 				return NewEscrowService(escrowRepo, bookingRepo, bhRepo, walletSvc, log, cfg.Escrow.ClaimHours)
