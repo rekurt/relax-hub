@@ -65,5 +65,5 @@ All five subsystems (Booking Enhancements, Pricing, Payment/Financial, Reviews/R
 
 ### Task 6: Update documentation
 
-- [ ] update CLAUDE.md if internal patterns changed
-- [ ] move this plan to `docs/plans/completed/`
+- [x] update CLAUDE.md if internal patterns changed
+- [x] move this plan to `docs/plans/completed/`
