@@ -89,14 +89,6 @@ func (s *forceMajeureService) Activate(ctx context.Context, adminID uuid.UUID, r
 		affectedCount++
 	}
 
-	// Collect unique owner IDs to notify
-	ownerNotified := make(map[uuid.UUID]bool)
-	for _, booking := range bookings {
-		if !ownerNotified[booking.BathhouseID] {
-			ownerNotified[booking.BathhouseID] = true
-		}
-	}
-
 	event := &domain.ForceMajeureEvent{
 		AdminID:       adminID,
 		Region:        region,

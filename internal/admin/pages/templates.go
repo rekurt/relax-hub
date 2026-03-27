@@ -54,23 +54,24 @@ func StatusRu(status string) string {
 	}
 }
 
+var jsReplacer = strings.NewReplacer(
+	`\`, `\\`,
+	`"`, `\"`,
+	`'`, `\'`,
+	`<`, `\x3c`,
+	`>`, `\x3e`,
+	`&`, `\x26`,
+	"\n", `\n`,
+	"\r", `\r`,
+	"\u2028", `\u2028`,
+	"\u2029", `\u2029`,
+)
+
 // JsEscape escapes a string for safe embedding in JavaScript string literals.
 // Returns template.JS to prevent html/template from applying additional
 // context-aware escaping on top of our escaping.
 func JsEscape(s string) template.JS {
-	r := strings.NewReplacer(
-		`\`, `\\`,
-		`"`, `\"`,
-		`'`, `\'`,
-		`<`, `\x3c`,
-		`>`, `\x3e`,
-		`&`, `\x26`,
-		"\n", `\n`,
-		"\r", `\r`,
-		"\u2028", `\u2028`,
-		"\u2029", `\u2029`,
-	)
-	return template.JS(r.Replace(s))
+	return template.JS(jsReplacer.Replace(s))
 }
 
 // ParsePageTemplate creates a template from the shared base layout, components,

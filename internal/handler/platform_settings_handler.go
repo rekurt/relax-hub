@@ -73,7 +73,7 @@ func (h *PlatformSettingsHandler) List(w http.ResponseWriter, r *http.Request) {
 //	@Security		BearerAuth
 //	@Param			key		path		string					true	"Setting key"
 //	@Param			body	body		updateSettingRequest	true	"New value"
-//	@Success		200		{object}	APIResponse{data=platformSettingResponse}
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
 //	@Failure		400		{object}	APIResponse{error=APIError}
 //	@Failure		401		{object}	APIResponse{error=APIError}
 //	@Failure		403		{object}	APIResponse{error=APIError}

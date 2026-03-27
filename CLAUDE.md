@@ -241,7 +241,7 @@ Custom pages are mounted under `{BANI_ADMIN_PREFIX}/pages/`:
 - `GET /moderation` — moderation page
 - `POST /moderation/api/{approve,reject,batch-approve,batch-reject}` — moderation actions (return JSON)
 - `GET /analytics` — analytics page
-- `GET /analytics/export?type={bookings|revenue|users|top_bookings|top_revenue}&from=&to=&city_id=` — CSV export
+- `GET /analytics/export?type={bookings|revenue|users|top_bookings|top_revenue}&date_from=&date_to=&city_id=` — CSV export
 - `GET /static/*` — self-hosted static assets
 - `GET /health` — health monitor
 

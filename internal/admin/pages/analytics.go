@@ -79,22 +79,22 @@ type AnalyticsSummary struct {
 
 // AnalyticsData is the full data model for the analytics dashboard page.
 type AnalyticsData struct {
-	BookingsPerDay     []ChartPoint
-	RevenuePerDay      []ChartPoint
-	NewUsersPerDay     []ChartPoint
-	TopByBookings      []RankedItem
-	TopByRevenue       []RankedItem
-	BookingStatusDist  []DistributionItem
-	ReviewRatingDist   []DistributionItem
-	Filter             AnalyticsFilter
-	Cities             []CityOption
-	DatePresets        []DatePreset
-	Summary            AnalyticsSummary
-	GeneratedAt        time.Time
-	PagesPrefix        string
-	AdminPrefix        string
-	PageTitle          string
-	ActivePage         string
+	BookingsPerDay    []ChartPoint
+	RevenuePerDay     []ChartPoint
+	NewUsersPerDay    []ChartPoint
+	TopByBookings     []RankedItem
+	TopByRevenue      []RankedItem
+	BookingStatusDist []DistributionItem
+	ReviewRatingDist  []DistributionItem
+	Filter            AnalyticsFilter
+	Cities            []CityOption
+	DatePresets       []DatePreset
+	Summary           AnalyticsSummary
+	GeneratedAt       time.Time
+	PagesPrefix       string
+	AdminPrefix       string
+	PageTitle         string
+	ActivePage        string
 }
 
 // AnalyticsDataProvider fetches analytics data from a data source.
@@ -618,8 +618,8 @@ func (h *AnalyticsHandler) HandleCSVExport(w http.ResponseWriter, r *http.Reques
 	}
 
 	filter := AnalyticsFilter{
-		DateFrom: q.Get("from"),
-		DateTo:   q.Get("to"),
+		DateFrom: q.Get("date_from"),
+		DateTo:   q.Get("date_to"),
 		CityID:   cityID,
 	}
 
