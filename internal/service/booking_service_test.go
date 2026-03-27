@@ -1823,7 +1823,7 @@ func TestBookingService_Create_WithLastMinuteDiscount(t *testing.T) {
 
 	wh := make([]domain.WorkingHours, 7)
 	for i := 0; i < 7; i++ {
-		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "08:00", CloseTime: "22:00"}
 	}
 	bh := &domain.Bathhouse{
 		ID:                         uuid.New(),
@@ -1838,15 +1838,15 @@ func TestBookingService_Create_WithLastMinuteDiscount(t *testing.T) {
 		LongSessionThresholdHours:  4,
 		LastMinuteEnabled:          true,
 		LastMinuteDiscountPercent:  20,
-		LastMinuteHoursThreshold:   6,
+		LastMinuteHoursThreshold:   48,
 		WorkingHours:               wh,
 		Status:                     domain.BathhouseStatusActive,
 	}
 	_ = bhRepo.Create(context.Background(), bh)
 
-	// Book starting 3 hours from now — all slots within threshold
+	// Book tomorrow at 10:00-12:00 — within 48h threshold for last-minute discount
 	now := time.Now()
-	start := now.Add(3 * time.Hour).Truncate(time.Hour)
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
 	end := start.Add(2 * time.Hour)
 
 	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
@@ -1859,7 +1859,7 @@ func TestBookingService_Create_WithLastMinuteDiscount(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Both slots (2h) start within 6h threshold
+	// Both slots (2h) start within 48h threshold
 	// Each slot: 10000 * 20% = 2000 discount
 	// Total last-minute discount: 4000
 	expectedDiscount := int64(4000)
@@ -1882,7 +1882,7 @@ func TestBookingService_Create_LastMinuteDisabled_NormalPrice(t *testing.T) {
 
 	wh := make([]domain.WorkingHours, 7)
 	for i := 0; i < 7; i++ {
-		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "08:00", CloseTime: "22:00"}
 	}
 	bh := &domain.Bathhouse{
 		ID:                         uuid.New(),
@@ -1904,7 +1904,7 @@ func TestBookingService_Create_LastMinuteDisabled_NormalPrice(t *testing.T) {
 	_ = bhRepo.Create(context.Background(), bh)
 
 	now := time.Now()
-	start := now.Add(3 * time.Hour).Truncate(time.Hour)
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
 	end := start.Add(2 * time.Hour)
 
 	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
@@ -1932,7 +1932,7 @@ func TestBookingService_Create_LastMinuteBeyondThreshold(t *testing.T) {
 
 	wh := make([]domain.WorkingHours, 7)
 	for i := 0; i < 7; i++ {
-		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "08:00", CloseTime: "22:00"}
 	}
 	bh := &domain.Bathhouse{
 		ID:                         uuid.New(),
