@@ -62,5 +62,5 @@ All three subsystems (Cron Jobs, Support & Disputes, Anti-fraud & Audit) are ful
 
 ### Task 5: Update Documentation
 
-- [ ] Move old plans (`2026-03-23-12-support-disputes.md`, `2026-03-23-13-antifraud-audit.md`, `2026-03-23-14-cron-jobs.md`) to `docs/plans/completed/`
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Move old plans (`2026-03-23-12-support-disputes.md`, `2026-03-23-13-antifraud-audit.md`, `2026-03-23-14-cron-jobs.md`) to `docs/plans/completed/`
+- [x] Move this plan to `docs/plans/completed/`
