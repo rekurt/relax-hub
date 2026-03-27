@@ -32,10 +32,10 @@ All five subsystems (Booking Enhancements, Pricing, Payment/Financial, Reviews/R
 **Files:**
 - Modify: `docs/swagger.json` (regenerate if needed)
 
-- [ ] run `make swagger` to regenerate OpenAPI spec
-- [ ] verify new CRM endpoints (/my/crm/*) appear in swagger
-- [ ] verify review criteria fields appear in swagger models
-- [ ] run `make swagger-fmt`
+- [x] run `make swagger` to regenerate OpenAPI spec
+- [x] verify new CRM endpoints (/my/crm/*) appear in swagger
+- [x] verify review criteria fields appear in swagger models
+- [x] run `make swagger-fmt`
 
 ### Task 3: Update plan files - mark completed tasks
 
