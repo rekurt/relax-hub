@@ -549,7 +549,7 @@ func TestAuditLogHandler_ListByBathhouse_Forbidden(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// AccessChecker returns ErrNotFound for unknown bathhouse, which maps to 404
-	if w.Code != http.StatusNotFound && w.Code != http.StatusForbidden {
-		t.Errorf("expected 404 or 403, got %d: %s", w.Code, w.Body.String())
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected 404, got %d: %s", w.Code, w.Body.String())
 	}
 }

@@ -126,7 +126,9 @@ func TestAntiFraudHandler_ListFlags_WithStatusFilter(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 	var resp handler.APIResponse
-	json.Unmarshal(w.Body.Bytes(), &resp)
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
 	if resp.Meta.TotalCount != 1 {
 		t.Errorf("expected 1 reviewed flag, got %d", resp.Meta.TotalCount)
 	}
@@ -148,7 +150,9 @@ func TestAntiFraudHandler_ListFlags_WithRuleFilter(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 	var resp handler.APIResponse
-	json.Unmarshal(w.Body.Bytes(), &resp)
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
 	if resp.Meta.TotalCount != 1 {
 		t.Errorf("expected 1 flag with rule filter, got %d", resp.Meta.TotalCount)
 	}
@@ -171,7 +175,9 @@ func TestAntiFraudHandler_ListFlags_WithUserIDFilter(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 	var resp handler.APIResponse
-	json.Unmarshal(w.Body.Bytes(), &resp)
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
 	if resp.Meta.TotalCount != 1 {
 		t.Errorf("expected 1 flag for user1, got %d", resp.Meta.TotalCount)
 	}
@@ -324,7 +330,9 @@ func TestAntiFraudHandler_ListFilteredMessages_DefaultPagination(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 	var resp handler.APIResponse
-	json.Unmarshal(w.Body.Bytes(), &resp)
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
 	if resp.Meta == nil {
 		t.Fatal("expected meta")
 	}

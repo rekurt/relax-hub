@@ -192,6 +192,7 @@ func (h *AntiFraudHandler) UpdateFlag(w http.ResponseWriter, r *http.Request) {
 // @Param        page_size  query     int  false  "Page size"    default(20)
 // @Success      200  {object}  APIResponse{data=[]antifraud.FilteredChatMessage,meta=Meta}
 // @Failure      401  {object}  APIResponse{error=APIError}
+// @Failure      403  {object}  APIResponse{error=APIError}
 // @Router       /admin/chat/filtered [get]
 func (h *AntiFraudHandler) ListFilteredMessages(w http.ResponseWriter, r *http.Request) {
 	page := getPage(r.URL.Query().Get("page"))

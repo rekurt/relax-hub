@@ -3594,6 +3594,15 @@ paths:
                 error:
                   $ref: '#/definitions/internal_handler.APIError'
               type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
       security:
       - BearerAuth: []
       summary: List filtered chat messages
