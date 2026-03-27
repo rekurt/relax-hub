@@ -12,12 +12,12 @@ import (
 )
 
 type WalletBalanceSummary struct {
-	Balance        int64              `json:"balance"`
-	HeldAmount     int64              `json:"held_amount"`
-	Available      int64              `json:"available"`
+	Balance        int64                 `json:"balance"`
+	HeldAmount     int64                 `json:"held_amount"`
+	Available      int64                 `json:"available"`
 	Currency       domain.WalletCurrency `json:"currency"`
-	ExpiringSoon   int64              `json:"expiring_soon"`
-	EarliestExpiry *time.Time         `json:"earliest_expiry,omitempty"`
+	ExpiringSoon   int64                 `json:"expiring_soon"`
+	EarliestExpiry *time.Time            `json:"earliest_expiry,omitempty"`
 }
 
 type WalletService interface {
@@ -59,12 +59,12 @@ func (s *walletService) CreateWallet(ctx context.Context, userID uuid.UUID, curr
 	}
 
 	wallet := &domain.Wallet{
-		ID:       uuid.New(),
-		UserID:   userID,
-		Balance:  0,
+		ID:         uuid.New(),
+		UserID:     userID,
+		Balance:    0,
 		HeldAmount: 0,
-		Currency: currency,
-		Status:   domain.WalletStatusActive,
+		Currency:   currency,
+		Status:     domain.WalletStatusActive,
 	}
 
 	if err := s.walletRepo.Create(ctx, wallet); err != nil {
@@ -291,17 +291,22 @@ func (s *walletService) ReleaseHold(ctx context.Context, holdID uuid.UUID) error
 		newHeldAmount = 0
 	}
 
-	// Update wallet balance first, then mark hold as released.
-	// If balance update succeeds but hold status update fails, the held amount is reduced
-	// but hold remains active -- a subsequent retry can still release it safely.
-	// The reverse order (hold first, then balance) would permanently freeze funds on partial failure.
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, wallet.Balance, wallet.HeldAmount, newHeldAmount); err != nil {
-		return err
-	}
-
+	// Mark hold as released first, then update wallet balance.
+	// This mirrors CaptureHold ordering: status first, balance second.
+	// If hold status update succeeds but balance update fails, we revert the hold status.
+	// This prevents double-release on retry (if balance were updated first and hold
+	// status update failed, a retry would reduce held amount again).
 	now := time.Now()
 	if err := s.walletRepo.UpdateHoldStatus(ctx, holdID, domain.WalletHoldStatusReleased, nil, &now); err != nil {
-		s.logger.Error("hold released but status update failed", "hold_id", holdID, "error", err)
+		return fmt.Errorf("release hold status: %w", err)
+	}
+
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, wallet.Balance, wallet.HeldAmount, newHeldAmount); err != nil {
+		// Revert hold status on balance update failure
+		if revertErr := s.walletRepo.UpdateHoldStatus(ctx, holdID, domain.WalletHoldStatusActive, nil, nil); revertErr != nil {
+			s.logger.Error("failed to revert hold status after balance update failure", "hold_id", holdID, "error", revertErr)
+		}
+		return err
 	}
 
 	return nil
