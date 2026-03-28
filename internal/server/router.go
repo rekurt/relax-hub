@@ -604,7 +604,10 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Put("/object-types/{id}", p.ObjectTypeHandler.UpdateObjectType)
 			r.Delete("/object-types/{id}", p.ObjectTypeHandler.DeleteObjectType)
 
-			// Admin refund
+			// Admin booking management
+			r.Get("/bookings", p.BookingHandler.AdminListBookings)
+			r.Post("/bookings/{id}/cancel", p.BookingHandler.AdminCancel)
+			r.Post("/bookings/{id}/change-status", p.BookingHandler.AdminChangeStatus)
 			r.Post("/bookings/{id}/refund", p.PaymentHandler.AdminRefund)
 
 			// Support tickets (admin only)

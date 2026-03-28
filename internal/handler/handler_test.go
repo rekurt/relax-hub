@@ -416,6 +416,19 @@ func (m *mockBookingService) RecalculateResponseRates(_ context.Context) (int, e
 func (m *mockBookingService) Modify(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ service.ModifyBookingInput) (*service.ModifyBookingResult, error) {
 	return nil, nil
 }
+func (m *mockBookingService) AdminCancel(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ string) error {
+	return nil
+}
+func (m *mockBookingService) AdminChangeStatus(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ domain.BookingStatus, _ string) error {
+	return nil
+}
+func (m *mockBookingService) AdminListBookings(_ context.Context, _ domain.AdminBookingFilter) (*domain.PaginatedResult[domain.Booking], error) {
+	return &domain.PaginatedResult[domain.Booking]{
+		Items:    []domain.Booking{},
+		Page:     1,
+		PageSize: 20,
+	}, nil
+}
 
 type mockReviewService struct {
 	createFn           func(ctx context.Context, userID uuid.UUID, input service.CreateReviewInput) (*domain.Review, error)
@@ -3368,5 +3381,127 @@ func TestBathhouseHandler_RegenerateWidgetKey_Forbidden(t *testing.T) {
 
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("expected status 403, got %d", rec.Code)
+	}
+}
+
+func TestBookingHandler_AdminCancel(t *testing.T) {
+	bookingSvc := &mockBookingService{}
+	paymentSvc := &mockPaymentService{}
+	h := handler.NewBookingHandler(bookingSvc, paymentSvc)
+
+	body := `{"reason":"admin test cancel"}`
+	req := httptest.NewRequest("POST", "/api/v1/admin/bookings/"+uuid.New().String()+"/cancel", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	ctx := createTestContext(uuid.New(), domain.RoleAdmin)
+	req = req.WithContext(ctx)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", uuid.New().String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+	h.AdminCancel(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBookingHandler_AdminCancel_MissingReason(t *testing.T) {
+	bookingSvc := &mockBookingService{}
+	paymentSvc := &mockPaymentService{}
+	h := handler.NewBookingHandler(bookingSvc, paymentSvc)
+
+	body := `{"reason":""}`
+	req := httptest.NewRequest("POST", "/api/v1/admin/bookings/"+uuid.New().String()+"/cancel", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	ctx := createTestContext(uuid.New(), domain.RoleAdmin)
+	req = req.WithContext(ctx)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", uuid.New().String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+	h.AdminCancel(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBookingHandler_AdminChangeStatus(t *testing.T) {
+	bookingSvc := &mockBookingService{}
+	paymentSvc := &mockPaymentService{}
+	h := handler.NewBookingHandler(bookingSvc, paymentSvc)
+
+	body := `{"status":"confirmed","reason":"admin override"}`
+	req := httptest.NewRequest("POST", "/api/v1/admin/bookings/"+uuid.New().String()+"/change-status", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	ctx := createTestContext(uuid.New(), domain.RoleAdmin)
+	req = req.WithContext(ctx)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", uuid.New().String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+	h.AdminChangeStatus(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBookingHandler_AdminChangeStatus_InvalidStatus(t *testing.T) {
+	bookingSvc := &mockBookingService{}
+	paymentSvc := &mockPaymentService{}
+	h := handler.NewBookingHandler(bookingSvc, paymentSvc)
+
+	body := `{"status":"invalid_status","reason":"test"}`
+	req := httptest.NewRequest("POST", "/api/v1/admin/bookings/"+uuid.New().String()+"/change-status", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	ctx := createTestContext(uuid.New(), domain.RoleAdmin)
+	req = req.WithContext(ctx)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", uuid.New().String())
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+	rec := httptest.NewRecorder()
+	h.AdminChangeStatus(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBookingHandler_AdminListBookings(t *testing.T) {
+	bookingSvc := &mockBookingService{}
+	paymentSvc := &mockPaymentService{}
+	h := handler.NewBookingHandler(bookingSvc, paymentSvc)
+
+	req := httptest.NewRequest("GET", "/api/v1/admin/bookings?page=1&page_size=20", nil)
+	ctx := createTestContext(uuid.New(), domain.RoleAdmin)
+	req = req.WithContext(ctx)
+
+	rec := httptest.NewRecorder()
+	h.AdminListBookings(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBookingHandler_AdminListBookings_InvalidUserID(t *testing.T) {
+	bookingSvc := &mockBookingService{}
+	paymentSvc := &mockPaymentService{}
+	h := handler.NewBookingHandler(bookingSvc, paymentSvc)
+
+	req := httptest.NewRequest("GET", "/api/v1/admin/bookings?user_id=not-a-uuid", nil)
+	ctx := createTestContext(uuid.New(), domain.RoleAdmin)
+	req = req.WithContext(ctx)
+
+	rec := httptest.NewRecorder()
+	h.AdminListBookings(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
 	}
 }

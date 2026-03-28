@@ -79,6 +79,15 @@ func (m *mockBookingServiceForReminders) RecalculateResponseRates(_ context.Cont
 func (m *mockBookingServiceForReminders) Modify(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ service.ModifyBookingInput) (*service.ModifyBookingResult, error) {
 	return nil, nil
 }
+func (m *mockBookingServiceForReminders) AdminCancel(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ string) error {
+	return nil
+}
+func (m *mockBookingServiceForReminders) AdminChangeStatus(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ domain.BookingStatus, _ string) error {
+	return nil
+}
+func (m *mockBookingServiceForReminders) AdminListBookings(_ context.Context, _ domain.AdminBookingFilter) (*domain.PaginatedResult[domain.Booking], error) {
+	return nil, nil
+}
 
 func newTestReminderScheduler(notifSvc *mockNotificationService, bookingSvc service.BookingService, redisClient *redis.Client) *CronScheduler {
 	log := logger.New(logger.LevelInfo)

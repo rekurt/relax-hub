@@ -94,6 +94,7 @@ type BookingRepository interface {
 	UpdateDepositStatus(ctx context.Context, bookingID uuid.UUID, depositStatus domain.DepositStatus, releasedAt *time.Time) error
 	ListHeldDepositsReadyForRelease(ctx context.Context, checkedOutBefore time.Time) ([]domain.Booking, error)
 	CountActiveByUser(ctx context.Context, userID uuid.UUID) (int64, error)
+	ListAll(ctx context.Context, filter domain.AdminBookingFilter) (*domain.PaginatedResult[domain.Booking], error)
 }
 
 type ReviewRepository interface {

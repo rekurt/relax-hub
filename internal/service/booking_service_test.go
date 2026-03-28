@@ -4060,3 +4060,214 @@ func TestBookingService_Modify_CanMoveToSameSlot(t *testing.T) {
 		t.Errorf("guest_count = %d, want 3", modResult.Booking.GuestCount)
 	}
 }
+
+func TestBookingService_AdminCancel_Success(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	adminID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  2,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+
+	err = svc.AdminCancel(context.Background(), adminID, result.Booking.ID, "admin test cancel")
+	if err != nil {
+		t.Fatalf("AdminCancel failed: %v", err)
+	}
+
+	booking, _ := bookingRepo.GetByID(context.Background(), result.Booking.ID)
+	if booking.Status != domain.BookingCancelled {
+		t.Errorf("status = %s, want cancelled", booking.Status)
+	}
+}
+
+func TestBookingService_AdminCancel_AlreadyCancelled(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	adminID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  2,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+
+	// Cancel first
+	_ = svc.AdminCancel(context.Background(), adminID, result.Booking.ID, "first cancel")
+	// Try again
+	err = svc.AdminCancel(context.Background(), adminID, result.Booking.ID, "second cancel")
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput, got %v", err)
+	}
+}
+
+func TestBookingService_AdminChangeStatus_Success(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	adminID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  2,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+
+	err = svc.AdminChangeStatus(context.Background(), adminID, result.Booking.ID, domain.BookingConfirmed, "admin override")
+	if err != nil {
+		t.Fatalf("AdminChangeStatus failed: %v", err)
+	}
+
+	booking, _ := bookingRepo.GetByID(context.Background(), result.Booking.ID)
+	if booking.Status != domain.BookingConfirmed {
+		t.Errorf("status = %s, want confirmed", booking.Status)
+	}
+}
+
+func TestBookingService_AdminChangeStatus_InvalidStatus(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	adminID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  2,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+
+	err = svc.AdminChangeStatus(context.Background(), adminID, result.Booking.ID, domain.BookingStatus("invalid_status"), "test")
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput, got %v", err)
+	}
+}
+
+func TestBookingService_AdminChangeStatus_SameStatus(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	adminID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  2,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+
+	// Try to set to same status (pending)
+	err = svc.AdminChangeStatus(context.Background(), adminID, result.Booking.ID, domain.BookingPending, "no change")
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput for same status, got %v", err)
+	}
+}
+
+func TestBookingService_AdminListBookings(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+
+	// Create 3 bookings
+	for i := 0; i < 3; i++ {
+		s := start.Add(time.Duration(i*3) * time.Hour)
+		_, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+			BathhouseID: bh.ID,
+			StartTime:   s,
+			EndTime:     s.Add(2 * time.Hour),
+			GuestCount:  2,
+		})
+		if err != nil {
+			t.Fatalf("failed to create booking %d: %v", i, err)
+		}
+	}
+
+	result, err := svc.AdminListBookings(context.Background(), domain.AdminBookingFilter{
+		Page:     1,
+		PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("AdminListBookings failed: %v", err)
+	}
+	if result.TotalCount != 3 {
+		t.Errorf("TotalCount = %d, want 3", result.TotalCount)
+	}
+
+	// Filter by user
+	result, err = svc.AdminListBookings(context.Background(), domain.AdminBookingFilter{
+		UserID:   &clientID,
+		Page:     1,
+		PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("AdminListBookings with user filter failed: %v", err)
+	}
+	if result.TotalCount != 3 {
+		t.Errorf("filtered TotalCount = %d, want 3", result.TotalCount)
+	}
+
+	// Filter by non-existent user
+	otherUser := uuid.New()
+	result, err = svc.AdminListBookings(context.Background(), domain.AdminBookingFilter{
+		UserID:   &otherUser,
+		Page:     1,
+		PageSize: 10,
+	})
+	if err != nil {
+		t.Fatalf("AdminListBookings with non-existent user failed: %v", err)
+	}
+	if result.TotalCount != 0 {
+		t.Errorf("TotalCount = %d, want 0", result.TotalCount)
+	}
+}

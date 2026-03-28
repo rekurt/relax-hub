@@ -450,6 +450,55 @@ func (r *BookingRepo) CountActiveByUser(_ context.Context, userID uuid.UUID) (in
 	return count, nil
 }
 
+func (r *BookingRepo) ListAll(_ context.Context, filter domain.AdminBookingFilter) (*domain.PaginatedResult[domain.Booking], error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var filtered []domain.Booking
+	for _, b := range r.bookings {
+		if filter.UserID != nil && b.UserID != *filter.UserID {
+			continue
+		}
+		if filter.BathhouseID != nil && b.BathhouseID != *filter.BathhouseID {
+			continue
+		}
+		if filter.Status != nil && b.Status != *filter.Status {
+			continue
+		}
+		if filter.FromDate != nil && b.CreatedAt.Before(*filter.FromDate) {
+			continue
+		}
+		if filter.ToDate != nil && b.CreatedAt.After(*filter.ToDate) {
+			continue
+		}
+		filtered = append(filtered, *b)
+	}
+	page := filter.Page
+	pageSize := filter.PageSize
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+	total := int64(len(filtered))
+	start := (page - 1) * pageSize
+	if start > len(filtered) {
+		start = len(filtered)
+	}
+	end := start + pageSize
+	if end > len(filtered) {
+		end = len(filtered)
+	}
+	totalPages := int(total+int64(pageSize)-1) / pageSize
+	return &domain.PaginatedResult[domain.Booking]{
+		Items:      filtered[start:end],
+		TotalCount: total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+	}, nil
+}
+
 func (r *BookingRepo) GetUserStats(_ context.Context, userID uuid.UUID) (*domain.UserBookingStats, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

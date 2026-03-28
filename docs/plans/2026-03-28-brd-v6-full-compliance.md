@@ -130,14 +130,14 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/service/booking_service.go` (admin override)
 - Create: `frontend/src/pages/admin/BookingManagement.tsx`
 
-- [ ] Add admin endpoint: POST /api/v1/admin/bookings/{id}/cancel (reason)
-- [ ] Add admin endpoint: POST /api/v1/admin/bookings/{id}/change-status (status, reason)
-- [ ] Add admin endpoint: GET /api/v1/admin/bookings (search with filters)
-- [ ] Ensure manual refund endpoint exists (POST /api/v1/admin/bookings/{id}/refund already exists - verify)
-- [ ] All operations logged to audit_log
-- [ ] Create admin booking management page
-- [ ] Write tests for admin booking operations
-- [ ] Run project test suite - must pass before task 7
+- [x] Add admin endpoint: POST /api/v1/admin/bookings/{id}/cancel (reason)
+- [x] Add admin endpoint: POST /api/v1/admin/bookings/{id}/change-status (status, reason)
+- [x] Add admin endpoint: GET /api/v1/admin/bookings (search with filters)
+- [x] Ensure manual refund endpoint exists (POST /api/v1/admin/bookings/{id}/refund already exists - verify)
+- [x] All operations logged to audit_log
+- [x] Create admin booking management page
+- [x] Write tests for admin booking operations
+- [x] Run project test suite - must pass before task 7
 
 ### Task 7: Admin Sub-Roles / RBAC (FR admin-panel)
 

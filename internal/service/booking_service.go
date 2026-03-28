@@ -125,6 +125,9 @@ type BookingService interface {
 	Extend(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, extraHours int) (*ExtendResult, error)
 	GetRebookData(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID) (*RebookData, error)
 	RecalculateResponseRates(ctx context.Context) (int, error)
+	AdminCancel(ctx context.Context, adminID uuid.UUID, bookingID uuid.UUID, reason string) error
+	AdminChangeStatus(ctx context.Context, adminID uuid.UUID, bookingID uuid.UUID, status domain.BookingStatus, reason string) error
+	AdminListBookings(ctx context.Context, filter domain.AdminBookingFilter) (*domain.PaginatedResult[domain.Booking], error)
 }
 
 type bookingService struct {
@@ -1416,7 +1419,15 @@ func (s *bookingService) handleOwnerCancellationPenalty(ctx context.Context, boo
 				bookingID := booking.ID
 				_, err := s.walletSvc.Refund(ctx, wallet.ID, compensationAmount, "owner_cancellation", &bookingID, "Компенсация за отмену владельцем")
 				if err != nil {
-					s.logger.Warn("failed to credit owner cancellation compensation", "booking_id", booking.ID, "amount", compensationAmount, "error", err)
+					s.logger.Error("failed to credit owner cancellation compensation, refunding owner", "booking_id", booking.ID, "amount", compensationAmount, "error", err)
+					// Refund the owner to avoid money loss
+					ownerWallet2, ownerErr := s.walletSvc.GetWallet(ctx, bh2.OwnerID)
+					if ownerErr == nil {
+						_, refundErr := s.walletSvc.Refund(ctx, ownerWallet2.ID, compensationAmount, "owner_penalty_reversal", &bookingID, "Возврат штрафа: не удалось начислить компенсацию клиенту")
+						if refundErr != nil {
+							s.logger.Error("CRITICAL: failed to refund owner after client credit failure, funds lost", "booking_id", booking.ID, "owner_id", bh2.OwnerID, "amount", compensationAmount, "error", refundErr)
+						}
+					}
 				} else {
 					s.logger.Info("credited owner cancellation compensation", "booking_id", booking.ID, "user_id", booking.UserID, "amount", compensationAmount)
 					if s.notifSvc != nil {
@@ -2265,4 +2276,83 @@ func (s *bookingService) checkCrossRegion(ctx context.Context, userID uuid.UUID,
 	}
 
 	return nil
+}
+
+func (s *bookingService) AdminCancel(ctx context.Context, adminID uuid.UUID, bookingID uuid.UUID, reason string) error {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	if booking.Status == domain.BookingCancelled || booking.Status == domain.BookingRejected || booking.Status == domain.BookingForceMajeure {
+		return domain.ErrInvalidInput
+	}
+
+	// Release holds if pending_owner
+	if booking.Status == domain.BookingPendingOwner {
+		if err := s.paymentSvc.ReleaseHoldPayment(ctx, bookingID); err != nil {
+			s.logger.Error("failed to release payment hold on admin cancel", "booking_id", bookingID, "error", err)
+		}
+		if booking.HoldID != nil && s.walletSvc != nil {
+			if err := s.walletSvc.ReleaseHold(ctx, *booking.HoldID); err != nil {
+				s.logger.Warn("failed to release wallet hold on admin cancel", "booking_id", bookingID, "error", err)
+			}
+		}
+	}
+
+	origStatus := booking.Status
+
+	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, domain.BookingCancelled); err != nil {
+		return err
+	}
+
+	if reason != "" {
+		booking.Status = domain.BookingCancelled
+		booking.RejectionReason = reason
+		_ = s.bookingRepo.Update(ctx, booking)
+	}
+
+	s.refundBookingPoints(ctx, booking)
+	s.refundReferralBonus(ctx, booking)
+	s.refundPromoUsage(ctx, booking)
+	s.refundCertificateUsage(ctx, booking)
+	if origStatus != domain.BookingPendingOwner {
+		s.refundPayment(ctx, booking, false, "wallet")
+	}
+	s.releaseDepositOnCancel(ctx, booking)
+	s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
+
+	return nil
+}
+
+func (s *bookingService) AdminChangeStatus(ctx context.Context, adminID uuid.UUID, bookingID uuid.UUID, status domain.BookingStatus, reason string) error {
+	if !status.IsValid() {
+		return domain.ErrInvalidInput
+	}
+
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+
+	// Prevent no-op transitions
+	if booking.Status == status {
+		return domain.ErrInvalidInput
+	}
+
+	if err := s.bookingRepo.UpdateStatus(ctx, bookingID, status); err != nil {
+		return err
+	}
+
+	if reason != "" {
+		booking.Status = status
+		booking.RejectionReason = reason
+		_ = s.bookingRepo.Update(ctx, booking)
+	}
+
+	return nil
+}
+
+func (s *bookingService) AdminListBookings(ctx context.Context, filter domain.AdminBookingFilter) (*domain.PaginatedResult[domain.Booking], error) {
+	return s.bookingRepo.ListAll(ctx, filter)
 }

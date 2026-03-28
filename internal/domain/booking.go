@@ -80,6 +80,17 @@ type Booking struct {
 	UpdatedAt           time.Time
 }
 
+// AdminBookingFilter contains filter parameters for admin booking search.
+type AdminBookingFilter struct {
+	UserID      *uuid.UUID
+	BathhouseID *uuid.UUID
+	Status      *BookingStatus
+	FromDate    *time.Time
+	ToDate      *time.Time
+	Page        int
+	PageSize    int
+}
+
 func (b *Booking) Validate() error {
 	if b.BathhouseID == uuid.Nil {
 		return ErrInvalidInput

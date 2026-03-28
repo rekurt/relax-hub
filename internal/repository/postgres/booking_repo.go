@@ -291,6 +291,85 @@ func (r *bookingRepo) CountActiveByUser(ctx context.Context, userID uuid.UUID) (
 	return count, nil
 }
 
+func (r *bookingRepo) ListAll(ctx context.Context, filter domain.AdminBookingFilter) (*domain.PaginatedResult[domain.Booking], error) {
+	page := filter.Page
+	pageSize := filter.PageSize
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+
+	where := "WHERE 1=1"
+	args := []any{}
+	argIdx := 1
+
+	if filter.UserID != nil {
+		where += fmt.Sprintf(" AND user_id = $%d", argIdx)
+		args = append(args, *filter.UserID)
+		argIdx++
+	}
+	if filter.BathhouseID != nil {
+		where += fmt.Sprintf(" AND bathhouse_id = $%d", argIdx)
+		args = append(args, *filter.BathhouseID)
+		argIdx++
+	}
+	if filter.Status != nil {
+		where += fmt.Sprintf(" AND status = $%d", argIdx)
+		args = append(args, string(*filter.Status))
+		argIdx++
+	}
+	if filter.FromDate != nil {
+		where += fmt.Sprintf(" AND created_at >= $%d", argIdx)
+		args = append(args, *filter.FromDate)
+		argIdx++
+	}
+	if filter.ToDate != nil {
+		where += fmt.Sprintf(" AND created_at <= $%d", argIdx)
+		args = append(args, *filter.ToDate)
+		argIdx++
+	}
+
+	var totalCount int64
+	countQuery := "SELECT COUNT(*) FROM bookings " + where
+	err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&totalCount)
+	if err != nil {
+		return nil, fmt.Errorf("count admin bookings: %w", err)
+	}
+
+	offset := (page - 1) * pageSize
+	query := fmt.Sprintf("SELECT %s FROM bookings %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d",
+		bookingColumns, where, argIdx, argIdx+1)
+	args = append(args, pageSize, offset)
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list admin bookings: %w", err)
+	}
+	defer rows.Close()
+
+	var bookings []domain.Booking
+	for rows.Next() {
+		b, err := scanBooking(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan booking: %w", err)
+		}
+		bookings = append(bookings, *b)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate admin booking rows: %w", err)
+	}
+
+	return &domain.PaginatedResult[domain.Booking]{
+		Items:      bookings,
+		TotalCount: totalCount,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: int(math.Ceil(float64(totalCount) / float64(pageSize))),
+	}, nil
+}
+
 func (r *bookingRepo) GetUserStats(ctx context.Context, userID uuid.UUID) (*domain.UserBookingStats, error) {
 	query := `
 		SELECT COUNT(*), COALESCE(SUM(total_price), 0), COALESCE(AVG(total_price), 0)

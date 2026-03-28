@@ -187,6 +187,15 @@ func (m *mockWidgetBookingService) RecalculateResponseRates(_ context.Context) (
 func (m *mockWidgetBookingService) Modify(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ service.ModifyBookingInput) (*service.ModifyBookingResult, error) {
 	return nil, nil
 }
+func (m *mockWidgetBookingService) AdminCancel(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ string) error {
+	return nil
+}
+func (m *mockWidgetBookingService) AdminChangeStatus(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ domain.BookingStatus, _ string) error {
+	return nil
+}
+func (m *mockWidgetBookingService) AdminListBookings(_ context.Context, _ domain.AdminBookingFilter) (*domain.PaginatedResult[domain.Booking], error) {
+	return nil, nil
+}
 
 func TestWidgetHandler_GetBathhouse(t *testing.T) {
 	apiKey := "test-api-key"
