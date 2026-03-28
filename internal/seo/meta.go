@@ -11,6 +11,10 @@ type MetaTags struct {
 	Description string `json:"description"`
 	OGImage     string `json:"og_image"`
 	OGType      string `json:"og_type"`
+	OGUrl       string `json:"og_url,omitempty"`
+	OGSiteName  string `json:"og_site_name,omitempty"`
+	OGLocale    string `json:"og_locale,omitempty"`
+	TwitterCard string `json:"twitter_card,omitempty"`
 	Canonical   string `json:"canonical"`
 }
 
@@ -48,11 +52,20 @@ func GenerateMetaTags(input MetaInput) MetaTags {
 
 	canonical := generateCanonical(input)
 
+	twitterCard := "summary"
+	if ogImage != "" {
+		twitterCard = "summary_large_image"
+	}
+
 	return MetaTags{
 		Title:       title,
 		Description: description,
 		OGImage:     ogImage,
 		OGType:      "business.business",
+		OGUrl:       canonical,
+		OGSiteName:  siteName,
+		OGLocale:    "ru_RU",
+		TwitterCard: twitterCard,
 		Canonical:   canonical,
 	}
 }

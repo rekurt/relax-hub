@@ -83,6 +83,7 @@ type RouterParams struct {
 	FinancialReportHandler    *handler.FinancialReportHandler
 	ReconciliationHandler     *handler.ReconciliationHandler
 	ListingImportHandler     *handler.ListingImportHandler
+	ShareHandler             *handler.ShareHandler
 	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
@@ -255,6 +256,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Post("/bookings/{id}/extend", p.BookingHandler.Extend)
 		r.With(auth).Post("/bookings/{id}/dispute-noshow", p.BookingHandler.DisputeNoShow)
 		r.With(auth).Get("/bookings/{id}/rebook-data", p.BookingHandler.GetRebookData)
+
+		// Booking share links
+		r.With(auth).Post("/bookings/share", p.ShareHandler.CreateShareLink)
+		r.Get("/share/booking/{token}", p.ShareHandler.ResolveShareLink)
 
 		// Bathhouse bookings (owner/representative/admin)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/bathhouses/{id}/bookings", p.BookingHandler.ListByBathhouse)

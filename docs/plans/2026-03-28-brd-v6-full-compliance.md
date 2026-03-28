@@ -259,12 +259,12 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: `internal/handler/share_handler.go` (share booking link generation)
 - Modify: `internal/handler/booking_handler.go` (share booking endpoint)
 
-- [ ] Enhance Open Graph meta tags on bathhouse pages (photo, title, description, price)
-- [ ] Generate shareable booking links with pre-filled date/bathhouse params
-- [ ] Add API endpoint: POST /api/v1/bookings/{id}/share -> returns share URL
-- [ ] Handle deep link resolution: /share/booking/{token} -> booking page with pre-filled data
-- [ ] Write tests for share URL generation and resolution
-- [ ] Run project test suite - must pass before next task
+- [x] Enhance Open Graph meta tags on bathhouse pages (photo, title, description, price)
+- [x] Generate shareable booking links with pre-filled date/bathhouse params
+- [x] Add API endpoint: POST /api/v1/bookings/{id}/share -> returns share URL
+- [x] Handle deep link resolution: /share/booking/{token} -> booking page with pre-filled data
+- [x] Write tests for share URL generation and resolution
+- [x] Run project test suite - must pass before next task
 
 ### Task 13: Representative roles expansion (FR - Owner management section)
 

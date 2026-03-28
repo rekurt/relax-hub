@@ -620,3 +620,10 @@ type ReconciliationRepository interface {
 	SumPaymentsForPeriod(ctx context.Context, from, to time.Time) (sum int64, count int, err error)
 	SumRefundsForPeriod(ctx context.Context, from, to time.Time) (sum int64, count int, err error)
 }
+
+// BookingShareRepository manages shareable booking links.
+type BookingShareRepository interface {
+	Create(ctx context.Context, share *domain.BookingShare) error
+	GetByToken(ctx context.Context, token string) (*domain.BookingShare, error)
+	DeleteExpired(ctx context.Context) (int64, error)
+}

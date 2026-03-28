@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/service"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -89,5 +90,8 @@ var Module = fx.Module("handler",
 		NewFinancialReportHandler,
 		NewReconciliationHandler,
 		NewListingImportHandler,
+		func(shareRepo repository.BookingShareRepository, cfg *config.Config) *ShareHandler {
+			return NewShareHandler(shareRepo, cfg.FrontendURL)
+		},
 	),
 )
