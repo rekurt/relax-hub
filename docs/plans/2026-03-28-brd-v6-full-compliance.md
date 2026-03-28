@@ -190,14 +190,14 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Create: `frontend/src/pages/admin/AdminNotificationCenter.tsx`
 - Modify: `internal/cron/scheduler.go` (daily digest cron)
 
-- [ ] Create admin_notifications table (id, role, severity, type, title, body, read, created_at)
-- [ ] Emit admin notifications from: antifraud flags, SLA violations, reconciliation discrepancies, float drift
-- [ ] Admin endpoint: GET /api/v1/admin/notifications (filtered by role)
-- [ ] Admin endpoint: PUT /api/v1/admin/notifications/{id}/read
-- [ ] Daily email digest cron: aggregate unread critical alerts and send per admin role
-- [ ] Create notification center page with severity filtering
-- [ ] Write tests for notification emission and digest
-- [ ] Run project test suite - must pass before task 10
+- [x] Create admin_notifications table (id, role, severity, type, title, body, read, created_at)
+- [x] Emit admin notifications from: antifraud flags, SLA violations, reconciliation discrepancies, float drift
+- [x] Admin endpoint: GET /api/v1/admin/notifications (filtered by role)
+- [x] Admin endpoint: PUT /api/v1/admin/notifications/{id}/read
+- [x] Daily email digest cron: aggregate unread critical alerts and send per admin role
+- [x] Create notification center page with severity filtering
+- [x] Write tests for notification emission and digest
+- [x] Run project test suite - must pass before task 10
 
 ### Task 10: Moderation Dashboard with SLA (FR-146)
 

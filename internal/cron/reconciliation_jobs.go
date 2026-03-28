@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/nikitaaldaev/bani/internal/domain"
 )
 
 func (cs *CronScheduler) dailyFloatSnapshot(ctx context.Context) error {
@@ -21,6 +23,20 @@ func (cs *CronScheduler) dailyFloatSnapshot(ctx context.Context) error {
 		"escrow_held", snapshot.EscrowHeldTotal,
 		"expected_total", snapshot.ExpectedTotal,
 	)
+
+	if snapshot.Status != "ok" && cs.adminNotificationSvc != nil {
+		_ = cs.adminNotificationSvc.Emit(ctx,
+			domain.AdminNotifFloatDrift,
+			domain.AdminNotifSeverityError,
+			"Обнаружено расхождение баланса платформы",
+			fmt.Sprintf("Статус: %s. Ожидаемый итог: %d коп.", snapshot.Status, snapshot.ExpectedTotal),
+			map[string]interface{}{
+				"status":         snapshot.Status,
+				"expected_total": snapshot.ExpectedTotal,
+			},
+		)
+	}
+
 	return nil
 }
 
@@ -42,5 +58,21 @@ func (cs *CronScheduler) dailyReconciliation(ctx context.Context) error {
 		"provider_payments", report.ProviderPaymentsSum,
 		"payment_discrepancy", report.PaymentDiscrepancy,
 	)
+
+	if report.PaymentDiscrepancy != 0 && cs.adminNotificationSvc != nil {
+		_ = cs.adminNotificationSvc.Emit(ctx,
+			domain.AdminNotifReconciliationMismatch,
+			domain.AdminNotifSeverityCritical,
+			"Расхождение в сверке платежей",
+			fmt.Sprintf("Расхождение: %d коп. Внутренние: %d, Провайдер: %d",
+				report.PaymentDiscrepancy, report.InternalPaymentsSum, report.ProviderPaymentsSum),
+			map[string]interface{}{
+				"discrepancy":       report.PaymentDiscrepancy,
+				"internal_payments": report.InternalPaymentsSum,
+				"provider_payments": report.ProviderPaymentsSum,
+			},
+		)
+	}
+
 	return nil
 }

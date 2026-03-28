@@ -43,7 +43,9 @@ type CronScheduler struct {
 	fraudEngine        antifraud.FraudEngine
 	bookingRepo        repository.BookingRepository
 	redisClient        *redis.Client
-	reconciliationSvc  service.ReconciliationService
+	reconciliationSvc      service.ReconciliationService
+	adminNotificationSvc   service.AdminNotificationService
+	adminNotificationRepo  repository.AdminNotificationRepository
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -73,6 +75,8 @@ func NewCronScheduler(
 	bookingRepo repository.BookingRepository,
 	redisClient *redis.Client,
 	reconciliationSvc service.ReconciliationService,
+	adminNotificationSvc service.AdminNotificationService,
+	adminNotificationRepo repository.AdminNotificationRepository,
 ) *CronScheduler {
 	timezone := cfg.Cron.Timezone
 	if timezone == "" {
@@ -105,7 +109,9 @@ func NewCronScheduler(
 		fraudEngine:        fraudEngine,
 		bookingRepo:        bookingRepo,
 		redisClient:        redisClient,
-		reconciliationSvc:  reconciliationSvc,
+		reconciliationSvc:      reconciliationSvc,
+		adminNotificationSvc:   adminNotificationSvc,
+		adminNotificationRepo:  adminNotificationRepo,
 	}
 }
 
@@ -165,6 +171,8 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		{"0 * * * *", "review_auto_reveal", cs.reviewAutoReveal},
 		{"0 1 * * *", "daily_float_snapshot", cs.dailyFloatSnapshot},
 		{"30 1 * * *", "daily_reconciliation", cs.dailyReconciliation},
+		{"0 9 * * *", "admin_notification_digest", cs.adminNotificationDigest},
+		{"0 5 * * 0", "admin_notification_cleanup", cs.adminNotificationCleanup},
 	}
 
 	for _, j := range jobs {

@@ -89,6 +89,7 @@ type RouterParams struct {
 	SavedCardHandler              *handler.SavedCardHandler
 	BankReconciliationHandler    *handler.BankReconciliationHandler
 	AdminRoleHandler             *handler.AdminRoleHandler
+	AdminNotificationHandler     *handler.AdminNotificationHandler
 	AuditLogRepo              repository.AuditLogRepository
 	AdminSubRoleResolver  middleware.AdminSubRoleResolver
 	Admin2FAChecker       middleware.Admin2FAChecker
@@ -679,6 +680,12 @@ func NewRouter(p RouterParams) http.Handler {
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/freeze", p.WalletHandler.AdminFreezeWallet)
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/unfreeze", p.WalletHandler.AdminUnfreezeWallet)
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/batch-credit", p.WalletHandler.AdminBatchCreditWallets)
+
+			// Admin notifications
+			r.With(middleware.RequireAdminPermission(domain.PermAdminNotificationsView)).Get("/notifications", p.AdminNotificationHandler.ListAdminNotifications)
+			r.With(middleware.RequireAdminPermission(domain.PermAdminNotificationsView)).Put("/notifications/{id}/read", p.AdminNotificationHandler.MarkNotificationRead)
+			r.With(middleware.RequireAdminPermission(domain.PermAdminNotificationsView)).Put("/notifications/read-all", p.AdminNotificationHandler.MarkAllNotificationsRead)
+			r.With(middleware.RequireAdminPermission(domain.PermAdminNotificationsView)).Get("/notifications/unread-count", p.AdminNotificationHandler.GetUnreadCount)
 		})
 	})
 

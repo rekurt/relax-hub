@@ -675,3 +675,15 @@ type BankReconciliationRepository interface {
 	// FindPaymentsByAmountAndDate finds payments matching amount and date range for auto-matching.
 	FindPaymentsByAmountAndDate(ctx context.Context, amount int64, dateFrom, dateTo time.Time) ([]domain.Payment, error)
 }
+
+// AdminNotificationRepository manages admin notifications.
+type AdminNotificationRepository interface {
+	Create(ctx context.Context, notif *domain.AdminNotification) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.AdminNotification, error)
+	List(ctx context.Context, filter domain.AdminNotificationFilter) (*domain.PaginatedResult[domain.AdminNotification], error)
+	MarkAsRead(ctx context.Context, id uuid.UUID, readBy uuid.UUID) error
+	MarkAllAsReadByRole(ctx context.Context, role domain.AdminSubRole, readBy uuid.UUID) error
+	CountUnreadByRole(ctx context.Context, role domain.AdminSubRole) (int64, error)
+	ListUnreadCriticalByRole(ctx context.Context, role domain.AdminSubRole) ([]domain.AdminNotification, error)
+	DeleteOlderThan(ctx context.Context, before time.Time) (int64, error)
+}

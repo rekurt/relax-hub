@@ -49,8 +49,9 @@ const (
 	PermObjectTypeManage    AdminPermission = "object_types.manage"
 	PermAuditLogView        AdminPermission = "audit_log.view"
 	PermReconciliationView  AdminPermission = "reconciliation.view"
-	PermAdminRolesManage    AdminPermission = "admin_roles.manage"
-	PermCityManage          AdminPermission = "cities.manage"
+	PermAdminRolesManage         AdminPermission = "admin_roles.manage"
+	PermCityManage               AdminPermission = "cities.manage"
+	PermAdminNotificationsView   AdminPermission = "admin_notifications.view"
 )
 
 // AdminRolePermissions defines the permission matrix: which sub-role has which permissions.
@@ -62,26 +63,30 @@ var AdminRolePermissions = map[AdminSubRole][]AdminPermission{
 		PermForceMajeureManage, PermAntiFraudManage, PermTicketManage, PermDisputeManage,
 		PermPromoManage, PermServiceFeeManage, PermHolidayManage, PermAmenityManage,
 		PermObjectTypeManage, PermAuditLogView, PermReconciliationView, PermAdminRolesManage,
-		PermCityManage,
+		PermCityManage, PermAdminNotificationsView,
 	},
 	AdminSubRoleModerator: {
 		PermBathhouseModerate, PermReviewModerate, PermPhotoModerate,
 		PermKYCModerate, PermComplaintManage, PermAuditLogView,
+		PermAdminNotificationsView,
 	},
 	AdminSubRoleSupportL1: {
 		PermTicketManage, PermBookingManage,
+		PermAdminNotificationsView,
 	},
 	AdminSubRoleSupportL2: {
 		PermTicketManage, PermBookingManage, PermComplaintManage,
-		PermDisputeManage,
+		PermDisputeManage, PermAdminNotificationsView,
 	},
 	AdminSubRoleSupportL3: {
 		PermTicketManage, PermBookingManage, PermComplaintManage,
 		PermDisputeManage, PermUserManage, PermWalletManage,
+		PermAdminNotificationsView,
 	},
 	AdminSubRoleFinance: {
 		PermFinanceManage, PermWalletManage, PermReconciliationView,
 		PermAnalyticsView, PermServiceFeeManage, PermAuditLogView,
+		PermAdminNotificationsView,
 	},
 }
 
@@ -120,6 +125,6 @@ func AllAdminPermissions() []AdminPermission {
 		PermForceMajeureManage, PermAntiFraudManage, PermTicketManage, PermDisputeManage,
 		PermPromoManage, PermServiceFeeManage, PermHolidayManage, PermAmenityManage,
 		PermObjectTypeManage, PermAuditLogView, PermReconciliationView, PermAdminRolesManage,
-		PermCityManage,
+		PermCityManage, PermAdminNotificationsView,
 	}
 }

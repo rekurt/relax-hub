@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/nikitaaldaev/bani/internal/domain"
 )
 
 // antiFraudPatternDetection runs batch anti-fraud checks: dormant balances,
@@ -55,5 +57,16 @@ func (cs *CronScheduler) antiFraudPatternDetection(ctx context.Context) error {
 	}
 
 	cs.logger.Info("Anti-fraud pattern detection done", "wallets_checked", len(walletIDs), "flagged", flagged)
+
+	if flagged > 0 && cs.adminNotificationSvc != nil {
+		_ = cs.adminNotificationSvc.Emit(ctx,
+			domain.AdminNotifAntifraudFlag,
+			domain.AdminNotifSeverityWarning,
+			fmt.Sprintf("Обнаружено %d подозрительных операций", flagged),
+			fmt.Sprintf("Автоматическая проверка антифрода выявила %d подозрительных кошельков. Проверьте очередь антифрода.", flagged),
+			map[string]interface{}{"flagged_count": flagged, "wallets_checked": len(walletIDs)},
+		)
+	}
+
 	return nil
 }

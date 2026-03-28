@@ -57,6 +57,7 @@ const adminMenuItems: MenuProps['items'] = [
   { key: '/admin/wallets', icon: <WalletOutlined />, label: 'Кошельки' },
   { key: '/admin/roles', icon: <SafetyOutlined />, label: 'Роли' },
   { key: '/admin/notifications', icon: <BellOutlined />, label: 'Уведомления' },
+  { key: '/admin/notification-center', icon: <BellOutlined />, label: 'Центр оповещений' },
   { key: '/admin/profile', icon: <UserOutlined />, label: 'Профиль' },
 ]
 
