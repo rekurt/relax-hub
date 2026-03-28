@@ -301,7 +301,7 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 	case errors.Is(err, domain.ErrSavedSearchLimitReached):
 		writeErrorWithContext(w, r, http.StatusConflict, "saved_search_limit_reached", err.Error())
 	case errors.Is(err, domain.ErrBookingModificationLimit):
-		writeErrorWithContext(w, r, http.StatusConflict, "booking_modification_limit", err.Error())
+		writeErrorWithContext(w, r, http.StatusBadRequest, "booking_modification_limit", err.Error())
 	case errors.Is(err, domain.ErrBookingNotModifiable):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "booking_not_modifiable", err.Error())
 	case errors.Is(err, domain.ErrCheckinTooEarly):

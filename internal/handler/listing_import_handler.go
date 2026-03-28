@@ -41,7 +41,7 @@ func (h *ListingImportHandler) ImportCSV(w http.ResponseWriter, r *http.Request)
 
 	report, err := h.importSvc.ImportCSV(r.Context(), userID, file)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "import_error", "Не удалось обработать CSV файл")
+		writeError(w, http.StatusBadRequest, "import_error", err.Error())
 		return
 	}
 
