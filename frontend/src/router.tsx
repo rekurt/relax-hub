@@ -65,6 +65,8 @@ import DisputeCreate from '@/pages/client/DisputeCreate'
 import DisputeManagement from '@/pages/admin/DisputeManagement'
 import AdminDisputeDetail from '@/pages/admin/AdminDisputeDetail'
 import ComparisonPage from '@/pages/client/ComparisonPage'
+import SavedSearches from '@/pages/client/SavedSearches'
+import AntiFraudDashboard from '@/pages/admin/AntiFraudDashboard'
 import OAuthCallback from '@/pages/OAuthCallback'
 
 export default function AppRouter() {
@@ -140,6 +142,7 @@ export default function AppRouter() {
         <Route path="disputes/new" element={<DisputeCreate />} />
         <Route path="disputes/:id" element={<ClientDisputeDetail />} />
         <Route path="comparison" element={<ComparisonPage />} />
+        <Route path="saved-searches" element={<SavedSearches />} />
         <Route path="notifications" element={<ClientNotifications />} />
         <Route path="profile" element={<ClientProfile />} />
       </Route>
@@ -165,6 +168,7 @@ export default function AppRouter() {
         <Route path="tickets/:id" element={<AdminTicketDetail />} />
         <Route path="disputes" element={<DisputeManagement />} />
         <Route path="disputes/:id" element={<AdminDisputeDetail />} />
+        <Route path="antifraud" element={<AntiFraudDashboard />} />
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="profile" element={<AdminProfile />} />
       </Route>

@@ -46,6 +46,7 @@ const clientMenuItems: MenuProps['items'] = [
   { key: '/client/certificates', icon: <GiftOutlined />, label: 'Сертификаты' },
   { key: '/client/payments', icon: <WalletOutlined />, label: 'Платежи' },
   { key: '/client/chat', icon: <MessageOutlined />, label: 'Чат' },
+  { key: '/client/saved-searches', icon: <SearchOutlined />, label: 'Сохранённые поиски' },
   { key: '/client/tickets', icon: <CustomerServiceOutlined />, label: 'Поддержка' },
   { key: '/client/notifications', icon: <BellOutlined />, label: 'Уведомления' },
   { key: '/client/profile', icon: <UserOutlined />, label: 'Профиль' },

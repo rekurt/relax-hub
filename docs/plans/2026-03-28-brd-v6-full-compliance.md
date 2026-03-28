@@ -361,10 +361,10 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: `frontend/src/pages/admin/AntiFraudDashboard.tsx`
 - Modify: `frontend/src/router.tsx`
 
-- [ ] Saved searches page: list saved searches, delete, view notification history
-- [ ] Anti-fraud admin dashboard: pending fraud flags, review actions (approve/dismiss), filter by rule type
-- [ ] Write frontend tests
-- [ ] Run project test suite - must pass before next task
+- [x] Saved searches page: list saved searches, delete, view notification history
+- [x] Anti-fraud admin dashboard: pending fraud flags, review actions (approve/dismiss), filter by rule type
+- [x] Write frontend tests
+- [x] Run project test suite - must pass before next task
 
 ### Task 19: Advanced analytics (FR-147-154)
 
