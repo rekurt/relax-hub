@@ -56,18 +56,20 @@ const clientMenuItems: MenuProps['items'] = [
 export default function ClientLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [showTour, setShowTour] = useState(false)
+  const [showTour, setShowTour] = useState(() => false)
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout, loadProfile } = useAuthStore()
   const screens = useBreakpoint()
   const { token: themeToken } = theme.useToken()
 
+  const shouldShowTour = user && !user.onboarding_completed
   useEffect(() => {
-    if (user && !user.onboarding_completed) {
-      setShowTour(true)
+    if (shouldShowTour) {
+      const timer = setTimeout(() => setShowTour(true), 0)
+      return () => clearTimeout(timer)
     }
-  }, [user])
+  }, [shouldShowTour])
 
   const isMobile = !screens.md
 

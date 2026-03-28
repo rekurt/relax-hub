@@ -482,16 +482,16 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 
 ### Task 27: Verify acceptance criteria
 
-- [ ] Manual test: create bathhouse with cancellation policy, verify correct refund calculation on cancel
-- [ ] Manual test: modify booking (change time), verify price recalculation
-- [ ] Manual test: CRM pages load with guest data
-- [ ] Manual test: open dispute from booking, upload evidence
-- [ ] Manual test: comparison of 2 bathhouses works
-- [ ] Run full test suite: `go test ./... -v`
-- [ ] Run linter: `make lint`
-- [ ] Run frontend tests: `cd frontend && npx vitest run`
-- [ ] Run frontend lint: `cd frontend && npm run lint`
-- [ ] Verify test coverage meets 80%+
+- [x] Manual test: create bathhouse with cancellation policy, verify correct refund calculation on cancel
+- [x] Manual test: modify booking (change time), verify price recalculation
+- [x] Manual test: CRM pages load with guest data
+- [x] Manual test: open dispute from booking, upload evidence
+- [x] Manual test: comparison of 2 bathhouses works
+- [x] Run full test suite: `go test ./... -v`
+- [x] Run linter: `make lint`
+- [x] Run frontend tests: `cd frontend && npx vitest run`
+- [x] Run frontend lint: `cd frontend && npm run lint`
+- [x] Verify test coverage meets 80%+
 
 ### Task 28: Update documentation
 

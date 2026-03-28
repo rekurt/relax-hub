@@ -20,7 +20,7 @@ import {
   useGetMyCrmSegments,
   useGetMyCrmSegmentsSlugGuests,
 } from '@/api/generated/crm/crm'
-import type { InternalHandlerGuestCardResponse, InternalHandlerSegmentResponse } from '@/api/generated/model'
+import type { InternalHandlerSegmentResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
 
 const { Title, Text } = Typography

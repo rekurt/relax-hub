@@ -158,7 +158,7 @@ func (s *financialReportService) GenerateOwnerAct(ctx context.Context, ownerID u
 	}
 
 	var lines []string
-	lines = append(lines, fmt.Sprintf("Акт оказанных услуг"))
+	lines = append(lines, "Акт оказанных услуг")
 	lines = append(lines, fmt.Sprintf("Объект: %s", bh.Name))
 	lines = append(lines, fmt.Sprintf("Период: %s — %s", dateFrom.Format("02.01.2006"), dateTo.Format("02.01.2006")))
 	lines = append(lines, "")
@@ -577,12 +577,12 @@ func generateSimplePDF(lines []string) []byte {
 	y := 800
 	for _, line := range lines {
 		if line == "---" {
-			content.WriteString(fmt.Sprintf("1 0 0 1 50 %d Tm\n", y))
+			fmt.Fprintf(&content, "1 0 0 1 50 %d Tm\n", y)
 			content.WriteString("(────────────────────────────────────────────────────) Tj\n")
 		} else {
-			content.WriteString(fmt.Sprintf("1 0 0 1 50 %d Tm\n", y))
+			fmt.Fprintf(&content, "1 0 0 1 50 %d Tm\n", y)
 			escaped := pdfEscapeString(line)
-			content.WriteString(fmt.Sprintf("(%s) Tj\n", escaped))
+			fmt.Fprintf(&content, "(%s) Tj\n", escaped)
 		}
 		y -= 14
 		if y < 50 {
@@ -594,11 +594,11 @@ func generateSimplePDF(lines []string) []byte {
 
 	// Object 3: Page
 	obj3Offset := buf.Len()
-	buf.WriteString(fmt.Sprintf("3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n"))
+	buf.WriteString("3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n")
 
 	// Object 4: Content stream
 	obj4Offset := buf.Len()
-	buf.WriteString(fmt.Sprintf("4 0 obj\n<< /Length %d >>\nstream\n", len(contentBytes)))
+	fmt.Fprintf(&buf, "4 0 obj\n<< /Length %d >>\nstream\n", len(contentBytes))
 	buf.Write(contentBytes)
 	buf.WriteString("\nendstream\nendobj\n")
 
@@ -611,14 +611,14 @@ func generateSimplePDF(lines []string) []byte {
 	buf.WriteString("xref\n")
 	buf.WriteString("0 6\n")
 	buf.WriteString("0000000000 65535 f \n")
-	buf.WriteString(fmt.Sprintf("%010d 00000 n \n", obj1Offset))
-	buf.WriteString(fmt.Sprintf("%010d 00000 n \n", obj2Offset))
-	buf.WriteString(fmt.Sprintf("%010d 00000 n \n", obj3Offset))
-	buf.WriteString(fmt.Sprintf("%010d 00000 n \n", obj4Offset))
-	buf.WriteString(fmt.Sprintf("%010d 00000 n \n", obj5Offset))
+	fmt.Fprintf(&buf, "%010d 00000 n \n", obj1Offset)
+	fmt.Fprintf(&buf, "%010d 00000 n \n", obj2Offset)
+	fmt.Fprintf(&buf, "%010d 00000 n \n", obj3Offset)
+	fmt.Fprintf(&buf, "%010d 00000 n \n", obj4Offset)
+	fmt.Fprintf(&buf, "%010d 00000 n \n", obj5Offset)
 
 	// Trailer
-	buf.WriteString(fmt.Sprintf("trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n", xrefOffset))
+	fmt.Fprintf(&buf, "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n", xrefOffset)
 
 	return buf.Bytes()
 }
