@@ -20,7 +20,8 @@ type CalendarService interface {
 	AddExternalCalendar(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, calendarURL string, source domain.SlotBlockSource) (*domain.ExternalCalendar, error)
 	ListExternalCalendars(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]domain.ExternalCalendar, error)
 	RemoveExternalCalendar(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, calendarID uuid.UUID) error
-	SyncExternalCalendars(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
+	SyncExternalCalendars(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]calendar.CalendarConflict, error)
+	GetCalendarConflicts(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]calendar.CalendarConflict, error)
 	CreateSlotBlock(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, block *domain.SlotBlock) (*domain.SlotBlock, error)
 	DeleteSlotBlock(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, blockID uuid.UUID) error
 }
@@ -150,20 +151,31 @@ func (s *calendarService) RemoveExternalCalendar(ctx context.Context, userID uui
 	return s.syncSvc.RemoveExternalCalendar(ctx, calendarID)
 }
 
-func (s *calendarService) SyncExternalCalendars(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error {
+func (s *calendarService) SyncExternalCalendars(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]calendar.CalendarConflict, error) {
 	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
-		return err
+		return nil, err
 	}
 	calendars, err := s.extCalRepo.ListByBathhouse(ctx, bathhouseID)
 	if err != nil {
-		return fmt.Errorf("list calendars: %w", err)
+		return nil, fmt.Errorf("list calendars: %w", err)
 	}
+	var allConflicts []calendar.CalendarConflict
 	for _, cal := range calendars {
-		if err := s.syncSvc.SyncCalendar(ctx, cal.ID); err != nil {
+		conflicts, err := s.syncSvc.SyncCalendar(ctx, cal.ID)
+		if err != nil {
 			s.log.Error("sync calendar failed", "calendar_id", cal.ID, "error", err)
+			continue
 		}
+		allConflicts = append(allConflicts, conflicts...)
 	}
-	return nil
+	return allConflicts, nil
+}
+
+func (s *calendarService) GetCalendarConflicts(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]calendar.CalendarConflict, error) {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
+		return nil, err
+	}
+	return s.syncSvc.GetConflicts(ctx, bathhouseID)
 }
 
 func (s *calendarService) CreateSlotBlock(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, block *domain.SlotBlock) (*domain.SlotBlock, error) {

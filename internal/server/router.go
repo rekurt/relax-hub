@@ -498,6 +498,7 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/external-calendars", p.CalendarHandler.ListExternalCalendars)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/external-calendars/{id}", p.CalendarHandler.RemoveExternalCalendar)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/external-calendars/sync", p.CalendarHandler.SyncExternalCalendars)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/calendar-conflicts", p.CalendarHandler.GetCalendarConflicts)
 
 		// Slot blocks (owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/slot-blocks", p.CalendarHandler.CreateSlotBlock)

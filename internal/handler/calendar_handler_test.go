@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/calendar"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/handler"
 )
@@ -21,7 +22,8 @@ type mockCalendarService struct {
 	addExternalCalendarFn      func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, calendarURL string, source domain.SlotBlockSource) (*domain.ExternalCalendar, error)
 	listExternalCalendarsFn    func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]domain.ExternalCalendar, error)
 	removeExternalCalendarFn   func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, calendarID uuid.UUID) error
-	syncExternalCalendarsFn    func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
+	syncExternalCalendarsFn    func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]calendar.CalendarConflict, error)
+	getCalendarConflictsFn     func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]calendar.CalendarConflict, error)
 	createSlotBlockFn          func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, block *domain.SlotBlock) (*domain.SlotBlock, error)
 	deleteSlotBlockFn          func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, blockID uuid.UUID) error
 }
@@ -50,8 +52,15 @@ func (m *mockCalendarService) RemoveExternalCalendar(ctx context.Context, userID
 	return m.removeExternalCalendarFn(ctx, userID, userRole, calendarID)
 }
 
-func (m *mockCalendarService) SyncExternalCalendars(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error {
+func (m *mockCalendarService) SyncExternalCalendars(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]calendar.CalendarConflict, error) {
 	return m.syncExternalCalendarsFn(ctx, userID, userRole, bathhouseID)
+}
+
+func (m *mockCalendarService) GetCalendarConflicts(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) ([]calendar.CalendarConflict, error) {
+	if m.getCalendarConflictsFn != nil {
+		return m.getCalendarConflictsFn(ctx, userID, userRole, bathhouseID)
+	}
+	return nil, nil
 }
 
 func (m *mockCalendarService) CreateSlotBlock(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, block *domain.SlotBlock) (*domain.SlotBlock, error) {
@@ -321,8 +330,8 @@ func TestCalendarHandler_RemoveExternalCalendar_NotFound(t *testing.T) {
 
 func TestCalendarHandler_SyncExternalCalendars(t *testing.T) {
 	svc := &mockCalendarService{
-		syncExternalCalendarsFn: func(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
-			return nil
+		syncExternalCalendarsFn: func(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) ([]calendar.CalendarConflict, error) {
+			return nil, nil
 		},
 	}
 	h := handler.NewCalendarHandler(svc)

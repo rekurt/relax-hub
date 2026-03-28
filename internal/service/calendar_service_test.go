@@ -22,7 +22,7 @@ func newCalendarService() (service.CalendarService, *mock.BathhouseRepo, *mock.B
 	slotBlockRepo := mock.NewSlotBlockRepo()
 	access := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
-	syncSvc := calendar.NewCalendarSyncService(extCalRepo, slotBlockRepo, log)
+	syncSvc := calendar.NewCalendarSyncService(extCalRepo, slotBlockRepo, bookingRepo, log)
 	svc := service.NewCalendarService(bhRepo, bookingRepo, extCalRepo, slotBlockRepo, syncSvc, access, log)
 	return svc, bhRepo, bookingRepo, repRepo, extCalRepo, slotBlockRepo
 }

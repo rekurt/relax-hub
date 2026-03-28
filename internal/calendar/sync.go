@@ -18,10 +18,17 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// CalendarConflict represents a conflict between an external calendar event and an existing booking.
+type CalendarConflict struct {
+	SlotBlock domain.SlotBlock
+	Booking   domain.Booking
+}
+
 // CalendarSyncService handles importing and syncing external calendar feeds.
 type CalendarSyncService struct {
 	extCalRepo    repository.ExternalCalendarRepository
 	slotBlockRepo repository.SlotBlockRepository
+	bookingRepo   repository.BookingRepository
 	httpClient    HTTPClient
 	log           *logger.Logger
 }
@@ -30,11 +37,13 @@ type CalendarSyncService struct {
 func NewCalendarSyncService(
 	extCalRepo repository.ExternalCalendarRepository,
 	slotBlockRepo repository.SlotBlockRepository,
+	bookingRepo repository.BookingRepository,
 	log *logger.Logger,
 ) *CalendarSyncService {
 	return &CalendarSyncService{
 		extCalRepo:    extCalRepo,
 		slotBlockRepo: slotBlockRepo,
+		bookingRepo:   bookingRepo,
 		httpClient:    &http.Client{Timeout: 30 * time.Second},
 		log:           log,
 	}
@@ -78,11 +87,40 @@ func (s *CalendarSyncService) RemoveExternalCalendar(ctx context.Context, calend
 	return s.extCalRepo.Delete(ctx, calendarID)
 }
 
-// SyncCalendar fetches and syncs a single external calendar.
-func (s *CalendarSyncService) SyncCalendar(ctx context.Context, calendarID uuid.UUID) error {
+// GetConflicts checks all external slot blocks against existing confirmed bookings for a bathhouse.
+func (s *CalendarSyncService) GetConflicts(ctx context.Context, bathhouseID uuid.UUID) ([]CalendarConflict, error) {
+	blocks, err := s.slotBlockRepo.ListByBathhouse(ctx, bathhouseID)
+	if err != nil {
+		return nil, fmt.Errorf("list slot blocks: %w", err)
+	}
+
+	var conflicts []CalendarConflict
+	for _, block := range blocks {
+		if block.Source == domain.SlotBlockSourceManual {
+			continue
+		}
+		overlapping, err := s.bookingRepo.GetOverlapping(ctx, bathhouseID, block.StartTime, block.EndTime)
+		if err != nil {
+			return nil, fmt.Errorf("check booking overlap: %w", err)
+		}
+		for _, booking := range overlapping {
+			if booking.Status == domain.BookingConfirmed || booking.Status == domain.BookingPendingOwner {
+				conflicts = append(conflicts, CalendarConflict{
+					SlotBlock: block,
+					Booking:   booking,
+				})
+			}
+		}
+	}
+
+	return conflicts, nil
+}
+
+// SyncCalendar fetches and syncs a single external calendar, returning any conflicts found.
+func (s *CalendarSyncService) SyncCalendar(ctx context.Context, calendarID uuid.UUID) ([]CalendarConflict, error) {
 	cal, err := s.extCalRepo.GetByID(ctx, calendarID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	return s.syncOne(ctx, cal)
@@ -97,36 +135,45 @@ func (s *CalendarSyncService) SyncAllCalendars(ctx context.Context) {
 	}
 
 	for i := range calendars {
-		if err := s.syncOne(ctx, &calendars[i]); err != nil {
+		conflicts, err := s.syncOne(ctx, &calendars[i])
+		if err != nil {
 			s.log.Error("Calendar sync failed",
 				"calendar_id", calendars[i].ID,
 				"bathhouse_id", calendars[i].BathhouseID,
 				"error", err,
 			)
 		}
+		if len(conflicts) > 0 {
+			s.log.Warn("Calendar sync detected booking conflicts",
+				"calendar_id", calendars[i].ID,
+				"bathhouse_id", calendars[i].BathhouseID,
+				"conflict_count", len(conflicts),
+			)
+		}
 	}
 }
 
-func (s *CalendarSyncService) syncOne(ctx context.Context, cal *domain.ExternalCalendar) error {
+func (s *CalendarSyncService) syncOne(ctx context.Context, cal *domain.ExternalCalendar) ([]CalendarConflict, error) {
 	data, err := s.fetchFeed(ctx, cal.URL)
 	now := time.Now()
 	if err != nil {
 		_ = s.extCalRepo.UpdateSyncStatus(ctx, cal.ID, now, err.Error())
-		return fmt.Errorf("fetch feed: %w", err)
+		return nil, fmt.Errorf("fetch feed: %w", err)
 	}
 
 	events, err := ParseICal(data)
 	if err != nil {
 		_ = s.extCalRepo.UpdateSyncStatus(ctx, cal.ID, now, err.Error())
-		return fmt.Errorf("parse ical: %w", err)
+		return nil, fmt.Errorf("parse ical: %w", err)
 	}
 
 	// Delete old blocks from this source, then re-create from current feed
 	if err := s.slotBlockRepo.DeleteBySource(ctx, cal.BathhouseID, cal.Source); err != nil {
 		_ = s.extCalRepo.UpdateSyncStatus(ctx, cal.ID, now, err.Error())
-		return fmt.Errorf("delete old blocks: %w", err)
+		return nil, fmt.Errorf("delete old blocks: %w", err)
 	}
 
+	var conflicts []CalendarConflict
 	cutoff := time.Now().Add(-24 * time.Hour)
 	for _, ev := range events {
 		// Skip past events (ended more than 24h ago)
@@ -148,11 +195,39 @@ func (s *CalendarSyncService) syncOne(ctx context.Context, cal *domain.ExternalC
 				"event_uid", ev.UID,
 				"error", err,
 			)
+			continue
+		}
+
+		// Check for conflicts with existing confirmed bookings
+		overlapping, err := s.bookingRepo.GetOverlapping(ctx, cal.BathhouseID, ev.Start, ev.End)
+		if err != nil {
+			s.log.Error("Failed to check booking conflicts",
+				"calendar_id", cal.ID,
+				"event_uid", ev.UID,
+				"error", err,
+			)
+			continue
+		}
+		for _, booking := range overlapping {
+			if booking.Status == domain.BookingConfirmed || booking.Status == domain.BookingPendingOwner {
+				conflicts = append(conflicts, CalendarConflict{
+					SlotBlock: *block,
+					Booking:   booking,
+				})
+				s.log.Warn("External calendar event conflicts with existing booking",
+					"calendar_id", cal.ID,
+					"event_uid", ev.UID,
+					"event_summary", ev.Summary,
+					"booking_id", booking.ID,
+					"booking_start", booking.StartTime,
+					"booking_end", booking.EndTime,
+				)
+			}
 		}
 	}
 
 	_ = s.extCalRepo.UpdateSyncStatus(ctx, cal.ID, now, "")
-	return nil
+	return conflicts, nil
 }
 
 func (s *CalendarSyncService) fetchFeed(ctx context.Context, url string) (string, error) {

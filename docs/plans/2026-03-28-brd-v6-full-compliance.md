@@ -447,12 +447,12 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `internal/service/calendar_service.go`
 - Create: `internal/cron/calendar_sync_job.go`
 
-- [ ] Implement inbound sync: fetch external calendar (iCal URL) every 15 minutes
-- [ ] Parse external calendar events and auto-create slot blocks
-- [ ] Implement outbound sync: generate iCal feed with all bookings as events
-- [ ] Handle conflict resolution when external event overlaps existing booking
-- [ ] Write tests for sync logic
-- [ ] Run project test suite - must pass before next task
+- [x] Implement inbound sync: fetch external calendar (iCal URL) every 15 minutes
+- [x] Parse external calendar events and auto-create slot blocks
+- [x] Implement outbound sync: generate iCal feed with all bookings as events
+- [x] Handle conflict resolution when external event overlaps existing booking
+- [x] Write tests for sync logic
+- [x] Run project test suite - must pass before next task
 
 ### Task 25: Smart pricing recommendations (FR-089)
 
