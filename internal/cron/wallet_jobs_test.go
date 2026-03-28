@@ -5,12 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -207,6 +209,60 @@ func TestHandleBonusExpiryNotify_NoNotificationForDistantBonuses(t *testing.T) {
 
 	// Should NOT send any notification - bonus is too far from expiry
 	assert.Empty(t, notifSvc.sent)
+}
+
+func TestHandleBonusExpiryNotify_Deduplication(t *testing.T) {
+	mr, err := miniredis.Run()
+	assert.NoError(t, err)
+	defer mr.Close()
+
+	redisClient := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+
+	walletRepo := mock.NewWalletRepo().(*mock.WalletRepo)
+	notifSvc := &mockNotificationService{}
+	walletSvc := service.NewWalletService(walletRepo, logger.New(logger.LevelInfo))
+
+	userID := uuid.New()
+	walletID := uuid.New()
+
+	err = walletRepo.Create(context.Background(), &domain.Wallet{
+		ID:       walletID,
+		UserID:   userID,
+		Balance:  50000,
+		Currency: domain.WalletCurrencyRUB,
+		Status:   domain.WalletStatusActive,
+	})
+	require.NoError(t, err)
+
+	expiresIn3Days := time.Now().Add(3 * 24 * time.Hour).Add(-1 * time.Hour)
+	err = walletRepo.CreateTransaction(context.Background(), &domain.WalletTransaction{
+		ID:           uuid.New(),
+		WalletID:     walletID,
+		Type:         domain.WalletTxWelcomeBonus,
+		Amount:       50000,
+		BalanceAfter: 50000,
+		Status:       domain.WalletTxStatusCompleted,
+		Description:  "Приветственный бонус",
+		IsBonus:      true,
+		ExpiresAt:    &expiresIn3Days,
+	})
+	require.NoError(t, err)
+
+	// Create scheduler with Redis for dedup
+	log := logger.New(logger.LevelInfo)
+	mockAnalyticsSvc := &MockAnalyticsService{}
+	mockAnalyticsRepo := mock.NewAnalyticsRepo()
+	cs := NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo,
+		nil, nil, notifSvc, nil, walletSvc, walletRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, redisClient, nil)
+
+	// First run — should send
+	_ = cs.bonusExpiryNotify(context.Background())
+	sentCount := len(notifSvc.sent)
+	assert.Greater(t, sentCount, 0, "First run should send bonus expiry notifications")
+
+	// Second run — should be deduplicated
+	_ = cs.bonusExpiryNotify(context.Background())
+	assert.Equal(t, sentCount, len(notifSvc.sent), "Second run should not send duplicate notifications")
 }
 
 func TestGetBonusExpiryDays_Default(t *testing.T) {

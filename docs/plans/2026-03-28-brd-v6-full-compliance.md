@@ -215,11 +215,11 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `internal/service/notification_service.go`
 - Modify: `internal/domain/notification.go` (add bonus_expiry_warning type)
 
-- [ ] Create cron job to find bonuses expiring in 14 days and 3 days
-- [ ] Send push + email notifications with expiring amount and suggestion to use
-- [ ] Deduplicate notifications (don't re-send if already notified)
-- [ ] Write tests for notification triggers and deduplication
-- [ ] Run project test suite - must pass before next task
+- [x] Create cron job to find bonuses expiring in 14 days and 3 days
+- [x] Send push + email notifications with expiring amount and suggestion to use
+- [x] Deduplicate notifications (don't re-send if already notified)
+- [x] Write tests for notification triggers and deduplication
+- [x] Run project test suite - must pass before next task
 
 ### Task 10: Payment error retry logic (FR-096)
 

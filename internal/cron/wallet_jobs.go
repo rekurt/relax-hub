@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/redis/go-redis/v9"
 )
 
 // bonusExpiration expires bonus transactions that have passed their expiry date.
@@ -72,6 +73,21 @@ func (cs *CronScheduler) bonusExpiryNotify(ctx context.Context) error {
 
 			if len(expiring) == 0 {
 				continue
+			}
+
+			// Deduplicate: don't re-send if already notified for this wallet+window
+			redisKey := fmt.Sprintf("bonus_expiry_notif:%s:%d", wid.String(), daysAhead)
+			if cs.redisClient != nil {
+				wasSet, err := cs.redisClient.SetArgs(ctx, redisKey, "1", redis.SetArgs{
+					Mode: "NX",
+					TTL:  48 * time.Hour,
+				}).Result()
+				if err != nil && err != redis.Nil {
+					cs.logger.Warn("Redis SET NX failed for bonus expiry dedup, sending anyway",
+						"key", redisKey, "error", err)
+				} else if wasSet != "OK" {
+					continue // already sent
+				}
 			}
 
 			var totalAmount int64
