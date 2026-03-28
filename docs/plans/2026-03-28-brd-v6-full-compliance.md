@@ -422,12 +422,12 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: `internal/admin/pages/finance.go`
 - Create: `internal/admin/pages/templates/finance.tmpl`
 
-- [ ] Float dashboard: client wallets total + owner wallets total + escrow total
-- [ ] Transaction reconciliation status (last run, discrepancies)
-- [ ] Revenue breakdown: service fees, subscriptions, promotions
-- [ ] Wallet metrics widget
-- [ ] Write tests
-- [ ] Run project test suite - must pass before next task
+- [x] Float dashboard: client wallets total + owner wallets total + escrow total
+- [x] Transaction reconciliation status (last run, discrepancies)
+- [x] Revenue breakdown: service fees, subscriptions, promotions
+- [x] Wallet metrics widget
+- [x] Write tests
+- [x] Run project test suite - must pass before next task
 
 ### Task 23: Chat content filtering enhancement (FR-063)
 

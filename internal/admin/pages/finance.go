@@ -16,6 +16,15 @@ var financeFuncMap = template.FuncMap{
 	"kopecksToRub": KopecksToRub,
 	"formatDate":   FormatDate,
 	"reconStatus":  ReconStatus,
+	"pctOf":        PctOf,
+}
+
+// PctOf returns the percentage of a/b as a formatted string.
+func PctOf(a, b int64) string {
+	if b == 0 {
+		return "0.0"
+	}
+	return fmt.Sprintf("%.1f", float64(a)/float64(b)*100)
 }
 
 var financeTmpl = ParsePageTemplate(financeFuncMap, "templates/finance.tmpl")
@@ -84,12 +93,39 @@ type FinanceReconciliation struct {
 	CreatedAt             time.Time
 }
 
+// RevenueBreakdown holds platform revenue split by source.
+type RevenueBreakdown struct {
+	ServiceFeesTotal     int64
+	ServiceFeesCount     int
+	SubscriptionsTotal   int64
+	SubscriptionsCount   int
+	PromotionsTotal      int64
+	PromotionsCount      int
+	GrandTotal           int64
+	PeriodLabel          string // e.g. "Текущий месяц"
+}
+
+// WalletMetrics holds aggregate wallet statistics.
+type WalletMetrics struct {
+	TotalBalance         int64
+	ActiveWalletsCount   int
+	WalletPaymentsTotal  int64
+	AllPaymentsTotal     int64
+	WalletPaymentShare   float64 // percent 0-100
+	ExpiredBonusesTotal  int64
+	ExpiredBonusesCount  int
+	PendingBonusesTotal  int64
+	PendingBonusesCount  int
+}
+
 // FinanceData is the full data model for the finance dashboard page.
 type FinanceData struct {
 	CurrentFloat    FinanceSnapshot
 	LastSnapshot    *FinanceSnapshot
 	LastRecon       *FinanceReconciliation
 	RecentSnapshots []FinanceSnapshot
+	Revenue         RevenueBreakdown
+	Wallet          WalletMetrics
 	GeneratedAt     time.Time
 	PagesPrefix     string
 	AdminPrefix     string
@@ -134,6 +170,16 @@ func (p *PostgresFinanceProvider) GetFinanceData(ctx context.Context) (*FinanceD
 	// Recent snapshots (last 7 days)
 	if err := p.loadRecentSnapshots(ctx, data); err != nil {
 		p.log.Error("finance: load recent snapshots", "error", err)
+	}
+
+	// Revenue breakdown (current month)
+	if err := p.loadRevenueBreakdown(ctx, data); err != nil {
+		p.log.Error("finance: load revenue", "error", err)
+	}
+
+	// Wallet metrics
+	if err := p.loadWalletMetrics(ctx, data); err != nil {
+		p.log.Error("finance: load wallet metrics", "error", err)
 	}
 
 	return data, nil
@@ -240,6 +286,100 @@ func (p *PostgresFinanceProvider) loadRecentSnapshots(ctx context.Context, data 
 		}
 		data.RecentSnapshots = append(data.RecentSnapshots, s)
 	}
+	return nil
+}
+
+func (p *PostgresFinanceProvider) loadRevenueBreakdown(ctx context.Context, data *FinanceData) error {
+	now := time.Now()
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	data.Revenue.PeriodLabel = "Текущий месяц"
+
+	// Service fees from completed bookings
+	err := p.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(service_fee), 0), COUNT(*)
+		FROM bookings
+		WHERE status = 'completed' AND created_at >= $1`,
+		monthStart,
+	).Scan(&data.Revenue.ServiceFeesTotal, &data.Revenue.ServiceFeesCount)
+	if err != nil {
+		return err
+	}
+
+	// Subscriptions revenue
+	err = p.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(price), 0), COUNT(*)
+		FROM subscriptions
+		WHERE status = 'active' AND created_at >= $1`,
+		monthStart,
+	).Scan(&data.Revenue.SubscriptionsTotal, &data.Revenue.SubscriptionsCount)
+	if err != nil {
+		return err
+	}
+
+	// Promotions revenue (promoted listings)
+	err = p.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(price), 0), COUNT(*)
+		FROM subscriptions
+		WHERE status = 'active' AND tier = 'promoted' AND created_at >= $1`,
+		monthStart,
+	).Scan(&data.Revenue.PromotionsTotal, &data.Revenue.PromotionsCount)
+	if err != nil {
+		return err
+	}
+
+	data.Revenue.GrandTotal = data.Revenue.ServiceFeesTotal +
+		data.Revenue.SubscriptionsTotal + data.Revenue.PromotionsTotal
+
+	return nil
+}
+
+func (p *PostgresFinanceProvider) loadWalletMetrics(ctx context.Context, data *FinanceData) error {
+	// Total balance across all active wallets
+	err := p.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(balance), 0), COUNT(*)
+		FROM wallets WHERE status != 'archived'`,
+	).Scan(&data.Wallet.TotalBalance, &data.Wallet.ActiveWalletsCount)
+	if err != nil {
+		return err
+	}
+
+	// Wallet payments vs all payments (last 30 days)
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+	err = p.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(CASE WHEN method = 'wallet' THEN amount ELSE 0 END), 0),
+			COALESCE(SUM(amount), 0)
+		FROM payments
+		WHERE status = 'succeeded' AND created_at >= $1`,
+		thirtyDaysAgo,
+	).Scan(&data.Wallet.WalletPaymentsTotal, &data.Wallet.AllPaymentsTotal)
+	if err != nil {
+		return err
+	}
+	if data.Wallet.AllPaymentsTotal > 0 {
+		data.Wallet.WalletPaymentShare = float64(data.Wallet.WalletPaymentsTotal) / float64(data.Wallet.AllPaymentsTotal) * 100
+	}
+
+	// Expired bonuses (all time)
+	err = p.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(amount), 0), COUNT(*)
+		FROM wallet_transactions
+		WHERE type = 'bonus_expiry'`,
+	).Scan(&data.Wallet.ExpiredBonusesTotal, &data.Wallet.ExpiredBonusesCount)
+	if err != nil {
+		return err
+	}
+
+	// Pending bonuses (expiring within 30 days)
+	err = p.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(amount), 0), COUNT(*)
+		FROM wallet_transactions
+		WHERE type = 'bonus' AND expires_at IS NOT NULL
+			AND expires_at > NOW() AND expires_at <= NOW() + INTERVAL '30 days'`,
+	).Scan(&data.Wallet.PendingBonusesTotal, &data.Wallet.PendingBonusesCount)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

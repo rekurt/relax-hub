@@ -10,6 +10,8 @@
     .finance-card.holds { border-left: 4px solid #e74c3c; }
     .finance-card.ok { border-left: 4px solid #27ae60; }
     .finance-card.warn { border-left: 4px solid #e74c3c; }
+    .finance-card.revenue { border-left: 4px solid #9b59b6; }
+    .finance-card.wallet { border-left: 4px solid #1abc9c; }
 
     .section-title { font-size: 16px; font-weight: 600; color: #2c3e50; margin: 24px 0 12px 0; }
 
@@ -111,6 +113,53 @@
 {{else}}
 <div class="empty-msg">Сверки ещё не проводились. Первая сверка будет выполнена автоматически ночью.</div>
 {{end}}
+
+<div class="section-title">Выручка платформы ({{.Revenue.PeriodLabel}})</div>
+<div class="finance-grid">
+    <div class="finance-card revenue">
+        <div class="label">Сервисные комиссии</div>
+        <div class="value">{{kopecksToRub .Revenue.ServiceFeesTotal}} ₽</div>
+        <div class="sub">{{.Revenue.ServiceFeesCount}} бронирований</div>
+    </div>
+    <div class="finance-card revenue">
+        <div class="label">Подписки</div>
+        <div class="value">{{kopecksToRub .Revenue.SubscriptionsTotal}} ₽</div>
+        <div class="sub">{{.Revenue.SubscriptionsCount}} активных</div>
+    </div>
+    <div class="finance-card revenue">
+        <div class="label">Продвижение</div>
+        <div class="value">{{kopecksToRub .Revenue.PromotionsTotal}} ₽</div>
+        <div class="sub">{{.Revenue.PromotionsCount}} размещений</div>
+    </div>
+    <div class="finance-card total">
+        <div class="label">Итого выручка</div>
+        <div class="value">{{kopecksToRub .Revenue.GrandTotal}} ₽</div>
+    </div>
+</div>
+
+<div class="section-title">Метрики кошельков</div>
+<div class="finance-grid">
+    <div class="finance-card total">
+        <div class="label">Общий баланс кошельков</div>
+        <div class="value">{{kopecksToRub .Wallet.TotalBalance}} ₽</div>
+        <div class="sub">{{.Wallet.ActiveWalletsCount}} активных</div>
+    </div>
+    <div class="finance-card wallet">
+        <div class="label">Доля оплат кошельком (30 дн.)</div>
+        <div class="value">{{printf "%.1f" .Wallet.WalletPaymentShare}}%</div>
+        <div class="sub">{{kopecksToRub .Wallet.WalletPaymentsTotal}} из {{kopecksToRub .Wallet.AllPaymentsTotal}} ₽</div>
+    </div>
+    <div class="finance-card holds">
+        <div class="label">Сгоревшие бонусы (всего)</div>
+        <div class="value">{{kopecksToRub .Wallet.ExpiredBonusesTotal}} ₽</div>
+        <div class="sub">{{.Wallet.ExpiredBonusesCount}} операций</div>
+    </div>
+    <div class="finance-card {{if gt .Wallet.PendingBonusesCount 0}}warn{{else}}ok{{end}}">
+        <div class="label">Сгорают в ближ. 30 дн.</div>
+        <div class="value">{{kopecksToRub .Wallet.PendingBonusesTotal}} ₽</div>
+        <div class="sub">{{.Wallet.PendingBonusesCount}} бонусов</div>
+    </div>
+</div>
 
 {{if .RecentSnapshots}}
 <div class="section-title">История снимков (7 дней)</div>
