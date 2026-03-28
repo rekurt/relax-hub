@@ -23,7 +23,7 @@ func newNotifTestEnv() *notifTestEnv {
 	notifRepo := mock.NewNotificationRepo()
 	userRepo := mock.NewUserRepo()
 	log := logger.New(logger.LevelError)
-	dispatcher := notification.NewDispatcher(notifRepo, nil, nil, mock.NewTelegramLinkRepo(), nil, nil, notification.NewHub(log), log)
+	dispatcher := notification.NewDispatcher(notifRepo, nil, nil, mock.NewTelegramLinkRepo(), nil, nil, nil, notification.NewHub(log), log)
 	svc := service.NewNotificationService(notifRepo, userRepo, dispatcher, log)
 	return &notifTestEnv{
 		svc:       svc,
@@ -291,5 +291,179 @@ func TestNotificationService_UpdatePreferences_SetsUserID(t *testing.T) {
 	got, _ := env.svc.GetPreferences(context.Background(), userID)
 	if got.UserID != userID {
 		t.Errorf("UserID = %s, want %s", got.UserID, userID)
+	}
+}
+
+func TestNotificationService_GetEventPreferences_Defaults(t *testing.T) {
+	env := newNotifTestEnv()
+	userID := uuid.New()
+
+	prefs, err := env.svc.GetEventPreferences(context.Background(), userID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(prefs) != len(domain.AllNotificationEventTypes) {
+		t.Errorf("expected %d event preferences, got %d", len(domain.AllNotificationEventTypes), len(prefs))
+	}
+
+	// Check that booking_confirmed (mandatory+critical) defaults to all channels enabled
+	for _, p := range prefs {
+		if p.EventType == domain.EventBookingConfirmed {
+			if !p.PushEnabled || !p.EmailEnabled || !p.SMSEnabled {
+				t.Errorf("booking_confirmed should default to all channels enabled, got push=%v email=%v sms=%v",
+					p.PushEnabled, p.EmailEnabled, p.SMSEnabled)
+			}
+			break
+		}
+	}
+}
+
+func TestNotificationService_UpdateEventPreferences_MandatoryEnforced(t *testing.T) {
+	env := newNotifTestEnv()
+	userID := uuid.New()
+
+	// Try to disable all channels for a mandatory event
+	prefs := []domain.NotificationEventPreference{
+		{
+			EventType:    domain.EventBookingConfirmed,
+			PushEnabled:  false,
+			EmailEnabled: false,
+			SMSEnabled:   false,
+		},
+	}
+
+	err := env.svc.UpdateEventPreferences(context.Background(), userID, prefs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Mandatory events should have push and email forced to true
+	got, err := env.svc.GetEventPreferences(context.Background(), userID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, p := range got {
+		if p.EventType == domain.EventBookingConfirmed {
+			if !p.PushEnabled {
+				t.Error("mandatory event booking_confirmed should have push forced to true")
+			}
+			if !p.EmailEnabled {
+				t.Error("mandatory event booking_confirmed should have email forced to true")
+			}
+			break
+		}
+	}
+}
+
+func TestNotificationService_UpdateEventPreferences_NonMandatoryCanDisable(t *testing.T) {
+	env := newNotifTestEnv()
+	userID := uuid.New()
+
+	prefs := []domain.NotificationEventPreference{
+		{
+			EventType:    domain.EventPromo,
+			PushEnabled:  false,
+			EmailEnabled: false,
+			SMSEnabled:   false,
+		},
+	}
+
+	err := env.svc.UpdateEventPreferences(context.Background(), userID, prefs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got, err := env.svc.GetEventPreferences(context.Background(), userID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, p := range got {
+		if p.EventType == domain.EventPromo {
+			if p.PushEnabled || p.EmailEnabled || p.SMSEnabled {
+				t.Error("non-mandatory event promo should allow disabling all channels")
+			}
+			break
+		}
+	}
+}
+
+func TestNotificationService_UpdateEventPreferences_InvalidEventType(t *testing.T) {
+	env := newNotifTestEnv()
+	userID := uuid.New()
+
+	prefs := []domain.NotificationEventPreference{
+		{
+			EventType:    domain.NotificationEventType("invalid_event"),
+			PushEnabled:  true,
+			EmailEnabled: true,
+		},
+	}
+
+	err := env.svc.UpdateEventPreferences(context.Background(), userID, prefs)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("expected ErrInvalidInput for invalid event type, got: %v", err)
+	}
+}
+
+func TestNotificationService_UpdatePreferences_SMS(t *testing.T) {
+	env := newNotifTestEnv()
+	userID := uuid.New()
+
+	prefs := &domain.NotificationPreferences{
+		InApp: true,
+		Email: true,
+		SMS:   true,
+	}
+
+	err := env.svc.UpdatePreferences(context.Background(), userID, prefs)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got, err := env.svc.GetPreferences(context.Background(), userID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !got.SMS {
+		t.Error("SMS should be true after update")
+	}
+}
+
+func TestMapNotificationTypeToEvent(t *testing.T) {
+	tests := []struct {
+		input    domain.NotificationType
+		expected domain.NotificationEventType
+	}{
+		{domain.NotifBookingConfirmed, domain.EventBookingConfirmed},
+		{domain.NotifBookingCancelled, domain.EventBookingCancelled},
+		{domain.NotifNewReview, domain.EventNewReview},
+		{domain.NotifClientReview, domain.EventNewReview},
+		{domain.NotifPromo, domain.EventPromo},
+		{domain.NotifBroadcast, domain.EventBroadcast},
+		{domain.NotifSystem, domain.EventSystem},
+		{domain.NotifBonusExpiring, domain.EventBonusExpiring},
+	}
+
+	for _, tt := range tests {
+		got := domain.MapNotificationTypeToEvent(tt.input)
+		if got != tt.expected {
+			t.Errorf("MapNotificationTypeToEvent(%s) = %s, want %s", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestMandatoryAndCriticalEvents(t *testing.T) {
+	// Verify mandatory events are a subset of all events
+	for evt := range domain.MandatoryEvents {
+		if !evt.IsValid() {
+			t.Errorf("mandatory event %s is not a valid event type", evt)
+		}
+	}
+
+	// Verify critical events are a subset of mandatory events
+	for evt := range domain.CriticalEvents {
+		if !evt.IsMandatory() {
+			t.Errorf("critical event %s should also be mandatory", evt)
+		}
 	}
 }

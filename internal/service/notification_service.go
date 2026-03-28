@@ -20,6 +20,8 @@ type NotificationService interface {
 	GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.NotificationPreferences, error)
 	UpdatePreferences(ctx context.Context, userID uuid.UUID, prefs *domain.NotificationPreferences) error
 	HasRecentByType(ctx context.Context, userID uuid.UUID, notifType domain.NotificationType, since time.Time) (bool, error)
+	GetEventPreferences(ctx context.Context, userID uuid.UUID) ([]domain.NotificationEventPreference, error)
+	UpdateEventPreferences(ctx context.Context, userID uuid.UUID, prefs []domain.NotificationEventPreference) error
 }
 
 type notificationService struct {
@@ -114,4 +116,43 @@ func (s *notificationService) UpdatePreferences(ctx context.Context, userID uuid
 
 func (s *notificationService) HasRecentByType(ctx context.Context, userID uuid.UUID, notifType domain.NotificationType, since time.Time) (bool, error) {
 	return s.notifRepo.HasRecentByType(ctx, userID, notifType, since)
+}
+
+func (s *notificationService) GetEventPreferences(ctx context.Context, userID uuid.UUID) ([]domain.NotificationEventPreference, error) {
+	stored, err := s.notifRepo.GetEventPreferences(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build a map of stored preferences
+	storedMap := make(map[domain.NotificationEventType]domain.NotificationEventPreference, len(stored))
+	for _, p := range stored {
+		storedMap[p.EventType] = p
+	}
+
+	// Return full list with defaults for missing event types
+	result := make([]domain.NotificationEventPreference, 0, len(domain.AllNotificationEventTypes))
+	for _, et := range domain.AllNotificationEventTypes {
+		if p, ok := storedMap[et]; ok {
+			result = append(result, p)
+		} else {
+			result = append(result, domain.DefaultEventPreference(userID, et))
+		}
+	}
+	return result, nil
+}
+
+func (s *notificationService) UpdateEventPreferences(ctx context.Context, userID uuid.UUID, prefs []domain.NotificationEventPreference) error {
+	// Enforce mandatory events: cannot disable channels for mandatory events
+	for i := range prefs {
+		prefs[i].UserID = userID
+		if !prefs[i].EventType.IsValid() {
+			return domain.ErrInvalidInput
+		}
+		if prefs[i].EventType.IsMandatory() {
+			prefs[i].PushEnabled = true
+			prefs[i].EmailEnabled = true
+		}
+	}
+	return s.notifRepo.UpsertEventPreferences(ctx, prefs)
 }

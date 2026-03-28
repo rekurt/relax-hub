@@ -134,6 +134,14 @@ type NotificationRepository interface {
 	GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.NotificationPreferences, error)
 	UpdatePreferences(ctx context.Context, prefs *domain.NotificationPreferences) error
 	HasRecentByType(ctx context.Context, userID uuid.UUID, notifType domain.NotificationType, since time.Time) (bool, error)
+	GetEventPreferences(ctx context.Context, userID uuid.UUID) ([]domain.NotificationEventPreference, error)
+	GetEventPreference(ctx context.Context, userID uuid.UUID, eventType domain.NotificationEventType) (*domain.NotificationEventPreference, error)
+	UpsertEventPreference(ctx context.Context, pref *domain.NotificationEventPreference) error
+	UpsertEventPreferences(ctx context.Context, prefs []domain.NotificationEventPreference) error
+	CreatePushDeliveryLog(ctx context.Context, log *domain.PushDeliveryLog) error
+	GetPendingPushDeliveries(ctx context.Context, olderThan time.Time) ([]domain.PushDeliveryLog, error)
+	UpdatePushDeliveryStatus(ctx context.Context, id uuid.UUID, status domain.PushDeliveryStatus) error
+	MarkPushFallbackSent(ctx context.Context, id uuid.UUID) error
 }
 
 type SocialAccountRepository interface {

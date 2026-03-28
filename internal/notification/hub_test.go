@@ -365,7 +365,7 @@ func TestHub_Dispatch_SendsViaWebSocket(t *testing.T) {
 	defer hub.Unregister(client)
 
 	notifRepo := mock.NewNotificationRepo()
-	d := notification.NewDispatcher(notifRepo, nil, nil, mock.NewTelegramLinkRepo(), nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, nil, nil, mock.NewTelegramLinkRepo(), nil, nil, nil, hub, log)
 
 	notif := &domain.Notification{
 		ID:        uuid.New(),

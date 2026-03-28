@@ -39,6 +39,14 @@ func (n *noopNotifService) HasRecentByType(_ context.Context, _ uuid.UUID, _ dom
 	return false, nil
 }
 
+func (n *noopNotifService) GetEventPreferences(_ context.Context, _ uuid.UUID) ([]domain.NotificationEventPreference, error) {
+	return nil, nil
+}
+
+func (n *noopNotifService) UpdateEventPreferences(_ context.Context, _ uuid.UUID, _ []domain.NotificationEventPreference) error {
+	return nil
+}
+
 // noopReferralService is a no-op ReferralService for tests that don't verify referrals.
 type noopReferralService struct{}
 

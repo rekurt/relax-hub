@@ -111,6 +111,14 @@ func (m *mockAdminNotificationService) HasRecentByType(_ context.Context, _ uuid
 	return false, nil
 }
 
+func (m *mockAdminNotificationService) GetEventPreferences(_ context.Context, _ uuid.UUID) ([]domain.NotificationEventPreference, error) {
+	return nil, nil
+}
+
+func (m *mockAdminNotificationService) UpdateEventPreferences(_ context.Context, _ uuid.UUID, _ []domain.NotificationEventPreference) error {
+	return nil
+}
+
 func testRouterParams() server.RouterParams {
 	cors := middleware.NewCORSMiddleware(&config.Config{
 		CORS: config.CORSConfig{AllowedOrigins: []string{"*"}},

@@ -514,6 +514,8 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Patch("/my/notifications/read-all", p.NotifHandler.MarkAllAsRead)
 		r.With(auth).Get("/my/notification-preferences", p.NotifHandler.GetPreferences)
 		r.With(auth).Put("/my/notification-preferences", p.NotifHandler.UpdatePreferences)
+		r.With(auth).Get("/my/notification-preferences/events", p.NotifHandler.GetEventPreferences)
+		r.With(auth).Put("/my/notification-preferences/events", p.NotifHandler.UpdateEventPreferences)
 
 		// Device tokens for push notifications (authenticated)
 		r.With(auth).Post("/device-tokens", p.DeviceTokenHandler.Register)

@@ -134,6 +134,10 @@ export default function BookingCreate() {
         const booking = response?.data
         if (booking?.id) {
           message.success('Бронирование создано!')
+          // Trigger push permission request after first booking (FR-142)
+          if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission()
+          }
           navigate(`/client/bookings/${booking.id}`)
         }
       },

@@ -62,6 +62,14 @@ func (m *mockFMNotificationService) HasRecentByType(_ context.Context, _ uuid.UU
 	return false, nil
 }
 
+func (m *mockFMNotificationService) GetEventPreferences(_ context.Context, _ uuid.UUID) ([]domain.NotificationEventPreference, error) {
+	return nil, nil
+}
+
+func (m *mockFMNotificationService) UpdateEventPreferences(_ context.Context, _ uuid.UUID, _ []domain.NotificationEventPreference) error {
+	return nil
+}
+
 // mockFMWalletService implements service.WalletService for testing
 type mockFMWalletService struct {
 	wallets     map[uuid.UUID]*domain.Wallet

@@ -1569,15 +1569,19 @@ func isBathhouseOpenNow(bh *domain.Bathhouse) bool {
 
 // NotificationRepo is an in-memory mock implementation of repository.NotificationRepository.
 type NotificationRepo struct {
-	mu            sync.RWMutex
-	notifications map[uuid.UUID]*domain.Notification
-	preferences   map[uuid.UUID]*domain.NotificationPreferences
+	mu               sync.RWMutex
+	notifications    map[uuid.UUID]*domain.Notification
+	preferences      map[uuid.UUID]*domain.NotificationPreferences
+	eventPrefs       map[string]*domain.NotificationEventPreference // key: "userID:eventType"
+	pushDeliveryLogs map[uuid.UUID]*domain.PushDeliveryLog
 }
 
 func NewNotificationRepo() *NotificationRepo {
 	return &NotificationRepo{
-		notifications: make(map[uuid.UUID]*domain.Notification),
-		preferences:   make(map[uuid.UUID]*domain.NotificationPreferences),
+		notifications:    make(map[uuid.UUID]*domain.Notification),
+		preferences:      make(map[uuid.UUID]*domain.NotificationPreferences),
+		eventPrefs:       make(map[string]*domain.NotificationEventPreference),
+		pushDeliveryLogs: make(map[uuid.UUID]*domain.PushDeliveryLog),
 	}
 }
 
@@ -1712,6 +1716,107 @@ func (r *NotificationRepo) HasRecentByType(_ context.Context, userID uuid.UUID, 
 		}
 	}
 	return false, nil
+}
+
+func eventPrefKey(userID uuid.UUID, eventType domain.NotificationEventType) string {
+	return userID.String() + ":" + string(eventType)
+}
+
+func (r *NotificationRepo) GetEventPreferences(_ context.Context, userID uuid.UUID) ([]domain.NotificationEventPreference, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var prefs []domain.NotificationEventPreference
+	prefix := userID.String() + ":"
+	for k, p := range r.eventPrefs {
+		if len(k) > len(prefix) && k[:len(prefix)] == prefix {
+			cp := *p
+			prefs = append(prefs, cp)
+		}
+	}
+	return prefs, nil
+}
+
+func (r *NotificationRepo) GetEventPreference(_ context.Context, userID uuid.UUID, eventType domain.NotificationEventType) (*domain.NotificationEventPreference, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	p, ok := r.eventPrefs[eventPrefKey(userID, eventType)]
+	if !ok {
+		def := domain.DefaultEventPreference(userID, eventType)
+		return &def, nil
+	}
+	cp := *p
+	return &cp, nil
+}
+
+func (r *NotificationRepo) UpsertEventPreference(_ context.Context, pref *domain.NotificationEventPreference) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	cp := *pref
+	r.eventPrefs[eventPrefKey(pref.UserID, pref.EventType)] = &cp
+	return nil
+}
+
+func (r *NotificationRepo) UpsertEventPreferences(_ context.Context, prefs []domain.NotificationEventPreference) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for i := range prefs {
+		cp := prefs[i]
+		r.eventPrefs[eventPrefKey(cp.UserID, cp.EventType)] = &cp
+	}
+	return nil
+}
+
+func (r *NotificationRepo) CreatePushDeliveryLog(_ context.Context, log *domain.PushDeliveryLog) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if log.ID == uuid.Nil {
+		log.ID = uuid.New()
+	}
+	cp := *log
+	r.pushDeliveryLogs[log.ID] = &cp
+	return nil
+}
+
+func (r *NotificationRepo) GetPendingPushDeliveries(_ context.Context, olderThan time.Time) ([]domain.PushDeliveryLog, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var logs []domain.PushDeliveryLog
+	for _, l := range r.pushDeliveryLogs {
+		if l.Status == domain.PushStatusSent && !l.FallbackSent && l.SentAt.Before(olderThan) {
+			logs = append(logs, *l)
+		}
+	}
+	return logs, nil
+}
+
+func (r *NotificationRepo) UpdatePushDeliveryStatus(_ context.Context, id uuid.UUID, status domain.PushDeliveryStatus) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	l, ok := r.pushDeliveryLogs[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	l.Status = status
+	return nil
+}
+
+func (r *NotificationRepo) MarkPushFallbackSent(_ context.Context, id uuid.UUID) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	l, ok := r.pushDeliveryLogs[id]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	l.FallbackSent = true
+	return nil
 }
 
 // SocialAccountRepo is an in-memory mock implementation of repository.SocialAccountRepository.

@@ -305,16 +305,16 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/handler/notification_handler.go` (preferences endpoints)
 - Create: `frontend/src/pages/client/NotificationPreferences.tsx`
 
-- [ ] Create notification_preferences table (user_id, event_type, push_enabled, email_enabled, sms_enabled)
-- [ ] Define event types enum matching BRD table (booking_confirmed, reminder_24h, etc.)
-- [ ] Mark mandatory events (booking confirmation, dispute resolution) - cannot be disabled
-- [ ] Implement fallback chain: push first -> if not delivered in 5 min -> email -> if critical -> SMS
-- [ ] Track push delivery status via FCM delivery receipts
-- [ ] Endpoints: GET/PUT /api/v1/my/notification-preferences
-- [ ] Frontend preferences matrix (event types x channels toggle grid)
-- [ ] Trigger push permission request after first booking (FR-142)
-- [ ] Write tests for preference filtering and fallback chain
-- [ ] Run project test suite - must pass before task 16
+- [x] Create notification_preferences table (user_id, event_type, push_enabled, email_enabled, sms_enabled)
+- [x] Define event types enum matching BRD table (booking_confirmed, reminder_24h, etc.)
+- [x] Mark mandatory events (booking confirmation, dispute resolution) - cannot be disabled
+- [x] Implement fallback chain: push first -> if not delivered in 5 min -> email -> if critical -> SMS
+- [x] Track push delivery status via FCM delivery receipts
+- [x] Endpoints: GET/PUT /api/v1/my/notification-preferences
+- [x] Frontend preferences matrix (event types x channels toggle grid)
+- [x] Trigger push permission request after first booking (FR-142)
+- [x] Write tests for preference filtering and fallback chain
+- [x] Run project test suite - must pass before task 16
 
 ### Task 16: Owner Outgoing Webhooks (FR section 2.16)
 

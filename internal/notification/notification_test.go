@@ -31,7 +31,7 @@ func TestDispatcher_Dispatch_AllChannelsEnabled(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, nil, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -76,7 +76,7 @@ func TestDispatcher_Dispatch_InAppOnly(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, nil, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -113,7 +113,7 @@ func TestDispatcher_Dispatch_UserOptedOutOfEventType(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, nil, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -150,7 +150,7 @@ func TestDispatcher_Dispatch_EmailWithoutAddress(t *testing.T) {
 	emailSender := &recordingEmailSender{}
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, nil, mock.NewTelegramLinkRepo(), nil, nil, nil, hub, log)
 
 	userID := uuid.New()
 	notif := &domain.Notification{
@@ -203,7 +203,7 @@ func TestDispatcher_Dispatch_TelegramEnabled(t *testing.T) {
 	tgRepo := mock.NewTelegramLinkRepo()
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, tgSender, tgRepo, nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, tgSender, tgRepo, nil, nil, nil, hub, log)
 
 	userID := uuid.New()
 	telegramID := int64(123456789)
@@ -254,7 +254,7 @@ func TestDispatcher_Dispatch_TelegramDisabled(t *testing.T) {
 	tgRepo := mock.NewTelegramLinkRepo()
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, tgSender, tgRepo, nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, tgSender, tgRepo, nil, nil, nil, hub, log)
 
 	userID := uuid.New()
 
@@ -287,7 +287,7 @@ func TestDispatcher_Dispatch_TelegramNoLink(t *testing.T) {
 	tgRepo := mock.NewTelegramLinkRepo()
 	log := logger.New(logger.LevelError)
 	hub := notification.NewHub(log)
-	d := notification.NewDispatcher(notifRepo, emailSender, tgSender, tgRepo, nil, nil, hub, log)
+	d := notification.NewDispatcher(notifRepo, emailSender, tgSender, tgRepo, nil, nil, nil, hub, log)
 
 	userID := uuid.New()
 
