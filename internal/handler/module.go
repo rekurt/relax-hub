@@ -104,5 +104,6 @@ var Module = fx.Module("handler",
 		NewWebhookHandler,
 		NewPMSHandler,
 		NewIsochroneHandler,
+		NewTransportHandler,
 	),
 )

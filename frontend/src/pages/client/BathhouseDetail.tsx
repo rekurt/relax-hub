@@ -24,9 +24,11 @@ import {
   HeartFilled,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  CarOutlined,
+  NodeIndexOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { App } from 'antd'
 import { useGetBathhousesId, useGetBathhousesIdAvailableSlots, useGetBathhousesIdSchema } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPhotos } from '@/api/generated/photos/photos'
@@ -34,12 +36,34 @@ import { useGetBathhousesIdReviews } from '@/api/generated/reviews/reviews'
 import { useGetBathhousesIdSimilar } from '@/api/generated/recommendations/recommendations'
 import { useGetBathhousesIdGallery } from '@/api/generated/review-media/review-media'
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
+import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice, formatDayOfWeek } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
 import BathhouseCard from '@/components/BathhouseCard'
 import ReviewCard from '@/components/ReviewCard'
 
 const { Title, Text, Paragraph } = Typography
+
+interface TransportItem {
+  type: 'metro' | 'bus_stop' | 'parking'
+  name: string
+  distance_meters: number
+  lat: number
+  lng: number
+}
+
+const TRANSPORT_LABELS: Record<string, { label: string; color: string }> = {
+  metro: { label: 'Метро', color: '#1677ff' },
+  bus_stop: { label: 'Остановка', color: '#52c41a' },
+  parking: { label: 'Парковка', color: '#faad14' },
+}
+
+function formatDistance(meters: number): string {
+  if (meters >= 1000) {
+    return `${(meters / 1000).toFixed(1)} км`
+  }
+  return `${meters} м`
+}
 
 const AMENITY_LIST = [
   { key: 'has_sauna', label: 'Сауна' },
@@ -95,6 +119,14 @@ export default function BathhouseDetail() {
   const { data: schemaData } = useGetBathhousesIdSchema(id ?? '', {
     query: { enabled: !!id },
   })
+
+  const { data: transportData } = useQuery({
+    queryKey: [`/bathhouses/${id}/transport`],
+    queryFn: () => axiosInstance.get<{ success: boolean; data: { items: TransportItem[] } }>(`/bathhouses/${id}/transport`).then((r) => r.data),
+    enabled: !!id,
+    staleTime: 7 * 24 * 60 * 60 * 1000, // 7 days - transport infrastructure rarely changes
+  })
+  const transportItems = transportData?.data?.items ?? []
 
   const favoriteMutation = usePostBathhousesIdFavorite({
     mutation: {
@@ -278,6 +310,31 @@ export default function BathhouseDetail() {
                         </Text>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {transportItems.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <Text strong>Транспорт рядом:</Text>
+                  <div style={{ marginTop: 8 }}>
+                    {transportItems.map((item, idx) => {
+                      const meta = TRANSPORT_LABELS[item.type] ?? { label: item.type, color: '#999' }
+                      return (
+                        <div key={`${item.type}-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                          {item.type === 'metro' ? (
+                            <NodeIndexOutlined style={{ color: meta.color }} />
+                          ) : item.type === 'parking' ? (
+                            <CarOutlined style={{ color: meta.color }} />
+                          ) : (
+                            <EnvironmentOutlined style={{ color: meta.color }} />
+                          )}
+                          <Tag color={meta.color} style={{ margin: 0 }}>{meta.label}</Tag>
+                          <Text>{item.name}</Text>
+                          <Text type="secondary">— {formatDistance(item.distance_meters)}</Text>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}

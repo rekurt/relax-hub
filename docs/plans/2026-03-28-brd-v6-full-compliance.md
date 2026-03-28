@@ -392,13 +392,13 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/handler/bathhouse_handler.go` (transport endpoint)
 - Modify: `frontend/src/pages/client/BathhouseDetail.tsx`
 
-- [ ] Integrate with Yandex Maps Geocoder/Search API for nearby POIs (metro, bus stops, parking)
-- [ ] Endpoint: GET /api/v1/bathhouses/{id}/transport (returns nearest transport with distances)
-- [ ] Cache in Redis (per bathhouse, TTL 7 days) - transport infrastructure changes rarely
-- [ ] Display on bathhouse detail page: "Metro Partizanskaya - 500m", "Bus stop - 200m"
-- [ ] Optional map layer with transport markers
-- [ ] Write tests for transport data parsing
-- [ ] Run project test suite - must pass before task 20
+- [x] Integrate with Yandex Maps Geocoder/Search API for nearby POIs (metro, bus stops, parking)
+- [x] Endpoint: GET /api/v1/bathhouses/{id}/transport (returns nearest transport with distances)
+- [x] Cache in Redis (per bathhouse, TTL 7 days) - transport infrastructure changes rarely
+- [x] Display on bathhouse detail page: "Metro Partizanskaya - 500m", "Bus stop - 200m"
+- [x] Optional map layer with transport markers
+- [x] Write tests for transport data parsing
+- [x] Run project test suite - must pass before task 20
 
 ### Task 20: SSR for Public Pages (FR section 2.17)
 

@@ -95,6 +95,7 @@ type RouterParams struct {
 	WebhookHandler               *handler.WebhookHandler
 	PMSHandler                   *handler.PMSHandler
 	IsochroneHandler             *handler.IsochroneHandler
+	TransportHandler             *handler.TransportHandler
 	AuditLogRepo              repository.AuditLogRepository
 	AdminSubRoleResolver  middleware.AdminSubRoleResolver
 	Admin2FAChecker       middleware.Admin2FAChecker
@@ -211,6 +212,7 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(optionalAuth).Get("/bathhouses/{id}", p.BHHandler.GetByID)
 		r.Get("/bathhouses/{id}/available-slots", p.BHHandler.GetAvailableSlots)
 		r.Get("/bathhouses/{id}/meta", p.BHHandler.GetMeta)
+		r.Get("/bathhouses/{id}/transport", p.TransportHandler.GetTransport)
 		r.Get("/bathhouses/{id}/schema", p.SitemapHandler.GetSchema)
 
 		// City bathhouses (public, SEO-friendly)

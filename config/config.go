@@ -37,8 +37,9 @@ type Config struct {
 }
 
 type GeoConfig struct {
-	IsochroneAPIURL string `mapstructure:"isochrone_api_url"` // OpenRouteService base URL
-	IsochroneAPIKey string `mapstructure:"isochrone_api_key"` // ORS API key
+	IsochroneAPIURL   string `mapstructure:"isochrone_api_url"`   // OpenRouteService base URL
+	IsochroneAPIKey   string `mapstructure:"isochrone_api_key"`   // ORS API key
+	YandexSearchAPIKey string `mapstructure:"yandex_search_api_key"` // Yandex Maps Search API key for transport/POI lookups
 }
 
 type CronConfig struct {
@@ -238,6 +239,7 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("frontend_url", "http://localhost:3000")
 	v.SetDefault("geo.isochrone_api_url", "https://api.openrouteservice.org")
 	v.SetDefault("geo.isochrone_api_key", "")
+	v.SetDefault("geo.yandex_search_api_key", "")
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
