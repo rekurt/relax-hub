@@ -134,19 +134,15 @@ func (s *passwordResetService) ResetPassword(ctx context.Context, token string, 
 		return fmt.Errorf("%w: password must be at most 72 characters", domain.ErrInvalidInput)
 	}
 
-	// Retrieve and validate token from Redis
+	// Atomically retrieve and delete token from Redis to prevent replay attacks.
+	// GetDel ensures no concurrent request can read the same token.
 	redisKey := resetRedisPrefix + token
-	userIDStr, err := s.redis.Get(ctx, redisKey).Result()
+	userIDStr, err := s.redis.GetDel(ctx, redisKey).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return domain.ErrResetTokenInvalid
 		}
 		return fmt.Errorf("get reset token: %w", err)
-	}
-
-	// Delete token immediately to prevent reuse
-	if err := s.redis.Del(ctx, redisKey).Err(); err != nil {
-		return fmt.Errorf("failed to invalidate reset token: %w", err)
 	}
 
 	userID, err := uuid.Parse(userIDStr)

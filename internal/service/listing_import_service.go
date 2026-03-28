@@ -95,7 +95,7 @@ func (s *listingImportService) ImportCSV(ctx context.Context, ownerID uuid.UUID,
 		report.TotalRows++
 
 		if report.TotalRows > maxRows {
-			return nil, fmt.Errorf("превышен лимит строк: максимум %d", maxRows)
+			return report, fmt.Errorf("превышен лимит строк: максимум %d (обработано %d)", maxRows, report.SuccessCount)
 		}
 
 		input, rowErrors := parseRow(record, colIndex, rowNum)

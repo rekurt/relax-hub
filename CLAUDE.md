@@ -136,7 +136,7 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrDisputeAlreadyClosed→409, ErrDisputeEvidenceWindowExpired→400
 - ErrDisputeAppealExpired→400, ErrDisputeNotResolved→400, ErrDisputeAlreadyAppealed→409
 - ErrBookingModificationLimit→400, ErrBookingNotModifiable→400
-- ErrRegionSwitchBlocked→400, ErrCrossRegionBooking→403
+- ErrRegionSwitchBlocked→409, ErrCrossRegionBooking→403
 - ErrSeasonalTariffOverlap→409, ErrSeasonalTariffNotFound→404
 - ErrShareTokenNotFound→404, ErrShareTokenExpired→400
 - ErrImportValidationFailed→400, ErrImportFileTooLarge→400

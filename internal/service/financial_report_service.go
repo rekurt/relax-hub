@@ -591,7 +591,6 @@ func generateSimplePDF(lines []string) []byte {
 	content.WriteString("BT\n")
 	content.WriteString("/F1 10 Tf\n")
 	y := 800
-	truncated := false
 	for i, line := range lines {
 		if line == "---" {
 			fmt.Fprintf(&content, "1 0 0 1 50 %d Tm\n", y)
@@ -605,16 +604,13 @@ func generateSimplePDF(lines []string) []byte {
 		if y < 50 {
 			remaining := len(lines) - i - 1
 			if remaining > 0 {
-				truncated = true
-				y -= 14
 				notice := pdfEscapeString(fmt.Sprintf("... eshche %d strok ne pokazano. Ispolzujte CSV eksport dlya polnogo otcheta.", remaining))
-				fmt.Fprintf(&content, "1 0 0 1 50 %d Tm\n", 36)
+				fmt.Fprintf(&content, "1 0 0 1 50 36 Tm\n")
 				fmt.Fprintf(&content, "(%s) Tj\n", notice)
 			}
 			break
 		}
 	}
-	_ = truncated
 	content.WriteString("ET\n")
 	contentBytes := content.Bytes()
 
