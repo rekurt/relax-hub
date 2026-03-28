@@ -9,22 +9,31 @@ import (
 type PaymentMethod string
 
 const (
-	PaymentMethodCard    PaymentMethod = "card"
-	PaymentMethodSBP     PaymentMethod = "sbp"
-	PaymentMethodWallet  PaymentMethod = "wallet"
-	PaymentMethodCombo   PaymentMethod = "combo"
-	PaymentMethodMIR     PaymentMethod = "mir"
-	PaymentMethodBelkart PaymentMethod = "belkart"
-	PaymentMethodERIP    PaymentMethod = "erip"
+	PaymentMethodCard      PaymentMethod = "card"
+	PaymentMethodSBP       PaymentMethod = "sbp"
+	PaymentMethodWallet    PaymentMethod = "wallet"
+	PaymentMethodCombo     PaymentMethod = "combo"
+	PaymentMethodMIR       PaymentMethod = "mir"
+	PaymentMethodBelkart   PaymentMethod = "belkart"
+	PaymentMethodERIP      PaymentMethod = "erip"
+	PaymentMethodApplePay  PaymentMethod = "apple_pay"
+	PaymentMethodGooglePay PaymentMethod = "google_pay"
 )
 
 func (m PaymentMethod) IsValid() bool {
 	switch m {
 	case PaymentMethodCard, PaymentMethodSBP, PaymentMethodWallet, PaymentMethodCombo,
-		PaymentMethodMIR, PaymentMethodBelkart, PaymentMethodERIP:
+		PaymentMethodMIR, PaymentMethodBelkart, PaymentMethodERIP,
+		PaymentMethodApplePay, PaymentMethodGooglePay:
 		return true
 	}
 	return false
+}
+
+// IsTokenBased returns true for payment methods that require a client-side payment token
+// (Apple Pay, Google Pay) instead of the redirect-based confirmation flow.
+func (m PaymentMethod) IsTokenBased() bool {
+	return m == PaymentMethodApplePay || m == PaymentMethodGooglePay
 }
 
 type PaymentStatus string

@@ -216,6 +216,74 @@ func TestKopecksToString(t *testing.T) {
 	}
 }
 
+func TestMockProvider_CreatePayment_ApplePay(t *testing.T) {
+	provider := NewMockProvider()
+	ctx := context.Background()
+
+	result, err := provider.CreatePayment(ctx, CreatePaymentRequest{
+		Amount:       5000,
+		Currency:     "RUB",
+		Description:  "Apple Pay payment",
+		ReturnURL:    "https://example.com/return",
+		Method:       "apple_pay",
+		Capture:      true,
+		PaymentToken: "apple-pay-token-data",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.ExternalID == "" {
+		t.Error("expected non-empty external ID")
+	}
+
+	method := provider.GetLastPaymentMethod()
+	if method != "apple_pay" {
+		t.Errorf("expected method apple_pay, got %s", method)
+	}
+}
+
+func TestMockProvider_CreatePayment_GooglePay(t *testing.T) {
+	provider := NewMockProvider()
+	ctx := context.Background()
+
+	result, err := provider.CreatePayment(ctx, CreatePaymentRequest{
+		Amount:       7500,
+		Currency:     "RUB",
+		Description:  "Google Pay payment",
+		ReturnURL:    "https://example.com/return",
+		Method:       "google_pay",
+		Capture:      true,
+		PaymentToken: "google-pay-token-data",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.ExternalID == "" {
+		t.Error("expected non-empty external ID")
+	}
+
+	method := provider.GetLastPaymentMethod()
+	if method != "google_pay" {
+		t.Errorf("expected method google_pay, got %s", method)
+	}
+}
+
+func TestCreatePaymentRequest_PaymentToken(t *testing.T) {
+	req := CreatePaymentRequest{
+		Amount:       10000,
+		Currency:     "RUB",
+		Method:       "apple_pay",
+		Capture:      true,
+		PaymentToken: "test-token",
+	}
+
+	if req.PaymentToken != "test-token" {
+		t.Errorf("expected payment token 'test-token', got '%s'", req.PaymentToken)
+	}
+}
+
 // Verify MockProvider implements PaymentProvider interface
 var _ PaymentProvider = (*MockProvider)(nil)
 

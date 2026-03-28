@@ -34,8 +34,15 @@ type ComboPaymentRequest struct {
 	PaymentMethod domain.PaymentMethod // "card" or "sbp" (for card portion)
 }
 
+// TokenPaymentRequest extends a standard payment with a client-side payment token (Apple Pay / Google Pay).
+type TokenPaymentRequest struct {
+	PaymentMethod domain.PaymentMethod
+	PaymentToken  string // token from Apple Pay JS or Google Pay API
+}
+
 type PaymentService interface {
 	InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, paymentMethod domain.PaymentMethod) (confirmationURL string, err error)
+	InitiateTokenPayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, req TokenPaymentRequest) (confirmationURL string, err error)
 	InitiateComboPayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, req ComboPaymentRequest) (confirmationURL string, err error)
 	HandleWebhook(ctx context.Context, event WebhookEvent) error
 	RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool, refundTo string, policy domain.CancellationPolicy) error
@@ -182,6 +189,105 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 	}
 
 	// Update with external ID and processing status
+	if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentProcessing, result.ExternalID); err != nil {
+		return "", err
+	}
+
+	return result.ConfirmationURL, nil
+}
+
+func (s *paymentService) InitiateTokenPayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, req TokenPaymentRequest) (string, error) {
+	if req.PaymentToken == "" {
+		return "", fmt.Errorf("%w: payment_token is required for token-based payments", domain.ErrInvalidInput)
+	}
+	if !req.PaymentMethod.IsTokenBased() {
+		return "", fmt.Errorf("%w: payment_method must be apple_pay or google_pay for token payments", domain.ErrInvalidInput)
+	}
+
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return "", err
+	}
+
+	if booking.UserID != userID {
+		return "", domain.ErrForbidden
+	}
+
+	if booking.Status != domain.BookingPending && booking.Status != domain.BookingPendingOwner && booking.Status != domain.BookingConfirmed {
+		return "", fmt.Errorf("%w: booking must be pending, pending_owner, or confirmed to pay", domain.ErrInvalidInput)
+	}
+
+	// Check if payment already exists for this booking
+	existing, err := s.paymentRepo.GetByBookingID(ctx, bookingID)
+	if err == nil && existing != nil {
+		if existing.Status == domain.PaymentSucceeded {
+			return "", domain.ErrPaymentAlreadyProcessed
+		}
+		if existing.Status == domain.PaymentPending || existing.Status == domain.PaymentProcessing {
+			return "", domain.ErrPaymentAlreadyProcessed
+		}
+		if existing.Status == domain.PaymentFailed {
+			if err := s.paymentRepo.Delete(ctx, existing.ID); err != nil {
+				return "", fmt.Errorf("failed to delete failed payment: %w", err)
+			}
+		}
+	}
+
+	isHold := booking.Status == domain.BookingPendingOwner
+	capture := !isHold
+
+	now := time.Now()
+	p := &domain.Payment{
+		ID:            uuid.New(),
+		BookingID:     bookingID,
+		UserID:        booking.UserID,
+		Amount:        booking.TotalPrice,
+		Currency:      "RUB",
+		Status:        domain.PaymentPending,
+		Provider:      "yookassa",
+		PaymentMethod: req.PaymentMethod,
+		IsHold:        isHold,
+		Metadata: map[string]string{
+			"booking_id": bookingID.String(),
+			"user_id":    booking.UserID.String(),
+		},
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	if err := p.Validate(); err != nil {
+		return "", err
+	}
+
+	if err := s.paymentRepo.Create(ctx, p); err != nil {
+		return "", err
+	}
+
+	description := fmt.Sprintf("Оплата бронирования %s", bookingID.String()[:8])
+	result, err := s.provider.CreatePayment(ctx, payment.CreatePaymentRequest{
+		Amount:       p.Amount,
+		Currency:     p.Currency,
+		Description:  description,
+		ReturnURL:    s.returnURL,
+		Metadata:     p.Metadata,
+		Method:       string(req.PaymentMethod),
+		Capture:      capture,
+		PaymentToken: req.PaymentToken,
+	})
+	if err != nil {
+		if updErr := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentFailed, ""); updErr != nil {
+			s.logger.Error("failed to update payment status after provider error",
+				"payment_id", p.ID, "error", updErr)
+		}
+		s.logger.Error("payment provider error", "payment_id", p.ID, "error", err)
+		info := payment.ClassifyError(err)
+		return "", &domain.PaymentFailedError{
+			Code:       info.Code,
+			MessageRU:  info.MessageRU,
+			Suggestion: info.Suggestion,
+		}
+	}
+
 	if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentProcessing, result.ExternalID); err != nil {
 		return "", err
 	}

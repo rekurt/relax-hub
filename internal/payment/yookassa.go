@@ -27,6 +27,7 @@ func NewYooKassaProvider(shopID, secretKey string) *YooKassaProvider {
 }
 
 // CreatePayment creates a payment in YooKassa and returns the external ID and confirmation URL.
+// For token-based methods (Apple Pay, Google Pay), PaymentToken is used instead of redirect confirmation.
 func (p *YooKassaProvider) CreatePayment(ctx context.Context, req CreatePaymentRequest) (*PaymentResult, error) {
 	payment := &yoopayment.Payment{
 		Amount: &yoocommon.Amount{
@@ -35,16 +36,28 @@ func (p *YooKassaProvider) CreatePayment(ctx context.Context, req CreatePaymentR
 		},
 		Capture:     req.Capture,
 		Description: req.Description,
-		Confirmation: &yoopayment.Redirect{
-			Type:      yoopayment.TypeRedirect,
-			ReturnURL: req.ReturnURL,
-		},
-		Metadata: req.Metadata,
+		Metadata:    req.Metadata,
 	}
 
-	// Set payment method type for SBP
-	if req.Method == "sbp" {
+	// Token-based payments (Apple Pay, Google Pay): use PaymentToken instead of redirect
+	if req.PaymentToken != "" {
+		payment.PaymentToken = req.PaymentToken
+		// No Confirmation needed for token-based payments
+	} else {
+		payment.Confirmation = &yoopayment.Redirect{
+			Type:      yoopayment.TypeRedirect,
+			ReturnURL: req.ReturnURL,
+		}
+	}
+
+	// Set payment method type
+	switch req.Method {
+	case "sbp":
 		payment.PaymentMethod = &yoopayment.SBP{}
+	case "apple_pay":
+		payment.PaymentMethod = &yoopayment.ApplePay{}
+	case "google_pay":
+		payment.PaymentMethod = &yoopayment.GooglePay{}
 	}
 
 	handler := p.paymentHandler.WithIdempotencyKey(uuid.New().String())

@@ -43,10 +43,11 @@ type paymentResponse struct {
 }
 
 type initiatePaymentRequest struct {
-	PaymentMethod     string `json:"payment_method"`                // "card", "sbp", "wallet", "combo"
+	PaymentMethod     string `json:"payment_method"`                // "card", "sbp", "wallet", "combo", "apple_pay", "google_pay"
 	WalletAmount      int64  `json:"wallet_amount,omitempty"`       // for combo/wallet
 	CardAmount        int64  `json:"card_amount,omitempty"`         // for combo
 	CardPaymentMethod string `json:"card_payment_method,omitempty"` // for combo: "card" (default) or "sbp"
+	PaymentToken      string `json:"payment_token,omitempty"`       // token from Apple Pay JS or Google Pay API
 }
 
 type initiatePaymentResponse struct {
@@ -78,7 +79,7 @@ func toPaymentResponse(p *domain.Payment) paymentResponse {
 // InitiatePayment godoc
 //
 //	@Summary		Initiate payment
-//	@Description	Creates a payment for a booking. Supports card, SBP, wallet, and combo (wallet+card/SBP) payment methods. For wallet/combo, provide wallet_amount and card_amount fields.
+//	@Description	Creates a payment for a booking. Supports card, SBP, wallet, combo (wallet+card/SBP), apple_pay, and google_pay payment methods. For wallet/combo, provide wallet_amount and card_amount fields. For Apple Pay/Google Pay, provide payment_token from the client-side SDK.
 //	@Tags			payments
 //	@Accept			json
 //	@Produce		json
@@ -114,11 +115,32 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 	}
 
 	if !paymentMethod.IsValid() {
-		writeError(w, http.StatusBadRequest, "invalid_input", "payment_method must be 'card', 'sbp', 'wallet', or 'combo'")
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid payment_method")
 		return
 	}
 
 	userID := middleware.GetUserID(r.Context())
+
+	// Token-based payments (Apple Pay, Google Pay)
+	if paymentMethod.IsTokenBased() {
+		if req.PaymentToken == "" {
+			writeError(w, http.StatusBadRequest, "invalid_input", "payment_token is required for Apple Pay / Google Pay")
+			return
+		}
+		tokenReq := service.TokenPaymentRequest{
+			PaymentMethod: paymentMethod,
+			PaymentToken:  req.PaymentToken,
+		}
+		confirmationURL, err := h.paymentService.InitiateTokenPayment(r.Context(), userID, bookingID, tokenReq)
+		if err != nil {
+			handleServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, initiatePaymentResponse{
+			ConfirmationURL: confirmationURL,
+		})
+		return
+	}
 
 	switch paymentMethod {
 	case domain.PaymentMethodWallet:

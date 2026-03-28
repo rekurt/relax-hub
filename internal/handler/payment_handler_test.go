@@ -20,17 +20,25 @@ import (
 // --- Mock payment service ---
 
 type mockPaymentService struct {
-	initiateFn       func(ctx context.Context, userID, bookingID uuid.UUID, method domain.PaymentMethod) (string, error)
-	initiateComboFn  func(ctx context.Context, userID, bookingID uuid.UUID, req service.ComboPaymentRequest) (string, error)
-	handleWebhookFn  func(ctx context.Context, event service.WebhookEvent) error
-	refundFn         func(ctx context.Context, bookingID uuid.UUID) error
-	getByBookingFn   func(ctx context.Context, userID, bookingID uuid.UUID) (*domain.Payment, error)
-	listUserFn       func(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
+	initiateFn      func(ctx context.Context, userID, bookingID uuid.UUID, method domain.PaymentMethod) (string, error)
+	initiateTokenFn func(ctx context.Context, userID, bookingID uuid.UUID, req service.TokenPaymentRequest) (string, error)
+	initiateComboFn func(ctx context.Context, userID, bookingID uuid.UUID, req service.ComboPaymentRequest) (string, error)
+	handleWebhookFn func(ctx context.Context, event service.WebhookEvent) error
+	refundFn        func(ctx context.Context, bookingID uuid.UUID) error
+	getByBookingFn  func(ctx context.Context, userID, bookingID uuid.UUID) (*domain.Payment, error)
+	listUserFn      func(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
 }
 
 func (m *mockPaymentService) InitiatePayment(ctx context.Context, userID, bookingID uuid.UUID, method domain.PaymentMethod) (string, error) {
 	if m.initiateFn != nil {
 		return m.initiateFn(ctx, userID, bookingID, method)
+	}
+	return "", nil
+}
+
+func (m *mockPaymentService) InitiateTokenPayment(ctx context.Context, userID, bookingID uuid.UUID, req service.TokenPaymentRequest) (string, error) {
+	if m.initiateTokenFn != nil {
+		return m.initiateTokenFn(ctx, userID, bookingID, req)
 	}
 	return "", nil
 }
@@ -412,5 +420,92 @@ func TestPaymentHandler_GetBookingPayment_InvalidID(t *testing.T) {
 
 	if rec.Code != http.StatusBadRequest {
 		t.Errorf("expected status 400, got %d", rec.Code)
+	}
+}
+
+func TestPaymentHandler_InitiatePayment_ApplePay(t *testing.T) {
+	bookingID := uuid.New()
+
+	svc := &mockPaymentService{
+		initiateTokenFn: func(ctx context.Context, uID, bID uuid.UUID, req service.TokenPaymentRequest) (string, error) {
+			if bID != bookingID {
+				t.Errorf("expected booking ID %v, got %v", bookingID, bID)
+			}
+			if req.PaymentMethod != domain.PaymentMethodApplePay {
+				t.Errorf("expected apple_pay method, got %s", req.PaymentMethod)
+			}
+			if req.PaymentToken != "apple-token-123" {
+				t.Errorf("expected token 'apple-token-123', got '%s'", req.PaymentToken)
+			}
+			// Token-based payments return empty confirmation URL
+			return "", nil
+		},
+	}
+
+	h := handler.NewPaymentHandler(svc)
+	router := chi.NewRouter()
+	router.Post("/bookings/{id}/pay", h.InitiatePayment)
+
+	body := `{"payment_method":"apple_pay","payment_token":"apple-token-123"}`
+	req := httptest.NewRequest(http.MethodPost, "/bookings/"+bookingID.String()+"/pay", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(createTestContext(uuid.New(), domain.RoleClient))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestPaymentHandler_InitiatePayment_GooglePay(t *testing.T) {
+	bookingID := uuid.New()
+
+	svc := &mockPaymentService{
+		initiateTokenFn: func(ctx context.Context, uID, bID uuid.UUID, req service.TokenPaymentRequest) (string, error) {
+			if req.PaymentMethod != domain.PaymentMethodGooglePay {
+				t.Errorf("expected google_pay method, got %s", req.PaymentMethod)
+			}
+			if req.PaymentToken != "gpay-token-456" {
+				t.Errorf("expected token 'gpay-token-456', got '%s'", req.PaymentToken)
+			}
+			return "", nil
+		},
+	}
+
+	h := handler.NewPaymentHandler(svc)
+	router := chi.NewRouter()
+	router.Post("/bookings/{id}/pay", h.InitiatePayment)
+
+	body := `{"payment_method":"google_pay","payment_token":"gpay-token-456"}`
+	req := httptest.NewRequest(http.MethodPost, "/bookings/"+bookingID.String()+"/pay", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(createTestContext(uuid.New(), domain.RoleClient))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestPaymentHandler_InitiatePayment_ApplePay_MissingToken(t *testing.T) {
+	svc := &mockPaymentService{}
+	h := handler.NewPaymentHandler(svc)
+	router := chi.NewRouter()
+	router.Post("/bookings/{id}/pay", h.InitiatePayment)
+
+	body := `{"payment_method":"apple_pay"}`
+	req := httptest.NewRequest(http.MethodPost, "/bookings/"+uuid.New().String()+"/pay", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(createTestContext(uuid.New(), domain.RoleClient))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for missing token, got %d: %s", rec.Code, rec.Body.String())
 	}
 }

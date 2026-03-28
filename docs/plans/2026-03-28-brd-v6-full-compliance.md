@@ -57,12 +57,12 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/handler/payment_handler.go` (new endpoints)
 - Modify: `frontend/src/pages/client/BookingCreate.tsx`
 
-- [ ] Add ApplePay and GooglePay to PaymentMethod enum
-- [ ] Implement YooKassa token-based payment for Apple/Google Pay
-- [ ] Add frontend payment button components (Apple Pay JS, Google Pay API)
-- [ ] Integrate into booking checkout flow
-- [ ] Write tests for new payment methods
-- [ ] Run project test suite - must pass before task 3
+- [x] Add ApplePay and GooglePay to PaymentMethod enum
+- [x] Implement YooKassa token-based payment for Apple/Google Pay
+- [x] Add frontend payment button components (Apple Pay JS, Google Pay API)
+- [x] Integrate into booking checkout flow
+- [x] Write tests for new payment methods
+- [x] Run project test suite - must pass before task 3
 
 ### Task 3: Saved Card Tokens (FR-004)
 

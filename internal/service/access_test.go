@@ -101,6 +101,9 @@ type noopPaymentService struct{}
 func (n *noopPaymentService) InitiatePayment(_ context.Context, _, _ uuid.UUID, _ domain.PaymentMethod) (string, error) {
 	return "", nil
 }
+func (n *noopPaymentService) InitiateTokenPayment(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ service.TokenPaymentRequest) (string, error) {
+	return "", nil
+}
 func (n *noopPaymentService) HandleWebhook(_ context.Context, _ service.WebhookEvent) error {
 	return nil
 }

@@ -31,6 +31,53 @@ func TestPaymentStatusIsValid(t *testing.T) {
 	}
 }
 
+func TestPaymentMethodIsValid(t *testing.T) {
+	tests := []struct {
+		name     string
+		method   PaymentMethod
+		expected bool
+	}{
+		{"card", PaymentMethodCard, true},
+		{"sbp", PaymentMethodSBP, true},
+		{"wallet", PaymentMethodWallet, true},
+		{"combo", PaymentMethodCombo, true},
+		{"mir", PaymentMethodMIR, true},
+		{"belkart", PaymentMethodBelkart, true},
+		{"erip", PaymentMethodERIP, true},
+		{"apple_pay", PaymentMethodApplePay, true},
+		{"google_pay", PaymentMethodGooglePay, true},
+		{"invalid method", PaymentMethod("bitcoin"), false},
+		{"empty method", PaymentMethod(""), false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.method.IsValid())
+		})
+	}
+}
+
+func TestPaymentMethodIsTokenBased(t *testing.T) {
+	tests := []struct {
+		name     string
+		method   PaymentMethod
+		expected bool
+	}{
+		{"apple_pay is token-based", PaymentMethodApplePay, true},
+		{"google_pay is token-based", PaymentMethodGooglePay, true},
+		{"card is not token-based", PaymentMethodCard, false},
+		{"sbp is not token-based", PaymentMethodSBP, false},
+		{"wallet is not token-based", PaymentMethodWallet, false},
+		{"combo is not token-based", PaymentMethodCombo, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.method.IsTokenBased())
+		})
+	}
+}
+
 func TestPaymentValidate(t *testing.T) {
 	now := time.Now()
 	bookingID := uuid.New()

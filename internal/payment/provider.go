@@ -4,13 +4,14 @@ import "context"
 
 // CreatePaymentRequest contains parameters for creating a payment in the external provider.
 type CreatePaymentRequest struct {
-	Amount      int64
-	Currency    string
-	Description string
-	ReturnURL   string
-	Metadata    map[string]string
-	Method      string // "card" or "sbp"
-	Capture     bool   // true for instant charge, false for authorization hold
+	Amount       int64
+	Currency     string
+	Description  string
+	ReturnURL    string
+	Metadata     map[string]string
+	Method       string // "card", "sbp", "apple_pay", "google_pay"
+	Capture      bool   // true for instant charge, false for authorization hold
+	PaymentToken string // client-side token for Apple Pay / Google Pay
 }
 
 // PaymentResult contains the result of creating a payment in the external provider.

@@ -33,6 +33,8 @@ import { useGetBookingsIdPayment, usePostBookingsIdPay } from '@/api/generated/p
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 import { axiosInstance } from '@/api/axios-instance'
+import ApplePayButton from '@/components/ApplePayButton'
+import GooglePayButton from '@/components/GooglePayButton'
 
 const { Title, Text } = Typography
 
@@ -73,11 +75,26 @@ export default function ClientBookingDetail() {
         const confirmationUrl = response?.data?.confirmation_url
         if (confirmationUrl) {
           window.location.href = confirmationUrl
+        } else {
+          // Token-based payments (Apple Pay, Google Pay) complete without redirect
+          message.success('Оплата прошла успешно')
+          queryClient.invalidateQueries({ queryKey: ['/bookings'] })
         }
       },
       onError: () => message.error('Не удалось инициировать оплату'),
     },
   })
+
+  const handleTokenPayment = (paymentMethod: 'apple_pay' | 'google_pay') => (token: string) => {
+    if (!id) return
+    payMutation.mutate({
+      id,
+      data: {
+        payment_method: paymentMethod,
+        payment_token: token,
+      },
+    })
+  }
 
   const handleModify = async (values: { startTime: dayjs.Dayjs; endTime: dayjs.Dayjs; guestCount: number }) => {
     if (!id) return
@@ -304,15 +321,29 @@ export default function ClientBookingDetail() {
           </Button>
         )}
         {canPay && (
-          <Button
-            type="primary"
-            size="large"
-            icon={<DollarOutlined />}
-            onClick={() => id && payMutation.mutate({ id, data: {} })}
-            loading={payMutation.isPending}
-          >
-            Оплатить
-          </Button>
+          <>
+            <Button
+              type="primary"
+              size="large"
+              icon={<DollarOutlined />}
+              onClick={() => id && payMutation.mutate({ id, data: {} })}
+              loading={payMutation.isPending}
+            >
+              Оплатить картой
+            </Button>
+            <ApplePayButton
+              amount={booking.total_price ?? 0}
+              onToken={handleTokenPayment('apple_pay')}
+              disabled={payMutation.isPending}
+              loading={payMutation.isPending}
+            />
+            <GooglePayButton
+              amount={booking.total_price ?? 0}
+              onToken={handleTokenPayment('google_pay')}
+              disabled={payMutation.isPending}
+              loading={payMutation.isPending}
+            />
+          </>
         )}
         {canCancel && (
           <Popconfirm
