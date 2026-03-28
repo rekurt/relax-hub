@@ -333,6 +333,7 @@ func TestAccessChecker_CanManageBathhouse_RepresentativeAllowed(t *testing.T) {
 		UserID:      repUserID,
 		BathhouseID: bh.ID,
 		OwnerID:     ownerID,
+		Role:        domain.RepRoleManager,
 	}
 	if err := repRepo.Create(context.Background(), rep); err != nil {
 		t.Fatal(err)
@@ -340,7 +341,100 @@ func TestAccessChecker_CanManageBathhouse_RepresentativeAllowed(t *testing.T) {
 
 	err := checker.CanManageBathhouse(context.Background(), repUserID, domain.RoleRepresentative, bh.ID)
 	if err != nil {
-		t.Errorf("representative assigned to bathhouse should be allowed, got: %v", err)
+		t.Errorf("manager representative assigned to bathhouse should be allowed, got: %v", err)
+	}
+}
+
+func TestAccessChecker_CanManageBathhouse_ObserverForbidden(t *testing.T) {
+	bhRepo := mock.NewBathhouseRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	checker := service.NewAccessChecker(repRepo, bhRepo)
+
+	ownerID := uuid.New()
+	repUserID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	rep := &domain.Representative{
+		ID:          uuid.New(),
+		UserID:      repUserID,
+		BathhouseID: bh.ID,
+		OwnerID:     ownerID,
+		Role:        domain.RepRoleObserver,
+	}
+	if err := repRepo.Create(context.Background(), rep); err != nil {
+		t.Fatal(err)
+	}
+
+	err := checker.CanManageBathhouse(context.Background(), repUserID, domain.RoleRepresentative, bh.ID)
+	if err != domain.ErrForbidden {
+		t.Errorf("observer representative should be forbidden from managing, got: %v", err)
+	}
+}
+
+func TestAccessChecker_CanViewBathhouse_ObserverAllowed(t *testing.T) {
+	bhRepo := mock.NewBathhouseRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	checker := service.NewAccessChecker(repRepo, bhRepo)
+
+	ownerID := uuid.New()
+	repUserID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	rep := &domain.Representative{
+		ID:          uuid.New(),
+		UserID:      repUserID,
+		BathhouseID: bh.ID,
+		OwnerID:     ownerID,
+		Role:        domain.RepRoleObserver,
+	}
+	if err := repRepo.Create(context.Background(), rep); err != nil {
+		t.Fatal(err)
+	}
+
+	err := checker.CanViewBathhouse(context.Background(), repUserID, domain.RoleRepresentative, bh.ID)
+	if err != nil {
+		t.Errorf("observer representative should be allowed to view, got: %v", err)
+	}
+}
+
+func TestAccessChecker_CanViewBathhouse_ManagerAllowed(t *testing.T) {
+	bhRepo := mock.NewBathhouseRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	checker := service.NewAccessChecker(repRepo, bhRepo)
+
+	ownerID := uuid.New()
+	repUserID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	rep := &domain.Representative{
+		ID:          uuid.New(),
+		UserID:      repUserID,
+		BathhouseID: bh.ID,
+		OwnerID:     ownerID,
+		Role:        domain.RepRoleManager,
+	}
+	if err := repRepo.Create(context.Background(), rep); err != nil {
+		t.Fatal(err)
+	}
+
+	err := checker.CanViewBathhouse(context.Background(), repUserID, domain.RoleRepresentative, bh.ID)
+	if err != nil {
+		t.Errorf("manager representative should be allowed to view, got: %v", err)
+	}
+}
+
+func TestAccessChecker_CanViewBathhouse_UnassignedForbidden(t *testing.T) {
+	bhRepo := mock.NewBathhouseRepo()
+	repRepo := mock.NewRepresentativeRepo()
+	checker := service.NewAccessChecker(repRepo, bhRepo)
+
+	ownerID := uuid.New()
+	repUserID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	err := checker.CanViewBathhouse(context.Background(), repUserID, domain.RoleRepresentative, bh.ID)
+	if err != domain.ErrForbidden {
+		t.Errorf("unassigned representative should be forbidden, got: %v", err)
 	}
 }
 

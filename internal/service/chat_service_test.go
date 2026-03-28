@@ -156,6 +156,7 @@ func TestChatService_SendMessage_AsRepresentative(t *testing.T) {
 		UserID:      repUserID,
 		BathhouseID: bh.ID,
 		OwnerID:     ownerID,
+		Role:        domain.RepRoleManager,
 		CreatedAt:   time.Now(),
 	}
 	if err := env.repRepo.Create(context.Background(), rep); err != nil {
@@ -261,6 +262,7 @@ func TestChatService_ListConversations_Representative(t *testing.T) {
 		UserID:      repUserID,
 		BathhouseID: bh.ID,
 		OwnerID:     ownerID,
+		Role:        domain.RepRoleManager,
 		CreatedAt:   time.Now(),
 	}
 	_ = env.repRepo.Create(context.Background(), rep)

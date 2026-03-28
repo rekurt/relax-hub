@@ -242,6 +242,7 @@ func TestBookingService_Confirm_RepresentativeAllowed(t *testing.T) {
 
 	rep := &domain.Representative{
 		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
+		Role:        domain.RepRoleManager,
 	}
 	_ = repRepo.Create(context.Background(), rep)
 
@@ -2631,6 +2632,7 @@ func TestBookingService_CheckIn_ValidWindow(t *testing.T) {
 	repRepo.Create(context.Background(), &domain.Representative{
 		UserID:      ownerID,
 		BathhouseID: bh.ID,
+		Role:        domain.RepRoleManager,
 	})
 
 	err := svc.CheckIn(context.Background(), ownerID, domain.RoleOwner, booking.ID)

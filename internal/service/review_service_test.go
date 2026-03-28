@@ -416,6 +416,7 @@ func TestReviewService_AddOwnerResponse_ByRepresentative(t *testing.T) {
 		ID:          uuid.New(),
 		UserID:      repUserID,
 		BathhouseID: bh.ID,
+		Role:        domain.RepRoleManager,
 	}
 	_ = env.repRepo.Create(context.Background(), rep)
 

@@ -274,13 +274,13 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `internal/handler/representative_handler.go`
 - Create: migration for representative_role and object_access
 
-- [ ] Add sub-roles for representatives: manager (manage bookings, reply messages) and observer (read-only)
-- [ ] Implement per-bathhouse access control (representative can be assigned to specific objects)
-- [ ] Audit all representative actions in audit log
-- [ ] Add invite-by-email flow for representatives
-- [ ] Frontend: update RepresentativeList page with role and object assignment
-- [ ] Write tests for role-based access with object-level restrictions
-- [ ] Run project test suite - must pass before next task
+- [x] Add sub-roles for representatives: manager (manage bookings, reply messages) and observer (read-only)
+- [x] Implement per-bathhouse access control (representative can be assigned to specific objects)
+- [x] Audit all representative actions in audit log
+- [x] Add invite-by-email flow for representatives
+- [x] Frontend: update RepresentativeList page with role and object assignment
+- [x] Write tests for role-based access with object-level restrictions
+- [x] Run project test suite - must pass before next task
 
 ### Task 14: Frontend - CRM pages for owners
 

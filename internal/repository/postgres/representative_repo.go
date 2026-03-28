@@ -22,15 +22,18 @@ func NewRepresentativeRepository(pool *pgxpool.Pool) repository.RepresentativeRe
 
 func (r *representativeRepo) Create(ctx context.Context, rep *domain.Representative) error {
 	query := `
-		INSERT INTO representatives (id, user_id, bathhouse_id, owner_id, created_at)
-		VALUES ($1, $2, $3, $4, $5)`
+		INSERT INTO representatives (id, user_id, bathhouse_id, owner_id, role, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6)`
 
 	if rep.ID == uuid.Nil {
 		rep.ID = uuid.New()
 	}
+	if rep.Role == "" {
+		rep.Role = domain.RepRoleManager
+	}
 
 	_, err := r.pool.Exec(ctx, query,
-		rep.ID, rep.UserID, rep.BathhouseID, rep.OwnerID, rep.CreatedAt,
+		rep.ID, rep.UserID, rep.BathhouseID, rep.OwnerID, rep.Role, rep.CreatedAt,
 	)
 	if err != nil {
 		if isDuplicateKeyError(err) {
@@ -43,12 +46,12 @@ func (r *representativeRepo) Create(ctx context.Context, rep *domain.Representat
 
 func (r *representativeRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Representative, error) {
 	query := `
-		SELECT id, user_id, bathhouse_id, owner_id, created_at
+		SELECT id, user_id, bathhouse_id, owner_id, role, created_at
 		FROM representatives WHERE id = $1`
 
 	var rep domain.Representative
 	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&rep.ID, &rep.UserID, &rep.BathhouseID, &rep.OwnerID, &rep.CreatedAt,
+		&rep.ID, &rep.UserID, &rep.BathhouseID, &rep.OwnerID, &rep.Role, &rep.CreatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -72,12 +75,12 @@ func (r *representativeRepo) Delete(ctx context.Context, id uuid.UUID) error {
 
 func (r *representativeRepo) GetByUserAndBathhouse(ctx context.Context, userID, bathhouseID uuid.UUID) (*domain.Representative, error) {
 	query := `
-		SELECT id, user_id, bathhouse_id, owner_id, created_at
+		SELECT id, user_id, bathhouse_id, owner_id, role, created_at
 		FROM representatives WHERE user_id = $1 AND bathhouse_id = $2`
 
 	var rep domain.Representative
 	err := r.pool.QueryRow(ctx, query, userID, bathhouseID).Scan(
-		&rep.ID, &rep.UserID, &rep.BathhouseID, &rep.OwnerID, &rep.CreatedAt,
+		&rep.ID, &rep.UserID, &rep.BathhouseID, &rep.OwnerID, &rep.Role, &rep.CreatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -90,7 +93,7 @@ func (r *representativeRepo) GetByUserAndBathhouse(ctx context.Context, userID, 
 
 func (r *representativeRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.Representative, error) {
 	query := `
-		SELECT id, user_id, bathhouse_id, owner_id, created_at
+		SELECT id, user_id, bathhouse_id, owner_id, role, created_at
 		FROM representatives WHERE bathhouse_id = $1 ORDER BY created_at`
 
 	rows, err := r.pool.Query(ctx, query, bathhouseID)
@@ -103,7 +106,7 @@ func (r *representativeRepo) ListByBathhouse(ctx context.Context, bathhouseID uu
 	for rows.Next() {
 		var rep domain.Representative
 		if err := rows.Scan(
-			&rep.ID, &rep.UserID, &rep.BathhouseID, &rep.OwnerID, &rep.CreatedAt,
+			&rep.ID, &rep.UserID, &rep.BathhouseID, &rep.OwnerID, &rep.Role, &rep.CreatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan representative: %w", err)
 		}
@@ -117,7 +120,7 @@ func (r *representativeRepo) ListByBathhouse(ctx context.Context, bathhouseID uu
 
 func (r *representativeRepo) ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.Representative, error) {
 	query := `
-		SELECT id, user_id, bathhouse_id, owner_id, created_at
+		SELECT id, user_id, bathhouse_id, owner_id, role, created_at
 		FROM representatives WHERE user_id = $1 ORDER BY created_at`
 
 	rows, err := r.pool.Query(ctx, query, userID)
@@ -130,7 +133,7 @@ func (r *representativeRepo) ListByUser(ctx context.Context, userID uuid.UUID) (
 	for rows.Next() {
 		var rep domain.Representative
 		if err := rows.Scan(
-			&rep.ID, &rep.UserID, &rep.BathhouseID, &rep.OwnerID, &rep.CreatedAt,
+			&rep.ID, &rep.UserID, &rep.BathhouseID, &rep.OwnerID, &rep.Role, &rep.CreatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan representative: %w", err)
 		}

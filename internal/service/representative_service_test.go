@@ -15,7 +15,7 @@ func newRepresentativeService() (service.RepresentativeService, *mock.BathhouseR
 	bhRepo := mock.NewBathhouseRepo()
 	userRepo := mock.NewUserRepo()
 	repRepo := mock.NewRepresentativeRepo()
-	svc := service.NewRepresentativeService(repRepo, userRepo, bhRepo)
+	svc := service.NewRepresentativeService(repRepo, userRepo, bhRepo, nil)
 	return svc, bhRepo, userRepo, repRepo
 }
 
@@ -129,6 +129,7 @@ func TestRepresentativeService_Revoke(t *testing.T) {
 
 	rep := &domain.Representative{
 		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
+		Role:        domain.RepRoleManager,
 	}
 	_ = repRepo.Create(context.Background(), rep)
 
@@ -152,6 +153,7 @@ func TestRepresentativeService_GetMyBathhouses(t *testing.T) {
 
 	rep := &domain.Representative{
 		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
+		Role:        domain.RepRoleManager,
 	}
 	_ = repRepo.Create(context.Background(), rep)
 

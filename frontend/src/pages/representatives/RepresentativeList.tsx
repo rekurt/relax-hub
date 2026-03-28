@@ -6,6 +6,7 @@ import {
   Input,
   Modal,
   Popconfirm,
+  Select,
   Table,
   Tag,
   Typography,
@@ -29,6 +30,12 @@ const { Title } = Typography
 
 interface InviteFormValues {
   user_email: string
+  role: string
+}
+
+const roleLabels: Record<string, string> = {
+  manager: 'Менеджер',
+  observer: 'Наблюдатель',
 }
 
 export default function RepresentativeList() {
@@ -81,7 +88,7 @@ export default function RepresentativeList() {
     if (!selectedBathhouseId) return
     inviteMutation.mutate({
       id: selectedBathhouseId,
-      data: { user_email: values.user_email },
+      data: { user_email: values.user_email, role: values.role },
     })
   }
 
@@ -97,6 +104,17 @@ export default function RepresentativeList() {
       ellipsis: true,
       render: (userId: string) => (
         <Tag style={{ fontFamily: 'monospace' }}>{userId?.slice(0, 8)}...</Tag>
+      ),
+    },
+    {
+      title: 'Роль',
+      dataIndex: 'role',
+      key: 'role',
+      width: 140,
+      render: (role: string) => (
+        <Tag color={role === 'manager' ? 'blue' : 'default'}>
+          {roleLabels[role] ?? role}
+        </Tag>
       ),
     },
     {
@@ -188,6 +206,19 @@ export default function RepresentativeList() {
             extra="Пользователь должен быть зарегистрирован в системе"
           >
             <Input placeholder="user@example.com" />
+          </Form.Item>
+
+          <Form.Item
+            name="role"
+            label="Роль"
+            initialValue="manager"
+            rules={[{ required: true, message: 'Выберите роль' }]}
+            extra="Менеджер — полный доступ, Наблюдатель — только просмотр"
+          >
+            <Select>
+              <Select.Option value="manager">Менеджер</Select.Option>
+              <Select.Option value="observer">Наблюдатель</Select.Option>
+            </Select>
           </Form.Item>
 
           <Form.Item>

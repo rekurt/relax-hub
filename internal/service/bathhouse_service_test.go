@@ -158,6 +158,7 @@ func TestBathhouseService_Update_RepresentativeAllowed(t *testing.T) {
 
 	rep := &domain.Representative{
 		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
+		Role:        domain.RepRoleManager,
 	}
 	_ = repRepo.Create(context.Background(), rep)
 
@@ -792,6 +793,7 @@ func TestBathhouseService_Duplicate_RepresentativeAllowed(t *testing.T) {
 
 	rep := &domain.Representative{
 		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
+		Role:        domain.RepRoleManager,
 	}
 	_ = env.repRepo.Create(context.Background(), rep)
 
@@ -999,6 +1001,7 @@ func TestBathhouseService_Deactivate_RepresentativeAllowed(t *testing.T) {
 
 	rep := &domain.Representative{
 		ID: uuid.New(), UserID: repUserID, BathhouseID: bh.ID, OwnerID: ownerID,
+		Role:        domain.RepRoleManager,
 	}
 	_ = env.repRepo.Create(context.Background(), rep)
 

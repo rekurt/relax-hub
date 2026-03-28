@@ -13,6 +13,7 @@ import (
 type InviteRepresentativeInput struct {
 	UserEmail   string
 	BathhouseID uuid.UUID
+	Role        domain.RepresentativeRole
 }
 
 type RepresentativeService interface {
@@ -26,17 +27,20 @@ type representativeService struct {
 	repRepo  repository.RepresentativeRepository
 	userRepo repository.UserRepository
 	bhRepo   repository.BathhouseRepository
+	auditSvc AuditLogService
 }
 
 func NewRepresentativeService(
 	repRepo repository.RepresentativeRepository,
 	userRepo repository.UserRepository,
 	bhRepo repository.BathhouseRepository,
+	auditSvc AuditLogService,
 ) RepresentativeService {
 	return &representativeService{
 		repRepo:  repRepo,
 		userRepo: userRepo,
 		bhRepo:   bhRepo,
+		auditSvc: auditSvc,
 	}
 }
 
@@ -67,16 +71,32 @@ func (s *representativeService) Invite(ctx context.Context, ownerID uuid.UUID, i
 		return nil, domain.ErrInvalidInput // can't invite owner or admin as representative
 	}
 
+	role := input.Role
+	if !role.IsValid() {
+		role = domain.RepRoleManager
+	}
+
 	rep := &domain.Representative{
 		ID:          uuid.New(),
 		UserID:      user.ID,
 		BathhouseID: input.BathhouseID,
 		OwnerID:     ownerID,
+		Role:        role,
 		CreatedAt:   time.Now(),
 	}
 
 	if err := s.repRepo.Create(ctx, rep); err != nil {
 		return nil, err
+	}
+
+	// Audit log: representative invited
+	if s.auditSvc != nil {
+		_ = s.auditSvc.LogChange(ctx, "representative", rep.ID, ownerID, domain.AuditActionCreate, map[string]interface{}{
+			"user_email":   input.UserEmail,
+			"user_id":      user.ID.String(),
+			"bathhouse_id": input.BathhouseID.String(),
+			"role":         string(role),
+		})
 	}
 
 	return rep, nil
@@ -94,6 +114,15 @@ func (s *representativeService) Revoke(ctx context.Context, ownerID uuid.UUID, r
 
 	if err := s.repRepo.Delete(ctx, representativeID); err != nil {
 		return err
+	}
+
+	// Audit log: representative revoked
+	if s.auditSvc != nil {
+		_ = s.auditSvc.LogChange(ctx, "representative", representativeID, ownerID, domain.AuditActionDelete, map[string]interface{}{
+			"user_id":      rep.UserID.String(),
+			"bathhouse_id": rep.BathhouseID.String(),
+			"role":         string(rep.Role),
+		})
 	}
 
 	// If the user has no remaining representative assignments, revert role to client

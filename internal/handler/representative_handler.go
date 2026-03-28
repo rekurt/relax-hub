@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -20,6 +21,7 @@ func NewRepresentativeHandler(repService service.RepresentativeService) *Represe
 
 type inviteRepresentativeRequest struct {
 	UserEmail string `json:"user_email"`
+	Role      string `json:"role,omitempty"`
 }
 
 type representativeResponse struct {
@@ -27,24 +29,26 @@ type representativeResponse struct {
 	UserID      string    `json:"user_id"`
 	BathhouseID string    `json:"bathhouse_id"`
 	OwnerID     string    `json:"owner_id"`
+	Role        string    `json:"role"`
 	CreatedAt   time.Time `json:"created_at"`
 }
 
 // Invite godoc
-// @Summary      Invite representative
-// @Description  Invites a user as a representative for a bathhouse by email. Owner only.
-// @Tags         representatives
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                       true  "Bathhouse ID (UUID)"
-// @Param        body  body      inviteRepresentativeRequest  true  "User email to invite"
-// @Success      201   {object}  APIResponse{data=representativeResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /bathhouses/{id}/representatives [post]
+//
+//	@Summary		Invite representative
+//	@Description	Invites a user as a representative for a bathhouse by email. Owner only.
+//	@Tags			representatives
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string						true	"Bathhouse ID (UUID)"
+//	@Param			body	body		inviteRepresentativeRequest	true	"User email to invite"
+//	@Success		201		{object}	APIResponse{data=representativeResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/bathhouses/{id}/representatives [post]
 func (h *RepresentativeHandler) Invite(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -63,6 +67,7 @@ func (h *RepresentativeHandler) Invite(w http.ResponseWriter, r *http.Request) {
 	rep, err := h.repService.Invite(r.Context(), ownerID, service.InviteRepresentativeInput{
 		UserEmail:   req.UserEmail,
 		BathhouseID: bathhouseID,
+		Role:        domain.RepresentativeRole(req.Role),
 	})
 	if err != nil {
 		handleServiceError(w, err)
@@ -74,22 +79,24 @@ func (h *RepresentativeHandler) Invite(w http.ResponseWriter, r *http.Request) {
 		UserID:      rep.UserID.String(),
 		BathhouseID: rep.BathhouseID.String(),
 		OwnerID:     rep.OwnerID.String(),
+		Role:        string(rep.Role),
 		CreatedAt:   rep.CreatedAt,
 	})
 }
 
 // ListByBathhouse godoc
-// @Summary      List representatives
-// @Description  Returns all representatives for a bathhouse. Owner only.
-// @Tags         representatives
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Bathhouse ID (UUID)"
-// @Success      200  {object}  APIResponse{data=[]representativeResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /bathhouses/{id}/representatives [get]
+//
+//	@Summary		List representatives
+//	@Description	Returns all representatives for a bathhouse. Owner only.
+//	@Tags			representatives
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Bathhouse ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=[]representativeResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Router			/bathhouses/{id}/representatives [get]
 func (h *RepresentativeHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -112,6 +119,7 @@ func (h *RepresentativeHandler) ListByBathhouse(w http.ResponseWriter, r *http.R
 			UserID:      rep.UserID.String(),
 			BathhouseID: rep.BathhouseID.String(),
 			OwnerID:     rep.OwnerID.String(),
+			Role:        string(rep.Role),
 			CreatedAt:   rep.CreatedAt,
 		}
 	}
@@ -120,18 +128,19 @@ func (h *RepresentativeHandler) ListByBathhouse(w http.ResponseWriter, r *http.R
 }
 
 // Revoke godoc
-// @Summary      Revoke representative
-// @Description  Revokes a representative's access to a bathhouse. Owner only.
-// @Tags         representatives
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Representative ID (UUID)"
-// @Success      200  {object}  APIResponse
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /representatives/{id} [delete]
+//
+//	@Summary		Revoke representative
+//	@Description	Revokes a representative's access to a bathhouse. Owner only.
+//	@Tags			representatives
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Representative ID (UUID)"
+//	@Success		200	{object}	APIResponse
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/representatives/{id} [delete]
 func (h *RepresentativeHandler) Revoke(w http.ResponseWriter, r *http.Request) {
 	repID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
