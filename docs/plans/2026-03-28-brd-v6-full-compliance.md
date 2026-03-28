@@ -284,15 +284,15 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/handler/ticket_handler.go` (auto-answer before creating ticket)
 - Create: `frontend/src/components/SupportChatBot.tsx`
 
-- [ ] Create faq table (id, category, question, answer, keywords, sort_order, active)
-- [ ] Admin CRUD: /api/v1/admin/faq
-- [ ] FAQ matching: keyword/trigram search against incoming support message
-- [ ] When client opens support: show top 3 matching FAQ answers first
-- [ ] If client clicks "not helpful" -> escalate to L2 (create ticket)
-- [ ] Frontend: chat-like FAQ widget before ticket creation
-- [ ] Seed initial FAQ entries (booking, payment, cancellation, wallet common questions)
-- [ ] Write tests for FAQ matching logic
-- [ ] Run project test suite - must pass before task 15
+- [x] Create faq table (id, category, question, answer, keywords, sort_order, active)
+- [x] Admin CRUD: /api/v1/admin/faq
+- [x] FAQ matching: keyword/trigram search against incoming support message
+- [x] When client opens support: show top 3 matching FAQ answers first
+- [x] If client clicks "not helpful" -> escalate to L2 (create ticket)
+- [x] Frontend: chat-like FAQ widget before ticket creation
+- [x] Seed initial FAQ entries (booking, payment, cancellation, wallet common questions)
+- [x] Write tests for FAQ matching logic
+- [x] Run project test suite - must pass before task 15
 
 ### Task 15: Notification Preferences & SMS Fallback (FR-140, FR-141, FR-142)
 

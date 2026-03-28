@@ -101,6 +101,7 @@ var Module = fx.Module("service",
 		fx.Annotate(NewSavedCardService, fx.As(new(SavedCardService))),
 		fx.Annotate(NewBankReconciliationService, fx.As(new(BankReconciliationService))),
 		fx.Annotate(NewAdminNotificationService, fx.As(new(AdminNotificationService))),
+		fx.Annotate(NewFAQBotService, fx.As(new(FAQBotService))),
 		fx.Annotate(
 			NewAdminRoleService,
 			fx.As(new(AdminRoleService)),

@@ -687,6 +687,17 @@ type BankReconciliationRepository interface {
 	FindPaymentsByAmountAndDate(ctx context.Context, amount int64, dateFrom, dateTo time.Time) ([]domain.Payment, error)
 }
 
+// FAQRepository manages FAQ entries.
+type FAQRepository interface {
+	Create(ctx context.Context, faq *domain.FAQ) error
+	Update(ctx context.Context, faq *domain.FAQ) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.FAQ, error)
+	List(ctx context.Context, filter domain.FAQFilter) (*domain.PaginatedResult[domain.FAQ], error)
+	SearchByKeywords(ctx context.Context, query string, limit int) ([]domain.FAQMatch, error)
+	ListActiveByCategory(ctx context.Context, category domain.FAQCategory) ([]domain.FAQ, error)
+}
+
 // AdminNotificationRepository manages admin notifications.
 type AdminNotificationRepository interface {
 	Create(ctx context.Context, notif *domain.AdminNotification) error

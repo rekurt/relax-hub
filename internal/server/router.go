@@ -91,6 +91,7 @@ type RouterParams struct {
 	BankReconciliationHandler    *handler.BankReconciliationHandler
 	AdminRoleHandler             *handler.AdminRoleHandler
 	AdminNotificationHandler     *handler.AdminNotificationHandler
+	FAQHandler                   *handler.FAQHandler
 	AuditLogRepo              repository.AuditLogRepository
 	AdminSubRoleResolver  middleware.AdminSubRoleResolver
 	Admin2FAChecker       middleware.Admin2FAChecker
@@ -487,6 +488,9 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/crm/templates/{id}", p.TemplateHandler.UpdateTemplate)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/crm/templates/{id}", p.TemplateHandler.DeleteTemplate)
 
+		// FAQ Bot (authenticated)
+		r.With(auth).Post("/my/support/faq-match", p.FAQHandler.MatchFAQ)
+
 		// Support Tickets (authenticated)
 		r.With(auth).Post("/my/tickets", p.TicketHandler.CreateTicket)
 		r.With(auth).Get("/my/tickets", p.TicketHandler.ListUserTickets)
@@ -634,6 +638,14 @@ func NewRouter(p RouterParams) http.Handler {
 			r.With(middleware.RequireAdminPermission(domain.PermBookingManage)).Post("/bookings/{id}/cancel", p.BookingHandler.AdminCancel)
 			r.With(middleware.RequireAdminPermission(domain.PermBookingManage)).Post("/bookings/{id}/change-status", p.BookingHandler.AdminChangeStatus)
 			r.With(middleware.RequireAdminPermission(domain.PermBookingManage)).Post("/bookings/{id}/refund", p.PaymentHandler.AdminRefund)
+
+			// FAQ management
+			r.With(middleware.RequireAdminPermission(domain.PermFAQManage)).Get("/faq", p.FAQHandler.AdminListFAQ)
+			r.With(middleware.RequireAdminPermission(domain.PermFAQManage)).Post("/faq", p.FAQHandler.AdminCreateFAQ)
+			r.With(middleware.RequireAdminPermission(domain.PermFAQManage)).Get("/faq/{id}", p.FAQHandler.AdminGetFAQ)
+			r.With(middleware.RequireAdminPermission(domain.PermFAQManage)).Put("/faq/{id}", p.FAQHandler.AdminUpdateFAQ)
+			r.With(middleware.RequireAdminPermission(domain.PermFAQManage)).Delete("/faq/{id}", p.FAQHandler.AdminDeleteFAQ)
+			r.With(middleware.RequireAdminPermission(domain.PermFAQManage)).Post("/faq/seed", p.FAQHandler.SeedFAQ)
 
 			// Support tickets
 			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Get("/tickets", p.TicketHandler.AdminListTickets)

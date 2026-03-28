@@ -52,6 +52,7 @@ const (
 	PermAdminRolesManage         AdminPermission = "admin_roles.manage"
 	PermCityManage               AdminPermission = "cities.manage"
 	PermAdminNotificationsView   AdminPermission = "admin_notifications.view"
+	PermFAQManage                AdminPermission = "faq.manage"
 )
 
 // AdminRolePermissions defines the permission matrix: which sub-role has which permissions.
@@ -63,7 +64,7 @@ var AdminRolePermissions = map[AdminSubRole][]AdminPermission{
 		PermForceMajeureManage, PermAntiFraudManage, PermTicketManage, PermDisputeManage,
 		PermPromoManage, PermServiceFeeManage, PermHolidayManage, PermAmenityManage,
 		PermObjectTypeManage, PermAuditLogView, PermReconciliationView, PermAdminRolesManage,
-		PermCityManage, PermAdminNotificationsView,
+		PermCityManage, PermAdminNotificationsView, PermFAQManage,
 	},
 	AdminSubRoleModerator: {
 		PermBathhouseModerate, PermReviewModerate, PermPhotoModerate,
@@ -72,16 +73,16 @@ var AdminRolePermissions = map[AdminSubRole][]AdminPermission{
 	},
 	AdminSubRoleSupportL1: {
 		PermTicketManage, PermBookingManage,
-		PermAdminNotificationsView,
+		PermAdminNotificationsView, PermFAQManage,
 	},
 	AdminSubRoleSupportL2: {
 		PermTicketManage, PermBookingManage, PermComplaintManage,
-		PermDisputeManage, PermAdminNotificationsView,
+		PermDisputeManage, PermAdminNotificationsView, PermFAQManage,
 	},
 	AdminSubRoleSupportL3: {
 		PermTicketManage, PermBookingManage, PermComplaintManage,
 		PermDisputeManage, PermUserManage, PermWalletManage,
-		PermAdminNotificationsView,
+		PermAdminNotificationsView, PermFAQManage,
 	},
 	AdminSubRoleFinance: {
 		PermFinanceManage, PermWalletManage, PermReconciliationView,
@@ -125,6 +126,6 @@ func AllAdminPermissions() []AdminPermission {
 		PermForceMajeureManage, PermAntiFraudManage, PermTicketManage, PermDisputeManage,
 		PermPromoManage, PermServiceFeeManage, PermHolidayManage, PermAmenityManage,
 		PermObjectTypeManage, PermAuditLogView, PermReconciliationView, PermAdminRolesManage,
-		PermCityManage, PermAdminNotificationsView,
+		PermCityManage, PermAdminNotificationsView, PermFAQManage,
 	}
 }

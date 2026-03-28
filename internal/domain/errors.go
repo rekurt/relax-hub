@@ -179,6 +179,8 @@ var (
 	ErrAdminPermissionDenied   = errors.New("insufficient admin permissions")
 	ErrImportValidationFailed  = errors.New("import validation failed")
 	ErrImportFileTooLarge      = errors.New("import file too large")
+
+	ErrFAQNotFound = errors.New("FAQ entry not found")
 )
 
 // PaymentFailedError wraps ErrPaymentFailed with user-facing details.

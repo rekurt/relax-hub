@@ -396,6 +396,8 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusForbidden, "admin_2fa_required", err.Error())
 	case errors.Is(err, domain.ErrAdminPermissionDenied):
 		writeErrorWithContext(w, r, http.StatusForbidden, "admin_permission_denied", err.Error())
+	case errors.Is(err, domain.ErrFAQNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "faq_not_found", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

@@ -16,7 +16,8 @@ import {
   Tag,
   Typography,
 } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined, RobotOutlined } from '@ant-design/icons'
+import SupportChatBot from '@/components/SupportChatBot'
 import type { ColumnsType } from 'antd/es/table'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -94,6 +95,7 @@ export default function SupportTickets() {
   const [pageSize, setPageSize] = useState(20)
   const [statusFilter, setStatusFilter] = useState('')
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [faqBotOpen, setFaqBotOpen] = useState(false)
   const [form] = Form.useForm()
 
   const { data, isLoading } = useGetMyTickets({
@@ -187,13 +189,21 @@ export default function SupportTickets() {
         <Title level={3} style={{ margin: 0 }}>
           Мои обращения
         </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setCreateModalOpen(true)}
-        >
-          Новое обращение
-        </Button>
+        <Space>
+          <Button
+            icon={<RobotOutlined />}
+            onClick={() => setFaqBotOpen(true)}
+          >
+            Быстрая помощь
+          </Button>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setCreateModalOpen(true)}
+          >
+            Новое обращение
+          </Button>
+        </Space>
       </div>
 
       <Space direction="vertical" size={16} style={{ width: '100%', marginBottom: 16 }}>
@@ -298,6 +308,27 @@ export default function SupportTickets() {
             <Input placeholder="UUID бронирования, если связано" />
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title={null}
+        open={faqBotOpen}
+        onCancel={() => setFaqBotOpen(false)}
+        footer={null}
+        width={600}
+        destroyOnClose
+      >
+        <SupportChatBot
+          onEscalate={(subject, msg) => {
+            setFaqBotOpen(false)
+            form.setFieldsValue({
+              subject,
+              message: msg,
+              category: 'question',
+            })
+            setCreateModalOpen(true)
+          }}
+        />
       </Modal>
     </div>
   )

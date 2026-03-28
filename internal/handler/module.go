@@ -100,5 +100,6 @@ var Module = fx.Module("handler",
 		NewBankReconciliationHandler,
 		NewAdminRoleHandler,
 		NewAdminNotificationHandler,
+		NewFAQHandler,
 	),
 )
