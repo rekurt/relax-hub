@@ -64,6 +64,7 @@ type userResponse struct {
 	AvatarURL string `json:"avatar_url"`
 	Bio       string `json:"bio"`
 	CityID    *int64 `json:"city_id"`
+	Region    string `json:"region"`
 }
 
 type updateProfileRequest struct {
@@ -112,6 +113,7 @@ func toUserResponse(u *domain.User) userResponse {
 		AvatarURL: u.AvatarURL,
 		Bio:       u.Bio,
 		CityID:    u.CityID,
+		Region:    string(u.Region),
 	}
 }
 
@@ -130,17 +132,18 @@ func toPublicProfileResponse(p *domain.UserProfile) publicProfileResponse {
 }
 
 // Register godoc
-// @Summary      Register a new user
-// @Description  Creates a new user account with the given credentials and role
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      registerRequest  true  "Registration data"
-// @Success      201   {object}  APIResponse{data=authResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Failure      429   {object}  APIResponse{error=APIError}  "Rate limited (5/min)"
-// @Router       /auth/register [post]
+//
+//	@Summary		Register a new user
+//	@Description	Creates a new user account with the given credentials and role
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		registerRequest	true	"Registration data"
+//	@Success		201		{object}	APIResponse{data=authResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}	"Rate limited (5/min)"
+//	@Router			/auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -170,17 +173,18 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 // Login godoc
-// @Summary      Login
-// @Description  Authenticates a user and returns a JWT token
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      loginRequest  true  "Login credentials"
-// @Success      200   {object}  APIResponse{data=authResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      429   {object}  APIResponse{error=APIError}  "Rate limited (10/min)"
-// @Router       /auth/login [post]
+//
+//	@Summary		Login
+//	@Description	Authenticates a user and returns a JWT token
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		loginRequest	true	"Login credentials"
+//	@Success		200		{object}	APIResponse{data=authResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}	"Rate limited (10/min)"
+//	@Router			/auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -206,14 +210,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // Me godoc
-// @Summary      Get current user
-// @Description  Returns the authenticated user's profile
-// @Tags         auth
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=userResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /auth/me [get]
+//
+//	@Summary		Get current user
+//	@Description	Returns the authenticated user's profile
+//	@Tags			auth
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=userResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/auth/me [get]
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	user, err := h.userService.GetByID(r.Context(), userID)
@@ -233,17 +238,18 @@ var allowedAvatarTypes = map[string]string{
 }
 
 // UpdateProfile godoc
-// @Summary      Update user profile
-// @Description  Updates the authenticated user's profile fields
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      updateProfileRequest  true  "Profile fields to update"
-// @Success      200   {object}  APIResponse{data=userResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Router       /auth/me [put]
+//
+//	@Summary		Update user profile
+//	@Description	Updates the authenticated user's profile fields
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		updateProfileRequest	true	"Profile fields to update"
+//	@Success		200		{object}	APIResponse{data=userResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Router			/auth/me [put]
 func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	var req updateProfileRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -272,17 +278,18 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 // UploadAvatar godoc
-// @Summary      Upload avatar
-// @Description  Uploads a new avatar image for the authenticated user (JPEG or PNG, max 5MB)
-// @Tags         auth
-// @Accept       multipart/form-data
-// @Produce      json
-// @Security     BearerAuth
-// @Param        avatar  formData  file  true  "Avatar image file"
-// @Success      200     {object}  APIResponse{data=userResponse}
-// @Failure      400     {object}  APIResponse{error=APIError}
-// @Failure      401     {object}  APIResponse{error=APIError}
-// @Router       /auth/me/avatar [post]
+//
+//	@Summary		Upload avatar
+//	@Description	Uploads a new avatar image for the authenticated user (JPEG or PNG, max 5MB)
+//	@Tags			auth
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			avatar	formData	file	true	"Avatar image file"
+//	@Success		200		{object}	APIResponse{data=userResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Router			/auth/me/avatar [post]
 func (h *AuthHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxAvatarSize)
 
@@ -330,14 +337,15 @@ func (h *AuthHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteAvatar godoc
-// @Summary      Delete avatar
-// @Description  Removes the authenticated user's avatar
-// @Tags         auth
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=userResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /auth/me/avatar [delete]
+//
+//	@Summary		Delete avatar
+//	@Description	Removes the authenticated user's avatar
+//	@Tags			auth
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=userResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/auth/me/avatar [delete]
 func (h *AuthHandler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -351,15 +359,16 @@ func (h *AuthHandler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetPublicProfile godoc
-// @Summary      Get public user profile
-// @Description  Returns a user's public profile by ID
-// @Tags         users
-// @Produce      json
-// @Param        id   path      string  true  "User ID (UUID)"
-// @Success      200  {object}  APIResponse{data=publicProfileResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /users/{id}/profile [get]
+//
+//	@Summary		Get public user profile
+//	@Description	Returns a user's public profile by ID
+//	@Tags			users
+//	@Produce		json
+//	@Param			id	path		string	true	"User ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=publicProfileResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/users/{id}/profile [get]
 func (h *AuthHandler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -377,14 +386,15 @@ func (h *AuthHandler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetMyStats godoc
-// @Summary      Get my statistics
-// @Description  Returns booking and review statistics for the authenticated user
-// @Tags         users
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=myStatsResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /my/stats [get]
+//
+//	@Summary		Get my statistics
+//	@Description	Returns booking and review statistics for the authenticated user
+//	@Tags			users
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=myStatsResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/my/stats [get]
 func (h *AuthHandler) GetMyStats(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -418,17 +428,18 @@ type otpSentResponse struct {
 }
 
 // RegisterPhone godoc
-// @Summary      Register via phone
-// @Description  Registers a new user with phone number and sends OTP
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      registerPhoneRequest  true  "Phone registration data"
-// @Success      200   {object}  APIResponse{data=otpSentResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Failure      429   {object}  APIResponse{error=APIError}
-// @Router       /auth/register-phone [post]
+//
+//	@Summary		Register via phone
+//	@Description	Registers a new user with phone number and sends OTP
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		registerPhoneRequest	true	"Phone registration data"
+//	@Success		200		{object}	APIResponse{data=otpSentResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}
+//	@Router			/auth/register-phone [post]
 func (h *AuthHandler) RegisterPhone(w http.ResponseWriter, r *http.Request) {
 	var req registerPhoneRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -450,17 +461,18 @@ func (h *AuthHandler) RegisterPhone(w http.ResponseWriter, r *http.Request) {
 }
 
 // LoginPhone godoc
-// @Summary      Login via phone
-// @Description  Sends OTP to an existing user's phone number
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      loginPhoneRequest  true  "Phone login data"
-// @Success      200   {object}  APIResponse{data=otpSentResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      429   {object}  APIResponse{error=APIError}
-// @Router       /auth/login-phone [post]
+//
+//	@Summary		Login via phone
+//	@Description	Sends OTP to an existing user's phone number
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		loginPhoneRequest	true	"Phone login data"
+//	@Success		200		{object}	APIResponse{data=otpSentResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}
+//	@Router			/auth/login-phone [post]
 func (h *AuthHandler) LoginPhone(w http.ResponseWriter, r *http.Request) {
 	var req loginPhoneRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -478,17 +490,18 @@ func (h *AuthHandler) LoginPhone(w http.ResponseWriter, r *http.Request) {
 }
 
 // VerifyPhone godoc
-// @Summary      Verify phone OTP
-// @Description  Verifies the OTP code and completes login/registration
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      verifyPhoneRequest  true  "Phone verification data"
-// @Success      200   {object}  APIResponse{data=authResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      429   {object}  APIResponse{error=APIError}
-// @Router       /auth/verify-phone [post]
+//
+//	@Summary		Verify phone OTP
+//	@Description	Verifies the OTP code and completes login/registration
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		verifyPhoneRequest	true	"Phone verification data"
+//	@Success		200		{object}	APIResponse{data=authResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}
+//	@Router			/auth/verify-phone [post]
 func (h *AuthHandler) VerifyPhone(w http.ResponseWriter, r *http.Request) {
 	var req verifyPhoneRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -528,15 +541,16 @@ type twoFAVerifyLoginRequest struct {
 }
 
 // EnableTOTP godoc
-// @Summary      Generate TOTP secret
-// @Description  Generates a TOTP secret and QR code URL for setting up 2FA
-// @Tags         2fa
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=totpEnableResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      409  {object}  APIResponse{error=APIError}
-// @Router       /auth/2fa/totp/enable [post]
+//
+//	@Summary		Generate TOTP secret
+//	@Description	Generates a TOTP secret and QR code URL for setting up 2FA
+//	@Tags			2fa
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=totpEnableResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		409	{object}	APIResponse{error=APIError}
+//	@Router			/auth/2fa/totp/enable [post]
 func (h *AuthHandler) EnableTOTP(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -553,17 +567,18 @@ func (h *AuthHandler) EnableTOTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // VerifyAndActivateTOTP godoc
-// @Summary      Verify and activate TOTP
-// @Description  Verifies a TOTP code and activates 2FA for the user
-// @Tags         2fa
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      verify2FARequest  true  "TOTP verification code"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Router       /auth/2fa/totp/verify [post]
+//
+//	@Summary		Verify and activate TOTP
+//	@Description	Verifies a TOTP code and activates 2FA for the user
+//	@Tags			2fa
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		verify2FARequest	true	"TOTP verification code"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Router			/auth/2fa/totp/verify [post]
 func (h *AuthHandler) VerifyAndActivateTOTP(w http.ResponseWriter, r *http.Request) {
 	var req verify2FARequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -581,17 +596,18 @@ func (h *AuthHandler) VerifyAndActivateTOTP(w http.ResponseWriter, r *http.Reque
 }
 
 // DisableTOTP godoc
-// @Summary      Disable TOTP
-// @Description  Disables TOTP 2FA (requires current TOTP code)
-// @Tags         2fa
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      verify2FARequest  true  "Current TOTP code"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Router       /auth/2fa/totp [delete]
+//
+//	@Summary		Disable TOTP
+//	@Description	Disables TOTP 2FA (requires current TOTP code)
+//	@Tags			2fa
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		verify2FARequest	true	"Current TOTP code"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Router			/auth/2fa/totp [delete]
 func (h *AuthHandler) DisableTOTP(w http.ResponseWriter, r *http.Request) {
 	var req verify2FARequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -609,16 +625,17 @@ func (h *AuthHandler) DisableTOTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // EnableSMS2FA godoc
-// @Summary      Enable SMS 2FA
-// @Description  Enables SMS-based 2FA (requires verified phone)
-// @Tags         2fa
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      409  {object}  APIResponse{error=APIError}
-// @Router       /auth/2fa/sms/enable [post]
+//
+//	@Summary		Enable SMS 2FA
+//	@Description	Enables SMS-based 2FA (requires verified phone)
+//	@Tags			2fa
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		409	{object}	APIResponse{error=APIError}
+//	@Router			/auth/2fa/sms/enable [post]
 func (h *AuthHandler) EnableSMS2FA(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -631,16 +648,17 @@ func (h *AuthHandler) EnableSMS2FA(w http.ResponseWriter, r *http.Request) {
 }
 
 // Verify2FALogin godoc
-// @Summary      Verify 2FA during login
-// @Description  Verifies the 2FA code using a partial token and returns a full JWT
-// @Tags         2fa
-// @Accept       json
-// @Produce      json
-// @Param        body  body      twoFAVerifyLoginRequest  true  "Partial token and 2FA code"
-// @Success      200   {object}  APIResponse{data=authResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Router       /auth/2fa/verify [post]
+//
+//	@Summary		Verify 2FA during login
+//	@Description	Verifies the 2FA code using a partial token and returns a full JWT
+//	@Tags			2fa
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		twoFAVerifyLoginRequest	true	"Partial token and 2FA code"
+//	@Success		200		{object}	APIResponse{data=authResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Router			/auth/2fa/verify [post]
 func (h *AuthHandler) Verify2FALogin(w http.ResponseWriter, r *http.Request) {
 	var req twoFAVerifyLoginRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -697,16 +715,17 @@ type resetPasswordRequest struct {
 }
 
 // ForgotPassword godoc
-// @Summary      Request password reset
-// @Description  Sends a password reset link to the user's email
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      forgotPasswordRequest  true  "Email address"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      429   {object}  APIResponse{error=APIError}  "Rate limited (3/15min)"
-// @Router       /auth/forgot-password [post]
+//
+//	@Summary		Request password reset
+//	@Description	Sends a password reset link to the user's email
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		forgotPasswordRequest	true	"Email address"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}	"Rate limited (3/15min)"
+//	@Router			/auth/forgot-password [post]
 func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	var req forgotPasswordRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -723,15 +742,16 @@ func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // ResetPassword godoc
-// @Summary      Reset password with token
-// @Description  Resets the user's password using a reset token from email
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      resetPasswordRequest  true  "Reset token and new password"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Router       /auth/reset-password [post]
+//
+//	@Summary		Reset password with token
+//	@Description	Resets the user's password using a reset token from email
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		resetPasswordRequest	true	"Reset token and new password"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Router			/auth/reset-password [post]
 func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req resetPasswordRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -748,15 +768,16 @@ func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteAccount godoc
-// @Summary      Request account deletion
-// @Description  Requests account deletion with a 30-day grace period
-// @Tags         auth
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      409  {object}  APIResponse{error=APIError}
-// @Router       /auth/delete-account [post]
+//
+//	@Summary		Request account deletion
+//	@Description	Requests account deletion with a 30-day grace period
+//	@Tags			auth
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		409	{object}	APIResponse{error=APIError}
+//	@Router			/auth/delete-account [post]
 func (h *AuthHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -769,15 +790,16 @@ func (h *AuthHandler) DeleteAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 // RestoreAccount godoc
-// @Summary      Restore account during grace period
-// @Description  Cancels a pending account deletion during the 30-day grace period
-// @Tags         auth
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /auth/restore-account [post]
+//
+//	@Summary		Restore account during grace period
+//	@Description	Cancels a pending account deletion during the 30-day grace period
+//	@Tags			auth
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/auth/restore-account [post]
 func (h *AuthHandler) RestoreAccount(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 

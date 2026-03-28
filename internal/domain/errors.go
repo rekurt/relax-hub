@@ -156,4 +156,9 @@ var (
 
 	ErrClientReviewNotFound = errors.New("client review not found")
 	ErrReviewBlindPeriod    = errors.New("review is in blind period")
+
+	ErrRegionSwitchBlocked  = errors.New("region switch blocked: resolve wallet balance, active bookings, open disputes, or unactivated certificates first")
+	ErrCrossRegionalBooking = errors.New("cross-regional booking not allowed: client region must match bathhouse region")
+	ErrRegionSameAsCurrent  = errors.New("already in the requested region")
+	ErrRegionInvalid        = errors.New("invalid region")
 )

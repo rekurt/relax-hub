@@ -438,6 +438,18 @@ func (r *BookingRepo) CountActiveByBathhouse(_ context.Context, bathhouseID uuid
 	return count, nil
 }
 
+func (r *BookingRepo) CountActiveByUser(_ context.Context, userID uuid.UUID) (int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var count int64
+	for _, b := range r.bookings {
+		if b.UserID == userID && isActiveBookingStatus(b.Status) {
+			count++
+		}
+	}
+	return count, nil
+}
+
 func (r *BookingRepo) GetUserStats(_ context.Context, userID uuid.UUID) (*domain.UserBookingStats, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

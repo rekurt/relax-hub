@@ -278,6 +278,19 @@ func (r *bookingRepo) CountActiveByBathhouse(ctx context.Context, bathhouseID uu
 	return count, nil
 }
 
+func (r *bookingRepo) CountActiveByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	query := `
+		SELECT COUNT(*) FROM bookings
+		WHERE user_id = $1 AND status IN ('pending', 'pending_owner', 'confirmed')`
+
+	var count int64
+	err := r.pool.QueryRow(ctx, query, userID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count active bookings by user: %w", err)
+	}
+	return count, nil
+}
+
 func (r *bookingRepo) GetUserStats(ctx context.Context, userID uuid.UUID) (*domain.UserBookingStats, error) {
 	query := `
 		SELECT COUNT(*), COALESCE(SUM(total_price), 0), COALESCE(AVG(total_price), 0)

@@ -26,13 +26,14 @@ func (c WalletCurrency) IsValid() bool {
 type WalletStatus string
 
 const (
-	WalletStatusActive WalletStatus = "active"
-	WalletStatusFrozen WalletStatus = "frozen"
+	WalletStatusActive   WalletStatus = "active"
+	WalletStatusFrozen   WalletStatus = "frozen"
+	WalletStatusArchived WalletStatus = "archived"
 )
 
 func (s WalletStatus) IsValid() bool {
 	switch s {
-	case WalletStatusActive, WalletStatusFrozen:
+	case WalletStatusActive, WalletStatusFrozen, WalletStatusArchived:
 		return true
 	}
 	return false
@@ -102,14 +103,14 @@ func (s WalletHoldStatus) IsValid() bool {
 
 // Wallet - кошелёк пользователя
 type Wallet struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
-	Balance   int64          // в копейках
-	HeldAmount int64         // заморожено в холдах, в копейках
-	Currency  WalletCurrency
-	Status    WalletStatus
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID         uuid.UUID
+	UserID     uuid.UUID
+	Balance    int64 // в копейках
+	HeldAmount int64 // заморожено в холдах, в копейках
+	Currency   WalletCurrency
+	Status     WalletStatus
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 func (w *Wallet) Validate() error {
@@ -146,14 +147,14 @@ type WalletTransaction struct {
 	ID            uuid.UUID
 	WalletID      uuid.UUID
 	Type          WalletTransactionType
-	Amount        int64                   // в копейках, всегда положительное
-	BalanceAfter  int64                   // баланс после транзакции
+	Amount        int64 // в копейках, всегда положительное
+	BalanceAfter  int64 // баланс после транзакции
 	Status        WalletTransactionStatus
 	Description   string
-	ReferenceType string                  // "booking", "payment", "payout" и т.д.
-	ReferenceID   *uuid.UUID              // ID связанной сущности
-	IsBonus       bool                    // бонусная транзакция (для приоритетного списания)
-	ExpiresAt     *time.Time              // срок действия бонуса
+	ReferenceType string     // "booking", "payment", "payout" и т.д.
+	ReferenceID   *uuid.UUID // ID связанной сущности
+	IsBonus       bool       // бонусная транзакция (для приоритетного списания)
+	ExpiresAt     *time.Time // срок действия бонуса
 	CreatedAt     time.Time
 }
 
@@ -175,17 +176,17 @@ func (t *WalletTransaction) Validate() error {
 
 // WalletHold - холд (заморозка) средств
 type WalletHold struct {
-	ID          uuid.UUID
-	WalletID    uuid.UUID
-	Amount      int64            // в копейках
-	Status      WalletHoldStatus
-	Description string
-	ReferenceType string         // "booking" и т.д.
-	ReferenceID *uuid.UUID
-	ExpiresAt   time.Time        // когда холд автоматически снимается
-	CapturedAt  *time.Time
-	ReleasedAt  *time.Time
-	CreatedAt   time.Time
+	ID            uuid.UUID
+	WalletID      uuid.UUID
+	Amount        int64 // в копейках
+	Status        WalletHoldStatus
+	Description   string
+	ReferenceType string // "booking" и т.д.
+	ReferenceID   *uuid.UUID
+	ExpiresAt     time.Time // когда холд автоматически снимается
+	CapturedAt    *time.Time
+	ReleasedAt    *time.Time
+	CreatedAt     time.Time
 }
 
 func (h *WalletHold) Validate() error {
@@ -222,10 +223,10 @@ type WalletTransactionFilter struct {
 
 // Лимиты кошелька
 const (
-	WalletMaxBalanceRUB  int64 = 10_000_000 // 100 000 RUB в копейках
-	WalletMaxBalanceBYN  int64 = 300_000    // 3 000 BYN в копейках
-	WalletTopUpMinRUB    int64 = 50_000     // 500 RUB в копейках
-	WalletTopUpMaxRUB    int64 = 3_000_000  // 30 000 RUB в копейках
+	WalletMaxBalanceRUB int64 = 10_000_000 // 100 000 RUB в копейках
+	WalletMaxBalanceBYN int64 = 300_000    // 3 000 BYN в копейках
+	WalletTopUpMinRUB   int64 = 50_000     // 500 RUB в копейках
+	WalletTopUpMaxRUB   int64 = 3_000_000  // 30 000 RUB в копейках
 )
 
 // MaxBalance возвращает максимальный баланс для валюты

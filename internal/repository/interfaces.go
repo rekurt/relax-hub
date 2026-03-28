@@ -93,6 +93,7 @@ type BookingRepository interface {
 	UpdateDeposit(ctx context.Context, bookingID uuid.UUID, depositAmount int64, depositStatus domain.DepositStatus, depositExternalID string) error
 	UpdateDepositStatus(ctx context.Context, bookingID uuid.UUID, depositStatus domain.DepositStatus, releasedAt *time.Time) error
 	ListHeldDepositsReadyForRelease(ctx context.Context, checkedOutBefore time.Time) ([]domain.Booking, error)
+	CountActiveByUser(ctx context.Context, userID uuid.UUID) (int64, error)
 }
 
 type ReviewRepository interface {
@@ -548,6 +549,7 @@ type DisputeRepository interface {
 	ListEvidence(ctx context.Context, disputeID uuid.UUID) ([]domain.DisputeEvidence, error)
 	ListAll(ctx context.Context, filter domain.DisputeFilter) (*domain.PaginatedResult[domain.Dispute], error)
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Dispute], error)
+	CountOpenByUser(ctx context.Context, userID uuid.UUID) (int64, error)
 }
 
 type FraudFlagRepository interface {

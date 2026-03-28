@@ -294,3 +294,15 @@ func (r *disputeRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pa
 		TotalPages: totalPages,
 	}, nil
 }
+
+func (r *disputeRepo) CountOpenByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	query := `SELECT COUNT(*) FROM disputes
+		WHERE (initiator_id = $1 OR respondent_id = $1)
+		AND status NOT IN ('closed', 'resolved')`
+
+	var count int64
+	if err := r.pool.QueryRow(ctx, query, userID).Scan(&count); err != nil {
+		return 0, fmt.Errorf("count open disputes by user: %w", err)
+	}
+	return count, nil
+}

@@ -48,7 +48,7 @@ func (r *WalletRepo) Create(_ context.Context, wallet *domain.Wallet) error {
 	}
 
 	for _, w := range r.wallets {
-		if w.UserID == wallet.UserID {
+		if w.UserID == wallet.UserID && w.Status != domain.WalletStatusArchived {
 			return domain.ErrAlreadyExists
 		}
 	}
@@ -75,7 +75,7 @@ func (r *WalletRepo) GetByUserID(_ context.Context, userID uuid.UUID) (*domain.W
 	defer r.mu.RUnlock()
 
 	for _, w := range r.wallets {
-		if w.UserID == userID {
+		if w.UserID == userID && w.Status != domain.WalletStatusArchived {
 			cp := *w
 			return &cp, nil
 		}

@@ -170,12 +170,12 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: migration for user region field and wallet archival
 - Modify: `internal/domain/wallet.go` (add Currency, archived status)
 
-- [ ] Add region field to user model (default RU)
-- [ ] Implement region switch validation: block if non-zero wallet balance, active bookings, open disputes, or unactivated certificates
-- [ ] On switch: archive old wallet, create new wallet in new currency, reset loyalty status
-- [ ] Block cross-regional bookings (client region must match bathhouse region)
-- [ ] Write tests for region switching with all blocking conditions
-- [ ] Run project test suite - must pass before next task
+- [x] Add region field to user model (default RU)
+- [x] Implement region switch validation: block if non-zero wallet balance, active bookings, open disputes, or unactivated certificates
+- [x] On switch: archive old wallet, create new wallet in new currency, reset loyalty status
+- [x] Block cross-regional bookings (client region must match bathhouse region)
+- [x] Write tests for region switching with all blocking conditions
+- [x] Run project test suite - must pass before next task
 
 ### Task 7: Financial reports and acts (FR-104, FR-115, FR-120)
 

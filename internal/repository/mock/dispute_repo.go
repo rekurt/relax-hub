@@ -212,3 +212,17 @@ func (r *DisputeRepo) ListByUser(_ context.Context, userID uuid.UUID, page, page
 
 	return paginate(filtered, page, pageSize), nil
 }
+
+func (r *DisputeRepo) CountOpenByUser(_ context.Context, userID uuid.UUID) (int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var count int64
+	for _, d := range r.disputes {
+		if (d.InitiatorID == userID || d.RespondentID == userID) &&
+			d.Status != domain.DisputeStatusClosed && d.Status != domain.DisputeStatusResolved {
+			count++
+		}
+	}
+	return count, nil
+}

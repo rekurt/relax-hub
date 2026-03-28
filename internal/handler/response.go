@@ -359,6 +359,14 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusNotFound, "client_review_not_found", err.Error())
 	case errors.Is(err, domain.ErrReviewBlindPeriod):
 		writeErrorWithContext(w, r, http.StatusForbidden, "review_blind_period", err.Error())
+	case errors.Is(err, domain.ErrRegionSwitchBlocked):
+		writeErrorWithContext(w, r, http.StatusConflict, "region_switch_blocked", err.Error())
+	case errors.Is(err, domain.ErrCrossRegionalBooking):
+		writeErrorWithContext(w, r, http.StatusForbidden, "cross_regional_booking", err.Error())
+	case errors.Is(err, domain.ErrRegionSameAsCurrent):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "region_same_as_current", err.Error())
+	case errors.Is(err, domain.ErrRegionInvalid):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "region_invalid", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

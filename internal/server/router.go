@@ -79,6 +79,7 @@ type RouterParams struct {
 	FeatureFlagHandler        *handler.FeatureFlagHandler
 	ForceMajeureHandler       *handler.ForceMajeureHandler
 	ClientReviewHandler       *handler.ClientReviewHandler
+	RegionHandler             *handler.RegionHandler
 	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
@@ -345,6 +346,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Get("/my/sessions", p.SessionHandler.ListSessions)
 		r.With(auth).Delete("/my/sessions", p.SessionHandler.TerminateAllOtherSessions)
 		r.With(auth).Delete("/my/sessions/{id}", p.SessionHandler.TerminateSession)
+
+		// Region (authenticated)
+		r.With(auth).Get("/my/region", p.RegionHandler.GetRegion)
+		r.With(auth).Put("/my/region", p.RegionHandler.SwitchRegion)
 
 		// Wallet (authenticated)
 		r.With(auth).Get("/my/wallet", p.WalletHandler.GetWallet)
