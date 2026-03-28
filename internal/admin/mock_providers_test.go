@@ -46,3 +46,10 @@ type mockHealthProvider struct{}
 func (m *mockHealthProvider) GetHealthData(_ context.Context) (*pages.HealthData, error) {
 	return &pages.HealthData{GeneratedAt: time.Now()}, nil
 }
+
+// mockFinanceProvider returns empty finance data for testing.
+type mockFinanceProvider struct{}
+
+func (m *mockFinanceProvider) GetFinanceData(_ context.Context) (*pages.FinanceData, error) {
+	return &pages.FinanceData{GeneratedAt: time.Now()}, nil
+}

@@ -43,11 +43,12 @@ func NewGoAdmin(cfg *appconfig.Config, pool *pgxpool.Pool, redisClient *redis.Cl
 	modProvider := pages.NewPostgresModerationProvider(pool, log)
 	analyticsProvider := pages.NewPostgresAnalyticsProvider(pool, log)
 	healthProvider := pages.NewPlatformHealthProvider(pool, redisClient, hub, log)
+	financeProvider := pages.NewPostgresFinanceProvider(pool, log)
 
 	return &GoAdmin{
 		Engine:      engine.Default(),
 		Config:      BuildGoAdminConfig(cfg),
-		PagesRouter: PagesRouter(dashProvider, modProvider, analyticsProvider, healthProvider, log, cfg.Admin.Prefix),
+		PagesRouter: PagesRouter(dashProvider, modProvider, analyticsProvider, healthProvider, financeProvider, log, cfg.Admin.Prefix),
 	}
 }
 

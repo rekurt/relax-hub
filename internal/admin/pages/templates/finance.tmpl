@@ -1,0 +1,148 @@
+{{define "content"}}
+<style>
+    .finance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .finance-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .finance-card .label { font-size: 13px; color: #7f8c8d; margin-bottom: 4px; }
+    .finance-card .value { font-size: 24px; font-weight: 700; color: #2c3e50; }
+    .finance-card .sub { font-size: 12px; color: #95a5a6; margin-top: 4px; }
+    .finance-card.total { border-left: 4px solid #3498db; }
+    .finance-card.escrow { border-left: 4px solid #f39c12; }
+    .finance-card.holds { border-left: 4px solid #e74c3c; }
+    .finance-card.ok { border-left: 4px solid #27ae60; }
+    .finance-card.warn { border-left: 4px solid #e74c3c; }
+
+    .section-title { font-size: 16px; font-weight: 600; color: #2c3e50; margin: 24px 0 12px 0; }
+
+    .recon-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .recon-table th { background: #f8f9fa; padding: 10px 14px; text-align: left; font-size: 13px; color: #7f8c8d; font-weight: 600; }
+    .recon-table td { padding: 10px 14px; border-top: 1px solid #eee; font-size: 14px; }
+
+    .badge-ok { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; background: #d5f5e3; color: #27ae60; }
+    .badge-warn { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; background: #fadbd8; color: #e74c3c; }
+    .badge-pending { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; background: #fdebd0; color: #f39c12; }
+
+    .empty-msg { padding: 20px; text-align: center; color: #95a5a6; font-size: 14px; }
+</style>
+
+<h2>Текущий баланс платформы</h2>
+
+<div class="finance-grid">
+    <div class="finance-card total">
+        <div class="label">Кошельки клиентов</div>
+        <div class="value">{{kopecksToRub .CurrentFloat.ClientWalletsTotal}} ₽</div>
+        <div class="sub">{{.CurrentFloat.ClientWalletsCount}} кошельков</div>
+    </div>
+    <div class="finance-card total">
+        <div class="label">Кошельки владельцев</div>
+        <div class="value">{{kopecksToRub .CurrentFloat.OwnerWalletsTotal}} ₽</div>
+        <div class="sub">{{.CurrentFloat.OwnerWalletsCount}} кошельков</div>
+    </div>
+    <div class="finance-card escrow">
+        <div class="label">Эскроу (удержано)</div>
+        <div class="value">{{kopecksToRub .CurrentFloat.EscrowHeldTotal}} ₽</div>
+        <div class="sub">{{.CurrentFloat.EscrowCount}} записей</div>
+    </div>
+    <div class="finance-card holds">
+        <div class="label">Активные холды</div>
+        <div class="value">{{kopecksToRub .CurrentFloat.WalletHoldsTotal}} ₽</div>
+    </div>
+    <div class="finance-card {{if eq .CurrentFloat.Status "ok"}}ok{{else}}warn{{end}}">
+        <div class="label">Итого на платформе</div>
+        <div class="value">{{kopecksToRub .CurrentFloat.PlatformTotal}} ₽</div>
+        <div class="sub">Клиенты + Владельцы + Эскроу</div>
+    </div>
+</div>
+
+{{if .LastSnapshot}}
+<div class="section-title">Последний снимок ({{formatDate .LastSnapshot.SnapshotDate}})</div>
+<div class="finance-grid">
+    <div class="finance-card">
+        <div class="label">Статус</div>
+        <div class="value">
+            {{if eq .LastSnapshot.Status "ok"}}<span class="badge-ok">{{reconStatus .LastSnapshot.Status}}</span>
+            {{else}}<span class="badge-warn">{{reconStatus .LastSnapshot.Status}}</span>{{end}}
+        </div>
+    </div>
+    <div class="finance-card">
+        <div class="label">Итого по снимку</div>
+        <div class="value">{{kopecksToRub .LastSnapshot.PlatformTotal}} ₽</div>
+    </div>
+</div>
+{{else}}
+<div class="empty-msg">Снимки ещё не создавались. Первый снимок будет создан автоматически ночью.</div>
+{{end}}
+
+{{if .LastRecon}}
+<div class="section-title">Последняя сверка с провайдером</div>
+<table class="recon-table">
+    <thead>
+        <tr>
+            <th>Период</th>
+            <th>Платежи (внутр.)</th>
+            <th>Платежи (провайдер)</th>
+            <th>Возвраты (внутр.)</th>
+            <th>Расхождение</th>
+            <th>Статус</th>
+            <th>Дата</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{formatDate .LastRecon.PeriodStart}} — {{formatDate .LastRecon.PeriodEnd}}</td>
+            <td>{{kopecksToRub .LastRecon.InternalPaymentsSum}} ₽ ({{.LastRecon.InternalPaymentsCount}})</td>
+            <td>{{kopecksToRub .LastRecon.ProviderPaymentsSum}} ₽ ({{.LastRecon.ProviderPaymentsCount}})</td>
+            <td>{{kopecksToRub .LastRecon.InternalRefundsSum}} ₽ ({{.LastRecon.InternalRefundsCount}})</td>
+            <td>
+                {{if and (eq .LastRecon.PaymentDiscrepancy 0) (eq .LastRecon.RefundDiscrepancy 0)}}
+                    <span class="badge-ok">0 ₽</span>
+                {{else}}
+                    <span class="badge-warn">{{kopecksToRub .LastRecon.PaymentDiscrepancy}} ₽</span>
+                {{end}}
+            </td>
+            <td>
+                {{if eq .LastRecon.Status "matched"}}<span class="badge-ok">{{reconStatus .LastRecon.Status}}</span>
+                {{else if eq .LastRecon.Status "mismatch"}}<span class="badge-warn">{{reconStatus .LastRecon.Status}}</span>
+                {{else}}<span class="badge-pending">{{reconStatus .LastRecon.Status}}</span>{{end}}
+            </td>
+            <td>{{formatDate .LastRecon.CreatedAt}}</td>
+        </tr>
+    </tbody>
+</table>
+{{else}}
+<div class="empty-msg">Сверки ещё не проводились. Первая сверка будет выполнена автоматически ночью.</div>
+{{end}}
+
+{{if .RecentSnapshots}}
+<div class="section-title">История снимков (7 дней)</div>
+<table class="recon-table">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Клиенты</th>
+            <th>Владельцы</th>
+            <th>Эскроу</th>
+            <th>Холды</th>
+            <th>Итого</th>
+            <th>Статус</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{range .RecentSnapshots}}
+        <tr>
+            <td>{{formatDate .SnapshotDate}}</td>
+            <td>{{kopecksToRub .ClientWalletsTotal}} ₽</td>
+            <td>{{kopecksToRub .OwnerWalletsTotal}} ₽</td>
+            <td>{{kopecksToRub .EscrowHeldTotal}} ₽</td>
+            <td>{{kopecksToRub .WalletHoldsTotal}} ₽</td>
+            <td>{{kopecksToRub .PlatformTotal}} ₽</td>
+            <td>
+                {{if eq .Status "ok"}}<span class="badge-ok">OK</span>
+                {{else}}<span class="badge-warn">{{reconStatus .Status}}</span>{{end}}
+            </td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+{{end}}
+
+{{end}}

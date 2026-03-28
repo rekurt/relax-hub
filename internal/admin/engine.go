@@ -19,6 +19,7 @@ func PagesRouter(
 	modProvider pages.ModerationDataProvider,
 	analyticsProvider pages.AnalyticsDataProvider,
 	healthProvider pages.HealthDataProvider,
+	financeProvider pages.FinanceDataProvider,
 	log *logger.Logger,
 	adminPrefix string,
 ) http.Handler {
@@ -45,6 +46,9 @@ func PagesRouter(
 
 	health := pages.NewHealthHandler(healthProvider, log, pagesPrefix, adminPrefix)
 	r.Get("/health", health.ServeHTTP)
+
+	finance := pages.NewFinanceHandler(financeProvider, log, pagesPrefix, adminPrefix)
+	r.Get("/finance", finance.ServeHTTP)
 
 	return r
 }
@@ -95,6 +99,12 @@ func CustomMenuConfig(pagesPrefix string) []CustomMenuItem {
 			URI:   pagesPrefix + "/health",
 			Order: 3,
 		},
+		{
+			Title: "Финансы",
+			Icon:  "fa-money",
+			URI:   pagesPrefix + "/finance",
+			Order: 4,
+		},
 	}
 }
 
@@ -103,8 +113,8 @@ func CustomMenuConfig(pagesPrefix string) []CustomMenuItem {
 // The menu structure is: Dashboard (top-level), Operations group with Moderation/Analytics/Health children.
 func RegisterCustomMenu(ctx context.Context, pool *pgxpool.Pool, pagesPrefix string, log *logger.Logger) error {
 	items := CustomMenuConfig(pagesPrefix)
-	if len(items) < 5 {
-		return fmt.Errorf("expected 5 menu items, got %d", len(items))
+	if len(items) < 6 {
+		return fmt.Errorf("expected at least 6 menu items, got %d", len(items))
 	}
 
 	tx, err := pool.Begin(ctx)

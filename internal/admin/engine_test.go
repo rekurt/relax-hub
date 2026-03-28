@@ -10,8 +10,8 @@ func TestCustomMenuConfig_Structure(t *testing.T) {
 	prefix := "/admin-panel/pages"
 	items := CustomMenuConfig(prefix)
 
-	if len(items) != 5 {
-		t.Fatalf("expected 5 menu items, got %d", len(items))
+	if len(items) != 6 {
+		t.Fatalf("expected 6 menu items, got %d", len(items))
 	}
 
 	// Dashboard: first item with home icon.
@@ -113,6 +113,7 @@ func TestPagesRouter_AllRoutesRegistered(t *testing.T) {
 		{"GET", "/moderation", http.StatusOK},
 		{"GET", "/analytics", http.StatusOK},
 		{"GET", "/health", http.StatusOK},
+		{"GET", "/finance", http.StatusOK},
 	}
 
 	handler := PagesRouter(
@@ -120,6 +121,7 @@ func TestPagesRouter_AllRoutesRegistered(t *testing.T) {
 		&mockModProvider{},
 		&mockAnalyticsProvider{},
 		&mockHealthProvider{},
+		&mockFinanceProvider{},
 		testLogger(),
 		"/admin-panel",
 	)
@@ -152,6 +154,7 @@ func TestPagesRouter_ModerationAPIRoutes(t *testing.T) {
 		&mockModProvider{},
 		&mockAnalyticsProvider{},
 		&mockHealthProvider{},
+		&mockFinanceProvider{},
 		testLogger(),
 		"/admin-panel",
 	)
@@ -175,6 +178,7 @@ func TestPagesRouter_HealthEndpoint(t *testing.T) {
 		&mockModProvider{},
 		&mockAnalyticsProvider{},
 		&mockHealthProvider{},
+		&mockFinanceProvider{},
 		testLogger(),
 		"/admin-panel",
 	)

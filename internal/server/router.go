@@ -81,6 +81,7 @@ type RouterParams struct {
 	ClientReviewHandler       *handler.ClientReviewHandler
 	RegionHandler             *handler.RegionHandler
 	FinancialReportHandler    *handler.FinancialReportHandler
+	ReconciliationHandler     *handler.ReconciliationHandler
 	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
@@ -595,6 +596,13 @@ func NewRouter(p RouterParams) http.Handler {
 			// Force majeure (admin only)
 			r.Post("/force-majeure", p.ForceMajeureHandler.Activate)
 			r.Get("/force-majeure", p.ForceMajeureHandler.List)
+
+			// Reconciliation (admin only)
+			r.Get("/reconciliation/summary", p.ReconciliationHandler.GetFloatSummary)
+			r.Post("/reconciliation/snapshot", p.ReconciliationHandler.TakeSnapshot)
+			r.Get("/reconciliation/snapshots", p.ReconciliationHandler.ListSnapshots)
+			r.Post("/reconciliation/reconcile", p.ReconciliationHandler.Reconcile)
+			r.Get("/reconciliation/reports", p.ReconciliationHandler.ListReports)
 		})
 	})
 

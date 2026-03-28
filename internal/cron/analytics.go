@@ -43,6 +43,7 @@ type CronScheduler struct {
 	fraudEngine        antifraud.FraudEngine
 	bookingRepo        repository.BookingRepository
 	redisClient        *redis.Client
+	reconciliationSvc  service.ReconciliationService
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -71,6 +72,7 @@ func NewCronScheduler(
 	fraudEngine antifraud.FraudEngine,
 	bookingRepo repository.BookingRepository,
 	redisClient *redis.Client,
+	reconciliationSvc service.ReconciliationService,
 ) *CronScheduler {
 	timezone := cfg.Cron.Timezone
 	if timezone == "" {
@@ -103,6 +105,7 @@ func NewCronScheduler(
 		fraudEngine:        fraudEngine,
 		bookingRepo:        bookingRepo,
 		redisClient:        redisClient,
+		reconciliationSvc:  reconciliationSvc,
 	}
 }
 
@@ -160,6 +163,8 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		{"45 3 * * *", "kyc_expiry_check", cs.kycExpiryCheck},
 		{"0 6 * * *", "bathhouse_metrics_update", cs.bathhouseMetricsUpdate},
 		{"0 * * * *", "review_auto_reveal", cs.reviewAutoReveal},
+		{"0 1 * * *", "daily_float_snapshot", cs.dailyFloatSnapshot},
+		{"30 1 * * *", "daily_reconciliation", cs.dailyReconciliation},
 	}
 
 	for _, j := range jobs {

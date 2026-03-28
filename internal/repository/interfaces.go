@@ -603,3 +603,20 @@ type ClientReviewRepository interface {
 	ListUnrevealedPastDeadline(ctx context.Context, now time.Time) ([]domain.ClientReview, error)
 	RevealByID(ctx context.Context, id uuid.UUID) error
 }
+
+type ReconciliationRepository interface {
+	CreateFloatSnapshot(ctx context.Context, snapshot *domain.FloatSnapshot) error
+	GetLatestFloatSnapshot(ctx context.Context) (*domain.FloatSnapshot, error)
+	ListFloatSnapshots(ctx context.Context, from, to time.Time, page, pageSize int) (*domain.PaginatedResult[domain.FloatSnapshot], error)
+
+	CreateReconciliationReport(ctx context.Context, report *domain.ReconciliationReport) error
+	GetLatestReconciliationReport(ctx context.Context) (*domain.ReconciliationReport, error)
+	ListReconciliationReports(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.ReconciliationReport], error)
+
+	// Aggregate queries for float calculation
+	SumWalletBalancesByRole(ctx context.Context, role string) (total int64, count int, err error)
+	SumEscrowHeld(ctx context.Context) (total int64, count int, err error)
+	SumActiveWalletHolds(ctx context.Context) (total int64, err error)
+	SumPaymentsForPeriod(ctx context.Context, from, to time.Time) (sum int64, count int, err error)
+	SumRefundsForPeriod(ctx context.Context, from, to time.Time) (sum int64, count int, err error)
+}

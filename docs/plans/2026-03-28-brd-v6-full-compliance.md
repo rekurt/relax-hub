@@ -200,13 +200,13 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `internal/admin/pages/` (add finance dashboard)
 - Create: `internal/cron/reconciliation_job.go`
 
-- [ ] Implement daily float snapshot: sum(client wallets) + sum(owner wallets) + sum(escrow) = expected total
-- [ ] Implement transaction reconciliation with YooKassa (compare internal transactions with provider)
-- [ ] Alert on any discrepancy (zero tolerance per FR-125)
-- [ ] Add admin dashboard widget showing float status
-- [ ] Add cron job for daily reconciliation
-- [ ] Write tests for reconciliation logic
-- [ ] Run project test suite - must pass before next task
+- [x] Implement daily float snapshot: sum(client wallets) + sum(owner wallets) + sum(escrow) = expected total
+- [x] Implement transaction reconciliation with YooKassa (compare internal transactions with provider)
+- [x] Alert on any discrepancy (zero tolerance per FR-125)
+- [x] Add admin dashboard widget showing float status
+- [x] Add cron job for daily reconciliation
+- [x] Write tests for reconciliation logic
+- [x] Run project test suite - must pass before next task
 
 ### Task 9: Bonus expiry notifications (FR-122)
 
