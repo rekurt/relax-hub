@@ -116,11 +116,11 @@ export default function BroadcastList() {
       ),
     },
     {
-      title: 'Доставлено / Прочитано',
+      title: 'Доставлено / Прочитано / Клики',
       key: 'stats',
-      width: 170,
+      width: 210,
       render: (_: unknown, record: InternalHandlerBroadcastResponse) => (
-        <span>{record.delivered ?? 0} / {record.read ?? 0}</span>
+        <span>{record.delivered ?? 0} / {record.read ?? 0} / {(record as Record<string, unknown>).clicked as number ?? 0}</span>
       ),
     },
     {

@@ -7,12 +7,16 @@ import {
   Input,
   Select,
   Space,
+  Tag,
+  Tooltip,
   Typography,
 } from 'antd'
 import {
   ArrowLeftOutlined,
   SendOutlined,
 } from '@ant-design/icons'
+import { useRef } from 'react'
+import type { TextAreaRef } from 'antd/es/input/TextArea'
 import { useNavigate } from 'react-router-dom'
 import {
   useGetMyCrmSegments,
@@ -20,12 +24,20 @@ import {
 } from '@/api/generated/crm/crm'
 import { useQueryClient } from '@tanstack/react-query'
 
-const { Title } = Typography
+const { Title, Text } = Typography
 
 const CHANNEL_OPTIONS = [
-  { label: 'Push-уведомление', value: 'push' },
+  { label: 'Push-уведомлен��е', value: 'push' },
   { label: 'Email', value: 'email' },
   { label: 'Telegram', value: 'telegram' },
+  { label: 'SMS', value: 'sms' },
+]
+
+const PERSONALIZATION_TOKENS = [
+  { token: '{{guest_name}}', label: 'Имя гостя', description: 'Имя клиента из профиля' },
+  { token: '{{last_visit_date}}', label: 'Дата визита', description: 'Дата последнего визита (ДД.ММ.ГГГГ)' },
+  { token: '{{visit_count}}', label: 'Кол-во визитов', description: 'Общее количество визитов гостя' },
+  { token: '{{promo_code}}', label: 'Промокод', description: 'Промокод из привязанной акции' },
 ]
 
 interface BroadcastFormValues {
@@ -41,6 +53,7 @@ export default function BroadcastCreate() {
   const queryClient = useQueryClient()
   const { message } = App.useApp()
   const [form] = Form.useForm<BroadcastFormValues>()
+  const bodyRef = useRef<TextAreaRef>(null)
 
   const { data: segmentsData } = useGetMyCrmSegments()
   const segments = segmentsData?.data ?? []
@@ -48,7 +61,7 @@ export default function BroadcastCreate() {
   const createMutation = usePostMyCrmBroadcasts({
     mutation: {
       onSuccess: () => {
-        message.success('Рассылка создана')
+        message.success('Р��ссылка создана')
         queryClient.invalidateQueries({ queryKey: ['/my/crm/broadcasts'] })
         navigate('/crm/broadcasts')
       },
@@ -65,6 +78,24 @@ export default function BroadcastCreate() {
         image_url: values.image_url || undefined,
         channels: values.channels,
       },
+    })
+  }
+
+  const insertToken = (token: string) => {
+    const textarea = bodyRef.current?.resizableTextArea?.textArea
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const currentBody = form.getFieldValue('body') || ''
+    const newBody = currentBody.slice(0, start) + token + currentBody.slice(end)
+    form.setFieldValue('body', newBody)
+
+    // Restore cursor after token
+    requestAnimationFrame(() => {
+      const pos = start + token.length
+      textarea.focus()
+      textarea.setSelectionRange(pos, pos)
     })
   }
 
@@ -101,7 +132,7 @@ export default function BroadcastCreate() {
 
           <Form.Item
             name="title"
-            label="Заголовок"
+            label="Заголо��ок"
             rules={[{ required: true, message: 'Введите заголовок' }]}
           >
             <Input placeholder="Заголовок рассылки" maxLength={200} showCount />
@@ -113,16 +144,36 @@ export default function BroadcastCreate() {
             rules={[{ required: true, message: 'Введите текст' }]}
           >
             <Input.TextArea
+              ref={bodyRef}
               rows={6}
-              placeholder="Текст рассылки для гостей..."
+              placeholder="Текст рассылки для гостей... Используйте токены персонализации ниже"
               maxLength={2000}
               showCount
             />
           </Form.Item>
 
+          <div style={{ marginBottom: 24 }}>
+            <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+              Токены персонализации (нажмите для вставки в текст):
+            </Text>
+            <Space wrap>
+              {PERSONALIZATION_TOKENS.map(({ token, label, description }) => (
+                <Tooltip key={token} title={description}>
+                  <Tag
+                    color="blue"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => insertToken(token)}
+                  >
+                    {label}
+                  </Tag>
+                </Tooltip>
+              ))}
+            </Space>
+          </div>
+
           <Form.Item
             name="image_url"
-            label="Ссылка на изображение"
+            label="Ссылка на ��зображение"
             extra="Необязательно. URL изображения для рассылки"
           >
             <Input placeholder="https://..." />
@@ -131,7 +182,7 @@ export default function BroadcastCreate() {
           <Form.Item
             name="channels"
             label="Каналы отправки"
-            rules={[{ required: true, message: 'Выберите хотя бы один канал' }]}
+            rules={[{ required: true, message: '��ыберите хотя бы один канал' }]}
           >
             <Checkbox.Group options={CHANNEL_OPTIONS} />
           </Form.Item>

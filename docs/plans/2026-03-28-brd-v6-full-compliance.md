@@ -263,14 +263,14 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/notification/dispatcher.go` (SMS for broadcasts)
 - Modify: `frontend/src/pages/crm/BroadcastCreate.tsx`
 
-- [ ] Add SMS to broadcast channels enum
-- [ ] Implement template personalization: {{guest_name}}, {{last_visit_date}}, {{visit_count}}, {{promo_code}}
-- [ ] Replace placeholders with guest card data when sending
-- [ ] Route SMS broadcasts through existing SMSProvider
-- [ ] Add personalization token picker in frontend broadcast editor
-- [ ] Update broadcast statistics: add clicked field
-- [ ] Write tests for personalization and SMS delivery
-- [ ] Run project test suite - must pass before task 14
+- [x] Add SMS to broadcast channels enum
+- [x] Implement template personalization: {{guest_name}}, {{last_visit_date}}, {{visit_count}}, {{promo_code}}
+- [x] Replace placeholders with guest card data when sending
+- [x] Route SMS broadcasts through existing SMSProvider
+- [x] Add personalization token picker in frontend broadcast editor
+- [x] Update broadcast statistics: add clicked field
+- [x] Write tests for personalization and SMS delivery
+- [x] Run project test suite - must pass before task 14
 
 ### Task 14: L1 Support Bot (FR-155)
 

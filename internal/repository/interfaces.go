@@ -528,7 +528,7 @@ type BroadcastRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Broadcast, error)
 	ListByOwner(ctx context.Context, filter domain.BroadcastFilter) (*domain.PaginatedResult[domain.Broadcast], error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BroadcastStatus) error
-	UpdateStats(ctx context.Context, id uuid.UUID, delivered, read int64) error
+	UpdateStats(ctx context.Context, id uuid.UUID, delivered, read, clicked int64) error
 	CountRecentByOwner(ctx context.Context, ownerID uuid.UUID, since time.Time) (int64, error)
 }
 

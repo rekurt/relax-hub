@@ -9,6 +9,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/nikitaaldaev/bani/internal/sms"
 )
 
 const (
@@ -26,7 +27,10 @@ type BroadcastService interface {
 type broadcastService struct {
 	broadcastRepo repository.BroadcastRepository
 	guestCardRepo repository.GuestCardRepository
+	userRepo      repository.UserRepository
+	promoRepo     repository.PromoCodeRepository
 	notifSvc      NotificationService
+	smsProvider   sms.Provider
 	access        *AccessChecker
 	logger        *logger.Logger
 }
@@ -34,14 +38,20 @@ type broadcastService struct {
 func NewBroadcastService(
 	broadcastRepo repository.BroadcastRepository,
 	guestCardRepo repository.GuestCardRepository,
+	userRepo repository.UserRepository,
+	promoRepo repository.PromoCodeRepository,
 	notifSvc NotificationService,
+	smsProvider sms.Provider,
 	access *AccessChecker,
 	log *logger.Logger,
 ) BroadcastService {
 	return &broadcastService{
 		broadcastRepo: broadcastRepo,
 		guestCardRepo: guestCardRepo,
+		userRepo:      userRepo,
+		promoRepo:     promoRepo,
 		notifSvc:      notifSvc,
+		smsProvider:   smsProvider,
 		access:        access,
 		logger:        log,
 	}
@@ -122,6 +132,17 @@ func (s *broadcastService) Send(ctx context.Context, userID uuid.UUID, role doma
 		return fmt.Errorf("list guests for broadcast: %w", err)
 	}
 
+	// Resolve promo code string for personalization
+	var promoCode string
+	if broadcast.PromoCodeID != nil {
+		promo, promoErr := s.promoRepo.GetByID(ctx, *broadcast.PromoCodeID)
+		if promoErr != nil {
+			s.logger.Warn("resolve promo code for broadcast", "promo_id", broadcast.PromoCodeID, "error", promoErr)
+		} else {
+			promoCode = promo.Code
+		}
+	}
+
 	// Send notifications to each guest (respecting per-guest cooldown and preferences)
 	cooldownSince := time.Now().Add(-time.Duration(broadcastGuestCooldownH) * time.Hour)
 	var delivered int64
@@ -136,7 +157,13 @@ func (s *broadcastService) Send(ctx context.Context, userID uuid.UUID, role doma
 			continue
 		}
 
-		err = s.notifSvc.Send(ctx, guest.ClientID, domain.NotifBroadcast, broadcast.Title, broadcast.Body, map[string]string{
+		// Build personalization data from guest card and user profile
+		pData := s.buildPersonalizationData(ctx, &guest, promoCode)
+		title := domain.PersonalizeMessage(broadcast.Title, pData)
+		body := domain.PersonalizeMessage(broadcast.Body, pData)
+
+		// Send via notification service (push, email, telegram, in-app)
+		err = s.notifSvc.Send(ctx, guest.ClientID, domain.NotifBroadcast, title, body, map[string]string{
 			"broadcast_id": broadcastID.String(),
 			"owner_id":     userID.String(),
 		})
@@ -144,11 +171,17 @@ func (s *broadcastService) Send(ctx context.Context, userID uuid.UUID, role doma
 			s.logger.Error("send broadcast notification", "client_id", guest.ClientID, "broadcast_id", broadcastID, "error", err)
 			continue
 		}
+
+		// Send SMS if channel enabled
+		if broadcast.HasChannel(domain.BroadcastChannelSMS) && s.smsProvider != nil {
+			s.sendBroadcastSMS(ctx, guest.ClientID, body)
+		}
+
 		delivered++
 	}
 
 	// Update stats and mark as sent
-	if err := s.broadcastRepo.UpdateStats(ctx, broadcastID, delivered, 0); err != nil {
+	if err := s.broadcastRepo.UpdateStats(ctx, broadcastID, delivered, 0, 0); err != nil {
 		s.logger.Error("update broadcast stats", "broadcast_id", broadcastID, "error", err)
 	}
 	if err := s.broadcastRepo.UpdateStatus(ctx, broadcastID, domain.BroadcastStatusSent); err != nil {
@@ -186,4 +219,46 @@ func (s *broadcastService) GetBroadcast(ctx context.Context, userID uuid.UUID, r
 	}
 
 	return broadcast, nil
+}
+
+// buildPersonalizationData constructs personalization data for a guest from their card and user profile.
+func (s *broadcastService) buildPersonalizationData(ctx context.Context, guest *domain.GuestCard, promoCode string) domain.BroadcastPersonalizationData {
+	data := domain.BroadcastPersonalizationData{
+		VisitCount: guest.VisitCount,
+		PromoCode:  promoCode,
+	}
+
+	// Format last visit date
+	if !guest.LastVisitAt.IsZero() {
+		data.LastVisitDate = guest.LastVisitAt.Format("02.01.2006")
+	}
+
+	// Get guest name from user profile
+	user, err := s.userRepo.GetByID(ctx, guest.ClientID)
+	if err != nil {
+		s.logger.Warn("get user for broadcast personalization", "client_id", guest.ClientID, "error", err)
+		data.GuestName = "Гость"
+	} else {
+		data.GuestName = user.Name
+		if data.GuestName == "" {
+			data.GuestName = "Гость"
+		}
+	}
+
+	return data
+}
+
+// sendBroadcastSMS sends a broadcast message via SMS to a guest.
+func (s *broadcastService) sendBroadcastSMS(ctx context.Context, clientID uuid.UUID, body string) {
+	user, err := s.userRepo.GetByID(ctx, clientID)
+	if err != nil {
+		s.logger.Warn("get user phone for broadcast SMS", "client_id", clientID, "error", err)
+		return
+	}
+	if user.Phone == "" {
+		return
+	}
+	if err := s.smsProvider.SendSMS(ctx, user.Phone, body); err != nil {
+		s.logger.Warn("send broadcast SMS", "client_id", clientID, "error", err)
+	}
 }

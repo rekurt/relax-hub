@@ -186,9 +186,9 @@ func (r *broadcastRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status d
 	return nil
 }
 
-func (r *broadcastRepo) UpdateStats(ctx context.Context, id uuid.UUID, delivered, read int64) error {
-	query := `UPDATE broadcasts SET delivered = $1, read = $2, updated_at = NOW() WHERE id = $3`
-	ct, err := r.pool.Exec(ctx, query, delivered, read, id)
+func (r *broadcastRepo) UpdateStats(ctx context.Context, id uuid.UUID, delivered, read, clicked int64) error {
+	query := `UPDATE broadcasts SET delivered = $1, read = $2, clicked = $3, updated_at = NOW() WHERE id = $4`
+	ct, err := r.pool.Exec(ctx, query, delivered, read, clicked, id)
 	if err != nil {
 		return fmt.Errorf("update broadcast stats: %w", err)
 	}

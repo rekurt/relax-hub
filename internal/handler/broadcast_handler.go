@@ -41,6 +41,7 @@ type broadcastResponse struct {
 	Status      string   `json:"status"`
 	Delivered   int64    `json:"delivered"`
 	Read        int64    `json:"read"`
+	Clicked     int64    `json:"clicked"`
 	SentAt      *string  `json:"sent_at,omitempty"`
 	CreatedAt   string   `json:"created_at"`
 	UpdatedAt   string   `json:"updated_at"`
@@ -62,6 +63,7 @@ func toBroadcastResponse(b *domain.Broadcast) broadcastResponse {
 		Status:    string(b.Status),
 		Delivered: b.Delivered,
 		Read:      b.Read,
+		Clicked:   b.Clicked,
 		CreatedAt: b.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: b.UpdatedAt.Format(time.RFC3339),
 	}
@@ -77,18 +79,19 @@ func toBroadcastResponse(b *domain.Broadcast) broadcastResponse {
 }
 
 // CreateBroadcast godoc
-// @Summary      Create a broadcast
-// @Description  Create a new broadcast message for a guest segment
-// @Tags         crm
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      createBroadcastRequest  true  "Broadcast data"
-// @Success      201   {object}  APIResponse{data=broadcastResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Router       /my/crm/broadcasts [post]
+//
+//	@Summary		Create a broadcast
+//	@Description	Create a new broadcast message for a guest segment
+//	@Tags			crm
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		createBroadcastRequest	true	"Broadcast data"
+//	@Success		201		{object}	APIResponse{data=broadcastResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/broadcasts [post]
 func (h *BroadcastHandler) CreateBroadcast(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -131,18 +134,19 @@ func (h *BroadcastHandler) CreateBroadcast(w http.ResponseWriter, r *http.Reques
 }
 
 // ListBroadcasts godoc
-// @Summary      List broadcasts
-// @Description  Get paginated list of broadcasts for the owner
-// @Tags         crm
-// @Produce      json
-// @Security     BearerAuth
-// @Param        status    query     string  false  "Filter by status (draft, sending, sent, failed)"
-// @Param        page      query     int     false  "Page number"
-// @Param        page_size query     int     false  "Page size"
-// @Success      200  {object}  APIResponse{data=[]broadcastResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /my/crm/broadcasts [get]
+//
+//	@Summary		List broadcasts
+//	@Description	Get paginated list of broadcasts for the owner
+//	@Tags			crm
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			status		query		string	false	"Filter by status (draft, sending, sent, failed)"
+//	@Param			page		query		int		false	"Page number"
+//	@Param			page_size	query		int		false	"Page size"
+//	@Success		200			{object}	APIResponse{data=[]broadcastResponse}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/broadcasts [get]
 func (h *BroadcastHandler) ListBroadcasts(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -188,19 +192,20 @@ func (h *BroadcastHandler) ListBroadcasts(w http.ResponseWriter, r *http.Request
 }
 
 // SendBroadcast godoc
-// @Summary      Send a broadcast
-// @Description  Send a draft broadcast to the target segment
-// @Tags         crm
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Broadcast ID (UUID)"
-// @Success      200  {object}  APIResponse{data=broadcastResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Failure      429  {object}  APIResponse{error=APIError}
-// @Router       /my/crm/broadcasts/{id}/send [post]
+//
+//	@Summary		Send a broadcast
+//	@Description	Send a draft broadcast to the target segment
+//	@Tags			crm
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Broadcast ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=broadcastResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Failure		429	{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/broadcasts/{id}/send [post]
 func (h *BroadcastHandler) SendBroadcast(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -227,17 +232,18 @@ func (h *BroadcastHandler) SendBroadcast(w http.ResponseWriter, r *http.Request)
 }
 
 // GetBroadcast godoc
-// @Summary      Get broadcast details
-// @Description  Get a specific broadcast by ID
-// @Tags         crm
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Broadcast ID (UUID)"
-// @Success      200  {object}  APIResponse{data=broadcastResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/crm/broadcasts/{id} [get]
+//
+//	@Summary		Get broadcast details
+//	@Description	Get a specific broadcast by ID
+//	@Tags			crm
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Broadcast ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=broadcastResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/broadcasts/{id} [get]
 func (h *BroadcastHandler) GetBroadcast(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())

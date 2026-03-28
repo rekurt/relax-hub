@@ -94,7 +94,7 @@ func (r *BroadcastRepo) UpdateStatus(_ context.Context, id uuid.UUID, status dom
 	return nil
 }
 
-func (r *BroadcastRepo) UpdateStats(_ context.Context, id uuid.UUID, delivered, read int64) error {
+func (r *BroadcastRepo) UpdateStats(_ context.Context, id uuid.UUID, delivered, read, clicked int64) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -104,6 +104,7 @@ func (r *BroadcastRepo) UpdateStats(_ context.Context, id uuid.UUID, delivered, 
 	}
 	b.Delivered = delivered
 	b.Read = read
+	b.Clicked = clicked
 	b.UpdatedAt = time.Now()
 	return nil
 }

@@ -2,7 +2,10 @@ package service_test
 
 import (
 	"context"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
@@ -11,19 +14,41 @@ import (
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
-func newBroadcastTestService() (service.BroadcastService, *mock.BroadcastRepo, *mock.GuestCardRepo) {
+// mockSMSProviderForBroadcast tracks SMS sends for testing.
+type mockSMSProviderForBroadcast struct {
+	mu       sync.Mutex
+	messages []smsSent
+}
+
+type smsSent struct {
+	Phone   string
+	Message string
+}
+
+func (m *mockSMSProviderForBroadcast) SendSMS(_ context.Context, phone string, message string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.messages = append(m.messages, smsSent{Phone: phone, Message: message})
+	return nil
+}
+
+func newBroadcastTestService() (service.BroadcastService, *mock.BroadcastRepo, *mock.GuestCardRepo, *mock.UserRepo, *mockSMSProviderForBroadcast) {
 	broadcastRepo := mock.NewBroadcastRepo().(*mock.BroadcastRepo)
 	gcRepo := mock.NewGuestCardRepo().(*mock.GuestCardRepo)
+	userRepo := mock.NewUserRepo()
+	promoRepo := mock.NewPromoCodeRepo()
 	bhRepo := mock.NewBathhouseRepo()
 	repRepo := mock.NewRepresentativeRepo()
 	access := service.NewAccessChecker(repRepo, bhRepo)
 	notifSvc := &noopNotifService{}
+	smsProv := &mockSMSProviderForBroadcast{}
 	log := logger.New(logger.LevelWarn)
-	return service.NewBroadcastService(broadcastRepo, gcRepo, notifSvc, access, log), broadcastRepo, gcRepo
+	svc := service.NewBroadcastService(broadcastRepo, gcRepo, userRepo, promoRepo, notifSvc, smsProv, access, log)
+	return svc, broadcastRepo, gcRepo, userRepo, smsProv
 }
 
 func TestBroadcastService_Create(t *testing.T) {
-	svc, broadcastRepo, _ := newBroadcastTestService()
+	svc, broadcastRepo, _, _, _ := newBroadcastTestService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 
@@ -58,7 +83,7 @@ func TestBroadcastService_Create(t *testing.T) {
 }
 
 func TestBroadcastService_Create_ForbiddenForClient(t *testing.T) {
-	svc, _, _ := newBroadcastTestService()
+	svc, _, _, _, _ := newBroadcastTestService()
 	ctx := context.Background()
 
 	broadcast := &domain.Broadcast{
@@ -76,7 +101,7 @@ func TestBroadcastService_Create_ForbiddenForClient(t *testing.T) {
 }
 
 func TestBroadcastService_Create_InvalidInput(t *testing.T) {
-	svc, _, _ := newBroadcastTestService()
+	svc, _, _, _, _ := newBroadcastTestService()
 	ctx := context.Background()
 
 	// Empty title
@@ -122,12 +147,40 @@ func TestBroadcastService_Create_InvalidInput(t *testing.T) {
 	}
 }
 
+func TestBroadcastService_Create_SMSChannel(t *testing.T) {
+	svc, _, _, _, _ := newBroadcastTestService()
+	ctx := context.Background()
+	ownerID := uuid.New()
+
+	broadcast := &domain.Broadcast{
+		ID:       uuid.New(),
+		Segment:  domain.SegmentRegular,
+		Title:    "SMS test",
+		Body:     "SMS body",
+		Channels: []domain.BroadcastChannel{domain.BroadcastChannelSMS},
+	}
+
+	err := svc.Create(ctx, ownerID, domain.RoleOwner, broadcast)
+	if err != nil {
+		t.Fatalf("Create with SMS channel: %v", err)
+	}
+	if broadcast.Status != domain.BroadcastStatusDraft {
+		t.Errorf("expected status=draft, got %s", broadcast.Status)
+	}
+}
+
 func TestBroadcastService_Send(t *testing.T) {
-	svc, broadcastRepo, gcRepo := newBroadcastTestService()
+	svc, broadcastRepo, gcRepo, userRepo, _ := newBroadcastTestService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 	clientID := uuid.New()
 	bathhouseID := uuid.New()
+
+	// Create user so personalization can resolve guest name
+	_ = userRepo.Create(ctx, &domain.User{
+		ID:   clientID,
+		Name: "Иван",
+	})
 
 	// Create a guest card so there's someone to send to
 	err := gcRepo.Upsert(ctx, &domain.GuestCard{
@@ -178,8 +231,151 @@ func TestBroadcastService_Send(t *testing.T) {
 	}
 }
 
+func TestBroadcastService_Send_WithPersonalization(t *testing.T) {
+	svc, broadcastRepo, gcRepo, userRepo, _ := newBroadcastTestService()
+	ctx := context.Background()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bathhouseID := uuid.New()
+
+	// Create user profile
+	_ = userRepo.Create(ctx, &domain.User{
+		ID:   clientID,
+		Name: "Мария",
+	})
+
+	lastVisit := time.Now().Add(-7 * 24 * time.Hour)
+	_ = gcRepo.Upsert(ctx, &domain.GuestCard{
+		ID:          uuid.New(),
+		OwnerID:     ownerID,
+		ClientID:    clientID,
+		BathhouseID: bathhouseID,
+		VisitCount:  5,
+		TotalSpent:  500000,
+		LastVisitAt: lastVisit,
+		Tags:        []string{},
+	})
+
+	// Broadcast with personalization tokens
+	broadcast := &domain.Broadcast{
+		ID:       uuid.New(),
+		Segment:  domain.SegmentRegular,
+		Title:    "Привет, {{guest_name}}!",
+		Body:     "Вы были у нас {{visit_count}} раз. Последний визит: {{last_visit_date}}",
+		Channels: []domain.BroadcastChannel{domain.BroadcastChannelPush},
+	}
+	_ = svc.Create(ctx, ownerID, domain.RoleOwner, broadcast)
+
+	err := svc.Send(ctx, ownerID, domain.RoleOwner, broadcast.ID)
+	if err != nil {
+		t.Fatalf("Send with personalization: %v", err)
+	}
+
+	sent, _ := broadcastRepo.GetByID(ctx, broadcast.ID)
+	if sent.Delivered != 1 {
+		t.Errorf("expected delivered=1, got %d", sent.Delivered)
+	}
+}
+
+func TestBroadcastService_Send_WithSMS(t *testing.T) {
+	svc, _, gcRepo, userRepo, smsProv := newBroadcastTestService()
+	ctx := context.Background()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bathhouseID := uuid.New()
+
+	// Create user with phone number
+	_ = userRepo.Create(ctx, &domain.User{
+		ID:    clientID,
+		Name:  "Алексей",
+		Phone: "+79991234567",
+	})
+
+	_ = gcRepo.Upsert(ctx, &domain.GuestCard{
+		ID:          uuid.New(),
+		OwnerID:     ownerID,
+		ClientID:    clientID,
+		BathhouseID: bathhouseID,
+		VisitCount:  3,
+		TotalSpent:  300000,
+		Tags:        []string{},
+	})
+
+	broadcast := &domain.Broadcast{
+		ID:       uuid.New(),
+		Segment:  domain.SegmentRegular,
+		Title:    "SMS рассылка",
+		Body:     "Привет, {{guest_name}}! Скидка 10%",
+		Channels: []domain.BroadcastChannel{domain.BroadcastChannelSMS},
+	}
+	_ = svc.Create(ctx, ownerID, domain.RoleOwner, broadcast)
+
+	err := svc.Send(ctx, ownerID, domain.RoleOwner, broadcast.ID)
+	if err != nil {
+		t.Fatalf("Send with SMS: %v", err)
+	}
+
+	// Verify SMS was sent
+	smsProv.mu.Lock()
+	defer smsProv.mu.Unlock()
+	if len(smsProv.messages) != 1 {
+		t.Fatalf("expected 1 SMS sent, got %d", len(smsProv.messages))
+	}
+	if smsProv.messages[0].Phone != "+79991234567" {
+		t.Errorf("expected phone=+79991234567, got %s", smsProv.messages[0].Phone)
+	}
+	if !strings.Contains(smsProv.messages[0].Message, "Алексей") {
+		t.Errorf("expected personalized SMS with guest name, got: %s", smsProv.messages[0].Message)
+	}
+}
+
+func TestBroadcastService_Send_SMSNoPhone(t *testing.T) {
+	svc, _, gcRepo, userRepo, smsProv := newBroadcastTestService()
+	ctx := context.Background()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bathhouseID := uuid.New()
+
+	// Create user without phone
+	_ = userRepo.Create(ctx, &domain.User{
+		ID:   clientID,
+		Name: "Без телефона",
+	})
+
+	_ = gcRepo.Upsert(ctx, &domain.GuestCard{
+		ID:          uuid.New(),
+		OwnerID:     ownerID,
+		ClientID:    clientID,
+		BathhouseID: bathhouseID,
+		VisitCount:  3,
+		TotalSpent:  300000,
+		Tags:        []string{},
+	})
+
+	broadcast := &domain.Broadcast{
+		ID:       uuid.New(),
+		Segment:  domain.SegmentRegular,
+		Title:    "SMS test",
+		Body:     "Hello",
+		Channels: []domain.BroadcastChannel{domain.BroadcastChannelSMS},
+	}
+	_ = svc.Create(ctx, ownerID, domain.RoleOwner, broadcast)
+
+	err := svc.Send(ctx, ownerID, domain.RoleOwner, broadcast.ID)
+	if err != nil {
+		t.Fatalf("Send: %v", err)
+	}
+
+	// No SMS should be sent since user has no phone
+	smsProv.mu.Lock()
+	defer smsProv.mu.Unlock()
+	if len(smsProv.messages) != 0 {
+		t.Errorf("expected 0 SMS sent for user without phone, got %d", len(smsProv.messages))
+	}
+}
+
 func TestBroadcastService_Send_NotDraft(t *testing.T) {
-	svc, _, _ := newBroadcastTestService()
+	svc, _, _, _, _ := newBroadcastTestService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 
@@ -203,7 +399,7 @@ func TestBroadcastService_Send_NotDraft(t *testing.T) {
 }
 
 func TestBroadcastService_Send_RateLimit(t *testing.T) {
-	svc, _, _ := newBroadcastTestService()
+	svc, _, _, _, _ := newBroadcastTestService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 
@@ -239,7 +435,7 @@ func TestBroadcastService_Send_RateLimit(t *testing.T) {
 }
 
 func TestBroadcastService_Send_ForbiddenOtherOwner(t *testing.T) {
-	svc, _, _ := newBroadcastTestService()
+	svc, _, _, _, _ := newBroadcastTestService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 	otherOwnerID := uuid.New()
@@ -261,7 +457,7 @@ func TestBroadcastService_Send_ForbiddenOtherOwner(t *testing.T) {
 }
 
 func TestBroadcastService_ListBroadcasts(t *testing.T) {
-	svc, _, _ := newBroadcastTestService()
+	svc, _, _, _, _ := newBroadcastTestService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 
@@ -287,7 +483,7 @@ func TestBroadcastService_ListBroadcasts(t *testing.T) {
 }
 
 func TestBroadcastService_GetBroadcast(t *testing.T) {
-	svc, _, _ := newBroadcastTestService()
+	svc, _, _, _, _ := newBroadcastTestService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 
@@ -313,7 +509,7 @@ func TestBroadcastService_GetBroadcast(t *testing.T) {
 }
 
 func TestBroadcastService_GetBroadcast_NotFound(t *testing.T) {
-	svc, _, _ := newBroadcastTestService()
+	svc, _, _, _, _ := newBroadcastTestService()
 	ctx := context.Background()
 
 	_, err := svc.GetBroadcast(ctx, uuid.New(), domain.RoleOwner, uuid.New())
@@ -323,7 +519,7 @@ func TestBroadcastService_GetBroadcast_NotFound(t *testing.T) {
 }
 
 func TestBroadcastService_GetBroadcast_ForbiddenOtherOwner(t *testing.T) {
-	svc, _, _ := newBroadcastTestService()
+	svc, _, _, _, _ := newBroadcastTestService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 
@@ -343,7 +539,7 @@ func TestBroadcastService_GetBroadcast_ForbiddenOtherOwner(t *testing.T) {
 }
 
 func TestBroadcastService_Send_NoGuests(t *testing.T) {
-	svc, broadcastRepo, _ := newBroadcastTestService()
+	svc, broadcastRepo, _, _, _ := newBroadcastTestService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 
