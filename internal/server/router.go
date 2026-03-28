@@ -545,11 +545,13 @@ func NewRouter(p RouterParams) http.Handler {
 			r.With(middleware.RequireAdminPermission(domain.PermUserManage)).Get("/users", p.AdminHandler.ListUsers)
 			r.With(middleware.RequireAdminPermission(domain.PermUserManage)).Patch("/users/{id}/block", p.AdminHandler.BlockUser)
 			r.With(middleware.RequireAdminPermission(domain.PermUserManage)).Patch("/users/{id}/unblock", p.AdminHandler.UnblockUser)
+			r.With(middleware.RequireAdminPermission(domain.PermUserManage)).Post("/users/batch", p.AdminHandler.BatchUsers)
 
 			// Bathhouse moderation
 			r.With(middleware.RequireAdminPermission(domain.PermBathhouseModerate)).Get("/bathhouses", p.AdminHandler.ListBathhouses)
 			r.With(middleware.RequireAdminPermission(domain.PermBathhouseModerate)).Patch("/bathhouses/{id}/approve", p.AdminHandler.ApproveBathhouse)
 			r.With(middleware.RequireAdminPermission(domain.PermBathhouseModerate)).Patch("/bathhouses/{id}/reject", p.AdminHandler.RejectBathhouse)
+			r.With(middleware.RequireAdminPermission(domain.PermBathhouseModerate)).Post("/listings/batch", p.AdminHandler.BatchListings)
 
 			// City management
 			r.With(middleware.RequireAdminPermission(domain.PermCityManage)).Post("/cities", p.AdminHandler.CreateCity)
@@ -676,6 +678,7 @@ func NewRouter(p RouterParams) http.Handler {
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/debit", p.WalletHandler.AdminDebitWallet)
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/freeze", p.WalletHandler.AdminFreezeWallet)
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/unfreeze", p.WalletHandler.AdminUnfreezeWallet)
+			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/batch-credit", p.WalletHandler.AdminBatchCreditWallets)
 		})
 	})
 

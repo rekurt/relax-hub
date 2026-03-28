@@ -169,14 +169,14 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `frontend/src/pages/admin/BathhouseModeration.tsx`
 - Modify: `frontend/src/pages/admin/UserManagement.tsx`
 
-- [ ] Add batch endpoint: POST /api/v1/admin/listings/batch (action: approve/reject, ids: [up to 1000])
-- [ ] Add batch endpoint: POST /api/v1/admin/users/batch (action: block/unblock, ids: [up to 1000])
-- [ ] Add batch endpoint: POST /api/v1/admin/wallets/batch-credit (ids, amount, reason)
-- [ ] Process in DB transactions with chunking (100 per batch)
-- [ ] Return results: succeeded[], failed[] with reasons
-- [ ] Update frontend moderation/user pages with bulk selection and actions
-- [ ] Write tests for batch operations
-- [ ] Run project test suite - must pass before task 9
+- [x] Add batch endpoint: POST /api/v1/admin/listings/batch (action: approve/reject, ids: [up to 1000])
+- [x] Add batch endpoint: POST /api/v1/admin/users/batch (action: block/unblock, ids: [up to 1000])
+- [x] Add batch endpoint: POST /api/v1/admin/wallets/batch-credit (ids, amount, reason)
+- [x] Process in DB transactions with chunking (100 per batch)
+- [x] Return results: succeeded[], failed[] with reasons
+- [x] Update frontend moderation/user pages with bulk selection and actions
+- [x] Write tests for batch operations
+- [x] Run project test suite - must pass before task 9
 
 ### Task 9: Admin Notification Center (FR admin-panel)
 

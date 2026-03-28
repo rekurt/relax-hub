@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { App, Input, Table, Tag, Typography } from 'antd'
+import { App, Button, Checkbox, Input, Space, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -11,6 +11,7 @@ import {
   usePatchAdminUsersIdUnblock,
 } from '@/api/generated/admin-users/admin-users'
 import type { InternalHandlerUserResponse } from '@/api/generated/model'
+import { axiosInstance } from '@/api/axios-instance'
 
 const { Title } = Typography
 const { Search } = Input
@@ -29,6 +30,8 @@ export default function UserManagement() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [search, setSearch] = useState('')
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [batchLoading, setBatchLoading] = useState(false)
 
   const { data, isLoading } = useGetAdminUsers({ page, page_size: pageSize })
   const blockMutation = usePatchAdminUsersIdBlock()
@@ -77,7 +80,68 @@ export default function UserManagement() {
     })
   }
 
+  const handleBatchAction = (action: 'block' | 'unblock') => {
+    const label = action === 'block' ? 'заблокировать' : 'разблокировать'
+    modal.confirm({
+      title: `${action === 'block' ? 'Заблокировать' : 'Разблокировать'} выбранных пользователей (${selectedIds.length})?`,
+      okText: action === 'block' ? 'Заблокировать' : 'Разблокировать',
+      okType: action === 'block' ? 'danger' : 'primary',
+      cancelText: 'Отмена',
+      onOk: async () => {
+        setBatchLoading(true)
+        try {
+          const { data: result } = await axiosInstance.post('/admin/users/batch', {
+            action,
+            ids: selectedIds,
+          })
+          const succeeded = result?.data?.succeeded?.length ?? 0
+          const failed = result?.data?.failed?.length ?? 0
+          if (failed > 0) {
+            message.warning(`Обработано: ${succeeded} успешно, ${failed} с ошибками`)
+          } else {
+            message.success(`Успешно: ${succeeded} пользователей`)
+          }
+          setSelectedIds([])
+          queryClient.invalidateQueries({ queryKey: getGetAdminUsersQueryKey() })
+        } catch {
+          message.error(`Не удалось ${label} пользователей`)
+        } finally {
+          setBatchLoading(false)
+        }
+      },
+    })
+  }
+
+  // Exclude admins from batch selection
+  const selectableUsers = filteredUsers.filter((u) => u.role !== 'admin')
+
   const columns: ColumnsType<InternalHandlerUserResponse> = [
+    {
+      title: (
+        <Checkbox
+          checked={selectedIds.length > 0 && selectedIds.length === selectableUsers.length}
+          indeterminate={selectedIds.length > 0 && selectedIds.length < selectableUsers.length}
+          onChange={(e) =>
+            setSelectedIds(e.target.checked ? selectableUsers.map((u) => u.id!).filter(Boolean) : [])
+          }
+        />
+      ),
+      key: 'select',
+      width: 48,
+      render: (_, record) => {
+        if (record.role === 'admin') return null
+        return (
+          <Checkbox
+            checked={selectedIds.includes(record.id!)}
+            onChange={(e) =>
+              setSelectedIds((prev) =>
+                e.target.checked ? [...prev, record.id!] : prev.filter((id) => id !== record.id!),
+              )
+            }
+          />
+        )
+      },
+    },
     {
       title: 'Имя',
       dataIndex: 'name',
@@ -145,6 +209,18 @@ export default function UserManagement() {
         style={{ maxWidth: 400, marginBottom: 16 }}
       />
 
+      {selectedIds.length > 0 && (
+        <Space style={{ marginBottom: 16 }}>
+          <span>Выбрано: {selectedIds.length}</span>
+          <Button danger loading={batchLoading} onClick={() => handleBatchAction('block')}>
+            Заблокировать выбранных
+          </Button>
+          <Button type="primary" loading={batchLoading} onClick={() => handleBatchAction('unblock')}>
+            Разблокировать выбранных
+          </Button>
+        </Space>
+      )}
+
       <Table
         columns={columns}
         dataSource={filteredUsers}
@@ -160,6 +236,7 @@ export default function UserManagement() {
           onChange: (p, ps) => {
             setPage(p)
             setPageSize(ps)
+            setSelectedIds([])
           },
         }}
       />

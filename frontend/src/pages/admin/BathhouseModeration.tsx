@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { App, Descriptions, Drawer, Input, Segmented, Space, Table, Tag, Typography } from 'antd'
+import { App, Button, Checkbox, Descriptions, Drawer, Input, Segmented, Space, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -10,6 +10,7 @@ import {
 } from '@/api/generated/admin-bathhouses/admin-bathhouses'
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
+import { axiosInstance } from '@/api/axios-instance'
 
 const { Title } = Typography
 const { Search } = Input
@@ -47,6 +48,8 @@ export default function BathhouseModeration() {
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
   const [detailItem, setDetailItem] = useState<InternalHandlerBathhouseResponse | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [batchLoading, setBatchLoading] = useState(false)
 
   const { data, isLoading } = useGetAdminBathhouses({
     page,
@@ -102,6 +105,38 @@ export default function BathhouseModeration() {
     })
   }
 
+  const handleBatchAction = (action: 'approve' | 'reject') => {
+    const label = action === 'approve' ? 'одобрить' : 'отклонить'
+    modal.confirm({
+      title: `${action === 'approve' ? 'Одобрить' : 'Отклонить'} выбранные бани (${selectedIds.length})?`,
+      okText: action === 'approve' ? 'Одобрить' : 'Отклонить',
+      okType: action === 'reject' ? 'danger' : 'primary',
+      cancelText: 'Отмена',
+      onOk: async () => {
+        setBatchLoading(true)
+        try {
+          const { data: result } = await axiosInstance.post('/admin/listings/batch', {
+            action,
+            ids: selectedIds,
+          })
+          const succeeded = result?.data?.succeeded?.length ?? 0
+          const failed = result?.data?.failed?.length ?? 0
+          if (failed > 0) {
+            message.warning(`Обработано: ${succeeded} успешно, ${failed} с ошибками`)
+          } else {
+            message.success(`Успешно: ${succeeded} бань`)
+          }
+          setSelectedIds([])
+          queryClient.invalidateQueries({ queryKey: getGetAdminBathhousesQueryKey() })
+        } catch {
+          message.error(`Не удалось ${label} бани`)
+        } finally {
+          setBatchLoading(false)
+        }
+      },
+    })
+  }
+
   const getAmenities = (item: InternalHandlerBathhouseResponse): string[] => {
     const result: string[] = []
     for (const [key, label] of Object.entries(AMENITY_LABELS)) {
@@ -113,6 +148,29 @@ export default function BathhouseModeration() {
   }
 
   const columns: ColumnsType<InternalHandlerBathhouseResponse> = [
+    {
+      title: (
+        <Checkbox
+          checked={selectedIds.length > 0 && selectedIds.length === filteredBathhouses.length}
+          indeterminate={selectedIds.length > 0 && selectedIds.length < filteredBathhouses.length}
+          onChange={(e) =>
+            setSelectedIds(e.target.checked ? filteredBathhouses.map((b) => b.id!).filter(Boolean) : [])
+          }
+        />
+      ),
+      key: 'select',
+      width: 48,
+      render: (_, record) => (
+        <Checkbox
+          checked={selectedIds.includes(record.id!)}
+          onChange={(e) =>
+            setSelectedIds((prev) =>
+              e.target.checked ? [...prev, record.id!] : prev.filter((id) => id !== record.id!),
+            )
+          }
+        />
+      ),
+    },
     {
       title: 'Название',
       dataIndex: 'name',
@@ -194,6 +252,7 @@ export default function BathhouseModeration() {
           onChange={(val) => {
             setStatusFilter(val as string)
             setPage(1)
+            setSelectedIds([])
           }}
         />
       </div>
@@ -205,6 +264,18 @@ export default function BathhouseModeration() {
         onChange={(e) => !e.target.value && setSearch('')}
         style={{ maxWidth: 400, marginBottom: 16 }}
       />
+
+      {selectedIds.length > 0 && (
+        <Space style={{ marginBottom: 16 }}>
+          <span>Выбрано: {selectedIds.length}</span>
+          <Button type="primary" loading={batchLoading} onClick={() => handleBatchAction('approve')}>
+            Одобрить выбранные
+          </Button>
+          <Button danger loading={batchLoading} onClick={() => handleBatchAction('reject')}>
+            Отклонить выбранные
+          </Button>
+        </Space>
+      )}
 
       <Table
         columns={columns}
@@ -221,6 +292,7 @@ export default function BathhouseModeration() {
           onChange: (p, ps) => {
             setPage(p)
             setPageSize(ps)
+            setSelectedIds([])
           },
         }}
       />

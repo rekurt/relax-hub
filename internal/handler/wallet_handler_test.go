@@ -991,3 +991,158 @@ func TestWalletHandler_AdminCreditWallet_InvalidID(t *testing.T) {
 		t.Errorf("expected status 400, got %d", rec.Code)
 	}
 }
+
+func TestWalletHandler_AdminBatchCreditWallets(t *testing.T) {
+	adminID := uuid.New()
+	w1 := uuid.New()
+	w2 := uuid.New()
+
+	walletSvc := &mockWalletService{
+		adminCreditFn: func(_ context.Context, wid uuid.UUID, amount int64, reason string, aid uuid.UUID) (*domain.WalletTransaction, error) {
+			return &domain.WalletTransaction{
+				ID:           uuid.New(),
+				WalletID:     wid,
+				Type:         domain.WalletTxAdminCredit,
+				Amount:       amount,
+				BalanceAfter: amount,
+				Status:       domain.WalletTxStatusCompleted,
+			}, nil
+		},
+	}
+
+	h := NewWalletHandler(walletSvc)
+	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Post("/admin/wallets/batch-credit", h.AdminBatchCreditWallets)
+
+	body, _ := json.Marshal(batchCreditRequest{
+		IDs:    []string{w1.String(), w2.String()},
+		Amount: 50_000,
+		Reason: "компенсация",
+	})
+	req := httptest.NewRequest(http.MethodPost, "/admin/wallets/batch-credit", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+		return
+	}
+
+	var resp APIResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if !resp.Success {
+		t.Error("expected success=true")
+	}
+
+	data := resp.Data.(map[string]interface{})
+	succeeded := data["succeeded"].([]interface{})
+	failed := data["failed"].([]interface{})
+	if len(succeeded) != 2 {
+		t.Errorf("expected 2 succeeded, got %d", len(succeeded))
+	}
+	if len(failed) != 0 {
+		t.Errorf("expected 0 failed, got %d", len(failed))
+	}
+}
+
+func TestWalletHandler_AdminBatchCreditWallets_Validation(t *testing.T) {
+	adminID := uuid.New()
+	walletSvc := &mockWalletService{}
+	h := NewWalletHandler(walletSvc)
+	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
+
+	tests := []struct {
+		name string
+		body batchCreditRequest
+	}{
+		{"empty ids", batchCreditRequest{IDs: []string{}, Amount: 1000, Reason: "test"}},
+		{"zero amount", batchCreditRequest{IDs: []string{uuid.New().String()}, Amount: 0, Reason: "test"}},
+		{"negative amount", batchCreditRequest{IDs: []string{uuid.New().String()}, Amount: -100, Reason: "test"}},
+		{"empty reason", batchCreditRequest{IDs: []string{uuid.New().String()}, Amount: 1000, Reason: ""}},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := chi.NewRouter()
+			r.Use(middleware.RequireAuth(authService))
+			r.Post("/admin/wallets/batch-credit", h.AdminBatchCreditWallets)
+
+			body, _ := json.Marshal(tc.body)
+			req := httptest.NewRequest(http.MethodPost, "/admin/wallets/batch-credit", bytes.NewReader(body))
+			req.Header.Set("Authorization", "Bearer valid-token")
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+			r.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusBadRequest {
+				t.Errorf("expected status 400, got %d: %s", rec.Code, rec.Body.String())
+			}
+		})
+	}
+}
+
+func TestWalletHandler_AdminBatchCreditWallets_PartialFailure(t *testing.T) {
+	adminID := uuid.New()
+	goodWallet := uuid.New()
+	badWallet := uuid.New()
+
+	walletSvc := &mockWalletService{
+		adminCreditFn: func(_ context.Context, wid uuid.UUID, amount int64, _ string, _ uuid.UUID) (*domain.WalletTransaction, error) {
+			if wid == goodWallet {
+				return &domain.WalletTransaction{
+					ID:       uuid.New(),
+					WalletID: wid,
+					Amount:   amount,
+					Status:   domain.WalletTxStatusCompleted,
+				}, nil
+			}
+			return nil, domain.ErrWalletNotFound
+		},
+	}
+
+	h := NewWalletHandler(walletSvc)
+	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Post("/admin/wallets/batch-credit", h.AdminBatchCreditWallets)
+
+	body, _ := json.Marshal(batchCreditRequest{
+		IDs:    []string{goodWallet.String(), badWallet.String(), "not-a-uuid"},
+		Amount: 10_000,
+		Reason: "тест",
+	})
+	req := httptest.NewRequest(http.MethodPost, "/admin/wallets/batch-credit", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+		return
+	}
+
+	var resp APIResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	data := resp.Data.(map[string]interface{})
+	succeeded := data["succeeded"].([]interface{})
+	failed := data["failed"].([]interface{})
+
+	if len(succeeded) != 1 {
+		t.Errorf("expected 1 succeeded, got %d", len(succeeded))
+	}
+	if len(failed) != 2 {
+		t.Errorf("expected 2 failed, got %d", len(failed))
+	}
+}

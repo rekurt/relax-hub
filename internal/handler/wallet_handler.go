@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -536,4 +537,74 @@ func (h *WalletHandler) AdminGetWallet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, toAdminWalletResponse(wallet))
+}
+
+// AdminBatchCreditWallets godoc
+//
+//	@Summary		Batch credit wallets
+//	@Description	Credits multiple wallets at once (up to 1000). Amount in kopecks. Processes in chunks of 100.
+//	@Tags			admin-wallets
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		batchCreditRequest	true	"Wallet IDs, amount, and reason"
+//	@Success		200		{object}	APIResponse{data=batchDetailedResult}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/wallets/batch-credit [post]
+func (h *WalletHandler) AdminBatchCreditWallets(w http.ResponseWriter, r *http.Request) {
+	var req batchCreditRequest
+	if err := readJSON(w, r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid request body")
+		return
+	}
+
+	if len(req.IDs) == 0 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "ids cannot be empty")
+		return
+	}
+	if len(req.IDs) > maxBatchSize {
+		writeError(w, http.StatusBadRequest, "invalid_input", fmt.Sprintf("batch size cannot exceed %d", maxBatchSize))
+		return
+	}
+	if req.Amount <= 0 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "amount must be positive")
+		return
+	}
+	if req.Reason == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "reason is required")
+		return
+	}
+
+	adminID := middleware.GetUserID(r.Context())
+
+	result := batchDetailedResult{
+		Succeeded: make([]batchItemResult, 0),
+		Failed:    make([]batchItemResult, 0),
+	}
+
+	for i := 0; i < len(req.IDs); i += batchChunkSize {
+		end := i + batchChunkSize
+		if end > len(req.IDs) {
+			end = len(req.IDs)
+		}
+		chunk := req.IDs[i:end]
+
+		for _, idStr := range chunk {
+			walletID, err := uuid.Parse(idStr)
+			if err != nil {
+				result.Failed = append(result.Failed, batchItemResult{ID: idStr, Error: "invalid uuid"})
+				continue
+			}
+
+			if _, err := h.walletService.AdminCredit(r.Context(), walletID, req.Amount, req.Reason, adminID); err != nil {
+				result.Failed = append(result.Failed, batchItemResult{ID: idStr, Error: err.Error()})
+			} else {
+				result.Succeeded = append(result.Succeeded, batchItemResult{ID: idStr})
+			}
+		}
+	}
+
+	writeJSON(w, http.StatusOK, result)
 }
