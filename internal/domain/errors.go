@@ -161,6 +161,15 @@ var (
 	ErrCrossRegionalBooking = errors.New("cross-regional booking not allowed: client region must match bathhouse region")
 	ErrRegionSameAsCurrent  = errors.New("already in the requested region")
 	ErrRegionInvalid        = errors.New("invalid region")
+
+	ErrSeasonalTariffOverlap  = errors.New("seasonal tariff date range overlaps with existing tariff")
+	ErrSeasonalTariffNotFound = errors.New("seasonal tariff not found")
+
+	ErrShareTokenNotFound = errors.New("share token not found")
+	ErrShareTokenExpired  = errors.New("share token has expired")
+
+	ErrSavedCardNotFound     = errors.New("saved card not found")
+	ErrSavedCardLimitReached = errors.New("saved card limit reached")
 )
 
 // PaymentFailedError wraps ErrPaymentFailed with user-facing details.

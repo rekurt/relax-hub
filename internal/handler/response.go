@@ -300,6 +300,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusNotFound, "saved_search_not_found", err.Error())
 	case errors.Is(err, domain.ErrSavedSearchLimitReached):
 		writeErrorWithContext(w, r, http.StatusConflict, "saved_search_limit_reached", err.Error())
+	case errors.Is(err, domain.ErrSavedCardNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "saved_card_not_found", err.Error())
+	case errors.Is(err, domain.ErrSavedCardLimitReached):
+		writeErrorWithContext(w, r, http.StatusConflict, "saved_card_limit_reached", err.Error())
 	case errors.Is(err, domain.ErrBookingModificationLimit):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "booking_modification_limit", err.Error())
 	case errors.Is(err, domain.ErrBookingNotModifiable):

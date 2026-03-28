@@ -95,5 +95,6 @@ var Module = fx.Module("handler",
 		},
 		NewAmenityHandler,
 		NewObjectTypeHandler,
+		NewSavedCardHandler,
 	),
 )

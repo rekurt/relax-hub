@@ -76,13 +76,13 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Create: `migrations/XXXX_saved_cards.up.sql`
 - Modify: `frontend/src/pages/client/BookingCreate.tsx`
 
-- [ ] Create saved_cards table (id, user_id, provider_token, last4, brand, expires, is_default)
-- [ ] Implement repository and service (list, add, delete, set default)
-- [ ] Handler: GET/POST/DELETE /api/v1/my/cards
-- [ ] Save card token after successful payment (opt-in checkbox)
-- [ ] Show saved cards on checkout, allow one-click payment
-- [ ] Write tests for saved card CRUD
-- [ ] Run project test suite - must pass before task 4
+- [x] Create saved_cards table (id, user_id, provider_token, last4, brand, expires, is_default)
+- [x] Implement repository and service (list, add, delete, set default)
+- [x] Handler: GET/POST/DELETE /api/v1/my/cards
+- [x] Save card token after successful payment (opt-in checkbox)
+- [x] Show saved cards on checkout, allow one-click payment
+- [x] Write tests for saved card CRUD
+- [x] Run project test suite - must pass before task 4
 
 ### Task 4: Bank Statement Reconciliation (FR-128)
 

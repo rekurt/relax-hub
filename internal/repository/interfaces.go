@@ -464,6 +464,15 @@ type SavedSearchRepository interface {
 	ListWithNotifications(ctx context.Context) ([]domain.SavedSearch, error)
 }
 
+type SavedCardRepository interface {
+	Create(ctx context.Context, card *domain.SavedCard) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.SavedCard, error)
+	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.SavedCard], error)
+	Delete(ctx context.Context, id uuid.UUID) error
+	SetDefault(ctx context.Context, userID uuid.UUID, cardID uuid.UUID) error
+	CountByUser(ctx context.Context, userID uuid.UUID) (int64, error)
+}
+
 type AuditLogRepository interface {
 	Create(ctx context.Context, log *domain.AuditLog) error
 	ListByEntity(ctx context.Context, entityType string, entityID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.AuditLog], error)

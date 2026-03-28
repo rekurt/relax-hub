@@ -86,6 +86,7 @@ type RouterParams struct {
 	ShareHandler             *handler.ShareHandler
 	AmenityHandler           *handler.AmenityHandler
 	ObjectTypeHandler        *handler.ObjectTypeHandler
+	SavedCardHandler         *handler.SavedCardHandler
 	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
@@ -300,6 +301,12 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Post("/my/saved-searches", p.SavedSearchHandler.CreateSavedSearch)
 		r.With(auth).Get("/my/saved-searches", p.SavedSearchHandler.ListSavedSearches)
 		r.With(auth).Delete("/my/saved-searches/{id}", p.SavedSearchHandler.DeleteSavedSearch)
+
+		// Saved cards (authenticated)
+		r.With(auth).Post("/my/saved-cards", p.SavedCardHandler.CreateSavedCard)
+		r.With(auth).Get("/my/saved-cards", p.SavedCardHandler.ListSavedCards)
+		r.With(auth).Delete("/my/saved-cards/{id}", p.SavedCardHandler.DeleteSavedCard)
+		r.With(auth).Post("/my/saved-cards/{id}/default", p.SavedCardHandler.SetDefaultCard)
 
 		// Recommendations
 		r.With(auth).Get("/recommendations", p.RecommendationHandler.GetPersonalized)
