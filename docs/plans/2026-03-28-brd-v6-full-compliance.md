@@ -374,14 +374,14 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: `internal/admin/pages/advanced_analytics.go`
 - Modify: `frontend/src/pages/admin/AdminDashboard.tsx` (add funnel/cohort charts)
 
-- [ ] Conversion funnel: visit -> search -> view card -> start booking -> pay -> complete visit (with counts and percentages per step)
-- [ ] Cohort analysis: group users by registration month, track retention and spending over time
-- [ ] Geographic demand/supply map data: count of searches vs count of listings per city/region
-- [ ] Wallet metrics: sum of balances, wallet payment share %, expired bonuses volume
-- [ ] Owner analytics: conversion rate (views -> bookings), occupancy rate, competitor benchmarking (anonymous average comparison)
-- [ ] Add API endpoints and admin dashboard charts
-- [ ] Write tests for analytics calculations
-- [ ] Run project test suite - must pass before next task
+- [x] Conversion funnel: visit -> search -> view card -> start booking -> pay -> complete visit (with counts and percentages per step)
+- [x] Cohort analysis: group users by registration month, track retention and spending over time
+- [x] Geographic demand/supply map data: count of searches vs count of listings per city/region
+- [x] Wallet metrics: sum of balances, wallet payment share %, expired bonuses volume
+- [x] Owner analytics: conversion rate (views -> bookings), occupancy rate, competitor benchmarking (anonymous average comparison)
+- [x] Add API endpoints and admin dashboard charts
+- [x] Write tests for analytics calculations
+- [x] Run project test suite - must pass before next task
 
 ### Task 20: Onboarding tour and profile completeness (FR-016)
 

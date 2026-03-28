@@ -14,12 +14,20 @@ type AnalyticsRepo struct {
 	mu        sync.RWMutex
 	views     []domain.BathhouseView
 	snapshots map[string]*domain.AnalyticsSnapshot // key: bathhouse_id:date
+
+	// Advanced analytics mock data
+	FunnelSteps    []domain.FunnelStep
+	CohortRows     []domain.CohortRow
+	GeoDemand      []domain.GeoSupplyDemand
+	WalletMetrics  *domain.WalletMetrics
+	OwnerPerfData  map[uuid.UUID]*domain.OwnerPerformance
 }
 
 func NewAnalyticsRepo() *AnalyticsRepo {
 	return &AnalyticsRepo{
-		views:     []domain.BathhouseView{},
-		snapshots: make(map[string]*domain.AnalyticsSnapshot),
+		views:         []domain.BathhouseView{},
+		snapshots:     make(map[string]*domain.AnalyticsSnapshot),
+		OwnerPerfData: make(map[uuid.UUID]*domain.OwnerPerformance),
 	}
 }
 
@@ -253,4 +261,82 @@ func (r *AnalyticsRepo) DeleteOldViews(ctx context.Context, before time.Time) (i
 
 	r.views = newViews
 	return count, nil
+}
+
+// --- Advanced analytics mock methods ---
+
+func (r *AnalyticsRepo) GetConversionFunnel(_ context.Context, _, _ time.Time) ([]domain.FunnelStep, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.FunnelSteps != nil {
+		return r.FunnelSteps, nil
+	}
+	return []domain.FunnelStep{
+		{Name: "visit", Count: 1000, Percentage: 100},
+		{Name: "search", Count: 600, Percentage: 60},
+		{Name: "view_card", Count: 300, Percentage: 30},
+		{Name: "start_booking", Count: 100, Percentage: 10},
+		{Name: "pay", Count: 80, Percentage: 8},
+		{Name: "complete_visit", Count: 70, Percentage: 7},
+	}, nil
+}
+
+func (r *AnalyticsRepo) GetCohortAnalysis(_ context.Context, months int) ([]domain.CohortRow, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.CohortRows != nil {
+		return r.CohortRows, nil
+	}
+	// Return sample cohort data
+	return []domain.CohortRow{
+		{CohortMonth: "2026-01", UsersCount: 100, RetentionWeeks: []float64{100, 60, 40, 30}, TotalSpending: 5000000},
+		{CohortMonth: "2026-02", UsersCount: 120, RetentionWeeks: []float64{100, 55, 35}, TotalSpending: 4500000},
+	}, nil
+}
+
+func (r *AnalyticsRepo) GetGeoSupplyDemand(_ context.Context, _, _ time.Time) ([]domain.GeoSupplyDemand, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.GeoDemand != nil {
+		return r.GeoDemand, nil
+	}
+	return []domain.GeoSupplyDemand{
+		{CityID: 1, CityName: "Москва", SearchCount: 5000, ListingCount: 100, BookingCount: 800},
+		{CityID: 2, CityName: "Санкт-Петербург", SearchCount: 3000, ListingCount: 60, BookingCount: 500},
+	}, nil
+}
+
+func (r *AnalyticsRepo) GetWalletMetrics(_ context.Context, _, _ time.Time) (*domain.WalletMetrics, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.WalletMetrics != nil {
+		return r.WalletMetrics, nil
+	}
+	return &domain.WalletMetrics{
+		TotalClientBalance: 15000000,
+		TotalOwnerBalance:  25000000,
+		TotalEscrow:        5000000,
+		WalletPaymentShare: 25.5,
+		ExpiredBonusVolume: 1200000,
+		ActiveWallets:      850,
+	}, nil
+}
+
+func (r *AnalyticsRepo) GetOwnerPerformance(_ context.Context, bathhouseID uuid.UUID, _, _ time.Time) (*domain.OwnerPerformance, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if perf, ok := r.OwnerPerfData[bathhouseID]; ok {
+		return perf, nil
+	}
+	return &domain.OwnerPerformance{
+		BathhouseID:           bathhouseID,
+		BathhouseName:         "Test",
+		ConversionRate:        0.08,
+		OccupancyRate:         0.65,
+		AvgRating:             4.3,
+		Revenue:               5000000,
+		AvgCityConversionRate: 0.06,
+		AvgCityOccupancyRate:  0.55,
+		AvgCityRating:         4.1,
+	}, nil
 }

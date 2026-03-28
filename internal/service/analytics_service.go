@@ -28,35 +28,35 @@ const (
 
 // OwnerDashboard represents analytics data for a bathhouse owner
 type OwnerDashboard struct {
-	Period          domain.AnalyticsPeriod `json:"period"`
-	Views           int64                  `json:"views"`
-	UniqueViews     int64                  `json:"unique_views"`
-	Bookings        int64                  `json:"bookings"`
-	ConversionRate  float64                `json:"conversion_rate"` // bookings / views
-	Revenue         int64                  `json:"revenue"`         // in kopecks
-	AvgCheck        int64                  `json:"avg_check"`       // revenue / bookings
-	Rating          float64                `json:"rating"`
-	RatingChange    float64                `json:"rating_change"` // % change from previous period
-	ViewsChange     float64                `json:"views_change"`
-	BookingsChange  float64                `json:"bookings_change"`
-	RevenueChange   float64                `json:"revenue_change"`
-	PreviousPeriod  *OwnerDashboard        `json:"previous_period,omitempty"`
+	Period         domain.AnalyticsPeriod `json:"period"`
+	Views          int64                  `json:"views"`
+	UniqueViews    int64                  `json:"unique_views"`
+	Bookings       int64                  `json:"bookings"`
+	ConversionRate float64                `json:"conversion_rate"` // bookings / views
+	Revenue        int64                  `json:"revenue"`         // in kopecks
+	AvgCheck       int64                  `json:"avg_check"`       // revenue / bookings
+	Rating         float64                `json:"rating"`
+	RatingChange   float64                `json:"rating_change"` // % change from previous period
+	ViewsChange    float64                `json:"views_change"`
+	BookingsChange float64                `json:"bookings_change"`
+	RevenueChange  float64                `json:"revenue_change"`
+	PreviousPeriod *OwnerDashboard        `json:"previous_period,omitempty"`
 }
 
 // AdminDashboard represents analytics data for admin
 type AdminDashboard struct {
-	Period              domain.AnalyticsPeriod `json:"period"`
-	TotalUsers          int64                  `json:"total_users"`
-	NewUsers            int64                  `json:"new_users"`
-	TotalBathhouses     int64                  `json:"total_bathhouses"`
-	TotalBookings       int64                  `json:"total_bookings"`
-	TotalRevenue        int64                  `json:"total_revenue"`
-	TotalViews          int64                  `json:"total_views"`
-	AvgRating           float64                `json:"avg_rating"`
-	DAU                 int64                  `json:"dau"`  // daily active users (from bookings)
-	WAU                 int64                  `json:"wau"`  // weekly active users
-	MAU                 int64                  `json:"mau"`  // monthly active users
-	TopBathhouses       []TopBathhouseInfo     `json:"top_bathhouses"`
+	Period          domain.AnalyticsPeriod `json:"period"`
+	TotalUsers      int64                  `json:"total_users"`
+	NewUsers        int64                  `json:"new_users"`
+	TotalBathhouses int64                  `json:"total_bathhouses"`
+	TotalBookings   int64                  `json:"total_bookings"`
+	TotalRevenue    int64                  `json:"total_revenue"`
+	TotalViews      int64                  `json:"total_views"`
+	AvgRating       float64                `json:"avg_rating"`
+	DAU             int64                  `json:"dau"` // daily active users (from bookings)
+	WAU             int64                  `json:"wau"` // weekly active users
+	MAU             int64                  `json:"mau"` // monthly active users
+	TopBathhouses   []TopBathhouseInfo     `json:"top_bathhouses"`
 }
 
 // TopBathhouseInfo contains info about a top-ranked bathhouse
@@ -78,6 +78,13 @@ type AnalyticsService interface {
 	GetTopBathhousesByMetric(ctx context.Context, userRole domain.UserRole, metric domain.TopMetric, limit int64) ([]TopBathhouseInfo, error)
 	AggregateDaily(ctx context.Context) error
 	UpdateBathhouseMetrics(ctx context.Context) (int, error)
+
+	// Advanced analytics (FR-147-154)
+	GetConversionFunnel(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*domain.ConversionFunnel, error)
+	GetCohortAnalysis(ctx context.Context, userRole domain.UserRole, months int) (*domain.CohortAnalysis, error)
+	GetGeoDemandSupply(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*domain.GeoDemandSupplyMap, error)
+	GetWalletMetrics(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*domain.WalletMetrics, error)
+	GetOwnerPerformance(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*domain.OwnerPerformance, error)
 }
 
 type analyticsService struct {
@@ -544,6 +551,87 @@ func (s *analyticsService) countNewUsers(ctx context.Context, from, to time.Time
 		}
 	}
 	return count
+}
+
+// --- Advanced analytics (FR-147-154) ---
+
+func (s *analyticsService) periodToRange(period domain.AnalyticsPeriod) (time.Time, time.Time) {
+	now := time.Now()
+	to := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999999999, now.Location())
+	from := to.AddDate(0, 0, -period.Days())
+	from = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+	return from, to
+}
+
+func (s *analyticsService) GetConversionFunnel(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*domain.ConversionFunnel, error) {
+	if userRole != domain.RoleAdmin {
+		return nil, domain.ErrForbidden
+	}
+	if !period.IsValid() {
+		return nil, fmt.Errorf("invalid period: %s", period)
+	}
+
+	from, to := s.periodToRange(period)
+	steps, err := s.analyticsRepo.GetConversionFunnel(ctx, from, to)
+	if err != nil {
+		return nil, err
+	}
+	return &domain.ConversionFunnel{Period: period, Steps: steps}, nil
+}
+
+func (s *analyticsService) GetCohortAnalysis(ctx context.Context, userRole domain.UserRole, months int) (*domain.CohortAnalysis, error) {
+	if userRole != domain.RoleAdmin {
+		return nil, domain.ErrForbidden
+	}
+	if months < 1 || months > 24 {
+		months = 6
+	}
+
+	cohorts, err := s.analyticsRepo.GetCohortAnalysis(ctx, months)
+	if err != nil {
+		return nil, err
+	}
+	return &domain.CohortAnalysis{Cohorts: cohorts}, nil
+}
+
+func (s *analyticsService) GetGeoDemandSupply(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*domain.GeoDemandSupplyMap, error) {
+	if userRole != domain.RoleAdmin {
+		return nil, domain.ErrForbidden
+	}
+	if !period.IsValid() {
+		return nil, fmt.Errorf("invalid period: %s", period)
+	}
+
+	from, to := s.periodToRange(period)
+	cities, err := s.analyticsRepo.GetGeoSupplyDemand(ctx, from, to)
+	if err != nil {
+		return nil, err
+	}
+	return &domain.GeoDemandSupplyMap{Period: period, Cities: cities}, nil
+}
+
+func (s *analyticsService) GetWalletMetrics(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*domain.WalletMetrics, error) {
+	if userRole != domain.RoleAdmin {
+		return nil, domain.ErrForbidden
+	}
+	if !period.IsValid() {
+		return nil, fmt.Errorf("invalid period: %s", period)
+	}
+
+	from, to := s.periodToRange(period)
+	return s.analyticsRepo.GetWalletMetrics(ctx, from, to)
+}
+
+func (s *analyticsService) GetOwnerPerformance(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*domain.OwnerPerformance, error) {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, bathhouseID); err != nil {
+		return nil, err
+	}
+	if !period.IsValid() {
+		return nil, fmt.Errorf("invalid period: %s", period)
+	}
+
+	from, to := s.periodToRange(period)
+	return s.analyticsRepo.GetOwnerPerformance(ctx, bathhouseID, from, to)
 }
 
 func (s *analyticsService) UpdateBathhouseMetrics(ctx context.Context) (int, error) {

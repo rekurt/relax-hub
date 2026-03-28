@@ -405,3 +405,277 @@ func TestAnalyticsService_GetOwnerDashboard_AdminBypass(t *testing.T) {
 		t.Errorf("views = %d, want 100", dashboard.Views)
 	}
 }
+
+// --- Advanced analytics tests ---
+
+func TestAnalyticsService_GetConversionFunnel_Success(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	funnel, err := svc.GetConversionFunnel(context.Background(), domain.RoleAdmin, domain.PeriodMonth)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if funnel == nil {
+		t.Fatal("funnel is nil")
+	}
+	if funnel.Period != domain.PeriodMonth {
+		t.Errorf("period = %s, want %s", funnel.Period, domain.PeriodMonth)
+	}
+	if len(funnel.Steps) == 0 {
+		t.Error("expected non-empty funnel steps")
+	}
+
+	// First step should have 100% percentage
+	if funnel.Steps[0].Percentage != 100 {
+		t.Errorf("first step percentage = %f, want 100", funnel.Steps[0].Percentage)
+	}
+
+	// Each step should have count <= previous step
+	for i := 1; i < len(funnel.Steps); i++ {
+		if funnel.Steps[i].Count > funnel.Steps[i-1].Count {
+			t.Errorf("step %d count (%d) > step %d count (%d)", i, funnel.Steps[i].Count, i-1, funnel.Steps[i-1].Count)
+		}
+	}
+}
+
+func TestAnalyticsService_GetConversionFunnel_Forbidden(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	_, err := svc.GetConversionFunnel(context.Background(), domain.RoleClient, domain.PeriodMonth)
+	if err != domain.ErrForbidden {
+		t.Errorf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestAnalyticsService_GetConversionFunnel_InvalidPeriod(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	_, err := svc.GetConversionFunnel(context.Background(), domain.RoleAdmin, domain.AnalyticsPeriod("invalid"))
+	if err == nil {
+		t.Fatal("expected error for invalid period")
+	}
+}
+
+func TestAnalyticsService_GetCohortAnalysis_Success(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	cohorts, err := svc.GetCohortAnalysis(context.Background(), domain.RoleAdmin, 6)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if cohorts == nil {
+		t.Fatal("cohorts is nil")
+	}
+	if len(cohorts.Cohorts) == 0 {
+		t.Error("expected non-empty cohorts")
+	}
+
+	// Each cohort should have retention weeks
+	for _, c := range cohorts.Cohorts {
+		if c.UsersCount == 0 {
+			t.Errorf("cohort %s has 0 users", c.CohortMonth)
+		}
+		if len(c.RetentionWeeks) == 0 {
+			t.Errorf("cohort %s has no retention data", c.CohortMonth)
+		}
+	}
+}
+
+func TestAnalyticsService_GetCohortAnalysis_Forbidden(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	_, err := svc.GetCohortAnalysis(context.Background(), domain.RoleOwner, 6)
+	if err != domain.ErrForbidden {
+		t.Errorf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestAnalyticsService_GetCohortAnalysis_ClampMonths(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	// Negative months should be clamped to 6
+	cohorts, err := svc.GetCohortAnalysis(context.Background(), domain.RoleAdmin, -1)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cohorts == nil {
+		t.Fatal("expected non-nil result")
+	}
+
+	// Over 24 months should also be clamped to 6
+	cohorts2, err := svc.GetCohortAnalysis(context.Background(), domain.RoleAdmin, 100)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cohorts2 == nil {
+		t.Fatal("expected non-nil result")
+	}
+}
+
+func TestAnalyticsService_GetGeoDemandSupply_Success(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	geo, err := svc.GetGeoDemandSupply(context.Background(), domain.RoleAdmin, domain.PeriodMonth)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if geo == nil {
+		t.Fatal("geo is nil")
+	}
+	if geo.Period != domain.PeriodMonth {
+		t.Errorf("period = %s, want %s", geo.Period, domain.PeriodMonth)
+	}
+	if len(geo.Cities) == 0 {
+		t.Error("expected non-empty cities")
+	}
+
+	for _, city := range geo.Cities {
+		if city.CityName == "" {
+			t.Error("city name is empty")
+		}
+	}
+}
+
+func TestAnalyticsService_GetGeoDemandSupply_Forbidden(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	_, err := svc.GetGeoDemandSupply(context.Background(), domain.RoleClient, domain.PeriodMonth)
+	if err != domain.ErrForbidden {
+		t.Errorf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestAnalyticsService_GetWalletMetrics_Success(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	metrics, err := svc.GetWalletMetrics(context.Background(), domain.RoleAdmin, domain.PeriodMonth)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if metrics == nil {
+		t.Fatal("metrics is nil")
+	}
+	if metrics.ActiveWallets < 0 {
+		t.Error("active wallets should be non-negative")
+	}
+	if metrics.WalletPaymentShare < 0 || metrics.WalletPaymentShare > 100 {
+		t.Errorf("wallet payment share = %f, expected 0-100", metrics.WalletPaymentShare)
+	}
+}
+
+func TestAnalyticsService_GetWalletMetrics_Forbidden(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	_, err := svc.GetWalletMetrics(context.Background(), domain.RoleOwner, domain.PeriodMonth)
+	if err != domain.ErrForbidden {
+		t.Errorf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestAnalyticsService_GetOwnerPerformance_Success(t *testing.T) {
+	svc, _, bhRepo, _, _, _ := newAnalyticsService()
+	ownerID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID:      bathhouseID,
+		OwnerID: ownerID,
+		Name:    "Test Bath",
+		Status:  domain.BathhouseStatusActive,
+	}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	perf, err := svc.GetOwnerPerformance(context.Background(), ownerID, domain.RoleOwner, bathhouseID, domain.PeriodMonth)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if perf == nil {
+		t.Fatal("performance is nil")
+	}
+	if perf.BathhouseID != bathhouseID {
+		t.Errorf("bathhouse_id mismatch")
+	}
+	if perf.ConversionRate < 0 || perf.ConversionRate > 1 {
+		t.Errorf("conversion rate = %f, expected 0-1", perf.ConversionRate)
+	}
+	if perf.OccupancyRate < 0 || perf.OccupancyRate > 1 {
+		t.Errorf("occupancy rate = %f, expected 0-1", perf.OccupancyRate)
+	}
+}
+
+func TestAnalyticsService_GetOwnerPerformance_Forbidden(t *testing.T) {
+	svc, _, bhRepo, _, _, _ := newAnalyticsService()
+	ownerID := uuid.New()
+	otherID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID:      bathhouseID,
+		OwnerID: ownerID,
+		Name:    "Test Bath",
+		Status:  domain.BathhouseStatusActive,
+	}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	_, err := svc.GetOwnerPerformance(context.Background(), otherID, domain.RoleClient, bathhouseID, domain.PeriodMonth)
+	if err != domain.ErrForbidden {
+		t.Errorf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestAnalyticsService_GetOwnerPerformance_WithCustomMockData(t *testing.T) {
+	svc, analyticsRepo, bhRepo, _, _, _ := newAnalyticsService()
+	ownerID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID:      bathhouseID,
+		OwnerID: ownerID,
+		Name:    "Premium Banya",
+		Status:  domain.BathhouseStatusActive,
+	}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	// Set custom mock performance data
+	analyticsRepo.OwnerPerfData[bathhouseID] = &domain.OwnerPerformance{
+		BathhouseID:           bathhouseID,
+		BathhouseName:         "Premium Banya",
+		ConversionRate:        0.15,
+		OccupancyRate:         0.80,
+		AvgRating:             4.8,
+		Revenue:               10000000,
+		AvgCityConversionRate: 0.08,
+		AvgCityOccupancyRate:  0.55,
+		AvgCityRating:         4.2,
+	}
+
+	perf, err := svc.GetOwnerPerformance(context.Background(), ownerID, domain.RoleOwner, bathhouseID, domain.PeriodMonth)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if perf.ConversionRate != 0.15 {
+		t.Errorf("conversion_rate = %f, want 0.15", perf.ConversionRate)
+	}
+	if perf.OccupancyRate != 0.80 {
+		t.Errorf("occupancy_rate = %f, want 0.80", perf.OccupancyRate)
+	}
+	if perf.Revenue != 10000000 {
+		t.Errorf("revenue = %d, want 10000000", perf.Revenue)
+	}
+	// City benchmarks should be lower than individual performance
+	if perf.AvgCityConversionRate > perf.ConversionRate {
+		t.Error("city benchmark should be lower than individual for this test data")
+	}
+}

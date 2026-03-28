@@ -20,6 +20,7 @@ func PagesRouter(
 	analyticsProvider pages.AnalyticsDataProvider,
 	healthProvider pages.HealthDataProvider,
 	financeProvider pages.FinanceDataProvider,
+	advancedAnalyticsProvider pages.AdvancedAnalyticsDataProvider,
 	log *logger.Logger,
 	adminPrefix string,
 ) http.Handler {
@@ -49,6 +50,11 @@ func PagesRouter(
 
 	finance := pages.NewFinanceHandler(financeProvider, log, pagesPrefix, adminPrefix)
 	r.Get("/finance", finance.ServeHTTP)
+
+	if advancedAnalyticsProvider != nil {
+		advAnalytics := pages.NewAdvancedAnalyticsHandler(advancedAnalyticsProvider, log, pagesPrefix, adminPrefix)
+		r.Get("/advanced-analytics", advAnalytics.ServeHTTP)
+	}
 
 	return r
 }
@@ -94,16 +100,22 @@ func CustomMenuConfig(pagesPrefix string) []CustomMenuItem {
 			Order: 2,
 		},
 		{
+			Title: "Расш. аналитика",
+			Icon:  "fa-area-chart",
+			URI:   pagesPrefix + "/advanced-analytics",
+			Order: 3,
+		},
+		{
 			Title: "Мониторинг",
 			Icon:  "fa-heartbeat",
 			URI:   pagesPrefix + "/health",
-			Order: 3,
+			Order: 4,
 		},
 		{
 			Title: "Финансы",
 			Icon:  "fa-money",
 			URI:   pagesPrefix + "/finance",
-			Order: 4,
+			Order: 5,
 		},
 	}
 }

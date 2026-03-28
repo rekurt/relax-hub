@@ -429,6 +429,7 @@ func NewRouter(p RouterParams) http.Handler {
 		// Analytics (authenticated owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/analytics", p.AnalyticsHandler.GetOwnerDashboard)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/analytics/daily", p.AnalyticsHandler.GetOwnerDailyStats)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/analytics/performance", p.AnalyticsHandler.GetOwnerPerformance)
 
 		// CRM Guest Cards (owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/guests", p.GuestCardHandler.ListGuests)
@@ -535,6 +536,10 @@ func NewRouter(p RouterParams) http.Handler {
 			// Analytics (admin only)
 			r.Get("/analytics", p.AnalyticsHandler.GetAdminDashboard)
 			r.Get("/analytics/top", p.AnalyticsHandler.GetTopBathhouses)
+			r.Get("/analytics/funnel", p.AnalyticsHandler.GetConversionFunnel)
+			r.Get("/analytics/cohorts", p.AnalyticsHandler.GetCohortAnalysis)
+			r.Get("/analytics/geo", p.AnalyticsHandler.GetGeoDemandSupply)
+			r.Get("/analytics/wallet", p.AnalyticsHandler.GetWalletMetrics)
 
 			// Complaints (admin only)
 			r.Get("/complaints", p.ComplaintHandler.List)

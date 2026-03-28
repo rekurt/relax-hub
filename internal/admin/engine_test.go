@@ -10,8 +10,8 @@ func TestCustomMenuConfig_Structure(t *testing.T) {
 	prefix := "/admin-panel/pages"
 	items := CustomMenuConfig(prefix)
 
-	if len(items) != 6 {
-		t.Fatalf("expected 6 menu items, got %d", len(items))
+	if len(items) != 7 {
+		t.Fatalf("expected 7 menu items, got %d", len(items))
 	}
 
 	// Dashboard: first item with home icon.
@@ -59,8 +59,17 @@ func TestCustomMenuConfig_Structure(t *testing.T) {
 		t.Errorf("analytics URI: got %q", analytics.URI)
 	}
 
+	// Advanced Analytics child.
+	advAnalytics := items[4]
+	if advAnalytics.Title != "Расш. аналитика" {
+		t.Errorf("advanced analytics title: got %q", advAnalytics.Title)
+	}
+	if advAnalytics.URI != prefix+"/advanced-analytics" {
+		t.Errorf("advanced analytics URI: got %q", advAnalytics.URI)
+	}
+
 	// Health child.
-	health := items[4]
+	health := items[5]
 	if health.Title != "Мониторинг" {
 		t.Errorf("health title: got %q", health.Title)
 	}
@@ -122,6 +131,7 @@ func TestPagesRouter_AllRoutesRegistered(t *testing.T) {
 		&mockAnalyticsProvider{},
 		&mockHealthProvider{},
 		&mockFinanceProvider{},
+		nil,
 		testLogger(),
 		"/admin-panel",
 	)
@@ -155,6 +165,7 @@ func TestPagesRouter_ModerationAPIRoutes(t *testing.T) {
 		&mockAnalyticsProvider{},
 		&mockHealthProvider{},
 		&mockFinanceProvider{},
+		nil,
 		testLogger(),
 		"/admin-panel",
 	)
@@ -179,6 +190,7 @@ func TestPagesRouter_HealthEndpoint(t *testing.T) {
 		&mockAnalyticsProvider{},
 		&mockHealthProvider{},
 		&mockFinanceProvider{},
+		nil,
 		testLogger(),
 		"/admin-panel",
 	)

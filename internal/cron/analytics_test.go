@@ -52,6 +52,26 @@ func (m *MockAnalyticsService) UpdateBathhouseMetrics(_ context.Context) (int, e
 	return 0, nil
 }
 
+func (m *MockAnalyticsService) GetConversionFunnel(_ context.Context, _ domain.UserRole, _ domain.AnalyticsPeriod) (*domain.ConversionFunnel, error) {
+	return nil, nil
+}
+
+func (m *MockAnalyticsService) GetCohortAnalysis(_ context.Context, _ domain.UserRole, _ int) (*domain.CohortAnalysis, error) {
+	return nil, nil
+}
+
+func (m *MockAnalyticsService) GetGeoDemandSupply(_ context.Context, _ domain.UserRole, _ domain.AnalyticsPeriod) (*domain.GeoDemandSupplyMap, error) {
+	return nil, nil
+}
+
+func (m *MockAnalyticsService) GetWalletMetrics(_ context.Context, _ domain.UserRole, _ domain.AnalyticsPeriod) (*domain.WalletMetrics, error) {
+	return nil, nil
+}
+
+func (m *MockAnalyticsService) GetOwnerPerformance(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID, _ domain.AnalyticsPeriod) (*domain.OwnerPerformance, error) {
+	return nil, nil
+}
+
 func TestNewCronScheduler(t *testing.T) {
 	log := logger.New(logger.LevelInfo)
 	mockSvc := &MockAnalyticsService{}

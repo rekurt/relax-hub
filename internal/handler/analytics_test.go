@@ -70,6 +70,26 @@ func (m *mockAnalyticsService) UpdateBathhouseMetrics(_ context.Context) (int, e
 	return 0, nil
 }
 
+func (m *mockAnalyticsService) GetConversionFunnel(_ context.Context, _ domain.UserRole, _ domain.AnalyticsPeriod) (*domain.ConversionFunnel, error) {
+	return &domain.ConversionFunnel{}, nil
+}
+
+func (m *mockAnalyticsService) GetCohortAnalysis(_ context.Context, _ domain.UserRole, _ int) (*domain.CohortAnalysis, error) {
+	return &domain.CohortAnalysis{}, nil
+}
+
+func (m *mockAnalyticsService) GetGeoDemandSupply(_ context.Context, _ domain.UserRole, _ domain.AnalyticsPeriod) (*domain.GeoDemandSupplyMap, error) {
+	return &domain.GeoDemandSupplyMap{}, nil
+}
+
+func (m *mockAnalyticsService) GetWalletMetrics(_ context.Context, _ domain.UserRole, _ domain.AnalyticsPeriod) (*domain.WalletMetrics, error) {
+	return &domain.WalletMetrics{}, nil
+}
+
+func (m *mockAnalyticsService) GetOwnerPerformance(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID, _ domain.AnalyticsPeriod) (*domain.OwnerPerformance, error) {
+	return &domain.OwnerPerformance{}, nil
+}
+
 func TestGetAdminDashboard_ValidRequest(t *testing.T) {
 	mock := &mockAnalyticsService{}
 	mock.getAdminDashboardFn = func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.AdminDashboard, error) {

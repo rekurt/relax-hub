@@ -29,26 +29,27 @@ func NewAnalyticsHandler(
 }
 
 type topBathhousesResponse struct {
-	Metric     string                    `json:"metric"`
-	Limit      int                       `json:"limit"`
+	Metric     string                     `json:"metric"`
+	Limit      int                        `json:"limit"`
 	Bathhouses []service.TopBathhouseInfo `json:"bathhouses"`
-	TotalCount int                       `json:"total_count"`
+	TotalCount int                        `json:"total_count"`
 }
 
 // GetOwnerDashboard godoc
-// @Summary      Get owner analytics dashboard
-// @Description  Returns analytics dashboard for a bathhouse owner, including booking stats, revenue, and views. Owner or representative only.
-// @Tags         analytics
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id      path      string  true   "Bathhouse ID (UUID)"
-// @Param        period  query     string  false  "Period: 1d, 7d, 30d, 90d"  default(30d)
-// @Success      200     {object}  APIResponse{data=service.OwnerDashboard}
-// @Failure      400     {object}  APIResponse{error=APIError}
-// @Failure      401     {object}  APIResponse{error=APIError}
-// @Failure      403     {object}  APIResponse{error=APIError}
-// @Failure      404     {object}  APIResponse{error=APIError}
-// @Router       /my/bathhouses/{id}/analytics [get]
+//
+//	@Summary		Get owner analytics dashboard
+//	@Description	Returns analytics dashboard for a bathhouse owner, including booking stats, revenue, and views. Owner or representative only.
+//	@Tags			analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string	true	"Bathhouse ID (UUID)"
+//	@Param			period	query		string	false	"Period: 1d, 7d, 30d, 90d"	default(30d)
+//	@Success		200		{object}	APIResponse{data=service.OwnerDashboard}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/analytics [get]
 func (h *AnalyticsHandler) GetOwnerDashboard(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -80,20 +81,21 @@ func (h *AnalyticsHandler) GetOwnerDashboard(w http.ResponseWriter, r *http.Requ
 }
 
 // GetOwnerDailyStats godoc
-// @Summary      Get daily analytics
-// @Description  Returns daily analytics breakdown for a bathhouse within a date range (max 365 days). Owner or representative only.
-// @Tags         analytics
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string  true  "Bathhouse ID (UUID)"
-// @Param        from  query     string  true  "Start date (YYYY-MM-DD)"
-// @Param        to    query     string  true  "End date (YYYY-MM-DD)"
-// @Success      200   {object}  APIResponse{data=[]domain.AnalyticsSnapshot}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /my/bathhouses/{id}/analytics/daily [get]
+//
+//	@Summary		Get daily analytics
+//	@Description	Returns daily analytics breakdown for a bathhouse within a date range (max 365 days). Owner or representative only.
+//	@Tags			analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string	true	"Bathhouse ID (UUID)"
+//	@Param			from	query		string	true	"Start date (YYYY-MM-DD)"
+//	@Param			to		query		string	true	"End date (YYYY-MM-DD)"
+//	@Success		200		{object}	APIResponse{data=[]domain.AnalyticsSnapshot}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/analytics/daily [get]
 func (h *AnalyticsHandler) GetOwnerDailyStats(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -149,17 +151,18 @@ func (h *AnalyticsHandler) GetOwnerDailyStats(w http.ResponseWriter, r *http.Req
 }
 
 // GetAdminDashboard godoc
-// @Summary      Get admin analytics dashboard
-// @Description  Returns platform-wide analytics dashboard. Admin only.
-// @Tags         admin-analytics
-// @Produce      json
-// @Security     BearerAuth
-// @Param        period  query     string  false  "Period: 1d, 7d, 30d, 90d"  default(30d)
-// @Success      200     {object}  APIResponse{data=service.AdminDashboard}
-// @Failure      400     {object}  APIResponse{error=APIError}
-// @Failure      401     {object}  APIResponse{error=APIError}
-// @Failure      403     {object}  APIResponse{error=APIError}
-// @Router       /admin/analytics [get]
+//
+//	@Summary		Get admin analytics dashboard
+//	@Description	Returns platform-wide analytics dashboard. Admin only.
+//	@Tags			admin-analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			period	query		string	false	"Period: 1d, 7d, 30d, 90d"	default(30d)
+//	@Success		200		{object}	APIResponse{data=service.AdminDashboard}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/analytics [get]
 func (h *AnalyticsHandler) GetAdminDashboard(w http.ResponseWriter, r *http.Request) {
 	userRole := middleware.GetUserRole(r.Context())
 
@@ -190,18 +193,19 @@ func (h *AnalyticsHandler) GetAdminDashboard(w http.ResponseWriter, r *http.Requ
 }
 
 // GetTopBathhouses godoc
-// @Summary      Get top bathhouses
-// @Description  Returns top bathhouses ranked by a specified metric (views, bookings, revenue, rating). Admin only.
-// @Tags         admin-analytics
-// @Produce      json
-// @Security     BearerAuth
-// @Param        metric  query     string  false  "Metric: views, bookings, revenue, rating"  default(bookings)
-// @Param        limit   query     int     false  "Max results (1-100)"                        default(10)
-// @Success      200     {object}  APIResponse{data=topBathhousesResponse}
-// @Failure      400     {object}  APIResponse{error=APIError}
-// @Failure      401     {object}  APIResponse{error=APIError}
-// @Failure      403     {object}  APIResponse{error=APIError}
-// @Router       /admin/analytics/top [get]
+//
+//	@Summary		Get top bathhouses
+//	@Description	Returns top bathhouses ranked by a specified metric (views, bookings, revenue, rating). Admin only.
+//	@Tags			admin-analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			metric	query		string	false	"Metric: views, bookings, revenue, rating"	default(bookings)
+//	@Param			limit	query		int		false	"Max results (1-100)"						default(10)
+//	@Success		200		{object}	APIResponse{data=topBathhousesResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/analytics/top [get]
 func (h *AnalyticsHandler) GetTopBathhouses(w http.ResponseWriter, r *http.Request) {
 	userRole := middleware.GetUserRole(r.Context())
 
@@ -243,4 +247,155 @@ func (h *AnalyticsHandler) GetTopBathhouses(w http.ResponseWriter, r *http.Reque
 		Bathhouses: topBathhouses,
 		TotalCount: len(topBathhouses),
 	})
+}
+
+// GetConversionFunnel godoc
+//
+//	@Summary		Get conversion funnel
+//	@Description	Returns conversion funnel: visit -> search -> view card -> start booking -> pay -> complete. Admin only.
+//	@Tags			admin-analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			period	query		string	false	"Period: 1d, 7d, 30d, 90d"	default(30d)
+//	@Success		200		{object}	APIResponse{data=domain.ConversionFunnel}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/analytics/funnel [get]
+func (h *AnalyticsHandler) GetConversionFunnel(w http.ResponseWriter, r *http.Request) {
+	userRole := middleware.GetUserRole(r.Context())
+	period := parsePeriodParam(r)
+
+	funnel, err := h.analyticsService.GetConversionFunnel(r.Context(), userRole, period)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, funnel)
+}
+
+// GetCohortAnalysis godoc
+//
+//	@Summary		Get cohort analysis
+//	@Description	Returns user cohort analysis (grouped by registration month, tracking retention and spending). Admin only.
+//	@Tags			admin-analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			months	query		int	false	"Number of months (1-24)"	default(6)
+//	@Success		200		{object}	APIResponse{data=domain.CohortAnalysis}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/analytics/cohorts [get]
+func (h *AnalyticsHandler) GetCohortAnalysis(w http.ResponseWriter, r *http.Request) {
+	userRole := middleware.GetUserRole(r.Context())
+
+	months := 6
+	if m := r.URL.Query().Get("months"); m != "" {
+		if val, err := strconv.Atoi(m); err == nil && val > 0 && val <= 24 {
+			months = val
+		}
+	}
+
+	cohorts, err := h.analyticsService.GetCohortAnalysis(r.Context(), userRole, months)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, cohorts)
+}
+
+// GetGeoDemandSupply godoc
+//
+//	@Summary		Get geographic demand/supply map
+//	@Description	Returns demand vs supply per city (searches vs listings vs bookings). Admin only.
+//	@Tags			admin-analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			period	query		string	false	"Period: 1d, 7d, 30d, 90d"	default(30d)
+//	@Success		200		{object}	APIResponse{data=domain.GeoDemandSupplyMap}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/analytics/geo [get]
+func (h *AnalyticsHandler) GetGeoDemandSupply(w http.ResponseWriter, r *http.Request) {
+	userRole := middleware.GetUserRole(r.Context())
+	period := parsePeriodParam(r)
+
+	geo, err := h.analyticsService.GetGeoDemandSupply(r.Context(), userRole, period)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, geo)
+}
+
+// GetWalletMetrics godoc
+//
+//	@Summary		Get wallet metrics
+//	@Description	Returns wallet metrics: total balances, payment share, expired bonuses. Admin only.
+//	@Tags			admin-analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			period	query		string	false	"Period: 1d, 7d, 30d, 90d"	default(30d)
+//	@Success		200		{object}	APIResponse{data=domain.WalletMetrics}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/analytics/wallet [get]
+func (h *AnalyticsHandler) GetWalletMetrics(w http.ResponseWriter, r *http.Request) {
+	userRole := middleware.GetUserRole(r.Context())
+	period := parsePeriodParam(r)
+
+	metrics, err := h.analyticsService.GetWalletMetrics(r.Context(), userRole, period)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, metrics)
+}
+
+// GetOwnerPerformance godoc
+//
+//	@Summary		Get owner performance analytics
+//	@Description	Returns performance analytics for a bathhouse with anonymous city benchmarks. Owner or representative only.
+//	@Tags			analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string	true	"Bathhouse ID (UUID)"
+//	@Param			period	query		string	false	"Period: 1d, 7d, 30d, 90d"	default(30d)
+//	@Success		200		{object}	APIResponse{data=domain.OwnerPerformance}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/analytics/performance [get]
+func (h *AnalyticsHandler) GetOwnerPerformance(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
+	period := parsePeriodParam(r)
+
+	perf, err := h.analyticsService.GetOwnerPerformance(r.Context(), userID, userRole, id, period)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, perf)
+}
+
+func parsePeriodParam(r *http.Request) domain.AnalyticsPeriod {
+	periodStr := r.URL.Query().Get("period")
+	if periodStr == "" {
+		periodStr = "30d"
+	}
+	period := domain.AnalyticsPeriod(periodStr)
+	if !period.IsValid() {
+		return domain.PeriodMonth
+	}
+	return period
 }

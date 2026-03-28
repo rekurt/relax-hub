@@ -14,6 +14,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/admin/pages"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/repository/postgres"
 	"github.com/nikitaaldaev/bani/internal/notification"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -44,11 +45,12 @@ func NewGoAdmin(cfg *appconfig.Config, pool *pgxpool.Pool, redisClient *redis.Cl
 	analyticsProvider := pages.NewPostgresAnalyticsProvider(pool, log)
 	healthProvider := pages.NewPlatformHealthProvider(pool, redisClient, hub, log)
 	financeProvider := pages.NewPostgresFinanceProvider(pool, log)
+	advAnalyticsProvider := pages.NewPostgresAdvancedAnalyticsProvider(postgres.NewAnalyticsRepository(pool), log)
 
 	return &GoAdmin{
 		Engine:      engine.Default(),
 		Config:      BuildGoAdminConfig(cfg),
-		PagesRouter: PagesRouter(dashProvider, modProvider, analyticsProvider, healthProvider, financeProvider, log, cfg.Admin.Prefix),
+		PagesRouter: PagesRouter(dashProvider, modProvider, analyticsProvider, healthProvider, financeProvider, advAnalyticsProvider, log, cfg.Admin.Prefix),
 	}
 }
 

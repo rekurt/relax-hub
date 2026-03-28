@@ -241,6 +241,13 @@ type AnalyticsRepository interface {
 	AggregateRawData(ctx context.Context, bathhouseID uuid.UUID, date time.Time) (*domain.AnalyticsSnapshot, error)
 	CreateSnapshot(ctx context.Context, snapshot *domain.AnalyticsSnapshot) error
 	DeleteOldViews(ctx context.Context, before time.Time) (int64, error)
+
+	// Advanced analytics (FR-147-154)
+	GetConversionFunnel(ctx context.Context, from, to time.Time) ([]domain.FunnelStep, error)
+	GetCohortAnalysis(ctx context.Context, months int) ([]domain.CohortRow, error)
+	GetGeoSupplyDemand(ctx context.Context, from, to time.Time) ([]domain.GeoSupplyDemand, error)
+	GetWalletMetrics(ctx context.Context, from, to time.Time) (*domain.WalletMetrics, error)
+	GetOwnerPerformance(ctx context.Context, bathhouseID uuid.UUID, from, to time.Time) (*domain.OwnerPerformance, error)
 }
 
 type TelegramLinkRepository interface {

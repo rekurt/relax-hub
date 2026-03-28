@@ -308,3 +308,383 @@ func (r *analyticsRepo) DeleteOldViews(ctx context.Context, before time.Time) (i
 
 	return result.RowsAffected(), nil
 }
+
+// --- Advanced analytics (FR-147-154) ---
+
+func (r *analyticsRepo) GetConversionFunnel(ctx context.Context, from, to time.Time) ([]domain.FunnelStep, error) {
+	fromDate := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+	toDate := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
+
+	// Step 1: unique visitors (distinct IPs in views)
+	var visits int64
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(DISTINCT ip_hash) FROM bathhouse_views WHERE viewed_at >= $1 AND viewed_at <= $2`,
+		fromDate, toDate).Scan(&visits)
+	if err != nil {
+		return nil, fmt.Errorf("funnel visits: %w", err)
+	}
+
+	// Step 2: searches (views with source='search')
+	var searches int64
+	err = r.pool.QueryRow(ctx,
+		`SELECT COUNT(DISTINCT ip_hash) FROM bathhouse_views WHERE source = 'search' AND viewed_at >= $1 AND viewed_at <= $2`,
+		fromDate, toDate).Scan(&searches)
+	if err != nil {
+		return nil, fmt.Errorf("funnel searches: %w", err)
+	}
+
+	// Step 3: card views (views with source='direct' or 'search' deduplicated by viewer_id)
+	var cardViews int64
+	err = r.pool.QueryRow(ctx,
+		`SELECT COUNT(DISTINCT COALESCE(viewer_id::text, ip_hash)) FROM bathhouse_views WHERE viewed_at >= $1 AND viewed_at <= $2`,
+		fromDate, toDate).Scan(&cardViews)
+	if err != nil {
+		return nil, fmt.Errorf("funnel card views: %w", err)
+	}
+
+	// Step 4: bookings started (all bookings created in period)
+	var bookingsStarted int64
+	err = r.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM bookings WHERE created_at >= $1 AND created_at <= $2`,
+		fromDate, toDate).Scan(&bookingsStarted)
+	if err != nil {
+		return nil, fmt.Errorf("funnel bookings started: %w", err)
+	}
+
+	// Step 5: paid bookings
+	var paid int64
+	err = r.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM bookings WHERE created_at >= $1 AND created_at <= $2 AND status IN ('confirmed', 'completed')`,
+		fromDate, toDate).Scan(&paid)
+	if err != nil {
+		return nil, fmt.Errorf("funnel paid: %w", err)
+	}
+
+	// Step 6: completed visits
+	var completed int64
+	err = r.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM bookings WHERE created_at >= $1 AND created_at <= $2 AND status = 'completed'`,
+		fromDate, toDate).Scan(&completed)
+	if err != nil {
+		return nil, fmt.Errorf("funnel completed: %w", err)
+	}
+
+	steps := []domain.FunnelStep{
+		{Name: "visit", Count: visits},
+		{Name: "search", Count: searches},
+		{Name: "view_card", Count: cardViews},
+		{Name: "start_booking", Count: bookingsStarted},
+		{Name: "pay", Count: paid},
+		{Name: "complete_visit", Count: completed},
+	}
+
+	// Calculate percentages relative to first step
+	if visits > 0 {
+		for i := range steps {
+			steps[i].Percentage = float64(steps[i].Count) / float64(visits) * 100
+		}
+	}
+
+	return steps, nil
+}
+
+func (r *analyticsRepo) GetCohortAnalysis(ctx context.Context, months int) ([]domain.CohortRow, error) {
+	if months < 1 {
+		months = 6
+	}
+
+	query := `
+		WITH cohorts AS (
+			SELECT
+				to_char(u.created_at, 'YYYY-MM') AS cohort_month,
+				u.id AS user_id
+			FROM users u
+			WHERE u.created_at >= NOW() - ($1 || ' months')::interval
+		),
+		activity AS (
+			SELECT
+				c.cohort_month,
+				c.user_id,
+				EXTRACT(WEEK FROM (b.created_at - DATE_TRUNC('month', c.cohort_month::date)))::int AS week_num,
+				b.total_price
+			FROM cohorts c
+			JOIN bookings b ON b.user_id = c.user_id AND b.status = 'completed'
+		)
+		SELECT
+			c.cohort_month,
+			COUNT(DISTINCT c.user_id) AS users_count,
+			COALESCE(SUM(a.total_price), 0) AS total_spending
+		FROM cohorts c
+		LEFT JOIN activity a ON a.cohort_month = c.cohort_month AND a.user_id = c.user_id
+		GROUP BY c.cohort_month
+		ORDER BY c.cohort_month`
+
+	rows, err := r.pool.Query(ctx, query, months)
+	if err != nil {
+		return nil, fmt.Errorf("cohort analysis: %w", err)
+	}
+	defer rows.Close()
+
+	var cohorts []domain.CohortRow
+	for rows.Next() {
+		var row domain.CohortRow
+		if err := rows.Scan(&row.CohortMonth, &row.UsersCount, &row.TotalSpending); err != nil {
+			return nil, fmt.Errorf("scan cohort: %w", err)
+		}
+		cohorts = append(cohorts, row)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("cohort rows: %w", err)
+	}
+
+	// Calculate retention per week for each cohort
+	for i := range cohorts {
+		retention, err := r.getCohortRetention(ctx, cohorts[i].CohortMonth)
+		if err != nil {
+			continue
+		}
+		cohorts[i].RetentionWeeks = retention
+	}
+
+	return cohorts, nil
+}
+
+func (r *analyticsRepo) getCohortRetention(ctx context.Context, cohortMonth string) ([]float64, error) {
+	query := `
+		WITH cohort_users AS (
+			SELECT id FROM users WHERE to_char(created_at, 'YYYY-MM') = $1
+		),
+		weeks AS (
+			SELECT generate_series(0, 12) AS week_num
+		)
+		SELECT
+			w.week_num,
+			CASE WHEN (SELECT COUNT(*) FROM cohort_users) > 0
+				THEN COUNT(DISTINCT b.user_id)::float / (SELECT COUNT(*) FROM cohort_users) * 100
+				ELSE 0
+			END AS retention_pct
+		FROM weeks w
+		LEFT JOIN bookings b ON b.user_id IN (SELECT id FROM cohort_users)
+			AND b.status = 'completed'
+			AND EXTRACT(WEEK FROM (b.created_at - ($1 || '-01')::date))::int = w.week_num
+		GROUP BY w.week_num
+		ORDER BY w.week_num`
+
+	rows, err := r.pool.Query(ctx, query, cohortMonth)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var retention []float64
+	for rows.Next() {
+		var weekNum int
+		var pct float64
+		if err := rows.Scan(&weekNum, &pct); err != nil {
+			return nil, err
+		}
+		retention = append(retention, pct)
+	}
+	return retention, rows.Err()
+}
+
+func (r *analyticsRepo) GetGeoSupplyDemand(ctx context.Context, from, to time.Time) ([]domain.GeoSupplyDemand, error) {
+	fromDate := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+	toDate := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
+
+	query := `
+		SELECT
+			c.id AS city_id,
+			c.name AS city_name,
+			COALESCE(search_counts.cnt, 0) AS search_count,
+			COALESCE(listing_counts.cnt, 0) AS listing_count,
+			COALESCE(booking_counts.cnt, 0) AS booking_count
+		FROM cities c
+		LEFT JOIN (
+			SELECT bh.city_id, COUNT(DISTINCT bv.ip_hash) AS cnt
+			FROM bathhouse_views bv
+			JOIN bathhouses bh ON bh.id = bv.bathhouse_id
+			WHERE bv.viewed_at >= $1 AND bv.viewed_at <= $2 AND bv.source = 'search'
+			GROUP BY bh.city_id
+		) search_counts ON search_counts.city_id = c.id
+		LEFT JOIN (
+			SELECT city_id, COUNT(*) AS cnt
+			FROM bathhouses
+			WHERE status = 'active'
+			GROUP BY city_id
+		) listing_counts ON listing_counts.city_id = c.id
+		LEFT JOIN (
+			SELECT bh.city_id, COUNT(*) AS cnt
+			FROM bookings b
+			JOIN bathhouses bh ON bh.id = b.bathhouse_id
+			WHERE b.created_at >= $1 AND b.created_at <= $2
+			GROUP BY bh.city_id
+		) booking_counts ON booking_counts.city_id = c.id
+		ORDER BY c.name`
+
+	rows, err := r.pool.Query(ctx, query, fromDate, toDate)
+	if err != nil {
+		return nil, fmt.Errorf("geo supply demand: %w", err)
+	}
+	defer rows.Close()
+
+	var result []domain.GeoSupplyDemand
+	for rows.Next() {
+		var g domain.GeoSupplyDemand
+		if err := rows.Scan(&g.CityID, &g.CityName, &g.SearchCount, &g.ListingCount, &g.BookingCount); err != nil {
+			return nil, fmt.Errorf("scan geo: %w", err)
+		}
+		result = append(result, g)
+	}
+	return result, rows.Err()
+}
+
+func (r *analyticsRepo) GetWalletMetrics(ctx context.Context, from, to time.Time) (*domain.WalletMetrics, error) {
+	fromDate := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+	toDate := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
+
+	m := &domain.WalletMetrics{}
+
+	// Client balances (users with role 'client')
+	err := r.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(w.balance), 0)
+		FROM wallets w
+		JOIN users u ON u.id = w.user_id
+		WHERE u.role = 'client' AND w.status = 'active'`).Scan(&m.TotalClientBalance)
+	if err != nil {
+		return nil, fmt.Errorf("wallet client balance: %w", err)
+	}
+
+	// Owner balances
+	err = r.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(w.balance), 0)
+		FROM wallets w
+		JOIN users u ON u.id = w.user_id
+		WHERE u.role = 'owner' AND w.status = 'active'`).Scan(&m.TotalOwnerBalance)
+	if err != nil {
+		return nil, fmt.Errorf("wallet owner balance: %w", err)
+	}
+
+	// Escrow total
+	err = r.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(amount), 0) FROM escrows WHERE status = 'held'`).Scan(&m.TotalEscrow)
+	if err != nil {
+		return nil, fmt.Errorf("wallet escrow: %w", err)
+	}
+
+	// Wallet payment share
+	var totalBookings, walletBookings int64
+	err = r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM bookings WHERE created_at >= $1 AND created_at <= $2`,
+		fromDate, toDate).Scan(&totalBookings)
+	if err != nil {
+		return nil, fmt.Errorf("wallet total bookings: %w", err)
+	}
+	err = r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM bookings WHERE created_at >= $1 AND created_at <= $2 AND payment_method IN ('wallet', 'combo')`,
+		fromDate, toDate).Scan(&walletBookings)
+	if err != nil {
+		return nil, fmt.Errorf("wallet wallet bookings: %w", err)
+	}
+	if totalBookings > 0 {
+		m.WalletPaymentShare = float64(walletBookings) / float64(totalBookings) * 100
+	}
+
+	// Expired bonuses in period
+	err = r.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(amount), 0)
+		FROM wallet_transactions
+		WHERE type = 'bonus_expiry' AND created_at >= $1 AND created_at <= $2`,
+		fromDate, toDate).Scan(&m.ExpiredBonusVolume)
+	if err != nil {
+		return nil, fmt.Errorf("wallet expired bonuses: %w", err)
+	}
+
+	// Active wallets
+	err = r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM wallets WHERE status = 'active'`).Scan(&m.ActiveWallets)
+	if err != nil {
+		return nil, fmt.Errorf("wallet active count: %w", err)
+	}
+
+	return m, nil
+}
+
+func (r *analyticsRepo) GetOwnerPerformance(ctx context.Context, bathhouseID uuid.UUID, from, to time.Time) (*domain.OwnerPerformance, error) {
+	fromDate := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+	toDate := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
+
+	perf := &domain.OwnerPerformance{BathhouseID: bathhouseID}
+
+	// Bathhouse name and city
+	var cityID sql.NullInt64
+	err := r.pool.QueryRow(ctx,
+		`SELECT name, city_id FROM bathhouses WHERE id = $1`, bathhouseID).
+		Scan(&perf.BathhouseName, &cityID)
+	if err != nil {
+		return nil, fmt.Errorf("owner perf bathhouse: %w", err)
+	}
+
+	// Views and bookings for conversion rate
+	var views, bookings int64
+	err = r.pool.QueryRow(ctx,
+		`SELECT COALESCE(SUM(views), 0), COALESCE(SUM(bookings), 0) FROM analytics_snapshots WHERE bathhouse_id = $1 AND date >= $2 AND date <= $3`,
+		bathhouseID, fromDate, toDate).Scan(&views, &bookings)
+	if err != nil {
+		return nil, fmt.Errorf("owner perf views: %w", err)
+	}
+	if views > 0 {
+		perf.ConversionRate = float64(bookings) / float64(views)
+	}
+
+	// Revenue
+	err = r.pool.QueryRow(ctx,
+		`SELECT COALESCE(SUM(revenue), 0) FROM analytics_snapshots WHERE bathhouse_id = $1 AND date >= $2 AND date <= $3`,
+		bathhouseID, fromDate, toDate).Scan(&perf.Revenue)
+	if err != nil {
+		return nil, fmt.Errorf("owner perf revenue: %w", err)
+	}
+
+	// Occupancy rate (booked hours / available hours)
+	var bookedHours sql.NullFloat64
+	err = r.pool.QueryRow(ctx,
+		`SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time)) / 3600), 0)
+		 FROM bookings WHERE bathhouse_id = $1 AND status IN ('confirmed', 'completed') AND start_time >= $2 AND end_time <= $3`,
+		bathhouseID, fromDate, toDate).Scan(&bookedHours)
+	if err != nil {
+		return nil, fmt.Errorf("owner perf occupancy: %w", err)
+	}
+	days := toDate.Sub(fromDate).Hours() / 24
+	availableHours := days * 12 // assume 12 working hours/day
+	if availableHours > 0 && bookedHours.Valid {
+		perf.OccupancyRate = bookedHours.Float64 / availableHours
+		if perf.OccupancyRate > 1.0 {
+			perf.OccupancyRate = 1.0
+		}
+	}
+
+	// Average rating
+	err = r.pool.QueryRow(ctx,
+		`SELECT COALESCE(AVG(rating), 0) FROM reviews WHERE bathhouse_id = $1`,
+		bathhouseID).Scan(&perf.AvgRating)
+	if err != nil {
+		return nil, fmt.Errorf("owner perf rating: %w", err)
+	}
+
+	// City benchmarks (anonymous averages)
+	if cityID.Valid {
+		_ = r.pool.QueryRow(ctx, `
+			SELECT
+				COALESCE(AVG(CASE WHEN s.views > 0 THEN s.bookings::float / s.views ELSE 0 END), 0),
+				COALESCE(AVG(bh.occupancy_rate), 0),
+				COALESCE(AVG(bh.bayesian_rating), 0)
+			FROM bathhouses bh
+			LEFT JOIN (
+				SELECT bathhouse_id, SUM(views) AS views, SUM(bookings) AS bookings
+				FROM analytics_snapshots WHERE date >= $1 AND date <= $2
+				GROUP BY bathhouse_id
+			) s ON s.bathhouse_id = bh.id
+			WHERE bh.city_id = $3 AND bh.status = 'active' AND bh.id != $4`,
+			fromDate, toDate, cityID.Int64, bathhouseID).
+			Scan(&perf.AvgCityConversionRate, &perf.AvgCityOccupancyRate, &perf.AvgCityRating)
+	}
+
+	return perf, nil
+}
