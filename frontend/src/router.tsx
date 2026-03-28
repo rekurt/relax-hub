@@ -55,6 +55,10 @@ import CityManagement from '@/pages/admin/CityManagement'
 import GlobalPromoCodes from '@/pages/admin/GlobalPromoCodes'
 import AdminNotifications from '@/pages/admin/AdminNotifications'
 import AdminProfile from '@/pages/admin/AdminProfile'
+import TicketManagement from '@/pages/admin/TicketManagement'
+import AdminTicketDetail from '@/pages/admin/AdminTicketDetail'
+import SupportTickets from '@/pages/client/SupportTickets'
+import ClientTicketDetail from '@/pages/client/TicketDetail'
 import OAuthCallback from '@/pages/OAuthCallback'
 
 export default function AppRouter() {
@@ -124,6 +128,8 @@ export default function AppRouter() {
         <Route path="certificates/purchase" element={<CertificatePurchase />} />
         <Route path="payments" element={<PaymentHistory />} />
         <Route path="chat" element={<ClientChat />} />
+        <Route path="tickets" element={<SupportTickets />} />
+        <Route path="tickets/:id" element={<ClientTicketDetail />} />
         <Route path="notifications" element={<ClientNotifications />} />
         <Route path="profile" element={<ClientProfile />} />
       </Route>
@@ -145,6 +151,8 @@ export default function AppRouter() {
         <Route path="complaints" element={<ComplaintManagement />} />
         <Route path="cities" element={<CityManagement />} />
         <Route path="promos" element={<GlobalPromoCodes />} />
+        <Route path="tickets" element={<TicketManagement />} />
+        <Route path="tickets/:id" element={<AdminTicketDetail />} />
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="profile" element={<AdminProfile />} />
       </Route>

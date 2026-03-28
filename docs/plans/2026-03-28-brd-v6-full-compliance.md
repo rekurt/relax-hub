@@ -313,13 +313,13 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: `frontend/src/pages/admin/TicketDetail.tsx`
 - Modify: `frontend/src/router.tsx`
 
-- [ ] Regenerate API client for ticket endpoints
-- [ ] Client ticket list: create ticket (category selector), view open/resolved tickets
-- [ ] Client ticket detail: message thread with attachments, CSAT survey after resolution
-- [ ] Admin ticket list: filterable queue by status/priority/escalation level, assign to agent
-- [ ] Admin ticket detail: respond, escalate, resolve, close with full context
-- [ ] Write frontend tests
-- [ ] Run project test suite - must pass before next task
+- [x] Regenerate API client for ticket endpoints
+- [x] Client ticket list: create ticket (category selector), view open/resolved tickets
+- [x] Client ticket detail: message thread with attachments, CSAT survey after resolution
+- [x] Admin ticket list: filterable queue by status/priority/escalation level, assign to agent
+- [x] Admin ticket detail: respond, escalate, resolve, close with full context
+- [x] Write frontend tests
+- [x] Run project test suite - must pass before next task
 
 ### Task 16: Frontend - Dispute pages
 
