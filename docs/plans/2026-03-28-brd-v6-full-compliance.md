@@ -392,12 +392,12 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `frontend/src/pages/client/ClientProfile.tsx` (completeness indicator)
 - Create: `frontend/src/components/OnboardingTour.tsx`
 
-- [ ] Add profile completeness calculation (name, photo, phone, preferences)
-- [ ] Add onboarding_completed flag to skip tour on subsequent visits
-- [ ] Frontend: create onboarding tour component (step-by-step guide: search, book, wallet)
-- [ ] Frontend: add profile completeness indicator with prompts to complete
-- [ ] Write tests
-- [ ] Run project test suite - must pass before next task
+- [x] Add profile completeness calculation (name, photo, phone, preferences)
+- [x] Add onboarding_completed flag to skip tour on subsequent visits
+- [x] Frontend: create onboarding tour component (step-by-step guide: search, book, wallet)
+- [x] Frontend: add profile completeness indicator with prompts to complete
+- [x] Write tests
+- [x] Run project test suite - must pass before next task
 
 ### Task 21: Admin справочники management (amenities, object types, holidays)
 

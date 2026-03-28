@@ -55,16 +55,17 @@ type authResponse struct {
 }
 
 type userResponse struct {
-	ID        string `json:"id"`
-	Email     string `json:"email"`
-	Name      string `json:"name"`
-	Phone     string `json:"phone"`
-	Role      string `json:"role"`
-	IsActive  bool   `json:"is_active"`
-	AvatarURL string `json:"avatar_url"`
-	Bio       string `json:"bio"`
-	CityID    *int64 `json:"city_id"`
-	Region    string `json:"region"`
+	ID                  string `json:"id"`
+	Email               string `json:"email"`
+	Name                string `json:"name"`
+	Phone               string `json:"phone"`
+	Role                string `json:"role"`
+	IsActive            bool   `json:"is_active"`
+	AvatarURL           string `json:"avatar_url"`
+	Bio                 string `json:"bio"`
+	CityID              *int64 `json:"city_id"`
+	Region              string `json:"region"`
+	OnboardingCompleted bool   `json:"onboarding_completed"`
 }
 
 type updateProfileRequest struct {
@@ -104,16 +105,17 @@ type publicProfileResponse struct {
 
 func toUserResponse(u *domain.User) userResponse {
 	return userResponse{
-		ID:        u.ID.String(),
-		Email:     u.Email,
-		Name:      u.Name,
-		Phone:     u.Phone,
-		Role:      string(u.Role),
-		IsActive:  u.IsActive,
-		AvatarURL: u.AvatarURL,
-		Bio:       u.Bio,
-		CityID:    u.CityID,
-		Region:    string(u.Region),
+		ID:                  u.ID.String(),
+		Email:               u.Email,
+		Name:                u.Name,
+		Phone:               u.Phone,
+		Role:                string(u.Role),
+		IsActive:            u.IsActive,
+		AvatarURL:           u.AvatarURL,
+		Bio:                 u.Bio,
+		CityID:              u.CityID,
+		Region:              string(u.Region),
+		OnboardingCompleted: u.OnboardingCompleted,
 	}
 }
 
@@ -809,4 +811,47 @@ func (h *AuthHandler) RestoreAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, simpleMessageResponse{Message: "Account deletion cancelled. Your account has been restored."})
+}
+
+// GetProfileCompleteness godoc
+//
+//	@Summary		Get profile completeness
+//	@Description	Returns profile completeness percentage and individual field statuses
+//	@Tags			users
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=service.ProfileCompletenessOutput}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/my/profile-completeness [get]
+func (h *AuthHandler) GetProfileCompleteness(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+
+	result, err := h.userService.GetProfileCompleteness(r.Context(), userID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
+
+// CompleteOnboarding godoc
+//
+//	@Summary		Complete onboarding tour
+//	@Description	Marks the onboarding tour as completed for the authenticated user
+//	@Tags			users
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/my/onboarding/complete [post]
+func (h *AuthHandler) CompleteOnboarding(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+
+	if err := h.userService.CompleteOnboarding(r.Context(), userID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, simpleMessageResponse{Message: "Onboarding completed"})
 }

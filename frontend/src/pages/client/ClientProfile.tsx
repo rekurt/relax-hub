@@ -47,6 +47,7 @@ import { useGetCities } from '@/api/generated/cities/cities'
 import { useGetMyStats } from '@/api/generated/users/users'
 import { formatPrice } from '@/lib/format'
 import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
+import ProfileCompleteness from '@/components/ProfileCompleteness'
 
 const { Title, Text } = Typography
 
@@ -172,6 +173,8 @@ export default function ClientProfile() {
   return (
     <div>
       <Title level={4} style={{ marginBottom: 24 }}>Мой профиль</Title>
+
+      <ProfileCompleteness />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <Card title="Статистика">

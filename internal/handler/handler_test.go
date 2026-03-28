@@ -185,6 +185,14 @@ func (m *mockUserService) GetMyStats(ctx context.Context, userID uuid.UUID) (*se
 	return &service.MyStatsOutput{}, nil
 }
 
+func (m *mockUserService) GetProfileCompleteness(_ context.Context, _ uuid.UUID) (*service.ProfileCompletenessOutput, error) {
+	return &service.ProfileCompletenessOutput{Percentage: 50}, nil
+}
+
+func (m *mockUserService) CompleteOnboarding(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+
 type mockBathhouseService struct {
 	searchFn           func(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error)
 	getByIDFn          func(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error)

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   Layout,
@@ -31,6 +31,7 @@ import {
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
 import NotificationBell from '@/components/NotificationBell'
+import OnboardingTour from '@/components/OnboardingTour'
 
 const { Header, Sider, Content } = Layout
 const { useBreakpoint } = Grid
@@ -55,11 +56,18 @@ const clientMenuItems: MenuProps['items'] = [
 export default function ClientLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [showTour, setShowTour] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout } = useAuthStore()
+  const { user, logout, loadProfile } = useAuthStore()
   const screens = useBreakpoint()
   const { token: themeToken } = theme.useToken()
+
+  useEffect(() => {
+    if (user && !user.onboarding_completed) {
+      setShowTour(true)
+    }
+  }, [user])
 
   const isMobile = !screens.md
 
@@ -206,6 +214,14 @@ export default function ClientLayout() {
           <Outlet />
         </Content>
       </Layout>
+
+      <OnboardingTour
+        open={showTour}
+        onComplete={() => {
+          setShowTour(false)
+          loadProfile()
+        }}
+      />
     </Layout>
   )
 }

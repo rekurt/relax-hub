@@ -30,6 +30,11 @@ type UploadAvatarInput struct {
 	Ext         string // e.g. ".jpg", ".png"
 }
 
+type ProfileCompletenessOutput struct {
+	Percentage int                              `json:"percentage"`
+	Items      []domain.ProfileCompletenessItem `json:"items"`
+}
+
 type UserService interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error)
 	Update(ctx context.Context, id uuid.UUID, input UpdateUserInput) (*domain.User, error)
@@ -37,6 +42,8 @@ type UserService interface {
 	DeleteAvatar(ctx context.Context, userID uuid.UUID) (*domain.User, error)
 	GetPublicProfile(ctx context.Context, id uuid.UUID) (*domain.UserProfile, error)
 	GetMyStats(ctx context.Context, userID uuid.UUID) (*MyStatsOutput, error)
+	GetProfileCompleteness(ctx context.Context, userID uuid.UUID) (*ProfileCompletenessOutput, error)
+	CompleteOnboarding(ctx context.Context, userID uuid.UUID) error
 	// Admin methods:
 	List(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.User], error)
 	Block(ctx context.Context, id uuid.UUID) error
@@ -55,12 +62,13 @@ type userService struct {
 	userRepo    repository.UserRepository
 	bookingRepo repository.BookingRepository
 	reviewRepo  repository.ReviewRepository
+	recRepo     repository.RecommendationRepository
 	storage     storage.FileStorage
 	log         *logger.Logger
 }
 
-func NewUserService(userRepo repository.UserRepository, bookingRepo repository.BookingRepository, reviewRepo repository.ReviewRepository, fileStorage storage.FileStorage, log *logger.Logger) UserService {
-	return &userService{userRepo: userRepo, bookingRepo: bookingRepo, reviewRepo: reviewRepo, storage: fileStorage, log: log}
+func NewUserService(userRepo repository.UserRepository, bookingRepo repository.BookingRepository, reviewRepo repository.ReviewRepository, recRepo repository.RecommendationRepository, fileStorage storage.FileStorage, log *logger.Logger) UserService {
+	return &userService{userRepo: userRepo, bookingRepo: bookingRepo, reviewRepo: reviewRepo, recRepo: recRepo, storage: fileStorage, log: log}
 }
 
 func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
@@ -207,6 +215,33 @@ func (s *userService) GetMyStats(ctx context.Context, userID uuid.UUID) (*MyStat
 		ReviewCount: reviewStats.ReviewCount,
 		AvgRating:   reviewStats.AvgRating,
 	}, nil
+}
+
+func (s *userService) GetProfileCompleteness(ctx context.Context, userID uuid.UUID) (*ProfileCompletenessOutput, error) {
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	hasPreferences := false
+	prefs, err := s.recRepo.GetUserPreferences(ctx, userID)
+	if err == nil && prefs != nil {
+		hasPreferences = prefs.PreferPool || prefs.PreferSauna || prefs.PreferSteamRoom ||
+			prefs.PreferHotTub || prefs.PreferBBQ || prefs.PreferKaraoke ||
+			prefs.PreferredCityID != nil || prefs.PriceRangeMin != nil || prefs.PriceRangeMax != nil
+	}
+
+	pct, items := user.ProfileCompleteness(hasPreferences)
+	return &ProfileCompletenessOutput{Percentage: pct, Items: items}, nil
+}
+
+func (s *userService) CompleteOnboarding(ctx context.Context, userID uuid.UUID) error {
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	user.OnboardingCompleted = true
+	return s.userRepo.Update(ctx, user)
 }
 
 // extractS3Key extracts the S3 object key from a full URL.

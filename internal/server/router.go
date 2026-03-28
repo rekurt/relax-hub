@@ -349,6 +349,8 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// User profile and statistics (authenticated)
 		r.With(auth).Get("/my/stats", p.AuthHandler.GetMyStats)
+		r.With(auth).Get("/my/profile-completeness", p.AuthHandler.GetProfileCompleteness)
+		r.With(auth).Post("/my/onboarding/complete", p.AuthHandler.CompleteOnboarding)
 
 		// Sessions (authenticated)
 		r.With(auth).Get("/my/sessions", p.SessionHandler.ListSessions)

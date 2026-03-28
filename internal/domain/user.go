@@ -74,10 +74,38 @@ type User struct {
 	TOTPSecret          string `json:"-"`
 	TwoFAMethod         TwoFAMethod
 	AgeConfirmed        bool
+	OnboardingCompleted bool
 	DeletionRequestedAt *time.Time
 	DeletionScheduledAt *time.Time
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
+}
+
+// ProfileCompletenessItem represents a single profile field and whether it's filled.
+type ProfileCompletenessItem struct {
+	Field    string `json:"field"`
+	Label    string `json:"label"`
+	Complete bool   `json:"complete"`
+}
+
+// ProfileCompleteness returns the completeness percentage (0-100) and individual field statuses.
+func (u *User) ProfileCompleteness(hasPreferences bool) (int, []ProfileCompletenessItem) {
+	items := []ProfileCompletenessItem{
+		{Field: "name", Label: "Имя", Complete: u.Name != ""},
+		{Field: "avatar", Label: "Фото профиля", Complete: u.AvatarURL != ""},
+		{Field: "phone", Label: "Телефон", Complete: u.Phone != ""},
+		{Field: "bio", Label: "О себе", Complete: u.Bio != ""},
+		{Field: "city", Label: "Город", Complete: u.CityID != nil},
+		{Field: "preferences", Label: "Предпочтения", Complete: hasPreferences},
+	}
+	filled := 0
+	for _, item := range items {
+		if item.Complete {
+			filled++
+		}
+	}
+	pct := filled * 100 / len(items)
+	return pct, items
 }
 
 // UserProfile is a read-only aggregate for public user profiles.
