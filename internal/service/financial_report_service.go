@@ -17,6 +17,8 @@ import (
 type FinancialReportService interface {
 	ExportWalletTransactionsCSV(ctx context.Context, userID uuid.UUID, dateFrom, dateTo *time.Time) ([]byte, error)
 	ExportWalletTransactionsPDF(ctx context.Context, userID uuid.UUID, dateFrom, dateTo *time.Time) ([]byte, error)
+	ExportPayoutsCSV(ctx context.Context, userID uuid.UUID, dateFrom, dateTo *time.Time) ([]byte, error)
+	ExportPayoutsPDF(ctx context.Context, userID uuid.UUID, dateFrom, dateTo *time.Time) ([]byte, error)
 	GenerateOwnerAct(ctx context.Context, ownerID uuid.UUID, bathhouseID uuid.UUID, dateFrom, dateTo time.Time) ([]byte, error)
 	ExportXML1C(ctx context.Context, ownerID uuid.UUID, dateFrom, dateTo time.Time) ([]byte, error)
 }
@@ -27,6 +29,7 @@ type financialReportService struct {
 	bathhouseRepo repository.BathhouseRepository
 	paymentRepo   repository.PaymentRepository
 	escrowRepo    repository.EscrowRepository
+	payoutRepo    repository.PayoutRepository
 	logger        *logger.Logger
 }
 
@@ -36,6 +39,7 @@ func NewFinancialReportService(
 	bathhouseRepo repository.BathhouseRepository,
 	paymentRepo repository.PaymentRepository,
 	escrowRepo repository.EscrowRepository,
+	payoutRepo repository.PayoutRepository,
 	log *logger.Logger,
 ) FinancialReportService {
 	return &financialReportService{
@@ -44,6 +48,7 @@ func NewFinancialReportService(
 		bathhouseRepo: bathhouseRepo,
 		paymentRepo:   paymentRepo,
 		escrowRepo:    escrowRepo,
+		payoutRepo:    payoutRepo,
 		logger:        log,
 	}
 }
@@ -277,6 +282,135 @@ func (s *financialReportService) ExportXML1C(ctx context.Context, ownerID uuid.U
 	}
 
 	return buf.Bytes(), nil
+}
+
+func (s *financialReportService) ExportPayoutsCSV(ctx context.Context, userID uuid.UUID, dateFrom, dateTo *time.Time) ([]byte, error) {
+	payouts, err := s.fetchAllPayouts(ctx, userID, dateFrom, dateTo)
+	if err != nil {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	buf.Write([]byte{0xEF, 0xBB, 0xBF})
+
+	w := csv.NewWriter(&buf)
+	w.Comma = ';'
+
+	header := []string{"Дата запроса", "Сумма", "Статус", "Дата обработки", "Причина отказа"}
+	if err := w.Write(header); err != nil {
+		return nil, fmt.Errorf("write csv header: %w", err)
+	}
+
+	for _, p := range payouts {
+		row := []string{
+			p.RequestedAt.Format("02.01.2006 15:04"),
+			formatKopecksRUB(p.Amount),
+			payoutStatusRu(p.Status),
+			formatOptionalTimePtr(p.ProcessedAt),
+			p.FailureReason,
+		}
+		if err := w.Write(row); err != nil {
+			return nil, fmt.Errorf("write csv row: %w", err)
+		}
+	}
+
+	w.Flush()
+	if err := w.Error(); err != nil {
+		return nil, fmt.Errorf("csv flush: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+func (s *financialReportService) ExportPayoutsPDF(ctx context.Context, userID uuid.UUID, dateFrom, dateTo *time.Time) ([]byte, error) {
+	payouts, err := s.fetchAllPayouts(ctx, userID, dateFrom, dateTo)
+	if err != nil {
+		return nil, err
+	}
+
+	title := "Выписка по выплатам"
+	if dateFrom != nil && dateTo != nil {
+		title += fmt.Sprintf(" за период %s — %s", dateFrom.Format("02.01.2006"), dateTo.Format("02.01.2006"))
+	}
+
+	var lines []string
+	lines = append(lines, title)
+	lines = append(lines, "")
+	lines = append(lines, fmt.Sprintf("%-20s %12s %-16s %-20s %s",
+		"Дата запроса", "Сумма", "Статус", "Дата обработки", "Причина отказа"))
+	lines = append(lines, "---")
+
+	var totalAmount int64
+	for _, p := range payouts {
+		totalAmount += p.Amount
+		line := fmt.Sprintf("%-20s %12s %-16s %-20s %s",
+			p.RequestedAt.Format("02.01.2006 15:04"),
+			formatKopecksRUB(p.Amount),
+			payoutStatusRu(p.Status),
+			formatOptionalTimePtr(p.ProcessedAt),
+			p.FailureReason,
+		)
+		lines = append(lines, line)
+	}
+
+	lines = append(lines, "---")
+	lines = append(lines, fmt.Sprintf("Итого выплат: %d", len(payouts)))
+	lines = append(lines, fmt.Sprintf("Общая сумма: %s", formatKopecksRUB(totalAmount)))
+
+	return generateSimplePDF(lines), nil
+}
+
+// fetchAllPayouts retrieves all payouts for a user within the date range.
+func (s *financialReportService) fetchAllPayouts(ctx context.Context, userID uuid.UUID, dateFrom, dateTo *time.Time) ([]domain.Payout, error) {
+	var all []domain.Payout
+	page := 1
+	pageSize := 500
+
+	for {
+		result, err := s.payoutRepo.ListByUser(ctx, userID, page, pageSize)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, p := range result.Items {
+			if dateFrom != nil && p.RequestedAt.Before(*dateFrom) {
+				continue
+			}
+			if dateTo != nil && p.RequestedAt.After(*dateTo) {
+				continue
+			}
+			all = append(all, p)
+		}
+
+		if page >= result.TotalPages || len(result.Items) == 0 {
+			break
+		}
+		page++
+	}
+
+	return all, nil
+}
+
+func payoutStatusRu(s domain.PayoutStatus) string {
+	switch s {
+	case domain.PayoutStatusPending:
+		return "Ожидает"
+	case domain.PayoutStatusProcessing:
+		return "Обрабатывается"
+	case domain.PayoutStatusCompleted:
+		return "Выполнена"
+	case domain.PayoutStatusFailed:
+		return "Ошибка"
+	default:
+		return string(s)
+	}
+}
+
+func formatOptionalTimePtr(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.Format("02.01.2006 15:04")
 }
 
 // fetchAllTransactions retrieves all wallet transactions for a user within the date range.

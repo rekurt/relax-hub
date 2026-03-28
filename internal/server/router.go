@@ -405,6 +405,7 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/wallet/payout", p.PayoutHandler.RequestPayout)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Put("/my/wallet/auto-payout", p.PayoutHandler.SetAutoPayoutThreshold)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/wallet/payouts", p.PayoutHandler.ListPayouts)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/wallet/payouts/export", p.FinancialReportHandler.ExportPayouts)
 
 		// Loyalty program (authenticated)
 		r.With(auth).Get("/my/loyalty", p.LoyaltyHandler.GetAccount)

@@ -15,16 +15,17 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 )
 
-func setupFinancialReportService() (FinancialReportService, repository.WalletRepository, *mock.BookingRepo, *mock.BathhouseRepo) {
+func setupFinancialReportService() (FinancialReportService, repository.WalletRepository, *mock.BookingRepo, *mock.BathhouseRepo, repository.PayoutRepository) {
 	walletRepo := mock.NewWalletRepo()
 	bookingRepo := mock.NewBookingRepo()
 	bathhouseRepo := mock.NewBathhouseRepo()
 	paymentRepo := mock.NewPaymentRepo()
 	escrowRepo := mock.NewEscrowRepo()
+	payoutRepo := mock.NewPayoutRepo()
 	log := logger.New(logger.LevelWarn)
 
-	svc := NewFinancialReportService(walletRepo, bookingRepo, bathhouseRepo, paymentRepo, escrowRepo, log)
-	return svc, walletRepo, bookingRepo, bathhouseRepo
+	svc := NewFinancialReportService(walletRepo, bookingRepo, bathhouseRepo, paymentRepo, escrowRepo, payoutRepo, log)
+	return svc, walletRepo, bookingRepo, bathhouseRepo, payoutRepo
 }
 
 func createTestWalletAndTransactions(t *testing.T, walletRepo repository.WalletRepository, userID uuid.UUID) uuid.UUID {
@@ -89,7 +90,7 @@ func createTestWalletAndTransactions(t *testing.T, walletRepo repository.WalletR
 }
 
 func TestFinancialReportService_ExportWalletCSV(t *testing.T) {
-	svc, walletRepo, _, _ := setupFinancialReportService()
+	svc, walletRepo, _, _, _ := setupFinancialReportService()
 	ctx := context.Background()
 	userID := uuid.New()
 
@@ -137,7 +138,7 @@ func TestFinancialReportService_ExportWalletCSV(t *testing.T) {
 }
 
 func TestFinancialReportService_ExportWalletCSV_WithDateFilter(t *testing.T) {
-	svc, walletRepo, _, _ := setupFinancialReportService()
+	svc, walletRepo, _, _, _ := setupFinancialReportService()
 	ctx := context.Background()
 	userID := uuid.New()
 
@@ -168,7 +169,7 @@ func TestFinancialReportService_ExportWalletCSV_WithDateFilter(t *testing.T) {
 }
 
 func TestFinancialReportService_ExportWalletPDF(t *testing.T) {
-	svc, walletRepo, _, _ := setupFinancialReportService()
+	svc, walletRepo, _, _, _ := setupFinancialReportService()
 	ctx := context.Background()
 	userID := uuid.New()
 
@@ -195,7 +196,7 @@ func TestFinancialReportService_ExportWalletPDF(t *testing.T) {
 }
 
 func TestFinancialReportService_GenerateOwnerAct(t *testing.T) {
-	svc, _, bookingRepo, bathhouseRepo := setupFinancialReportService()
+	svc, _, bookingRepo, bathhouseRepo, _ := setupFinancialReportService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 
@@ -275,7 +276,7 @@ func TestFinancialReportService_GenerateOwnerAct(t *testing.T) {
 }
 
 func TestFinancialReportService_GenerateOwnerAct_ForbiddenForNonOwner(t *testing.T) {
-	svc, _, _, bathhouseRepo := setupFinancialReportService()
+	svc, _, _, bathhouseRepo, _ := setupFinancialReportService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 	otherUserID := uuid.New()
@@ -296,7 +297,7 @@ func TestFinancialReportService_GenerateOwnerAct_ForbiddenForNonOwner(t *testing
 }
 
 func TestFinancialReportService_ExportXML1C(t *testing.T) {
-	svc, _, bookingRepo, bathhouseRepo := setupFinancialReportService()
+	svc, _, bookingRepo, bathhouseRepo, _ := setupFinancialReportService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 
@@ -370,7 +371,7 @@ func TestFinancialReportService_ExportXML1C(t *testing.T) {
 }
 
 func TestFinancialReportService_ExportWalletCSV_NoWallet(t *testing.T) {
-	svc, _, _, _ := setupFinancialReportService()
+	svc, _, _, _, _ := setupFinancialReportService()
 	ctx := context.Background()
 	userID := uuid.New()
 
@@ -381,7 +382,7 @@ func TestFinancialReportService_ExportWalletCSV_NoWallet(t *testing.T) {
 }
 
 func TestFinancialReportService_ExportXML1C_NoBookings(t *testing.T) {
-	svc, _, _, bathhouseRepo := setupFinancialReportService()
+	svc, _, _, bathhouseRepo, _ := setupFinancialReportService()
 	ctx := context.Background()
 	ownerID := uuid.New()
 
@@ -501,6 +502,205 @@ func TestPdfEscapeString(t *testing.T) {
 		result := pdfEscapeString(tt.input)
 		if result != tt.expected {
 			t.Errorf("pdfEscapeString(%q) = %q, want %q", tt.input, result, tt.expected)
+		}
+	}
+}
+
+func createTestPayouts(t *testing.T, payoutRepo repository.PayoutRepository, userID uuid.UUID) {
+	t.Helper()
+	ctx := context.Background()
+	now := time.Now()
+	processedAt := now.Add(-12 * time.Hour)
+
+	payouts := []domain.Payout{
+		{
+			ID:          uuid.New(),
+			UserID:      userID,
+			Amount:      500_000,
+			Status:      domain.PayoutStatusCompleted,
+			RequestedAt: now.Add(-72 * time.Hour),
+			ProcessedAt: &processedAt,
+		},
+		{
+			ID:            uuid.New(),
+			UserID:        userID,
+			Amount:        200_000,
+			Status:        domain.PayoutStatusFailed,
+			RequestedAt:   now.Add(-24 * time.Hour),
+			FailureReason: "Недостаточно средств на счёте",
+		},
+		{
+			ID:          uuid.New(),
+			UserID:      userID,
+			Amount:      300_000,
+			Status:      domain.PayoutStatusPending,
+			RequestedAt: now.Add(-1 * time.Hour),
+		},
+	}
+
+	for i := range payouts {
+		if err := payoutRepo.Create(ctx, &payouts[i]); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestFinancialReportService_ExportPayoutsCSV(t *testing.T) {
+	svc, _, _, _, payoutRepo := setupFinancialReportService()
+	ctx := context.Background()
+	userID := uuid.New()
+
+	createTestPayouts(t, payoutRepo, userID)
+
+	data, err := svc.ExportPayoutsCSV(ctx, userID, nil, nil)
+	if err != nil {
+		t.Fatalf("ExportPayoutsCSV failed: %v", err)
+	}
+
+	if len(data) == 0 {
+		t.Fatal("CSV export returned empty data")
+	}
+
+	csvContent := string(data[3:]) // Skip BOM
+	reader := csv.NewReader(strings.NewReader(csvContent))
+	reader.Comma = ';'
+
+	records, err := reader.ReadAll()
+	if err != nil {
+		t.Fatalf("CSV parse failed: %v", err)
+	}
+
+	// header + 3 payouts
+	if len(records) != 4 {
+		t.Fatalf("expected 4 rows (header + 3 payouts), got %d", len(records))
+	}
+
+	if records[0][0] != "Дата запроса" || records[0][1] != "Сумма" {
+		t.Fatalf("unexpected header: %v", records[0])
+	}
+
+	// Verify statuses are in Russian
+	foundCompleted := false
+	foundFailed := false
+	for _, row := range records[1:] {
+		if row[2] == "Выполнена" {
+			foundCompleted = true
+		}
+		if row[2] == "Ошибка" {
+			foundFailed = true
+			if row[4] != "Недостаточно средств на счёте" {
+				t.Fatalf("expected failure reason, got %q", row[4])
+			}
+		}
+	}
+	if !foundCompleted {
+		t.Fatal("expected completed payout in CSV")
+	}
+	if !foundFailed {
+		t.Fatal("expected failed payout in CSV")
+	}
+}
+
+func TestFinancialReportService_ExportPayoutsCSV_WithDateFilter(t *testing.T) {
+	svc, _, _, _, payoutRepo := setupFinancialReportService()
+	ctx := context.Background()
+	userID := uuid.New()
+
+	createTestPayouts(t, payoutRepo, userID)
+
+	// Filter to last 2 hours - should only get the pending payout
+	dateFrom := time.Now().Add(-2 * time.Hour)
+	dateTo := time.Now().Add(time.Hour)
+
+	data, err := svc.ExportPayoutsCSV(ctx, userID, &dateFrom, &dateTo)
+	if err != nil {
+		t.Fatalf("ExportPayoutsCSV with dates failed: %v", err)
+	}
+
+	csvContent := string(data[3:])
+	reader := csv.NewReader(strings.NewReader(csvContent))
+	reader.Comma = ';'
+
+	records, err := reader.ReadAll()
+	if err != nil {
+		t.Fatalf("CSV parse failed: %v", err)
+	}
+
+	// header + 1 payout (pending, -1h)
+	if len(records) != 2 {
+		t.Fatalf("expected 2 rows (header + 1 payout), got %d", len(records))
+	}
+
+	if records[1][2] != "Ожидает" {
+		t.Fatalf("expected pending payout status, got %q", records[1][2])
+	}
+}
+
+func TestFinancialReportService_ExportPayoutsPDF(t *testing.T) {
+	svc, _, _, _, payoutRepo := setupFinancialReportService()
+	ctx := context.Background()
+	userID := uuid.New()
+
+	createTestPayouts(t, payoutRepo, userID)
+
+	data, err := svc.ExportPayoutsPDF(ctx, userID, nil, nil)
+	if err != nil {
+		t.Fatalf("ExportPayoutsPDF failed: %v", err)
+	}
+
+	if len(data) == 0 {
+		t.Fatal("PDF export returned empty data")
+	}
+
+	if !strings.HasPrefix(string(data), "%PDF-1.4") {
+		t.Fatal("expected PDF output to start with %PDF-1.4")
+	}
+
+	if !strings.HasSuffix(strings.TrimSpace(string(data)), "%%EOF") {
+		t.Fatal("expected PDF output to end with EOF marker")
+	}
+}
+
+func TestFinancialReportService_ExportPayoutsCSV_NoPayouts(t *testing.T) {
+	svc, _, _, _, _ := setupFinancialReportService()
+	ctx := context.Background()
+	userID := uuid.New()
+
+	data, err := svc.ExportPayoutsCSV(ctx, userID, nil, nil)
+	if err != nil {
+		t.Fatalf("ExportPayoutsCSV for empty payouts failed: %v", err)
+	}
+
+	csvContent := string(data[3:])
+	reader := csv.NewReader(strings.NewReader(csvContent))
+	reader.Comma = ';'
+
+	records, err := reader.ReadAll()
+	if err != nil {
+		t.Fatalf("CSV parse failed: %v", err)
+	}
+
+	// header only, no data rows
+	if len(records) != 1 {
+		t.Fatalf("expected 1 row (header only), got %d", len(records))
+	}
+}
+
+func TestPayoutStatusRu(t *testing.T) {
+	tests := []struct {
+		status   domain.PayoutStatus
+		expected string
+	}{
+		{domain.PayoutStatusPending, "Ожидает"},
+		{domain.PayoutStatusProcessing, "Обрабатывается"},
+		{domain.PayoutStatusCompleted, "Выполнена"},
+		{domain.PayoutStatusFailed, "Ошибка"},
+	}
+
+	for _, tt := range tests {
+		result := payoutStatusRu(tt.status)
+		if result != tt.expected {
+			t.Errorf("payoutStatusRu(%s) = %s, want %s", tt.status, result, tt.expected)
 		}
 	}
 }

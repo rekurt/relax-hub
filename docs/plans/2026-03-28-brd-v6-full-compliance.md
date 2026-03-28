@@ -474,11 +474,11 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `internal/handler/payout_handler.go`
 - Modify: `frontend/src/pages/client/PaymentHistory.tsx` (add export buttons)
 
-- [ ] Add CSV export endpoint for wallet transactions (both client and owner)
-- [ ] Add PDF export for wallet statement
-- [ ] Frontend: add export buttons (CSV/PDF) on payment history and wallet pages
-- [ ] Write tests for export formatting
-- [ ] Run project test suite - must pass before next task
+- [x] Add CSV export endpoint for wallet transactions (both client and owner)
+- [x] Add PDF export for wallet statement
+- [x] Frontend: add export buttons (CSV/PDF) on payment history and wallet pages
+- [x] Write tests for export formatting
+- [x] Run project test suite - must pass before next task
 
 ### Task 27: Verify acceptance criteria
 

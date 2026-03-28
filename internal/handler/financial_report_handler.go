@@ -180,6 +180,60 @@ func (h *FinancialReportHandler) ExportXML1C(w http.ResponseWriter, r *http.Requ
 	w.Write(data)
 }
 
+// ExportPayouts godoc
+//
+//	@Summary		Export payout history
+//	@Description	Export payout history in CSV or PDF format
+//	@Tags			wallet
+//	@Produce		application/csv,application/pdf
+//	@Security		BearerAuth
+//	@Param			format		query		string	true	"Export format: csv or pdf"
+//	@Param			date_from	query		string	false	"Start date (YYYY-MM-DD)"
+//	@Param			date_to		query		string	false	"End date (YYYY-MM-DD)"
+//	@Success		200			{file}		file
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Router			/my/wallet/payouts/export [get]
+func (h *FinancialReportHandler) ExportPayouts(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	format := r.URL.Query().Get("format")
+
+	if format != "csv" && format != "pdf" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "format must be csv or pdf")
+		return
+	}
+
+	dateFrom, dateTo, err := parseDateRange(r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", err.Error())
+		return
+	}
+
+	switch format {
+	case "csv":
+		data, err := h.reportService.ExportPayoutsCSV(r.Context(), userID, dateFrom, dateTo)
+		if err != nil {
+			handleServiceError(w, err)
+			return
+		}
+		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+		w.Header().Set("Content-Disposition", "attachment; filename=payouts.csv")
+		w.WriteHeader(http.StatusOK)
+		w.Write(data)
+
+	case "pdf":
+		data, err := h.reportService.ExportPayoutsPDF(r.Context(), userID, dateFrom, dateTo)
+		if err != nil {
+			handleServiceError(w, err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/pdf")
+		w.Header().Set("Content-Disposition", "attachment; filename=payouts.pdf")
+		w.WriteHeader(http.StatusOK)
+		w.Write(data)
+	}
+}
+
 func parseDateRange(r *http.Request) (*time.Time, *time.Time, error) {
 	var dateFrom, dateTo *time.Time
 
