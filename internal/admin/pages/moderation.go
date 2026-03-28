@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -16,12 +17,27 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/nikitaaldaev/bani/internal/middleware"
 )
 
 var moderationFuncMap = template.FuncMap{
 	"join":     strings.Join,
 	"add":      func(a, b int) int { return a + b },
 	"subtract": func(a, b int) int { return a - b },
+	"formatDuration": func(hours float64) string {
+		if hours < 1 {
+			return fmt.Sprintf("%d мин", int(hours*60))
+		}
+		h := int(hours)
+		m := int((hours - float64(h)) * 60)
+		if m == 0 {
+			return fmt.Sprintf("%d ч", h)
+		}
+		return fmt.Sprintf("%d ч %d мин", h, m)
+	},
+	"formatPercent": func(v float64) string {
+		return fmt.Sprintf("%.1f", v)
+	},
 }
 
 var moderationTmpl = ParsePageTemplate(moderationFuncMap, "templates/moderation.tmpl")
@@ -42,10 +58,31 @@ type ModerationReview struct {
 
 // ModerationStats holds moderation statistics.
 type ModerationStats struct {
-	PendingTotal int64
+	PendingTotal  int64
 	ApprovedToday int64
 	RejectedToday int64
 	PendingWeek   int64
+}
+
+// SLAMetrics holds SLA-related moderation metrics.
+type SLAMetrics struct {
+	QueueSize         int64   // current pending items
+	AvgWaitHours      float64 // average wait time for pending items (hours)
+	SLAComplianceRate float64 // % of items resolved within 48h (last 30 days)
+	SLABreachCount    int64   // items pending > 24h (warning threshold)
+	SLABreachedCount  int64   // items pending > 48h (breached)
+	ModeratedLast30d  int64   // total moderated items in last 30 days
+	ModeratorStats    []ModeratorThroughput
+}
+
+// ModeratorThroughput holds per-moderator throughput stats.
+type ModeratorThroughput struct {
+	ModeratorID   string
+	ModeratorName string
+	Approved      int64
+	Rejected      int64
+	Total         int64
+	AvgTimeHours  float64
 }
 
 // ModerationFilter holds the current filter state for rendering.
@@ -68,6 +105,7 @@ type BathhouseOption struct {
 type ModerationData struct {
 	Reviews     []ModerationReview
 	Stats       ModerationStats
+	SLA         SLAMetrics
 	Filter      ModerationFilter
 	Bathhouses  []BathhouseOption
 	TotalCount  int64
@@ -84,10 +122,10 @@ type ModerationData struct {
 // ModerationDataProvider fetches moderation data from a data source.
 type ModerationDataProvider interface {
 	GetModerationData(ctx context.Context, filter ModerationFilter, page, pageSize int) (*ModerationData, error)
-	ApproveReview(ctx context.Context, id uuid.UUID) error
-	RejectReview(ctx context.Context, id uuid.UUID, reasons []string) error
-	BatchApproveReviews(ctx context.Context, ids []uuid.UUID) (successful, failed int)
-	BatchRejectReviews(ctx context.Context, ids []uuid.UUID, reasons []string) (successful, failed int)
+	ApproveReview(ctx context.Context, id uuid.UUID, moderatorID uuid.UUID) error
+	RejectReview(ctx context.Context, id uuid.UUID, reasons []string, moderatorID uuid.UUID) error
+	BatchApproveReviews(ctx context.Context, ids []uuid.UUID, moderatorID uuid.UUID) (successful, failed int)
+	BatchRejectReviews(ctx context.Context, ids []uuid.UUID, reasons []string, moderatorID uuid.UUID) (successful, failed int)
 }
 
 // PostgresModerationProvider fetches moderation data from PostgreSQL.
@@ -109,6 +147,9 @@ func (p *PostgresModerationProvider) GetModerationData(ctx context.Context, filt
 	}
 
 	if err := p.loadStats(ctx, &data.Stats); err != nil {
+		return nil, err
+	}
+	if err := p.loadSLAMetrics(ctx, &data.SLA); err != nil {
 		return nil, err
 	}
 	if err := p.loadBathhouses(ctx, &data.Bathhouses); err != nil {
@@ -154,6 +195,110 @@ func (p *PostgresModerationProvider) loadStats(ctx context.Context, stats *Moder
 	}
 
 	return nil
+}
+
+func (p *PostgresModerationProvider) loadSLAMetrics(ctx context.Context, sla *SLAMetrics) error {
+	now := time.Now()
+
+	// Queue size (same as PendingTotal, but kept separate for SLA context)
+	err := p.pool.QueryRow(ctx, "SELECT COUNT(*) FROM reviews WHERE status = 'pending'").Scan(&sla.QueueSize)
+	if err != nil {
+		p.log.Error("moderation: sla queue size", "error", err)
+		return err
+	}
+
+	// Average wait time for pending items
+	err = p.pool.QueryRow(ctx,
+		"SELECT COALESCE(EXTRACT(EPOCH FROM AVG(NOW() - created_at)) / 3600, 0) FROM reviews WHERE status = 'pending'",
+	).Scan(&sla.AvgWaitHours)
+	if err != nil {
+		p.log.Error("moderation: sla avg wait", "error", err)
+		return err
+	}
+	sla.AvgWaitHours = math.Round(sla.AvgWaitHours*10) / 10
+
+	// SLA compliance rate: % of items resolved within 48h (last 30 days)
+	thirtyDaysAgo := now.AddDate(0, 0, -30)
+	var totalModerated, withinSLA int64
+	err = p.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM reviews
+		 WHERE status IN ('approved', 'rejected')
+		 AND moderated_at IS NOT NULL
+		 AND moderated_at >= $1`, thirtyDaysAgo,
+	).Scan(&totalModerated)
+	if err != nil {
+		p.log.Error("moderation: sla total moderated", "error", err)
+		return err
+	}
+	sla.ModeratedLast30d = totalModerated
+
+	err = p.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM reviews
+		 WHERE status IN ('approved', 'rejected')
+		 AND moderated_at IS NOT NULL
+		 AND moderated_at >= $1
+		 AND EXTRACT(EPOCH FROM (moderated_at - created_at)) / 3600 <= 48`, thirtyDaysAgo,
+	).Scan(&withinSLA)
+	if err != nil {
+		p.log.Error("moderation: sla within sla", "error", err)
+		return err
+	}
+
+	if totalModerated > 0 {
+		sla.SLAComplianceRate = math.Round(float64(withinSLA)/float64(totalModerated)*1000) / 10
+	} else {
+		sla.SLAComplianceRate = 100.0
+	}
+
+	// Items pending > 24h (warning)
+	twentyFourHoursAgo := now.Add(-24 * time.Hour)
+	err = p.pool.QueryRow(ctx,
+		"SELECT COUNT(*) FROM reviews WHERE status = 'pending' AND created_at < $1", twentyFourHoursAgo,
+	).Scan(&sla.SLABreachCount)
+	if err != nil {
+		p.log.Error("moderation: sla breach count", "error", err)
+		return err
+	}
+
+	// Items pending > 48h (breached)
+	fortyEightHoursAgo := now.Add(-48 * time.Hour)
+	err = p.pool.QueryRow(ctx,
+		"SELECT COUNT(*) FROM reviews WHERE status = 'pending' AND created_at < $1", fortyEightHoursAgo,
+	).Scan(&sla.SLABreachedCount)
+	if err != nil {
+		p.log.Error("moderation: sla breached count", "error", err)
+		return err
+	}
+
+	// Per-moderator throughput (last 30 days)
+	rows, err := p.pool.Query(ctx,
+		`SELECT r.moderated_by, COALESCE(u.name, 'Неизвестно'),
+		        COUNT(*) FILTER (WHERE r.status = 'approved'),
+		        COUNT(*) FILTER (WHERE r.status = 'rejected'),
+		        COUNT(*),
+		        COALESCE(AVG(EXTRACT(EPOCH FROM (r.moderated_at - r.created_at)) / 3600), 0)
+		 FROM reviews r
+		 LEFT JOIN users u ON u.id = r.moderated_by
+		 WHERE r.moderated_by IS NOT NULL
+		 AND r.moderated_at >= $1
+		 GROUP BY r.moderated_by, u.name
+		 ORDER BY COUNT(*) DESC`, thirtyDaysAgo,
+	)
+	if err != nil {
+		p.log.Error("moderation: sla moderator stats", "error", err)
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var ms ModeratorThroughput
+		if err := rows.Scan(&ms.ModeratorID, &ms.ModeratorName, &ms.Approved, &ms.Rejected, &ms.Total, &ms.AvgTimeHours); err != nil {
+			return err
+		}
+		ms.AvgTimeHours = math.Round(ms.AvgTimeHours*10) / 10
+		sla.ModeratorStats = append(sla.ModeratorStats, ms)
+	}
+	return rows.Err()
 }
 
 func (p *PostgresModerationProvider) loadBathhouses(ctx context.Context, bathhouses *[]BathhouseOption) error {
@@ -288,8 +433,10 @@ func (p *PostgresModerationProvider) loadReviews(ctx context.Context, data *Mode
 	return rows.Err()
 }
 
-func (p *PostgresModerationProvider) ApproveReview(ctx context.Context, id uuid.UUID) error {
-	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'approved', updated_at = NOW() WHERE id = $1 AND status = 'pending'", id)
+func (p *PostgresModerationProvider) ApproveReview(ctx context.Context, id uuid.UUID, moderatorID uuid.UUID) error {
+	result, err := p.pool.Exec(ctx,
+		"UPDATE reviews SET status = 'approved', updated_at = NOW(), moderated_by = $2, moderated_at = NOW() WHERE id = $1 AND status = 'pending'",
+		id, moderatorID)
 	if err != nil {
 		p.log.Error("moderation: approve review", "error", err, "id", id)
 		return err
@@ -300,8 +447,10 @@ func (p *PostgresModerationProvider) ApproveReview(ctx context.Context, id uuid.
 	return nil
 }
 
-func (p *PostgresModerationProvider) RejectReview(ctx context.Context, id uuid.UUID, reasons []string) error {
-	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'rejected', rejection_reasons = $2, updated_at = NOW() WHERE id = $1 AND status = 'pending'", id, reasons)
+func (p *PostgresModerationProvider) RejectReview(ctx context.Context, id uuid.UUID, reasons []string, moderatorID uuid.UUID) error {
+	result, err := p.pool.Exec(ctx,
+		"UPDATE reviews SET status = 'rejected', rejection_reasons = $2, updated_at = NOW(), moderated_by = $3, moderated_at = NOW() WHERE id = $1 AND status = 'pending'",
+		id, reasons, moderatorID)
 	if err != nil {
 		p.log.Error("moderation: reject review", "error", err, "id", id)
 		return err
@@ -312,11 +461,13 @@ func (p *PostgresModerationProvider) RejectReview(ctx context.Context, id uuid.U
 	return nil
 }
 
-func (p *PostgresModerationProvider) BatchApproveReviews(ctx context.Context, ids []uuid.UUID) (successful, failed int) {
+func (p *PostgresModerationProvider) BatchApproveReviews(ctx context.Context, ids []uuid.UUID, moderatorID uuid.UUID) (successful, failed int) {
 	if len(ids) == 0 {
 		return 0, 0
 	}
-	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'approved', updated_at = NOW() WHERE id = ANY($1) AND status = 'pending'", ids)
+	result, err := p.pool.Exec(ctx,
+		"UPDATE reviews SET status = 'approved', updated_at = NOW(), moderated_by = $2, moderated_at = NOW() WHERE id = ANY($1) AND status = 'pending'",
+		ids, moderatorID)
 	if err != nil {
 		p.log.Error("moderation: batch approve", "error", err, "count", len(ids))
 		return 0, len(ids)
@@ -326,11 +477,13 @@ func (p *PostgresModerationProvider) BatchApproveReviews(ctx context.Context, id
 	return
 }
 
-func (p *PostgresModerationProvider) BatchRejectReviews(ctx context.Context, ids []uuid.UUID, reasons []string) (successful, failed int) {
+func (p *PostgresModerationProvider) BatchRejectReviews(ctx context.Context, ids []uuid.UUID, reasons []string, moderatorID uuid.UUID) (successful, failed int) {
 	if len(ids) == 0 {
 		return 0, 0
 	}
-	result, err := p.pool.Exec(ctx, "UPDATE reviews SET status = 'rejected', rejection_reasons = $2, updated_at = NOW() WHERE id = ANY($1) AND status = 'pending'", ids, reasons)
+	result, err := p.pool.Exec(ctx,
+		"UPDATE reviews SET status = 'rejected', rejection_reasons = $2, updated_at = NOW(), moderated_by = $3, moderated_at = NOW() WHERE id = ANY($1) AND status = 'pending'",
+		ids, reasons, moderatorID)
 	if err != nil {
 		p.log.Error("moderation: batch reject", "error", err, "count", len(ids))
 		return 0, len(ids)
@@ -432,7 +585,9 @@ func (h *ModerationHandler) HandleApprove(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := h.provider.ApproveReview(r.Context(), id); err != nil {
+	moderatorID := middleware.GetUserID(r.Context())
+
+	if err := h.provider.ApproveReview(r.Context(), id, moderatorID); err != nil {
 		writeJSON(w, http.StatusInternalServerError, actionResponse{Error: "failed to approve"})
 		return
 	}
@@ -468,7 +623,9 @@ func (h *ModerationHandler) HandleReject(w http.ResponseWriter, r *http.Request)
 		reasons = append(reasons, comment)
 	}
 
-	if err := h.provider.RejectReview(r.Context(), id, reasons); err != nil {
+	moderatorID := middleware.GetUserID(r.Context())
+
+	if err := h.provider.RejectReview(r.Context(), id, reasons, moderatorID); err != nil {
 		writeJSON(w, http.StatusInternalServerError, actionResponse{Error: "failed to reject"})
 		return
 	}
@@ -501,7 +658,9 @@ func (h *ModerationHandler) HandleBatchApprove(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	successful, failed := h.provider.BatchApproveReviews(r.Context(), ids)
+	moderatorID := middleware.GetUserID(r.Context())
+
+	successful, failed := h.provider.BatchApproveReviews(r.Context(), ids, moderatorID)
 	writeJSON(w, http.StatusOK, batchResponse{Success: true, Successful: successful, Failed: failed})
 }
 
@@ -540,7 +699,9 @@ func (h *ModerationHandler) HandleBatchReject(w http.ResponseWriter, r *http.Req
 		reasons = append(reasons, comment)
 	}
 
-	successful, failed := h.provider.BatchRejectReviews(r.Context(), ids, reasons)
+	moderatorID := middleware.GetUserID(r.Context())
+
+	successful, failed := h.provider.BatchRejectReviews(r.Context(), ids, reasons, moderatorID)
 	writeJSON(w, http.StatusOK, batchResponse{Success: true, Successful: successful, Failed: failed})
 }
 

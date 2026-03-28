@@ -208,12 +208,12 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/admin/pages/templates/moderation.tmpl`
 - Modify: `internal/repository/postgres/bathhouse_repo.go` (moderation queue stats)
 
-- [ ] Track moderation assignment (who moderates what, when assigned)
-- [ ] Calculate metrics: queue size, avg wait time, SLA compliance (48h), per-moderator throughput
-- [ ] Add metrics section to moderation admin page
-- [ ] Add alerts when SLA is being breached (items > 24h without review)
-- [ ] Write tests for SLA calculations
-- [ ] Run project test suite - must pass before task 11
+- [x] Track moderation assignment (who moderates what, when assigned)
+- [x] Calculate metrics: queue size, avg wait time, SLA compliance (48h), per-moderator throughput
+- [x] Add metrics section to moderation admin page
+- [x] Add alerts when SLA is being breached (items > 24h without review)
+- [x] Write tests for SLA calculations
+- [x] Run project test suite - must pass before task 11
 
 ### Task 11: Calendar Day & Month Views (FR-076)
 

@@ -36,18 +36,18 @@ func (m *mockModerationProvider) GetModerationData(_ context.Context, _ Moderati
 	return m.data, nil
 }
 
-func (m *mockModerationProvider) ApproveReview(_ context.Context, id uuid.UUID) error {
+func (m *mockModerationProvider) ApproveReview(_ context.Context, id uuid.UUID, _ uuid.UUID) error {
 	m.approvedIDs = append(m.approvedIDs, id)
 	return m.approveErr
 }
 
-func (m *mockModerationProvider) RejectReview(_ context.Context, id uuid.UUID, reasons []string) error {
+func (m *mockModerationProvider) RejectReview(_ context.Context, id uuid.UUID, reasons []string, _ uuid.UUID) error {
 	m.rejectedIDs = append(m.rejectedIDs, id)
 	m.rejectedReasons = reasons
 	return m.rejectErr
 }
 
-func (m *mockModerationProvider) BatchApproveReviews(_ context.Context, ids []uuid.UUID) (int, int) {
+func (m *mockModerationProvider) BatchApproveReviews(_ context.Context, ids []uuid.UUID, _ uuid.UUID) (int, int) {
 	m.approvedIDs = append(m.approvedIDs, ids...)
 	if m.batchApproveOK > 0 || m.batchApproveFail > 0 {
 		return m.batchApproveOK, m.batchApproveFail
@@ -55,7 +55,7 @@ func (m *mockModerationProvider) BatchApproveReviews(_ context.Context, ids []uu
 	return len(ids), 0
 }
 
-func (m *mockModerationProvider) BatchRejectReviews(_ context.Context, ids []uuid.UUID, reasons []string) (int, int) {
+func (m *mockModerationProvider) BatchRejectReviews(_ context.Context, ids []uuid.UUID, reasons []string, _ uuid.UUID) (int, int) {
 	m.rejectedIDs = append(m.rejectedIDs, ids...)
 	m.rejectedReasons = reasons
 	if m.batchRejectOK > 0 || m.batchRejectFail > 0 {
@@ -976,6 +976,245 @@ func TestModerationHandler_HandleBatchReject_EmptyIDs(t *testing.T) {
 
 	if rec.Code != http.StatusBadRequest {
 		t.Errorf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+}
+
+func TestModerationHandler_RendersSLAMetrics(t *testing.T) {
+	data := sampleModerationData()
+	data.SLA = SLAMetrics{
+		QueueSize:         15,
+		AvgWaitHours:      8.5,
+		SLAComplianceRate: 92.3,
+		SLABreachCount:    3,
+		SLABreachedCount:  1,
+		ModeratedLast30d:  120,
+		ModeratorStats: []ModeratorThroughput{
+			{
+				ModeratorID:   "mod-1",
+				ModeratorName: "Админ Иванов",
+				Approved:      50,
+				Rejected:      10,
+				Total:         60,
+				AvgTimeHours:  6.2,
+			},
+			{
+				ModeratorID:   "mod-2",
+				ModeratorName: "Модератор Петров",
+				Approved:      40,
+				Rejected:      20,
+				Total:         60,
+				AvgTimeHours:  12.1,
+			},
+		},
+	}
+	provider := &mockModerationProvider{data: data}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	checks := []string{
+		"sla-section",
+		"SLA модерации",
+		"92.3%",
+		"120",
+		"Очередь",
+		"Среднее ожидание",
+		"SLA (48ч)",
+		"Обработано за 30д",
+		"Нагрузка по модераторам",
+		"Админ Иванов",
+		"Модератор Петров",
+		"moderator-table",
+	}
+	for _, c := range checks {
+		if !strings.Contains(body, c) {
+			t.Errorf("body missing SLA element %q", c)
+		}
+	}
+}
+
+func TestModerationHandler_RendersSLAAlerts(t *testing.T) {
+	data := sampleModerationData()
+	data.SLA = SLAMetrics{
+		SLABreachCount:   5,
+		SLABreachedCount: 2,
+	}
+	provider := &mockModerationProvider{data: data}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	if !strings.Contains(body, "sla-alert-danger") {
+		t.Error("body missing SLA danger alert for breached items (>48h)")
+	}
+	if !strings.Contains(body, "sla-alert-warning") {
+		t.Error("body missing SLA warning alert for items >24h")
+	}
+	if !strings.Contains(body, "SLA нарушен") {
+		t.Error("body missing SLA breach text")
+	}
+	if !strings.Contains(body, "ожидают более 48 часов") {
+		t.Error("body missing 48h breach text")
+	}
+	if !strings.Contains(body, "ожидают более 24 часов") {
+		t.Error("body missing 24h warning text")
+	}
+}
+
+func TestModerationHandler_NoSLAAlerts_WhenZero(t *testing.T) {
+	data := sampleModerationData()
+	data.SLA = SLAMetrics{
+		SLABreachCount:   0,
+		SLABreachedCount: 0,
+	}
+	provider := &mockModerationProvider{data: data}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+
+	// Check for the alert div elements (not CSS class definitions in style block)
+	if strings.Contains(body, "SLA нарушен") {
+		t.Error("body should not contain SLA breach alert text when no items breached")
+	}
+	if strings.Contains(body, "ожидают более 24 часов") {
+		t.Error("body should not contain 24h warning text when no items > 24h")
+	}
+	if strings.Contains(body, "ожидают более 48 часов") {
+		t.Error("body should not contain 48h breach text when no items breached")
+	}
+}
+
+func TestModerationHandler_SLAColorCoding(t *testing.T) {
+	tests := []struct {
+		name       string
+		sla        SLAMetrics
+		wantClass  string
+		wantAbsent string
+	}{
+		{
+			name: "good compliance",
+			sla: SLAMetrics{
+				SLAComplianceRate: 97.0,
+				QueueSize:         0,
+				AvgWaitHours:      2.0,
+			},
+			wantClass: "sla-good",
+		},
+		{
+			name: "warning compliance",
+			sla: SLAMetrics{
+				SLAComplianceRate: 85.0,
+				QueueSize:         10,
+				AvgWaitHours:      20.0,
+			},
+			wantClass: "sla-warning",
+		},
+		{
+			name: "danger queue",
+			sla: SLAMetrics{
+				SLAComplianceRate: 70.0,
+				QueueSize:         25,
+				AvgWaitHours:      30.0,
+			},
+			wantClass: "sla-danger",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data := sampleModerationData()
+			data.SLA = tt.sla
+			provider := &mockModerationProvider{data: data}
+			handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+			handler.ServeHTTP(rec, req)
+
+			body := rec.Body.String()
+			if !strings.Contains(body, tt.wantClass) {
+				t.Errorf("body missing expected SLA color class %q", tt.wantClass)
+			}
+		})
+	}
+}
+
+func TestModerationHandler_NoModeratorTable_WhenEmpty(t *testing.T) {
+	data := sampleModerationData()
+	data.SLA = SLAMetrics{}
+	provider := &mockModerationProvider{data: data}
+	handler := NewModerationHandler(provider, testLogger(), "/admin-panel/pages", "/admin-panel")
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/moderation", nil)
+	handler.ServeHTTP(rec, req)
+
+	body := rec.Body.String()
+	// The CSS class .moderator-table is in the <style> block always, but the <table> element should not appear
+	if strings.Contains(body, "<table class=\"moderator-table\"") {
+		t.Error("body should not contain moderator table element when no moderator stats")
+	}
+	if strings.Contains(body, "Нагрузка по модераторам") {
+		t.Error("body should not contain moderator stats heading when no data")
+	}
+}
+
+func TestFormatDuration(t *testing.T) {
+	fn := moderationFuncMap["formatDuration"].(func(float64) string)
+
+	tests := []struct {
+		hours float64
+		want  string
+	}{
+		{0.5, "30 мин"},
+		{0.0, "0 мин"},
+		{1.0, "1 ч"},
+		{2.5, "2 ч 30 мин"},
+		{24.0, "24 ч"},
+		{48.75, "48 ч 45 мин"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.want, func(t *testing.T) {
+			got := fn(tt.hours)
+			if got != tt.want {
+				t.Errorf("formatDuration(%v) = %q, want %q", tt.hours, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFormatPercent(t *testing.T) {
+	fn := moderationFuncMap["formatPercent"].(func(float64) string)
+
+	tests := []struct {
+		val  float64
+		want string
+	}{
+		{100.0, "100.0"},
+		{92.3, "92.3"},
+		{0.0, "0.0"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.want, func(t *testing.T) {
+			got := fn(tt.val)
+			if got != tt.want {
+				t.Errorf("formatPercent(%v) = %q, want %q", tt.val, got, tt.want)
+			}
+		})
 	}
 }
 

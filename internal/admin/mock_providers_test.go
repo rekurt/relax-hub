@@ -22,14 +22,16 @@ func (m *mockModProvider) GetModerationData(_ context.Context, _ pages.Moderatio
 	return &pages.ModerationData{Page: 1, PageSize: 20, TotalPages: 1}, nil
 }
 
-func (m *mockModProvider) ApproveReview(_ context.Context, _ uuid.UUID) error   { return nil }
-func (m *mockModProvider) RejectReview(_ context.Context, _ uuid.UUID, _ []string) error {
+func (m *mockModProvider) ApproveReview(_ context.Context, _ uuid.UUID, _ uuid.UUID) error {
 	return nil
 }
-func (m *mockModProvider) BatchApproveReviews(_ context.Context, _ []uuid.UUID) (int, int) {
+func (m *mockModProvider) RejectReview(_ context.Context, _ uuid.UUID, _ []string, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockModProvider) BatchApproveReviews(_ context.Context, _ []uuid.UUID, _ uuid.UUID) (int, int) {
 	return 0, 0
 }
-func (m *mockModProvider) BatchRejectReviews(_ context.Context, _ []uuid.UUID, _ []string) (int, int) {
+func (m *mockModProvider) BatchRejectReviews(_ context.Context, _ []uuid.UUID, _ []string, _ uuid.UUID) (int, int) {
 	return 0, 0
 }
 

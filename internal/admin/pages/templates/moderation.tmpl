@@ -82,6 +82,27 @@
     .review-card:focus { outline: 2px solid #3498db; outline-offset: 2px; }
     .review-card.focused { outline: 2px solid #3498db; outline-offset: 2px; }
 
+    /* SLA Section */
+    .sla-section { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 24px; }
+    .sla-section h2 { font-size: 18px; margin-bottom: 16px; color: #333; }
+    .sla-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 16px; }
+    .sla-metric { text-align: center; padding: 12px; background: #f8f9fa; border-radius: 6px; }
+    .sla-metric .metric-value { font-size: 28px; font-weight: 700; }
+    .sla-metric .metric-label { font-size: 12px; color: #888; margin-top: 4px; }
+    .sla-metric .metric-value.sla-good { color: #27ae60; }
+    .sla-metric .metric-value.sla-warning { color: #f39c12; }
+    .sla-metric .metric-value.sla-danger { color: #e74c3c; }
+
+    .sla-alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .sla-alert-warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404; }
+    .sla-alert-danger { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    .sla-alert .alert-icon { font-size: 18px; }
+
+    .moderator-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+    .moderator-table th { background: #f8f9fa; padding: 10px 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #555; }
+    .moderator-table td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+    .moderator-table tr:hover { background: #f8f9fa; }
+
     /* Keyboard shortcuts help */
     .shortcuts-help {
         position: fixed;
@@ -173,6 +194,69 @@
         <div class="stat-value {{if gt .Stats.PendingWeek 0}}warn{{else}}ok{{end}}" id="stat-pending-week">{{.Stats.PendingWeek}}</div>
         <div class="stat-label">Ожидают за неделю</div>
     </div>
+</div>
+
+<!-- SLA Metrics -->
+<div class="sla-section" id="sla-section">
+    <h2>SLA модерации</h2>
+
+    {{if gt .SLA.SLABreachedCount 0}}
+    <div class="sla-alert sla-alert-danger">
+        <span class="alert-icon">&#9888;</span>
+        <span><strong>SLA нарушен:</strong> {{.SLA.SLABreachedCount}} отзыв(ов) ожидают более 48 часов</span>
+    </div>
+    {{end}}
+    {{if gt .SLA.SLABreachCount 0}}
+    <div class="sla-alert sla-alert-warning">
+        <span class="alert-icon">&#9888;</span>
+        <span><strong>Внимание:</strong> {{.SLA.SLABreachCount}} отзыв(ов) ожидают более 24 часов</span>
+    </div>
+    {{end}}
+
+    <div class="sla-metrics">
+        <div class="sla-metric">
+            <div class="metric-value {{if eq .SLA.QueueSize 0}}sla-good{{else if gt .SLA.QueueSize 20}}sla-danger{{else}}sla-warning{{end}}">{{.SLA.QueueSize}}</div>
+            <div class="metric-label">Очередь</div>
+        </div>
+        <div class="sla-metric">
+            <div class="metric-value {{if le .SLA.AvgWaitHours 12.0}}sla-good{{else if le .SLA.AvgWaitHours 24.0}}sla-warning{{else}}sla-danger{{end}}">{{formatDuration .SLA.AvgWaitHours}}</div>
+            <div class="metric-label">Среднее ожидание</div>
+        </div>
+        <div class="sla-metric">
+            <div class="metric-value {{if ge .SLA.SLAComplianceRate 95.0}}sla-good{{else if ge .SLA.SLAComplianceRate 80.0}}sla-warning{{else}}sla-danger{{end}}">{{formatPercent .SLA.SLAComplianceRate}}%</div>
+            <div class="metric-label">SLA (48ч)</div>
+        </div>
+        <div class="sla-metric">
+            <div class="metric-value">{{.SLA.ModeratedLast30d}}</div>
+            <div class="metric-label">Обработано за 30д</div>
+        </div>
+    </div>
+
+    {{if .SLA.ModeratorStats}}
+    <h3 style="font-size:15px;margin-bottom:8px;color:#555;">Нагрузка по модераторам (30 дней)</h3>
+    <table class="moderator-table">
+        <thead>
+            <tr>
+                <th>Модератор</th>
+                <th>Одобрено</th>
+                <th>Отклонено</th>
+                <th>Всего</th>
+                <th>Ср. время</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .SLA.ModeratorStats}}
+            <tr>
+                <td>{{.ModeratorName}}</td>
+                <td>{{.Approved}}</td>
+                <td>{{.Rejected}}</td>
+                <td>{{.Total}}</td>
+                <td>{{formatDuration .AvgTimeHours}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{end}}
 </div>
 
 <!-- Filters -->
