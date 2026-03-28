@@ -135,13 +135,13 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: migration for seasonal_tariffs table
 - Modify: `frontend/src/pages/pricing/PricingRules.tsx` (seasonal tariff UI)
 
-- [ ] Create seasonal_tariffs model (bathhouse_id, date_from, date_to, multiplier, name)
-- [ ] Add repository and service CRUD
-- [ ] Integrate into price calculation pipeline (after base price, before other adjustments)
-- [ ] Add API endpoints for managing seasonal tariffs
-- [ ] Frontend: add seasonal tariff management in PricingRules page
-- [ ] Write tests for seasonal pricing with overlapping ranges
-- [ ] Run project test suite - must pass before next task
+- [x] Create seasonal_tariffs model (bathhouse_id, date_from, date_to, multiplier, name)
+- [x] Add repository and service CRUD
+- [x] Integrate into price calculation pipeline (after base price, before other adjustments)
+- [x] Add API endpoints for managing seasonal tariffs
+- [x] Frontend: add seasonal tariff management in PricingRules page
+- [x] Write tests for seasonal pricing with overlapping ranges
+- [x] Run project test suite - must pass before next task
 
 ### Task 5: Bidirectional reviews - owner rates client (FR-130, FR-131)
 

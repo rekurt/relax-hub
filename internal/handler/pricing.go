@@ -12,6 +12,8 @@ import (
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
+const dateFormat = "2006-01-02"
+
 type PricingHandler struct {
 	pricingService   service.PricingService
 	bathhouseService service.BathhouseService
@@ -63,6 +65,40 @@ type priceCalculatorResponse struct {
 	PriceSaving int64 `json:"price_saving,omitempty"`
 }
 
+type seasonalTariffResponse struct {
+	ID          string  `json:"id"`
+	BathhouseID string  `json:"bathhouse_id"`
+	Name        string  `json:"name"`
+	DateFrom    string  `json:"date_from"`
+	DateTo      string  `json:"date_to"`
+	Multiplier  float64 `json:"multiplier"`
+	IsActive    bool    `json:"is_active"`
+	CreatedAt   string  `json:"created_at"`
+	UpdatedAt   string  `json:"updated_at"`
+}
+
+type seasonalTariffRequest struct {
+	Name       string  `json:"name"`
+	DateFrom   string  `json:"date_from"`
+	DateTo     string  `json:"date_to"`
+	Multiplier float64 `json:"multiplier"`
+	IsActive   bool    `json:"is_active"`
+}
+
+func toSeasonalTariffResponse(t *domain.SeasonalTariff) seasonalTariffResponse {
+	return seasonalTariffResponse{
+		ID:          t.ID.String(),
+		BathhouseID: t.BathhouseID.String(),
+		Name:        t.Name,
+		DateFrom:    t.DateFrom.Format("2006-01-02"),
+		DateTo:      t.DateTo.Format("2006-01-02"),
+		Multiplier:  t.Multiplier,
+		IsActive:    t.IsActive,
+		CreatedAt:   t.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   t.UpdatedAt.Format(time.RFC3339),
+	}
+}
+
 func toPricingRuleResponse(r *domain.PricingRule) pricingRuleResponse {
 	return pricingRuleResponse{
 		ID:          r.ID.String(),
@@ -82,19 +118,20 @@ func toPricingRuleResponse(r *domain.PricingRule) pricingRuleResponse {
 }
 
 // CreateRule godoc
-// @Summary      Create pricing rule
-// @Description  Creates a new dynamic pricing rule for a bathhouse. Owner or representative only.
-// @Tags         pricing
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string              true  "Bathhouse ID (UUID)"
-// @Param        body  body      pricingRuleRequest  true  "Pricing rule data"
-// @Success      201   {object}  APIResponse{data=pricingRuleResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Router       /my/bathhouses/{id}/pricing-rules [post]
+//
+//	@Summary		Create pricing rule
+//	@Description	Creates a new dynamic pricing rule for a bathhouse. Owner or representative only.
+//	@Tags			pricing
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Bathhouse ID (UUID)"
+//	@Param			body	body		pricingRuleRequest	true	"Pricing rule data"
+//	@Success		201		{object}	APIResponse{data=pricingRuleResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/pricing-rules [post]
 func (h *PricingHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -143,17 +180,18 @@ func (h *PricingHandler) CreateRule(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListRules godoc
-// @Summary      List pricing rules
-// @Description  Returns all pricing rules for a bathhouse. Owner or representative only.
-// @Tags         pricing
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Bathhouse ID (UUID)"
-// @Success      200  {object}  APIResponse{data=[]pricingRuleResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /my/bathhouses/{id}/pricing-rules [get]
+//
+//	@Summary		List pricing rules
+//	@Description	Returns all pricing rules for a bathhouse. Owner or representative only.
+//	@Tags			pricing
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Bathhouse ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=[]pricingRuleResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/pricing-rules [get]
 func (h *PricingHandler) ListRules(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -176,20 +214,21 @@ func (h *PricingHandler) ListRules(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateRule godoc
-// @Summary      Update pricing rule
-// @Description  Updates an existing pricing rule. Owner or representative only.
-// @Tags         pricing
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string              true  "Rule ID (UUID)"
-// @Param        body  body      pricingRuleRequest  true  "Updated rule data"
-// @Success      200   {object}  APIResponse
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /pricing-rules/{id} [put]
+//
+//	@Summary		Update pricing rule
+//	@Description	Updates an existing pricing rule. Owner or representative only.
+//	@Tags			pricing
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Rule ID (UUID)"
+//	@Param			body	body		pricingRuleRequest	true	"Updated rule data"
+//	@Success		200		{object}	APIResponse
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/pricing-rules/{id} [put]
 func (h *PricingHandler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 	ruleID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -214,17 +253,17 @@ func (h *PricingHandler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 	userRole := middleware.GetUserRole(r.Context())
 
 	rule := &domain.PricingRule{
-		ID:          ruleID,
-		Name:        req.Name,
-		Type:        ruleType,
-		Multiplier:  req.Multiplier,
-		DaysOfWeek:  req.DaysOfWeek,
-		TimeFrom:    req.TimeFrom,
-		TimeTo:      req.TimeTo,
-		DateFrom:    req.DateFrom,
-		DateTo:      req.DateTo,
-		Priority:    req.Priority,
-		IsActive:    req.IsActive,
+		ID:         ruleID,
+		Name:       req.Name,
+		Type:       ruleType,
+		Multiplier: req.Multiplier,
+		DaysOfWeek: req.DaysOfWeek,
+		TimeFrom:   req.TimeFrom,
+		TimeTo:     req.TimeTo,
+		DateFrom:   req.DateFrom,
+		DateTo:     req.DateTo,
+		Priority:   req.Priority,
+		IsActive:   req.IsActive,
 	}
 
 	if err := h.pricingService.UpdateRule(r.Context(), userID, userRole, rule); err != nil {
@@ -236,18 +275,19 @@ func (h *PricingHandler) UpdateRule(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteRule godoc
-// @Summary      Delete pricing rule
-// @Description  Deletes a pricing rule. Owner or representative only.
-// @Tags         pricing
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Rule ID (UUID)"
-// @Success      200  {object}  APIResponse
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /pricing-rules/{id} [delete]
+//
+//	@Summary		Delete pricing rule
+//	@Description	Deletes a pricing rule. Owner or representative only.
+//	@Tags			pricing
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Rule ID (UUID)"
+//	@Success		200	{object}	APIResponse
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/pricing-rules/{id} [delete]
 func (h *PricingHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 	ruleID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -267,17 +307,18 @@ func (h *PricingHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 }
 
 // CalculatePrice godoc
-// @Summary      Calculate price
-// @Description  Calculates the price for a bathhouse booking with dynamic pricing rules applied. Public endpoint.
-// @Tags         pricing
-// @Produce      json
-// @Param        id     path      string  true  "Bathhouse ID (UUID)"
-// @Param        start  query     string  true  "Start time (RFC3339)"
-// @Param        end    query     string  true  "End time (RFC3339)"
-// @Success      200    {object}  APIResponse{data=priceCalculatorResponse}
-// @Failure      400    {object}  APIResponse{error=APIError}
-// @Failure      404    {object}  APIResponse{error=APIError}
-// @Router       /bathhouses/{id}/price-calculator [get]
+//
+//	@Summary		Calculate price
+//	@Description	Calculates the price for a bathhouse booking with dynamic pricing rules applied. Public endpoint.
+//	@Tags			pricing
+//	@Produce		json
+//	@Param			id		path		string	true	"Bathhouse ID (UUID)"
+//	@Param			start	query		string	true	"Start time (RFC3339)"
+//	@Param			end		query		string	true	"End time (RFC3339)"
+//	@Success		200		{object}	APIResponse{data=priceCalculatorResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/bathhouses/{id}/price-calculator [get]
 func (h *PricingHandler) CalculatePrice(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -352,4 +393,190 @@ func (h *PricingHandler) CalculatePrice(w http.ResponseWriter, r *http.Request) 
 	}
 
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// CreateSeasonalTariff godoc
+//
+//	@Summary		Create seasonal tariff
+//	@Description	Creates a new seasonal tariff for a bathhouse. Owner or representative only.
+//	@Tags			pricing
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Bathhouse ID (UUID)"
+//	@Param			body	body		seasonalTariffRequest	true	"Seasonal tariff data"
+//	@Success		201		{object}	APIResponse{data=seasonalTariffResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/seasonal-tariffs [post]
+func (h *PricingHandler) CreateSeasonalTariff(w http.ResponseWriter, r *http.Request) {
+	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	var req seasonalTariffRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	dateFrom, err := time.Parse(dateFormat, req.DateFrom)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid date_from format (use YYYY-MM-DD)")
+		return
+	}
+	dateTo, err := time.Parse(dateFormat, req.DateTo)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid date_to format (use YYYY-MM-DD)")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
+
+	tariff := &domain.SeasonalTariff{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        req.Name,
+		DateFrom:    dateFrom,
+		DateTo:      dateTo,
+		Multiplier:  req.Multiplier,
+		IsActive:    req.IsActive,
+	}
+
+	created, err := h.pricingService.CreateSeasonalTariff(r.Context(), userID, userRole, tariff)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, toSeasonalTariffResponse(created))
+}
+
+// ListSeasonalTariffs godoc
+//
+//	@Summary		List seasonal tariffs
+//	@Description	Returns all seasonal tariffs for a bathhouse. Owner or representative only.
+//	@Tags			pricing
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Bathhouse ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=[]seasonalTariffResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/seasonal-tariffs [get]
+func (h *PricingHandler) ListSeasonalTariffs(w http.ResponseWriter, r *http.Request) {
+	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	tariffs, err := h.pricingService.ListSeasonalTariffs(r.Context(), bathhouseID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	responses := make([]seasonalTariffResponse, len(tariffs))
+	for i := range tariffs {
+		responses[i] = toSeasonalTariffResponse(&tariffs[i])
+	}
+
+	writeJSON(w, http.StatusOK, responses)
+}
+
+// UpdateSeasonalTariff godoc
+//
+//	@Summary		Update seasonal tariff
+//	@Description	Updates an existing seasonal tariff. Owner or representative only.
+//	@Tags			pricing
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Tariff ID (UUID)"
+//	@Param			body	body		seasonalTariffRequest	true	"Updated tariff data"
+//	@Success		200		{object}	APIResponse
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/seasonal-tariffs/{id} [put]
+func (h *PricingHandler) UpdateSeasonalTariff(w http.ResponseWriter, r *http.Request) {
+	tariffID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid tariff id")
+		return
+	}
+
+	var req seasonalTariffRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	dateFrom, err := time.Parse(dateFormat, req.DateFrom)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid date_from format (use YYYY-MM-DD)")
+		return
+	}
+	dateTo, err := time.Parse(dateFormat, req.DateTo)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid date_to format (use YYYY-MM-DD)")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
+
+	tariff := &domain.SeasonalTariff{
+		ID:         tariffID,
+		Name:       req.Name,
+		DateFrom:   dateFrom,
+		DateTo:     dateTo,
+		Multiplier: req.Multiplier,
+		IsActive:   req.IsActive,
+	}
+
+	if err := h.pricingService.UpdateSeasonalTariff(r.Context(), userID, userRole, tariff); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "tariff updated"})
+}
+
+// DeleteSeasonalTariff godoc
+//
+//	@Summary		Delete seasonal tariff
+//	@Description	Deletes a seasonal tariff. Owner or representative only.
+//	@Tags			pricing
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Tariff ID (UUID)"
+//	@Success		200	{object}	APIResponse
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/seasonal-tariffs/{id} [delete]
+func (h *PricingHandler) DeleteSeasonalTariff(w http.ResponseWriter, r *http.Request) {
+	tariffID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid tariff id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
+
+	if err := h.pricingService.DeleteSeasonalTariff(r.Context(), userID, userRole, tariffID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "tariff deleted"})
 }

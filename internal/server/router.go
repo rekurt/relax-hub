@@ -306,6 +306,12 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/pricing-rules/{id}", p.PricingHandler.UpdateRule)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/pricing-rules/{id}", p.PricingHandler.DeleteRule)
 
+		// Seasonal tariffs (authenticated owner)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/seasonal-tariffs", p.PricingHandler.CreateSeasonalTariff)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/seasonal-tariffs", p.PricingHandler.ListSeasonalTariffs)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/seasonal-tariffs/{id}", p.PricingHandler.UpdateSeasonalTariff)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/seasonal-tariffs/{id}", p.PricingHandler.DeleteSeasonalTariff)
+
 		// Holiday multiplier (authenticated owner)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/bathhouses/{id}/holiday-multiplier", p.HolidayHandler.SetBathhouseMultiplier)
 

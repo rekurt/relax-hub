@@ -74,6 +74,22 @@ func (m *mockPricingService) GetActiveRules(ctx context.Context, bathhouseID uui
 	return nil, nil
 }
 
+func (m *mockPricingService) CreateSeasonalTariff(_ context.Context, _ uuid.UUID, _ domain.UserRole, tariff *domain.SeasonalTariff) (*domain.SeasonalTariff, error) {
+	return tariff, nil
+}
+
+func (m *mockPricingService) UpdateSeasonalTariff(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ *domain.SeasonalTariff) error {
+	return nil
+}
+
+func (m *mockPricingService) DeleteSeasonalTariff(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
+	return nil
+}
+
+func (m *mockPricingService) ListSeasonalTariffs(_ context.Context, _ uuid.UUID) ([]domain.SeasonalTariff, error) {
+	return nil, nil
+}
+
 func TestPricingHandler_CreateRule(t *testing.T) {
 	userID := uuid.New()
 	bathhouseID := uuid.New()

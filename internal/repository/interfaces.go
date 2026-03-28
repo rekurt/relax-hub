@@ -474,6 +474,15 @@ type HolidayRepository interface {
 	SetBathhouseMultiplier(ctx context.Context, bathhouseID uuid.UUID, multiplier float64) error
 }
 
+type SeasonalTariffRepository interface {
+	Create(ctx context.Context, tariff *domain.SeasonalTariff) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.SeasonalTariff, error)
+	Update(ctx context.Context, tariff *domain.SeasonalTariff) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.SeasonalTariff, error)
+	GetActiveTariffs(ctx context.Context, bathhouseID uuid.UUID, date time.Time) ([]domain.SeasonalTariff, error)
+}
+
 type GuestCardRepository interface {
 	Upsert(ctx context.Context, card *domain.GuestCard) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.GuestCard, error)

@@ -58,5 +58,6 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewPlatformSettingsRepository, fx.As(new(repository.PlatformSettingsRepository))),
 		fx.Annotate(NewFeatureFlagRepository, fx.As(new(repository.FeatureFlagRepository))),
 		fx.Annotate(NewForceMajeureRepository, fx.As(new(repository.ForceMajeureRepository))),
+		fx.Annotate(NewSeasonalTariffRepository, fx.As(new(repository.SeasonalTariffRepository))),
 	),
 )

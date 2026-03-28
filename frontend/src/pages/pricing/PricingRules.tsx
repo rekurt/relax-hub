@@ -2,7 +2,9 @@ import { useState } from 'react'
 import {
   App,
   Button,
+  Card,
   DatePicker,
+  Divider,
   Form,
   Input,
   InputNumber,
@@ -30,8 +32,9 @@ import {
 } from '@/api/generated/pricing/pricing'
 import type { InternalHandlerPricingRuleResponse } from '@/api/generated/model'
 import { useBathhouseStore } from '@/stores/bathhouse'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query'
 import { formatDayOfWeek } from '@/lib/format'
+import { axiosInstance } from '@/api/axios-instance'
 
 const { Title } = Typography
 
@@ -73,15 +76,38 @@ interface RuleFormValues {
   date_range?: [dayjs.Dayjs, dayjs.Dayjs]
 }
 
+interface SeasonalTariff {
+  id: string
+  bathhouse_id: string
+  name: string
+  date_from: string
+  date_to: string
+  multiplier: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+interface TariffFormValues {
+  name: string
+  date_range: [dayjs.Dayjs, dayjs.Dayjs]
+  multiplier: number
+  is_active: boolean
+}
+
 export default function PricingRules() {
   const selectedBathhouseId = useBathhouseStore((s) => s.selectedBathhouseId)
   const queryClient = useQueryClient()
   const { message } = App.useApp()
   const [form] = Form.useForm<RuleFormValues>()
+  const [tariffForm] = Form.useForm<TariffFormValues>()
 
   const [modalOpen, setModalOpen] = useState(false)
   const [editingRule, setEditingRule] = useState<InternalHandlerPricingRuleResponse | null>(null)
+  const [tariffModalOpen, setTariffModalOpen] = useState(false)
+  const [editingTariff, setEditingTariff] = useState<SeasonalTariff | null>(null)
 
+  // --- Pricing Rules ---
   const { data, isLoading } = useGetMyBathhousesIdPricingRules(selectedBathhouseId ?? '', {
     query: { enabled: !!selectedBathhouseId },
   })
@@ -297,6 +323,177 @@ export default function PricingRules() {
     },
   ]
 
+  // --- Seasonal Tariffs ---
+  const tariffQueryKey = ['seasonal-tariffs', selectedBathhouseId]
+
+  const { data: tariffsData, isLoading: tariffsLoading } = useQuery({
+    queryKey: tariffQueryKey,
+    queryFn: async () => {
+      const res = await axiosInstance.get<{ success: boolean; data: SeasonalTariff[] }>(
+        `/my/bathhouses/${selectedBathhouseId}/seasonal-tariffs`,
+      )
+      return res.data.data ?? []
+    },
+    enabled: !!selectedBathhouseId,
+  })
+
+  const tariffs = tariffsData ?? []
+
+  const invalidateTariffs = () => {
+    queryClient.invalidateQueries({ queryKey: tariffQueryKey })
+  }
+
+  const createTariffMutation = useMutation({
+    mutationFn: async (data: { name: string; date_from: string; date_to: string; multiplier: number; is_active: boolean }) => {
+      return axiosInstance.post(`/my/bathhouses/${selectedBathhouseId}/seasonal-tariffs`, data)
+    },
+    onSuccess: () => {
+      message.success('Сезонный тариф создан')
+      setTariffModalOpen(false)
+      tariffForm.resetFields()
+      invalidateTariffs()
+    },
+    onError: () => message.error('Не удалось создать тариф'),
+  })
+
+  const updateTariffMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { name: string; date_from: string; date_to: string; multiplier: number; is_active: boolean } }) => {
+      return axiosInstance.put(`/seasonal-tariffs/${id}`, data)
+    },
+    onSuccess: () => {
+      message.success('Сезонный тариф обновлён')
+      setTariffModalOpen(false)
+      setEditingTariff(null)
+      tariffForm.resetFields()
+      invalidateTariffs()
+    },
+    onError: () => message.error('Не удалось обновить тариф'),
+  })
+
+  const deleteTariffMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return axiosInstance.delete(`/seasonal-tariffs/${id}`)
+    },
+    onSuccess: () => {
+      message.success('Сезонный тариф удалён')
+      invalidateTariffs()
+    },
+    onError: () => message.error('Не удалось удалить тариф'),
+  })
+
+  const handleOpenCreateTariff = () => {
+    setEditingTariff(null)
+    tariffForm.resetFields()
+    tariffForm.setFieldsValue({ is_active: true, multiplier: 1.0 })
+    setTariffModalOpen(true)
+  }
+
+  const handleOpenEditTariff = (tariff: SeasonalTariff) => {
+    setEditingTariff(tariff)
+    tariffForm.setFieldsValue({
+      name: tariff.name,
+      date_range: [dayjs(tariff.date_from), dayjs(tariff.date_to)],
+      multiplier: tariff.multiplier,
+      is_active: tariff.is_active,
+    })
+    setTariffModalOpen(true)
+  }
+
+  const handleTariffSubmit = (values: TariffFormValues) => {
+    const payload = {
+      name: values.name,
+      date_from: values.date_range[0].format('YYYY-MM-DD'),
+      date_to: values.date_range[1].format('YYYY-MM-DD'),
+      multiplier: values.multiplier,
+      is_active: values.is_active,
+    }
+
+    if (editingTariff) {
+      updateTariffMutation.mutate({ id: editingTariff.id, data: payload })
+    } else {
+      createTariffMutation.mutate(payload)
+    }
+  }
+
+  const handleToggleTariffActive = (tariff: SeasonalTariff) => {
+    updateTariffMutation.mutate({
+      id: tariff.id,
+      data: {
+        name: tariff.name,
+        date_from: tariff.date_from,
+        date_to: tariff.date_to,
+        multiplier: tariff.multiplier,
+        is_active: !tariff.is_active,
+      },
+    })
+  }
+
+  const tariffColumns = [
+    {
+      title: 'Название',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: 'Период',
+      key: 'period',
+      render: (_: unknown, record: SeasonalTariff) =>
+        `${dayjs(record.date_from).format('DD.MM.YYYY')} – ${dayjs(record.date_to).format('DD.MM.YYYY')}`,
+    },
+    {
+      title: 'Множитель',
+      dataIndex: 'multiplier',
+      key: 'multiplier',
+      width: 120,
+      render: (val: number) => {
+        const isDiscount = val < 1
+        const percent = Math.round(Math.abs(val - 1) * 100)
+        return (
+          <span style={{ color: isDiscount ? '#52c41a' : val > 1 ? '#f5222d' : undefined }}>
+            x{val} {percent > 0 && `(${isDiscount ? '-' : '+'}${percent}%)`}
+          </span>
+        )
+      },
+    },
+    {
+      title: 'Активно',
+      dataIndex: 'is_active',
+      key: 'is_active',
+      width: 90,
+      render: (active: boolean, record: SeasonalTariff) => (
+        <Switch
+          checked={active}
+          onChange={() => handleToggleTariffActive(record)}
+          size="small"
+        />
+      ),
+    },
+    {
+      title: 'Действия',
+      key: 'actions',
+      width: 100,
+      render: (_: unknown, record: SeasonalTariff) => (
+        <Space>
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => handleOpenEditTariff(record)}
+            size="small"
+          />
+          <Popconfirm
+            title="Удалить тариф?"
+            description="Это действие нельзя отменить"
+            onConfirm={() => deleteTariffMutation.mutate(record.id)}
+            okText="Удалить"
+            cancelText="Отмена"
+          >
+            <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ]
+
   if (!selectedBathhouseId) {
     return (
       <div>
@@ -326,6 +523,31 @@ export default function PricingRules() {
         pagination={false}
       />
 
+      <Divider />
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={4} style={{ margin: 0 }}>Сезонные тарифы</Title>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreateTariff}>
+          Добавить тариф
+        </Button>
+      </div>
+
+      <Card size="small" styles={{ body: { padding: 0 } }}>
+        <Table
+          dataSource={tariffs}
+          columns={tariffColumns}
+          rowKey="id"
+          loading={tariffsLoading}
+          locale={{ emptyText: 'Нет сезонных тарифов' }}
+          pagination={false}
+          size="small"
+        />
+      </Card>
+      <Typography.Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
+        Сезонные тарифы умножают базовую цену на период дат. При пересечении нескольких тарифов применяется наибольший множитель.
+      </Typography.Text>
+
+      {/* Pricing Rule Modal */}
       <Modal
         title={editingRule ? 'Редактировать правило' : 'Новое правило'}
         open={modalOpen}
@@ -427,6 +649,62 @@ export default function PricingRules() {
                 {editingRule ? 'Сохранить' : 'Создать'}
               </Button>
               <Button onClick={() => { setModalOpen(false); setEditingRule(null) }}>
+                Отмена
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Seasonal Tariff Modal */}
+      <Modal
+        title={editingTariff ? 'Редактировать сезонный тариф' : 'Новый сезонный тариф'}
+        open={tariffModalOpen}
+        onCancel={() => { setTariffModalOpen(false); setEditingTariff(null) }}
+        footer={null}
+        destroyOnClose
+      >
+        <Form
+          form={tariffForm}
+          layout="vertical"
+          onFinish={handleTariffSubmit}
+          initialValues={{ is_active: true, multiplier: 1.0 }}
+        >
+          <Form.Item name="name" label="Название" rules={[{ required: true, message: 'Укажите название' }]}>
+            <Input placeholder="Например: Летний сезон, Новогодние каникулы" />
+          </Form.Item>
+
+          <Form.Item
+            name="date_range"
+            label="Период действия"
+            rules={[{ required: true, message: 'Укажите период' }]}
+          >
+            <DatePicker.RangePicker style={{ width: '100%' }} format="DD.MM.YYYY" />
+          </Form.Item>
+
+          <Form.Item
+            name="multiplier"
+            label="Множитель цены"
+            rules={[{ required: true, message: 'Укажите множитель' }]}
+            extra="1.0 = без изменений, 1.3 = +30%, 0.8 = -20%. Макс: 10.0"
+          >
+            <InputNumber min={0.01} max={10.0} step={0.1} style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item name="is_active" label="Активно" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+
+          <Form.Item>
+            <Space>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={createTariffMutation.isPending || updateTariffMutation.isPending}
+              >
+                {editingTariff ? 'Сохранить' : 'Создать'}
+              </Button>
+              <Button onClick={() => { setTariffModalOpen(false); setEditingTariff(null) }}>
                 Отмена
               </Button>
             </Space>

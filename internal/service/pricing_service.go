@@ -26,12 +26,15 @@ type PriceCalculationInput struct {
 }
 
 type PriceBreakdown struct {
-	BasePrice           int64   // price after dynamic rules (before discount/surcharge)
-	LongSessionDiscount int64   // discount amount (positive value)
-	ExtraGuestSurcharge int64   // surcharge amount
-	IsHolidayPrice      bool    // whether holiday pricing was applied
-	HolidayName         string  // holiday name if applicable
-	HolidayMultiplier   float64 // holiday multiplier used (0 if not holiday)
+	BasePrice               int64   // price after dynamic rules (before discount/surcharge)
+	LongSessionDiscount     int64   // discount amount (positive value)
+	ExtraGuestSurcharge     int64   // surcharge amount
+	IsHolidayPrice          bool    // whether holiday pricing was applied
+	HolidayName             string  // holiday name if applicable
+	HolidayMultiplier       float64 // holiday multiplier used (0 if not holiday)
+	IsSeasonalPrice         bool    // whether seasonal tariff was applied
+	SeasonalTariffName      string  // seasonal tariff name if applicable
+	SeasonalTariffMultiplier float64 // seasonal tariff multiplier used (0 if not seasonal)
 }
 
 type PricingService interface {
@@ -42,29 +45,37 @@ type PricingService interface {
 	DeleteRule(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, ruleID uuid.UUID) error
 	ListRules(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
 	GetActiveRules(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
+	// Seasonal tariff CRUD
+	CreateSeasonalTariff(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, tariff *domain.SeasonalTariff) (*domain.SeasonalTariff, error)
+	UpdateSeasonalTariff(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, tariff *domain.SeasonalTariff) error
+	DeleteSeasonalTariff(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, tariffID uuid.UUID) error
+	ListSeasonalTariffs(ctx context.Context, bathhouseID uuid.UUID) ([]domain.SeasonalTariff, error)
 }
 
 type pricingService struct {
-	priceRuleRepo repository.PricingRuleRepository
-	bhRepo        repository.BathhouseRepository
-	holidaySvc    HolidayService
-	access        *AccessChecker
-	logger        *logger.Logger
+	priceRuleRepo      repository.PricingRuleRepository
+	seasonalTariffRepo repository.SeasonalTariffRepository
+	bhRepo             repository.BathhouseRepository
+	holidaySvc         HolidayService
+	access             *AccessChecker
+	logger             *logger.Logger
 }
 
 func NewPricingService(
 	priceRuleRepo repository.PricingRuleRepository,
+	seasonalTariffRepo repository.SeasonalTariffRepository,
 	bhRepo repository.BathhouseRepository,
 	holidaySvc HolidayService,
 	access *AccessChecker,
 	log *logger.Logger,
 ) PricingService {
 	return &pricingService{
-		priceRuleRepo: priceRuleRepo,
-		bhRepo:        bhRepo,
-		holidaySvc:    holidaySvc,
-		access:        access,
-		logger:        log,
+		priceRuleRepo:      priceRuleRepo,
+		seasonalTariffRepo: seasonalTariffRepo,
+		bhRepo:             bhRepo,
+		holidaySvc:         holidaySvc,
+		access:             access,
+		logger:             log,
 	}
 }
 
@@ -132,6 +143,26 @@ func (s *pricingService) CalculateFullPrice(ctx context.Context, input PriceCalc
 			breakdown.IsHolidayPrice = true
 			breakdown.HolidayName = holiday.Name
 			breakdown.HolidayMultiplier = multiplier
+		}
+	}
+
+	// Apply seasonal tariff multiplier (after holiday, before dynamic rules)
+	if s.seasonalTariffRepo != nil {
+		tariffs, err := s.seasonalTariffRepo.GetActiveTariffs(ctx, input.BathhouseID, input.StartTime)
+		if err != nil {
+			s.logger.Warn("failed to check seasonal tariffs, continuing without", "error", err)
+		} else if len(tariffs) > 0 {
+			// When multiple tariffs overlap, pick the highest multiplier
+			bestTariff := tariffs[0]
+			for _, t := range tariffs[1:] {
+				if t.Multiplier > bestTariff.Multiplier {
+					bestTariff = t
+				}
+			}
+			effectiveBasePrice = int64(math.Round(float64(effectiveBasePrice) * bestTariff.Multiplier))
+			breakdown.IsSeasonalPrice = true
+			breakdown.SeasonalTariffName = bestTariff.Name
+			breakdown.SeasonalTariffMultiplier = bestTariff.Multiplier
 		}
 	}
 
@@ -332,4 +363,63 @@ func (s *pricingService) getDayOfWeek(wd time.Weekday) int {
 		return 6
 	}
 	return int(wd) - 1
+}
+
+// CreateSeasonalTariff creates a new seasonal tariff for a bathhouse.
+func (s *pricingService) CreateSeasonalTariff(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, tariff *domain.SeasonalTariff) (*domain.SeasonalTariff, error) {
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, tariff.BathhouseID); err != nil {
+		return nil, err
+	}
+	if _, err := s.bhRepo.GetByID(ctx, tariff.BathhouseID); err != nil {
+		return nil, err
+	}
+	if err := tariff.Validate(); err != nil {
+		return nil, err
+	}
+	if err := s.seasonalTariffRepo.Create(ctx, tariff); err != nil {
+		return nil, err
+	}
+	s.logger.Info("seasonal tariff created", "tariff_id", tariff.ID, "bathhouse_id", tariff.BathhouseID)
+	return tariff, nil
+}
+
+// UpdateSeasonalTariff updates an existing seasonal tariff.
+func (s *pricingService) UpdateSeasonalTariff(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, tariff *domain.SeasonalTariff) error {
+	existing, err := s.seasonalTariffRepo.GetByID(ctx, tariff.ID)
+	if err != nil {
+		return err
+	}
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, existing.BathhouseID); err != nil {
+		return err
+	}
+	tariff.BathhouseID = existing.BathhouseID
+	if err := tariff.Validate(); err != nil {
+		return err
+	}
+	if err := s.seasonalTariffRepo.Update(ctx, tariff); err != nil {
+		return err
+	}
+	s.logger.Info("seasonal tariff updated", "tariff_id", tariff.ID, "bathhouse_id", tariff.BathhouseID)
+	return nil
+}
+
+// DeleteSeasonalTariff deletes a seasonal tariff.
+func (s *pricingService) DeleteSeasonalTariff(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, tariffID uuid.UUID) error {
+	existing, err := s.seasonalTariffRepo.GetByID(ctx, tariffID)
+	if err != nil {
+		return err
+	}
+	if err := s.access.CanManageBathhouse(ctx, userID, userRole, existing.BathhouseID); err != nil {
+		return err
+	}
+	if err := s.seasonalTariffRepo.Delete(ctx, tariffID); err != nil {
+		return err
+	}
+	s.logger.Info("seasonal tariff deleted", "tariff_id", tariffID, "bathhouse_id", existing.BathhouseID)
+	return nil
+}
+
+// ListSeasonalTariffs lists all seasonal tariffs for a bathhouse.
+func (s *pricingService) ListSeasonalTariffs(ctx context.Context, bathhouseID uuid.UUID) ([]domain.SeasonalTariff, error) {
+	return s.seasonalTariffRepo.ListByBathhouse(ctx, bathhouseID)
 }
