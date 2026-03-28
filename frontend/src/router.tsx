@@ -59,6 +59,11 @@ import TicketManagement from '@/pages/admin/TicketManagement'
 import AdminTicketDetail from '@/pages/admin/AdminTicketDetail'
 import SupportTickets from '@/pages/client/SupportTickets'
 import ClientTicketDetail from '@/pages/client/TicketDetail'
+import DisputeList from '@/pages/client/DisputeList'
+import ClientDisputeDetail from '@/pages/client/DisputeDetail'
+import DisputeCreate from '@/pages/client/DisputeCreate'
+import DisputeManagement from '@/pages/admin/DisputeManagement'
+import AdminDisputeDetail from '@/pages/admin/AdminDisputeDetail'
 import OAuthCallback from '@/pages/OAuthCallback'
 
 export default function AppRouter() {
@@ -130,6 +135,9 @@ export default function AppRouter() {
         <Route path="chat" element={<ClientChat />} />
         <Route path="tickets" element={<SupportTickets />} />
         <Route path="tickets/:id" element={<ClientTicketDetail />} />
+        <Route path="disputes" element={<DisputeList />} />
+        <Route path="disputes/new" element={<DisputeCreate />} />
+        <Route path="disputes/:id" element={<ClientDisputeDetail />} />
         <Route path="notifications" element={<ClientNotifications />} />
         <Route path="profile" element={<ClientProfile />} />
       </Route>
@@ -153,6 +161,8 @@ export default function AppRouter() {
         <Route path="promos" element={<GlobalPromoCodes />} />
         <Route path="tickets" element={<TicketManagement />} />
         <Route path="tickets/:id" element={<AdminTicketDetail />} />
+        <Route path="disputes" element={<DisputeManagement />} />
+        <Route path="disputes/:id" element={<AdminDisputeDetail />} />
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="profile" element={<AdminProfile />} />
       </Route>

@@ -24,6 +24,7 @@ import {
   DollarOutlined,
   StarOutlined,
   EditOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
@@ -122,6 +123,7 @@ export default function ClientBookingDetail() {
   const canCancel = booking.status === 'pending' || booking.status === 'confirmed'
   const canPay = booking.status === 'confirmed' && (!payment || payment.status === 'pending' || !payment.status)
   const canReview = booking.status === 'completed'
+  const canDispute = booking.status === 'completed' || booking.status === 'no_show'
   const canModify =
     (booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'pending_owner') &&
     (booking.modification_count ?? 0) < 3 &&
@@ -289,6 +291,16 @@ export default function ClientBookingDetail() {
             onClick={() => navigate(`/client/review?bathhouse=${booking.bathhouse_id}&booking=${booking.id}`)}
           >
             Оставить отзыв
+          </Button>
+        )}
+        {canDispute && (
+          <Button
+            size="large"
+            icon={<ExclamationCircleOutlined />}
+            danger
+            onClick={() => navigate(`/client/disputes/new?booking=${booking.id}`)}
+          >
+            Открыть спор
           </Button>
         )}
         {canPay && (

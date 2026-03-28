@@ -331,12 +331,12 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: `frontend/src/pages/admin/DisputeDetail.tsx`
 - Modify: `frontend/src/router.tsx`
 
-- [ ] Regenerate API client for dispute endpoints
-- [ ] Client: open dispute from booking detail, upload evidence (photos, screenshots, GPS, messages, receipts)
-- [ ] Client: view dispute status, submit appeal within 7 days of resolution
-- [ ] Admin: dispute queue with assignment, view evidence from both sides, render resolution (full/partial/no refund + compensation)
-- [ ] Write frontend tests
-- [ ] Run project test suite - must pass before next task
+- [x] Regenerate API client for dispute endpoints
+- [x] Client: open dispute from booking detail, upload evidence (photos, screenshots, GPS, messages, receipts)
+- [x] Client: view dispute status, submit appeal within 7 days of resolution
+- [x] Admin: dispute queue with assignment, view evidence from both sides, render resolution (full/partial/no refund + compensation)
+- [x] Write frontend tests
+- [x] Run project test suite - must pass before next task
 
 ### Task 17: Frontend - Comparison page and map search
 
