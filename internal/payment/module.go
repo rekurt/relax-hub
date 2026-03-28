@@ -8,11 +8,25 @@ import (
 var Module = fx.Module("payment",
 	fx.Provide(
 		func(cfg *config.Config) PaymentProvider {
-			base := NewYooKassaProvider(
+			providers := make(map[string]PaymentProvider)
+
+			// RU region: YooKassa
+			ruBase := NewYooKassaProvider(
 				cfg.Payment.YooKassa.ShopID,
 				cfg.Payment.YooKassa.SecretKey,
 			)
-			return NewRetryingProvider(base, DefaultRetryConfig)
+			providers["RU"] = NewRetryingProvider(ruBase, DefaultRetryConfig)
+
+			// BY region: bePaid (only if configured)
+			if cfg.Payment.BePaid.ShopID != "" {
+				byBase := NewBePaidProvider(
+					cfg.Payment.BePaid.ShopID,
+					cfg.Payment.BePaid.SecretKey,
+				)
+				providers["BY"] = NewRetryingProvider(byBase, DefaultRetryConfig)
+			}
+
+			return NewProviderFactory(providers)
 		},
 	),
 )

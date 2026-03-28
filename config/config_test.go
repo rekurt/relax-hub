@@ -564,6 +564,7 @@ func TestWarnings_AllConfigured(t *testing.T) {
 	cfg := &Config{
 		Payment: PaymentConfig{
 			YooKassa: YooKassaConfig{ShopID: "shop-123"},
+			BePaid:   BePaidConfig{ShopID: "bepaid-123"},
 		},
 		Telegram: TelegramConfig{BotToken: "some-token"},
 	}

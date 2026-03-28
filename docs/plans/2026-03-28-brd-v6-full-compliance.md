@@ -1,0 +1,592 @@
+# Plan: Full BRD Compliance - RelaxHub v6
+
+## Overview
+
+Comprehensive gap analysis and implementation plan to bring the RelaxHub codebase into full compliance with BRD v6. Covers 30+ missing or incomplete features across payments, location, calendar, CRM, admin, integrations, SEO, and support automation.
+
+## Context
+
+- BRD: docs/BRD_RelaxHub_v6.md (158 functional requirements)
+- Architecture: handler -> service -> repository (Go, chi, pgx, fx DI)
+- Frontend: React + Ant Design + TanStack Query + orval
+- Current coverage: ~85% of BRD requirements implemented
+- Remaining gaps: ~30 features/enhancements across 10 categories
+- Files involved: internal/domain/, internal/service/, internal/handler/, internal/repository/postgres/, internal/payment/, internal/notification/, internal/geo/, internal/pms/, internal/seo/, internal/admin/, frontend/src/
+- Related patterns: handler→service→repository, fx DI modules, domain error mapping
+- Dependencies: github.com/xuri/excelize/v2 (xlsx), Yandex Maps API (isochrone), bePaid API, Yclients API, Restoplace API
+
+## Development Approach
+
+- **Testing approach**: Regular (code first, then tests)
+- Complete each task fully before moving to the next
+- Tasks ordered by dependency: backend domain/repo first, then service, then handler, then frontend
+- **CRITICAL: every task MUST include new/updated tests**
+- **CRITICAL: all tests must pass before starting next task**
+
+---
+
+## Implementation Steps
+
+### Task 1: Belarus Payment Infrastructure (FR-092, FR-095)
+
+**Why:** BRD requires dual-region payment: YooKassa for RU, bePaid/Assist for BY. Currently only YooKassa exists.
+
+**Files:**
+- Create: `internal/payment/bepaid_provider.go`
+- Create: `internal/payment/provider_factory.go`
+- Modify: `internal/domain/payment.go` (add Belkart, ERIP, MIR methods)
+- Modify: `internal/service/booking_service.go` (route by region)
+- Modify: `config/config.go` (add bePaid credentials)
+
+- [x] Add payment methods: MIR, Belkart, ERIP to domain
+- [x] Implement PaymentProvider interface for bePaid (create, capture, cancel, refund, webhook)
+- [x] Create provider factory that selects provider by user region (RU -> YooKassa, BY -> bePaid)
+- [x] Add bePaid webhook handler endpoint
+- [x] Add bePaid config keys (BANI_PAYMENT_BEPAID_*)
+- [x] Update fiscalization to support BY provider placeholder
+- [x] Write tests for bePaid provider and provider factory
+- [x] Run project test suite - must pass before task 2
+
+### Task 2: Apple Pay & Google Pay (FR-057, FR-092)
+
+**Why:** BRD requires Apple Pay and Google Pay as payment methods for RU region.
+
+**Files:**
+- Modify: `internal/domain/payment.go` (add ApplePay, GooglePay methods)
+- Modify: `internal/payment/yookassa_provider.go` (token-based payments)
+- Modify: `internal/handler/payment_handler.go` (new endpoints)
+- Modify: `frontend/src/pages/client/BookingCreate.tsx`
+
+- [ ] Add ApplePay and GooglePay to PaymentMethod enum
+- [ ] Implement YooKassa token-based payment for Apple/Google Pay
+- [ ] Add frontend payment button components (Apple Pay JS, Google Pay API)
+- [ ] Integrate into booking checkout flow
+- [ ] Write tests for new payment methods
+- [ ] Run project test suite - must pass before task 3
+
+### Task 3: Saved Card Tokens (FR-004)
+
+**Why:** BRD requires clients to save cards for quick repeat payments via provider tokenization.
+
+**Files:**
+- Create: `internal/domain/saved_card.go`
+- Create: `internal/repository/postgres/saved_card_repo.go`
+- Create: `internal/service/saved_card_service.go`
+- Create: `internal/handler/saved_card_handler.go`
+- Create: `migrations/XXXX_saved_cards.up.sql`
+- Modify: `frontend/src/pages/client/BookingCreate.tsx`
+
+- [ ] Create saved_cards table (id, user_id, provider_token, last4, brand, expires, is_default)
+- [ ] Implement repository and service (list, add, delete, set default)
+- [ ] Handler: GET/POST/DELETE /api/v1/my/cards
+- [ ] Save card token after successful payment (opt-in checkbox)
+- [ ] Show saved cards on checkout, allow one-click payment
+- [ ] Write tests for saved card CRUD
+- [ ] Run project test suite - must pass before task 4
+
+### Task 4: Bank Statement Reconciliation (FR-128)
+
+**Why:** BRD requires importing bank statements and auto-matching against internal transactions.
+
+**Files:**
+- Create: `internal/service/bank_reconciliation_service.go`
+- Create: `internal/handler/bank_reconciliation_handler.go`
+- Create: `migrations/XXXX_bank_reconciliation.up.sql`
+- Modify: `internal/cron/scheduler.go` (optional daily import cron)
+
+- [ ] Create bank_statement_entries table (id, date, amount, description, counterparty, matched_tx_id, status)
+- [ ] Implement CSV/1C format parser for bank statements
+- [ ] Auto-matching algorithm: by amount + date + reference number
+- [ ] Admin endpoint: POST /api/v1/admin/finance/bank-statement (upload)
+- [ ] Admin endpoint: GET /api/v1/admin/finance/reconciliation (unmatched entries queue)
+- [ ] Admin endpoint: PUT /api/v1/admin/finance/reconciliation/{id}/match (manual match)
+- [ ] Write tests for parser and matching
+- [ ] Run project test suite - must pass before task 5
+
+### Task 5: Admin Wallet Management (FR admin-panel)
+
+**Why:** BRD requires admin manual credit/debit/freeze of user wallets.
+
+**Files:**
+- Modify: `internal/handler/wallet_handler.go` (admin endpoints)
+- Modify: `internal/service/wallet_service.go` (admin operations)
+- Create: `frontend/src/pages/admin/WalletManagement.tsx`
+
+- [ ] Add admin endpoint: POST /api/v1/admin/wallets/{id}/credit (amount, reason)
+- [ ] Add admin endpoint: POST /api/v1/admin/wallets/{id}/debit (amount, reason)
+- [ ] Add admin endpoint: POST /api/v1/admin/wallets/{id}/freeze
+- [ ] Add admin endpoint: POST /api/v1/admin/wallets/{id}/unfreeze
+- [ ] All operations logged to audit_log with admin_id and reason
+- [ ] Create admin wallet management page with search and actions
+- [ ] Write tests for admin wallet operations
+- [ ] Run project test suite - must pass before task 6
+
+### Task 6: Admin Booking Management (FR admin-panel)
+
+**Why:** BRD requires admin manual cancel, refund, status change for bookings.
+
+**Files:**
+- Modify: `internal/handler/booking_handler.go` (admin endpoints)
+- Modify: `internal/service/booking_service.go` (admin override)
+- Create: `frontend/src/pages/admin/BookingManagement.tsx`
+
+- [ ] Add admin endpoint: POST /api/v1/admin/bookings/{id}/cancel (reason)
+- [ ] Add admin endpoint: POST /api/v1/admin/bookings/{id}/change-status (status, reason)
+- [ ] Add admin endpoint: GET /api/v1/admin/bookings (search with filters)
+- [ ] Ensure manual refund endpoint exists (POST /api/v1/admin/bookings/{id}/refund already exists - verify)
+- [ ] All operations logged to audit_log
+- [ ] Create admin booking management page
+- [ ] Write tests for admin booking operations
+- [ ] Run project test suite - must pass before task 7
+
+### Task 7: Admin Sub-Roles / RBAC (FR admin-panel)
+
+**Why:** BRD requires multiple admin sub-roles: admin, moderator, support, finance. Currently only single "admin" role.
+
+**Files:**
+- Modify: `internal/domain/user.go` (add admin sub-roles or separate role field)
+- Create: `internal/domain/admin_permission.go`
+- Modify: `internal/middleware/auth.go` (permission-based checks)
+- Create: `migrations/XXXX_admin_roles.up.sql`
+- Create: `frontend/src/pages/admin/RoleManagement.tsx`
+
+- [ ] Add admin sub-roles: super_admin, moderator, support_l1, support_l2, support_l3, finance
+- [ ] Create admin_permissions table (role, permission, resource)
+- [ ] Define permission matrix: who can access which admin endpoints
+- [ ] Add middleware RequireAdminPermission(permission) alongside RequireRole
+- [ ] Enforce mandatory 2FA for all admin sub-roles
+- [ ] Create admin role management page (assign roles, view permissions)
+- [ ] Write tests for permission checks
+- [ ] Run project test suite - must pass before task 8
+
+### Task 8: Admin Mass Operations (FR admin-panel)
+
+**Why:** BRD requires batch operations up to 1000 records (approve/reject listings, block users, credit bonuses).
+
+**Files:**
+- Modify: `internal/handler/admin_handler.go` (batch endpoints)
+- Modify: `internal/service/moderation_service.go` (batch logic)
+- Modify: `frontend/src/pages/admin/BathhouseModeration.tsx`
+- Modify: `frontend/src/pages/admin/UserManagement.tsx`
+
+- [ ] Add batch endpoint: POST /api/v1/admin/listings/batch (action: approve/reject, ids: [up to 1000])
+- [ ] Add batch endpoint: POST /api/v1/admin/users/batch (action: block/unblock, ids: [up to 1000])
+- [ ] Add batch endpoint: POST /api/v1/admin/wallets/batch-credit (ids, amount, reason)
+- [ ] Process in DB transactions with chunking (100 per batch)
+- [ ] Return results: succeeded[], failed[] with reasons
+- [ ] Update frontend moderation/user pages with bulk selection and actions
+- [ ] Write tests for batch operations
+- [ ] Run project test suite - must pass before task 9
+
+### Task 9: Admin Notification Center (FR admin-panel)
+
+**Why:** BRD requires critical alerts per admin role (antifraud, SLA violations, financial discrepancies), email digest.
+
+**Files:**
+- Create: `internal/domain/admin_notification.go`
+- Create: `internal/repository/postgres/admin_notification_repo.go`
+- Create: `internal/service/admin_notification_service.go`
+- Create: `internal/handler/admin_notification_handler.go`
+- Create: `frontend/src/pages/admin/AdminNotificationCenter.tsx`
+- Modify: `internal/cron/scheduler.go` (daily digest cron)
+
+- [ ] Create admin_notifications table (id, role, severity, type, title, body, read, created_at)
+- [ ] Emit admin notifications from: antifraud flags, SLA violations, reconciliation discrepancies, float drift
+- [ ] Admin endpoint: GET /api/v1/admin/notifications (filtered by role)
+- [ ] Admin endpoint: PUT /api/v1/admin/notifications/{id}/read
+- [ ] Daily email digest cron: aggregate unread critical alerts and send per admin role
+- [ ] Create notification center page with severity filtering
+- [ ] Write tests for notification emission and digest
+- [ ] Run project test suite - must pass before task 10
+
+### Task 10: Moderation Dashboard with SLA (FR-146)
+
+**Why:** BRD requires moderation metrics: queue size, avg wait time, SLA compliance, per-moderator load.
+
+**Files:**
+- Modify: `internal/admin/pages/moderation.go` (add SLA metrics)
+- Modify: `internal/admin/pages/templates/moderation.tmpl`
+- Modify: `internal/repository/postgres/bathhouse_repo.go` (moderation queue stats)
+
+- [ ] Track moderation assignment (who moderates what, when assigned)
+- [ ] Calculate metrics: queue size, avg wait time, SLA compliance (48h), per-moderator throughput
+- [ ] Add metrics section to moderation admin page
+- [ ] Add alerts when SLA is being breached (items > 24h without review)
+- [ ] Write tests for SLA calculations
+- [ ] Run project test suite - must pass before task 11
+
+### Task 11: Calendar Day & Month Views (FR-076)
+
+**Why:** BRD requires day (hourly grid), week, and month views. Only weekly view exists.
+
+**Files:**
+- Modify: `frontend/src/pages/calendar/CalendarPage.tsx`
+
+- [ ] Add day view: hourly grid with bookings as colored blocks
+- [ ] Add month view: cells with booking count/status summary
+- [ ] Color coding: green (confirmed), yellow (pending), red (cancelled), gray (blocked)
+- [ ] Add view switcher (day/week/month) in calendar header
+- [ ] Multi-object consolidated view for owners with multiple bathhouses
+- [ ] Write frontend tests for new views
+- [ ] Run project test suite - must pass before task 12
+
+### Task 12: CRM - RFM Analysis & Custom Segments (FR CRM)
+
+**Why:** BRD requires RFM (Recency-Frequency-Monetary) analysis and custom segment constructor.
+
+**Files:**
+- Create: `internal/service/rfm_service.go`
+- Modify: `internal/domain/guest_card.go` (add RFM scores)
+- Modify: `internal/handler/guest_card_handler.go` (RFM endpoint)
+- Create: `internal/domain/custom_segment.go`
+- Create: `internal/repository/postgres/custom_segment_repo.go`
+- Create: `frontend/src/pages/crm/RFMAnalysis.tsx`
+- Create: `frontend/src/pages/crm/SegmentBuilder.tsx`
+
+- [ ] Calculate RFM scores (1-5 each) for each guest card based on last visit, visit count, total spent
+- [ ] Add endpoint: GET /api/v1/my/crm/rfm (returns guests with RFM scores and matrix)
+- [ ] Create custom_segments table (id, owner_id, bathhouse_id, name, conditions JSONB)
+- [ ] Conditions: visit_count (min/max), avg_check (min/max), last_visit_days_ago (min/max), tags (include/exclude), rfm_score ranges
+- [ ] CRUD endpoints: /api/v1/my/crm/segments/custom
+- [ ] Dynamic evaluation: resolve segment -> guest list on demand
+- [ ] Frontend RFM matrix visualization and segment builder UI
+- [ ] Write tests for RFM calculation and segment evaluation
+- [ ] Run project test suite - must pass before task 13
+
+### Task 13: Broadcast Personalization & SMS Channel (FR CRM)
+
+**Why:** BRD requires personalization tokens in broadcasts (name, last visit) and SMS channel.
+
+**Files:**
+- Modify: `internal/domain/broadcast.go` (add SMS channel)
+- Modify: `internal/service/broadcast_service.go` (personalization, SMS)
+- Modify: `internal/notification/dispatcher.go` (SMS for broadcasts)
+- Modify: `frontend/src/pages/crm/BroadcastCreate.tsx`
+
+- [ ] Add SMS to broadcast channels enum
+- [ ] Implement template personalization: {{guest_name}}, {{last_visit_date}}, {{visit_count}}, {{promo_code}}
+- [ ] Replace placeholders with guest card data when sending
+- [ ] Route SMS broadcasts through existing SMSProvider
+- [ ] Add personalization token picker in frontend broadcast editor
+- [ ] Update broadcast statistics: add clicked field
+- [ ] Write tests for personalization and SMS delivery
+- [ ] Run project test suite - must pass before task 14
+
+### Task 14: L1 Support Bot (FR-155)
+
+**Why:** BRD requires automated L1 support with FAQ answers, SLA < 5 min.
+
+**Files:**
+- Create: `internal/domain/faq.go`
+- Create: `internal/repository/postgres/faq_repo.go`
+- Create: `internal/service/faq_bot_service.go`
+- Create: `internal/handler/faq_handler.go`
+- Modify: `internal/handler/ticket_handler.go` (auto-answer before creating ticket)
+- Create: `frontend/src/components/SupportChatBot.tsx`
+
+- [ ] Create faq table (id, category, question, answer, keywords, sort_order, active)
+- [ ] Admin CRUD: /api/v1/admin/faq
+- [ ] FAQ matching: keyword/trigram search against incoming support message
+- [ ] When client opens support: show top 3 matching FAQ answers first
+- [ ] If client clicks "not helpful" -> escalate to L2 (create ticket)
+- [ ] Frontend: chat-like FAQ widget before ticket creation
+- [ ] Seed initial FAQ entries (booking, payment, cancellation, wallet common questions)
+- [ ] Write tests for FAQ matching logic
+- [ ] Run project test suite - must pass before task 15
+
+### Task 15: Notification Preferences & SMS Fallback (FR-140, FR-141, FR-142)
+
+**Why:** BRD requires per-event/per-channel notification preferences and push -> email -> SMS fallback chain.
+
+**Files:**
+- Create: `internal/domain/notification_preferences.go`
+- Create: `internal/repository/postgres/notification_preferences_repo.go`
+- Modify: `internal/notification/dispatcher.go` (preferences + fallback)
+- Modify: `internal/handler/notification_handler.go` (preferences endpoints)
+- Create: `frontend/src/pages/client/NotificationPreferences.tsx`
+
+- [ ] Create notification_preferences table (user_id, event_type, push_enabled, email_enabled, sms_enabled)
+- [ ] Define event types enum matching BRD table (booking_confirmed, reminder_24h, etc.)
+- [ ] Mark mandatory events (booking confirmation, dispute resolution) - cannot be disabled
+- [ ] Implement fallback chain: push first -> if not delivered in 5 min -> email -> if critical -> SMS
+- [ ] Track push delivery status via FCM delivery receipts
+- [ ] Endpoints: GET/PUT /api/v1/my/notification-preferences
+- [ ] Frontend preferences matrix (event types x channels toggle grid)
+- [ ] Trigger push permission request after first booking (FR-142)
+- [ ] Write tests for preference filtering and fallback chain
+- [ ] Run project test suite - must pass before task 16
+
+### Task 16: Owner Outgoing Webhooks (FR section 2.16)
+
+**Why:** BRD requires owners to configure webhooks for booking/cancellation/payment events to their CRM.
+
+**Files:**
+- Create: `internal/domain/webhook.go`
+- Create: `internal/repository/postgres/webhook_repo.go`
+- Create: `internal/service/webhook_service.go`
+- Create: `internal/handler/webhook_handler.go`
+- Modify: `internal/service/booking_service.go` (emit webhook events)
+- Create: `frontend/src/pages/settings/WebhookSettings.tsx`
+
+- [ ] Create webhooks table (id, owner_id, url, secret, events[], active, created_at)
+- [ ] Events: booking.created, booking.confirmed, booking.cancelled, booking.completed, payment.received
+- [ ] HMAC-SHA256 signature in X-Webhook-Signature header
+- [ ] Async delivery with retry (3 attempts, exponential backoff)
+- [ ] Create webhook_deliveries table (webhook_id, event, payload, status, attempts, last_error)
+- [ ] Owner endpoints: CRUD /api/v1/my/webhooks + GET /api/v1/my/webhooks/{id}/deliveries
+- [ ] Frontend webhook configuration page with test button
+- [ ] Write tests for signature generation and delivery retry
+- [ ] Run project test suite - must pass before task 17
+
+### Task 17: PMS API Integration Framework (FR section 2.16)
+
+**Why:** BRD requires Yclients and Restoplace integration for large venues/chains.
+
+**Files:**
+- Create: `internal/pms/interface.go`
+- Create: `internal/pms/yclients.go`
+- Create: `internal/pms/restoplace.go`
+- Create: `internal/domain/pms_connection.go`
+- Create: `internal/service/pms_service.go`
+- Create: `internal/handler/pms_handler.go`
+- Create: `frontend/src/pages/settings/PMSIntegration.tsx`
+
+- [ ] Define PMSProvider interface: SyncBookings, SyncSchedule, PushBooking, PullBookings
+- [ ] Create pms_connections table (id, owner_id, bathhouse_id, provider, credentials_encrypted, sync_interval, last_sync)
+- [ ] Implement Yclients adapter (OAuth2 + REST API)
+- [ ] Implement Restoplace adapter (API key + REST)
+- [ ] Bidirectional sync: bookings from PMS -> RelaxHub slots blocked, RelaxHub bookings -> PMS events
+- [ ] Cron job: sync every 15 min for active connections
+- [ ] Owner endpoints: CRUD /api/v1/my/pms-connections + POST /api/v1/my/pms-connections/{id}/sync
+- [ ] Frontend integration settings page
+- [ ] Write tests with mock PMS responses
+- [ ] Run project test suite - must pass before task 18
+
+### Task 18: Isochrone Search (FR-053)
+
+**Why:** BRD requires "15 min by car" / "30 min by transit" zones instead of simple radius.
+
+**Files:**
+- Create: `internal/geo/isochrone.go`
+- Modify: `internal/service/search_service.go` (isochrone filter)
+- Modify: `internal/handler/search_handler.go` (isochrone params)
+- Modify: `frontend/src/pages/client/BathhouseSearch.tsx`
+- Modify: `frontend/src/components/BathhouseMap.tsx` (isochrone polygon)
+
+- [ ] Integrate with Yandex Maps isochrone API (or OpenRouteService)
+- [ ] API: GET /api/v1/isochrone?lat=&lon=&mode=car|transit&minutes=15
+- [ ] Cache isochrone polygons in Redis (key: lat_lon_mode_minutes, TTL 1h)
+- [ ] Filter search results: ST_Within(bathhouse.location, isochrone_polygon)
+- [ ] Display isochrone polygon on map
+- [ ] Add "travel time" filter: dropdown with 15/30/45/60 min, mode car/transit
+- [ ] Write tests for isochrone filtering
+- [ ] Run project test suite - must pass before task 19
+
+### Task 19: Transport Accessibility (FR-054)
+
+**Why:** BRD requires nearest metro/bus/parking info on bathhouse cards and map.
+
+**Files:**
+- Create: `internal/geo/transport.go`
+- Modify: `internal/domain/bathhouse.go` (transport info cache)
+- Modify: `internal/handler/bathhouse_handler.go` (transport endpoint)
+- Modify: `frontend/src/pages/client/BathhouseDetail.tsx`
+
+- [ ] Integrate with Yandex Maps Geocoder/Search API for nearby POIs (metro, bus stops, parking)
+- [ ] Endpoint: GET /api/v1/bathhouses/{id}/transport (returns nearest transport with distances)
+- [ ] Cache in Redis (per bathhouse, TTL 7 days) - transport infrastructure changes rarely
+- [ ] Display on bathhouse detail page: "Metro Partizanskaya - 500m", "Bus stop - 200m"
+- [ ] Optional map layer with transport markers
+- [ ] Write tests for transport data parsing
+- [ ] Run project test suite - must pass before task 20
+
+### Task 20: SSR for Public Pages (FR section 2.17)
+
+**Why:** BRD requires server-side rendering for public pages (catalog, listings, reviews) for SEO indexing.
+
+**Files:**
+- Modify: `internal/handler/seo_handler.go` (serve pre-rendered HTML)
+- Create: `internal/seo/renderer.go`
+
+- [ ] Evaluate approach: full SSR (Next.js migration) vs prerender service (Rendertron/Prerender.io)
+- [ ] Implement prerender middleware: detect bot user-agents, serve pre-rendered HTML
+- [ ] Pre-render public pages: bathhouse listing, bathhouse detail, reviews
+- [ ] Cache pre-rendered pages in Redis (TTL 1h, invalidate on update)
+- [ ] Ensure meta tags (OG, Schema.org) are in pre-rendered HTML
+- [ ] Configure prerender for Yandex, Google, social crawlers
+- [ ] Write tests for bot detection and cache invalidation
+- [ ] Run project test suite - must pass before task 21
+
+### Task 21: Professional Photography (FR-035)
+
+**Why:** BRD requires ordering professional photographers from owner cabinet.
+
+**Files:**
+- Create: `internal/domain/photo_order.go`
+- Create: `internal/repository/postgres/photo_order_repo.go`
+- Create: `internal/service/photo_order_service.go`
+- Create: `internal/handler/photo_order_handler.go`
+- Create: `frontend/src/pages/photos/PhotoOrderPage.tsx`
+
+- [ ] Create photo_orders table (id, owner_id, bathhouse_id, region, status, photographer_name, price, scheduled_at, notes)
+- [ ] Status flow: requested -> confirmed -> completed -> cancelled
+- [ ] Owner endpoint: POST /api/v1/my/bathhouses/{id}/photo-order (request)
+- [ ] Admin endpoint: GET /api/v1/admin/photo-orders (manage queue)
+- [ ] Admin endpoint: PUT /api/v1/admin/photo-orders/{id} (assign photographer, confirm, complete)
+- [ ] Payment from owner wallet on completion
+- [ ] Frontend order page with status tracking
+- [ ] Write tests for order flow
+- [ ] Run project test suite - must pass before task 22
+
+### Task 22: Excel Import for Listings (FR-033)
+
+**Why:** BRD requires both CSV and Excel format for mass listing import.
+
+**Files:**
+- Modify: `internal/service/listing_import_service.go` (add xlsx parsing)
+- Modify: `internal/handler/listing_import_handler.go` (accept xlsx)
+- Add dependency: `github.com/xuri/excelize/v2`
+
+- [ ] Add excelize dependency for .xlsx parsing
+- [ ] Detect file format by Content-Type or extension
+- [ ] Parse xlsx with same column mapping as CSV
+- [ ] Provide downloadable xlsx template (with column headers and sample data)
+- [ ] Endpoint: same POST /api/v1/my/listings/import (accept both csv and xlsx)
+- [ ] Write tests for xlsx parsing
+- [ ] Run project test suite - must pass before task 23
+
+### Task 23: Search UI Enhancements (FR-043, FR-090, FR-044)
+
+**Why:** BRD requires last-minute badges, promoted listing limit (max 3/page), average area price on card.
+
+**Files:**
+- Modify: `internal/handler/search_handler.go` (add fields to response)
+- Modify: `internal/service/search_service.go` (limit promoted, calc area avg)
+- Modify: `frontend/src/components/BathhouseCard.tsx` (badges)
+- Modify: `frontend/src/pages/client/BathhouseDetail.tsx` (area avg price)
+
+- [ ] Add last_minute_active boolean to search results (true if discount currently applies)
+- [ ] Display "Last minute -XX%" badge on BathhouseCard when active
+- [ ] Limit promoted listings to max 3 per page in search results
+- [ ] Calculate average hourly price in area (same city + 5km radius) for bathhouse detail page
+- [ ] Display "Average in area: X rub/h" on price breakdown
+- [ ] Write tests for promoted limit and area avg calculation
+- [ ] Run project test suite - must pass before task 24
+
+### Task 24: Promoted Listing Campaigns (FR-043)
+
+**Why:** BRD requires auction-based promotion with min 50 rub/day bid, budget management.
+
+**Files:**
+- Modify: `internal/domain/promotion.go` (add bid, budget, dates)
+- Modify: `internal/service/promotion_service.go` (auction logic, budget deduction)
+- Modify: `internal/handler/promotion_handler.go` (campaign CRUD)
+- Create: `frontend/src/pages/promotion/PromotionCampaign.tsx`
+
+- [ ] Verify promotion domain has: daily_bid (min 50 rub), total_budget, start_date, end_date, status
+- [ ] Implement daily budget deduction from owner wallet (cron)
+- [ ] Pause campaign when budget exhausted, notify owner
+- [ ] Auction ranking: higher bid = more impressions (weighted in search ranking)
+- [ ] Campaign statistics: impressions, clicks, CTR, cost
+- [ ] Frontend campaign creation and management page
+- [ ] Write tests for budget deduction and auction ranking
+- [ ] Run project test suite - must pass before task 25
+
+### Task 25: Client Profile Completeness (FR-016, FR section 2.18)
+
+**Why:** BRD requires profile completeness indicator with prompts to fill missing fields.
+
+**Files:**
+- Modify: `internal/handler/user_handler.go` (completeness endpoint)
+- Modify: `frontend/src/components/OnboardingTour.tsx` (completeness widget)
+- Modify: `frontend/src/pages/client/ClientProfile.tsx`
+
+- [ ] Endpoint returns completeness: name (required), photo, phone, email, preferences, notification_settings
+- [ ] Calculate percentage (0-100%) based on filled fields
+- [ ] Show progress bar in client profile with specific prompts for missing items
+- [ ] Show "complete your profile" nudge on client dashboard
+- [ ] Write tests for completeness calculation
+- [ ] Run project test suite - must pass before task 26
+
+### Task 26: Chat Content Filtering Enhancement (FR-063)
+
+**Why:** BRD requires blocking phone numbers, emails, URLs in chat to keep transactions on platform.
+
+**Files:**
+- Modify: `internal/service/chat_service.go` (filter outgoing messages)
+- Modify: `internal/moderation/filter.go` (add contact detection patterns)
+
+- [ ] Verify existing chat filter covers: phone numbers (various RU/BY formats), email addresses, URLs
+- [ ] Add pattern: Telegram usernames (@username), WhatsApp links
+- [ ] Replace detected contacts with "[contact info hidden]" message + notification to both parties
+- [ ] Log filtered messages for anti-fraud review
+- [ ] Write tests for all contact detection patterns
+- [ ] Run project test suite - must pass before task 27
+
+### Task 27: Empty States & UX Polish (FR section 2.15, 2.18)
+
+**Why:** BRD requires empty states with explanations and CTAs on every screen without data.
+
+**Files:**
+- Modify: multiple frontend pages (BookingList, ReviewList, Favorites, etc.)
+
+- [ ] Audit all list/grid pages for empty state handling
+- [ ] Add empty state components with illustration, text, and CTA for:
+  - Bookings: "You have no bookings yet. Find a bathhouse nearby?"
+  - Reviews: "No reviews yet. Book a visit to leave your first review"
+  - Favorites: "Your favorites list is empty. Start exploring!"
+  - Owner bookings: "No bookings yet. Make sure your listing is active and complete"
+  - Owner CRM: "No guests yet. They'll appear after the first completed booking"
+  - Wallet: "Your wallet is empty. Top up to pay faster"
+- [ ] Write snapshot tests for empty states
+- [ ] Run project test suite - must pass before task 28
+
+### Task 28: Bathhouse Card Enhancements (FR-044)
+
+**Why:** BRD requires similar objects block (up to 6), owner profile section, wallet payment button on card.
+
+**Files:**
+- Modify: `internal/handler/bathhouse_handler.go` (similar objects endpoint)
+- Modify: `internal/service/recommendation_service.go` (similar by type/location)
+- Modify: `frontend/src/pages/client/BathhouseDetail.tsx`
+
+- [ ] Add endpoint: GET /api/v1/bathhouses/{id}/similar (up to 6, same city + type, sorted by rating)
+- [ ] Display similar objects section at bottom of bathhouse detail
+- [ ] Add owner profile section: rating, number of objects, registration date
+- [ ] Add "Pay from wallet" quick button on price section (if balance sufficient)
+- [ ] Write tests for similar objects query
+- [ ] Run project test suite - must pass before task 29
+
+### Task 29: Listing Wizard Video Step (FR-034 step 1)
+
+**Why:** BRD requires video instruction on step 1 of the 7-step listing wizard.
+
+**Files:**
+- Modify: `frontend/src/pages/bathhouses/BathhouseForm.tsx` (step 1)
+
+- [ ] Add welcome/intro step with embedded video player (YouTube/Vimeo embed or self-hosted)
+- [ ] Video placeholder with "How to create a listing" content
+- [ ] "Skip" button to proceed directly to step 2
+- [ ] Store video URL in platform_settings for admin configurability
+- [ ] Run project test suite - must pass before task 30
+
+### Task 30: Verify Acceptance Criteria
+
+- [ ] Manual test: complete booking flow RU region (card + wallet combo)
+- [ ] Manual test: Belarus region payment flow (placeholder for bePaid)
+- [ ] Manual test: admin sub-role access (moderator can moderate but not manage finance)
+- [ ] Manual test: CRM RFM analysis and custom segment creation
+- [ ] Manual test: webhook delivery to external URL
+- [ ] Manual test: FAQ bot answers before ticket creation
+- [ ] Run full test suite: `go test ./... -race`
+- [ ] Run linter: `make lint`
+- [ ] Run frontend tests: `cd frontend && npx vitest run`
+- [ ] Run frontend lint: `cd frontend && npm run lint`
+- [ ] Verify test coverage meets 80%+
+
+### Task 31: Update Documentation
+
+- [ ] Update CLAUDE.md with new subsystems (saved cards, webhooks, PMS, FAQ bot, admin sub-roles, bank reconciliation)
+- [ ] Update swagger annotations for all new endpoints, run `make swagger`
+- [ ] Regenerate frontend API client: `make frontend-generate-api`
+- [ ] Move this plan to `docs/plans/completed/`

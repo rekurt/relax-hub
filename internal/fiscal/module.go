@@ -17,6 +17,11 @@ var Module = fx.Module("fiscal",
 					cfg.Fiscal.ATOLGroupCode,
 					log,
 				)
+			case "by":
+				// Belarus fiscalization placeholder — not yet implemented.
+				// Returns no-op provider until a BY fiscal provider is integrated.
+				log.Info("using no-op fiscal provider for BY region (placeholder)")
+				return NewNoOpProvider()
 			default:
 				return NewNoOpProvider()
 			}

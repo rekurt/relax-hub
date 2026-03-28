@@ -43,10 +43,10 @@ type paymentResponse struct {
 }
 
 type initiatePaymentRequest struct {
-	PaymentMethod     string `json:"payment_method"`                  // "card", "sbp", "wallet", "combo"
-	WalletAmount      int64  `json:"wallet_amount,omitempty"`         // for combo/wallet
-	CardAmount        int64  `json:"card_amount,omitempty"`           // for combo
-	CardPaymentMethod string `json:"card_payment_method,omitempty"`   // for combo: "card" (default) or "sbp"
+	PaymentMethod     string `json:"payment_method"`                // "card", "sbp", "wallet", "combo"
+	WalletAmount      int64  `json:"wallet_amount,omitempty"`       // for combo/wallet
+	CardAmount        int64  `json:"card_amount,omitempty"`         // for combo
+	CardPaymentMethod string `json:"card_payment_method,omitempty"` // for combo: "card" (default) or "sbp"
 }
 
 type initiatePaymentResponse struct {
@@ -76,20 +76,22 @@ func toPaymentResponse(p *domain.Payment) paymentResponse {
 }
 
 // InitiatePayment godoc
-// @Summary      Initiate payment
-// @Description  Creates a payment for a booking. Supports card, SBP, wallet, and combo (wallet+card/SBP) payment methods. For wallet/combo, provide wallet_amount and card_amount fields.
-// @Tags         payments
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                   true  "Booking ID (UUID)"
-// @Param        body  body      initiatePaymentRequest   false "Payment options"
-// @Success      200   {object}  APIResponse{data=initiatePaymentResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/pay [post]
+//
+//	@Summary		Initiate payment
+//	@Description	Creates a payment for a booking. Supports card, SBP, wallet, and combo (wallet+card/SBP) payment methods. For wallet/combo, provide wallet_amount and card_amount fields.
+//	@Tags			payments
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Booking ID (UUID)"
+//	@Param			body	body		initiatePaymentRequest	false	"Payment options"
+//	@Success		200		{object}	APIResponse{data=initiatePaymentResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/pay [post]
+//
 // InitiatePayment handles POST /api/v1/bookings/{id}/pay
 func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
@@ -165,17 +167,19 @@ func (h *PaymentHandler) InitiatePayment(w http.ResponseWriter, r *http.Request)
 }
 
 // HandleWebhook godoc
-// @Summary      YooKassa webhook
-// @Description  Processes payment status updates from YooKassa. Returns 200 even for domain errors to prevent infinite retries.
-// @Tags         payments
-// @Accept       json
-// @Produce      json
-// @Param        body  body      object  true  "YooKassa webhook payload"
-// @Success      200   {object}  APIResponse{data=statusResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      429   {object}  APIResponse{error=APIError}  "Rate limited (30/min)"
-// @Failure      500   {object}  APIResponse{error=APIError}
-// @Router       /webhooks/yookassa [post]
+//
+//	@Summary		YooKassa webhook
+//	@Description	Processes payment status updates from YooKassa. Returns 200 even for domain errors to prevent infinite retries.
+//	@Tags			payments
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		object	true	"YooKassa webhook payload"
+//	@Success		200		{object}	APIResponse{data=statusResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}	"Rate limited (30/min)"
+//	@Failure		500		{object}	APIResponse{error=APIError}
+//	@Router			/webhooks/yookassa [post]
+//
 // HandleWebhook handles POST /api/v1/webhooks/yookassa
 func (h *PaymentHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
@@ -223,17 +227,94 @@ func (h *PaymentHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+// HandleBePaidWebhook godoc
+//
+//	@Summary		bePaid webhook
+//	@Description	Processes payment status updates from bePaid (Belarus). Returns 200 even for domain errors to prevent infinite retries.
+//	@Tags			payments
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		object	true	"bePaid webhook payload"
+//	@Success		200		{object}	APIResponse{data=statusResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}	"Rate limited (30/min)"
+//	@Failure		500		{object}	APIResponse{error=APIError}
+//	@Router			/webhooks/bepaid [post]
+//
+// HandleBePaidWebhook handles POST /api/v1/webhooks/bepaid
+func (h *PaymentHandler) HandleBePaidWebhook(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodySize)
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "failed to read request body")
+		return
+	}
+
+	var webhook struct {
+		Transaction struct {
+			UID    string `json:"uid"`
+			Status string `json:"status"`
+		} `json:"transaction"`
+	}
+
+	if err := json.Unmarshal(body, &webhook); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid webhook payload")
+		return
+	}
+
+	if webhook.Transaction.UID == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "missing transaction uid in webhook")
+		return
+	}
+
+	// Map bePaid status to internal status
+	internalStatus := mapBePaidWebhookStatus(webhook.Transaction.Status)
+
+	event := service.WebhookEvent{
+		ExternalID: webhook.Transaction.UID,
+		Status:     internalStatus,
+	}
+
+	if err := h.paymentService.HandleWebhook(r.Context(), event); err != nil {
+		if errors.Is(err, domain.ErrPaymentNotFound) || errors.Is(err, domain.ErrInvalidInput) {
+			writeJSON(w, http.StatusOK, map[string]string{"status": "error"})
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "internal_error", "webhook processing failed")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// mapBePaidWebhookStatus maps bePaid webhook statuses to our internal status strings.
+func mapBePaidWebhookStatus(bepaidStatus string) string {
+	switch bepaidStatus {
+	case "successful":
+		return "succeeded"
+	case "failed", "expired":
+		return "canceled"
+	case "authorized":
+		return "waiting_for_capture"
+	default:
+		return bepaidStatus
+	}
+}
+
 // ListUserPayments godoc
-// @Summary      List my payments
-// @Description  Returns a paginated list of payments for the authenticated user
-// @Tags         payments
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query     int  false  "Page number"  default(1)
-// @Param        page_size  query     int  false  "Page size"    default(20)
-// @Success      200        {object}  APIResponse{data=[]paymentResponse,meta=Meta}
-// @Failure      401        {object}  APIResponse{error=APIError}
-// @Router       /my/payments [get]
+//
+//	@Summary		List my payments
+//	@Description	Returns a paginated list of payments for the authenticated user
+//	@Tags			payments
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int	false	"Page number"	default(1)
+//	@Param			page_size	query		int	false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]paymentResponse,meta=Meta}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Router			/my/payments [get]
+//
 // ListUserPayments handles GET /api/v1/my/payments
 func (h *PaymentHandler) ListUserPayments(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
@@ -260,17 +341,19 @@ func (h *PaymentHandler) ListUserPayments(w http.ResponseWriter, r *http.Request
 }
 
 // GetBookingPayment godoc
-// @Summary      Get booking payment
-// @Description  Returns the payment associated with a specific booking
-// @Tags         payments
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=paymentResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/payment [get]
+//
+//	@Summary		Get booking payment
+//	@Description	Returns the payment associated with a specific booking
+//	@Tags			payments
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Booking ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=paymentResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/payment [get]
+//
 // GetBookingPayment handles GET /api/v1/bookings/{id}/payment
 func (h *PaymentHandler) GetBookingPayment(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
@@ -296,20 +379,21 @@ type adminRefundRequest struct {
 }
 
 // AdminRefund godoc
-// @Summary      Admin manual refund
-// @Description  Allows admin to refund a booking payment with a specified amount and reason. Creates an audit log entry.
-// @Tags         payments
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string              true  "Booking ID (UUID)"
-// @Param        body  body      adminRefundRequest  true  "Refund details"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /admin/bookings/{id}/refund [post]
+//
+//	@Summary		Admin manual refund
+//	@Description	Allows admin to refund a booking payment with a specified amount and reason. Creates an audit log entry.
+//	@Tags			payments
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Booking ID (UUID)"
+//	@Param			body	body		adminRefundRequest	true	"Refund details"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/bookings/{id}/refund [post]
 func (h *PaymentHandler) AdminRefund(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

@@ -10,20 +10,20 @@ import (
 )
 
 type Config struct {
-	Environment string           `mapstructure:"environment"`
-	BaseURL     string           `mapstructure:"base_url"`
-	FrontendURL string           `mapstructure:"frontend_url"`
-	Server      ServerConfig     `mapstructure:"server"`
-	Database    DatabaseConfig   `mapstructure:"database"`
-	Redis       RedisConfig      `mapstructure:"redis"`
-	JWT         JWTConfig        `mapstructure:"jwt"`
-	Logger      LoggerConfig     `mapstructure:"logger"`
-	CORS        CORSConfig       `mapstructure:"cors"`
-	Storage     StorageConfig    `mapstructure:"storage"`
-	OAuth       OAuthConfig      `mapstructure:"oauth"`
-	Moderation  ModerationConfig `mapstructure:"moderation"`
-	Telegram    TelegramConfig   `mapstructure:"telegram"`
-	Admin       AdminConfig      `mapstructure:"admin"`
+	Environment  string             `mapstructure:"environment"`
+	BaseURL      string             `mapstructure:"base_url"`
+	FrontendURL  string             `mapstructure:"frontend_url"`
+	Server       ServerConfig       `mapstructure:"server"`
+	Database     DatabaseConfig     `mapstructure:"database"`
+	Redis        RedisConfig        `mapstructure:"redis"`
+	JWT          JWTConfig          `mapstructure:"jwt"`
+	Logger       LoggerConfig       `mapstructure:"logger"`
+	CORS         CORSConfig         `mapstructure:"cors"`
+	Storage      StorageConfig      `mapstructure:"storage"`
+	OAuth        OAuthConfig        `mapstructure:"oauth"`
+	Moderation   ModerationConfig   `mapstructure:"moderation"`
+	Telegram     TelegramConfig     `mapstructure:"telegram"`
+	Admin        AdminConfig        `mapstructure:"admin"`
 	Escrow       EscrowConfig       `mapstructure:"escrow"`
 	Payment      PaymentConfig      `mapstructure:"payment"`
 	WebPush      WebPushConfig      `mapstructure:"webpush"`
@@ -49,7 +49,7 @@ type WalletConfig struct {
 }
 
 type FiscalConfig struct {
-	Provider      string `mapstructure:"provider"`       // "none" or "atol"
+	Provider      string `mapstructure:"provider"` // "none" or "atol"
 	ATOLLogin     string `mapstructure:"atol_login"`
 	ATOLPassword  string `mapstructure:"atol_password"`
 	ATOLGroupCode string `mapstructure:"atol_group_code"`
@@ -61,8 +61,8 @@ type SMSConfig struct {
 }
 
 type WelcomeBonusConfig struct {
-	Amount    int64 `mapstructure:"amount"`     // in kopecks, default 50000 (500 RUB)
-	ExpiryDays int  `mapstructure:"expiry_days"` // default 30
+	Amount     int64 `mapstructure:"amount"`      // in kopecks, default 50000 (500 RUB)
+	ExpiryDays int   `mapstructure:"expiry_days"` // default 30
 }
 
 type WebPushConfig struct {
@@ -106,12 +106,18 @@ type EscrowConfig struct {
 }
 
 type PaymentConfig struct {
-	YooKassa               YooKassaConfig `mapstructure:"yookassa"`
-	ReturnURL              string         `mapstructure:"return_url"`
-	WalletRefundBonusPercent int          `mapstructure:"wallet_refund_bonus_percent"` // bonus % for wallet refund (0-15, default 5)
+	YooKassa                 YooKassaConfig `mapstructure:"yookassa"`
+	BePaid                   BePaidConfig   `mapstructure:"bepaid"`
+	ReturnURL                string         `mapstructure:"return_url"`
+	WalletRefundBonusPercent int            `mapstructure:"wallet_refund_bonus_percent"` // bonus % for wallet refund (0-15, default 5)
 }
 
 type YooKassaConfig struct {
+	ShopID    string `mapstructure:"shop_id"`
+	SecretKey string `mapstructure:"secret_key"`
+}
+
+type BePaidConfig struct {
 	ShopID    string `mapstructure:"shop_id"`
 	SecretKey string `mapstructure:"secret_key"`
 }
@@ -206,10 +212,12 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("cors.allowed_origins", []string{"*"})
 	v.SetDefault("payment.yookassa.shop_id", "")
 	v.SetDefault("payment.yookassa.secret_key", "")
+	v.SetDefault("payment.bepaid.shop_id", "")
+	v.SetDefault("payment.bepaid.secret_key", "")
 	v.SetDefault("payment.return_url", "http://localhost:3000/payment/callback")
 	v.SetDefault("sms.provider", "smsru")
 	v.SetDefault("sms.api_key", "")
-	v.SetDefault("welcome_bonus.amount", 50000)      // 500 RUB in kopecks
+	v.SetDefault("welcome_bonus.amount", 50000) // 500 RUB in kopecks
 	v.SetDefault("welcome_bonus.expiry_days", 30)
 	v.SetDefault("escrow.claim_hours", 48)
 	v.SetDefault("payment.wallet_refund_bonus_percent", 5)
@@ -315,6 +323,9 @@ func (c *Config) Warnings() []string {
 	}
 	if c.Telegram.BotToken == "" {
 		warnings = append(warnings, "telegram.bot_token is empty: telegram notifications will be disabled (set BANI_TELEGRAM_BOT_TOKEN)")
+	}
+	if c.Payment.BePaid.ShopID == "" {
+		warnings = append(warnings, "payment.bepaid.shop_id is empty: Belarus payments will be disabled (set BANI_PAYMENT_BEPAID_SHOP_ID)")
 	}
 	return warnings
 }

@@ -142,7 +142,8 @@ func NewRouter(p RouterParams) http.Handler {
 		r.Get("/ws/notifications", p.WSHandler.HandleWS)
 
 		// Webhooks (public, called by payment providers)
-		r.With(middleware.RateLimit(webhookRateLimiter, 0.5)).Post("/webhooks/yookassa", p.PaymentHandler.HandleWebhook) // 30/min
+		r.With(middleware.RateLimit(webhookRateLimiter, 0.5)).Post("/webhooks/yookassa", p.PaymentHandler.HandleWebhook)       // 30/min
+		r.With(middleware.RateLimit(webhookRateLimiter, 0.5)).Post("/webhooks/bepaid", p.PaymentHandler.HandleBePaidWebhook) // 30/min
 
 		// Auth (public, rate-limited)
 		r.With(middleware.RateLimit(authRegisterRateLimiter, 5.0/60.0)).Post("/auth/register", p.AuthHandler.Register) // 5/min

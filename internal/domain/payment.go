@@ -9,15 +9,19 @@ import (
 type PaymentMethod string
 
 const (
-	PaymentMethodCard   PaymentMethod = "card"
-	PaymentMethodSBP    PaymentMethod = "sbp"
-	PaymentMethodWallet PaymentMethod = "wallet"
-	PaymentMethodCombo  PaymentMethod = "combo"
+	PaymentMethodCard    PaymentMethod = "card"
+	PaymentMethodSBP     PaymentMethod = "sbp"
+	PaymentMethodWallet  PaymentMethod = "wallet"
+	PaymentMethodCombo   PaymentMethod = "combo"
+	PaymentMethodMIR     PaymentMethod = "mir"
+	PaymentMethodBelkart PaymentMethod = "belkart"
+	PaymentMethodERIP    PaymentMethod = "erip"
 )
 
 func (m PaymentMethod) IsValid() bool {
 	switch m {
-	case PaymentMethodCard, PaymentMethodSBP, PaymentMethodWallet, PaymentMethodCombo:
+	case PaymentMethodCard, PaymentMethodSBP, PaymentMethodWallet, PaymentMethodCombo,
+		PaymentMethodMIR, PaymentMethodBelkart, PaymentMethodERIP:
 		return true
 	}
 	return false
@@ -26,12 +30,12 @@ func (m PaymentMethod) IsValid() bool {
 type PaymentStatus string
 
 const (
-	PaymentPending            PaymentStatus = "pending"
-	PaymentProcessing         PaymentStatus = "processing"
-	PaymentSucceeded          PaymentStatus = "succeeded"
-	PaymentFailed             PaymentStatus = "failed"
-	PaymentRefunded           PaymentStatus = "refunded"
-	PaymentPartiallyRefunded  PaymentStatus = "partially_refunded"
+	PaymentPending           PaymentStatus = "pending"
+	PaymentProcessing        PaymentStatus = "processing"
+	PaymentSucceeded         PaymentStatus = "succeeded"
+	PaymentFailed            PaymentStatus = "failed"
+	PaymentRefunded          PaymentStatus = "refunded"
+	PaymentPartiallyRefunded PaymentStatus = "partially_refunded"
 )
 
 func (s PaymentStatus) IsValid() bool {
@@ -46,17 +50,17 @@ type Payment struct {
 	ID            uuid.UUID
 	BookingID     uuid.UUID
 	UserID        uuid.UUID
-	Amount        int64             // в копейках
-	Currency      string            // "RUB"
+	Amount        int64  // в копейках
+	Currency      string // "RUB"
 	Status        PaymentStatus
-	Provider      string            // "yookassa"
-	ExternalID    string            // ID транзакции в платежной системе
-	PaymentMethod PaymentMethod     // "card", "sbp", "wallet", "combo"
-	WalletAmount  int64             // копейки, оплачено из кошелька
-	CardAmount    int64             // копейки, оплачено картой/СБП
-	IsHold        bool              // true = authorization hold, not yet captured
-	CapturedAt    *time.Time        // when the hold was captured
-	RefundAmount  int64             // сумма возврата в копейках
+	Provider      string        // "yookassa"
+	ExternalID    string        // ID транзакции в платежной системе
+	PaymentMethod PaymentMethod // "card", "sbp", "wallet", "combo"
+	WalletAmount  int64         // копейки, оплачено из кошелька
+	CardAmount    int64         // копейки, оплачено картой/СБП
+	IsHold        bool          // true = authorization hold, not yet captured
+	CapturedAt    *time.Time    // when the hold was captured
+	RefundAmount  int64         // сумма возврата в копейках
 	RefundedAt    *time.Time
 	Metadata      map[string]string
 	CreatedAt     time.Time
