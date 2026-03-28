@@ -1,9 +1,10 @@
-import { Card, Tag, Rate, Typography, Space, Button, Image, App } from 'antd'
+import { Card, Tag, Rate, Typography, Space, Button, Image, App, Checkbox } from 'antd'
 import {
   EnvironmentOutlined,
   HeartOutlined,
   HeartFilled,
   CheckCircleOutlined,
+  SwapOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -25,9 +26,18 @@ const AMENITY_LABELS: Record<string, string> = {
 interface BathhouseCardProps {
   bathhouse: InternalHandlerBathhouseResponse
   showFavorite?: boolean
+  showCompare?: boolean
+  isCompareSelected?: boolean
+  onCompareToggle?: (id: string) => void
 }
 
-export default function BathhouseCard({ bathhouse, showFavorite = true }: BathhouseCardProps) {
+export default function BathhouseCard({
+  bathhouse,
+  showFavorite = true,
+  showCompare = false,
+  isCompareSelected = false,
+  onCompareToggle,
+}: BathhouseCardProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { message } = App.useApp()
@@ -53,6 +63,36 @@ export default function BathhouseCard({ bathhouse, showFavorite = true }: Bathho
     if (bathhouse.id) {
       favoriteMutation.mutate({ id: bathhouse.id })
     }
+  }
+
+  const cardActions: React.ReactNode[] = []
+  if (showFavorite) {
+    cardActions.push(
+      <Button
+        key="favorite"
+        type="text"
+        icon={bathhouse.is_favorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
+        onClick={handleFavoriteClick}
+        loading={favoriteMutation.isPending}
+      >
+        {bathhouse.is_favorite ? 'В избранном' : 'В избранное'}
+      </Button>,
+    )
+  }
+  if (showCompare) {
+    cardActions.push(
+      <Checkbox
+        key="compare"
+        checked={isCompareSelected}
+        onChange={(e) => {
+          e.stopPropagation()
+          if (bathhouse.id && onCompareToggle) onCompareToggle(bathhouse.id)
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <SwapOutlined /> Сравнить
+      </Checkbox>,
+    )
   }
 
   return (
@@ -82,21 +122,7 @@ export default function BathhouseCard({ bathhouse, showFavorite = true }: Bathho
           </div>
         )
       }
-      actions={
-        showFavorite
-          ? [
-              <Button
-                key="favorite"
-                type="text"
-                icon={bathhouse.is_favorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
-                onClick={handleFavoriteClick}
-                loading={favoriteMutation.isPending}
-              >
-                {bathhouse.is_favorite ? 'В избранном' : 'В избранное'}
-              </Button>,
-            ]
-          : undefined
-      }
+      actions={cardActions.length > 0 ? cardActions : undefined}
     >
       <Space direction="vertical" size={4} style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

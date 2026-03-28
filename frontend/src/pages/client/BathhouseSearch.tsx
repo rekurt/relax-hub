@@ -15,17 +15,26 @@ import {
   Button,
   InputNumber,
   Collapse,
+  Badge,
+  Segmented,
+  App,
 } from 'antd'
 import {
   SearchOutlined,
   EnvironmentOutlined,
   FilterOutlined,
   SortAscendingOutlined,
+  SwapOutlined,
+  UnorderedListOutlined,
+  EnvironmentFilled,
+  SplitCellsOutlined,
 } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import { useGetBathhouses } from '@/api/generated/bathhouses/bathhouses'
 import { useGetCities } from '@/api/generated/cities/cities'
 import type { GetBathhousesParams } from '@/api/generated/model'
 import BathhouseCard from '@/components/BathhouseCard'
+import BathhouseMap from '@/components/BathhouseMap'
 import { formatPrice } from '@/lib/format'
 
 const { Title } = Typography
@@ -38,6 +47,14 @@ const SORT_OPTIONS = [
   { value: 'distance_asc', label: 'Ближайшие' },
 ]
 
+type ViewMode = 'list' | 'map' | 'split'
+
+const VIEW_MODE_OPTIONS = [
+  { value: 'list', icon: <UnorderedListOutlined />, label: 'Список' },
+  { value: 'split', icon: <SplitCellsOutlined />, label: 'Сплит' },
+  { value: 'map', icon: <EnvironmentFilled />, label: 'Карта' },
+]
+
 function parseSortOption(value: string): { sort_by: string; sort_order: string } {
   const lastUnderscore = value.lastIndexOf('_')
   return {
@@ -45,6 +62,8 @@ function parseSortOption(value: string): { sort_by: string; sort_order: string }
     sort_order: value.slice(lastUnderscore + 1),
   }
 }
+
+const MAX_COMPARE = 3
 
 export default function BathhouseSearch() {
   const [page, setPage] = useState(1)
@@ -54,7 +73,12 @@ export default function BathhouseSearch() {
   const [filters, setFilters] = useState<Partial<GetBathhousesParams>>({})
   const [geoEnabled, setGeoEnabled] = useState(false)
   const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [compareIds, setCompareIds] = useState<string[]>([])
+  const [highlightedId, setHighlightedId] = useState<string | null>(null)
 
+  const navigate = useNavigate()
+  const { message } = App.useApp()
   const { data: citiesData } = useGetCities()
   const cities = citiesData?.data ?? []
 
@@ -91,9 +115,102 @@ export default function BathhouseSearch() {
     setPage(1)
   }
 
+  const handleCompareToggle = (id: string) => {
+    setCompareIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id)
+      if (prev.length >= MAX_COMPARE) {
+        message.warning(`Можно сравнить не более ${MAX_COMPARE} бань`)
+        return prev
+      }
+      return [...prev, id]
+    })
+  }
+
+  const handleGoCompare = () => {
+    if (compareIds.length < 2) {
+      message.warning('Выберите минимум 2 бани для сравнения')
+      return
+    }
+    navigate(`/client/comparison?ids=${compareIds.join(',')}`)
+  }
+
+  const handleBoundsChange = (bounds: { north: number; south: number; east: number; west: number }) => {
+    setFilters((prev) => ({
+      ...prev,
+      lat: (bounds.north + bounds.south) / 2,
+      lng: (bounds.east + bounds.west) / 2,
+      radius_km: Math.max(
+        1,
+        Math.round(
+          haversineDistance(
+            bounds.south,
+            bounds.west,
+            bounds.north,
+            bounds.east,
+          ) / 2,
+        ),
+      ),
+    }))
+    setGeoEnabled(true)
+    setPage(1)
+  }
+
+  const handleMarkerClick = (id: string) => {
+    navigate(`/client/bathhouse/${id}`)
+  }
+
+  const listContent = (
+    <Spin spinning={isLoading}>
+      {bathhouses.length === 0 && !isLoading ? (
+        <Empty description="Бани не найдены" />
+      ) : (
+        <>
+          <Row gutter={[16, 16]}>
+            {bathhouses.map((b) => (
+              <Col
+                key={b.id}
+                xs={24}
+                sm={viewMode === 'split' ? 24 : 12}
+                md={viewMode === 'split' ? 24 : 8}
+                lg={viewMode === 'split' ? 12 : 6}
+                onMouseEnter={() => setHighlightedId(b.id ?? null)}
+                onMouseLeave={() => setHighlightedId(null)}
+              >
+                <BathhouseCard
+                  bathhouse={b}
+                  showCompare
+                  isCompareSelected={compareIds.includes(b.id ?? '')}
+                  onCompareToggle={handleCompareToggle}
+                />
+              </Col>
+            ))}
+          </Row>
+          {meta && meta.total_pages && meta.total_pages > 1 && (
+            <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <Pagination
+                current={page}
+                pageSize={pageSize}
+                total={meta.total_count}
+                onChange={(p) => setPage(p)}
+                showSizeChanger={false}
+              />
+            </div>
+          )}
+        </>
+      )}
+    </Spin>
+  )
+
   return (
     <div>
-      <Title level={3}>Поиск бань</Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={3} style={{ margin: 0 }}>Поиск бань</Title>
+        <Segmented
+          options={VIEW_MODE_OPTIONS}
+          value={viewMode}
+          onChange={(v) => setViewMode(v as ViewMode)}
+        />
+      </div>
 
       <Space direction="vertical" size="middle" style={{ width: '100%', marginBottom: 24 }}>
         <Row gutter={[16, 16]} align="middle">
@@ -225,32 +342,91 @@ export default function BathhouseSearch() {
         />
       </Space>
 
-      <Spin spinning={isLoading}>
-        {bathhouses.length === 0 && !isLoading ? (
-          <Empty description="Бани не найдены" />
-        ) : (
-          <>
-            <Row gutter={[16, 16]}>
-              {bathhouses.map((b) => (
-                <Col key={b.id} xs={24} sm={12} md={8} lg={6}>
-                  <BathhouseCard bathhouse={b} />
-                </Col>
-              ))}
-            </Row>
-            {meta && meta.total_pages && meta.total_pages > 1 && (
-              <div style={{ textAlign: 'center', marginTop: 24 }}>
-                <Pagination
-                  current={page}
-                  pageSize={pageSize}
-                  total={meta.total_count}
-                  onChange={(p) => setPage(p)}
-                  showSizeChanger={false}
-                />
-              </div>
-            )}
-          </>
-        )}
-      </Spin>
+      {/* Comparison bar */}
+      {compareIds.length > 0 && (
+        <div
+          style={{
+            position: 'sticky',
+            top: 64,
+            zIndex: 9,
+            background: '#f0f5ff',
+            border: '1px solid #adc6ff',
+            borderRadius: 8,
+            padding: '8px 16px',
+            marginBottom: 16,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Space>
+            <SwapOutlined />
+            <span>
+              Выбрано для сравнения: <Badge count={compareIds.length} style={{ backgroundColor: '#722ed1' }} />
+            </span>
+          </Space>
+          <Space>
+            <Button size="small" onClick={() => setCompareIds([])}>
+              Сбросить
+            </Button>
+            <Button
+              type="primary"
+              size="small"
+              disabled={compareIds.length < 2}
+              onClick={handleGoCompare}
+            >
+              Сравнить
+            </Button>
+          </Space>
+        </div>
+      )}
+
+      {/* Content area */}
+      {viewMode === 'list' && listContent}
+
+      {viewMode === 'map' && (
+        <BathhouseMap
+          bathhouses={bathhouses}
+          highlightedId={highlightedId}
+          onBoundsChange={handleBoundsChange}
+          onMarkerClick={handleMarkerClick}
+          onMarkerHover={setHighlightedId}
+          center={geoCoords ?? undefined}
+          style={{ height: 600, borderRadius: 8, overflow: 'hidden' }}
+        />
+      )}
+
+      {viewMode === 'split' && (
+        <Row gutter={16}>
+          <Col xs={24} md={12}>
+            <div style={{ maxHeight: 700, overflow: 'auto' }}>{listContent}</div>
+          </Col>
+          <Col xs={24} md={12}>
+            <BathhouseMap
+              bathhouses={bathhouses}
+              highlightedId={highlightedId}
+              onBoundsChange={handleBoundsChange}
+              onMarkerClick={handleMarkerClick}
+              onMarkerHover={setHighlightedId}
+              center={geoCoords ?? undefined}
+              style={{ height: 700, borderRadius: 8, overflow: 'hidden' }}
+            />
+          </Col>
+        </Row>
+      )}
     </div>
   )
+}
+
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLon = ((lon2 - lon1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2)
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }

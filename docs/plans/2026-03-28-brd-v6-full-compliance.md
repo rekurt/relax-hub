@@ -345,14 +345,14 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `frontend/src/pages/client/BathhouseSearch.tsx` (add map mode, split-view)
 - Create: `frontend/src/components/BathhouseMap.tsx`
 
-- [ ] Regenerate API client for comparison endpoints
-- [ ] Comparison page: side-by-side table for 2-3 bathhouses (price, rating, capacity, amenities, distance, cancellation policy)
-- [ ] Add "Compare" button on bathhouse cards in search results
-- [ ] Map view in search: Yandex Maps with price markers, clustering for 50+ results
-- [ ] Split-view mode: list on left, map on right, synchronized highlights
-- [ ] "Search in this area" button on map drag
-- [ ] Write frontend tests
-- [ ] Run project test suite - must pass before next task
+- [x] Regenerate API client for comparison endpoints
+- [x] Comparison page: side-by-side table for 2-3 bathhouses (price, rating, capacity, amenities, distance, cancellation policy)
+- [x] Add "Compare" button on bathhouse cards in search results
+- [x] Map view in search: Yandex Maps with price markers, clustering for 50+ results
+- [x] Split-view mode: list on left, map on right, synchronized highlights
+- [x] "Search in this area" button on map drag
+- [x] Write frontend tests
+- [x] Run project test suite - must pass before next task
 
 ### Task 18: Frontend - Saved searches and anti-fraud admin
 

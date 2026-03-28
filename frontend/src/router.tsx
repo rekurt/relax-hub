@@ -64,6 +64,7 @@ import ClientDisputeDetail from '@/pages/client/DisputeDetail'
 import DisputeCreate from '@/pages/client/DisputeCreate'
 import DisputeManagement from '@/pages/admin/DisputeManagement'
 import AdminDisputeDetail from '@/pages/admin/AdminDisputeDetail'
+import ComparisonPage from '@/pages/client/ComparisonPage'
 import OAuthCallback from '@/pages/OAuthCallback'
 
 export default function AppRouter() {
@@ -138,6 +139,7 @@ export default function AppRouter() {
         <Route path="disputes" element={<DisputeList />} />
         <Route path="disputes/new" element={<DisputeCreate />} />
         <Route path="disputes/:id" element={<ClientDisputeDetail />} />
+        <Route path="comparison" element={<ComparisonPage />} />
         <Route path="notifications" element={<ClientNotifications />} />
         <Route path="profile" element={<ClientProfile />} />
       </Route>
