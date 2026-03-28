@@ -15,17 +15,20 @@ import (
 const dateFormat = "2006-01-02"
 
 type PricingHandler struct {
-	pricingService   service.PricingService
-	bathhouseService service.BathhouseService
+	pricingService      service.PricingService
+	bathhouseService    service.BathhouseService
+	smartPricingService service.SmartPricingService
 }
 
 func NewPricingHandler(
 	pricingService service.PricingService,
 	bathhouseService service.BathhouseService,
+	smartPricingService service.SmartPricingService,
 ) *PricingHandler {
 	return &PricingHandler{
-		pricingService:   pricingService,
-		bathhouseService: bathhouseService,
+		pricingService:      pricingService,
+		bathhouseService:    bathhouseService,
+		smartPricingService: smartPricingService,
 	}
 }
 
@@ -579,4 +582,55 @@ func (h *PricingHandler) DeleteSeasonalTariff(w http.ResponseWriter, r *http.Req
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "tariff deleted"})
+}
+
+type priceRecommendationResponse struct {
+	CurrentPrice        int64   `json:"current_price"`
+	RecommendedPrice    int64   `json:"recommended_price"`
+	Coefficient         float64 `json:"coefficient"`
+	AvgAreaPrice        int64   `json:"avg_area_price"`
+	OccupancyRate       float64 `json:"occupancy_rate"`
+	DemandTrend         string  `json:"demand_trend"`
+	RecommendationBasis string  `json:"recommendation_basis"`
+}
+
+// GetPriceRecommendation godoc
+//
+//	@Summary		Get smart pricing recommendation
+//	@Description	Returns a pricing recommendation based on occupancy, area averages, and demand trends. Owner or representative only.
+//	@Tags			pricing
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Bathhouse ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=priceRecommendationResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/price-recommendation [get]
+func (h *PricingHandler) GetPriceRecommendation(w http.ResponseWriter, r *http.Request) {
+	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
+
+	rec, err := h.smartPricingService.GetRecommendation(r.Context(), userID, userRole, bathhouseID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, priceRecommendationResponse{
+		CurrentPrice:        rec.CurrentPrice,
+		RecommendedPrice:    rec.RecommendedPrice,
+		Coefficient:         rec.Coefficient,
+		AvgAreaPrice:        rec.AvgAreaPrice,
+		OccupancyRate:       rec.OccupancyRate,
+		DemandTrend:         rec.DemandTrend,
+		RecommendationBasis: rec.RecommendationBasis,
+	})
 }

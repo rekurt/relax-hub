@@ -90,6 +90,24 @@ func (m *mockPricingService) ListSeasonalTariffs(_ context.Context, _ uuid.UUID)
 	return nil, nil
 }
 
+type mockSmartPricingService struct {
+	getRecommendationFn func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (*service.PriceRecommendation, error)
+}
+
+func (m *mockSmartPricingService) GetRecommendation(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) (*service.PriceRecommendation, error) {
+	if m.getRecommendationFn != nil {
+		return m.getRecommendationFn(ctx, userID, userRole, bathhouseID)
+	}
+	return &service.PriceRecommendation{
+		CurrentPrice:     200000,
+		RecommendedPrice: 220000,
+		Coefficient:      1.1,
+		AvgAreaPrice:     180000,
+		OccupancyRate:    0.65,
+		DemandTrend:      "stable",
+	}, nil
+}
+
 func TestPricingHandler_CreateRule(t *testing.T) {
 	userID := uuid.New()
 	bathhouseID := uuid.New()
@@ -115,7 +133,7 @@ func TestPricingHandler_CreateRule(t *testing.T) {
 		},
 	}
 
-	h := NewPricingHandler(pricingSvc, bhSvc)
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -180,7 +198,7 @@ func TestPricingHandler_ListRules(t *testing.T) {
 		},
 	}
 
-	h := NewPricingHandler(pricingSvc, bhSvc)
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -221,7 +239,7 @@ func TestPricingHandler_UpdateRule(t *testing.T) {
 	}
 
 	bhSvc := &mockBHService{}
-	h := NewPricingHandler(pricingSvc, bhSvc)
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -263,7 +281,7 @@ func TestPricingHandler_DeleteRule(t *testing.T) {
 	}
 
 	bhSvc := &mockBHService{}
-	h := NewPricingHandler(pricingSvc, bhSvc)
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -314,7 +332,7 @@ func TestPricingHandler_CalculatePrice(t *testing.T) {
 		},
 	}
 
-	h := NewPricingHandler(pricingSvc, bhSvc)
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}/price-calculator", h.CalculatePrice)
@@ -346,7 +364,7 @@ func TestPricingHandler_CalculatePrice_MissingParams(t *testing.T) {
 
 	pricingSvc := &mockPricingService{}
 	bhSvc := &mockBHService{}
-	h := NewPricingHandler(pricingSvc, bhSvc)
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}/price-calculator", h.CalculatePrice)

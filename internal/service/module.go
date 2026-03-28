@@ -94,6 +94,7 @@ var Module = fx.Module("service",
 		fx.Annotate(NewFinancialReportService, fx.As(new(FinancialReportService))),
 		fx.Annotate(NewReconciliationService, fx.As(new(ReconciliationService))),
 		fx.Annotate(NewListingImportService, fx.As(new(ListingImportService))),
+		fx.Annotate(NewSmartPricingService, fx.As(new(SmartPricingService))),
 		fx.Annotate(NewAmenityService, fx.As(new(AmenityService))),
 		fx.Annotate(NewObjectTypeService, fx.As(new(ObjectTypeService))),
 		fx.Annotate(

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  Alert,
   App,
   Button,
   Card,
@@ -12,6 +13,7 @@ import {
   Popconfirm,
   Select,
   Space,
+  Statistic,
   Switch,
   Table,
   Tag,
@@ -19,6 +21,9 @@ import {
   Typography,
 } from 'antd'
 import {
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  BulbOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
@@ -323,6 +328,36 @@ export default function PricingRules() {
     },
   ]
 
+  // --- Smart Pricing Recommendation ---
+  interface PriceRecommendation {
+    current_price: number
+    recommended_price: number
+    coefficient: number
+    avg_area_price: number
+    occupancy_rate: number
+    demand_trend: string
+    recommendation_basis: string
+  }
+
+  const { data: recommendationData } = useQuery<PriceRecommendation>({
+    queryKey: ['price-recommendation', selectedBathhouseId],
+    queryFn: async () => {
+      const res = await axiosInstance.get<{ success: boolean; data: PriceRecommendation }>(
+        `/my/bathhouses/${selectedBathhouseId}/price-recommendation`,
+      )
+      return res.data.data
+    },
+    enabled: !!selectedBathhouseId,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const formatPrice = (kopecks: number) => `${(kopecks / 100).toLocaleString('ru-RU')} ₽`
+  const demandTrendLabel: Record<string, string> = {
+    growing: 'Растущий',
+    declining: 'Снижающийся',
+    stable: 'Стабильный',
+  }
+
   // --- Seasonal Tariffs ---
   const tariffQueryKey = ['seasonal-tariffs', selectedBathhouseId]
 
@@ -513,6 +548,34 @@ export default function PricingRules() {
           Добавить правило
         </Button>
       </div>
+
+      {recommendationData && (
+        <Card
+          size="small"
+          style={{ marginBottom: 16 }}
+          title={<><BulbOutlined /> Рекомендация по цене</>}
+        >
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Statistic title="Текущая цена/час" value={formatPrice(recommendationData.current_price)} />
+            <Statistic
+              title="Рекомендуемая цена/час"
+              value={formatPrice(recommendationData.recommended_price)}
+              valueStyle={{ color: recommendationData.coefficient > 1 ? '#3f8600' : recommendationData.coefficient < 1 ? '#cf1322' : undefined }}
+              prefix={recommendationData.coefficient > 1 ? <ArrowUpOutlined /> : recommendationData.coefficient < 1 ? <ArrowDownOutlined /> : undefined}
+            />
+            <Statistic title="Коэффициент" value={`x${recommendationData.coefficient}`} />
+            <Statistic title="Средняя цена в районе" value={formatPrice(recommendationData.avg_area_price)} />
+            <Statistic title="Загрузка" value={`${Math.round(recommendationData.occupancy_rate * 100)}%`} />
+            <Statistic title="Спрос" value={demandTrendLabel[recommendationData.demand_trend] ?? recommendationData.demand_trend} />
+          </div>
+          <Alert
+            style={{ marginTop: 12 }}
+            type="info"
+            showIcon
+            message={recommendationData.recommendation_basis}
+          />
+        </Card>
+      )}
 
       <Table
         dataSource={rules}

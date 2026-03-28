@@ -460,12 +460,12 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: `internal/service/smart_pricing_service.go`
 - Modify: `internal/handler/pricing.go`
 
-- [ ] Calculate recommended price based on: current occupancy, average area prices, demand patterns
-- [ ] Recommend coefficient range 0.8 to 1.5
-- [ ] Add API endpoint: GET /api/v1/my/bathhouses/{id}/price-recommendation
-- [ ] Frontend: show recommendation in pricing settings with accept/dismiss
-- [ ] Write tests
-- [ ] Run project test suite - must pass before next task
+- [x] Calculate recommended price based on: current occupancy, average area prices, demand patterns
+- [x] Recommend coefficient range 0.8 to 1.5
+- [x] Add API endpoint: GET /api/v1/my/bathhouses/{id}/price-recommendation
+- [x] Frontend: show recommendation in pricing settings with accept/dismiss
+- [x] Write tests
+- [x] Run project test suite - must pass before next task
 
 ### Task 26: Owner wallet export and financial documents
 
