@@ -243,15 +243,15 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Create: `frontend/src/pages/crm/RFMAnalysis.tsx`
 - Create: `frontend/src/pages/crm/SegmentBuilder.tsx`
 
-- [ ] Calculate RFM scores (1-5 each) for each guest card based on last visit, visit count, total spent
-- [ ] Add endpoint: GET /api/v1/my/crm/rfm (returns guests with RFM scores and matrix)
-- [ ] Create custom_segments table (id, owner_id, bathhouse_id, name, conditions JSONB)
-- [ ] Conditions: visit_count (min/max), avg_check (min/max), last_visit_days_ago (min/max), tags (include/exclude), rfm_score ranges
-- [ ] CRUD endpoints: /api/v1/my/crm/segments/custom
-- [ ] Dynamic evaluation: resolve segment -> guest list on demand
-- [ ] Frontend RFM matrix visualization and segment builder UI
-- [ ] Write tests for RFM calculation and segment evaluation
-- [ ] Run project test suite - must pass before task 13
+- [x] Calculate RFM scores (1-5 each) for each guest card based on last visit, visit count, total spent
+- [x] Add endpoint: GET /api/v1/my/crm/rfm (returns guests with RFM scores and matrix)
+- [x] Create custom_segments table (id, owner_id, bathhouse_id, name, conditions JSONB)
+- [x] Conditions: visit_count (min/max), avg_check (min/max), last_visit_days_ago (min/max), tags (include/exclude), rfm_score ranges
+- [x] CRUD endpoints: /api/v1/my/crm/segments/custom
+- [x] Dynamic evaluation: resolve segment -> guest list on demand
+- [x] Frontend RFM matrix visualization and segment builder UI
+- [x] Write tests for RFM calculation and segment evaluation
+- [x] Run project test suite - must pass before task 13
 
 ### Task 13: Broadcast Personalization & SMS Channel (FR CRM)
 

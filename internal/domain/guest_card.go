@@ -91,3 +91,30 @@ type GuestCardStats struct {
 	AvgVisitCount int64 `json:"avg_visit_count"`
 	AvgSpent      int64 `json:"avg_spent"`
 }
+
+// RFMScore represents the RFM (Recency-Frequency-Monetary) scores for a guest.
+// Each score ranges from 1 (lowest) to 5 (highest).
+type RFMScore struct {
+	Recency   int `json:"recency"`   // 5=most recent, 1=least recent
+	Frequency int `json:"frequency"` // 5=most visits, 1=fewest visits
+	Monetary  int `json:"monetary"`  // 5=highest spend, 1=lowest spend
+}
+
+// GuestRFM combines a guest card with its computed RFM scores.
+type GuestRFM struct {
+	GuestCard
+	RFM RFMScore `json:"rfm"`
+}
+
+// RFMMatrix holds the count of guests in each RFM cell (R x F).
+type RFMMatrixCell struct {
+	Recency   int   `json:"recency"`
+	Frequency int   `json:"frequency"`
+	Count     int64 `json:"count"`
+}
+
+// RFMResult holds all RFM data for an owner.
+type RFMResult struct {
+	Guests []GuestRFM      `json:"guests"`
+	Matrix []RFMMatrixCell `json:"matrix"`
+}

@@ -209,6 +209,86 @@ func (r *GuestCardRepo) CountBySegment(_ context.Context, filter domain.GuestCar
 	return count, nil
 }
 
+func (r *GuestCardRepo) GetRFMScores(_ context.Context, filter domain.GuestCardFilter) (*domain.RFMResult, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var filtered []domain.GuestCard
+	for _, c := range r.cards {
+		if !r.matchesFilter(c, filter) {
+			continue
+		}
+		cp := *c
+		filtered = append(filtered, cp)
+	}
+
+	if len(filtered) == 0 {
+		return &domain.RFMResult{
+			Guests: []domain.GuestRFM{},
+			Matrix: []domain.RFMMatrixCell{},
+		}, nil
+	}
+
+	n := len(filtered)
+	bucketSize := n / 5
+	if bucketSize < 1 {
+		bucketSize = 1
+	}
+
+	// Sort by last_visit_at ascending for recency
+	sort.Slice(filtered, func(i, j int) bool { return filtered[i].LastVisitAt.Before(filtered[j].LastVisitAt) })
+	rRanks := make(map[uuid.UUID]int, n)
+	for i, c := range filtered {
+		score := i/bucketSize + 1
+		if score > 5 {
+			score = 5
+		}
+		rRanks[c.ID] = score
+	}
+
+	// Sort by visit_count ascending
+	sort.Slice(filtered, func(i, j int) bool { return filtered[i].VisitCount < filtered[j].VisitCount })
+	fRanks := make(map[uuid.UUID]int, n)
+	for i, c := range filtered {
+		score := i/bucketSize + 1
+		if score > 5 {
+			score = 5
+		}
+		fRanks[c.ID] = score
+	}
+
+	// Sort by total_spent ascending
+	sort.Slice(filtered, func(i, j int) bool { return filtered[i].TotalSpent < filtered[j].TotalSpent })
+	mRanks := make(map[uuid.UUID]int, n)
+	for i, c := range filtered {
+		score := i/bucketSize + 1
+		if score > 5 {
+			score = 5
+		}
+		mRanks[c.ID] = score
+	}
+
+	var guests []domain.GuestRFM
+	matrixMap := make(map[[2]int]int64)
+	for _, c := range filtered {
+		rfm := domain.RFMScore{
+			Recency:   rRanks[c.ID],
+			Frequency: fRanks[c.ID],
+			Monetary:  mRanks[c.ID],
+		}
+		guests = append(guests, domain.GuestRFM{GuestCard: c, RFM: rfm})
+		key := [2]int{rfm.Recency, rfm.Frequency}
+		matrixMap[key]++
+	}
+
+	var matrix []domain.RFMMatrixCell
+	for key, count := range matrixMap {
+		matrix = append(matrix, domain.RFMMatrixCell{Recency: key[0], Frequency: key[1], Count: count})
+	}
+
+	return &domain.RFMResult{Guests: guests, Matrix: matrix}, nil
+}
+
 func (r *GuestCardRepo) GetStats(_ context.Context, filter domain.GuestCardFilter) (*domain.GuestCardStats, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -237,4 +317,3 @@ func (r *GuestCardRepo) GetStats(_ context.Context, filter domain.GuestCardFilte
 
 	return &stats, nil
 }
-

@@ -27,6 +27,8 @@ import BroadcastList from '@/pages/crm/BroadcastList'
 import BroadcastCreate from '@/pages/crm/BroadcastCreate'
 import AutoScenarios from '@/pages/crm/AutoScenarios'
 import ResponseTemplates from '@/pages/crm/ResponseTemplates'
+import RFMAnalysis from '@/pages/crm/RFMAnalysis'
+import SegmentBuilder from '@/pages/crm/SegmentBuilder'
 import ClientHome from '@/pages/client/ClientHome'
 import BathhouseSearch from '@/pages/client/BathhouseSearch'
 import BathhouseDetail from '@/pages/client/BathhouseDetail'
@@ -110,6 +112,8 @@ export default function AppRouter() {
         <Route path="crm/guests" element={<GuestCardList />} />
         <Route path="crm/guests/:id" element={<GuestCardDetail />} />
         <Route path="crm/segments" element={<SegmentList />} />
+        <Route path="crm/rfm" element={<RFMAnalysis />} />
+        <Route path="crm/segments/custom" element={<SegmentBuilder />} />
         <Route path="crm/broadcasts" element={<BroadcastList />} />
         <Route path="crm/broadcasts/new" element={<BroadcastCreate />} />
         <Route path="crm/scenarios" element={<AutoScenarios />} />

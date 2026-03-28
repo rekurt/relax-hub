@@ -289,6 +289,67 @@ func (r *guestCardRepo) CountBySegment(ctx context.Context, filter domain.GuestC
 	return count, nil
 }
 
+func (r *guestCardRepo) GetRFMScores(ctx context.Context, filter domain.GuestCardFilter) (*domain.RFMResult, error) {
+	where, args := buildGuestCardOwnerCondition(filter)
+
+	// Use NTILE(5) window functions to compute RFM quintiles.
+	// Recency: NTILE over last_visit_at ASC so most recent gets score 5.
+	query := fmt.Sprintf(`
+		SELECT id, owner_id, client_id, bathhouse_id, first_visit_at, last_visit_at,
+			visit_count, total_spent, avg_check, notes, tags, created_at, updated_at,
+			NTILE(5) OVER (ORDER BY last_visit_at ASC) AS r_score,
+			NTILE(5) OVER (ORDER BY visit_count ASC) AS f_score,
+			NTILE(5) OVER (ORDER BY total_spent ASC) AS m_score
+		FROM guest_cards WHERE %s
+		ORDER BY total_spent DESC
+		LIMIT 1000`, where)
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("get rfm scores: %w", err)
+	}
+	defer rows.Close()
+
+	var guests []domain.GuestRFM
+	for rows.Next() {
+		var g domain.GuestRFM
+		var r, f, m int
+		if err := rows.Scan(
+			&g.ID, &g.OwnerID, &g.ClientID, &g.BathhouseID,
+			&g.FirstVisitAt, &g.LastVisitAt, &g.VisitCount,
+			&g.TotalSpent, &g.AvgCheck, &g.Notes, &g.Tags,
+			&g.CreatedAt, &g.UpdatedAt, &r, &f, &m,
+		); err != nil {
+			return nil, fmt.Errorf("scan rfm row: %w", err)
+		}
+		g.RFM = domain.RFMScore{Recency: r, Frequency: f, Monetary: m}
+		guests = append(guests, g)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate rfm rows: %w", err)
+	}
+
+	// Build matrix (R x F counts)
+	matrixMap := make(map[[2]int]int64)
+	for _, g := range guests {
+		key := [2]int{g.RFM.Recency, g.RFM.Frequency}
+		matrixMap[key]++
+	}
+	var matrix []domain.RFMMatrixCell
+	for key, count := range matrixMap {
+		matrix = append(matrix, domain.RFMMatrixCell{
+			Recency:   key[0],
+			Frequency: key[1],
+			Count:     count,
+		})
+	}
+
+	return &domain.RFMResult{
+		Guests: guests,
+		Matrix: matrix,
+	}, nil
+}
+
 // buildGuestCardOwnerCondition returns the owner/bathhouse WHERE clause and args for guest card queries.
 func buildGuestCardOwnerCondition(filter domain.GuestCardFilter) (string, []interface{}) {
 	if filter.NoOwnerFilter {

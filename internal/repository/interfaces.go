@@ -510,6 +510,17 @@ type GuestCardRepository interface {
 	UpdateNotes(ctx context.Context, id uuid.UUID, notes string, tags []string) error
 	GetStats(ctx context.Context, filter domain.GuestCardFilter) (*domain.GuestCardStats, error)
 	CountBySegment(ctx context.Context, filter domain.GuestCardFilter, segment domain.GuestSegmentSlug) (int64, error)
+	GetRFMScores(ctx context.Context, filter domain.GuestCardFilter) (*domain.RFMResult, error)
+}
+
+type CustomSegmentRepository interface {
+	Create(ctx context.Context, segment *domain.CustomSegment) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.CustomSegment, error)
+	Update(ctx context.Context, segment *domain.CustomSegment) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	ListByOwner(ctx context.Context, filter domain.CustomSegmentFilter) ([]domain.CustomSegment, error)
+	EvaluateSegment(ctx context.Context, segment *domain.CustomSegment, ownerFilter domain.GuestCardFilter, page, pageSize int) (*domain.PaginatedResult[domain.GuestCard], error)
+	CountSegmentGuests(ctx context.Context, segment *domain.CustomSegment, ownerFilter domain.GuestCardFilter) (int64, error)
 }
 
 type BroadcastRepository interface {

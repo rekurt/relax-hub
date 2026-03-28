@@ -68,6 +68,7 @@ type RouterParams struct {
 	SavedSearchHandler    *handler.SavedSearchHandler
 	HolidayHandler        *handler.HolidayHandler
 	GuestCardHandler      *handler.GuestCardHandler
+	RFMHandler            *handler.RFMHandler
 	BroadcastHandler      *handler.BroadcastHandler
 	AutoScenarioHandler   *handler.AutoScenarioHandler
 	TemplateHandler       *handler.TemplateHandler
@@ -461,6 +462,14 @@ func NewRouter(p RouterParams) http.Handler {
 		// CRM Segments (owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/segments", p.GuestCardHandler.ListSegments)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/segments/{slug}/guests", p.GuestCardHandler.GetGuestsInSegment)
+
+		// CRM RFM Analysis & Custom Segments (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/rfm", p.RFMHandler.GetRFMAnalysis)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/segments/custom", p.RFMHandler.ListCustomSegments)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/crm/segments/custom", p.RFMHandler.CreateCustomSegment)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/crm/segments/custom/{id}", p.RFMHandler.UpdateCustomSegment)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/crm/segments/custom/{id}", p.RFMHandler.DeleteCustomSegment)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/crm/segments/custom/{id}/guests", p.RFMHandler.GetCustomSegmentGuests)
 
 		// CRM Broadcasts (owner/representative)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/crm/broadcasts", p.BroadcastHandler.CreateBroadcast)
