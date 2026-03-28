@@ -1928,7 +1928,8 @@ func (s *bookingService) Modify(ctx context.Context, userID uuid.UUID, bookingID
 		// Price went down — issue partial refund for the difference only
 		refundAmount := -priceDiff
 		if s.paymentSvc != nil {
-			if err := s.paymentSvc.AdminRefund(ctx, userID, bookingID, refundAmount, "booking_modification", ""); err != nil {
+			// Use uuid.Nil as admin ID to indicate system-initiated refund (not a manual admin action)
+			if err := s.paymentSvc.AdminRefund(ctx, uuid.Nil, bookingID, refundAmount, "booking_modification", ""); err != nil {
 				s.logger.Warn("failed to auto-refund price difference on modification",
 					"booking_id", bookingID, "refund_amount", refundAmount, "error", err)
 				// Continue — the booking is still modified, refund can be handled manually
