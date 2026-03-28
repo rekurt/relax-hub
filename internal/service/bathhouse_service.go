@@ -61,6 +61,7 @@ type UpdateBathhouseInput struct {
 	BookingMode                *string
 	RequestTimeout             *int
 	CancellationPolicy         *string
+	SecurityDepositPercent     *int
 	Images                     []string
 	WorkingHours               []domain.WorkingHours
 }
@@ -339,6 +340,9 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 	}
 	if input.CancellationPolicy != nil {
 		bh.CancellationPolicy = domain.CancellationPolicy(*input.CancellationPolicy)
+	}
+	if input.SecurityDepositPercent != nil {
+		bh.SecurityDepositPercent = *input.SecurityDepositPercent
 	}
 	// Detect substantial changes before persisting, so status update is atomic with data update
 	changedFields := buildChangedFields(&oldBh, bh)

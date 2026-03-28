@@ -149,4 +149,8 @@ var (
 	ErrDisputeAppealExpired         = errors.New("appeal deadline has passed")
 	ErrDisputeNotResolved           = errors.New("dispute must be resolved to appeal")
 	ErrDisputeAlreadyAppealed       = errors.New("dispute has already been appealed")
+
+	ErrDepositNotFound        = errors.New("security deposit not found")
+	ErrDepositAlreadyReleased = errors.New("security deposit already released")
+	ErrDepositAlreadyClaimed  = errors.New("security deposit already claimed")
 )

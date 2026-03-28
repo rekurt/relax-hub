@@ -244,6 +244,14 @@ export default function BathhouseDetail() {
                     }
                   })()}
                 </Descriptions.Item>
+                {(() => {
+                  const depositPercent = (bathhouse as Record<string, unknown>).security_deposit_percent as number
+                  return depositPercent > 0 ? (
+                    <Descriptions.Item label="Залог">
+                      {depositPercent}% от базовой цены (возврат через 48ч после визита)
+                    </Descriptions.Item>
+                  ) : null
+                })()}
               </Descriptions>
 
               {amenities.length > 0 && (

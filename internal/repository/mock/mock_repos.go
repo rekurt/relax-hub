@@ -682,6 +682,45 @@ func (r *BookingRepo) SetBathhouseRegion(bathhouseID uuid.UUID, region string) {
 	r.bathhouseRegions[bathhouseID] = region
 }
 
+func (r *BookingRepo) UpdateDeposit(_ context.Context, bookingID uuid.UUID, depositAmount int64, depositStatus domain.DepositStatus, depositExternalID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	b, ok := r.bookings[bookingID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	b.DepositAmount = depositAmount
+	b.DepositStatus = depositStatus
+	b.DepositExternalID = depositExternalID
+	return nil
+}
+
+func (r *BookingRepo) UpdateDepositStatus(_ context.Context, bookingID uuid.UUID, depositStatus domain.DepositStatus, releasedAt *time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	b, ok := r.bookings[bookingID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	b.DepositStatus = depositStatus
+	b.DepositReleasedAt = releasedAt
+	return nil
+}
+
+func (r *BookingRepo) ListHeldDepositsReadyForRelease(_ context.Context, checkedOutBefore time.Time) ([]domain.Booking, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var result []domain.Booking
+	for _, b := range r.bookings {
+		if b.DepositStatus == domain.DepositHeld &&
+			b.CheckedOutAt != nil &&
+			b.CheckedOutAt.Before(checkedOutBefore) {
+			result = append(result, *b)
+		}
+	}
+	return result, nil
+}
+
 // RepresentativeRepo is an in-memory mock implementation of repository.RepresentativeRepository.
 type RepresentativeRepo struct {
 	mu   sync.RWMutex

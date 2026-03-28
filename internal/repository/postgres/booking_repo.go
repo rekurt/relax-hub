@@ -14,9 +14,9 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
-const bookingColumns = `id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, modification_count, checked_in_at, checked_out_at, hold_id, rejection_reason, cancelled_by_owner, points_spent, referral_bonus_used, status, comment, created_at, updated_at`
+const bookingColumns = `id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, modification_count, deposit_amount, deposit_status, deposit_external_id, deposit_released_at, checked_in_at, checked_out_at, hold_id, rejection_reason, cancelled_by_owner, points_spent, referral_bonus_used, status, comment, created_at, updated_at`
 
-const bookingColumnsAliased = `b.id, b.user_id, b.bathhouse_id, b.start_time, b.end_time, b.guest_count, b.total_price, b.addon_total, b.base_price, b.long_session_discount, b.extra_guest_surcharge, b.last_minute_discount, b.service_fee_amount, b.modification_count, b.checked_in_at, b.checked_out_at, b.hold_id, b.rejection_reason, b.cancelled_by_owner, b.points_spent, b.referral_bonus_used, b.status, b.comment, b.created_at, b.updated_at`
+const bookingColumnsAliased = `b.id, b.user_id, b.bathhouse_id, b.start_time, b.end_time, b.guest_count, b.total_price, b.addon_total, b.base_price, b.long_session_discount, b.extra_guest_surcharge, b.last_minute_discount, b.service_fee_amount, b.modification_count, b.deposit_amount, b.deposit_status, b.deposit_external_id, b.deposit_released_at, b.checked_in_at, b.checked_out_at, b.hold_id, b.rejection_reason, b.cancelled_by_owner, b.points_spent, b.referral_bonus_used, b.status, b.comment, b.created_at, b.updated_at`
 
 type bookingRepo struct {
 	pool *pgxpool.Pool
@@ -33,6 +33,7 @@ func scanBooking(row interface{ Scan(dest ...any) error }) (*domain.Booking, err
 		&b.StartTime, &b.EndTime, &b.GuestCount,
 		&b.TotalPrice, &b.AddOnTotal, &b.BasePrice, &b.LongSessionDiscount, &b.ExtraGuestSurcharge, &b.LastMinuteDiscount, &b.ServiceFeeAmount,
 		&b.ModificationCount,
+		&b.DepositAmount, &b.DepositStatus, &b.DepositExternalID, &b.DepositReleasedAt,
 		&b.CheckedInAt, &b.CheckedOutAt,
 		&b.HoldID, &b.RejectionReason, &b.CancelledByOwner,
 		&b.PointsSpent, &b.ReferralBonusUsed, &b.Status, &b.Comment,
@@ -47,7 +48,7 @@ func scanBooking(row interface{ Scan(dest ...any) error }) (*domain.Booking, err
 func (r *bookingRepo) Create(ctx context.Context, booking *domain.Booking) error {
 	query := `
 		INSERT INTO bookings (` + bookingColumns + `)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)`
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)`
 
 	if booking.ID == uuid.Nil {
 		booking.ID = uuid.New()
@@ -58,6 +59,7 @@ func (r *bookingRepo) Create(ctx context.Context, booking *domain.Booking) error
 		booking.StartTime, booking.EndTime, booking.GuestCount,
 		booking.TotalPrice, booking.AddOnTotal, booking.BasePrice, booking.LongSessionDiscount, booking.ExtraGuestSurcharge, booking.LastMinuteDiscount, booking.ServiceFeeAmount,
 		booking.ModificationCount,
+		booking.DepositAmount, booking.DepositStatus, booking.DepositExternalID, booking.DepositReleasedAt,
 		booking.CheckedInAt, booking.CheckedOutAt,
 		booking.HoldID, booking.RejectionReason, booking.CancelledByOwner,
 		booking.PointsSpent, booking.ReferralBonusUsed, booking.Status, booking.Comment,
@@ -543,6 +545,57 @@ func (r *bookingRepo) ListConfirmedByRegionAndDateRange(ctx context.Context, reg
 	rows, err := r.pool.Query(ctx, query, region, dateFrom, dateTo)
 	if err != nil {
 		return nil, fmt.Errorf("list confirmed by region and date range: %w", err)
+	}
+	defer rows.Close()
+
+	var bookings []domain.Booking
+	for rows.Next() {
+		b, err := scanBooking(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan booking: %w", err)
+		}
+		bookings = append(bookings, *b)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate booking rows: %w", err)
+	}
+	return bookings, nil
+}
+
+func (r *bookingRepo) UpdateDeposit(ctx context.Context, bookingID uuid.UUID, depositAmount int64, depositStatus domain.DepositStatus, depositExternalID string) error {
+	query := `UPDATE bookings SET deposit_amount = $2, deposit_status = $3, deposit_external_id = $4, updated_at = NOW() WHERE id = $1`
+	result, err := r.pool.Exec(ctx, query, bookingID, depositAmount, depositStatus, depositExternalID)
+	if err != nil {
+		return fmt.Errorf("update deposit: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *bookingRepo) UpdateDepositStatus(ctx context.Context, bookingID uuid.UUID, depositStatus domain.DepositStatus, releasedAt *time.Time) error {
+	query := `UPDATE bookings SET deposit_status = $2, deposit_released_at = $3, updated_at = NOW() WHERE id = $1`
+	result, err := r.pool.Exec(ctx, query, bookingID, depositStatus, releasedAt)
+	if err != nil {
+		return fmt.Errorf("update deposit status: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
+
+func (r *bookingRepo) ListHeldDepositsReadyForRelease(ctx context.Context, checkedOutBefore time.Time) ([]domain.Booking, error) {
+	query := `SELECT ` + bookingColumns + ` FROM bookings
+		WHERE deposit_status = 'held'
+		AND checked_out_at IS NOT NULL
+		AND checked_out_at < $1
+		ORDER BY checked_out_at ASC`
+
+	rows, err := r.pool.Query(ctx, query, checkedOutBefore)
+	if err != nil {
+		return nil, fmt.Errorf("list held deposits ready for release: %w", err)
 	}
 	defer rows.Close()
 

@@ -34,6 +34,7 @@ type CronScheduler struct {
 	savedSearchSvc     service.SavedSearchService
 	bookingSvc         service.BookingService
 	escrowSvc          service.EscrowService
+	depositSvc         service.SecurityDepositService
 	reviewSvc          service.ReviewService
 	autoScenarioSvc    service.AutoScenarioService
 	ticketSvc          service.TicketService
@@ -60,6 +61,7 @@ func NewCronScheduler(
 	savedSearchSvc service.SavedSearchService,
 	bookingSvc service.BookingService,
 	escrowSvc service.EscrowService,
+	depositSvc service.SecurityDepositService,
 	reviewSvc service.ReviewService,
 	autoScenarioSvc service.AutoScenarioService,
 	ticketSvc service.TicketService,
@@ -90,6 +92,7 @@ func NewCronScheduler(
 		savedSearchSvc:     savedSearchSvc,
 		bookingSvc:         bookingSvc,
 		escrowSvc:          escrowSvc,
+		depositSvc:         depositSvc,
 		reviewSvc:          reviewSvc,
 		autoScenarioSvc:    autoScenarioSvc,
 		ticketSvc:          ticketSvc,
@@ -142,6 +145,7 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		{"*/15 * * * *", "auto_reject_timed_out_requests", cs.autoRejectTimedOutRequests},
 		{"*/15 * * * *", "no_show_detection", cs.noShowDetection},
 		{"30 * * * *", "escrow_release", cs.escrowReleaseJob},
+		{"45 * * * *", "deposit_release", cs.depositReleaseJob},
 		{"*/15 * * * *", "booking_reminders", cs.bookingRemindersJob},
 		{"0 3 * * *", "response_rate_recalculation", cs.responseRateRecalculation},
 		{"30 2 * * *", "platform_average_refresh", cs.platformAverageRefresh},

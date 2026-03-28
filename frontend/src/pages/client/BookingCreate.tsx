@@ -380,6 +380,16 @@ export default function BookingCreate() {
                 <Text type="success">до -{formatPrice(certificateBalance)}</Text>
               </Descriptions.Item>
             )}
+            {(() => {
+              const depositPercent = (bathhouse as Record<string, unknown>)?.security_deposit_percent as number
+              return depositPercent > 0 ? (
+                <Descriptions.Item label="Залог (возвратный)">
+                  <Text type="warning">
+                    ~{formatPrice(Math.round((priceInfo.base_price ?? 0) * depositPercent / 100))}
+                  </Text>
+                </Descriptions.Item>
+              ) : null
+            })()}
             <Descriptions.Item label="Стоимость">
               <Text strong style={{ fontSize: 18 }}>
                 {formatPrice(priceInfo.final_price ?? 0)}

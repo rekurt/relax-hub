@@ -116,14 +116,14 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `frontend/src/pages/client/BookingCreate.tsx` (show deposit info)
 - Modify: `frontend/src/pages/bathhouses/BathhouseForm.tsx` (deposit config)
 
-- [ ] Add security_deposit_percent field to bathhouse (0-50%, default 0)
-- [ ] Add deposit tracking fields to booking (amount, status: none/held/released/claimed)
-- [ ] Implement deposit hold on booking creation (card hold via YooKassa)
-- [ ] Auto-release deposit 48h after check-out if no dispute
-- [ ] Deposit freeze on dispute opening
-- [ ] Frontend: display deposit info in booking flow and bathhouse settings
-- [ ] Write tests for deposit lifecycle
-- [ ] Run project test suite - must pass before next task
+- [x] Add security_deposit_percent field to bathhouse (0-50%, default 0)
+- [x] Add deposit tracking fields to booking (amount, status: none/held/released/claimed)
+- [x] Implement deposit hold on booking creation (card hold via YooKassa)
+- [x] Auto-release deposit 48h after check-out if no dispute
+- [x] Deposit freeze on dispute opening
+- [x] Frontend: display deposit info in booking flow and bathhouse settings
+- [x] Write tests for deposit lifecycle
+- [x] Run project test suite - must pass before next task
 
 ### Task 4: Seasonal tariffs (FR-087)
 

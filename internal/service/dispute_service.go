@@ -33,6 +33,7 @@ type DisputeService interface {
 type disputeService struct {
 	disputeRepo   repository.DisputeRepository
 	escrowSvc     EscrowService
+	depositSvc    SecurityDepositService
 	walletSvc     WalletService
 	bookingRepo   repository.BookingRepository
 	bathhouseRepo repository.BathhouseRepository
@@ -43,6 +44,7 @@ type disputeService struct {
 func NewDisputeService(
 	disputeRepo repository.DisputeRepository,
 	escrowSvc EscrowService,
+	depositSvc SecurityDepositService,
 	walletSvc WalletService,
 	bookingRepo repository.BookingRepository,
 	bathhouseRepo repository.BathhouseRepository,
@@ -52,6 +54,7 @@ func NewDisputeService(
 	return &disputeService{
 		disputeRepo:   disputeRepo,
 		escrowSvc:     escrowSvc,
+		depositSvc:    depositSvc,
 		walletSvc:     walletSvc,
 		bookingRepo:   bookingRepo,
 		bathhouseRepo: bathhouseRepo,
@@ -118,6 +121,14 @@ func (s *disputeService) OpenDispute(ctx context.Context, userID uuid.UUID, book
 	// Block escrow release BEFORE creating dispute to prevent funds being released
 	if err := s.escrowSvc.MarkDisputedByBookingID(ctx, bookingID); err != nil {
 		return nil, fmt.Errorf("block escrow for dispute: %w", err)
+	}
+
+	// Freeze security deposit to prevent auto-release during dispute
+	if s.depositSvc != nil && booking.DepositStatus == domain.DepositHeld {
+		if err := s.depositSvc.FreezeDeposit(ctx, bookingID); err != nil {
+			s.logger.Error("failed to freeze deposit for dispute, continuing",
+				"booking_id", bookingID, "error", err)
+		}
 	}
 
 	if err := s.disputeRepo.Create(ctx, dispute); err != nil {

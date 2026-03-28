@@ -349,6 +349,12 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusConflict, "dispute_already_appealed", err.Error())
 	case errors.Is(err, domain.ErrFraudDetected):
 		writeErrorWithContext(w, r, http.StatusForbidden, "fraud_detected", err.Error())
+	case errors.Is(err, domain.ErrDepositNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "deposit_not_found", err.Error())
+	case errors.Is(err, domain.ErrDepositAlreadyReleased):
+		writeErrorWithContext(w, r, http.StatusConflict, "deposit_already_released", err.Error())
+	case errors.Is(err, domain.ErrDepositAlreadyClaimed):
+		writeErrorWithContext(w, r, http.StatusConflict, "deposit_already_claimed", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

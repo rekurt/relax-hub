@@ -30,6 +30,24 @@ func (s BookingStatus) IsValid() bool {
 // MaxBookingModifications is the maximum number of times a booking can be modified.
 const MaxBookingModifications = 3
 
+type DepositStatus string
+
+const (
+	DepositNone     DepositStatus = "none"
+	DepositHeld     DepositStatus = "held"
+	DepositReleased DepositStatus = "released"
+	DepositClaimed  DepositStatus = "claimed"
+	DepositDisputed DepositStatus = "disputed"
+)
+
+func (s DepositStatus) IsValid() bool {
+	switch s {
+	case DepositNone, DepositHeld, DepositReleased, DepositClaimed, DepositDisputed:
+		return true
+	}
+	return false
+}
+
 type Booking struct {
 	ID                  uuid.UUID
 	UserID              uuid.UUID
@@ -47,6 +65,10 @@ type Booking struct {
 	LastMinuteDiscount  int64
 	ServiceFeeAmount    int64
 	ModificationCount   int
+	DepositAmount       int64
+	DepositStatus       DepositStatus
+	DepositExternalID   string
+	DepositReleasedAt   *time.Time
 	CheckedInAt         *time.Time
 	CheckedOutAt        *time.Time
 	HoldID              *uuid.UUID

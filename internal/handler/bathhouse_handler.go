@@ -127,6 +127,7 @@ type bathhouseResponse struct {
 	BookingMode                string             `json:"booking_mode"`
 	RequestTimeout             int                `json:"request_timeout"`
 	CancellationPolicy         string             `json:"cancellation_policy"`
+	SecurityDepositPercent     int                `json:"security_deposit_percent"`
 	ResponseRate               float64            `json:"response_rate"`
 	AvgResponseTimeMinutes     int                `json:"avg_response_time_minutes"`
 	Rating                     float64            `json:"rating"`
@@ -200,6 +201,7 @@ func toBathhouseResponse(b *domain.Bathhouse) bathhouseResponse {
 		BookingMode:                b.BookingMode,
 		RequestTimeout:             b.RequestTimeout,
 		CancellationPolicy:         string(b.CancellationPolicy),
+		SecurityDepositPercent:     b.SecurityDepositPercent,
 		ResponseRate:               b.ResponseRate,
 		AvgResponseTimeMinutes:     b.AvgResponseTimeMinutes,
 		Rating:                     b.Rating,
@@ -270,6 +272,7 @@ type updateBathhouseRequest struct {
 	BookingMode                *string               `json:"booking_mode"`
 	RequestTimeout             *int                  `json:"request_timeout"`
 	CancellationPolicy         *string               `json:"cancellation_policy"`
+	SecurityDepositPercent     *int                  `json:"security_deposit_percent"`
 	Images                     []string              `json:"images"`
 	WorkingHours               []workingHoursRequest `json:"working_hours"`
 }
@@ -790,6 +793,7 @@ func (h *BathhouseHandler) Update(w http.ResponseWriter, r *http.Request) {
 		BookingMode:                req.BookingMode,
 		RequestTimeout:             req.RequestTimeout,
 		CancellationPolicy:         req.CancellationPolicy,
+		SecurityDepositPercent:     req.SecurityDepositPercent,
 		Images:                     req.Images,
 		WorkingHours:               wh,
 	})

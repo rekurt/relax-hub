@@ -95,5 +95,11 @@ var Module = fx.Module("service",
 			},
 			fx.As(new(EscrowService)),
 		),
+		fx.Annotate(
+			func(bookingRepo repository.BookingRepository, provider payment.PaymentProvider, cfg *config.Config, log *logger.Logger) SecurityDepositService {
+				return NewSecurityDepositService(bookingRepo, provider, log, cfg.Escrow.ClaimHours, cfg.Payment.ReturnURL)
+			},
+			fx.As(new(SecurityDepositService)),
+		),
 	),
 )

@@ -117,7 +117,7 @@ func newDisputeTestService() (service.DisputeService, *mock.DisputeRepo, *mock.B
 	walletSvc := newMockDisputeWalletService()
 	access := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewDisputeService(disputeRepo, escrowSvc, walletSvc, bookingRepo, bhRepo, access, log)
+	svc := service.NewDisputeService(disputeRepo, escrowSvc, nil, walletSvc, bookingRepo, bhRepo, access, log)
 	return svc, disputeRepo, bookingRepo, bhRepo, escrowSvc, walletSvc
 }
 

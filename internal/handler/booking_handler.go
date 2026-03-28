@@ -80,6 +80,8 @@ type bookingResponse struct {
 	HolidayName         string                 `json:"holiday_name,omitempty"`
 	HolidayMultiplier   float64                `json:"holiday_multiplier,omitempty"`
 	ModificationCount   int                    `json:"modification_count"`
+	DepositAmount       int64                  `json:"deposit_amount,omitempty"`
+	DepositStatus       string                 `json:"deposit_status,omitempty"`
 	AddOns              []bookingAddOnResponse `json:"addons,omitempty"`
 	CreatedAt           time.Time              `json:"created_at"`
 	UpdatedAt           time.Time              `json:"updated_at"`
@@ -108,6 +110,8 @@ func toBookingResponse(b *domain.Booking) bookingResponse {
 		PointsSpent:         b.PointsSpent,
 		ReferralBonusUsed:   b.ReferralBonusUsed,
 		ModificationCount:   b.ModificationCount,
+		DepositAmount:       b.DepositAmount,
+		DepositStatus:       string(b.DepositStatus),
 		CreatedAt:           b.CreatedAt,
 		UpdatedAt:           b.UpdatedAt,
 	}
@@ -133,6 +137,7 @@ func toBookingResultResponse(r *service.BookingResult) bookingResponse {
 	resp.IsHolidayPrice = r.IsHolidayPrice
 	resp.HolidayName = r.HolidayName
 	resp.HolidayMultiplier = r.HolidayMultiplier
+	resp.DepositAmount = r.DepositAmount
 	if len(r.AddOns) > 0 {
 		resp.AddOns = make([]bookingAddOnResponse, len(r.AddOns))
 		for i, a := range r.AddOns {

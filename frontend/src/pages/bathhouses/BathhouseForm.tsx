@@ -58,6 +58,7 @@ interface BathhouseFormValues {
   min_duration: number
   max_guests: number
   cancellation_policy: string
+  security_deposit_percent: number
   images: string
   amenities: string[]
   working_hours: WorkingHoursFormItem[]
@@ -107,6 +108,7 @@ function buildRequest(values: BathhouseFormValues): InternalHandlerCreateBathhou
     has_karaoke: amenitySet.has('has_karaoke'),
     working_hours: buildWorkingHours(values),
     ...(values.cancellation_policy ? { cancellation_policy: values.cancellation_policy } : {}),
+    ...(values.security_deposit_percent != null ? { security_deposit_percent: values.security_deposit_percent } : {}),
   } as InternalHandlerCreateBathhouseRequest
 }
 
@@ -189,6 +191,7 @@ export default function BathhouseForm() {
       max_guests: b.max_guests,
       images: b.images?.join('\n') ?? '',
       cancellation_policy: (b as Record<string, unknown>).cancellation_policy as string ?? 'flexible',
+      security_deposit_percent: (b as Record<string, unknown>).security_deposit_percent as number ?? 0,
       amenities,
       working_hours: workingHours,
     })
@@ -324,6 +327,13 @@ export default function BathhouseForm() {
                 </Select.Option>
               ))}
             </Select>
+          </Form.Item>
+          <Form.Item
+            name="security_deposit_percent"
+            label="Залог (% от базовой цены)"
+            help="0 — залог не требуется. Макс. 50%. Удерживается при бронировании и возвращается через 48ч после визита."
+          >
+            <InputNumber min={0} max={50} style={{ width: '100%' }} placeholder="0" />
           </Form.Item>
         </Card>
 

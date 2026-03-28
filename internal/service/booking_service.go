@@ -41,6 +41,7 @@ type BookingResult struct {
 	LongSessionDiscount int64                 // Long session discount amount
 	ExtraGuestSurcharge int64                 // Extra guest surcharge amount
 	LastMinuteDiscount  int64                 // Last-minute discount amount
+	DepositAmount       int64                 // Security deposit amount (card hold, not charged)
 	IsHolidayPrice      bool                  // Whether holiday pricing was applied
 	HolidayName         string                // Holiday name if applicable
 	HolidayMultiplier   float64               // Holiday multiplier used
@@ -142,6 +143,7 @@ type bookingService struct {
 	walletSvc     WalletService
 	complaintSvc  ComplaintService
 	escrowSvc     EscrowService
+	depositSvc    SecurityDepositService
 	guestCardSvc  GuestCardService
 	access        *AccessChecker
 	notifSvc      NotificationService
@@ -164,6 +166,7 @@ func NewBookingService(
 	walletSvc WalletService,
 	complaintSvc ComplaintService,
 	escrowSvc EscrowService,
+	depositSvc SecurityDepositService,
 	guestCardSvc GuestCardService,
 	access *AccessChecker,
 	notifSvc NotificationService,
@@ -185,6 +188,7 @@ func NewBookingService(
 		walletSvc:     walletSvc,
 		complaintSvc:  complaintSvc,
 		escrowSvc:     escrowSvc,
+		depositSvc:    depositSvc,
 		guestCardSvc:  guestCardSvc,
 		access:        access,
 		notifSvc:      notifSvc,
@@ -436,6 +440,9 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 
 	bookingID := uuid.New()
 	now := time.Now()
+	// Calculate security deposit amount if bathhouse requires it
+	depositAmount := CalculateDepositAmount(priceBreakdown.BasePrice, bh.SecurityDepositPercent)
+
 	booking := &domain.Booking{
 		ID:                  bookingID,
 		UserID:              userID,
@@ -450,6 +457,8 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		ExtraGuestSurcharge: priceBreakdown.ExtraGuestSurcharge,
 		LastMinuteDiscount:  lastMinuteDiscount,
 		ServiceFeeAmount:    serviceFeeAmount,
+		DepositAmount:       depositAmount,
+		DepositStatus:       domain.DepositNone,
 		PointsSpent:         pointsSpent,
 		ReferralBonusUsed:   referralBonusUsed,
 		Status:              domain.BookingPending,
@@ -625,6 +634,18 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		}
 	}
 
+	// Hold security deposit if required (best-effort: booking proceeds even if deposit hold fails)
+	if depositAmount > 0 && s.depositSvc != nil {
+		if depositErr := s.depositSvc.HoldDeposit(ctx, bookingID, depositAmount, "card"); depositErr != nil {
+			s.logger.Warn("failed to hold security deposit, proceeding without deposit",
+				"booking_id", bookingID, "deposit_amount", depositAmount, "error", depositErr)
+			booking.DepositAmount = 0
+			booking.DepositStatus = domain.DepositNone
+		} else {
+			booking.DepositStatus = domain.DepositHeld
+		}
+	}
+
 	return &BookingResult{
 		Booking:             booking,
 		AddOns:              bookingAddOns,
@@ -639,6 +660,7 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		LongSessionDiscount: priceBreakdown.LongSessionDiscount,
 		ExtraGuestSurcharge: priceBreakdown.ExtraGuestSurcharge,
 		LastMinuteDiscount:  lastMinuteDiscount,
+		DepositAmount:       booking.DepositAmount,
 		IsHolidayPrice:      priceBreakdown.IsHolidayPrice,
 		HolidayName:         priceBreakdown.HolidayName,
 		HolidayMultiplier:   priceBreakdown.HolidayMultiplier,
@@ -681,6 +703,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		if booking.Status != domain.BookingPendingOwner {
 			s.refundPayment(ctx, booking, false, refundTo)
 		}
+		s.releaseDepositOnCancel(ctx, booking)
 		s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 		return nil
 	}
@@ -718,6 +741,7 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 	if booking.Status != domain.BookingPendingOwner {
 		s.refundPayment(ctx, booking, true, "")
 	}
+	s.releaseDepositOnCancel(ctx, booking)
 	s.sendBookingNotification(ctx, booking, domain.NotifBookingCancelled)
 
 	// Owner cancellation penalty: credit 10% to client wallet as compensation
@@ -1181,6 +1205,16 @@ func (s *bookingService) refundPayment(ctx context.Context, booking *domain.Book
 		}
 		s.logger.Error("failed to refund payment on booking cancellation",
 			"booking_id", booking.ID, "user_id", booking.UserID, "error", err)
+	}
+}
+
+func (s *bookingService) releaseDepositOnCancel(ctx context.Context, booking *domain.Booking) {
+	if booking.DepositStatus != domain.DepositHeld || s.depositSvc == nil {
+		return
+	}
+	if err := s.depositSvc.ReleaseDeposit(ctx, booking.ID); err != nil {
+		s.logger.Error("failed to release deposit on booking cancellation",
+			"booking_id", booking.ID, "error", err)
 	}
 }
 

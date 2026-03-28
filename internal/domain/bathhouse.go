@@ -81,6 +81,7 @@ type Bathhouse struct {
 	IsPhotoVerified            bool
 	ApiKey                     string
 	CancellationPolicy         CancellationPolicy // flexible, moderate, strict
+	SecurityDepositPercent     int                // 0-50, percentage of base price as security deposit
 	CalendarToken              string
 	CreatedAt                  time.Time
 	UpdatedAt                  time.Time
@@ -142,6 +143,10 @@ func (b *Bathhouse) Validate() error {
 		return ErrInvalidInput
 	}
 	if b.MaxAdvanceDays < 7 || b.MaxAdvanceDays > 365 {
+		return ErrInvalidInput
+	}
+	// Validate security deposit percent
+	if b.SecurityDepositPercent < 0 || b.SecurityDepositPercent > 50 {
 		return ErrInvalidInput
 	}
 	// Apply defaults for cancellation policy
