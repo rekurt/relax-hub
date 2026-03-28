@@ -185,12 +185,12 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `internal/handler/wallet_handler.go` (add export endpoints)
 - Create: `internal/service/pdf_generator.go` (PDF report generation)
 
-- [ ] Implement wallet history export to CSV and PDF for clients and owners
-- [ ] Implement act generation for owners (PDF format: booking details, amounts, dates)
-- [ ] Implement XML export for legal entities (1C-compatible format)
-- [ ] Add API endpoints: GET /api/v1/my/wallet/export?format=csv|pdf, GET /api/v1/my/finance/acts
-- [ ] Write tests for export formats and data correctness
-- [ ] Run project test suite - must pass before next task
+- [x] Implement wallet history export to CSV and PDF for clients and owners
+- [x] Implement act generation for owners (PDF format: booking details, amounts, dates)
+- [x] Implement XML export for legal entities (1C-compatible format)
+- [x] Add API endpoints: GET /api/v1/my/wallet/export?format=csv|pdf, GET /api/v1/my/finance/acts
+- [x] Write tests for export formats and data correctness
+- [x] Run project test suite - must pass before next task
 
 ### Task 8: Float monitoring and transaction reconciliation (FR-125, FR-127, FR-128)
 

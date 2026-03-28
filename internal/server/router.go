@@ -80,6 +80,7 @@ type RouterParams struct {
 	ForceMajeureHandler       *handler.ForceMajeureHandler
 	ClientReviewHandler       *handler.ClientReviewHandler
 	RegionHandler             *handler.RegionHandler
+	FinancialReportHandler    *handler.FinancialReportHandler
 	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
@@ -356,6 +357,11 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Get("/my/wallet/transactions", p.WalletHandler.ListTransactions)
 		r.With(auth).Post("/my/wallet/topup", p.WalletHandler.TopUp)
 		r.With(auth).Get("/my/wallet/holds", p.WalletHandler.ListHolds)
+		r.With(auth).Get("/my/wallet/export", p.FinancialReportHandler.ExportWalletTransactions)
+
+		// Financial reports (authenticated owner)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/finance/acts/{bathhouse_id}", p.FinancialReportHandler.GenerateAct)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/finance/export-xml", p.FinancialReportHandler.ExportXML1C)
 
 		// KYC (authenticated owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/kyc", p.KYCHandler.SubmitKYC)
