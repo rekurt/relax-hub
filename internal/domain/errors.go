@@ -181,6 +181,9 @@ var (
 	ErrImportFileTooLarge      = errors.New("import file too large")
 
 	ErrFAQNotFound = errors.New("FAQ entry not found")
+
+	ErrWebhookNotFound     = errors.New("webhook not found")
+	ErrWebhookLimitReached = errors.New("webhook limit reached")
 )
 
 // PaymentFailedError wraps ErrPaymentFailed with user-facing details.

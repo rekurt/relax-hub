@@ -328,15 +328,15 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/service/booking_service.go` (emit webhook events)
 - Create: `frontend/src/pages/settings/WebhookSettings.tsx`
 
-- [ ] Create webhooks table (id, owner_id, url, secret, events[], active, created_at)
-- [ ] Events: booking.created, booking.confirmed, booking.cancelled, booking.completed, payment.received
-- [ ] HMAC-SHA256 signature in X-Webhook-Signature header
-- [ ] Async delivery with retry (3 attempts, exponential backoff)
-- [ ] Create webhook_deliveries table (webhook_id, event, payload, status, attempts, last_error)
-- [ ] Owner endpoints: CRUD /api/v1/my/webhooks + GET /api/v1/my/webhooks/{id}/deliveries
-- [ ] Frontend webhook configuration page with test button
-- [ ] Write tests for signature generation and delivery retry
-- [ ] Run project test suite - must pass before task 17
+- [x] Create webhooks table (id, owner_id, url, secret, events[], active, created_at)
+- [x] Events: booking.created, booking.confirmed, booking.cancelled, booking.completed, payment.received
+- [x] HMAC-SHA256 signature in X-Webhook-Signature header
+- [x] Async delivery with retry (3 attempts, exponential backoff)
+- [x] Create webhook_deliveries table (webhook_id, event, payload, status, attempts, last_error)
+- [x] Owner endpoints: CRUD /api/v1/my/webhooks + GET /api/v1/my/webhooks/{id}/deliveries
+- [x] Frontend webhook configuration page with test button
+- [x] Write tests for signature generation and delivery retry
+- [x] Run project test suite - must pass before task 17
 
 ### Task 17: PMS API Integration Framework (FR section 2.16)
 

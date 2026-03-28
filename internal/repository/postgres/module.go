@@ -69,5 +69,7 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewBankReconciliationRepo, fx.As(new(repository.BankReconciliationRepository))),
 		fx.Annotate(NewAdminNotificationRepository, fx.As(new(repository.AdminNotificationRepository))),
 		fx.Annotate(NewFAQRepository, fx.As(new(repository.FAQRepository))),
+		fx.Annotate(NewWebhookRepository, fx.As(new(repository.WebhookRepository))),
+		fx.Annotate(NewWebhookDeliveryRepository, fx.As(new(repository.WebhookDeliveryRepository))),
 	),
 )

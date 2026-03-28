@@ -92,6 +92,7 @@ type RouterParams struct {
 	AdminRoleHandler             *handler.AdminRoleHandler
 	AdminNotificationHandler     *handler.AdminNotificationHandler
 	FAQHandler                   *handler.FAQHandler
+	WebhookHandler               *handler.WebhookHandler
 	AuditLogRepo              repository.AuditLogRepository
 	AdminSubRoleResolver  middleware.AdminSubRoleResolver
 	Admin2FAChecker       middleware.Admin2FAChecker
@@ -490,6 +491,15 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// FAQ Bot (authenticated)
 		r.With(auth).Post("/my/support/faq-match", p.FAQHandler.MatchFAQ)
+
+		// Webhooks (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/webhooks", p.WebhookHandler.CreateWebhook)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/webhooks", p.WebhookHandler.ListWebhooks)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/webhooks/{id}", p.WebhookHandler.GetWebhook)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/webhooks/{id}", p.WebhookHandler.UpdateWebhook)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/webhooks/{id}", p.WebhookHandler.DeleteWebhook)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/webhooks/{id}/deliveries", p.WebhookHandler.ListDeliveries)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/webhooks/{id}/test", p.WebhookHandler.TestWebhook)
 
 		// Support Tickets (authenticated)
 		r.With(auth).Post("/my/tickets", p.TicketHandler.CreateTicket)

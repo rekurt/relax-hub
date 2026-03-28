@@ -398,6 +398,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusForbidden, "admin_permission_denied", err.Error())
 	case errors.Is(err, domain.ErrFAQNotFound):
 		writeErrorWithContext(w, r, http.StatusNotFound, "faq_not_found", err.Error())
+	case errors.Is(err, domain.ErrWebhookNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "webhook_not_found", err.Error())
+	case errors.Is(err, domain.ErrWebhookLimitReached):
+		writeErrorWithContext(w, r, http.StatusConflict, "webhook_limit_reached", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

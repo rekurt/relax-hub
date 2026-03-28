@@ -717,3 +717,22 @@ type AdminNotificationRepository interface {
 	ListUnreadCriticalByRole(ctx context.Context, role domain.AdminSubRole) ([]domain.AdminNotification, error)
 	DeleteOlderThan(ctx context.Context, before time.Time) (int64, error)
 }
+
+// WebhookRepository manages owner outgoing webhooks.
+type WebhookRepository interface {
+	Create(ctx context.Context, webhook *domain.Webhook) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Webhook, error)
+	Update(ctx context.Context, webhook *domain.Webhook) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Webhook], error)
+	CountByOwner(ctx context.Context, ownerID uuid.UUID) (int64, error)
+	ListActiveByEvent(ctx context.Context, bathhouseOwnerID uuid.UUID, event domain.WebhookEventType) ([]domain.Webhook, error)
+}
+
+// WebhookDeliveryRepository manages webhook delivery attempts.
+type WebhookDeliveryRepository interface {
+	Create(ctx context.Context, delivery *domain.WebhookDelivery) error
+	Update(ctx context.Context, delivery *domain.WebhookDelivery) error
+	ListByWebhook(ctx context.Context, webhookID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.WebhookDelivery], error)
+	ListPendingRetries(ctx context.Context, before time.Time) ([]domain.WebhookDelivery, error)
+}

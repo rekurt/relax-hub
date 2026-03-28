@@ -102,6 +102,7 @@ var Module = fx.Module("service",
 		fx.Annotate(NewBankReconciliationService, fx.As(new(BankReconciliationService))),
 		fx.Annotate(NewAdminNotificationService, fx.As(new(AdminNotificationService))),
 		fx.Annotate(NewFAQBotService, fx.As(new(FAQBotService))),
+		fx.Annotate(NewWebhookService, fx.As(new(WebhookService))),
 		fx.Annotate(
 			NewAdminRoleService,
 			fx.As(new(AdminRoleService)),
