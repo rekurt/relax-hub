@@ -135,6 +135,11 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrDisputeNotFound→404, ErrDisputeAlreadyExists→409, ErrDisputeAlreadyResolved→409
 - ErrDisputeAlreadyClosed→409, ErrDisputeEvidenceWindowExpired→400
 - ErrDisputeAppealExpired→400, ErrDisputeNotResolved→400, ErrDisputeAlreadyAppealed→409
+- ErrBookingModificationLimit→400, ErrBookingNotModifiable→400
+- ErrRegionSwitchBlocked→400, ErrCrossRegionBooking→403
+- ErrSeasonalTariffOverlap→409, ErrSeasonalTariffNotFound→404
+- ErrShareTokenNotFound→404, ErrShareTokenExpired→400
+- ErrImportValidationFailed→400, ErrImportFileTooLarge→400
 
 ### Logging
 
@@ -207,7 +212,7 @@ All API endpoints are annotated with swaggo/swag comments. Swagger UI is served 
 Built on GoAdmin framework, enabled via `--with-admin` flag on the serve command.
 
 - `internal/admin/` — GoAdmin engine, JWT auth bridge, fx module
-- `internal/admin/pages/` — custom pages: dashboard, moderation, analytics, health
+- `internal/admin/pages/` — custom pages: dashboard, moderation, analytics, health, finance
 - `internal/admin/pages/templates/` — Go html/template files with shared layout system
 - `internal/admin/pages/static/` — self-hosted static assets (Chart.js)
 - Config: `BANI_ADMIN_ENABLED` (default `false`), `BANI_ADMIN_PREFIX` (default `/admin-panel`), `BANI_ADMIN_LANGUAGE` (default `ru`), `BANI_ADMIN_THEME` (default `adminlte`)
@@ -232,6 +237,7 @@ Template functions available: `statusRu` (EN→RU status mapping), `jsEscape` (X
 - **Moderation Center**: inline AJAX approve/reject (no page reload), toast notifications, loading states, lightbox for review images, reject modal with reason validation and free-text comment, keyboard shortcuts, batch operations with confirmation
 - **Analytics**: date presets (Today/7d/30d/Month/Year), summary row with period comparison, CSV export, self-hosted Chart.js, city filter on all charts
 - **Health Monitor**: system metrics (uptime, goroutines, memory, GC), pgxpool connection stats with progress bars, filesystem check, DB size, severity-colored backlog (green/yellow/orange/red), configurable auto-refresh (15/30/60s) with pause/play
+- **Finance Dashboard**: float monitoring (client wallets + owner wallets + escrow totals), transaction reconciliation status, revenue breakdown (service fees, subscriptions, promotions), wallet metrics widget
 
 ### Admin Routes
 
@@ -244,6 +250,7 @@ Custom pages are mounted under `{BANI_ADMIN_PREFIX}/pages/`:
 - `GET /analytics/export?type={bookings|revenue|users|top_bookings|top_revenue}&date_from=&date_to=&city_id=` — CSV export
 - `GET /static/*` — self-hosted static assets
 - `GET /health` — health monitor
+- `GET /finance` — financial dashboard
 
 ### Moderation Keyboard Shortcuts
 
@@ -306,7 +313,8 @@ frontend/src/
 │       └── model/             # Shared TypeScript types
 ├── components/                # Reusable: AppLayout, ClientLayout, AdminLayout, BathhouseCard,
 │   │                          #   BathhouseSelector, MediaUploader, NotificationBell, OAuthButtons,
-│   │                          #   ProtectedRoute, ReportModal, ReviewCard
+│   │                          #   ProtectedRoute, ReportModal, ReviewCard,
+│   │                          #   OnboardingTour, BathhouseMap
 ├── pages/
 │   ├── admin/                 # Admin role pages:
 │   │   ├── AdminDashboard     #   KPI analytics, top bathhouses
@@ -318,7 +326,15 @@ frontend/src/
 │   │   ├── CityManagement     #   City CRUD
 │   │   ├── GlobalPromoCodes   #   Global promo code creation
 │   │   ├── AdminNotifications #   Admin notifications
-│   │   └── AdminProfile       #   Admin profile settings
+│   │   ├── AdminProfile       #   Admin profile settings
+│   │   ├── AmenityManagement  #   Amenity CRUD with icons
+│   │   ├── ObjectTypeManagement # Bathhouse category CRUD
+│   │   ├── HolidayManagement  #   Holiday management per region
+│   │   ├── AntiFraudDashboard #   Fraud flag review queue
+│   │   ├── TicketManagement   #   Support ticket admin queue
+│   │   ├── TicketDetail       #   Admin ticket response/escalation
+│   │   ├── DisputeManagement  #   Dispute mediation queue
+│   │   └── DisputeDetail      #   Admin dispute resolution
 │   ├── client/                # Client role pages:
 │   │   ├── BathhouseSearch    #   Search with filters, geo-search
 │   │   ├── BathhouseDetail    #   Full info, gallery, reviews, slots
@@ -336,7 +352,14 @@ frontend/src/
 │   │   ├── PaymentHistory     #   Payment list with filters
 │   │   ├── ClientProfile      #   Profile, social accounts, notifications
 │   │   ├── ClientChat         #   Real-time chat with bathhouses
-│   │   └── ClientNotifications#   Notification list
+│   │   ├── ClientNotifications#   Notification list
+│   │   ├── SavedSearches      #   Saved search management
+│   │   ├── ComparisonPage     #   Side-by-side bathhouse comparison
+│   │   ├── SupportTickets     #   Support ticket list
+│   │   ├── TicketDetail       #   Ticket thread with CSAT
+│   │   ├── DisputeCreate      #   Open dispute with evidence
+│   │   ├── DisputeDetail      #   Dispute status and appeal
+│   │   └── DisputeList        #   Client disputes list
 │   ├── bathhouses/            # Owner: BathhouseList, BathhouseForm (create/edit)
 │   ├── bookings/              # Owner: BookingList (with payment info), BookingDetails
 │   ├── calendar/              # Owner: CalendarPage (weekly view, slot management)
@@ -349,6 +372,14 @@ frontend/src/
 │   ├── reviews/               # Owner: ReviewList (with media display, response form)
 │   ├── settings/              # Owner: ProfileSettings
 │   ├── subscriptions/         # Owner: SubscriptionPage
+│   ├── crm/                   # Owner CRM:
+│   │   ├── GuestCardList      #   Guest card search/filter/export
+│   │   ├── GuestCardDetail    #   Visit history, LTV, notes, tags
+│   │   ├── SegmentList        #   Dynamic segments (new/regular/lost/VIP)
+│   │   ├── BroadcastList      #   Broadcast message management
+│   │   ├── BroadcastCreate    #   Create broadcast to segment
+│   │   ├── AutoScenarios      #   Auto-scenario toggle/customize
+│   │   └── ResponseTemplates  #   Quick reply template CRUD
 │   └── widget/                # Owner: WidgetSettings
 ├── stores/                    # Zustand: auth.ts (user/token/role), bathhouse.ts (selected bathhouse)
 ├── lib/                       # format.ts, constants.ts, useWebSocketNotifications.ts, useDeviceToken.ts
@@ -378,7 +409,7 @@ Each subsystem follows the same handler→service→repository pattern:
 - **OAuth**: VK, Yandex, Google social login. Config: `BANI_OAUTH_{PROVIDER}_{CLIENT_ID,CLIENT_SECRET,REDIRECT_URL}`
 - **Recommendations**: collaborative filtering + user preferences scoring
 - **Subscriptions**: free/premium/promoted tiers, affects feed sorting (+10 boost for premium, promoted first)
-- **Dynamic pricing**: rules with priority, multipliers applied per hourly slot. Extended with long session discounts (threshold hours + discount %), extra guest surcharges (per extra guest per hour), holiday pricing (recurring holidays with per-bathhouse multipliers, default 1.5x), last-minute discounts (configurable threshold hours + discount %). Full price breakdown in booking response: base_price, long_session_discount, extra_guest_surcharge, service_fee, holiday info
+- **Dynamic pricing**: rules with priority, multipliers applied per hourly slot. Extended with long session discounts (threshold hours + discount %), extra guest surcharges (per extra guest per hour), holiday pricing (recurring holidays with per-bathhouse multipliers, default 1.5x), last-minute discounts (configurable threshold hours + discount %), seasonal tariffs (date range + multiplier). Full price breakdown in booking response: base_price, long_session_discount, extra_guest_surcharge, service_fee, holiday info, seasonal_tariff
 - **Loyalty**: bronze/silver/gold/platinum tiers based on visit count, points system
 - **Chat**: real-time via WebSocket, conversations tied to bathhouse+client pair
 - **Telegram bot**: booking wizard with in-memory state, short ID cache for callback data (64-byte limit)
@@ -388,7 +419,11 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Photo verification**: admin-verified bathhouse photos with pending/verified/rejected statuses, `is_photo_verified` badge on bathhouse cards, owner/representative upload with admin moderation queue
 - **Promo codes**: percentage/fixed_amount/free_hour discount types, bathhouse-scoped (owner/representative) and global (admin) codes, usage limits, validity periods, min amount checks, integrated into booking creation discount chain
 - **Review media**: photo/video attachments on reviews (max 10 photos, 1 video per review), file type/size validation, image resize and thumbnail generation, bathhouse gallery endpoint aggregates review media with review status filtering
-- **Online payments**: YooKassa integration via PaymentProvider interface, automatic refund on booking cancellation (100% if >24h, 50% if 2-24h, 0% if <2h), webhook processing. Payment methods: card, SBP (sbp), wallet, combo (wallet + card/SBP). Combo payments: wallet debited first, card payment for remainder, rollback on failure. Payment holds for request-based bookings (capture=false). Enhanced refunds: wallet refund with bonus (default 5%), proportional combo refund, admin manual refund. Config: `BANI_PAYMENT_YOOKASSA_SHOP_ID`, `BANI_PAYMENT_YOOKASSA_SECRET_KEY`, `BANI_PAYMENT_RETURN_URL`
+- **Cancellation policies**: per-bathhouse policy (flexible/moderate/strict) with configurable time windows and refund percentages. Flexible: 100% if >24h, 50% if <24h. Moderate: 100% if >72h, 50% if 24-72h, 0% if <24h. Strict: 100% if >7d, 50% if 3-7d, 0% if <3d. `internal/domain/cancellation_policy.go`
+- **Booking modifications**: clients can modify confirmed bookings (change date/time/duration/guests/addons), max 3 modifications per booking. Price difference charged or refunded proportionally. Combo payment adjustments handled. `PUT /api/v1/bookings/{id}/modify`
+- **Security deposit**: per-bathhouse configurable deposit (0-50% of base price). Card hold on booking creation, auto-release 48h after check-out if no dispute, freeze on dispute. Deposit statuses: none/held/released/claimed
+- **Seasonal tariffs**: date-range pricing multipliers per bathhouse (name, date_from, date_to, multiplier). Applied in price calculation pipeline after base price. CRUD endpoints for owner management. `internal/domain/seasonal_tariff.go`, `internal/repository/postgres/seasonal_tariff_repo.go`
+- **Online payments**: YooKassa integration via PaymentProvider interface, automatic refund on booking cancellation (policy-based), webhook processing. Payment error retry with exponential backoff (3 attempts: 2s, 4s, 8s) for retryable errors (timeout, network). Russian user-friendly error messages. Payment methods: card, SBP (sbp), wallet, combo (wallet + card/SBP). Combo payments: wallet debited first, card payment for remainder, rollback on failure. Payment holds for request-based bookings (capture=false). Enhanced refunds: wallet refund with bonus (default 5%), proportional combo refund, admin manual refund. Config: `BANI_PAYMENT_YOOKASSA_SHOP_ID`, `BANI_PAYMENT_YOOKASSA_SECRET_KEY`, `BANI_PAYMENT_RETURN_URL`
 - **Wallet system**: user balance with top-up/spend/hold/refund, priority spending (expiring bonuses first), balance limits (max 100,000 RUB), top-up limits (min 500, max 30,000 RUB per tx), bonus expiration cron (180 days, configurable). Owner payouts with daily/monthly limits and auto-payout threshold
 - **Phone + OTP auth**: Redis-backed 6-digit codes, 5 min TTL, 3 attempts, rate limiting. SMSProvider interface + SMS.ru adapter. Config: `BANI_SMS_PROVIDER`, `BANI_SMS_API_KEY`
 - **Two-factor authentication**: TOTP (pquerna/otp) + SMS 2FA, partial token flow for 2FA during login
@@ -413,6 +448,17 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Saved searches**: JSONB filter storage, daily cron checks for new matches with notifications, max 50 per user
 - **Recently viewed**: Redis sorted set per user (last 20), recorded on bathhouse detail view
 - **Service fee**: platform fee on booking base price (not add-ons), configurable by region+category with global default (10%). Admin CRUD via `ServiceFeeConfig`. Config stored in `service_fee_configs` table
+- **Bidirectional reviews**: owner rates client (punctuality, cleanliness, rule_compliance). Double-blind reveal: reviews hidden until both posted OR 14 days elapsed. Auto-reveal cron job. `internal/domain/client_review.go`, `internal/service/client_review_service.go`
+- **Region switching**: users can switch between RU and BY regions. Blocked if non-zero wallet balance, active bookings, open disputes, or unactivated certificates. On switch: archive old wallet, create new wallet in new currency, reset loyalty. Cross-regional bookings blocked. `internal/service/region_service.go`
+- **Financial reports**: wallet history export (CSV/PDF), act generation for owners (PDF), 1C XML export for legal entities. `GET /api/v1/my/wallet/export?format=csv|pdf`, `GET /api/v1/my/finance/acts`. `internal/service/financial_report_service.go`
+- **Transaction reconciliation**: daily float snapshot (client wallets + owner wallets + escrow = expected total), YooKassa transaction reconciliation with zero-tolerance discrepancy alerting. Admin dashboard widget. Daily cron job. `internal/service/reconciliation_service.go`
+- **Bonus expiry notifications**: cron job sends push + email for bonuses expiring in 14 days and 3 days, with deduplication
+- **Mass listing import**: CSV upload with validation, creates listings as drafts (pending moderation), returns import report with per-row errors. `POST /api/v1/my/listings/import`. `internal/service/listing_import_service.go`
+- **Share listing/booking**: Open Graph meta tags on bathhouse pages, shareable booking links with pre-filled params. `POST /api/v1/bookings/{id}/share`, deep link resolution at `/share/booking/{token}`. `internal/handler/share_handler.go`
+- **Representative sub-roles**: manager (manage bookings, reply messages) and observer (read-only). Per-bathhouse access control. Invite-by-email flow
+- **Smart pricing**: recommended price based on occupancy, area averages, demand patterns. Coefficient range 0.8-1.5. `GET /api/v1/my/bathhouses/{id}/price-recommendation`. `internal/service/smart_pricing_service.go`
+- **Advanced analytics**: conversion funnels (visit->search->book->complete), cohort analysis by registration month, geographic demand/supply, wallet metrics, owner analytics with competitor benchmarking
+- **Onboarding tour**: profile completeness calculation (name, photo, phone, preferences), step-by-step guide component, onboarding_completed flag
 - **Booking modes**: instant (default, immediate confirmation) and request (owner approval required within timeout). Request-based: status `pending_owner`, wallet/card hold, auto-reject on timeout. Booking statuses: pending, pending_owner, confirmed, cancelled, rejected, completed, no_show
 - **Buffer/lead time**: configurable per-bathhouse buffer between bookings (0-120 min, step 15), lead time before booking (0-48h), max advance days (7-365)
 - **Check-in/check-out**: owner/rep marks guest arrival (window: start-15min to start+30min) and departure. No-show detection cron (30min after start without check-in). No-show dispute within 2h

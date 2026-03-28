@@ -495,7 +495,7 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 
 ### Task 28: Update documentation
 
-- [ ] Update CLAUDE.md with new features (cancellation policies, booking modifications, deposits, seasonal tariffs, bidirectional reviews, region switching, financial reports, CRM frontend, tickets frontend, disputes frontend)
-- [ ] Update swagger annotations and regenerate: `make swagger`
-- [ ] Regenerate frontend API client: `make frontend-generate-api`
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Update CLAUDE.md with new features (cancellation policies, booking modifications, deposits, seasonal tariffs, bidirectional reviews, region switching, financial reports, CRM frontend, tickets frontend, disputes frontend)
+- [x] Update swagger annotations and regenerate: `make swagger`
+- [x] Regenerate frontend API client: `make frontend-generate-api`
+- [x] Move this plan to `docs/plans/completed/`
