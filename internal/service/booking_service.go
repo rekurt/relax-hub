@@ -13,8 +13,6 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
-const cancelDeadline = 2 * time.Hour
-
 type CreateBookingInput struct {
 	BathhouseID      uuid.UUID
 	StartTime        time.Time
@@ -640,14 +638,10 @@ func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role doma
 		return domain.ErrInvalidInput
 	}
 
-	// Client cancels their own booking (at least 2 hours before start, unless pending_owner)
+	// Client cancels their own booking. Refund amount determined by bathhouse cancellation policy.
 	if role == domain.RoleClient {
 		if booking.UserID != userID {
 			return domain.ErrForbidden
-		}
-		// pending_owner bookings can be cancelled anytime by client (request not yet approved)
-		if booking.Status != domain.BookingPendingOwner && time.Until(booking.StartTime) < cancelDeadline {
-			return domain.ErrBookingCancelLate
 		}
 		// Release payment holds and wallet hold if pending_owner
 		if booking.Status == domain.BookingPendingOwner {
@@ -1155,7 +1149,16 @@ func (s *bookingService) refundCertificateUsage(ctx context.Context, booking *do
 }
 
 func (s *bookingService) refundPayment(ctx context.Context, booking *domain.Booking, forceFullRefund bool, refundTo string) {
-	if err := s.paymentSvc.RefundPayment(ctx, booking.ID, forceFullRefund, refundTo); err != nil {
+	// Look up the bathhouse's cancellation policy for policy-based refund calculation
+	var policy domain.CancellationPolicy
+	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+	if err == nil {
+		policy = bh.CancellationPolicy
+	} else {
+		s.logger.Warn("failed to get bathhouse for cancellation policy, using default",
+			"booking_id", booking.ID, "bathhouse_id", booking.BathhouseID, "error", err)
+	}
+	if err := s.paymentSvc.RefundPayment(ctx, booking.ID, forceFullRefund, refundTo, policy); err != nil {
 		if errors.Is(err, domain.ErrPaymentNotFound) {
 			return
 		}

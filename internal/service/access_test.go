@@ -104,7 +104,7 @@ func (n *noopPaymentService) InitiatePayment(_ context.Context, _, _ uuid.UUID, 
 func (n *noopPaymentService) HandleWebhook(_ context.Context, _ service.WebhookEvent) error {
 	return nil
 }
-func (n *noopPaymentService) RefundPayment(_ context.Context, _ uuid.UUID, _ bool, _ string) error {
+func (n *noopPaymentService) RefundPayment(_ context.Context, _ uuid.UUID, _ bool, _ string, _ domain.CancellationPolicy) error {
 	return nil
 }
 func (n *noopPaymentService) AdminRefund(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ int64, _ string, _ string) error {

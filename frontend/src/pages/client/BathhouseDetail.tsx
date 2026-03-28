@@ -233,6 +233,17 @@ export default function BathhouseDetail() {
                 <Descriptions.Item label="Макс. гостей">
                   {bathhouse.max_guests ?? '—'}
                 </Descriptions.Item>
+                <Descriptions.Item label="Политика отмены">
+                  {(() => {
+                    const policy = (bathhouse as Record<string, unknown>).cancellation_policy as string
+                    switch (policy) {
+                      case 'flexible': return 'Гибкая'
+                      case 'moderate': return 'Умеренная'
+                      case 'strict': return 'Строгая'
+                      default: return 'Гибкая'
+                    }
+                  })()}
+                </Descriptions.Item>
               </Descriptions>
 
               {amenities.length > 0 && (

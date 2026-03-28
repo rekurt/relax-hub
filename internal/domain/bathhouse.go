@@ -36,53 +36,54 @@ type WorkingHours struct {
 }
 
 type Bathhouse struct {
-	ID           uuid.UUID
-	OwnerID      uuid.UUID
-	Name         string
-	Slug         string
-	Description  string
-	Address      string
-	CityID       int64
-	Latitude     float64
-	Longitude    float64
-	PricePerHour int64 // in kopecks
-	MinDuration  int   // minimum duration in hours
-	MaxGuests    int
-	HasPool      bool
-	HasSauna     bool
-	HasSteamRoom bool
-	HasHotTub    bool
-	HasBBQ       bool
-	HasKaraoke   bool
-	Rating         float64
-	BayesianRating float64
-	ReviewCount    int
-	ConversionRate float64
-	OccupancyRate  float64
-	ViewCount      int64
-	Images         []string
-	WorkingHours []WorkingHours
-	Status       BathhouseStatus
-	IsPromoted       bool // transient field, set during List queries
-	LongSessionThresholdHours  int   // default 4, minimum hours before discount kicks in
-	LongSessionDiscountPercent int   // 0-50, discount on hours beyond threshold
-	BaseCapacity               int   // default equals MaxGuests, guests included in base price
-	ExtraGuestSurcharge        int64 // kopecks per extra guest per hour
-	LastMinuteEnabled         bool  // default false
-	LastMinuteDiscountPercent int   // 5-50, discount for slots starting soon
-	LastMinuteHoursThreshold  int   // 2-24, hours before start to apply discount
-	BufferMinutes             int   // 0-120 step 15, cleanup time between bookings
-	LeadTimeHours             int   // 0-48, minimum hours before booking start
-	MaxAdvanceDays            int   // 7-365, max days ahead for booking
-	BookingMode               string  // "instant" or "request", default "instant"
-	RequestTimeout            int     // hours, default 24, range 1-72
-	ResponseRate              float64 // 0.0-1.0, percentage of requests responded to within timeout
-	AvgResponseTimeMinutes    int     // average response time in minutes for request-based bookings
-	IsPhotoVerified           bool
-	ApiKey                    string
-	CalendarToken             string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID                         uuid.UUID
+	OwnerID                    uuid.UUID
+	Name                       string
+	Slug                       string
+	Description                string
+	Address                    string
+	CityID                     int64
+	Latitude                   float64
+	Longitude                  float64
+	PricePerHour               int64 // in kopecks
+	MinDuration                int   // minimum duration in hours
+	MaxGuests                  int
+	HasPool                    bool
+	HasSauna                   bool
+	HasSteamRoom               bool
+	HasHotTub                  bool
+	HasBBQ                     bool
+	HasKaraoke                 bool
+	Rating                     float64
+	BayesianRating             float64
+	ReviewCount                int
+	ConversionRate             float64
+	OccupancyRate              float64
+	ViewCount                  int64
+	Images                     []string
+	WorkingHours               []WorkingHours
+	Status                     BathhouseStatus
+	IsPromoted                 bool    // transient field, set during List queries
+	LongSessionThresholdHours  int     // default 4, minimum hours before discount kicks in
+	LongSessionDiscountPercent int     // 0-50, discount on hours beyond threshold
+	BaseCapacity               int     // default equals MaxGuests, guests included in base price
+	ExtraGuestSurcharge        int64   // kopecks per extra guest per hour
+	LastMinuteEnabled          bool    // default false
+	LastMinuteDiscountPercent  int     // 5-50, discount for slots starting soon
+	LastMinuteHoursThreshold   int     // 2-24, hours before start to apply discount
+	BufferMinutes              int     // 0-120 step 15, cleanup time between bookings
+	LeadTimeHours              int     // 0-48, minimum hours before booking start
+	MaxAdvanceDays             int     // 7-365, max days ahead for booking
+	BookingMode                string  // "instant" or "request", default "instant"
+	RequestTimeout             int     // hours, default 24, range 1-72
+	ResponseRate               float64 // 0.0-1.0, percentage of requests responded to within timeout
+	AvgResponseTimeMinutes     int     // average response time in minutes for request-based bookings
+	IsPhotoVerified            bool
+	ApiKey                     string
+	CancellationPolicy         CancellationPolicy // flexible, moderate, strict
+	CalendarToken              string
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
 }
 
 func (b *Bathhouse) Validate() error {
@@ -141,6 +142,13 @@ func (b *Bathhouse) Validate() error {
 		return ErrInvalidInput
 	}
 	if b.MaxAdvanceDays < 7 || b.MaxAdvanceDays > 365 {
+		return ErrInvalidInput
+	}
+	// Apply defaults for cancellation policy
+	if b.CancellationPolicy == "" {
+		b.CancellationPolicy = CancellationPolicyFlexible
+	}
+	if !b.CancellationPolicy.IsValid() {
 		return ErrInvalidInput
 	}
 	// Apply defaults for booking mode

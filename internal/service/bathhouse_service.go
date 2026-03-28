@@ -33,20 +33,20 @@ type CreateBathhouseInput struct {
 }
 
 type UpdateBathhouseInput struct {
-	Name         *string
-	Description  *string
-	Address      *string
-	CityID       *int64
-	Latitude     *float64
-	Longitude    *float64
-	PricePerHour *int64
-	MinDuration  *int
-	MaxGuests    *int
-	HasPool      *bool
-	HasSauna     *bool
-	HasSteamRoom *bool
-	HasHotTub    *bool
-	HasBBQ       *bool
+	Name                       *string
+	Description                *string
+	Address                    *string
+	CityID                     *int64
+	Latitude                   *float64
+	Longitude                  *float64
+	PricePerHour               *int64
+	MinDuration                *int
+	MaxGuests                  *int
+	HasPool                    *bool
+	HasSauna                   *bool
+	HasSteamRoom               *bool
+	HasHotTub                  *bool
+	HasBBQ                     *bool
 	HasKaraoke                 *bool
 	LongSessionThresholdHours  *int
 	LongSessionDiscountPercent *int
@@ -60,6 +60,7 @@ type UpdateBathhouseInput struct {
 	MaxAdvanceDays             *int
 	BookingMode                *string
 	RequestTimeout             *int
+	CancellationPolicy         *string
 	Images                     []string
 	WorkingHours               []domain.WorkingHours
 }
@@ -158,34 +159,34 @@ func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input 
 	}
 
 	bh := &domain.Bathhouse{
-		ID:           uuid.New(),
-		OwnerID:      ownerID,
-		Name:         input.Name,
-		Slug:         slug,
-		Description:  input.Description,
-		Address:      input.Address,
-		CityID:       input.CityID,
-		Latitude:     input.Latitude,
-		Longitude:    input.Longitude,
-		PricePerHour: input.PricePerHour,
-		MinDuration:  input.MinDuration,
-		MaxGuests:    input.MaxGuests,
-		HasPool:      input.HasPool,
-		HasSauna:     input.HasSauna,
-		HasSteamRoom: input.HasSteamRoom,
-		HasHotTub:    input.HasHotTub,
-		HasBBQ:       input.HasBBQ,
-		HasKaraoke:   input.HasKaraoke,
-		Images:       input.Images,
-		WorkingHours: input.WorkingHours,
+		ID:                         uuid.New(),
+		OwnerID:                    ownerID,
+		Name:                       input.Name,
+		Slug:                       slug,
+		Description:                input.Description,
+		Address:                    input.Address,
+		CityID:                     input.CityID,
+		Latitude:                   input.Latitude,
+		Longitude:                  input.Longitude,
+		PricePerHour:               input.PricePerHour,
+		MinDuration:                input.MinDuration,
+		MaxGuests:                  input.MaxGuests,
+		HasPool:                    input.HasPool,
+		HasSauna:                   input.HasSauna,
+		HasSteamRoom:               input.HasSteamRoom,
+		HasHotTub:                  input.HasHotTub,
+		HasBBQ:                     input.HasBBQ,
+		HasKaraoke:                 input.HasKaraoke,
+		Images:                     input.Images,
+		WorkingHours:               input.WorkingHours,
 		LongSessionThresholdHours:  4,
 		LongSessionDiscountPercent: 0,
 		BaseCapacity:               input.MaxGuests,
 		ExtraGuestSurcharge:        0,
-		Status:       domain.BathhouseStatusPending,
-		ApiKey:       uuid.New().String(),
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		Status:                     domain.BathhouseStatusPending,
+		ApiKey:                     uuid.New().String(),
+		CreatedAt:                  now,
+		UpdatedAt:                  now,
 	}
 
 	if err := bh.Validate(); err != nil {
@@ -335,6 +336,9 @@ func (s *bathhouseService) Update(ctx context.Context, userID uuid.UUID, role do
 	}
 	if input.RequestTimeout != nil {
 		bh.RequestTimeout = *input.RequestTimeout
+	}
+	if input.CancellationPolicy != nil {
+		bh.CancellationPolicy = domain.CancellationPolicy(*input.CancellationPolicy)
 	}
 	// Detect substantial changes before persisting, so status update is atomic with data update
 	changedFields := buildChangedFields(&oldBh, bh)

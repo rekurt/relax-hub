@@ -49,7 +49,7 @@ func (m *mockPaymentService) HandleWebhook(ctx context.Context, event service.We
 	return nil
 }
 
-func (m *mockPaymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool, refundTo string) error {
+func (m *mockPaymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool, refundTo string, policy domain.CancellationPolicy) error {
 	if m.refundFn != nil {
 		return m.refundFn(ctx, bookingID)
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
+// Default cancellation policy constants kept for backward compatibility.
 const (
 	fullRefundDeadline = 24 * time.Hour
 	noRefundDeadline   = 2 * time.Hour
@@ -28,8 +29,8 @@ type WebhookEvent struct {
 
 // ComboPaymentRequest describes how a booking payment should be split between wallet and card/SBP.
 type ComboPaymentRequest struct {
-	WalletAmount  int64             // amount to pay from wallet (0 = card only)
-	CardAmount    int64             // amount to pay by card/SBP (0 = wallet only)
+	WalletAmount  int64                // amount to pay from wallet (0 = card only)
+	CardAmount    int64                // amount to pay by card/SBP (0 = wallet only)
 	PaymentMethod domain.PaymentMethod // "card" or "sbp" (for card portion)
 }
 
@@ -37,7 +38,7 @@ type PaymentService interface {
 	InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, paymentMethod domain.PaymentMethod) (confirmationURL string, err error)
 	InitiateComboPayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, req ComboPaymentRequest) (confirmationURL string, err error)
 	HandleWebhook(ctx context.Context, event WebhookEvent) error
-	RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool, refundTo string) error
+	RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool, refundTo string, policy domain.CancellationPolicy) error
 	AdminRefund(ctx context.Context, adminUserID uuid.UUID, bookingID uuid.UUID, amount int64, reason string, refundTo string) error
 	CaptureHoldPayment(ctx context.Context, bookingID uuid.UUID) error
 	ReleaseHoldPayment(ctx context.Context, bookingID uuid.UUID) error
@@ -48,16 +49,16 @@ type PaymentService interface {
 const defaultWalletRefundBonusPercent = 5
 
 type paymentService struct {
-	paymentRepo             repository.PaymentRepository
-	bookingRepo             repository.BookingRepository
-	auditLogRepo            repository.AuditLogRepository
-	provider                payment.PaymentProvider
-	fiscalProvider          fiscal.FiscalProvider
-	walletSvc               WalletService
-	notifSvc                NotificationService
-	returnURL               string
+	paymentRepo              repository.PaymentRepository
+	bookingRepo              repository.BookingRepository
+	auditLogRepo             repository.AuditLogRepository
+	provider                 payment.PaymentProvider
+	fiscalProvider           fiscal.FiscalProvider
+	walletSvc                WalletService
+	notifSvc                 NotificationService
+	returnURL                string
 	walletRefundBonusPercent int
-	logger                  *logger.Logger
+	logger                   *logger.Logger
 }
 
 func NewPaymentService(
@@ -690,7 +691,7 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 	return nil
 }
 
-func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool, refundTo string) error {
+func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID, forceFullRefund bool, refundTo string, policy domain.CancellationPolicy) error {
 	p, err := s.paymentRepo.GetByBookingID(ctx, bookingID)
 	if err != nil {
 		return err
@@ -719,15 +720,26 @@ func (s *paymentService) RefundPayment(ctx context.Context, bookingID uuid.UUID,
 	} else {
 		timeUntilStart := time.Until(booking.StartTime)
 
-		if timeUntilStart < noRefundDeadline {
-			return nil
+		// Use per-bathhouse cancellation policy if provided, otherwise fall back to legacy flat rules
+		if policy.IsValid() {
+			refundAmount = policy.CalculateRefundAmount(p.Amount, timeUntilStart)
+		} else {
+			if timeUntilStart < noRefundDeadline {
+				return nil
+			}
+			if timeUntilStart >= fullRefundDeadline {
+				refundAmount = p.Amount
+			} else {
+				refundAmount = p.Amount / 2
+			}
 		}
 
-		if timeUntilStart >= fullRefundDeadline {
-			refundAmount = p.Amount
+		if refundAmount == 0 {
+			return nil
+		}
+		if refundAmount == p.Amount {
 			refundStatus = domain.PaymentRefunded
 		} else {
-			refundAmount = p.Amount / 2
 			refundStatus = domain.PaymentPartiallyRefunded
 		}
 	}

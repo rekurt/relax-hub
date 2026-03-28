@@ -57,10 +57,17 @@ interface BathhouseFormValues {
   price_per_hour: number
   min_duration: number
   max_guests: number
+  cancellation_policy: string
   images: string
   amenities: string[]
   working_hours: WorkingHoursFormItem[]
 }
+
+const CANCELLATION_POLICIES = [
+  { value: 'flexible', label: 'Гибкая — 100% за 24ч+, 50% менее 24ч' },
+  { value: 'moderate', label: 'Умеренная — 100% за 72ч+, 50% за 24-72ч, 0% менее 24ч' },
+  { value: 'strict', label: 'Строгая — 100% за 7д+, 50% за 3-7д, 0% менее 3д' },
+]
 
 function buildWorkingHours(values: BathhouseFormValues): InternalHandlerWorkingHoursRequest[] {
   return values.working_hours
@@ -99,7 +106,8 @@ function buildRequest(values: BathhouseFormValues): InternalHandlerCreateBathhou
     has_bbq: amenitySet.has('has_bbq'),
     has_karaoke: amenitySet.has('has_karaoke'),
     working_hours: buildWorkingHours(values),
-  }
+    ...(values.cancellation_policy ? { cancellation_policy: values.cancellation_policy } : {}),
+  } as InternalHandlerCreateBathhouseRequest
 }
 
 const DEFAULT_WORKING_HOURS: WorkingHoursFormItem[] = Array.from({ length: 7 }, () => ({
@@ -180,6 +188,7 @@ export default function BathhouseForm() {
       min_duration: b.min_duration,
       max_guests: b.max_guests,
       images: b.images?.join('\n') ?? '',
+      cancellation_policy: (b as Record<string, unknown>).cancellation_policy as string ?? 'flexible',
       amenities,
       working_hours: workingHours,
     })
@@ -214,6 +223,7 @@ export default function BathhouseForm() {
         initialValues={{
           min_duration: 1,
           max_guests: 10,
+          cancellation_policy: 'flexible',
           working_hours: DEFAULT_WORKING_HOURS,
           amenities: [],
         }}
@@ -300,6 +310,21 @@ export default function BathhouseForm() {
               </Form.Item>
             </Col>
           </Row>
+        </Card>
+
+        <Card title="Политика отмены" style={{ marginBottom: 24 }}>
+          <Form.Item
+            name="cancellation_policy"
+            label="Условия возврата при отмене бронирования"
+          >
+            <Select>
+              {CANCELLATION_POLICIES.map((p) => (
+                <Select.Option key={p.value} value={p.value}>
+                  {p.label}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
         </Card>
 
         <Card title="Удобства" style={{ marginBottom: 24 }}>

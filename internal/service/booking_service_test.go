@@ -169,7 +169,8 @@ func TestBookingService_Cancel_ClientOtherBookingForbidden(t *testing.T) {
 	}
 }
 
-func TestBookingService_Cancel_ClientTooLate(t *testing.T) {
+func TestBookingService_Cancel_ClientLateCancel_Succeeds(t *testing.T) {
+	// With policy-based cancellation, clients can always cancel (refund depends on policy).
 	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
 	bh := createBathhouse(t, bhRepo, uuid.New())
 	clientID := uuid.New()
@@ -183,8 +184,13 @@ func TestBookingService_Cancel_ClientTooLate(t *testing.T) {
 	_ = bookingRepo.Create(context.Background(), booking)
 
 	err := svc.Cancel(context.Background(), clientID, domain.RoleClient, booking.ID, "")
-	if !errors.Is(err, domain.ErrBookingCancelLate) {
-		t.Errorf("should fail for too late cancel, got: %v", err)
+	if err != nil {
+		t.Errorf("late cancel should succeed (refund is policy-based), got: %v", err)
+	}
+
+	updated, _ := bookingRepo.GetByID(context.Background(), booking.ID)
+	if updated.Status != domain.BookingCancelled {
+		t.Errorf("status = %q, want %q", updated.Status, domain.BookingCancelled)
 	}
 }
 
@@ -1098,7 +1104,7 @@ type trackingPaymentService struct {
 	payment      *domain.Payment
 }
 
-func (t *trackingPaymentService) RefundPayment(_ context.Context, _ uuid.UUID, _ bool, _ string) error {
+func (t *trackingPaymentService) RefundPayment(_ context.Context, _ uuid.UUID, _ bool, _ string, _ domain.CancellationPolicy) error {
 	t.refundCalled = true
 	return t.refundErr
 }

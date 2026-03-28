@@ -35,6 +35,7 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 			last_minute_enabled, last_minute_discount_percent, last_minute_hours_threshold,
 			buffer_minutes, lead_time_hours, max_advance_days,
 			booking_mode, request_timeout,
+			cancellation_policy,
 			created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7,
@@ -45,7 +46,8 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 			$29, $30, $31,
 			$32, $33, $34,
 			$35, $36,
-			$37, $38
+			$37,
+			$38, $39
 		)`
 
 	if bh.ID == uuid.Nil {
@@ -70,6 +72,7 @@ func (r *bathhouseRepo) Create(ctx context.Context, bh *domain.Bathhouse) error 
 		bh.LastMinuteEnabled, bh.LastMinuteDiscountPercent, bh.LastMinuteHoursThreshold,
 		bh.BufferMinutes, bh.LeadTimeHours, bh.MaxAdvanceDays,
 		bh.BookingMode, bh.RequestTimeout,
+		bh.CancellationPolicy,
 		bh.CreatedAt, bh.UpdatedAt,
 	)
 	if err != nil {
@@ -90,6 +93,7 @@ func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bath
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
 			bathhouses.booking_mode, bathhouses.request_timeout,
 			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
+			bathhouses.cancellation_policy,
 			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
 		WHERE bathhouses.id = $1`
@@ -122,6 +126,7 @@ func (r *bathhouseRepo) GetBySlug(ctx context.Context, slug string) (*domain.Bat
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
 			bathhouses.booking_mode, bathhouses.request_timeout,
 			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
+			bathhouses.cancellation_policy,
 			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
 		WHERE bathhouses.slug = $1`
@@ -163,6 +168,7 @@ func (r *bathhouseRepo) GetByAPIKey(ctx context.Context, apiKey string) (*domain
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
 			bathhouses.booking_mode, bathhouses.request_timeout,
 			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
+			bathhouses.cancellation_policy,
 			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
 		FROM bathhouses
 		WHERE bathhouses.api_key = $1`
@@ -190,7 +196,8 @@ func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error 
 			long_session_threshold_hours = $23, long_session_discount_percent = $24, base_capacity = $25, extra_guest_surcharge = $26,
 			last_minute_enabled = $27, last_minute_discount_percent = $28, last_minute_hours_threshold = $29,
 			buffer_minutes = $30, lead_time_hours = $31, max_advance_days = $32,
-			booking_mode = $33, request_timeout = $34
+			booking_mode = $33, request_timeout = $34,
+			cancellation_policy = $35
 		WHERE id = $1`
 
 	bh.UpdatedAt = time.Now()
@@ -213,6 +220,7 @@ func (r *bathhouseRepo) Update(ctx context.Context, bh *domain.Bathhouse) error 
 		bh.LastMinuteEnabled, bh.LastMinuteDiscountPercent, bh.LastMinuteHoursThreshold,
 		bh.BufferMinutes, bh.LeadTimeHours, bh.MaxAdvanceDays,
 		bh.BookingMode, bh.RequestTimeout,
+		bh.CancellationPolicy,
 	)
 	if err != nil {
 		return fmt.Errorf("update bathhouse: %w", err)
@@ -467,6 +475,7 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
 			bathhouses.booking_mode, bathhouses.request_timeout,
 			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
+			bathhouses.cancellation_policy,
 			%s as is_promoted
 		FROM bathhouses %s ORDER BY %s LIMIT %s OFFSET %s`,
 		promotionExists, whereClause, orderBy, addArg(filter.PageSize), addArg(offset),
@@ -524,6 +533,7 @@ func (r *bathhouseRepo) ListByOwner(ctx context.Context, ownerID uuid.UUID, page
 			buffer_minutes, lead_time_hours, max_advance_days,
 			booking_mode, request_timeout,
 			response_rate, avg_response_time_minutes,
+			cancellation_policy,
 			created_at, updated_at
 		FROM bathhouses WHERE owner_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
@@ -667,7 +677,8 @@ func (r *bathhouseRepo) GetByCalendarToken(ctx context.Context, token string) (*
 			last_minute_enabled, last_minute_discount_percent, last_minute_hours_threshold,
 			buffer_minutes, lead_time_hours, max_advance_days,
 			booking_mode, request_timeout,
-			response_rate, avg_response_time_minutes
+			response_rate, avg_response_time_minutes,
+			cancellation_policy
 		FROM bathhouses
 		WHERE calendar_token = $1`
 
@@ -703,6 +714,7 @@ func (r *bathhouseRepo) scanBathhouseMinimal(rows pgx.Rows) (*domain.Bathhouse, 
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
 		&bh.BookingMode, &bh.RequestTimeout,
 		&bh.ResponseRate, &bh.AvgResponseTimeMinutes,
+		&bh.CancellationPolicy,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan bathhouse row: %w", err)
@@ -734,6 +746,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*do
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
 		&bh.BookingMode, &bh.RequestTimeout,
 		&bh.ResponseRate, &bh.AvgResponseTimeMinutes,
+		&bh.CancellationPolicy,
 		&isPromoted,
 	)
 	if err != nil {
@@ -770,6 +783,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKey(rows pgx.Rows) (*domain.B
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
 		&bh.BookingMode, &bh.RequestTimeout,
 		&bh.ResponseRate, &bh.AvgResponseTimeMinutes,
+		&bh.CancellationPolicy,
 		&isPromoted,
 	)
 	if err != nil {
@@ -804,6 +818,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithAPIKeyOnly(rows pgx.Rows) (*doma
 		&bh.BufferMinutes, &bh.LeadTimeHours, &bh.MaxAdvanceDays,
 		&bh.BookingMode, &bh.RequestTimeout,
 		&bh.ResponseRate, &bh.AvgResponseTimeMinutes,
+		&bh.CancellationPolicy,
 		&bh.CreatedAt, &bh.UpdatedAt,
 	)
 	if err != nil {
@@ -870,7 +885,8 @@ func (r *bathhouseRepo) ListRequestModeBathhouses(ctx context.Context) ([]domain
 			bathhouses.last_minute_enabled, bathhouses.last_minute_discount_percent, bathhouses.last_minute_hours_threshold,
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
 			bathhouses.booking_mode, bathhouses.request_timeout,
-			bathhouses.response_rate, bathhouses.avg_response_time_minutes
+			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
+			bathhouses.cancellation_policy
 		FROM bathhouses
 		WHERE bathhouses.booking_mode = 'request'
 			AND bathhouses.status = 'active'`

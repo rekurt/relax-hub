@@ -308,7 +308,7 @@ func TestPaymentService_RefundPayment_FullRefund(t *testing.T) {
 	})
 
 	// Now refund
-	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", "")
 	if err != nil {
 		t.Fatalf("refund failed: %v", err)
 	}
@@ -340,7 +340,7 @@ func TestPaymentService_RefundPayment_PartialRefund(t *testing.T) {
 		Status:     "succeeded",
 	})
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", "")
 	if err != nil {
 		t.Fatalf("refund failed: %v", err)
 	}
@@ -369,7 +369,7 @@ func TestPaymentService_RefundPayment_NoRefundTooLate(t *testing.T) {
 		Status:     "succeeded",
 	})
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", "")
 	if err != nil {
 		t.Fatalf("expected no error (just no refund), got: %v", err)
 	}
@@ -388,7 +388,7 @@ func TestPaymentService_RefundPayment_NotSucceeded(t *testing.T) {
 	// Initiate but don't complete payment
 	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", "")
 	if !errors.Is(err, domain.ErrInvalidInput) {
 		t.Errorf("expected ErrInvalidInput for non-succeeded payment, got: %v", err)
 	}
@@ -399,7 +399,7 @@ func TestPaymentService_RefundPayment_NoPayment(t *testing.T) {
 	userID := uuid.New()
 	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", "")
 	if !errors.Is(err, domain.ErrPaymentNotFound) {
 		t.Errorf("expected ErrPaymentNotFound, got: %v", err)
 	}
@@ -1015,7 +1015,7 @@ func TestPaymentService_RefundPayment_HoldReleasedInsteadOfRefund(t *testing.T) 
 	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
 
 	// Calling RefundPayment on a hold should release it instead
-	err = svc.RefundPayment(context.Background(), booking.ID, true, "")
+	err = svc.RefundPayment(context.Background(), booking.ID, true, "", "")
 	if err != nil {
 		t.Fatalf("refund/release failed: %v", err)
 	}
@@ -1048,7 +1048,7 @@ func TestPaymentService_RefundPayment_WalletRefundWithBonus(t *testing.T) {
 		Status:     "succeeded",
 	})
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false, "wallet")
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "wallet", "")
 	if err != nil {
 		t.Fatalf("wallet refund failed: %v", err)
 	}
@@ -1084,7 +1084,7 @@ func TestPaymentService_RefundPayment_CardRefundDefault(t *testing.T) {
 		Status:     "succeeded",
 	})
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false, "")
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", "")
 	if err != nil {
 		t.Fatalf("card refund failed: %v", err)
 	}
@@ -1120,7 +1120,7 @@ func TestPaymentService_ComboRefund_Proportional(t *testing.T) {
 	walletSvc.refundCalled = false
 	walletSvc.refundAmount = 0
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false, "card")
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "card", "")
 	if err != nil {
 		t.Fatalf("combo refund failed: %v", err)
 	}
@@ -1161,7 +1161,7 @@ func TestPaymentService_ComboRefund_AllToWallet(t *testing.T) {
 	walletSvc.refundCalled = false
 	walletSvc.refundAmount = 0
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false, "wallet")
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "wallet", "")
 	if err != nil {
 		t.Fatalf("combo all-to-wallet refund failed: %v", err)
 	}
@@ -1251,7 +1251,7 @@ func TestPaymentService_RefundPayment_NoRefundTier_IgnoresRefundTo(t *testing.T)
 		Status:     "succeeded",
 	})
 
-	err := svc.RefundPayment(context.Background(), booking.ID, false, "wallet")
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "wallet", "")
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -1320,7 +1320,7 @@ func TestPaymentService_Refund_TriggersFiscalReceipt(t *testing.T) {
 	// Reset receipts to only track refund receipt
 	fp.receipts = nil
 
-	err = svc.RefundPayment(context.Background(), booking.ID, true, "card")
+	err = svc.RefundPayment(context.Background(), booking.ID, true, "card", "")
 	if err != nil {
 		t.Fatalf("refund failed: %v", err)
 	}
@@ -1383,7 +1383,7 @@ func TestPaymentService_FiscalFailure_DoesNotBlockRefund(t *testing.T) {
 	fp.receipts = nil
 
 	// Refund should still succeed
-	err := svc.RefundPayment(context.Background(), booking.ID, true, "card")
+	err := svc.RefundPayment(context.Background(), booking.ID, true, "card", "")
 	if err != nil {
 		t.Fatalf("refund should not fail due to fiscal error, got: %v", err)
 	}
@@ -1392,5 +1392,190 @@ func TestPaymentService_FiscalFailure_DoesNotBlockRefund(t *testing.T) {
 	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
 	if updated.Status != domain.PaymentRefunded {
 		t.Errorf("expected payment status refunded, got %s", updated.Status)
+	}
+}
+
+// Tests for per-bathhouse cancellation policies
+
+func TestPaymentService_RefundPayment_FlexiblePolicy_FullRefund(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	// Booking in 48h, flexible policy -> 100% refund
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{ExternalID: p.ExternalID, Status: "succeeded"})
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", domain.CancellationPolicyFlexible)
+	if err != nil {
+		t.Fatalf("refund failed: %v", err)
+	}
+
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.RefundAmount != 10000 {
+		t.Errorf("refund amount = %d, want 10000", updated.RefundAmount)
+	}
+	if updated.Status != domain.PaymentRefunded {
+		t.Errorf("status = %q, want %q", updated.Status, domain.PaymentRefunded)
+	}
+}
+
+func TestPaymentService_RefundPayment_FlexiblePolicy_HalfRefund(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	// Booking in 1h, flexible policy -> 50% refund (flexible has no 0% tier)
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(1*time.Hour), domain.BookingPending)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{ExternalID: p.ExternalID, Status: "succeeded"})
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", domain.CancellationPolicyFlexible)
+	if err != nil {
+		t.Fatalf("refund failed: %v", err)
+	}
+
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.RefundAmount != 5000 {
+		t.Errorf("refund amount = %d, want 5000 (50%%)", updated.RefundAmount)
+	}
+	if updated.Status != domain.PaymentPartiallyRefunded {
+		t.Errorf("status = %q, want %q", updated.Status, domain.PaymentPartiallyRefunded)
+	}
+}
+
+func TestPaymentService_RefundPayment_ModeratePolicy_NoRefund(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	// Booking in 12h, moderate policy -> 0% refund (under 24h)
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(12*time.Hour), domain.BookingPending)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{ExternalID: p.ExternalID, Status: "succeeded"})
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", domain.CancellationPolicyModerate)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.RefundAmount != 0 {
+		t.Errorf("refund amount = %d, want 0", updated.RefundAmount)
+	}
+}
+
+func TestPaymentService_RefundPayment_ModeratePolicy_HalfRefund(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	// Booking in 48h, moderate policy -> 50% refund (24-72h)
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{ExternalID: p.ExternalID, Status: "succeeded"})
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", domain.CancellationPolicyModerate)
+	if err != nil {
+		t.Fatalf("refund failed: %v", err)
+	}
+
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.RefundAmount != 5000 {
+		t.Errorf("refund amount = %d, want 5000 (50%%)", updated.RefundAmount)
+	}
+	if updated.Status != domain.PaymentPartiallyRefunded {
+		t.Errorf("status = %q, want %q", updated.Status, domain.PaymentPartiallyRefunded)
+	}
+}
+
+func TestPaymentService_RefundPayment_StrictPolicy_FullRefund(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	// Booking in 10 days (240h), strict policy -> 100% refund (7d+)
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(240*time.Hour), domain.BookingPending)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{ExternalID: p.ExternalID, Status: "succeeded"})
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", domain.CancellationPolicyStrict)
+	if err != nil {
+		t.Fatalf("refund failed: %v", err)
+	}
+
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.RefundAmount != 10000 {
+		t.Errorf("refund amount = %d, want 10000", updated.RefundAmount)
+	}
+	if updated.Status != domain.PaymentRefunded {
+		t.Errorf("status = %q, want %q", updated.Status, domain.PaymentRefunded)
+	}
+}
+
+func TestPaymentService_RefundPayment_StrictPolicy_NoRefund(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	// Booking in 48h, strict policy -> 0% refund (under 3d)
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(48*time.Hour), domain.BookingPending)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{ExternalID: p.ExternalID, Status: "succeeded"})
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", domain.CancellationPolicyStrict)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.RefundAmount != 0 {
+		t.Errorf("refund amount = %d, want 0", updated.RefundAmount)
+	}
+}
+
+func TestPaymentService_RefundPayment_StrictPolicy_HalfRefund(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	// Booking in 5 days (120h), strict policy -> 50% refund (3-7d)
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(120*time.Hour), domain.BookingPending)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{ExternalID: p.ExternalID, Status: "succeeded"})
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", domain.CancellationPolicyStrict)
+	if err != nil {
+		t.Fatalf("refund failed: %v", err)
+	}
+
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.RefundAmount != 5000 {
+		t.Errorf("refund amount = %d, want 5000 (50%%)", updated.RefundAmount)
+	}
+	if updated.Status != domain.PaymentPartiallyRefunded {
+		t.Errorf("status = %q, want %q", updated.Status, domain.PaymentPartiallyRefunded)
+	}
+}
+
+func TestPaymentService_RefundPayment_PolicyBoundaryExact(t *testing.T) {
+	svc, paymentRepo, bookingRepo, provider := newPaymentService()
+	userID := uuid.New()
+	// Booking just over 72h (add 1 minute buffer for test execution time), moderate policy -> 100% refund
+	booking := createTestBooking(t, bookingRepo, userID, uuid.New(), time.Now().Add(72*time.Hour+time.Minute), domain.BookingPending)
+	_, _ = svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+	_ = svc.HandleWebhook(context.Background(), service.WebhookEvent{ExternalID: p.ExternalID, Status: "succeeded"})
+
+	err := svc.RefundPayment(context.Background(), booking.ID, false, "", domain.CancellationPolicyModerate)
+	if err != nil {
+		t.Fatalf("refund failed: %v", err)
+	}
+
+	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
+	if updated.RefundAmount != 10000 {
+		t.Errorf("refund amount = %d, want 10000 (100%% at exact 72h boundary)", updated.RefundAmount)
 	}
 }

@@ -406,7 +406,17 @@ export default function BookingCreate() {
         showIcon
         style={{ marginBottom: 16 }}
         message="Политика отмены"
-        description="Более 24ч до начала — 100% возврат. От 2 до 24ч — 50% возврат. Менее 2ч — без возврата."
+        description={(() => {
+          const policy = (bathhouse as Record<string, unknown>)?.cancellation_policy as string
+          switch (policy) {
+            case 'moderate':
+              return 'Умеренная: более 72ч — 100% возврат, 24-72ч — 50% возврат, менее 24ч — без возврата.'
+            case 'strict':
+              return 'Строгая: более 7 дней — 100% возврат, 3-7 дней — 50% возврат, менее 3 дней — без возврата.'
+            default:
+              return 'Гибкая: более 24ч до начала — 100% возврат, менее 24ч — 50% возврат.'
+          }
+        })()}
       />
 
       <Divider />
