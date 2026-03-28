@@ -408,12 +408,12 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `frontend/src/router.tsx`
 - If backend CRUD for amenities/object types is missing, add it
 
-- [ ] Verify backend CRUD endpoints exist for amenities, object types, holidays; create if missing
-- [ ] Admin page: manage amenities (add/edit/delete, icon assignment)
-- [ ] Admin page: manage object types (bathhouse categories)
-- [ ] Admin page: manage holidays per region (name, date, recurring flag)
-- [ ] Write tests
-- [ ] Run project test suite - must pass before next task
+- [x] Verify backend CRUD endpoints exist for amenities, object types, holidays; create if missing
+- [x] Admin page: manage amenities (add/edit/delete, icon assignment)
+- [x] Admin page: manage object types (bathhouse categories)
+- [x] Admin page: manage holidays per region (name, date, recurring flag)
+- [x] Write tests
+- [x] Run project test suite - must pass before next task
 
 ### Task 22: Admin financial dashboard (FR-152, FR-127)
 

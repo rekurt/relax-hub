@@ -93,5 +93,7 @@ var Module = fx.Module("handler",
 		func(shareRepo repository.BookingShareRepository, cfg *config.Config) *ShareHandler {
 			return NewShareHandler(shareRepo, cfg.FrontendURL)
 		},
+		NewAmenityHandler,
+		NewObjectTypeHandler,
 	),
 )

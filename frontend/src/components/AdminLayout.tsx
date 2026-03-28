@@ -26,6 +26,9 @@ import {
   MenuUnfoldOutlined,
   CustomerServiceOutlined,
   SafetyOutlined,
+  AppstoreOutlined,
+  TagsOutlined,
+  CalendarOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -45,6 +48,9 @@ const adminMenuItems: MenuProps['items'] = [
   { key: '/admin/promos', icon: <GiftOutlined />, label: 'Промокоды' },
   { key: '/admin/tickets', icon: <CustomerServiceOutlined />, label: 'Обращения' },
   { key: '/admin/antifraud', icon: <SafetyOutlined />, label: 'Антифрод' },
+  { key: '/admin/amenities', icon: <AppstoreOutlined />, label: 'Удобства' },
+  { key: '/admin/object-types', icon: <TagsOutlined />, label: 'Типы объектов' },
+  { key: '/admin/holidays', icon: <CalendarOutlined />, label: 'Праздники' },
   { key: '/admin/notifications', icon: <BellOutlined />, label: 'Уведомления' },
   { key: '/admin/profile', icon: <UserOutlined />, label: 'Профиль' },
 ]

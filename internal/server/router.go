@@ -84,6 +84,8 @@ type RouterParams struct {
 	ReconciliationHandler     *handler.ReconciliationHandler
 	ListingImportHandler     *handler.ListingImportHandler
 	ShareHandler             *handler.ShareHandler
+	AmenityHandler           *handler.AmenityHandler
+	ObjectTypeHandler        *handler.ObjectTypeHandler
 	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
@@ -575,6 +577,18 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Post("/holidays", p.HolidayHandler.CreateHoliday)
 			r.Put("/holidays/{id}", p.HolidayHandler.UpdateHoliday)
 			r.Delete("/holidays/{id}", p.HolidayHandler.DeleteHoliday)
+
+			// Amenities (admin only)
+			r.Get("/amenities", p.AmenityHandler.ListAmenities)
+			r.Post("/amenities", p.AmenityHandler.CreateAmenity)
+			r.Put("/amenities/{id}", p.AmenityHandler.UpdateAmenity)
+			r.Delete("/amenities/{id}", p.AmenityHandler.DeleteAmenity)
+
+			// Object types (admin only)
+			r.Get("/object-types", p.ObjectTypeHandler.ListObjectTypes)
+			r.Post("/object-types", p.ObjectTypeHandler.CreateObjectType)
+			r.Put("/object-types/{id}", p.ObjectTypeHandler.UpdateObjectType)
+			r.Delete("/object-types/{id}", p.ObjectTypeHandler.DeleteObjectType)
 
 			// Admin refund
 			r.Post("/bookings/{id}/refund", p.PaymentHandler.AdminRefund)

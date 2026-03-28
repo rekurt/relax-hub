@@ -62,5 +62,7 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewClientReviewRepository, fx.As(new(repository.ClientReviewRepository))),
 		fx.Annotate(NewReconciliationRepo, fx.As(new(repository.ReconciliationRepository))),
 		fx.Annotate(NewBookingShareRepo, fx.As(new(repository.BookingShareRepository))),
+		fx.Annotate(NewAmenityRepository, fx.As(new(repository.AmenityRepository))),
+		fx.Annotate(NewObjectTypeRepository, fx.As(new(repository.ObjectTypeRepository))),
 	),
 )

@@ -634,3 +634,19 @@ type BookingShareRepository interface {
 	GetByToken(ctx context.Context, token string) (*domain.BookingShare, error)
 	DeleteExpired(ctx context.Context) (int64, error)
 }
+
+type AmenityRepository interface {
+	Create(ctx context.Context, amenity *domain.Amenity) error
+	Update(ctx context.Context, amenity *domain.Amenity) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Amenity, error)
+	ListAll(ctx context.Context) ([]domain.Amenity, error)
+}
+
+type ObjectTypeRepository interface {
+	Create(ctx context.Context, objType *domain.ObjectType) error
+	Update(ctx context.Context, objType *domain.ObjectType) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.ObjectType, error)
+	ListAll(ctx context.Context) ([]domain.ObjectType, error)
+}

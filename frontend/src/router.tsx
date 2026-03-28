@@ -67,6 +67,9 @@ import AdminDisputeDetail from '@/pages/admin/AdminDisputeDetail'
 import ComparisonPage from '@/pages/client/ComparisonPage'
 import SavedSearches from '@/pages/client/SavedSearches'
 import AntiFraudDashboard from '@/pages/admin/AntiFraudDashboard'
+import AmenityManagement from '@/pages/admin/AmenityManagement'
+import ObjectTypeManagement from '@/pages/admin/ObjectTypeManagement'
+import HolidayManagement from '@/pages/admin/HolidayManagement'
 import OAuthCallback from '@/pages/OAuthCallback'
 
 export default function AppRouter() {
@@ -169,6 +172,9 @@ export default function AppRouter() {
         <Route path="disputes" element={<DisputeManagement />} />
         <Route path="disputes/:id" element={<AdminDisputeDetail />} />
         <Route path="antifraud" element={<AntiFraudDashboard />} />
+        <Route path="amenities" element={<AmenityManagement />} />
+        <Route path="object-types" element={<ObjectTypeManagement />} />
+        <Route path="holidays" element={<HolidayManagement />} />
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="profile" element={<AdminProfile />} />
       </Route>
