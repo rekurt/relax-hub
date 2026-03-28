@@ -3744,3 +3744,315 @@ func TestResponseRate_AutoDeactivateBelow30(t *testing.T) {
 		t.Error("expected response rate critical warning notification")
 	}
 }
+
+// --- Booking Modification Tests ---
+
+func TestBookingService_Modify_Success(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+2, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	// Create booking
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+	bookingID := result.Booking.ID
+	originalPrice := result.Booking.TotalPrice
+
+	// Modify: change to 3 hours (price should go up)
+	newStart := time.Date(now.Year(), now.Month(), now.Day()+2, 12, 0, 0, 0, now.Location())
+	newEnd := newStart.Add(3 * time.Hour)
+	modResult, err := svc.Modify(context.Background(), clientID, bookingID, service.ModifyBookingInput{
+		StartTime:  newStart,
+		EndTime:    newEnd,
+		GuestCount: 5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if modResult.OldPrice != originalPrice {
+		t.Errorf("old_price = %d, want %d", modResult.OldPrice, originalPrice)
+	}
+	if modResult.NewPrice <= originalPrice {
+		t.Errorf("new_price = %d, should be > %d (longer duration)", modResult.NewPrice, originalPrice)
+	}
+	if modResult.PriceDiff <= 0 {
+		t.Errorf("price_diff = %d, should be positive for price increase", modResult.PriceDiff)
+	}
+
+	// Verify booking was updated
+	updated, _ := bookingRepo.GetByID(context.Background(), bookingID)
+	if updated.ModificationCount != 1 {
+		t.Errorf("modification_count = %d, want 1", updated.ModificationCount)
+	}
+	if !updated.StartTime.Equal(newStart) {
+		t.Errorf("start_time not updated")
+	}
+	if !updated.EndTime.Equal(newEnd) {
+		t.Errorf("end_time not updated")
+	}
+}
+
+func TestBookingService_Modify_PriceDown(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+2, 10, 0, 0, 0, now.Location())
+	end := start.Add(3 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+
+	// Modify: reduce to 2 hours (price should go down)
+	newEnd := start.Add(2 * time.Hour)
+	modResult, err := svc.Modify(context.Background(), clientID, result.Booking.ID, service.ModifyBookingInput{
+		StartTime:  start,
+		EndTime:    newEnd,
+		GuestCount: 5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if modResult.PriceDiff >= 0 {
+		t.Errorf("price_diff = %d, should be negative for price decrease", modResult.PriceDiff)
+	}
+}
+
+func TestBookingService_Modify_EqualPrice(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+2, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+
+	// Modify: shift by 1 hour, same duration (same price)
+	newStart := start.Add(1 * time.Hour)
+	newEnd := newStart.Add(2 * time.Hour)
+	modResult, err := svc.Modify(context.Background(), clientID, result.Booking.ID, service.ModifyBookingInput{
+		StartTime:  newStart,
+		EndTime:    newEnd,
+		GuestCount: 5,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if modResult.PriceDiff != 0 {
+		t.Errorf("price_diff = %d, want 0 for same duration", modResult.PriceDiff)
+	}
+}
+
+func TestBookingService_Modify_MaxModificationsReached(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+2, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+
+	// Manually set modification count to max
+	b, _ := bookingRepo.GetByID(context.Background(), result.Booking.ID)
+	b.ModificationCount = domain.MaxBookingModifications
+	_ = bookingRepo.Update(context.Background(), b)
+
+	newStart := start.Add(1 * time.Hour)
+	_, err = svc.Modify(context.Background(), clientID, result.Booking.ID, service.ModifyBookingInput{
+		StartTime:  newStart,
+		EndTime:    newStart.Add(2 * time.Hour),
+		GuestCount: 5,
+	})
+	if !errors.Is(err, domain.ErrBookingModificationLimit) {
+		t.Errorf("expected ErrBookingModificationLimit, got %v", err)
+	}
+}
+
+func TestBookingService_Modify_WrongUser(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	otherUser := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+2, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+
+	_, err = svc.Modify(context.Background(), otherUser, result.Booking.ID, service.ModifyBookingInput{
+		StartTime:  start,
+		EndTime:    end,
+		GuestCount: 3,
+	})
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestBookingService_Modify_CompletedBooking(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+2, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+
+	// Set to completed
+	_ = bookingRepo.UpdateStatus(context.Background(), result.Booking.ID, domain.BookingCompleted)
+
+	_, err = svc.Modify(context.Background(), clientID, result.Booking.ID, service.ModifyBookingInput{
+		StartTime:  start,
+		EndTime:    end,
+		GuestCount: 3,
+	})
+	if !errors.Is(err, domain.ErrBookingNotModifiable) {
+		t.Errorf("expected ErrBookingNotModifiable, got %v", err)
+	}
+}
+
+func TestBookingService_Modify_SlotConflict(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start1 := time.Date(now.Year(), now.Month(), now.Day()+2, 10, 0, 0, 0, now.Location())
+	end1 := start1.Add(2 * time.Hour)
+
+	// Create booking 1
+	result1, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start1,
+		EndTime:     end1,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking 1: %v", err)
+	}
+
+	// Create booking 2 at a different time
+	start2 := time.Date(now.Year(), now.Month(), now.Day()+2, 14, 0, 0, 0, now.Location())
+	end2 := start2.Add(2 * time.Hour)
+	_, err = svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start2,
+		EndTime:     end2,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking 2: %v", err)
+	}
+
+	// Try to modify booking 1 to overlap with booking 2
+	_, err = svc.Modify(context.Background(), clientID, result1.Booking.ID, service.ModifyBookingInput{
+		StartTime:  start2,
+		EndTime:    end2,
+		GuestCount: 5,
+	})
+	if !errors.Is(err, domain.ErrSlotUnavailable) {
+		t.Errorf("expected ErrSlotUnavailable, got %v", err)
+	}
+}
+
+func TestBookingService_Modify_CanMoveToSameSlot(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+2, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID,
+		StartTime:   start,
+		EndTime:     end,
+		GuestCount:  5,
+	})
+	if err != nil {
+		t.Fatalf("failed to create booking: %v", err)
+	}
+
+	// Modify to same time but different guest count (should not conflict with self)
+	modResult, err := svc.Modify(context.Background(), clientID, result.Booking.ID, service.ModifyBookingInput{
+		StartTime:  start,
+		EndTime:    end,
+		GuestCount: 3,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error modifying guest count: %v", err)
+	}
+	if modResult.Booking.GuestCount != 3 {
+		t.Errorf("guest_count = %d, want 3", modResult.Booking.GuestCount)
+	}
+}

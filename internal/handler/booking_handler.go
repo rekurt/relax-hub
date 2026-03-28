@@ -79,6 +79,7 @@ type bookingResponse struct {
 	IsHolidayPrice      bool                   `json:"is_holiday_price,omitempty"`
 	HolidayName         string                 `json:"holiday_name,omitempty"`
 	HolidayMultiplier   float64                `json:"holiday_multiplier,omitempty"`
+	ModificationCount   int                    `json:"modification_count"`
 	AddOns              []bookingAddOnResponse `json:"addons,omitempty"`
 	CreatedAt           time.Time              `json:"created_at"`
 	UpdatedAt           time.Time              `json:"updated_at"`
@@ -106,6 +107,7 @@ func toBookingResponse(b *domain.Booking) bookingResponse {
 		Comment:             b.Comment,
 		PointsSpent:         b.PointsSpent,
 		ReferralBonusUsed:   b.ReferralBonusUsed,
+		ModificationCount:   b.ModificationCount,
 		CreatedAt:           b.CreatedAt,
 		UpdatedAt:           b.UpdatedAt,
 	}
@@ -164,19 +166,20 @@ func (h *BookingHandler) enrichWithPaymentStatus(ctx context.Context, resp *book
 }
 
 // Create godoc
-// @Summary      Create booking
-// @Description  Creates a new booking for a bathhouse. Supports loyalty points, referral bonus, promo codes, and gift certificates as discounts.
-// @Tags         bookings
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      createBookingRequest  true  "Booking data"
-// @Success      201   {object}  APIResponse{data=bookingResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Router       /bookings [post]
+//
+//	@Summary		Create booking
+//	@Description	Creates a new booking for a bathhouse. Supports loyalty points, referral bonus, promo codes, and gift certificates as discounts.
+//	@Tags			bookings
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		createBookingRequest	true	"Booking data"
+//	@Success		201		{object}	APIResponse{data=bookingResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Router			/bookings [post]
 func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createBookingRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -238,16 +241,17 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListByUser godoc
-// @Summary      List my bookings
-// @Description  Returns a paginated list of bookings for the authenticated user
-// @Tags         bookings
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query     int  false  "Page number"  default(1)
-// @Param        page_size  query     int  false  "Page size"    default(20)
-// @Success      200        {object}  APIResponse{data=[]bookingResponse,meta=Meta}
-// @Failure      401        {object}  APIResponse{error=APIError}
-// @Router       /bookings [get]
+//
+//	@Summary		List my bookings
+//	@Description	Returns a paginated list of bookings for the authenticated user
+//	@Tags			bookings
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int	false	"Page number"	default(1)
+//	@Param			page_size	query		int	false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]bookingResponse,meta=Meta}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Router			/bookings [get]
 func (h *BookingHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	page := getPage(r.URL.Query().Get("page"))
@@ -278,20 +282,21 @@ type cancelBookingRequest struct {
 }
 
 // Cancel godoc
-// @Summary      Cancel booking
-// @Description  Cancels a booking. Clients can cancel their own bookings, owners/representatives can cancel bookings for their bathhouses. Optional refund_to parameter to choose refund destination.
-// @Tags         bookings
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                true  "Booking ID (UUID)"
-// @Param        body  body      cancelBookingRequest  false "Cancel options"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/cancel [patch]
+//
+//	@Summary		Cancel booking
+//	@Description	Cancels a booking. Clients can cancel their own bookings, owners/representatives can cancel bookings for their bathhouses. Optional refund_to parameter to choose refund destination.
+//	@Tags			bookings
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Booking ID (UUID)"
+//	@Param			body	body		cancelBookingRequest	false	"Cancel options"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/cancel [patch]
 func (h *BookingHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -320,18 +325,19 @@ func (h *BookingHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 }
 
 // Confirm godoc
-// @Summary      Confirm booking
-// @Description  Confirms a pending booking. Only available to bathhouse owners and representatives.
-// @Tags         bookings
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/confirm [patch]
+//
+//	@Summary		Confirm booking
+//	@Description	Confirms a pending booking. Only available to bathhouse owners and representatives.
+//	@Tags			bookings
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Booking ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/confirm [patch]
 func (h *BookingHandler) Confirm(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -355,20 +361,21 @@ type rejectBookingRequest struct {
 }
 
 // Reject godoc
-// @Summary      Reject booking
-// @Description  Rejects a pending or pending_owner booking. Only available to bathhouse owners and representatives. Optional rejection reason.
-// @Tags         bookings
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                true  "Booking ID (UUID)"
-// @Param        body  body      rejectBookingRequest  false "Rejection reason"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/reject [patch]
+//
+//	@Summary		Reject booking
+//	@Description	Rejects a pending or pending_owner booking. Only available to bathhouse owners and representatives. Optional rejection reason.
+//	@Tags			bookings
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Booking ID (UUID)"
+//	@Param			body	body		rejectBookingRequest	false	"Rejection reason"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/reject [patch]
 func (h *BookingHandler) Reject(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -392,18 +399,19 @@ func (h *BookingHandler) Reject(w http.ResponseWriter, r *http.Request) {
 }
 
 // Approve godoc
-// @Summary      Approve booking request
-// @Description  Approves a pending_owner booking request. Captures wallet hold. Only available to bathhouse owners and representatives.
-// @Tags         bookings
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/approve [patch]
+//
+//	@Summary		Approve booking request
+//	@Description	Approves a pending_owner booking request. Captures wallet hold. Only available to bathhouse owners and representatives.
+//	@Tags			bookings
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Booking ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/approve [patch]
 func (h *BookingHandler) Approve(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -423,18 +431,19 @@ func (h *BookingHandler) Approve(w http.ResponseWriter, r *http.Request) {
 }
 
 // Complete godoc
-// @Summary      Complete booking
-// @Description  Marks a confirmed booking as completed. Awards loyalty points. Only available to bathhouse owners and representatives.
-// @Tags         bookings
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=bookingResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/complete [patch]
+//
+//	@Summary		Complete booking
+//	@Description	Marks a confirmed booking as completed. Awards loyalty points. Only available to bathhouse owners and representatives.
+//	@Tags			bookings
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Booking ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=bookingResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/complete [patch]
 func (h *BookingHandler) Complete(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -455,19 +464,20 @@ func (h *BookingHandler) Complete(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListByBathhouse godoc
-// @Summary      List bathhouse bookings
-// @Description  Returns a paginated list of bookings for a specific bathhouse. Only available to bathhouse owners and representatives.
-// @Tags         bookings
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id         path      string  true   "Bathhouse ID (UUID)"
-// @Param        page       query     int     false  "Page number"  default(1)
-// @Param        page_size  query     int     false  "Page size"    default(20)
-// @Success      200        {object}  APIResponse{data=[]bookingResponse,meta=Meta}
-// @Failure      400        {object}  APIResponse{error=APIError}
-// @Failure      401        {object}  APIResponse{error=APIError}
-// @Failure      403        {object}  APIResponse{error=APIError}
-// @Router       /bathhouses/{id}/bookings [get]
+//
+//	@Summary		List bathhouse bookings
+//	@Description	Returns a paginated list of bookings for a specific bathhouse. Only available to bathhouse owners and representatives.
+//	@Tags			bookings
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id			path		string	true	"Bathhouse ID (UUID)"
+//	@Param			page		query		int		false	"Page number"	default(1)
+//	@Param			page_size	query		int		false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]bookingResponse,meta=Meta}
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/bathhouses/{id}/bookings [get]
 func (h *BookingHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -501,18 +511,19 @@ func (h *BookingHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request)
 }
 
 // CheckIn godoc
-// @Summary      Check-in guest
-// @Description  Marks a guest as arrived for a confirmed booking. Available 15 min before to 30 min after booking start time. Only owners/representatives.
-// @Tags         bookings
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/check-in [patch]
+//
+//	@Summary		Check-in guest
+//	@Description	Marks a guest as arrived for a confirmed booking. Available 15 min before to 30 min after booking start time. Only owners/representatives.
+//	@Tags			bookings
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Booking ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/check-in [patch]
 func (h *BookingHandler) CheckIn(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -532,18 +543,19 @@ func (h *BookingHandler) CheckIn(w http.ResponseWriter, r *http.Request) {
 }
 
 // CheckOut godoc
-// @Summary      Check-out guest
-// @Description  Marks a guest as departed, completing the booking. Requires prior check-in. Awards loyalty points. Only owners/representatives.
-// @Tags         bookings
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/check-out [patch]
+//
+//	@Summary		Check-out guest
+//	@Description	Marks a guest as departed, completing the booking. Requires prior check-in. Awards loyalty points. Only owners/representatives.
+//	@Tags			bookings
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Booking ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/check-out [patch]
 func (h *BookingHandler) CheckOut(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -573,21 +585,22 @@ type extendBookingResponse struct {
 }
 
 // Extend godoc
-// @Summary      Extend booking session
-// @Description  Extends an active booking session by 1-2 hours. Only the booking owner (client) can extend. Booking must be confirmed or checked-in. Extension slots must be available.
-// @Tags         bookings
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                true  "Booking ID (UUID)"
-// @Param        body  body      extendBookingRequest   true  "Extension details"
-// @Success      200   {object}  APIResponse{data=extendBookingResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/extend [post]
+//
+//	@Summary		Extend booking session
+//	@Description	Extends an active booking session by 1-2 hours. Only the booking owner (client) can extend. Booking must be confirmed or checked-in. Extension slots must be available.
+//	@Tags			bookings
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Booking ID (UUID)"
+//	@Param			body	body		extendBookingRequest	true	"Extension details"
+//	@Success		200		{object}	APIResponse{data=extendBookingResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/extend [post]
 func (h *BookingHandler) Extend(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -636,18 +649,19 @@ type rebookDataResponse struct {
 }
 
 // GetRebookData godoc
-// @Summary      Get re-booking data
-// @Description  Returns pre-filled booking parameters from a past booking (completed or cancelled) for quick re-booking. Prices are not included as they are recalculated at booking time.
-// @Tags         bookings
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Booking ID (UUID)"
-// @Success      200  {object}  APIResponse{data=rebookDataResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/rebook-data [get]
+//
+//	@Summary		Get re-booking data
+//	@Description	Returns pre-filled booking parameters from a past booking (completed or cancelled) for quick re-booking. Prices are not included as they are recalculated at booking time.
+//	@Tags			bookings
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Booking ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=rebookDataResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/rebook-data [get]
 func (h *BookingHandler) GetRebookData(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -680,6 +694,102 @@ func (h *BookingHandler) GetRebookData(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
+type modifyBookingRequest struct {
+	StartTime  string                  `json:"start_time"`
+	EndTime    string                  `json:"end_time"`
+	GuestCount int                     `json:"guest_count"`
+	AddOns     []addOnSelectionRequest `json:"addons,omitempty"`
+}
+
+type modifyBookingResponse struct {
+	Booking   bookingResponse `json:"booking"`
+	OldPrice  int64           `json:"old_price"`
+	NewPrice  int64           `json:"new_price"`
+	PriceDiff int64           `json:"price_diff"`
+}
+
+// Modify godoc
+//
+//	@Summary		Modify booking
+//	@Description	Modifies a pending or confirmed booking. Allows changing date/time, duration, guest count, and add-ons. Maximum 3 modifications per booking. If the new price differs, a refund or additional charge is handled automatically.
+//	@Tags			bookings
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Booking ID (UUID)"
+//	@Param			body	body		modifyBookingRequest	true	"Modification data"
+//	@Success		200		{object}	APIResponse{data=modifyBookingResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/modify [put]
+func (h *BookingHandler) Modify(w http.ResponseWriter, r *http.Request) {
+	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking id")
+		return
+	}
+
+	var req modifyBookingRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	startTime, err := time.Parse(time.RFC3339, req.StartTime)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid start_time format, use RFC3339")
+		return
+	}
+
+	endTime, err := time.Parse(time.RFC3339, req.EndTime)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid end_time format, use RFC3339")
+		return
+	}
+
+	if req.GuestCount <= 0 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "guest_count must be positive")
+		return
+	}
+
+	var addOnSelections []service.AddOnSelection
+	for _, a := range req.AddOns {
+		addonID, err := uuid.Parse(a.AddOnID)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid addon_id")
+			return
+		}
+		addOnSelections = append(addOnSelections, service.AddOnSelection{
+			AddOnID:  addonID,
+			Quantity: a.Quantity,
+		})
+	}
+
+	userID := middleware.GetUserID(r.Context())
+
+	result, err := h.bookingService.Modify(r.Context(), userID, bookingID, service.ModifyBookingInput{
+		StartTime:  startTime,
+		EndTime:    endTime,
+		GuestCount: req.GuestCount,
+		AddOns:     addOnSelections,
+	})
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	resp := modifyBookingResponse{
+		Booking:   toBookingResponse(result.Booking),
+		OldPrice:  result.OldPrice,
+		NewPrice:  result.NewPrice,
+		PriceDiff: result.PriceDiff,
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
 type disputeNoShowRequest struct {
 	GPSLat  float64 `json:"gps_lat"`
 	GPSLon  float64 `json:"gps_lon"`
@@ -687,20 +797,21 @@ type disputeNoShowRequest struct {
 }
 
 // DisputeNoShow godoc
-// @Summary      Dispute no-show
-// @Description  Client disputes a no-show status within 2 hours. Creates a support ticket with GPS coordinates.
-// @Tags         bookings
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                 true  "Booking ID (UUID)"
-// @Param        body  body      disputeNoShowRequest   true  "Dispute details"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/dispute-noshow [post]
+//
+//	@Summary		Dispute no-show
+//	@Description	Client disputes a no-show status within 2 hours. Creates a support ticket with GPS coordinates.
+//	@Tags			bookings
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Booking ID (UUID)"
+//	@Param			body	body		disputeNoShowRequest	true	"Dispute details"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/dispute-noshow [post]
 func (h *BookingHandler) DisputeNoShow(w http.ResponseWriter, r *http.Request) {
 	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

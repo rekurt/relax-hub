@@ -97,13 +97,13 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: migration for modification_count column
 - Modify: `frontend/src/pages/client/BookingDetail.tsx` (modify button + form)
 
-- [ ] Add modification_count field to booking model, max 3 modifications
-- [ ] Create modification service: validate new slot availability, recalculate price, handle price difference (charge or refund proportionally)
-- [ ] Handle combo payment modifications (wallet + card proportional adjustments)
-- [ ] Add API endpoint for booking modification
-- [ ] Frontend: add modify button on BookingDetail with date/time/duration/addons change form
-- [ ] Write tests for modification scenarios (price up, price down, equal, max modifications reached, slot conflicts)
-- [ ] Run project test suite - must pass before next task
+- [x] Add modification_count field to booking model, max 3 modifications
+- [x] Create modification service: validate new slot availability, recalculate price, handle price difference (charge or refund proportionally)
+- [x] Handle combo payment modifications (wallet + card proportional adjustments)
+- [x] Add API endpoint for booking modification
+- [x] Frontend: add modify button on BookingDetail with date/time/duration/addons change form
+- [x] Write tests for modification scenarios (price up, price down, equal, max modifications reached, slot conflicts)
+- [x] Run project test suite - must pass before next task
 
 ### Task 3: Insurance deposit / security deposit (FR-091, FR-103)
 

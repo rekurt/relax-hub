@@ -73,6 +73,7 @@ type BookingRepository interface {
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.BookingStatus) error
 	CheckAvailability(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) (bool, error)
+	CheckAvailabilityExcluding(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time, excludeBookingID uuid.UUID) (bool, error)
 	GetOverlapping(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) ([]domain.Booking, error)
 	CountActiveByBathhouse(ctx context.Context, bathhouseID uuid.UUID) (int64, error)
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*domain.UserBookingStats, error)
@@ -81,6 +82,7 @@ type BookingRepository interface {
 	UpdateCheckout(ctx context.Context, bookingID uuid.UUID, checkedOutAt *time.Time, status domain.BookingStatus) error
 	ListConfirmedWithoutCheckin(ctx context.Context, noShowCutoff time.Time) ([]domain.Booking, error)
 	ListUpcoming(ctx context.Context, from, to time.Time) ([]domain.Booking, error)
+	UpdateModification(ctx context.Context, bookingID uuid.UUID, startTime, endTime time.Time, guestCount int, totalPrice, addOnTotal, basePrice, longSessionDiscount, extraGuestSurcharge, lastMinuteDiscount, serviceFeeAmount int64, modificationCount int) error
 	UpdateEndTime(ctx context.Context, bookingID uuid.UUID, oldEndTime, newEndTime time.Time, newTotalPrice int64) error
 	UpdateCancelledByOwner(ctx context.Context, bookingID uuid.UUID) error
 	CountOwnerCancellations(ctx context.Context, ownerID uuid.UUID, since time.Time) (int, error)

@@ -396,6 +396,22 @@ func (r *BookingRepo) CheckAvailability(_ context.Context, bathhouseID uuid.UUID
 	return true, nil
 }
 
+func (r *BookingRepo) CheckAvailabilityExcluding(_ context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time, excludeBookingID uuid.UUID) (bool, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, b := range r.bookings {
+		if b.ID == excludeBookingID {
+			continue
+		}
+		if b.BathhouseID == bathhouseID &&
+			isActiveBookingStatus(b.Status) &&
+			b.StartTime.Before(endTime) && b.EndTime.After(startTime) {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
 func (r *BookingRepo) GetOverlapping(_ context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) ([]domain.Booking, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -518,6 +534,28 @@ func (r *BookingRepo) ListUpcoming(_ context.Context, from, to time.Time) ([]dom
 		}
 	}
 	return result, nil
+}
+
+func (r *BookingRepo) UpdateModification(_ context.Context, bookingID uuid.UUID, startTime, endTime time.Time, guestCount int, totalPrice, addOnTotal, basePrice, longSessionDiscount, extraGuestSurcharge, lastMinuteDiscount, serviceFeeAmount int64, modificationCount int) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	b, ok := r.bookings[bookingID]
+	if !ok {
+		return domain.ErrNotFound
+	}
+	b.StartTime = startTime
+	b.EndTime = endTime
+	b.GuestCount = guestCount
+	b.TotalPrice = totalPrice
+	b.AddOnTotal = addOnTotal
+	b.BasePrice = basePrice
+	b.LongSessionDiscount = longSessionDiscount
+	b.ExtraGuestSurcharge = extraGuestSurcharge
+	b.LastMinuteDiscount = lastMinuteDiscount
+	b.ServiceFeeAmount = serviceFeeAmount
+	b.ModificationCount = modificationCount
+	b.UpdatedAt = time.Now()
+	return nil
 }
 
 func (r *BookingRepo) UpdateEndTime(_ context.Context, bookingID uuid.UUID, oldEndTime, newEndTime time.Time, newTotalPrice int64) error {

@@ -76,6 +76,9 @@ func (m *mockBookingServiceForReminders) GetRebookData(_ context.Context, _ uuid
 func (m *mockBookingServiceForReminders) RecalculateResponseRates(_ context.Context) (int, error) {
 	return 0, nil
 }
+func (m *mockBookingServiceForReminders) Modify(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ service.ModifyBookingInput) (*service.ModifyBookingResult, error) {
+	return nil, nil
+}
 
 func newTestReminderScheduler(notifSvc *mockNotificationService, bookingSvc service.BookingService, redisClient *redis.Client) *CronScheduler {
 	log := logger.New(logger.LevelInfo)

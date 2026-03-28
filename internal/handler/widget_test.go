@@ -184,6 +184,9 @@ func (m *mockWidgetBookingService) GetRebookData(_ context.Context, _ uuid.UUID,
 func (m *mockWidgetBookingService) RecalculateResponseRates(_ context.Context) (int, error) {
 	return 0, nil
 }
+func (m *mockWidgetBookingService) Modify(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ service.ModifyBookingInput) (*service.ModifyBookingResult, error) {
+	return nil, nil
+}
 
 func TestWidgetHandler_GetBathhouse(t *testing.T) {
 	apiKey := "test-api-key"

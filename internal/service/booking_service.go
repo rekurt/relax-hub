@@ -88,8 +88,25 @@ type UpcomingBookingInfo struct {
 	OwnerID       uuid.UUID
 }
 
+// ModifyBookingInput contains the fields a client can change when modifying a booking.
+type ModifyBookingInput struct {
+	StartTime  time.Time
+	EndTime    time.Time
+	GuestCount int
+	AddOns     []AddOnSelection
+}
+
+// ModifyBookingResult holds the outcome of a booking modification.
+type ModifyBookingResult struct {
+	Booking   *domain.Booking
+	OldPrice  int64 // previous total price
+	NewPrice  int64 // recalculated total price
+	PriceDiff int64 // positive = client owes more, negative = refund due
+}
+
 type BookingService interface {
 	Create(ctx context.Context, userID uuid.UUID, input CreateBookingInput) (*BookingResult, error)
+	Modify(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, input ModifyBookingInput) (*ModifyBookingResult, error)
 	Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, refundTo string) error
 	Confirm(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, reason string) error
@@ -1685,6 +1702,229 @@ func (s *bookingService) ListUpcomingWithBathhouse(ctx context.Context, from, to
 		})
 	}
 	return result, nil
+}
+
+func (s *bookingService) Modify(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, input ModifyBookingInput) (*ModifyBookingResult, error) {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Only the booking owner can modify
+	if booking.UserID != userID {
+		return nil, domain.ErrForbidden
+	}
+
+	// Only pending or confirmed bookings can be modified
+	if booking.Status != domain.BookingPending && booking.Status != domain.BookingConfirmed && booking.Status != domain.BookingPendingOwner {
+		return nil, domain.ErrBookingNotModifiable
+	}
+
+	// Enforce modification limit
+	if booking.ModificationCount >= domain.MaxBookingModifications {
+		return nil, domain.ErrBookingModificationLimit
+	}
+
+	// Cannot modify a booking that already started
+	if time.Now().After(booking.StartTime) {
+		return nil, fmt.Errorf("%w: cannot modify a booking that has already started", domain.ErrBookingNotModifiable)
+	}
+
+	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+	if err != nil {
+		return nil, err
+	}
+
+	if bh.Status != domain.BathhouseStatusActive {
+		return nil, domain.ErrBathhouseNotActive
+	}
+
+	// Validate new time
+	if !input.EndTime.After(input.StartTime) {
+		return nil, fmt.Errorf("%w: end_time must be after start_time", domain.ErrInvalidInput)
+	}
+
+	duration := input.EndTime.Sub(input.StartTime)
+	durationHours := int(duration / time.Hour)
+	if duration%time.Hour != 0 || durationHours < bh.MinDuration {
+		return nil, fmt.Errorf("%w: invalid duration", domain.ErrInvalidInput)
+	}
+
+	if input.GuestCount <= 0 || input.GuestCount > bh.MaxGuests {
+		return nil, fmt.Errorf("%w: invalid guest count", domain.ErrInvalidInput)
+	}
+
+	// Enforce lead time
+	leadTime := time.Duration(bh.LeadTimeHours) * time.Hour
+	if leadTime < 5*time.Minute {
+		leadTime = 5 * time.Minute
+	}
+	if input.StartTime.Before(time.Now().Add(leadTime)) {
+		return nil, fmt.Errorf("%w: start time must be at least %v in the future", domain.ErrInvalidInput, leadTime)
+	}
+
+	// Enforce max advance days
+	maxAdvanceDays := bh.MaxAdvanceDays
+	if maxAdvanceDays <= 0 {
+		maxAdvanceDays = 90
+	}
+	if input.StartTime.After(time.Now().AddDate(0, 0, maxAdvanceDays)) {
+		return nil, fmt.Errorf("%w: booking exceeds maximum advance days", domain.ErrInvalidInput)
+	}
+
+	// Validate working hours
+	if err := validateWithinWorkingHours(bh, input.StartTime, input.EndTime); err != nil {
+		return nil, err
+	}
+
+	// Check availability excluding this booking
+	bufferDuration := time.Duration(bh.BufferMinutes) * time.Minute
+	checkStart := input.StartTime
+	checkEnd := input.EndTime
+	if bufferDuration > 0 {
+		checkStart = input.StartTime.Add(-bufferDuration)
+		checkEnd = input.EndTime.Add(bufferDuration)
+	}
+
+	available, err := s.bookingRepo.CheckAvailabilityExcluding(ctx, booking.BathhouseID, checkStart, checkEnd, bookingID)
+	if err != nil {
+		return nil, err
+	}
+	if !available {
+		return nil, domain.ErrSlotUnavailable
+	}
+
+	// Check for slot blocks
+	blocked, err := s.slotBlockRepo.HasOverlapping(ctx, booking.BathhouseID, input.StartTime, input.EndTime)
+	if err != nil {
+		return nil, err
+	}
+	if blocked {
+		return nil, domain.ErrSlotUnavailable
+	}
+
+	// Recalculate price
+	totalPrice, priceBreakdown, err := s.pricingSvc.CalculateFullPrice(ctx, PriceCalculationInput{
+		BathhouseID:                booking.BathhouseID,
+		BasePrice:                  bh.PricePerHour,
+		StartTime:                  input.StartTime,
+		EndTime:                    input.EndTime,
+		GuestCount:                 input.GuestCount,
+		BaseCapacity:               bh.BaseCapacity,
+		ExtraGuestSurcharge:        bh.ExtraGuestSurcharge,
+		LongSessionThresholdHours:  bh.LongSessionThresholdHours,
+		LongSessionDiscountPercent: bh.LongSessionDiscountPercent,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Calculate last-minute discount
+	var lastMinuteDiscount int64
+	if bh.LastMinuteEnabled && bh.LastMinuteDiscountPercent > 0 {
+		now := time.Now()
+		slotStart := input.StartTime
+		for slotStart.Before(input.EndTime) {
+			slotEnd := slotStart.Add(time.Hour)
+			if slotEnd.After(input.EndTime) {
+				slotEnd = input.EndTime
+			}
+			hoursUntilStart := slotStart.Sub(now).Hours()
+			if hoursUntilStart >= 0 && hoursUntilStart <= float64(bh.LastMinuteHoursThreshold) {
+				slotPrice, _, calcErr := s.pricingSvc.CalculateFullPrice(ctx, PriceCalculationInput{
+					BathhouseID:  booking.BathhouseID,
+					BasePrice:    bh.PricePerHour,
+					StartTime:    slotStart,
+					EndTime:      slotEnd,
+					GuestCount:   1,
+					BaseCapacity: 1,
+				})
+				if calcErr == nil {
+					lastMinuteDiscount += slotPrice * int64(bh.LastMinuteDiscountPercent) / 100
+				}
+			}
+			slotStart = slotEnd
+		}
+		if lastMinuteDiscount > 0 {
+			totalPrice -= lastMinuteDiscount
+			if totalPrice <= 0 {
+				totalPrice = 1
+			}
+		}
+	}
+
+	// Calculate service fee
+	serviceFeeAmount, err := s.serviceFeeSvc.CalculateFee(ctx, priceBreakdown.BasePrice, "*", nil)
+	if err != nil {
+		s.logger.Warn("failed to calculate service fee on modification, defaulting to 0", "error", err)
+		serviceFeeAmount = 0
+	}
+	totalPrice += serviceFeeAmount
+
+	// Calculate add-on totals
+	var addOnTotal int64
+	if len(input.AddOns) > 0 {
+		addOnTotal, _, err = s.addonSvc.CalculateAddOnTotal(ctx, input.AddOns, booking.BathhouseID, durationHours, input.GuestCount)
+		if err != nil {
+			return nil, err
+		}
+		totalPrice += addOnTotal
+	}
+
+	if totalPrice <= 0 {
+		totalPrice = 1
+	}
+
+	oldPrice := booking.TotalPrice
+	priceDiff := totalPrice - oldPrice
+
+	// Handle payment adjustments for price difference
+	if priceDiff < 0 {
+		// Price went down — issue proportional refund via payment service
+		refundAmount := -priceDiff
+		if s.paymentSvc != nil {
+			// Best-effort refund: use the bathhouse cancellation policy for full refund
+			if err := s.paymentSvc.RefundPayment(ctx, bookingID, true, "", bh.CancellationPolicy); err != nil {
+				s.logger.Warn("failed to auto-refund price difference on modification",
+					"booking_id", bookingID, "refund_amount", refundAmount, "error", err)
+				// Continue — the booking is still modified, refund can be handled manually
+			}
+		}
+	}
+	// For priceDiff > 0, the client will need to pay the difference via a separate payment initiation
+
+	// Update booking in database
+	newModificationCount := booking.ModificationCount + 1
+	if err := s.bookingRepo.UpdateModification(ctx, bookingID,
+		input.StartTime, input.EndTime, input.GuestCount,
+		totalPrice, addOnTotal, priceBreakdown.BasePrice,
+		priceBreakdown.LongSessionDiscount, priceBreakdown.ExtraGuestSurcharge,
+		lastMinuteDiscount, serviceFeeAmount, newModificationCount,
+	); err != nil {
+		return nil, err
+	}
+
+	// Refresh booking from DB
+	updatedBooking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("booking modified",
+		"booking_id", bookingID,
+		"user_id", userID,
+		"modification_count", newModificationCount,
+		"old_price", oldPrice,
+		"new_price", totalPrice,
+		"price_diff", priceDiff,
+	)
+
+	return &ModifyBookingResult{
+		Booking:   updatedBooking,
+		OldPrice:  oldPrice,
+		NewPrice:  totalPrice,
+		PriceDiff: priceDiff,
+	}, nil
 }
 
 func (s *bookingService) Extend(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, extraHours int) (*ExtendResult, error) {

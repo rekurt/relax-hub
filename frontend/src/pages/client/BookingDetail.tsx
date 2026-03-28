@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Typography,
@@ -12,14 +13,25 @@ import {
   Space,
   Popconfirm,
   App,
+  Modal,
+  DatePicker,
+  InputNumber,
+  Form,
 } from 'antd'
-import { ArrowLeftOutlined, StopOutlined, DollarOutlined, StarOutlined } from '@ant-design/icons'
+import {
+  ArrowLeftOutlined,
+  StopOutlined,
+  DollarOutlined,
+  StarOutlined,
+  EditOutlined,
+} from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useGetBookings, usePatchBookingsIdCancel } from '@/api/generated/bookings/bookings'
 import { useGetBookingsIdPayment, usePostBookingsIdPay } from '@/api/generated/payments/payments'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
+import { axiosInstance } from '@/api/axios-instance'
 
 const { Title, Text } = Typography
 
@@ -28,6 +40,9 @@ export default function ClientBookingDetail() {
   const navigate = useNavigate()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
+  const [modifyModalOpen, setModifyModalOpen] = useState(false)
+  const [modifyLoading, setModifyLoading] = useState(false)
+  const [form] = Form.useForm()
 
   // Fetch user's bookings and find the one we need
   const { data: bookingsData, isLoading } = useGetBookings(
@@ -63,6 +78,33 @@ export default function ClientBookingDetail() {
     },
   })
 
+  const handleModify = async (values: { startTime: dayjs.Dayjs; endTime: dayjs.Dayjs; guestCount: number }) => {
+    if (!id) return
+    setModifyLoading(true)
+    try {
+      const resp = await axiosInstance.put(`/bookings/${id}/modify`, {
+        start_time: values.startTime.toISOString(),
+        end_time: values.endTime.toISOString(),
+        guest_count: values.guestCount,
+      })
+      const result = resp.data?.data
+      if (result?.price_diff > 0) {
+        message.info(`Бронирование изменено. Доплата: ${formatPrice(result.price_diff)}`)
+      } else if (result?.price_diff < 0) {
+        message.success(`Бронирование изменено. Возврат: ${formatPrice(-result.price_diff)}`)
+      } else {
+        message.success('Бронирование изменено')
+      }
+      setModifyModalOpen(false)
+      queryClient.invalidateQueries({ queryKey: ['/bookings'] })
+    } catch (err: unknown) {
+      const errorMsg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+      message.error(errorMsg || 'Не удалось изменить бронирование')
+    } finally {
+      setModifyLoading(false)
+    }
+  }
+
   if (isLoading) {
     return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
   }
@@ -80,6 +122,11 @@ export default function ClientBookingDetail() {
   const canCancel = booking.status === 'pending' || booking.status === 'confirmed'
   const canPay = booking.status === 'confirmed' && (!payment || payment.status === 'pending' || !payment.status)
   const canReview = booking.status === 'completed'
+  const canModify =
+    (booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'pending_owner') &&
+    (booking.modification_count ?? 0) < 3 &&
+    booking.start_time &&
+    dayjs(booking.start_time).isAfter(dayjs())
 
   const getRefundInfo = () => {
     if (!booking.start_time) return ''
@@ -87,6 +134,15 @@ export default function ClientBookingDetail() {
     if (hoursUntil > 24) return 'При отмене сейчас вы получите 100% возврат.'
     if (hoursUntil >= 2) return 'При отмене сейчас вы получите 50% возврат.'
     return 'При отмене менее чем за 2 часа возврат не предусмотрен.'
+  }
+
+  const openModifyModal = () => {
+    form.setFieldsValue({
+      startTime: booking.start_time ? dayjs(booking.start_time) : undefined,
+      endTime: booking.end_time ? dayjs(booking.end_time) : undefined,
+      guestCount: booking.guest_count ?? 1,
+    })
+    setModifyModalOpen(true)
   }
 
   return (
@@ -159,6 +215,11 @@ export default function ClientBookingDetail() {
               +{booking.earned_points}
             </Descriptions.Item>
           )}
+          {(booking.modification_count ?? 0) > 0 && (
+            <Descriptions.Item label="Изменений">
+              {booking.modification_count} / 3
+            </Descriptions.Item>
+          )}
           <Descriptions.Item label="Создано">
             {booking.created_at ? formatDateTime(booking.created_at) : '—'}
           </Descriptions.Item>
@@ -211,6 +272,15 @@ export default function ClientBookingDetail() {
       <Divider />
 
       <Space>
+        {canModify && (
+          <Button
+            size="large"
+            icon={<EditOutlined />}
+            onClick={openModifyModal}
+          >
+            Изменить бронирование
+          </Button>
+        )}
         {canReview && booking.bathhouse_id && (
           <Button
             type="primary"
@@ -252,6 +322,68 @@ export default function ClientBookingDetail() {
           </Popconfirm>
         )}
       </Space>
+
+      {/* Modify booking modal */}
+      <Modal
+        title="Изменить бронирование"
+        open={modifyModalOpen}
+        onCancel={() => setModifyModalOpen(false)}
+        footer={null}
+        destroyOnClose
+      >
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message={`Осталось изменений: ${3 - (booking.modification_count ?? 0)}`}
+          description="Цена будет пересчитана автоматически. При увеличении стоимости потребуется доплата, при уменьшении — разница будет возвращена."
+        />
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleModify}
+        >
+          <Form.Item
+            name="startTime"
+            label="Начало"
+            rules={[{ required: true, message: 'Выберите время начала' }]}
+          >
+            <DatePicker
+              showTime={{ format: 'HH:mm' }}
+              format="DD.MM.YYYY HH:mm"
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="endTime"
+            label="Окончание"
+            rules={[{ required: true, message: 'Выберите время окончания' }]}
+          >
+            <DatePicker
+              showTime={{ format: 'HH:mm' }}
+              format="DD.MM.YYYY HH:mm"
+              style={{ width: '100%' }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="guestCount"
+            label="Количество гостей"
+            rules={[{ required: true, message: 'Укажите количество гостей' }]}
+          >
+            <InputNumber min={1} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={modifyLoading}>
+                Сохранить изменения
+              </Button>
+              <Button onClick={() => setModifyModalOpen(false)}>
+                Отмена
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }
