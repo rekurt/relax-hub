@@ -93,6 +93,7 @@ type RouterParams struct {
 	AdminNotificationHandler     *handler.AdminNotificationHandler
 	FAQHandler                   *handler.FAQHandler
 	WebhookHandler               *handler.WebhookHandler
+	PMSHandler                   *handler.PMSHandler
 	AuditLogRepo              repository.AuditLogRepository
 	AdminSubRoleResolver  middleware.AdminSubRoleResolver
 	Admin2FAChecker       middleware.Admin2FAChecker
@@ -500,6 +501,16 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/webhooks/{id}", p.WebhookHandler.DeleteWebhook)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/webhooks/{id}/deliveries", p.WebhookHandler.ListDeliveries)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/webhooks/{id}/test", p.WebhookHandler.TestWebhook)
+
+		// PMS Connections (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/pms-connections", p.PMSHandler.CreatePMSConnection)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/pms-connections", p.PMSHandler.ListPMSConnections)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/pms-connections/{id}", p.PMSHandler.GetPMSConnection)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/pms-connections/{id}", p.PMSHandler.UpdatePMSConnection)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/my/pms-connections/{id}", p.PMSHandler.DeletePMSConnection)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/pms-connections/{id}/test", p.PMSHandler.TestPMSConnection)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/pms-connections/{id}/sync", p.PMSHandler.SyncPMSConnection)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/pms-connections/{id}/logs", p.PMSHandler.ListPMSSyncLogs)
 
 		// Support Tickets (authenticated)
 		r.With(auth).Post("/my/tickets", p.TicketHandler.CreateTicket)

@@ -21,7 +21,7 @@ func newTestWalletCronScheduler(notifSvc *mockNotificationService, walletSvc ser
 	log := logger.New(logger.LevelInfo)
 	mockAnalyticsSvc := &MockAnalyticsService{}
 	mockAnalyticsRepo := mock.NewAnalyticsRepo()
-	return NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo, nil, nil, notifSvc, nil, walletSvc, walletRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	return NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo, nil, nil, notifSvc, nil, walletSvc, walletRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 func TestHandleBonusExpiration_NoWallets(t *testing.T) {
@@ -253,7 +253,7 @@ func TestHandleBonusExpiryNotify_Deduplication(t *testing.T) {
 	mockAnalyticsSvc := &MockAnalyticsService{}
 	mockAnalyticsRepo := mock.NewAnalyticsRepo()
 	cs := NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo,
-		nil, nil, notifSvc, nil, walletSvc, walletRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, redisClient, nil, nil, nil)
+		nil, nil, notifSvc, nil, walletSvc, walletRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, redisClient, nil, nil, nil, nil)
 
 	// First run — should send
 	_ = cs.bonusExpiryNotify(context.Background())

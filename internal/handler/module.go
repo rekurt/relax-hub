@@ -102,5 +102,6 @@ var Module = fx.Module("handler",
 		NewAdminNotificationHandler,
 		NewFAQHandler,
 		NewWebhookHandler,
+		NewPMSHandler,
 	),
 )

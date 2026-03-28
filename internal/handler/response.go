@@ -402,6 +402,14 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusNotFound, "webhook_not_found", err.Error())
 	case errors.Is(err, domain.ErrWebhookLimitReached):
 		writeErrorWithContext(w, r, http.StatusConflict, "webhook_limit_reached", err.Error())
+	case errors.Is(err, domain.ErrPMSConnectionNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "pms_connection_not_found", err.Error())
+	case errors.Is(err, domain.ErrPMSConnectionLimitReached):
+		writeErrorWithContext(w, r, http.StatusConflict, "pms_connection_limit_reached", err.Error())
+	case errors.Is(err, domain.ErrPMSConnectionAlreadyExists):
+		writeErrorWithContext(w, r, http.StatusConflict, "pms_connection_already_exists", err.Error())
+	case errors.Is(err, domain.ErrPMSSyncFailed):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "pms_sync_failed", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

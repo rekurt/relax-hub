@@ -184,6 +184,11 @@ var (
 
 	ErrWebhookNotFound     = errors.New("webhook not found")
 	ErrWebhookLimitReached = errors.New("webhook limit reached")
+
+	ErrPMSConnectionNotFound      = errors.New("PMS connection not found")
+	ErrPMSConnectionLimitReached  = errors.New("PMS connection limit reached for this bathhouse")
+	ErrPMSConnectionAlreadyExists = errors.New("PMS connection already exists for this bathhouse")
+	ErrPMSSyncFailed              = errors.New("PMS synchronization failed")
 )
 
 // PaymentFailedError wraps ErrPaymentFailed with user-facing details.

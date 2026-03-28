@@ -46,6 +46,7 @@ type CronScheduler struct {
 	reconciliationSvc      service.ReconciliationService
 	adminNotificationSvc   service.AdminNotificationService
 	adminNotificationRepo  repository.AdminNotificationRepository
+	pmsSvc                 service.PMSService
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -77,6 +78,7 @@ func NewCronScheduler(
 	reconciliationSvc service.ReconciliationService,
 	adminNotificationSvc service.AdminNotificationService,
 	adminNotificationRepo repository.AdminNotificationRepository,
+	pmsSvc service.PMSService,
 ) *CronScheduler {
 	timezone := cfg.Cron.Timezone
 	if timezone == "" {
@@ -112,6 +114,7 @@ func NewCronScheduler(
 		reconciliationSvc:      reconciliationSvc,
 		adminNotificationSvc:   adminNotificationSvc,
 		adminNotificationRepo:  adminNotificationRepo,
+		pmsSvc:                 pmsSvc,
 	}
 }
 
@@ -173,6 +176,7 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		{"30 1 * * *", "daily_reconciliation", cs.dailyReconciliation},
 		{"0 9 * * *", "admin_notification_digest", cs.adminNotificationDigest},
 		{"0 5 * * 0", "admin_notification_cleanup", cs.adminNotificationCleanup},
+		{"*/15 * * * *", "pms_sync", cs.pmsSyncJob},
 	}
 
 	for _, j := range jobs {

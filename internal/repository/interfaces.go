@@ -736,3 +736,21 @@ type WebhookDeliveryRepository interface {
 	ListByWebhook(ctx context.Context, webhookID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.WebhookDelivery], error)
 	ListPendingRetries(ctx context.Context, before time.Time) ([]domain.WebhookDelivery, error)
 }
+
+// PMSConnectionRepository manages PMS integration connections.
+type PMSConnectionRepository interface {
+	Create(ctx context.Context, conn *domain.PMSConnection) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.PMSConnection, error)
+	Update(ctx context.Context, conn *domain.PMSConnection) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PMSConnection], error)
+	GetByBathhouseID(ctx context.Context, bathhouseID uuid.UUID) (*domain.PMSConnection, error)
+	ListActive(ctx context.Context) ([]domain.PMSConnection, error)
+	UpdateSyncStatus(ctx context.Context, id uuid.UUID, lastSyncAt time.Time, lastSyncError string, status domain.PMSConnectionStatus) error
+}
+
+// PMSSyncLogRepository manages PMS sync log entries.
+type PMSSyncLogRepository interface {
+	Create(ctx context.Context, log *domain.PMSSyncLog) error
+	ListByConnection(ctx context.Context, connectionID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PMSSyncLog], error)
+}

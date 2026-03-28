@@ -71,5 +71,7 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewFAQRepository, fx.As(new(repository.FAQRepository))),
 		fx.Annotate(NewWebhookRepository, fx.As(new(repository.WebhookRepository))),
 		fx.Annotate(NewWebhookDeliveryRepository, fx.As(new(repository.WebhookDeliveryRepository))),
+		fx.Annotate(NewPMSConnectionRepository, fx.As(new(repository.PMSConnectionRepository))),
+		fx.Annotate(NewPMSSyncLogRepository, fx.As(new(repository.PMSSyncLogRepository))),
 	),
 )

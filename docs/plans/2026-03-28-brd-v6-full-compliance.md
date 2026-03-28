@@ -351,16 +351,16 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Create: `internal/handler/pms_handler.go`
 - Create: `frontend/src/pages/settings/PMSIntegration.tsx`
 
-- [ ] Define PMSProvider interface: SyncBookings, SyncSchedule, PushBooking, PullBookings
-- [ ] Create pms_connections table (id, owner_id, bathhouse_id, provider, credentials_encrypted, sync_interval, last_sync)
-- [ ] Implement Yclients adapter (OAuth2 + REST API)
-- [ ] Implement Restoplace adapter (API key + REST)
-- [ ] Bidirectional sync: bookings from PMS -> RelaxHub slots blocked, RelaxHub bookings -> PMS events
-- [ ] Cron job: sync every 15 min for active connections
-- [ ] Owner endpoints: CRUD /api/v1/my/pms-connections + POST /api/v1/my/pms-connections/{id}/sync
-- [ ] Frontend integration settings page
-- [ ] Write tests with mock PMS responses
-- [ ] Run project test suite - must pass before task 18
+- [x] Define PMSProvider interface: SyncBookings, SyncSchedule, PushBooking, PullBookings
+- [x] Create pms_connections table (id, owner_id, bathhouse_id, provider, credentials_encrypted, sync_interval, last_sync)
+- [x] Implement Yclients adapter (OAuth2 + REST API)
+- [x] Implement Restoplace adapter (API key + REST)
+- [x] Bidirectional sync: bookings from PMS -> RelaxHub slots blocked, RelaxHub bookings -> PMS events
+- [x] Cron job: sync every 15 min for active connections
+- [x] Owner endpoints: CRUD /api/v1/my/pms-connections + POST /api/v1/my/pms-connections/{id}/sync
+- [x] Frontend integration settings page
+- [x] Write tests with mock PMS responses
+- [x] Run project test suite - must pass before task 18
 
 ### Task 18: Isochrone Search (FR-053)
 
