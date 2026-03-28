@@ -181,7 +181,7 @@ describe('BathhouseSearch - Map & Compare features', () => {
 
     // Click first compare checkbox
     const compareLabels = screen.getAllByText('Сравнить')
-    fireEvent.click(compareLabels[0])
+    fireEvent.click(compareLabels[0]!)
 
     expect(screen.getByText(/Выбрано для сравнения/)).toBeInTheDocument()
     expect(screen.getByText('Сбросить')).toBeInTheDocument()
@@ -191,8 +191,8 @@ describe('BathhouseSearch - Map & Compare features', () => {
     renderWithProviders(<BathhouseSearch />)
 
     const compareCheckboxes = screen.getAllByText('Сравнить')
-    fireEvent.click(compareCheckboxes[0])
-    fireEvent.click(compareCheckboxes[1])
+    fireEvent.click(compareCheckboxes[0]!)
+    fireEvent.click(compareCheckboxes[1]!)
 
     const compareBtn = screen.getByRole('button', { name: 'Сравнить' })
     expect(compareBtn).not.toBeDisabled()
@@ -202,8 +202,8 @@ describe('BathhouseSearch - Map & Compare features', () => {
     renderWithProviders(<BathhouseSearch />)
 
     const compareCheckboxes = screen.getAllByText('Сравнить')
-    fireEvent.click(compareCheckboxes[0])
-    fireEvent.click(compareCheckboxes[1])
+    fireEvent.click(compareCheckboxes[0]!)
+    fireEvent.click(compareCheckboxes[1]!)
 
     // Find the "Сравнить" button in the comparison bar (not the checkboxes)
     const buttons = screen.getAllByRole('button', { name: 'Сравнить' })
@@ -217,7 +217,7 @@ describe('BathhouseSearch - Map & Compare features', () => {
     renderWithProviders(<BathhouseSearch />)
 
     const compareCheckboxes = screen.getAllByText('Сравнить')
-    fireEvent.click(compareCheckboxes[0])
+    fireEvent.click(compareCheckboxes[0]!)
 
     expect(screen.getByText(/Выбрано для сравнения/)).toBeInTheDocument()
 

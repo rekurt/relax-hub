@@ -109,11 +109,12 @@ export default function BathhouseMap({
     if (!mapRef.current || !onBoundsChange) return
     const bounds = mapRef.current.getBounds()
     if (bounds && bounds.length === 2) {
+      const [sw, ne] = bounds as [number[], number[]]
       onBoundsChange({
-        south: bounds[0][0],
-        west: bounds[0][1],
-        north: bounds[1][0],
-        east: bounds[1][1],
+        south: sw[0]!,
+        west: sw[1]!,
+        north: ne[0]!,
+        east: ne[1]!,
       })
     }
     setShowSearchArea(false)

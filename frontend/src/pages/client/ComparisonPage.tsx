@@ -13,7 +13,7 @@ import {
 import { DeleteOutlined } from '@ant-design/icons'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { usePostApiV1BathhousesCompare } from '@/api/generated/bathhouses/bathhouses'
-import type { InternalHandlerComparisonItem } from '@/api/generated/model'
+import type { InternalHandlerComparisonItem, InternalHandlerCompareResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
 
 const { Title, Text } = Typography
@@ -118,7 +118,7 @@ function buildRows(items: InternalHandlerComparisonItem[]): ComparisonRow[] {
   for (const amenityKey of amenityKeys) {
     rows.push({
       key: amenityKey,
-      label: AMENITY_LABELS[amenityKey],
+      label: AMENITY_LABELS[amenityKey] ?? amenityKey,
       values: items.map((item) =>
         item[amenityKey as keyof InternalHandlerComparisonItem] ? (
           <Tag color="green">Есть</Tag>
@@ -143,7 +143,8 @@ export default function ComparisonPage() {
   const compareMutation = usePostApiV1BathhousesCompare({
     mutation: {
       onSuccess: (data) => {
-        const responseItems = data?.data?.data?.items ?? []
+        const compareData = data?.data as InternalHandlerCompareResponse | undefined
+        const responseItems = compareData?.items ?? []
         setItems(responseItems)
       },
       onError: () => {

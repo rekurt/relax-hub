@@ -308,7 +308,7 @@ export default function ClientBookingDetail() {
             type="primary"
             size="large"
             icon={<DollarOutlined />}
-            onClick={() => id && payMutation.mutate({ id })}
+            onClick={() => id && payMutation.mutate({ id, data: {} })}
             loading={payMutation.isPending}
           >
             Оплатить
@@ -318,7 +318,7 @@ export default function ClientBookingDetail() {
           <Popconfirm
             title="Отменить бронирование?"
             description={getRefundInfo()}
-            onConfirm={() => id && cancelMutation.mutate({ id })}
+            onConfirm={() => id && cancelMutation.mutate({ id, data: {} })}
             okText="Отменить"
             cancelText="Нет"
             okButtonProps={{ danger: true }}

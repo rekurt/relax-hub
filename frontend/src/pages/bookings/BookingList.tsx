@@ -166,7 +166,7 @@ export default function BookingList() {
           key="reject"
           title="Отклонить бронирование?"
           description="Это действие нельзя отменить."
-          onConfirm={() => record.id && rejectMutation.mutate({ id: record.id })}
+          onConfirm={() => record.id && rejectMutation.mutate({ id: record.id, data: {} })}
           okText="Отклонить"
           cancelText="Нет"
           okButtonProps={{ danger: true }}
@@ -193,7 +193,7 @@ export default function BookingList() {
             size="small"
             icon={<DollarOutlined />}
             loading={payMutation.isPending && payMutation.variables?.id === record.id}
-            onClick={() => record.id && payMutation.mutate({ id: record.id })}
+            onClick={() => record.id && payMutation.mutate({ id: record.id, data: {} })}
           >
             Оплатить
           </Button>,
@@ -216,7 +216,7 @@ export default function BookingList() {
           key="cancel"
           title="Отменить бронирование?"
           description="Это может повлечь автоматический возврат средств."
-          onConfirm={() => record.id && cancelMutation.mutate({ id: record.id })}
+          onConfirm={() => record.id && cancelMutation.mutate({ id: record.id, data: {} })}
           okText="Отменить"
           cancelText="Нет"
           okButtonProps={{ danger: true }}

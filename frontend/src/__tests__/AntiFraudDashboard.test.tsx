@@ -167,7 +167,7 @@ describe('AntiFraudDashboard', () => {
     renderWithProviders(<AntiFraudDashboard />)
 
     const detailButtons = screen.getAllByText('Детали')
-    fireEvent.click(detailButtons[0])
+    fireEvent.click(detailButtons[0]!)
 
     expect(screen.getByText('Детали подозрительной операции')).toBeInTheDocument()
   })
@@ -181,7 +181,7 @@ describe('AntiFraudDashboard', () => {
     renderWithProviders(<AntiFraudDashboard />)
 
     const detailButtons = screen.getAllByText('Детали')
-    fireEvent.click(detailButtons[0])
+    fireEvent.click(detailButtons[0]!)
 
     const walletFreezeTexts = screen.getAllByText('Заморозка кошелька')
     expect(walletFreezeTexts.length).toBeGreaterThanOrEqual(1)

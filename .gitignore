@@ -41,5 +41,8 @@ redis_data/
 # Temporary files
 tmp/
 
+# Node modules
+node_modules/
+
 # ralphex progress logs
 .ralphex/progress/

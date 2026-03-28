@@ -234,11 +234,16 @@ func parseRow(record []string, colIndex map[string]int, rowNum int) (*CreateBath
 	// Parse images (semicolon-separated URLs)
 	var images []string
 	if raw := getCol("images"); raw != "" {
-		for _, url := range strings.Split(raw, ";") {
-			url = strings.TrimSpace(url)
-			if url != "" {
-				images = append(images, url)
+		for _, imgURL := range strings.Split(raw, ";") {
+			imgURL = strings.TrimSpace(imgURL)
+			if imgURL == "" {
+				continue
 			}
+			if !strings.HasPrefix(imgURL, "https://") && !strings.HasPrefix(imgURL, "http://") {
+				errs = append(errs, ImportError{Row: rowNum, Field: "images", Message: "URL изображения должен начинаться с http:// или https://"})
+				continue
+			}
+			images = append(images, imgURL)
 		}
 	}
 

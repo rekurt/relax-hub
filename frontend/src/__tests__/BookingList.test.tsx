@@ -378,6 +378,6 @@ describe('BookingList', () => {
     renderWithProviders(<BookingList />)
     fireEvent.click(screen.getByText('Оплатить'))
 
-    expect(payMutate).toHaveBeenCalledWith({ id: 'booking-2' })
+    expect(payMutate).toHaveBeenCalledWith({ id: 'booking-2', data: {} })
   })
 })

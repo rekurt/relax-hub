@@ -113,7 +113,7 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 	case errors.Is(err, domain.ErrAlreadyExists):
 		writeErrorWithContext(w, r, http.StatusConflict, "already_exists", "already exists")
 	case errors.Is(err, domain.ErrInvalidInput):
-		writeErrorWithContext(w, r, http.StatusBadRequest, "invalid_input", domain.ErrInvalidInput.Error())
+		writeErrorWithContext(w, r, http.StatusBadRequest, "invalid_input", err.Error())
 	case errors.Is(err, domain.ErrUnauthorized):
 		writeErrorWithContext(w, r, http.StatusUnauthorized, "unauthorized", "unauthorized")
 	case errors.Is(err, domain.ErrForbidden):

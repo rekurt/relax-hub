@@ -137,7 +137,7 @@ export default function ClientBookingList() {
             <Popconfirm
               title="Отменить бронирование?"
               description={`Это действие нельзя отменить. ${getRefundInfo(record.start_time)}`}
-              onConfirm={() => record.id && cancelMutation.mutate({ id: record.id })}
+              onConfirm={() => record.id && cancelMutation.mutate({ id: record.id, data: {} })}
               okText="Отменить"
               cancelText="Нет"
               okButtonProps={{ danger: true }}

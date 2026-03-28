@@ -114,7 +114,7 @@ describe('SavedSearches', () => {
 
     const deleteButtons = document.querySelectorAll('.ant-btn-dangerous')
     expect(deleteButtons.length).toBeGreaterThanOrEqual(1)
-    fireEvent.click(deleteButtons[0])
+    fireEvent.click(deleteButtons[0]!)
 
     expect(screen.getByText('Удалить сохранённый поиск?')).toBeInTheDocument()
   })

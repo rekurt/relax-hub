@@ -72,12 +72,12 @@ export default function OnboardingTour({ open, onComplete }: OnboardingTourProps
       centered
     >
       <div style={{ textAlign: 'center', padding: '24px 0 8px' }}>
-        {STEPS[current].icon}
+        {STEPS[current]!.icon}
         <Title level={4} style={{ marginTop: 16 }}>
-          {STEPS[current].title}
+          {STEPS[current]!.title}
         </Title>
         <Paragraph type="secondary" style={{ fontSize: 15, minHeight: 66 }}>
-          {STEPS[current].description}
+          {STEPS[current]!.description}
         </Paragraph>
       </div>
 

@@ -318,7 +318,7 @@ describe('PricingRules', () => {
     renderWithProviders(<PricingRules />)
 
     const tables = screen.getAllByRole('table')
-    const rows = within(tables[0]).getAllByRole('row')
+    const rows = within(tables[0]!).getAllByRole('row')
     // header + 3 data rows
     expect(rows.length).toBeGreaterThanOrEqual(4)
   })

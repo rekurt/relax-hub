@@ -166,7 +166,7 @@ describe('ComparisonPage', () => {
     vi.mocked(usePostApiV1BathhousesCompare).mockImplementation(((opts: { mutation?: { onSuccess?: (data: unknown) => void } }) => {
       const mutate = vi.fn().mockImplementation(() => {
         opts?.mutation?.onSuccess?.({
-          data: { data: { items: mockItems } },
+          data: { items: mockItems },
         })
       })
       return { mutate, isPending: false }
@@ -190,7 +190,7 @@ describe('ComparisonPage', () => {
     vi.mocked(usePostApiV1BathhousesCompare).mockImplementation(((opts: { mutation?: { onSuccess?: (data: unknown) => void } }) => {
       const mutate = vi.fn().mockImplementation(() => {
         opts?.mutation?.onSuccess?.({
-          data: { data: { items: mockItems } },
+          data: { items: mockItems },
         })
       })
       return { mutate, isPending: false }
@@ -213,7 +213,7 @@ describe('ComparisonPage', () => {
     vi.mocked(usePostApiV1BathhousesCompare).mockImplementation(((opts: { mutation?: { onSuccess?: (data: unknown) => void } }) => {
       const mutate = vi.fn().mockImplementation(() => {
         opts?.mutation?.onSuccess?.({
-          data: { data: { items: mockItems } },
+          data: { items: mockItems },
         })
       })
       return { mutate, isPending: false }

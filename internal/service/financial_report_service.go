@@ -226,9 +226,18 @@ type XML1CSummary struct {
 }
 
 func (s *financialReportService) ExportXML1C(ctx context.Context, ownerID uuid.UUID, dateFrom, dateTo time.Time) ([]byte, error) {
-	bathhouses, err := s.bathhouseRepo.ListByOwner(ctx, ownerID, 1, 100)
-	if err != nil {
-		return nil, err
+	var allBathhouses []domain.Bathhouse
+	page := 1
+	for {
+		result, err := s.bathhouseRepo.ListByOwner(ctx, ownerID, page, 100)
+		if err != nil {
+			return nil, err
+		}
+		allBathhouses = append(allBathhouses, result.Items...)
+		if page >= result.TotalPages || len(result.Items) == 0 {
+			break
+		}
+		page++
 	}
 
 	doc := XML1CDocument{
@@ -241,7 +250,7 @@ func (s *financialReportService) ExportXML1C(ctx context.Context, ownerID uuid.U
 	var totalAmount, totalFee int64
 	num := 0
 
-	for _, bh := range bathhouses.Items {
+	for _, bh := range allBathhouses {
 		bookings, err := s.fetchCompletedBookings(ctx, bh.ID, dateFrom, dateTo)
 		if err != nil {
 			return nil, err
@@ -342,7 +351,9 @@ func (s *financialReportService) ExportPayoutsPDF(ctx context.Context, userID uu
 
 	var totalAmount int64
 	for _, p := range payouts {
-		totalAmount += p.Amount
+		if p.Status == domain.PayoutStatusCompleted {
+			totalAmount += p.Amount
+		}
 		line := fmt.Sprintf("%-20s %12s %-16s %-20s %s",
 			p.RequestedAt.Format("02.01.2006 15:04"),
 			formatKopecksRUB(p.Amount),
@@ -523,13 +534,18 @@ func transactionStatusRu(s domain.WalletTransactionStatus) string {
 }
 
 func formatKopecks(amount int64, currency domain.WalletCurrency) string {
+	sign := ""
+	if amount < 0 {
+		sign = "-"
+		amount = -amount
+	}
 	rubles := amount / 100
 	kopecks := amount % 100
 	sym := "₽"
 	if currency == domain.WalletCurrencyBYN {
 		sym = "BYN"
 	}
-	return fmt.Sprintf("%d.%02d %s", rubles, kopecks, sym)
+	return fmt.Sprintf("%s%d.%02d %s", sign, rubles, kopecks, sym)
 }
 
 func formatKopecksRUB(amount int64) string {
@@ -575,7 +591,8 @@ func generateSimplePDF(lines []string) []byte {
 	content.WriteString("BT\n")
 	content.WriteString("/F1 10 Tf\n")
 	y := 800
-	for _, line := range lines {
+	truncated := false
+	for i, line := range lines {
 		if line == "---" {
 			fmt.Fprintf(&content, "1 0 0 1 50 %d Tm\n", y)
 			content.WriteString("(────────────────────────────────────────────────────) Tj\n")
@@ -586,9 +603,18 @@ func generateSimplePDF(lines []string) []byte {
 		}
 		y -= 14
 		if y < 50 {
+			remaining := len(lines) - i - 1
+			if remaining > 0 {
+				truncated = true
+				y -= 14
+				notice := pdfEscapeString(fmt.Sprintf("... eshche %d strok ne pokazano. Ispolzujte CSV eksport dlya polnogo otcheta.", remaining))
+				fmt.Fprintf(&content, "1 0 0 1 50 %d Tm\n", 36)
+				fmt.Fprintf(&content, "(%s) Tj\n", notice)
+			}
 			break
 		}
 	}
+	_ = truncated
 	content.WriteString("ET\n")
 	contentBytes := content.Bytes()
 
