@@ -104,11 +104,12 @@ func (r *Review) Validate() error {
 }
 
 type ReviewFilter struct {
-	BathhouseID *uuid.UUID
-	Status      *ReviewStatus
-	MinRating   *int
-	Page        int
-	PageSize    int
+	BathhouseID  *uuid.UUID
+	Status       *ReviewStatus
+	MinRating    *int
+	OnlyRevealed bool
+	Page         int
+	PageSize     int
 }
 
 type AdminReviewFilter struct {

@@ -346,10 +346,11 @@ func (s *reviewService) Delete(ctx context.Context, userID uuid.UUID, userRole d
 func (s *reviewService) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Review], error) {
 	approvedStatus := domain.ReviewStatusApproved
 	return s.reviewRepo.ListByBathhouseFiltered(ctx, domain.ReviewFilter{
-		BathhouseID: &bathhouseID,
-		Status:      &approvedStatus,
-		Page:        page,
-		PageSize:    pageSize,
+		BathhouseID:  &bathhouseID,
+		Status:       &approvedStatus,
+		OnlyRevealed: true,
+		Page:         page,
+		PageSize:     pageSize,
 	})
 }
 

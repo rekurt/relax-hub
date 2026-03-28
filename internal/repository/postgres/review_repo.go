@@ -206,6 +206,9 @@ func (r *reviewRepo) ListByBathhouseFiltered(ctx context.Context, filter domain.
 		args = append(args, *filter.MinRating)
 		argIdx++
 	}
+	if filter.OnlyRevealed {
+		conditions = append(conditions, "is_revealed = true")
+	}
 
 	where := ""
 	if len(conditions) > 0 {
@@ -424,4 +427,19 @@ func (r *reviewRepo) ListAllReviews(ctx context.Context, filter domain.AdminRevi
 		PageSize:   filter.PageSize,
 		TotalPages: int(math.Ceil(float64(totalCount) / float64(filter.PageSize))),
 	}, nil
+}
+
+func (r *reviewRepo) ListUnrevealedPastDeadline(ctx context.Context, now time.Time) ([]domain.Review, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT `+reviewColumns+`
+		FROM reviews
+		WHERE is_revealed = false AND reveal_at IS NOT NULL AND reveal_at <= $1
+		ORDER BY reveal_at ASC
+		LIMIT 500`, now)
+	if err != nil {
+		return nil, fmt.Errorf("list unrevealed reviews past deadline: %w", err)
+	}
+	defer rows.Close()
+
+	return scanReviews(rows)
 }

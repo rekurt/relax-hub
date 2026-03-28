@@ -570,88 +570,53 @@ func formatOptionalTime(t *time.Time) string {
 	return t.Format("02.01.2006")
 }
 
-// generateSimplePDF creates a minimal valid PDF with text content.
-// Uses PDF 1.4 spec directly - no external dependencies needed.
+// generateSimplePDF generates an HTML document styled for printing as PDF.
+// Standard PDF Type1 fonts (Courier, Helvetica, etc.) do not support Cyrillic glyphs,
+// so we use HTML with UTF-8 encoding which handles all Unicode characters natively.
+// Users can print to PDF from their browser if a true PDF is needed.
 func generateSimplePDF(lines []string) []byte {
 	var buf bytes.Buffer
 
-	// PDF header
-	buf.WriteString("%PDF-1.4\n")
+	buf.WriteString(`<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 20mm; }
+  body { font-family: monospace; font-size: 10pt; line-height: 1.4; }
+  hr { border: none; border-top: 1px solid #000; margin: 4px 0; }
+  .line { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+`)
 
-	// Object 1: Catalog
-	obj1Offset := buf.Len()
-	buf.WriteString("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n")
-
-	// Object 2: Pages
-	obj2Offset := buf.Len()
-	buf.WriteString("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n")
-
-	// Build content stream
-	var content bytes.Buffer
-	content.WriteString("BT\n")
-	content.WriteString("/F1 10 Tf\n")
-	y := 800
-	for i, line := range lines {
+	for _, line := range lines {
 		if line == "---" {
-			fmt.Fprintf(&content, "1 0 0 1 50 %d Tm\n", y)
-			content.WriteString("(────────────────────────────────────────────────────) Tj\n")
+			buf.WriteString("<hr>\n")
 		} else {
-			fmt.Fprintf(&content, "1 0 0 1 50 %d Tm\n", y)
-			escaped := pdfEscapeString(line)
-			fmt.Fprintf(&content, "(%s) Tj\n", escaped)
-		}
-		y -= 14
-		if y < 50 {
-			remaining := len(lines) - i - 1
-			if remaining > 0 {
-				notice := pdfEscapeString(fmt.Sprintf("... eshche %d strok ne pokazano. Ispolzujte CSV eksport dlya polnogo otcheta.", remaining))
-				fmt.Fprintf(&content, "1 0 0 1 50 36 Tm\n")
-				fmt.Fprintf(&content, "(%s) Tj\n", notice)
-			}
-			break
+			buf.WriteString(`<div class="line">`)
+			buf.WriteString(htmlEscapeString(line))
+			buf.WriteString("</div>\n")
 		}
 	}
-	content.WriteString("ET\n")
-	contentBytes := content.Bytes()
 
-	// Object 3: Page
-	obj3Offset := buf.Len()
-	buf.WriteString("3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n")
-
-	// Object 4: Content stream
-	obj4Offset := buf.Len()
-	fmt.Fprintf(&buf, "4 0 obj\n<< /Length %d >>\nstream\n", len(contentBytes))
-	buf.Write(contentBytes)
-	buf.WriteString("\nendstream\nendobj\n")
-
-	// Object 5: Font
-	obj5Offset := buf.Len()
-	buf.WriteString("5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>\nendobj\n")
-
-	// Cross-reference table
-	xrefOffset := buf.Len()
-	buf.WriteString("xref\n")
-	buf.WriteString("0 6\n")
-	buf.WriteString("0000000000 65535 f \n")
-	fmt.Fprintf(&buf, "%010d 00000 n \n", obj1Offset)
-	fmt.Fprintf(&buf, "%010d 00000 n \n", obj2Offset)
-	fmt.Fprintf(&buf, "%010d 00000 n \n", obj3Offset)
-	fmt.Fprintf(&buf, "%010d 00000 n \n", obj4Offset)
-	fmt.Fprintf(&buf, "%010d 00000 n \n", obj5Offset)
-
-	// Trailer
-	fmt.Fprintf(&buf, "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n", xrefOffset)
-
+	buf.WriteString("</body>\n</html>\n")
 	return buf.Bytes()
 }
 
-func pdfEscapeString(s string) string {
+func htmlEscapeString(s string) string {
 	var buf bytes.Buffer
 	for _, c := range s {
 		switch c {
-		case '(', ')', '\\':
-			buf.WriteByte('\\')
-			buf.WriteRune(c)
+		case '<':
+			buf.WriteString("&lt;")
+		case '>':
+			buf.WriteString("&gt;")
+		case '&':
+			buf.WriteString("&amp;")
+		case '"':
+			buf.WriteString("&quot;")
 		default:
 			buf.WriteRune(c)
 		}

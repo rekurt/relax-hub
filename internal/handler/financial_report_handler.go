@@ -66,8 +66,8 @@ func (h *FinancialReportHandler) ExportWalletTransactions(w http.ResponseWriter,
 			handleServiceError(w, err)
 			return
 		}
-		w.Header().Set("Content-Type", "application/pdf")
-		w.Header().Set("Content-Disposition", "attachment; filename=wallet_transactions.pdf")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Content-Disposition", "attachment; filename=wallet_transactions.html")
 		w.WriteHeader(http.StatusOK)
 		w.Write(data)
 	}
@@ -124,8 +124,8 @@ func (h *FinancialReportHandler) GenerateAct(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	filename := fmt.Sprintf("act_%s_%s_%s.pdf", bathhouseIDStr[:8], dateFromStr, dateToStr)
-	w.Header().Set("Content-Type", "application/pdf")
+	filename := fmt.Sprintf("act_%s_%s_%s.html", bathhouseIDStr[:8], dateFromStr, dateToStr)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
@@ -227,8 +227,8 @@ func (h *FinancialReportHandler) ExportPayouts(w http.ResponseWriter, r *http.Re
 			handleServiceError(w, err)
 			return
 		}
-		w.Header().Set("Content-Type", "application/pdf")
-		w.Header().Set("Content-Disposition", "attachment; filename=payouts.pdf")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Content-Disposition", "attachment; filename=payouts.html")
 		w.WriteHeader(http.StatusOK)
 		w.Write(data)
 	}

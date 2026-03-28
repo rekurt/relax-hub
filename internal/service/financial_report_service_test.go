@@ -184,14 +184,13 @@ func TestFinancialReportService_ExportWalletPDF(t *testing.T) {
 		t.Fatal("PDF export returned empty data")
 	}
 
-	// Verify it starts with PDF magic bytes
-	if !strings.HasPrefix(string(data), "%PDF-1.4") {
-		t.Fatal("expected PDF output to start with %PDF-1.4")
+	// Verify it contains valid HTML with Cyrillic support
+	content := string(data)
+	if !strings.Contains(content, "<!DOCTYPE html>") {
+		t.Fatal("expected HTML document output")
 	}
-
-	// Verify it ends with %%EOF
-	if !strings.HasSuffix(strings.TrimSpace(string(data)), "%%EOF") {
-		t.Fatal("expected PDF output to end with EOF marker")
+	if !strings.Contains(content, `charset="UTF-8"`) {
+		t.Fatal("expected UTF-8 charset declaration")
 	}
 }
 
@@ -261,17 +260,14 @@ func TestFinancialReportService_GenerateOwnerAct(t *testing.T) {
 		t.Fatal("act generation returned empty data")
 	}
 
-	if !strings.HasPrefix(string(data), "%PDF-1.4") {
-		t.Fatal("expected PDF output")
+	content := string(data)
+	if !strings.Contains(content, "<!DOCTYPE html>") {
+		t.Fatal("expected HTML document output")
 	}
 
-	// Verify act content contains bathhouse name
-	content := string(data)
+	// Verify act content contains bathhouse name (Cyrillic now properly rendered)
 	if !strings.Contains(content, "Тестовая баня") {
-		// PDF may encode Cyrillic differently; check for structure
-		if !strings.Contains(content, "PDF") {
-			t.Fatal("expected valid PDF content")
-		}
+		t.Fatal("expected act to contain bathhouse name")
 	}
 }
 
@@ -471,7 +467,7 @@ func TestFormatDecimal(t *testing.T) {
 }
 
 func TestGenerateSimplePDF(t *testing.T) {
-	lines := []string{"Title", "---", "Line 1", "Line 2"}
+	lines := []string{"Заголовок", "---", "Строка 1", "Строка 2"}
 	data := generateSimplePDF(lines)
 
 	if len(data) == 0 {
@@ -479,29 +475,36 @@ func TestGenerateSimplePDF(t *testing.T) {
 	}
 
 	content := string(data)
-	if !strings.HasPrefix(content, "%PDF-1.4") {
-		t.Fatal("expected PDF header")
+	if !strings.Contains(content, "<!DOCTYPE html>") {
+		t.Fatal("expected HTML document")
 	}
-	if !strings.Contains(content, "%%EOF") {
-		t.Fatal("expected EOF trailer")
+	if !strings.Contains(content, "Заголовок") {
+		t.Fatal("expected Cyrillic content preserved")
+	}
+	if !strings.Contains(content, "<hr>") {
+		t.Fatal("expected separator rendered as <hr>")
+	}
+	if !strings.Contains(content, "Строка 1") {
+		t.Fatal("expected line content")
 	}
 }
 
-func TestPdfEscapeString(t *testing.T) {
+func TestHtmlEscapeString(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected string
 	}{
 		{"hello", "hello"},
-		{"test(paren)", "test\\(paren\\)"},
-		{"back\\slash", "back\\\\slash"},
-		{"normal text", "normal text"},
+		{"<script>alert(1)</script>", "&lt;script&gt;alert(1)&lt;/script&gt;"},
+		{"a & b", "a &amp; b"},
+		{`say "hi"`, "say &quot;hi&quot;"},
+		{"Привет мир", "Привет мир"},
 	}
 
 	for _, tt := range tests {
-		result := pdfEscapeString(tt.input)
+		result := htmlEscapeString(tt.input)
 		if result != tt.expected {
-			t.Errorf("pdfEscapeString(%q) = %q, want %q", tt.input, result, tt.expected)
+			t.Errorf("htmlEscapeString(%q) = %q, want %q", tt.input, result, tt.expected)
 		}
 	}
 }
@@ -652,12 +655,12 @@ func TestFinancialReportService_ExportPayoutsPDF(t *testing.T) {
 		t.Fatal("PDF export returned empty data")
 	}
 
-	if !strings.HasPrefix(string(data), "%PDF-1.4") {
-		t.Fatal("expected PDF output to start with %PDF-1.4")
+	content := string(data)
+	if !strings.Contains(content, "<!DOCTYPE html>") {
+		t.Fatal("expected HTML document output")
 	}
-
-	if !strings.HasSuffix(strings.TrimSpace(string(data)), "%%EOF") {
-		t.Fatal("expected PDF output to end with EOF marker")
+	if !strings.Contains(content, `charset="UTF-8"`) {
+		t.Fatal("expected UTF-8 charset declaration")
 	}
 }
 

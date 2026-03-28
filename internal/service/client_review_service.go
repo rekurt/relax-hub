@@ -242,9 +242,16 @@ func (s *clientReviewService) RevealExpired(ctx context.Context) (int, error) {
 
 // revealExpiredGuestReviews reveals guest reviews that are past their reveal_at deadline.
 func (s *clientReviewService) revealExpiredGuestReviews(ctx context.Context, now time.Time) {
-	// This is handled via the review repo — we need to find reviews with
-	// reveal_at set, is_revealed=false, and reveal_at <= now.
-	// Since the existing ReviewRepository doesn't have a method for this,
-	// we'll handle it through the cron service which has access to both repos.
-	// For now, the cron job handles guest review reveals separately.
+	reviews, err := s.reviewRepo.ListUnrevealedPastDeadline(ctx, now)
+	if err != nil {
+		s.logger.Warn("failed to list unrevealed guest reviews", "error", err)
+		return
+	}
+	for _, rev := range reviews {
+		rev.IsRevealed = true
+		rev.UpdatedAt = now
+		if err := s.reviewRepo.Update(ctx, &rev); err != nil {
+			s.logger.Warn("failed to reveal guest review by deadline", "id", rev.ID, "error", err)
+		}
+	}
 }

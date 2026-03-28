@@ -1077,6 +1077,19 @@ func (r *ReviewRepo) GetPlatformAverageRating(_ context.Context) (float64, error
 	return total / count, nil
 }
 
+func (r *ReviewRepo) ListUnrevealedPastDeadline(_ context.Context, now time.Time) ([]domain.Review, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var result []domain.Review
+	for _, rev := range r.reviews {
+		if !rev.IsRevealed && rev.RevealAt != nil && !rev.RevealAt.After(now) {
+			result = append(result, *rev)
+		}
+	}
+	return result, nil
+}
+
 // FavoriteRepo is an in-memory mock implementation of repository.FavoriteRepository.
 type FavoriteRepo struct {
 	mu        sync.RWMutex

@@ -112,6 +112,7 @@ type ReviewRepository interface {
 	ListAllReviews(ctx context.Context, filter domain.AdminReviewFilter) (*domain.PaginatedResult[domain.Review], error)
 	GetCriteriaAverages(ctx context.Context, bathhouseID uuid.UUID) (*domain.ReviewCriteriaAverages, error)
 	GetPlatformAverageRating(ctx context.Context) (float64, error)
+	ListUnrevealedPastDeadline(ctx context.Context, now time.Time) ([]domain.Review, error)
 }
 
 type FavoriteRepository interface {
