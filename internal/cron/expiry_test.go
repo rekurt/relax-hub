@@ -95,7 +95,7 @@ func TestHandleSubscriptionExpiryNotify(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cs := NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo, subRepo, promoRepo, notifSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	cs := NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo, subRepo, promoRepo, notifSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_ = cs.subscriptionExpiryNotify(context.Background())
 
 	// Only the expiring (not expired) subscription should be notified
@@ -128,7 +128,7 @@ func TestHandleExpiredSubscriptionUpdate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cs := NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo, subRepo, promoRepo, notifSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	cs := NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo, subRepo, promoRepo, notifSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_ = cs.expiredSubscriptionUpdate(context.Background())
 
 	// Verify status was updated
@@ -178,7 +178,7 @@ func TestHandlePromoDeactivation(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cs := NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo, subRepo, promoRepo, notifSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	cs := NewCronScheduler(&config.Config{}, log, mockAnalyticsSvc, mockAnalyticsRepo, subRepo, promoRepo, notifSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	_ = cs.promoDeactivation(context.Background())
 
 	// Active promo should still be active

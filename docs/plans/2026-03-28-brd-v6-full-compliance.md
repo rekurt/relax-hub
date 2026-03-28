@@ -153,13 +153,13 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `internal/domain/review.go` (add reveal logic: both posted or 14 days)
 - Create: migration for client_reviews table and reveal_at field on reviews
 
-- [ ] Create client_review domain model (punctuality, cleanliness, rule_compliance ratings)
-- [ ] Implement double-blind reveal: reviews hidden until both posted OR 14 days elapsed
-- [ ] Add reveal_at computed field, cron job for auto-reveal after 14 days
-- [ ] Add API endpoints for owner to rate client
-- [ ] Update existing review endpoints to respect blind period
-- [ ] Write tests for reveal logic (both post, timeout, edit before reveal)
-- [ ] Run project test suite - must pass before next task
+- [x] Create client_review domain model (punctuality, cleanliness, rule_compliance ratings)
+- [x] Implement double-blind reveal: reviews hidden until both posted OR 14 days elapsed
+- [x] Add reveal_at computed field, cron job for auto-reveal after 14 days
+- [x] Add API endpoints for owner to rate client
+- [x] Update existing review endpoints to respect blind period
+- [x] Write tests for reveal logic (both post, timeout, edit before reveal)
+- [x] Run project test suite - must pass before next task
 
 ### Task 6: Region switching (FR-017)
 

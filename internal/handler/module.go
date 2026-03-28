@@ -84,5 +84,6 @@ var Module = fx.Module("handler",
 		NewPlatformSettingsHandler,
 		NewFeatureFlagHandler,
 		NewForceMajeureHandler,
+		NewClientReviewHandler,
 	),
 )

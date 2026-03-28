@@ -58,31 +58,33 @@ type ReviewService interface {
 }
 
 const (
-	bayesianMinReviews           = 5     // m: minimum reviews threshold
-	bayesianDisplayMinReviews    = 3     // show Bayesian rating only when >= 3 reviews
-	redisPlatformAvgKey          = "platform:avg_rating"
-	redisPlatformAvgTTL          = 24 * time.Hour
-	qualityMinReviews            = 10    // minimum reviews before quality thresholds apply
-	qualityWarningThreshold      = 3.0   // rating below this triggers owner warning
-	qualityDepublishThreshold    = 2.0   // rating below this triggers auto-depublish
+	bayesianMinReviews        = 5 // m: minimum reviews threshold
+	bayesianDisplayMinReviews = 3 // show Bayesian rating only when >= 3 reviews
+	redisPlatformAvgKey       = "platform:avg_rating"
+	redisPlatformAvgTTL       = 24 * time.Hour
+	qualityMinReviews         = 10  // minimum reviews before quality thresholds apply
+	qualityWarningThreshold   = 3.0 // rating below this triggers owner warning
+	qualityDepublishThreshold = 2.0 // rating below this triggers auto-depublish
 )
 
 type reviewService struct {
-	reviewRepo      repository.ReviewRepository
-	bookingRepo     repository.BookingRepository
-	bhRepo          repository.BathhouseRepository
-	mediaRepo       repository.MediaRepository
-	fileStorage     storage.FileStorage
-	accessChecker   *AccessChecker
-	notifSvc        NotificationService
-	contentFilter   *moderation.ContentFilter
-	textModerator   moderation.TextModerationService
-	redisClient     *redis.Client
-	logger          *logger.Logger
+	reviewRepo       repository.ReviewRepository
+	clientReviewRepo repository.ClientReviewRepository
+	bookingRepo      repository.BookingRepository
+	bhRepo           repository.BathhouseRepository
+	mediaRepo        repository.MediaRepository
+	fileStorage      storage.FileStorage
+	accessChecker    *AccessChecker
+	notifSvc         NotificationService
+	contentFilter    *moderation.ContentFilter
+	textModerator    moderation.TextModerationService
+	redisClient      *redis.Client
+	logger           *logger.Logger
 }
 
 func NewReviewService(
 	reviewRepo repository.ReviewRepository,
+	clientReviewRepo repository.ClientReviewRepository,
 	bookingRepo repository.BookingRepository,
 	bhRepo repository.BathhouseRepository,
 	mediaRepo repository.MediaRepository,
@@ -95,17 +97,18 @@ func NewReviewService(
 	log *logger.Logger,
 ) ReviewService {
 	return &reviewService{
-		reviewRepo:    reviewRepo,
-		bookingRepo:   bookingRepo,
-		bhRepo:        bhRepo,
-		mediaRepo:     mediaRepo,
-		fileStorage:   fileStorage,
-		accessChecker: accessChecker,
-		notifSvc:      notifSvc,
-		contentFilter: contentFilter,
-		textModerator: textModerator,
-		redisClient:   redisClient,
-		logger:        log,
+		reviewRepo:       reviewRepo,
+		clientReviewRepo: clientReviewRepo,
+		bookingRepo:      bookingRepo,
+		bhRepo:           bhRepo,
+		mediaRepo:        mediaRepo,
+		fileStorage:      fileStorage,
+		accessChecker:    accessChecker,
+		notifSvc:         notifSvc,
+		contentFilter:    contentFilter,
+		textModerator:    textModerator,
+		redisClient:      redisClient,
+		logger:           log,
 	}
 }
 
@@ -136,6 +139,7 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 	}
 
 	now := time.Now()
+	revealAt := now.Add(domain.ClientReviewBlindDays * 24 * time.Hour)
 	review := &domain.Review{
 		ID:            uuid.New(),
 		UserID:        userID,
@@ -147,6 +151,8 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 		Communication: input.Communication,
 		ValueForMoney: input.ValueForMoney,
 		Text:          input.Text,
+		RevealAt:      &revealAt,
+		IsRevealed:    false,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
@@ -199,6 +205,11 @@ func (s *reviewService) Create(ctx context.Context, userID uuid.UUID, input Crea
 			s.logger.Warn("Failed to recalculate bayesian rating", "bathhouse_id", booking.BathhouseID, "error", err)
 		}
 		s.checkQualityThresholds(ctx, booking.BathhouseID)
+	}
+
+	// Check if owner already posted a client review — if so, reveal both
+	if review.Status == domain.ReviewStatusApproved {
+		s.tryMutualRevealFromGuest(ctx, review)
 	}
 
 	// Notify bathhouse owner about new review (only for approved reviews)
@@ -383,6 +394,34 @@ func (s *reviewService) AddOwnerResponse(ctx context.Context, userID uuid.UUID, 
 	}
 
 	return review, nil
+}
+
+// tryMutualRevealFromGuest checks if the owner has also reviewed the client. If both exist, reveal both.
+func (s *reviewService) tryMutualRevealFromGuest(ctx context.Context, guestReview *domain.Review) {
+	if s.clientReviewRepo == nil {
+		return
+	}
+
+	clientReview, err := s.clientReviewRepo.GetByBookingID(ctx, guestReview.BookingID)
+	if err != nil {
+		// Owner hasn't reviewed yet, keep both in blind period
+		return
+	}
+
+	// Both reviews exist — reveal both
+	// Reveal the guest review
+	guestReview.IsRevealed = true
+	guestReview.UpdatedAt = time.Now()
+	if err := s.reviewRepo.Update(ctx, guestReview); err != nil {
+		s.logger.Warn("failed to reveal guest review on mutual", "id", guestReview.ID, "error", err)
+	}
+
+	// Reveal the client review
+	if !clientReview.IsRevealed {
+		if err := s.clientReviewRepo.RevealByID(ctx, clientReview.ID); err != nil {
+			s.logger.Warn("failed to reveal client review on mutual", "id", clientReview.ID, "error", err)
+		}
+	}
 }
 
 func (s *reviewService) cleanupReviewMedia(ctx context.Context, reviewID uuid.UUID) {

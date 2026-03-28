@@ -355,6 +355,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusConflict, "deposit_already_released", err.Error())
 	case errors.Is(err, domain.ErrDepositAlreadyClaimed):
 		writeErrorWithContext(w, r, http.StatusConflict, "deposit_already_claimed", err.Error())
+	case errors.Is(err, domain.ErrClientReviewNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "client_review_not_found", err.Error())
+	case errors.Is(err, domain.ErrReviewBlindPeriod):
+		writeErrorWithContext(w, r, http.StatusForbidden, "review_blind_period", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

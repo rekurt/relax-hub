@@ -78,6 +78,7 @@ type RouterParams struct {
 	PlatformSettingsHandler   *handler.PlatformSettingsHandler
 	FeatureFlagHandler        *handler.FeatureFlagHandler
 	ForceMajeureHandler       *handler.ForceMajeureHandler
+	ClientReviewHandler       *handler.ClientReviewHandler
 	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
@@ -264,6 +265,11 @@ func NewRouter(p RouterParams) http.Handler {
 		// Review media
 		r.With(auth).Post("/reviews/{id}/media", p.ReviewHandler.UploadMedia)
 		r.With(auth).Delete("/media/{id}", p.ReviewHandler.DeleteMedia)
+
+		// Client reviews (owner rates client)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/client-reviews", p.ClientReviewHandler.Create)
+		r.With(auth).Get("/bookings/{id}/client-review", p.ClientReviewHandler.GetByBooking)
+		r.With(auth).Get("/my/client-reviews", p.ClientReviewHandler.ListMyClientReviews)
 
 		// Bathhouse gallery (public)
 		r.Get("/bathhouses/{id}/gallery", p.MediaHandler.BathhouseGallery)

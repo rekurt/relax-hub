@@ -153,4 +153,7 @@ var (
 	ErrDepositNotFound        = errors.New("security deposit not found")
 	ErrDepositAlreadyReleased = errors.New("security deposit already released")
 	ErrDepositAlreadyClaimed  = errors.New("security deposit already claimed")
+
+	ErrClientReviewNotFound = errors.New("client review not found")
+	ErrReviewBlindPeriod    = errors.New("review is in blind period")
 )

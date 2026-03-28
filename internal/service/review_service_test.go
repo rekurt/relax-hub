@@ -34,7 +34,7 @@ func newReviewTestEnv() *reviewTestEnv {
 	contentFilter := moderation.NewContentFilter(false, false)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
+	svc := service.NewReviewService(reviewRepo, mock.NewClientReviewRepo(), bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
 	return &reviewTestEnv{
 		svc:         svc,
 		bhRepo:      bhRepo,
@@ -440,7 +440,7 @@ func TestReviewService_Create_WithModeration_CleanText(t *testing.T) {
 	contentFilter := moderation.NewContentFilter(true, true)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
+	svc := service.NewReviewService(reviewRepo, mock.NewClientReviewRepo(), bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())
@@ -471,7 +471,7 @@ func TestReviewService_Create_WithModeration_AutoRejectProfanity(t *testing.T) {
 	contentFilter := moderation.NewContentFilter(true, false)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
+	svc := service.NewReviewService(reviewRepo, mock.NewClientReviewRepo(), bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())
@@ -505,7 +505,7 @@ func TestReviewService_Create_WithModeration_PendingCleanText(t *testing.T) {
 	contentFilter := moderation.NewContentFilter(true, false)
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
+	svc := service.NewReviewService(reviewRepo, mock.NewClientReviewRepo(), bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
 
 	clientID := uuid.New()
 	bh := createBathhouse(t, bhRepo, uuid.New())
@@ -1137,7 +1137,7 @@ func newReviewTestEnvWithTracking() *reviewTestEnvWithTracking {
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
 	notifSvc := &trackingNotifService{}
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, notifSvc, contentFilter, nil, nil, log)
+	svc := service.NewReviewService(reviewRepo, mock.NewClientReviewRepo(), bookingRepo, bhRepo, mediaRepo, noopStore, ac, notifSvc, contentFilter, nil, nil, log)
 	return &reviewTestEnvWithTracking{
 		svc: svc, bhRepo: bhRepo, bookingRepo: bookingRepo, reviewRepo: reviewRepo, notifSvc: notifSvc,
 	}
@@ -1299,7 +1299,7 @@ func newReviewTestEnvWithModeration() *reviewTestEnv {
 	textModerator := moderation.NewRegexTextModerator()
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, textModerator, nil, log)
+	svc := service.NewReviewService(reviewRepo, mock.NewClientReviewRepo(), bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, textModerator, nil, log)
 	return &reviewTestEnv{
 		svc:         svc,
 		bhRepo:      bhRepo,
@@ -1438,7 +1438,7 @@ func TestTextModeration_DisabledFallsBackToContentFilter(t *testing.T) {
 	mediaRepo := mock.NewMediaRepo()
 	noopStore := storage.NewMockStorage()
 	// textModerator is nil - legacy path
-	svc := service.NewReviewService(reviewRepo, bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
+	svc := service.NewReviewService(reviewRepo, mock.NewClientReviewRepo(), bookingRepo, bhRepo, mediaRepo, noopStore, ac, &noopNotifService{}, contentFilter, nil, nil, log)
 
 	ctx := context.Background()
 	clientID := uuid.New()

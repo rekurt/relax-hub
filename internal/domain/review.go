@@ -42,6 +42,8 @@ type Review struct {
 	ModerationScore  *float64
 	ModerationFlags  []string
 	Images           []string
+	RevealAt         *time.Time
+	IsRevealed       bool
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }

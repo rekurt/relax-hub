@@ -1,0 +1,3 @@
+ALTER TABLE reviews DROP COLUMN IF EXISTS reveal_at;
+ALTER TABLE reviews DROP COLUMN IF EXISTS is_revealed;
+DROP TABLE IF EXISTS client_reviews;

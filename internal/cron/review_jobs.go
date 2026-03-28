@@ -22,3 +22,17 @@ func (cs *CronScheduler) autoReviewRequests(ctx context.Context) error {
 	cs.logger.Info("Auto review requests done", "sent", sent)
 	return nil
 }
+
+func (cs *CronScheduler) reviewAutoReveal(ctx context.Context) error {
+	if cs.clientReviewSvc == nil {
+		return nil
+	}
+	revealed, err := cs.clientReviewSvc.RevealExpired(ctx)
+	if err != nil {
+		return fmt.Errorf("reveal expired reviews: %w", err)
+	}
+	if revealed > 0 {
+		cs.logger.Info("Auto-revealed reviews", "count", revealed)
+	}
+	return nil
+}

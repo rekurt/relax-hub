@@ -36,6 +36,7 @@ type CronScheduler struct {
 	escrowSvc          service.EscrowService
 	depositSvc         service.SecurityDepositService
 	reviewSvc          service.ReviewService
+	clientReviewSvc    service.ClientReviewService
 	autoScenarioSvc    service.AutoScenarioService
 	ticketSvc          service.TicketService
 	kycSvc             service.KYCService
@@ -63,6 +64,7 @@ func NewCronScheduler(
 	escrowSvc service.EscrowService,
 	depositSvc service.SecurityDepositService,
 	reviewSvc service.ReviewService,
+	clientReviewSvc service.ClientReviewService,
 	autoScenarioSvc service.AutoScenarioService,
 	ticketSvc service.TicketService,
 	kycSvc service.KYCService,
@@ -94,6 +96,7 @@ func NewCronScheduler(
 		escrowSvc:          escrowSvc,
 		depositSvc:         depositSvc,
 		reviewSvc:          reviewSvc,
+		clientReviewSvc:    clientReviewSvc,
 		autoScenarioSvc:    autoScenarioSvc,
 		ticketSvc:          ticketSvc,
 		kycSvc:             kycSvc,
@@ -156,6 +159,7 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		{"0 * * * *", "antifraud_pattern_detection", cs.antiFraudPatternDetection},
 		{"45 3 * * *", "kyc_expiry_check", cs.kycExpiryCheck},
 		{"0 6 * * *", "bathhouse_metrics_update", cs.bathhouseMetricsUpdate},
+		{"0 * * * *", "review_auto_reveal", cs.reviewAutoReveal},
 	}
 
 	for _, j := range jobs {

@@ -135,7 +135,8 @@ func testRouterParams() server.RouterParams {
 		PromoHandler:   handler.NewPromoHandler(nil),
 		MediaHandler:   handler.NewMediaHandler(nil),
 		SessionHandler:     handler.NewSessionHandler(nil),
-		SavedSearchHandler: handler.NewSavedSearchHandler(nil, nil),
+		SavedSearchHandler:  handler.NewSavedSearchHandler(nil, nil),
+		ClientReviewHandler: handler.NewClientReviewHandler(nil, logger.New(logger.LevelError)),
 	}
 }
 

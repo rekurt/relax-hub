@@ -591,3 +591,13 @@ type ForceMajeureRepository interface {
 	Create(ctx context.Context, event *domain.ForceMajeureEvent) error
 	List(ctx context.Context) ([]domain.ForceMajeureEvent, error)
 }
+
+type ClientReviewRepository interface {
+	Create(ctx context.Context, review *domain.ClientReview) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.ClientReview, error)
+	GetByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.ClientReview, error)
+	Update(ctx context.Context, review *domain.ClientReview) error
+	ListByClient(ctx context.Context, clientID uuid.UUID, onlyRevealed bool, page, pageSize int) (*domain.PaginatedResult[domain.ClientReview], error)
+	ListUnrevealedPastDeadline(ctx context.Context, now time.Time) ([]domain.ClientReview, error)
+	RevealByID(ctx context.Context, id uuid.UUID) error
+}

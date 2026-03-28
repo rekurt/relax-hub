@@ -9,48 +9,50 @@ import (
 type NotificationType string
 
 const (
-	NotifBookingConfirmed     NotificationType = "booking_confirmed"
-	NotifBookingCancelled     NotificationType = "booking_cancelled"
-	NotifBookingRejected      NotificationType = "booking_rejected"
-	NotifNewReview            NotificationType = "new_review"
-	NotifReviewResponse       NotificationType = "review_response"
-	NotifReviewApproved       NotificationType = "review_approved"
-	NotifReviewRejected       NotificationType = "review_rejected"
-	NotifPromo                NotificationType = "promo"
-	NotifReminder             NotificationType = "reminder"
-	NotifSystem               NotificationType = "system"
-	NotifNewMessage           NotificationType = "new_message"
-	NotifPhotoVerified        NotificationType = "photo_verified"
-	NotifPhotoRejected        NotificationType = "photo_rejected"
-	NotifReviewHidden         NotificationType = "review_hidden"
-	NotifLoyaltyUpgrade       NotificationType = "loyalty_upgrade"
-	NotifReferralBonus        NotificationType = "referral_bonus"
-	NotifSubscriptionExpiring NotificationType = "subscription_expiring"
-	NotifSubscriptionExpired  NotificationType = "subscription_expired"
-	NotifBonusExpiring            NotificationType = "bonus_expiring"
-	NotifBonusExpired             NotificationType = "bonus_expired"
-	NotifAccountDeletionRequested NotificationType = "account_deletion_requested"
-	NotifAccountDeletionReminder  NotificationType = "account_deletion_reminder"
-	NotifAccountDeletionFinal     NotificationType = "account_deletion_final"
-	NotifSavedSearchMatch         NotificationType = "saved_search_match"
-	NotifBookingRequest           NotificationType = "booking_request"
-	NotifBookingCheckedIn         NotificationType = "booking_checked_in"
-	NotifBookingNoShow            NotificationType = "booking_no_show"
-	NotifBookingNoShowOwner       NotificationType = "booking_no_show_owner"
-	NotifBookingReminder24h       NotificationType = "booking_reminder_24h"
-	NotifBookingReminder2h        NotificationType = "booking_reminder_2h"
-	NotifBookingReminderOwner5min NotificationType = "booking_reminder_owner_5min"
-	NotifBookingExtended         NotificationType = "booking_extended"
-	NotifBookingExtendedOwner    NotificationType = "booking_extended_owner"
-	NotifOwnerCancellationWarning  NotificationType = "owner_cancellation_warning"
-	NotifOwnerCancellationPenalty  NotificationType = "owner_cancellation_penalty"
-	NotifOwnerResponseRateWarning  NotificationType = "owner_response_rate_warning"
+	NotifBookingConfirmed              NotificationType = "booking_confirmed"
+	NotifBookingCancelled              NotificationType = "booking_cancelled"
+	NotifBookingRejected               NotificationType = "booking_rejected"
+	NotifNewReview                     NotificationType = "new_review"
+	NotifReviewResponse                NotificationType = "review_response"
+	NotifReviewApproved                NotificationType = "review_approved"
+	NotifReviewRejected                NotificationType = "review_rejected"
+	NotifPromo                         NotificationType = "promo"
+	NotifReminder                      NotificationType = "reminder"
+	NotifSystem                        NotificationType = "system"
+	NotifNewMessage                    NotificationType = "new_message"
+	NotifPhotoVerified                 NotificationType = "photo_verified"
+	NotifPhotoRejected                 NotificationType = "photo_rejected"
+	NotifReviewHidden                  NotificationType = "review_hidden"
+	NotifLoyaltyUpgrade                NotificationType = "loyalty_upgrade"
+	NotifReferralBonus                 NotificationType = "referral_bonus"
+	NotifSubscriptionExpiring          NotificationType = "subscription_expiring"
+	NotifSubscriptionExpired           NotificationType = "subscription_expired"
+	NotifBonusExpiring                 NotificationType = "bonus_expiring"
+	NotifBonusExpired                  NotificationType = "bonus_expired"
+	NotifAccountDeletionRequested      NotificationType = "account_deletion_requested"
+	NotifAccountDeletionReminder       NotificationType = "account_deletion_reminder"
+	NotifAccountDeletionFinal          NotificationType = "account_deletion_final"
+	NotifSavedSearchMatch              NotificationType = "saved_search_match"
+	NotifBookingRequest                NotificationType = "booking_request"
+	NotifBookingCheckedIn              NotificationType = "booking_checked_in"
+	NotifBookingNoShow                 NotificationType = "booking_no_show"
+	NotifBookingNoShowOwner            NotificationType = "booking_no_show_owner"
+	NotifBookingReminder24h            NotificationType = "booking_reminder_24h"
+	NotifBookingReminder2h             NotificationType = "booking_reminder_2h"
+	NotifBookingReminderOwner5min      NotificationType = "booking_reminder_owner_5min"
+	NotifBookingExtended               NotificationType = "booking_extended"
+	NotifBookingExtendedOwner          NotificationType = "booking_extended_owner"
+	NotifOwnerCancellationWarning      NotificationType = "owner_cancellation_warning"
+	NotifOwnerCancellationPenalty      NotificationType = "owner_cancellation_penalty"
+	NotifOwnerResponseRateWarning      NotificationType = "owner_response_rate_warning"
 	NotifOwnerCancellationCompensation NotificationType = "owner_cancellation_compensation"
 	NotifReviewRequest                 NotificationType = "review_request"
 	NotifLowRatingWarning              NotificationType = "low_rating_warning"
 	NotifBathhouseDepublished          NotificationType = "bathhouse_depublished"
 	NotifBroadcast                     NotificationType = "broadcast"
 	NotifAutoScenario                  NotificationType = "auto_scenario"
+	NotifClientReview                  NotificationType = "client_review"
+	NotifReviewRevealed                NotificationType = "review_revealed"
 )
 
 func (t NotificationType) IsValid() bool {
@@ -71,7 +73,8 @@ func (t NotificationType) IsValid() bool {
 		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal,
 		NotifSavedSearchMatch,
 		NotifLowRatingWarning, NotifBathhouseDepublished,
-		NotifBroadcast, NotifAutoScenario:
+		NotifBroadcast, NotifAutoScenario,
+		NotifClientReview, NotifReviewRevealed:
 		return true
 	}
 	return false
@@ -161,7 +164,8 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 	case NotifSystem, NotifNewMessage, NotifPhotoVerified, NotifPhotoRejected,
 		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal,
 		NotifSavedSearchMatch,
-		NotifLowRatingWarning, NotifBathhouseDepublished:
+		NotifLowRatingWarning, NotifBathhouseDepublished,
+		NotifClientReview, NotifReviewRevealed:
 		return true
 	}
 	return false
