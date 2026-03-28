@@ -150,14 +150,14 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Create: `migrations/XXXX_admin_roles.up.sql`
 - Create: `frontend/src/pages/admin/RoleManagement.tsx`
 
-- [ ] Add admin sub-roles: super_admin, moderator, support_l1, support_l2, support_l3, finance
-- [ ] Create admin_permissions table (role, permission, resource)
-- [ ] Define permission matrix: who can access which admin endpoints
-- [ ] Add middleware RequireAdminPermission(permission) alongside RequireRole
-- [ ] Enforce mandatory 2FA for all admin sub-roles
-- [ ] Create admin role management page (assign roles, view permissions)
-- [ ] Write tests for permission checks
-- [ ] Run project test suite - must pass before task 8
+- [x] Add admin sub-roles: super_admin, moderator, support_l1, support_l2, support_l3, finance
+- [x] Create admin_permissions table (role, permission, resource)
+- [x] Define permission matrix: who can access which admin endpoints
+- [x] Add middleware RequireAdminPermission(permission) alongside RequireRole
+- [x] Enforce mandatory 2FA for all admin sub-roles
+- [x] Create admin role management page (assign roles, view permissions)
+- [x] Write tests for permission checks
+- [x] Run project test suite - must pass before task 8
 
 ### Task 8: Admin Mass Operations (FR admin-panel)
 

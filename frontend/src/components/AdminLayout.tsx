@@ -55,6 +55,7 @@ const adminMenuItems: MenuProps['items'] = [
   { key: '/admin/holidays', icon: <CalendarOutlined />, label: 'Праздники' },
   { key: '/admin/bookings', icon: <ScheduleOutlined />, label: 'Бронирования' },
   { key: '/admin/wallets', icon: <WalletOutlined />, label: 'Кошельки' },
+  { key: '/admin/roles', icon: <SafetyOutlined />, label: 'Роли' },
   { key: '/admin/notifications', icon: <BellOutlined />, label: 'Уведомления' },
   { key: '/admin/profile', icon: <UserOutlined />, label: 'Профиль' },
 ]

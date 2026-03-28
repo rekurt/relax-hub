@@ -97,5 +97,6 @@ var Module = fx.Module("handler",
 		NewObjectTypeHandler,
 		NewSavedCardHandler,
 		NewBankReconciliationHandler,
+		NewAdminRoleHandler,
 	),
 )

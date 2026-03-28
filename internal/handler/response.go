@@ -390,6 +390,12 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "region_same_as_current", err.Error())
 	case errors.Is(err, domain.ErrRegionInvalid):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "region_invalid", err.Error())
+	case errors.Is(err, domain.ErrAdminRoleNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "admin_role_not_found", err.Error())
+	case errors.Is(err, domain.ErrAdmin2FARequired):
+		writeErrorWithContext(w, r, http.StatusForbidden, "admin_2fa_required", err.Error())
+	case errors.Is(err, domain.ErrAdminPermissionDenied):
+		writeErrorWithContext(w, r, http.StatusForbidden, "admin_permission_denied", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

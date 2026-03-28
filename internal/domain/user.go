@@ -65,6 +65,7 @@ type User struct {
 	Phone               string
 	PhoneVerified       bool
 	Role                UserRole
+	AdminSubRole        AdminSubRole
 	IsActive            bool
 	AvatarURL           string
 	Bio                 string

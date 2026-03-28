@@ -72,6 +72,7 @@ import ObjectTypeManagement from '@/pages/admin/ObjectTypeManagement'
 import HolidayManagement from '@/pages/admin/HolidayManagement'
 import WalletManagement from '@/pages/admin/WalletManagement'
 import BookingManagement from '@/pages/admin/BookingManagement'
+import RoleManagement from '@/pages/admin/RoleManagement'
 import OAuthCallback from '@/pages/OAuthCallback'
 
 export default function AppRouter() {
@@ -179,6 +180,7 @@ export default function AppRouter() {
         <Route path="holidays" element={<HolidayManagement />} />
         <Route path="wallets" element={<WalletManagement />} />
         <Route path="bookings" element={<BookingManagement />} />
+        <Route path="roles" element={<RoleManagement />} />
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="profile" element={<AdminProfile />} />
       </Route>

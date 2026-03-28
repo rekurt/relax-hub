@@ -173,6 +173,12 @@ var (
 
 	ErrBankEntryNotFound      = errors.New("bank statement entry not found")
 	ErrBankEntryAlreadyMatched = errors.New("bank statement entry already matched")
+
+	ErrAdminRoleNotFound       = errors.New("admin role not found")
+	ErrAdmin2FARequired        = errors.New("admin accounts require two-factor authentication")
+	ErrAdminPermissionDenied   = errors.New("insufficient admin permissions")
+	ErrImportValidationFailed  = errors.New("import validation failed")
+	ErrImportFileTooLarge      = errors.New("import file too large")
 )
 
 // PaymentFailedError wraps ErrPaymentFailed with user-facing details.

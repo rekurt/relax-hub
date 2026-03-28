@@ -100,6 +100,12 @@ var Module = fx.Module("service",
 		fx.Annotate(NewSavedCardService, fx.As(new(SavedCardService))),
 		fx.Annotate(NewBankReconciliationService, fx.As(new(BankReconciliationService))),
 		fx.Annotate(
+			NewAdminRoleService,
+			fx.As(new(AdminRoleService)),
+			fx.As(new(middleware.AdminSubRoleResolver)),
+			fx.As(new(middleware.Admin2FAChecker)),
+		),
+		fx.Annotate(
 			func(escrowRepo repository.EscrowRepository, bookingRepo repository.BookingRepository, bhRepo repository.BathhouseRepository, walletSvc WalletService, cfg *config.Config, log *logger.Logger) EscrowService {
 				return NewEscrowService(escrowRepo, bookingRepo, bhRepo, walletSvc, log, cfg.Escrow.ClaimHours)
 			},

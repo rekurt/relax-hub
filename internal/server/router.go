@@ -88,7 +88,10 @@ type RouterParams struct {
 	ObjectTypeHandler        *handler.ObjectTypeHandler
 	SavedCardHandler              *handler.SavedCardHandler
 	BankReconciliationHandler    *handler.BankReconciliationHandler
+	AdminRoleHandler             *handler.AdminRoleHandler
 	AuditLogRepo              repository.AuditLogRepository
+	AdminSubRoleResolver  middleware.AdminSubRoleResolver
+	Admin2FAChecker       middleware.Admin2FAChecker
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
 }
@@ -529,140 +532,150 @@ func NewRouter(p RouterParams) http.Handler {
 		r.Route("/admin", func(r chi.Router) {
 			r.Use(auth)
 			r.Use(middleware.RequireRole(domain.RoleAdmin))
+			r.Use(middleware.RequireAdmin2FA(p.Admin2FAChecker))
+			r.Use(middleware.LoadAdminSubRole(p.AdminSubRoleResolver))
 			r.Use(middleware.AdminAudit(p.AuditLogRepo, p.Log))
 
-			r.Get("/users", p.AdminHandler.ListUsers)
-			r.Patch("/users/{id}/block", p.AdminHandler.BlockUser)
-			r.Patch("/users/{id}/unblock", p.AdminHandler.UnblockUser)
+			// Admin role management (super_admin only)
+			r.With(middleware.RequireAdminPermission(domain.PermAdminRolesManage)).Get("/roles", p.AdminRoleHandler.ListAdminUsers)
+			r.With(middleware.RequireAdminPermission(domain.PermAdminRolesManage)).Put("/roles/{id}", p.AdminRoleHandler.SetAdminSubRole)
+			r.With(middleware.RequireAdminPermission(domain.PermAdminRolesManage)).Get("/roles/permissions", p.AdminRoleHandler.GetPermissionsMatrix)
 
-			r.Get("/bathhouses", p.AdminHandler.ListBathhouses)
-			r.Patch("/bathhouses/{id}/approve", p.AdminHandler.ApproveBathhouse)
-			r.Patch("/bathhouses/{id}/reject", p.AdminHandler.RejectBathhouse)
+			// User management
+			r.With(middleware.RequireAdminPermission(domain.PermUserManage)).Get("/users", p.AdminHandler.ListUsers)
+			r.With(middleware.RequireAdminPermission(domain.PermUserManage)).Patch("/users/{id}/block", p.AdminHandler.BlockUser)
+			r.With(middleware.RequireAdminPermission(domain.PermUserManage)).Patch("/users/{id}/unblock", p.AdminHandler.UnblockUser)
 
-			r.Post("/cities", p.AdminHandler.CreateCity)
-			r.Put("/cities/{id}", p.AdminHandler.UpdateCity)
-			r.Delete("/cities/{id}", p.AdminHandler.DeleteCity)
+			// Bathhouse moderation
+			r.With(middleware.RequireAdminPermission(domain.PermBathhouseModerate)).Get("/bathhouses", p.AdminHandler.ListBathhouses)
+			r.With(middleware.RequireAdminPermission(domain.PermBathhouseModerate)).Patch("/bathhouses/{id}/approve", p.AdminHandler.ApproveBathhouse)
+			r.With(middleware.RequireAdminPermission(domain.PermBathhouseModerate)).Patch("/bathhouses/{id}/reject", p.AdminHandler.RejectBathhouse)
+
+			// City management
+			r.With(middleware.RequireAdminPermission(domain.PermCityManage)).Post("/cities", p.AdminHandler.CreateCity)
+			r.With(middleware.RequireAdminPermission(domain.PermCityManage)).Put("/cities/{id}", p.AdminHandler.UpdateCity)
+			r.With(middleware.RequireAdminPermission(domain.PermCityManage)).Delete("/cities/{id}", p.AdminHandler.DeleteCity)
 
 			// Review moderation
-			r.Get("/reviews", p.AdminHandler.ListReviews)
-			r.Get("/reviews/pending-count", p.AdminHandler.GetPendingCount)
-			r.Patch("/reviews/{id}/approve", p.AdminHandler.ApproveReview)
-			r.Patch("/reviews/{id}/reject", p.AdminHandler.RejectReview)
-			r.Post("/reviews/batch-approve", p.AdminHandler.BatchApproveReviews)
-			r.Post("/reviews/batch-reject", p.AdminHandler.BatchRejectReviews)
+			r.With(middleware.RequireAdminPermission(domain.PermReviewModerate)).Get("/reviews", p.AdminHandler.ListReviews)
+			r.With(middleware.RequireAdminPermission(domain.PermReviewModerate)).Get("/reviews/pending-count", p.AdminHandler.GetPendingCount)
+			r.With(middleware.RequireAdminPermission(domain.PermReviewModerate)).Patch("/reviews/{id}/approve", p.AdminHandler.ApproveReview)
+			r.With(middleware.RequireAdminPermission(domain.PermReviewModerate)).Patch("/reviews/{id}/reject", p.AdminHandler.RejectReview)
+			r.With(middleware.RequireAdminPermission(domain.PermReviewModerate)).Post("/reviews/batch-approve", p.AdminHandler.BatchApproveReviews)
+			r.With(middleware.RequireAdminPermission(domain.PermReviewModerate)).Post("/reviews/batch-reject", p.AdminHandler.BatchRejectReviews)
 
-			// Analytics (admin only)
-			r.Get("/analytics", p.AnalyticsHandler.GetAdminDashboard)
-			r.Get("/analytics/top", p.AnalyticsHandler.GetTopBathhouses)
-			r.Get("/analytics/funnel", p.AnalyticsHandler.GetConversionFunnel)
-			r.Get("/analytics/cohorts", p.AnalyticsHandler.GetCohortAnalysis)
-			r.Get("/analytics/geo", p.AnalyticsHandler.GetGeoDemandSupply)
-			r.Get("/analytics/wallet", p.AnalyticsHandler.GetWalletMetrics)
+			// Analytics
+			r.With(middleware.RequireAdminPermission(domain.PermAnalyticsView)).Get("/analytics", p.AnalyticsHandler.GetAdminDashboard)
+			r.With(middleware.RequireAdminPermission(domain.PermAnalyticsView)).Get("/analytics/top", p.AnalyticsHandler.GetTopBathhouses)
+			r.With(middleware.RequireAdminPermission(domain.PermAnalyticsView)).Get("/analytics/funnel", p.AnalyticsHandler.GetConversionFunnel)
+			r.With(middleware.RequireAdminPermission(domain.PermAnalyticsView)).Get("/analytics/cohorts", p.AnalyticsHandler.GetCohortAnalysis)
+			r.With(middleware.RequireAdminPermission(domain.PermAnalyticsView)).Get("/analytics/geo", p.AnalyticsHandler.GetGeoDemandSupply)
+			r.With(middleware.RequireAdminPermission(domain.PermAnalyticsView)).Get("/analytics/wallet", p.AnalyticsHandler.GetWalletMetrics)
 
-			// Complaints (admin only)
-			r.Get("/complaints", p.ComplaintHandler.List)
-			r.Get("/complaints/{id}", p.ComplaintHandler.GetByID)
-			r.Patch("/complaints/{id}/resolve", p.ComplaintHandler.Resolve)
-			r.Patch("/complaints/{id}/dismiss", p.ComplaintHandler.Dismiss)
+			// Complaints
+			r.With(middleware.RequireAdminPermission(domain.PermComplaintManage)).Get("/complaints", p.ComplaintHandler.List)
+			r.With(middleware.RequireAdminPermission(domain.PermComplaintManage)).Get("/complaints/{id}", p.ComplaintHandler.GetByID)
+			r.With(middleware.RequireAdminPermission(domain.PermComplaintManage)).Patch("/complaints/{id}/resolve", p.ComplaintHandler.Resolve)
+			r.With(middleware.RequireAdminPermission(domain.PermComplaintManage)).Patch("/complaints/{id}/dismiss", p.ComplaintHandler.Dismiss)
 
-			// Photo verification (admin only)
-			r.Get("/photos/pending", p.PhotoHandler.GetPending)
-			r.Patch("/photos/{id}/verify", p.PhotoHandler.Verify)
-			r.Patch("/photos/{id}/reject", p.PhotoHandler.Reject)
+			// Photo verification
+			r.With(middleware.RequireAdminPermission(domain.PermPhotoModerate)).Get("/photos/pending", p.PhotoHandler.GetPending)
+			r.With(middleware.RequireAdminPermission(domain.PermPhotoModerate)).Patch("/photos/{id}/verify", p.PhotoHandler.Verify)
+			r.With(middleware.RequireAdminPermission(domain.PermPhotoModerate)).Patch("/photos/{id}/reject", p.PhotoHandler.Reject)
 
-			// KYC moderation (admin only)
-			r.Get("/kyc/pending", p.KYCHandler.ListPendingKYC)
-			r.Patch("/kyc/{id}/approve", p.KYCHandler.ApproveKYC)
-			r.Patch("/kyc/{id}/reject", p.KYCHandler.RejectKYC)
+			// KYC moderation
+			r.With(middleware.RequireAdminPermission(domain.PermKYCModerate)).Get("/kyc/pending", p.KYCHandler.ListPendingKYC)
+			r.With(middleware.RequireAdminPermission(domain.PermKYCModerate)).Patch("/kyc/{id}/approve", p.KYCHandler.ApproveKYC)
+			r.With(middleware.RequireAdminPermission(domain.PermKYCModerate)).Patch("/kyc/{id}/reject", p.KYCHandler.RejectKYC)
 
-			// Audit log (admin only)
-			r.Get("/audit-log", p.AuditLogHandler.ListAdmin)
-			r.Get("/audit-log/actions", p.AuditLogHandler.ListAdminActions)
+			// Audit log
+			r.With(middleware.RequireAdminPermission(domain.PermAuditLogView)).Get("/audit-log", p.AuditLogHandler.ListAdmin)
+			r.With(middleware.RequireAdminPermission(domain.PermAuditLogView)).Get("/audit-log/actions", p.AuditLogHandler.ListAdminActions)
 
-			// Promo codes (admin only)
-			r.Post("/promo-codes", p.PromoHandler.CreateGlobal)
+			// Promo codes
+			r.With(middleware.RequireAdminPermission(domain.PermPromoManage)).Post("/promo-codes", p.PromoHandler.CreateGlobal)
 
-			// Service fee (admin only)
-			r.Get("/service-fee", p.ServiceFeeHandler.List)
-			r.Put("/service-fee", p.ServiceFeeHandler.Upsert)
+			// Service fee
+			r.With(middleware.RequireAdminPermission(domain.PermServiceFeeManage)).Get("/service-fee", p.ServiceFeeHandler.List)
+			r.With(middleware.RequireAdminPermission(domain.PermServiceFeeManage)).Put("/service-fee", p.ServiceFeeHandler.Upsert)
 
-			// Holidays (admin only)
-			r.Get("/holidays", p.HolidayHandler.ListHolidays)
-			r.Post("/holidays", p.HolidayHandler.CreateHoliday)
-			r.Put("/holidays/{id}", p.HolidayHandler.UpdateHoliday)
-			r.Delete("/holidays/{id}", p.HolidayHandler.DeleteHoliday)
+			// Holidays
+			r.With(middleware.RequireAdminPermission(domain.PermHolidayManage)).Get("/holidays", p.HolidayHandler.ListHolidays)
+			r.With(middleware.RequireAdminPermission(domain.PermHolidayManage)).Post("/holidays", p.HolidayHandler.CreateHoliday)
+			r.With(middleware.RequireAdminPermission(domain.PermHolidayManage)).Put("/holidays/{id}", p.HolidayHandler.UpdateHoliday)
+			r.With(middleware.RequireAdminPermission(domain.PermHolidayManage)).Delete("/holidays/{id}", p.HolidayHandler.DeleteHoliday)
 
-			// Amenities (admin only)
-			r.Get("/amenities", p.AmenityHandler.ListAmenities)
-			r.Post("/amenities", p.AmenityHandler.CreateAmenity)
-			r.Put("/amenities/{id}", p.AmenityHandler.UpdateAmenity)
-			r.Delete("/amenities/{id}", p.AmenityHandler.DeleteAmenity)
+			// Amenities
+			r.With(middleware.RequireAdminPermission(domain.PermAmenityManage)).Get("/amenities", p.AmenityHandler.ListAmenities)
+			r.With(middleware.RequireAdminPermission(domain.PermAmenityManage)).Post("/amenities", p.AmenityHandler.CreateAmenity)
+			r.With(middleware.RequireAdminPermission(domain.PermAmenityManage)).Put("/amenities/{id}", p.AmenityHandler.UpdateAmenity)
+			r.With(middleware.RequireAdminPermission(domain.PermAmenityManage)).Delete("/amenities/{id}", p.AmenityHandler.DeleteAmenity)
 
-			// Object types (admin only)
-			r.Get("/object-types", p.ObjectTypeHandler.ListObjectTypes)
-			r.Post("/object-types", p.ObjectTypeHandler.CreateObjectType)
-			r.Put("/object-types/{id}", p.ObjectTypeHandler.UpdateObjectType)
-			r.Delete("/object-types/{id}", p.ObjectTypeHandler.DeleteObjectType)
+			// Object types
+			r.With(middleware.RequireAdminPermission(domain.PermObjectTypeManage)).Get("/object-types", p.ObjectTypeHandler.ListObjectTypes)
+			r.With(middleware.RequireAdminPermission(domain.PermObjectTypeManage)).Post("/object-types", p.ObjectTypeHandler.CreateObjectType)
+			r.With(middleware.RequireAdminPermission(domain.PermObjectTypeManage)).Put("/object-types/{id}", p.ObjectTypeHandler.UpdateObjectType)
+			r.With(middleware.RequireAdminPermission(domain.PermObjectTypeManage)).Delete("/object-types/{id}", p.ObjectTypeHandler.DeleteObjectType)
 
 			// Admin booking management
-			r.Get("/bookings", p.BookingHandler.AdminListBookings)
-			r.Post("/bookings/{id}/cancel", p.BookingHandler.AdminCancel)
-			r.Post("/bookings/{id}/change-status", p.BookingHandler.AdminChangeStatus)
-			r.Post("/bookings/{id}/refund", p.PaymentHandler.AdminRefund)
+			r.With(middleware.RequireAdminPermission(domain.PermBookingManage)).Get("/bookings", p.BookingHandler.AdminListBookings)
+			r.With(middleware.RequireAdminPermission(domain.PermBookingManage)).Post("/bookings/{id}/cancel", p.BookingHandler.AdminCancel)
+			r.With(middleware.RequireAdminPermission(domain.PermBookingManage)).Post("/bookings/{id}/change-status", p.BookingHandler.AdminChangeStatus)
+			r.With(middleware.RequireAdminPermission(domain.PermBookingManage)).Post("/bookings/{id}/refund", p.PaymentHandler.AdminRefund)
 
-			// Support tickets (admin only)
-			r.Get("/tickets", p.TicketHandler.AdminListTickets)
-			r.Get("/tickets/stats", p.TicketHandler.AdminGetStats)
-			r.Get("/tickets/{id}", p.TicketHandler.AdminGetTicket)
-			r.Patch("/tickets/{id}/assign", p.TicketHandler.AdminAssignTicket)
-			r.Patch("/tickets/{id}/escalate", p.TicketHandler.AdminEscalateTicket)
-			r.Patch("/tickets/{id}/resolve", p.TicketHandler.AdminResolveTicket)
-			r.Post("/tickets/{id}/messages", p.TicketHandler.AdminAddMessage)
+			// Support tickets
+			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Get("/tickets", p.TicketHandler.AdminListTickets)
+			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Get("/tickets/stats", p.TicketHandler.AdminGetStats)
+			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Get("/tickets/{id}", p.TicketHandler.AdminGetTicket)
+			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Patch("/tickets/{id}/assign", p.TicketHandler.AdminAssignTicket)
+			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Patch("/tickets/{id}/escalate", p.TicketHandler.AdminEscalateTicket)
+			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Patch("/tickets/{id}/resolve", p.TicketHandler.AdminResolveTicket)
+			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Post("/tickets/{id}/messages", p.TicketHandler.AdminAddMessage)
 
-			// Disputes (admin only)
-			r.Get("/disputes", p.DisputeHandler.AdminListDisputes)
-			r.Get("/disputes/{id}", p.DisputeHandler.AdminGetDispute)
-			r.Patch("/disputes/{id}/assign", p.DisputeHandler.AdminAssignDispute)
-			r.Patch("/disputes/{id}/resolve", p.DisputeHandler.AdminResolveDispute)
-			r.Patch("/disputes/{id}/close", p.DisputeHandler.AdminCloseDispute)
+			// Disputes
+			r.With(middleware.RequireAdminPermission(domain.PermDisputeManage)).Get("/disputes", p.DisputeHandler.AdminListDisputes)
+			r.With(middleware.RequireAdminPermission(domain.PermDisputeManage)).Get("/disputes/{id}", p.DisputeHandler.AdminGetDispute)
+			r.With(middleware.RequireAdminPermission(domain.PermDisputeManage)).Patch("/disputes/{id}/assign", p.DisputeHandler.AdminAssignDispute)
+			r.With(middleware.RequireAdminPermission(domain.PermDisputeManage)).Patch("/disputes/{id}/resolve", p.DisputeHandler.AdminResolveDispute)
+			r.With(middleware.RequireAdminPermission(domain.PermDisputeManage)).Patch("/disputes/{id}/close", p.DisputeHandler.AdminCloseDispute)
 
-			// Anti-fraud (admin only)
-			r.Get("/antifraud/flags", p.AntiFraudHandler.ListFlags)
-			r.Patch("/antifraud/flags/{id}", p.AntiFraudHandler.UpdateFlag)
+			// Anti-fraud
+			r.With(middleware.RequireAdminPermission(domain.PermAntiFraudManage)).Get("/antifraud/flags", p.AntiFraudHandler.ListFlags)
+			r.With(middleware.RequireAdminPermission(domain.PermAntiFraudManage)).Patch("/antifraud/flags/{id}", p.AntiFraudHandler.UpdateFlag)
 
-			// Chat content filtering (admin only)
-			r.Get("/chat/filtered", p.AntiFraudHandler.ListFilteredMessages)
+			// Chat content filtering
+			r.With(middleware.RequireAdminPermission(domain.PermAntiFraudManage)).Get("/chat/filtered", p.AntiFraudHandler.ListFilteredMessages)
 
-			// Platform settings (admin only)
-			r.Get("/settings", p.PlatformSettingsHandler.List)
-			r.Put("/settings/{key}", p.PlatformSettingsHandler.Update)
+			// Platform settings
+			r.With(middleware.RequireAdminPermission(domain.PermSettingsManage)).Get("/settings", p.PlatformSettingsHandler.List)
+			r.With(middleware.RequireAdminPermission(domain.PermSettingsManage)).Put("/settings/{key}", p.PlatformSettingsHandler.Update)
 
-			// Feature flags (admin only)
-			r.Get("/feature-flags", p.FeatureFlagHandler.List)
-			r.Put("/feature-flags/{key}", p.FeatureFlagHandler.Update)
+			// Feature flags
+			r.With(middleware.RequireAdminPermission(domain.PermFeatureFlagsManage)).Get("/feature-flags", p.FeatureFlagHandler.List)
+			r.With(middleware.RequireAdminPermission(domain.PermFeatureFlagsManage)).Put("/feature-flags/{key}", p.FeatureFlagHandler.Update)
 
-			// Force majeure (admin only)
-			r.Post("/force-majeure", p.ForceMajeureHandler.Activate)
-			r.Get("/force-majeure", p.ForceMajeureHandler.List)
+			// Force majeure
+			r.With(middleware.RequireAdminPermission(domain.PermForceMajeureManage)).Post("/force-majeure", p.ForceMajeureHandler.Activate)
+			r.With(middleware.RequireAdminPermission(domain.PermForceMajeureManage)).Get("/force-majeure", p.ForceMajeureHandler.List)
 
-			// Reconciliation (admin only)
-			r.Get("/reconciliation/summary", p.ReconciliationHandler.GetFloatSummary)
-			r.Post("/reconciliation/snapshot", p.ReconciliationHandler.TakeSnapshot)
-			r.Get("/reconciliation/snapshots", p.ReconciliationHandler.ListSnapshots)
-			r.Post("/reconciliation/reconcile", p.ReconciliationHandler.Reconcile)
-			r.Get("/reconciliation/reports", p.ReconciliationHandler.ListReports)
+			// Reconciliation
+			r.With(middleware.RequireAdminPermission(domain.PermReconciliationView)).Get("/reconciliation/summary", p.ReconciliationHandler.GetFloatSummary)
+			r.With(middleware.RequireAdminPermission(domain.PermReconciliationView)).Post("/reconciliation/snapshot", p.ReconciliationHandler.TakeSnapshot)
+			r.With(middleware.RequireAdminPermission(domain.PermReconciliationView)).Get("/reconciliation/snapshots", p.ReconciliationHandler.ListSnapshots)
+			r.With(middleware.RequireAdminPermission(domain.PermReconciliationView)).Post("/reconciliation/reconcile", p.ReconciliationHandler.Reconcile)
+			r.With(middleware.RequireAdminPermission(domain.PermReconciliationView)).Get("/reconciliation/reports", p.ReconciliationHandler.ListReports)
 
-			// Bank statement reconciliation (admin only)
-			r.Post("/finance/bank-statement", p.BankReconciliationHandler.UploadBankStatement)
-			r.Get("/finance/reconciliation", p.BankReconciliationHandler.ListUnmatched)
-			r.Put("/finance/reconciliation/{id}/match", p.BankReconciliationHandler.ManualMatch)
+			// Bank statement reconciliation
+			r.With(middleware.RequireAdminPermission(domain.PermFinanceManage)).Post("/finance/bank-statement", p.BankReconciliationHandler.UploadBankStatement)
+			r.With(middleware.RequireAdminPermission(domain.PermFinanceManage)).Get("/finance/reconciliation", p.BankReconciliationHandler.ListUnmatched)
+			r.With(middleware.RequireAdminPermission(domain.PermFinanceManage)).Put("/finance/reconciliation/{id}/match", p.BankReconciliationHandler.ManualMatch)
 
 			// Admin wallet management
-			r.Get("/wallets/{id}", p.WalletHandler.AdminGetWallet)
-			r.Post("/wallets/{id}/credit", p.WalletHandler.AdminCreditWallet)
-			r.Post("/wallets/{id}/debit", p.WalletHandler.AdminDebitWallet)
-			r.Post("/wallets/{id}/freeze", p.WalletHandler.AdminFreezeWallet)
-			r.Post("/wallets/{id}/unfreeze", p.WalletHandler.AdminUnfreezeWallet)
+			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Get("/wallets/{id}", p.WalletHandler.AdminGetWallet)
+			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/credit", p.WalletHandler.AdminCreditWallet)
+			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/debit", p.WalletHandler.AdminDebitWallet)
+			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/freeze", p.WalletHandler.AdminFreezeWallet)
+			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/unfreeze", p.WalletHandler.AdminUnfreezeWallet)
 		})
 	})
 

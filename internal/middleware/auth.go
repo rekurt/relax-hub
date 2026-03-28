@@ -15,9 +15,10 @@ import (
 type contextKey string
 
 const (
-	userIDKey    contextKey = "user_id"
-	roleKey      contextKey = "user_role"
-	sessionIDKey contextKey = "session_id"
+	userIDKey       contextKey = "user_id"
+	roleKey         contextKey = "user_role"
+	sessionIDKey    contextKey = "session_id"
+	adminSubRoleKey contextKey = "admin_sub_role"
 )
 
 func GetUserID(ctx context.Context) uuid.UUID {
@@ -64,6 +65,19 @@ func SetUserIDForTesting(ctx context.Context, userID uuid.UUID) context.Context 
 // SetUserRoleForTesting is an alias for SetUserRole, kept for test readability.
 func SetUserRoleForTesting(ctx context.Context, role domain.UserRole) context.Context {
 	return SetUserRole(ctx, role)
+}
+
+// GetAdminSubRole returns the admin sub-role from context.
+func GetAdminSubRole(ctx context.Context) domain.AdminSubRole {
+	if r, ok := ctx.Value(adminSubRoleKey).(domain.AdminSubRole); ok {
+		return r
+	}
+	return ""
+}
+
+// SetAdminSubRole sets the admin sub-role in context.
+func SetAdminSubRole(ctx context.Context, subRole domain.AdminSubRole) context.Context {
+	return context.WithValue(ctx, adminSubRoleKey, subRole)
 }
 
 type AuthService interface {
