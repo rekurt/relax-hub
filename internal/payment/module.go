@@ -8,10 +8,11 @@ import (
 var Module = fx.Module("payment",
 	fx.Provide(
 		func(cfg *config.Config) PaymentProvider {
-			return NewYooKassaProvider(
+			base := NewYooKassaProvider(
 				cfg.Payment.YooKassa.ShopID,
 				cfg.Payment.YooKassa.SecretKey,
 			)
+			return NewRetryingProvider(base, DefaultRetryConfig)
 		},
 	),
 )

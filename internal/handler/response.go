@@ -18,8 +18,9 @@ type APIResponse struct {
 }
 
 type APIError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code       string `json:"code"`
+	Message    string `json:"message"`
+	Suggestion string `json:"suggestion,omitempty"`
 }
 
 type Meta struct {
@@ -186,6 +187,20 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 	case errors.Is(err, domain.ErrRefundExceedsAmount):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "refund_exceeds_amount", err.Error())
 	case errors.Is(err, domain.ErrPaymentFailed):
+		var pfe *domain.PaymentFailedError
+		if errors.As(err, &pfe) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(w).Encode(APIResponse{
+				Success: false,
+				Error: &APIError{
+					Code:       pfe.Code,
+					Message:    pfe.MessageRU,
+					Suggestion: pfe.Suggestion,
+				},
+			})
+			return
+		}
 		writeErrorWithContext(w, r, http.StatusBadRequest, "payment_failed", err.Error())
 	case errors.Is(err, domain.ErrWalletNotFound):
 		writeErrorWithContext(w, r, http.StatusNotFound, "wallet_not_found", err.Error())

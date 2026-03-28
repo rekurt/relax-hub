@@ -228,12 +228,12 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `internal/service/payment_service.go` (handle retryable vs permanent errors)
 - Modify: `internal/handler/payment_handler.go` (user-friendly error messages in Russian)
 
-- [ ] Classify payment errors: retryable (timeout, network) vs permanent (insufficient funds, blocked card)
-- [ ] Implement retry for retryable errors: up to 3 attempts with 2s, 4s, 8s delays
-- [ ] Map provider error codes to Russian user-friendly messages
-- [ ] Return helpful suggestions (e.g., "Попробуйте другую карту")
-- [ ] Write tests for retry logic and error classification
-- [ ] Run project test suite - must pass before next task
+- [x] Classify payment errors: retryable (timeout, network) vs permanent (insufficient funds, blocked card)
+- [x] Implement retry for retryable errors: up to 3 attempts with 2s, 4s, 8s delays
+- [x] Map provider error codes to Russian user-friendly messages
+- [x] Return helpful suggestions (e.g., "Попробуйте другую карту")
+- [x] Write tests for retry logic and error classification
+- [x] Run project test suite - must pass before next task
 
 ### Task 11: Mass CSV/Excel import for listings (FR-033)
 

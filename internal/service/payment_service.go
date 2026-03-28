@@ -173,7 +173,12 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 				"payment_id", p.ID, "error", updErr)
 		}
 		s.logger.Error("payment provider error", "payment_id", p.ID, "error", err)
-		return "", domain.ErrPaymentFailed
+		info := payment.ClassifyError(err)
+		return "", &domain.PaymentFailedError{
+			Code:       info.Code,
+			MessageRU:  info.MessageRU,
+			Suggestion: info.Suggestion,
+		}
 	}
 
 	// Update with external ID and processing status
@@ -383,7 +388,12 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 				"payment_id", p.ID, "error", updErr)
 		}
 		s.logger.Error("payment provider error", "payment_id", p.ID, "error", err)
-		return "", domain.ErrPaymentFailed
+		info := payment.ClassifyError(err)
+		return "", &domain.PaymentFailedError{
+			Code:       info.Code,
+			MessageRU:  info.MessageRU,
+			Suggestion: info.Suggestion,
+		}
 	}
 
 	if err := s.paymentRepo.UpdateStatus(ctx, p.ID, domain.PaymentProcessing, result.ExternalID); err != nil {

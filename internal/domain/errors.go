@@ -162,3 +162,13 @@ var (
 	ErrRegionSameAsCurrent  = errors.New("already in the requested region")
 	ErrRegionInvalid        = errors.New("invalid region")
 )
+
+// PaymentFailedError wraps ErrPaymentFailed with user-facing details.
+type PaymentFailedError struct {
+	Code       string // e.g. "insufficient_funds", "timeout"
+	MessageRU  string // user-friendly Russian message
+	Suggestion string // e.g. "Попробуйте другую карту"
+}
+
+func (e *PaymentFailedError) Error() string { return e.MessageRU }
+func (e *PaymentFailedError) Unwrap() error { return ErrPaymentFailed }
