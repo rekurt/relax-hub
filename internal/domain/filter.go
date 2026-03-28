@@ -27,6 +27,7 @@ type BathhouseFilter struct {
 	LastMinute        *bool            `json:"last_minute,omitempty"`
 	Status            *BathhouseStatus `json:"status,omitempty"`
 	ShowAllStatuses   bool             `json:"show_all_statuses,omitempty"` // when true, don't filter by status even if Status is nil
+	IsochroneWKT      *string          `json:"isochrone_wkt,omitempty"`     // WKT POLYGON for isochrone-based filtering
 	SortBy            string           `json:"sort_by,omitempty"`           // "relevance", "price_asc", "price_desc", "rating", "distance", "newest"
 	SortOrder         string           `json:"sort_order,omitempty"`        // "asc", "desc"
 	Page              int              `json:"page,omitempty"`

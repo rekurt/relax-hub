@@ -33,6 +33,12 @@ type Config struct {
 	Review       ReviewConfig       `mapstructure:"review"`
 	Wallet       WalletConfig       `mapstructure:"wallet"`
 	Cron         CronConfig         `mapstructure:"cron"`
+	Geo          GeoConfig          `mapstructure:"geo"`
+}
+
+type GeoConfig struct {
+	IsochroneAPIURL string `mapstructure:"isochrone_api_url"` // OpenRouteService base URL
+	IsochroneAPIKey string `mapstructure:"isochrone_api_key"` // ORS API key
 }
 
 type CronConfig struct {
@@ -230,6 +236,8 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("cron.enabled", true)
 	v.SetDefault("cron.timezone", "Europe/Moscow")
 	v.SetDefault("frontend_url", "http://localhost:3000")
+	v.SetDefault("geo.isochrone_api_url", "https://api.openrouteservice.org")
+	v.SetDefault("geo.isochrone_api_key", "")
 
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {

@@ -373,14 +373,14 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `frontend/src/pages/client/BathhouseSearch.tsx`
 - Modify: `frontend/src/components/BathhouseMap.tsx` (isochrone polygon)
 
-- [ ] Integrate with Yandex Maps isochrone API (or OpenRouteService)
-- [ ] API: GET /api/v1/isochrone?lat=&lon=&mode=car|transit&minutes=15
-- [ ] Cache isochrone polygons in Redis (key: lat_lon_mode_minutes, TTL 1h)
-- [ ] Filter search results: ST_Within(bathhouse.location, isochrone_polygon)
-- [ ] Display isochrone polygon on map
-- [ ] Add "travel time" filter: dropdown with 15/30/45/60 min, mode car/transit
-- [ ] Write tests for isochrone filtering
-- [ ] Run project test suite - must pass before task 19
+- [x] Integrate with Yandex Maps isochrone API (or OpenRouteService)
+- [x] API: GET /api/v1/isochrone?lat=&lon=&mode=car|transit&minutes=15
+- [x] Cache isochrone polygons in Redis (key: lat_lon_mode_minutes, TTL 1h)
+- [x] Filter search results: ST_Within(bathhouse.location, isochrone_polygon)
+- [x] Display isochrone polygon on map
+- [x] Add "travel time" filter: dropdown with 15/30/45/60 min, mode car/transit
+- [x] Write tests for isochrone filtering
+- [x] Run project test suite - must pass before task 19
 
 ### Task 19: Transport Accessibility (FR-054)
 

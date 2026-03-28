@@ -8,6 +8,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/cron"
 	"github.com/nikitaaldaev/bani/internal/database"
 	"github.com/nikitaaldaev/bani/internal/fiscal"
+	"github.com/nikitaaldaev/bani/internal/geo"
 	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
@@ -39,6 +40,7 @@ func New(cfg *config.Config) *fx.App {
 		sms.Module,
 		service.Module,
 		pms.Module,
+		geo.Module,
 		antifraud.Module,
 		handler.Module,
 		cron.Module,

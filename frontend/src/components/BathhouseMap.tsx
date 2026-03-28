@@ -22,13 +22,18 @@ interface YMaps {
     options?: Record<string, unknown>,
   ) => YPlacemark
   Clusterer: new (options?: Record<string, unknown>) => YClusterer
+  Polygon: new (
+    coordinates: number[][][],
+    props?: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ) => YGeoObject
   templateLayoutFactory: {
     createClass(template: string): unknown
   }
 }
 
 interface YMap {
-  geoObjects: { add(obj: unknown): void; removeAll(): void }
+  geoObjects: { add(obj: unknown): void; remove(obj: unknown): void; removeAll(): void }
   events: { add(event: string, handler: () => void): void }
   getBounds(): number[][]
   getCenter(): number[]
@@ -45,6 +50,10 @@ interface YClusterer {
   removeAll(): void
 }
 
+interface YGeoObject {
+  events: { add(event: string, handler: () => void): void }
+}
+
 interface BathhouseMapProps {
   bathhouses: InternalHandlerBathhouseResponse[]
   highlightedId?: string | null
@@ -53,6 +62,7 @@ interface BathhouseMapProps {
   onMarkerHover?: (id: string | null) => void
   center?: { lat: number; lng: number }
   zoom?: number
+  isochronePolygon?: number[][] | null // [lat, lng] pairs for Yandex Maps
   style?: React.CSSProperties
 }
 
@@ -92,11 +102,13 @@ export default function BathhouseMap({
   onMarkerHover,
   center,
   zoom,
+  isochronePolygon,
   style,
 }: BathhouseMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<YMap | null>(null)
   const clustererRef = useRef<YClusterer | null>(null)
+  const polygonRef = useRef<YGeoObject | null>(null)
   const [loading, setLoading] = useState(true)
   const [showSearchArea, setShowSearchArea] = useState(false)
 
@@ -225,6 +237,33 @@ export default function BathhouseMap({
 
     clustererRef.current.add(placemarks)
   }, [bathhouses, highlightedId, onMarkerClick, onMarkerHover])
+
+  // Update isochrone polygon overlay
+  useEffect(() => {
+    if (!mapRef.current || !window.ymaps) return
+
+    // Remove previous polygon
+    if (polygonRef.current) {
+      mapRef.current.geoObjects.remove(polygonRef.current)
+      polygonRef.current = null
+    }
+
+    // Add new polygon if present
+    if (isochronePolygon && isochronePolygon.length > 2) {
+      const polygon = new window.ymaps.Polygon(
+        [isochronePolygon],
+        { hintContent: 'Зона доступности' },
+        {
+          fillColor: '#722ed120',
+          strokeColor: '#722ed1',
+          strokeWidth: 2,
+          strokeStyle: 'shortdash',
+        },
+      )
+      polygonRef.current = polygon
+      mapRef.current.geoObjects.add(polygon)
+    }
+  }, [isochronePolygon])
 
   return (
     <div style={{ position: 'relative', ...style }}>

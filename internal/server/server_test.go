@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/geo"
 	"github.com/nikitaaldaev/bani/internal/handler"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
@@ -145,6 +146,7 @@ func testRouterParams() server.RouterParams {
 		SessionHandler:     handler.NewSessionHandler(nil),
 		SavedSearchHandler:  handler.NewSavedSearchHandler(nil, nil),
 		ClientReviewHandler: handler.NewClientReviewHandler(nil, logger.New(logger.LevelError)),
+		IsochroneHandler:    handler.NewIsochroneHandler(geo.NewIsochroneService(nil, log, "", "")),
 	}
 }
 

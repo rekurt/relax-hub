@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
   Typography,
   Input,
@@ -28,6 +28,8 @@ import {
   UnorderedListOutlined,
   EnvironmentFilled,
   SplitCellsOutlined,
+  CarOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useGetBathhouses } from '@/api/generated/bathhouses/bathhouses'
@@ -36,6 +38,7 @@ import type { GetBathhousesParams } from '@/api/generated/model'
 import BathhouseCard from '@/components/BathhouseCard'
 import BathhouseMap from '@/components/BathhouseMap'
 import { formatPrice } from '@/lib/format'
+import { axiosInstance } from '@/api/axios-instance'
 
 const { Title } = Typography
 
@@ -48,12 +51,30 @@ const SORT_OPTIONS = [
 ]
 
 type ViewMode = 'list' | 'map' | 'split'
+type GeoMode = 'radius' | 'travel_time'
 
 const VIEW_MODE_OPTIONS = [
   { value: 'list', icon: <UnorderedListOutlined />, label: 'Список' },
   { value: 'split', icon: <SplitCellsOutlined />, label: 'Сплит' },
   { value: 'map', icon: <EnvironmentFilled />, label: 'Карта' },
 ]
+
+const TRAVEL_TIME_OPTIONS = [
+  { value: 15, label: '15 мин' },
+  { value: 30, label: '30 мин' },
+  { value: 45, label: '45 мин' },
+  { value: 60, label: '60 мин' },
+]
+
+const TRAVEL_MODE_OPTIONS = [
+  { value: 'car', label: 'На машине', icon: <CarOutlined /> },
+  { value: 'transit', label: 'Пешком/транспорт', icon: <ClockCircleOutlined /> },
+]
+
+interface IsochroneData {
+  coordinates: number[][]
+  wkt: string
+}
 
 function parseSortOption(value: string): { sort_by: string; sort_order: string } {
   const lastUnderscore = value.lastIndexOf('_')
@@ -77,6 +98,13 @@ export default function BathhouseSearch() {
   const [compareIds, setCompareIds] = useState<string[]>([])
   const [highlightedId, setHighlightedId] = useState<string | null>(null)
 
+  // Isochrone state
+  const [geoMode, setGeoMode] = useState<GeoMode>('radius')
+  const [travelMode, setTravelMode] = useState<string>('car')
+  const [travelMinutes, setTravelMinutes] = useState<number>(15)
+  const [isochroneData, setIsochroneData] = useState<IsochroneData | null>(null)
+  const [isochroneLoading, setIsochroneLoading] = useState(false)
+
   const navigate = useNavigate()
   const { message } = App.useApp()
   const { data: citiesData } = useGetCities()
@@ -91,23 +119,76 @@ export default function BathhouseSearch() {
     sort_order,
     q: search || undefined,
     ...filters,
-    ...(geoEnabled && geoCoords ? { lat: geoCoords.lat, lng: geoCoords.lng, radius_km: filters.radius_km ?? 10 } : {}),
+    ...(geoEnabled && geoCoords && geoMode === 'radius'
+      ? { lat: geoCoords.lat, lng: geoCoords.lng, radius_km: filters.radius_km ?? 10 }
+      : {}),
+    ...(geoEnabled && geoCoords && geoMode === 'travel_time' && isochroneData
+      ? { lat: geoCoords.lat, lng: geoCoords.lng, isochrone_wkt: isochroneData.wkt }
+      : {}),
   }
 
-  const { data, isLoading } = useGetBathhouses(queryParams)
+  const { data, isLoading } = useGetBathhouses(queryParams as GetBathhousesParams)
   const bathhouses = data?.data ?? []
   const meta = data?.meta
+
+  const fetchIsochrone = useCallback(async (lat: number, lng: number, mode: string, minutes: number) => {
+    setIsochroneLoading(true)
+    try {
+      const resp = await axiosInstance.get('/isochrone', {
+        params: { lat, lon: lng, mode, minutes },
+      })
+      const result = resp.data?.data ?? resp.data
+      if (result?.coordinates && result?.wkt) {
+        setIsochroneData({ coordinates: result.coordinates, wkt: result.wkt })
+      }
+    } catch {
+      message.error('Не удалось построить зону доступности')
+      setIsochroneData(null)
+    } finally {
+      setIsochroneLoading(false)
+    }
+  }, [message])
 
   const handleGeoSearch = () => {
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setGeoCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        setGeoCoords(coords)
         setGeoEnabled(true)
         setPage(1)
+        if (geoMode === 'travel_time') {
+          fetchIsochrone(coords.lat, coords.lng, travelMode, travelMinutes)
+        }
       },
       () => {/* geolocation denied - ignore */},
     )
+  }
+
+  const handleGeoModeChange = (mode: GeoMode) => {
+    setGeoMode(mode)
+    if (mode === 'travel_time' && geoCoords) {
+      fetchIsochrone(geoCoords.lat, geoCoords.lng, travelMode, travelMinutes)
+    } else {
+      setIsochroneData(null)
+    }
+    setPage(1)
+  }
+
+  const handleTravelModeChange = (mode: string) => {
+    setTravelMode(mode)
+    if (geoCoords && geoMode === 'travel_time') {
+      fetchIsochrone(geoCoords.lat, geoCoords.lng, mode, travelMinutes)
+    }
+    setPage(1)
+  }
+
+  const handleTravelMinutesChange = (minutes: number) => {
+    setTravelMinutes(minutes)
+    if (geoCoords && geoMode === 'travel_time') {
+      fetchIsochrone(geoCoords.lat, geoCoords.lng, travelMode, minutes)
+    }
+    setPage(1)
   }
 
   const updateFilter = (key: keyof GetBathhousesParams, value: unknown) => {
@@ -135,6 +216,7 @@ export default function BathhouseSearch() {
   }
 
   const handleBoundsChange = (bounds: { north: number; south: number; east: number; west: number }) => {
+    if (geoMode === 'travel_time') return // Don't override isochrone with bounds
     setFilters((prev) => ({
       ...prev,
       lat: (bounds.north + bounds.south) / 2,
@@ -159,8 +241,13 @@ export default function BathhouseSearch() {
     navigate(`/client/bathhouse/${id}`)
   }
 
+  // Polygon for map display (convert [lng, lat] -> [lat, lng] for Yandex Maps)
+  const isochronePolygon: number[][] | null = isochroneData?.coordinates
+    ? isochroneData.coordinates.map((coord: number[]) => [coord[1] ?? 0, coord[0] ?? 0] as [number, number])
+    : null
+
   const listContent = (
-    <Spin spinning={isLoading}>
+    <Spin spinning={isLoading || isochroneLoading}>
       {bathhouses.length === 0 && !isLoading ? (
         <Empty description="Бани не найдены" />
       ) : (
@@ -313,6 +400,21 @@ export default function BathhouseSearch() {
                     </Col>
                     {geoEnabled && (
                       <Col xs={24} sm={12}>
+                        <Typography.Text type="secondary">Способ поиска</Typography.Text>
+                        <Segmented
+                          block
+                          options={[
+                            { value: 'radius', label: 'По радиусу' },
+                            { value: 'travel_time', label: 'По времени пути' },
+                          ]}
+                          value={geoMode}
+                          onChange={(v) => handleGeoModeChange(v as GeoMode)}
+                          style={{ marginTop: 4 }}
+                        />
+                      </Col>
+                    )}
+                    {geoEnabled && geoMode === 'radius' && (
+                      <Col xs={24} sm={12}>
                         <Typography.Text type="secondary">Радиус (км)</Typography.Text>
                         <InputNumber
                           min={1}
@@ -322,6 +424,28 @@ export default function BathhouseSearch() {
                           style={{ width: '100%' }}
                         />
                       </Col>
+                    )}
+                    {geoEnabled && geoMode === 'travel_time' && (
+                      <>
+                        <Col xs={12} sm={6}>
+                          <Typography.Text type="secondary">Способ</Typography.Text>
+                          <Select
+                            style={{ width: '100%' }}
+                            value={travelMode}
+                            onChange={handleTravelModeChange}
+                            options={TRAVEL_MODE_OPTIONS}
+                          />
+                        </Col>
+                        <Col xs={12} sm={6}>
+                          <Typography.Text type="secondary">Время в пути</Typography.Text>
+                          <Select
+                            style={{ width: '100%' }}
+                            value={travelMinutes}
+                            onChange={handleTravelMinutesChange}
+                            options={TRAVEL_TIME_OPTIONS}
+                          />
+                        </Col>
+                      </>
                     )}
                     <Col xs={24}>
                       <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>Удобства</Typography.Text>
@@ -392,6 +516,7 @@ export default function BathhouseSearch() {
           onMarkerClick={handleMarkerClick}
           onMarkerHover={setHighlightedId}
           center={geoCoords ?? undefined}
+          isochronePolygon={isochronePolygon}
           style={{ height: 600, borderRadius: 8, overflow: 'hidden' }}
         />
       )}
@@ -409,6 +534,7 @@ export default function BathhouseSearch() {
               onMarkerClick={handleMarkerClick}
               onMarkerHover={setHighlightedId}
               center={geoCoords ?? undefined}
+              isochronePolygon={isochronePolygon}
               style={{ height: 700, borderRadius: 8, overflow: 'hidden' }}
             />
           </Col>

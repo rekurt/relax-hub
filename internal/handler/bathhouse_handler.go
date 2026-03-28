@@ -420,6 +420,9 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 	if v := q.Get("q"); v != "" {
 		filter.SearchQuery = &v
 	}
+	if v := q.Get("isochrone_wkt"); v != "" {
+		filter.IsochroneWKT = &v
+	}
 
 	result, err := h.bathhouseService.Search(r.Context(), filter)
 	if err == nil && filter.SearchQuery != nil && h.suggestionService != nil {

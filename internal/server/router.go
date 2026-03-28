@@ -94,6 +94,7 @@ type RouterParams struct {
 	FAQHandler                   *handler.FAQHandler
 	WebhookHandler               *handler.WebhookHandler
 	PMSHandler                   *handler.PMSHandler
+	IsochroneHandler             *handler.IsochroneHandler
 	AuditLogRepo              repository.AuditLogRepository
 	AdminSubRoleResolver  middleware.AdminSubRoleResolver
 	Admin2FAChecker       middleware.Admin2FAChecker
@@ -197,6 +198,9 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// Search suggestions (public)
 		r.Get("/search/suggestions", p.SearchHandler.GetSuggestions)
+
+		// Isochrone (public)
+		r.Get("/isochrone", p.IsochroneHandler.GetIsochrone)
 
 		// Bathhouse comparison (public)
 		r.Post("/bathhouses/compare", p.ComparisonHandler.Compare)
