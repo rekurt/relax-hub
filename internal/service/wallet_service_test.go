@@ -457,3 +457,201 @@ func TestWalletService_Spend_WalletNotFound(t *testing.T) {
 		t.Errorf("err = %v, want ErrWalletNotFound", err)
 	}
 }
+
+func TestWalletService_AdminCredit_Success(t *testing.T) {
+	env := newWalletTestEnv()
+	wallet := createTestWallet(t, env)
+	adminID := uuid.New()
+
+	tx, err := env.svc.AdminCredit(context.Background(), wallet.ID, 200_000, "компенсация", adminID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if tx.Type != domain.WalletTxAdminCredit {
+		t.Errorf("type = %v, want admin_credit", tx.Type)
+	}
+	if tx.Amount != 200_000 {
+		t.Errorf("amount = %d, want 200000", tx.Amount)
+	}
+	if tx.BalanceAfter != 200_000 {
+		t.Errorf("balance_after = %d, want 200000", tx.BalanceAfter)
+	}
+
+	balance, err := env.svc.GetBalance(context.Background(), wallet.UserID)
+	if err != nil {
+		t.Fatalf("get balance: %v", err)
+	}
+	if balance.Available != 200_000 {
+		t.Errorf("available = %d, want 200000", balance.Available)
+	}
+}
+
+func TestWalletService_AdminCredit_InvalidAmount(t *testing.T) {
+	env := newWalletTestEnv()
+	wallet := createTestWallet(t, env)
+	adminID := uuid.New()
+
+	_, err := env.svc.AdminCredit(context.Background(), wallet.ID, 0, "test", adminID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("err = %v, want ErrInvalidInput", err)
+	}
+
+	_, err = env.svc.AdminCredit(context.Background(), wallet.ID, -100, "test", adminID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("err = %v, want ErrInvalidInput", err)
+	}
+}
+
+func TestWalletService_AdminCredit_ExceedsLimit(t *testing.T) {
+	env := newWalletTestEnv()
+	wallet := createTestWallet(t, env)
+	adminID := uuid.New()
+
+	// Credit close to max
+	_, err := env.svc.AdminCredit(context.Background(), wallet.ID, 9_500_000, "test", adminID)
+	if err != nil {
+		t.Fatalf("first credit: %v", err)
+	}
+
+	// Try to exceed 10,000,000 (100,000 RUB)
+	_, err = env.svc.AdminCredit(context.Background(), wallet.ID, 1_000_000, "test", adminID)
+	if !errors.Is(err, domain.ErrWalletLimitExceeded) {
+		t.Errorf("err = %v, want ErrWalletLimitExceeded", err)
+	}
+}
+
+func TestWalletService_AdminCredit_WalletNotFound(t *testing.T) {
+	env := newWalletTestEnv()
+	adminID := uuid.New()
+
+	_, err := env.svc.AdminCredit(context.Background(), uuid.New(), 100_000, "test", adminID)
+	if !errors.Is(err, domain.ErrWalletNotFound) {
+		t.Errorf("err = %v, want ErrWalletNotFound", err)
+	}
+}
+
+func TestWalletService_AdminDebit_Success(t *testing.T) {
+	env := newWalletTestEnv()
+	wallet := createTestWallet(t, env)
+	adminID := uuid.New()
+
+	// Credit first to have balance
+	_, err := env.svc.AdminCredit(context.Background(), wallet.ID, 500_000, "seed", adminID)
+	if err != nil {
+		t.Fatalf("credit: %v", err)
+	}
+
+	tx, err := env.svc.AdminDebit(context.Background(), wallet.ID, 200_000, "штраф", adminID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if tx.Type != domain.WalletTxAdminDebit {
+		t.Errorf("type = %v, want admin_debit", tx.Type)
+	}
+	if tx.Amount != 200_000 {
+		t.Errorf("amount = %d, want 200000", tx.Amount)
+	}
+	if tx.BalanceAfter != 300_000 {
+		t.Errorf("balance_after = %d, want 300000", tx.BalanceAfter)
+	}
+}
+
+func TestWalletService_AdminDebit_InsufficientBalance(t *testing.T) {
+	env := newWalletTestEnv()
+	wallet := createTestWallet(t, env)
+	adminID := uuid.New()
+
+	_, err := env.svc.AdminDebit(context.Background(), wallet.ID, 100, "test", adminID)
+	if !errors.Is(err, domain.ErrInsufficientWalletBalance) {
+		t.Errorf("err = %v, want ErrInsufficientWalletBalance", err)
+	}
+}
+
+func TestWalletService_AdminFreeze_Success(t *testing.T) {
+	env := newWalletTestEnv()
+	wallet := createTestWallet(t, env)
+	adminID := uuid.New()
+
+	err := env.svc.AdminFreeze(context.Background(), wallet.ID, "подозрительная активность", adminID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	w, err := env.svc.GetWalletByID(context.Background(), wallet.ID)
+	if err != nil {
+		t.Fatalf("get wallet: %v", err)
+	}
+	if w.Status != domain.WalletStatusFrozen {
+		t.Errorf("status = %v, want frozen", w.Status)
+	}
+}
+
+func TestWalletService_AdminFreeze_AlreadyFrozen(t *testing.T) {
+	env := newWalletTestEnv()
+	wallet := createTestWallet(t, env)
+	adminID := uuid.New()
+
+	if err := env.svc.AdminFreeze(context.Background(), wallet.ID, "test", adminID); err != nil {
+		t.Fatalf("first freeze: %v", err)
+	}
+
+	err := env.svc.AdminFreeze(context.Background(), wallet.ID, "test", adminID)
+	if !errors.Is(err, domain.ErrWalletFrozen) {
+		t.Errorf("err = %v, want ErrWalletFrozen", err)
+	}
+}
+
+func TestWalletService_AdminUnfreeze_Success(t *testing.T) {
+	env := newWalletTestEnv()
+	wallet := createTestWallet(t, env)
+	adminID := uuid.New()
+
+	if err := env.svc.AdminFreeze(context.Background(), wallet.ID, "test", adminID); err != nil {
+		t.Fatalf("freeze: %v", err)
+	}
+
+	if err := env.svc.AdminUnfreeze(context.Background(), wallet.ID, "проверка завершена", adminID); err != nil {
+		t.Fatalf("unfreeze: %v", err)
+	}
+
+	w, err := env.svc.GetWalletByID(context.Background(), wallet.ID)
+	if err != nil {
+		t.Fatalf("get wallet: %v", err)
+	}
+	if w.Status != domain.WalletStatusActive {
+		t.Errorf("status = %v, want active", w.Status)
+	}
+}
+
+func TestWalletService_AdminUnfreeze_NotFrozen(t *testing.T) {
+	env := newWalletTestEnv()
+	wallet := createTestWallet(t, env)
+	adminID := uuid.New()
+
+	err := env.svc.AdminUnfreeze(context.Background(), wallet.ID, "test", adminID)
+	if !errors.Is(err, domain.ErrInvalidInput) {
+		t.Errorf("err = %v, want ErrInvalidInput", err)
+	}
+}
+
+func TestWalletService_GetWalletByID_Success(t *testing.T) {
+	env := newWalletTestEnv()
+	wallet := createTestWallet(t, env)
+
+	w, err := env.svc.GetWalletByID(context.Background(), wallet.ID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if w.ID != wallet.ID {
+		t.Errorf("id = %v, want %v", w.ID, wallet.ID)
+	}
+}
+
+func TestWalletService_GetWalletByID_NotFound(t *testing.T) {
+	env := newWalletTestEnv()
+
+	_, err := env.svc.GetWalletByID(context.Background(), uuid.New())
+	if !errors.Is(err, domain.ErrWalletNotFound) {
+		t.Errorf("err = %v, want ErrWalletNotFound", err)
+	}
+}

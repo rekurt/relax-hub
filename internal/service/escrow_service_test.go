@@ -103,6 +103,21 @@ func (m *mockWalletService) ExpireBonusesForWallet(_ context.Context, _ uuid.UUI
 func (m *mockWalletService) FreezeAndZeroBalance(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
+func (m *mockWalletService) AdminCredit(_ context.Context, _ uuid.UUID, _ int64, _ string, _ uuid.UUID) (*domain.WalletTransaction, error) {
+	return nil, nil
+}
+func (m *mockWalletService) AdminDebit(_ context.Context, _ uuid.UUID, _ int64, _ string, _ uuid.UUID) (*domain.WalletTransaction, error) {
+	return nil, nil
+}
+func (m *mockWalletService) AdminFreeze(_ context.Context, _ uuid.UUID, _ string, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockWalletService) AdminUnfreeze(_ context.Context, _ uuid.UUID, _ string, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockWalletService) GetWalletByID(_ context.Context, _ uuid.UUID) (*domain.Wallet, error) {
+	return nil, nil
+}
 
 func setupEscrowTest(t *testing.T) (service.EscrowService, *mock.EscrowRepo, *mock.BookingRepo, *mock.BathhouseRepo, *mockWalletService) {
 	t.Helper()

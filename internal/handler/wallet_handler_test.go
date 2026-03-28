@@ -30,6 +30,11 @@ type mockWalletService struct {
 	listTransactionsFn func(ctx context.Context, userID uuid.UUID, filter domain.WalletTransactionFilter) (*domain.PaginatedResult[domain.WalletTransaction], error)
 	getActiveHoldsFn   func(ctx context.Context, walletID uuid.UUID) ([]domain.WalletHold, error)
 	expireBonusesFn    func(ctx context.Context) (int, error)
+	adminCreditFn      func(ctx context.Context, walletID uuid.UUID, amount int64, reason string, adminID uuid.UUID) (*domain.WalletTransaction, error)
+	adminDebitFn       func(ctx context.Context, walletID uuid.UUID, amount int64, reason string, adminID uuid.UUID) (*domain.WalletTransaction, error)
+	adminFreezeFn      func(ctx context.Context, walletID uuid.UUID, reason string, adminID uuid.UUID) error
+	adminUnfreezeFn    func(ctx context.Context, walletID uuid.UUID, reason string, adminID uuid.UUID) error
+	getWalletByIDFn    func(ctx context.Context, walletID uuid.UUID) (*domain.Wallet, error)
 }
 
 func (m *mockWalletService) CreateWallet(ctx context.Context, userID uuid.UUID, currency domain.WalletCurrency) (*domain.Wallet, error) {
@@ -129,6 +134,41 @@ func (m *mockWalletService) ExpireBonusesForWallet(_ context.Context, _ uuid.UUI
 
 func (m *mockWalletService) FreezeAndZeroBalance(_ context.Context, _ uuid.UUID) error {
 	return nil
+}
+
+func (m *mockWalletService) AdminCredit(ctx context.Context, walletID uuid.UUID, amount int64, reason string, adminID uuid.UUID) (*domain.WalletTransaction, error) {
+	if m.adminCreditFn != nil {
+		return m.adminCreditFn(ctx, walletID, amount, reason, adminID)
+	}
+	return nil, nil
+}
+
+func (m *mockWalletService) AdminDebit(ctx context.Context, walletID uuid.UUID, amount int64, reason string, adminID uuid.UUID) (*domain.WalletTransaction, error) {
+	if m.adminDebitFn != nil {
+		return m.adminDebitFn(ctx, walletID, amount, reason, adminID)
+	}
+	return nil, nil
+}
+
+func (m *mockWalletService) AdminFreeze(ctx context.Context, walletID uuid.UUID, reason string, adminID uuid.UUID) error {
+	if m.adminFreezeFn != nil {
+		return m.adminFreezeFn(ctx, walletID, reason, adminID)
+	}
+	return nil
+}
+
+func (m *mockWalletService) AdminUnfreeze(ctx context.Context, walletID uuid.UUID, reason string, adminID uuid.UUID) error {
+	if m.adminUnfreezeFn != nil {
+		return m.adminUnfreezeFn(ctx, walletID, reason, adminID)
+	}
+	return nil
+}
+
+func (m *mockWalletService) GetWalletByID(ctx context.Context, walletID uuid.UUID) (*domain.Wallet, error) {
+	if m.getWalletByIDFn != nil {
+		return m.getWalletByIDFn(ctx, walletID)
+	}
+	return nil, nil
 }
 
 func TestWalletHandler_GetWallet(t *testing.T) {
@@ -649,5 +689,305 @@ func TestWalletHandler_TopUp_WalletFrozen(t *testing.T) {
 
 	if rec.Code != http.StatusForbidden {
 		t.Errorf("expected status 403, got %d", rec.Code)
+	}
+}
+
+func TestWalletHandler_AdminCreditWallet(t *testing.T) {
+	adminID := uuid.New()
+	walletID := uuid.New()
+	txID := uuid.New()
+
+	walletSvc := &mockWalletService{
+		adminCreditFn: func(_ context.Context, wid uuid.UUID, amount int64, reason string, aid uuid.UUID) (*domain.WalletTransaction, error) {
+			if wid == walletID && amount == 100_000 && aid == adminID {
+				return &domain.WalletTransaction{
+					ID:           txID,
+					WalletID:     walletID,
+					Type:         domain.WalletTxAdminCredit,
+					Amount:       100_000,
+					BalanceAfter: 100_000,
+					Status:       domain.WalletTxStatusCompleted,
+					Description:  "Начисление администратором: " + reason,
+					CreatedAt:    time.Now(),
+				}, nil
+			}
+			return nil, domain.ErrWalletNotFound
+		},
+	}
+
+	h := NewWalletHandler(walletSvc)
+	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Post("/admin/wallets/{id}/credit", h.AdminCreditWallet)
+
+	body, _ := json.Marshal(map[string]interface{}{"amount": 100_000, "reason": "компенсация"})
+	req := httptest.NewRequest(http.MethodPost, "/admin/wallets/"+walletID.String()+"/credit", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+		return
+	}
+
+	var resp APIResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+	if !resp.Success {
+		t.Error("expected success=true")
+	}
+
+	data := resp.Data.(map[string]interface{})
+	if data["type"] != "admin_credit" {
+		t.Errorf("expected type admin_credit, got %v", data["type"])
+	}
+}
+
+func TestWalletHandler_AdminCreditWallet_MissingReason(t *testing.T) {
+	adminID := uuid.New()
+	walletID := uuid.New()
+
+	walletSvc := &mockWalletService{}
+	h := NewWalletHandler(walletSvc)
+	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Post("/admin/wallets/{id}/credit", h.AdminCreditWallet)
+
+	body, _ := json.Marshal(map[string]interface{}{"amount": 100_000})
+	req := httptest.NewRequest(http.MethodPost, "/admin/wallets/"+walletID.String()+"/credit", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestWalletHandler_AdminDebitWallet(t *testing.T) {
+	adminID := uuid.New()
+	walletID := uuid.New()
+	txID := uuid.New()
+
+	walletSvc := &mockWalletService{
+		adminDebitFn: func(_ context.Context, wid uuid.UUID, amount int64, _ string, aid uuid.UUID) (*domain.WalletTransaction, error) {
+			if wid == walletID && amount == 50_000 && aid == adminID {
+				return &domain.WalletTransaction{
+					ID:           txID,
+					WalletID:     walletID,
+					Type:         domain.WalletTxAdminDebit,
+					Amount:       50_000,
+					BalanceAfter: 450_000,
+					Status:       domain.WalletTxStatusCompleted,
+					CreatedAt:    time.Now(),
+				}, nil
+			}
+			return nil, domain.ErrWalletNotFound
+		},
+	}
+
+	h := NewWalletHandler(walletSvc)
+	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Post("/admin/wallets/{id}/debit", h.AdminDebitWallet)
+
+	body, _ := json.Marshal(map[string]interface{}{"amount": 50_000, "reason": "штраф"})
+	req := httptest.NewRequest(http.MethodPost, "/admin/wallets/"+walletID.String()+"/debit", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestWalletHandler_AdminFreezeWallet(t *testing.T) {
+	adminID := uuid.New()
+	walletID := uuid.New()
+
+	walletSvc := &mockWalletService{
+		adminFreezeFn: func(_ context.Context, wid uuid.UUID, _ string, _ uuid.UUID) error {
+			if wid == walletID {
+				return nil
+			}
+			return domain.ErrWalletNotFound
+		},
+		getWalletByIDFn: func(_ context.Context, wid uuid.UUID) (*domain.Wallet, error) {
+			if wid == walletID {
+				return &domain.Wallet{
+					ID:       walletID,
+					UserID:   uuid.New(),
+					Balance:  500_000,
+					Currency: domain.WalletCurrencyRUB,
+					Status:   domain.WalletStatusFrozen,
+				}, nil
+			}
+			return nil, domain.ErrWalletNotFound
+		},
+	}
+
+	h := NewWalletHandler(walletSvc)
+	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Post("/admin/wallets/{id}/freeze", h.AdminFreezeWallet)
+
+	body, _ := json.Marshal(map[string]interface{}{"reason": "подозрение на фрод"})
+	req := httptest.NewRequest(http.MethodPost, "/admin/wallets/"+walletID.String()+"/freeze", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+		return
+	}
+
+	var resp APIResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	data := resp.Data.(map[string]interface{})
+	if data["status"] != "frozen" {
+		t.Errorf("expected status frozen, got %v", data["status"])
+	}
+}
+
+func TestWalletHandler_AdminUnfreezeWallet(t *testing.T) {
+	adminID := uuid.New()
+	walletID := uuid.New()
+
+	walletSvc := &mockWalletService{
+		adminUnfreezeFn: func(_ context.Context, wid uuid.UUID, _ string, _ uuid.UUID) error {
+			if wid == walletID {
+				return nil
+			}
+			return domain.ErrWalletNotFound
+		},
+		getWalletByIDFn: func(_ context.Context, wid uuid.UUID) (*domain.Wallet, error) {
+			if wid == walletID {
+				return &domain.Wallet{
+					ID:       walletID,
+					UserID:   uuid.New(),
+					Balance:  500_000,
+					Currency: domain.WalletCurrencyRUB,
+					Status:   domain.WalletStatusActive,
+				}, nil
+			}
+			return nil, domain.ErrWalletNotFound
+		},
+	}
+
+	h := NewWalletHandler(walletSvc)
+	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Post("/admin/wallets/{id}/unfreeze", h.AdminUnfreezeWallet)
+
+	body, _ := json.Marshal(map[string]interface{}{"reason": "проверка завершена"})
+	req := httptest.NewRequest(http.MethodPost, "/admin/wallets/"+walletID.String()+"/unfreeze", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+		return
+	}
+
+	var resp APIResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	data := resp.Data.(map[string]interface{})
+	if data["status"] != "active" {
+		t.Errorf("expected status active, got %v", data["status"])
+	}
+}
+
+func TestWalletHandler_AdminGetWallet(t *testing.T) {
+	adminID := uuid.New()
+	walletID := uuid.New()
+	userID := uuid.New()
+
+	walletSvc := &mockWalletService{
+		getWalletByIDFn: func(_ context.Context, wid uuid.UUID) (*domain.Wallet, error) {
+			if wid == walletID {
+				return &domain.Wallet{
+					ID:       walletID,
+					UserID:   userID,
+					Balance:  300_000,
+					Currency: domain.WalletCurrencyRUB,
+					Status:   domain.WalletStatusActive,
+				}, nil
+			}
+			return nil, domain.ErrWalletNotFound
+		},
+	}
+
+	h := NewWalletHandler(walletSvc)
+	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Get("/admin/wallets/{id}", h.AdminGetWallet)
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/wallets/"+walletID.String(), nil)
+	req.Header.Set("Authorization", "Bearer valid-token")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+		return
+	}
+
+	var resp APIResponse
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	data := resp.Data.(map[string]interface{})
+	if data["id"] != walletID.String() {
+		t.Errorf("expected id %s, got %v", walletID.String(), data["id"])
+	}
+	if data["balance"].(float64) != 300_000 {
+		t.Errorf("expected balance 300000, got %v", data["balance"])
+	}
+}
+
+func TestWalletHandler_AdminCreditWallet_InvalidID(t *testing.T) {
+	walletSvc := &mockWalletService{}
+	h := NewWalletHandler(walletSvc)
+	authService := &mockAuthService{userID: uuid.New(), role: domain.RoleAdmin}
+
+	r := chi.NewRouter()
+	r.Use(middleware.RequireAuth(authService))
+	r.Post("/admin/wallets/{id}/credit", h.AdminCreditWallet)
+
+	body, _ := json.Marshal(map[string]interface{}{"amount": 100_000, "reason": "test"})
+	req := httptest.NewRequest(http.MethodPost, "/admin/wallets/not-a-uuid/credit", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer valid-token")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", rec.Code)
 	}
 }

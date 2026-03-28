@@ -112,14 +112,14 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/service/wallet_service.go` (admin operations)
 - Create: `frontend/src/pages/admin/WalletManagement.tsx`
 
-- [ ] Add admin endpoint: POST /api/v1/admin/wallets/{id}/credit (amount, reason)
-- [ ] Add admin endpoint: POST /api/v1/admin/wallets/{id}/debit (amount, reason)
-- [ ] Add admin endpoint: POST /api/v1/admin/wallets/{id}/freeze
-- [ ] Add admin endpoint: POST /api/v1/admin/wallets/{id}/unfreeze
-- [ ] All operations logged to audit_log with admin_id and reason
-- [ ] Create admin wallet management page with search and actions
-- [ ] Write tests for admin wallet operations
-- [ ] Run project test suite - must pass before task 6
+- [x] Add admin endpoint: POST /api/v1/admin/wallets/{id}/credit (amount, reason)
+- [x] Add admin endpoint: POST /api/v1/admin/wallets/{id}/debit (amount, reason)
+- [x] Add admin endpoint: POST /api/v1/admin/wallets/{id}/freeze
+- [x] Add admin endpoint: POST /api/v1/admin/wallets/{id}/unfreeze
+- [x] All operations logged to audit_log with admin_id and reason
+- [x] Create admin wallet management page with search and actions
+- [x] Write tests for admin wallet operations
+- [x] Run project test suite - must pass before task 6
 
 ### Task 6: Admin Booking Management (FR admin-panel)
 

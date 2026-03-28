@@ -171,6 +171,21 @@ func (n *noopWalletService) ExpireBonusesForWallet(_ context.Context, _ uuid.UUI
 	return 0, nil
 }
 func (n *noopWalletService) FreezeAndZeroBalance(_ context.Context, _ uuid.UUID) error { return nil }
+func (n *noopWalletService) AdminCredit(_ context.Context, _ uuid.UUID, _ int64, _ string, _ uuid.UUID) (*domain.WalletTransaction, error) {
+	return nil, nil
+}
+func (n *noopWalletService) AdminDebit(_ context.Context, _ uuid.UUID, _ int64, _ string, _ uuid.UUID) (*domain.WalletTransaction, error) {
+	return nil, nil
+}
+func (n *noopWalletService) AdminFreeze(_ context.Context, _ uuid.UUID, _ string, _ uuid.UUID) error {
+	return nil
+}
+func (n *noopWalletService) AdminUnfreeze(_ context.Context, _ uuid.UUID, _ string, _ uuid.UUID) error {
+	return nil
+}
+func (n *noopWalletService) GetWalletByID(_ context.Context, _ uuid.UUID) (*domain.Wallet, error) {
+	return nil, nil
+}
 
 // noopCertificateService is a no-op CertificateService for tests that don't verify certificates.
 type noopCertificateService struct{}

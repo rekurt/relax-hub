@@ -107,6 +107,21 @@ func (m *mockDisputeWalletService) ExpireBonusesForWallet(_ context.Context, _ u
 func (m *mockDisputeWalletService) FreezeAndZeroBalance(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
+func (m *mockDisputeWalletService) AdminCredit(_ context.Context, _ uuid.UUID, _ int64, _ string, _ uuid.UUID) (*domain.WalletTransaction, error) {
+	return nil, nil
+}
+func (m *mockDisputeWalletService) AdminDebit(_ context.Context, _ uuid.UUID, _ int64, _ string, _ uuid.UUID) (*domain.WalletTransaction, error) {
+	return nil, nil
+}
+func (m *mockDisputeWalletService) AdminFreeze(_ context.Context, _ uuid.UUID, _ string, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockDisputeWalletService) AdminUnfreeze(_ context.Context, _ uuid.UUID, _ string, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockDisputeWalletService) GetWalletByID(_ context.Context, _ uuid.UUID) (*domain.Wallet, error) {
+	return nil, nil
+}
 
 func newDisputeTestService() (service.DisputeService, *mock.DisputeRepo, *mock.BookingRepo, *mock.BathhouseRepo, *mockEscrowService, *mockDisputeWalletService) {
 	disputeRepo := mock.NewDisputeRepo().(*mock.DisputeRepo)

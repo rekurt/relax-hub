@@ -70,6 +70,7 @@ import AntiFraudDashboard from '@/pages/admin/AntiFraudDashboard'
 import AmenityManagement from '@/pages/admin/AmenityManagement'
 import ObjectTypeManagement from '@/pages/admin/ObjectTypeManagement'
 import HolidayManagement from '@/pages/admin/HolidayManagement'
+import WalletManagement from '@/pages/admin/WalletManagement'
 import OAuthCallback from '@/pages/OAuthCallback'
 
 export default function AppRouter() {
@@ -175,6 +176,7 @@ export default function AppRouter() {
         <Route path="amenities" element={<AmenityManagement />} />
         <Route path="object-types" element={<ObjectTypeManagement />} />
         <Route path="holidays" element={<HolidayManagement />} />
+        <Route path="wallets" element={<WalletManagement />} />
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="profile" element={<AdminProfile />} />
       </Route>

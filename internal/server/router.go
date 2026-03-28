@@ -653,6 +653,13 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Post("/finance/bank-statement", p.BankReconciliationHandler.UploadBankStatement)
 			r.Get("/finance/reconciliation", p.BankReconciliationHandler.ListUnmatched)
 			r.Put("/finance/reconciliation/{id}/match", p.BankReconciliationHandler.ManualMatch)
+
+			// Admin wallet management
+			r.Get("/wallets/{id}", p.WalletHandler.AdminGetWallet)
+			r.Post("/wallets/{id}/credit", p.WalletHandler.AdminCreditWallet)
+			r.Post("/wallets/{id}/debit", p.WalletHandler.AdminDebitWallet)
+			r.Post("/wallets/{id}/freeze", p.WalletHandler.AdminFreezeWallet)
+			r.Post("/wallets/{id}/unfreeze", p.WalletHandler.AdminUnfreezeWallet)
 		})
 	})
 

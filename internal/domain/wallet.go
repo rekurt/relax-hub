@@ -53,13 +53,16 @@ const (
 	WalletTxPayout        WalletTransactionType = "payout"
 	WalletTxWelcomeBonus  WalletTransactionType = "welcome_bonus"
 	WalletTxReferralBonus WalletTransactionType = "referral_bonus"
+	WalletTxAdminCredit   WalletTransactionType = "admin_credit"
+	WalletTxAdminDebit    WalletTransactionType = "admin_debit"
 )
 
 func (t WalletTransactionType) IsValid() bool {
 	switch t {
 	case WalletTxTopUp, WalletTxSpend, WalletTxRefund, WalletTxBonus,
 		WalletTxBonusExpiry, WalletTxHoldCapture, WalletTxHoldRelease,
-		WalletTxPayout, WalletTxWelcomeBonus, WalletTxReferralBonus:
+		WalletTxPayout, WalletTxWelcomeBonus, WalletTxReferralBonus,
+		WalletTxAdminCredit, WalletTxAdminDebit:
 		return true
 	}
 	return false

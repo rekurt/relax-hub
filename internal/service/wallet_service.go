@@ -36,6 +36,13 @@ type WalletService interface {
 	ExpireBonuses(ctx context.Context) (int, error)
 	ExpireBonusesForWallet(ctx context.Context, walletID uuid.UUID) (int, error)
 	FreezeAndZeroBalance(ctx context.Context, userID uuid.UUID) error
+
+	// Admin operations
+	AdminCredit(ctx context.Context, walletID uuid.UUID, amount int64, reason string, adminID uuid.UUID) (*domain.WalletTransaction, error)
+	AdminDebit(ctx context.Context, walletID uuid.UUID, amount int64, reason string, adminID uuid.UUID) (*domain.WalletTransaction, error)
+	AdminFreeze(ctx context.Context, walletID uuid.UUID, reason string, adminID uuid.UUID) error
+	AdminUnfreeze(ctx context.Context, walletID uuid.UUID, reason string, adminID uuid.UUID) error
+	GetWalletByID(ctx context.Context, walletID uuid.UUID) (*domain.Wallet, error)
 }
 
 type walletService struct {
@@ -526,6 +533,127 @@ func (s *walletService) ExpireBonusesForWallet(ctx context.Context, walletID uui
 	}
 
 	return len(expiring), nil
+}
+
+func (s *walletService) GetWalletByID(ctx context.Context, walletID uuid.UUID) (*domain.Wallet, error) {
+	return s.walletRepo.GetByID(ctx, walletID)
+}
+
+func (s *walletService) AdminCredit(ctx context.Context, walletID uuid.UUID, amount int64, reason string, adminID uuid.UUID) (*domain.WalletTransaction, error) {
+	if amount <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
+	wallet, err := s.walletRepo.GetByID(ctx, walletID)
+	if err != nil {
+		return nil, err
+	}
+
+	newBalance := wallet.Balance + amount
+	maxBalance := domain.MaxBalanceForCurrency(wallet.Currency)
+	if newBalance > maxBalance {
+		return nil, domain.ErrWalletLimitExceeded
+	}
+
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
+		return nil, err
+	}
+
+	description := fmt.Sprintf("Начисление администратором: %s", reason)
+	tx := &domain.WalletTransaction{
+		ID:            uuid.New(),
+		WalletID:      wallet.ID,
+		Type:          domain.WalletTxAdminCredit,
+		Amount:        amount,
+		BalanceAfter:  newBalance,
+		Status:        domain.WalletTxStatusCompleted,
+		Description:   description,
+		ReferenceType: "admin",
+		ReferenceID:   &adminID,
+	}
+
+	if err := s.walletRepo.CreateTransaction(ctx, tx); err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("admin wallet credit", "wallet_id", walletID, "amount", amount, "admin_id", adminID, "reason", reason)
+	return tx, nil
+}
+
+func (s *walletService) AdminDebit(ctx context.Context, walletID uuid.UUID, amount int64, reason string, adminID uuid.UUID) (*domain.WalletTransaction, error) {
+	if amount <= 0 {
+		return nil, domain.ErrInvalidInput
+	}
+
+	wallet, err := s.walletRepo.GetByID(ctx, walletID)
+	if err != nil {
+		return nil, err
+	}
+
+	if wallet.AvailableBalance() < amount {
+		return nil, domain.ErrInsufficientWalletBalance
+	}
+
+	newBalance := wallet.Balance - amount
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
+		return nil, err
+	}
+
+	description := fmt.Sprintf("Списание администратором: %s", reason)
+	tx := &domain.WalletTransaction{
+		ID:            uuid.New(),
+		WalletID:      wallet.ID,
+		Type:          domain.WalletTxAdminDebit,
+		Amount:        amount,
+		BalanceAfter:  newBalance,
+		Status:        domain.WalletTxStatusCompleted,
+		Description:   description,
+		ReferenceType: "admin",
+		ReferenceID:   &adminID,
+	}
+
+	if err := s.walletRepo.CreateTransaction(ctx, tx); err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("admin wallet debit", "wallet_id", walletID, "amount", amount, "admin_id", adminID, "reason", reason)
+	return tx, nil
+}
+
+func (s *walletService) AdminFreeze(ctx context.Context, walletID uuid.UUID, reason string, adminID uuid.UUID) error {
+	wallet, err := s.walletRepo.GetByID(ctx, walletID)
+	if err != nil {
+		return err
+	}
+
+	if wallet.IsFrozen() {
+		return domain.ErrWalletFrozen
+	}
+
+	if err := s.walletRepo.UpdateStatus(ctx, wallet.ID, domain.WalletStatusFrozen); err != nil {
+		return err
+	}
+
+	s.logger.Info("admin wallet freeze", "wallet_id", walletID, "admin_id", adminID, "reason", reason)
+	return nil
+}
+
+func (s *walletService) AdminUnfreeze(ctx context.Context, walletID uuid.UUID, reason string, adminID uuid.UUID) error {
+	wallet, err := s.walletRepo.GetByID(ctx, walletID)
+	if err != nil {
+		return err
+	}
+
+	if !wallet.IsFrozen() {
+		return domain.ErrInvalidInput
+	}
+
+	if err := s.walletRepo.UpdateStatus(ctx, wallet.ID, domain.WalletStatusActive); err != nil {
+		return err
+	}
+
+	s.logger.Info("admin wallet unfreeze", "wallet_id", walletID, "admin_id", adminID, "reason", reason)
+	return nil
 }
 
 func (s *walletService) FreezeAndZeroBalance(ctx context.Context, userID uuid.UUID) error {

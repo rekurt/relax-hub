@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/service"
@@ -117,15 +119,16 @@ func toWalletHoldResponse(h *domain.WalletHold) walletHoldResponse {
 }
 
 // GetWallet godoc
-// @Summary      Get wallet balance
-// @Description  Returns the wallet balance summary for the authenticated user, including held amount, available balance, and expiring bonuses
-// @Tags         wallet
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=walletResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/wallet [get]
+//
+//	@Summary		Get wallet balance
+//	@Description	Returns the wallet balance summary for the authenticated user, including held amount, available balance, and expiring bonuses
+//	@Tags			wallet
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=walletResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/wallet [get]
 func (h *WalletHandler) GetWallet(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -139,19 +142,20 @@ func (h *WalletHandler) GetWallet(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListTransactions godoc
-// @Summary      List wallet transactions
-// @Description  Returns paginated transaction history for the authenticated user's wallet
-// @Tags         wallet
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query     int     false  "Page number"          default(1)
-// @Param        page_size  query     int     false  "Page size"            default(20)
-// @Param        type       query     string  false  "Transaction type filter (topup, spend, refund, bonus, etc.)"
-// @Param        is_bonus   query     bool    false  "Filter bonus transactions only"
-// @Success      200  {object}  APIResponse{data=[]walletTransactionResponse,meta=Meta}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/wallet/transactions [get]
+//
+//	@Summary		List wallet transactions
+//	@Description	Returns paginated transaction history for the authenticated user's wallet
+//	@Tags			wallet
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int		false	"Page number"	default(1)
+//	@Param			page_size	query		int		false	"Page size"		default(20)
+//	@Param			type		query		string	false	"Transaction type filter (topup, spend, refund, bonus, etc.)"
+//	@Param			is_bonus	query		bool	false	"Filter bonus transactions only"
+//	@Success		200			{object}	APIResponse{data=[]walletTransactionResponse,meta=Meta}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		404			{object}	APIResponse{error=APIError}
+//	@Router			/my/wallet/transactions [get]
 func (h *WalletHandler) ListTransactions(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	page := getPage(r.URL.Query().Get("page"))
@@ -197,19 +201,20 @@ func (h *WalletHandler) ListTransactions(w http.ResponseWriter, r *http.Request)
 }
 
 // TopUp godoc
-// @Summary      Top up wallet
-// @Description  Initiates a wallet top-up. Amount is in kopecks (min 50000 = 500 RUB, max 3000000 = 30000 RUB)
-// @Tags         wallet
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      topUpRequest  true  "Top-up amount in kopecks"
-// @Success      200   {object}  APIResponse{data=topUpResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /my/wallet/topup [post]
+//
+//	@Summary		Top up wallet
+//	@Description	Initiates a wallet top-up. Amount is in kopecks (min 50000 = 500 RUB, max 3000000 = 30000 RUB)
+//	@Tags			wallet
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		topUpRequest	true	"Top-up amount in kopecks"
+//	@Success		200		{object}	APIResponse{data=topUpResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/my/wallet/topup [post]
 func (h *WalletHandler) TopUp(w http.ResponseWriter, r *http.Request) {
 	// TODO: This endpoint directly credits the wallet without payment verification.
 	// Must be integrated with YooKassa: create payment -> return confirmation_url ->
@@ -247,15 +252,16 @@ func (h *WalletHandler) TopUp(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListHolds godoc
-// @Summary      List active wallet holds
-// @Description  Returns active holds (frozen amounts) on the authenticated user's wallet
-// @Tags         wallet
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=[]walletHoldResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/wallet/holds [get]
+//
+//	@Summary		List active wallet holds
+//	@Description	Returns active holds (frozen amounts) on the authenticated user's wallet
+//	@Tags			wallet
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=[]walletHoldResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/wallet/holds [get]
 func (h *WalletHandler) ListHolds(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -277,4 +283,257 @@ func (h *WalletHandler) ListHolds(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, items)
+}
+
+type adminWalletRequest struct {
+	Amount int64  `json:"amount,omitempty"`
+	Reason string `json:"reason"`
+}
+
+type adminWalletResponse struct {
+	ID       string `json:"id"`
+	UserID   string `json:"user_id"`
+	Balance  int64  `json:"balance"`
+	Held     int64  `json:"held_amount"`
+	Currency string `json:"currency"`
+	Status   string `json:"status"`
+}
+
+func toAdminWalletResponse(w *domain.Wallet) adminWalletResponse {
+	return adminWalletResponse{
+		ID:       w.ID.String(),
+		UserID:   w.UserID.String(),
+		Balance:  w.Balance,
+		Held:     w.HeldAmount,
+		Currency: string(w.Currency),
+		Status:   string(w.Status),
+	}
+}
+
+// AdminCreditWallet godoc
+//
+//	@Summary		Admin credit wallet
+//	@Description	Credits (adds funds to) a wallet by admin. Amount is in kopecks. Requires reason for audit log.
+//	@Tags			admin-wallets
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Wallet ID (UUID)"
+//	@Param			body	body		adminWalletRequest	true	"Credit amount and reason"
+//	@Success		200		{object}	APIResponse{data=walletTransactionResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/wallets/{id}/credit [post]
+func (h *WalletHandler) AdminCreditWallet(w http.ResponseWriter, r *http.Request) {
+	walletID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid wallet id")
+		return
+	}
+
+	adminID := middleware.GetUserID(r.Context())
+
+	var req adminWalletRequest
+	if err := readJSON(w, r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid request body")
+		return
+	}
+
+	if req.Amount <= 0 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "amount must be positive")
+		return
+	}
+	if req.Reason == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "reason is required")
+		return
+	}
+
+	tx, err := h.walletService.AdminCredit(r.Context(), walletID, req.Amount, req.Reason, adminID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toWalletTransactionResponse(tx))
+}
+
+// AdminDebitWallet godoc
+//
+//	@Summary		Admin debit wallet
+//	@Description	Debits (removes funds from) a wallet by admin. Amount is in kopecks. Requires reason for audit log.
+//	@Tags			admin-wallets
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Wallet ID (UUID)"
+//	@Param			body	body		adminWalletRequest	true	"Debit amount and reason"
+//	@Success		200		{object}	APIResponse{data=walletTransactionResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/wallets/{id}/debit [post]
+func (h *WalletHandler) AdminDebitWallet(w http.ResponseWriter, r *http.Request) {
+	walletID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid wallet id")
+		return
+	}
+
+	adminID := middleware.GetUserID(r.Context())
+
+	var req adminWalletRequest
+	if err := readJSON(w, r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid request body")
+		return
+	}
+
+	if req.Amount <= 0 {
+		writeError(w, http.StatusBadRequest, "invalid_input", "amount must be positive")
+		return
+	}
+	if req.Reason == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "reason is required")
+		return
+	}
+
+	tx, err := h.walletService.AdminDebit(r.Context(), walletID, req.Amount, req.Reason, adminID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toWalletTransactionResponse(tx))
+}
+
+// AdminFreezeWallet godoc
+//
+//	@Summary		Admin freeze wallet
+//	@Description	Freezes a wallet, preventing any transactions. Requires reason for audit log.
+//	@Tags			admin-wallets
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Wallet ID (UUID)"
+//	@Param			body	body		adminWalletRequest	true	"Reason for freezing"
+//	@Success		200		{object}	APIResponse{data=adminWalletResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/wallets/{id}/freeze [post]
+func (h *WalletHandler) AdminFreezeWallet(w http.ResponseWriter, r *http.Request) {
+	walletID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid wallet id")
+		return
+	}
+
+	adminID := middleware.GetUserID(r.Context())
+
+	var req adminWalletRequest
+	if err := readJSON(w, r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid request body")
+		return
+	}
+
+	if req.Reason == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "reason is required")
+		return
+	}
+
+	if err := h.walletService.AdminFreeze(r.Context(), walletID, req.Reason, adminID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	wallet, err := h.walletService.GetWalletByID(r.Context(), walletID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toAdminWalletResponse(wallet))
+}
+
+// AdminUnfreezeWallet godoc
+//
+//	@Summary		Admin unfreeze wallet
+//	@Description	Unfreezes a frozen wallet, restoring normal operation. Requires reason for audit log.
+//	@Tags			admin-wallets
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Wallet ID (UUID)"
+//	@Param			body	body		adminWalletRequest	true	"Reason for unfreezing"
+//	@Success		200		{object}	APIResponse{data=adminWalletResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/wallets/{id}/unfreeze [post]
+func (h *WalletHandler) AdminUnfreezeWallet(w http.ResponseWriter, r *http.Request) {
+	walletID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid wallet id")
+		return
+	}
+
+	adminID := middleware.GetUserID(r.Context())
+
+	var req adminWalletRequest
+	if err := readJSON(w, r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid request body")
+		return
+	}
+
+	if req.Reason == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "reason is required")
+		return
+	}
+
+	if err := h.walletService.AdminUnfreeze(r.Context(), walletID, req.Reason, adminID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	wallet, err := h.walletService.GetWalletByID(r.Context(), walletID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toAdminWalletResponse(wallet))
+}
+
+// AdminGetWallet godoc
+//
+//	@Summary		Admin get wallet by ID
+//	@Description	Returns wallet details by wallet ID. Admin only.
+//	@Tags			admin-wallets
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Wallet ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=adminWalletResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/admin/wallets/{id} [get]
+func (h *WalletHandler) AdminGetWallet(w http.ResponseWriter, r *http.Request) {
+	walletID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid wallet id")
+		return
+	}
+
+	wallet, err := h.walletService.GetWalletByID(r.Context(), walletID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toAdminWalletResponse(wallet))
 }

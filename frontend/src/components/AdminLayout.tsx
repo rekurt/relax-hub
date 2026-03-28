@@ -29,6 +29,7 @@ import {
   AppstoreOutlined,
   TagsOutlined,
   CalendarOutlined,
+  WalletOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -51,6 +52,7 @@ const adminMenuItems: MenuProps['items'] = [
   { key: '/admin/amenities', icon: <AppstoreOutlined />, label: 'Удобства' },
   { key: '/admin/object-types', icon: <TagsOutlined />, label: 'Типы объектов' },
   { key: '/admin/holidays', icon: <CalendarOutlined />, label: 'Праздники' },
+  { key: '/admin/wallets', icon: <WalletOutlined />, label: 'Кошельки' },
   { key: '/admin/notifications', icon: <BellOutlined />, label: 'Уведомления' },
   { key: '/admin/profile', icon: <UserOutlined />, label: 'Профиль' },
 ]

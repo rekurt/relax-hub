@@ -149,6 +149,21 @@ func (m *mockFMWalletService) ExpireBonusesForWallet(_ context.Context, _ uuid.U
 func (m *mockFMWalletService) FreezeAndZeroBalance(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
+func (m *mockFMWalletService) AdminCredit(_ context.Context, _ uuid.UUID, _ int64, _ string, _ uuid.UUID) (*domain.WalletTransaction, error) {
+	return nil, nil
+}
+func (m *mockFMWalletService) AdminDebit(_ context.Context, _ uuid.UUID, _ int64, _ string, _ uuid.UUID) (*domain.WalletTransaction, error) {
+	return nil, nil
+}
+func (m *mockFMWalletService) AdminFreeze(_ context.Context, _ uuid.UUID, _ string, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockFMWalletService) AdminUnfreeze(_ context.Context, _ uuid.UUID, _ string, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockFMWalletService) GetWalletByID(_ context.Context, _ uuid.UUID) (*domain.Wallet, error) {
+	return nil, nil
+}
 
 func setupForceMajeureTest(t *testing.T) (service.ForceMajeureService, *mock.ForceMajeureRepo, *mock.BookingRepo, *mock.BathhouseRepo, *mock.CityRepo, *mockFMWalletService, *mockFMNotificationService) {
 	t.Helper()
