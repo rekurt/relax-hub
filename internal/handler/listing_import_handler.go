@@ -29,6 +29,9 @@ func NewListingImportHandler(importSvc service.ListingImportService) *ListingImp
 func (h *ListingImportHandler) ImportCSV(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
+	// Limit upload to 10 MB to prevent DoS
+	r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
+
 	file, _, err := r.FormFile("file")
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "file_required", "Загрузите CSV файл")

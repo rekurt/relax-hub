@@ -17,12 +17,12 @@ import (
 )
 
 const (
-	resetTokenTTL     = 30 * time.Minute
-	resetRateLimit    = 3
-	resetRateWindow   = 15 * time.Minute
-	resetTokenBytes   = 32
-	resetRedisPrefix  = "password_reset:"
-	resetRatePrefix   = "password_reset_rate:"
+	resetTokenTTL    = 30 * time.Minute
+	resetRateLimit   = 3
+	resetRateWindow  = 15 * time.Minute
+	resetTokenBytes  = 32
+	resetRedisPrefix = "password_reset:"
+	resetRatePrefix  = "password_reset_rate:"
 )
 
 type PasswordResetService interface {
@@ -145,7 +145,9 @@ func (s *passwordResetService) ResetPassword(ctx context.Context, token string, 
 	}
 
 	// Delete token immediately to prevent reuse
-	s.redis.Del(ctx, redisKey)
+	if err := s.redis.Del(ctx, redisKey).Err(); err != nil {
+		return fmt.Errorf("failed to invalidate reset token: %w", err)
+	}
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {

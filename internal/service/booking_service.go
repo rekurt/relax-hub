@@ -1925,11 +1925,10 @@ func (s *bookingService) Modify(ctx context.Context, userID uuid.UUID, bookingID
 
 	// Handle payment adjustments for price difference
 	if priceDiff < 0 {
-		// Price went down — issue proportional refund via payment service
+		// Price went down — issue partial refund for the difference only
 		refundAmount := -priceDiff
 		if s.paymentSvc != nil {
-			// Best-effort refund: use the bathhouse cancellation policy for full refund
-			if err := s.paymentSvc.RefundPayment(ctx, bookingID, true, "", bh.CancellationPolicy); err != nil {
+			if err := s.paymentSvc.AdminRefund(ctx, userID, bookingID, refundAmount, "booking_modification", ""); err != nil {
 				s.logger.Warn("failed to auto-refund price difference on modification",
 					"booking_id", bookingID, "refund_amount", refundAmount, "error", err)
 				// Continue — the booking is still modified, refund can be handled manually

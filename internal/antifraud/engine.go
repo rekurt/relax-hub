@@ -3,7 +3,6 @@ package antifraud
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
@@ -63,7 +62,7 @@ func (e *fraudEngine) CheckBookingCreate(ctx context.Context, userID uuid.UUID, 
 
 func (e *fraudEngine) CheckBookingCancel(ctx context.Context, userID uuid.UUID, topUpCancelCycles int) error {
 	input := RuleInput{
-		UserID:           userID,
+		UserID:            userID,
 		TopUpCancelCycles: topUpCancelCycles,
 	}
 	return e.evaluate(ctx, input, RuleCategoryBookingCancel)
@@ -150,7 +149,6 @@ type RuleInput struct {
 	TopUpCancelCycles  int
 	DailyWithdrawals   int
 	LastBookingDaysAgo int
-	Timestamp          time.Time
 }
 
 // Rule defines a single anti-fraud rule.

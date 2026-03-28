@@ -150,5 +150,8 @@ func (s *regionService) validateRegionSwitch(ctx context.Context, userID uuid.UU
 		return domain.ErrRegionSwitchBlocked
 	}
 
+	// TODO: check for unactivated gift certificates (requires adding GiftCertificateRepository dependency)
+	// Certificates purchased in one region's currency should not be left unresolved during region switch.
+
 	return nil
 }

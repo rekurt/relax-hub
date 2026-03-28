@@ -109,15 +109,15 @@ func handleServiceError(w http.ResponseWriter, err error) {
 func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, domain.ErrNotFound):
-		writeErrorWithContext(w, r, http.StatusNotFound, "not_found", err.Error())
+		writeErrorWithContext(w, r, http.StatusNotFound, "not_found", "not found")
 	case errors.Is(err, domain.ErrAlreadyExists):
-		writeErrorWithContext(w, r, http.StatusConflict, "already_exists", err.Error())
+		writeErrorWithContext(w, r, http.StatusConflict, "already_exists", "already exists")
 	case errors.Is(err, domain.ErrInvalidInput):
-		writeErrorWithContext(w, r, http.StatusBadRequest, "invalid_input", err.Error())
+		writeErrorWithContext(w, r, http.StatusBadRequest, "invalid_input", domain.ErrInvalidInput.Error())
 	case errors.Is(err, domain.ErrUnauthorized):
-		writeErrorWithContext(w, r, http.StatusUnauthorized, "unauthorized", err.Error())
+		writeErrorWithContext(w, r, http.StatusUnauthorized, "unauthorized", "unauthorized")
 	case errors.Is(err, domain.ErrForbidden):
-		writeErrorWithContext(w, r, http.StatusForbidden, "forbidden", err.Error())
+		writeErrorWithContext(w, r, http.StatusForbidden, "forbidden", "forbidden")
 	case errors.Is(err, domain.ErrSlotUnavailable):
 		writeErrorWithContext(w, r, http.StatusConflict, "slot_unavailable", err.Error())
 	case errors.Is(err, domain.ErrBookingCancelLate):

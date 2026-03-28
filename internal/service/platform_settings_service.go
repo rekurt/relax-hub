@@ -48,11 +48,7 @@ func NewPlatformSettingsService(
 }
 
 func (s *platformSettingsService) GetString(ctx context.Context, key string) (string, error) {
-	val, err := s.getValue(ctx, key)
-	if err != nil {
-		return "", err
-	}
-	return val, nil
+	return s.getValue(ctx, key)
 }
 
 func (s *platformSettingsService) GetInt(ctx context.Context, key string) (int, error) {
@@ -161,6 +157,8 @@ func validateSettingValue(value string, settingType domain.SettingType) error {
 		}
 	case domain.SettingTypeString:
 		// No validation needed
+	default:
+		return fmt.Errorf("unknown setting type %q: %w", settingType, domain.ErrInvalidInput)
 	}
 	return nil
 }
