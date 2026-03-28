@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	replacementText   = "[контактные данные скрыты]"
+	replacementText    = "[контактные данные скрыты]"
 	maxFilteredRecords = 10000
 )
 
@@ -62,24 +62,51 @@ type chatFilter struct {
 	records []FilteredChatMessage
 }
 
-// NewChatFilter creates a new ChatFilter with Russian-specific detection patterns.
+// NewChatFilter creates a new ChatFilter with detection patterns for phone numbers,
+// emails, URLs, and messenger references. Patterns are ordered so that more specific
+// matchers (e.g. t.me, vk.com) run before the generic URL pattern to avoid collisions.
 func NewChatFilter(log *logger.Logger) ChatFilter {
 	patterns := []patternDef{
+		// --- Phones ---
+		// Russian +7 / 8 prefix (10-digit body)
 		{
 			name:    "phone",
 			pattern: "phone_ru",
 			re:      regexp.MustCompile(`(?i)(?:\+7|8)[\s\-\(]*\d{3}[\s\-\)]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2}`),
 		},
+		// Belarus +375 prefix (9-digit body: 2-digit operator + 7 digits)
+		{
+			name:    "phone",
+			pattern: "phone_by",
+			re:      regexp.MustCompile(`\+375[\s\-\(]*\d{2}[\s\-\)]*\d{3}[\s\-]*\d{2}[\s\-]*\d{2}`),
+		},
+		// Obfuscated digits: 10+ digits separated by dots, spaces, or dashes (e.g. "9.9.9.1.2.3.4.5.6.7")
+		{
+			name:    "phone",
+			pattern: "phone_obfuscated",
+			re:      regexp.MustCompile(`(?:\d[\s.\-]){9,}\d`),
+		},
+		// Phone numbers spelled in Russian words (e.g. "восемь девятьсот...")
+		{
+			name:    "phone",
+			pattern: "phone_words_ru",
+			re: regexp.MustCompile(`(?i)(?:восемь|плюс\s*семь)[\s,]*` +
+				`(?:девятьсот|восемьсот|девятьсот)[\s,]*` +
+				`(?:[\wа-яё]+[\s,]*){2,5}`),
+		},
+		// --- Email ---
 		{
 			name:    "email",
 			pattern: "email",
 			re:      regexp.MustCompile(`(?i)[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`),
 		},
+		// Email obfuscated with "собака"/"собачка" instead of @
 		{
-			name:    "url",
-			pattern: "url",
-			re:      regexp.MustCompile(`(?i)(?:https?://|www\.)[^\s]+`),
+			name:    "email",
+			pattern: "email_obfuscated",
+			re:      regexp.MustCompile(`(?i)[a-zA-Z0-9._%+\-]+\s*(?:собак[аи]|собачк[аи])\s*[a-zA-Z0-9.\-]+\s*(?:точка|\.)\s*[a-zA-Z]{2,}`),
 		},
+		// --- Messenger-specific links (before generic URL) ---
 		{
 			name:    "telegram",
 			pattern: "telegram_link",
@@ -95,6 +122,20 @@ func NewChatFilter(log *logger.Logger) ChatFilter {
 			pattern: "whatsapp_link",
 			re:      regexp.MustCompile(`(?i)wa\.me/[^\s]+`),
 		},
+		// --- Generic URLs ---
+		// With protocol or www prefix
+		{
+			name:    "url",
+			pattern: "url",
+			re:      regexp.MustCompile(`(?i)(?:https?://|www\.)[^\s]+`),
+		},
+		// Bare domain names (e.g. "example.com", "сайт.рф")
+		{
+			name:    "url",
+			pattern: "url_bare_domain",
+			re:      regexp.MustCompile(`(?i)\b[a-zA-Z0-9\-]+\.(?:com|ru|net|org|рф|by|info|biz|me|io|co)\b(?:/[^\s]*)?`),
+		},
+		// --- Messenger keywords ---
 		{
 			name:    "messenger_keyword",
 			pattern: "messenger_keyword",

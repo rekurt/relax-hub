@@ -435,11 +435,11 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Modify: `internal/antifraud/chat_filter.go` (add phone/email/URL blocking)
 - Modify: `internal/service/chat_service.go`
 
-- [ ] Verify and enhance chat filter to block: phone numbers (all formats), email addresses, URLs
-- [ ] Replace blocked content with [hidden] placeholder, not reject message entirely
-- [ ] Log blocked content attempts for anti-fraud review
-- [ ] Write tests with various phone/email/URL formats
-- [ ] Run project test suite - must pass before next task
+- [x] Verify and enhance chat filter to block: phone numbers (all formats), email addresses, URLs
+- [x] Replace blocked content with [hidden] placeholder, not reject message entirely
+- [x] Log blocked content attempts for anti-fraud review
+- [x] Write tests with various phone/email/URL formats
+- [x] Run project test suite - must pass before next task
 
 ### Task 24: Calendar bidirectional sync enhancement (FR-074)
 
