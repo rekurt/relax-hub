@@ -93,6 +93,7 @@ var Module = fx.Module("service",
 		fx.Annotate(NewRegionService, fx.As(new(RegionService))),
 		fx.Annotate(NewFinancialReportService, fx.As(new(FinancialReportService))),
 		fx.Annotate(NewReconciliationService, fx.As(new(ReconciliationService))),
+		fx.Annotate(NewListingImportService, fx.As(new(ListingImportService))),
 		fx.Annotate(
 			func(escrowRepo repository.EscrowRepository, bookingRepo repository.BookingRepository, bhRepo repository.BathhouseRepository, walletSvc WalletService, cfg *config.Config, log *logger.Logger) EscrowService {
 				return NewEscrowService(escrowRepo, bookingRepo, bhRepo, walletSvc, log, cfg.Escrow.ClaimHours)

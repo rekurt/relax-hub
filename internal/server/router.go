@@ -82,6 +82,7 @@ type RouterParams struct {
 	RegionHandler             *handler.RegionHandler
 	FinancialReportHandler    *handler.FinancialReportHandler
 	ReconciliationHandler     *handler.ReconciliationHandler
+	ListingImportHandler     *handler.ListingImportHandler
 	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
@@ -383,6 +384,10 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Put("/my/listing-drafts/{id}/step/{step}", p.ListingDraftHandler.SaveStep)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/listing-drafts/{id}/submit", p.ListingDraftHandler.SubmitDraft)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Delete("/my/listing-drafts/{id}", p.ListingDraftHandler.DeleteDraft)
+
+		// Listing CSV import (authenticated owner)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/listings/import", p.ListingImportHandler.ImportCSV)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/listings/import/template", p.ListingImportHandler.GetImportTemplate)
 
 		// Payouts (authenticated owner)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/wallet/payout", p.PayoutHandler.RequestPayout)

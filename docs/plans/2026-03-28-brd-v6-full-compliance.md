@@ -242,14 +242,14 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: `internal/handler/listing_import_handler.go`
 - Create: CSV/Excel template file
 
-- [ ] Create import template (CSV format with all required listing fields)
-- [ ] Implement file upload and parsing (CSV, optionally Excel via excelize)
-- [ ] Validate each row against listing requirements (required fields, photo URLs, price ranges)
-- [ ] Create listings as drafts (pending moderation)
-- [ ] Return import report (success count, error details per row)
-- [ ] Add API endpoint: POST /api/v1/my/listings/import
-- [ ] Write tests for import validation and error handling
-- [ ] Run project test suite - must pass before next task
+- [x] Create import template (CSV format with all required listing fields)
+- [x] Implement file upload and parsing (CSV, optionally Excel via excelize)
+- [x] Validate each row against listing requirements (required fields, photo URLs, price ranges)
+- [x] Create listings as drafts (pending moderation)
+- [x] Return import report (success count, error details per row)
+- [x] Add API endpoint: POST /api/v1/my/listings/import
+- [x] Write tests for import validation and error handling
+- [x] Run project test suite - must pass before next task
 
 ### Task 12: Share listing and share booking (FR-047, FR-081)
 
