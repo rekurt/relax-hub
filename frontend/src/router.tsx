@@ -20,6 +20,13 @@ import ProfileSettings from '@/pages/settings/ProfileSettings'
 import SubscriptionPage from '@/pages/subscriptions/SubscriptionPage'
 import WidgetSettings from '@/pages/widget/WidgetSettings'
 import PhotoManager from '@/pages/photos/PhotoManager'
+import GuestCardList from '@/pages/crm/GuestCardList'
+import GuestCardDetail from '@/pages/crm/GuestCardDetail'
+import SegmentList from '@/pages/crm/SegmentList'
+import BroadcastList from '@/pages/crm/BroadcastList'
+import BroadcastCreate from '@/pages/crm/BroadcastCreate'
+import AutoScenarios from '@/pages/crm/AutoScenarios'
+import ResponseTemplates from '@/pages/crm/ResponseTemplates'
 import ClientHome from '@/pages/client/ClientHome'
 import BathhouseSearch from '@/pages/client/BathhouseSearch'
 import BathhouseDetail from '@/pages/client/BathhouseDetail'
@@ -81,6 +88,13 @@ export default function AppRouter() {
         <Route path="subscriptions" element={<SubscriptionPage />} />
         <Route path="widget" element={<WidgetSettings />} />
         <Route path="photos" element={<PhotoManager />} />
+        <Route path="crm/guests" element={<GuestCardList />} />
+        <Route path="crm/guests/:id" element={<GuestCardDetail />} />
+        <Route path="crm/segments" element={<SegmentList />} />
+        <Route path="crm/broadcasts" element={<BroadcastList />} />
+        <Route path="crm/broadcasts/new" element={<BroadcastCreate />} />
+        <Route path="crm/scenarios" element={<AutoScenarios />} />
+        <Route path="crm/templates" element={<ResponseTemplates />} />
         <Route path="settings" element={<ProfileSettings />} />
         <Route path="notifications" element={<NotificationList />} />
       </Route>

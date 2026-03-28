@@ -294,15 +294,15 @@ Comprehensive plan to bring the platform into full compliance with BRD RelaxHub 
 - Create: `frontend/src/pages/crm/ResponseTemplates.tsx`
 - Modify: `frontend/src/router.tsx` (add CRM routes)
 
-- [ ] Regenerate API client (npm run generate:api) to include CRM endpoints
-- [ ] Guest card list page: search, filter by tags/segment, CSV export
-- [ ] Guest card detail page: visit history, LTV, avg check, notes, tags editor
-- [ ] Segment list page: view predefined segments (new/regular/lost/VIP/birthday), segment member counts
-- [ ] Broadcast management: create broadcast with text+image, select segment, attach promo, view send statistics
-- [ ] Auto-scenarios page: toggle on/off, customize text/timing/channel per scenario
-- [ ] Response templates page: CRUD for quick reply templates
-- [ ] Write frontend tests for key CRM flows
-- [ ] Run project test suite - must pass before next task
+- [x] Regenerate API client (npm run generate:api) to include CRM endpoints
+- [x] Guest card list page: search, filter by tags/segment, CSV export
+- [x] Guest card detail page: visit history, LTV, avg check, notes, tags editor
+- [x] Segment list page: view predefined segments (new/regular/lost/VIP/birthday), segment member counts
+- [x] Broadcast management: create broadcast with text+image, select segment, attach promo, view send statistics
+- [x] Auto-scenarios page: toggle on/off, customize text/timing/channel per scenario
+- [x] Response templates page: CRUD for quick reply templates
+- [x] Write frontend tests for key CRM flows
+- [x] Run project test suite - must pass before next task
 
 ### Task 15: Frontend - Support tickets pages
 
