@@ -2241,13 +2241,18 @@ func (s *bookingService) checkCrossRegion(ctx context.Context, userID uuid.UUID,
 
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
-		// User not found is not a cross-region error; let other validations handle it
-		return nil
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil
+		}
+		return fmt.Errorf("get user for cross-region check: %w", err)
 	}
 
 	city, err := s.cityRepo.GetByID(ctx, cityID)
 	if err != nil {
-		return nil
+		if errors.Is(err, domain.ErrNotFound) {
+			return nil
+		}
+		return fmt.Errorf("get city for cross-region check: %w", err)
 	}
 
 	userRegion := user.Region
