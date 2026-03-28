@@ -94,14 +94,14 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Create: `migrations/XXXX_bank_reconciliation.up.sql`
 - Modify: `internal/cron/scheduler.go` (optional daily import cron)
 
-- [ ] Create bank_statement_entries table (id, date, amount, description, counterparty, matched_tx_id, status)
-- [ ] Implement CSV/1C format parser for bank statements
-- [ ] Auto-matching algorithm: by amount + date + reference number
-- [ ] Admin endpoint: POST /api/v1/admin/finance/bank-statement (upload)
-- [ ] Admin endpoint: GET /api/v1/admin/finance/reconciliation (unmatched entries queue)
-- [ ] Admin endpoint: PUT /api/v1/admin/finance/reconciliation/{id}/match (manual match)
-- [ ] Write tests for parser and matching
-- [ ] Run project test suite - must pass before task 5
+- [x] Create bank_statement_entries table (id, date, amount, description, counterparty, matched_tx_id, status)
+- [x] Implement CSV/1C format parser for bank statements
+- [x] Auto-matching algorithm: by amount + date + reference number
+- [x] Admin endpoint: POST /api/v1/admin/finance/bank-statement (upload)
+- [x] Admin endpoint: GET /api/v1/admin/finance/reconciliation (unmatched entries queue)
+- [x] Admin endpoint: PUT /api/v1/admin/finance/reconciliation/{id}/match (manual match)
+- [x] Write tests for parser and matching
+- [x] Run project test suite - must pass before task 5
 
 ### Task 5: Admin Wallet Management (FR admin-panel)
 

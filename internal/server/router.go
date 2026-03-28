@@ -86,7 +86,8 @@ type RouterParams struct {
 	ShareHandler             *handler.ShareHandler
 	AmenityHandler           *handler.AmenityHandler
 	ObjectTypeHandler        *handler.ObjectTypeHandler
-	SavedCardHandler         *handler.SavedCardHandler
+	SavedCardHandler              *handler.SavedCardHandler
+	BankReconciliationHandler    *handler.BankReconciliationHandler
 	AuditLogRepo              repository.AuditLogRepository
 	SessionValidator      middleware.SessionValidator `optional:"true"`
 	GoAdmin               *admin.GoAdmin              `optional:"true"`
@@ -647,6 +648,11 @@ func NewRouter(p RouterParams) http.Handler {
 			r.Get("/reconciliation/snapshots", p.ReconciliationHandler.ListSnapshots)
 			r.Post("/reconciliation/reconcile", p.ReconciliationHandler.Reconcile)
 			r.Get("/reconciliation/reports", p.ReconciliationHandler.ListReports)
+
+			// Bank statement reconciliation (admin only)
+			r.Post("/finance/bank-statement", p.BankReconciliationHandler.UploadBankStatement)
+			r.Get("/finance/reconciliation", p.BankReconciliationHandler.ListUnmatched)
+			r.Put("/finance/reconciliation/{id}/match", p.BankReconciliationHandler.ManualMatch)
 		})
 	})
 

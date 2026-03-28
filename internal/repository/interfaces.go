@@ -660,3 +660,17 @@ type ObjectTypeRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.ObjectType, error)
 	ListAll(ctx context.Context) ([]domain.ObjectType, error)
 }
+
+// BankReconciliationRepository manages bank statement entries and uploads.
+type BankReconciliationRepository interface {
+	CreateUpload(ctx context.Context, upload *domain.BankStatementUpload) error
+	UpdateUploadCounts(ctx context.Context, id uuid.UUID, matched, pending, ignored int) error
+
+	CreateEntries(ctx context.Context, entries []domain.BankStatementEntry) error
+	GetEntryByID(ctx context.Context, id uuid.UUID) (*domain.BankStatementEntry, error)
+	ListEntries(ctx context.Context, filter domain.BankStatementFilter) (*domain.PaginatedResult[domain.BankStatementEntry], error)
+	MatchEntry(ctx context.Context, entryID uuid.UUID, txID uuid.UUID, txType string) error
+
+	// FindPaymentsByAmountAndDate finds payments matching amount and date range for auto-matching.
+	FindPaymentsByAmountAndDate(ctx context.Context, amount int64, dateFrom, dateTo time.Time) ([]domain.Payment, error)
+}

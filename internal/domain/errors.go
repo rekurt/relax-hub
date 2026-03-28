@@ -170,6 +170,9 @@ var (
 
 	ErrSavedCardNotFound     = errors.New("saved card not found")
 	ErrSavedCardLimitReached = errors.New("saved card limit reached")
+
+	ErrBankEntryNotFound      = errors.New("bank statement entry not found")
+	ErrBankEntryAlreadyMatched = errors.New("bank statement entry already matched")
 )
 
 // PaymentFailedError wraps ErrPaymentFailed with user-facing details.

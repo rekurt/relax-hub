@@ -366,6 +366,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "dispute_not_resolved", err.Error())
 	case errors.Is(err, domain.ErrDisputeAlreadyAppealed):
 		writeErrorWithContext(w, r, http.StatusConflict, "dispute_already_appealed", err.Error())
+	case errors.Is(err, domain.ErrBankEntryNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "bank_entry_not_found", err.Error())
+	case errors.Is(err, domain.ErrBankEntryAlreadyMatched):
+		writeErrorWithContext(w, r, http.StatusConflict, "bank_entry_already_matched", err.Error())
 	case errors.Is(err, domain.ErrFraudDetected):
 		writeErrorWithContext(w, r, http.StatusForbidden, "fraud_detected", err.Error())
 	case errors.Is(err, domain.ErrDepositNotFound):
