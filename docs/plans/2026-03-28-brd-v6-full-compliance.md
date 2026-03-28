@@ -222,13 +222,13 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 **Files:**
 - Modify: `frontend/src/pages/calendar/CalendarPage.tsx`
 
-- [ ] Add day view: hourly grid with bookings as colored blocks
-- [ ] Add month view: cells with booking count/status summary
-- [ ] Color coding: green (confirmed), yellow (pending), red (cancelled), gray (blocked)
-- [ ] Add view switcher (day/week/month) in calendar header
-- [ ] Multi-object consolidated view for owners with multiple bathhouses
-- [ ] Write frontend tests for new views
-- [ ] Run project test suite - must pass before task 12
+- [x] Add day view: hourly grid with bookings as colored blocks
+- [x] Add month view: cells with booking count/status summary
+- [x] Color coding: green (confirmed), yellow (pending), red (cancelled), gray (blocked)
+- [x] Add view switcher (day/week/month) in calendar header
+- [x] Multi-object consolidated view for owners with multiple bathhouses
+- [x] Write frontend tests for new views
+- [x] Run project test suite - must pass before task 12
 
 ### Task 12: CRM - RFM Analysis & Custom Segments (FR CRM)
 

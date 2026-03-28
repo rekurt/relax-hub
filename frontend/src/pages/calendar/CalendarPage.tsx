@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import {
   Alert,
+  Badge,
   Button,
   Card,
   Col,
@@ -11,9 +12,11 @@ import {
   Modal,
   Popconfirm,
   Row,
+  Segmented,
   Select,
   Space,
   Spin,
+  Switch,
   Tag,
   Tooltip,
   Typography,
@@ -32,6 +35,7 @@ import {
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
 import { App } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -43,13 +47,15 @@ import {
   useDeleteMyExternalCalendarsId,
 } from '@/api/generated/calendar/calendar'
 import { useGetBathhousesIdBookings } from '@/api/generated/bookings/bookings'
+import { useGetMyBathhouses } from '@/api/generated/bathhouses/bathhouses'
 import type {
   InternalHandlerBookingResponse,
   InternalHandlerExternalCalendarResponse,
 } from '@/api/generated/model'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { formatPrice, formatTime, formatDateTime } from '@/lib/format'
-import { BOOKING_STATUS_CONFIG } from '@/lib/constants'
+
+dayjs.extend(isoWeek)
 
 const { Title, Text } = Typography
 const { RangePicker } = DatePicker
@@ -62,6 +68,37 @@ const SOURCE_OPTIONS = [
   { value: 'yandex_calendar', label: 'Яндекс.Календарь' },
 ]
 
+type CalendarView = 'day' | 'week' | 'month'
+
+const VIEW_OPTIONS = [
+  { label: 'День', value: 'day' as CalendarView },
+  { label: 'Неделя', value: 'week' as CalendarView },
+  { label: 'Месяц', value: 'month' as CalendarView },
+]
+
+/** Status-based color coding per BRD: green=confirmed, yellow=pending, red=cancelled, gray=blocked */
+const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+  confirmed: { bg: '#52c41a', text: '#fff', label: 'Подтверждено' },
+  pending: { bg: '#faad14', text: '#fff', label: 'Ожидает' },
+  pending_owner: { bg: '#faad14', text: '#fff', label: 'Ожидает владельца' },
+  cancelled: { bg: '#ff4d4f', text: '#fff', label: 'Отменено' },
+  rejected: { bg: '#ff4d4f', text: '#fff', label: 'Отклонено' },
+  completed: { bg: '#52c41a', text: '#fff', label: 'Завершено' },
+  no_show: { bg: '#d9d9d9', text: '#333', label: 'Неявка' },
+  force_majeure_cancelled: { bg: '#d9d9d9', text: '#333', label: 'Форс-мажор' },
+}
+
+const LEGEND_ITEMS = [
+  { color: '#52c41a', label: 'Подтверждено' },
+  { color: '#faad14', label: 'Ожидает' },
+  { color: '#ff4d4f', label: 'Отменено' },
+  { color: '#d9d9d9', label: 'Заблокировано' },
+]
+
+function getStatusColor(status: string) {
+  return STATUS_COLORS[status] ?? { bg: '#1677ff', text: '#fff', label: status }
+}
+
 interface BookingBlock {
   booking: InternalHandlerBookingResponse
   top: number
@@ -69,23 +106,456 @@ interface BookingBlock {
   dayIndex: number
 }
 
+function computeBookingBlocks(
+  bookings: InternalHandlerBookingResponse[],
+  days: Dayjs[],
+): BookingBlock[] {
+  const blocks: BookingBlock[] = []
+  for (const booking of bookings) {
+    if (!booking.start_time || !booking.end_time) continue
+
+    const start = dayjs(booking.start_time)
+    const end = dayjs(booking.end_time)
+
+    for (let d = 0; d < days.length; d++) {
+      const day = days[d]!
+      const dayStart = day.startOf('day')
+      const dayEnd = day.endOf('day')
+
+      if (start.isBefore(dayEnd) && end.isAfter(dayStart)) {
+        const effectiveStart = start.isAfter(dayStart) ? start : dayStart
+        const effectiveEnd = end.isBefore(dayEnd) ? end : dayEnd
+
+        const startMinutes = effectiveStart.hour() * 60 + effectiveStart.minute()
+        const endMinutes = effectiveEnd.hour() * 60 + effectiveEnd.minute()
+
+        const top = (startMinutes / 60) * 60
+        const height = Math.max(((endMinutes - startMinutes) / 60) * 60, 20)
+
+        blocks.push({ booking, top, height, dayIndex: d })
+      }
+    }
+  }
+  return blocks
+}
+
+interface MonthCellData {
+  date: Dayjs
+  isCurrentMonth: boolean
+  counts: Record<string, number>
+  total: number
+}
+
+function computeMonthCells(
+  monthStart: Dayjs,
+  bookings: InternalHandlerBookingResponse[],
+): MonthCellData[] {
+  const firstDay = monthStart.startOf('month')
+  const lastDay = monthStart.endOf('month')
+
+  // Start from Monday of first week
+  const calendarStart = firstDay.startOf('isoWeek')
+  // End on Sunday of last week
+  const calendarEnd = lastDay.endOf('isoWeek')
+
+  const cells: MonthCellData[] = []
+  let current = calendarStart
+
+  while (current.isBefore(calendarEnd) || current.isSame(calendarEnd, 'day')) {
+    const dayStart = current.startOf('day')
+    const dayEnd = current.endOf('day')
+    const counts: Record<string, number> = {}
+    let total = 0
+
+    for (const booking of bookings) {
+      if (!booking.start_time) continue
+      const bStart = dayjs(booking.start_time)
+      const bEnd = booking.end_time ? dayjs(booking.end_time) : bStart
+
+      if (bStart.isBefore(dayEnd) && bEnd.isAfter(dayStart)) {
+        const status = booking.status ?? 'pending'
+        counts[status] = (counts[status] ?? 0) + 1
+        total++
+      }
+    }
+
+    cells.push({
+      date: current,
+      isCurrentMonth: current.month() === monthStart.month(),
+      counts,
+      total,
+    })
+
+    current = current.add(1, 'day')
+  }
+
+  return cells
+}
+
+/** Renders a single booking block for day/week grids */
+function BookingBlockEl({ block }: { block: BookingBlock }) {
+  const status = block.booking.status ?? 'pending'
+  const sc = getStatusColor(status)
+  return (
+    <Tooltip
+      title={
+        <div>
+          <div>{sc.label}</div>
+          <div>
+            {block.booking.start_time ? formatTime(block.booking.start_time) : ''} –{' '}
+            {block.booking.end_time ? formatTime(block.booking.end_time) : ''}
+          </div>
+          <div>Гостей: {block.booking.guest_count ?? '—'}</div>
+          <div>{formatPrice(block.booking.total_price ?? 0)}</div>
+        </div>
+      }
+    >
+      <div
+        style={{
+          position: 'absolute',
+          top: block.top,
+          left: 2,
+          right: 2,
+          height: block.height,
+          backgroundColor: sc.bg,
+          opacity: 0.85,
+          borderRadius: 4,
+          padding: '2px 4px',
+          overflow: 'hidden',
+          cursor: 'pointer',
+          color: sc.text,
+          fontSize: 11,
+          lineHeight: '14px',
+        }}
+      >
+        <div style={{ fontWeight: 500 }}>
+          {block.booking.start_time ? formatTime(block.booking.start_time) : ''}
+        </div>
+        {block.height > 30 && <div>{formatPrice(block.booking.total_price ?? 0)}</div>}
+      </div>
+    </Tooltip>
+  )
+}
+
+/** Time column shared by day and week views */
+function TimeColumn() {
+  return (
+    <div style={{ width: 60, flexShrink: 0, borderRight: '1px solid #f0f0f0' }}>
+      <div
+        style={{
+          height: 40,
+          borderBottom: '1px solid #f0f0f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          Время
+        </Text>
+      </div>
+      {HOURS.map((hour) => (
+        <div
+          key={hour}
+          style={{
+            height: 60,
+            borderBottom: '1px solid #f5f5f5',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            paddingTop: 2,
+          }}
+        >
+          <Text type="secondary" style={{ fontSize: 11 }}>
+            {String(hour).padStart(2, '0')}:00
+          </Text>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** Single day column with hourly grid and booking blocks */
+function DayColumn({
+  day,
+  dayIndex,
+  blocks,
+  isLast,
+  showDayHeader = true,
+}: {
+  day: Dayjs
+  dayIndex: number
+  blocks: BookingBlock[]
+  isLast?: boolean
+  showDayHeader?: boolean
+}) {
+  const isToday = day.isSame(dayjs(), 'day')
+  const dayBlocks = blocks.filter((b) => b.dayIndex === dayIndex)
+
+  return (
+    <div
+      style={{
+        flex: 1,
+        borderRight: isLast ? undefined : '1px solid #f0f0f0',
+        minWidth: 100,
+      }}
+    >
+      {showDayHeader && (
+        <div
+          style={{
+            height: 40,
+            borderBottom: '1px solid #f0f0f0',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: isToday ? '#e6f4ff' : undefined,
+          }}
+        >
+          <Text type="secondary" style={{ fontSize: 11, lineHeight: 1 }}>
+            {DAYS_SHORT[day.isoWeekday() - 1]}
+          </Text>
+          <Text
+            strong={isToday}
+            style={{
+              fontSize: 14,
+              color: isToday ? '#1677ff' : undefined,
+              lineHeight: 1.2,
+            }}
+          >
+            {day.format('DD')}
+          </Text>
+        </div>
+      )}
+
+      <div style={{ position: 'relative' }}>
+        {HOURS.map((hour) => (
+          <div
+            key={hour}
+            style={{
+              height: 60,
+              borderBottom: '1px solid #f5f5f5',
+              backgroundColor: isToday ? '#fafcff' : undefined,
+            }}
+          />
+        ))}
+        {dayBlocks.map((block, i) => (
+          <BookingBlockEl key={`${block.booking.id}-${i}`} block={block} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Day view - single day with hourly grid */
+function DayView({
+  date,
+  bookings,
+}: {
+  date: Dayjs
+  bookings: InternalHandlerBookingResponse[]
+}) {
+  const days = useMemo(() => [date], [date])
+  const blocks = useMemo(() => computeBookingBlocks(bookings, days), [bookings, days])
+
+  return (
+    <div style={{ display: 'flex', minWidth: 300 }}>
+      <TimeColumn />
+      <DayColumn day={date} dayIndex={0} blocks={blocks} isLast showDayHeader={false} />
+    </div>
+  )
+}
+
+/** Week view - 7 days with hourly grid */
+function WeekView({
+  weekStart,
+  bookings,
+}: {
+  weekStart: Dayjs
+  bookings: InternalHandlerBookingResponse[]
+}) {
+  const weekDays = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => weekStart.add(i, 'day')),
+    [weekStart],
+  )
+  const blocks = useMemo(() => computeBookingBlocks(bookings, weekDays), [bookings, weekDays])
+
+  return (
+    <div style={{ display: 'flex', minWidth: 800 }}>
+      <TimeColumn />
+      {weekDays.map((day, idx) => (
+        <DayColumn
+          key={idx}
+          day={day}
+          dayIndex={idx}
+          blocks={blocks}
+          isLast={idx === 6}
+        />
+      ))}
+    </div>
+  )
+}
+
+/** Month view - grid of day cells with booking counts */
+function MonthView({
+  monthStart,
+  bookings,
+  onDayClick,
+}: {
+  monthStart: Dayjs
+  bookings: InternalHandlerBookingResponse[]
+  onDayClick: (date: Dayjs) => void
+}) {
+  const cells = useMemo(() => computeMonthCells(monthStart, bookings), [monthStart, bookings])
+
+  const weeks: MonthCellData[][] = []
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7))
+  }
+
+  return (
+    <div>
+      {/* Day of week headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid #f0f0f0' }}>
+        {DAYS_SHORT.map((d) => (
+          <div
+            key={d}
+            style={{
+              textAlign: 'center',
+              padding: '8px 0',
+              fontWeight: 500,
+              fontSize: 13,
+              color: '#666',
+            }}
+          >
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Week rows */}
+      {weeks.map((week, wi) => (
+        <div
+          key={wi}
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}
+        >
+          {week.map((cell, ci) => {
+            const isToday = cell.date.isSame(dayjs(), 'day')
+            return (
+              <div
+                key={ci}
+                onClick={() => onDayClick(cell.date)}
+                style={{
+                  minHeight: 90,
+                  padding: 6,
+                  border: '1px solid #f0f0f0',
+                  borderTop: 'none',
+                  borderLeft: ci === 0 ? '1px solid #f0f0f0' : 'none',
+                  backgroundColor: isToday
+                    ? '#e6f4ff'
+                    : cell.isCurrentMonth
+                      ? '#fff'
+                      : '#fafafa',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isToday) e.currentTarget.style.backgroundColor = '#f5f5ff'
+                }}
+                onMouseLeave={(e) => {
+                  if (!isToday)
+                    e.currentTarget.style.backgroundColor = cell.isCurrentMonth ? '#fff' : '#fafafa'
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: isToday ? 700 : 400,
+                    color: cell.isCurrentMonth
+                      ? isToday
+                        ? '#1677ff'
+                        : '#333'
+                      : '#bbb',
+                    marginBottom: 4,
+                  }}
+                >
+                  {cell.date.format('D')}
+                </div>
+
+                {cell.total > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                    {(cell.counts['confirmed'] ?? 0) > 0 && (
+                      <Badge
+                        count={cell.counts['confirmed']}
+                        color="#52c41a"
+                        size="small"
+                        title="Подтверждено"
+                      />
+                    )}
+                    {(cell.counts['completed'] ?? 0) > 0 && (
+                      <Badge
+                        count={cell.counts['completed']}
+                        color="#52c41a"
+                        size="small"
+                        title="Завершено"
+                      />
+                    )}
+                    {((cell.counts['pending'] ?? 0) + (cell.counts['pending_owner'] ?? 0)) > 0 && (
+                      <Badge
+                        count={(cell.counts['pending'] ?? 0) + (cell.counts['pending_owner'] ?? 0)}
+                        color="#faad14"
+                        size="small"
+                        title="Ожидает"
+                      />
+                    )}
+                    {((cell.counts['cancelled'] ?? 0) + (cell.counts['rejected'] ?? 0)) > 0 && (
+                      <Badge
+                        count={(cell.counts['cancelled'] ?? 0) + (cell.counts['rejected'] ?? 0)}
+                        color="#ff4d4f"
+                        size="small"
+                        title="Отменено"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function CalendarPage() {
   const { message } = App.useApp()
   const queryClient = useQueryClient()
   const selectedBathhouseId = useBathhouseStore((s) => s.selectedBathhouseId)
 
-  const [weekStart, setWeekStart] = useState<Dayjs>(() => dayjs().startOf('isoWeek'))
+  const [view, setView] = useState<CalendarView>('week')
+  const [currentDate, setCurrentDate] = useState<Dayjs>(() => dayjs())
+  const [consolidatedView, setConsolidatedView] = useState(false)
   const [slotBlockModalOpen, setSlotBlockModalOpen] = useState(false)
   const [externalCalendarModalOpen, setExternalCalendarModalOpen] = useState(false)
   const [slotBlockForm] = Form.useForm()
   const [externalCalForm] = Form.useForm()
 
-  const weekEnd = weekStart.add(6, 'day').endOf('day')
+  // Derive week/month start from currentDate
+  const weekStart = useMemo(() => currentDate.startOf('isoWeek'), [currentDate])
+  const monthStart = useMemo(() => currentDate.startOf('month'), [currentDate])
+
+  // Fetch owner's bathhouses for consolidated view
+  const { data: bathhousesData } = useGetMyBathhouses(
+    { page: 1, page_size: 100 },
+    { query: { enabled: consolidatedView } },
+  )
+  const allBathhouses = useMemo(() => bathhousesData?.data ?? [], [bathhousesData?.data])
+  const hasMultipleBathhouses = allBathhouses.length > 1
 
   const { data: bookingsData, isLoading: bookingsLoading } = useGetBathhousesIdBookings(
     selectedBathhouseId ?? '',
-    { page: 1, page_size: 100 },
-    { query: { enabled: !!selectedBathhouseId } },
+    { page: 1, page_size: 200 },
+    { query: { enabled: !!selectedBathhouseId && !consolidatedView } },
   )
 
   const { data: tokenData } = useGetMyBathhousesIdCalendarToken(
@@ -151,42 +621,10 @@ export default function CalendarPage() {
   const externalCalendars = (externalCalendarsData?.data ?? []) as InternalHandlerExternalCalendarResponse[]
   const calendarToken = tokenData?.data
 
-  const weekDays = useMemo(
-    () => Array.from({ length: 7 }, (_, i) => weekStart.add(i, 'day')),
-    [weekStart],
+  const bookings = useMemo(
+    () => (bookingsData?.data ?? []) as InternalHandlerBookingResponse[],
+    [bookingsData?.data],
   )
-
-  const bookingBlocks: BookingBlock[] = useMemo(() => {
-    const blocks: BookingBlock[] = []
-    const items = bookingsData?.data ?? []
-    for (const booking of items) {
-      if (!booking.start_time || !booking.end_time) continue
-      if (booking.status === 'cancelled' || booking.status === 'rejected') continue
-
-      const start = dayjs(booking.start_time)
-      const end = dayjs(booking.end_time)
-
-      for (let d = 0; d < 7; d++) {
-        const day = weekDays[d]!
-        const dayStart = day.startOf('day')
-        const dayEnd = day.endOf('day')
-
-        if (start.isBefore(dayEnd) && end.isAfter(dayStart)) {
-          const effectiveStart = start.isAfter(dayStart) ? start : dayStart
-          const effectiveEnd = end.isBefore(dayEnd) ? end : dayEnd
-
-          const startMinutes = effectiveStart.hour() * 60 + effectiveStart.minute()
-          const endMinutes = effectiveEnd.hour() * 60 + effectiveEnd.minute()
-
-          const top = (startMinutes / 60) * 60
-          const height = Math.max(((endMinutes - startMinutes) / 60) * 60, 20)
-
-          blocks.push({ booking, top, height, dayIndex: d })
-        }
-      }
-    }
-    return blocks
-  }, [bookingsData?.data, weekDays])
 
   const handleCreateSlotBlock = () => {
     slotBlockForm.validateFields().then((values) => {
@@ -226,13 +664,43 @@ export default function CalendarPage() {
     }
   }
 
-  const navigateWeek = (direction: number) => {
-    setWeekStart((prev) => prev.add(direction * 7, 'day'))
-  }
+  const navigate = useCallback(
+    (direction: number) => {
+      setCurrentDate((prev) => {
+        switch (view) {
+          case 'day':
+            return prev.add(direction, 'day')
+          case 'week':
+            return prev.add(direction * 7, 'day')
+          case 'month':
+            return prev.add(direction, 'month')
+        }
+      })
+    },
+    [view],
+  )
 
-  const goToToday = () => {
-    setWeekStart(dayjs().startOf('isoWeek'))
-  }
+  const goToToday = useCallback(() => {
+    setCurrentDate(dayjs())
+  }, [])
+
+  const handleMonthDayClick = useCallback((date: Dayjs) => {
+    setCurrentDate(date)
+    setView('day')
+  }, [])
+
+  const dateLabel = useMemo(() => {
+    switch (view) {
+      case 'day':
+        return currentDate.format('DD MMMM YYYY (dd)')
+      case 'week': {
+        const end = weekStart.add(6, 'day')
+        return `${weekStart.format('DD MMM')} — ${end.format('DD MMM YYYY')}`
+      }
+      case 'month':
+        return currentDate.format('MMMM YYYY')
+    }
+  }, [view, currentDate, weekStart])
 
   if (!selectedBathhouseId) {
     return (
@@ -264,6 +732,18 @@ export default function CalendarPage() {
           Календарь
         </Title>
         <Space wrap>
+          {hasMultipleBathhouses && (
+            <Tooltip title="Показать бронирования всех объектов">
+              <Space>
+                <Text style={{ fontSize: 13 }}>Все объекты</Text>
+                <Switch
+                  size="small"
+                  checked={consolidatedView}
+                  onChange={setConsolidatedView}
+                />
+              </Space>
+            </Tooltip>
+          )}
           <Button
             icon={<PlusOutlined />}
             onClick={() => setSlotBlockModalOpen(true)}
@@ -276,26 +756,50 @@ export default function CalendarPage() {
         </Space>
       </div>
 
-      {/* Week navigation */}
+      {/* Navigation + View Switcher */}
       <Card size="small" style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 8,
+          }}
+        >
           <Space>
-            <Button icon={<LeftOutlined />} onClick={() => navigateWeek(-1)} />
+            <Button icon={<LeftOutlined />} onClick={() => navigate(-1)} />
             <Button onClick={goToToday}>Сегодня</Button>
-            <Button icon={<RightOutlined />} onClick={() => navigateWeek(1)} />
+            <Button icon={<RightOutlined />} onClick={() => navigate(1)} />
           </Space>
-          <Text strong>
-            {weekStart.format('DD MMM')} — {weekEnd.format('DD MMM YYYY')}
-          </Text>
+          <Text strong>{dateLabel}</Text>
           <Space>
-            <Tag color="blue">Подтверждено</Tag>
-            <Tag color="orange">Ожидает</Tag>
-            <Tag color="green">Завершено</Tag>
+            <Segmented
+              options={VIEW_OPTIONS}
+              value={view}
+              onChange={(v) => setView(v as CalendarView)}
+            />
           </Space>
+        </div>
+        {/* Legend */}
+        <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
+          {LEGEND_ITEMS.map((item) => (
+            <Space key={item.label} size={4}>
+              <div
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 2,
+                  backgroundColor: item.color,
+                }}
+              />
+              <Text style={{ fontSize: 12 }}>{item.label}</Text>
+            </Space>
+          ))}
         </div>
       </Card>
 
-      {/* Weekly calendar grid */}
+      {/* Calendar Grid */}
       <Card
         size="small"
         style={{ marginBottom: 16, overflow: 'auto' }}
@@ -305,161 +809,16 @@ export default function CalendarPage() {
           <div style={{ textAlign: 'center', padding: 40 }}>
             <Spin size="large" />
           </div>
+        ) : view === 'day' ? (
+          <DayView date={currentDate} bookings={bookings} />
+        ) : view === 'week' ? (
+          <WeekView weekStart={weekStart} bookings={bookings} />
         ) : (
-          <div style={{ display: 'flex', minWidth: 800 }}>
-            {/* Time column */}
-            <div style={{ width: 60, flexShrink: 0, borderRight: '1px solid #f0f0f0' }}>
-              <div
-                style={{
-                  height: 40,
-                  borderBottom: '1px solid #f0f0f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  Время
-                </Text>
-              </div>
-              {HOURS.map((hour) => (
-                <div
-                  key={hour}
-                  style={{
-                    height: 60,
-                    borderBottom: '1px solid #f5f5f5',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    justifyContent: 'center',
-                    paddingTop: 2,
-                  }}
-                >
-                  <Text type="secondary" style={{ fontSize: 11 }}>
-                    {String(hour).padStart(2, '0')}:00
-                  </Text>
-                </div>
-              ))}
-            </div>
-
-            {/* Day columns */}
-            {weekDays.map((day, dayIndex) => {
-              const isToday = day.isSame(dayjs(), 'day')
-              const dayBlocks = bookingBlocks.filter((b) => b.dayIndex === dayIndex)
-
-              return (
-                <div
-                  key={dayIndex}
-                  style={{
-                    flex: 1,
-                    borderRight: dayIndex < 6 ? '1px solid #f0f0f0' : undefined,
-                    minWidth: 100,
-                  }}
-                >
-                  {/* Day header */}
-                  <div
-                    style={{
-                      height: 40,
-                      borderBottom: '1px solid #f0f0f0',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: isToday ? '#e6f4ff' : undefined,
-                    }}
-                  >
-                    <Text
-                      type="secondary"
-                      style={{ fontSize: 11, lineHeight: 1 }}
-                    >
-                      {DAYS_SHORT[dayIndex]}
-                    </Text>
-                    <Text
-                      strong={isToday}
-                      style={{
-                        fontSize: 14,
-                        color: isToday ? '#1677ff' : undefined,
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      {day.format('DD')}
-                    </Text>
-                  </div>
-
-                  {/* Hours grid with bookings */}
-                  <div style={{ position: 'relative' }}>
-                    {HOURS.map((hour) => (
-                      <div
-                        key={hour}
-                        style={{
-                          height: 60,
-                          borderBottom: '1px solid #f5f5f5',
-                          backgroundColor: isToday ? '#fafcff' : undefined,
-                        }}
-                      />
-                    ))}
-                    {dayBlocks.map((block, i) => {
-                      const status = block.booking.status ?? 'pending'
-                      const statusConf = BOOKING_STATUS_CONFIG[status]
-                      const bgColor = statusConf?.hexColor ?? '#1677ff'
-                      return (
-                        <Tooltip
-                          key={`${block.booking.id}-${i}`}
-                          title={
-                            <div>
-                              <div>{statusConf?.text ?? status}</div>
-                              <div>
-                                {block.booking.start_time
-                                  ? formatTime(block.booking.start_time)
-                                  : ''}{' '}
-                                –{' '}
-                                {block.booking.end_time
-                                  ? formatTime(block.booking.end_time)
-                                  : ''}
-                              </div>
-                              <div>
-                                Гостей: {block.booking.guest_count ?? '—'}
-                              </div>
-                              <div>
-                                {formatPrice(block.booking.total_price ?? 0)}
-                              </div>
-                            </div>
-                          }
-                        >
-                          <div
-                            style={{
-                              position: 'absolute',
-                              top: block.top,
-                              left: 2,
-                              right: 2,
-                              height: block.height,
-                              backgroundColor: bgColor,
-                              opacity: 0.85,
-                              borderRadius: 4,
-                              padding: '2px 4px',
-                              overflow: 'hidden',
-                              cursor: 'pointer',
-                              color: '#fff',
-                              fontSize: 11,
-                              lineHeight: '14px',
-                            }}
-                          >
-                            <div style={{ fontWeight: 500 }}>
-                              {block.booking.start_time
-                                ? formatTime(block.booking.start_time)
-                                : ''}
-                            </div>
-                            {block.height > 30 && (
-                              <div>{formatPrice(block.booking.total_price ?? 0)}</div>
-                            )}
-                          </div>
-                        </Tooltip>
-                      )
-                    })}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          <MonthView
+            monthStart={monthStart}
+            bookings={bookings}
+            onDayClick={handleMonthDayClick}
+          />
         )}
       </Card>
 
