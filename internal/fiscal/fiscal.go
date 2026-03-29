@@ -54,8 +54,8 @@ func TaxInfoForEntityType(entityType domain.KYCEntityType) (vat string, taxSyste
 		// Юрлица: ОСНО, НДС 20%
 		return "vat20", TaxSystemOSN
 	case domain.KYCEntitySoleProprietor:
-		// ИП: по умолчанию УСН доходы, без НДС
-		return "none", TaxSystemUSN
+		// ИП: ОСНО, НДС 20%
+		return "vat20", TaxSystemOSN
 	case domain.KYCEntitySelfEmployed:
 		// Самозанятые: НПД, без НДС
 		return "none", TaxSystemNPD

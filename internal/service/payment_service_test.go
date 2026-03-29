@@ -1412,7 +1412,7 @@ func TestPaymentService_FiscalReceipt_AdaptsByEntityType(t *testing.T) {
 		wantTax    fiscal.TaxSystem
 	}{
 		{"legal entity gets VAT 20% and OSN", domain.KYCEntityLegalEntity, "vat20", fiscal.TaxSystemOSN},
-		{"sole proprietor gets no VAT and USN", domain.KYCEntitySoleProprietor, "none", fiscal.TaxSystemUSN},
+		{"sole proprietor gets VAT 20% and OSN", domain.KYCEntitySoleProprietor, "vat20", fiscal.TaxSystemOSN},
 		{"self-employed gets no VAT and NPD", domain.KYCEntitySelfEmployed, "none", fiscal.TaxSystemNPD},
 		{"individual gets no VAT and OSN", domain.KYCEntityIndividual, "none", fiscal.TaxSystemOSN},
 	}

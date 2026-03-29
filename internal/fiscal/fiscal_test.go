@@ -107,10 +107,10 @@ func TestTaxInfoForEntityType(t *testing.T) {
 			wantTax:    fiscal.TaxSystemOSN,
 		},
 		{
-			name:       "sole proprietor uses USN without VAT",
+			name:       "sole proprietor uses OSN with VAT 20%",
 			entityType: domain.KYCEntitySoleProprietor,
-			wantVAT:    "none",
-			wantTax:    fiscal.TaxSystemUSN,
+			wantVAT:    "vat20",
+			wantTax:    fiscal.TaxSystemOSN,
 		},
 		{
 			name:       "self-employed uses NPD without VAT",
