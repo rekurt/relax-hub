@@ -282,6 +282,77 @@ func (r *TicketRepo) ListResolvedForAutoClose(_ context.Context, resolvedBefore 
 	return result, nil
 }
 
+func (r *TicketRepo) GetOperationMetrics(_ context.Context, filter domain.TicketMetricsFilter) (*domain.TicketOperationMetrics, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var totalTickets, totalResolved, fcrCount int64
+	var ahtSum float64
+	var ahtCount int64
+	var csatSum float64
+	var csatCount int64
+	var slaCompliant int64
+
+	for _, t := range r.tickets {
+		if filter.DateFrom != nil && t.CreatedAt.Before(*filter.DateFrom) {
+			continue
+		}
+		if filter.DateTo != nil && !t.CreatedAt.Before(*filter.DateTo) {
+			continue
+		}
+
+		totalTickets++
+
+		if t.Status == domain.TicketStatusResolved || t.Status == domain.TicketStatusClosed {
+			totalResolved++
+			if t.Level == domain.TicketLevelL1 {
+				fcrCount++
+			}
+		}
+
+		if t.ResolvedAt != nil {
+			ahtSum += t.ResolvedAt.Sub(t.CreatedAt).Seconds()
+			ahtCount++
+		}
+
+		if t.CSATScore != nil {
+			csatSum += float64(*t.CSATScore)
+			csatCount++
+		}
+
+		// SLA: check if first admin message was within 24h
+		msgs := r.messages[t.ID]
+		for _, m := range msgs {
+			if m.SenderType == domain.TicketSenderAdmin {
+				if m.CreatedAt.Sub(t.CreatedAt) <= 24*time.Hour {
+					slaCompliant++
+				}
+				break
+			}
+		}
+	}
+
+	metrics := &domain.TicketOperationMetrics{
+		TotalTickets:  totalTickets,
+		TotalResolved: totalResolved,
+	}
+
+	if totalResolved > 0 {
+		metrics.FCRPercent = float64(fcrCount) / float64(totalResolved) * 100
+	}
+	if ahtCount > 0 {
+		metrics.AHTSeconds = ahtSum / float64(ahtCount)
+	}
+	if csatCount > 0 {
+		metrics.AvgCSAT = csatSum / float64(csatCount)
+	}
+	if totalTickets > 0 {
+		metrics.SLACompliancePercent = float64(slaCompliant) / float64(totalTickets) * 100
+	}
+
+	return metrics, nil
+}
+
 // BackdateUpdatedAt sets the updated_at time for a ticket (test helper).
 func (r *TicketRepo) BackdateUpdatedAt(id uuid.UUID, t time.Time) {
 	r.mu.Lock()

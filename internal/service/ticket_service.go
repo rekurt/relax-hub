@@ -24,6 +24,7 @@ type TicketService interface {
 	CloseTicket(ctx context.Context, ticketID uuid.UUID) error
 	SubmitCSAT(ctx context.Context, userID uuid.UUID, ticketID uuid.UUID, score int) error
 	GetStats(ctx context.Context) (*domain.TicketStatusCounts, error)
+	GetOperationMetrics(ctx context.Context, filter domain.TicketMetricsFilter) (*domain.TicketOperationMetrics, error)
 	AutoEscalateStaleTickets(ctx context.Context) error
 	AutoCloseResolvedTickets(ctx context.Context) error
 }
@@ -258,6 +259,10 @@ func (s *ticketService) SubmitCSAT(ctx context.Context, userID uuid.UUID, ticket
 
 func (s *ticketService) GetStats(ctx context.Context) (*domain.TicketStatusCounts, error) {
 	return s.ticketRepo.CountByStatus(ctx)
+}
+
+func (s *ticketService) GetOperationMetrics(ctx context.Context, filter domain.TicketMetricsFilter) (*domain.TicketOperationMetrics, error) {
+	return s.ticketRepo.GetOperationMetrics(ctx, filter)
 }
 
 // AutoEscalateStaleTickets escalates tickets that have had no response:

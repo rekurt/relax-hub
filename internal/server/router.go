@@ -714,6 +714,7 @@ func NewRouter(p RouterParams) http.Handler {
 			// Support tickets
 			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Get("/tickets", p.TicketHandler.AdminListTickets)
 			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Get("/tickets/stats", p.TicketHandler.AdminGetStats)
+			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Get("/tickets/metrics", p.TicketHandler.AdminGetOperationMetrics)
 			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Get("/tickets/{id}", p.TicketHandler.AdminGetTicket)
 			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Patch("/tickets/{id}/assign", p.TicketHandler.AdminAssignTicket)
 			r.With(middleware.RequireAdminPermission(domain.PermTicketManage)).Patch("/tickets/{id}/escalate", p.TicketHandler.AdminEscalateTicket)

@@ -694,6 +694,104 @@ func TestTicketService_EscalateTicket_Closed(t *testing.T) {
 	}
 }
 
+func TestTicketService_GetOperationMetrics(t *testing.T) {
+	svc, repo := newTicketTestService()
+	ctx := context.Background()
+	userID := uuid.New()
+	adminID := uuid.New()
+
+	// Create 3 tickets, resolve 2 at L1, escalate 1
+
+	// Ticket 1: resolved at L1 with admin message within 24h (FCR=yes, SLA=yes)
+	t1 := &domain.Ticket{ID: uuid.New(), Category: domain.TicketCategoryQuestion, Subject: "Q1"}
+	_ = svc.CreateTicket(ctx, userID, t1, "help")
+	_, _ = svc.AddMessage(ctx, adminID, domain.RoleAdmin, t1.ID, "answer", nil)
+	_ = svc.ResolveTicket(ctx, t1.ID)
+	_ = svc.SubmitCSAT(ctx, userID, t1.ID, 5)
+
+	// Ticket 2: resolved at L1, no admin message (FCR=yes, SLA=no)
+	t2 := &domain.Ticket{ID: uuid.New(), Category: domain.TicketCategoryProblem, Subject: "Q2"}
+	_ = svc.CreateTicket(ctx, userID, t2, "issue")
+	_ = svc.ResolveTicket(ctx, t2.ID)
+	_ = svc.SubmitCSAT(ctx, userID, t2.ID, 3)
+
+	// Ticket 3: escalated to L2, then resolved (FCR=no, SLA=yes because admin replied)
+	t3 := &domain.Ticket{ID: uuid.New(), Category: domain.TicketCategoryComplaint, Subject: "Q3"}
+	_ = svc.CreateTicket(ctx, userID, t3, "complaint")
+	_, _ = svc.AddMessage(ctx, adminID, domain.RoleAdmin, t3.ID, "looking into it", nil)
+	_ = svc.EscalateTicket(ctx, t3.ID)
+	_ = svc.ResolveTicket(ctx, t3.ID)
+
+	metrics, err := svc.GetOperationMetrics(ctx, domain.TicketMetricsFilter{})
+	if err != nil {
+		t.Fatalf("GetOperationMetrics: %v", err)
+	}
+
+	if metrics.TotalTickets != 3 {
+		t.Errorf("expected total_tickets=3, got %d", metrics.TotalTickets)
+	}
+	if metrics.TotalResolved != 3 {
+		t.Errorf("expected total_resolved=3, got %d", metrics.TotalResolved)
+	}
+
+	// FCR: 2 resolved at L1 out of 3 = 66.67%
+	expectedFCR := float64(2) / float64(3) * 100
+	if diff := metrics.FCRPercent - expectedFCR; diff > 0.1 || diff < -0.1 {
+		t.Errorf("expected FCR~%.1f%%, got %.1f%%", expectedFCR, metrics.FCRPercent)
+	}
+
+	// AHT should be > 0 (all 3 are resolved)
+	if metrics.AHTSeconds <= 0 {
+		t.Errorf("expected AHT > 0, got %f", metrics.AHTSeconds)
+	}
+
+	// Avg CSAT: (5 + 3) / 2 = 4.0 (only 2 tickets have scores)
+	if diff := metrics.AvgCSAT - 4.0; diff > 0.1 || diff < -0.1 {
+		t.Errorf("expected avg_csat~4.0, got %.1f", metrics.AvgCSAT)
+	}
+
+	// SLA: 2 out of 3 have admin response within 24h (t1, t3)
+	expectedSLA := float64(2) / float64(3) * 100
+	if diff := metrics.SLACompliancePercent - expectedSLA; diff > 0.1 || diff < -0.1 {
+		t.Errorf("expected SLA~%.1f%%, got %.1f%%", expectedSLA, metrics.SLACompliancePercent)
+	}
+
+	// Test with date filter - future range should return zeros
+	futureFrom := time.Now().Add(24 * time.Hour)
+	metricsFiltered, err := svc.GetOperationMetrics(ctx, domain.TicketMetricsFilter{DateFrom: &futureFrom})
+	if err != nil {
+		t.Fatalf("GetOperationMetrics with filter: %v", err)
+	}
+	if metricsFiltered.TotalTickets != 0 {
+		t.Errorf("expected 0 tickets with future date filter, got %d", metricsFiltered.TotalTickets)
+	}
+
+	_ = repo // keep reference
+}
+
+func TestTicketService_GetOperationMetrics_Empty(t *testing.T) {
+	svc, _ := newTicketTestService()
+	ctx := context.Background()
+
+	metrics, err := svc.GetOperationMetrics(ctx, domain.TicketMetricsFilter{})
+	if err != nil {
+		t.Fatalf("GetOperationMetrics empty: %v", err)
+	}
+
+	if metrics.TotalTickets != 0 {
+		t.Errorf("expected total_tickets=0, got %d", metrics.TotalTickets)
+	}
+	if metrics.FCRPercent != 0 {
+		t.Errorf("expected FCR=0 for no tickets, got %f", metrics.FCRPercent)
+	}
+	if metrics.AHTSeconds != 0 {
+		t.Errorf("expected AHT=0 for no tickets, got %f", metrics.AHTSeconds)
+	}
+	if metrics.AvgCSAT != 0 {
+		t.Errorf("expected CSAT=0 for no tickets, got %f", metrics.AvgCSAT)
+	}
+}
+
 func TestTicketService_CreateTicket_WithBookingID(t *testing.T) {
 	svc, repo := newTicketTestService()
 	ctx := context.Background()

@@ -312,12 +312,12 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 - Modify: `internal/service/ticket_service.go` — добавить FCR, AHT расчёт
 - Modify: `internal/admin/pages/` — дашборд операционных метрик
 
-- [ ] FCR: % тикетов закрытых после первого ответа оператора
-- [ ] AHT: среднее время от создания тикета до закрытия
-- [ ] Агрегация в admin API endpoint
-- [ ] Frontend admin: виджет с метриками
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task D2
+- [x] FCR: % тикетов закрытых после первого ответа оператора
+- [x] AHT: среднее время от создания тикета до закрытия
+- [x] Агрегация в admin API endpoint
+- [x] Frontend admin: виджет с метриками
+- [x] Тесты
+- [x] run project test suite — must pass before Task D2
 
 ### Task D2: Метрики предложения и спроса (FR-148, FR-149)
 

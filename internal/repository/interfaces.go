@@ -648,6 +648,7 @@ type TicketRepository interface {
 	CountByStatus(ctx context.Context) (*domain.TicketStatusCounts, error)
 	ListStaleTickets(ctx context.Context, level domain.TicketLevel, olderThan time.Time) ([]domain.Ticket, error)
 	ListResolvedForAutoClose(ctx context.Context, resolvedBefore time.Time) ([]domain.Ticket, error)
+	GetOperationMetrics(ctx context.Context, filter domain.TicketMetricsFilter) (*domain.TicketOperationMetrics, error)
 }
 
 type ForceMajeureRepository interface {

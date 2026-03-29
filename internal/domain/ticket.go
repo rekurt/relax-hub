@@ -180,3 +180,23 @@ type TicketStatusCounts struct {
 	Resolved   int64
 	Closed     int64
 }
+
+type TicketOperationMetrics struct {
+	// FCR: percentage of tickets resolved at L1 (no escalation)
+	FCRPercent float64
+	// AHT: average time from creation to resolution (seconds)
+	AHTSeconds float64
+	// Average CSAT score (1-5)
+	AvgCSAT float64
+	// SLA compliance: % of tickets with first admin response within 24h
+	SLACompliancePercent float64
+	// Total resolved tickets in period
+	TotalResolved int64
+	// Total tickets in period
+	TotalTickets int64
+}
+
+type TicketMetricsFilter struct {
+	DateFrom *time.Time
+	DateTo   *time.Time
+}

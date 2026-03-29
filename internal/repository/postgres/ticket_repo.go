@@ -356,6 +356,74 @@ func (r *ticketRepo) ListStaleTickets(ctx context.Context, level domain.TicketLe
 	return tickets, nil
 }
 
+func (r *ticketRepo) GetOperationMetrics(ctx context.Context, filter domain.TicketMetricsFilter) (*domain.TicketOperationMetrics, error) {
+	// Build date filter conditions
+	var dateCondition string
+	var args []interface{}
+	argIdx := 1
+
+	if filter.DateFrom != nil && filter.DateTo != nil {
+		dateCondition = fmt.Sprintf("WHERE t.created_at >= $%d AND t.created_at < $%d", argIdx, argIdx+1)
+		args = append(args, *filter.DateFrom, *filter.DateTo)
+		argIdx += 2
+	} else if filter.DateFrom != nil {
+		dateCondition = fmt.Sprintf("WHERE t.created_at >= $%d", argIdx)
+		args = append(args, *filter.DateFrom)
+		argIdx++
+	} else if filter.DateTo != nil {
+		dateCondition = fmt.Sprintf("WHERE t.created_at < $%d", argIdx)
+		args = append(args, *filter.DateTo)
+		argIdx++
+	}
+
+	query := fmt.Sprintf(`
+		SELECT
+			-- Total tickets
+			COUNT(*) AS total_tickets,
+			-- Total resolved (resolved or closed)
+			COALESCE(SUM(CASE WHEN t.status IN ('resolved', 'closed') THEN 1 ELSE 0 END), 0) AS total_resolved,
+			-- FCR: resolved at L1 / total resolved
+			CASE
+				WHEN SUM(CASE WHEN t.status IN ('resolved', 'closed') THEN 1 ELSE 0 END) > 0
+				THEN (SUM(CASE WHEN t.status IN ('resolved', 'closed') AND t.level = 'L1' THEN 1 ELSE 0 END)::float
+					/ SUM(CASE WHEN t.status IN ('resolved', 'closed') THEN 1 ELSE 0 END)::float) * 100
+				ELSE 0
+			END AS fcr_percent,
+			-- AHT: avg seconds from creation to resolution
+			COALESCE(AVG(EXTRACT(EPOCH FROM (t.resolved_at - t.created_at)))
+				FILTER (WHERE t.resolved_at IS NOT NULL), 0) AS aht_seconds,
+			-- Avg CSAT
+			COALESCE(AVG(t.csat_score) FILTER (WHERE t.csat_score IS NOT NULL), 0) AS avg_csat,
+			-- SLA compliance: %% of tickets with first admin response within 24h
+			CASE
+				WHEN COUNT(*) > 0
+				THEN (
+					SUM(CASE WHEN EXISTS (
+						SELECT 1 FROM ticket_messages tm
+						WHERE tm.ticket_id = t.id AND tm.sender_type = 'admin'
+						AND tm.created_at - t.created_at <= interval '24 hours'
+					) THEN 1 ELSE 0 END)::float / COUNT(*)::float
+				) * 100
+				ELSE 0
+			END AS sla_compliance_percent
+		FROM support_tickets t
+		%s`, dateCondition)
+
+	var m domain.TicketOperationMetrics
+	err := r.pool.QueryRow(ctx, query, args...).Scan(
+		&m.TotalTickets,
+		&m.TotalResolved,
+		&m.FCRPercent,
+		&m.AHTSeconds,
+		&m.AvgCSAT,
+		&m.SLACompliancePercent,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("get operation metrics: %w", err)
+	}
+	return &m, nil
+}
+
 func (r *ticketRepo) ListResolvedForAutoClose(ctx context.Context, resolvedBefore time.Time) ([]domain.Ticket, error) {
 	query := fmt.Sprintf(`SELECT %s FROM support_tickets
 		WHERE status = 'resolved' AND resolved_at IS NOT NULL AND resolved_at < $1

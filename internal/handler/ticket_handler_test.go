@@ -30,7 +30,8 @@ type mockTicketService struct {
 	resolveTicketFn  func(ctx context.Context, ticketID uuid.UUID) error
 	closeTicketFn    func(ctx context.Context, ticketID uuid.UUID) error
 	submitCSATFn     func(ctx context.Context, userID uuid.UUID, ticketID uuid.UUID, score int) error
-	getStatsFn       func(ctx context.Context) (*domain.TicketStatusCounts, error)
+	getStatsFn              func(ctx context.Context) (*domain.TicketStatusCounts, error)
+	getOperationMetricsFn   func() (*domain.TicketOperationMetrics, error)
 }
 
 func (m *mockTicketService) CreateTicket(ctx context.Context, userID uuid.UUID, ticket *domain.Ticket, initialMessage string) error {
@@ -117,6 +118,12 @@ func (m *mockTicketService) GetStats(ctx context.Context) (*domain.TicketStatusC
 	return nil, nil
 }
 
+func (m *mockTicketService) GetOperationMetrics(_ context.Context, _ domain.TicketMetricsFilter) (*domain.TicketOperationMetrics, error) {
+	if m.getOperationMetricsFn != nil {
+		return m.getOperationMetricsFn()
+	}
+	return &domain.TicketOperationMetrics{}, nil
+}
 func (m *mockTicketService) AutoEscalateStaleTickets(_ context.Context) error { return nil }
 func (m *mockTicketService) AutoCloseResolvedTickets(_ context.Context) error  { return nil }
 
@@ -899,5 +906,81 @@ func TestTicketHandler_AdminGetStats(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestTicketHandler_AdminGetOperationMetrics(t *testing.T) {
+	svc := &mockTicketService{
+		getOperationMetricsFn: func() (*domain.TicketOperationMetrics, error) {
+			return &domain.TicketOperationMetrics{
+				FCRPercent:           66.7,
+				AHTSeconds:           3600,
+				AvgCSAT:              4.2,
+				SLACompliancePercent: 85.0,
+				TotalResolved:        100,
+				TotalTickets:         120,
+			}, nil
+		},
+	}
+
+	h := handler.NewTicketHandler(svc)
+	router := chi.NewRouter()
+	router.Get("/admin/tickets/metrics", h.AdminGetOperationMetrics)
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/tickets/metrics", nil)
+	req = req.WithContext(createTestContext(uuid.New(), domain.RoleAdmin))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var resp map[string]interface{}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	data, ok := resp["data"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected data object in response")
+	}
+	if data["fcr_percent"].(float64) != 66.7 {
+		t.Errorf("expected fcr_percent=66.7, got %v", data["fcr_percent"])
+	}
+	if data["total_tickets"].(float64) != 120 {
+		t.Errorf("expected total_tickets=120, got %v", data["total_tickets"])
+	}
+}
+
+func TestTicketHandler_AdminGetOperationMetrics_InvalidDateFrom(t *testing.T) {
+	h := handler.NewTicketHandler(&mockTicketService{})
+	router := chi.NewRouter()
+	router.Get("/admin/tickets/metrics", h.AdminGetOperationMetrics)
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/tickets/metrics?date_from=bad-date", nil)
+	req = req.WithContext(createTestContext(uuid.New(), domain.RoleAdmin))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid date_from, got %d", rec.Code)
+	}
+}
+
+func TestTicketHandler_AdminGetOperationMetrics_InvalidDateTo(t *testing.T) {
+	h := handler.NewTicketHandler(&mockTicketService{})
+	router := chi.NewRouter()
+	router.Get("/admin/tickets/metrics", h.AdminGetOperationMetrics)
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/tickets/metrics?date_to=bad-date", nil)
+	req = req.WithContext(createTestContext(uuid.New(), domain.RoleAdmin))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400 for invalid date_to, got %d", rec.Code)
 	}
 }

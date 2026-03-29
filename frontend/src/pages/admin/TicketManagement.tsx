@@ -2,8 +2,10 @@ import { useState } from 'react'
 import {
   Badge,
   Card,
+  Col,
   Empty,
   Pagination,
+  Row,
   Segmented,
   Select,
   Space,
@@ -15,12 +17,41 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   useGetAdminTickets,
   useGetAdminTicketsStats,
 } from '@/api/generated/support-admin/support-admin'
 import type { InternalHandlerTicketResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
+import { axiosInstance } from '@/api/axios-instance'
+
+interface OperationMetrics {
+  fcr_percent: number
+  aht_seconds: number
+  avg_csat: number
+  sla_compliance_percent: number
+  total_resolved: number
+  total_tickets: number
+}
+
+function useOperationMetrics() {
+  return useQuery({
+    queryKey: ['admin', 'tickets', 'metrics'],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: OperationMetrics }>('/admin/tickets/metrics')
+      return data.data
+    },
+    staleTime: 60_000,
+  })
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds < 3600) return `${Math.round(seconds / 60)} мин`
+  const hours = Math.floor(seconds / 3600)
+  const mins = Math.round((seconds % 3600) / 60)
+  return mins > 0 ? `${hours} ч ${mins} мин` : `${hours} ч`
+}
 
 const { Title, Text } = Typography
 
@@ -115,6 +146,7 @@ export default function TicketManagement() {
   })
 
   const { data: statsData } = useGetAdminTicketsStats()
+  const { data: metrics } = useOperationMetrics()
 
   const tickets: InternalHandlerTicketResponse[] = data?.data ?? []
   const meta = data?.meta
@@ -230,6 +262,52 @@ export default function TicketManagement() {
             <Statistic title="Закрытые" value={stats.closed ?? 0} />
           </Card>
         </Space>
+      )}
+
+      {metrics && (
+        <Card size="small" title="Операционные метрики" style={{ marginBottom: 16 }}>
+          <Row gutter={[24, 16]}>
+            <Col xs={12} sm={8} md={4}>
+              <Statistic
+                title="FCR"
+                value={metrics.fcr_percent}
+                precision={1}
+                suffix="%"
+                valueStyle={{ color: metrics.fcr_percent >= 70 ? '#52c41a' : '#fa8c16' }}
+              />
+            </Col>
+            <Col xs={12} sm={8} md={4}>
+              <Statistic
+                title="AHT"
+                value={formatDuration(metrics.aht_seconds)}
+              />
+            </Col>
+            <Col xs={12} sm={8} md={4}>
+              <Statistic
+                title="CSAT"
+                value={metrics.avg_csat}
+                precision={1}
+                suffix="/ 5"
+                valueStyle={{ color: metrics.avg_csat >= 4 ? '#52c41a' : metrics.avg_csat >= 3 ? '#fa8c16' : '#f5222d' }}
+              />
+            </Col>
+            <Col xs={12} sm={8} md={4}>
+              <Statistic
+                title="SLA (24ч)"
+                value={metrics.sla_compliance_percent}
+                precision={1}
+                suffix="%"
+                valueStyle={{ color: metrics.sla_compliance_percent >= 90 ? '#52c41a' : '#fa8c16' }}
+              />
+            </Col>
+            <Col xs={12} sm={8} md={4}>
+              <Statistic title="Решено" value={metrics.total_resolved} />
+            </Col>
+            <Col xs={12} sm={8} md={4}>
+              <Statistic title="Всего" value={metrics.total_tickets} />
+            </Col>
+          </Row>
+        </Card>
       )}
 
       <Space direction="vertical" size={16} style={{ width: '100%', marginBottom: 16 }}>

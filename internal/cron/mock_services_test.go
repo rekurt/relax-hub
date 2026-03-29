@@ -50,6 +50,9 @@ func (m *mockTicketServiceForCron) SubmitCSAT(_ context.Context, _ uuid.UUID, _ 
 func (m *mockTicketServiceForCron) GetStats(_ context.Context) (*domain.TicketStatusCounts, error) {
 	return nil, nil
 }
+func (m *mockTicketServiceForCron) GetOperationMetrics(_ context.Context, _ domain.TicketMetricsFilter) (*domain.TicketOperationMetrics, error) {
+	return &domain.TicketOperationMetrics{}, nil
+}
 func (m *mockTicketServiceForCron) AutoEscalateStaleTickets(_ context.Context) error {
 	m.autoEscalateCalled = true
 	return nil

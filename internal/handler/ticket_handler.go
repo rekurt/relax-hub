@@ -74,6 +74,15 @@ type ticketStatsResponse struct {
 	Closed     int64 `json:"closed"`
 }
 
+type ticketOperationMetricsResponse struct {
+	FCRPercent           float64 `json:"fcr_percent"`
+	AHTSeconds           float64 `json:"aht_seconds"`
+	AvgCSAT              float64 `json:"avg_csat"`
+	SLACompliancePercent float64 `json:"sla_compliance_percent"`
+	TotalResolved        int64   `json:"total_resolved"`
+	TotalTickets         int64   `json:"total_tickets"`
+}
+
 func toTicketResponse(t *domain.Ticket) ticketResponse {
 	resp := ticketResponse{
 		ID:        t.ID.String(),
@@ -618,6 +627,56 @@ func (h *TicketHandler) AdminAddMessage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	writeJSON(w, http.StatusCreated, toTicketMessageResponse(msg))
+}
+
+// AdminGetOperationMetrics godoc
+//
+//	@Summary		Get support operation metrics
+//	@Description	Get FCR, AHT, CSAT, SLA compliance metrics for support tickets
+//	@Tags			support-admin
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			date_from	query		string	false	"Start date (RFC3339)"
+//	@Param			date_to		query		string	false	"End date (RFC3339)"
+//	@Success		200			{object}	APIResponse{data=ticketOperationMetricsResponse}
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/tickets/metrics [get]
+func (h *TicketHandler) AdminGetOperationMetrics(w http.ResponseWriter, r *http.Request) {
+	var filter domain.TicketMetricsFilter
+
+	if df := r.URL.Query().Get("date_from"); df != "" {
+		t, err := time.Parse(time.RFC3339, df)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_date_from", "invalid date_from format, use RFC3339")
+			return
+		}
+		filter.DateFrom = &t
+	}
+	if dt := r.URL.Query().Get("date_to"); dt != "" {
+		t, err := time.Parse(time.RFC3339, dt)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_date_to", "invalid date_to format, use RFC3339")
+			return
+		}
+		filter.DateTo = &t
+	}
+
+	metrics, err := h.ticketService.GetOperationMetrics(r.Context(), filter)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, ticketOperationMetricsResponse{
+		FCRPercent:           metrics.FCRPercent,
+		AHTSeconds:           metrics.AHTSeconds,
+		AvgCSAT:              metrics.AvgCSAT,
+		SLACompliancePercent: metrics.SLACompliancePercent,
+		TotalResolved:        metrics.TotalResolved,
+		TotalTickets:         metrics.TotalTickets,
+	})
 }
 
 // AdminGetStats godoc
