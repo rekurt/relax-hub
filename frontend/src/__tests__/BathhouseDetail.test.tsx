@@ -267,4 +267,31 @@ describe('BathhouseDetail', () => {
 
     expect(screen.getByText('К поиску')).toBeInTheDocument()
   })
+
+  it('works with public /bathhouses/:slug route', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: mockBathhouse, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ConfigProvider locale={ruRU}>
+          <AntApp>
+            <MemoryRouter initialEntries={['/bathhouses/banya-premium']}>
+              <Routes>
+                <Route path="/bathhouses/:slug" element={<BathhouseDetail />} />
+              </Routes>
+            </MemoryRouter>
+          </AntApp>
+        </ConfigProvider>
+      </QueryClientProvider>,
+    )
+
+    expect(screen.getByText('Баня Премиум')).toBeInTheDocument()
+    expect(useGetBathhousesBySlugSlug).toHaveBeenCalledWith('banya-premium', expect.anything())
+  })
 })

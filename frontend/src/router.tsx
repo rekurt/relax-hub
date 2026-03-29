@@ -90,6 +90,7 @@ export default function AppRouter() {
       <Route path="/register" element={<Register />} />
       <Route path="/auth/oauth/callback/:provider" element={<OAuthCallback />} />
       <Route path="/certificates/purchase" element={<CertificatePurchase />} />
+      <Route path="/bathhouses/:slug" element={<BathhouseDetail />} />
 
       {/* Owner/Representative routes */}
       <Route

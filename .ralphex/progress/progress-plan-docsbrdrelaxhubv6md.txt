@@ -207,10 +207,10 @@ starting interactive plan creation
 [26-03-29 09:40:19]   - Modify: `frontend/src/router.tsx` — slug-based routes
 [26-03-29 09:40:19]   - Modify: `frontend/src/pages/client/BathhouseDetail.tsx` — загрузка по slug
 [26-03-29 09:40:19]   - Modify: `frontend/src/pages/client/BathhouseSearch.tsx` — ссылки через slug
-[26-03-29 09:40:19]   - [ ] Добавить маршрут /bathhouses/:slug в router
-[26-03-29 09:40:19]   - [ ] BathhouseDetail: загрузка через getBySlug API
-[26-03-29 09:40:19]   - [ ] Обновить все ссылки на bathhouse: использовать slug вместо UUID
-[26-03-29 09:40:19]   - [ ] Тесты
+[26-03-29 09:40:19]   - [x] Добавить маршрут /bathhouses/:slug в router
+[26-03-29 09:40:19]   - [x] BathhouseDetail: загрузка через getBySlug API
+[26-03-29 09:40:19]   - [x] Обновить все ссылки на bathhouse: использовать slug вместо UUID
+[26-03-29 09:40:19]   - [x] Тесты
 [26-03-29 09:40:19] ### Task C4: Бейдж "Last minute" в результатах поиска (FR-090)
 [26-03-29 09:40:19] **Проблема:** Скидка last-minute рассчитывается, но бейдж не отображается в списке поиска.
 [26-03-29 09:40:19] **Files:**
