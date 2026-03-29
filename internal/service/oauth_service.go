@@ -35,8 +35,9 @@ type oauthService struct {
 	logger             *logger.Logger
 	jwtSecret          []byte
 	tokenTTL           time.Duration
-	welcomeBonusAmount int64
-	welcomeBonusExpiry int
+	welcomeBonusAmount   int64
+	welcomeBonusAmountBY int64
+	welcomeBonusExpiry   int
 }
 
 func NewOAuthService(
@@ -78,8 +79,9 @@ func NewOAuthService(
 		logger:             log,
 		jwtSecret:          []byte(cfg.JWT.Secret),
 		tokenTTL:           cfg.JWT.TokenTTL,
-		welcomeBonusAmount: cfg.WelcomeBonus.Amount,
-		welcomeBonusExpiry: cfg.WelcomeBonus.ExpiryDays,
+		welcomeBonusAmount:   cfg.WelcomeBonus.Amount,
+		welcomeBonusAmountBY: cfg.WelcomeBonus.AmountBY,
+		welcomeBonusExpiry:   cfg.WelcomeBonus.ExpiryDays,
 	}
 }
 
@@ -254,7 +256,7 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 		}
 
 		// Create wallet and credit welcome bonus (best-effort, mirrors AuthService.Register)
-		s.createWalletWithBonus(ctx, user.ID)
+		s.createWalletWithBonus(ctx, user.ID, user.Region)
 	}
 
 	// Link social account
@@ -387,20 +389,26 @@ func (s *oauthService) generateToken(ctx context.Context, userID uuid.UUID, role
 	return generateJWT(userID, role, s.jwtSecret, s.tokenTTL)
 }
 
-func (s *oauthService) createWalletWithBonus(ctx context.Context, userID uuid.UUID) {
+func (s *oauthService) createWalletWithBonus(ctx context.Context, userID uuid.UUID, region domain.UserRegion) {
 	if s.walletSvc == nil {
 		return
 	}
 
-	wallet, err := s.walletSvc.CreateWallet(ctx, userID, domain.WalletCurrencyRUB)
+	currency := domain.CurrencyForRegion(region)
+	wallet, err := s.walletSvc.CreateWallet(ctx, userID, currency)
 	if err != nil {
 		s.logger.Warn("failed to create wallet on OAuth registration", "user_id", userID, "error", err)
 		return
 	}
 
-	if s.welcomeBonusAmount > 0 {
+	bonusAmount := s.welcomeBonusAmount
+	if region == domain.RegionBY {
+		bonusAmount = s.welcomeBonusAmountBY
+	}
+
+	if bonusAmount > 0 {
 		expiresAt := time.Now().AddDate(0, 0, s.welcomeBonusExpiry)
-		_, err = s.walletSvc.AddBonus(ctx, wallet.ID, s.welcomeBonusAmount, domain.WalletTxWelcomeBonus, &expiresAt, "Приветственный бонус")
+		_, err = s.walletSvc.AddBonus(ctx, wallet.ID, bonusAmount, domain.WalletTxWelcomeBonus, &expiresAt, "Приветственный бонус")
 		if err != nil {
 			s.logger.Warn("failed to credit welcome bonus on OAuth registration", "user_id", userID, "wallet_id", wallet.ID, "error", err)
 		}

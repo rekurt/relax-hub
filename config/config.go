@@ -69,6 +69,7 @@ type SMSConfig struct {
 
 type WelcomeBonusConfig struct {
 	Amount     int64 `mapstructure:"amount"`      // in kopecks, default 50000 (500 RUB)
+	AmountBY   int64 `mapstructure:"amount_by"`   // in kopecks, default 1500 (15 BYN)
 	ExpiryDays int   `mapstructure:"expiry_days"` // default 30
 }
 
@@ -225,6 +226,7 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("sms.provider", "smsru")
 	v.SetDefault("sms.api_key", "")
 	v.SetDefault("welcome_bonus.amount", 50000) // 500 RUB in kopecks
+	v.SetDefault("welcome_bonus.amount_by", 1500) // 15 BYN in kopecks
 	v.SetDefault("welcome_bonus.expiry_days", 30)
 	v.SetDefault("escrow.claim_hours", 48)
 	v.SetDefault("payment.wallet_refund_bonus_percent", 5)

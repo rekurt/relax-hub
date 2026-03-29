@@ -21,6 +21,7 @@ func newTestConfig() *config.Config {
 		},
 		WelcomeBonus: config.WelcomeBonusConfig{
 			Amount:     50000, // 500 RUB
+			AmountBY:   1500,  // 15 BYN
 			ExpiryDays: 30,
 		},
 	}
@@ -644,6 +645,80 @@ func TestAuthService_Register_WelcomeBonusDisabled(t *testing.T) {
 	}
 	if wallet.Balance != 0 {
 		t.Errorf("wallet balance = %d, want 0 (no welcome bonus)", wallet.Balance)
+	}
+}
+
+func TestAuthService_Register_WelcomeBonus_BY_Region(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	walletRepo := mock.NewWalletRepo()
+	cfg := newTestConfig()
+	log := logger.New(logger.LevelWarn)
+	walletSvc := service.NewWalletService(walletRepo, log)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, walletSvc, nil, cfg, log)
+
+	user, _, err := svc.Register(context.Background(), service.RegisterInput{
+		Email:        "by-user@example.com",
+		Password:     "password123",
+		Name:         "BY User",
+		Phone:        "+375291234567",
+		Role:         domain.RoleClient,
+		AgeConfirmed: true,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if user.Region != domain.RegionBY {
+		t.Errorf("user region = %s, want BY (detected from phone)", user.Region)
+	}
+
+	wallet, err := walletSvc.GetWallet(context.Background(), user.ID)
+	if err != nil {
+		t.Fatalf("expected wallet to be created, got error: %v", err)
+	}
+	if wallet.Currency != domain.WalletCurrencyBYN {
+		t.Errorf("wallet currency = %s, want BYN", wallet.Currency)
+	}
+	if wallet.Balance != 1500 {
+		t.Errorf("wallet balance = %d, want 1500 (15 BYN welcome bonus)", wallet.Balance)
+	}
+}
+
+func TestAuthService_Register_WelcomeBonus_ExplicitRegion(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	walletRepo := mock.NewWalletRepo()
+	cfg := newTestConfig()
+	log := logger.New(logger.LevelWarn)
+	walletSvc := service.NewWalletService(walletRepo, log)
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, walletSvc, nil, cfg, log)
+
+	// Explicit region BY overrides phone detection
+	user, _, err := svc.Register(context.Background(), service.RegisterInput{
+		Email:        "explicit-by@example.com",
+		Password:     "password123",
+		Name:         "Explicit BY",
+		Phone:        "+79001234567", // RU phone, but explicit BY region
+		Role:         domain.RoleClient,
+		Region:       domain.RegionBY,
+		AgeConfirmed: true,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if user.Region != domain.RegionBY {
+		t.Errorf("user region = %s, want BY (explicit)", user.Region)
+	}
+
+	wallet, err := walletSvc.GetWallet(context.Background(), user.ID)
+	if err != nil {
+		t.Fatalf("expected wallet to be created, got error: %v", err)
+	}
+	if wallet.Currency != domain.WalletCurrencyBYN {
+		t.Errorf("wallet currency = %s, want BYN", wallet.Currency)
+	}
+	if wallet.Balance != 1500 {
+		t.Errorf("wallet balance = %d, want 1500 (15 BYN)", wallet.Balance)
 	}
 }
 

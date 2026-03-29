@@ -215,10 +215,10 @@ BRD требует: "Изменение требует подтверждени�
 - Modify: `internal/service/user_service.go` — начисление бонуса с учётом региона
 - Modify: `internal/config/config.go` — отдельная настройка для BY
 
-- [ ] Добавить конфиг BANI_WELCOME_BONUS_AMOUNT_BY (default 1500 = 15 BYN в копейках)
-- [ ] При регистрации: определить регион → выбрать сумму
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task B7
+- [x] Добавить конфиг BANI_WELCOME_BONUS_AMOUNT_BY (default 1500 = 15 BYN в копейках)
+- [x] При регистрации: определить регион → выбрать сумму
+- [x] Тесты
+- [x] run project test suite — must pass before Task B7
 
 ### Task B7: Мгновенные выплаты через СБП для владельцев (FR-101)
 

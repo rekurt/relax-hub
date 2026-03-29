@@ -21,9 +21,10 @@ type RegisterInput struct {
 	Password     string
 	Name         string
 	Phone        string
-	Role         domain.UserRole // client or owner only
-	ReferralCode string          // optional referral code from inviter
-	AgeConfirmed bool            // required: user confirms they are 18+
+	Role         domain.UserRole   // client or owner only
+	Region       domain.UserRegion // optional: if empty, detected from phone or defaults to RU
+	ReferralCode string            // optional referral code from inviter
+	AgeConfirmed bool              // required: user confirms they are 18+
 }
 
 type RegisterPhoneInput struct {
@@ -59,8 +60,9 @@ type authService struct {
 	logger             *logger.Logger
 	jwtSecret          []byte
 	tokenTTL           time.Duration
-	welcomeBonusAmount int64
-	welcomeBonusExpiry int
+	welcomeBonusAmount   int64
+	welcomeBonusAmountBY int64
+	welcomeBonusExpiry   int
 }
 
 func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralService, otpSvc OTPService, walletSvc WalletService, sessionSvc SessionService, cfg *config.Config, log *logger.Logger) AuthService {
@@ -73,8 +75,9 @@ func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralServ
 		logger:             log,
 		jwtSecret:          []byte(cfg.JWT.Secret),
 		tokenTTL:           cfg.JWT.TokenTTL,
-		welcomeBonusAmount: cfg.WelcomeBonus.Amount,
-		welcomeBonusExpiry: cfg.WelcomeBonus.ExpiryDays,
+		welcomeBonusAmount:   cfg.WelcomeBonus.Amount,
+		welcomeBonusAmountBY: cfg.WelcomeBonus.AmountBY,
+		welcomeBonusExpiry:   cfg.WelcomeBonus.ExpiryDays,
 	}
 }
 
@@ -115,6 +118,12 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 		return nil, "", fmt.Errorf("failed to hash password: %w", err)
 	}
 
+	// Determine region: explicit input > phone detection > default RU
+	region := input.Region
+	if region == "" && input.Phone != "" {
+		region = detectRegionFromPhone(input.Phone)
+	}
+
 	now := time.Now()
 	user := &domain.User{
 		ID:           uuid.New(),
@@ -123,6 +132,7 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 		Name:         input.Name,
 		Phone:        input.Phone,
 		Role:         input.Role,
+		Region:       region,
 		IsActive:     true,
 		AgeConfirmed: true,
 		CreatedAt:    now,
@@ -141,7 +151,7 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 	}
 
 	// Create wallet and credit welcome bonus (best-effort, don't fail registration)
-	s.createWalletWithBonus(ctx, user.ID)
+	s.createWalletWithBonus(ctx, user.ID, user.Region)
 
 	token, err := s.generateTokenWithSession(ctx, user.ID, user.Role)
 	if err != nil {
@@ -151,20 +161,26 @@ func (s *authService) Register(ctx context.Context, input RegisterInput) (*domai
 	return user, token, nil
 }
 
-func (s *authService) createWalletWithBonus(ctx context.Context, userID uuid.UUID) {
+func (s *authService) createWalletWithBonus(ctx context.Context, userID uuid.UUID, region domain.UserRegion) {
 	if s.walletSvc == nil {
 		return
 	}
 
-	wallet, err := s.walletSvc.CreateWallet(ctx, userID, domain.WalletCurrencyRUB)
+	currency := domain.CurrencyForRegion(region)
+	wallet, err := s.walletSvc.CreateWallet(ctx, userID, currency)
 	if err != nil {
 		s.logger.Warn("failed to create wallet on registration", "user_id", userID, "error", err)
 		return
 	}
 
-	if s.welcomeBonusAmount > 0 {
+	bonusAmount := s.welcomeBonusAmount
+	if region == domain.RegionBY {
+		bonusAmount = s.welcomeBonusAmountBY
+	}
+
+	if bonusAmount > 0 {
 		expiresAt := time.Now().AddDate(0, 0, s.welcomeBonusExpiry)
-		_, err = s.walletSvc.AddBonus(ctx, wallet.ID, s.welcomeBonusAmount, domain.WalletTxWelcomeBonus, &expiresAt, "Приветственный бонус")
+		_, err = s.walletSvc.AddBonus(ctx, wallet.ID, bonusAmount, domain.WalletTxWelcomeBonus, &expiresAt, "Приветственный бонус")
 		if err != nil {
 			s.logger.Warn("failed to credit welcome bonus", "user_id", userID, "wallet_id", wallet.ID, "error", err)
 		}
@@ -381,6 +397,7 @@ func (s *authService) VerifyPhone(ctx context.Context, phone string, code string
 				Phone:         phone,
 				PhoneVerified: true,
 				Role:          domain.RoleClient,
+				Region:        detectRegionFromPhone(phone),
 				IsActive:      true,
 				AgeConfirmed:  true,
 				CreatedAt:     now,
@@ -390,7 +407,7 @@ func (s *authService) VerifyPhone(ctx context.Context, phone string, code string
 				return nil, err
 			}
 			// Create wallet and credit welcome bonus (best-effort)
-			s.createWalletWithBonus(ctx, user.ID)
+			s.createWalletWithBonus(ctx, user.ID, user.Region)
 		} else {
 			return nil, err
 		}
@@ -449,6 +466,14 @@ func normalizePhone(phone string) string {
 		s = "7" + s[1:]
 	}
 	return "+" + s
+}
+
+// detectRegionFromPhone returns BY for Belarus phone numbers (+375), RU otherwise.
+func detectRegionFromPhone(phone string) domain.UserRegion {
+	if strings.HasPrefix(phone, "+375") {
+		return domain.RegionBY
+	}
+	return domain.RegionRU
 }
 
 func isValidPhone(phone string) bool {
