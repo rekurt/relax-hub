@@ -46,6 +46,7 @@ const { Title } = Typography
 const RULE_TYPES = [
   { value: 'weekday', label: 'Будние дни' },
   { value: 'weekend', label: 'Выходные' },
+  { value: 'per_day', label: 'По дням недели' },
   { value: 'holiday', label: 'Праздники' },
   { value: 'time_range', label: 'Диапазон времени' },
   { value: 'season', label: 'Сезон' },
@@ -54,6 +55,7 @@ const RULE_TYPES = [
 const RULE_TYPE_COLORS: Record<string, string> = {
   weekday: 'blue',
   weekend: 'green',
+  per_day: 'cyan',
   holiday: 'red',
   time_range: 'orange',
   season: 'purple',
@@ -65,6 +67,11 @@ const WEEKDAY_OPTIONS = [0, 1, 2, 3, 4].map((d) => ({
 }))
 
 const WEEKEND_OPTIONS = [5, 6].map((d) => ({
+  value: d,
+  label: formatDayOfWeek(d),
+}))
+
+const ALL_DAY_OPTIONS = [0, 1, 2, 3, 4, 5, 6].map((d) => ({
   value: d,
   label: formatDayOfWeek(d),
 }))
@@ -666,6 +673,17 @@ export default function PricingRules() {
               rules={[{ required: true, message: 'Выберите дни' }]}
             >
               <Select mode="multiple" options={WEEKEND_OPTIONS} placeholder="Выберите дни" />
+            </Form.Item>
+          )}
+
+          {(selectedType === 'per_day') && (
+            <Form.Item
+              name="days_of_week"
+              label="Дни недели"
+              rules={[{ required: true, message: 'Выберите дни' }]}
+              extra="Выберите любые дни недели для применения правила"
+            >
+              <Select mode="multiple" options={ALL_DAY_OPTIONS} placeholder="Выберите дни" />
             </Form.Item>
           )}
 

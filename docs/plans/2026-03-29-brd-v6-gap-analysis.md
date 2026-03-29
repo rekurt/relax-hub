@@ -136,12 +136,12 @@ BRD требует: "Изменение требует подтверждени�
 - Modify: `internal/service/pricing_service.go` — калькуляция по конкретному дню
 - Modify: `frontend/src/pages/pricing/PricingRules.tsx` — UI для задания цен по дням
 
-- [ ] Расширить PricingRule: разрешить произвольный набор дней в DaysOfWeek для любого типа
-- [ ] Или добавить RuleType `per_day` с валидацией
-- [ ] Обновить CalculatePrice для матчинга по конкретному дню недели
-- [ ] Frontend: 7-дневная сетка цен
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task B2
+- [x] Расширить PricingRule: разрешить произвольный набор дней в DaysOfWeek для любого типа
+- [x] Или добавить RuleType `per_day` с валидацией
+- [x] Обновить CalculatePrice для матчинга по конкретному дню недели
+- [x] Frontend: 7-дневная сетка цен
+- [x] Тесты
+- [x] run project test suite — must pass before Task B2
 
 ### Task B2: Cron-задача для автовыплат (FR-102)
 

@@ -35,6 +35,11 @@ func TestPricingRuleTypeIsValid(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "per_day rule type is valid",
+			ruleType: RuleTypePerDay,
+			expected: true,
+		},
+		{
 			name:     "season rule type is valid",
 			ruleType: RuleTypeSeason,
 			expected: true,
@@ -132,6 +137,69 @@ func TestPricingRuleValidate(t *testing.T) {
 				IsActive:    true,
 			},
 			wantErr: false,
+		},
+		{
+			name: "valid per_day rule with single day (Friday)",
+			rule: &PricingRule{
+				BathhouseID: bathhouseID,
+				Name:        "Пятничная цена",
+				Type:        RuleTypePerDay,
+				Multiplier:  1.3,
+				DaysOfWeek:  []int{4}, // Friday only
+				Priority:    5,
+				IsActive:    true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid per_day rule with mixed weekday and weekend days",
+			rule: &PricingRule{
+				BathhouseID: bathhouseID,
+				Name:        "Пт-Вс цена",
+				Type:        RuleTypePerDay,
+				Multiplier:  1.5,
+				DaysOfWeek:  []int{4, 5, 6}, // Friday, Saturday, Sunday
+				Priority:    5,
+				IsActive:    true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "per_day rule with all days",
+			rule: &PricingRule{
+				BathhouseID: bathhouseID,
+				Name:        "Все дни",
+				Type:        RuleTypePerDay,
+				Multiplier:  1.1,
+				DaysOfWeek:  []int{0, 1, 2, 3, 4, 5, 6},
+				Priority:    1,
+				IsActive:    true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "per_day rule without days_of_week",
+			rule: &PricingRule{
+				BathhouseID: bathhouseID,
+				Name:        "Empty days",
+				Type:        RuleTypePerDay,
+				Multiplier:  1.0,
+				DaysOfWeek:  []int{},
+				Priority:    1,
+			},
+			wantErr: true,
+		},
+		{
+			name: "per_day rule with invalid day",
+			rule: &PricingRule{
+				BathhouseID: bathhouseID,
+				Name:        "Invalid day",
+				Type:        RuleTypePerDay,
+				Multiplier:  1.0,
+				DaysOfWeek:  []int{7},
+				Priority:    1,
+			},
+			wantErr: true,
 		},
 		{
 			name: "missing bathhouse id",

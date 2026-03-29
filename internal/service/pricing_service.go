@@ -310,7 +310,7 @@ func (s *pricingService) ruleAppliesAt(t time.Time, rule *domain.PricingRule) bo
 	}
 
 	switch rule.Type {
-	case domain.RuleTypeWeekday, domain.RuleTypeWeekend:
+	case domain.RuleTypeWeekday, domain.RuleTypeWeekend, domain.RuleTypePerDay:
 		// Check day of week using the app's convention (0=Monday, 6=Sunday)
 		dayOfWeek := s.getDayOfWeek(t.Weekday())
 		return slices.Contains(rule.DaysOfWeek, dayOfWeek)

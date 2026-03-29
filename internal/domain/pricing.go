@@ -12,6 +12,7 @@ type PricingRuleType string
 const (
 	RuleTypeWeekday   PricingRuleType = "weekday"
 	RuleTypeWeekend   PricingRuleType = "weekend"
+	RuleTypePerDay    PricingRuleType = "per_day"
 	RuleTypeHoliday   PricingRuleType = "holiday"
 	RuleTypeTimeRange PricingRuleType = "time_range"
 	RuleTypeSeason    PricingRuleType = "season"
@@ -19,7 +20,7 @@ const (
 
 func (t PricingRuleType) IsValid() bool {
 	switch t {
-	case RuleTypeWeekday, RuleTypeWeekend, RuleTypeHoliday, RuleTypeTimeRange, RuleTypeSeason:
+	case RuleTypeWeekday, RuleTypeWeekend, RuleTypePerDay, RuleTypeHoliday, RuleTypeTimeRange, RuleTypeSeason:
 		return true
 	}
 	return false
@@ -60,7 +61,7 @@ func (pr *PricingRule) Validate() error {
 
 	// Validate type-specific fields
 	switch pr.Type {
-	case RuleTypeWeekday, RuleTypeWeekend:
+	case RuleTypeWeekday, RuleTypeWeekend, RuleTypePerDay:
 		if len(pr.DaysOfWeek) == 0 {
 			return ErrInvalidInput
 		}

@@ -948,6 +948,178 @@ func TestPricingService_CalculateFullPrice_ExtraGuestSurcharge(t *testing.T) {
 	}
 }
 
+func TestPricingService_CalculatePrice_PerDayRule(t *testing.T) {
+	// Test per_day pricing: different multipliers for specific days
+	priceRepo := mock.NewPricingRuleRepo()
+	bhRepo := mock.NewBathhouseRepo()
+	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
+
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+
+	bathhouseID := uuid.New()
+	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	// Friday-only rule with 1.3x multiplier
+	fridayRule := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        "Friday",
+		Type:        domain.RuleTypePerDay,
+		Multiplier:  1.3,
+		DaysOfWeek:  []int{4}, // Friday (0=Mon)
+		Priority:    10,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+	}
+	if err := priceRepo.Create(context.Background(), fridayRule); err != nil {
+		t.Fatalf("failed to create friday rule: %v", err)
+	}
+
+	// Saturday+Sunday rule with 1.5x multiplier
+	weekendRule := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        "Sat+Sun",
+		Type:        domain.RuleTypePerDay,
+		Multiplier:  1.5,
+		DaysOfWeek:  []int{5, 6}, // Saturday, Sunday
+		Priority:    10,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+	}
+	if err := priceRepo.Create(context.Background(), weekendRule); err != nil {
+		t.Fatalf("failed to create weekend rule: %v", err)
+	}
+
+	tests := []struct {
+		name      string
+		date      time.Time // booking date
+		hours     int
+		basePrice int64
+		expected  int64
+	}{
+		{
+			name:      "Friday booking applies 1.3x",
+			date:      time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC), // Friday
+			hours:     2,
+			basePrice: 1000,
+			expected:  2600, // 1000 * 2 * 1.3
+		},
+		{
+			name:      "Saturday booking applies 1.5x",
+			date:      time.Date(2024, 3, 16, 10, 0, 0, 0, time.UTC), // Saturday
+			hours:     2,
+			basePrice: 1000,
+			expected:  3000, // 1000 * 2 * 1.5
+		},
+		{
+			name:      "Sunday booking applies 1.5x",
+			date:      time.Date(2024, 3, 17, 10, 0, 0, 0, time.UTC), // Sunday
+			hours:     2,
+			basePrice: 1000,
+			expected:  3000, // 1000 * 2 * 1.5
+		},
+		{
+			name:      "Wednesday booking no rule applies",
+			date:      time.Date(2024, 3, 13, 10, 0, 0, 0, time.UTC), // Wednesday
+			hours:     2,
+			basePrice: 1000,
+			expected:  2000, // 1000 * 2 * 1.0
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			endTime := tt.date.Add(time.Duration(tt.hours) * time.Hour)
+			price, err := service.CalculatePrice(context.Background(), bathhouseID, tt.basePrice, tt.date, endTime)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if price != tt.expected {
+				t.Errorf("expected price %d, got %d", tt.expected, price)
+			}
+		})
+	}
+}
+
+func TestPricingService_CalculatePrice_PerDayOverridesWeekday(t *testing.T) {
+	// per_day rule with higher priority should override weekday rule
+	priceRepo := mock.NewPricingRuleRepo()
+	bhRepo := mock.NewBathhouseRepo()
+	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
+
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+
+	bathhouseID := uuid.New()
+	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
+	if err := bhRepo.Create(context.Background(), bh); err != nil {
+		t.Fatalf("failed to create bathhouse: %v", err)
+	}
+
+	// General weekday rule: 0.9x (priority 5)
+	weekdayRule := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        "Weekdays",
+		Type:        domain.RuleTypeWeekday,
+		Multiplier:  0.9,
+		DaysOfWeek:  []int{0, 1, 2, 3, 4},
+		Priority:    5,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+	}
+	if err := priceRepo.Create(context.Background(), weekdayRule); err != nil {
+		t.Fatalf("failed to create weekday rule: %v", err)
+	}
+
+	// Friday-specific per_day rule: 1.2x (priority 10, higher)
+	fridayRule := &domain.PricingRule{
+		ID:          uuid.New(),
+		BathhouseID: bathhouseID,
+		Name:        "Friday Special",
+		Type:        domain.RuleTypePerDay,
+		Multiplier:  1.2,
+		DaysOfWeek:  []int{4}, // Friday
+		Priority:    10,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+	}
+	if err := priceRepo.Create(context.Background(), fridayRule); err != nil {
+		t.Fatalf("failed to create friday rule: %v", err)
+	}
+
+	// Friday: per_day rule should win (higher priority)
+	startTime := time.Date(2024, 3, 15, 10, 0, 0, 0, time.UTC) // Friday
+	endTime := time.Date(2024, 3, 15, 12, 0, 0, 0, time.UTC)
+
+	price, err := service.CalculatePrice(context.Background(), bathhouseID, 1000, startTime, endTime)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := int64(2400) // 1000 * 2 * 1.2 (per_day wins)
+	if price != expected {
+		t.Errorf("expected price %d, got %d", expected, price)
+	}
+
+	// Monday: weekday rule should apply (no per_day for Monday)
+	startTime = time.Date(2024, 3, 11, 10, 0, 0, 0, time.UTC) // Monday
+	endTime = time.Date(2024, 3, 11, 12, 0, 0, 0, time.UTC)
+
+	price, err = service.CalculatePrice(context.Background(), bathhouseID, 1000, startTime, endTime)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected = int64(1800) // 1000 * 2 * 0.9 (weekday rule)
+	if price != expected {
+		t.Errorf("expected price %d, got %d", expected, price)
+	}
+}
+
 func TestPricingService_CalculateFullPrice_Combined(t *testing.T) {
 	// Test combined discount + surcharge
 	priceRepo := mock.NewPricingRuleRepo()
