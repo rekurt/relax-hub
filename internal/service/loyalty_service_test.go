@@ -551,3 +551,47 @@ func TestLoyaltyService_EarnPoints_PlatinumMultiplier(t *testing.T) {
 		t.Errorf("points = %d, want 100", account.Points)
 	}
 }
+
+func TestLoyaltyService_CalculateCashback(t *testing.T) {
+	tests := []struct {
+		name       string
+		level      domain.LoyaltyLevel
+		totalPrice int64
+		wantAmount int64
+	}{
+		{"bronze_zero_cashback", domain.LoyaltyBronze, 10000, 0},
+		{"silver_3_percent", domain.LoyaltySilver, 10000, 300},
+		{"gold_5_percent", domain.LoyaltyGold, 10000, 500},
+		{"platinum_10_percent", domain.LoyaltyPlatinum, 10000, 1000},
+		{"platinum_large_amount", domain.LoyaltyPlatinum, 500000, 50000},
+		{"silver_small_amount", domain.LoyaltySilver, 100, 3},
+		{"zero_price", domain.LoyaltyPlatinum, 0, 0},
+		{"negative_price", domain.LoyaltyGold, -100, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, repo := newLoyaltyService()
+			userID := uuid.New()
+
+			if tt.level != domain.LoyaltyBronze {
+				err := repo.CreateAccount(context.Background(), &domain.LoyaltyAccount{
+					UserID:     userID,
+					Level:      tt.level,
+					VisitCount: 30,
+				})
+				if err != nil {
+					t.Fatalf("failed to create account: %v", err)
+				}
+			}
+
+			amount, err := svc.CalculateCashback(context.Background(), userID, tt.totalPrice)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if amount != tt.wantAmount {
+				t.Errorf("cashback = %d, want %d", amount, tt.wantAmount)
+			}
+		})
+	}
+}

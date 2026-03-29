@@ -26,6 +26,7 @@ type LoyaltyService interface {
 	GetDiscount(ctx context.Context, userID uuid.UUID) (int, error)
 	RecalculateLevel(ctx context.Context, userID uuid.UUID) (*LevelChangeResult, error)
 	ListTransactions(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.LoyaltyTransaction], error)
+	CalculateCashback(ctx context.Context, userID uuid.UUID, totalPrice int64) (int64, error)
 }
 
 type loyaltyService struct {
@@ -209,4 +210,25 @@ func (s *loyaltyService) RecalculateLevel(ctx context.Context, userID uuid.UUID)
 // ListTransactions returns paginated transaction history for a user.
 func (s *loyaltyService) ListTransactions(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.LoyaltyTransaction], error) {
 	return s.loyaltyRepo.ListTransactions(ctx, userID, page, pageSize)
+}
+
+// CalculateCashback returns the cashback amount in kopecks based on the user's loyalty level.
+// Bronze=0%, Silver=3%, Gold=5%, Platinum=10% of totalPrice.
+func (s *loyaltyService) CalculateCashback(ctx context.Context, userID uuid.UUID, totalPrice int64) (int64, error) {
+	if totalPrice <= 0 {
+		return 0, nil
+	}
+
+	account, err := s.GetAccount(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	levelInfo := domain.GetLoyaltyLevelInfo(account.Level)
+	if levelInfo.CashbackPercent <= 0 {
+		return 0, nil
+	}
+
+	cashback := totalPrice * int64(levelInfo.CashbackPercent) / 100
+	return cashback, nil
 }

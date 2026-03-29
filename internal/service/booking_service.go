@@ -879,6 +879,9 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 		}
 	}
 
+	// Credit cashback to wallet based on loyalty level
+	s.creditCashback(ctx, booking.UserID, bookingID, booking.TotalPrice)
+
 	// Complete referral if this is the referee's first completed booking
 	referralResult, err := s.referralSvc.CompleteReferral(ctx, booking.UserID)
 	if err != nil {
@@ -1489,6 +1492,32 @@ func (s *bookingService) handleOwnerCancellationPenalty(ctx context.Context, boo
 	}
 }
 
+func (s *bookingService) creditCashback(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) {
+	cashbackAmount, err := s.loyaltySvc.CalculateCashback(ctx, userID, totalPrice)
+	if err != nil {
+		s.logger.Warn("failed to calculate cashback", "booking_id", bookingID, "error", err)
+		return
+	}
+	if cashbackAmount <= 0 {
+		return
+	}
+
+	wallet, err := s.walletSvc.GetWallet(ctx, userID)
+	if err != nil {
+		s.logger.Warn("failed to get wallet for cashback", "user_id", userID, "booking_id", bookingID, "error", err)
+		return
+	}
+
+	description := fmt.Sprintf("Кэшбэк за бронирование (%d коп.)", totalPrice)
+	_, err = s.walletSvc.AddBonus(ctx, wallet.ID, cashbackAmount, domain.WalletTxCashback, nil, description)
+	if err != nil {
+		s.logger.Warn("failed to credit cashback", "user_id", userID, "booking_id", bookingID, "amount", cashbackAmount, "error", err)
+		return
+	}
+
+	s.logger.Info("credited cashback", "user_id", userID, "booking_id", bookingID, "amount", cashbackAmount)
+}
+
 func (s *bookingService) sendLoyaltyUpgradeNotification(ctx context.Context, userID uuid.UUID, change *LevelChangeResult) {
 	title := "Повышение уровня лояльности!"
 	body := fmt.Sprintf("Поздравляем! Ваш уровень лояльности повышен: %s → %s",
@@ -1577,6 +1606,9 @@ func (s *bookingService) CheckOut(ctx context.Context, userID uuid.UUID, role do
 			s.sendLoyaltyUpgradeNotification(ctx, booking.UserID, levelChange)
 		}
 	}
+
+	// Credit cashback to wallet based on loyalty level
+	s.creditCashback(ctx, booking.UserID, bookingID, booking.TotalPrice)
 
 	// Complete referral if applicable
 	referralResult, err := s.referralSvc.CompleteReferral(ctx, booking.UserID)

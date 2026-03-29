@@ -540,6 +540,10 @@ func (m *mockLoyaltyService) ListTransactions(_ context.Context, _ uuid.UUID, _,
 	return nil, nil
 }
 
+func (m *mockLoyaltyService) CalculateCashback(_ context.Context, _ uuid.UUID, _ int64) (int64, error) {
+	return 0, nil
+}
+
 func TestGetPersonalized_WithLoyaltyBoost(t *testing.T) {
 	t.Run("gold user gets higher scores", func(t *testing.T) {
 		recRepo := mockrepo.NewRecommendationRepo()

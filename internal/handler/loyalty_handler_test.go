@@ -74,6 +74,10 @@ func (m *mockLoyaltyService) ListTransactions(ctx context.Context, userID uuid.U
 	return nil, nil
 }
 
+func (m *mockLoyaltyService) CalculateCashback(_ context.Context, _ uuid.UUID, _ int64) (int64, error) {
+	return 0, nil
+}
+
 func TestLoyaltyHandler_GetAccount(t *testing.T) {
 	userID := uuid.New()
 	now := time.Now()

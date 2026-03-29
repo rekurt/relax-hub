@@ -184,11 +184,11 @@ BRD требует: "Изменение требует подтверждени�
 - Modify: `internal/service/loyalty_service.go` — после начисления points, зачислить cashback на кошелёк
 - Modify: `internal/domain/loyalty.go` — определить % кэшбэка по уровню
 
-- [ ] Определить механику: points → скидка ИЛИ cashback → кошелёк (BRD указывает cashback)
-- [ ] Добавить зачисление на кошелёк с тегом "cashback" при завершении бронирования
-- [ ] Кэшбэк % зависит от уровня лояльности (Bronze 0%, Silver 3%, Gold 5%, Platinum 10%)
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task B5
+- [x] Определить механику: points → скидка ИЛИ cashback → кошелёк (BRD указывает cashback)
+- [x] Добавить зачисление н�� кошелёк с тегом "cashback" при завершении бронирования
+- [x] Кэшбэк % зависит от уровня лояльности (Bronze 0%, Silver 3%, Gold 5%, Platinum 10%)
+- [x] Тесты
+- [x] run project test suite — must pass before Task B5
 
 ### Task B5: Средняя цена по району на карточке объекта (FR-044)
 
