@@ -730,6 +730,9 @@ func NewRouter(p RouterParams) http.Handler {
 			// Anti-fraud
 			r.With(middleware.RequireAdminPermission(domain.PermAntiFraudManage)).Get("/antifraud/flags", p.AntiFraudHandler.ListFlags)
 			r.With(middleware.RequireAdminPermission(domain.PermAntiFraudManage)).Patch("/antifraud/flags/{id}", p.AntiFraudHandler.UpdateFlag)
+			r.With(middleware.RequireAdminPermission(domain.PermAntiFraudManage)).Get("/antifraud/stoplist", p.AntiFraudHandler.ListStoplist)
+			r.With(middleware.RequireAdminPermission(domain.PermAntiFraudManage)).Post("/antifraud/stoplist", p.AntiFraudHandler.CreateStoplistEntry)
+			r.With(middleware.RequireAdminPermission(domain.PermAntiFraudManage)).Delete("/antifraud/stoplist/{id}", p.AntiFraudHandler.DeleteStoplistEntry)
 
 			// Chat content filtering
 			r.With(middleware.RequireAdminPermission(domain.PermAntiFraudManage)).Get("/chat/filtered", p.AntiFraudHandler.ListFilteredMessages)

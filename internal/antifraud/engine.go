@@ -17,6 +17,7 @@ type FraudEngine interface {
 	CheckBookingCancel(ctx context.Context, userID uuid.UUID, topUpCancelCycles int) error
 	CheckPayoutRequest(ctx context.Context, userID uuid.UUID, amount int64, dailyWithdrawals int) error
 	CheckDormantBalance(ctx context.Context, userID uuid.UUID, balance int64, lastBookingDaysAgo int) error
+	CheckListingCreate(ctx context.Context, userID uuid.UUID, isOnStoplist bool, duplicateOwnerCount int) error
 }
 
 // FraudCheckResult captures the outcome of a single rule evaluation.
@@ -86,6 +87,15 @@ func (e *fraudEngine) CheckDormantBalance(ctx context.Context, userID uuid.UUID,
 	return e.evaluate(ctx, input, RuleCategoryDormantBalance)
 }
 
+func (e *fraudEngine) CheckListingCreate(ctx context.Context, userID uuid.UUID, isOnStoplist bool, duplicateOwnerCount int) error {
+	input := RuleInput{
+		UserID:              userID,
+		IsOnStoplist:        isOnStoplist,
+		DuplicateOwnerCount: duplicateOwnerCount,
+	}
+	return e.evaluate(ctx, input, RuleCategoryListingCreate)
+}
+
 func (e *fraudEngine) evaluate(ctx context.Context, input RuleInput, category RuleCategory) error {
 	for _, rule := range e.rules {
 		if rule.Category != category {
@@ -136,19 +146,22 @@ const (
 	RuleCategoryBookingCancel  RuleCategory = "booking_cancel"
 	RuleCategoryPayoutRequest  RuleCategory = "payout_request"
 	RuleCategoryDormantBalance RuleCategory = "dormant_balance"
+	RuleCategoryListingCreate  RuleCategory = "listing_create"
 )
 
 // RuleInput contains all possible inputs for fraud rule evaluation.
 type RuleInput struct {
-	UserID             uuid.UUID
-	BathhouseOwnerID   uuid.UUID
-	Amount             int64
-	Balance            int64
-	CardCount          int
-	RecentBookingCount int
-	TopUpCancelCycles  int
-	DailyWithdrawals   int
-	LastBookingDaysAgo int
+	UserID              uuid.UUID
+	BathhouseOwnerID    uuid.UUID
+	Amount              int64
+	Balance             int64
+	CardCount           int
+	RecentBookingCount  int
+	TopUpCancelCycles   int
+	DailyWithdrawals    int
+	LastBookingDaysAgo  int
+	IsOnStoplist        bool
+	DuplicateOwnerCount int
 }
 
 // Rule defines a single anti-fraud rule.

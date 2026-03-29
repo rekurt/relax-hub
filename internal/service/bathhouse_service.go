@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/antifraud"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
@@ -121,11 +122,15 @@ type bathhouseService struct {
 	offerSvc       OfferService
 	paymentDetails PaymentDetailsService
 	auditSvc       AuditLogService
+	fraudEngine    antifraud.FraudEngine
+	stoplistRepo   repository.StoplistRepository
+	userRepo       repository.UserRepository
+	pdRepo         repository.PaymentDetailsRepository
 	logger         *logger.Logger
 }
 
-func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, subRepo repository.SubscriptionRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService, auditSvc AuditLogService, log *logger.Logger) BathhouseService {
-	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, photoRepo: photoRepo, subRepo: subRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails, auditSvc: auditSvc, logger: log}
+func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, subRepo repository.SubscriptionRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService, auditSvc AuditLogService, fraudEngine antifraud.FraudEngine, stoplistRepo repository.StoplistRepository, userRepo repository.UserRepository, pdRepo repository.PaymentDetailsRepository, log *logger.Logger) BathhouseService {
+	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, photoRepo: photoRepo, subRepo: subRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails, auditSvc: auditSvc, fraudEngine: fraudEngine, stoplistRepo: stoplistRepo, userRepo: userRepo, pdRepo: pdRepo, logger: log}
 }
 
 func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error) {
@@ -149,6 +154,11 @@ func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input 
 
 	// Onboarding gate: payment details must be set and valid
 	if err := s.paymentDetails.Validate(ctx, ownerID); err != nil {
+		return nil, err
+	}
+
+	// Antifraud: check stoplist and duplicate owner accounts
+	if err := s.checkListingAntifraud(ctx, ownerID); err != nil {
 		return nil, err
 	}
 
@@ -201,6 +211,35 @@ func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input 
 	}
 
 	return bh, nil
+}
+
+func (s *bathhouseService) checkListingAntifraud(ctx context.Context, ownerID uuid.UUID) error {
+	user, err := s.userRepo.GetByID(ctx, ownerID)
+	if err != nil {
+		return err
+	}
+
+	pd, _ := s.pdRepo.GetByUserID(ctx, ownerID)
+
+	var inn, bankCard string
+	if pd != nil {
+		inn = pd.INN
+		bankCard = pd.BankCardNumber
+	}
+
+	isBlocked, err := s.stoplistRepo.IsBlocked(ctx, user.Phone, user.Email, inn, bankCard)
+	if err != nil {
+		s.logger.Error("antifraud stoplist check failed", "error", err, "owner_id", ownerID)
+		return err
+	}
+
+	dupCount, err := s.stoplistRepo.CountDuplicateOwners(ctx, user.Phone, user.Email, inn, ownerID)
+	if err != nil {
+		s.logger.Error("antifraud duplicate check failed", "error", err, "owner_id", ownerID)
+		return err
+	}
+
+	return s.fraudEngine.CheckListingCreate(ctx, ownerID, isBlocked, dupCount)
 }
 
 func (s *bathhouseService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bathhouse, error) {

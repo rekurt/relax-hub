@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/nikitaaldaev/bani/config"
+	"github.com/nikitaaldaev/bani/internal/antifraud"
 	"github.com/nikitaaldaev/bani/internal/fiscal"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/middleware"
@@ -22,7 +23,12 @@ var Module = fx.Module("service",
 		),
 		fx.Annotate(NewAuditLogService, fx.As(new(AuditLogService))),
 		fx.Annotate(NewUserService, fx.As(new(UserService))),
-		fx.Annotate(NewBathhouseService, fx.As(new(BathhouseService))),
+		fx.Annotate(
+			func(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, subRepo repository.SubscriptionRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, pdSvc PaymentDetailsService, auditSvc AuditLogService, fraudEngine antifraud.FraudEngine, stoplistRepo repository.StoplistRepository, userRepo repository.UserRepository, pdRepo repository.PaymentDetailsRepository, log *logger.Logger) BathhouseService {
+				return NewBathhouseService(bhRepo, bookingRepo, photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, fraudEngine, stoplistRepo, userRepo, pdRepo, log)
+			},
+			fx.As(new(BathhouseService)),
+		),
 		fx.Annotate(NewBookingService, fx.As(new(BookingService))),
 		fx.Annotate(NewRepresentativeService, fx.As(new(RepresentativeService))),
 		fx.Annotate(NewReviewService, fx.As(new(ReviewService))),

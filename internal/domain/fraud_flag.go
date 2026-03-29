@@ -17,13 +17,16 @@ const (
 	FraudRuleRapidBookings    FraudRuleName = "RULE_RAPID_BOOKINGS"
 	FraudRuleSelfBooking      FraudRuleName = "RULE_SELF_BOOKING"
 	FraudRuleStructuring      FraudRuleName = "RULE_STRUCTURING"
-	FraudRuleFakeReviews      FraudRuleName = "RULE_FAKE_REVIEWS"
+	FraudRuleFakeReviews        FraudRuleName = "RULE_FAKE_REVIEWS"
+	FraudRuleListingDuplicate   FraudRuleName = "RULE_LISTING_DUPLICATE"
+	FraudRuleListingStoplist    FraudRuleName = "RULE_LISTING_STOPLIST"
 )
 
 func (r FraudRuleName) IsValid() bool {
 	switch r {
 	case FraudRuleMultiCardTopUp, FraudRuleTopUpCancelCycle, FraudRuleDormantBalance,
-		FraudRuleRapidBookings, FraudRuleSelfBooking, FraudRuleStructuring, FraudRuleFakeReviews:
+		FraudRuleRapidBookings, FraudRuleSelfBooking, FraudRuleStructuring, FraudRuleFakeReviews,
+		FraudRuleListingDuplicate, FraudRuleListingStoplist:
 		return true
 	}
 	return false

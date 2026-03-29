@@ -76,5 +76,6 @@ var Module = fx.Module("repository",
 		fx.Annotate(NewPhotoOrderRepository, fx.As(new(repository.PhotoOrderRepository))),
 		fx.Annotate(NewBookingModificationRequestRepo, fx.As(new(repository.BookingModificationRequestRepository))),
 		fx.Annotate(NewExtensionRequestRepo, fx.As(new(repository.ExtensionRequestRepository))),
+		fx.Annotate(NewStoplistRepository, fx.As(new(repository.StoplistRepository))),
 	),
 )

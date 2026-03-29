@@ -784,3 +784,12 @@ type PhotoOrderRepository interface {
 	Update(ctx context.Context, order *domain.PhotoOrder) error
 	List(ctx context.Context, filter domain.PhotoOrderFilter) (*domain.PaginatedResult[domain.PhotoOrder], error)
 }
+
+// StoplistRepository manages the antifraud stoplist.
+type StoplistRepository interface {
+	Create(ctx context.Context, entry *domain.StoplistEntry) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	List(ctx context.Context, filter domain.StoplistFilter) (*domain.PaginatedResult[domain.StoplistEntry], error)
+	IsBlocked(ctx context.Context, phone, email, inn, bankCardNumber string) (bool, error)
+	CountDuplicateOwners(ctx context.Context, phone, email, inn string, excludeUserID uuid.UUID) (int, error)
+}

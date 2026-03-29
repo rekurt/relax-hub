@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/internal/antifraud"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
@@ -15,14 +16,17 @@ import (
 )
 
 type bathhouseTestEnv struct {
-	svc         service.BathhouseService
-	bhRepo      *mock.BathhouseRepo
-	repRepo     *mock.RepresentativeRepo
-	bookingRepo *mock.BookingRepo
-	photoRepo   *mock.BathhousePhotoRepo
-	kycRepo     *mock.KYCRepo
-	offerRepo   *mock.OfferRepo
-	pdRepo      *mock.PaymentDetailsRepo
+	svc          service.BathhouseService
+	bhRepo       *mock.BathhouseRepo
+	repRepo      *mock.RepresentativeRepo
+	bookingRepo  *mock.BookingRepo
+	photoRepo    *mock.BathhousePhotoRepo
+	kycRepo      *mock.KYCRepo
+	offerRepo    *mock.OfferRepo
+	pdRepo       *mock.PaymentDetailsRepo
+	stoplistRepo *mock.StoplistRepo
+	fraudFlagRepo *mock.FraudFlagRepo
+	userRepo     *mock.UserRepo
 }
 
 func newBathhouseTestEnv() *bathhouseTestEnv {
@@ -33,6 +37,9 @@ func newBathhouseTestEnv() *bathhouseTestEnv {
 	kycRepo := mock.NewKYCRepo()
 	offerRepo := mock.NewOfferRepo()
 	pdRepo := mock.NewPaymentDetailsRepo()
+	userRepo := mock.NewUserRepo()
+	stoplistRepo := mock.NewStoplistRepo().(*mock.StoplistRepo)
+	fraudFlagRepo := mock.NewFraudFlagRepo().(*mock.FraudFlagRepo)
 	access := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
 	kycSvc := service.NewKYCService(kycRepo, &noopNotifService{}, log)
@@ -41,16 +48,30 @@ func newBathhouseTestEnv() *bathhouseTestEnv {
 	auditLogRepo := mock.NewAuditLogRepo()
 	auditSvc := service.NewAuditLogService(auditLogRepo, log)
 	subRepo := mock.NewSubscriptionRepo()
-	svc := service.NewBathhouseService(bhRepo, bookingRepo, photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, log)
+	fraudEngine := antifraud.NewFraudEngine(fraudFlagRepo, log)
+	svc := service.NewBathhouseService(bhRepo, bookingRepo, photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, fraudEngine, stoplistRepo, userRepo, pdRepo, log)
 	return &bathhouseTestEnv{
 		svc: svc, bhRepo: bhRepo, repRepo: repRepo, bookingRepo: bookingRepo,
 		photoRepo: photoRepo, kycRepo: kycRepo, offerRepo: offerRepo, pdRepo: pdRepo,
+		stoplistRepo: stoplistRepo, fraudFlagRepo: fraudFlagRepo, userRepo: userRepo,
 	}
 }
 
-// setupOnboardingGate prepares KYC, offer, and payment details for a user so they pass the gate.
+// setupOnboardingGate prepares KYC, offer, payment details, and user for a user so they pass the gate.
 func (e *bathhouseTestEnv) setupOnboardingGate(t *testing.T, userID uuid.UUID) {
 	t.Helper()
+
+	// User record (needed for antifraud checks)
+	user := &domain.User{
+		ID:    userID,
+		Email: fmt.Sprintf("owner-%s@test.com", userID.String()[:8]),
+		Phone: "+79001234567",
+		Role:  domain.RoleOwner,
+		Name:  "Test User",
+	}
+	if err := e.userRepo.Create(context.Background(), user); err != nil {
+		t.Fatalf("setup user: %v", err)
+	}
 
 	// Approved KYC
 	expiresAt := time.Now().Add(365 * 24 * time.Hour)
@@ -116,6 +137,67 @@ func TestBathhouseService_Create_PendingStatus(t *testing.T) {
 	}
 	if bh.OwnerID != ownerID {
 		t.Errorf("ownerID = %v, want %v", bh.OwnerID, ownerID)
+	}
+}
+
+func TestBathhouseService_Create_BlockedByStoplist(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	env.setupOnboardingGate(t, ownerID)
+
+	// Add the owner's phone to stoplist
+	user, _ := env.userRepo.GetByID(context.Background(), ownerID)
+	_ = env.stoplistRepo.Create(context.Background(), &domain.StoplistEntry{
+		Phone:  user.Phone,
+		Reason: "fraud detected",
+	})
+
+	_, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+		Name:         "Blocked Bath",
+		Address:      "456 Street",
+		CityID:       1,
+		PricePerHour: 5000,
+		MinDuration:  1,
+		MaxGuests:    10,
+	})
+
+	if !errors.Is(err, domain.ErrFraudDetected) {
+		t.Errorf("expected ErrFraudDetected, got: %v", err)
+	}
+}
+
+func TestBathhouseService_Create_DuplicateOwnerFlagged(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ownerID := uuid.New()
+	env.setupOnboardingGate(t, ownerID)
+
+	// Set duplicate count > 0 (another owner shares same phone/email)
+	env.stoplistRepo.SetDuplicateCount(1)
+
+	bh, err := env.svc.Create(context.Background(), ownerID, service.CreateBathhouseInput{
+		Name:         "Dup Owner Bath",
+		Address:      "789 Street",
+		CityID:       1,
+		PricePerHour: 5000,
+		MinDuration:  1,
+		MaxGuests:    10,
+	})
+
+	// Duplicate creates a flag but does NOT block creation
+	if err != nil {
+		t.Fatalf("expected no error (flag action, not block), got: %v", err)
+	}
+	if bh == nil {
+		t.Fatal("expected bathhouse to be created")
+	}
+
+	// Verify a fraud flag was created
+	result, _ := env.fraudFlagRepo.ListByUser(context.Background(), ownerID, 1, 10)
+	if len(result.Items) != 1 {
+		t.Fatalf("expected 1 fraud flag, got %d", len(result.Items))
+	}
+	if result.Items[0].Rule != domain.FraudRuleListingDuplicate {
+		t.Errorf("expected rule %s, got %s", domain.FraudRuleListingDuplicate, result.Items[0].Rule)
 	}
 }
 
@@ -1339,7 +1421,8 @@ func TestComputeBadges_Premium(t *testing.T) {
 	pdSvc := service.NewPaymentDetailsService(env.pdRepo, log)
 	auditLogRepo := mock.NewAuditLogRepo()
 	auditSvc := service.NewAuditLogService(auditLogRepo, log)
-	svcWithSub := service.NewBathhouseService(env.bhRepo, env.bookingRepo, env.photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, log)
+	fraudEngine := antifraud.NewFraudEngine(env.fraudFlagRepo, log)
+	svcWithSub := service.NewBathhouseService(env.bhRepo, env.bookingRepo, env.photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, fraudEngine, env.stoplistRepo, env.userRepo, env.pdRepo, log)
 
 	badges := svcWithSub.ComputeBadges(ctx, bh)
 	if !containsBadge(badges, "premium") {

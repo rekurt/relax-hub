@@ -231,3 +231,60 @@ func TestCheckDormantBalance_RecentBooking(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 }
+
+func TestCheckListingCreate_Stoplist(t *testing.T) {
+	engine, repo := newTestEngine()
+	ctx := context.Background()
+	userID := uuid.New()
+
+	// User is on stoplist - should block
+	err := engine.CheckListingCreate(ctx, userID, true, 0)
+	if err != domain.ErrFraudDetected {
+		t.Fatalf("expected ErrFraudDetected, got %v", err)
+	}
+
+	result, _ := repo.ListByUser(ctx, userID, 1, 10)
+	if len(result.Items) != 1 {
+		t.Fatalf("expected 1 flag, got %d", len(result.Items))
+	}
+	if result.Items[0].Rule != domain.FraudRuleListingStoplist {
+		t.Errorf("expected rule %s, got %s", domain.FraudRuleListingStoplist, result.Items[0].Rule)
+	}
+	if result.Items[0].Severity != domain.FraudSeverityCritical {
+		t.Errorf("expected severity critical, got %s", result.Items[0].Severity)
+	}
+}
+
+func TestCheckListingCreate_Duplicate(t *testing.T) {
+	engine, repo := newTestEngine()
+	ctx := context.Background()
+	userID := uuid.New()
+
+	// Duplicate owner detected - should flag (not block)
+	err := engine.CheckListingCreate(ctx, userID, false, 2)
+	if err != nil {
+		t.Fatalf("expected no error (action is flag, not block), got %v", err)
+	}
+
+	result, _ := repo.ListByUser(ctx, userID, 1, 10)
+	if len(result.Items) != 1 {
+		t.Fatalf("expected 1 flag, got %d", len(result.Items))
+	}
+	if result.Items[0].Rule != domain.FraudRuleListingDuplicate {
+		t.Errorf("expected rule %s, got %s", domain.FraudRuleListingDuplicate, result.Items[0].Rule)
+	}
+	if result.Items[0].Action != domain.FraudActionFlag {
+		t.Errorf("expected action flag, got %s", result.Items[0].Action)
+	}
+}
+
+func TestCheckListingCreate_Clean(t *testing.T) {
+	engine, _ := newTestEngine()
+	ctx := context.Background()
+
+	// Not on stoplist, no duplicates
+	err := engine.CheckListingCreate(ctx, uuid.New(), false, 0)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}

@@ -100,13 +100,13 @@ BRD требует: "Изменение требует подтверждени�
 - Modify: `internal/service/bathhouse_service.go` — вызвать антифрод перед созданием
 - Create: `migrations/XXXXXX_antifraud_stoplist.up.sql` — таблица стоп-листа
 
-- [ ] Таблица antifraud_stoplist (phone, email, payment_details, reason, blocked_at)
-- [ ] Правило: поиск дубликатов по телефону/email/реквизитам среди существующих владельцев
-- [ ] Правило: проверка по стоп-листу
-- [ ] Интеграция в bathhouse_service.Create()
-- [ ] Admin-эндпоинт для управления стоп-листом
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task A5
+- [x] Таблица antifraud_stoplist (phone, email, payment_details, reason, blocked_at)
+- [x] Правило: поиск дубликатов по телефону/email/реквизитам среди существующих владельцев
+- [x] Правило: проверка по стоп-листу
+- [x] Интеграция в bathhouse_service.Create()
+- [x] Admin-эндпоинт для управления стоп-листом
+- [x] Тесты
+- [x] run project test suite — must pass before Task A5
 
 ### Task A5: GPS-валидация при оспаривании неявки (FR-070)
 

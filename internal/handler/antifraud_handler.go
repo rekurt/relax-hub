@@ -13,12 +13,13 @@ import (
 )
 
 type AntiFraudHandler struct {
-	flagRepo   repository.FraudFlagRepository
-	chatFilter antifraud.ChatFilter
+	flagRepo     repository.FraudFlagRepository
+	chatFilter   antifraud.ChatFilter
+	stoplistRepo repository.StoplistRepository
 }
 
-func NewAntiFraudHandler(flagRepo repository.FraudFlagRepository, chatFilter antifraud.ChatFilter) *AntiFraudHandler {
-	return &AntiFraudHandler{flagRepo: flagRepo, chatFilter: chatFilter}
+func NewAntiFraudHandler(flagRepo repository.FraudFlagRepository, chatFilter antifraud.ChatFilter, stoplistRepo repository.StoplistRepository) *AntiFraudHandler {
+	return &AntiFraudHandler{flagRepo: flagRepo, chatFilter: chatFilter, stoplistRepo: stoplistRepo}
 }
 
 type fraudFlagResponse struct {
@@ -211,4 +212,159 @@ func (h *AntiFraudHandler) ListFilteredMessages(w http.ResponseWriter, r *http.R
 		TotalCount: total,
 		TotalPages: totalPages,
 	})
+}
+
+type stoplistEntryResponse struct {
+	ID             string  `json:"id"`
+	Phone          string  `json:"phone,omitempty"`
+	Email          string  `json:"email,omitempty"`
+	INN            string  `json:"inn,omitempty"`
+	BankCardNumber string  `json:"bank_card_number,omitempty"`
+	Reason         string  `json:"reason"`
+	BlockedAt      string  `json:"blocked_at"`
+	CreatedBy      *string `json:"created_by,omitempty"`
+}
+
+func toStoplistResponse(e *domain.StoplistEntry) stoplistEntryResponse {
+	resp := stoplistEntryResponse{
+		ID:             e.ID.String(),
+		Phone:          e.Phone,
+		Email:          e.Email,
+		INN:            e.INN,
+		BankCardNumber: e.BankCardNumber,
+		Reason:         e.Reason,
+		BlockedAt:      e.BlockedAt.Format(time.RFC3339),
+	}
+	if e.CreatedBy != nil {
+		s := e.CreatedBy.String()
+		resp.CreatedBy = &s
+	}
+	return resp
+}
+
+type createStoplistRequest struct {
+	Phone          string `json:"phone"`
+	Email          string `json:"email"`
+	INN            string `json:"inn"`
+	BankCardNumber string `json:"bank_card_number"`
+	Reason         string `json:"reason"`
+}
+
+// ListStoplist godoc
+//
+//	@Summary		List antifraud stoplist entries
+//	@Description	Returns paginated list of stoplist entries
+//	@Tags			admin-antifraud
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			phone		query		string	false	"Filter by phone"
+//	@Param			email		query		string	false	"Filter by email"
+//	@Param			page		query		int		false	"Page number"	default(1)
+//	@Param			page_size	query		int		false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]stoplistEntryResponse,meta=Meta}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/antifraud/stoplist [get]
+func (h *AntiFraudHandler) ListStoplist(w http.ResponseWriter, r *http.Request) {
+	filter := domain.StoplistFilter{
+		Phone:    r.URL.Query().Get("phone"),
+		Email:    r.URL.Query().Get("email"),
+		Page:     getPage(r.URL.Query().Get("page")),
+		PageSize: getPageSize(r.URL.Query().Get("page_size"), 20),
+	}
+
+	result, err := h.stoplistRepo.List(r.Context(), filter)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	items := make([]stoplistEntryResponse, 0, len(result.Items))
+	for i := range result.Items {
+		items = append(items, toStoplistResponse(&result.Items[i]))
+	}
+
+	writeJSONWithMeta(w, http.StatusOK, items, &Meta{
+		Page:       result.Page,
+		PageSize:   result.PageSize,
+		TotalCount: result.TotalCount,
+		TotalPages: result.TotalPages,
+	})
+}
+
+// CreateStoplistEntry godoc
+//
+//	@Summary		Add entry to antifraud stoplist
+//	@Description	Block phone, email, INN or bank card from creating listings
+//	@Tags			admin-antifraud
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		createStoplistRequest	true	"Stoplist entry"
+//	@Success		201		{object}	APIResponse{data=stoplistEntryResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/antifraud/stoplist [post]
+func (h *AntiFraudHandler) CreateStoplistEntry(w http.ResponseWriter, r *http.Request) {
+	var req createStoplistRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	if req.Reason == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "reason is required")
+		return
+	}
+	if req.Phone == "" && req.Email == "" && req.INN == "" && req.BankCardNumber == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "at least one identifier (phone, email, inn, bank_card_number) is required")
+		return
+	}
+
+	adminID := middleware.GetUserID(r.Context())
+	entry := &domain.StoplistEntry{
+		Phone:          req.Phone,
+		Email:          req.Email,
+		INN:            req.INN,
+		BankCardNumber: req.BankCardNumber,
+		Reason:         req.Reason,
+		CreatedBy:      &adminID,
+	}
+
+	if err := h.stoplistRepo.Create(r.Context(), entry); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, toStoplistResponse(entry))
+}
+
+// DeleteStoplistEntry godoc
+//
+//	@Summary		Remove entry from antifraud stoplist
+//	@Description	Delete a stoplist entry by ID
+//	@Tags			admin-antifraud
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Stoplist entry ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=object}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/admin/antifraud/stoplist/{id} [delete]
+func (h *AntiFraudHandler) DeleteStoplistEntry(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_id", "invalid stoplist entry ID")
+		return
+	}
+
+	if err := h.stoplistRepo.Delete(r.Context(), id); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 }

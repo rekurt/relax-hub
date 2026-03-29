@@ -11,6 +11,8 @@ func DefaultRules() []Rule {
 		rapidBookingsRule(),
 		selfBookingRule(),
 		structuringRule(),
+		listingStoplistRule(),
+		listingDuplicateRule(),
 	}
 }
 
