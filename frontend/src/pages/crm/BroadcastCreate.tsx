@@ -27,7 +27,7 @@ import { useQueryClient } from '@tanstack/react-query'
 const { Title, Text } = Typography
 
 const CHANNEL_OPTIONS = [
-  { label: 'Push-уведомлен��е', value: 'push' },
+  { label: 'Push-уведомление', value: 'push' },
   { label: 'Email', value: 'email' },
   { label: 'Telegram', value: 'telegram' },
   { label: 'SMS', value: 'sms' },
@@ -61,7 +61,7 @@ export default function BroadcastCreate() {
   const createMutation = usePostMyCrmBroadcasts({
     mutation: {
       onSuccess: () => {
-        message.success('Р��ссылка создана')
+        message.success('Рассылка создана')
         queryClient.invalidateQueries({ queryKey: ['/my/crm/broadcasts'] })
         navigate('/crm/broadcasts')
       },
@@ -132,7 +132,7 @@ export default function BroadcastCreate() {
 
           <Form.Item
             name="title"
-            label="Заголо��ок"
+            label="Заголовок"
             rules={[{ required: true, message: 'Введите заголовок' }]}
           >
             <Input placeholder="Заголовок рассылки" maxLength={200} showCount />
@@ -173,7 +173,7 @@ export default function BroadcastCreate() {
 
           <Form.Item
             name="image_url"
-            label="Ссылка на ��зображение"
+            label="Ссылка на изображение"
             extra="Необязательно. URL изображения для рассылки"
           >
             <Input placeholder="https://..." />
@@ -182,7 +182,7 @@ export default function BroadcastCreate() {
           <Form.Item
             name="channels"
             label="Каналы отправки"
-            rules={[{ required: true, message: '��ыберите хотя бы один канал' }]}
+            rules={[{ required: true, message: 'Выберите хотя бы один канал' }]}
           >
             <Checkbox.Group options={CHANNEL_OPTIONS} />
           </Form.Item>

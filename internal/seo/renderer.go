@@ -66,37 +66,37 @@ func (r *Renderer) RenderPage(data PageData) string {
 	b.WriteString("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n")
 
 	// Title
-	b.WriteString(fmt.Sprintf("<title>%s</title>\n", html.EscapeString(data.Title)))
+	fmt.Fprintf(&b, "<title>%s</title>\n", html.EscapeString(data.Title))
 
 	// Meta description
 	if data.Description != "" {
-		b.WriteString(fmt.Sprintf("<meta name=\"description\" content=\"%s\">\n", html.EscapeString(data.Description)))
+		fmt.Fprintf(&b, "<meta name=\"description\" content=\"%s\">\n", html.EscapeString(data.Description))
 	}
 
 	// Canonical
 	if data.Canonical != "" {
-		b.WriteString(fmt.Sprintf("<link rel=\"canonical\" href=\"%s\">\n", html.EscapeString(data.Canonical)))
+		fmt.Fprintf(&b, "<link rel=\"canonical\" href=\"%s\">\n", html.EscapeString(data.Canonical))
 	}
 
 	// Open Graph
 	if data.OGType != "" {
-		b.WriteString(fmt.Sprintf("<meta property=\"og:type\" content=\"%s\">\n", html.EscapeString(data.OGType)))
+		fmt.Fprintf(&b, "<meta property=\"og:type\" content=\"%s\">\n", html.EscapeString(data.OGType))
 	}
-	b.WriteString(fmt.Sprintf("<meta property=\"og:title\" content=\"%s\">\n", html.EscapeString(data.Title)))
+	fmt.Fprintf(&b, "<meta property=\"og:title\" content=\"%s\">\n", html.EscapeString(data.Title))
 	if data.Description != "" {
-		b.WriteString(fmt.Sprintf("<meta property=\"og:description\" content=\"%s\">\n", html.EscapeString(data.Description)))
+		fmt.Fprintf(&b, "<meta property=\"og:description\" content=\"%s\">\n", html.EscapeString(data.Description))
 	}
 	if data.Canonical != "" {
-		b.WriteString(fmt.Sprintf("<meta property=\"og:url\" content=\"%s\">\n", html.EscapeString(data.Canonical)))
+		fmt.Fprintf(&b, "<meta property=\"og:url\" content=\"%s\">\n", html.EscapeString(data.Canonical))
 	}
 	if data.OGImage != "" {
-		b.WriteString(fmt.Sprintf("<meta property=\"og:image\" content=\"%s\">\n", html.EscapeString(data.OGImage)))
+		fmt.Fprintf(&b, "<meta property=\"og:image\" content=\"%s\">\n", html.EscapeString(data.OGImage))
 	}
 	if data.OGSiteName != "" {
-		b.WriteString(fmt.Sprintf("<meta property=\"og:site_name\" content=\"%s\">\n", html.EscapeString(data.OGSiteName)))
+		fmt.Fprintf(&b, "<meta property=\"og:site_name\" content=\"%s\">\n", html.EscapeString(data.OGSiteName))
 	}
 	if data.OGLocale != "" {
-		b.WriteString(fmt.Sprintf("<meta property=\"og:locale\" content=\"%s\">\n", html.EscapeString(data.OGLocale)))
+		fmt.Fprintf(&b, "<meta property=\"og:locale\" content=\"%s\">\n", html.EscapeString(data.OGLocale))
 	}
 
 	// Twitter Card
@@ -104,18 +104,18 @@ func (r *Renderer) RenderPage(data PageData) string {
 	if tc == "" {
 		tc = "summary"
 	}
-	b.WriteString(fmt.Sprintf("<meta name=\"twitter:card\" content=\"%s\">\n", html.EscapeString(tc)))
-	b.WriteString(fmt.Sprintf("<meta name=\"twitter:title\" content=\"%s\">\n", html.EscapeString(data.Title)))
+	fmt.Fprintf(&b, "<meta name=\"twitter:card\" content=\"%s\">\n", html.EscapeString(tc))
+	fmt.Fprintf(&b, "<meta name=\"twitter:title\" content=\"%s\">\n", html.EscapeString(data.Title))
 	if data.Description != "" {
-		b.WriteString(fmt.Sprintf("<meta name=\"twitter:description\" content=\"%s\">\n", html.EscapeString(data.Description)))
+		fmt.Fprintf(&b, "<meta name=\"twitter:description\" content=\"%s\">\n", html.EscapeString(data.Description))
 	}
 	if data.OGImage != "" {
-		b.WriteString(fmt.Sprintf("<meta name=\"twitter:image\" content=\"%s\">\n", html.EscapeString(data.OGImage)))
+		fmt.Fprintf(&b, "<meta name=\"twitter:image\" content=\"%s\">\n", html.EscapeString(data.OGImage))
 	}
 
 	// Schema.org JSON-LD
 	if data.SchemaJSON != "" {
-		b.WriteString(fmt.Sprintf("<script type=\"application/ld+json\">%s</script>\n", data.SchemaJSON))
+		fmt.Fprintf(&b, "<script type=\"application/ld+json\">%s</script>\n", data.SchemaJSON)
 	}
 
 	b.WriteString("</head>\n<body>\n")
@@ -186,18 +186,18 @@ func (r *Renderer) BuildBathhouseDetailPage(input SchemaInput, meta MetaTags) Pa
 
 	// Build body content with visible text for crawlers
 	var body strings.Builder
-	body.WriteString(fmt.Sprintf("<h1>%s</h1>\n", html.EscapeString(input.Name)))
+	fmt.Fprintf(&body, "<h1>%s</h1>\n", html.EscapeString(input.Name))
 	if input.Description != "" {
-		body.WriteString(fmt.Sprintf("<p>%s</p>\n", html.EscapeString(input.Description)))
+		fmt.Fprintf(&body, "<p>%s</p>\n", html.EscapeString(input.Description))
 	}
 	if input.CityName != "" {
-		body.WriteString(fmt.Sprintf("<p>Город: %s</p>\n", html.EscapeString(input.CityName)))
+		fmt.Fprintf(&body, "<p>Город: %s</p>\n", html.EscapeString(input.CityName))
 	}
 	if input.PricePerHour > 0 {
-		body.WriteString(fmt.Sprintf("<p>Цена от %d руб/ч</p>\n", input.PricePerHour/100))
+		fmt.Fprintf(&body, "<p>Цена от %d руб/ч</p>\n", input.PricePerHour/100)
 	}
 	if input.Rating > 0 && input.ReviewCount > 0 {
-		body.WriteString(fmt.Sprintf("<p>Рейтинг: %.1f (%d отзывов)</p>\n", input.Rating, input.ReviewCount))
+		fmt.Fprintf(&body, "<p>Рейтинг: %.1f (%d отзывов)</p>\n", input.Rating, input.ReviewCount)
 	}
 
 	// Amenities
@@ -210,7 +210,7 @@ func (r *Renderer) BuildBathhouseDetailPage(input SchemaInput, meta MetaTags) Pa
 		HasKaraoke:   input.HasKaraoke,
 	})
 	if len(amenities) > 0 {
-		body.WriteString(fmt.Sprintf("<p>Удобства: %s</p>\n", html.EscapeString(strings.Join(amenities, ", "))))
+		fmt.Fprintf(&body, "<p>Удобства: %s</p>\n", html.EscapeString(strings.Join(amenities, ", ")))
 	}
 
 	return PageData{
@@ -279,15 +279,15 @@ func (r *Renderer) BuildReviewsPage(bathhouseName, cityName, citySlug, bathhouse
 	}
 
 	var body strings.Builder
-	body.WriteString(fmt.Sprintf("<h1>%s</h1>\n", html.EscapeString(title)))
+	fmt.Fprintf(&body, "<h1>%s</h1>\n", html.EscapeString(title))
 	if rating > 0 {
-		body.WriteString(fmt.Sprintf("<p>Средний рейтинг: %.1f из 5 (%d отзывов)</p>\n", rating, reviewCount))
+		fmt.Fprintf(&body, "<p>Средний рейтинг: %.1f из 5 (%d отзывов)</p>\n", rating, reviewCount)
 	}
 	for i, text := range reviewTexts {
 		if i >= 10 { // limit to first 10 reviews in pre-rendered content
 			break
 		}
-		body.WriteString(fmt.Sprintf("<blockquote>%s</blockquote>\n", html.EscapeString(text)))
+		fmt.Fprintf(&body, "<blockquote>%s</blockquote>\n", html.EscapeString(text))
 	}
 
 	return PageData{

@@ -194,13 +194,13 @@ func (r *IsochroneResult) ToWKTPolygon() string {
 		if i > 0 {
 			b.WriteString(", ")
 		}
-		b.WriteString(fmt.Sprintf("%f %f", pt[0], pt[1])) // lng lat (WKT order)
+		fmt.Fprintf(&b, "%f %f", pt[0], pt[1]) // lng lat (WKT order)
 	}
 	// Close the ring if not already closed
 	first := r.Coordinates[0]
 	last := r.Coordinates[len(r.Coordinates)-1]
 	if first[0] != last[0] || first[1] != last[1] {
-		b.WriteString(fmt.Sprintf(", %f %f", first[0], first[1]))
+		fmt.Fprintf(&b, ", %f %f", first[0], first[1])
 	}
 	b.WriteString("))")
 	return b.String()

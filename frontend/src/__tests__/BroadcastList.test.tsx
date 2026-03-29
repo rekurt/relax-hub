@@ -109,7 +109,7 @@ describe('BroadcastList', () => {
 
     renderWithProviders(<BroadcastList />)
 
-    expect(screen.getByText('150 / 85')).toBeInTheDocument()
+    expect(screen.getByText('150 / 85 / 0')).toBeInTheDocument()
   })
 
   it('shows send button for draft broadcasts', () => {

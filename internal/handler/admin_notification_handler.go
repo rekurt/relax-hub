@@ -104,11 +104,12 @@ func (h *AdminNotificationHandler) ListAdminNotifications(w http.ResponseWriter,
 	}
 	if s := r.URL.Query().Get("is_read"); s != "" {
 		var isRead bool
-		if s == "true" {
+		switch s {
+		case "true":
 			isRead = true
-		} else if s == "false" {
+		case "false":
 			isRead = false
-		} else {
+		default:
 			writeError(w, http.StatusBadRequest, "invalid_is_read", "is_read must be true or false")
 			return
 		}

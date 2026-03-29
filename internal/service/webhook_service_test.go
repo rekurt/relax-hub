@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -289,12 +290,17 @@ func TestWebhookService_DeliverEvent(t *testing.T) {
 
 	// Create a test HTTP server
 	var receivedCount int32
+	var mu sync.Mutex
 	var receivedSignature string
 	var receivedBody []byte
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt32(&receivedCount, 1)
-		receivedSignature = r.Header.Get("X-Webhook-Signature")
-		receivedBody, _ = io.ReadAll(r.Body)
+		sig := r.Header.Get("X-Webhook-Signature")
+		body, _ := io.ReadAll(r.Body)
+		mu.Lock()
+		receivedSignature = sig
+		receivedBody = body
+		mu.Unlock()
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer server.Close()
@@ -328,18 +334,24 @@ func TestWebhookService_DeliverEvent(t *testing.T) {
 	}
 
 	// Verify HMAC signature
+	mu.Lock()
+	sig := receivedSignature
+	body := make([]byte, len(receivedBody))
+	copy(body, receivedBody)
+	mu.Unlock()
+
 	payloadBytes, _ := json.Marshal(payload)
 	mac := hmac.New(sha256.New, []byte("my-secret"))
 	mac.Write(payloadBytes)
 	expectedSig := hex.EncodeToString(mac.Sum(nil))
 
-	if receivedSignature != expectedSig {
-		t.Errorf("HMAC signature mismatch: expected %s, got %s", expectedSig, receivedSignature)
+	if sig != expectedSig {
+		t.Errorf("HMAC signature mismatch: expected %s, got %s", expectedSig, sig)
 	}
 
 	// Verify payload
 	var gotPayload map[string]string
-	_ = json.Unmarshal(receivedBody, &gotPayload)
+	_ = json.Unmarshal(body, &gotPayload)
 	if gotPayload["booking_id"] != "test-123" {
 		t.Errorf("expected booking_id=test-123, got %s", gotPayload["booking_id"])
 	}

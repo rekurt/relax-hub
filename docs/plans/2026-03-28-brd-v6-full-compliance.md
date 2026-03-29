@@ -572,17 +572,17 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 
 ### Task 30: Verify Acceptance Criteria
 
-- [ ] Manual test: complete booking flow RU region (card + wallet combo)
-- [ ] Manual test: Belarus region payment flow (placeholder for bePaid)
-- [ ] Manual test: admin sub-role access (moderator can moderate but not manage finance)
-- [ ] Manual test: CRM RFM analysis and custom segment creation
-- [ ] Manual test: webhook delivery to external URL
-- [ ] Manual test: FAQ bot answers before ticket creation
-- [ ] Run full test suite: `go test ./... -race`
-- [ ] Run linter: `make lint`
-- [ ] Run frontend tests: `cd frontend && npx vitest run`
-- [ ] Run frontend lint: `cd frontend && npm run lint`
-- [ ] Verify test coverage meets 80%+
+- [x] Manual test: complete booking flow RU region (card + wallet combo)
+- [x] Manual test: Belarus region payment flow (placeholder for bePaid)
+- [x] Manual test: admin sub-role access (moderator can moderate but not manage finance)
+- [x] Manual test: CRM RFM analysis and custom segment creation
+- [x] Manual test: webhook delivery to external URL
+- [x] Manual test: FAQ bot answers before ticket creation
+- [x] Run full test suite: `go test ./... -race`
+- [x] Run linter: `make lint`
+- [x] Run frontend tests: `cd frontend && npx vitest run`
+- [x] Run frontend lint: `cd frontend && npm run lint`
+- [x] Verify test coverage meets 80%+
 
 ### Task 31: Update Documentation
 

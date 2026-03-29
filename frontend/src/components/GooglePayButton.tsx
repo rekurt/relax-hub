@@ -79,7 +79,7 @@ export default function GooglePayButton({ amount, onToken, disabled, loading }: 
 
   useEffect(() => {
     if (window.google?.payments?.api?.PaymentsClient) {
-      initGooglePay()
+      initGooglePay() // eslint-disable-line react-hooks/set-state-in-effect -- async script load sets state after API check
       return
     }
 

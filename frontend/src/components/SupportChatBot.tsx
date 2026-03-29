@@ -3,7 +3,6 @@ import {
   Button,
   Card,
   Input,
-  List,
   Space,
   Typography,
   Collapse,
@@ -19,7 +18,7 @@ import {
 } from '@ant-design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 
-const { Text, Paragraph, Title } = Typography
+const { Text, Paragraph } = Typography
 
 interface FAQMatch {
   faq: {

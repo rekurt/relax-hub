@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { Button } from 'antd'
 import { AppleOutlined } from '@ant-design/icons'
 
@@ -30,15 +29,7 @@ interface ApplePaySessionInstance {
 }
 
 export default function ApplePayButton({ amount, onToken, disabled, loading }: ApplePayButtonProps) {
-  const [available, setAvailable] = useState(false)
-
-  useEffect(() => {
-    if (window.ApplePaySession && window.ApplePaySession.canMakePayments()) {
-      setAvailable(true)
-    }
-  }, [])
-
-  if (!available) return null
+  if (!window.ApplePaySession || !window.ApplePaySession.canMakePayments()) return null
 
   const handleClick = () => {
     if (!window.ApplePaySession) return

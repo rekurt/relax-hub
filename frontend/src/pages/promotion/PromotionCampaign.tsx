@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   Col,
-  DatePicker,
   Descriptions,
   Empty,
   Form,
@@ -28,7 +27,6 @@ import {
   RocketOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import type { Dayjs } from 'dayjs'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { useQueryClient } from '@tanstack/react-query'
 import { formatPrice } from '@/lib/format'

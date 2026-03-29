@@ -143,7 +143,7 @@ export default function RFMAnalysis() {
   const { data, isLoading } = useRFMAnalysis()
   const [pageSize] = useState(20)
 
-  const guests = data?.guests ?? []
+  const guests = useMemo(() => data?.guests ?? [], [data?.guests])
   const matrix = data?.matrix ?? []
 
   const segmentSummary = useMemo(() => {

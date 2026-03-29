@@ -113,7 +113,7 @@ export default function NotificationPreferences() {
   const queryClient = useQueryClient()
 
   const { data: globalPrefsData, isLoading: globalLoading } = useGetMyNotificationPreferences()
-  const globalPrefs = (globalPrefsData as any)?.data
+  const globalPrefs = (globalPrefsData as { data?: Record<string, boolean> })?.data
   const updateGlobalMutation = usePutMyNotificationPreferences({
     mutation: {
       onSuccess: () => {
@@ -131,7 +131,7 @@ export default function NotificationPreferences() {
 
   useEffect(() => {
     if (eventPrefs) {
-      setLocalEventPrefs(eventPrefs)
+      setLocalEventPrefs(eventPrefs) // eslint-disable-line react-hooks/set-state-in-effect -- sync local state from server data
       setDirty(false)
     }
   }, [eventPrefs])

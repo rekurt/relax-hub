@@ -71,7 +71,7 @@ const STATUS_TAGS: Record<string, { color: string; text: string }> = {
 type ActionType = 'cancel' | 'change-status'
 
 export default function BookingManagement() {
-  const { message, modal } = App.useApp()
+  const { message } = App.useApp()
   const [bookings, setBookings] = useState<BookingData[]>([])
   const [loading, setLoading] = useState(false)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 })
@@ -133,17 +133,6 @@ export default function BookingManagement() {
     } catch {
       message.error('Ошибка выполнения операции')
     }
-  }
-
-  const handleRefund = (bookingId: string) => {
-    modal.confirm({
-      title: 'Возврат средств',
-      content: 'Для возврата средств используйте раздел финансов. Перейти?',
-      onOk: () => {
-        // The refund endpoint already exists at /admin/bookings/{id}/refund
-        message.info('Используйте POST /api/v1/admin/bookings/{id}/refund для возврата')
-      },
-    })
   }
 
   const columns: ColumnsType<BookingData> = [
