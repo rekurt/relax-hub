@@ -56,7 +56,17 @@ func DeterminePayoutMethod(user *domain.User) domain.PayoutMethod {
 }
 
 func (s *payoutService) RequestPayout(ctx context.Context, userID uuid.UUID, amount int64, bankDetails json.RawMessage) (*domain.Payout, error) {
-	if amount < domain.PayoutMinAmountRUB {
+	// Determine currency-appropriate limits from user's wallet
+	minAmount := domain.PayoutMinAmountRUB
+	dailyLimit := domain.PayoutDailyLimitRUB
+	monthlyLimit := domain.PayoutMonthlyLimitRUB
+	if wallet, wErr := s.walletRepo.GetByUserID(ctx, userID); wErr == nil && wallet.Currency == domain.WalletCurrencyBYN {
+		minAmount = domain.PayoutMinAmountBYN
+		dailyLimit = domain.PayoutDailyLimitBYN
+		monthlyLimit = domain.PayoutMonthlyLimitBYN
+	}
+
+	if amount < minAmount {
 		return nil, domain.ErrPayoutBelowMinimum
 	}
 
@@ -75,7 +85,7 @@ func (s *payoutService) RequestPayout(ctx context.Context, userID uuid.UUID, amo
 	if err != nil {
 		return nil, err
 	}
-	if dailyTotal+amount > domain.PayoutDailyLimitRUB {
+	if dailyTotal+amount > dailyLimit {
 		return nil, domain.ErrPayoutDailyLimitExceeded
 	}
 
@@ -84,7 +94,7 @@ func (s *payoutService) RequestPayout(ctx context.Context, userID uuid.UUID, amo
 	if err != nil {
 		return nil, err
 	}
-	if monthlyTotal+amount > domain.PayoutMonthlyLimitRUB {
+	if monthlyTotal+amount > monthlyLimit {
 		return nil, domain.ErrPayoutMonthlyLimitExceeded
 	}
 
@@ -125,7 +135,11 @@ func (s *payoutService) SetAutoPayoutThreshold(ctx context.Context, userID uuid.
 		return domain.ErrInvalidInput
 	}
 	// threshold of 0 means disabled, any positive value is a minimum threshold
-	if threshold > 0 && threshold < domain.PayoutMinAmountRUB {
+	minAmount := domain.PayoutMinAmountRUB
+	if wallet, wErr := s.walletRepo.GetByUserID(ctx, userID); wErr == nil && wallet.Currency == domain.WalletCurrencyBYN {
+		minAmount = domain.PayoutMinAmountBYN
+	}
+	if threshold > 0 && threshold < minAmount {
 		return domain.ErrPayoutBelowMinimum
 	}
 

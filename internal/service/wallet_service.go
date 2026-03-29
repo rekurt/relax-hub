@@ -86,16 +86,16 @@ func (s *walletService) GetWallet(ctx context.Context, userID uuid.UUID) (*domai
 }
 
 func (s *walletService) TopUp(ctx context.Context, userID uuid.UUID, amount int64) (*domain.WalletTransaction, error) {
-	if amount < domain.WalletTopUpMinRUB {
-		return nil, domain.ErrTopUpBelowMinimum
-	}
-	if amount > domain.WalletTopUpMaxRUB {
-		return nil, domain.ErrTopUpAboveMaximum
-	}
-
 	wallet, err := s.walletRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
+	}
+
+	if amount < domain.TopUpMinForCurrency(wallet.Currency) {
+		return nil, domain.ErrTopUpBelowMinimum
+	}
+	if amount > domain.TopUpMaxForCurrency(wallet.Currency) {
+		return nil, domain.ErrTopUpAboveMaximum
 	}
 
 	if wallet.IsFrozen() {

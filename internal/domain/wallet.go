@@ -231,14 +231,36 @@ const (
 	WalletMaxBalanceBYN int64 = 300_000    // 3 000 BYN в копейках
 	WalletTopUpMinRUB   int64 = 50_000     // 500 RUB в копейках
 	WalletTopUpMaxRUB   int64 = 3_000_000  // 30 000 RUB в копейках
+	WalletTopUpMinBYN   int64 = 1_000      // 10 BYN в копейках
+	WalletTopUpMaxBYN   int64 = 100_000    // 1 000 BYN в копейках
 )
 
-// MaxBalance возвращает максимальный баланс для валюты
+// MaxBalanceForCurrency возвращает максимальный баланс для валюты
 func MaxBalanceForCurrency(currency WalletCurrency) int64 {
 	switch currency {
 	case WalletCurrencyBYN:
 		return WalletMaxBalanceBYN
 	default:
 		return WalletMaxBalanceRUB
+	}
+}
+
+// TopUpMinForCurrency возвращает минимальную сумму пополнения для валюты
+func TopUpMinForCurrency(currency WalletCurrency) int64 {
+	switch currency {
+	case WalletCurrencyBYN:
+		return WalletTopUpMinBYN
+	default:
+		return WalletTopUpMinRUB
+	}
+}
+
+// TopUpMaxForCurrency возвращает максимальную сумму пополнения для валюты
+func TopUpMaxForCurrency(currency WalletCurrency) int64 {
+	switch currency {
+	case WalletCurrencyBYN:
+		return WalletTopUpMaxBYN
+	default:
+		return WalletTopUpMaxRUB
 	}
 }

@@ -103,6 +103,20 @@ func NewPaymentService(
 	}
 }
 
+// currencyAndProvider returns the payment currency and provider name based on the user's wallet.
+// Falls back to RUB/yookassa if the wallet is not found.
+func (s *paymentService) currencyAndProvider(ctx context.Context, userID uuid.UUID) (string, string) {
+	if s.walletSvc != nil {
+		if w, err := s.walletSvc.GetWallet(ctx, userID); err == nil {
+			switch w.Currency {
+			case domain.WalletCurrencyBYN:
+				return "BYN", "bepaid"
+			}
+		}
+	}
+	return "RUB", "yookassa"
+}
+
 func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, paymentMethod domain.PaymentMethod) (string, error) {
 	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
 	if err != nil {
@@ -142,15 +156,17 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 	isHold := booking.Status == domain.BookingPendingOwner
 	capture := !isHold
 
+	currency, providerName := s.currencyAndProvider(ctx, userID)
+
 	now := time.Now()
 	p := &domain.Payment{
 		ID:            uuid.New(),
 		BookingID:     bookingID,
 		UserID:        booking.UserID,
 		Amount:        booking.TotalPrice,
-		Currency:      "RUB",
+		Currency:      currency,
 		Status:        domain.PaymentPending,
-		Provider:      "yookassa",
+		Provider:      providerName,
 		PaymentMethod: paymentMethod,
 		IsHold:        isHold,
 		Metadata: map[string]string{
@@ -242,15 +258,17 @@ func (s *paymentService) InitiateTokenPayment(ctx context.Context, userID uuid.U
 	isHold := booking.Status == domain.BookingPendingOwner
 	capture := !isHold
 
+	currency, providerName := s.currencyAndProvider(ctx, userID)
+
 	now := time.Now()
 	p := &domain.Payment{
 		ID:            uuid.New(),
 		BookingID:     bookingID,
 		UserID:        booking.UserID,
 		Amount:        booking.TotalPrice,
-		Currency:      "RUB",
+		Currency:      currency,
 		Status:        domain.PaymentPending,
-		Provider:      "yookassa",
+		Provider:      providerName,
 		PaymentMethod: req.PaymentMethod,
 		IsHold:        isHold,
 		Metadata: map[string]string{
@@ -352,15 +370,17 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 	}
 	// If CardAmount only, keep the provided method (card/sbp)
 
+	currency, providerName := s.currencyAndProvider(ctx, userID)
+
 	now := time.Now()
 	p := &domain.Payment{
 		ID:            uuid.New(),
 		BookingID:     bookingID,
 		UserID:        booking.UserID,
 		Amount:        booking.TotalPrice,
-		Currency:      "RUB",
+		Currency:      currency,
 		Status:        domain.PaymentPending,
-		Provider:      "yookassa",
+		Provider:      providerName,
 		PaymentMethod: paymentMethod,
 		WalletAmount:  req.WalletAmount,
 		CardAmount:    req.CardAmount,
