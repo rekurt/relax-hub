@@ -107,6 +107,7 @@ var Module = fx.Module("handler",
 		NewPMSHandler,
 		NewPhotoOrderHandler,
 		NewBookingModificationHandler,
+		NewBookingExtensionHandler,
 		NewIsochroneHandler,
 		NewTransportHandler,
 		func(renderer *seo.Renderer, bathhouseService service.BathhouseService, cityService service.CityService, reviewService service.ReviewService, log *logger.Logger, cfg *config.Config) *PrerenderHandler {

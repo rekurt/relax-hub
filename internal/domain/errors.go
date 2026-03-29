@@ -117,6 +117,10 @@ var (
 	ErrModificationRequestPending        = errors.New("a pending modification request already exists for this booking")
 	ErrModificationRequestExpired        = errors.New("booking modification request has expired")
 
+	ErrExtensionRequestNotFound = errors.New("booking extension request not found")
+	ErrExtensionRequestPending  = errors.New("a pending extension request already exists for this booking")
+	ErrExtensionRequestExpired  = errors.New("booking extension request has expired")
+
 	ErrCheckinTooEarly = errors.New("check-in is not yet available")
 	ErrCheckinTooLate       = errors.New("check-in window has passed")
 	ErrNotCheckedIn         = errors.New("guest has not checked in")

@@ -98,6 +98,7 @@ type RouterParams struct {
 	TransportHandler             *handler.TransportHandler
 	PhotoOrderHandler            *handler.PhotoOrderHandler
 	BookingModificationHandler   *handler.BookingModificationHandler
+	BookingExtensionHandler      *handler.BookingExtensionHandler
 	PrerenderHandler             *handler.PrerenderHandler
 	AuditLogRepo              repository.AuditLogRepository
 	AdminSubRoleResolver  middleware.AdminSubRoleResolver
@@ -299,6 +300,12 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Get("/bookings/{id}/modification-requests", p.BookingModificationHandler.ListModificationRequests)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/modification-requests/{id}/approve", p.BookingModificationHandler.ApproveModification)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/modification-requests/{id}/reject", p.BookingModificationHandler.RejectModification)
+
+		// Booking extension requests (two-party approval)
+		r.With(auth, middleware.RequireRole(domain.RoleClient)).Post("/bookings/{id}/extension-request", p.BookingExtensionHandler.RequestExtension)
+		r.With(auth).Get("/bookings/{id}/extension-requests", p.BookingExtensionHandler.ListExtensionRequests)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/extension-requests/{id}/approve", p.BookingExtensionHandler.ApproveExtension)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/extension-requests/{id}/reject", p.BookingExtensionHandler.RejectExtension)
 
 		// Booking share links
 		r.With(auth).Post("/bookings/share", p.ShareHandler.CreateShareLink)

@@ -49,6 +49,7 @@ type CronScheduler struct {
 	pmsSvc                 service.PMSService
 	promotionSvc           service.PromotionService
 	modReqSvc              service.BookingModificationService
+	extReqSvc              service.BookingExtensionService
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -83,6 +84,7 @@ func NewCronScheduler(
 	pmsSvc service.PMSService,
 	promotionSvc service.PromotionService,
 	modReqSvc service.BookingModificationService,
+	extReqSvc service.BookingExtensionService,
 ) *CronScheduler {
 	timezone := cfg.Cron.Timezone
 	if timezone == "" {
@@ -121,6 +123,7 @@ func NewCronScheduler(
 		pmsSvc:                 pmsSvc,
 		promotionSvc:           promotionSvc,
 		modReqSvc:              modReqSvc,
+		extReqSvc:              extReqSvc,
 	}
 }
 
@@ -185,6 +188,7 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		{"*/15 * * * *", "pms_sync", cs.pmsSyncJob},
 		{"0 7 * * *", "promotion_daily_budget", cs.promotionDailyBudget},
 		{"*/15 * * * *", "modification_request_expiry", cs.modificationRequestExpiry},
+		{"*/5 * * * *", "extension_request_expiry", cs.extensionRequestExpiry},
 	}
 
 	for _, j := range jobs {

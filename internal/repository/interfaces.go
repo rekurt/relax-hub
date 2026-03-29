@@ -108,6 +108,15 @@ type BookingModificationRequestRepository interface {
 	ListByBookingID(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingModificationRequest, error)
 }
 
+type ExtensionRequestRepository interface {
+	Create(ctx context.Context, req *domain.BookingExtensionRequest) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.BookingExtensionRequest, error)
+	GetPendingByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.BookingExtensionRequest, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ExtensionRequestStatus, reason string) error
+	ListExpired(ctx context.Context) ([]domain.BookingExtensionRequest, error)
+	ListByBookingID(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingExtensionRequest, error)
+}
+
 type ReviewRepository interface {
 	Create(ctx context.Context, review *domain.Review) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Review, error)

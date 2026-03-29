@@ -106,6 +106,7 @@ var Module = fx.Module("service",
 		fx.Annotate(NewPMSService, fx.As(new(PMSService))),
 		fx.Annotate(NewPhotoOrderService, fx.As(new(PhotoOrderService))),
 		fx.Annotate(NewBookingModificationService, fx.As(new(BookingModificationService))),
+		fx.Annotate(NewBookingExtensionService, fx.As(new(BookingExtensionService))),
 		fx.Annotate(
 			NewAdminRoleService,
 			fx.As(new(AdminRoleService)),

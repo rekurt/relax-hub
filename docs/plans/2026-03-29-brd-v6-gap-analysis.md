@@ -81,13 +81,13 @@ BRD требует: "Изменение требует подтверждени�
 - Modify: `internal/handler/booking_handler.go` — эндпоинты approve/reject extension
 - Create: `migrations/XXXXXX_extension_requests.up.sql`
 
-- [ ] Модель ExtensionRequest (booking_id, hours, status)
-- [ ] Extend() → создаёт pending request + холдирует средства + уведомляет владельца
-- [ ] ApproveExtension() → применяет, списывает средства
-- [ ] RejectExtension() → снимает холд, уведомляет клиента
-- [ ] Таймаут 30 минут (cron или отложенная задача)
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task A4
+- [x] Модель ExtensionRequest (booking_id, hours, status)
+- [x] Extend() → создаёт pending request + холдирует средства + уведомляет владельца
+- [x] ApproveExtension() → применяет, списывает средства
+- [x] RejectExtension() → снимает холд, уведомляет клиента
+- [x] Таймаут 30 минут (cron или отложенная задача)
+- [x] Тесты
+- [x] run project test suite — must pass before Task A4
 
 ### Task A4: Антифрод при создании листинга (FR-028)
 

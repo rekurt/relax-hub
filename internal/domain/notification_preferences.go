@@ -115,7 +115,9 @@ func MapNotificationTypeToEvent(t NotificationType) NotificationEventType {
 		return EventBookingCheckedIn
 	case NotifBookingNoShow, NotifBookingNoShowOwner:
 		return EventBookingNoShow
-	case NotifBookingExtended, NotifBookingExtendedOwner:
+	case NotifBookingExtended, NotifBookingExtendedOwner,
+		NotifBookingExtensionRequested, NotifBookingExtensionApproved,
+		NotifBookingExtensionRejected, NotifBookingExtensionExpired:
 		return EventBookingExtended
 	case NotifNewReview, NotifClientReview, NotifReviewRevealed:
 		return EventNewReview
