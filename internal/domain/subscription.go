@@ -9,9 +9,9 @@ import (
 type SubscriptionPlan string
 
 const (
-	PlanFree      SubscriptionPlan = "free"
-	PlanPremium   SubscriptionPlan = "premium"
-	PlanPromoted  SubscriptionPlan = "promoted"
+	PlanFree     SubscriptionPlan = "free"
+	PlanPremium  SubscriptionPlan = "premium"
+	PlanPromoted SubscriptionPlan = "promoted"
 )
 
 func (p SubscriptionPlan) IsValid() bool {
@@ -94,6 +94,7 @@ func (p PromotionStatus) IsValid() bool {
 type Promotion struct {
 	ID              uuid.UUID
 	BathhouseID     uuid.UUID
+	DailyBidKopecks int64
 	BudgetKopecks   int64
 	SpentKopecks    int64
 	StartDate       time.Time
@@ -106,8 +107,14 @@ type Promotion struct {
 	UpdatedAt       time.Time
 }
 
+// MinDailyBidKopecks is the minimum daily bid for a promotion campaign (50 rubles).
+const MinDailyBidKopecks int64 = 5000
+
 func (p *Promotion) Validate() error {
 	if p.BathhouseID == uuid.Nil {
+		return ErrInvalidInput
+	}
+	if p.DailyBidKopecks < MinDailyBidKopecks {
 		return ErrInvalidInput
 	}
 	if p.BudgetKopecks <= 0 {
@@ -135,4 +142,25 @@ func (p *Promotion) Validate() error {
 		return ErrInvalidInput
 	}
 	return nil
+}
+
+// RemainingBudget returns the unspent budget in kopecks.
+func (p *Promotion) RemainingBudget() int64 {
+	return p.BudgetKopecks - p.SpentKopecks
+}
+
+// CTR returns the click-through rate as a percentage.
+func (p *Promotion) CTR() float64 {
+	if p.ImpressionCount == 0 {
+		return 0
+	}
+	return float64(p.ClickCount) / float64(p.ImpressionCount) * 100
+}
+
+// CostPerClick returns the average cost per click in kopecks.
+func (p *Promotion) CostPerClick() float64 {
+	if p.ClickCount == 0 {
+		return 0
+	}
+	return float64(p.SpentKopecks) / float64(p.ClickCount)
 }

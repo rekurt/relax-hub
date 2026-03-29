@@ -19,6 +19,7 @@ import NotificationList from '@/pages/notifications/NotificationList'
 import ProfileSettings from '@/pages/settings/ProfileSettings'
 import WebhookSettings from '@/pages/settings/WebhookSettings'
 import SubscriptionPage from '@/pages/subscriptions/SubscriptionPage'
+import PromotionCampaign from '@/pages/promotion/PromotionCampaign'
 import WidgetSettings from '@/pages/widget/WidgetSettings'
 import PhotoManager from '@/pages/photos/PhotoManager'
 import PhotoOrderPage from '@/pages/photos/PhotoOrderPage'
@@ -110,6 +111,7 @@ export default function AppRouter() {
         <Route path="chat" element={<ChatPage />} />
         <Route path="representatives" element={<RepresentativeList />} />
         <Route path="subscriptions" element={<SubscriptionPage />} />
+        <Route path="promotion" element={<PromotionCampaign />} />
         <Route path="widget" element={<WidgetSettings />} />
         <Route path="photos" element={<PhotoManager />} />
         <Route path="photo-order" element={<PhotoOrderPage />} />

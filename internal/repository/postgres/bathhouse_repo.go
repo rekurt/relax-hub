@@ -395,6 +395,10 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 	// Promotion check as EXISTS subquery (avoids JOIN duplicates and DISTINCT issues)
 	promotionExists := `EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active')`
 
+	// Auction-weighted promotion boost: normalized daily_bid_kopecks (higher bid = more visibility).
+	// LEAST caps at 1.0, reference bid is 10000 kopecks (100 rub/day).
+	promotionBoost := `COALESCE((SELECT LEAST(daily_bid_kopecks::float / 10000.0, 1.0) FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active' ORDER BY daily_bid_kopecks DESC LIMIT 1), 0)`
+
 	// Count query
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM bathhouses %s", whereClause)
 	var totalCount int64
@@ -405,13 +409,13 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 
 	// Determine ORDER BY
 	// Composite ranking: relevance*0.30 + bayesian_rating*0.25 + conversion_rate*0.20 + occupancy_rate*0.15 + promotion_boost*0.10
-	// Bayesian rating: (C*m + R*v) / (C+v), where C=5 (prior count), m=3.5 (prior mean)
+	// Promotion boost is auction-weighted: daily_bid / 10000 (capped at 1.0)
 	compositeRank := fmt.Sprintf(`(
 		COALESCE(bathhouses.conversion_rate, 0) * 0.20 +
 		COALESCE(bathhouses.bayesian_rating, 0) / 5.0 * 0.25 +
 		COALESCE(bathhouses.occupancy_rate, 0) * 0.15 +
-		CASE WHEN %s THEN 1 ELSE 0 END * 0.10
-	)`, promotionExists)
+		%s * 0.10
+	)`, promotionBoost)
 
 	orderBy := "created_at DESC"
 

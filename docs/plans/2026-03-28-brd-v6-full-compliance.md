@@ -483,14 +483,14 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/handler/promotion_handler.go` (campaign CRUD)
 - Create: `frontend/src/pages/promotion/PromotionCampaign.tsx`
 
-- [ ] Verify promotion domain has: daily_bid (min 50 rub), total_budget, start_date, end_date, status
-- [ ] Implement daily budget deduction from owner wallet (cron)
-- [ ] Pause campaign when budget exhausted, notify owner
-- [ ] Auction ranking: higher bid = more impressions (weighted in search ranking)
-- [ ] Campaign statistics: impressions, clicks, CTR, cost
-- [ ] Frontend campaign creation and management page
-- [ ] Write tests for budget deduction and auction ranking
-- [ ] Run project test suite - must pass before task 25
+- [x] Verify promotion domain has: daily_bid (min 50 rub), total_budget, start_date, end_date, status
+- [x] Implement daily budget deduction from owner wallet (cron)
+- [x] Pause campaign when budget exhausted, notify owner
+- [x] Auction ranking: higher bid = more impressions (weighted in search ranking)
+- [x] Campaign statistics: impressions, clicks, CTR, cost
+- [x] Frontend campaign creation and management page
+- [x] Write tests for budget deduction and auction ranking
+- [x] Run project test suite - must pass before task 25
 
 ### Task 25: Client Profile Completeness (FR-016, FR section 2.18)
 

@@ -2290,6 +2290,33 @@ func (r *PromotionRepo) RecordClick(_ context.Context, promotionID uuid.UUID) er
 	return nil
 }
 
+func (r *PromotionRepo) ListByBathhouse(_ context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Promotion], error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var items []domain.Promotion
+	for _, promo := range r.promotions {
+		if promo.BathhouseID == bathhouseID {
+			items = append(items, *promo)
+		}
+	}
+
+	return paginate(items, page, pageSize), nil
+}
+
+func (r *PromotionRepo) ListAllActive(_ context.Context) ([]domain.Promotion, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var items []domain.Promotion
+	for _, promo := range r.promotions {
+		if promo.Status == domain.PromotionActive {
+			items = append(items, *promo)
+		}
+	}
+	return items, nil
+}
+
 // PricingRuleRepo is an in-memory mock implementation of repository.PricingRuleRepository.
 type PricingRuleRepo struct {
 	mu    sync.RWMutex

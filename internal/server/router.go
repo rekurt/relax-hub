@@ -353,6 +353,10 @@ func NewRouter(p RouterParams) http.Handler {
 		// Promotions (authenticated owner)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/promotion", p.SubscriptionHandler.CreatePromotion)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/promotion", p.SubscriptionHandler.GetPromotion)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/bathhouses/{id}/promotions", p.SubscriptionHandler.ListPromotions)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/promotions/{id}", p.SubscriptionHandler.UpdatePromotion)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/promotions/{id}/pause", p.SubscriptionHandler.PausePromotion)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/promotions/{id}/resume", p.SubscriptionHandler.ResumePromotion)
 
 		// Pricing rules (authenticated owner)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/pricing-rules", p.PricingHandler.CreateRule)

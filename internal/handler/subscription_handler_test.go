@@ -88,6 +88,20 @@ func (m *mockPromotionService) RecordClick(ctx context.Context, bathhouseID uuid
 	return nil
 }
 
+func (m *mockPromotionService) Update(_ context.Context, _ *domain.Promotion) error { return nil }
+func (m *mockPromotionService) Pause(_ context.Context, _ uuid.UUID) error         { return nil }
+func (m *mockPromotionService) Resume(_ context.Context, _ uuid.UUID) error        { return nil }
+func (m *mockPromotionService) GetByID(_ context.Context, _ uuid.UUID) (*domain.Promotion, error) {
+	return nil, domain.ErrNotFound
+}
+func (m *mockPromotionService) ListByBathhouse(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Promotion], error) {
+	return &domain.PaginatedResult[domain.Promotion]{}, nil
+}
+func (m *mockPromotionService) ListByOwner(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Promotion], error) {
+	return &domain.PaginatedResult[domain.Promotion]{}, nil
+}
+func (m *mockPromotionService) DeductDailyBudgets(_ context.Context) error { return nil }
+
 func TestSubscriptionHandler_Subscribe(t *testing.T) {
 	userID := uuid.New()
 	bathhouseID := uuid.New()
@@ -378,7 +392,7 @@ func TestSubscriptionHandler_CreatePromotion(t *testing.T) {
 	r.Use(middleware.RequireAuth(authService))
 	r.Post("/my/bathhouses/{id}/promotion", h.CreatePromotion)
 
-	requestBody := `{"budget_kopecks":100000,"duration_days":30}`
+	requestBody := `{"budget_kopecks":100000,"duration_days":30,"daily_bid_kopecks":5000}`
 	req := httptest.NewRequest(http.MethodPost, "/my/bathhouses/"+bathhouseID.String()+"/promotion", strings.NewReader(requestBody))
 	req.Header.Set("Authorization", "Bearer valid-token")
 	rec := httptest.NewRecorder()

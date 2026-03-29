@@ -200,6 +200,8 @@ type PromotionRepository interface {
 	GetActiveBybathhouse(ctx context.Context, bathhouseID uuid.UUID) (*domain.Promotion, error)
 	Update(ctx context.Context, promo *domain.Promotion) error
 	ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Promotion], error)
+	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Promotion], error)
+	ListAllActive(ctx context.Context) ([]domain.Promotion, error)
 	RecordImpression(ctx context.Context, promotionID uuid.UUID) error
 	RecordClick(ctx context.Context, promotionID uuid.UUID) error
 }

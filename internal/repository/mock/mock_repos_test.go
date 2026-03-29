@@ -1413,6 +1413,7 @@ func TestPromotionRepo_CRUD(t *testing.T) {
 
 	promo := &domain.Promotion{
 		BathhouseID:     bathhouseID,
+		DailyBidKopecks: 5000,
 		BudgetKopecks:   100000,
 		SpentKopecks:    50000,
 		StartDate:       time.Now(),
