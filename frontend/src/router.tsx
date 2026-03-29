@@ -50,6 +50,7 @@ import CertificatePurchase from '@/pages/client/CertificatePurchase'
 import PaymentHistory from '@/pages/client/PaymentHistory'
 import WalletDashboard from '@/pages/client/WalletDashboard'
 import ClientProfile from '@/pages/client/ClientProfile'
+import SavedCards from '@/pages/client/SavedCards'
 import ClientChat from '@/pages/client/ClientChat'
 import ClientNotifications from '@/pages/client/ClientNotifications'
 import NotificationPreferences from '@/pages/client/NotificationPreferences'
@@ -158,6 +159,7 @@ export default function AppRouter() {
         <Route path="certificates" element={<CertificateList />} />
         <Route path="certificates/purchase" element={<CertificatePurchase />} />
         <Route path="payments" element={<PaymentHistory />} />
+        <Route path="cards" element={<SavedCards />} />
         <Route path="wallet" element={<WalletDashboard />} />
         <Route path="chat" element={<ClientChat />} />
         <Route path="tickets" element={<SupportTickets />} />

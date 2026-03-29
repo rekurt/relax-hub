@@ -27,8 +27,10 @@ import {
   StarOutlined,
   WalletOutlined,
   TrophyOutlined,
+  CreditCardOutlined,
 } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth'
 import {
   usePutAuthMe,
@@ -323,6 +325,17 @@ export default function ClientProfile() {
               </Form.Item>
             </Form>
           )}
+        </Card>
+
+        <Card
+          title="Сохранённые карты"
+          extra={
+            <Link to="/client/cards">
+              <Button type="link" icon={<CreditCardOutlined />}>Управление картами</Button>
+            </Link>
+          }
+        >
+          <Text type="secondary">Управляйте сохранёнными способами оплаты для быстрого бронирования.</Text>
         </Card>
 
         <Card title="Привязанные аккаунты">

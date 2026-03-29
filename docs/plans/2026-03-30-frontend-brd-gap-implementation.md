@@ -53,11 +53,11 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Create: `frontend/src/pages/client/SavedCards.tsx`
 - Modify: `frontend/src/router.tsx`
 
-- [ ] Build saved cards list with: last4, brand icon, expiry, default card toggle
-- [ ] Add card deletion with confirmation dialog
-- [ ] Add route `/client/cards` and link from ClientProfile
-- [ ] Write tests for card list rendering and delete flow
-- [ ] Run project test suite + lint
+- [x] Build saved cards list with: last4, brand icon, expiry, default card toggle
+- [x] Add card deletion with confirmation dialog
+- [x] Add route `/client/cards` and link from ClientProfile
+- [x] Write tests for card list rendering and delete flow
+- [x] Run project test suite + lint
 
 ### Task 4: Client Session Management & Security (FR-007, FR-008, FR-015)
 
