@@ -894,3 +894,14 @@ func (r *analyticsRepo) GetOwnerPerformance(ctx context.Context, bathhouseID uui
 
 	return perf, nil
 }
+
+func (r *analyticsRepo) CountDistinctActiveUsers(ctx context.Context, from, to time.Time) (int64, error) {
+	var count int64
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(DISTINCT user_id) FROM bookings WHERE status = 'completed' AND start_time >= $1 AND start_time <= $2`,
+		from, to).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count distinct active users: %w", err)
+	}
+	return count, nil
+}

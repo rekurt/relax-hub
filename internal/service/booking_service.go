@@ -396,12 +396,14 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		if promoErr != nil {
 			return nil, promoErr
 		}
-		// For free_addon promo: verify the target add-on is included in the booking
+		// For free_addon promo: verify the target add-on is included and use actual line item total
 		if promo.Type == domain.PromoTypeFreeAddon && promo.TargetAddOnID != nil {
 			addonIncluded := false
-			for _, sel := range input.AddOns {
-				if sel.AddOnID == *promo.TargetAddOnID {
+			for _, item := range addOnLineItems {
+				if item.AddOnID == *promo.TargetAddOnID {
 					addonIncluded = true
+					// Use actual computed line item total (accounts for per_hour/per_person multipliers)
+					discount = item.TotalPrice
 					break
 				}
 			}

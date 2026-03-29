@@ -292,6 +292,9 @@ type AnalyticsRepository interface {
 
 	// Heatmap (FR-153)
 	GetHeatmapData(ctx context.Context, from, to time.Time, cellSize float64) ([]domain.HeatmapCell, error)
+
+	// User activity metrics
+	CountDistinctActiveUsers(ctx context.Context, from, to time.Time) (int64, error)
 }
 
 type TelegramLinkRepository interface {

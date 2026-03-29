@@ -397,3 +397,7 @@ func (r *AnalyticsRepo) GetPlatformRevenue(_ context.Context, _, _ time.Time) (i
 	// Default mock: service_fees=5M kop, subscriptions=1M kop, promotions=500K kop
 	return 5000000, 1000000, 500000, nil
 }
+
+func (r *AnalyticsRepo) CountDistinctActiveUsers(_ context.Context, _, _ time.Time) (int64, error) {
+	return 42, nil
+}

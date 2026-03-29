@@ -284,6 +284,24 @@ func (s *payoutService) failPayoutAndRefundWallet(ctx context.Context, payout *d
 			"error", err, "payout_id", payout.ID, "wallet_id", wallet.ID, "amount", payout.Amount)
 		return
 	}
+
+	// Record refund transaction for audit trail
+	tx := &domain.WalletTransaction{
+		ID:            uuid.New(),
+		WalletID:      wallet.ID,
+		Type:          domain.WalletTxRefund,
+		Amount:        payout.Amount,
+		BalanceAfter:  newBalance,
+		Status:        domain.WalletTxStatusCompleted,
+		Description:   "Возврат средств: неудачный вывод",
+		ReferenceType: "payout",
+		ReferenceID:   &payout.ID,
+	}
+	if err := s.walletRepo.CreateTransaction(ctx, tx); err != nil {
+		s.logger.Error("failed to create refund transaction for failed payout, balance updated but no record",
+			"error", err, "payout_id", payout.ID, "wallet_id", wallet.ID, "amount", payout.Amount)
+	}
+
 	s.logger.Info("wallet refunded for permanently failed SBP payout",
 		"payout_id", payout.ID, "wallet_id", wallet.ID, "amount", payout.Amount)
 }
