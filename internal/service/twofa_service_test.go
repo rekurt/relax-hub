@@ -435,7 +435,7 @@ func TestAuthService_VerifyPhone_With2FA_SMS_Skipped(t *testing.T) {
 	}
 	userRepo.Create(context.Background(), user)
 
-	result, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456", "")
+	result, err := svc.VerifyPhone(context.Background(), "+79001234567", "123456", "", false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -462,7 +462,7 @@ func TestAuthService_VerifyPhone_With2FA_TOTP_Required(t *testing.T) {
 	}
 	userRepo.Create(context.Background(), user)
 
-	result, err := svc.VerifyPhone(context.Background(), "+79001234568", "123456", "")
+	result, err := svc.VerifyPhone(context.Background(), "+79001234568", "123456", "", false)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

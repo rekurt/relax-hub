@@ -248,7 +248,7 @@ export default function NotificationPreferences() {
 
         {Object.entries(EVENT_CATEGORIES).map(([category, events]) => (
           <div key={category}>
-            <Divider orientation="left">{category}</Divider>
+            <Divider>{category}</Divider>
             <Table
               dataSource={events
                 .map((et) => eventPrefMap.get(et))

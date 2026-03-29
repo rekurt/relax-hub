@@ -251,7 +251,7 @@ describe('BathhouseSearch', () => {
 
     // Before debounce, query should still use empty string (debouncedSearch hasn't updated)
     const callsBefore = vi.mocked(useGetBathhouses).mock.calls
-    const lastCallBefore = callsBefore[callsBefore.length - 1]
+    const lastCallBefore = callsBefore[callsBefore.length - 1]!
     expect(lastCallBefore[0]).toHaveProperty('q', undefined)
 
     // After debounce timer fires

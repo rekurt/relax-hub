@@ -86,7 +86,7 @@ func (m *mockAuthService) LoginPhone(ctx context.Context, phone string) error {
 	return nil
 }
 
-func (m *mockAuthService) VerifyPhone(ctx context.Context, phone, code, _ string) (*service.LoginResult, error) {
+func (m *mockAuthService) VerifyPhone(ctx context.Context, phone, code, _ string, _ bool) (*service.LoginResult, error) {
 	if m.verifyPhoneFn != nil {
 		return m.verifyPhoneFn(ctx, phone, code)
 	}

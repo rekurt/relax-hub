@@ -366,9 +366,9 @@ export default function BathhouseDetail() {
                     <div>
                       <Text strong>{bathhouse.owner_profile.name || 'Владелец'}</Text>
                       <div>
-                        {bathhouse.owner_profile.rating > 0 && (
+                        {(bathhouse.owner_profile.rating ?? 0) > 0 && (
                           <Text type="secondary" style={{ marginRight: 12 }}>
-                            Рейтинг: {bathhouse.owner_profile.rating.toFixed(1)}
+                            Рейтинг: {bathhouse.owner_profile.rating!.toFixed(1)}
                           </Text>
                         )}
                         <Text type="secondary" style={{ marginRight: 12 }}>

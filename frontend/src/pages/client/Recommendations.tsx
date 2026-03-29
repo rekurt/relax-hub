@@ -40,6 +40,7 @@ function RecommendationCard({ item }: { item: InternalHandlerRecommendationRespo
 }
 
 export default function Recommendations() {
+  const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [popularCityId, setPopularCityId] = useState<number | undefined>()
 

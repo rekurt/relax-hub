@@ -520,18 +520,20 @@ func (s *walletService) ExpireBonusesForWallet(ctx context.Context, walletID uui
 
 	// Record expiration transaction with the actual deducted amount (may be less
 	// than totalExpired if bonus amounts were partially spent).
-	expiryTx := &domain.WalletTransaction{
-		ID:           uuid.New(),
-		WalletID:     walletID,
-		Type:         domain.WalletTxBonusExpiry,
-		Amount:       actualDeducted,
-		BalanceAfter: newBalance,
-		Status:       domain.WalletTxStatusCompleted,
-		Description:  "Истечение срока бонусов",
-	}
+	if actualDeducted > 0 {
+		expiryTx := &domain.WalletTransaction{
+			ID:           uuid.New(),
+			WalletID:     walletID,
+			Type:         domain.WalletTxBonusExpiry,
+			Amount:       actualDeducted,
+			BalanceAfter: newBalance,
+			Status:       domain.WalletTxStatusCompleted,
+			Description:  "Истечение срока бонусов",
+		}
 
-	if err := s.walletRepo.CreateTransaction(ctx, expiryTx); err != nil {
-		s.logger.Error("failed to create expiry transaction", "error", err)
+		if err := s.walletRepo.CreateTransaction(ctx, expiryTx); err != nil {
+			s.logger.Error("failed to create expiry transaction", "error", err)
+		}
 	}
 
 	return len(expiring), nil

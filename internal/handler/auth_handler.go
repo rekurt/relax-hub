@@ -420,9 +420,10 @@ type loginPhoneRequest struct {
 }
 
 type verifyPhoneRequest struct {
-	Phone string `json:"phone"`
-	Code  string `json:"code"`
-	Name  string `json:"name,omitempty"`
+	Phone        string `json:"phone"`
+	Code         string `json:"code"`
+	Name         string `json:"name,omitempty"`
+	AgeConfirmed bool   `json:"age_confirmed,omitempty"`
 }
 
 type otpSentResponse struct {
@@ -511,7 +512,7 @@ func (h *AuthHandler) VerifyPhone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.authService.VerifyPhone(r.Context(), req.Phone, req.Code, req.Name)
+	result, err := h.authService.VerifyPhone(r.Context(), req.Phone, req.Code, req.Name, req.AgeConfirmed)
 	if err != nil {
 		handleServiceError(w, err)
 		return
