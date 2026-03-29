@@ -189,6 +189,9 @@ var (
 	ErrPMSConnectionLimitReached  = errors.New("PMS connection limit reached for this bathhouse")
 	ErrPMSConnectionAlreadyExists = errors.New("PMS connection already exists for this bathhouse")
 	ErrPMSSyncFailed              = errors.New("PMS synchronization failed")
+
+	ErrPhotoOrderNotFound      = errors.New("photo order not found")
+	ErrPhotoOrderInvalidStatus = errors.New("photo order status transition not allowed")
 )
 
 // PaymentFailedError wraps ErrPaymentFailed with user-facing details.

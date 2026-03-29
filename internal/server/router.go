@@ -96,6 +96,7 @@ type RouterParams struct {
 	PMSHandler                   *handler.PMSHandler
 	IsochroneHandler             *handler.IsochroneHandler
 	TransportHandler             *handler.TransportHandler
+	PhotoOrderHandler            *handler.PhotoOrderHandler
 	PrerenderHandler             *handler.PrerenderHandler
 	AuditLogRepo              repository.AuditLogRepository
 	AdminSubRoleResolver  middleware.AdminSubRoleResolver
@@ -254,6 +255,12 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/photos", p.PhotoHandler.Upload)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Delete("/photos/{id}", p.PhotoHandler.Delete)
 		r.With(auth, middleware.RequireOwnerOrRepresentative()).Put("/my/bathhouses/{id}/photos/reorder", p.PhotoHandler.Reorder)
+
+		// Photo orders (owner/representative)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/bathhouses/{id}/photo-order", p.PhotoOrderHandler.Create)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/photo-orders", p.PhotoOrderHandler.ListByOwner)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Get("/my/photo-orders/{id}", p.PhotoOrderHandler.GetByID)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Post("/my/photo-orders/{id}/cancel", p.PhotoOrderHandler.OwnerCancel)
 
 		// Bathhouse photos (public)
 		r.Get("/bathhouses/{id}/photos", p.PhotoHandler.ListByBathhouse)
@@ -737,6 +744,10 @@ func NewRouter(p RouterParams) http.Handler {
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/freeze", p.WalletHandler.AdminFreezeWallet)
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/unfreeze", p.WalletHandler.AdminUnfreezeWallet)
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/batch-credit", p.WalletHandler.AdminBatchCreditWallets)
+
+			// Photo orders
+			r.With(middleware.RequireAdminPermission(domain.PermPhotoOrderManage)).Get("/photo-orders", p.PhotoOrderHandler.AdminList)
+			r.With(middleware.RequireAdminPermission(domain.PermPhotoOrderManage)).Put("/photo-orders/{id}", p.PhotoOrderHandler.AdminUpdate)
 
 			// SEO prerender cache invalidation
 			r.Post("/prerender/invalidate/{slug}", p.PrerenderHandler.InvalidateBathhouseCache)

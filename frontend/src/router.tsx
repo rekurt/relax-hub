@@ -21,6 +21,7 @@ import WebhookSettings from '@/pages/settings/WebhookSettings'
 import SubscriptionPage from '@/pages/subscriptions/SubscriptionPage'
 import WidgetSettings from '@/pages/widget/WidgetSettings'
 import PhotoManager from '@/pages/photos/PhotoManager'
+import PhotoOrderPage from '@/pages/photos/PhotoOrderPage'
 import GuestCardList from '@/pages/crm/GuestCardList'
 import GuestCardDetail from '@/pages/crm/GuestCardDetail'
 import SegmentList from '@/pages/crm/SegmentList'
@@ -111,6 +112,7 @@ export default function AppRouter() {
         <Route path="subscriptions" element={<SubscriptionPage />} />
         <Route path="widget" element={<WidgetSettings />} />
         <Route path="photos" element={<PhotoManager />} />
+        <Route path="photo-order" element={<PhotoOrderPage />} />
         <Route path="crm/guests" element={<GuestCardList />} />
         <Route path="crm/guests/:id" element={<GuestCardDetail />} />
         <Route path="crm/segments" element={<SegmentList />} />

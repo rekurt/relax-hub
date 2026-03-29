@@ -53,6 +53,7 @@ const (
 	PermCityManage               AdminPermission = "cities.manage"
 	PermAdminNotificationsView   AdminPermission = "admin_notifications.view"
 	PermFAQManage                AdminPermission = "faq.manage"
+	PermPhotoOrderManage         AdminPermission = "photo_orders.manage"
 )
 
 // AdminRolePermissions defines the permission matrix: which sub-role has which permissions.
@@ -64,12 +65,12 @@ var AdminRolePermissions = map[AdminSubRole][]AdminPermission{
 		PermForceMajeureManage, PermAntiFraudManage, PermTicketManage, PermDisputeManage,
 		PermPromoManage, PermServiceFeeManage, PermHolidayManage, PermAmenityManage,
 		PermObjectTypeManage, PermAuditLogView, PermReconciliationView, PermAdminRolesManage,
-		PermCityManage, PermAdminNotificationsView, PermFAQManage,
+		PermCityManage, PermAdminNotificationsView, PermFAQManage, PermPhotoOrderManage,
 	},
 	AdminSubRoleModerator: {
 		PermBathhouseModerate, PermReviewModerate, PermPhotoModerate,
 		PermKYCModerate, PermComplaintManage, PermAuditLogView,
-		PermAdminNotificationsView,
+		PermAdminNotificationsView, PermPhotoOrderManage,
 	},
 	AdminSubRoleSupportL1: {
 		PermTicketManage, PermBookingManage,
@@ -126,6 +127,6 @@ func AllAdminPermissions() []AdminPermission {
 		PermForceMajeureManage, PermAntiFraudManage, PermTicketManage, PermDisputeManage,
 		PermPromoManage, PermServiceFeeManage, PermHolidayManage, PermAmenityManage,
 		PermObjectTypeManage, PermAuditLogView, PermReconciliationView, PermAdminRolesManage,
-		PermCityManage, PermAdminNotificationsView, PermFAQManage,
+		PermCityManage, PermAdminNotificationsView, PermFAQManage, PermPhotoOrderManage,
 	}
 }

@@ -410,6 +410,10 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusConflict, "pms_connection_already_exists", err.Error())
 	case errors.Is(err, domain.ErrPMSSyncFailed):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "pms_sync_failed", err.Error())
+	case errors.Is(err, domain.ErrPhotoOrderNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "photo_order_not_found", err.Error())
+	case errors.Is(err, domain.ErrPhotoOrderInvalidStatus):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "photo_order_invalid_status", err.Error())
 	default:
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}

@@ -428,15 +428,15 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Create: `internal/handler/photo_order_handler.go`
 - Create: `frontend/src/pages/photos/PhotoOrderPage.tsx`
 
-- [ ] Create photo_orders table (id, owner_id, bathhouse_id, region, status, photographer_name, price, scheduled_at, notes)
-- [ ] Status flow: requested -> confirmed -> completed -> cancelled
-- [ ] Owner endpoint: POST /api/v1/my/bathhouses/{id}/photo-order (request)
-- [ ] Admin endpoint: GET /api/v1/admin/photo-orders (manage queue)
-- [ ] Admin endpoint: PUT /api/v1/admin/photo-orders/{id} (assign photographer, confirm, complete)
-- [ ] Payment from owner wallet on completion
-- [ ] Frontend order page with status tracking
-- [ ] Write tests for order flow
-- [ ] Run project test suite - must pass before task 22
+- [x] Create photo_orders table (id, owner_id, bathhouse_id, region, status, photographer_name, price, scheduled_at, notes)
+- [x] Status flow: requested -> confirmed -> completed -> cancelled
+- [x] Owner endpoint: POST /api/v1/my/bathhouses/{id}/photo-order (request)
+- [x] Admin endpoint: GET /api/v1/admin/photo-orders (manage queue)
+- [x] Admin endpoint: PUT /api/v1/admin/photo-orders/{id} (assign photographer, confirm, complete)
+- [x] Payment from owner wallet on completion
+- [x] Frontend order page with status tracking
+- [x] Write tests for order flow
+- [x] Run project test suite - must pass before task 22
 
 ### Task 22: Excel Import for Listings (FR-033)
 

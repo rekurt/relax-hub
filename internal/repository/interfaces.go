@@ -754,3 +754,11 @@ type PMSSyncLogRepository interface {
 	Create(ctx context.Context, log *domain.PMSSyncLog) error
 	ListByConnection(ctx context.Context, connectionID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PMSSyncLog], error)
 }
+
+// PhotoOrderRepository manages professional photography orders.
+type PhotoOrderRepository interface {
+	Create(ctx context.Context, order *domain.PhotoOrder) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.PhotoOrder, error)
+	Update(ctx context.Context, order *domain.PhotoOrder) error
+	List(ctx context.Context, filter domain.PhotoOrderFilter) (*domain.PaginatedResult[domain.PhotoOrder], error)
+}
