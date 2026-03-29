@@ -667,6 +667,57 @@ func (m *mockFavoriteService) IsFavorite(ctx context.Context, userID, bathhouseI
 	return false, nil
 }
 
+type mockRecommendationService struct {
+	getPersonalizedFn func(ctx context.Context, userID uuid.UUID, page, pageSize int) ([]uuid.UUID, int64, error)
+	getSimilarFn      func(ctx context.Context, bathhouseID uuid.UUID, limit int) ([]uuid.UUID, error)
+	getPopularFn      func(ctx context.Context, cityID int64, limit int) ([]uuid.UUID, error)
+	getPreferencesFn  func(ctx context.Context, userID uuid.UUID) (*domain.UserPreferences, error)
+	updatePrefsFn     func(ctx context.Context, userID uuid.UUID, prefs *domain.UserPreferences) error
+	recordViewFn      func(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) error
+}
+
+func (m *mockRecommendationService) GetPersonalized(ctx context.Context, userID uuid.UUID, page, pageSize int) ([]uuid.UUID, int64, error) {
+	if m.getPersonalizedFn != nil {
+		return m.getPersonalizedFn(ctx, userID, page, pageSize)
+	}
+	return nil, 0, nil
+}
+
+func (m *mockRecommendationService) GetSimilar(ctx context.Context, bathhouseID uuid.UUID, limit int) ([]uuid.UUID, error) {
+	if m.getSimilarFn != nil {
+		return m.getSimilarFn(ctx, bathhouseID, limit)
+	}
+	return nil, nil
+}
+
+func (m *mockRecommendationService) GetPopular(ctx context.Context, cityID int64, limit int) ([]uuid.UUID, error) {
+	if m.getPopularFn != nil {
+		return m.getPopularFn(ctx, cityID, limit)
+	}
+	return nil, nil
+}
+
+func (m *mockRecommendationService) GetUserPreferences(ctx context.Context, userID uuid.UUID) (*domain.UserPreferences, error) {
+	if m.getPreferencesFn != nil {
+		return m.getPreferencesFn(ctx, userID)
+	}
+	return &domain.UserPreferences{UserID: userID}, nil
+}
+
+func (m *mockRecommendationService) UpdatePreferences(ctx context.Context, userID uuid.UUID, prefs *domain.UserPreferences) error {
+	if m.updatePrefsFn != nil {
+		return m.updatePrefsFn(ctx, userID, prefs)
+	}
+	return nil
+}
+
+func (m *mockRecommendationService) RecordView(ctx context.Context, userID uuid.UUID, bathhouseID uuid.UUID) error {
+	if m.recordViewFn != nil {
+		return m.recordViewFn(ctx, userID, bathhouseID)
+	}
+	return nil
+}
+
 // --- Helpers ---
 
 func jsonBody(v interface{}) *bytes.Buffer {
@@ -1095,7 +1146,7 @@ func TestBathhouseHandler_Search(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?city_id=1&has_pool=true", nil)
 	rec := httptest.NewRecorder()
@@ -1129,7 +1180,7 @@ func TestBathhouseHandler_GetByID(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}", h.GetByID)
@@ -1151,7 +1202,7 @@ func TestBathhouseHandler_GetByID_NotFound(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}", h.GetByID)
@@ -1180,7 +1231,7 @@ func TestBathhouseHandler_Create_RequiresOwnerRole(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses", h.Create)
@@ -1205,7 +1256,7 @@ func TestBathhouseHandler_Create_RequiresOwnerRole(t *testing.T) {
 func TestBathhouseHandler_Create_ForbiddenForClient(t *testing.T) {
 	clientID := uuid.New()
 	authSvc := makeAuthToken(clientID, domain.RoleClient)
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Post("/bathhouses", h.Create)
@@ -1690,7 +1741,7 @@ func TestBathhouseHandler_Update(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative)).Put("/bathhouses/{id}", h.Update)
@@ -1718,7 +1769,7 @@ func TestBathhouseHandler_Delete(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Delete("/bathhouses/{id}", h.Delete)
@@ -1744,7 +1795,7 @@ func TestBathhouseHandler_GetAvailableSlots(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(nil, bookingSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(nil, bookingSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}/available-slots", h.GetAvailableSlots)
@@ -1761,7 +1812,7 @@ func TestBathhouseHandler_GetAvailableSlots(t *testing.T) {
 
 func TestBathhouseHandler_GetAvailableSlots_NoDate(t *testing.T) {
 	bhID := uuid.New()
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}/available-slots", h.GetAvailableSlots)
@@ -1788,7 +1839,7 @@ func TestBathhouseHandler_MyBathhouses_Owner(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(ownerID, domain.RoleOwner)
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative)).Get("/my/bathhouses", h.MyBathhouses)
@@ -1815,7 +1866,7 @@ func TestBathhouseHandler_MyBathhouses_Representative(t *testing.T) {
 	}
 
 	authSvc := makeAuthToken(repID, domain.RoleRepresentative)
-	h := handler.NewBathhouseHandler(nil, nil, repSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(nil, nil, repSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative)).Get("/my/bathhouses", h.MyBathhouses)
@@ -2205,7 +2256,7 @@ func TestBathhouseHandler_Search_WithAllFilters(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?page=2&page_size=10&city_slug=moscow&price_min=1000&price_max=10000&min_guests=5&has_sauna=true&has_steam_room=true&has_hot_tub=true&has_bbq=true&has_karaoke=true&min_rating=4.0&lat=55.75&lng=37.62&radius_km=10&sort_by=price&sort_order=asc", nil)
 	rec := httptest.NewRecorder()
@@ -2228,7 +2279,7 @@ func TestBathhouseHandler_Search_WithExtendedFilters(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?guest_count=8&available_date=2026-03-15&available_time_from=10:00&available_time_to=14:00&open_now=true&q=русская+баня", nil)
 	rec := httptest.NewRecorder()
@@ -2272,7 +2323,7 @@ func TestBathhouseHandler_Search_InvalidTimeParams(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?available_time_from=invalid&available_time_to=25:00&available_date=bad-date", nil)
 	rec := httptest.NewRecorder()
@@ -2305,7 +2356,7 @@ func TestBathhouseHandler_Search_GuestCountOnly(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?guest_count=5", nil)
 	rec := httptest.NewRecorder()
@@ -2331,7 +2382,7 @@ func TestBathhouseHandler_Search_SearchQueryOnly(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?q=sauna", nil)
 	rec := httptest.NewRecorder()
@@ -2355,7 +2406,7 @@ func TestBathhouseHandler_Search_InvalidPage(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/bathhouses?page=invalid&page_size=-1", nil)
 	rec := httptest.NewRecorder()
@@ -2370,7 +2421,7 @@ func TestBathhouseHandler_Search_InvalidPage(t *testing.T) {
 // --- Invalid ID error paths ---
 
 func TestBathhouseHandler_GetByID_InvalidUUID(t *testing.T) {
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}", h.GetByID)
 
@@ -2483,7 +2534,7 @@ func TestAdminHandler_UpdateCity_InvalidID(t *testing.T) {
 
 func TestBathhouseHandler_GetAvailableSlots_InvalidDate(t *testing.T) {
 	bhID := uuid.New()
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}/available-slots", h.GetAvailableSlots)
 
@@ -2498,7 +2549,7 @@ func TestBathhouseHandler_GetAvailableSlots_InvalidDate(t *testing.T) {
 
 func TestBathhouseHandler_Update_InvalidUUID(t *testing.T) {
 	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Put("/bathhouses/{id}", h.Update)
 
@@ -2516,7 +2567,7 @@ func TestBathhouseHandler_Update_InvalidUUID(t *testing.T) {
 
 func TestBathhouseHandler_Delete_InvalidUUID(t *testing.T) {
 	authSvc := makeAuthToken(uuid.New(), domain.RoleOwner)
-	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 	router := chi.NewRouter()
 	router.With(middleware.RequireAuth(authSvc), middleware.RequireRole(domain.RoleOwner)).Delete("/bathhouses/{id}", h.Delete)
 
@@ -2860,7 +2911,7 @@ func TestProtectedEndpoints_RequireAuth(t *testing.T) {
 	auth := middleware.RequireAuth(authSvc)
 
 	bookingH := handler.NewBookingHandler(nil, &mockPaymentService{})
-	bhH := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	bhH := handler.NewBathhouseHandler(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router.With(auth).Get("/bookings", bookingH.ListByUser)
 	router.With(auth, middleware.RequireRole(domain.RoleClient)).Post("/bookings", bookingH.Create)
@@ -3094,7 +3145,7 @@ func TestBathhouseHandler_Search_IsFavorite_Authenticated(t *testing.T) {
 	}
 	authSvc := makeAuthToken(userID, domain.RoleClient)
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, favSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, favSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.With(middleware.OptionalAuth(authSvc)).Get("/bathhouses", h.Search)
@@ -3134,7 +3185,7 @@ func TestBathhouseHandler_Search_IsFavorite_Unauthenticated(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/bathhouses", nil)
 	rec := httptest.NewRecorder()
@@ -3180,7 +3231,7 @@ func TestBathhouseHandler_GetByID_IsFavorite_Authenticated(t *testing.T) {
 	}
 	authSvc := makeAuthToken(userID, domain.RoleClient)
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, favSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, favSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.With(middleware.OptionalAuth(authSvc)).Get("/bathhouses/{id}", h.GetByID)
@@ -3217,7 +3268,7 @@ func TestBathhouseHandler_GetByID_IsFavorite_Unauthenticated(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	router := chi.NewRouter()
 	router.Get("/bathhouses/{id}", h.GetByID)
@@ -3255,7 +3306,7 @@ func TestBathhouseHandler_GetWidgetKey_Success(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	ctx := createTestContext(ownerID, domain.RoleOwner)
 
@@ -3296,7 +3347,7 @@ func TestBathhouseHandler_GetWidgetKey_Forbidden(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	ctx := createTestContext(otherUserID, domain.RoleOwner)
 
@@ -3328,7 +3379,7 @@ func TestBathhouseHandler_RegenerateWidgetKey_Success(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	ctx := createTestContext(ownerID, domain.RoleOwner)
 
@@ -3370,7 +3421,7 @@ func TestBathhouseHandler_RegenerateWidgetKey_Forbidden(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	ctx := createTestContext(otherUserID, domain.RoleOwner)
 
@@ -3507,5 +3558,176 @@ func TestBookingHandler_AdminListBookings_InvalidUserID(t *testing.T) {
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestBathhouseHandler_GetByID_OwnerProfile(t *testing.T) {
+	bhID := uuid.New()
+	ownerID := uuid.New()
+	memberSince := time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC)
+
+	bhSvc := &mockBathhouseService{
+		getByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
+			return &domain.Bathhouse{
+				ID: id, OwnerID: ownerID, Name: "Bath", Status: domain.BathhouseStatusActive,
+				CityID: 1, PricePerHour: 5000, MaxGuests: 10, MinDuration: 1, Address: "Test",
+			}, nil
+		},
+		listByOwnerFn: func(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Bathhouse], error) {
+			return &domain.PaginatedResult[domain.Bathhouse]{TotalCount: 3}, nil
+		},
+	}
+
+	userSvc := &mockUserService{
+		getPublicProfileFn: func(_ context.Context, id uuid.UUID) (*domain.UserProfile, error) {
+			if id == ownerID {
+				return &domain.UserProfile{
+					ID:          ownerID,
+					Name:        "Тест Владелец",
+					AvatarURL:   "https://example.com/avatar.jpg",
+					AvgRating:   4.5,
+					MemberSince: memberSince,
+				}, nil
+			}
+			return nil, domain.ErrNotFound
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, userSvc, nil, "")
+
+	router := chi.NewRouter()
+	router.Get("/bathhouses/{id}", h.GetByID)
+
+	req := httptest.NewRequest(http.MethodGet, "/bathhouses/"+bhID.String(), nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d, body: %s", rec.Code, rec.Body.String())
+	}
+
+	resp := parseResponse(t, rec)
+	var item map[string]interface{}
+	if err := json.Unmarshal(resp.Data, &item); err != nil {
+		t.Fatalf("failed to parse data: %v", err)
+	}
+
+	ownerProfile, ok := item["owner_profile"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected owner_profile in response, got: %v", item["owner_profile"])
+	}
+
+	if ownerProfile["name"] != "Тест Владелец" {
+		t.Errorf("expected owner name 'Тест Владелец', got %v", ownerProfile["name"])
+	}
+	if ownerProfile["avatar_url"] != "https://example.com/avatar.jpg" {
+		t.Errorf("expected avatar URL, got %v", ownerProfile["avatar_url"])
+	}
+	if rating, ok := ownerProfile["rating"].(float64); !ok || rating != 4.5 {
+		t.Errorf("expected rating 4.5, got %v", ownerProfile["rating"])
+	}
+	if count, ok := ownerProfile["object_count"].(float64); !ok || count != 3 {
+		t.Errorf("expected object_count 3, got %v", ownerProfile["object_count"])
+	}
+}
+
+func TestBathhouseHandler_GetByID_OwnerProfile_NilUserService(t *testing.T) {
+	bhID := uuid.New()
+
+	bhSvc := &mockBathhouseService{
+		getByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
+			return &domain.Bathhouse{
+				ID: id, Name: "Bath", Status: domain.BathhouseStatusActive,
+				CityID: 1, PricePerHour: 5000, MaxGuests: 10, MinDuration: 1, Address: "Test",
+			}, nil
+		},
+	}
+
+	h := handler.NewBathhouseHandler(bhSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
+
+	router := chi.NewRouter()
+	router.Get("/bathhouses/{id}", h.GetByID)
+
+	req := httptest.NewRequest(http.MethodGet, "/bathhouses/"+bhID.String(), nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+
+	resp := parseResponse(t, rec)
+	var item map[string]interface{}
+	if err := json.Unmarshal(resp.Data, &item); err != nil {
+		t.Fatalf("failed to parse data: %v", err)
+	}
+
+	// owner_profile should be nil/absent when userService is nil
+	if item["owner_profile"] != nil {
+		t.Errorf("expected owner_profile to be nil when userService is nil, got %v", item["owner_profile"])
+	}
+}
+
+func TestRecommendationHandler_GetSimilar_DefaultLimit(t *testing.T) {
+	bhID := uuid.New()
+	similar := make([]uuid.UUID, 6)
+	for i := range similar {
+		similar[i] = uuid.New()
+	}
+
+	recSvc := &mockRecommendationService{
+		getSimilarFn: func(_ context.Context, _ uuid.UUID, limit int) ([]uuid.UUID, error) {
+			if limit != 6 {
+				t.Errorf("expected default limit 6, got %d", limit)
+			}
+			return similar[:limit], nil
+		},
+	}
+
+	bhSvc := &mockBathhouseService{
+		getByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Bathhouse, error) {
+			return &domain.Bathhouse{
+				ID: id, Name: "Similar Bath", Slug: "similar-bath",
+				Status: domain.BathhouseStatusActive, CityID: 1,
+				PricePerHour: 3000, MaxGuests: 5, MinDuration: 1, Address: "Addr",
+				Images: []string{"img1.jpg"},
+			}, nil
+		},
+	}
+
+	h := handler.NewRecommendationHandler(recSvc, bhSvc)
+
+	router := chi.NewRouter()
+	router.Get("/bathhouses/{id}/similar", h.GetSimilar)
+
+	req := httptest.NewRequest(http.MethodGet, "/bathhouses/"+bhID.String()+"/similar", nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	resp := parseResponse(t, rec)
+	var items []map[string]interface{}
+	if err := json.Unmarshal(resp.Data, &items); err != nil {
+		t.Fatalf("failed to parse data: %v", err)
+	}
+
+	if len(items) != 6 {
+		t.Errorf("expected 6 similar items, got %d", len(items))
+	}
+
+	// Verify enriched fields (slug, images)
+	if len(items) > 0 {
+		if items[0]["slug"] != "similar-bath" {
+			t.Errorf("expected slug 'similar-bath', got %v", items[0]["slug"])
+		}
+		if images, ok := items[0]["images"].([]interface{}); !ok || len(images) != 1 {
+			t.Errorf("expected images [img1.jpg], got %v", items[0]["images"])
+		}
 	}
 }

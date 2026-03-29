@@ -16,6 +16,7 @@ import {
   DatePicker,
   Empty,
   Pagination,
+  Avatar,
 } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -26,6 +27,8 @@ import {
   ClockCircleOutlined,
   CarOutlined,
   NodeIndexOutlined,
+  UserOutlined,
+  WalletOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -36,6 +39,7 @@ import { useGetBathhousesIdReviews } from '@/api/generated/reviews/reviews'
 import { useGetBathhousesIdSimilar } from '@/api/generated/recommendations/recommendations'
 import { useGetBathhousesIdGallery } from '@/api/generated/review-media/review-media'
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
+import { useGetMyWallet } from '@/api/generated/wallet/wallet'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice, formatDayOfWeek } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
@@ -106,7 +110,7 @@ export default function BathhouseDetail() {
   const reviews = reviewsData?.data ?? []
   const reviewMeta = reviewsData?.meta
 
-  const { data: similarData } = useGetBathhousesIdSimilar(id ?? '', { limit: 4 }, {
+  const { data: similarData } = useGetBathhousesIdSimilar(id ?? '', { limit: 6 }, {
     query: { enabled: !!id },
   })
   const similar = similarData?.data ?? []
@@ -127,6 +131,11 @@ export default function BathhouseDetail() {
     staleTime: 7 * 24 * 60 * 60 * 1000, // 7 days - transport infrastructure rarely changes
   })
   const transportItems = transportData?.data?.items ?? []
+
+  const { data: walletData } = useGetMyWallet({
+    query: { enabled: !!currentUser },
+  })
+  const walletBalance = (walletData as Record<string, unknown>)?.data as { balance?: number } | undefined
 
   const favoriteMutation = usePostBathhousesIdFavorite({
     mutation: {
@@ -338,6 +347,37 @@ export default function BathhouseDetail() {
                   </div>
                 </div>
               )}
+
+              {bathhouse.owner_profile && (
+                <div style={{ marginTop: 16 }}>
+                  <Text strong>Владелец:</Text>
+                  <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Avatar
+                      size={48}
+                      src={bathhouse.owner_profile.avatar_url}
+                      icon={!bathhouse.owner_profile.avatar_url && <UserOutlined />}
+                    />
+                    <div>
+                      <Text strong>{bathhouse.owner_profile.name || 'Владелец'}</Text>
+                      <div>
+                        {bathhouse.owner_profile.rating > 0 && (
+                          <Text type="secondary" style={{ marginRight: 12 }}>
+                            Рейтинг: {bathhouse.owner_profile.rating.toFixed(1)}
+                          </Text>
+                        )}
+                        <Text type="secondary" style={{ marginRight: 12 }}>
+                          Объектов: {bathhouse.owner_profile.object_count}
+                        </Text>
+                        {bathhouse.owner_profile.member_since && (
+                          <Text type="secondary">
+                            На платформе с {dayjs(bathhouse.owner_profile.member_since).format('MMM YYYY')}
+                          </Text>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </Col>
@@ -385,6 +425,24 @@ export default function BathhouseDetail() {
               )}
             </Spin>
           </Card>
+
+          {currentUser && walletBalance?.balance != null && walletBalance.balance > 0 && bathhouse.price_per_hour && walletBalance.balance >= bathhouse.price_per_hour && (
+            <Card size="small" style={{ marginTop: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <WalletOutlined style={{ fontSize: 18, color: '#52c41a' }} />
+                <Text>Баланс кошелька: <Text strong>{formatPrice(walletBalance.balance)}</Text></Text>
+              </div>
+              <Button
+                type="primary"
+                ghost
+                block
+                icon={<WalletOutlined />}
+                onClick={() => navigate(`/client/booking/new?bathhouse=${id}&payment_method=wallet`)}
+              >
+                Оплатить из кошелька
+              </Button>
+            </Card>
+          )}
         </Col>
       </Row>
 
@@ -422,8 +480,8 @@ export default function BathhouseDetail() {
           <Divider />
           <Title level={4}>Похожие бани</Title>
           <Row gutter={[16, 16]}>
-            {similar.map((s) => (
-              <Col key={s.id} xs={24} sm={12} md={6}>
+            {similar.slice(0, 6).map((s) => (
+              <Col key={s.id} xs={24} sm={12} md={8}>
                 <BathhouseCard
                   bathhouse={{
                     id: s.id,

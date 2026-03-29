@@ -550,12 +550,12 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/service/recommendation_service.go` (similar by type/location)
 - Modify: `frontend/src/pages/client/BathhouseDetail.tsx`
 
-- [ ] Add endpoint: GET /api/v1/bathhouses/{id}/similar (up to 6, same city + type, sorted by rating)
-- [ ] Display similar objects section at bottom of bathhouse detail
-- [ ] Add owner profile section: rating, number of objects, registration date
-- [ ] Add "Pay from wallet" quick button on price section (if balance sufficient)
-- [ ] Write tests for similar objects query
-- [ ] Run project test suite - must pass before task 29
+- [x] Add endpoint: GET /api/v1/bathhouses/{id}/similar (up to 6, same city + type, sorted by rating)
+- [x] Display similar objects section at bottom of bathhouse detail
+- [x] Add owner profile section: rating, number of objects, registration date
+- [x] Add "Pay from wallet" quick button on price section (if balance sufficient)
+- [x] Write tests for similar objects query
+- [x] Run project test suite - must pass before task 29
 
 ### Task 29: Listing Wizard Video Step (FR-034 step 1)
 

@@ -182,7 +182,7 @@ func (s *recommendationService) GetPersonalized(ctx context.Context, userID uuid
 // GetSimilar returns bathhouses similar to the given bathhouse
 func (s *recommendationService) GetSimilar(ctx context.Context, bathhouseID uuid.UUID, limit int) ([]uuid.UUID, error) {
 	if limit < 1 {
-		limit = 10
+		limit = 6
 	}
 
 	return s.recRepo.GetSimilarBathhouses(ctx, bathhouseID, limit)

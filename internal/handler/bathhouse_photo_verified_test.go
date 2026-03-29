@@ -58,6 +58,7 @@ func TestBathhouseHandler_GetByID_IsPhotoVerified(t *testing.T) {
 				nil, // savedSearchService
 				nil, // suggestionService
 				nil, // reviewService
+				nil, // userService
 				nil, // logger
 				"",  // baseURL
 			)
@@ -118,11 +119,7 @@ func TestBathhouseHandler_Search_IsPhotoVerified(t *testing.T) {
 		},
 	}
 
-	h := handler.NewBathhouseHandler(
-		mockBathhouse,
-		&mockBookingService{},
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "",
-	)
+	h := handler.NewBathhouseHandler(mockBathhouse, &mockBookingService{}, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "")
 
 	r := chi.NewRouter()
 	r.Get("/api/v1/bathhouses", h.Search)

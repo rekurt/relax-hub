@@ -27,16 +27,18 @@ func NewRecommendationHandler(
 }
 
 type recommendationResponse struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Description  string  `json:"description"`
-	Address      string  `json:"address"`
-	CityID       int64   `json:"city_id"`
-	Latitude     float64 `json:"latitude"`
-	Longitude    float64 `json:"longitude"`
-	PricePerHour int64   `json:"price_per_hour"`
-	Rating       float64 `json:"rating"`
-	ReviewCount  int     `json:"review_count"`
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Slug         string   `json:"slug,omitempty"`
+	Description  string   `json:"description"`
+	Address      string   `json:"address"`
+	CityID       int64    `json:"city_id"`
+	Latitude     float64  `json:"latitude"`
+	Longitude    float64  `json:"longitude"`
+	PricePerHour int64    `json:"price_per_hour"`
+	Rating       float64  `json:"rating"`
+	ReviewCount  int      `json:"review_count"`
+	Images       []string `json:"images,omitempty"`
 }
 
 type userPreferencesResponse struct {
@@ -64,16 +66,17 @@ type updateRecommendationPreferencesRequest struct {
 }
 
 // GetPersonalized godoc
-// @Summary      Get personalized recommendations
-// @Description  Returns personalized bathhouse recommendations based on user preferences and booking history
-// @Tags         recommendations
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query     int  false  "Page number"  default(1)
-// @Param        page_size  query     int  false  "Page size"    default(20)
-// @Success      200  {object}  APIResponse{data=[]recommendationResponse,meta=Meta}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /recommendations [get]
+//
+//	@Summary		Get personalized recommendations
+//	@Description	Returns personalized bathhouse recommendations based on user preferences and booking history
+//	@Tags			recommendations
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int	false	"Page number"	default(1)
+//	@Param			page_size	query		int	false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]recommendationResponse,meta=Meta}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Router			/recommendations [get]
 func (h *RecommendationHandler) GetPersonalized(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	if userID == uuid.Nil {
@@ -100,6 +103,7 @@ func (h *RecommendationHandler) GetPersonalized(w http.ResponseWriter, r *http.R
 		items = append(items, recommendationResponse{
 			ID:           bh.ID.String(),
 			Name:         bh.Name,
+			Slug:         bh.Slug,
 			Description:  bh.Description,
 			Address:      bh.Address,
 			CityID:       bh.CityID,
@@ -108,6 +112,7 @@ func (h *RecommendationHandler) GetPersonalized(w http.ResponseWriter, r *http.R
 			PricePerHour: bh.PricePerHour,
 			Rating:       bh.Rating,
 			ReviewCount:  bh.ReviewCount,
+			Images:       bh.Images,
 		})
 	}
 
@@ -125,15 +130,16 @@ func (h *RecommendationHandler) GetPersonalized(w http.ResponseWriter, r *http.R
 }
 
 // GetSimilar godoc
-// @Summary      Get similar bathhouses
-// @Description  Returns bathhouses similar to the specified one based on features and location
-// @Tags         recommendations
-// @Produce      json
-// @Param        id     path      string  true   "Bathhouse ID (UUID)"
-// @Param        limit  query     int     false  "Max results"  default(10)
-// @Success      200  {object}  APIResponse{data=[]recommendationResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Router       /bathhouses/{id}/similar [get]
+//
+//	@Summary		Get similar bathhouses
+//	@Description	Returns bathhouses similar to the specified one based on features and location
+//	@Tags			recommendations
+//	@Produce		json
+//	@Param			id		path		string	true	"Bathhouse ID (UUID)"
+//	@Param			limit	query		int		false	"Max results"	default(6)
+//	@Success		200		{object}	APIResponse{data=[]recommendationResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Router			/bathhouses/{id}/similar [get]
 func (h *RecommendationHandler) GetSimilar(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -142,7 +148,7 @@ func (h *RecommendationHandler) GetSimilar(w http.ResponseWriter, r *http.Reques
 	}
 
 	q := r.URL.Query()
-	limit := 10
+	limit := 6
 	if v := q.Get("limit"); v != "" {
 		if l, err := strconv.Atoi(v); err == nil && l > 0 && l <= 100 {
 			limit = l
@@ -164,6 +170,7 @@ func (h *RecommendationHandler) GetSimilar(w http.ResponseWriter, r *http.Reques
 		items = append(items, recommendationResponse{
 			ID:           bh.ID.String(),
 			Name:         bh.Name,
+			Slug:         bh.Slug,
 			Description:  bh.Description,
 			Address:      bh.Address,
 			CityID:       bh.CityID,
@@ -172,6 +179,7 @@ func (h *RecommendationHandler) GetSimilar(w http.ResponseWriter, r *http.Reques
 			PricePerHour: bh.PricePerHour,
 			Rating:       bh.Rating,
 			ReviewCount:  bh.ReviewCount,
+			Images:       bh.Images,
 		})
 	}
 
@@ -179,15 +187,16 @@ func (h *RecommendationHandler) GetSimilar(w http.ResponseWriter, r *http.Reques
 }
 
 // GetPopular godoc
-// @Summary      Get popular bathhouses
-// @Description  Returns popular bathhouses in a specified city
-// @Tags         recommendations
-// @Produce      json
-// @Param        city_id  query     int  true   "City ID"
-// @Param        limit    query     int  false  "Max results"  default(10)
-// @Success      200  {object}  APIResponse{data=[]recommendationResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Router       /popular [get]
+//
+//	@Summary		Get popular bathhouses
+//	@Description	Returns popular bathhouses in a specified city
+//	@Tags			recommendations
+//	@Produce		json
+//	@Param			city_id	query		int	true	"City ID"
+//	@Param			limit	query		int	false	"Max results"	default(10)
+//	@Success		200		{object}	APIResponse{data=[]recommendationResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Router			/popular [get]
 func (h *RecommendationHandler) GetPopular(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	cityIDStr := q.Get("city_id")
@@ -224,6 +233,7 @@ func (h *RecommendationHandler) GetPopular(w http.ResponseWriter, r *http.Reques
 		items = append(items, recommendationResponse{
 			ID:           bh.ID.String(),
 			Name:         bh.Name,
+			Slug:         bh.Slug,
 			Description:  bh.Description,
 			Address:      bh.Address,
 			CityID:       bh.CityID,
@@ -232,6 +242,7 @@ func (h *RecommendationHandler) GetPopular(w http.ResponseWriter, r *http.Reques
 			PricePerHour: bh.PricePerHour,
 			Rating:       bh.Rating,
 			ReviewCount:  bh.ReviewCount,
+			Images:       bh.Images,
 		})
 	}
 
@@ -239,14 +250,15 @@ func (h *RecommendationHandler) GetPopular(w http.ResponseWriter, r *http.Reques
 }
 
 // GetPreferences godoc
-// @Summary      Get recommendation preferences
-// @Description  Returns the user's current recommendation preferences (city, price range, amenities)
-// @Tags         recommendations
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=userPreferencesResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /my/preferences [get]
+//
+//	@Summary		Get recommendation preferences
+//	@Description	Returns the user's current recommendation preferences (city, price range, amenities)
+//	@Tags			recommendations
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=userPreferencesResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/my/preferences [get]
 func (h *RecommendationHandler) GetPreferences(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	if userID == uuid.Nil {
@@ -276,17 +288,18 @@ func (h *RecommendationHandler) GetPreferences(w http.ResponseWriter, r *http.Re
 }
 
 // UpdatePreferences godoc
-// @Summary      Update recommendation preferences
-// @Description  Updates the user's recommendation preferences. Only provided fields are updated.
-// @Tags         recommendations
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      updateRecommendationPreferencesRequest  true  "Preferences to update"
-// @Success      200   {object}  APIResponse{data=userPreferencesResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Router       /my/preferences [put]
+//
+//	@Summary		Update recommendation preferences
+//	@Description	Updates the user's recommendation preferences. Only provided fields are updated.
+//	@Tags			recommendations
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		updateRecommendationPreferencesRequest	true	"Preferences to update"
+//	@Success		200		{object}	APIResponse{data=userPreferencesResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Router			/my/preferences [put]
 func (h *RecommendationHandler) UpdatePreferences(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	if userID == uuid.Nil {

@@ -33,6 +33,7 @@ type BathhouseHandler struct {
 	savedSearchService    service.SavedSearchService
 	suggestionService     service.SearchSuggestionService
 	reviewService         service.ReviewService
+	userService           service.UserService
 	log                   *logger.Logger
 	baseURL               string
 }
@@ -50,6 +51,7 @@ func NewBathhouseHandler(
 	savedSearchService service.SavedSearchService,
 	suggestionService service.SearchSuggestionService,
 	reviewService service.ReviewService,
+	userService service.UserService,
 	log *logger.Logger,
 	baseURL string,
 ) *BathhouseHandler {
@@ -66,6 +68,7 @@ func NewBathhouseHandler(
 		savedSearchService:    savedSearchService,
 		suggestionService:     suggestionService,
 		reviewService:         reviewService,
+		userService:           userService,
 		log:                   log,
 		baseURL:               baseURL,
 	}
@@ -145,11 +148,21 @@ type bathhouseResponse struct {
 	IsPhotoVerified            bool               `json:"is_photo_verified"`
 	LastMinuteActive           bool               `json:"last_minute_active"`
 	Badges                     []string           `json:"badges"`
-	AreaAvgPricePerHour        int64              `json:"area_avg_price_per_hour,omitempty"`
-	GalleryPreview             []mediaResponse    `json:"gallery_preview,omitempty"`
-	Meta                       *seo.MetaTags      `json:"meta,omitempty"`
-	CreatedAt                  time.Time          `json:"created_at"`
-	UpdatedAt                  time.Time          `json:"updated_at"`
+	AreaAvgPricePerHour        int64                 `json:"area_avg_price_per_hour,omitempty"`
+	GalleryPreview             []mediaResponse       `json:"gallery_preview,omitempty"`
+	OwnerProfile               *ownerProfileResponse `json:"owner_profile,omitempty"`
+	Meta                       *seo.MetaTags         `json:"meta,omitempty"`
+	CreatedAt                  time.Time             `json:"created_at"`
+	UpdatedAt                  time.Time             `json:"updated_at"`
+}
+
+type ownerProfileResponse struct {
+	ID             string    `json:"id"`
+	Name           string    `json:"name"`
+	AvatarURL      string    `json:"avatar_url,omitempty"`
+	Rating         float64   `json:"rating"`
+	ObjectCount    int       `json:"object_count"`
+	MemberSince    time.Time `json:"member_since"`
 }
 
 type workingHoursResp struct {
@@ -610,6 +623,9 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		resp.AreaAvgPricePerHour = avgPrice
 	}
 
+	// Owner profile section
+	resp.OwnerProfile = h.buildOwnerProfile(r.Context(), bh.OwnerID)
+
 	writeJSON(w, http.StatusOK, resp)
 }
 
@@ -679,6 +695,9 @@ func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	if avgPrice, err := h.bathhouseService.GetAreaAvgPrice(r.Context(), bh.CityID, bh.Latitude, bh.Longitude); err == nil && avgPrice > 0 {
 		resp.AreaAvgPricePerHour = avgPrice
 	}
+
+	// Owner profile section
+	resp.OwnerProfile = h.buildOwnerProfile(r.Context(), bh.OwnerID)
 
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -1462,6 +1481,34 @@ func (h *BathhouseHandler) recordBathhouseView(r *http.Request, bathhouseID uuid
 		if err := h.savedSearchService.RecordView(ctx, userID, bathhouseID); err != nil {
 			h.log.Warn("failed to record recently viewed", "bathhouse_id", bathhouseID, "error", err)
 		}
+	}
+}
+
+func (h *BathhouseHandler) buildOwnerProfile(ctx context.Context, ownerID uuid.UUID) *ownerProfileResponse {
+	if h.userService == nil {
+		return nil
+	}
+
+	profile, err := h.userService.GetPublicProfile(ctx, ownerID)
+	if err != nil || profile == nil {
+		return nil
+	}
+
+	objectCount := 0
+	if h.bathhouseService != nil {
+		result, err := h.bathhouseService.ListByOwner(ctx, ownerID, 1, 1)
+		if err == nil && result != nil {
+			objectCount = int(result.TotalCount)
+		}
+	}
+
+	return &ownerProfileResponse{
+		ID:          profile.ID.String(),
+		Name:        profile.Name,
+		AvatarURL:   profile.AvatarURL,
+		Rating:      profile.AvgRating,
+		ObjectCount: objectCount,
+		MemberSince: profile.MemberSince,
 	}
 }
 
