@@ -131,7 +131,7 @@ func TestHandleDailyAggregation(t *testing.T) {
 	mockRepo := mock.NewAnalyticsRepo()
 
 	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	_ = cs.dailyAggregation(context.Background())
+	require.NoError(t, cs.dailyAggregation(context.Background()))
 
 	assert.True(t, aggregationCalled, "Expected AggregateDaily to be called")
 }
@@ -147,8 +147,9 @@ func TestHandleDailyAggregationError(t *testing.T) {
 	mockRepo := mock.NewAnalyticsRepo()
 
 	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	// Should not panic even with error
-	_ = cs.dailyAggregation(context.Background())
+	// Should return error but not panic
+	err := cs.dailyAggregation(context.Background())
+	assert.Error(t, err)
 }
 
 func TestHandleWeeklyCleanup(t *testing.T) {
@@ -180,7 +181,7 @@ func TestHandleWeeklyCleanup(t *testing.T) {
 	require.NoError(t, err)
 
 	cs := NewCronScheduler(&config.Config{}, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	_ = cs.weeklyCleanup(context.Background())
+	require.NoError(t, cs.weeklyCleanup(context.Background()))
 
 	// Verify old views are deleted by trying to delete again (should return 0)
 	cutoffDate := time.Now().AddDate(0, 0, -90)

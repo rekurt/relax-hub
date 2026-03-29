@@ -8,14 +8,14 @@ import (
 
 // MockProvider implements PaymentProvider for testing.
 type MockProvider struct {
-	mu             sync.Mutex
-	payments       map[string]*mockPayment
-	refunds        map[string]int64
-	captures       map[string]int64
-	cancellations  map[string]bool
-	counter        int
-	FailCapture    bool // when true, CapturePayment returns an error
-	FailCancel     bool // when true, CancelPayment returns an error
+	mu            sync.Mutex
+	payments      map[string]*mockPayment
+	refunds       map[string]int64
+	captures      map[string]int64
+	cancellations map[string]bool
+	counter       int
+	FailCapture   bool // when true, CapturePayment returns an error
+	FailCancel    bool // when true, CancelPayment returns an error
 }
 
 type mockPayment struct {
@@ -140,16 +140,11 @@ func (m *MockProvider) SetPaymentStatus(externalID, status string) {
 func (m *MockProvider) GetLastPaymentMethod() string {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	var lastID string
-	for id := range m.payments {
-		if id > lastID {
-			lastID = id
-		}
+	lastID := fmt.Sprintf("mock-pay-%d", m.counter)
+	if p, ok := m.payments[lastID]; ok {
+		return p.Method
 	}
-	if lastID == "" {
-		return ""
-	}
-	return m.payments[lastID].Method
+	return ""
 }
 
 // GetPaymentCapture returns the capture flag for a given payment (for testing).

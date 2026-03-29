@@ -13,6 +13,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -125,7 +126,7 @@ func TestHandleBookingReminders_24hReminder(t *testing.T) {
 	notifSvc := &mockNotificationService{}
 
 	cs := newTestReminderScheduler(notifSvc, bookingSvc, nil)
-	_ = cs.bookingRemindersJob(context.Background())
+	require.NoError(t, cs.bookingRemindersJob(context.Background()))
 
 	// Should have sent at least the 24h reminder
 	found := false
@@ -167,7 +168,7 @@ func TestHandleBookingReminders_2hReminder(t *testing.T) {
 	notifSvc := &mockNotificationService{}
 
 	cs := newTestReminderScheduler(notifSvc, bookingSvc, nil)
-	_ = cs.bookingRemindersJob(context.Background())
+	require.NoError(t, cs.bookingRemindersJob(context.Background()))
 
 	found := false
 	for _, n := range notifSvc.sent {
@@ -208,7 +209,7 @@ func TestHandleBookingReminders_Owner5minReminder(t *testing.T) {
 	notifSvc := &mockNotificationService{}
 
 	cs := newTestReminderScheduler(notifSvc, bookingSvc, nil)
-	_ = cs.bookingRemindersJob(context.Background())
+	require.NoError(t, cs.bookingRemindersJob(context.Background()))
 
 	found := false
 	for _, n := range notifSvc.sent {
@@ -257,12 +258,12 @@ func TestHandleBookingReminders_Deduplication(t *testing.T) {
 	cs := newTestReminderScheduler(notifSvc, bookingSvc, redisClient)
 
 	// First run — should send
-	_ = cs.bookingRemindersJob(context.Background())
+	require.NoError(t, cs.bookingRemindersJob(context.Background()))
 	sentCount := len(notifSvc.sent)
 	assert.Greater(t, sentCount, 0, "First run should send reminders")
 
 	// Second run — same booking, should be deduplicated
-	_ = cs.bookingRemindersJob(context.Background())
+	require.NoError(t, cs.bookingRemindersJob(context.Background()))
 	assert.Equal(t, sentCount, len(notifSvc.sent), "Second run should not send duplicate reminders")
 }
 
@@ -274,7 +275,7 @@ func TestHandleBookingReminders_NoCancelledBookings(t *testing.T) {
 	notifSvc := &mockNotificationService{}
 
 	cs := newTestReminderScheduler(notifSvc, bookingSvc, nil)
-	_ = cs.bookingRemindersJob(context.Background())
+	require.NoError(t, cs.bookingRemindersJob(context.Background()))
 
 	assert.Empty(t, notifSvc.sent, "No reminders should be sent for empty booking list")
 }

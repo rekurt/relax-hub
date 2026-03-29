@@ -62,6 +62,12 @@ func (s *CustomSegment) Validate() error {
 	if c.TotalSpentMin != nil && c.TotalSpentMax != nil && *c.TotalSpentMin > *c.TotalSpentMax {
 		return ErrInvalidInput
 	}
+	if c.LastVisitDaysMin != nil && *c.LastVisitDaysMin < 0 {
+		return ErrInvalidInput
+	}
+	if c.LastVisitDaysMax != nil && *c.LastVisitDaysMax < 0 {
+		return ErrInvalidInput
+	}
 	if c.LastVisitDaysMin != nil && c.LastVisitDaysMax != nil && *c.LastVisitDaysMin > *c.LastVisitDaysMax {
 		return ErrInvalidInput
 	}

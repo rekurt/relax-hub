@@ -30,7 +30,7 @@ func TestHandleBonusExpiration_NoWallets(t *testing.T) {
 	walletSvc := service.NewWalletService(walletRepo, logger.New(logger.LevelInfo))
 
 	cs := newTestWalletCronScheduler(notifSvc, walletSvc, walletRepo)
-	_ = cs.bonusExpiration(context.Background())
+	require.NoError(t, cs.bonusExpiration(context.Background()))
 
 	assert.Empty(t, notifSvc.sent)
 }
@@ -68,7 +68,7 @@ func TestHandleBonusExpiration_ExpiresOldBonuses(t *testing.T) {
 	require.NoError(t, err)
 
 	cs := newTestWalletCronScheduler(notifSvc, walletSvc, walletRepo)
-	_ = cs.bonusExpiration(context.Background())
+	require.NoError(t, cs.bonusExpiration(context.Background()))
 
 	// Should have sent a notification about expired bonuses
 	assert.Equal(t, 1, len(notifSvc.sent))
@@ -114,7 +114,7 @@ func TestHandleBonusExpiration_SkipsActiveBonuses(t *testing.T) {
 	require.NoError(t, err)
 
 	cs := newTestWalletCronScheduler(notifSvc, walletSvc, walletRepo)
-	_ = cs.bonusExpiration(context.Background())
+	require.NoError(t, cs.bonusExpiration(context.Background()))
 
 	// Should NOT send notification - bonuses are still active
 	assert.Empty(t, notifSvc.sent)
@@ -158,7 +158,7 @@ func TestHandleBonusExpiryNotify_NotifiesAt14And3Days(t *testing.T) {
 	require.NoError(t, err)
 
 	cs := newTestWalletCronScheduler(notifSvc, walletSvc, walletRepo)
-	_ = cs.bonusExpiryNotify(context.Background())
+	require.NoError(t, cs.bonusExpiryNotify(context.Background()))
 
 	// Should send notification for the 3-day window
 	assert.GreaterOrEqual(t, len(notifSvc.sent), 1)
@@ -205,7 +205,7 @@ func TestHandleBonusExpiryNotify_NoNotificationForDistantBonuses(t *testing.T) {
 	require.NoError(t, err)
 
 	cs := newTestWalletCronScheduler(notifSvc, walletSvc, walletRepo)
-	_ = cs.bonusExpiryNotify(context.Background())
+	require.NoError(t, cs.bonusExpiryNotify(context.Background()))
 
 	// Should NOT send any notification - bonus is too far from expiry
 	assert.Empty(t, notifSvc.sent)
@@ -256,12 +256,12 @@ func TestHandleBonusExpiryNotify_Deduplication(t *testing.T) {
 		nil, nil, notifSvc, nil, walletSvc, walletRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, redisClient, nil, nil, nil, nil, nil)
 
 	// First run — should send
-	_ = cs.bonusExpiryNotify(context.Background())
+	require.NoError(t, cs.bonusExpiryNotify(context.Background()))
 	sentCount := len(notifSvc.sent)
 	assert.Greater(t, sentCount, 0, "First run should send bonus expiry notifications")
 
 	// Second run — should be deduplicated
-	_ = cs.bonusExpiryNotify(context.Background())
+	require.NoError(t, cs.bonusExpiryNotify(context.Background()))
 	assert.Equal(t, sentCount, len(notifSvc.sent), "Second run should not send duplicate notifications")
 }
 
