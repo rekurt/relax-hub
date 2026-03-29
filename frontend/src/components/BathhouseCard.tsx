@@ -98,7 +98,7 @@ export default function BathhouseCard({
   return (
     <Card
       hoverable
-      onClick={() => navigate(`/client/bathhouse/${bathhouse.id}`)}
+      onClick={() => navigate(`/client/bathhouse/${bathhouse.slug ?? bathhouse.id}`)}
       cover={
         coverImage ? (
           <Image

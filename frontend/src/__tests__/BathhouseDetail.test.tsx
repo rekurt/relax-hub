@@ -8,6 +8,7 @@ import BathhouseDetail from '@/pages/client/BathhouseDetail'
 
 vi.mock('@/api/generated/bathhouses/bathhouses', () => ({
   useGetBathhousesId: vi.fn(),
+  useGetBathhousesBySlugSlug: vi.fn(),
   useGetBathhousesIdAvailableSlots: vi.fn(),
   useGetBathhousesIdSchema: vi.fn(),
 }))
@@ -37,7 +38,7 @@ vi.mock('@/api/generated/complaints/complaints', () => ({
   usePostReviewsIdReport: vi.fn(),
 }))
 
-import { useGetBathhousesId, useGetBathhousesIdAvailableSlots, useGetBathhousesIdSchema } from '@/api/generated/bathhouses/bathhouses'
+import { useGetBathhousesBySlugSlug, useGetBathhousesIdAvailableSlots, useGetBathhousesIdSchema } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPhotos } from '@/api/generated/photos/photos'
 import { useGetBathhousesIdReviews } from '@/api/generated/reviews/reviews'
 import { useDeleteReviewsId } from '@/api/generated/reviews/reviews'
@@ -46,7 +47,7 @@ import { useGetBathhousesIdGallery } from '@/api/generated/review-media/review-m
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
 import { usePostReviewsIdReport } from '@/api/generated/complaints/complaints'
 
-function renderWithProviders(ui: React.ReactElement, { route = '/client/bathhouse/bath-1' } = {}) {
+function renderWithProviders(ui: React.ReactElement, { route = '/client/bathhouse/banya-premium' } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -56,7 +57,7 @@ function renderWithProviders(ui: React.ReactElement, { route = '/client/bathhous
         <AntApp>
           <MemoryRouter initialEntries={[route]}>
             <Routes>
-              <Route path="/client/bathhouse/:id" element={ui} />
+              <Route path="/client/bathhouse/:slug" element={ui} />
             </Routes>
           </MemoryRouter>
         </AntApp>
@@ -67,6 +68,7 @@ function renderWithProviders(ui: React.ReactElement, { route = '/client/bathhous
 
 const mockBathhouse = {
   id: 'bath-1',
+  slug: 'banya-premium',
   name: 'Баня Премиум',
   description: 'Лучшая баня в городе',
   address: 'ул. Мира, д. 10',
@@ -156,10 +158,10 @@ describe('BathhouseDetail', () => {
   })
 
   it('renders bathhouse name and description', () => {
-    vi.mocked(useGetBathhousesId).mockReturnValue({
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: mockBathhouse, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesId>)
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
 
     renderWithProviders(<BathhouseDetail />)
 
@@ -168,10 +170,10 @@ describe('BathhouseDetail', () => {
   })
 
   it('renders price and capacity info', () => {
-    vi.mocked(useGetBathhousesId).mockReturnValue({
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: mockBathhouse, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesId>)
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
 
     renderWithProviders(<BathhouseDetail />)
 
@@ -182,10 +184,10 @@ describe('BathhouseDetail', () => {
   })
 
   it('renders amenity tags', () => {
-    vi.mocked(useGetBathhousesId).mockReturnValue({
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: mockBathhouse, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesId>)
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
 
     renderWithProviders(<BathhouseDetail />)
 
@@ -195,10 +197,10 @@ describe('BathhouseDetail', () => {
   })
 
   it('renders available slots', () => {
-    vi.mocked(useGetBathhousesId).mockReturnValue({
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: mockBathhouse, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesId>)
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
 
     renderWithProviders(<BathhouseDetail />)
 
@@ -209,10 +211,10 @@ describe('BathhouseDetail', () => {
   })
 
   it('renders reviews section', () => {
-    vi.mocked(useGetBathhousesId).mockReturnValue({
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: mockBathhouse, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesId>)
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
 
     renderWithProviders(<BathhouseDetail />)
 
@@ -222,10 +224,10 @@ describe('BathhouseDetail', () => {
   })
 
   it('renders working hours', () => {
-    vi.mocked(useGetBathhousesId).mockReturnValue({
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: mockBathhouse, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesId>)
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
 
     renderWithProviders(<BathhouseDetail />)
 
@@ -234,10 +236,10 @@ describe('BathhouseDetail', () => {
   })
 
   it('shows empty state when bathhouse not found', () => {
-    vi.mocked(useGetBathhousesId).mockReturnValue({
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: null, success: false },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesId>)
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
 
     renderWithProviders(<BathhouseDetail />)
 
@@ -245,10 +247,10 @@ describe('BathhouseDetail', () => {
   })
 
   it('renders favorite button', () => {
-    vi.mocked(useGetBathhousesId).mockReturnValue({
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: mockBathhouse, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesId>)
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
 
     renderWithProviders(<BathhouseDetail />)
 
@@ -256,10 +258,10 @@ describe('BathhouseDetail', () => {
   })
 
   it('renders back button', () => {
-    vi.mocked(useGetBathhousesId).mockReturnValue({
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: mockBathhouse, success: true },
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhousesId>)
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
 
     renderWithProviders(<BathhouseDetail />)
 

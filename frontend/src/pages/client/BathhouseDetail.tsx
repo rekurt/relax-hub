@@ -33,7 +33,7 @@ import {
 import dayjs from 'dayjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { App } from 'antd'
-import { useGetBathhousesId, useGetBathhousesIdAvailableSlots, useGetBathhousesIdSchema } from '@/api/generated/bathhouses/bathhouses'
+import { useGetBathhousesBySlugSlug, useGetBathhousesIdAvailableSlots, useGetBathhousesIdSchema } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPhotos } from '@/api/generated/photos/photos'
 import { useGetBathhousesIdReviews } from '@/api/generated/reviews/reviews'
 import { useGetBathhousesIdSimilar } from '@/api/generated/recommendations/recommendations'
@@ -79,7 +79,7 @@ const AMENITY_LIST = [
 ] as const
 
 export default function BathhouseDetail() {
-  const { id } = useParams<{ id: string }>()
+  const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { message } = App.useApp()
@@ -87,10 +87,11 @@ export default function BathhouseDetail() {
   const [selectedDate, setSelectedDate] = useState<string>(dayjs().format('YYYY-MM-DD'))
   const [reviewPage, setReviewPage] = useState(1)
 
-  const { data: bathhouseData, isLoading } = useGetBathhousesId(id ?? '', {
-    query: { enabled: !!id },
+  const { data: bathhouseData, isLoading } = useGetBathhousesBySlugSlug(slug ?? '', {
+    query: { enabled: !!slug },
   })
   const bathhouse = bathhouseData?.data
+  const id = bathhouse?.id
 
   const { data: photosData } = useGetBathhousesIdPhotos(id ?? '', {
     query: { enabled: !!id },
@@ -140,7 +141,7 @@ export default function BathhouseDetail() {
   const favoriteMutation = usePostBathhousesIdFavorite({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [`/bathhouses/${id}`] })
+        queryClient.invalidateQueries({ queryKey: [`/bathhouses/by-slug/${slug}`] })
         queryClient.invalidateQueries({ queryKey: ['/my/favorites'] })
       },
       onError: () => message.error('Не удалось обновить избранное'),
@@ -490,6 +491,7 @@ export default function BathhouseDetail() {
                 <BathhouseCard
                   bathhouse={{
                     id: s.id,
+                    slug: s.slug,
                     name: s.name,
                     address: s.address,
                     price_per_hour: s.price_per_hour,

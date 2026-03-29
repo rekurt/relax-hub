@@ -238,7 +238,8 @@ export default function BathhouseSearch() {
   }
 
   const handleMarkerClick = (id: string) => {
-    navigate(`/client/bathhouse/${id}`)
+    const found = bathhouses.find((b) => b.id === id)
+    navigate(`/client/bathhouse/${found?.slug ?? id}`)
   }
 
   // Polygon for map display (convert [lng, lat] -> [lat, lng] for Yandex Maps)

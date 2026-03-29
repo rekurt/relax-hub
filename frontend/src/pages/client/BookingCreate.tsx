@@ -179,7 +179,7 @@ export default function BookingCreate() {
       <Button
         type="text"
         icon={<ArrowLeftOutlined />}
-        onClick={() => navigate(`/client/bathhouse/${bathhouseId}`)}
+        onClick={() => navigate(`/client/bathhouse/${bathhouse?.slug ?? bathhouseId}`)}
         style={{ marginBottom: 16 }}
       >
         Назад к бане
@@ -445,7 +445,7 @@ export default function BookingCreate() {
         >
           Забронировать
         </Button>
-        <Button size="large" onClick={() => navigate(`/client/bathhouse/${bathhouseId}`)}>
+        <Button size="large" onClick={() => navigate(`/client/bathhouse/${bathhouse?.slug ?? bathhouseId}`)}>
           Отмена
         </Button>
       </Space>

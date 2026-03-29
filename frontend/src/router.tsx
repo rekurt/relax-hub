@@ -140,7 +140,7 @@ export default function AppRouter() {
       >
         <Route index element={<ClientHome />} />
         <Route path="search" element={<BathhouseSearch />} />
-        <Route path="bathhouse/:id" element={<BathhouseDetail />} />
+        <Route path="bathhouse/:slug" element={<BathhouseDetail />} />
         <Route path="booking/new" element={<BookingCreate />} />
         <Route path="bookings" element={<ClientBookingList />} />
         <Route path="bookings/:id" element={<ClientBookingDetail />} />

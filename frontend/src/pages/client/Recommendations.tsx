@@ -17,7 +17,7 @@ function RecommendationCard({ item }: { item: InternalHandlerRecommendationRespo
   return (
     <Card
       hoverable
-      onClick={() => navigate(`/client/bathhouse/${item.id}`)}
+      onClick={() => navigate(`/client/bathhouse/${item.slug ?? item.id}`)}
     >
       <Title level={5} style={{ margin: 0, marginBottom: 8 }}>{item.name}</Title>
       {item.address && (

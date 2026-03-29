@@ -280,11 +280,11 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 - Modify: `frontend/src/pages/client/BathhouseDetail.tsx` — загрузка по slug
 - Modify: `frontend/src/pages/client/BathhouseSearch.tsx` — ссылки через slug
 
-- [ ] Добавить маршрут /bathhouses/:slug в router
-- [ ] BathhouseDetail: загрузка через getBySlug API
-- [ ] Обновить все ссылки на bathhouse: использовать slug вместо UUID
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task C4
+- [x] Добавить маршрут /bathhouses/:slug в router
+- [x] BathhouseDetail: загрузка через getBySlug API
+- [x] Обновить все ссылки на bathhouse: использовать slug вместо UUID
+- [x] Тесты
+- [x] run project test suite — must pass before Task C4
 
 ### Task C4: Бейдж "Last minute" в результатах поиска (FR-090)
 

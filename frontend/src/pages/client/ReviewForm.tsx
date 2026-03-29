@@ -96,7 +96,7 @@ export default function ReviewForm() {
       }
 
       queryClient.invalidateQueries({ queryKey: [`/bathhouses/${bathhouseId}/reviews`] })
-      navigate(`/client/bathhouse/${bathhouseId}`)
+      navigate(`/client/bathhouse/${bathhouse?.slug ?? bathhouseId}`)
     } catch {
       message.error(isEdit ? 'Не удалось обновить отзыв' : 'Не удалось отправить отзыв')
     } finally {
@@ -117,7 +117,7 @@ export default function ReviewForm() {
       <Button
         type="text"
         icon={<ArrowLeftOutlined />}
-        onClick={() => navigate(`/client/bathhouse/${bathhouseId}`)}
+        onClick={() => navigate(`/client/bathhouse/${bathhouse?.slug ?? bathhouseId}`)}
         style={{ marginBottom: 16 }}
       >
         Назад к бане
@@ -194,7 +194,7 @@ export default function ReviewForm() {
         </Button>
         <Button
           size="large"
-          onClick={() => navigate(`/client/bathhouse/${bathhouseId}`)}
+          onClick={() => navigate(`/client/bathhouse/${bathhouse?.slug ?? bathhouseId}`)}
         >
           Отмена
         </Button>

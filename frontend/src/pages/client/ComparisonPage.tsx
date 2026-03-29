@@ -202,7 +202,7 @@ export default function ComparisonPage() {
           <Button
             type="link"
             style={{ padding: 0, fontSize: 16, fontWeight: 600 }}
-            onClick={() => navigate(`/client/bathhouse/${item.id}`)}
+            onClick={() => navigate(`/client/bathhouse/${item.slug ?? item.id}`)}
           >
             {item.name}
           </Button>
