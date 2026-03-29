@@ -131,11 +131,11 @@ starting interactive plan creation
 [26-03-29 09:40:19]   - Modify: `internal/domain/bathhouse.go` — поле low_response_rate_since (timestamp)
 [26-03-29 09:40:19]   - Modify: `internal/service/booking_service.go` — CheckOwnerResponseRates: логика 60-дневного окна
 [26-03-29 09:40:19]   - Create: `migrations/XXXXXX_low_response_rate_tracking.up.sql`
-[26-03-29 09:40:19]   - [ ] Миграция: добавить low_response_rate_since в bathhouses
-[26-03-29 09:40:19]   - [ ] При rate < 30%: если low_response_rate_since null → установить текущую дату
-[26-03-29 09:40:19]   - [ ] Если low_response_rate_since > 60 дней → переключить booking_mode на instant или деактивировать
-[26-03-29 09:40:19]   - [ ] При rate >= 30%: сбросить low_response_rate_since
-[26-03-29 09:40:19]   - [ ] Тесты
+[26-03-29 09:40:19]   - [x] Миграция: добавить low_response_rate_since в bathhouses
+[26-03-29 09:40:19]   - [x] При rate < 30%: если low_response_rate_since null → установить текущую дату
+[26-03-29 09:40:19]   - [x] Если low_response_rate_since > 60 дней → переключить booking_mode на instant или деактивировать
+[26-03-29 09:40:19]   - [x] При rate >= 30%: сбросить low_response_rate_since
+[26-03-29 09:40:19]   - [x] Тесты
 [26-03-29 09:40:19] ### Task B4: Лояльность — кэшбэк на кошелёк (FR-112, FR-111)
 [26-03-29 09:40:19] **Проблема:** BRD упоминает cashback как тип зачисления на кошелёк (tag: cashback). Текущая
 [26-03-29 09:40:19] система только начисляет points, но не конвертирует их в реальный кэшбэк на кошелёк.
