@@ -434,8 +434,8 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/listing-drafts/{id}/submit", p.ListingDraftHandler.SubmitDraft)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Delete("/my/listing-drafts/{id}", p.ListingDraftHandler.DeleteDraft)
 
-		// Listing CSV import (authenticated owner)
-		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/listings/import", p.ListingImportHandler.ImportCSV)
+		// Listing import CSV/XLSX (authenticated owner)
+		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Post("/my/listings/import", p.ListingImportHandler.Import)
 		r.With(auth, middleware.RequireRole(domain.RoleOwner)).Get("/my/listings/import/template", p.ListingImportHandler.GetImportTemplate)
 
 		// Payouts (authenticated owner)

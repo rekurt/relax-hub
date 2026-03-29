@@ -447,13 +447,13 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/handler/listing_import_handler.go` (accept xlsx)
 - Add dependency: `github.com/xuri/excelize/v2`
 
-- [ ] Add excelize dependency for .xlsx parsing
-- [ ] Detect file format by Content-Type or extension
-- [ ] Parse xlsx with same column mapping as CSV
-- [ ] Provide downloadable xlsx template (with column headers and sample data)
-- [ ] Endpoint: same POST /api/v1/my/listings/import (accept both csv and xlsx)
-- [ ] Write tests for xlsx parsing
-- [ ] Run project test suite - must pass before task 23
+- [x] Add excelize dependency for .xlsx parsing
+- [x] Detect file format by Content-Type or extension
+- [x] Parse xlsx with same column mapping as CSV
+- [x] Provide downloadable xlsx template (with column headers and sample data)
+- [x] Endpoint: same POST /api/v1/my/listings/import (accept both csv and xlsx)
+- [x] Write tests for xlsx parsing
+- [x] Run project test suite - must pass before task 23
 
 ### Task 23: Search UI Enhancements (FR-043, FR-090, FR-044)
 

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/csv"
 	"fmt"
@@ -10,11 +11,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/xuri/excelize/v2"
 )
 
-// ListingImportService handles bulk CSV import of bathhouse listings.
+// ListingImportService handles bulk CSV/XLSX import of bathhouse listings.
 type ListingImportService interface {
 	ImportCSV(ctx context.Context, ownerID uuid.UUID, r io.Reader) (*ImportReport, error)
+	ImportXLSX(ctx context.Context, ownerID uuid.UUID, r io.Reader) (*ImportReport, error)
 }
 
 // ImportReport summarises the result of a CSV import.
@@ -271,10 +274,127 @@ func parseRow(record []string, colIndex map[string]int, rowNum int) (*CreateBath
 	}, nil
 }
 
+func (s *listingImportService) ImportXLSX(ctx context.Context, ownerID uuid.UUID, r io.Reader) (*ImportReport, error) {
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("read XLSX data: %w", err)
+	}
+
+	f, err := excelize.OpenReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf("open XLSX file: %w", err)
+	}
+	defer f.Close()
+
+	sheetName := f.GetSheetName(0)
+	if sheetName == "" {
+		return nil, fmt.Errorf("XLSX файл не содержит листов")
+	}
+
+	rows, err := f.GetRows(sheetName)
+	if err != nil {
+		return nil, fmt.Errorf("read XLSX rows: %w", err)
+	}
+
+	if len(rows) == 0 {
+		return nil, fmt.Errorf("XLSX файл пустой")
+	}
+
+	// First row is header
+	colIndex := buildColumnIndex(rows[0])
+	if err := validateHeader(colIndex); err != nil {
+		return nil, err
+	}
+
+	const maxRows = 500
+
+	report := &ImportReport{}
+
+	for i := 1; i < len(rows); i++ {
+		record := rows[i]
+		rowNum := i + 1 // 1-based, header is row 1
+		report.TotalRows++
+
+		if report.TotalRows > maxRows {
+			return report, fmt.Errorf("превышен лимит строк: максимум %d (обработано %d)", maxRows, report.SuccessCount)
+		}
+
+		input, rowErrors := parseRow(record, colIndex, rowNum)
+		if len(rowErrors) > 0 {
+			report.Errors = append(report.Errors, rowErrors...)
+			report.ErrorCount++
+			continue
+		}
+
+		bh, err := s.bathhouseSvc.Create(ctx, ownerID, *input)
+		if err != nil {
+			report.Errors = append(report.Errors, ImportError{
+				Row: rowNum, Message: fmt.Sprintf("ошибка создания: %v", err),
+			})
+			report.ErrorCount++
+			continue
+		}
+
+		report.SuccessCount++
+		report.CreatedIDs = append(report.CreatedIDs, bh.ID)
+	}
+
+	s.logger.Info("XLSX import complete",
+		"owner_id", ownerID,
+		"total", report.TotalRows,
+		"success", report.SuccessCount,
+		"errors", report.ErrorCount,
+	)
+
+	return report, nil
+}
+
 // CSVTemplate returns the CSV header line for the import template.
 func CSVTemplate() string {
 	return strings.Join(csvColumns, ",") + "\n" +
 		"Баня у Петра,Лучшая баня в городе,ул. Ленина 10,1,55.7558,37.6173,1500,2,10,1,1,0,0,1,0,https://example.com/photo1.jpg;https://example.com/photo2.jpg\n"
+}
+
+// XLSXTemplate generates an in-memory XLSX file with header row and sample data.
+func XLSXTemplate() (*bytes.Buffer, error) {
+	f := excelize.NewFile()
+	defer f.Close()
+
+	sheet := "Listings"
+	idx, err := f.NewSheet(sheet)
+	if err != nil {
+		return nil, fmt.Errorf("create sheet: %w", err)
+	}
+	f.SetActiveSheet(idx)
+	// Remove default Sheet1 if different
+	if sheet != "Sheet1" {
+		f.DeleteSheet("Sheet1")
+	}
+
+	// Write header
+	for i, col := range csvColumns {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		f.SetCellValue(sheet, cell, col)
+	}
+
+	// Write sample row
+	sampleRow := []interface{}{
+		"Баня у Петра", "Лучшая баня в городе", "ул. Ленина 10", 1,
+		55.7558, 37.6173, 1500, 2, 10,
+		1, 1, 0, 0, 1, 0,
+		"https://example.com/photo1.jpg;https://example.com/photo2.jpg",
+	}
+	for i, val := range sampleRow {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 2)
+		f.SetCellValue(sheet, cell, val)
+	}
+
+	buf, err := f.WriteToBuffer()
+	if err != nil {
+		return nil, fmt.Errorf("write XLSX: %w", err)
+	}
+
+	return buf, nil
 }
 
 // ValidateImportRow checks a single parsed row without creating a listing (for dry-run).
