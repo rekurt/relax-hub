@@ -21,13 +21,14 @@ func NewPromoHandler(promoService service.PromoService) *PromoHandler {
 }
 
 type createPromoRequest struct {
-	Code       string    `json:"code"`
-	Type       string    `json:"type"`
-	Value      int64     `json:"value"`
-	MaxUses    int       `json:"max_uses"`
-	MinAmount  int64     `json:"min_amount"`
-	ValidFrom  time.Time `json:"valid_from"`
-	ValidUntil time.Time `json:"valid_until"`
+	Code          string    `json:"code"`
+	Type          string    `json:"type"`
+	Value         int64     `json:"value"`
+	MaxUses       int       `json:"max_uses"`
+	MinAmount     int64     `json:"min_amount"`
+	TargetAddOnID *string   `json:"target_addon_id,omitempty"`
+	ValidFrom     time.Time `json:"valid_from"`
+	ValidUntil    time.Time `json:"valid_until"`
 }
 
 type validatePromoRequest struct {
@@ -37,19 +38,20 @@ type validatePromoRequest struct {
 }
 
 type promoResponse struct {
-	ID          string    `json:"id"`
-	Code        string    `json:"code"`
-	Type        string    `json:"type"`
-	Value       int64     `json:"value"`
-	BathhouseID *string   `json:"bathhouse_id,omitempty"`
-	CreatorID   string    `json:"creator_id"`
-	MaxUses     int       `json:"max_uses"`
-	CurrentUses int       `json:"current_uses"`
-	MinAmount   int64     `json:"min_amount"`
-	ValidFrom   time.Time `json:"valid_from"`
-	ValidUntil  time.Time `json:"valid_until"`
-	IsActive    bool      `json:"is_active"`
-	CreatedAt   time.Time `json:"created_at"`
+	ID            string    `json:"id"`
+	Code          string    `json:"code"`
+	Type          string    `json:"type"`
+	Value         int64     `json:"value"`
+	BathhouseID   *string   `json:"bathhouse_id,omitempty"`
+	CreatorID     string    `json:"creator_id"`
+	MaxUses       int       `json:"max_uses"`
+	CurrentUses   int       `json:"current_uses"`
+	MinAmount     int64     `json:"min_amount"`
+	TargetAddOnID *string   `json:"target_addon_id,omitempty"`
+	ValidFrom     time.Time `json:"valid_from"`
+	ValidUntil    time.Time `json:"valid_until"`
+	IsActive      bool      `json:"is_active"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 type validatePromoResponse struct {
@@ -77,6 +79,10 @@ func toPromoResponse(p *domain.PromoCode) promoResponse {
 	if p.BathhouseID != nil {
 		s := p.BathhouseID.String()
 		resp.BathhouseID = &s
+	}
+	if p.TargetAddOnID != nil {
+		s := p.TargetAddOnID.String()
+		resp.TargetAddOnID = &s
 	}
 	return resp
 }
@@ -130,6 +136,14 @@ func (h *PromoHandler) CreateForBathhouse(w http.ResponseWriter, r *http.Request
 		MinAmount:   req.MinAmount,
 		ValidFrom:   req.ValidFrom,
 		ValidUntil:  req.ValidUntil,
+	}
+	if req.TargetAddOnID != nil {
+		id, err := uuid.Parse(*req.TargetAddOnID)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid target_addon_id")
+			return
+		}
+		promo.TargetAddOnID = &id
 	}
 
 	created, err := h.promoService.Create(r.Context(), userID, userRole, promo)
@@ -296,6 +310,14 @@ func (h *PromoHandler) CreateGlobal(w http.ResponseWriter, r *http.Request) {
 		MinAmount:  req.MinAmount,
 		ValidFrom:  req.ValidFrom,
 		ValidUntil: req.ValidUntil,
+	}
+	if req.TargetAddOnID != nil {
+		id, err := uuid.Parse(*req.TargetAddOnID)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid target_addon_id")
+			return
+		}
+		promo.TargetAddOnID = &id
 	}
 
 	created, err := h.promoService.Create(r.Context(), userID, userRole, promo)

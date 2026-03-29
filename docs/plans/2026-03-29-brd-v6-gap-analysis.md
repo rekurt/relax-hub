@@ -378,11 +378,11 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 - Modify: `internal/service/promo_service.go` — логика применения
 - Modify: `internal/service/booking_service.go` — обнуление цены выбранного add-on
 
-- [ ] Новый тип промо: free_addon с полем target_addon_id
-- [ ] При применении: скидка = цена указанного add-on
-- [ ] Валидация: add-on должен быть в списке bathhouse add-ons
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task E2
+- [x] Новый тип промо: free_addon с полем target_addon_id
+- [x] При применении: скидка = цена указанного add-on
+- [x] Валидация: add-on должен быть в списке bathhouse add-ons
+- [x] Тесты
+- [x] run project test suite — must pass before Task E2
 
 ### Task E2: Фискализация — адаптация по типу налогового статуса (FR-105)
 

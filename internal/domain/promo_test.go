@@ -30,6 +30,11 @@ func TestPromoTypeIsValid(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "free addon type is valid",
+			typ:      PromoTypeFreeAddon,
+			expected: true,
+		},
+		{
 			name:     "invalid type",
 			typ:      PromoType("invalid"),
 			expected: false,
@@ -206,6 +211,46 @@ func TestPromoCodeValidate(t *testing.T) {
 				CreatorID:  creatorID,
 				ValidFrom:  now,
 				ValidUntil: now,
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid free_addon promo",
+			promo: &PromoCode{
+				Code:          "FREEADD",
+				Type:          PromoTypeFreeAddon,
+				Value:         0,
+				BathhouseID:   &bathhouseID,
+				TargetAddOnID: &bathhouseID, // reuse as UUID placeholder
+				CreatorID:     creatorID,
+				ValidFrom:     now,
+				ValidUntil:    now.AddDate(0, 0, 30),
+			},
+			wantErr: false,
+		},
+		{
+			name: "free_addon without target addon id",
+			promo: &PromoCode{
+				Code:        "FREEADD2",
+				Type:        PromoTypeFreeAddon,
+				Value:       0,
+				BathhouseID: &bathhouseID,
+				CreatorID:   creatorID,
+				ValidFrom:   now,
+				ValidUntil:  now.AddDate(0, 0, 30),
+			},
+			wantErr: true,
+		},
+		{
+			name: "free_addon without bathhouse id",
+			promo: &PromoCode{
+				Code:          "FREEADD3",
+				Type:          PromoTypeFreeAddon,
+				Value:         0,
+				TargetAddOnID: &bathhouseID,
+				CreatorID:     creatorID,
+				ValidFrom:     now,
+				ValidUntil:    now.AddDate(0, 0, 30),
 			},
 			wantErr: true,
 		},

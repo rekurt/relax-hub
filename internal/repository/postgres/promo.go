@@ -31,13 +31,13 @@ func (r *promoRepo) Create(ctx context.Context, promo *domain.PromoCode) error {
 	}
 
 	query := `
-		INSERT INTO promo_codes (id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, valid_from, valid_until, is_active, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`
+		INSERT INTO promo_codes (id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, target_addon_id, valid_from, valid_until, is_active, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
 
 	_, err := r.pool.Exec(ctx, query,
 		promo.ID, promo.Code, string(promo.Type), promo.Value,
 		promo.BathhouseID, promo.CreatorID, promo.MaxUses, promo.CurrentUses,
-		promo.MinAmount, promo.ValidFrom, promo.ValidUntil, promo.IsActive, promo.CreatedAt,
+		promo.MinAmount, promo.TargetAddOnID, promo.ValidFrom, promo.ValidUntil, promo.IsActive, promo.CreatedAt,
 	)
 	if err != nil {
 		if isDuplicateKeyError(err) {
@@ -50,7 +50,7 @@ func (r *promoRepo) Create(ctx context.Context, promo *domain.PromoCode) error {
 
 func (r *promoRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.PromoCode, error) {
 	query := `
-		SELECT id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, valid_from, valid_until, is_active, created_at
+		SELECT id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, target_addon_id, valid_from, valid_until, is_active, created_at
 		FROM promo_codes WHERE id = $1`
 
 	return r.scanPromo(ctx, query, id)
@@ -58,7 +58,7 @@ func (r *promoRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.PromoCod
 
 func (r *promoRepo) GetByCode(ctx context.Context, code string) (*domain.PromoCode, error) {
 	query := `
-		SELECT id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, valid_from, valid_until, is_active, created_at
+		SELECT id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, target_addon_id, valid_from, valid_until, is_active, created_at
 		FROM promo_codes WHERE code = $1`
 
 	return r.scanPromo(ctx, query, code)
@@ -69,7 +69,7 @@ func (r *promoRepo) scanPromo(ctx context.Context, query string, arg any) (*doma
 	err := r.pool.QueryRow(ctx, query, arg).Scan(
 		&promo.ID, &promo.Code, &promo.Type, &promo.Value,
 		&promo.BathhouseID, &promo.CreatorID, &promo.MaxUses, &promo.CurrentUses,
-		&promo.MinAmount, &promo.ValidFrom, &promo.ValidUntil, &promo.IsActive, &promo.CreatedAt,
+		&promo.MinAmount, &promo.TargetAddOnID, &promo.ValidFrom, &promo.ValidUntil, &promo.IsActive, &promo.CreatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -84,13 +84,13 @@ func (r *promoRepo) Update(ctx context.Context, promo *domain.PromoCode) error {
 	query := `
 		UPDATE promo_codes
 		SET code = $2, type = $3, value = $4, bathhouse_id = $5, max_uses = $6,
-			min_amount = $7, valid_from = $8, valid_until = $9, is_active = $10
+			min_amount = $7, target_addon_id = $8, valid_from = $9, valid_until = $10, is_active = $11
 		WHERE id = $1`
 
 	result, err := r.pool.Exec(ctx, query,
 		promo.ID, promo.Code, string(promo.Type), promo.Value,
 		promo.BathhouseID, promo.MaxUses, promo.MinAmount,
-		promo.ValidFrom, promo.ValidUntil, promo.IsActive,
+		promo.TargetAddOnID, promo.ValidFrom, promo.ValidUntil, promo.IsActive,
 	)
 	if err != nil {
 		if isDuplicateKeyError(err) {
@@ -122,7 +122,7 @@ func (r *promoRepo) ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID, 
 
 	offset := (page - 1) * pageSize
 	query := `
-		SELECT id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, valid_from, valid_until, is_active, created_at
+		SELECT id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, target_addon_id, valid_from, valid_until, is_active, created_at
 		FROM promo_codes
 		WHERE bathhouse_id = $1
 		ORDER BY created_at DESC
@@ -144,7 +144,7 @@ func (r *promoRepo) scanPromoList(ctx context.Context, query string, totalCount 
 		if err := rows.Scan(
 			&promo.ID, &promo.Code, &promo.Type, &promo.Value,
 			&promo.BathhouseID, &promo.CreatorID, &promo.MaxUses, &promo.CurrentUses,
-			&promo.MinAmount, &promo.ValidFrom, &promo.ValidUntil, &promo.IsActive, &promo.CreatedAt,
+			&promo.MinAmount, &promo.TargetAddOnID, &promo.ValidFrom, &promo.ValidUntil, &promo.IsActive, &promo.CreatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan promo code: %w", err)
 		}
@@ -181,7 +181,7 @@ func (r *promoRepo) ListByCreator(ctx context.Context, creatorID uuid.UUID, page
 
 	offset := (page - 1) * pageSize
 	query := `
-		SELECT id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, valid_from, valid_until, is_active, created_at
+		SELECT id, code, type, value, bathhouse_id, creator_id, max_uses, current_uses, min_amount, target_addon_id, valid_from, valid_until, is_active, created_at
 		FROM promo_codes
 		WHERE creator_id = $1
 		ORDER BY created_at DESC

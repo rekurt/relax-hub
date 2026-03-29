@@ -392,10 +392,24 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	var promoDiscount int64
 	originalPriceBeforePromo := totalPrice
 	if input.PromoCode != "" {
-		_, promoDiscount, err = s.promoSvc.Validate(ctx, input.PromoCode, input.BathhouseID, totalPrice)
-		if err != nil {
-			return nil, err
+		promo, discount, promoErr := s.promoSvc.Validate(ctx, input.PromoCode, input.BathhouseID, totalPrice)
+		if promoErr != nil {
+			return nil, promoErr
 		}
+		// For free_addon promo: verify the target add-on is included in the booking
+		if promo.Type == domain.PromoTypeFreeAddon && promo.TargetAddOnID != nil {
+			addonIncluded := false
+			for _, sel := range input.AddOns {
+				if sel.AddOnID == *promo.TargetAddOnID {
+					addonIncluded = true
+					break
+				}
+			}
+			if !addonIncluded {
+				return nil, domain.ErrPromoInvalid
+			}
+		}
+		promoDiscount = discount
 		totalPrice -= promoDiscount
 		if totalPrice <= 0 {
 			totalPrice = 1

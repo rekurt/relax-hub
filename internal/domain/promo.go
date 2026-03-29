@@ -12,30 +12,32 @@ const (
 	PromoTypePercentage  PromoType = "percentage"
 	PromoTypeFixedAmount PromoType = "fixed_amount"
 	PromoTypeFreeHour    PromoType = "free_hour"
+	PromoTypeFreeAddon   PromoType = "free_addon"
 )
 
 func (t PromoType) IsValid() bool {
 	switch t {
-	case PromoTypePercentage, PromoTypeFixedAmount, PromoTypeFreeHour:
+	case PromoTypePercentage, PromoTypeFixedAmount, PromoTypeFreeHour, PromoTypeFreeAddon:
 		return true
 	}
 	return false
 }
 
 type PromoCode struct {
-	ID          uuid.UUID
-	Code        string     // uppercase, unique
-	Type        PromoType  // percentage, fixed_amount, free_hour
-	Value       int64      // percent (10 = 10%) or amount in kopecks
-	BathhouseID *uuid.UUID // nil = global
-	CreatorID   uuid.UUID  // owner or admin
-	MaxUses     int        // 0 = unlimited
-	CurrentUses int
-	MinAmount   int64 // minimum booking amount in kopecks
-	ValidFrom   time.Time
-	ValidUntil  time.Time
-	IsActive    bool
-	CreatedAt   time.Time
+	ID            uuid.UUID
+	Code          string     // uppercase, unique
+	Type          PromoType  // percentage, fixed_amount, free_hour, free_addon
+	Value         int64      // percent (10 = 10%) or amount in kopecks; ignored for free_addon
+	BathhouseID   *uuid.UUID // nil = global (free_addon requires non-nil)
+	CreatorID     uuid.UUID  // owner or admin
+	MaxUses       int        // 0 = unlimited
+	CurrentUses   int
+	MinAmount     int64      // minimum booking amount in kopecks
+	TargetAddOnID *uuid.UUID // required for free_addon type: the add-on to make free
+	ValidFrom     time.Time
+	ValidUntil    time.Time
+	IsActive      bool
+	CreatedAt     time.Time
 }
 
 func (p *PromoCode) Validate() error {
@@ -45,8 +47,18 @@ func (p *PromoCode) Validate() error {
 	if !p.Type.IsValid() {
 		return ErrInvalidInput
 	}
-	if p.Value <= 0 {
-		return ErrInvalidInput
+	if p.Type == PromoTypeFreeAddon {
+		// free_addon: Value is ignored, but TargetAddOnID and BathhouseID are required
+		if p.TargetAddOnID == nil || *p.TargetAddOnID == uuid.Nil {
+			return ErrInvalidInput
+		}
+		if p.BathhouseID == nil || *p.BathhouseID == uuid.Nil {
+			return ErrInvalidInput
+		}
+	} else {
+		if p.Value <= 0 {
+			return ErrInvalidInput
+		}
 	}
 	if p.Type == PromoTypePercentage && p.Value > 100 {
 		return ErrInvalidInput

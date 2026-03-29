@@ -15,20 +15,23 @@ import (
 type promoTestEnv struct {
 	svc       service.PromoService
 	promoRepo *mock.PromoCodeRepo
+	addonRepo *mock.AddOnRepo
 	bhRepo    *mock.BathhouseRepo
 	repRepo   *mock.RepresentativeRepo
 }
 
 func newPromoTestEnv() *promoTestEnv {
 	promoRepo := mock.NewPromoCodeRepo().(*mock.PromoCodeRepo)
+	addonRepo := mock.NewAddOnRepo()
 	bhRepo := mock.NewBathhouseRepo()
 	repRepo := mock.NewRepresentativeRepo()
 	accessCheck := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPromoService(promoRepo, accessCheck, log)
+	svc := service.NewPromoService(promoRepo, addonRepo, accessCheck, log)
 	return &promoTestEnv{
 		svc:       svc,
 		promoRepo: promoRepo,
+		addonRepo: addonRepo,
 		bhRepo:    bhRepo,
 		repRepo:   repRepo,
 	}
@@ -509,5 +512,210 @@ func TestPromoService_ListByBathhouse_Forbidden(t *testing.T) {
 	_, err := env.svc.ListByBathhouse(context.Background(), otherUserID, domain.RoleOwner, bh.ID, 1, 10)
 	if err != domain.ErrForbidden {
 		t.Errorf("err = %v, want ErrForbidden", err)
+	}
+}
+
+// --- Free Addon ---
+
+func TestPromoService_Create_FreeAddon_Success(t *testing.T) {
+	env := newPromoTestEnv()
+	ownerID := uuid.New()
+	bh := createPromoBathhouse(env, ownerID)
+
+	addon := &domain.AddOn{
+		ID:          uuid.New(),
+		BathhouseID: bh.ID,
+		Name:        "Веник дубовый",
+		Price:       50000,
+		Unit:        domain.AddOnUnitPerItem,
+		IsActive:    true,
+	}
+	if err := env.addonRepo.Create(context.Background(), addon); err != nil {
+		t.Fatalf("setup addon: %v", err)
+	}
+
+	promo := &domain.PromoCode{
+		Code:          "FREEOAK",
+		Type:          domain.PromoTypeFreeAddon,
+		Value:         1,
+		BathhouseID:   &bh.ID,
+		TargetAddOnID: &addon.ID,
+		MaxUses:       100,
+		MinAmount:     0,
+		ValidFrom:     time.Now().Add(-time.Hour),
+		ValidUntil:    time.Now().Add(24 * time.Hour),
+	}
+
+	result, err := env.svc.Create(context.Background(), ownerID, domain.RoleOwner, promo)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Type != domain.PromoTypeFreeAddon {
+		t.Errorf("type = %q, want free_addon", result.Type)
+	}
+	if result.TargetAddOnID == nil || *result.TargetAddOnID != addon.ID {
+		t.Error("target_addon_id mismatch")
+	}
+}
+
+func TestPromoService_Create_FreeAddon_MissingTargetAddon(t *testing.T) {
+	env := newPromoTestEnv()
+	ownerID := uuid.New()
+	bh := createPromoBathhouse(env, ownerID)
+
+	promo := &domain.PromoCode{
+		Code:        "FREENOTHING",
+		Type:        domain.PromoTypeFreeAddon,
+		Value:       1,
+		BathhouseID: &bh.ID,
+		MaxUses:     100,
+		ValidFrom:   time.Now().Add(-time.Hour),
+		ValidUntil:  time.Now().Add(24 * time.Hour),
+	}
+
+	_, err := env.svc.Create(context.Background(), ownerID, domain.RoleOwner, promo)
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput", err)
+	}
+}
+
+func TestPromoService_Create_FreeAddon_NoBathhouse(t *testing.T) {
+	env := newPromoTestEnv()
+	adminID := uuid.New()
+	addonID := uuid.New()
+
+	promo := &domain.PromoCode{
+		Code:          "FREEGLOBAL",
+		Type:          domain.PromoTypeFreeAddon,
+		Value:         1,
+		TargetAddOnID: &addonID,
+		MaxUses:       100,
+		ValidFrom:     time.Now().Add(-time.Hour),
+		ValidUntil:    time.Now().Add(24 * time.Hour),
+	}
+
+	_, err := env.svc.Create(context.Background(), adminID, domain.RoleAdmin, promo)
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput", err)
+	}
+}
+
+func TestPromoService_Create_FreeAddon_WrongBathhouse(t *testing.T) {
+	env := newPromoTestEnv()
+	ownerID := uuid.New()
+	bh := createPromoBathhouse(env, ownerID)
+
+	otherBhID := uuid.New()
+	addon := &domain.AddOn{
+		ID:          uuid.New(),
+		BathhouseID: otherBhID,
+		Name:        "Веник берёзовый",
+		Price:       30000,
+		Unit:        domain.AddOnUnitPerItem,
+		IsActive:    true,
+	}
+	if err := env.addonRepo.Create(context.Background(), addon); err != nil {
+		t.Fatalf("setup addon: %v", err)
+	}
+
+	promo := &domain.PromoCode{
+		Code:          "FREEWRONG",
+		Type:          domain.PromoTypeFreeAddon,
+		Value:         1,
+		BathhouseID:   &bh.ID,
+		TargetAddOnID: &addon.ID,
+		MaxUses:       100,
+		ValidFrom:     time.Now().Add(-time.Hour),
+		ValidUntil:    time.Now().Add(24 * time.Hour),
+	}
+
+	_, err := env.svc.Create(context.Background(), ownerID, domain.RoleOwner, promo)
+	if err != domain.ErrInvalidInput {
+		t.Errorf("err = %v, want ErrInvalidInput", err)
+	}
+}
+
+func TestPromoService_Validate_FreeAddon_Success(t *testing.T) {
+	env := newPromoTestEnv()
+	ownerID := uuid.New()
+	bh := createPromoBathhouse(env, ownerID)
+
+	addon := &domain.AddOn{
+		ID:          uuid.New(),
+		BathhouseID: bh.ID,
+		Name:        "Веник дубовый",
+		Price:       50000,
+		Unit:        domain.AddOnUnitPerItem,
+		IsActive:    true,
+	}
+	if err := env.addonRepo.Create(context.Background(), addon); err != nil {
+		t.Fatalf("setup addon: %v", err)
+	}
+
+	promo := &domain.PromoCode{
+		Code:          "FREEOAK",
+		Type:          domain.PromoTypeFreeAddon,
+		Value:         1,
+		BathhouseID:   &bh.ID,
+		TargetAddOnID: &addon.ID,
+		MaxUses:       100,
+		ValidFrom:     time.Now().Add(-time.Hour),
+		ValidUntil:    time.Now().Add(24 * time.Hour),
+	}
+	if _, err := env.svc.Create(context.Background(), ownerID, domain.RoleOwner, promo); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	result, discount, err := env.svc.Validate(context.Background(), "FREEOAK", bh.ID, 300000)
+	if err != nil {
+		t.Fatalf("validate: %v", err)
+	}
+	if result.Type != domain.PromoTypeFreeAddon {
+		t.Errorf("type = %q, want free_addon", result.Type)
+	}
+	if discount != 50000 {
+		t.Errorf("discount = %d, want 50000 (addon price)", discount)
+	}
+}
+
+func TestPromoService_Apply_FreeAddon_Success(t *testing.T) {
+	env := newPromoTestEnv()
+	ownerID := uuid.New()
+	bh := createPromoBathhouse(env, ownerID)
+
+	addon := &domain.AddOn{
+		ID:          uuid.New(),
+		BathhouseID: bh.ID,
+		Name:        "Веник дубовый",
+		Price:       50000,
+		Unit:        domain.AddOnUnitPerItem,
+		IsActive:    true,
+	}
+	if err := env.addonRepo.Create(context.Background(), addon); err != nil {
+		t.Fatalf("setup addon: %v", err)
+	}
+
+	promo := &domain.PromoCode{
+		Code:          "FREEOAK",
+		Type:          domain.PromoTypeFreeAddon,
+		Value:         1,
+		BathhouseID:   &bh.ID,
+		TargetAddOnID: &addon.ID,
+		MaxUses:       100,
+		ValidFrom:     time.Now().Add(-time.Hour),
+		ValidUntil:    time.Now().Add(24 * time.Hour),
+	}
+	if _, err := env.svc.Create(context.Background(), ownerID, domain.RoleOwner, promo); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	userID := uuid.New()
+	bookingID := uuid.New()
+	discount, err := env.svc.Apply(context.Background(), userID, "FREEOAK", bookingID, bh.ID, 300000)
+	if err != nil {
+		t.Fatalf("apply: %v", err)
+	}
+	if discount != 50000 {
+		t.Errorf("discount = %d, want 50000", discount)
 	}
 }

@@ -907,8 +907,8 @@ func newBookingServiceWithPromo() (service.BookingService, *mock.BathhouseRepo, 
 	log := logger.New(logger.LevelWarn)
 	pricingSvc := service.NewPricingService(pricingRepo, nil, bhRepo, nil, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
-	promoSvc := service.NewPromoService(promoRepo, access, log)
 	addonRepo := mock.NewAddOnRepo()
+	promoSvc := service.NewPromoService(promoRepo, addonRepo, access, log)
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
 	svc := service.NewBookingService(bookingRepo, bhRepo, mock.NewSlotBlockRepo(), addonRepo, mock.NewUserRepo(), mock.NewCityRepo(), pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, promoSvc, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, nil, nil, access, &noopNotifService{}, log)
 	return svc, bhRepo, bookingRepo, promoSvc

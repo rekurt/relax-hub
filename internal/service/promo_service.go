@@ -23,17 +23,20 @@ type PromoService interface {
 
 type promoService struct {
 	promoRepo repository.PromoCodeRepository
+	addonRepo repository.AddOnRepository
 	access    *AccessChecker
 	logger    *logger.Logger
 }
 
 func NewPromoService(
 	promoRepo repository.PromoCodeRepository,
+	addonRepo repository.AddOnRepository,
 	access *AccessChecker,
 	log *logger.Logger,
 ) PromoService {
 	return &promoService{
 		promoRepo: promoRepo,
+		addonRepo: addonRepo,
 		access:    access,
 		logger:    log,
 	}
@@ -57,6 +60,17 @@ func (s *promoService) Create(ctx context.Context, userID uuid.UUID, userRole do
 
 	if err := promo.Validate(); err != nil {
 		return nil, err
+	}
+
+	// For free_addon: validate the target add-on exists and belongs to the bathhouse
+	if promo.Type == domain.PromoTypeFreeAddon {
+		addon, err := s.addonRepo.GetByID(ctx, *promo.TargetAddOnID)
+		if err != nil {
+			return nil, domain.ErrAddOnNotFound
+		}
+		if addon.BathhouseID != *promo.BathhouseID {
+			return nil, domain.ErrInvalidInput
+		}
 	}
 
 	promo.ID = uuid.New()
@@ -87,7 +101,10 @@ func (s *promoService) Validate(ctx context.Context, code string, bathhouseID uu
 		return nil, 0, err
 	}
 
-	discount := s.calculateDiscount(promo, amount)
+	discount, err := s.calculateDiscount(ctx, promo, amount)
+	if err != nil {
+		return nil, 0, err
+	}
 	return promo, discount, nil
 }
 
@@ -106,7 +123,10 @@ func (s *promoService) Apply(ctx context.Context, userID uuid.UUID, code string,
 		return 0, err
 	}
 
-	discount := s.calculateDiscount(promo, amount)
+	discount, err := s.calculateDiscount(ctx, promo, amount)
+	if err != nil {
+		return 0, err
+	}
 
 	usage := &domain.PromoUsage{
 		ID:             uuid.New(),
@@ -200,26 +220,39 @@ func (s *promoService) checkPromoValidity(promo *domain.PromoCode, bathhouseID u
 	return nil
 }
 
-func (s *promoService) calculateDiscount(promo *domain.PromoCode, amount int64) int64 {
+func (s *promoService) calculateDiscount(ctx context.Context, promo *domain.PromoCode, amount int64) (int64, error) {
 	switch promo.Type {
 	case domain.PromoTypePercentage:
 		discount := amount * promo.Value / 100
 		if discount > amount {
 			discount = amount
 		}
-		return discount
+		return discount, nil
 	case domain.PromoTypeFixedAmount:
 		if promo.Value > amount {
-			return amount
+			return amount, nil
 		}
-		return promo.Value
+		return promo.Value, nil
 	case domain.PromoTypeFreeHour:
 		// Value represents the hourly rate to subtract
 		if promo.Value > amount {
-			return amount
+			return amount, nil
 		}
-		return promo.Value
+		return promo.Value, nil
+	case domain.PromoTypeFreeAddon:
+		if promo.TargetAddOnID == nil {
+			return 0, domain.ErrPromoInvalid
+		}
+		addon, err := s.addonRepo.GetByID(ctx, *promo.TargetAddOnID)
+		if err != nil {
+			return 0, domain.ErrAddOnNotFound
+		}
+		discount := addon.Price
+		if discount > amount {
+			return amount, nil
+		}
+		return discount, nil
 	default:
-		return 0
+		return 0, nil
 	}
 }
