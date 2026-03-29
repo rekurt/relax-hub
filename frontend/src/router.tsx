@@ -87,6 +87,7 @@ import AdminNotificationCenter from '@/pages/admin/AdminNotificationCenter'
 import GeoHeatmap from '@/pages/admin/GeoHeatmap'
 import OAuthCallback from '@/pages/OAuthCallback'
 import ShareRedirect from '@/pages/ShareRedirect'
+import OwnerAnalytics from '@/pages/analytics/OwnerAnalytics'
 import FinanceDashboard from '@/pages/finance/FinanceDashboard'
 import PayoutPage from '@/pages/finance/PayoutPage'
 import FinancialReports from '@/pages/finance/FinancialReports'
@@ -118,6 +119,7 @@ export default function AppRouter() {
         <Route path="reviews" element={<ReviewList />} />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="pricing" element={<PricingRules />} />
+        <Route path="analytics" element={<OwnerAnalytics />} />
         <Route path="promo" element={<PromoList />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="representatives" element={<RepresentativeList />} />

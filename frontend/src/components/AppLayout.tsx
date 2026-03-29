@@ -33,6 +33,7 @@ import {
   MenuOutlined,
   SettingOutlined,
   ApiOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -51,6 +52,7 @@ function useMenuItems(unreadCount: number): MenuProps['items'] {
     { key: '/reviews', icon: <StarOutlined />, label: 'Отзывы' },
     { key: '/calendar', icon: <ScheduleOutlined />, label: 'Календарь' },
     { key: '/pricing', icon: <DollarOutlined />, label: 'Цены' },
+    { key: '/analytics', icon: <BarChartOutlined />, label: 'Аналитика' },
     { key: '/promo', icon: <GiftOutlined />, label: 'Промокоды' },
     {
       key: '/chat',
@@ -108,6 +110,7 @@ const breadcrumbNameMap: Record<string, string> = {
   '/reviews': 'Отзывы',
   '/calendar': 'Календарь',
   '/pricing': 'Цены',
+  '/analytics': 'Аналитика',
   '/promo': 'Промокоды',
   '/chat': 'Чат',
   '/representatives': 'Представители',

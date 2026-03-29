@@ -137,11 +137,11 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/router.tsx`
 - Modify: `frontend/src/components/AppLayout.tsx`
 
-- [ ] Add smart pricing recommendation widget to PricingRules: shows recommended price coefficient (0.8-1.5) based on occupancy/demand/competitors, accept/dismiss buttons (FR-089)
-- [ ] Build OwnerAnalytics page with: occupancy chart (% filled slots by period), income dynamics (week/month/year line chart), page views & conversion rate, anonymous competitor comparison (avg price, occupancy, rating in area), CRM metrics (unique guests, repeat rate, avg LTV)
-- [ ] Add routes `/analytics` and sidebar link
-- [ ] Write tests for analytics page rendering, smart pricing widget
-- [ ] Run project test suite + lint
+- [x] Add smart pricing recommendation widget to PricingRules: shows recommended price coefficient (0.8-1.5) based on occupancy/demand/competitors, accept/dismiss buttons (FR-089)
+- [x] Build OwnerAnalytics page with: occupancy chart (% filled slots by period), income dynamics (week/month/year line chart), page views & conversion rate, anonymous competitor comparison (avg price, occupancy, rating in area), CRM metrics (unique guests, repeat rate, avg LTV)
+- [x] Add routes `/analytics` and sidebar link
+- [x] Write tests for analytics page rendering, smart pricing widget
+- [x] Run project test suite + lint
 
 ### Task 10: Owner Listing Enhancements - Import, Duplicate, Completeness (FR-025, FR-032, FR-033)
 

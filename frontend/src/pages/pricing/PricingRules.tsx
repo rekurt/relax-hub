@@ -24,6 +24,8 @@ import {
   ArrowUpOutlined,
   ArrowDownOutlined,
   BulbOutlined,
+  CheckOutlined,
+  CloseOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
@@ -358,6 +360,24 @@ export default function PricingRules() {
     staleTime: 5 * 60 * 1000,
   })
 
+  const [recommendationDismissed, setRecommendationDismissed] = useState(false)
+
+  const acceptRecommendationMutation = useMutation({
+    mutationFn: async (recommendedPrice: number) => {
+      await axiosInstance.put(`/my/bathhouses/${selectedBathhouseId}`, {
+        base_price: recommendedPrice,
+      })
+    },
+    onSuccess: () => {
+      message.success('Рекомендованная цена применена')
+      setRecommendationDismissed(true)
+      queryClient.invalidateQueries({ queryKey: ['price-recommendation', selectedBathhouseId] })
+    },
+    onError: () => {
+      message.error('Не удалось применить рекомендацию')
+    },
+  })
+
   const formatPrice = (kopecks: number) => `${(kopecks / 100).toLocaleString('ru-RU')} ₽`
   const demandTrendLabel: Record<string, string> = {
     growing: 'Растущий',
@@ -556,11 +576,31 @@ export default function PricingRules() {
         </Button>
       </div>
 
-      {recommendationData && (
+      {recommendationData && !recommendationDismissed && (
         <Card
           size="small"
           style={{ marginBottom: 16 }}
           title={<><BulbOutlined /> Рекомендация по цене</>}
+          extra={
+            <Space>
+              <Button
+                type="primary"
+                size="small"
+                icon={<CheckOutlined />}
+                loading={acceptRecommendationMutation.isPending}
+                onClick={() => acceptRecommendationMutation.mutate(recommendationData.recommended_price)}
+              >
+                Применить
+              </Button>
+              <Button
+                size="small"
+                icon={<CloseOutlined />}
+                onClick={() => setRecommendationDismissed(true)}
+              >
+                Скрыть
+              </Button>
+            </Space>
+          }
         >
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
             <Statistic title="Текущая цена/час" value={formatPrice(recommendationData.current_price)} />

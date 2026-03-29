@@ -17,6 +17,23 @@ vi.mock('@/stores/bathhouse', () => ({
   useBathhouseStore: vi.fn(),
 }))
 
+vi.mock('@/api/axios-instance', () => ({
+  axiosInstance: {
+    get: vi.fn().mockImplementation((url: string) => {
+      if (url.includes('price-recommendation')) {
+        return Promise.resolve({ data: { success: true, data: null } })
+      }
+      if (url.includes('seasonal-tariffs')) {
+        return Promise.resolve({ data: { success: true, data: [] } })
+      }
+      return Promise.resolve({ data: { success: true, data: [] } })
+    }),
+    put: vi.fn().mockResolvedValue({ data: { success: true } }),
+    post: vi.fn().mockResolvedValue({ data: { success: true } }),
+    delete: vi.fn().mockResolvedValue({ data: { success: true } }),
+  },
+}))
+
 import {
   useGetMyBathhousesIdPricingRules,
   usePostMyBathhousesIdPricingRules,
@@ -24,6 +41,7 @@ import {
   useDeletePricingRulesId,
 } from '@/api/generated/pricing/pricing'
 import { useBathhouseStore } from '@/stores/bathhouse'
+import { axiosInstance } from '@/api/axios-instance'
 
 function renderWithProviders(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -321,5 +339,64 @@ describe('PricingRules', () => {
     const rows = within(tables[0]!).getAllByRole('row')
     // header + 3 data rows
     expect(rows.length).toBeGreaterThanOrEqual(4)
+  })
+
+  describe('Smart Pricing Widget', () => {
+    const mockRecommendation = {
+      current_price: 300000,
+      recommended_price: 350000,
+      coefficient: 1.17,
+      avg_area_price: 320000,
+      occupancy_rate: 0.72,
+      demand_trend: 'growing',
+      recommendation_basis: 'Высокий спрос в вашем районе',
+    }
+
+    beforeEach(() => {
+      vi.mocked(axiosInstance.get).mockImplementation((url: string) => {
+        if (url.includes('price-recommendation')) {
+          return Promise.resolve({ data: { success: true, data: mockRecommendation } })
+        }
+        if (url.includes('seasonal-tariffs')) {
+          return Promise.resolve({ data: { success: true, data: [] } })
+        }
+        return Promise.resolve({ data: { success: true, data: [] } })
+      })
+    })
+
+    it('renders recommendation card with accept and dismiss buttons', async () => {
+      mockBathhouseStore('bath-1')
+      vi.mocked(useGetMyBathhousesIdPricingRules).mockReturnValue({
+        data: { data: [], success: true },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetMyBathhousesIdPricingRules>)
+
+      renderWithProviders(<PricingRules />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Рекомендация по цене')).toBeInTheDocument()
+      })
+
+      expect(screen.getByText('Применить')).toBeInTheDocument()
+      expect(screen.getByText('Скрыть')).toBeInTheDocument()
+    })
+
+    it('hides recommendation card when dismiss is clicked', async () => {
+      mockBathhouseStore('bath-1')
+      vi.mocked(useGetMyBathhousesIdPricingRules).mockReturnValue({
+        data: { data: [], success: true },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetMyBathhousesIdPricingRules>)
+
+      renderWithProviders(<PricingRules />)
+
+      await waitFor(() => {
+        expect(screen.getByText('Рекомендация по цене')).toBeInTheDocument()
+      })
+
+      fireEvent.click(screen.getByText('Скрыть'))
+
+      expect(screen.queryByText('Рекомендация по цене')).not.toBeInTheDocument()
+    })
   })
 })
