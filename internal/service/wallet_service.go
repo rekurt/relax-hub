@@ -510,6 +510,7 @@ func (s *walletService) ExpireBonusesForWallet(ctx context.Context, walletID uui
 	if newBalance < 0 {
 		newBalance = 0
 	}
+	actualDeducted := wallet.Balance - newBalance
 
 	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
 		s.logger.Error("bonuses marked expired but failed to deduct balance, needs reconciliation",
@@ -517,12 +518,13 @@ func (s *walletService) ExpireBonusesForWallet(ctx context.Context, walletID uui
 		return 0, err
 	}
 
-	// Record expiration transaction
+	// Record expiration transaction with the actual deducted amount (may be less
+	// than totalExpired if bonus amounts were partially spent).
 	expiryTx := &domain.WalletTransaction{
 		ID:           uuid.New(),
 		WalletID:     walletID,
 		Type:         domain.WalletTxBonusExpiry,
-		Amount:       totalExpired,
+		Amount:       actualDeducted,
 		BalanceAfter: newBalance,
 		Status:       domain.WalletTxStatusCompleted,
 		Description:  "Истечение срока бонусов",

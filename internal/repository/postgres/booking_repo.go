@@ -677,7 +677,7 @@ func (r *bookingRepo) UpdateEndTime(ctx context.Context, bookingID uuid.UUID, ol
 		return fmt.Errorf("update end time: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
-		return domain.ErrWalletConcurrentUpdate
+		return domain.ErrSlotUnavailable
 	}
 	return nil
 }

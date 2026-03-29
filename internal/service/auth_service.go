@@ -193,16 +193,17 @@ func (s *authService) Login(ctx context.Context, email, password string) (*Login
 		return nil, domain.ErrUnauthorized
 	}
 
+	// Verify password BEFORE revealing account status to prevent enumeration.
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+		return nil, domain.ErrUnauthorized
+	}
+
 	if !user.IsActive {
 		return nil, domain.ErrUserBlocked
 	}
 
 	if user.DeletionScheduledAt != nil {
 		return nil, domain.ErrAccountDeletionPending
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return nil, domain.ErrUnauthorized
 	}
 
 	if user.TwoFAMethod != domain.TwoFANone && user.TwoFAMethod != "" {
