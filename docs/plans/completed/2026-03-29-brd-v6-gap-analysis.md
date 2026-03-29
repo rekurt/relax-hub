@@ -473,4 +473,4 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 
 ### Task F4: Перенос плана в completed
 
-- [ ] Переместить этот план в `docs/plans/completed/`
+- [x] Переместить этот план в `docs/plans/completed/`
