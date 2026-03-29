@@ -268,6 +268,11 @@ export default function BathhouseDetail() {
                 <Descriptions.Item label="Цена за час">
                   {bathhouse.price_per_hour ? formatPrice(bathhouse.price_per_hour) : '—'}
                 </Descriptions.Item>
+                {bathhouse.area_avg_price_per_hour ? (
+                  <Descriptions.Item label="Средняя цена в районе">
+                    {formatPrice(bathhouse.area_avg_price_per_hour)}
+                  </Descriptions.Item>
+                ) : null}
                 <Descriptions.Item label="Мин. длительность">
                   {bathhouse.min_duration ? `${bathhouse.min_duration} ч` : '—'}
                 </Descriptions.Item>

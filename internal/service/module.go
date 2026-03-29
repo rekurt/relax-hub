@@ -24,8 +24,8 @@ var Module = fx.Module("service",
 		fx.Annotate(NewAuditLogService, fx.As(new(AuditLogService))),
 		fx.Annotate(NewUserService, fx.As(new(UserService))),
 		fx.Annotate(
-			func(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, subRepo repository.SubscriptionRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, pdSvc PaymentDetailsService, auditSvc AuditLogService, fraudEngine antifraud.FraudEngine, stoplistRepo repository.StoplistRepository, userRepo repository.UserRepository, pdRepo repository.PaymentDetailsRepository, log *logger.Logger) BathhouseService {
-				return NewBathhouseService(bhRepo, bookingRepo, photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, fraudEngine, stoplistRepo, userRepo, pdRepo, log)
+			func(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, subRepo repository.SubscriptionRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, pdSvc PaymentDetailsService, auditSvc AuditLogService, fraudEngine antifraud.FraudEngine, stoplistRepo repository.StoplistRepository, userRepo repository.UserRepository, pdRepo repository.PaymentDetailsRepository, redisClient *redis.Client, log *logger.Logger) BathhouseService {
+				return NewBathhouseService(bhRepo, bookingRepo, photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, fraudEngine, stoplistRepo, userRepo, pdRepo, redisClient, log)
 			},
 			fx.As(new(BathhouseService)),
 		),

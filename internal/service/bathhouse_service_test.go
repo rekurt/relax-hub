@@ -49,7 +49,7 @@ func newBathhouseTestEnv() *bathhouseTestEnv {
 	auditSvc := service.NewAuditLogService(auditLogRepo, log)
 	subRepo := mock.NewSubscriptionRepo()
 	fraudEngine := antifraud.NewFraudEngine(fraudFlagRepo, log)
-	svc := service.NewBathhouseService(bhRepo, bookingRepo, photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, fraudEngine, stoplistRepo, userRepo, pdRepo, log)
+	svc := service.NewBathhouseService(bhRepo, bookingRepo, photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, fraudEngine, stoplistRepo, userRepo, pdRepo, nil, log)
 	return &bathhouseTestEnv{
 		svc: svc, bhRepo: bhRepo, repRepo: repRepo, bookingRepo: bookingRepo,
 		photoRepo: photoRepo, kycRepo: kycRepo, offerRepo: offerRepo, pdRepo: pdRepo,
@@ -1422,7 +1422,7 @@ func TestComputeBadges_Premium(t *testing.T) {
 	auditLogRepo := mock.NewAuditLogRepo()
 	auditSvc := service.NewAuditLogService(auditLogRepo, log)
 	fraudEngine := antifraud.NewFraudEngine(env.fraudFlagRepo, log)
-	svcWithSub := service.NewBathhouseService(env.bhRepo, env.bookingRepo, env.photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, fraudEngine, env.stoplistRepo, env.userRepo, env.pdRepo, log)
+	svcWithSub := service.NewBathhouseService(env.bhRepo, env.bookingRepo, env.photoRepo, subRepo, access, kycSvc, offerSvc, pdSvc, auditSvc, fraudEngine, env.stoplistRepo, env.userRepo, env.pdRepo, nil, log)
 
 	badges := svcWithSub.ComputeBadges(ctx, bh)
 	if !containsBadge(badges, "premium") {

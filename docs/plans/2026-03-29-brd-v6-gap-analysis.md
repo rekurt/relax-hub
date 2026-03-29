@@ -200,12 +200,12 @@ BRD требует: "Изменение требует подтверждени�
 - Modify: `internal/handler/bathhouse_handler.go` — добавить в ответ GetByID
 - Modify: `internal/repository/postgres/bathhouse_repo.go` — SQL-запрос средней цены в радиусе
 
-- [ ] SQL: AVG(base_price) WHERE city_id = X AND status = active AND id != current
-- [ ] Добавить поле area_average_price в ответ детальной карточки
-- [ ] Redis-кеш (1ч) по city_id
-- [ ] Frontend: отображение на странице BathhouseDetail
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task B6
+- [x] SQL: AVG(base_price) WHERE city_id = X AND status = active AND id != current
+- [x] Добавить поле area_average_price в ответ детальной карточки
+- [x] Redis-кеш (1ч) по city_id
+- [x] Frontend: отображение на странице BathhouseDetail
+- [x] Тесты
+- [x] run project test suite — must pass before Task B6
 
 ### Task B6: Региональный приветственный бонус (FR-016)
 

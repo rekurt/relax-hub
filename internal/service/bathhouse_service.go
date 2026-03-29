@@ -3,14 +3,23 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
+
 	"github.com/nikitaaldaev/bani/internal/antifraud"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 	"github.com/nikitaaldaev/bani/internal/seo"
+)
+
+const (
+	areaAvgPriceCachePrefix = "area_avg_price:"
+	areaAvgPriceCacheTTL    = 1 * time.Hour
 )
 
 type CreateBathhouseInput struct {
@@ -126,11 +135,12 @@ type bathhouseService struct {
 	stoplistRepo   repository.StoplistRepository
 	userRepo       repository.UserRepository
 	pdRepo         repository.PaymentDetailsRepository
+	redisClient    *redis.Client
 	logger         *logger.Logger
 }
 
-func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, subRepo repository.SubscriptionRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService, auditSvc AuditLogService, fraudEngine antifraud.FraudEngine, stoplistRepo repository.StoplistRepository, userRepo repository.UserRepository, pdRepo repository.PaymentDetailsRepository, log *logger.Logger) BathhouseService {
-	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, photoRepo: photoRepo, subRepo: subRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails, auditSvc: auditSvc, fraudEngine: fraudEngine, stoplistRepo: stoplistRepo, userRepo: userRepo, pdRepo: pdRepo, logger: log}
+func NewBathhouseService(bhRepo repository.BathhouseRepository, bookingRepo repository.BookingRepository, photoRepo repository.BathhousePhotoRepository, subRepo repository.SubscriptionRepository, access *AccessChecker, kycSvc KYCService, offerSvc OfferService, paymentDetails PaymentDetailsService, auditSvc AuditLogService, fraudEngine antifraud.FraudEngine, stoplistRepo repository.StoplistRepository, userRepo repository.UserRepository, pdRepo repository.PaymentDetailsRepository, redisClient *redis.Client, log *logger.Logger) BathhouseService {
+	return &bathhouseService{bhRepo: bhRepo, bookingRepo: bookingRepo, photoRepo: photoRepo, subRepo: subRepo, access: access, kycSvc: kycSvc, offerSvc: offerSvc, paymentDetails: paymentDetails, auditSvc: auditSvc, fraudEngine: fraudEngine, stoplistRepo: stoplistRepo, userRepo: userRepo, pdRepo: pdRepo, redisClient: redisClient, logger: log}
 }
 
 func (s *bathhouseService) Create(ctx context.Context, ownerID uuid.UUID, input CreateBathhouseInput) (*domain.Bathhouse, error) {
@@ -931,8 +941,33 @@ func (s *bathhouseService) IsLastMinuteActive(bh *domain.Bathhouse) bool {
 
 // GetAreaAvgPrice returns the average price per hour for active bathhouses in the same city
 // within a 5km radius of the given coordinates. Returns 0 if no data available.
+// Results are cached in Redis for 1 hour by city_id.
 func (s *bathhouseService) GetAreaAvgPrice(ctx context.Context, cityID int64, lat, lng float64) (int64, error) {
-	return s.bhRepo.GetAreaAvgPrice(ctx, cityID, lat, lng)
+	cacheKey := fmt.Sprintf("%s%d", areaAvgPriceCachePrefix, cityID)
+
+	// Try cache first
+	if s.redisClient != nil {
+		cached, err := s.redisClient.Get(ctx, cacheKey).Result()
+		if err == nil {
+			if v, parseErr := strconv.ParseInt(cached, 10, 64); parseErr == nil {
+				return v, nil
+			}
+		}
+	}
+
+	avg, err := s.bhRepo.GetAreaAvgPrice(ctx, cityID, lat, lng)
+	if err != nil {
+		return 0, err
+	}
+
+	// Populate cache (best-effort)
+	if s.redisClient != nil {
+		if cacheErr := s.redisClient.Set(ctx, cacheKey, strconv.FormatInt(avg, 10), areaAvgPriceCacheTTL).Err(); cacheErr != nil {
+			s.logger.Error("failed to cache area avg price", "city_id", cityID, "error", cacheErr)
+		}
+	}
+
+	return avg, nil
 }
 
 func countAmenities(bh *domain.Bathhouse) int {
