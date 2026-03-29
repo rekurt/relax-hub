@@ -96,6 +96,7 @@ type RouterParams struct {
 	PMSHandler                   *handler.PMSHandler
 	IsochroneHandler             *handler.IsochroneHandler
 	TransportHandler             *handler.TransportHandler
+	PrerenderHandler             *handler.PrerenderHandler
 	AuditLogRepo              repository.AuditLogRepository
 	AdminSubRoleResolver  middleware.AdminSubRoleResolver
 	Admin2FAChecker       middleware.Admin2FAChecker
@@ -115,6 +116,12 @@ func NewRouter(p RouterParams) http.Handler {
 	r.Get("/ready", p.HealthHandler.Ready)
 	r.Get("/sitemap.xml", p.SitemapHandler.Sitemap)
 	r.Get("/calendar/{token}.ics", p.CalendarHandler.ExportICalByToken)
+
+	// Pre-rendered pages for search engine bots (SEO)
+	r.Get("/prerender/catalog", p.PrerenderHandler.MainListing)
+	r.Get("/prerender/cities/{citySlug}", p.PrerenderHandler.CityListing)
+	r.Get("/prerender/bathhouses/{slug}", p.PrerenderHandler.BathhouseDetail)
+	r.Get("/prerender/bathhouses/{slug}/reviews", p.PrerenderHandler.BathhouseReviews)
 
 	// Swagger UI (disabled in production)
 	if middleware.IsDevEnvironment(p.Config.Environment) {
@@ -730,6 +737,9 @@ func NewRouter(p RouterParams) http.Handler {
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/freeze", p.WalletHandler.AdminFreezeWallet)
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/{id}/unfreeze", p.WalletHandler.AdminUnfreezeWallet)
 			r.With(middleware.RequireAdminPermission(domain.PermWalletManage)).Post("/wallets/batch-credit", p.WalletHandler.AdminBatchCreditWallets)
+
+			// SEO prerender cache invalidation
+			r.Post("/prerender/invalidate/{slug}", p.PrerenderHandler.InvalidateBathhouseCache)
 
 			// Admin notifications
 			r.With(middleware.RequireAdminPermission(domain.PermAdminNotificationsView)).Get("/notifications", p.AdminNotificationHandler.ListAdminNotifications)

@@ -408,14 +408,14 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/handler/seo_handler.go` (serve pre-rendered HTML)
 - Create: `internal/seo/renderer.go`
 
-- [ ] Evaluate approach: full SSR (Next.js migration) vs prerender service (Rendertron/Prerender.io)
-- [ ] Implement prerender middleware: detect bot user-agents, serve pre-rendered HTML
-- [ ] Pre-render public pages: bathhouse listing, bathhouse detail, reviews
-- [ ] Cache pre-rendered pages in Redis (TTL 1h, invalidate on update)
-- [ ] Ensure meta tags (OG, Schema.org) are in pre-rendered HTML
-- [ ] Configure prerender for Yandex, Google, social crawlers
-- [ ] Write tests for bot detection and cache invalidation
-- [ ] Run project test suite - must pass before task 21
+- [x] Evaluate approach: full SSR (Next.js migration) vs prerender service (Rendertron/Prerender.io)
+- [x] Implement prerender middleware: detect bot user-agents, serve pre-rendered HTML
+- [x] Pre-render public pages: bathhouse listing, bathhouse detail, reviews
+- [x] Cache pre-rendered pages in Redis (TTL 1h, invalidate on update)
+- [x] Ensure meta tags (OG, Schema.org) are in pre-rendered HTML
+- [x] Configure prerender for Yandex, Google, social crawlers
+- [x] Write tests for bot detection and cache invalidation
+- [x] Run project test suite - must pass before task 21
 
 ### Task 21: Professional Photography (FR-035)
 

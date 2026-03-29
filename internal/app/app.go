@@ -16,6 +16,7 @@ import (
 	"github.com/nikitaaldaev/bani/internal/notification"
 	"github.com/nikitaaldaev/bani/internal/payment"
 	"github.com/nikitaaldaev/bani/internal/pms"
+	"github.com/nikitaaldaev/bani/internal/seo"
 	repopostgres "github.com/nikitaaldaev/bani/internal/repository/postgres"
 	"github.com/nikitaaldaev/bani/internal/server"
 	"github.com/nikitaaldaev/bani/internal/service"
@@ -42,6 +43,7 @@ func New(cfg *config.Config) *fx.App {
 		pms.Module,
 		geo.Module,
 		antifraud.Module,
+		seo.Module,
 		handler.Module,
 		cron.Module,
 		server.Module,

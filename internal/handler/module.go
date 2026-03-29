@@ -4,6 +4,7 @@ import (
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/nikitaaldaev/bani/internal/seo"
 	"github.com/nikitaaldaev/bani/internal/service"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -105,5 +106,8 @@ var Module = fx.Module("handler",
 		NewPMSHandler,
 		NewIsochroneHandler,
 		NewTransportHandler,
+		func(renderer *seo.Renderer, bathhouseService service.BathhouseService, cityService service.CityService, reviewService service.ReviewService, log *logger.Logger, cfg *config.Config) *PrerenderHandler {
+			return NewPrerenderHandler(renderer, bathhouseService, cityService, reviewService, log, cfg.BaseURL)
+		},
 	),
 )
