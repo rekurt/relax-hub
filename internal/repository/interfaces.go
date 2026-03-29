@@ -408,6 +408,7 @@ type PayoutRepository interface {
 	GetPendingTotal(ctx context.Context, userID uuid.UUID) (int64, error)
 	GetAutoPayoutSettings(ctx context.Context, userID uuid.UUID) (*domain.AutoPayoutSettings, error)
 	UpsertAutoPayoutSettings(ctx context.Context, settings *domain.AutoPayoutSettings) error
+	ListActiveAutoPayoutSettings(ctx context.Context) ([]domain.AutoPayoutSettings, error)
 }
 
 type SessionRepository interface {

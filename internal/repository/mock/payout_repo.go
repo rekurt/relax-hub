@@ -151,6 +151,20 @@ func (r *PayoutRepo) GetAutoPayoutSettings(_ context.Context, userID uuid.UUID) 
 	return &cp, nil
 }
 
+func (r *PayoutRepo) ListActiveAutoPayoutSettings(_ context.Context) ([]domain.AutoPayoutSettings, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	var result []domain.AutoPayoutSettings
+	for _, s := range r.autoPaySettings {
+		if s.Threshold > 0 {
+			cp := *s
+			result = append(result, cp)
+		}
+	}
+	return result, nil
+}
+
 func (r *PayoutRepo) UpsertAutoPayoutSettings(_ context.Context, settings *domain.AutoPayoutSettings) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

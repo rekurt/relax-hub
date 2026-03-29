@@ -152,11 +152,11 @@ BRD требует: "Изменение требует подтверждени�
 - Create: `internal/cron/auto_payout.go`
 - Modify: `internal/cron/scheduler.go` — зарегистрировать задачу
 
-- [ ] Cron-задача (каждый час): выбрать владельцев с auto_payout_threshold > 0 и balance >= threshold
-- [ ] Для каждого: вызвать PayoutService.RequestPayout()
-- [ ] Redis-лок для предотвращения дублей
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task B3
+- [x] Cron-задача (каждый час): выбрать владельцев с auto_payout_threshold > 0 и balance >= threshold
+- [x] Для каждого: вызвать PayoutService.RequestPayout()
+- [x] Redis-лок для предотвращения дублей
+- [x] Тесты
+- [x] run project test suite — must pass before Task B3
 
 ### Task B3: Принудительное переключение в instant-режим при низком проценте ответов (FR-079)
 

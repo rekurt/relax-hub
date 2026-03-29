@@ -186,6 +186,26 @@ func (r *payoutRepo) GetAutoPayoutSettings(ctx context.Context, userID uuid.UUID
 	return &s, nil
 }
 
+func (r *payoutRepo) ListActiveAutoPayoutSettings(ctx context.Context) ([]domain.AutoPayoutSettings, error) {
+	query := `SELECT user_id, threshold, updated_at FROM auto_payout_settings WHERE threshold > 0`
+
+	rows, err := r.pool.Query(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []domain.AutoPayoutSettings
+	for rows.Next() {
+		var s domain.AutoPayoutSettings
+		if err := rows.Scan(&s.UserID, &s.Threshold, &s.UpdatedAt); err != nil {
+			return nil, err
+		}
+		result = append(result, s)
+	}
+	return result, rows.Err()
+}
+
 func (r *payoutRepo) UpsertAutoPayoutSettings(ctx context.Context, settings *domain.AutoPayoutSettings) error {
 	settings.UpdatedAt = time.Now()
 	query := `

@@ -50,6 +50,9 @@ type CronScheduler struct {
 	promotionSvc           service.PromotionService
 	modReqSvc              service.BookingModificationService
 	extReqSvc              service.BookingExtensionService
+	payoutSvc              service.PayoutService
+	payoutRepo             repository.PayoutRepository
+	paymentDetailsRepo     repository.PaymentDetailsRepository
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -85,6 +88,9 @@ func NewCronScheduler(
 	promotionSvc service.PromotionService,
 	modReqSvc service.BookingModificationService,
 	extReqSvc service.BookingExtensionService,
+	payoutSvc service.PayoutService,
+	payoutRepo repository.PayoutRepository,
+	paymentDetailsRepo repository.PaymentDetailsRepository,
 ) *CronScheduler {
 	timezone := cfg.Cron.Timezone
 	if timezone == "" {
@@ -124,6 +130,9 @@ func NewCronScheduler(
 		promotionSvc:           promotionSvc,
 		modReqSvc:              modReqSvc,
 		extReqSvc:              extReqSvc,
+		payoutSvc:              payoutSvc,
+		payoutRepo:             payoutRepo,
+		paymentDetailsRepo:     paymentDetailsRepo,
 	}
 }
 
@@ -189,6 +198,7 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		{"0 7 * * *", "promotion_daily_budget", cs.promotionDailyBudget},
 		{"*/15 * * * *", "modification_request_expiry", cs.modificationRequestExpiry},
 		{"*/5 * * * *", "extension_request_expiry", cs.extensionRequestExpiry},
+		{"0 * * * *", "auto_payout", cs.autoPayoutJob},
 	}
 
 	for _, j := range jobs {
