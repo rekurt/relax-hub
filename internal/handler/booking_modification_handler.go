@@ -223,6 +223,14 @@ func (h *BookingModificationHandler) ListModificationRequests(w http.ResponseWri
 		return
 	}
 
+	// Authorization: verify the caller is related to this booking
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+	if err := h.modSvc.AuthorizeListAccess(r.Context(), userID, role, bookingID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
 	requests, err := h.modSvc.ListByBooking(r.Context(), bookingID)
 	if err != nil {
 		handleServiceError(w, err)

@@ -114,6 +114,14 @@ func (h *BookingExtensionHandler) ListExtensionRequests(w http.ResponseWriter, r
 		return
 	}
 
+	// Authorization: verify the caller is related to this booking
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+	if err := h.extSvc.AuthorizeListAccess(r.Context(), userID, role, bookingID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
 	requests, err := h.extSvc.ListByBooking(r.Context(), bookingID)
 	if err != nil {
 		handleServiceError(w, err)

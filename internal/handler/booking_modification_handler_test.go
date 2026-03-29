@@ -19,12 +19,13 @@ import (
 )
 
 type mockBookingModificationService struct {
-	requestFunc func(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, input service.ModifyBookingInput) (*domain.BookingModificationRequest, error)
-	approveFunc func(ctx context.Context, ownerID uuid.UUID, role domain.UserRole, requestID uuid.UUID) (*service.ModifyBookingResult, error)
-	rejectFunc  func(ctx context.Context, ownerID uuid.UUID, role domain.UserRole, requestID uuid.UUID, reason string) error
-	listFunc    func(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingModificationRequest, error)
-	getFunc     func(ctx context.Context, id uuid.UUID) (*domain.BookingModificationRequest, error)
-	expireFunc  func(ctx context.Context) (int, error)
+	requestFunc   func(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, input service.ModifyBookingInput) (*domain.BookingModificationRequest, error)
+	approveFunc   func(ctx context.Context, ownerID uuid.UUID, role domain.UserRole, requestID uuid.UUID) (*service.ModifyBookingResult, error)
+	rejectFunc    func(ctx context.Context, ownerID uuid.UUID, role domain.UserRole, requestID uuid.UUID, reason string) error
+	authorizeFunc func(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
+	listFunc      func(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingModificationRequest, error)
+	getFunc       func(ctx context.Context, id uuid.UUID) (*domain.BookingModificationRequest, error)
+	expireFunc    func(ctx context.Context) (int, error)
 }
 
 func (m *mockBookingModificationService) RequestModification(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, input service.ModifyBookingInput) (*domain.BookingModificationRequest, error) {
@@ -37,6 +38,13 @@ func (m *mockBookingModificationService) ApproveModification(ctx context.Context
 
 func (m *mockBookingModificationService) RejectModification(ctx context.Context, ownerID uuid.UUID, role domain.UserRole, requestID uuid.UUID, reason string) error {
 	return m.rejectFunc(ctx, ownerID, role, requestID, reason)
+}
+
+func (m *mockBookingModificationService) AuthorizeListAccess(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+	if m.authorizeFunc != nil {
+		return m.authorizeFunc(ctx, userID, role, bookingID)
+	}
+	return nil
 }
 
 func (m *mockBookingModificationService) ListByBooking(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingModificationRequest, error) {

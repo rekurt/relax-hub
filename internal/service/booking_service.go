@@ -893,8 +893,8 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 		}
 	}
 
-	// Credit cashback to wallet based on loyalty level
-	s.creditCashback(ctx, booking.UserID, bookingID, booking.TotalPrice)
+	// Credit cashback to wallet based on loyalty level (cashback is on base price per BRD)
+	s.creditCashback(ctx, booking.UserID, bookingID, booking.BasePrice)
 
 	// Complete referral if this is the referee's first completed booking
 	referralResult, err := s.referralSvc.CompleteReferral(ctx, booking.UserID)
@@ -1621,8 +1621,8 @@ func (s *bookingService) CheckOut(ctx context.Context, userID uuid.UUID, role do
 		}
 	}
 
-	// Credit cashback to wallet based on loyalty level
-	s.creditCashback(ctx, booking.UserID, bookingID, booking.TotalPrice)
+	// Credit cashback to wallet based on loyalty level (cashback is on base price per BRD)
+	s.creditCashback(ctx, booking.UserID, bookingID, booking.BasePrice)
 
 	// Complete referral if applicable
 	referralResult, err := s.referralSvc.CompleteReferral(ctx, booking.UserID)

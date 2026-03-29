@@ -233,11 +233,12 @@ func (s *payoutService) ProcessPayout(ctx context.Context, payoutID uuid.UUID) e
 				Description: fmt.Sprintf("Вывод средств #%s", payout.ID.String()[:8]),
 			})
 			if providerErr != nil {
-				s.logger.Error("SBP payout failed, falling back to manual processing",
+				s.logger.Error("SBP payout failed, leaving in processing state for manual retry",
 					"error", providerErr, "payout_id", payoutID)
-			} else {
-				_ = s.payoutRepo.UpdateExternalID(ctx, payoutID, result.ExternalID)
+				// Do not mark as completed — leave in processing state for manual retry
+				return fmt.Errorf("SBP payout provider failed: %w", providerErr)
 			}
+			_ = s.payoutRepo.UpdateExternalID(ctx, payoutID, result.ExternalID)
 		}
 	}
 

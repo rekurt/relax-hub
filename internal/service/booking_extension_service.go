@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -19,6 +20,8 @@ type BookingExtensionService interface {
 	ApproveExtension(ctx context.Context, ownerID uuid.UUID, role domain.UserRole, requestID uuid.UUID) (*ExtendResult, error)
 	// RejectExtension rejects a pending extension and releases the wallet hold.
 	RejectExtension(ctx context.Context, ownerID uuid.UUID, role domain.UserRole, requestID uuid.UUID, reason string) error
+	// AuthorizeListAccess verifies the caller is the booking client or can manage the bathhouse.
+	AuthorizeListAccess(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	// ListByBooking returns all extension requests for a booking.
 	ListByBooking(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingExtensionRequest, error)
 	// GetByID returns an extension request by ID.
@@ -86,6 +89,9 @@ func (s *bookingExtensionService) RequestExtension(ctx context.Context, userID u
 	_, err = s.extReqRepo.GetPendingByBookingID(ctx, bookingID)
 	if err == nil {
 		return nil, domain.ErrExtensionRequestPending
+	}
+	if !errors.Is(err, domain.ErrExtensionRequestNotFound) {
+		return nil, err
 	}
 
 	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
@@ -194,7 +200,7 @@ func (s *bookingExtensionService) ApproveExtension(ctx context.Context, ownerID 
 	}
 
 	if req.Status != domain.ExtReqPending {
-		return nil, domain.ErrExtensionRequestNotFound
+		return nil, fmt.Errorf("%w: request is already %s", domain.ErrBookingNotModifiable, req.Status)
 	}
 
 	if time.Now().After(req.ExpiresAt) {
@@ -208,23 +214,36 @@ func (s *bookingExtensionService) ApproveExtension(ctx context.Context, ownerID 
 		return nil, err
 	}
 
-	// Capture the wallet hold
-	if req.HoldID != nil {
-		if _, cErr := s.walletSvc.CaptureHold(ctx, *req.HoldID); cErr != nil {
-			return nil, fmt.Errorf("capture extension hold: %w", cErr)
-		}
-	}
-
-	// Apply the extension to the booking
+	// Re-check slot availability (may have changed since the request was created)
 	booking, err := s.bookingRepo.GetByID(ctx, req.BookingID)
 	if err != nil {
 		return nil, err
 	}
 
+	available, avErr := s.bookingRepo.CheckAvailabilityExcluding(ctx, req.BathhouseID, booking.EndTime, req.NewEndTime, req.BookingID)
+	if avErr != nil {
+		return nil, fmt.Errorf("re-check availability: %w", avErr)
+	}
+	if !available {
+		s.releaseHoldQuietly(ctx, req)
+		_ = s.extReqRepo.UpdateStatus(ctx, requestID, domain.ExtReqExpired, "slot no longer available")
+		return nil, domain.ErrSlotUnavailable
+	}
+
+	// Update booking first, then capture the hold (safer ordering: if update fails, hold is not lost)
 	newTotalPrice := booking.TotalPrice + req.ExtensionPrice
 
 	if err := s.bookingRepo.UpdateEndTime(ctx, req.BookingID, booking.EndTime, req.NewEndTime, newTotalPrice); err != nil {
 		return nil, fmt.Errorf("update booking end time: %w", err)
+	}
+
+	// Capture the wallet hold after successful booking update
+	if req.HoldID != nil {
+		if _, cErr := s.walletSvc.CaptureHold(ctx, *req.HoldID); cErr != nil {
+			s.logger.Error("failed to capture hold after booking update, manual intervention needed",
+				"hold_id", req.HoldID, "request_id", requestID, "error", cErr)
+			return nil, fmt.Errorf("capture extension hold: %w", cErr)
+		}
 	}
 
 	if err := s.extReqRepo.UpdateStatus(ctx, requestID, domain.ExtReqApproved, ""); err != nil {
@@ -259,7 +278,7 @@ func (s *bookingExtensionService) RejectExtension(ctx context.Context, ownerID u
 	}
 
 	if req.Status != domain.ExtReqPending {
-		return domain.ErrExtensionRequestNotFound
+		return fmt.Errorf("%w: request is already %s", domain.ErrBookingNotModifiable, req.Status)
 	}
 
 	if err := s.access.CanManageBathhouse(ctx, ownerID, role, req.BathhouseID); err != nil {
@@ -283,6 +302,20 @@ func (s *bookingExtensionService) RejectExtension(ctx context.Context, ownerID u
 	)
 
 	return nil
+}
+
+func (s *bookingExtensionService) AuthorizeListAccess(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+	if booking.UserID == userID {
+		return nil
+	}
+	if role == domain.RoleAdmin {
+		return nil
+	}
+	return s.access.CanManageBathhouse(ctx, userID, role, booking.BathhouseID)
 }
 
 func (s *bookingExtensionService) ListByBooking(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingExtensionRequest, error) {

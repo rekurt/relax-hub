@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -19,6 +20,8 @@ type BookingModificationService interface {
 	ApproveModification(ctx context.Context, ownerID uuid.UUID, role domain.UserRole, requestID uuid.UUID) (*ModifyBookingResult, error)
 	// RejectModification rejects a pending modification request.
 	RejectModification(ctx context.Context, ownerID uuid.UUID, role domain.UserRole, requestID uuid.UUID, reason string) error
+	// AuthorizeListAccess verifies the caller is the booking client or can manage the bathhouse.
+	AuthorizeListAccess(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	// ListByBooking returns all modification requests for a booking.
 	ListByBooking(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingModificationRequest, error)
 	// GetByID returns a modification request by ID.
@@ -84,6 +87,9 @@ func (s *bookingModificationService) RequestModification(ctx context.Context, us
 	if err == nil {
 		return nil, domain.ErrModificationRequestPending
 	}
+	if !errors.Is(err, domain.ErrModificationRequestNotFound) {
+		return nil, err
+	}
 
 	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
 	if err != nil {
@@ -139,7 +145,7 @@ func (s *bookingModificationService) ApproveModification(ctx context.Context, ow
 	}
 
 	if req.Status != domain.ModReqPending {
-		return nil, domain.ErrModificationRequestNotFound
+		return nil, fmt.Errorf("%w: request is already %s", domain.ErrBookingNotModifiable, req.Status)
 	}
 
 	if time.Now().After(req.ExpiresAt) {
@@ -186,7 +192,7 @@ func (s *bookingModificationService) RejectModification(ctx context.Context, own
 	}
 
 	if req.Status != domain.ModReqPending {
-		return domain.ErrModificationRequestNotFound
+		return fmt.Errorf("%w: request is already %s", domain.ErrBookingNotModifiable, req.Status)
 	}
 
 	if err := s.access.CanManageBathhouse(ctx, ownerID, role, req.BathhouseID); err != nil {
@@ -207,6 +213,23 @@ func (s *bookingModificationService) RejectModification(ctx context.Context, own
 	)
 
 	return nil
+}
+
+func (s *bookingModificationService) AuthorizeListAccess(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return err
+	}
+	// Booking client can always see their own requests
+	if booking.UserID == userID {
+		return nil
+	}
+	// Admin can see everything
+	if role == domain.RoleAdmin {
+		return nil
+	}
+	// Owner/representative must be able to manage the bathhouse
+	return s.access.CanManageBathhouse(ctx, userID, role, booking.BathhouseID)
 }
 
 func (s *bookingModificationService) ListByBooking(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingModificationRequest, error) {
@@ -256,10 +279,11 @@ func (s *bookingModificationService) calculateProposedPrice(ctx context.Context,
 }
 
 func (s *bookingModificationService) notifyOwner(ctx context.Context, ownerID uuid.UUID, booking *domain.Booking, req *domain.BookingModificationRequest) {
-	_ = req
 	s.notifSvc.Send(ctx, ownerID, domain.NotifBookingModificationRequested,
 		"Запрос на изменение бронирования",
-		fmt.Sprintf("Клиент запросил изменение бронирования на %s", booking.StartTime.Format("02.01.2006 15:04")),
+		fmt.Sprintf("Клиент запросил изменение бронирования %s → %s",
+			booking.StartTime.Format("02.01.2006 15:04"),
+			req.ProposedStartTime.Format("02.01.2006 15:04")),
 		map[string]string{
 			"booking_id": booking.ID.String(),
 			"request_id": req.ID.String(),

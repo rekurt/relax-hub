@@ -431,11 +431,11 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			q := strings.TrimSpace(*filter.SearchQuery)
 			// When searching: composite = text relevance * 0.30 + other factors
 			orderBy = fmt.Sprintf(
-				"(ts_rank(search_vector, plainto_tsquery('russian', %s)) * 0.30 + %s) DESC, similarity(name, %s) DESC",
-				addArg(q), compositeRank, addArg(q),
+				"%s, (ts_rank(search_vector, plainto_tsquery('russian', %s)) * 0.30 + %s) DESC, similarity(name, %s) DESC",
+				promotedCap, addArg(q), compositeRank, addArg(q),
 			)
 		} else {
-			orderBy = compositeRank + " DESC, created_at DESC"
+			orderBy = promotedCap + ", " + compositeRank + " DESC, created_at DESC"
 		}
 	case "price_asc":
 		orderBy = promotedCap + ", price_per_hour ASC"
@@ -472,11 +472,11 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		if filter.SearchQuery != nil && *filter.SearchQuery != "" {
 			q := strings.TrimSpace(*filter.SearchQuery)
 			orderBy = fmt.Sprintf(
-				"(ts_rank(search_vector, plainto_tsquery('russian', %s)) * 0.30 + %s) DESC, similarity(name, %s) DESC",
-				addArg(q), compositeRank, addArg(q),
+				"%s, (ts_rank(search_vector, plainto_tsquery('russian', %s)) * 0.30 + %s) DESC, similarity(name, %s) DESC",
+				promotedCap, addArg(q), compositeRank, addArg(q),
 			)
 		} else {
-			orderBy = compositeRank + " DESC, created_at DESC"
+			orderBy = promotedCap + ", " + compositeRank + " DESC, created_at DESC"
 		}
 	}
 
