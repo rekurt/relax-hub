@@ -294,10 +294,10 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 - Modify: `internal/handler/bathhouse_handler.go` — добавить is_last_minute в ответ поиска
 - Modify: `frontend/src/components/BathhouseCard.tsx` — бейдж "Last minute"
 
-- [ ] В ответе поиска: для каждого объекта вычислить, есть ли last-minute слот сегодня
-- [ ] Frontend: бейдж/тег "Last minute -X%" на карточке
-- [ ] Тесты
-- [ ] run project test suite — must pass before Block D
+- [x] В ответе поиска: для каждого объекта вычислить, есть ли last-minute слот сегодня
+- [x] Frontend: бейдж/тег "Last minute -X%" на карточке
+- [x] Тесты
+- [x] run project test suite — must pass before Block D
 
 ---
 

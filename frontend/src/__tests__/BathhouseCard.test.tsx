@@ -109,4 +109,28 @@ describe('BathhouseCard', () => {
 
     expect(screen.getByText('Нет фото')).toBeInTheDocument()
   })
+
+  it('shows last minute badge when last_minute_active is true', () => {
+    renderWithProviders(
+      <BathhouseCard bathhouse={{ ...mockBathhouse, last_minute_active: true, last_minute_discount_percent: 20 }} />,
+    )
+
+    expect(screen.getByText('Last minute -20%')).toBeInTheDocument()
+  })
+
+  it('does not show last minute badge when last_minute_active is false', () => {
+    renderWithProviders(
+      <BathhouseCard bathhouse={{ ...mockBathhouse, last_minute_active: false }} />,
+    )
+
+    expect(screen.queryByText(/Last minute/)).not.toBeInTheDocument()
+  })
+
+  it('does not show last minute badge when last_minute_active is undefined', () => {
+    renderWithProviders(
+      <BathhouseCard bathhouse={mockBathhouse} />,
+    )
+
+    expect(screen.queryByText(/Last minute/)).not.toBeInTheDocument()
+  })
 })

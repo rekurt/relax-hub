@@ -5,6 +5,7 @@ import {
   HeartFilled,
   CheckCircleOutlined,
   SwapOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -136,6 +137,12 @@ export default function BathhouseCard({
             {bathhouse.price_per_hour ? formatPrice(bathhouse.price_per_hour) + '/ч' : ''}
           </Text>
         </div>
+
+        {bathhouse.last_minute_active && (
+          <Tag color="red" icon={<ThunderboltOutlined />}>
+            Last minute {bathhouse.last_minute_discount_percent ? `-${bathhouse.last_minute_discount_percent}%` : ''}
+          </Tag>
+        )}
 
         {bathhouse.address && (
           <Text type="secondary" style={{ fontSize: 13 }}>
