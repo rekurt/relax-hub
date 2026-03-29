@@ -9,6 +9,8 @@ import {
   EyeOutlined,
   DollarOutlined,
   SwapOutlined,
+  LoginOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import {
@@ -17,6 +19,8 @@ import {
   usePatchBookingsIdReject,
   usePatchBookingsIdCancel,
   usePatchBookingsIdComplete,
+  usePatchBookingsIdCheckIn,
+  usePatchBookingsIdCheckOut,
 } from '@/api/generated/bookings/bookings'
 import { usePostBookingsIdPay } from '@/api/generated/payments/payments'
 import type { InternalHandlerBookingResponse } from '@/api/generated/model'
@@ -106,6 +110,26 @@ export default function BookingList() {
         invalidateBookings()
       },
       onError: () => message.error('Не удалось завершить бронирование'),
+    },
+  })
+
+  const checkInMutation = usePatchBookingsIdCheckIn({
+    mutation: {
+      onSuccess: () => {
+        message.success('Гость отмечен как прибывший')
+        invalidateBookings()
+      },
+      onError: () => message.error('Не удалось отметить прибытие гостя'),
+    },
+  })
+
+  const checkOutMutation = usePatchBookingsIdCheckOut({
+    mutation: {
+      onSuccess: () => {
+        message.success('Гость отмечен как ушедший')
+        invalidateBookings()
+      },
+      onError: () => message.error('Не удалось отметить уход гостя'),
     },
   })
 
@@ -217,18 +241,56 @@ export default function BookingList() {
           </Button>,
         )
       }
-      actions.push(
-        <Button
-          key="complete"
-          type="link"
-          size="small"
-          icon={<CheckOutlined />}
-          loading={completeMutation.isPending && completeMutation.variables?.id === record.id}
-          onClick={() => record.id && completeMutation.mutate({ id: record.id })}
-        >
-          Завершить
-        </Button>,
-      )
+
+      if (!record.checked_in_at) {
+        const now = dayjs()
+        const start = record.start_time ? dayjs(record.start_time) : null
+        const canCheckIn = start && now.isAfter(start.subtract(15, 'minute')) && now.isBefore(start.add(30, 'minute'))
+        actions.push(
+          <Button
+            key="checkin"
+            type="link"
+            size="small"
+            icon={<LoginOutlined />}
+            disabled={!canCheckIn}
+            title={canCheckIn ? 'Отметить прибытие гостя' : 'Регистрация доступна за 15 мин до и 30 мин после начала'}
+            loading={checkInMutation.isPending && checkInMutation.variables?.id === record.id}
+            onClick={() => record.id && checkInMutation.mutate({ id: record.id })}
+          >
+            Гость прибыл
+          </Button>,
+        )
+      }
+
+      if (record.checked_in_at && !record.checked_out_at) {
+        actions.push(
+          <Button
+            key="checkout"
+            type="link"
+            size="small"
+            icon={<LogoutOutlined />}
+            loading={checkOutMutation.isPending && checkOutMutation.variables?.id === record.id}
+            onClick={() => record.id && checkOutMutation.mutate({ id: record.id })}
+          >
+            Гость ушёл
+          </Button>,
+        )
+      }
+
+      if (!record.checked_in_at) {
+        actions.push(
+          <Button
+            key="complete"
+            type="link"
+            size="small"
+            icon={<CheckOutlined />}
+            loading={completeMutation.isPending && completeMutation.variables?.id === record.id}
+            onClick={() => record.id && completeMutation.mutate({ id: record.id })}
+          >
+            Завершить
+          </Button>,
+        )
+      }
       actions.push(
         <Popconfirm
           key="cancel"
@@ -298,6 +360,21 @@ export default function BookingList() {
         if (!status) return <Tag>Не оплачено</Tag>
         const config = PAYMENT_STATUS_CONFIG[status] ?? { color: 'default', text: status }
         return <Tag color={config.color}>{config.text}</Tag>
+      },
+    },
+    {
+      title: 'Регистрация',
+      key: 'checkin_status',
+      responsive: ['lg'] as const,
+      render: (_: unknown, record: InternalHandlerBookingResponse) => {
+        if (record.status !== 'confirmed' && record.status !== 'completed') return null
+        if (record.checked_out_at) {
+          return <Tag color="green" icon={<LogoutOutlined />}>Ушёл</Tag>
+        }
+        if (record.checked_in_at) {
+          return <Tag color="blue" icon={<LoginOutlined />}>Прибыл</Tag>
+        }
+        return <Tag>Ожидает</Tag>
       },
     },
     {

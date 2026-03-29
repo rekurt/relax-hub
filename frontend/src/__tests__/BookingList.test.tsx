@@ -12,6 +12,8 @@ vi.mock('@/api/generated/bookings/bookings', () => ({
   usePatchBookingsIdReject: vi.fn(),
   usePatchBookingsIdCancel: vi.fn(),
   usePatchBookingsIdComplete: vi.fn(),
+  usePatchBookingsIdCheckIn: vi.fn(),
+  usePatchBookingsIdCheckOut: vi.fn(),
 }))
 
 vi.mock('@/api/generated/payments/payments', () => ({
@@ -32,6 +34,8 @@ import {
   usePatchBookingsIdReject,
   usePatchBookingsIdCancel,
   usePatchBookingsIdComplete,
+  usePatchBookingsIdCheckIn,
+  usePatchBookingsIdCheckOut,
 } from '@/api/generated/bookings/bookings'
 import { usePostBookingsIdPay } from '@/api/generated/payments/payments'
 import { useBathhouseStore } from '@/stores/bathhouse'
@@ -107,6 +111,8 @@ describe('BookingList', () => {
     vi.mocked(usePatchBookingsIdReject).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePatchBookingsIdReject>)
     vi.mocked(usePatchBookingsIdCancel).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePatchBookingsIdCancel>)
     vi.mocked(usePatchBookingsIdComplete).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePatchBookingsIdComplete>)
+    vi.mocked(usePatchBookingsIdCheckIn).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePatchBookingsIdCheckIn>)
+    vi.mocked(usePatchBookingsIdCheckOut).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePatchBookingsIdCheckOut>)
     vi.mocked(usePostBookingsIdPay).mockReturnValue(mockMutation as unknown as ReturnType<typeof usePostBookingsIdPay>)
   })
 
@@ -357,6 +363,106 @@ describe('BookingList', () => {
 
     renderWithProviders(<BookingList />)
     expect(screen.queryByText('Оплатить')).not.toBeInTheDocument()
+  })
+
+  it('shows check-in button for confirmed booking without check-in', () => {
+    mockBathhouseStore('bathhouse-1')
+    const now = new Date()
+    const startTime = new Date(now.getTime() + 5 * 60 * 1000).toISOString()
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [{ ...mockBookings[1], start_time: startTime, checked_in_at: undefined }],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+    expect(screen.getByText('Гость прибыл')).toBeInTheDocument()
+  })
+
+  it('shows check-out button for confirmed booking with check-in but no check-out', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [{
+          ...mockBookings[1],
+          checked_in_at: '2026-03-21T10:00:00Z',
+          checked_out_at: undefined,
+        }],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+    expect(screen.getByText('Гость ушёл')).toBeInTheDocument()
+  })
+
+  it('hides check-in and check-out when both are done', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [{
+          ...mockBookings[1],
+          checked_in_at: '2026-03-21T10:00:00Z',
+          checked_out_at: '2026-03-21T12:00:00Z',
+        }],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+    expect(screen.queryByText('Гость прибыл')).not.toBeInTheDocument()
+    expect(screen.queryByText('Гость ушёл')).not.toBeInTheDocument()
+  })
+
+  it('does not show check-in button when guest already checked in', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [{
+          ...mockBookings[1],
+          checked_in_at: '2026-03-21T10:00:00Z',
+          checked_out_at: undefined,
+        }],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+    expect(screen.queryByText('Гость прибыл')).not.toBeInTheDocument()
+    expect(screen.getByText('Гость ушёл')).toBeInTheDocument()
+  })
+
+  it('calls check-in mutation when button clicked', () => {
+    const checkInMutate = vi.fn()
+    vi.mocked(usePatchBookingsIdCheckIn).mockReturnValue({
+      mutate: checkInMutate,
+      isPending: false,
+    } as unknown as ReturnType<typeof usePatchBookingsIdCheckIn>)
+    mockBathhouseStore('bathhouse-1')
+    const now = new Date()
+    const startTime = new Date(now.getTime() + 5 * 60 * 1000).toISOString()
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [{ ...mockBookings[1], start_time: startTime, checked_in_at: undefined }],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+    fireEvent.click(screen.getByText('Гость прибыл'))
+
+    expect(checkInMutate).toHaveBeenCalledWith({ id: 'booking-2' })
   })
 
   it('calls pay mutation when pay button clicked', () => {

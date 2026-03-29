@@ -165,12 +165,12 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/pages/bookings/BookingList.tsx` (owner)
 - Modify: `frontend/src/router.tsx`
 
-- [ ] Build AuditLog page: diff-based change history for selected bathhouse, filter by date, shows who/what/when with JSONB diff visualization (FR-029)
-- [ ] Enhance owner BookingList with explicit check-in/check-out buttons (not just "complete"): "Гость прибыл" button (available from start-15min to start+30min), "Гость ушёл" button (FR-066)
-- [ ] Add visual check-in status indicators on booking cards
-- [ ] Add route `/bathhouses/:id/audit`
-- [ ] Write tests for audit log rendering, check-in/out button visibility logic
-- [ ] Run project test suite + lint
+- [x] Build AuditLog page: diff-based change history for selected bathhouse, filter by date, shows who/what/when with JSONB diff visualization (FR-029)
+- [x] Enhance owner BookingList with explicit check-in/check-out buttons (not just "complete"): "Гость прибыл" button (available from start-15min to start+30min), "Гость ушёл" button (FR-066)
+- [x] Add visual check-in status indicators on booking cards
+- [x] Add route `/bathhouses/:id/audit`
+- [x] Write tests for audit log rendering, check-in/out button visibility logic
+- [x] Run project test suite + lint
 
 ### Task 12: Owner Calendar Enhancements (FR-076, FR-074)
 
