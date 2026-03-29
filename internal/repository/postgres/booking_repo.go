@@ -8,6 +8,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"encoding/binary"
+	"hash/fnv"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nikitaaldaev/bani/internal/domain"
@@ -234,6 +237,73 @@ func (r *bookingRepo) CheckAvailabilityExcluding(ctx context.Context, bathhouseI
 		return false, fmt.Errorf("check availability excluding: %w", err)
 	}
 	return count == 0, nil
+}
+
+// bathhouseAdvisoryLockKey derives a stable int64 from a bathhouse UUID for use
+// with pg_advisory_xact_lock. This serializes concurrent booking attempts for
+// the same bathhouse so that CheckAvailability + Create is atomic.
+func bathhouseAdvisoryLockKey(bathhouseID uuid.UUID) int64 {
+	h := fnv.New64a()
+	b := bathhouseID[:]
+	_, _ = h.Write(b)
+	return int64(binary.BigEndian.Uint64(h.Sum(nil)[:8]) >> 1) // ensure non-negative
+}
+
+func (r *bookingRepo) CreateWithAvailabilityCheck(ctx context.Context, booking *domain.Booking, checkStart, checkEnd time.Time) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	// Acquire advisory lock for this bathhouse to serialize concurrent bookings
+	lockKey := bathhouseAdvisoryLockKey(booking.BathhouseID)
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock($1)`, lockKey); err != nil {
+		return fmt.Errorf("acquire advisory lock: %w", err)
+	}
+
+	// Check availability within the transaction
+	var count int64
+	err = tx.QueryRow(ctx, `
+		SELECT COUNT(*) FROM bookings
+		WHERE bathhouse_id = $1
+			AND status IN ('pending', 'pending_owner', 'confirmed')
+			AND start_time < $3
+			AND end_time > $2`,
+		booking.BathhouseID, checkStart, checkEnd,
+	).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("check availability in tx: %w", err)
+	}
+	if count > 0 {
+		return domain.ErrSlotUnavailable
+	}
+
+	// Create booking
+	if booking.ID == uuid.Nil {
+		booking.ID = uuid.New()
+	}
+
+	insertQuery := `
+		INSERT INTO bookings (` + bookingColumns + `)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)`
+
+	_, err = tx.Exec(ctx, insertQuery,
+		booking.ID, booking.UserID, booking.BathhouseID,
+		booking.StartTime, booking.EndTime, booking.GuestCount,
+		booking.TotalPrice, booking.AddOnTotal, booking.BasePrice, booking.LongSessionDiscount, booking.ExtraGuestSurcharge, booking.LastMinuteDiscount, booking.ServiceFeeAmount,
+		booking.ModificationCount,
+		booking.DepositAmount, booking.DepositStatus, booking.DepositExternalID, booking.DepositReleasedAt,
+		booking.CheckedInAt, booking.CheckedOutAt,
+		booking.HoldID, booking.RejectionReason, booking.CancelledByOwner,
+		booking.PointsSpent, booking.ReferralBonusUsed, booking.Status, booking.Comment,
+		booking.CreatedAt, booking.UpdatedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("create booking in tx: %w", err)
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *bookingRepo) GetOverlapping(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) ([]domain.Booking, error) {

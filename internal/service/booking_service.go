@@ -490,8 +490,11 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, err
 	}
 
-	// Create booking first so loyalty_transactions FK on booking_id is valid
-	if err := s.bookingRepo.Create(ctx, booking); err != nil {
+	// Atomically check availability and create booking in a single transaction
+	// with advisory lock to prevent double-booking race conditions (FR-061).
+	// The earlier CheckAvailability call serves as a fast pre-check to avoid
+	// unnecessary lock acquisition.
+	if err := s.bookingRepo.CreateWithAvailabilityCheck(ctx, booking, checkStart, checkEnd); err != nil {
 		return nil, err
 	}
 

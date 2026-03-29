@@ -412,6 +412,35 @@ func (r *BookingRepo) CheckAvailabilityExcluding(_ context.Context, bathhouseID 
 	return true, nil
 }
 
+func (r *BookingRepo) CreateWithAvailabilityCheck(_ context.Context, booking *domain.Booking, checkStart, checkEnd time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	// Check availability
+	for _, b := range r.bookings {
+		if b.BathhouseID == booking.BathhouseID &&
+			isActiveBookingStatus(b.Status) &&
+			b.StartTime.Before(checkEnd) && b.EndTime.After(checkStart) {
+			return domain.ErrSlotUnavailable
+		}
+	}
+
+	// Create booking
+	if booking.ID == uuid.Nil {
+		booking.ID = uuid.New()
+	}
+	now := time.Now()
+	if booking.CreatedAt.IsZero() {
+		booking.CreatedAt = now
+	}
+	if booking.UpdatedAt.IsZero() {
+		booking.UpdatedAt = now
+	}
+	cp := *booking
+	r.bookings[booking.ID] = &cp
+	return nil
+}
+
 func (r *BookingRepo) GetOverlapping(_ context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) ([]domain.Booking, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

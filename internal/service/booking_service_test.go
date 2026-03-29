@@ -4271,3 +4271,85 @@ func TestBookingService_AdminListBookings(t *testing.T) {
 		t.Errorf("TotalCount = %d, want 0", result.TotalCount)
 	}
 }
+
+func TestBookingService_Create_ConcurrentSameSlot(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	end := start.Add(2 * time.Hour)
+
+	const goroutines = 10
+	results := make(chan error, goroutines)
+
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			_, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+				BathhouseID: bh.ID,
+				StartTime:   start,
+				EndTime:     end,
+				GuestCount:  2,
+			})
+			results <- err
+		}()
+	}
+
+	var successes, failures int
+	for i := 0; i < goroutines; i++ {
+		err := <-results
+		if err == nil {
+			successes++
+		} else if errors.Is(err, domain.ErrSlotUnavailable) {
+			failures++
+		} else {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}
+
+	if successes != 1 {
+		t.Errorf("expected exactly 1 success, got %d", successes)
+	}
+	if failures != goroutines-1 {
+		t.Errorf("expected %d slot unavailable errors, got %d", goroutines-1, failures)
+	}
+}
+
+func TestBookingService_Create_ConcurrentDifferentSlots(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start1 := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	start2 := time.Date(now.Year(), now.Month(), now.Day()+1, 14, 0, 0, 0, now.Location())
+
+	results := make(chan error, 2)
+
+	go func() {
+		_, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+			BathhouseID: bh.ID,
+			StartTime:   start1,
+			EndTime:     start1.Add(2 * time.Hour),
+			GuestCount:  2,
+		})
+		results <- err
+	}()
+
+	go func() {
+		_, err := svc.Create(context.Background(), uuid.New(), service.CreateBookingInput{
+			BathhouseID: bh.ID,
+			StartTime:   start2,
+			EndTime:     start2.Add(2 * time.Hour),
+			GuestCount:  2,
+		})
+		results <- err
+	}()
+
+	for i := 0; i < 2; i++ {
+		if err := <-results; err != nil {
+			t.Errorf("booking for different slot should succeed, got: %v", err)
+		}
+	}
+}
