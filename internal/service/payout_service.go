@@ -164,82 +164,95 @@ func (s *payoutService) ProcessPayout(ctx context.Context, payoutID uuid.UUID) e
 		return err
 	}
 
-	if payout.Status != domain.PayoutStatusPending {
+	// Allow retry from "processing" state (e.g., after SBP provider failure)
+	isRetry := payout.Status == domain.PayoutStatusProcessing
+	if payout.Status != domain.PayoutStatusPending && !isRetry {
 		return domain.ErrPayoutAlreadyProcessed
 	}
 
-	// Mark as processing
-	if err := s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusProcessing, nil, ""); err != nil {
-		return err
-	}
-
-	// Deduct from wallet
-	wallet, err := s.walletRepo.GetByUserID(ctx, payout.UserID)
-	if err != nil {
-		now := time.Now()
-		_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &now, "wallet not found")
-		return err
-	}
-
-	if wallet.AvailableBalance() < payout.Amount {
-		now := time.Now()
-		_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &now, "insufficient balance")
-		return domain.ErrInsufficientWalletBalance
-	}
-
-	newBalance := wallet.Balance - payout.Amount
-	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
-		now := time.Now()
-		_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &now, "balance update failed")
-		return err
-	}
-
-	// Record payout transaction in wallet
-	tx := &domain.WalletTransaction{
-		ID:            uuid.New(),
-		WalletID:      wallet.ID,
-		Type:          domain.WalletTxPayout,
-		Amount:        payout.Amount,
-		BalanceAfter:  newBalance,
-		Status:        domain.WalletTxStatusCompleted,
-		Description:   "Вывод средств",
-		ReferenceType: "payout",
-		ReferenceID:   &payout.ID,
-	}
-	if err := s.walletRepo.CreateTransaction(ctx, tx); err != nil {
-		// Balance was already deducted but transaction record failed - rollback balance
-		s.logger.Error("failed to create payout transaction, rolling back balance",
-			"error", err, "payout_id", payoutID, "wallet_id", wallet.ID, "amount", payout.Amount)
-		if rbErr := s.walletRepo.UpdateBalance(ctx, wallet.ID, newBalance, wallet.Balance, wallet.HeldAmount, wallet.HeldAmount); rbErr != nil {
-			s.logger.Error("CRITICAL: balance rollback failed after payout transaction failure, requires manual reconciliation",
-				"error", rbErr, "payout_id", payoutID, "wallet_id", wallet.ID, "amount", payout.Amount,
-				"deducted_balance", newBalance, "original_balance", wallet.Balance)
+	// Mark as processing (skip if already processing on retry)
+	if !isRetry {
+		if err := s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusProcessing, nil, ""); err != nil {
+			return err
 		}
-		failedAt := time.Now()
-		_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &failedAt, "transaction record failed")
-		return fmt.Errorf("create payout transaction: %w", err)
+	}
+
+	// Deduct from wallet (skip on retry — wallet was already deducted)
+	if !isRetry {
+		wallet, err := s.walletRepo.GetByUserID(ctx, payout.UserID)
+		if err != nil {
+			now := time.Now()
+			_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &now, "wallet not found")
+			return err
+		}
+
+		if wallet.AvailableBalance() < payout.Amount {
+			now := time.Now()
+			_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &now, "insufficient balance")
+			return domain.ErrInsufficientWalletBalance
+		}
+
+		newBalance := wallet.Balance - payout.Amount
+		if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
+			now := time.Now()
+			_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &now, "balance update failed")
+			return err
+		}
+
+		// Record payout transaction in wallet
+		tx := &domain.WalletTransaction{
+			ID:            uuid.New(),
+			WalletID:      wallet.ID,
+			Type:          domain.WalletTxPayout,
+			Amount:        payout.Amount,
+			BalanceAfter:  newBalance,
+			Status:        domain.WalletTxStatusCompleted,
+			Description:   "Вывод средств",
+			ReferenceType: "payout",
+			ReferenceID:   &payout.ID,
+		}
+		if err := s.walletRepo.CreateTransaction(ctx, tx); err != nil {
+			// Balance was already deducted but transaction record failed - rollback balance
+			s.logger.Error("failed to create payout transaction, rolling back balance",
+				"error", err, "payout_id", payoutID, "wallet_id", wallet.ID, "amount", payout.Amount)
+			if rbErr := s.walletRepo.UpdateBalance(ctx, wallet.ID, newBalance, wallet.Balance, wallet.HeldAmount, wallet.HeldAmount); rbErr != nil {
+				s.logger.Error("CRITICAL: balance rollback failed after payout transaction failure, requires manual reconciliation",
+					"error", rbErr, "payout_id", payoutID, "wallet_id", wallet.ID, "amount", payout.Amount,
+					"deducted_balance", newBalance, "original_balance", wallet.Balance)
+			}
+			failedAt := time.Now()
+			_ = s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusFailed, &failedAt, "transaction record failed")
+			return fmt.Errorf("create payout transaction: %w", err)
+		}
 	}
 
 	// Execute payout via payment provider if available
 	if s.payoutProvider != nil && payout.PayoutMethod == domain.PayoutMethodSBP {
 		user, userErr := s.userRepo.GetByID(ctx, payout.UserID)
-		if userErr == nil && user.Phone != "" {
-			currency := string(domain.CurrencyForRegion(user.Region))
-			result, providerErr := s.payoutProvider.CreatePayout(ctx, payment.CreatePayoutRequest{
-				Amount:      payout.Amount,
-				Currency:    currency,
-				Method:      "sbp",
-				Phone:       user.Phone,
-				Description: fmt.Sprintf("Вывод средств #%s", payout.ID.String()[:8]),
-			})
-			if providerErr != nil {
-				s.logger.Error("SBP payout failed, leaving in processing state for manual retry",
-					"error", providerErr, "payout_id", payoutID)
-				// Do not mark as completed — leave in processing state for manual retry
-				return fmt.Errorf("SBP payout provider failed: %w", providerErr)
-			}
-			_ = s.payoutRepo.UpdateExternalID(ctx, payoutID, result.ExternalID)
+		if userErr != nil {
+			s.logger.Error("SBP payout failed: cannot load user",
+				"error", userErr, "payout_id", payoutID, "user_id", payout.UserID)
+			return fmt.Errorf("SBP payout: load user: %w", userErr)
 		}
+		if user.Phone == "" {
+			s.logger.Error("SBP payout failed: user has no phone",
+				"payout_id", payoutID, "user_id", payout.UserID)
+			return fmt.Errorf("SBP payout: user has no phone number")
+		}
+		currency := string(domain.CurrencyForRegion(user.Region))
+		result, providerErr := s.payoutProvider.CreatePayout(ctx, payment.CreatePayoutRequest{
+			Amount:      payout.Amount,
+			Currency:    currency,
+			Method:      "sbp",
+			Phone:       user.Phone,
+			Description: fmt.Sprintf("Вывод средств #%s", payout.ID.String()[:8]),
+		})
+		if providerErr != nil {
+			s.logger.Error("SBP payout provider failed, retryable from processing state",
+				"error", providerErr, "payout_id", payoutID)
+			return fmt.Errorf("SBP payout provider failed: %w", providerErr)
+		}
+		_ = s.payoutRepo.UpdateExternalID(ctx, payoutID, result.ExternalID)
 	}
 
 	now := time.Now()

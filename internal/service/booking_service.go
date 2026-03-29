@@ -1506,8 +1506,8 @@ func (s *bookingService) handleOwnerCancellationPenalty(ctx context.Context, boo
 	}
 }
 
-func (s *bookingService) creditCashback(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, totalPrice int64) {
-	cashbackAmount, err := s.loyaltySvc.CalculateCashback(ctx, userID, totalPrice)
+func (s *bookingService) creditCashback(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, basePrice int64) {
+	cashbackAmount, err := s.loyaltySvc.CalculateCashback(ctx, userID, basePrice)
 	if err != nil {
 		s.logger.Warn("failed to calculate cashback", "booking_id", bookingID, "error", err)
 		return
@@ -1522,7 +1522,7 @@ func (s *bookingService) creditCashback(ctx context.Context, userID uuid.UUID, b
 		return
 	}
 
-	description := fmt.Sprintf("Кэшбэк за бронирование (%d коп.)", totalPrice)
+	description := fmt.Sprintf("Кэшбэк за бронирование (%d коп.)", basePrice)
 	_, err = s.walletSvc.AddBonus(ctx, wallet.ID, cashbackAmount, domain.WalletTxCashback, nil, description)
 	if err != nil {
 		s.logger.Warn("failed to credit cashback", "user_id", userID, "booking_id", bookingID, "amount", cashbackAmount, "error", err)
