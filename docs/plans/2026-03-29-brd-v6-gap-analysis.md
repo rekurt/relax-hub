@@ -456,10 +456,10 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 
 ### Task F1: Прогон тестов и линтера
 
-- [ ] `go test ./... -race`
-- [ ] `make lint`
-- [ ] `cd frontend && npm run lint`
-- [ ] `cd frontend && npx vitest run`
+- [x] `go test ./... -race`
+- [x] `make lint`
+- [x] `cd frontend && npm run lint`
+- [x] `cd frontend && npx vitest run`
 
 ### Task F2: Обновление swagger-документации
 
