@@ -174,10 +174,10 @@ starting interactive plan creation
 [26-03-29 09:40:19]   - Modify: `internal/payment/yookassa.go` — метод PayoutViaSBP (YooKassa Payouts API)
 [26-03-29 09:40:19]   - Modify: `internal/service/payout_service.go` — выбор метода выплаты (SBP vs bank transfer)
 [26-03-29 09:40:19]   - Modify: `internal/domain/payout.go` — добавить payout_method: sbp, bank_transfer
-[26-03-29 09:40:19]   - [ ] Интеграция с YooKassa Payouts API для СБП-выплат
-[26-03-29 09:40:19]   - [ ] Поле payout_method в domain + миграция
-[26-03-29 09:40:19]   - [ ] Логика выбора: если owner из РФ и указан телефон → СБП, иначе bank transfer
-[26-03-29 09:40:19]   - [ ] Тесты
+[26-03-29 09:40:19]   - [x] Интеграция с YooKassa Payouts API для СБП-выплат
+[26-03-29 09:40:19]   - [x] Поле payout_method в domain + миграция
+[26-03-29 09:40:19]   - [x] Логика выбора: если owner из РФ и указан телефон → СБП, иначе bank transfer
+[26-03-29 09:40:19]   - [x] Тесты
 [26-03-29 09:40:19] ---
 [26-03-29 09:40:19] ## БЛОК C: ПРОБЕЛЫ В ОБРАБОТКЕ МЕДИА И SEO
 [26-03-29 09:40:19] ### Task C1: WebP-конвертация и множественные размеры фото (FR-023)
