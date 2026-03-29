@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"slices"
 	"strings"
@@ -376,11 +377,30 @@ func (s *pricingService) CreateSeasonalTariff(ctx context.Context, userID uuid.U
 	if err := tariff.Validate(); err != nil {
 		return nil, err
 	}
+	// Check for overlapping tariffs
+	existing, err := s.seasonalTariffRepo.ListByBathhouse(ctx, tariff.BathhouseID)
+	if err != nil {
+		return nil, fmt.Errorf("check tariff overlap: %w", err)
+	}
+	for _, e := range existing {
+		if tariffDatesOverlap(tariff, &e) {
+			return nil, domain.ErrSeasonalTariffOverlap
+		}
+	}
 	if err := s.seasonalTariffRepo.Create(ctx, tariff); err != nil {
 		return nil, err
 	}
 	s.logger.Info("seasonal tariff created", "tariff_id", tariff.ID, "bathhouse_id", tariff.BathhouseID)
 	return tariff, nil
+}
+
+// tariffDatesOverlap checks if two seasonal tariff date ranges overlap.
+func tariffDatesOverlap(a *domain.SeasonalTariff, b *domain.SeasonalTariff) bool {
+	aFrom := a.DateFrom.Truncate(24 * time.Hour)
+	aTo := a.DateTo.Truncate(24 * time.Hour)
+	bFrom := b.DateFrom.Truncate(24 * time.Hour)
+	bTo := b.DateTo.Truncate(24 * time.Hour)
+	return !aFrom.After(bTo) && !bFrom.After(aTo)
 }
 
 // UpdateSeasonalTariff updates an existing seasonal tariff.
@@ -395,6 +415,16 @@ func (s *pricingService) UpdateSeasonalTariff(ctx context.Context, userID uuid.U
 	tariff.BathhouseID = existing.BathhouseID
 	if err := tariff.Validate(); err != nil {
 		return err
+	}
+	// Check for overlapping tariffs (exclude self)
+	allTariffs, err := s.seasonalTariffRepo.ListByBathhouse(ctx, tariff.BathhouseID)
+	if err != nil {
+		return fmt.Errorf("check tariff overlap: %w", err)
+	}
+	for _, e := range allTariffs {
+		if e.ID != tariff.ID && tariffDatesOverlap(tariff, &e) {
+			return domain.ErrSeasonalTariffOverlap
+		}
 	}
 	if err := s.seasonalTariffRepo.Update(ctx, tariff); err != nil {
 		return err

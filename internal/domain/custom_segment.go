@@ -56,7 +56,19 @@ func (s *CustomSegment) Validate() error {
 	if c.VisitCountMin != nil && c.VisitCountMax != nil && *c.VisitCountMin > *c.VisitCountMax {
 		return ErrInvalidInput
 	}
+	if c.AvgCheckMin != nil && *c.AvgCheckMin < 0 {
+		return ErrInvalidInput
+	}
+	if c.AvgCheckMax != nil && *c.AvgCheckMax < 0 {
+		return ErrInvalidInput
+	}
 	if c.AvgCheckMin != nil && c.AvgCheckMax != nil && *c.AvgCheckMin > *c.AvgCheckMax {
+		return ErrInvalidInput
+	}
+	if c.TotalSpentMin != nil && *c.TotalSpentMin < 0 {
+		return ErrInvalidInput
+	}
+	if c.TotalSpentMax != nil && *c.TotalSpentMax < 0 {
 		return ErrInvalidInput
 	}
 	if c.TotalSpentMin != nil && c.TotalSpentMax != nil && *c.TotalSpentMin > *c.TotalSpentMax {

@@ -63,12 +63,12 @@ func (p *YandexProvider) Exchange(ctx context.Context, code string) (*OAuthUserI
 }
 
 type yandexUserInfo struct {
-	ID           string `json:"id"`
-	Login        string `json:"login"`
-	DisplayName  string `json:"display_name"`
-	RealName     string `json:"real_name"`
-	DefaultEmail string `json:"default_email"`
-	IsAvatarEmpty bool  `json:"is_avatar_empty"`
+	ID              string `json:"id"`
+	Login           string `json:"login"`
+	DisplayName     string `json:"display_name"`
+	RealName        string `json:"real_name"`
+	DefaultEmail    string `json:"default_email"`
+	IsAvatarEmpty   bool   `json:"is_avatar_empty"`
 	DefaultAvatarID string `json:"default_avatar_id"`
 }
 

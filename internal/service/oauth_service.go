@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/auth"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/redis/go-redis/v9"
 )
 
 type OAuthService interface {
@@ -227,14 +227,15 @@ func (s *oauthService) OAuthCallback(ctx context.Context, provider domain.OAuthP
 			name = "User"
 		}
 		user = &domain.User{
-			ID:        uuid.New(),
-			Email:     email,
-			Name:      name,
-			AvatarURL: info.AvatarURL,
-			Role:      domain.RoleClient,
-			IsActive:  true,
-			CreatedAt: now,
-			UpdatedAt: now,
+			ID:           uuid.New(),
+			Email:        email,
+			Name:         name,
+			AvatarURL:    info.AvatarURL,
+			Role:         domain.RoleClient,
+			IsActive:     true,
+			AgeConfirmed: true,
+			CreatedAt:    now,
+			UpdatedAt:    now,
 		}
 
 		if err := user.Validate(); err != nil {

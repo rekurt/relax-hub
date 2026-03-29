@@ -85,7 +85,7 @@ func (s *webhookService) GetByID(ctx context.Context, userID uuid.UUID, role dom
 		return nil, err
 	}
 
-	if webhook.OwnerID != userID {
+	if role != domain.RoleAdmin && webhook.OwnerID != userID {
 		return nil, domain.ErrForbidden
 	}
 
@@ -102,7 +102,7 @@ func (s *webhookService) Update(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 
-	if existing.OwnerID != userID {
+	if role != domain.RoleAdmin && existing.OwnerID != userID {
 		return domain.ErrForbidden
 	}
 
@@ -128,7 +128,7 @@ func (s *webhookService) Delete(ctx context.Context, userID uuid.UUID, role doma
 		return err
 	}
 
-	if existing.OwnerID != userID {
+	if role != domain.RoleAdmin && existing.OwnerID != userID {
 		return domain.ErrForbidden
 	}
 
@@ -151,7 +151,7 @@ func (s *webhookService) ListDeliveries(ctx context.Context, userID uuid.UUID, r
 	if err != nil {
 		return nil, err
 	}
-	if webhook.OwnerID != userID {
+	if role != domain.RoleAdmin && webhook.OwnerID != userID {
 		return nil, domain.ErrForbidden
 	}
 

@@ -14,9 +14,9 @@ import (
 const vkAPIVersion = "5.131"
 
 type VKProvider struct {
-	config   *oauth2.Config
-	client   *http.Client
-	apiBase  string
+	config  *oauth2.Config
+	client  *http.Client
+	apiBase string
 }
 
 type VKProviderOption func(*VKProvider)
