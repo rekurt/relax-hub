@@ -24,8 +24,8 @@ func (s CertificateStatus) IsValid() bool {
 
 type GiftCertificate struct {
 	ID             uuid.UUID
-	Code           string            // уникальный код формата BANI-XXXX-XXXX
-	PurchaserID    *uuid.UUID        // nil если куплен без регистрации
+	Code           string     // уникальный код формата BANI-XXXX-XXXX
+	PurchaserID    *uuid.UUID // nil если куплен без регистрации
 	PurchaserEmail string
 	RecipientEmail string
 	RecipientName  string
@@ -34,7 +34,7 @@ type GiftCertificate struct {
 	Message        string            // поздравительное сообщение
 	Status         CertificateStatus // active, used, expired
 	ValidUntil     time.Time
-	RedeemedByID   *uuid.UUID        // кто привязал к аккаунту
+	RedeemedByID   *uuid.UUID // кто привязал к аккаунту
 	CreatedAt      time.Time
 }
 
@@ -94,4 +94,3 @@ func (u *CertificateUsage) Validate() error {
 	}
 	return nil
 }
-

@@ -30,15 +30,16 @@ type offerStatusResponse struct {
 }
 
 // AcceptOffer godoc
-// @Summary      Accept platform offer
-// @Description  Accept the current version of the platform offer/contract (owner only)
-// @Tags         offer
-// @Produce      json
-// @Security     BearerAuth
-// @Success      201  {object}  APIResponse{data=offerAcceptanceResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      409  {object}  APIResponse{error=APIError}
-// @Router       /my/offer/accept [post]
+//
+//	@Summary		Accept platform offer
+//	@Description	Accept the current version of the platform offer/contract (owner only)
+//	@Tags			offer
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		201	{object}	APIResponse{data=offerAcceptanceResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		409	{object}	APIResponse{error=APIError}
+//	@Router			/my/offer/accept [post]
 func (h *OfferHandler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -60,14 +61,15 @@ func (h *OfferHandler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetOfferStatus godoc
-// @Summary      Get offer acceptance status
-// @Description  Check if the current user has accepted the latest offer version (owner only)
-// @Tags         offer
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=offerStatusResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /my/offer/status [get]
+//
+//	@Summary		Get offer acceptance status
+//	@Description	Check if the current user has accepted the latest offer version (owner only)
+//	@Tags			offer
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=offerStatusResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/my/offer/status [get]
 func (h *OfferHandler) GetOfferStatus(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 

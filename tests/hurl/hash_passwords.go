@@ -4,17 +4,18 @@ package main
 
 import (
 	"fmt"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
 	passwords := map[string]string{
-		"admin":      "admin-password",
-		"owner":      "owner-password",
-		"rep":        "rep-password",
-		"client":     "client-password",
-		"client2":    "client2-password",
-		"blocked":    "blocked-password",
+		"admin":   "admin-password",
+		"owner":   "owner-password",
+		"rep":     "rep-password",
+		"client":  "client-password",
+		"client2": "client2-password",
+		"blocked": "blocked-password",
 	}
 
 	for user, password := range passwords {

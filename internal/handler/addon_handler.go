@@ -73,20 +73,21 @@ func toAddOnListResponse(addons []domain.AddOn) []addOnResponse {
 }
 
 // CreateAddOn godoc
-// @Summary      Create add-on for bathhouse
-// @Description  Creates a new add-on service for a bathhouse. Available to owners and representatives.
-// @Tags         add-ons
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string              true  "Bathhouse ID (UUID)"
-// @Param        body  body      createAddOnRequest   true  "Add-on data"
-// @Success      201   {object}  APIResponse{data=addOnResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Router       /my/bathhouses/{id}/addons [post]
+//
+//	@Summary		Create add-on for bathhouse
+//	@Description	Creates a new add-on service for a bathhouse. Available to owners and representatives.
+//	@Tags			add-ons
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Bathhouse ID (UUID)"
+//	@Param			body	body		createAddOnRequest	true	"Add-on data"
+//	@Success		201		{object}	APIResponse{data=addOnResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/addons [post]
 func (h *AddOnHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -122,20 +123,21 @@ func (h *AddOnHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateAddOn godoc
-// @Summary      Update add-on
-// @Description  Updates an existing add-on. Available to owners and representatives.
-// @Tags         add-ons
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string              true  "Add-on ID (UUID)"
-// @Param        body  body      updateAddOnRequest   true  "Updated add-on data"
-// @Success      200   {object}  APIResponse{data=addOnResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /my/addons/{id} [put]
+//
+//	@Summary		Update add-on
+//	@Description	Updates an existing add-on. Available to owners and representatives.
+//	@Tags			add-ons
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Add-on ID (UUID)"
+//	@Param			body	body		updateAddOnRequest	true	"Updated add-on data"
+//	@Success		200		{object}	APIResponse{data=addOnResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/my/addons/{id} [put]
 func (h *AddOnHandler) Update(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -172,17 +174,18 @@ func (h *AddOnHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteAddOn godoc
-// @Summary      Delete add-on
-// @Description  Deletes an add-on. Available to owners and representatives.
-// @Tags         add-ons
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string  true  "Add-on ID (UUID)"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /my/addons/{id} [delete]
+//
+//	@Summary		Delete add-on
+//	@Description	Deletes an add-on. Available to owners and representatives.
+//	@Tags			add-ons
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Add-on ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/addons/{id} [delete]
 func (h *AddOnHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -202,16 +205,17 @@ func (h *AddOnHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListByBathhouse godoc
-// @Summary      List add-ons for bathhouse (owner)
-// @Description  Lists all add-ons for a bathhouse. Available to owners and representatives.
-// @Tags         add-ons
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id  path      string  true  "Bathhouse ID (UUID)"
-// @Success      200 {object}  APIResponse{data=[]addOnResponse}
-// @Failure      400 {object}  APIResponse{error=APIError}
-// @Failure      401 {object}  APIResponse{error=APIError}
-// @Router       /my/bathhouses/{id}/addons [get]
+//
+//	@Summary		List add-ons for bathhouse (owner)
+//	@Description	Lists all add-ons for a bathhouse. Available to owners and representatives.
+//	@Tags			add-ons
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Bathhouse ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=[]addOnResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/addons [get]
 func (h *AddOnHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -232,14 +236,15 @@ func (h *AddOnHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListPublic godoc
-// @Summary      List active add-ons for bathhouse (public)
-// @Description  Lists active add-ons for a bathhouse. Available publicly.
-// @Tags         add-ons
-// @Produce      json
-// @Param        id  path      string  true  "Bathhouse ID (UUID)"
-// @Success      200 {object}  APIResponse{data=[]addOnResponse}
-// @Failure      400 {object}  APIResponse{error=APIError}
-// @Router       /bathhouses/{id}/addons [get]
+//
+//	@Summary		List active add-ons for bathhouse (public)
+//	@Description	Lists active add-ons for a bathhouse. Available publicly.
+//	@Tags			add-ons
+//	@Produce		json
+//	@Param			id	path		string	true	"Bathhouse ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=[]addOnResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Router			/bathhouses/{id}/addons [get]
 func (h *AddOnHandler) ListPublic(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

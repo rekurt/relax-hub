@@ -123,20 +123,21 @@ func toDisputeEvidenceResponse(e *domain.DisputeEvidence) disputeEvidenceRespons
 }
 
 // OpenDispute godoc
-// @Summary      Open a dispute on a booking
-// @Description  Open a dispute for a specific booking
-// @Tags         disputes
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string               true  "Booking ID (UUID)"
-// @Param        body  body      openDisputeRequest   true  "Dispute data"
-// @Success      201   {object}  APIResponse{data=disputeResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Router       /bookings/{id}/dispute [post]
+//
+//	@Summary		Open a dispute on a booking
+//	@Description	Open a dispute for a specific booking
+//	@Tags			disputes
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Booking ID (UUID)"
+//	@Param			body	body		openDisputeRequest	true	"Dispute data"
+//	@Success		201		{object}	APIResponse{data=disputeResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id}/dispute [post]
 func (h *DisputeHandler) OpenDispute(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -162,19 +163,20 @@ func (h *DisputeHandler) OpenDispute(w http.ResponseWriter, r *http.Request) {
 }
 
 // SubmitEvidence godoc
-// @Summary      Submit evidence for a dispute
-// @Description  Submit evidence for an open dispute within the evidence collection window
-// @Tags         disputes
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                  true  "Dispute ID (UUID)"
-// @Param        body  body      submitEvidenceRequest   true  "Evidence data"
-// @Success      201   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Router       /my/disputes/{id}/evidence [post]
+//
+//	@Summary		Submit evidence for a dispute
+//	@Description	Submit evidence for an open dispute within the evidence collection window
+//	@Tags			disputes
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Dispute ID (UUID)"
+//	@Param			body	body		submitEvidenceRequest	true	"Evidence data"
+//	@Success		201		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/my/disputes/{id}/evidence [post]
 func (h *DisputeHandler) SubmitEvidence(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -206,17 +208,18 @@ func (h *DisputeHandler) SubmitEvidence(w http.ResponseWriter, r *http.Request) 
 }
 
 // GetDispute godoc
-// @Summary      Get dispute details
-// @Description  Get details of a specific dispute
-// @Tags         disputes
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Dispute ID (UUID)"
-// @Success      200  {object}  APIResponse{data=disputeResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/disputes/{id} [get]
+//
+//	@Summary		Get dispute details
+//	@Description	Get details of a specific dispute
+//	@Tags			disputes
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Dispute ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=disputeResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/disputes/{id} [get]
 func (h *DisputeHandler) GetDispute(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -237,16 +240,17 @@ func (h *DisputeHandler) GetDispute(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListUserDisputes godoc
-// @Summary      List my disputes
-// @Description  Get all disputes for the authenticated user
-// @Tags         disputes
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query     int  false  "Page number"  default(1)
-// @Param        page_size  query     int  false  "Page size"    default(20)
-// @Success      200  {object}  APIResponse{data=[]disputeResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /my/disputes [get]
+//
+//	@Summary		List my disputes
+//	@Description	Get all disputes for the authenticated user
+//	@Tags			disputes
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int	false	"Page number"	default(1)
+//	@Param			page_size	query		int	false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]disputeResponse}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Router			/my/disputes [get]
 func (h *DisputeHandler) ListUserDisputes(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -282,17 +286,18 @@ func (h *DisputeHandler) ListUserDisputes(w http.ResponseWriter, r *http.Request
 }
 
 // ListEvidence godoc
-// @Summary      List dispute evidence
-// @Description  Get all evidence for a dispute
-// @Tags         disputes
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Dispute ID (UUID)"
-// @Success      200  {object}  APIResponse{data=[]disputeEvidenceResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/disputes/{id}/evidence [get]
+//
+//	@Summary		List dispute evidence
+//	@Description	Get all evidence for a dispute
+//	@Tags			disputes
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Dispute ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=[]disputeEvidenceResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/disputes/{id}/evidence [get]
 func (h *DisputeHandler) ListEvidence(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -321,18 +326,19 @@ func (h *DisputeHandler) ListEvidence(w http.ResponseWriter, r *http.Request) {
 }
 
 // AppealDispute godoc
-// @Summary      Appeal a dispute resolution
-// @Description  Appeal a resolved dispute within the appeal window (7 days)
-// @Tags         disputes
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Dispute ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      409  {object}  APIResponse{error=APIError}
-// @Router       /my/disputes/{id}/appeal [post]
+//
+//	@Summary		Appeal a dispute resolution
+//	@Description	Appeal a resolved dispute within the appeal window (7 days)
+//	@Tags			disputes
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Dispute ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		409	{object}	APIResponse{error=APIError}
+//	@Router			/my/disputes/{id}/appeal [post]
 func (h *DisputeHandler) AppealDispute(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -353,17 +359,18 @@ func (h *DisputeHandler) AppealDispute(w http.ResponseWriter, r *http.Request) {
 // --- Admin endpoints ---
 
 // AdminGetDispute godoc
-// @Summary      Get dispute details (admin)
-// @Description  Get details of a specific dispute as admin
-// @Tags         disputes-admin
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Dispute ID (UUID)"
-// @Success      200  {object}  APIResponse{data=disputeResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /admin/disputes/{id} [get]
+//
+//	@Summary		Get dispute details (admin)
+//	@Description	Get details of a specific dispute as admin
+//	@Tags			disputes-admin
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Dispute ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=disputeResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/admin/disputes/{id} [get]
 func (h *DisputeHandler) AdminGetDispute(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -384,18 +391,19 @@ func (h *DisputeHandler) AdminGetDispute(w http.ResponseWriter, r *http.Request)
 }
 
 // AdminListDisputes godoc
-// @Summary      List all disputes (admin)
-// @Description  List all disputes with optional status filter
-// @Tags         disputes-admin
-// @Produce      json
-// @Security     BearerAuth
-// @Param        status    query     string  false  "Filter by status"
-// @Param        page      query     int     false  "Page number"  default(1)
-// @Param        page_size query     int     false  "Page size"    default(20)
-// @Success      200  {object}  APIResponse{data=[]disputeResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /admin/disputes [get]
+//
+//	@Summary		List all disputes (admin)
+//	@Description	List all disputes with optional status filter
+//	@Tags			disputes-admin
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			status		query		string	false	"Filter by status"
+//	@Param			page		query		int		false	"Page number"	default(1)
+//	@Param			page_size	query		int		false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]disputeResponse}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/disputes [get]
 func (h *DisputeHandler) AdminListDisputes(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
@@ -443,19 +451,20 @@ func (h *DisputeHandler) AdminListDisputes(w http.ResponseWriter, r *http.Reques
 }
 
 // AdminAssignDispute godoc
-// @Summary      Assign dispute to mediator
-// @Description  Assign a dispute to an admin mediator
-// @Tags         disputes-admin
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string               true  "Dispute ID (UUID)"
-// @Param        body  body      assignDisputeRequest  true  "Assignment data"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /admin/disputes/{id}/assign [patch]
+//
+//	@Summary		Assign dispute to mediator
+//	@Description	Assign a dispute to an admin mediator
+//	@Tags			disputes-admin
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Dispute ID (UUID)"
+//	@Param			body	body		assignDisputeRequest	true	"Assignment data"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/disputes/{id}/assign [patch]
 func (h *DisputeHandler) AdminAssignDispute(w http.ResponseWriter, r *http.Request) {
 	disputeID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -484,20 +493,21 @@ func (h *DisputeHandler) AdminAssignDispute(w http.ResponseWriter, r *http.Reque
 }
 
 // AdminResolveDispute godoc
-// @Summary      Resolve a dispute
-// @Description  Resolve a dispute with a decision (full/partial/no refund)
-// @Tags         disputes-admin
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                 true  "Dispute ID (UUID)"
-// @Param        body  body      resolveDisputeRequest   true  "Resolution data"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Router       /admin/disputes/{id}/resolve [patch]
+//
+//	@Summary		Resolve a dispute
+//	@Description	Resolve a dispute with a decision (full/partial/no refund)
+//	@Tags			disputes-admin
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Dispute ID (UUID)"
+//	@Param			body	body		resolveDisputeRequest	true	"Resolution data"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Router			/admin/disputes/{id}/resolve [patch]
 func (h *DisputeHandler) AdminResolveDispute(w http.ResponseWriter, r *http.Request) {
 	disputeID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -520,18 +530,19 @@ func (h *DisputeHandler) AdminResolveDispute(w http.ResponseWriter, r *http.Requ
 }
 
 // AdminCloseDispute godoc
-// @Summary      Close a dispute
-// @Description  Close a dispute (after resolution or appeal)
-// @Tags         disputes-admin
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Dispute ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Failure      409  {object}  APIResponse{error=APIError}
-// @Router       /admin/disputes/{id}/close [patch]
+//
+//	@Summary		Close a dispute
+//	@Description	Close a dispute (after resolution or appeal)
+//	@Tags			disputes-admin
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Dispute ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Failure		409	{object}	APIResponse{error=APIError}
+//	@Router			/admin/disputes/{id}/close [patch]
 func (h *DisputeHandler) AdminCloseDispute(w http.ResponseWriter, r *http.Request) {
 	disputeID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

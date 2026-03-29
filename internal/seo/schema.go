@@ -7,18 +7,18 @@ import (
 
 // SchemaLocalBusiness represents a Schema.org LocalBusiness JSON-LD object.
 type SchemaLocalBusiness struct {
-	Context         string                  `json:"@context"`
-	Type            string                  `json:"@type"`
-	Name            string                  `json:"name"`
-	Description     string                  `json:"description,omitempty"`
-	URL             string                  `json:"url,omitempty"`
-	Image           []string                `json:"image,omitempty"`
-	Address         *SchemaPostalAddress     `json:"address,omitempty"`
-	Geo             *SchemaGeoCoordinates    `json:"geo,omitempty"`
-	AggregateRating *SchemaAggregateRating   `json:"aggregateRating,omitempty"`
-	PriceRange      string                  `json:"priceRange,omitempty"`
-	OpeningHours    []SchemaOpeningHours     `json:"openingHoursSpecification,omitempty"`
-	AmenityFeature  []SchemaAmenity          `json:"amenityFeature,omitempty"`
+	Context         string                 `json:"@context"`
+	Type            string                 `json:"@type"`
+	Name            string                 `json:"name"`
+	Description     string                 `json:"description,omitempty"`
+	URL             string                 `json:"url,omitempty"`
+	Image           []string               `json:"image,omitempty"`
+	Address         *SchemaPostalAddress   `json:"address,omitempty"`
+	Geo             *SchemaGeoCoordinates  `json:"geo,omitempty"`
+	AggregateRating *SchemaAggregateRating `json:"aggregateRating,omitempty"`
+	PriceRange      string                 `json:"priceRange,omitempty"`
+	OpeningHours    []SchemaOpeningHours   `json:"openingHoursSpecification,omitempty"`
+	AmenityFeature  []SchemaAmenity        `json:"amenityFeature,omitempty"`
 }
 
 // SchemaPostalAddress represents a Schema.org PostalAddress.

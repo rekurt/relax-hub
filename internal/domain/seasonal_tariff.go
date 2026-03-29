@@ -44,8 +44,8 @@ func (st *SeasonalTariff) AppliesToDate(t time.Time) bool {
 	if !st.IsActive {
 		return false
 	}
-	tDate := t.Truncate(24 * time.Hour)
-	fromDate := st.DateFrom.Truncate(24 * time.Hour)
-	toDate := st.DateTo.Truncate(24 * time.Hour)
+	tDate := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+	fromDate := time.Date(st.DateFrom.Year(), st.DateFrom.Month(), st.DateFrom.Day(), 0, 0, 0, 0, st.DateFrom.Location())
+	toDate := time.Date(st.DateTo.Year(), st.DateTo.Month(), st.DateTo.Day(), 0, 0, 0, 0, st.DateTo.Location())
 	return !tDate.Before(fromDate) && !tDate.After(toDate)
 }

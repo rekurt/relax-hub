@@ -13,8 +13,8 @@ import (
 )
 
 type SavedSearchRepo struct {
-	mu      sync.RWMutex
-	items   map[uuid.UUID]*domain.SavedSearch
+	mu    sync.RWMutex
+	items map[uuid.UUID]*domain.SavedSearch
 }
 
 func NewSavedSearchRepo() *SavedSearchRepo {

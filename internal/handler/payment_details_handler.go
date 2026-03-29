@@ -46,14 +46,14 @@ type paymentDetailsResponse struct {
 
 func toPaymentDetailsResponse(pd *domain.PaymentDetails) paymentDetailsResponse {
 	resp := paymentDetailsResponse{
-		ID:           pd.ID.String(),
-		UserID:       pd.UserID.String(),
-		EntityType:   string(pd.EntityType),
-		IsVerified:   pd.IsVerified,
-		CreatedAt:    pd.CreatedAt,
-		UpdatedAt:    pd.UpdatedAt,
-		BIK:          pd.BIK,
-		BankName:     pd.BankName,
+		ID:         pd.ID.String(),
+		UserID:     pd.UserID.String(),
+		EntityType: string(pd.EntityType),
+		IsVerified: pd.IsVerified,
+		CreatedAt:  pd.CreatedAt,
+		UpdatedAt:  pd.UpdatedAt,
+		BIK:        pd.BIK,
+		BankName:   pd.BankName,
 	}
 
 	if pd.BankCardNumber != "" {
@@ -76,17 +76,18 @@ func toPaymentDetailsResponse(pd *domain.PaymentDetails) paymentDetailsResponse 
 }
 
 // SetPaymentDetails godoc
-// @Summary      Set owner payment details
-// @Description  Create or update payment details for the current owner (required for payouts)
-// @Tags         payment-details
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body  setPaymentDetailsRequest  true  "Payment details"
-// @Success      200  {object}  APIResponse{data=paymentDetailsResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /my/payment-details [put]
+//
+//	@Summary		Set owner payment details
+//	@Description	Create or update payment details for the current owner (required for payouts)
+//	@Tags			payment-details
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		setPaymentDetailsRequest	true	"Payment details"
+//	@Success		200		{object}	APIResponse{data=paymentDetailsResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Router			/my/payment-details [put]
 func (h *PaymentDetailsHandler) SetPaymentDetails(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -121,15 +122,16 @@ func (h *PaymentDetailsHandler) SetPaymentDetails(w http.ResponseWriter, r *http
 }
 
 // GetPaymentDetails godoc
-// @Summary      Get owner payment details
-// @Description  Get current payment details for the authenticated owner (sensitive data is masked)
-// @Tags         payment-details
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=paymentDetailsResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/payment-details [get]
+//
+//	@Summary		Get owner payment details
+//	@Description	Get current payment details for the authenticated owner (sensitive data is masked)
+//	@Tags			payment-details
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=paymentDetailsResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/payment-details [get]
 func (h *PaymentDetailsHandler) GetPaymentDetails(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 

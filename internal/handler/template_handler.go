@@ -54,19 +54,20 @@ func toTemplateResponse(t *domain.ResponseTemplate) templateResponse {
 }
 
 // CreateTemplate godoc
-// @Summary      Create a response template
-// @Description  Create a new response template for review responses
-// @Tags         crm
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      createTemplateRequest  true  "Template data"
-// @Success      201   {object}  APIResponse{data=templateResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Router       /my/crm/templates [post]
+//
+//	@Summary		Create a response template
+//	@Description	Create a new response template for review responses
+//	@Tags			crm
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		createTemplateRequest	true	"Template data"
+//	@Success		201		{object}	APIResponse{data=templateResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/templates [post]
 func (h *TemplateHandler) CreateTemplate(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -93,15 +94,16 @@ func (h *TemplateHandler) CreateTemplate(w http.ResponseWriter, r *http.Request)
 }
 
 // ListTemplates godoc
-// @Summary      List response templates
-// @Description  Get all response templates for the owner (seeds defaults on first use)
-// @Tags         crm
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=[]templateResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /my/crm/templates [get]
+//
+//	@Summary		List response templates
+//	@Description	Get all response templates for the owner (seeds defaults on first use)
+//	@Tags			crm
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=[]templateResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/templates [get]
 func (h *TemplateHandler) ListTemplates(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -124,20 +126,21 @@ func (h *TemplateHandler) ListTemplates(w http.ResponseWriter, r *http.Request) 
 }
 
 // UpdateTemplate godoc
-// @Summary      Update a response template
-// @Description  Update an existing response template
-// @Tags         crm
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                 true  "Template ID (UUID)"
-// @Param        body  body      updateTemplateRequest   true  "Template data"
-// @Success      200   {object}  APIResponse{data=templateResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /my/crm/templates/{id} [put]
+//
+//	@Summary		Update a response template
+//	@Description	Update an existing response template
+//	@Tags			crm
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Template ID (UUID)"
+//	@Param			body	body		updateTemplateRequest	true	"Template data"
+//	@Success		200		{object}	APIResponse{data=templateResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/templates/{id} [put]
 func (h *TemplateHandler) UpdateTemplate(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -170,17 +173,18 @@ func (h *TemplateHandler) UpdateTemplate(w http.ResponseWriter, r *http.Request)
 }
 
 // DeleteTemplate godoc
-// @Summary      Delete a response template
-// @Description  Delete a response template
-// @Tags         crm
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Template ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/crm/templates/{id} [delete]
+//
+//	@Summary		Delete a response template
+//	@Description	Delete a response template
+//	@Tags			crm
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Template ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/templates/{id} [delete]
 func (h *TemplateHandler) DeleteTemplate(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())

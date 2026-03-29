@@ -31,7 +31,7 @@ type PromoCode struct {
 	CreatorID   uuid.UUID  // owner or admin
 	MaxUses     int        // 0 = unlimited
 	CurrentUses int
-	MinAmount   int64      // minimum booking amount in kopecks
+	MinAmount   int64 // minimum booking amount in kopecks
 	ValidFrom   time.Time
 	ValidUntil  time.Time
 	IsActive    bool

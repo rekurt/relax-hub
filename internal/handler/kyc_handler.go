@@ -70,18 +70,19 @@ func toKYCResponse(k *domain.KYCApplication) kycResponse {
 }
 
 // SubmitKYC godoc
-// @Summary      Submit KYC application
-// @Description  Submit KYC documents for verification (owner only)
-// @Tags         kyc
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      submitKYCRequest  true  "KYC application data"
-// @Success      201   {object}  APIResponse{data=kycResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Router       /my/kyc [post]
+//
+//	@Summary		Submit KYC application
+//	@Description	Submit KYC documents for verification (owner only)
+//	@Tags			kyc
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		submitKYCRequest	true	"KYC application data"
+//	@Success		201		{object}	APIResponse{data=kycResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Router			/my/kyc [post]
 func (h *KYCHandler) SubmitKYC(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -108,15 +109,16 @@ func (h *KYCHandler) SubmitKYC(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetKYCStatus godoc
-// @Summary      Get KYC status
-// @Description  Get current user's KYC verification status (owner only)
-// @Tags         kyc
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=kycResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/kyc [get]
+//
+//	@Summary		Get KYC status
+//	@Description	Get current user's KYC verification status (owner only)
+//	@Tags			kyc
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=kycResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/kyc [get]
 func (h *KYCHandler) GetKYCStatus(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -130,17 +132,18 @@ func (h *KYCHandler) GetKYCStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListPendingKYC godoc
-// @Summary      List pending KYC applications
-// @Description  Get list of pending KYC applications for admin review
-// @Tags         kyc,admin
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query  int  false  "Page number"  default(1)
-// @Param        page_size  query  int  false  "Page size"    default(20)
-// @Success      200  {object}  APIResponse{data=[]kycResponse,meta=Meta}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /admin/kyc/pending [get]
+//
+//	@Summary		List pending KYC applications
+//	@Description	Get list of pending KYC applications for admin review
+//	@Tags			kyc,admin
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int	false	"Page number"	default(1)
+//	@Param			page_size	query		int	false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]kycResponse,meta=Meta}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/kyc/pending [get]
 func (h *KYCHandler) ListPendingKYC(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
@@ -174,17 +177,18 @@ func (h *KYCHandler) ListPendingKYC(w http.ResponseWriter, r *http.Request) {
 }
 
 // ApproveKYC godoc
-// @Summary      Approve KYC application
-// @Description  Approve a pending KYC application (admin only)
-// @Tags         kyc,admin
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id  path  string  true  "KYC Application ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /admin/kyc/{id}/approve [patch]
+//
+//	@Summary		Approve KYC application
+//	@Description	Approve a pending KYC application (admin only)
+//	@Tags			kyc,admin
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"KYC Application ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/admin/kyc/{id}/approve [patch]
 func (h *KYCHandler) ApproveKYC(w http.ResponseWriter, r *http.Request) {
 	kycID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -203,20 +207,21 @@ func (h *KYCHandler) ApproveKYC(w http.ResponseWriter, r *http.Request) {
 }
 
 // RejectKYC godoc
-// @Summary      Reject KYC application
-// @Description  Reject a pending KYC application with reason (admin only)
-// @Tags         kyc,admin
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path  string           true  "KYC Application ID (UUID)"
-// @Param        body  body  rejectKYCRequest true  "Rejection reason"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /admin/kyc/{id}/reject [patch]
+//
+//	@Summary		Reject KYC application
+//	@Description	Reject a pending KYC application with reason (admin only)
+//	@Tags			kyc,admin
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"KYC Application ID (UUID)"
+//	@Param			body	body		rejectKYCRequest	true	"Rejection reason"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/kyc/{id}/reject [patch]
 func (h *KYCHandler) RejectKYC(w http.ResponseWriter, r *http.Request) {
 	kycID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

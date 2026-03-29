@@ -18,15 +18,15 @@ func NewLoyaltyHandler(loyaltyService service.LoyaltyService) *LoyaltyHandler {
 }
 
 type loyaltyAccountResponse struct {
-	UserID     string                `json:"user_id"`
-	Level      string                `json:"level"`
-	Points     int64                 `json:"points"`
-	TotalEarned int64               `json:"total_earned"`
-	TotalSpent int64                 `json:"total_spent"`
-	VisitCount int                   `json:"visit_count"`
-	Privileges loyaltyPrivileges     `json:"privileges"`
-	UpdatedAt  time.Time             `json:"updated_at"`
-	CreatedAt  time.Time             `json:"created_at"`
+	UserID      string            `json:"user_id"`
+	Level       string            `json:"level"`
+	Points      int64             `json:"points"`
+	TotalEarned int64             `json:"total_earned"`
+	TotalSpent  int64             `json:"total_spent"`
+	VisitCount  int               `json:"visit_count"`
+	Privileges  loyaltyPrivileges `json:"privileges"`
+	UpdatedAt   time.Time         `json:"updated_at"`
+	CreatedAt   time.Time         `json:"created_at"`
 }
 
 type loyaltyPrivileges struct {
@@ -37,13 +37,13 @@ type loyaltyPrivileges struct {
 }
 
 type loyaltyTransactionResponse struct {
-	ID          string     `json:"id"`
-	UserID      string     `json:"user_id"`
-	Type        string     `json:"type"`
-	Amount      int64      `json:"amount"`
-	BookingID   *string    `json:"booking_id,omitempty"`
-	Description string     `json:"description"`
-	CreatedAt   time.Time  `json:"created_at"`
+	ID          string    `json:"id"`
+	UserID      string    `json:"user_id"`
+	Type        string    `json:"type"`
+	Amount      int64     `json:"amount"`
+	BookingID   *string   `json:"booking_id,omitempty"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type loyaltyLevelResponse struct {
@@ -106,14 +106,15 @@ func toLoyaltyTransactionResponse(t *domain.LoyaltyTransaction) loyaltyTransacti
 }
 
 // GetAccount godoc
-// @Summary      Get loyalty account
-// @Description  Returns the loyalty account for the authenticated user, including level, points, and privileges
-// @Tags         loyalty
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=loyaltyAccountResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /my/loyalty [get]
+//
+//	@Summary		Get loyalty account
+//	@Description	Returns the loyalty account for the authenticated user, including level, points, and privileges
+//	@Tags			loyalty
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=loyaltyAccountResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/my/loyalty [get]
 func (h *LoyaltyHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -127,16 +128,17 @@ func (h *LoyaltyHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListTransactions godoc
-// @Summary      List loyalty transactions
-// @Description  Returns paginated transaction history for the authenticated user
-// @Tags         loyalty
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query     int  false  "Page number"  default(1)
-// @Param        page_size  query     int  false  "Page size"    default(20)
-// @Success      200  {object}  APIResponse{data=[]loyaltyTransactionResponse,meta=Meta}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /my/loyalty/transactions [get]
+//
+//	@Summary		List loyalty transactions
+//	@Description	Returns paginated transaction history for the authenticated user
+//	@Tags			loyalty
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int	false	"Page number"	default(1)
+//	@Param			page_size	query		int	false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]loyaltyTransactionResponse,meta=Meta}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Router			/my/loyalty/transactions [get]
 func (h *LoyaltyHandler) ListTransactions(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	page := getPage(r.URL.Query().Get("page"))
@@ -162,14 +164,15 @@ func (h *LoyaltyHandler) ListTransactions(w http.ResponseWriter, r *http.Request
 }
 
 // GetLevels godoc
-// @Summary      Get loyalty levels
-// @Description  Returns information about all loyalty levels and their privileges (bronze, silver, gold, platinum)
-// @Tags         loyalty
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=[]loyaltyLevelResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /my/loyalty/levels [get]
+//
+//	@Summary		Get loyalty levels
+//	@Description	Returns information about all loyalty levels and their privileges (bronze, silver, gold, platinum)
+//	@Tags			loyalty
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=[]loyaltyLevelResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/my/loyalty/levels [get]
 func (h *LoyaltyHandler) GetLevels(w http.ResponseWriter, r *http.Request) {
 	allLevels := domain.GetAllLoyaltyLevels()
 	levels := make([]loyaltyLevelResponse, len(allLevels))

@@ -69,15 +69,16 @@ type updateAutoScenarioRequest struct {
 }
 
 // ListAutoScenarios godoc
-// @Summary      List auto-scenarios
-// @Description  Get all predefined auto-scenarios with their current configuration
-// @Tags         crm
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=[]autoScenarioResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /my/crm/auto-scenarios [get]
+//
+//	@Summary		List auto-scenarios
+//	@Description	Get all predefined auto-scenarios with their current configuration
+//	@Tags			crm
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=[]autoScenarioResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/auto-scenarios [get]
 func (h *AutoScenarioHandler) ListAutoScenarios(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -100,19 +101,20 @@ func (h *AutoScenarioHandler) ListAutoScenarios(w http.ResponseWriter, r *http.R
 }
 
 // UpdateAutoScenario godoc
-// @Summary      Update auto-scenario
-// @Description  Update configuration for a specific auto-scenario type
-// @Tags         crm
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        type  path      string                     true  "Scenario type"
-// @Param        body  body      updateAutoScenarioRequest  true  "Scenario configuration"
-// @Success      200   {object}  APIResponse{data=autoScenarioResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Router       /my/crm/auto-scenarios/{type} [put]
+//
+//	@Summary		Update auto-scenario
+//	@Description	Update configuration for a specific auto-scenario type
+//	@Tags			crm
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			type	path		string						true	"Scenario type"
+//	@Param			body	body		updateAutoScenarioRequest	true	"Scenario configuration"
+//	@Success		200		{object}	APIResponse{data=autoScenarioResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/auto-scenarios/{type} [put]
 func (h *AutoScenarioHandler) UpdateAutoScenario(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())

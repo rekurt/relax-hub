@@ -394,12 +394,17 @@ func (s *pricingService) CreateSeasonalTariff(ctx context.Context, userID uuid.U
 	return tariff, nil
 }
 
+// truncateToDate returns midnight in the time's own location, unlike Truncate(24h) which is UTC-relative.
+func truncateToDate(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+}
+
 // tariffDatesOverlap checks if two seasonal tariff date ranges overlap.
 func tariffDatesOverlap(a *domain.SeasonalTariff, b *domain.SeasonalTariff) bool {
-	aFrom := a.DateFrom.Truncate(24 * time.Hour)
-	aTo := a.DateTo.Truncate(24 * time.Hour)
-	bFrom := b.DateFrom.Truncate(24 * time.Hour)
-	bTo := b.DateTo.Truncate(24 * time.Hour)
+	aFrom := truncateToDate(a.DateFrom)
+	aTo := truncateToDate(a.DateTo)
+	bFrom := truncateToDate(b.DateFrom)
+	bTo := truncateToDate(b.DateTo)
 	return !aFrom.After(bTo) && !bFrom.After(aTo)
 }
 

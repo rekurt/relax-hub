@@ -55,8 +55,8 @@ func (t MediaOwnerType) IsValid() bool {
 const (
 	MaxImagesPerReview = 10
 	MaxVideosPerReview = 1
-	MaxImageSizeBytes  = 10 * 1024 * 1024  // 10MB
-	MaxVideoSizeBytes  = 50 * 1024 * 1024  // 50MB
+	MaxImageSizeBytes  = 10 * 1024 * 1024 // 10MB
+	MaxVideoSizeBytes  = 50 * 1024 * 1024 // 50MB
 	MaxImageWidth      = 1920
 	ThumbnailSize      = 300
 )

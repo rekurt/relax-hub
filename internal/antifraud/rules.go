@@ -73,10 +73,10 @@ func dormantBalanceRule() Rule {
 					Severity:  domain.FraudSeverityMedium,
 					Action:    domain.FraudActionNotifyAdmin,
 					Details: map[string]interface{}{
-						"balance_kopecks":     input.Balance,
-						"last_booking_days":   input.LastBookingDaysAgo,
-						"balance_threshold":   5000000,
-						"inactivity_days":     30,
+						"balance_kopecks":   input.Balance,
+						"last_booking_days": input.LastBookingDaysAgo,
+						"balance_threshold": 5000000,
+						"inactivity_days":   30,
 					},
 				}
 			}
@@ -121,8 +121,8 @@ func selfBookingRule() Rule {
 					Severity:  domain.FraudSeverityHigh,
 					Action:    domain.FraudActionBlock,
 					Details: map[string]interface{}{
-						"user_id":          input.UserID.String(),
-						"bathhouse_owner":  input.BathhouseOwnerID.String(),
+						"user_id":         input.UserID.String(),
+						"bathhouse_owner": input.BathhouseOwnerID.String(),
 					},
 				}
 			}

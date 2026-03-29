@@ -28,10 +28,10 @@ func (s KYCStatus) IsValid() bool {
 type KYCEntityType string
 
 const (
-	KYCEntityIndividual      KYCEntityType = "individual"
-	KYCEntitySoleProprietor  KYCEntityType = "sole_proprietor"
-	KYCEntitySelfEmployed    KYCEntityType = "self_employed"
-	KYCEntityLegalEntity     KYCEntityType = "legal_entity"
+	KYCEntityIndividual     KYCEntityType = "individual"
+	KYCEntitySoleProprietor KYCEntityType = "sole_proprietor"
+	KYCEntitySelfEmployed   KYCEntityType = "self_employed"
+	KYCEntityLegalEntity    KYCEntityType = "legal_entity"
 )
 
 func (t KYCEntityType) IsValid() bool {
@@ -44,22 +44,22 @@ func (t KYCEntityType) IsValid() bool {
 
 // KYCApplication - заявка на KYC верификацию
 type KYCApplication struct {
-	ID              uuid.UUID  `json:"id"`
-	UserID          uuid.UUID  `json:"user_id"`
-	Status          KYCStatus  `json:"status"`
+	ID              uuid.UUID     `json:"id"`
+	UserID          uuid.UUID     `json:"user_id"`
+	Status          KYCStatus     `json:"status"`
 	EntityType      KYCEntityType `json:"entity_type"`
-	FullName        string     `json:"full_name"`
-	INN             string     `json:"inn"`
-	OGRNIP          string     `json:"ogrnip,omitempty"`
-	CompanyName     string     `json:"company_name,omitempty"`
-	DocumentURLs    []string   `json:"document_urls"`
-	RejectionReason string     `json:"rejection_reason,omitempty"`
-	SubmittedAt     time.Time  `json:"submitted_at"`
-	ReviewedAt      *time.Time `json:"reviewed_at,omitempty"`
-	ReviewedBy      *uuid.UUID `json:"reviewed_by,omitempty"`
-	ExpiresAt       *time.Time `json:"expires_at,omitempty"`
-	CreatedAt       time.Time  `json:"created_at"`
-	UpdatedAt       time.Time  `json:"updated_at"`
+	FullName        string        `json:"full_name"`
+	INN             string        `json:"inn"`
+	OGRNIP          string        `json:"ogrnip,omitempty"`
+	CompanyName     string        `json:"company_name,omitempty"`
+	DocumentURLs    []string      `json:"document_urls"`
+	RejectionReason string        `json:"rejection_reason,omitempty"`
+	SubmittedAt     time.Time     `json:"submitted_at"`
+	ReviewedAt      *time.Time    `json:"reviewed_at,omitempty"`
+	ReviewedBy      *uuid.UUID    `json:"reviewed_by,omitempty"`
+	ExpiresAt       *time.Time    `json:"expires_at,omitempty"`
+	CreatedAt       time.Time     `json:"created_at"`
+	UpdatedAt       time.Time     `json:"updated_at"`
 }
 
 // Validate проверяет обязательные поля по типу юридического лица

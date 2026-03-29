@@ -119,17 +119,18 @@ func toTicketMessageResponse(m *domain.TicketMessage) ticketMessageResponse {
 }
 
 // CreateTicket godoc
-// @Summary      Create a support ticket
-// @Description  Create a new support ticket with an initial message
-// @Tags         support
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      createTicketRequest  true  "Ticket data"
-// @Success      201   {object}  APIResponse{data=ticketResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Router       /my/tickets [post]
+//
+//	@Summary		Create a support ticket
+//	@Description	Create a new support ticket with an initial message
+//	@Tags			support
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		createTicketRequest	true	"Ticket data"
+//	@Success		201		{object}	APIResponse{data=ticketResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Router			/my/tickets [post]
 func (h *TicketHandler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -163,16 +164,17 @@ func (h *TicketHandler) CreateTicket(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListUserTickets godoc
-// @Summary      List my support tickets
-// @Description  Get all support tickets for the authenticated user
-// @Tags         support
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query     int  false  "Page number"  default(1)
-// @Param        page_size  query     int  false  "Page size"    default(20)
-// @Success      200  {object}  APIResponse{data=[]ticketResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /my/tickets [get]
+//
+//	@Summary		List my support tickets
+//	@Description	Get all support tickets for the authenticated user
+//	@Tags			support
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int	false	"Page number"	default(1)
+//	@Param			page_size	query		int	false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]ticketResponse}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Router			/my/tickets [get]
 func (h *TicketHandler) ListUserTickets(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -208,17 +210,18 @@ func (h *TicketHandler) ListUserTickets(w http.ResponseWriter, r *http.Request) 
 }
 
 // GetTicket godoc
-// @Summary      Get support ticket details
-// @Description  Get a specific support ticket by ID
-// @Tags         support
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Ticket ID (UUID)"
-// @Success      200  {object}  APIResponse{data=ticketResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/tickets/{id} [get]
+//
+//	@Summary		Get support ticket details
+//	@Description	Get a specific support ticket by ID
+//	@Tags			support
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Ticket ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=ticketResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/tickets/{id} [get]
 func (h *TicketHandler) GetTicket(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -239,20 +242,21 @@ func (h *TicketHandler) GetTicket(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddUserMessage godoc
-// @Summary      Add message to ticket
-// @Description  Add a message to a support ticket
-// @Tags         support
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                   true  "Ticket ID (UUID)"
-// @Param        body  body      addTicketMessageRequest  true  "Message data"
-// @Success      201   {object}  APIResponse{data=ticketMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /my/tickets/{id}/messages [post]
+//
+//	@Summary		Add message to ticket
+//	@Description	Add a message to a support ticket
+//	@Tags			support
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Ticket ID (UUID)"
+//	@Param			body	body		addTicketMessageRequest	true	"Message data"
+//	@Success		201		{object}	APIResponse{data=ticketMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/my/tickets/{id}/messages [post]
 func (h *TicketHandler) AddUserMessage(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -279,17 +283,18 @@ func (h *TicketHandler) AddUserMessage(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListMessages godoc
-// @Summary      List ticket messages
-// @Description  Get all messages for a support ticket
-// @Tags         support
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Ticket ID (UUID)"
-// @Success      200  {object}  APIResponse{data=[]ticketMessageResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/tickets/{id}/messages [get]
+//
+//	@Summary		List ticket messages
+//	@Description	Get all messages for a support ticket
+//	@Tags			support
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Ticket ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=[]ticketMessageResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/tickets/{id}/messages [get]
 func (h *TicketHandler) ListMessages(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -318,20 +323,21 @@ func (h *TicketHandler) ListMessages(w http.ResponseWriter, r *http.Request) {
 }
 
 // SubmitCSAT godoc
-// @Summary      Submit CSAT score
-// @Description  Submit customer satisfaction score for a resolved ticket
-// @Tags         support
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string           true  "Ticket ID (UUID)"
-// @Param        body  body      submitCSATRequest true  "CSAT score (1-5)"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Router       /my/tickets/{id}/csat [post]
+//
+//	@Summary		Submit CSAT score
+//	@Description	Submit customer satisfaction score for a resolved ticket
+//	@Tags			support
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Ticket ID (UUID)"
+//	@Param			body	body		submitCSATRequest	true	"CSAT score (1-5)"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Router			/my/tickets/{id}/csat [post]
 func (h *TicketHandler) SubmitCSAT(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -358,17 +364,18 @@ func (h *TicketHandler) SubmitCSAT(w http.ResponseWriter, r *http.Request) {
 // --- Admin endpoints ---
 
 // AdminGetTicket godoc
-// @Summary      Get ticket details (admin)
-// @Description  Get a specific support ticket by ID as admin
-// @Tags         support-admin
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Ticket ID (UUID)"
-// @Success      200  {object}  APIResponse{data=ticketResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /admin/tickets/{id} [get]
+//
+//	@Summary		Get ticket details (admin)
+//	@Description	Get a specific support ticket by ID as admin
+//	@Tags			support-admin
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Ticket ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=ticketResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/admin/tickets/{id} [get]
 func (h *TicketHandler) AdminGetTicket(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -389,21 +396,22 @@ func (h *TicketHandler) AdminGetTicket(w http.ResponseWriter, r *http.Request) {
 }
 
 // AdminListTickets godoc
-// @Summary      List all tickets (admin)
-// @Description  List all support tickets with filters
-// @Tags         support-admin
-// @Produce      json
-// @Security     BearerAuth
-// @Param        status    query     string  false  "Filter by status"
-// @Param        priority  query     string  false  "Filter by priority"
-// @Param        level     query     string  false  "Filter by level"
-// @Param        category  query     string  false  "Filter by category"
-// @Param        page      query     int     false  "Page number"  default(1)
-// @Param        page_size query     int     false  "Page size"    default(20)
-// @Success      200  {object}  APIResponse{data=[]ticketResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /admin/tickets [get]
+//
+//	@Summary		List all tickets (admin)
+//	@Description	List all support tickets with filters
+//	@Tags			support-admin
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			status		query		string	false	"Filter by status"
+//	@Param			priority	query		string	false	"Filter by priority"
+//	@Param			level		query		string	false	"Filter by level"
+//	@Param			category	query		string	false	"Filter by category"
+//	@Param			page		query		int		false	"Page number"	default(1)
+//	@Param			page_size	query		int		false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]ticketResponse}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/tickets [get]
 func (h *TicketHandler) AdminListTickets(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
@@ -475,19 +483,20 @@ func (h *TicketHandler) AdminListTickets(w http.ResponseWriter, r *http.Request)
 }
 
 // AdminAssignTicket godoc
-// @Summary      Assign ticket to admin
-// @Description  Assign a support ticket to an admin user
-// @Tags         support-admin
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string              true  "Ticket ID (UUID)"
-// @Param        body  body      assignTicketRequest  true  "Assignment data"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /admin/tickets/{id}/assign [patch]
+//
+//	@Summary		Assign ticket to admin
+//	@Description	Assign a support ticket to an admin user
+//	@Tags			support-admin
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Ticket ID (UUID)"
+//	@Param			body	body		assignTicketRequest	true	"Assignment data"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/tickets/{id}/assign [patch]
 func (h *TicketHandler) AdminAssignTicket(w http.ResponseWriter, r *http.Request) {
 	ticketID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -516,17 +525,18 @@ func (h *TicketHandler) AdminAssignTicket(w http.ResponseWriter, r *http.Request
 }
 
 // AdminEscalateTicket godoc
-// @Summary      Escalate ticket
-// @Description  Escalate a ticket to the next support level
-// @Tags         support-admin
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Ticket ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Failure      409  {object}  APIResponse{error=APIError}
-// @Router       /admin/tickets/{id}/escalate [patch]
+//
+//	@Summary		Escalate ticket
+//	@Description	Escalate a ticket to the next support level
+//	@Tags			support-admin
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Ticket ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Failure		409	{object}	APIResponse{error=APIError}
+//	@Router			/admin/tickets/{id}/escalate [patch]
 func (h *TicketHandler) AdminEscalateTicket(w http.ResponseWriter, r *http.Request) {
 	ticketID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -543,17 +553,18 @@ func (h *TicketHandler) AdminEscalateTicket(w http.ResponseWriter, r *http.Reque
 }
 
 // AdminResolveTicket godoc
-// @Summary      Resolve ticket
-// @Description  Mark a support ticket as resolved
-// @Tags         support-admin
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Ticket ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Failure      409  {object}  APIResponse{error=APIError}
-// @Router       /admin/tickets/{id}/resolve [patch]
+//
+//	@Summary		Resolve ticket
+//	@Description	Mark a support ticket as resolved
+//	@Tags			support-admin
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Ticket ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Failure		409	{object}	APIResponse{error=APIError}
+//	@Router			/admin/tickets/{id}/resolve [patch]
 func (h *TicketHandler) AdminResolveTicket(w http.ResponseWriter, r *http.Request) {
 	ticketID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -570,19 +581,20 @@ func (h *TicketHandler) AdminResolveTicket(w http.ResponseWriter, r *http.Reques
 }
 
 // AdminAddMessage godoc
-// @Summary      Add admin message to ticket
-// @Description  Add an admin response to a support ticket
-// @Tags         support-admin
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                   true  "Ticket ID (UUID)"
-// @Param        body  body      addTicketMessageRequest  true  "Message data"
-// @Success      201   {object}  APIResponse{data=ticketMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /admin/tickets/{id}/messages [post]
+//
+//	@Summary		Add admin message to ticket
+//	@Description	Add an admin response to a support ticket
+//	@Tags			support-admin
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Ticket ID (UUID)"
+//	@Param			body	body		addTicketMessageRequest	true	"Message data"
+//	@Success		201		{object}	APIResponse{data=ticketMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/tickets/{id}/messages [post]
 func (h *TicketHandler) AdminAddMessage(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -609,15 +621,16 @@ func (h *TicketHandler) AdminAddMessage(w http.ResponseWriter, r *http.Request) 
 }
 
 // AdminGetStats godoc
-// @Summary      Get ticket statistics
-// @Description  Get counts of tickets by status
-// @Tags         support-admin
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=ticketStatsResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /admin/tickets/stats [get]
+//
+//	@Summary		Get ticket statistics
+//	@Description	Get counts of tickets by status
+//	@Tags			support-admin
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=ticketStatsResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Router			/admin/tickets/stats [get]
 func (h *TicketHandler) AdminGetStats(w http.ResponseWriter, r *http.Request) {
 	stats, err := h.ticketService.GetStats(r.Context())
 	if err != nil {

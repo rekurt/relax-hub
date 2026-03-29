@@ -18,12 +18,12 @@ import (
 )
 
 var healthFuncMap = template.FuncMap{
-	"formatLatency":  FormatLatency,
+	"formatLatency":   FormatLatency,
 	"backlogSeverity": BacklogSeverity,
-	"formatBytes":    FormatBytes,
-	"formatUptime":   FormatUptime,
-	"poolUsageClass": PoolUsageClass,
-	"poolPercent":    PoolPercent,
+	"formatBytes":     FormatBytes,
+	"formatUptime":    FormatUptime,
+	"poolUsageClass":  PoolUsageClass,
+	"poolPercent":     PoolPercent,
 }
 
 var healthTmpl = ParsePageTemplate(healthFuncMap, "templates/health.tmpl")
@@ -151,13 +151,13 @@ type SystemMetrics struct {
 
 // PoolStats holds pgxpool connection statistics.
 type PoolStats struct {
-	AcquiredConns    int32
-	IdleConns        int32
-	TotalConns       int32
-	MaxConns         int32
-	AcquireCount     int64
+	AcquiredConns     int32
+	IdleConns         int32
+	TotalConns        int32
+	MaxConns          int32
+	AcquireCount      int64
 	EmptyAcquireCount int64
-	AcquireDuration  time.Duration
+	AcquireDuration   time.Duration
 }
 
 // HealthData is the full data model for the platform health monitor page.

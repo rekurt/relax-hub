@@ -66,11 +66,11 @@ func (p *UserPreferences) Validate() error {
 
 // UserActivity tracks user interactions with bathhouses
 type UserActivity struct {
-	ID         uuid.UUID
-	UserID     uuid.UUID
+	ID          uuid.UUID
+	UserID      uuid.UUID
 	BathhouseID uuid.UUID
-	Type       UserActivityType
-	CreatedAt  time.Time
+	Type        UserActivityType
+	CreatedAt   time.Time
 }
 
 // Validate checks if UserActivity is valid

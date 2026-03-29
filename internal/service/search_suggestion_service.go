@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	popularQueriesKey     = "search:popular_queries"
-	suggestionCachePrefix = "search:suggestions:"
-	suggestionCacheTTL    = 5 * time.Minute
-	minQueryLength        = 2
-	maxSuggestionLimit    = 20
+	popularQueriesKey      = "search:popular_queries"
+	suggestionCachePrefix  = "search:suggestions:"
+	suggestionCacheTTL     = 5 * time.Minute
+	minQueryLength         = 2
+	maxSuggestionLimit     = 20
 	defaultSuggestionLimit = 10
 )
 
@@ -195,7 +195,7 @@ func (s *searchSuggestionService) getPopularQuerySuggestions(ctx context.Context
 	// Get top popular queries from sorted set
 	members, err := s.redis.ZRangeArgs(ctx, redis.ZRangeArgs{
 		Key:     popularQueriesKey,
-		Start:   "2",    // at least 2 searches
+		Start:   "2", // at least 2 searches
 		Stop:    "+inf",
 		ByScore: true,
 		Rev:     true,

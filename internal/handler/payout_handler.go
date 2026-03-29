@@ -24,13 +24,13 @@ type requestPayoutRequest struct {
 }
 
 type payoutResponse struct {
-	ID            string  `json:"id"`
-	Amount        int64   `json:"amount"`
-	Status        string  `json:"status"`
+	ID            string          `json:"id"`
+	Amount        int64           `json:"amount"`
+	Status        string          `json:"status"`
 	BankDetails   json.RawMessage `json:"bank_details,omitempty"`
-	RequestedAt   string  `json:"requested_at"`
-	ProcessedAt   *string `json:"processed_at,omitempty"`
-	FailureReason string  `json:"failure_reason,omitempty"`
+	RequestedAt   string          `json:"requested_at"`
+	ProcessedAt   *string         `json:"processed_at,omitempty"`
+	FailureReason string          `json:"failure_reason,omitempty"`
 }
 
 type autoPayoutRequest struct {
@@ -59,18 +59,19 @@ func toPayoutResponse(p *domain.Payout) payoutResponse {
 }
 
 // RequestPayout godoc
-// @Summary      Request payout
-// @Description  Request withdrawal of funds from wallet. Amount in kopecks (min 50000 = 500 RUB). Daily limit 500,000 RUB, monthly 3,000,000 RUB.
-// @Tags         wallet
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      requestPayoutRequest  true  "Payout request"
-// @Success      201   {object}  APIResponse{data=payoutResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Router       /my/wallet/payout [post]
+//
+//	@Summary		Request payout
+//	@Description	Request withdrawal of funds from wallet. Amount in kopecks (min 50000 = 500 RUB). Daily limit 500,000 RUB, monthly 3,000,000 RUB.
+//	@Tags			wallet
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		requestPayoutRequest	true	"Payout request"
+//	@Success		201		{object}	APIResponse{data=payoutResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/my/wallet/payout [post]
 func (h *PayoutHandler) RequestPayout(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -95,18 +96,19 @@ func (h *PayoutHandler) RequestPayout(w http.ResponseWriter, r *http.Request) {
 }
 
 // SetAutoPayoutThreshold godoc
-// @Summary      Set auto-payout threshold
-// @Description  Configure automatic payout when wallet balance exceeds threshold. Set to 0 to disable. Threshold in kopecks.
-// @Tags         wallet
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      autoPayoutRequest  true  "Auto-payout settings"
-// @Success      200   {object}  APIResponse{data=autoPayoutResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Router       /my/wallet/auto-payout [put]
+//
+//	@Summary		Set auto-payout threshold
+//	@Description	Configure automatic payout when wallet balance exceeds threshold. Set to 0 to disable. Threshold in kopecks.
+//	@Tags			wallet
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		autoPayoutRequest	true	"Auto-payout settings"
+//	@Success		200		{object}	APIResponse{data=autoPayoutResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/my/wallet/auto-payout [put]
 func (h *PayoutHandler) SetAutoPayoutThreshold(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -134,17 +136,18 @@ func (h *PayoutHandler) SetAutoPayoutThreshold(w http.ResponseWriter, r *http.Re
 }
 
 // ListPayouts godoc
-// @Summary      List payout history
-// @Description  Returns paginated payout history for the authenticated owner
-// @Tags         wallet
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query     int  false  "Page number"   default(1)
-// @Param        page_size  query     int  false  "Page size"     default(20)
-// @Success      200  {object}  APIResponse{data=[]payoutResponse,meta=Meta}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /my/wallet/payouts [get]
+//
+//	@Summary		List payout history
+//	@Description	Returns paginated payout history for the authenticated owner
+//	@Tags			wallet
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int	false	"Page number"	default(1)
+//	@Param			page_size	query		int	false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]payoutResponse,meta=Meta}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/my/wallet/payouts [get]
 func (h *PayoutHandler) ListPayouts(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	page := getPage(r.URL.Query().Get("page"))

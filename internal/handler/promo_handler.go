@@ -37,19 +37,19 @@ type validatePromoRequest struct {
 }
 
 type promoResponse struct {
-	ID          string     `json:"id"`
-	Code        string     `json:"code"`
-	Type        string     `json:"type"`
-	Value       int64      `json:"value"`
-	BathhouseID *string    `json:"bathhouse_id,omitempty"`
-	CreatorID   string     `json:"creator_id"`
-	MaxUses     int        `json:"max_uses"`
-	CurrentUses int        `json:"current_uses"`
-	MinAmount   int64      `json:"min_amount"`
-	ValidFrom   time.Time  `json:"valid_from"`
-	ValidUntil  time.Time  `json:"valid_until"`
-	IsActive    bool       `json:"is_active"`
-	CreatedAt   time.Time  `json:"created_at"`
+	ID          string    `json:"id"`
+	Code        string    `json:"code"`
+	Type        string    `json:"type"`
+	Value       int64     `json:"value"`
+	BathhouseID *string   `json:"bathhouse_id,omitempty"`
+	CreatorID   string    `json:"creator_id"`
+	MaxUses     int       `json:"max_uses"`
+	CurrentUses int       `json:"current_uses"`
+	MinAmount   int64     `json:"min_amount"`
+	ValidFrom   time.Time `json:"valid_from"`
+	ValidUntil  time.Time `json:"valid_until"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type validatePromoResponse struct {
@@ -90,19 +90,20 @@ func toPromoListResponse(promos []domain.PromoCode) []promoResponse {
 }
 
 // CreateForBathhouse godoc
-// @Summary      Create bathhouse promo code
-// @Description  Creates a promo code for a specific bathhouse. Available to owners and representatives.
-// @Tags         promo-codes
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string              true  "Bathhouse ID (UUID)"
-// @Param        body  body      createPromoRequest   true  "Promo code data"
-// @Success      201   {object}  APIResponse{data=promoResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Router       /my/bathhouses/{id}/promo-codes [post]
+//
+//	@Summary		Create bathhouse promo code
+//	@Description	Creates a promo code for a specific bathhouse. Available to owners and representatives.
+//	@Tags			promo-codes
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string				true	"Bathhouse ID (UUID)"
+//	@Param			body	body		createPromoRequest	true	"Promo code data"
+//	@Success		201		{object}	APIResponse{data=promoResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/promo-codes [post]
 func (h *PromoHandler) CreateForBathhouse(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -141,19 +142,20 @@ func (h *PromoHandler) CreateForBathhouse(w http.ResponseWriter, r *http.Request
 }
 
 // ListByBathhouse godoc
-// @Summary      List bathhouse promo codes
-// @Description  Returns promo codes for a specific bathhouse with pagination. Available to owners and representatives.
-// @Tags         promo-codes
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id         path      string  true   "Bathhouse ID (UUID)"
-// @Param        page       query     int     false  "Page number"  default(1)
-// @Param        page_size  query     int     false  "Page size"    default(20)
-// @Success      200  {object}  APIResponse{data=[]promoResponse,meta=Meta}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /my/bathhouses/{id}/promo-codes [get]
+//
+//	@Summary		List bathhouse promo codes
+//	@Description	Returns promo codes for a specific bathhouse with pagination. Available to owners and representatives.
+//	@Tags			promo-codes
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id			path		string	true	"Bathhouse ID (UUID)"
+//	@Param			page		query		int		false	"Page number"	default(1)
+//	@Param			page_size	query		int		false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]promoResponse,meta=Meta}
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/promo-codes [get]
 func (h *PromoHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -189,18 +191,19 @@ func (h *PromoHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 }
 
 // Deactivate godoc
-// @Summary      Deactivate promo code
-// @Description  Deactivates a promo code. Available to owners, representatives, and admins.
-// @Tags         promo-codes
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id   path      string  true  "Promo code ID (UUID)"
-// @Success      200  {object}  APIResponse
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /promo-codes/{id} [delete]
+//
+//	@Summary		Deactivate promo code
+//	@Description	Deactivates a promo code. Available to owners, representatives, and admins.
+//	@Tags			promo-codes
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Promo code ID (UUID)"
+//	@Success		200	{object}	APIResponse
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/promo-codes/{id} [delete]
 func (h *PromoHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())
@@ -221,18 +224,19 @@ func (h *PromoHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 }
 
 // Validate godoc
-// @Summary      Validate promo code
-// @Description  Checks a promo code and returns the calculated discount amount. Rate limited to 20 requests per minute.
-// @Tags         promo-codes
-// @Accept       json
-// @Produce      json
-// @Param        body  body      validatePromoRequest   true  "Promo code and booking details"
-// @Success      200   {object}  APIResponse{data=validatePromoResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Failure      409   {object}  APIResponse{error=APIError}
-// @Failure      429   {object}  APIResponse{error=APIError}  "Rate limited (20/min)"
-// @Router       /promo-codes/validate [post]
+//
+//	@Summary		Validate promo code
+//	@Description	Checks a promo code and returns the calculated discount amount. Rate limited to 20 requests per minute.
+//	@Tags			promo-codes
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		validatePromoRequest	true	"Promo code and booking details"
+//	@Success		200		{object}	APIResponse{data=validatePromoResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}	"Rate limited (20/min)"
+//	@Router			/promo-codes/validate [post]
 func (h *PromoHandler) Validate(w http.ResponseWriter, r *http.Request) {
 	var req validatePromoRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -261,18 +265,19 @@ func (h *PromoHandler) Validate(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateGlobal godoc
-// @Summary      Create global promo code
-// @Description  Creates a global promo code (not tied to a specific bathhouse). Admin only.
-// @Tags         promo-codes
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        body  body      createPromoRequest  true  "Promo code data"
-// @Success      201   {object}  APIResponse{data=promoResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Router       /admin/promo-codes [post]
+//
+//	@Summary		Create global promo code
+//	@Description	Creates a global promo code (not tied to a specific bathhouse). Admin only.
+//	@Tags			promo-codes
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		createPromoRequest	true	"Promo code data"
+//	@Success		201		{object}	APIResponse{data=promoResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/promo-codes [post]
 func (h *PromoHandler) CreateGlobal(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	userRole := middleware.GetUserRole(r.Context())

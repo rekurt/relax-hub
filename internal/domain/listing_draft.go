@@ -17,13 +17,13 @@ const (
 
 // ListingDraft - черновик объявления бани (7-шаговый визард)
 type ListingDraft struct {
-	ID          uuid.UUID                   `json:"id"`
-	UserID      uuid.UUID                   `json:"user_id"`
-	Status      ListingDraftStatus          `json:"status"`
-	CurrentStep int                         `json:"current_step"`
-	StepData    map[int]json.RawMessage     `json:"step_data"`
-	CreatedAt   time.Time                   `json:"created_at"`
-	UpdatedAt   time.Time                   `json:"updated_at"`
+	ID          uuid.UUID               `json:"id"`
+	UserID      uuid.UUID               `json:"user_id"`
+	Status      ListingDraftStatus      `json:"status"`
+	CurrentStep int                     `json:"current_step"`
+	StepData    map[int]json.RawMessage `json:"step_data"`
+	CreatedAt   time.Time               `json:"created_at"`
+	UpdatedAt   time.Time               `json:"updated_at"`
 }
 
 const (

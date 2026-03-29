@@ -23,14 +23,15 @@ type suggestionResponse struct {
 }
 
 // GetSuggestions godoc
-// @Summary      Get search suggestions
-// @Description  Returns autocomplete suggestions for the given query, including bathhouse names, city names, and popular searches
-// @Tags         search
-// @Produce      json
-// @Param        q      query    string  true   "Search query (min 2 characters)"
-// @Param        limit  query    int     false  "Max results (default 10, max 20)"
-// @Success      200    {object} APIResponse{data=[]suggestionResponse}
-// @Router       /search/suggestions [get]
+//
+//	@Summary		Get search suggestions
+//	@Description	Returns autocomplete suggestions for the given query, including bathhouse names, city names, and popular searches
+//	@Tags			search
+//	@Produce		json
+//	@Param			q		query		string	true	"Search query (min 2 characters)"
+//	@Param			limit	query		int		false	"Max results (default 10, max 20)"
+//	@Success		200		{object}	APIResponse{data=[]suggestionResponse}
+//	@Router			/search/suggestions [get]
 func (h *SearchHandler) GetSuggestions(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
 	if query == "" {

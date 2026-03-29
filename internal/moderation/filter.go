@@ -20,14 +20,14 @@ type FilterResult struct {
 
 // ContentFilter performs moderation checks on review text
 type ContentFilter struct {
-	enabled bool
+	enabled     bool
 	autoApprove bool
 }
 
 // NewContentFilter creates a new content filter
 func NewContentFilter(enabled, autoApprove bool) *ContentFilter {
 	return &ContentFilter{
-		enabled: enabled,
+		enabled:     enabled,
 		autoApprove: autoApprove,
 	}
 }

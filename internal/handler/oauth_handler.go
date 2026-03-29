@@ -52,14 +52,16 @@ func toSocialAccountListResponse(accounts []domain.SocialAccount) []socialAccoun
 }
 
 // OAuthRedirect godoc
-// @Summary      OAuth redirect
-// @Description  Redirects the user to the OAuth provider's authorization page
-// @Tags         oauth
-// @Param        provider      path   string  true  "OAuth provider (vk, yandex, google)"
-// @Param        referral_code query  string  false "Referral code"
-// @Success      302
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Router       /auth/oauth/{provider} [get]
+//
+//	@Summary		OAuth redirect
+//	@Description	Redirects the user to the OAuth provider's authorization page
+//	@Tags			oauth
+//	@Param			provider		path	string	true	"OAuth provider (vk, yandex, google)"
+//	@Param			referral_code	query	string	false	"Referral code"
+//	@Success		302
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Router			/auth/oauth/{provider} [get]
+//
 // OAuthRedirect redirects the user to the OAuth provider's authorization page.
 // GET /api/v1/auth/oauth/{provider}
 func (h *OAuthHandler) OAuthRedirect(w http.ResponseWriter, r *http.Request) {
@@ -76,16 +78,18 @@ func (h *OAuthHandler) OAuthRedirect(w http.ResponseWriter, r *http.Request) {
 }
 
 // OAuthCallback godoc
-// @Summary      OAuth callback
-// @Description  Handles the OAuth provider callback, authenticates or registers the user
-// @Tags         oauth
-// @Produce      json
-// @Param        provider  path   string  true  "OAuth provider (vk, yandex, google)"
-// @Param        code      query  string  true  "Authorization code"
-// @Param        state     query  string  true  "State parameter"
-// @Success      200  {object}  APIResponse{data=oauthCallbackResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Router       /auth/oauth/{provider}/callback [get]
+//
+//	@Summary		OAuth callback
+//	@Description	Handles the OAuth provider callback, authenticates or registers the user
+//	@Tags			oauth
+//	@Produce		json
+//	@Param			provider	path		string	true	"OAuth provider (vk, yandex, google)"
+//	@Param			code		query		string	true	"Authorization code"
+//	@Param			state		query		string	true	"State parameter"
+//	@Success		200			{object}	APIResponse{data=oauthCallbackResponse}
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Router			/auth/oauth/{provider}/callback [get]
+//
 // OAuthCallback handles the OAuth provider callback with an authorization code.
 // GET /api/v1/auth/oauth/{provider}/callback?code=...&state=...
 func (h *OAuthHandler) OAuthCallback(w http.ResponseWriter, r *http.Request) {
@@ -125,19 +129,21 @@ func (h *OAuthHandler) OAuthCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 // LinkSocialAccount godoc
-// @Summary      Link social account
-// @Description  Links a social account to the authenticated user
-// @Tags         oauth
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        provider  path  string  true  "OAuth provider (vk, yandex, google)"
-// @Param        body      body  object{code=string}  true  "Authorization code"
-// @Success      200  {object}  APIResponse{data=object{status=string}}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      409  {object}  APIResponse{error=APIError}
-// @Router       /auth/link/{provider} [post]
+//
+//	@Summary		Link social account
+//	@Description	Links a social account to the authenticated user
+//	@Tags			oauth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			provider	path		string				true	"OAuth provider (vk, yandex, google)"
+//	@Param			body		body		object{code=string}	true	"Authorization code"
+//	@Success		200			{object}	APIResponse{data=object{status=string}}
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		409			{object}	APIResponse{error=APIError}
+//	@Router			/auth/link/{provider} [post]
+//
 // LinkSocialAccount links a social account to the authenticated user.
 // POST /api/v1/auth/link/{provider}
 func (h *OAuthHandler) LinkSocialAccount(w http.ResponseWriter, r *http.Request) {
@@ -166,16 +172,18 @@ func (h *OAuthHandler) LinkSocialAccount(w http.ResponseWriter, r *http.Request)
 }
 
 // UnlinkSocialAccount godoc
-// @Summary      Unlink social account
-// @Description  Unlinks a social account from the authenticated user
-// @Tags         oauth
-// @Produce      json
-// @Security     BearerAuth
-// @Param        provider  path  string  true  "OAuth provider (vk, yandex, google)"
-// @Success      200  {object}  APIResponse{data=object{status=string}}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /auth/link/{provider} [delete]
+//
+//	@Summary		Unlink social account
+//	@Description	Unlinks a social account from the authenticated user
+//	@Tags			oauth
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			provider	path		string	true	"OAuth provider (vk, yandex, google)"
+//	@Success		200			{object}	APIResponse{data=object{status=string}}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		404			{object}	APIResponse{error=APIError}
+//	@Router			/auth/link/{provider} [delete]
+//
 // UnlinkSocialAccount unlinks a social account from the authenticated user.
 // DELETE /api/v1/auth/link/{provider}
 func (h *OAuthHandler) UnlinkSocialAccount(w http.ResponseWriter, r *http.Request) {
@@ -191,14 +199,16 @@ func (h *OAuthHandler) UnlinkSocialAccount(w http.ResponseWriter, r *http.Reques
 }
 
 // ListSocialAccounts godoc
-// @Summary      List linked social accounts
-// @Description  Returns the list of social accounts linked to the authenticated user
-// @Tags         oauth
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=[]socialAccountResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /auth/me/social-accounts [get]
+//
+//	@Summary		List linked social accounts
+//	@Description	Returns the list of social accounts linked to the authenticated user
+//	@Tags			oauth
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=[]socialAccountResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/auth/me/social-accounts [get]
+//
 // ListSocialAccounts returns the list of linked social accounts for the authenticated user.
 // GET /api/v1/auth/me/social-accounts
 func (h *OAuthHandler) ListSocialAccounts(w http.ResponseWriter, r *http.Request) {

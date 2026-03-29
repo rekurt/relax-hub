@@ -66,23 +66,24 @@ type updateGuestNotesRequest struct {
 }
 
 // ListGuests godoc
-// @Summary      List CRM guest cards
-// @Description  Get paginated list of guest cards for the owner
-// @Tags         crm
-// @Produce      json
-// @Security     BearerAuth
-// @Param        bathhouse_id  query     string  false  "Filter by bathhouse ID"
-// @Param        search        query     string  false  "Search by client name/email/phone"
-// @Param        tag           query     string  false  "Filter by tag"
-// @Param        date_from     query     string  false  "Filter by last visit date from (RFC3339)"
-// @Param        date_to       query     string  false  "Filter by last visit date to (RFC3339)"
-// @Param        sort_by       query     string  false  "Sort by: last_visit, total_spent, visit_count, avg_check"
-// @Param        page          query     int     false  "Page number"
-// @Param        page_size     query     int     false  "Page size"
-// @Success      200  {object}  APIResponse{data=[]guestCardResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /my/crm/guests [get]
+//
+//	@Summary		List CRM guest cards
+//	@Description	Get paginated list of guest cards for the owner
+//	@Tags			crm
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			bathhouse_id	query		string	false	"Filter by bathhouse ID"
+//	@Param			search			query		string	false	"Search by client name/email/phone"
+//	@Param			tag				query		string	false	"Filter by tag"
+//	@Param			date_from		query		string	false	"Filter by last visit date from (RFC3339)"
+//	@Param			date_to			query		string	false	"Filter by last visit date to (RFC3339)"
+//	@Param			sort_by			query		string	false	"Sort by: last_visit, total_spent, visit_count, avg_check"
+//	@Param			page			query		int		false	"Page number"
+//	@Param			page_size		query		int		false	"Page size"
+//	@Success		200				{object}	APIResponse{data=[]guestCardResponse}
+//	@Failure		401				{object}	APIResponse{error=APIError}
+//	@Failure		403				{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/guests [get]
 func (h *GuestCardHandler) ListGuests(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -152,20 +153,21 @@ func (h *GuestCardHandler) ListGuests(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateGuestNotes godoc
-// @Summary      Update guest card notes and tags
-// @Description  Update notes and tags for a specific guest card
-// @Tags         crm
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                   true  "Guest card ID (UUID)"
-// @Param        body  body      updateGuestNotesRequest  true  "Notes and tags"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /my/crm/guests/{id} [put]
+//
+//	@Summary		Update guest card notes and tags
+//	@Description	Update notes and tags for a specific guest card
+//	@Tags			crm
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Guest card ID (UUID)"
+//	@Param			body	body		updateGuestNotesRequest	true	"Notes and tags"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/guests/{id} [put]
 func (h *GuestCardHandler) UpdateGuestNotes(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -191,15 +193,16 @@ func (h *GuestCardHandler) UpdateGuestNotes(w http.ResponseWriter, r *http.Reque
 }
 
 // ExportCSV godoc
-// @Summary      Export guest cards as CSV
-// @Description  Export all guest cards as a CSV file
-// @Tags         crm
-// @Produce      text/csv
-// @Security     BearerAuth
-// @Success      200  {file}   file
-// @Failure      401  {object} APIResponse{error=APIError}
-// @Failure      403  {object} APIResponse{error=APIError}
-// @Router       /my/crm/guests/export [get]
+//
+//	@Summary		Export guest cards as CSV
+//	@Description	Export all guest cards as a CSV file
+//	@Tags			crm
+//	@Produce		text/csv
+//	@Security		BearerAuth
+//	@Success		200	{file}		file
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/guests/export [get]
 func (h *GuestCardHandler) ExportCSV(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -230,15 +233,16 @@ type segmentResponse struct {
 }
 
 // ListSegments godoc
-// @Summary      List CRM segments
-// @Description  Get all predefined CRM segments with guest counts
-// @Tags         crm
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=[]segmentResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /my/crm/segments [get]
+//
+//	@Summary		List CRM segments
+//	@Description	Get all predefined CRM segments with guest counts
+//	@Tags			crm
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=[]segmentResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/segments [get]
 func (h *GuestCardHandler) ListSegments(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -266,18 +270,19 @@ func (h *GuestCardHandler) ListSegments(w http.ResponseWriter, r *http.Request) 
 }
 
 // GetGuestsInSegment godoc
-// @Summary      Get guests in segment
-// @Description  Get paginated list of guests in a specific CRM segment
-// @Tags         crm
-// @Produce      json
-// @Security     BearerAuth
-// @Param        slug       path      string  true  "Segment slug (new, regular, lost, vip, birthday_soon)"
-// @Param        page       query     int     false "Page number"
-// @Param        page_size  query     int     false "Page size"
-// @Success      200  {object}  APIResponse{data=[]guestCardResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /my/crm/segments/{slug}/guests [get]
+//
+//	@Summary		Get guests in segment
+//	@Description	Get paginated list of guests in a specific CRM segment
+//	@Tags			crm
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			slug		path		string	true	"Segment slug (new, regular, lost, vip, birthday_soon)"
+//	@Param			page		query		int		false	"Page number"
+//	@Param			page_size	query		int		false	"Page size"
+//	@Success		200			{object}	APIResponse{data=[]guestCardResponse}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/segments/{slug}/guests [get]
 func (h *GuestCardHandler) GetGuestsInSegment(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -330,15 +335,16 @@ func (h *GuestCardHandler) GetGuestsInSegment(w http.ResponseWriter, r *http.Req
 }
 
 // GetStats godoc
-// @Summary      Get CRM guest stats
-// @Description  Get summary statistics for all guest cards
-// @Tags         crm
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=domain.GuestCardStats}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /my/crm/stats [get]
+//
+//	@Summary		Get CRM guest stats
+//	@Description	Get summary statistics for all guest cards
+//	@Tags			crm
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=domain.GuestCardStats}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Router			/my/crm/stats [get]
 func (h *GuestCardHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())

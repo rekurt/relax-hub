@@ -33,8 +33,8 @@ type ChatWSMessage struct {
 
 // Chat WebSocket message types.
 const (
-	ChatMsgNewMessage     = "new_message"
-	ChatMsgMessageRead    = "message_read"
+	ChatMsgNewMessage      = "new_message"
+	ChatMsgMessageRead     = "message_read"
 	ChatMsgTypingIndicator = "typing_indicator"
 )
 

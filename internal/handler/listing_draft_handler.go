@@ -21,13 +21,13 @@ func NewListingDraftHandler(draftService service.ListingDraftService) *ListingDr
 }
 
 type listingDraftResponse struct {
-	ID          string                        `json:"id"`
-	UserID      string                        `json:"user_id"`
-	Status      string                        `json:"status"`
-	CurrentStep int                           `json:"current_step"`
-	StepData    map[string]json.RawMessage    `json:"step_data"`
-	CreatedAt   time.Time                     `json:"created_at"`
-	UpdatedAt   time.Time                     `json:"updated_at"`
+	ID          string                     `json:"id"`
+	UserID      string                     `json:"user_id"`
+	Status      string                     `json:"status"`
+	CurrentStep int                        `json:"current_step"`
+	StepData    map[string]json.RawMessage `json:"step_data"`
+	CreatedAt   time.Time                  `json:"created_at"`
+	UpdatedAt   time.Time                  `json:"updated_at"`
 }
 
 type listingDraftListItem struct {
@@ -59,15 +59,16 @@ func makeDraftResponse(id, userID uuid.UUID, status string, currentStep int, ste
 }
 
 // CreateDraft godoc
-// @Summary      Create listing draft
-// @Description  Create a new listing draft (requires approved KYC and accepted offer)
-// @Tags         listing-drafts
-// @Produce      json
-// @Security     BearerAuth
-// @Success      201  {object}  APIResponse{data=listingDraftResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /my/listing-drafts [post]
+//
+//	@Summary		Create listing draft
+//	@Description	Create a new listing draft (requires approved KYC and accepted offer)
+//	@Tags			listing-drafts
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		201	{object}	APIResponse{data=listingDraftResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Router			/my/listing-drafts [post]
 func (h *ListingDraftHandler) CreateDraft(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -84,21 +85,22 @@ func (h *ListingDraftHandler) CreateDraft(w http.ResponseWriter, r *http.Request
 }
 
 // SaveStep godoc
-// @Summary      Save draft step data
-// @Description  Save data for a specific step of the listing draft wizard
-// @Tags         listing-drafts
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path  string          true  "Draft ID (UUID)"
-// @Param        step  path  int             true  "Step number (1-7)"
-// @Param        body  body  saveStepRequest true  "Step data"
-// @Success      200   {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /my/listing-drafts/{id}/step/{step} [put]
+//
+//	@Summary		Save draft step data
+//	@Description	Save data for a specific step of the listing draft wizard
+//	@Tags			listing-drafts
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string			true	"Draft ID (UUID)"
+//	@Param			step	path		int				true	"Step number (1-7)"
+//	@Param			body	body		saveStepRequest	true	"Step data"
+//	@Success		200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/my/listing-drafts/{id}/step/{step} [put]
 func (h *ListingDraftHandler) SaveStep(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -133,17 +135,18 @@ func (h *ListingDraftHandler) SaveStep(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetDraft godoc
-// @Summary      Get listing draft
-// @Description  Get a listing draft with all step data
-// @Tags         listing-drafts
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id  path  string  true  "Draft ID (UUID)"
-// @Success      200  {object}  APIResponse{data=listingDraftResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/listing-drafts/{id} [get]
+//
+//	@Summary		Get listing draft
+//	@Description	Get a listing draft with all step data
+//	@Tags			listing-drafts
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Draft ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=listingDraftResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/listing-drafts/{id} [get]
 func (h *ListingDraftHandler) GetDraft(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -166,14 +169,15 @@ func (h *ListingDraftHandler) GetDraft(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListDrafts godoc
-// @Summary      List user's listing drafts
-// @Description  Get all listing drafts for the authenticated user
-// @Tags         listing-drafts
-// @Produce      json
-// @Security     BearerAuth
-// @Success      200  {object}  APIResponse{data=[]listingDraftListItem}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Router       /my/listing-drafts [get]
+//
+//	@Summary		List user's listing drafts
+//	@Description	Get all listing drafts for the authenticated user
+//	@Tags			listing-drafts
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200	{object}	APIResponse{data=[]listingDraftListItem}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Router			/my/listing-drafts [get]
 func (h *ListingDraftHandler) ListDrafts(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -198,19 +202,20 @@ func (h *ListingDraftHandler) ListDrafts(w http.ResponseWriter, r *http.Request)
 }
 
 // SubmitDraft godoc
-// @Summary      Submit listing draft
-// @Description  Submit a completed draft to create a bathhouse listing (sends to moderation)
-// @Tags         listing-drafts
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id  path  string  true  "Draft ID (UUID)"
-// @Success      200  {object}  APIResponse{data=listingDraftResponse}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Failure      409  {object}  APIResponse{error=APIError}
-// @Router       /my/listing-drafts/{id}/submit [post]
+//
+//	@Summary		Submit listing draft
+//	@Description	Submit a completed draft to create a bathhouse listing (sends to moderation)
+//	@Tags			listing-drafts
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Draft ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=listingDraftResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Failure		409	{object}	APIResponse{error=APIError}
+//	@Router			/my/listing-drafts/{id}/submit [post]
 func (h *ListingDraftHandler) SubmitDraft(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -233,17 +238,18 @@ func (h *ListingDraftHandler) SubmitDraft(w http.ResponseWriter, r *http.Request
 }
 
 // DeleteDraft godoc
-// @Summary      Delete listing draft
-// @Description  Delete (discard) a listing draft
-// @Tags         listing-drafts
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id  path  string  true  "Draft ID (UUID)"
-// @Success      200  {object}  APIResponse{data=simpleMessageResponse}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Failure      404  {object}  APIResponse{error=APIError}
-// @Router       /my/listing-drafts/{id} [delete]
+//
+//	@Summary		Delete listing draft
+//	@Description	Delete (discard) a listing draft
+//	@Tags			listing-drafts
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Draft ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/listing-drafts/{id} [delete]
 func (h *ListingDraftHandler) DeleteDraft(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 

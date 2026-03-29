@@ -22,16 +22,16 @@ func NewAntiFraudHandler(flagRepo repository.FraudFlagRepository, chatFilter ant
 }
 
 type fraudFlagResponse struct {
-	ID         string  `json:"id"`
-	UserID     string  `json:"user_id"`
-	Rule       string  `json:"rule"`
-	Severity   string  `json:"severity"`
-	Status     string  `json:"status"`
-	Action     string  `json:"action"`
+	ID         string      `json:"id"`
+	UserID     string      `json:"user_id"`
+	Rule       string      `json:"rule"`
+	Severity   string      `json:"severity"`
+	Status     string      `json:"status"`
+	Action     string      `json:"action"`
 	Details    interface{} `json:"details,omitempty"`
-	CreatedAt  string  `json:"created_at"`
-	ReviewedAt *string `json:"reviewed_at,omitempty"`
-	ReviewedBy *string `json:"reviewed_by,omitempty"`
+	CreatedAt  string      `json:"created_at"`
+	ReviewedAt *string     `json:"reviewed_at,omitempty"`
+	ReviewedBy *string     `json:"reviewed_by,omitempty"`
 }
 
 func toFraudFlagResponse(f *domain.FraudFlag) fraudFlagResponse {
@@ -59,21 +59,22 @@ func toFraudFlagResponse(f *domain.FraudFlag) fraudFlagResponse {
 }
 
 // ListFlags godoc
-// @Summary      List fraud flags
-// @Description  Returns paginated list of fraud flags with optional filters by status, rule, and user
-// @Tags         admin-antifraud
-// @Produce      json
-// @Security     BearerAuth
-// @Param        status     query     string  false  "Filter by flag status (pending, reviewed, dismissed)"
-// @Param        rule       query     string  false  "Filter by fraud rule name"
-// @Param        user_id    query     string  false  "Filter by user ID (UUID)"
-// @Param        page       query     int     false  "Page number"  default(1)
-// @Param        page_size  query     int     false  "Page size"    default(20)
-// @Success      200  {object}  APIResponse{data=[]fraudFlagResponse,meta=Meta}
-// @Failure      400  {object}  APIResponse{error=APIError}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /admin/antifraud/flags [get]
+//
+//	@Summary		List fraud flags
+//	@Description	Returns paginated list of fraud flags with optional filters by status, rule, and user
+//	@Tags			admin-antifraud
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			status		query		string	false	"Filter by flag status (pending, reviewed, dismissed)"
+//	@Param			rule		query		string	false	"Filter by fraud rule name"
+//	@Param			user_id		query		string	false	"Filter by user ID (UUID)"
+//	@Param			page		query		int		false	"Page number"	default(1)
+//	@Param			page_size	query		int		false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]fraudFlagResponse,meta=Meta}
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/antifraud/flags [get]
 func (h *AntiFraudHandler) ListFlags(w http.ResponseWriter, r *http.Request) {
 	page := getPage(r.URL.Query().Get("page"))
 	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)
@@ -132,20 +133,21 @@ type updateFraudFlagRequest struct {
 }
 
 // UpdateFlag godoc
-// @Summary      Update fraud flag status
-// @Description  Update the status of a fraud flag (reviewed or dismissed)
-// @Tags         admin-antifraud
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id    path      string                  true  "Fraud flag ID (UUID)"
-// @Param        body  body      updateFraudFlagRequest  true  "New status"
-// @Success      200   {object}  APIResponse{data=object}
-// @Failure      400   {object}  APIResponse{error=APIError}
-// @Failure      401   {object}  APIResponse{error=APIError}
-// @Failure      403   {object}  APIResponse{error=APIError}
-// @Failure      404   {object}  APIResponse{error=APIError}
-// @Router       /admin/antifraud/flags/{id} [patch]
+//
+//	@Summary		Update fraud flag status
+//	@Description	Update the status of a fraud flag (reviewed or dismissed)
+//	@Tags			admin-antifraud
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id		path		string					true	"Fraud flag ID (UUID)"
+//	@Param			body	body		updateFraudFlagRequest	true	"New status"
+//	@Success		200		{object}	APIResponse{data=object}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Router			/admin/antifraud/flags/{id} [patch]
 func (h *AntiFraudHandler) UpdateFlag(w http.ResponseWriter, r *http.Request) {
 	flagID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -176,17 +178,18 @@ func (h *AntiFraudHandler) UpdateFlag(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListFilteredMessages godoc
-// @Summary      List filtered chat messages
-// @Description  Returns paginated list of chat messages that had contact information filtered
-// @Tags         admin-antifraud
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page       query     int  false  "Page number"  default(1)
-// @Param        page_size  query     int  false  "Page size"    default(20)
-// @Success      200  {object}  APIResponse{data=[]antifraud.FilteredChatMessage,meta=Meta}
-// @Failure      401  {object}  APIResponse{error=APIError}
-// @Failure      403  {object}  APIResponse{error=APIError}
-// @Router       /admin/chat/filtered [get]
+//
+//	@Summary		List filtered chat messages
+//	@Description	Returns paginated list of chat messages that had contact information filtered
+//	@Tags			admin-antifraud
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int	false	"Page number"	default(1)
+//	@Param			page_size	query		int	false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]antifraud.FilteredChatMessage,meta=Meta}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/chat/filtered [get]
 func (h *AntiFraudHandler) ListFilteredMessages(w http.ResponseWriter, r *http.Request) {
 	page := getPage(r.URL.Query().Get("page"))
 	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)

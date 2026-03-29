@@ -50,16 +50,17 @@ type compareResponse struct {
 }
 
 // Compare godoc
-// @Summary Compare bathhouses
-// @Description Compare 2-3 bathhouses side by side
-// @Tags bathhouses
-// @Accept json
-// @Produce json
-// @Param request body compareRequest true "Bathhouse IDs to compare"
-// @Success 200 {object} APIResponse{data=compareResponse}
-// @Failure 400 {object} APIResponse
-// @Failure 404 {object} APIResponse
-// @Router /api/v1/bathhouses/compare [post]
+//
+//	@Summary		Compare bathhouses
+//	@Description	Compare 2-3 bathhouses side by side
+//	@Tags			bathhouses
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		compareRequest	true	"Bathhouse IDs to compare"
+//	@Success		200		{object}	APIResponse{data=compareResponse}
+//	@Failure		400		{object}	APIResponse
+//	@Failure		404		{object}	APIResponse
+//	@Router			/api/v1/bathhouses/compare [post]
 func (h *ComparisonHandler) Compare(w http.ResponseWriter, r *http.Request) {
 	var req compareRequest
 	if err := readJSON(w, r, &req); err != nil {

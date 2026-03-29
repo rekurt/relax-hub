@@ -198,7 +198,7 @@ func (s *webhookService) TestWebhook(ctx context.Context, userID uuid.UUID, role
 	if err != nil {
 		return err
 	}
-	if webhook.OwnerID != userID {
+	if role != domain.RoleAdmin && webhook.OwnerID != userID {
 		return domain.ErrForbidden
 	}
 

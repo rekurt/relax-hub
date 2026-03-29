@@ -26,10 +26,10 @@ func (s EscrowStatus) IsValid() bool {
 type Escrow struct {
 	ID                uuid.UUID
 	BookingID         uuid.UUID
-	Amount            int64        // total payment amount in kopecks
-	ServiceFee        int64        // platform service fee in kopecks
+	Amount            int64 // total payment amount in kopecks
+	ServiceFee        int64 // platform service fee in kopecks
 	Status            EscrowStatus
-	ClaimPeriodEndsAt time.Time    // when funds can be released to owner
+	ClaimPeriodEndsAt time.Time // when funds can be released to owner
 	ReleasedAt        *time.Time
 	CreatedAt         time.Time
 }

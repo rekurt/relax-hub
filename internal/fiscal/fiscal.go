@@ -14,7 +14,7 @@ const (
 
 // ReceiptRequest contains data needed to create a fiscal receipt.
 type ReceiptRequest struct {
-	Type  ReceiptType
+	Type   ReceiptType
 	Amount int64 // kopecks
 	Email  string
 	Phone  string

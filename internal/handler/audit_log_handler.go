@@ -59,24 +59,25 @@ func writeAuditLogList(w http.ResponseWriter, result *domain.PaginatedResult[dom
 }
 
 // ListAdmin godoc
-// @Summary      List audit logs
-// @Description  Returns a paginated list of all audit log entries. Admin only. Supports filtering by entity_type, entity_id, user_id, action, and date range.
-// @Tags         admin-audit
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page         query     int     false  "Page number"                          default(1)
-// @Param        page_size    query     int     false  "Page size"                            default(20)
-// @Param        entity_type  query     string  false  "Filter by entity type (e.g. bathhouse)"
-// @Param        entity_id    query     string  false  "Filter by entity ID (UUID)"
-// @Param        user_id      query     string  false  "Filter by user ID (UUID)"
-// @Param        action       query     string  false  "Filter by action (create, update, delete)"
-// @Param        from_date    query     string  false  "Filter from date (RFC3339)"
-// @Param        to_date      query     string  false  "Filter to date (RFC3339)"
-// @Success      200          {object}  APIResponse{data=[]auditLogResponse,meta=Meta}
-// @Failure      400          {object}  APIResponse{error=APIError}
-// @Failure      401          {object}  APIResponse{error=APIError}
-// @Failure      403          {object}  APIResponse{error=APIError}
-// @Router       /admin/audit-log [get]
+//
+//	@Summary		List audit logs
+//	@Description	Returns a paginated list of all audit log entries. Admin only. Supports filtering by entity_type, entity_id, user_id, action, and date range.
+//	@Tags			admin-audit
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int		false	"Page number"	default(1)
+//	@Param			page_size	query		int		false	"Page size"		default(20)
+//	@Param			entity_type	query		string	false	"Filter by entity type (e.g. bathhouse)"
+//	@Param			entity_id	query		string	false	"Filter by entity ID (UUID)"
+//	@Param			user_id		query		string	false	"Filter by user ID (UUID)"
+//	@Param			action		query		string	false	"Filter by action (create, update, delete)"
+//	@Param			from_date	query		string	false	"Filter from date (RFC3339)"
+//	@Param			to_date		query		string	false	"Filter to date (RFC3339)"
+//	@Success		200			{object}	APIResponse{data=[]auditLogResponse,meta=Meta}
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/audit-log [get]
 func (h *AuditLogHandler) ListAdmin(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	page := getPage(q.Get("page"))
@@ -141,22 +142,23 @@ func (h *AuditLogHandler) ListAdmin(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListAdminActions godoc
-// @Summary      List admin action audit logs
-// @Description  Returns a paginated list of admin action audit entries (POST/PUT/PATCH/DELETE on admin routes). Supports filtering by admin_id, action, and date range.
-// @Tags         admin-audit
-// @Produce      json
-// @Security     BearerAuth
-// @Param        page         query     int     false  "Page number"                          default(1)
-// @Param        page_size    query     int     false  "Page size"                            default(20)
-// @Param        admin_id     query     string  false  "Filter by admin user ID (UUID)"
-// @Param        action       query     string  false  "Filter by action (create, update, delete)"
-// @Param        from_date    query     string  false  "Filter from date (RFC3339)"
-// @Param        to_date      query     string  false  "Filter to date (RFC3339)"
-// @Success      200          {object}  APIResponse{data=[]auditLogResponse,meta=Meta}
-// @Failure      400          {object}  APIResponse{error=APIError}
-// @Failure      401          {object}  APIResponse{error=APIError}
-// @Failure      403          {object}  APIResponse{error=APIError}
-// @Router       /admin/audit-log/actions [get]
+//
+//	@Summary		List admin action audit logs
+//	@Description	Returns a paginated list of admin action audit entries (POST/PUT/PATCH/DELETE on admin routes). Supports filtering by admin_id, action, and date range.
+//	@Tags			admin-audit
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			page		query		int		false	"Page number"	default(1)
+//	@Param			page_size	query		int		false	"Page size"		default(20)
+//	@Param			admin_id	query		string	false	"Filter by admin user ID (UUID)"
+//	@Param			action		query		string	false	"Filter by action (create, update, delete)"
+//	@Param			from_date	query		string	false	"Filter from date (RFC3339)"
+//	@Param			to_date		query		string	false	"Filter to date (RFC3339)"
+//	@Success		200			{object}	APIResponse{data=[]auditLogResponse,meta=Meta}
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/audit-log/actions [get]
 func (h *AuditLogHandler) ListAdminActions(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	page := getPage(q.Get("page"))
@@ -210,19 +212,20 @@ func (h *AuditLogHandler) ListAdminActions(w http.ResponseWriter, r *http.Reques
 }
 
 // ListByBathhouse godoc
-// @Summary      Get bathhouse edit history
-// @Description  Returns a paginated list of audit log entries for a specific bathhouse. Owner or representative only.
-// @Tags         bathhouses
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id         path      string  true   "Bathhouse ID (UUID)"
-// @Param        page       query     int     false  "Page number"   default(1)
-// @Param        page_size  query     int     false  "Page size"     default(20)
-// @Success      200        {object}  APIResponse{data=[]auditLogResponse,meta=Meta}
-// @Failure      400        {object}  APIResponse{error=APIError}
-// @Failure      401        {object}  APIResponse{error=APIError}
-// @Failure      403        {object}  APIResponse{error=APIError}
-// @Router       /my/bathhouses/{id}/history [get]
+//
+//	@Summary		Get bathhouse edit history
+//	@Description	Returns a paginated list of audit log entries for a specific bathhouse. Owner or representative only.
+//	@Tags			bathhouses
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id			path		string	true	"Bathhouse ID (UUID)"
+//	@Param			page		query		int		false	"Page number"	default(1)
+//	@Param			page_size	query		int		false	"Page size"		default(20)
+//	@Success		200			{object}	APIResponse{data=[]auditLogResponse,meta=Meta}
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/history [get]
 func (h *AuditLogHandler) ListByBathhouse(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {

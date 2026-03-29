@@ -38,15 +38,15 @@ func NewWidgetHandler(
 }
 
 type widgetBathhouseResponse struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Description  string  `json:"description"`
-	Address      string  `json:"address"`
-	PricePerHour int64   `json:"price_per_hour"`
-	MinDuration  int     `json:"min_duration"`
-	MaxGuests    int     `json:"max_guests"`
-	Rating       float64 `json:"rating"`
-	ReviewCount  int     `json:"review_count"`
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	Address      string   `json:"address"`
+	PricePerHour int64    `json:"price_per_hour"`
+	MinDuration  int      `json:"min_duration"`
+	MaxGuests    int      `json:"max_guests"`
+	Rating       float64  `json:"rating"`
+	ReviewCount  int      `json:"review_count"`
 	Images       []string `json:"images"`
 }
 
@@ -111,16 +111,17 @@ func toWidgetBookingResponse(b *domain.Booking) widgetBookingResponse {
 }
 
 // GetBathhouse godoc
-// @Summary      Get bathhouse (widget)
-// @Description  Returns bathhouse info for the embeddable widget. Public endpoint, authenticated via API key.
-// @Tags         widget
-// @Produce      json
-// @Param        api_key  path      string  true  "Widget API key"
-// @Success      200      {object}  APIResponse{data=widgetBathhouseResponse}
-// @Failure      400      {object}  APIResponse{error=APIError}
-// @Failure      404      {object}  APIResponse{error=APIError}
-// @Failure      429      {object}  APIResponse{error=APIError}  "Rate limited (10/s per API key)"
-// @Router       /widget/{api_key}/bathhouse [get]
+//
+//	@Summary		Get bathhouse (widget)
+//	@Description	Returns bathhouse info for the embeddable widget. Public endpoint, authenticated via API key.
+//	@Tags			widget
+//	@Produce		json
+//	@Param			api_key	path		string	true	"Widget API key"
+//	@Success		200		{object}	APIResponse{data=widgetBathhouseResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}	"Rate limited (10/s per API key)"
+//	@Router			/widget/{api_key}/bathhouse [get]
 func (h *WidgetHandler) GetBathhouse(w http.ResponseWriter, r *http.Request) {
 	apiKey := chi.URLParam(r, "api_key")
 	if apiKey == "" {
@@ -148,17 +149,18 @@ func (h *WidgetHandler) GetBathhouse(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetAvailableSlots godoc
-// @Summary      Get available slots (widget)
-// @Description  Returns available booking slots for a given date. Public endpoint, authenticated via API key.
-// @Tags         widget
-// @Produce      json
-// @Param        api_key  path      string  true  "Widget API key"
-// @Param        date     query     string  true  "Date (YYYY-MM-DD)"
-// @Success      200      {object}  APIResponse{data=[]widgetSlotResponse}
-// @Failure      400      {object}  APIResponse{error=APIError}
-// @Failure      404      {object}  APIResponse{error=APIError}
-// @Failure      429      {object}  APIResponse{error=APIError}  "Rate limited (10/s per API key)"
-// @Router       /widget/{api_key}/slots [get]
+//
+//	@Summary		Get available slots (widget)
+//	@Description	Returns available booking slots for a given date. Public endpoint, authenticated via API key.
+//	@Tags			widget
+//	@Produce		json
+//	@Param			api_key	path		string	true	"Widget API key"
+//	@Param			date	query		string	true	"Date (YYYY-MM-DD)"
+//	@Success		200		{object}	APIResponse{data=[]widgetSlotResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}	"Rate limited (10/s per API key)"
+//	@Router			/widget/{api_key}/slots [get]
 func (h *WidgetHandler) GetAvailableSlots(w http.ResponseWriter, r *http.Request) {
 	apiKey := chi.URLParam(r, "api_key")
 	if apiKey == "" {
@@ -215,19 +217,20 @@ func (h *WidgetHandler) GetAvailableSlots(w http.ResponseWriter, r *http.Request
 }
 
 // CreateBooking godoc
-// @Summary      Create booking (widget)
-// @Description  Creates a booking through the embeddable widget. Requires guest name, phone, and email. Public endpoint, authenticated via API key.
-// @Tags         widget
-// @Accept       json
-// @Produce      json
-// @Param        api_key  path      string                true  "Widget API key"
-// @Param        body     body      widgetBookingRequest  true  "Booking details"
-// @Success      201      {object}  APIResponse{data=widgetBookingResponse}
-// @Failure      400      {object}  APIResponse{error=APIError}
-// @Failure      404      {object}  APIResponse{error=APIError}
-// @Failure      409      {object}  APIResponse{error=APIError}
-// @Failure      429      {object}  APIResponse{error=APIError}  "Rate limited (10/s per API key)"
-// @Router       /widget/{api_key}/booking [post]
+//
+//	@Summary		Create booking (widget)
+//	@Description	Creates a booking through the embeddable widget. Requires guest name, phone, and email. Public endpoint, authenticated via API key.
+//	@Tags			widget
+//	@Accept			json
+//	@Produce		json
+//	@Param			api_key	path		string					true	"Widget API key"
+//	@Param			body	body		widgetBookingRequest	true	"Booking details"
+//	@Success		201		{object}	APIResponse{data=widgetBookingResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		404		{object}	APIResponse{error=APIError}
+//	@Failure		409		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}	"Rate limited (10/s per API key)"
+//	@Router			/widget/{api_key}/booking [post]
 func (h *WidgetHandler) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	apiKey := chi.URLParam(r, "api_key")
 	if apiKey == "" {

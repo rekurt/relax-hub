@@ -49,10 +49,10 @@ func (s FraudSeverity) IsValid() bool {
 type FraudFlagStatus string
 
 const (
-	FraudFlagStatusPending      FraudFlagStatus = "pending"
-	FraudFlagStatusReviewed     FraudFlagStatus = "reviewed"
-	FraudFlagStatusDismissed    FraudFlagStatus = "dismissed"
-	FraudFlagStatusActionTaken  FraudFlagStatus = "action_taken"
+	FraudFlagStatusPending     FraudFlagStatus = "pending"
+	FraudFlagStatusReviewed    FraudFlagStatus = "reviewed"
+	FraudFlagStatusDismissed   FraudFlagStatus = "dismissed"
+	FraudFlagStatusActionTaken FraudFlagStatus = "action_taken"
 )
 
 func (s FraudFlagStatus) IsValid() bool {
@@ -95,10 +95,10 @@ type FraudFlag struct {
 }
 
 type FraudFlagFilter struct {
-	Status *FraudFlagStatus
-	UserID *uuid.UUID
-	Rule   *FraudRuleName
-	Page   int
+	Status   *FraudFlagStatus
+	UserID   *uuid.UUID
+	Rule     *FraudRuleName
+	Page     int
 	PageSize int
 }
 

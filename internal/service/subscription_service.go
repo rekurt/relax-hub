@@ -18,10 +18,10 @@ type SubscriptionService interface {
 }
 
 type subscriptionService struct {
-	subRepo   repository.SubscriptionRepository
-	bhRepo    repository.BathhouseRepository
-	access    *AccessChecker
-	logger    *logger.Logger
+	subRepo repository.SubscriptionRepository
+	bhRepo  repository.BathhouseRepository
+	access  *AccessChecker
+	logger  *logger.Logger
 }
 
 func NewSubscriptionService(

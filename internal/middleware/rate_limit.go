@@ -37,8 +37,8 @@ type clientLimiter struct {
 
 // RateLimitInfo holds the result of a rate limit check.
 type RateLimitInfo struct {
-	Allowed   bool
-	Remaining int
+	Allowed    bool
+	Remaining  int
 	RetryAfter time.Duration
 }
 

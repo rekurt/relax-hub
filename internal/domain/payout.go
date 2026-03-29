@@ -70,7 +70,7 @@ type PayoutFilter struct {
 
 // Лимиты выплат
 const (
-	PayoutMinAmountRUB      int64 = 50_000      // 500 RUB в копейках
-	PayoutDailyLimitRUB     int64 = 50_000_000   // 500,000 RUB в копейках
-	PayoutMonthlyLimitRUB   int64 = 300_000_000  // 3,000,000 RUB в копейках
+	PayoutMinAmountRUB    int64 = 50_000      // 500 RUB в копейках
+	PayoutDailyLimitRUB   int64 = 50_000_000  // 500,000 RUB в копейках
+	PayoutMonthlyLimitRUB int64 = 300_000_000 // 3,000,000 RUB в копейках
 )
