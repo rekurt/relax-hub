@@ -168,12 +168,12 @@ BRD требует: "Изменение требует подтверждени�
 - Modify: `internal/service/booking_service.go` — CheckOwnerResponseRates: логика 60-дневного окна
 - Create: `migrations/XXXXXX_low_response_rate_tracking.up.sql`
 
-- [ ] Миграция: добавить low_response_rate_since в bathhouses
-- [ ] При rate < 30%: если low_response_rate_since null → установить текущую дату
-- [ ] Если low_response_rate_since > 60 дней → переключить booking_mode на instant или деактивировать
-- [ ] При rate >= 30%: сбросить low_response_rate_since
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task B4
+- [x] Миграция: добавить low_response_rate_since в bathhouses
+- [x] При rate < 30%: если low_response_rate_since null → установить текущую дату
+- [x] Если low_response_rate_since > 60 дней → переключить booking_mode на instant или деактивировать
+- [x] При rate >= 30%: сбросить low_response_rate_since
+- [x] Тесты
+- [x] run project test suite — must pass before Task B4
 
 ### Task B4: Лояльность — кэшбэк на кошелёк (FR-112, FR-111)
 

@@ -76,8 +76,9 @@ type Bathhouse struct {
 	MaxAdvanceDays             int     // 7-365, max days ahead for booking
 	BookingMode                string  // "instant" or "request", default "instant"
 	RequestTimeout             int     // hours, default 24, range 1-72
-	ResponseRate               float64 // 0.0-1.0, percentage of requests responded to within timeout
-	AvgResponseTimeMinutes     int     // average response time in minutes for request-based bookings
+	ResponseRate               float64    // 0.0-1.0, percentage of requests responded to within timeout
+	AvgResponseTimeMinutes     int        // average response time in minutes for request-based bookings
+	LowResponseRateSince       *time.Time // when response rate first dropped below 30%; nil = rate OK
 	IsPhotoVerified            bool
 	ApiKey                     string
 	CancellationPolicy         CancellationPolicy // flexible, moderate, strict

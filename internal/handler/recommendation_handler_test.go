@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -232,7 +233,7 @@ func (m *mockBathhouseRepository) UpdateRankingFields(_ context.Context, _ uuid.
 	return nil
 }
 
-func (m *mockBathhouseRepository) UpdateResponseRate(_ context.Context, _ uuid.UUID, _ float64, _ int) error {
+func (m *mockBathhouseRepository) UpdateResponseRate(_ context.Context, _ uuid.UUID, _ float64, _ int, _ *time.Time) error {
 	return nil
 }
 

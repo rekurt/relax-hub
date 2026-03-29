@@ -1544,7 +1544,7 @@ func (r *BathhouseRepo) ListIDsByOwner(_ context.Context, ownerID uuid.UUID) ([]
 	return ids, nil
 }
 
-func (r *BathhouseRepo) UpdateResponseRate(_ context.Context, id uuid.UUID, responseRate float64, avgResponseMinutes int) error {
+func (r *BathhouseRepo) UpdateResponseRate(_ context.Context, id uuid.UUID, responseRate float64, avgResponseMinutes int, lowResponseRateSince *time.Time) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	bh, ok := r.bathhouses[id]
@@ -1553,6 +1553,7 @@ func (r *BathhouseRepo) UpdateResponseRate(_ context.Context, id uuid.UUID, resp
 	}
 	bh.ResponseRate = responseRate
 	bh.AvgResponseTimeMinutes = avgResponseMinutes
+	bh.LowResponseRateSince = lowResponseRateSince
 	return nil
 }
 

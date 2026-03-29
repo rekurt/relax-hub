@@ -690,7 +690,8 @@ func (r *bathhouseRepo) GetByCalendarToken(ctx context.Context, token string) (*
 			buffer_minutes, lead_time_hours, max_advance_days,
 			booking_mode, request_timeout,
 			response_rate, avg_response_time_minutes,
-			cancellation_policy, security_deposit_percent
+			cancellation_policy, security_deposit_percent,
+			low_response_rate_since
 		FROM bathhouses
 		WHERE calendar_token = $1`
 
@@ -727,6 +728,7 @@ func (r *bathhouseRepo) scanBathhouseMinimal(rows pgx.Rows) (*domain.Bathhouse, 
 		&bh.BookingMode, &bh.RequestTimeout,
 		&bh.ResponseRate, &bh.AvgResponseTimeMinutes,
 		&bh.CancellationPolicy, &bh.SecurityDepositPercent,
+		&bh.LowResponseRateSince,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan bathhouse row: %w", err)
@@ -872,10 +874,10 @@ func (r *bathhouseRepo) UpdateRankingFields(ctx context.Context, id uuid.UUID, c
 	return nil
 }
 
-func (r *bathhouseRepo) UpdateResponseRate(ctx context.Context, id uuid.UUID, responseRate float64, avgResponseMinutes int) error {
+func (r *bathhouseRepo) UpdateResponseRate(ctx context.Context, id uuid.UUID, responseRate float64, avgResponseMinutes int, lowResponseRateSince *time.Time) error {
 	tag, err := r.pool.Exec(ctx,
-		`UPDATE bathhouses SET response_rate = $2, avg_response_time_minutes = $3, updated_at = $4 WHERE id = $1`,
-		id, responseRate, avgResponseMinutes, time.Now(),
+		`UPDATE bathhouses SET response_rate = $2, avg_response_time_minutes = $3, low_response_rate_since = $4, updated_at = $5 WHERE id = $1`,
+		id, responseRate, avgResponseMinutes, lowResponseRateSince, time.Now(),
 	)
 	if err != nil {
 		return fmt.Errorf("update response rate: %w", err)
@@ -898,7 +900,8 @@ func (r *bathhouseRepo) ListRequestModeBathhouses(ctx context.Context) ([]domain
 			bathhouses.buffer_minutes, bathhouses.lead_time_hours, bathhouses.max_advance_days,
 			bathhouses.booking_mode, bathhouses.request_timeout,
 			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
-			bathhouses.cancellation_policy, bathhouses.security_deposit_percent
+			bathhouses.cancellation_policy, bathhouses.security_deposit_percent,
+			bathhouses.low_response_rate_since
 		FROM bathhouses
 		WHERE bathhouses.booking_mode = 'request'
 			AND bathhouses.status = 'active'`

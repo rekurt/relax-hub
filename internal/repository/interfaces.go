@@ -55,7 +55,7 @@ type BathhouseRepository interface {
 	SuggestNames(ctx context.Context, filter SuggestionFilter) ([]string, error)
 	IncrementViewCount(ctx context.Context, id uuid.UUID) error
 	UpdateRankingFields(ctx context.Context, id uuid.UUID, conversionRate, occupancyRate float64) error
-	UpdateResponseRate(ctx context.Context, id uuid.UUID, responseRate float64, avgResponseMinutes int) error
+	UpdateResponseRate(ctx context.Context, id uuid.UUID, responseRate float64, avgResponseMinutes int, lowResponseRateSince *time.Time) error
 	ListRequestModeBathhouses(ctx context.Context) ([]domain.Bathhouse, error)
 	GetAreaAvgPrice(ctx context.Context, cityID int64, lat, lng float64) (int64, error)
 }

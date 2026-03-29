@@ -3799,10 +3799,15 @@ func TestResponseRate_AutoDeactivateBelow30(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Should NOT force to instant mode (requires LowResponseRateSince tracking for 60+ days)
+	// Should NOT force to instant mode yet (LowResponseRateSince was nil, just set now — not 60 days)
 	updatedBh, _ := bhRepo.GetByID(context.Background(), bh.ID)
 	if updatedBh.BookingMode != domain.BookingModeRequest {
-		t.Errorf("booking_mode = %q, want %q (should not auto-force without 60-day tracking)", updatedBh.BookingMode, domain.BookingModeRequest)
+		t.Errorf("booking_mode = %q, want %q (should not auto-force before 60 days)", updatedBh.BookingMode, domain.BookingModeRequest)
+	}
+
+	// LowResponseRateSince should be set now
+	if updatedBh.LowResponseRateSince == nil {
+		t.Error("expected LowResponseRateSince to be set when rate < 30%")
 	}
 
 	// Should send critical warning notification
@@ -3814,6 +3819,126 @@ func TestResponseRate_AutoDeactivateBelow30(t *testing.T) {
 	}
 	if !notifFound {
 		t.Error("expected response rate critical warning notification")
+	}
+}
+
+func TestResponseRate_ForceInstantAfter60Days(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, notifSvc := newBookingServiceWithWallet()
+	ownerID := uuid.New()
+
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+
+	// LowResponseRateSince set 61 days ago
+	lowSince := time.Now().AddDate(0, 0, -61)
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Chronically Slow Bath",
+		Address: "101 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, BaseCapacity: 10,
+		LongSessionThresholdHours: 4,
+		BookingMode: domain.BookingModeRequest, RequestTimeout: 24,
+		ResponseRate:         0.2,
+		LowResponseRateSince: &lowSince,
+		WorkingHours:         wh, Status: domain.BathhouseStatusActive,
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Create 10 bookings: only 2 responded (20% rate)
+	holdID := uuid.New()
+	for i := 0; i < 10; i++ {
+		status := domain.BookingPendingOwner
+		if i < 2 {
+			status = domain.BookingConfirmed
+		}
+		booking := &domain.Booking{
+			ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID,
+			StartTime:  time.Now().Add(time.Duration(i+1) * 24 * time.Hour),
+			EndTime:    time.Now().Add(time.Duration(i+1)*24*time.Hour + 2*time.Hour),
+			GuestCount: 2, TotalPrice: 10000, Status: status,
+			HoldID: &holdID,
+		}
+		_ = bookingRepo.Create(context.Background(), booking)
+	}
+
+	_, err := svc.RecalculateResponseRates(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should force to instant mode after 60+ days below 30%
+	updatedBh, _ := bhRepo.GetByID(context.Background(), bh.ID)
+	if updatedBh.BookingMode != domain.BookingModeInstant {
+		t.Errorf("booking_mode = %q, want %q (should force instant after 60 days)", updatedBh.BookingMode, domain.BookingModeInstant)
+	}
+
+	// Should send mode-changed notification
+	notifFound := false
+	for _, n := range notifSvc.sent {
+		if n.Type == domain.NotifOwnerResponseRateWarning && n.UserID == ownerID {
+			notifFound = true
+		}
+	}
+	if !notifFound {
+		t.Error("expected mode-changed notification")
+	}
+}
+
+func TestResponseRate_ResetLowResponseRateSinceWhenRateRecovers(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _ := newBookingServiceWithWallet()
+	ownerID := uuid.New()
+
+	wh := make([]domain.WorkingHours, 7)
+	for i := 0; i < 7; i++ {
+		wh[i] = domain.WorkingHours{DayOfWeek: i, OpenTime: "00:00", CloseTime: "23:59"}
+	}
+
+	// Was below 30% for 10 days
+	lowSince := time.Now().AddDate(0, 0, -10)
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: ownerID, Name: "Recovering Bath",
+		Address: "202 St", CityID: 1, PricePerHour: 5000,
+		MinDuration: 1, MaxGuests: 10, BaseCapacity: 10,
+		LongSessionThresholdHours: 4,
+		BookingMode: domain.BookingModeRequest, RequestTimeout: 24,
+		ResponseRate:         0.2,
+		LowResponseRateSince: &lowSince,
+		WorkingHours:         wh, Status: domain.BathhouseStatusActive,
+	}
+	_ = bhRepo.Create(context.Background(), bh)
+
+	// Create 10 bookings: 8 responded (80% rate, above 30%)
+	holdID := uuid.New()
+	for i := 0; i < 10; i++ {
+		status := domain.BookingConfirmed // responded
+		if i >= 8 {
+			status = domain.BookingPendingOwner // not responded
+		}
+		booking := &domain.Booking{
+			ID: uuid.New(), UserID: uuid.New(), BathhouseID: bh.ID,
+			StartTime:  time.Now().Add(time.Duration(i+1) * 24 * time.Hour),
+			EndTime:    time.Now().Add(time.Duration(i+1)*24*time.Hour + 2*time.Hour),
+			GuestCount: 2, TotalPrice: 10000, Status: status,
+			HoldID: &holdID,
+		}
+		_ = bookingRepo.Create(context.Background(), booking)
+	}
+
+	_, err := svc.RecalculateResponseRates(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// LowResponseRateSince should be reset to nil
+	updatedBh, _ := bhRepo.GetByID(context.Background(), bh.ID)
+	if updatedBh.LowResponseRateSince != nil {
+		t.Error("expected LowResponseRateSince to be nil after rate recovered above 30%")
+	}
+
+	// Should stay in request mode
+	if updatedBh.BookingMode != domain.BookingModeRequest {
+		t.Errorf("booking_mode = %q, want %q", updatedBh.BookingMode, domain.BookingModeRequest)
 	}
 }
 

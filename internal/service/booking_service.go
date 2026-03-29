@@ -2229,26 +2229,50 @@ func (s *bookingService) RecalculateResponseRates(ctx context.Context) (int, err
 			responseRate = 1.0 // no requests = perfect rate
 		}
 
-		if err := s.bhRepo.UpdateResponseRate(ctx, bh.ID, responseRate, avgResponseMinutes); err != nil {
+		// Track when response rate first dropped below 30%
+		var lowSince *time.Time
+		if responseRate < 0.3 {
+			if bh.LowResponseRateSince != nil {
+				lowSince = bh.LowResponseRateSince // keep existing timestamp
+			} else {
+				now := time.Now()
+				lowSince = &now // start tracking
+			}
+		}
+		// If rate >= 0.3, lowSince stays nil (reset)
+
+		if err := s.bhRepo.UpdateResponseRate(ctx, bh.ID, responseRate, avgResponseMinutes, lowSince); err != nil {
 			s.logger.Warn("failed to update response rate", "bathhouse_id", bh.ID, "error", err)
 			continue
 		}
 
 		updated++
 
-		// Enforcement: warn at <0.5, warn critically at <0.3
-		// NOTE: Auto-forcing to instant mode requires tracking LowResponseRateSince timestamp
-		// (60+ consecutive days below 30%). Currently only warns — needs DB column to enforce properly.
-		if responseRate < 0.3 {
+		// Enforcement: force to instant mode after 60 consecutive days below 30%
+		if responseRate < 0.3 && lowSince != nil {
+			daysBelowThreshold := time.Since(*lowSince).Hours() / 24
+			if daysBelowThreshold >= 60 {
+				s.logger.Warn("forcing bathhouse to instant mode due to prolonged low response rate",
+					"bathhouse_id", bh.ID, "response_rate", responseRate, "low_since", lowSince)
+				bh.BookingMode = domain.BookingModeInstant
+				if err := s.bhRepo.Update(ctx, &bh); err != nil {
+					s.logger.Warn("failed to force instant mode", "bathhouse_id", bh.ID, "error", err)
+				} else if s.notifSvc != nil {
+					body := fmt.Sprintf("Ваш процент ответов %.0f%% более 60 дней. Режим бронирования принудительно переключён на мгновенный.", responseRate*100)
+					_ = s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifOwnerResponseRateWarning,
+						"Режим бронирования изменён", body, nil)
+				}
+				continue
+			}
+
 			s.logger.Warn("bathhouse response rate critically low",
-				"bathhouse_id", bh.ID, "response_rate", responseRate)
+				"bathhouse_id", bh.ID, "response_rate", responseRate, "days_below", int(daysBelowThreshold))
 			if s.notifSvc != nil {
 				body := fmt.Sprintf("Ваш процент ответов %.0f%%. При сохранении низкого показателя режим бронирования будет изменён на мгновенный.", responseRate*100)
 				_ = s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifOwnerResponseRateWarning,
 					"Критически низкий процент ответов", body, nil)
 			}
 		} else if responseRate < 0.5 {
-			// Send warning
 			if s.notifSvc != nil {
 				body := fmt.Sprintf("Ваш процент ответов %.0f%%, рекомендуем отвечать быстрее", responseRate*100)
 				_ = s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifOwnerResponseRateWarning,
