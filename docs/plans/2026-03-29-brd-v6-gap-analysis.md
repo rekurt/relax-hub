@@ -468,8 +468,8 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 
 ### Task F3: Обновление CLAUDE.md
 
-- [ ] Добавить описание новых подсистем (booking modification requests, extension requests, auto-payout cron, etc.)
-- [ ] Обновить список ошибок в Error Mapping
+- [x] Добавить описание новых подсистем (booking modification requests, extension requests, auto-payout cron, etc.)
+- [x] Обновить список ошибок в Error Mapping
 
 ### Task F4: Перенос плана в completed
 
