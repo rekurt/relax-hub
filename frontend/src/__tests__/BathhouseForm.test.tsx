@@ -8,6 +8,7 @@ import BathhouseForm from '@/pages/bathhouses/BathhouseForm'
 
 vi.mock('@/api/generated/bathhouses/bathhouses', () => ({
   useGetBathhousesId: vi.fn(),
+  useGetMyBathhousesIdCompleteness: vi.fn(),
   usePostBathhouses: vi.fn(),
   usePutBathhousesId: vi.fn(),
 }))
@@ -24,6 +25,7 @@ vi.mock('@/api/axios-instance', () => ({
 
 import {
   useGetBathhousesId,
+  useGetMyBathhousesIdCompleteness,
   usePostBathhouses,
   usePutBathhousesId,
 } from '@/api/generated/bathhouses/bathhouses'
@@ -81,6 +83,10 @@ describe('BathhouseForm', () => {
       data: undefined,
       isLoading: false,
     } as unknown as ReturnType<typeof useGetBathhousesId>)
+
+    vi.mocked(useGetMyBathhousesIdCompleteness).mockReturnValue({
+      data: undefined,
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdCompleteness>)
   })
 
   describe('intro step', () => {
@@ -246,5 +252,90 @@ describe('BathhouseForm', () => {
     renderWithProviders(<BathhouseForm />, '/bathhouses/abc/edit')
 
     expect(screen.queryByText('Редактирование бани')).not.toBeInTheDocument()
+  })
+
+  describe('completeness checklist', () => {
+    const editBathhouse = {
+      id: 'abc',
+      name: 'Test Bathhouse',
+      address: 'Test addr',
+      city_id: 1,
+      price_per_hour: 150000,
+      min_duration: 2,
+      max_guests: 8,
+      has_sauna: true,
+      working_hours: [
+        { day_of_week: 0, open_time: '10:00', close_time: '22:00' },
+      ],
+    }
+
+    it('shows completeness checklist when editing', () => {
+      vi.mocked(useGetBathhousesId).mockReturnValue({
+        data: { data: editBathhouse, success: true },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetBathhousesId>)
+
+      vi.mocked(useGetMyBathhousesIdCompleteness).mockReturnValue({
+        data: {
+          data: {
+            score: 0.75,
+            ready: false,
+            done_required: 3,
+            total_required: 4,
+            done_optional: 2,
+            total_optional: 5,
+            items: [
+              { field: 'name', label: 'Название', required: true, complete: true },
+              { field: 'address', label: 'Адрес', required: true, complete: true },
+              { field: 'price', label: 'Цена', required: true, complete: true },
+              { field: 'photos', label: 'Фотографии', required: true, complete: false },
+              { field: 'description', label: 'Описание', required: false, complete: true },
+              { field: 'amenities', label: 'Удобства', required: false, complete: true },
+            ],
+          },
+        },
+      } as unknown as ReturnType<typeof useGetMyBathhousesIdCompleteness>)
+
+      renderWithProviders(<BathhouseForm />, '/bathhouses/abc/edit')
+
+      expect(screen.getByText('Полнота объявления')).toBeInTheDocument()
+      expect(screen.getByText('Заполните обязательные поля')).toBeInTheDocument()
+      expect(screen.getByText('Обязательные (3/4)')).toBeInTheDocument()
+      expect(screen.getByText('Дополнительные (2/5)')).toBeInTheDocument()
+    })
+
+    it('shows ready state when all required fields complete', () => {
+      vi.mocked(useGetBathhousesId).mockReturnValue({
+        data: { data: editBathhouse, success: true },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetBathhousesId>)
+
+      vi.mocked(useGetMyBathhousesIdCompleteness).mockReturnValue({
+        data: {
+          data: {
+            score: 1.0,
+            ready: true,
+            done_required: 4,
+            total_required: 4,
+            done_optional: 3,
+            total_optional: 5,
+            items: [
+              { field: 'name', label: 'Название', required: true, complete: true },
+            ],
+          },
+        },
+      } as unknown as ReturnType<typeof useGetMyBathhousesIdCompleteness>)
+
+      renderWithProviders(<BathhouseForm />, '/bathhouses/abc/edit')
+
+      expect(screen.getByText('Готово к модерации')).toBeInTheDocument()
+    })
+
+    it('does not show completeness checklist on create', () => {
+      renderWithProviders(<BathhouseForm />)
+      skipIntroStep()
+
+      expect(screen.queryByText('Полнота объявления')).not.toBeInTheDocument()
+    })
   })
 })

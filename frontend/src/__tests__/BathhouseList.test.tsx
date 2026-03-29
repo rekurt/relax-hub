@@ -10,13 +10,14 @@ import type { AuthState } from '@/stores/auth'
 vi.mock('@/api/generated/bathhouses/bathhouses', () => ({
   useGetMyBathhouses: vi.fn(),
   useDeleteBathhousesId: vi.fn(),
+  usePostMyBathhousesIdDuplicate: vi.fn(),
 }))
 
 vi.mock('@/stores/auth', () => ({
   useAuthStore: vi.fn(),
 }))
 
-import { useGetMyBathhouses, useDeleteBathhousesId } from '@/api/generated/bathhouses/bathhouses'
+import { useGetMyBathhouses, useDeleteBathhousesId, usePostMyBathhousesIdDuplicate } from '@/api/generated/bathhouses/bathhouses'
 import { useAuthStore } from '@/stores/auth'
 
 function renderWithProviders(ui: React.ReactElement) {
@@ -75,6 +76,10 @@ describe('BathhouseList', () => {
       mutate: vi.fn(),
       isPending: false,
     } as unknown as ReturnType<typeof useDeleteBathhousesId>)
+    vi.mocked(usePostMyBathhousesIdDuplicate).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof usePostMyBathhousesIdDuplicate>)
   })
 
   it('renders bathhouse table with data', () => {
@@ -152,5 +157,41 @@ describe('BathhouseList', () => {
 
     expect(screen.queryAllByText('Удалить')).toHaveLength(0)
     expect(screen.getAllByText('Изменить')).toHaveLength(2)
+  })
+
+  it('shows duplicate button for owner', () => {
+    vi.mocked(useGetMyBathhouses).mockReturnValue({
+      data: { data: mockBathhouses, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetMyBathhouses>)
+    mockAuth('owner')
+
+    renderWithProviders(<BathhouseList />)
+
+    expect(screen.getAllByText('Дублировать')).toHaveLength(2)
+  })
+
+  it('hides duplicate button for representative', () => {
+    vi.mocked(useGetMyBathhouses).mockReturnValue({
+      data: { data: mockBathhouses, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetMyBathhouses>)
+    mockAuth('representative')
+
+    renderWithProviders(<BathhouseList />)
+
+    expect(screen.queryAllByText('Дублировать')).toHaveLength(0)
+  })
+
+  it('shows import button for owner', () => {
+    vi.mocked(useGetMyBathhouses).mockReturnValue({
+      data: { data: [], success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetMyBathhouses>)
+    mockAuth('owner')
+
+    renderWithProviders(<BathhouseList />)
+
+    expect(screen.getByText('Импорт')).toBeInTheDocument()
   })
 })

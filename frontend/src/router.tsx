@@ -8,6 +8,7 @@ import Register from '@/pages/Register'
 import Dashboard from '@/pages/Dashboard'
 import BathhouseList from '@/pages/bathhouses/BathhouseList'
 import BathhouseForm from '@/pages/bathhouses/BathhouseForm'
+import ListingImport from '@/pages/bathhouses/ListingImport'
 import BookingList from '@/pages/bookings/BookingList'
 import CalendarPage from '@/pages/calendar/CalendarPage'
 import ReviewList from '@/pages/reviews/ReviewList'
@@ -114,6 +115,7 @@ export default function AppRouter() {
         <Route index element={<Dashboard />} />
         <Route path="bathhouses" element={<BathhouseList />} />
         <Route path="bathhouses/new" element={<BathhouseForm />} />
+        <Route path="bathhouses/import" element={<ListingImport />} />
         <Route path="bathhouses/:id/edit" element={<BathhouseForm />} />
         <Route path="bookings" element={<BookingList />} />
         <Route path="reviews" element={<ReviewList />} />

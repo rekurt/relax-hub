@@ -1,9 +1,12 @@
-import { App, Badge, Button, Empty, Popconfirm, Rate, Space, Table, Tag, Typography } from 'antd'
+import { App, Badge, Button, Empty, Popconfirm, Rate, Space, Table, Tag, Tooltip, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
+import { CopyOutlined, DeleteOutlined, EditOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { useGetMyBathhouses } from '@/api/generated/bathhouses/bathhouses'
-import { useDeleteBathhousesId } from '@/api/generated/bathhouses/bathhouses'
+import {
+  useGetMyBathhouses,
+  useDeleteBathhousesId,
+  usePostMyBathhousesIdDuplicate,
+} from '@/api/generated/bathhouses/bathhouses'
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { useAuthStore } from '@/stores/auth'
 import { formatPrice } from '@/lib/format'
@@ -35,6 +38,22 @@ export default function BathhouseList() {
       },
       onError: () => {
         message.error('Не удалось удалить баню')
+      },
+    },
+  })
+
+  const duplicateMutation = usePostMyBathhousesIdDuplicate({
+    mutation: {
+      onSuccess: (response) => {
+        message.success('Объект дублирован')
+        queryClient.invalidateQueries({ queryKey: ['/my/bathhouses'] })
+        const newId = (response?.data as { id?: string })?.id
+        if (newId) {
+          navigate(`/bathhouses/${newId}/edit`)
+        }
+      },
+      onError: () => {
+        message.error('Не удалось дублировать объект')
       },
     },
   })
@@ -102,6 +121,18 @@ export default function BathhouseList() {
             Изменить
           </Button>
           {isOwner && (
+            <Tooltip title="Дублировать">
+              <Button
+                type="link"
+                icon={<CopyOutlined />}
+                loading={duplicateMutation.isPending && duplicateMutation.variables?.id === record.id}
+                onClick={() => record.id && duplicateMutation.mutate({ id: record.id })}
+              >
+                Дублировать
+              </Button>
+            </Tooltip>
+          )}
+          {isOwner && (
             <Popconfirm
               title="Удалить баню?"
               description="Это действие необратимо. Баня со всеми данными будет удалена."
@@ -141,13 +172,21 @@ export default function BathhouseList() {
           Мои бани
         </Title>
         {isOwner && (
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => navigate('/bathhouses/new')}
-          >
-            Добавить баню
-          </Button>
+          <Space>
+            <Button
+              icon={<ImportOutlined />}
+              onClick={() => navigate('/bathhouses/import')}
+            >
+              Импорт
+            </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => navigate('/bathhouses/new')}
+            >
+              Добавить баню
+            </Button>
+          </Space>
         )}
       </div>
       <Table

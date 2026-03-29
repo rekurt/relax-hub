@@ -151,12 +151,12 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/pages/bathhouses/BathhouseForm.tsx`
 - Modify: `frontend/src/router.tsx`
 
-- [ ] Build ListingImport page: file upload (CSV/XLSX), template download link, validation results with per-row errors, import progress (FR-033)
-- [ ] Add "Duplicate" button to BathhouseList per listing row - calls API and redirects to edit form (FR-032)
-- [ ] Add listing completeness checklist to BathhouseForm: shows required vs optional fields, blocks submission if incomplete (FR-025). Visual checklist sidebar with check marks
-- [ ] Add route `/bathhouses/import`
-- [ ] Write tests for import page, duplicate action, completeness checklist
-- [ ] Run project test suite + lint
+- [x] Build ListingImport page: file upload (CSV/XLSX), template download link, validation results with per-row errors, import progress (FR-033)
+- [x] Add "Duplicate" button to BathhouseList per listing row - calls API and redirects to edit form (FR-032)
+- [x] Add listing completeness checklist to BathhouseForm: shows required vs optional fields, blocks submission if incomplete (FR-025). Visual checklist sidebar with check marks
+- [x] Add route `/bathhouses/import`
+- [x] Write tests for import page, duplicate action, completeness checklist
+- [x] Run project test suite + lint
 
 ### Task 11: Owner Audit Log & Check-in/Check-out (FR-029, FR-066)
 

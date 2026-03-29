@@ -8,23 +8,28 @@ import {
   Form,
   Input,
   InputNumber,
+  List,
+  Progress,
   Row,
   Select,
   Spin,
+  Tag,
   TimePicker,
   Typography,
 } from 'antd'
-import { PlayCircleOutlined, RightOutlined } from '@ant-design/icons'
+import { CheckCircleOutlined, CloseCircleOutlined, PlayCircleOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import {
   useGetBathhousesId,
+  useGetMyBathhousesIdCompleteness,
   usePostBathhouses,
   usePutBathhousesId,
 } from '@/api/generated/bathhouses/bathhouses'
 import { useGetCities } from '@/api/generated/cities/cities'
 import type {
+  GithubComNikitaaldaevBaniInternalServiceCompletenessItem,
   InternalHandlerCreateBathhouseRequest,
   InternalHandlerWorkingHoursRequest,
 } from '@/api/generated/model'
@@ -143,6 +148,92 @@ function getEmbedUrl(url: string): string | null {
   // Direct embed URL (already an embed)
   if (url.includes('/embed/') || url.includes('player.vimeo.com')) return url
   return null
+}
+
+function CompletenessChecklist({ id }: { id: string }) {
+  const { data } = useGetMyBathhousesIdCompleteness(id, {
+    query: { staleTime: 30_000 },
+  })
+
+  const result = data?.data
+  if (!result) return null
+
+  const score = Math.round((result.score ?? 0) * 100)
+  const items = result.items ?? []
+  const requiredItems = items.filter((i) => i.required)
+  const optionalItems = items.filter((i) => !i.required)
+
+  return (
+    <Card
+      title="Полнота объявления"
+      size="small"
+      style={{ position: 'sticky', top: 16 }}
+    >
+      <div style={{ textAlign: 'center', marginBottom: 16 }}>
+        <Progress
+          type="circle"
+          percent={score}
+          size={80}
+          status={result.ready ? 'success' : 'normal'}
+        />
+        <div style={{ marginTop: 8 }}>
+          {result.ready ? (
+            <Tag color="success">Готово к модерации</Tag>
+          ) : (
+            <Tag color="warning">Заполните обязательные поля</Tag>
+          )}
+        </div>
+      </div>
+
+      {requiredItems.length > 0 && (
+        <>
+          <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
+            Обязательные ({result.done_required}/{result.total_required})
+          </Typography.Text>
+          <List
+            size="small"
+            dataSource={requiredItems}
+            renderItem={(item: GithubComNikitaaldaevBaniInternalServiceCompletenessItem) => (
+              <List.Item style={{ padding: '4px 0', border: 'none' }}>
+                {item.complete ? (
+                  <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 8 }} />
+                ) : (
+                  <CloseCircleOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
+                )}
+                <span style={{ color: item.complete ? '#8c8c8c' : undefined }}>
+                  {item.label}
+                </span>
+              </List.Item>
+            )}
+          />
+        </>
+      )}
+
+      {optionalItems.length > 0 && (
+        <>
+          <Typography.Text strong style={{ display: 'block', marginBottom: 8, marginTop: 12 }}>
+            Дополнительные ({result.done_optional}/{result.total_optional})
+          </Typography.Text>
+          <List
+            size="small"
+            dataSource={optionalItems}
+            renderItem={(item: GithubComNikitaaldaevBaniInternalServiceCompletenessItem) => (
+              <List.Item style={{ padding: '4px 0', border: 'none' }}>
+                {item.complete ? (
+                  <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 8 }} />
+                ) : (
+                  <CloseCircleOutlined style={{ color: '#d9d9d9', marginRight: 8 }} />
+                )}
+                <span style={{ color: item.complete ? '#8c8c8c' : undefined }}>
+                  {item.label}
+                </span>
+              </List.Item>
+            )}
+          />
+        </>
+      )}
+    </Card>
+  )
 }
 
 export default function BathhouseForm() {
@@ -297,7 +388,7 @@ export default function BathhouseForm() {
     )
   }
 
-  return (
+  const formContent = (
     <div>
       <Title level={3}>{isEdit ? 'Редактирование бани' : 'Новая баня'}</Title>
       <Form
@@ -481,4 +572,17 @@ export default function BathhouseForm() {
       </Form>
     </div>
   )
+
+  if (isEdit && id) {
+    return (
+      <Row gutter={24}>
+        <Col xs={24} lg={16}>{formContent}</Col>
+        <Col xs={24} lg={8}>
+          <CompletenessChecklist id={id} />
+        </Col>
+      </Row>
+    )
+  }
+
+  return formContent
 }
