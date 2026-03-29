@@ -17,6 +17,7 @@ vi.mock('@/api/generated/calendar/calendar', () => ({
 
 vi.mock('@/api/generated/bookings/bookings', () => ({
   useGetBathhousesIdBookings: vi.fn(),
+  getBathhousesIdBookings: vi.fn(),
 }))
 
 vi.mock('@/api/generated/bathhouses/bathhouses', () => ({
@@ -436,5 +437,110 @@ describe('CalendarPage', () => {
     if (leftButton) fireEvent.click(leftButton)
     // Should be back to current week - Today button should still work
     expect(screen.getByText('Сегодня')).toBeInTheDocument()
+  })
+
+  // --- Consolidated multi-bathhouse view ---
+
+  it('shows bathhouse color legend when consolidated view is toggled on', () => {
+    mockBathhouseStore('bathhouse-1')
+    setupCalendarMocks()
+    setupDefaultMocks({
+      bathhouses: [
+        { id: 'b1', name: 'Баня Люкс' },
+        { id: 'b2', name: 'Баня Премиум' },
+      ],
+    })
+
+    renderWithProviders(<CalendarPage />)
+
+    // Toggle consolidated view on
+    const switchEl = screen.getByRole('switch')
+    fireEvent.click(switchEl)
+
+    // Bathhouse names should appear in the legend
+    expect(screen.getByText('Баня Люкс')).toBeInTheDocument()
+    expect(screen.getByText('Баня Премиум')).toBeInTheDocument()
+  })
+
+  it('shows status legend when consolidated view is off', () => {
+    mockBathhouseStore('bathhouse-1')
+    setupCalendarMocks()
+    setupDefaultMocks({
+      bathhouses: [
+        { id: 'b1', name: 'Баня 1' },
+        { id: 'b2', name: 'Баня 2' },
+      ],
+    })
+
+    renderWithProviders(<CalendarPage />)
+
+    // Status legend should be visible by default (consolidated off)
+    expect(screen.getByText('Подтверждено')).toBeInTheDocument()
+    expect(screen.getByText('Заблокировано')).toBeInTheDocument()
+  })
+
+  // --- External calendar sync status ---
+
+  it('shows sync status indicator for connected external calendars', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: { data: [], success: true, meta: { total_count: 0, page: 1, page_size: 200, total_pages: 0 } },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+    vi.mocked(useGetMyBathhousesIdCalendarToken).mockReturnValue({
+      data: { data: { token: 'abc123', url: '/calendar/abc123.ics' } },
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdCalendarToken>)
+    vi.mocked(useGetMyBathhousesIdExternalCalendars).mockReturnValue({
+      data: {
+        data: [
+          {
+            id: 'cal-1',
+            bathhouse_id: 'bathhouse-1',
+            url: 'https://calendar.google.com/test.ics',
+            source: 'google_calendar',
+            last_sync_at: '2026-03-15T10:00:00Z',
+            last_error: '',
+            created_at: '2026-03-10T08:00:00Z',
+          },
+          {
+            id: 'cal-2',
+            bathhouse_id: 'bathhouse-1',
+            url: 'https://calendar.yandex.ru/test.ics',
+            source: 'yandex_calendar',
+            last_sync_at: '2026-03-14T10:00:00Z',
+            last_error: 'Connection timeout',
+            created_at: '2026-03-10T08:00:00Z',
+          },
+        ],
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetMyBathhousesIdExternalCalendars>)
+
+    renderWithProviders(<CalendarPage />)
+
+    // Synced calendar should show success badge, error calendar should show error badge
+    const badges = document.querySelectorAll('.ant-badge-status-dot')
+    expect(badges.length).toBeGreaterThanOrEqual(2)
+
+    // Error text should be displayed
+    expect(screen.getByText(/Connection timeout/)).toBeInTheDocument()
+  })
+
+  // --- Day view rendering tests ---
+
+  it('day view shows hourly time slots from 00:00 to 23:00', () => {
+    mockBathhouseStore('bathhouse-1')
+    setupCalendarMocks()
+
+    renderWithProviders(<CalendarPage />)
+
+    fireEvent.click(screen.getByText('День'))
+
+    // Verify all hour labels are present
+    expect(screen.getByText('00:00')).toBeInTheDocument()
+    expect(screen.getByText('06:00')).toBeInTheDocument()
+    expect(screen.getByText('12:00')).toBeInTheDocument()
+    expect(screen.getByText('18:00')).toBeInTheDocument()
+    expect(screen.getByText('23:00')).toBeInTheDocument()
   })
 })

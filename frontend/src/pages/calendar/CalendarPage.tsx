@@ -37,7 +37,7 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
 import { App } from 'antd'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, useQueries } from '@tanstack/react-query'
 import {
   useGetMyBathhousesIdCalendarToken,
   usePostMyBathhousesIdSlotBlocks,
@@ -46,7 +46,10 @@ import {
   usePostMyBathhousesIdExternalCalendarsSync,
   useDeleteMyExternalCalendarsId,
 } from '@/api/generated/calendar/calendar'
-import { useGetBathhousesIdBookings } from '@/api/generated/bookings/bookings'
+import {
+  useGetBathhousesIdBookings,
+  getBathhousesIdBookings,
+} from '@/api/generated/bookings/bookings'
 import { useGetMyBathhouses } from '@/api/generated/bathhouses/bathhouses'
 import type {
   InternalHandlerBookingResponse,
@@ -95,6 +98,16 @@ const LEGEND_ITEMS = [
   { color: '#d9d9d9', label: 'Заблокировано' },
 ]
 
+/** Color palette for multi-bathhouse consolidated view */
+const BATHHOUSE_COLORS = [
+  '#1677ff', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16',
+  '#52c41a', '#2f54eb', '#faad14', '#a0d911', '#f5222d',
+]
+
+function getBathhouseColor(index: number): string {
+  return BATHHOUSE_COLORS[index % BATHHOUSE_COLORS.length]!
+}
+
 function getStatusColor(status: string) {
   return STATUS_COLORS[status] ?? { bg: '#1677ff', text: '#fff', label: status }
 }
@@ -104,11 +117,15 @@ interface BookingBlock {
   top: number
   height: number
   dayIndex: number
+  bathhouseName?: string
+  bathhouseColor?: string
 }
 
 function computeBookingBlocks(
   bookings: InternalHandlerBookingResponse[],
   days: Dayjs[],
+  bookingBathhouseMap?: Map<string, string>,
+  bathhouseColorMap?: Map<string, { name: string; color: string }>,
 ): BookingBlock[] {
   const blocks: BookingBlock[] = []
   for (const booking of bookings) {
@@ -116,6 +133,10 @@ function computeBookingBlocks(
 
     const start = dayjs(booking.start_time)
     const end = dayjs(booking.end_time)
+
+    // Resolve bathhouse info for consolidated view
+    const bathhouseId = booking.id && bookingBathhouseMap?.get(booking.id)
+    const bathhouseInfo = bathhouseId ? bathhouseColorMap?.get(bathhouseId) : undefined
 
     for (let d = 0; d < days.length; d++) {
       const day = days[d]!
@@ -132,7 +153,14 @@ function computeBookingBlocks(
         const top = (startMinutes / 60) * 60
         const height = Math.max(((endMinutes - startMinutes) / 60) * 60, 20)
 
-        blocks.push({ booking, top, height, dayIndex: d })
+        blocks.push({
+          booking,
+          top,
+          height,
+          dayIndex: d,
+          bathhouseName: bathhouseInfo?.name,
+          bathhouseColor: bathhouseInfo?.color,
+        })
       }
     }
   }
@@ -196,10 +224,12 @@ function computeMonthCells(
 function BookingBlockEl({ block }: { block: BookingBlock }) {
   const status = block.booking.status ?? 'pending'
   const sc = getStatusColor(status)
+  const bgColor = block.bathhouseColor ?? sc.bg
   return (
     <Tooltip
       title={
         <div>
+          {block.bathhouseName && <div style={{ fontWeight: 600 }}>{block.bathhouseName}</div>}
           <div>{sc.label}</div>
           <div>
             {block.booking.start_time ? formatTime(block.booking.start_time) : ''} –{' '}
@@ -217,13 +247,13 @@ function BookingBlockEl({ block }: { block: BookingBlock }) {
           left: 2,
           right: 2,
           height: block.height,
-          backgroundColor: sc.bg,
+          backgroundColor: bgColor,
           opacity: 0.85,
           borderRadius: 4,
           padding: '2px 4px',
           overflow: 'hidden',
           cursor: 'pointer',
-          color: sc.text,
+          color: '#fff',
           fontSize: 11,
           lineHeight: '14px',
         }}
@@ -231,7 +261,9 @@ function BookingBlockEl({ block }: { block: BookingBlock }) {
         <div style={{ fontWeight: 500 }}>
           {block.booking.start_time ? formatTime(block.booking.start_time) : ''}
         </div>
-        {block.height > 30 && <div>{formatPrice(block.booking.total_price ?? 0)}</div>}
+        {block.height > 30 && (
+          <div>{block.bathhouseName ?? formatPrice(block.booking.total_price ?? 0)}</div>
+        )}
       </div>
     </Tooltip>
   )
@@ -351,12 +383,19 @@ function DayColumn({
 function DayView({
   date,
   bookings,
+  bookingBathhouseMap,
+  bathhouseColorMap,
 }: {
   date: Dayjs
   bookings: InternalHandlerBookingResponse[]
+  bookingBathhouseMap?: Map<string, string>
+  bathhouseColorMap?: Map<string, { name: string; color: string }>
 }) {
   const days = useMemo(() => [date], [date])
-  const blocks = useMemo(() => computeBookingBlocks(bookings, days), [bookings, days])
+  const blocks = useMemo(
+    () => computeBookingBlocks(bookings, days, bookingBathhouseMap, bathhouseColorMap),
+    [bookings, days, bookingBathhouseMap, bathhouseColorMap],
+  )
 
   return (
     <div style={{ display: 'flex', minWidth: 300 }}>
@@ -370,15 +409,22 @@ function DayView({
 function WeekView({
   weekStart,
   bookings,
+  bookingBathhouseMap,
+  bathhouseColorMap,
 }: {
   weekStart: Dayjs
   bookings: InternalHandlerBookingResponse[]
+  bookingBathhouseMap?: Map<string, string>
+  bathhouseColorMap?: Map<string, { name: string; color: string }>
 }) {
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => weekStart.add(i, 'day')),
     [weekStart],
   )
-  const blocks = useMemo(() => computeBookingBlocks(bookings, weekDays), [bookings, weekDays])
+  const blocks = useMemo(
+    () => computeBookingBlocks(bookings, weekDays, bookingBathhouseMap, bathhouseColorMap),
+    [bookings, weekDays, bookingBathhouseMap, bathhouseColorMap],
+  )
 
   return (
     <div style={{ display: 'flex', minWidth: 800 }}>
@@ -552,11 +598,34 @@ export default function CalendarPage() {
   const allBathhouses = useMemo(() => bathhousesData?.data ?? [], [bathhousesData?.data])
   const hasMultipleBathhouses = allBathhouses.length > 1
 
+  // Build bathhouse color map for consolidated view
+  const bathhouseColorMap = useMemo(() => {
+    const map = new Map<string, { name: string; color: string }>()
+    allBathhouses.forEach((b, i) => {
+      if (b.id) map.set(b.id, { name: b.name ?? `Объект ${i + 1}`, color: getBathhouseColor(i) })
+    })
+    return map
+  }, [allBathhouses])
+
   const { data: bookingsData, isLoading: bookingsLoading } = useGetBathhousesIdBookings(
     selectedBathhouseId ?? '',
     { page: 1, page_size: 200 },
     { query: { enabled: !!selectedBathhouseId && !consolidatedView } },
   )
+
+  // Fetch bookings from all bathhouses in consolidated view
+  const consolidatedQueries = useQueries({
+    queries: consolidatedView
+      ? allBathhouses
+          .filter((b) => !!b.id)
+          .map((b) => ({
+            queryKey: [`/bathhouses/${b.id}/bookings`, { page: 1, page_size: 200 }] as const,
+            queryFn: () => getBathhousesIdBookings(b.id!, { page: 1, page_size: 200 }),
+            enabled: consolidatedView && allBathhouses.length > 0,
+          }))
+      : [],
+  })
+  const consolidatedLoading = consolidatedView && consolidatedQueries.some((q) => q.isLoading)
 
   const { data: tokenData } = useGetMyBathhousesIdCalendarToken(
     selectedBathhouseId ?? '',
@@ -621,10 +690,33 @@ export default function CalendarPage() {
   const externalCalendars = (externalCalendarsData?.data ?? []) as InternalHandlerExternalCalendarResponse[]
   const calendarToken = tokenData?.data
 
-  const bookings = useMemo(
-    () => (bookingsData?.data ?? []) as InternalHandlerBookingResponse[],
-    [bookingsData?.data],
-  )
+  const bookings = useMemo(() => {
+    if (consolidatedView) {
+      const merged: InternalHandlerBookingResponse[] = []
+      consolidatedQueries.forEach((q) => {
+        if (q.data?.data) {
+          merged.push(...(q.data.data as InternalHandlerBookingResponse[]))
+        }
+      })
+      return merged
+    }
+    return (bookingsData?.data ?? []) as InternalHandlerBookingResponse[]
+  }, [consolidatedView, consolidatedQueries, bookingsData?.data])
+
+  // Create booking-to-bathhouse mapping for consolidated view color coding
+  const bookingBathhouseMap = useMemo(() => {
+    if (!consolidatedView) return new Map<string, string>()
+    const map = new Map<string, string>()
+    consolidatedQueries.forEach((q, idx) => {
+      const bathhouseId = allBathhouses[idx]?.id
+      if (bathhouseId && q.data?.data) {
+        for (const b of q.data.data as InternalHandlerBookingResponse[]) {
+          if (b.id) map.set(b.id, bathhouseId)
+        }
+      }
+    })
+    return map
+  }, [consolidatedView, consolidatedQueries, allBathhouses])
 
   const handleCreateSlotBlock = () => {
     slotBlockForm.validateFields().then((values) => {
@@ -783,19 +875,36 @@ export default function CalendarPage() {
         </div>
         {/* Legend */}
         <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
-          {LEGEND_ITEMS.map((item) => (
-            <Space key={item.label} size={4}>
-              <div
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: 2,
-                  backgroundColor: item.color,
-                }}
-              />
-              <Text style={{ fontSize: 12 }}>{item.label}</Text>
-            </Space>
-          ))}
+          {consolidatedView ? (
+            // Show bathhouse color legend in consolidated mode
+            Array.from(bathhouseColorMap.entries()).map(([id, info]) => (
+              <Space key={id} size={4}>
+                <div
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 2,
+                    backgroundColor: info.color,
+                  }}
+                />
+                <Text style={{ fontSize: 12 }}>{info.name}</Text>
+              </Space>
+            ))
+          ) : (
+            LEGEND_ITEMS.map((item) => (
+              <Space key={item.label} size={4}>
+                <div
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: 2,
+                    backgroundColor: item.color,
+                  }}
+                />
+                <Text style={{ fontSize: 12 }}>{item.label}</Text>
+              </Space>
+            ))
+          )}
         </div>
       </Card>
 
@@ -805,14 +914,24 @@ export default function CalendarPage() {
         style={{ marginBottom: 16, overflow: 'auto' }}
         styles={{ body: { padding: 0 } }}
       >
-        {bookingsLoading ? (
+        {(bookingsLoading || consolidatedLoading) ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
             <Spin size="large" />
           </div>
         ) : view === 'day' ? (
-          <DayView date={currentDate} bookings={bookings} />
+          <DayView
+            date={currentDate}
+            bookings={bookings}
+            bookingBathhouseMap={consolidatedView ? bookingBathhouseMap : undefined}
+            bathhouseColorMap={consolidatedView ? bathhouseColorMap : undefined}
+          />
         ) : view === 'week' ? (
-          <WeekView weekStart={weekStart} bookings={bookings} />
+          <WeekView
+            weekStart={weekStart}
+            bookings={bookings}
+            bookingBathhouseMap={consolidatedView ? bookingBathhouseMap : undefined}
+            bathhouseColorMap={consolidatedView ? bathhouseColorMap : undefined}
+          />
         ) : (
           <MonthView
             monthStart={monthStart}
@@ -924,6 +1043,10 @@ export default function CalendarPage() {
                       avatar={<CalendarOutlined />}
                       title={
                         <Space>
+                          <Badge
+                            status={cal.last_error ? 'error' : cal.last_sync_at ? 'success' : 'default'}
+                            title={cal.last_error ? 'Ошибка синхронизации' : cal.last_sync_at ? 'Синхронизировано' : 'Не синхронизировано'}
+                          />
                           <Tag>
                             {cal.source === 'google_calendar'
                               ? 'Google'

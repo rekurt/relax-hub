@@ -177,11 +177,11 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 **Files:**
 - Modify: `frontend/src/pages/calendar/CalendarPage.tsx`
 
-- [ ] Add consolidated multi-bathhouse view: when owner has multiple bathhouses, show all bookings on one calendar with color coding per bathhouse (FR-076)
-- [ ] Add day view mode (hourly grid) in addition to existing week/month views
-- [ ] Enhance external calendar sync UI: connect/disconnect Google Calendar, Yandex Calendar with sync status indicator (FR-074)
-- [ ] Write tests for multi-bathhouse view toggle, day view rendering
-- [ ] Run project test suite + lint
+- [x] Add consolidated multi-bathhouse view: when owner has multiple bathhouses, show all bookings on one calendar with color coding per bathhouse (FR-076)
+- [x] Add day view mode (hourly grid) in addition to existing week/month views
+- [x] Enhance external calendar sync UI: connect/disconnect Google Calendar, Yandex Calendar with sync status indicator (FR-074)
+- [x] Write tests for multi-bathhouse view toggle, day view rendering
+- [x] Run project test suite + lint
 
 ### Task 13: Owner BathhouseForm 7-Step Wizard Enhancement (FR-034)
 
