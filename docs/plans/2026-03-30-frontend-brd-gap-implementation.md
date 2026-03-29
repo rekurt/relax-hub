@@ -66,13 +66,13 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/router.tsx`
 - Modify: `frontend/src/components/ClientLayout.tsx`
 
-- [ ] Build security settings page with three sections:
+- [x] Build security settings page with three sections:
   - Active sessions list (device, browser, IP, last active, terminate button) per FR-008
   - 2FA setup: TOTP QR code generation + verification code input, SMS 2FA toggle per FR-007
   - Password change form (current + new + confirm) per FR-015
-- [ ] Add route `/client/security` and sidebar link
-- [ ] Write tests for session list, 2FA toggle, password change form
-- [ ] Run project test suite + lint
+- [x] Add route `/client/security` and sidebar link
+- [x] Write tests for session list, 2FA toggle, password change form
+- [x] Run project test suite + lint
 
 ### Task 5: Client Account Deletion & Region Switching (FR-014, FR-017)
 

@@ -51,6 +51,7 @@ import PaymentHistory from '@/pages/client/PaymentHistory'
 import WalletDashboard from '@/pages/client/WalletDashboard'
 import ClientProfile from '@/pages/client/ClientProfile'
 import SavedCards from '@/pages/client/SavedCards'
+import SecuritySettings from '@/pages/client/SecuritySettings'
 import ClientChat from '@/pages/client/ClientChat'
 import ClientNotifications from '@/pages/client/ClientNotifications'
 import NotificationPreferences from '@/pages/client/NotificationPreferences'
@@ -171,6 +172,7 @@ export default function AppRouter() {
         <Route path="saved-searches" element={<SavedSearches />} />
         <Route path="notifications" element={<ClientNotifications />} />
         <Route path="notification-preferences" element={<NotificationPreferences />} />
+        <Route path="security" element={<SecuritySettings />} />
         <Route path="profile" element={<ClientProfile />} />
       </Route>
 
