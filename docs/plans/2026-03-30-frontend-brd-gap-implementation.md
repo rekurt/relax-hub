@@ -38,14 +38,14 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/router.tsx`
 - Modify: `frontend/src/components/ClientLayout.tsx`
 
-- [ ] Build wallet page with: balance display (single number per FR-116), top-up form with amount validation (min 500 / max 30,000 RUB), transaction history table with type/date/amount/description/linked booking
-- [ ] Add filters: by type (topup/refund/cashback/promo/referral/welcome_bonus/gift_cert), date range
-- [ ] Add bonus expiry warnings section (show bonuses expiring within 30 days with amounts and dates)
-- [ ] Add CSV/PDF export buttons for wallet history (FR-115)
-- [ ] Add hold indicator showing frozen amounts (FR-113)
-- [ ] Add route `/client/wallet` and sidebar link in ClientLayout
-- [ ] Write tests for wallet dashboard rendering, top-up validation, filter interactions
-- [ ] Run project test suite + lint
+- [x] Build wallet page with: balance display (single number per FR-116), top-up form with amount validation (min 500 / max 30,000 RUB), transaction history table with type/date/amount/description/linked booking
+- [x] Add filters: by type (topup/refund/cashback/promo/referral/welcome_bonus/gift_cert), date range
+- [x] Add bonus expiry warnings section (show bonuses expiring within 30 days with amounts and dates)
+- [x] Add CSV/PDF export buttons for wallet history (FR-115)
+- [x] Add hold indicator showing frozen amounts (FR-113)
+- [x] Add route `/client/wallet` and sidebar link in ClientLayout
+- [x] Write tests for wallet dashboard rendering, top-up validation, filter interactions
+- [x] Run project test suite + lint
 
 ### Task 3: Client Saved Cards Management (FR-004, FR-092)
 
