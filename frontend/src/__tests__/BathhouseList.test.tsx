@@ -102,7 +102,7 @@ describe('BathhouseList', () => {
 
     renderWithProviders(<BathhouseList />)
 
-    expect(screen.getByText('Добавить баню')).toBeInTheDocument()
+    expect(screen.getAllByText('Добавить баню').length).toBeGreaterThanOrEqual(1)
   })
 
   it('hides create button for representative role', () => {
@@ -138,7 +138,7 @@ describe('BathhouseList', () => {
 
     renderWithProviders(<BathhouseList />)
 
-    expect(screen.getByText('Нет бань')).toBeInTheDocument()
+    expect(screen.getByText(/У вас пока нет объектов/)).toBeInTheDocument()
   })
 
   it('shows delete button only for owner', () => {

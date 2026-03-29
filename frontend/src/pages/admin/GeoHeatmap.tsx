@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Card, Segmented, Spin, Typography, Alert, Slider, Row, Col, Statistic, Radio } from 'antd'
+import { Card, Empty, Segmented, Spin, Typography, Alert, Slider, Row, Col, Statistic, Radio } from 'antd'
 import { HeatMapOutlined, EnvironmentOutlined, ShopOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { axiosInstance } from '@/api/axios-instance'
@@ -284,7 +284,10 @@ export default function GeoHeatmap() {
             <Spin size="large" />
           </div>
         ) : cells.length === 0 ? (
-          <Alert type="info" message="Нет данных для отображения за выбранный период" />
+          <Empty
+            description="Нет данных для отображения за выбранный период. Попробуйте увеличить период или изменить размер ячейки."
+            style={{ padding: '48px 0' }}
+          />
         ) : null}
         <div
           ref={containerRef}

@@ -5,6 +5,7 @@ import {
   Card,
   Col,
   Descriptions,
+  Empty,
   Input,
   Row,
   Space,
@@ -71,9 +72,14 @@ export default function GuestCardDetail() {
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/crm/guests')}>
           Назад
         </Button>
-        <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
-          Карточка не найдена
-        </div>
+        <Empty
+          description="Карточка гостя не найдена. Возможно, она была удалена или ещё не создана."
+          style={{ padding: '48px 0' }}
+        >
+          <Button type="primary" onClick={() => navigate('/crm/guests')}>
+            К списку гостей
+          </Button>
+        </Empty>
       </div>
     )
   }

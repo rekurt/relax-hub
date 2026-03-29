@@ -181,8 +181,8 @@ export default function ReferralProgram() {
         ) : (
           !isLoading && (
             <Empty
-              description="Реферальная программа пока недоступна"
-              style={{ marginTop: 48 }}
+              description="Реферальная программа станет доступна после завершения первого бронирования. Приглашайте друзей и получайте бонусы!"
+              style={{ padding: '48px 0' }}
             />
           )
         )}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   App,
   Button,
+  Empty,
   Form,
   Input,
   Modal,
@@ -180,7 +181,11 @@ export default function RepresentativeList() {
         columns={columns}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: 'Нет представителей' }}
+        locale={{
+          emptyText: (
+            <Empty description="Нет представителей. Пригласите сотрудника для управления бронированиями и общением с клиентами." />
+          ),
+        }}
         pagination={false}
       />
 

@@ -1,4 +1,4 @@
-import { App, Badge, Button, Popconfirm, Rate, Space, Table, Tag, Typography } from 'antd'
+import { App, Badge, Button, Empty, Popconfirm, Rate, Space, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -156,7 +156,19 @@ export default function BathhouseList() {
         rowKey="id"
         loading={isLoading}
         pagination={false}
-        locale={{ emptyText: 'Нет бань' }}
+        locale={{
+          emptyText: (
+            <Empty
+              description="У вас пока нет объектов. Добавьте первую баню, чтобы начать принимать бронирования."
+            >
+              {isOwner && (
+                <Button type="primary" onClick={() => navigate('/bathhouses/new')}>
+                  Добавить баню
+                </Button>
+              )}
+            </Empty>
+          ),
+        }}
       />
     </div>
   )

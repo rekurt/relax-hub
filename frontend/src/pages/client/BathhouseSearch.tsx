@@ -262,7 +262,10 @@ export default function BathhouseSearch() {
   const listContent = (
     <Spin spinning={isLoading || isochroneLoading}>
       {bathhouses.length === 0 && !isLoading ? (
-        <Empty description="Бани не найдены" />
+        <Empty
+          description="По вашему запросу ничего не найдено. Попробуйте изменить параметры поиска или сбросить фильтры."
+          style={{ padding: '48px 0' }}
+        />
       ) : (
         <>
           <Row gutter={[16, 16]}>

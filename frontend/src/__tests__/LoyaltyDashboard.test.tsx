@@ -209,7 +209,7 @@ describe('LoyaltyDashboard', () => {
   it('shows empty state when no loyalty data', () => {
     setupMocks({ loyalty: null })
     renderWithProviders(<LoyaltyDashboard />)
-    expect(screen.getByText('Программа лояльности пока недоступна')).toBeInTheDocument()
+    expect(screen.getByText(/Начните пользоваться сервисом/)).toBeInTheDocument()
   })
 
   it('shows empty state when no transactions', () => {

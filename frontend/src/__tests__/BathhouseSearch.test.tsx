@@ -111,7 +111,7 @@ describe('BathhouseSearch', () => {
 
     renderWithProviders(<BathhouseSearch />)
 
-    expect(screen.getByText('Бани не найдены')).toBeInTheDocument()
+    expect(screen.getByText(/По вашему запросу ничего не найдено/)).toBeInTheDocument()
   })
 
   it('renders search input', () => {

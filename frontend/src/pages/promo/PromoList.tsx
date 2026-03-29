@@ -3,6 +3,7 @@ import {
   App,
   Button,
   DatePicker,
+  Empty,
   Form,
   Input,
   InputNumber,
@@ -274,7 +275,11 @@ export default function PromoList() {
         columns={columns}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: 'Нет промокодов' }}
+        locale={{
+          emptyText: (
+            <Empty description="Нет промокодов. Создайте промокод для привлечения клиентов." />
+          ),
+        }}
         pagination={
           totalCount > pageSize
             ? {

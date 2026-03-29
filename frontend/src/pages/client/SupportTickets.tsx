@@ -237,7 +237,11 @@ export default function SupportTickets() {
             rowKey="id"
             pagination={false}
             size="middle"
-            locale={{ emptyText: 'Нет обращений' }}
+            locale={{
+              emptyText: (
+                <Empty description="Нет обращений с выбранным статусом." />
+              ),
+            }}
             onRow={(record) => ({
               onClick: () => navigate(`/client/tickets/${record.id}`),
               style: { cursor: 'pointer' },

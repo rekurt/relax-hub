@@ -106,7 +106,7 @@ describe('GuestCardDetail', () => {
 
     renderWithProviders(<GuestCardDetail />, '/crm/guests/nonexistent')
 
-    expect(screen.getByText('Карточка не найдена')).toBeInTheDocument()
+    expect(screen.getByText(/Карточка гостя не найдена/)).toBeInTheDocument()
   })
 
   it('shows back button', () => {

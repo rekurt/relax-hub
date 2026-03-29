@@ -203,7 +203,7 @@ describe('ReferralProgram', () => {
   it('shows empty state when no referral code', () => {
     setupMocks({ referral: null })
     renderWithProviders(<ReferralProgram />)
-    expect(screen.getByText('Реферальная программа пока недоступна')).toBeInTheDocument()
+    expect(screen.getByText(/Реферальная программа станет доступна/)).toBeInTheDocument()
   })
 
   it('renders zero stats gracefully', () => {

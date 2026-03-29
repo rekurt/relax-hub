@@ -146,7 +146,7 @@ describe('RepresentativeList', () => {
 
     renderWithProviders(<RepresentativeList />)
 
-    expect(screen.getByText('Нет представителей')).toBeInTheDocument()
+    expect(screen.getByText(/Нет представителей/)).toBeInTheDocument()
   })
 
   it('shows invite button for owner role', () => {

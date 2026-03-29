@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   App,
   Button,
+  Empty,
   Popconfirm,
   Select,
   Space,
@@ -183,7 +184,11 @@ export default function BroadcastList() {
         columns={columns}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: 'Нет рассылок' }}
+        locale={{
+          emptyText: (
+            <Empty description="Нет рассылок. Создайте рассылку для информирования гостей об акциях и новостях." />
+          ),
+        }}
         pagination={
           totalCount > pageSize
             ? {

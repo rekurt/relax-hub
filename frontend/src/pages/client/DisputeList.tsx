@@ -161,7 +161,11 @@ export default function DisputeList() {
             rowKey="id"
             pagination={false}
             size="middle"
-            locale={{ emptyText: 'Нет споров' }}
+            locale={{
+              emptyText: (
+                <Empty description="У вас нет открытых споров. Споры можно создать из деталей бронирования." />
+              ),
+            }}
             onRow={(record) => ({
               onClick: () => navigate(`/client/disputes/${record.id}`),
               style: { cursor: 'pointer' },

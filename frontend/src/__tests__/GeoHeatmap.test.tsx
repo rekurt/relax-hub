@@ -112,7 +112,7 @@ describe('GeoHeatmap', () => {
     })
     renderWithProviders(<GeoHeatmap />)
     await waitFor(() => {
-      expect(screen.getByText('Нет данных для отображения за выбранный период')).toBeTruthy()
+      expect(screen.getByText(/Нет данных для отображения за выбранный период/)).toBeTruthy()
     })
   })
 })

@@ -3,6 +3,7 @@ import {
   App,
   Button,
   Card,
+  Empty,
   Form,
   Input,
   InputNumber,
@@ -137,7 +138,11 @@ export default function ResponseTemplates() {
       <List
         loading={isLoading}
         dataSource={templates}
-        locale={{ emptyText: 'Нет шаблонов' }}
+        locale={{
+          emptyText: (
+            <Empty description="Нет шаблонов быстрых ответов. Создайте шаблоны для ускорения общения с клиентами." />
+          ),
+        }}
         grid={{ gutter: 16, xs: 1, sm: 1, md: 2, lg: 2 }}
         renderItem={(item: InternalHandlerTemplateResponse) => (
           <List.Item>

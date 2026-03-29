@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  Button,
   Typography,
   Card,
   Row,
@@ -22,6 +23,7 @@ import { useGetMyLoyaltyLevels } from '@/api/generated/loyalty/loyalty'
 import { useGetMyLoyaltyTransactions } from '@/api/generated/loyalty/loyalty'
 import type { InternalHandlerLoyaltyLevelResponse, InternalHandlerLoyaltyTransactionResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
+import { useNavigate } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 
 const { Title, Text } = Typography
@@ -59,6 +61,7 @@ function getLevelProgress(currentLevel: string, visitCount: number, levels: Inte
 }
 
 export default function LoyaltyDashboard() {
+  const navigate = useNavigate()
   const [page, setPage] = useState(1)
 
   const { data: loyaltyData, isLoading: loadingLoyalty } = useGetMyLoyalty()
@@ -276,9 +279,13 @@ export default function LoyaltyDashboard() {
         ) : (
           !loadingLoyalty && (
             <Empty
-              description="Программа лояльности пока недоступна"
-              style={{ marginTop: 48 }}
-            />
+              description="Начните пользоваться сервисом — бронируйте бани и получайте баллы лояльности за каждый визит."
+              style={{ padding: '48px 0' }}
+            >
+              <Button type="primary" onClick={() => navigate('/client')}>
+                Найти баню
+              </Button>
+            </Empty>
           )
         )}
       </Spin>

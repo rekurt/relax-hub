@@ -152,6 +152,6 @@ describe('ResponseTemplates', () => {
 
     renderWithProviders(<ResponseTemplates />)
 
-    expect(screen.getByText('Нет шаблонов')).toBeInTheDocument()
+    expect(screen.getByText(/Нет шаблонов/)).toBeInTheDocument()
   })
 })

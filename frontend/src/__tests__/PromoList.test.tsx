@@ -240,7 +240,7 @@ describe('PromoList', () => {
 
     renderWithProviders(<PromoList />)
 
-    expect(screen.getByText('Нет промокодов')).toBeInTheDocument()
+    expect(screen.getByText(/Нет промокодов/)).toBeInTheDocument()
   })
 
   it('opens create modal when button clicked', () => {

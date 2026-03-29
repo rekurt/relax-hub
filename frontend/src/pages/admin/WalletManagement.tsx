@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   Descriptions,
+  Empty,
   Form,
   Input,
   InputNumber,
@@ -139,6 +140,14 @@ export default function WalletManagement() {
           </Button>
         </Space.Compact>
       </Card>
+
+      {!wallet && !loading && (
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description="Введите ID кошелька для поиска. Вы сможете зачислить, списать средства или заморозить кошелёк."
+          style={{ padding: '48px 0' }}
+        />
+      )}
 
       {wallet && (
         <Card

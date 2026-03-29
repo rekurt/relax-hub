@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Typography, Row, Col, Pagination, Spin, Empty, Card, Rate, Select, Divider } from 'antd'
+import { Button, Typography, Row, Col, Pagination, Spin, Empty, Card, Rate, Select, Divider } from 'antd'
 import { EnvironmentOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useGetRecommendations, useGetPopular } from '@/api/generated/recommendations/recommendations'
@@ -91,8 +91,12 @@ export default function Recommendations() {
           !loadingRecs && (
             <Empty
               description="Пока нет персональных рекомендаций. Настройте предпочтения для лучших результатов."
-              style={{ marginTop: 24 }}
-            />
+              style={{ padding: '48px 0' }}
+            >
+              <Button type="primary" onClick={() => navigate('/client/preferences')}>
+                Настроить предпочтения
+              </Button>
+            </Empty>
           )
         )}
       </Spin>

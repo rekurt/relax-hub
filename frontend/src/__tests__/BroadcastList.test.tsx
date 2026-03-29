@@ -142,6 +142,6 @@ describe('BroadcastList', () => {
 
     renderWithProviders(<BroadcastList />)
 
-    expect(screen.getByText('Нет рассылок')).toBeInTheDocument()
+    expect(screen.getByText(/Нет рассылок/)).toBeInTheDocument()
   })
 })
