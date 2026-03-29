@@ -128,7 +128,7 @@ describe('App', () => {
     })
     const { container } = renderWithProviders(<App />, { route: '/' })
     const mainContent = container.querySelector('.ant-layout-content')
-    expect(mainContent!.textContent).toContain('Поиск бань')
+    expect(mainContent!.textContent).toContain('Добро пожаловать в Bani!')
   })
 
   it('shows spinner while loading auth', () => {

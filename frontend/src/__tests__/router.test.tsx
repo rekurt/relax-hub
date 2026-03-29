@@ -182,19 +182,19 @@ describe('AppRouter', () => {
       const { container } = renderRouter('/client')
       const mainContent = container.querySelector('.ant-layout-content')
       expect(mainContent).toBeTruthy()
-      expect(mainContent!.textContent).toContain('Поиск бань')
+      expect(mainContent!.textContent).toContain('Добро пожаловать в Bani!')
     })
 
     it('redirects client away from / (owner area) to /client', () => {
       const { container } = renderRouter('/')
       const mainContent = container.querySelector('.ant-layout-content')
-      expect(mainContent!.textContent).toContain('Поиск бань')
+      expect(mainContent!.textContent).toContain('Добро пожаловать в Bani!')
     })
 
     it('redirects client away from /admin to /client', () => {
       const { container } = renderRouter('/admin')
       const mainContent = container.querySelector('.ant-layout-content')
-      expect(mainContent!.textContent).toContain('Поиск бань')
+      expect(mainContent!.textContent).toContain('Добро пожаловать в Bani!')
     })
   })
 

@@ -91,11 +91,11 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/pages/client/ClientHome.tsx`
 - Create: `frontend/src/components/RecentlyViewed.tsx`
 
-- [ ] Create RecentlyViewed component using Redis-backed API (last 20 items): horizontal scrollable cards with photo, name, price, rating
-- [ ] Enhance ClientHome with sections: search bar, recently viewed, recommendations, promotional banners, popular nearby (by geolocation)
-- [ ] Record bathhouse view on BathhouseDetail page open (API call to record recently viewed)
-- [ ] Write tests for RecentlyViewed component rendering
-- [ ] Run project test suite + lint
+- [x] Create RecentlyViewed component using Redis-backed API (last 20 items): horizontal scrollable cards with photo, name, price, rating
+- [x] Enhance ClientHome with sections: search bar, recently viewed, recommendations, promotional banners, popular nearby (by geolocation)
+- [x] Record bathhouse view on BathhouseDetail page open (API call to record recently viewed)
+- [x] Write tests for RecentlyViewed component rendering
+- [x] Run project test suite + lint
 
 ### Task 7: Share Booking & Listing (FR-047, FR-081)
 
