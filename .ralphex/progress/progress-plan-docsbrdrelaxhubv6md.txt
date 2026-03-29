@@ -51,16 +51,16 @@ starting interactive plan creation
 [26-03-29 09:40:19]   - Modify: `internal/handler/booking_handler.go` — эндпоинты approve/reject modification
 [26-03-29 09:40:19]   - Create: `internal/repository/postgres/booking_modification_repo.go`
 [26-03-29 09:40:19]   - Create: `migrations/XXXXXX_booking_modification_requests.up.sql`
-[26-03-29 09:40:19]   - [ ] Создать домен модели ModificationRequest (old values, new values, status: pending/approved/rejected)
-[26-03-29 09:40:19]   - [ ] Миграция: таблица booking_modification_requests
-[26-03-29 09:40:19]   - [ ] Репозиторий: CRUD для modification requests
-[26-03-29 09:40:19]   - [ ] Сервис: Modify() → создаёт pending request, отправляет уведомление владельцу
-[26-03-29 09:40:19]   - [ ] Сервис: ApproveModification() → применяет изменения, пересчитывает цену
-[26-03-29 09:40:19]   - [ ] Сервис: RejectModification() → уведомляет клиента
-[26-03-29 09:40:19]   - [ ] Cron: таймаут на ответ владельца (24ч) → авто-отклонение
-[26-03-29 09:40:19]   - [ ] Handler: POST /api/v1/my/bookings/{id}/modification/approve, /reject
-[26-03-29 09:40:19]   - [ ] Тесты сервиса и хендлера
-[26-03-29 09:40:19]   - [ ] Frontend: UI подтверждения для владельца
+[26-03-29 09:40:19]   - [x] Создать домен модели ModificationRequest (old values, new values, status: pending/approved/rejected)
+[26-03-29 09:40:19]   - [x] Миграция: таблица booking_modification_requests
+[26-03-29 09:40:19]   - [x] Репозиторий: CRUD для modification requests
+[26-03-29 09:40:19]   - [x] Сервис: Modify() → создаёт pending request, отправляет уведомление владельцу
+[26-03-29 09:40:19]   - [x] Сервис: ApproveModification() → применяет изменения, пересчитывает цену
+[26-03-29 09:40:19]   - [x] Сервис: RejectModification() → уведомляет клиента
+[26-03-29 09:40:19]   - [x] Cron: таймаут на ответ владельца (24ч) → авто-отклонение
+[26-03-29 09:40:19]   - [x] Handler: POST /api/v1/my/bookings/{id}/modification/approve, /reject
+[26-03-29 09:40:19]   - [x] Тесты сервиса и хендлера
+[26-03-29 09:40:19]   - [x] Frontend: UI подтверждения для владельца
 [26-03-29 09:40:19] ### Task A3: Подтверждение продления сеанса обеими сторонами (FR-065)
 [26-03-29 09:40:19] **Проблема:** Продление выполняется клиентом односторонне. BRD: "Продление
 [26-03-29 09:40:19] подтверждается обеими сторонами".
