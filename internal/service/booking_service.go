@@ -681,6 +681,11 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 				"booking_id", bookingID, "deposit_amount", depositAmount, "error", depositErr)
 			booking.DepositAmount = 0
 			booking.DepositStatus = domain.DepositNone
+			// Persist the zeroed deposit to DB so it matches in-memory state
+			if updateErr := s.bookingRepo.UpdateDeposit(ctx, bookingID, 0, domain.DepositNone, ""); updateErr != nil {
+				s.logger.Error("failed to reset deposit amount after hold failure",
+					"booking_id", bookingID, "error", updateErr)
+			}
 		} else {
 			booking.DepositStatus = domain.DepositHeld
 		}

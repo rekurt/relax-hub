@@ -68,7 +68,8 @@ interface BathhouseMapProps {
   style?: React.CSSProperties
 }
 
-const YMAPS_SRC = 'https://api-maps.yandex.ru/2.1/?apikey=&lang=ru_RU'
+const YMAPS_API_KEY = import.meta.env.VITE_YMAPS_API_KEY || ''
+const YMAPS_SRC = `https://api-maps.yandex.ru/2.1/?apikey=${YMAPS_API_KEY}&lang=ru_RU`
 let ymapsLoadPromise: Promise<void> | null = null
 
 function loadYmaps(): Promise<void> {

@@ -73,6 +73,6 @@ func TestRedisTimeoutConfiguration(t *testing.T) {
 	const toleranceSeconds = 1
 	actualSeconds := int(RedisOperationTimeout.Seconds())
 	if actualSeconds < expectedTimeoutSeconds-toleranceSeconds || actualSeconds > expectedTimeoutSeconds+toleranceSeconds {
-		t.Logf("Warning: RedisOperationTimeout (%v) is outside typical range (~5s)", RedisOperationTimeout)
+		t.Errorf("RedisOperationTimeout (%v) is outside typical range (~5s)", RedisOperationTimeout)
 	}
 }

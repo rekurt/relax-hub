@@ -331,7 +331,7 @@ starting interactive plan creation
 [26-03-29 09:40:19]   - [x] Добавить описание новых подсистем (booking modification requests, extension requests, auto-payout cron, etc.)
 [26-03-29 09:40:19]   - [x] Обновить список ошибок в Error Mapping
 [26-03-29 09:40:19] ### Task F4: Перенос плана в completed
-[26-03-29 09:40:19]   - [ ] Переместить этот план в docs/plans/completed/
+[26-03-29 09:40:19]   - [x] Переместить этот план в docs/plans/completed/
 [26-03-29 09:40:19] <<<RALPHEX:END>>>
 [26-03-29 09:40:19] plan draft ready for review
 [26-03-29 09:52:53] DRAFT REVIEW: accept
