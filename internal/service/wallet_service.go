@@ -342,6 +342,11 @@ func (s *walletService) Refund(ctx context.Context, walletID uuid.UUID, amount i
 	if actualAmount <= 0 {
 		return nil, fmt.Errorf("wallet balance at maximum, cannot process refund of %d kopecks", amount)
 	}
+	if actualAmount < amount {
+		s.logger.Warn("partial refund due to wallet balance limit",
+			"wallet_id", walletID, "requested", amount, "actual", actualAmount,
+			"balance", wallet.Balance, "max_balance", maxBalance)
+	}
 
 	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
 		return nil, err

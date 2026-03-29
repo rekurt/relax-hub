@@ -318,7 +318,7 @@ func TestWebhookService_DeliverEvent(t *testing.T) {
 
 	// Build a new service with the test repos
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewWebhookService(webhookRepo, deliveryRepo, log)
+	svc := service.NewWebhookServiceWithClient(webhookRepo, deliveryRepo, log, &http.Client{Timeout: 10 * time.Second})
 
 	payload := map[string]string{"booking_id": "test-123"}
 	err := svc.DeliverEvent(ctx, ownerID, domain.WebhookEventBookingCreated, payload)
@@ -389,7 +389,7 @@ func TestWebhookService_DeliverEvent_FailedDeliveryRetry(t *testing.T) {
 	_ = webhookRepo.Create(ctx, wh)
 
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewWebhookService(webhookRepo, deliveryRepo, log)
+	svc := service.NewWebhookServiceWithClient(webhookRepo, deliveryRepo, log, &http.Client{Timeout: 10 * time.Second})
 
 	err := svc.DeliverEvent(ctx, ownerID, domain.WebhookEventBookingCancelled, map[string]string{"test": "1"})
 	if err != nil {

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net"
 	"net/http"
 	"time"
 
@@ -38,6 +39,25 @@ type webhookService struct {
 	logger       *logger.Logger
 }
 
+// safeDialContext prevents SSRF by blocking connections to private/loopback/link-local IPs.
+func safeDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid address: %s", addr)
+	}
+	ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+	if err != nil {
+		return nil, err
+	}
+	for _, ip := range ips {
+		if ip.IP.IsLoopback() || ip.IP.IsPrivate() || ip.IP.IsLinkLocalUnicast() || ip.IP.IsLinkLocalMulticast() || ip.IP.IsUnspecified() {
+			return nil, fmt.Errorf("webhook target resolves to private IP: %s", ip.IP)
+		}
+	}
+	var dialer net.Dialer
+	return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].IP.String(), port))
+}
+
 func NewWebhookService(
 	webhookRepo repository.WebhookRepository,
 	deliveryRepo repository.WebhookDeliveryRepository,
@@ -48,8 +68,26 @@ func NewWebhookService(
 		deliveryRepo: deliveryRepo,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
+			Transport: &http.Transport{
+				DialContext: safeDialContext,
+			},
 		},
 		logger: log,
+	}
+}
+
+// NewWebhookServiceWithClient creates a webhook service with a custom HTTP client (for testing).
+func NewWebhookServiceWithClient(
+	webhookRepo repository.WebhookRepository,
+	deliveryRepo repository.WebhookDeliveryRepository,
+	log *logger.Logger,
+	client *http.Client,
+) WebhookService {
+	return &webhookService{
+		webhookRepo:  webhookRepo,
+		deliveryRepo: deliveryRepo,
+		httpClient:   client,
+		logger:       log,
 	}
 }
 

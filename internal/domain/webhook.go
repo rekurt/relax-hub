@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"net"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -72,6 +74,9 @@ func (w *Webhook) Validate() error {
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
 		return ErrInvalidInput
 	}
+	if isPrivateHost(u.Hostname()) {
+		return ErrInvalidInput
+	}
 	if len(w.Events) == 0 {
 		return ErrInvalidInput
 	}
@@ -93,6 +98,27 @@ func (w *Webhook) SubscribedTo(event WebhookEventType) bool {
 		}
 	}
 	return false
+}
+
+// isPrivateHost returns true if the hostname resolves to a private, loopback, or link-local address.
+func isPrivateHost(host string) bool {
+	lower := strings.ToLower(host)
+	if lower == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	if ip == nil {
+		// Could be a hostname — resolve it
+		addrs, err := net.LookupHost(host)
+		if err != nil || len(addrs) == 0 {
+			return true // unresolvable hosts are blocked
+		}
+		ip = net.ParseIP(addrs[0])
+		if ip == nil {
+			return true
+		}
+	}
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified()
 }
 
 type WebhookDelivery struct {
