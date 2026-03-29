@@ -79,11 +79,11 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 **Files:**
 - Modify: `frontend/src/pages/client/ClientProfile.tsx`
 
-- [ ] Add account deletion section: confirmation modal with 30-day grace period explanation, info about fund return (topup refunded, bonuses lost) per FR-014
-- [ ] Add restore account button if deletion is pending (from profile state)
-- [ ] Add region switching section: current region display, switch button, validation checks (non-zero balance, active bookings, certificates, disputes) with error messages per FR-017
-- [ ] Write tests for deletion flow modal, region switch validation
-- [ ] Run project test suite + lint
+- [x] Add account deletion section: confirmation modal with 30-day grace period explanation, info about fund return (topup refunded, bonuses lost) per FR-014
+- [x] Add restore account button if deletion is pending (from profile state)
+- [x] Add region switching section: current region display, switch button, validation checks (non-zero balance, active bookings, certificates, disputes) with error messages per FR-017
+- [x] Write tests for deletion flow modal, region switch validation
+- [x] Run project test suite + lint
 
 ### Task 6: Client Recently Viewed & Home Page Enhancement (FR-051, FR-016)
 

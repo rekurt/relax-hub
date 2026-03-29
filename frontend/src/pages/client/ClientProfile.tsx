@@ -18,6 +18,10 @@ import {
   Statistic,
   Row,
   Col,
+  Modal,
+  Alert,
+  Tag,
+  Result,
 } from 'antd'
 import {
   UserOutlined,
@@ -28,6 +32,9 @@ import {
   WalletOutlined,
   TrophyOutlined,
   CreditCardOutlined,
+  ExclamationCircleOutlined,
+  SwapOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
@@ -36,6 +43,8 @@ import {
   usePutAuthMe,
   usePostAuthMeAvatar,
   useDeleteAuthMeAvatar,
+  usePostAuthDeleteAccount,
+  usePostAuthRestoreAccount,
 } from '@/api/generated/auth/auth'
 import {
   useGetMyNotificationPreferences,
@@ -47,19 +56,33 @@ import {
 } from '@/api/generated/oauth/oauth'
 import { useGetCities } from '@/api/generated/cities/cities'
 import { useGetMyStats } from '@/api/generated/users/users'
+import { useGetMyRegion, usePutMyRegion } from '@/api/generated/region/region'
 import { formatPrice } from '@/lib/format'
 import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
 import ProfileCompleteness from '@/components/ProfileCompleteness'
+
+const REGION_LABELS: Record<string, string> = {
+  RU: 'Россия',
+  BY: 'Беларусь',
+}
+
+const REGION_CURRENCIES: Record<string, string> = {
+  RU: 'RUB',
+  BY: 'BYN',
+}
 
 const { Title, Text } = Typography
 
 export default function ClientProfile() {
   const { user, loadProfile } = useAuthStore()
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
   const queryClient = useQueryClient()
   const [profileForm] = Form.useForm()
   const [prefsForm] = Form.useForm()
   const [avatarUploading, setAvatarUploading] = useState(false)
+  const [deletionPending, setDeletionPending] = useState(false)
+  const [regionSwitchModalOpen, setRegionSwitchModalOpen] = useState(false)
+  const [regionError, setRegionError] = useState<string | null>(null)
 
   const { data: citiesData } = useGetCities()
   const cities = citiesData?.data ?? []
@@ -72,6 +95,9 @@ export default function ClientProfile() {
 
   const { data: socialData, isLoading: socialLoading } = useGetAuthMeSocialAccounts()
   const socialAccounts = socialData?.data ?? []
+
+  const { data: regionData, isLoading: regionLoading } = useGetMyRegion()
+  const currentRegion = regionData?.data?.region ?? user?.region ?? 'RU'
 
   useEffect(() => {
     if (user) {
@@ -151,6 +177,101 @@ export default function ClientProfile() {
       onError: () => message.error('Ошибка при отвязке аккаунта'),
     },
   })
+
+  const deleteAccount = usePostAuthDeleteAccount({
+    mutation: {
+      onSuccess: () => {
+        message.success('Запрос на удаление аккаунта отправлен. У вас есть 30 дней, чтобы отменить.')
+        setDeletionPending(true)
+      },
+      onError: (error: unknown) => {
+        const status = (error as { response?: { status?: number } })?.response?.status
+        if (status === 409) {
+          message.warning('Удаление аккаунта уже запрошено')
+          setDeletionPending(true)
+        } else {
+          message.error('Ошибка при запросе удаления аккаунта')
+        }
+      },
+    },
+  })
+
+  const restoreAccount = usePostAuthRestoreAccount({
+    mutation: {
+      onSuccess: () => {
+        message.success('Удаление аккаунта отменено')
+        setDeletionPending(false)
+      },
+      onError: (error: unknown) => {
+        const status = (error as { response?: { status?: number } })?.response?.status
+        if (status === 400) {
+          message.info('Удаление аккаунта не было запрошено')
+          setDeletionPending(false)
+        } else {
+          message.error('Ошибка при восстановлении аккаунта')
+        }
+      },
+    },
+  })
+
+  const switchRegion = usePutMyRegion({
+    mutation: {
+      onSuccess: () => {
+        message.success('Регион успешно изменён')
+        setRegionSwitchModalOpen(false)
+        setRegionError(null)
+        queryClient.invalidateQueries({ queryKey: ['/my/region'] })
+        loadProfile()
+      },
+      onError: (error: unknown) => {
+        const status = (error as { response?: { status?: number } })?.response?.status
+        const errorMessage = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+        if (status === 409) {
+          setRegionError(errorMessage ?? 'Невозможно сменить регион: проверьте баланс кошелька, активные бронирования, открытые споры и неактивированные сертификаты')
+        } else if (status === 400) {
+          setRegionError(errorMessage ?? 'Некорректный регион или вы уже в этом регионе')
+        } else {
+          setRegionError('Ошибка при смене региона')
+        }
+      },
+    },
+  })
+
+  const targetRegion = currentRegion === 'RU' ? 'BY' : 'RU'
+
+  const handleDeleteAccount = () => {
+    modal.confirm({
+      title: 'Удаление аккаунта',
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p>Вы уверены, что хотите удалить аккаунт?</p>
+          <Alert
+            type="warning"
+            showIcon
+            style={{ marginBottom: 12 }}
+            message="Период восстановления — 30 дней"
+            description="После подтверждения ваш аккаунт будет деактивирован. В течение 30 дней вы можете отменить удаление."
+          />
+          <Alert
+            type="info"
+            showIcon
+            message="Что произойдёт с вашими средствами"
+            description="Средства, внесённые пополнением, будут возвращены. Бонусы и промо-баланс будут утеряны."
+          />
+        </div>
+      ),
+      okText: 'Удалить аккаунт',
+      okType: 'danger',
+      cancelText: 'Отмена',
+      onOk: () => deleteAccount.mutate(),
+    })
+  }
+
+  const handleRegionSwitch = () => {
+    setRegionError(null)
+    switchRegion.mutate({ data: { region: targetRegion } })
+  }
 
   const handleProfileSubmit = (values: { name?: string; phone?: string; bio?: string; city_id?: number }) => {
     updateProfile.mutate({ data: values })
@@ -405,6 +526,117 @@ export default function ClientProfile() {
               </Space>
             </>
           )}
+        </Card>
+
+        <Card title={<Space><GlobalOutlined /> Регион</Space>}>
+          {regionLoading ? (
+            <Skeleton active paragraph={{ rows: 2 }} />
+          ) : (
+            <div style={{ maxWidth: 500 }}>
+              <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                <div>
+                  <Text type="secondary">Текущий регион: </Text>
+                  <Tag color="blue" style={{ fontSize: 14 }}>
+                    {REGION_LABELS[currentRegion] ?? currentRegion} ({REGION_CURRENCIES[currentRegion] ?? currentRegion})
+                  </Tag>
+                </div>
+
+                <Alert
+                  type="info"
+                  showIcon
+                  message="Смена региона"
+                  description="При смене региона будет создан новый кошелёк в валюте нового региона, а старый — архивирован. Уровень лояльности будет сброшен. Смена невозможна при ненулевом балансе кошелька, активных бронированиях, открытых спорах или неактивированных сертификатах."
+                />
+
+                <Button
+                  icon={<SwapOutlined />}
+                  onClick={() => {
+                    setRegionError(null)
+                    setRegionSwitchModalOpen(true)
+                  }}
+                >
+                  Сменить на {REGION_LABELS[targetRegion] ?? targetRegion}
+                </Button>
+              </Space>
+            </div>
+          )}
+
+          <Modal
+            title="Подтверждение смены региона"
+            open={regionSwitchModalOpen}
+            onCancel={() => {
+              setRegionSwitchModalOpen(false)
+              setRegionError(null)
+            }}
+            onOk={handleRegionSwitch}
+            okText="Подтвердить"
+            cancelText="Отмена"
+            confirmLoading={switchRegion.isPending}
+          >
+            <Space direction="vertical" size={12} style={{ width: '100%' }}>
+              <Text>
+                Вы хотите сменить регион с <strong>{REGION_LABELS[currentRegion]}</strong> на <strong>{REGION_LABELS[targetRegion]}</strong>?
+              </Text>
+              <Alert
+                type="warning"
+                showIcon
+                message="Последствия смены региона"
+                description={
+                  <ul style={{ paddingLeft: 20, margin: 0 }}>
+                    <li>Текущий кошелёк ({REGION_CURRENCIES[currentRegion]}) будет архивирован</li>
+                    <li>Создан новый кошелёк в {REGION_CURRENCIES[targetRegion]}</li>
+                    <li>Уровень лояльности будет сброшен</li>
+                  </ul>
+                }
+              />
+              {regionError && (
+                <Alert type="error" showIcon message={regionError} />
+              )}
+            </Space>
+          </Modal>
+        </Card>
+
+        <Card
+          title={
+            <Space>
+              <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />
+              <Text>Удаление аккаунта</Text>
+            </Space>
+          }
+        >
+          <div style={{ maxWidth: 500 }}>
+            {deletionPending ? (
+              <Result
+                status="warning"
+                title="Удаление аккаунта запрошено"
+                subTitle="Ваш аккаунт будет удалён через 30 дней. Вы можете отменить удаление в любой момент до этого срока."
+                extra={
+                  <Button
+                    type="primary"
+                    onClick={() => restoreAccount.mutate()}
+                    loading={restoreAccount.isPending}
+                  >
+                    Отменить удаление
+                  </Button>
+                }
+              />
+            ) : (
+              <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                <Text type="secondary">
+                  После подтверждения ваш аккаунт будет деактивирован. В течение 30 дней вы можете отменить удаление.
+                  Средства, внесённые пополнением, будут возвращены. Бонусы и промо-баланс будут утеряны.
+                </Text>
+                <Button
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={handleDeleteAccount}
+                  loading={deleteAccount.isPending}
+                >
+                  Удалить аккаунт
+                </Button>
+              </Space>
+            )}
+          </div>
         </Card>
       </div>
     </div>

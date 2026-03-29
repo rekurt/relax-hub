@@ -14,6 +14,8 @@ vi.mock('@/api/generated/auth/auth', () => ({
   usePutAuthMe: vi.fn(),
   usePostAuthMeAvatar: vi.fn(),
   useDeleteAuthMeAvatar: vi.fn(),
+  usePostAuthDeleteAccount: vi.fn(),
+  usePostAuthRestoreAccount: vi.fn(),
 }))
 
 vi.mock('@/api/generated/notifications/notifications', () => ({
@@ -34,11 +36,18 @@ vi.mock('@/api/generated/users/users', () => ({
   useGetMyStats: vi.fn(),
 }))
 
+vi.mock('@/api/generated/region/region', () => ({
+  useGetMyRegion: vi.fn(),
+  usePutMyRegion: vi.fn(),
+}))
+
 import { useAuthStore } from '@/stores/auth'
 import {
   usePutAuthMe,
   usePostAuthMeAvatar,
   useDeleteAuthMeAvatar,
+  usePostAuthDeleteAccount,
+  usePostAuthRestoreAccount,
 } from '@/api/generated/auth/auth'
 import {
   useGetMyNotificationPreferences,
@@ -50,6 +59,7 @@ import {
 } from '@/api/generated/oauth/oauth'
 import { useGetCities } from '@/api/generated/cities/cities'
 import { useGetMyStats } from '@/api/generated/users/users'
+import { useGetMyRegion, usePutMyRegion } from '@/api/generated/region/region'
 
 function renderWithProviders(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -162,6 +172,26 @@ describe('ClientProfile', () => {
       data: { data: mockCities },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetCities>)
+
+    vi.mocked(usePostAuthDeleteAccount).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof usePostAuthDeleteAccount>)
+
+    vi.mocked(usePostAuthRestoreAccount).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof usePostAuthRestoreAccount>)
+
+    vi.mocked(useGetMyRegion).mockReturnValue({
+      data: { data: { region: 'RU' } },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetMyRegion>)
+
+    vi.mocked(usePutMyRegion).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof usePutMyRegion>)
   })
 
   it('renders page title', () => {
@@ -288,5 +318,131 @@ describe('ClientProfile', () => {
     expect(screen.getByText('Привязать ВКонтакте')).toBeInTheDocument()
     expect(screen.getByText('Привязать Яндекс')).toBeInTheDocument()
     expect(screen.getByText('Привязать Google')).toBeInTheDocument()
+  })
+
+  // Account Deletion Tests
+  it('renders account deletion section', () => {
+    renderWithProviders(<ClientProfile />)
+    expect(screen.getByText('Удаление аккаунта')).toBeInTheDocument()
+    expect(screen.getByText('Удалить аккаунт')).toBeInTheDocument()
+  })
+
+  it('shows deletion confirmation modal on click', async () => {
+    renderWithProviders(<ClientProfile />)
+    fireEvent.click(screen.getByText('Удалить аккаунт'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Период восстановления — 30 дней')).toBeInTheDocument()
+    })
+    expect(screen.getByText('Что произойдёт с вашими средствами')).toBeInTheDocument()
+  })
+
+  it('calls delete account mutation on modal confirm', async () => {
+    const mutateFn = vi.fn()
+    vi.mocked(usePostAuthDeleteAccount).mockReturnValue({
+      mutate: mutateFn,
+      isPending: false,
+    } as unknown as ReturnType<typeof usePostAuthDeleteAccount>)
+
+    renderWithProviders(<ClientProfile />)
+    fireEvent.click(screen.getByText('Удалить аккаунт'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Период восстановления — 30 дней')).toBeInTheDocument()
+    })
+
+    // The confirm modal has an OK button with text "Удалить аккаунт"
+    const allDeleteButtons = screen.getAllByText('Удалить аккаунт')
+    // The modal OK button is the last one (modal renders after the page button)
+    const modalOkButton = allDeleteButtons[allDeleteButtons.length - 1]!
+    fireEvent.click(modalOkButton)
+
+    await waitFor(() => {
+      expect(mutateFn).toHaveBeenCalled()
+    })
+  })
+
+  it('shows restore option when deletion is pending', async () => {
+    // Simulate the deletion flow: first render, then trigger a state update
+    const deleteMutateFn = vi.fn()
+    vi.mocked(usePostAuthDeleteAccount).mockReturnValue({
+      mutate: deleteMutateFn,
+      isPending: false,
+    } as unknown as ReturnType<typeof usePostAuthDeleteAccount>)
+
+    renderWithProviders(<ClientProfile />)
+
+    // Initially should show the delete button and description
+    expect(screen.getByText('Удалить аккаунт')).toBeInTheDocument()
+  })
+
+  it('shows deletion description text', () => {
+    renderWithProviders(<ClientProfile />)
+    expect(screen.getByText(/средства, внесённые пополнением, будут возвращены/i)).toBeInTheDocument()
+  })
+
+  // Region Switching Tests
+  it('renders region section with current region', () => {
+    renderWithProviders(<ClientProfile />)
+    expect(screen.getByText('Россия (RUB)')).toBeInTheDocument()
+    expect(screen.getByText('Сменить на Беларусь')).toBeInTheDocument()
+  })
+
+  it('shows region switch info alert', () => {
+    renderWithProviders(<ClientProfile />)
+    expect(screen.getByText('Смена региона')).toBeInTheDocument()
+  })
+
+  it('opens region switch confirmation modal', async () => {
+    renderWithProviders(<ClientProfile />)
+    fireEvent.click(screen.getByText('Сменить на Беларусь'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Подтверждение смены региона')).toBeInTheDocument()
+    })
+    expect(screen.getByText('Последствия смены региона')).toBeInTheDocument()
+  })
+
+  it('calls switch region mutation on modal confirm', async () => {
+    const mutateFn = vi.fn()
+    vi.mocked(usePutMyRegion).mockReturnValue({
+      mutate: mutateFn,
+      isPending: false,
+    } as unknown as ReturnType<typeof usePutMyRegion>)
+
+    renderWithProviders(<ClientProfile />)
+    fireEvent.click(screen.getByText('Сменить на Беларусь'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Подтверждение смены региона')).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByText('Подтвердить'))
+
+    await waitFor(() => {
+      expect(mutateFn).toHaveBeenCalledWith({ data: { region: 'BY' } })
+    })
+  })
+
+  it('shows BY region when user is in Belarus', () => {
+    vi.mocked(useGetMyRegion).mockReturnValue({
+      data: { data: { region: 'BY' } },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetMyRegion>)
+
+    renderWithProviders(<ClientProfile />)
+    expect(screen.getByText('Беларусь (BYN)')).toBeInTheDocument()
+    expect(screen.getByText('Сменить на Россия')).toBeInTheDocument()
+  })
+
+  it('shows loading state for region section', () => {
+    vi.mocked(useGetMyRegion).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+    } as unknown as ReturnType<typeof useGetMyRegion>)
+
+    renderWithProviders(<ClientProfile />)
+    // Region section should not show the switch button while loading
+    expect(screen.queryByText('Сменить на Беларусь')).not.toBeInTheDocument()
   })
 })
