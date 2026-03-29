@@ -463,8 +463,8 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 
 ### Task F2: Обновление swagger-документации
 
-- [ ] `make swagger` для всех новых/изменённых эндпоинтов
-- [ ] Regenerate frontend API client: `make frontend-generate-api`
+- [x] `make swagger` для всех новых/изменённых эндпоинтов
+- [x] Regenerate frontend API client: `make frontend-generate-api`
 
 ### Task F3: Обновление CLAUDE.md
 

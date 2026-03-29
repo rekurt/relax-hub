@@ -257,6 +257,36 @@ definitions:
       total_guests:
         type: integer
     type: object
+  github_com_nikitaaldaev_bani_internal_domain.HeatmapCell:
+    properties:
+      booking_count:
+        description: realized demand
+        type: integer
+      latitude:
+        description: center of the cell
+        type: number
+      listing_count:
+        description: supply (active bathhouses)
+        type: integer
+      longitude:
+        description: center of the cell
+        type: number
+      search_count:
+        description: demand (search views)
+        type: integer
+    type: object
+  github_com_nikitaaldaev_bani_internal_domain.HeatmapData:
+    properties:
+      cell_size:
+        description: grid cell size in degrees
+        type: number
+      cells:
+        items:
+          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.HeatmapCell'
+        type: array
+      period:
+        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod'
+    type: object
   github_com_nikitaaldaev_bani_internal_domain.OwnerPerformance:
     properties:
       avg_city_conversion_rate:
@@ -344,7 +374,13 @@ definitions:
     type: object
   github_com_nikitaaldaev_bani_internal_service.AdminDashboard:
     properties:
+      adr:
+        description: average daily rate (avg booking value in kopecks)
+        type: integer
       avg_rating:
+        type: number
+      churn_rate:
+        description: '% of users with no bookings in last 90 days'
         type: number
       dau:
         description: daily active users (from bookings)
@@ -373,6 +409,29 @@ definitions:
       wau:
         description: weekly active users
         type: integer
+    type: object
+  github_com_nikitaaldaev_bani_internal_service.BusinessMetrics:
+    properties:
+      adr:
+        description: average booking value (kopecks)
+        type: integer
+      arpu:
+        description: average revenue per user in period (kopecks)
+        type: integer
+      churn_rate:
+        description: '% users churned (90 days no activity)'
+        type: number
+      dau:
+        description: daily active users
+        type: integer
+      ltv:
+        description: average lifetime value per user (kopecks)
+        type: integer
+      mau:
+        description: monthly active users
+        type: integer
+      period:
+        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod'
     type: object
   github_com_nikitaaldaev_bani_internal_service.CompletenessItem:
     properties:
@@ -462,6 +521,38 @@ definitions:
         type: integer
       views_change:
         type: number
+    type: object
+  github_com_nikitaaldaev_bani_internal_service.PnLMetrics:
+    properties:
+      gmv:
+        description: gross merchandise value (kopecks) — total booking value
+        type: integer
+      gmv_per_booking:
+        description: average booking value (kopecks)
+        type: integer
+      period:
+        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod'
+      platform_revenue:
+        description: total platform revenue (kopecks)
+        type: integer
+      promotions_total:
+        description: promotion revenue (kopecks)
+        type: integer
+      revenue_per_booking:
+        description: platform revenue per booking (kopecks)
+        type: integer
+      service_fees_total:
+        description: platform service fees (kopecks)
+        type: integer
+      subscriptions_total:
+        description: subscription revenue (kopecks)
+        type: integer
+      take_rate:
+        description: platform_revenue / GMV * 100
+        type: number
+      total_bookings:
+        description: booking count in period
+        type: integer
     type: object
   github_com_nikitaaldaev_bani_internal_service.ProfileCompletenessOutput:
     properties:
@@ -1632,6 +1723,8 @@ definitions:
         type: integer
       min_amount:
         type: integer
+      target_addon_id:
+        type: string
       type:
         type: string
       valid_from:
@@ -1705,6 +1798,19 @@ definitions:
         type: string
       start_time:
         example: "2026-03-20T10:00:00Z"
+        type: string
+    type: object
+  internal_handler.createStoplistRequest:
+    properties:
+      bank_card_number:
+        type: string
+      email:
+        type: string
+      inn:
+        type: string
+      phone:
+        type: string
+      reason:
         type: string
     type: object
   internal_handler.createTemplateRequest:
@@ -1870,6 +1976,33 @@ definitions:
         $ref: '#/definitions/internal_handler.bookingResponse'
       extension_price:
         type: integer
+    type: object
+  internal_handler.extensionRequestResponse:
+    properties:
+      bathhouse_id:
+        type: string
+      booking_id:
+        type: string
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      extension_price:
+        type: integer
+      extra_hours:
+        type: integer
+      id:
+        type: string
+      new_end_time:
+        type: string
+      rejection_reason:
+        type: string
+      resolved_at:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: string
     type: object
   internal_handler.externalCalendarResponse:
     properties:
@@ -2349,6 +2482,43 @@ definitions:
       text:
         type: string
     type: object
+  internal_handler.modificationRequestResponse:
+    properties:
+      bathhouse_id:
+        type: string
+      booking_id:
+        type: string
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      old_end_time:
+        type: string
+      old_guest_count:
+        type: integer
+      old_start_time:
+        type: string
+      old_total_price:
+        type: integer
+      proposed_end_time:
+        type: string
+      proposed_guest_count:
+        type: integer
+      proposed_start_time:
+        type: string
+      proposed_total_price:
+        type: integer
+      rejection_reason:
+        type: string
+      resolved_at:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: string
+    type: object
   internal_handler.modifyBookingRequest:
     properties:
       addons:
@@ -2564,6 +2734,8 @@ definitions:
       failure_reason:
         type: string
       id:
+        type: string
+      payout_method:
         type: string
       processed_at:
         type: string
@@ -2828,6 +3000,8 @@ definitions:
         type: integer
       min_amount:
         type: integer
+      target_addon_id:
+        type: string
       type:
         type: string
       valid_from:
@@ -3085,7 +3259,17 @@ definitions:
       reason:
         type: string
     type: object
+  internal_handler.rejectExtensionRequest:
+    properties:
+      reason:
+        type: string
+    type: object
   internal_handler.rejectKYCRequest:
+    properties:
+      reason:
+        type: string
+    type: object
+  internal_handler.rejectModificationRequest:
     properties:
       reason:
         type: string
@@ -3122,6 +3306,20 @@ definitions:
       role:
         type: string
       user_id:
+        type: string
+    type: object
+  internal_handler.requestExtensionRequest:
+    properties:
+      extra_hours:
+        type: integer
+    type: object
+  internal_handler.requestModificationRequest:
+    properties:
+      end_time:
+        type: string
+      guest_count:
+        type: integer
+      start_time:
         type: string
     type: object
   internal_handler.requestPayoutRequest:
@@ -3494,6 +3692,25 @@ definitions:
       status:
         type: string
     type: object
+  internal_handler.stoplistEntryResponse:
+    properties:
+      bank_card_number:
+        type: string
+      blocked_at:
+        type: string
+      created_by:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      inn:
+        type: string
+      phone:
+        type: string
+      reason:
+        type: string
+    type: object
   internal_handler.submitCSATRequest:
     properties:
       score:
@@ -3615,6 +3832,21 @@ definitions:
         type: string
       ticket_id:
         type: string
+    type: object
+  internal_handler.ticketOperationMetricsResponse:
+    properties:
+      aht_seconds:
+        type: number
+      avg_csat:
+        type: number
+      fcr_percent:
+        type: number
+      sla_compliance_percent:
+        type: number
+      total_resolved:
+        type: integer
+      total_tickets:
+        type: integer
     type: object
   internal_handler.ticketResponse:
     properties:
@@ -4623,6 +4855,60 @@ paths:
       summary: Get admin analytics dashboard
       tags:
       - admin-analytics
+  /admin/analytics/business-metrics:
+    get:
+      description: 'Returns business metrics: ADR, DAU/MAU, churn rate, LTV, ARPU.
+        Admin only.'
+      parameters:
+      - default: 30d
+        description: 'Period: 1d, 7d, 30d, 90d'
+        in: query
+        name: period
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.BusinessMetrics'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get business metrics
+      tags:
+      - admin-analytics
   /admin/analytics/cohorts:
     get:
       description: Returns user cohort analysis (grouped by registration month, tracking
@@ -4783,6 +5069,119 @@ paths:
       security:
       - BearerAuth: []
       summary: Get geographic demand/supply map
+      tags:
+      - admin-analytics
+  /admin/analytics/heatmap:
+    get:
+      description: Returns heatmap grid cells with supply (listings), demand (searches),
+        and bookings aggregated by coordinates. Admin only.
+      parameters:
+      - default: 30d
+        description: 'Period: 1d, 7d, 30d, 90d'
+        in: query
+        name: period
+        type: string
+      - default: 0.01
+        description: Grid cell size in degrees
+        in: query
+        name: cell_size
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.HeatmapData'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get geographic heatmap data
+      tags:
+      - admin-analytics
+  /admin/analytics/pnl:
+    get:
+      description: 'Returns P&L metrics: GMV, take rate, platform revenue breakdown,
+        unit economics per booking. Admin only.'
+      parameters:
+      - default: 30d
+        description: 'Period: 1d, 7d, 30d, 90d'
+        in: query
+        name: period
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.PnLMetrics'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get P&L and unit economics
       tags:
       - admin-analytics
   /admin/analytics/top:
@@ -5041,6 +5440,184 @@ paths:
       security:
       - BearerAuth: []
       summary: Update fraud flag status
+      tags:
+      - admin-antifraud
+  /admin/antifraud/stoplist:
+    get:
+      description: Returns paginated list of stoplist entries
+      parameters:
+      - description: Filter by phone
+        in: query
+        name: phone
+        type: string
+      - description: Filter by email
+        in: query
+        name: email
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.stoplistEntryResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/internal_handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List antifraud stoplist entries
+      tags:
+      - admin-antifraud
+    post:
+      consumes:
+      - application/json
+      description: Block phone, email, INN or bank card from creating listings
+      parameters:
+      - description: Stoplist entry
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createStoplistRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.stoplistEntryResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Add entry to antifraud stoplist
+      tags:
+      - admin-antifraud
+  /admin/antifraud/stoplist/{id}:
+    delete:
+      description: Delete a stoplist entry by ID
+      parameters:
+      - description: Stoplist entry ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Remove entry from antifraud stoplist
       tags:
       - admin-antifraud
   /admin/audit-log:
@@ -9234,6 +9811,62 @@ paths:
       summary: Resolve ticket
       tags:
       - support-admin
+  /admin/tickets/metrics:
+    get:
+      description: Get FCR, AHT, CSAT, SLA compliance metrics for support tickets
+      parameters:
+      - description: Start date (RFC3339)
+        in: query
+        name: date_from
+        type: string
+      - description: End date (RFC3339)
+        in: query
+        name: date_to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.ticketOperationMetricsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get support operation metrics
+      tags:
+      - support-admin
   /admin/tickets/stats:
     get:
       description: Get counts of tickets by status
@@ -13276,6 +13909,204 @@ paths:
       summary: Extend booking session
       tags:
       - bookings
+  /bookings/{id}/extension-request:
+    post:
+      consumes:
+      - application/json
+      description: Creates a pending extension request that the bathhouse owner must
+        approve. Funds are held in the client's wallet.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Extension details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.requestExtensionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.extensionRequestResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Request booking extension
+      tags:
+      - bookings
+  /bookings/{id}/extension-requests:
+    get:
+      description: Returns all extension requests for the specified booking.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.extensionRequestResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List extension requests for a booking
+      tags:
+      - bookings
+  /bookings/{id}/modification-request:
+    post:
+      consumes:
+      - application/json
+      description: Creates a modification request that the owner must approve. Maximum
+        3 modifications per booking.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Proposed changes
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.requestModificationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.modificationRequestResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Request booking modification
+      tags:
+      - bookings
+  /bookings/{id}/modification-requests:
+    get:
+      description: Lists all modification requests for a booking.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.modificationRequestResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List modification requests
+      tags:
+      - bookings
   /bookings/{id}/modify:
     put:
       consumes:
@@ -13614,6 +14445,213 @@ paths:
       security:
       - BearerAuth: []
       summary: Reject booking
+      tags:
+      - bookings
+  /bookings/extension-requests/{id}/approve:
+    patch:
+      description: Approves a pending extension request and applies the extension
+        to the booking.
+      parameters:
+      - description: Extension Request ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.extendBookingResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Approve extension request
+      tags:
+      - bookings
+  /bookings/extension-requests/{id}/reject:
+    patch:
+      consumes:
+      - application/json
+      description: Rejects a pending extension request and releases the wallet hold.
+      parameters:
+      - description: Extension Request ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Rejection details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.rejectExtensionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Reject extension request
+      tags:
+      - bookings
+  /bookings/modification-requests/{id}/approve:
+    patch:
+      description: Owner approves a pending booking modification request. Changes
+        are applied immediately.
+      parameters:
+      - description: Modification Request ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.modifyBookingResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Approve modification request
+      tags:
+      - bookings
+  /bookings/modification-requests/{id}/reject:
+    patch:
+      consumes:
+      - application/json
+      description: Owner rejects a pending booking modification request.
+      parameters:
+      - description: Modification Request ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Rejection reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.rejectModificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Reject modification request
       tags:
       - bookings
   /certificates/{code}/balance:
