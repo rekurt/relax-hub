@@ -19,7 +19,7 @@ func TestStart_RegistersAllExpectedJobs(t *testing.T) {
 
 	cs := NewCronScheduler(cfg, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.Start(context.Background())
@@ -37,6 +37,7 @@ func TestStart_RegistersAllExpectedJobs(t *testing.T) {
 	assert.Equal(t, "*/15 * * * *", jobMap["no_show_detection"], "NoShowDetection should run every 15 min")
 	assert.Equal(t, "*/15 * * * *", jobMap["booking_reminders"], "BookingReminders should run every 15 min")
 	assert.Equal(t, "*/15 * * * *", jobMap["ticket_auto_escalation"], "TicketAutoEscalation should run every 15 min")
+	assert.Equal(t, "*/15 * * * *", jobMap["modification_request_expiry"], "ModificationRequestExpiry should run every 15 min")
 
 	// Hourly
 	assert.Contains(t, jobMap, "escrow_release", "EscrowRelease should be registered")
@@ -78,7 +79,7 @@ func TestStart_AllJobsUseDistributedLocking(t *testing.T) {
 
 	cs := NewCronScheduler(cfg, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.Start(context.Background())
@@ -104,7 +105,7 @@ func TestStart_JobCount(t *testing.T) {
 
 	cs := NewCronScheduler(cfg, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.Start(context.Background())
@@ -113,7 +114,7 @@ func TestStart_JobCount(t *testing.T) {
 
 	// We expect at least 28 jobs to be registered (all the ones listed in the schedule)
 	jobs := cs.Jobs()
-	assert.GreaterOrEqual(t, len(jobs), 33, "Expected at least 33 registered cron jobs, got %d", len(jobs))
+	assert.GreaterOrEqual(t, len(jobs), 34, "Expected at least 34 registered cron jobs, got %d", len(jobs))
 }
 
 func TestTicketJobs_AutoEscalation(t *testing.T) {
@@ -122,7 +123,7 @@ func TestTicketJobs_AutoEscalation(t *testing.T) {
 
 	cs := NewCronScheduler(&config.Config{}, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockTicketSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockTicketSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.ticketAutoEscalation(context.Background())
@@ -136,7 +137,7 @@ func TestTicketJobs_AutoClose(t *testing.T) {
 
 	cs := NewCronScheduler(&config.Config{}, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockTicketSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockTicketSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.ticketAutoCloseJob(context.Background())
@@ -150,7 +151,7 @@ func TestEscrowJob_ProcessMatured(t *testing.T) {
 
 	cs := NewCronScheduler(&config.Config{}, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockEscrowSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockEscrowSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.escrowReleaseJob(context.Background())
@@ -163,7 +164,7 @@ func TestAntiFraudJob_NilEngine(t *testing.T) {
 
 	cs := NewCronScheduler(&config.Config{}, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.antiFraudPatternDetection(context.Background())
@@ -175,7 +176,7 @@ func TestKYCExpiryCheck_NilService(t *testing.T) {
 
 	cs := NewCronScheduler(&config.Config{}, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.kycExpiryCheck(context.Background())
@@ -188,7 +189,7 @@ func TestSearchJob_BathhouseMetricsUpdate(t *testing.T) {
 
 	cs := NewCronScheduler(&config.Config{}, log,
 		mockAnalyticsSvc, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.bathhouseMetricsUpdate(context.Background())
@@ -201,7 +202,7 @@ func TestOwnerJob_ResponseRateMonitoring(t *testing.T) {
 
 	cs := NewCronScheduler(&config.Config{}, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, bookingSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, bookingSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.responseRateRecalculation(context.Background())
@@ -213,7 +214,7 @@ func TestSavedSearchJob_NilService(t *testing.T) {
 
 	cs := NewCronScheduler(&config.Config{}, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.savedSearchCheck(context.Background())
@@ -226,7 +227,7 @@ func TestReviewJobs_PlatformAverageRefresh(t *testing.T) {
 
 	cs := NewCronScheduler(&config.Config{}, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockReviewSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockReviewSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.platformAverageRefresh(context.Background())
@@ -242,7 +243,7 @@ func TestReviewJobs_AutoReviewRequests(t *testing.T) {
 
 	cs := NewCronScheduler(cfg, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockReviewSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockReviewSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.autoReviewRequests(context.Background())
@@ -257,7 +258,7 @@ func TestAutoScenarioJob(t *testing.T) {
 
 	cs := NewCronScheduler(&config.Config{}, log,
 		&MockAnalyticsService{}, mock.NewAnalyticsRepo(),
-		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockScenarioSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockScenarioSvc, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,
 	)
 
 	err := cs.autoScenarioExecution(context.Background())

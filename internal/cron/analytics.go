@@ -48,6 +48,7 @@ type CronScheduler struct {
 	adminNotificationRepo  repository.AdminNotificationRepository
 	pmsSvc                 service.PMSService
 	promotionSvc           service.PromotionService
+	modReqSvc              service.BookingModificationService
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -81,6 +82,7 @@ func NewCronScheduler(
 	adminNotificationRepo repository.AdminNotificationRepository,
 	pmsSvc service.PMSService,
 	promotionSvc service.PromotionService,
+	modReqSvc service.BookingModificationService,
 ) *CronScheduler {
 	timezone := cfg.Cron.Timezone
 	if timezone == "" {
@@ -118,6 +120,7 @@ func NewCronScheduler(
 		adminNotificationRepo:  adminNotificationRepo,
 		pmsSvc:                 pmsSvc,
 		promotionSvc:           promotionSvc,
+		modReqSvc:              modReqSvc,
 	}
 }
 
@@ -181,6 +184,7 @@ func (cs *CronScheduler) Start(ctx context.Context) error {
 		{"0 5 * * 0", "admin_notification_cleanup", cs.adminNotificationCleanup},
 		{"*/15 * * * *", "pms_sync", cs.pmsSyncJob},
 		{"0 7 * * *", "promotion_daily_budget", cs.promotionDailyBudget},
+		{"*/15 * * * *", "modification_request_expiry", cs.modificationRequestExpiry},
 	}
 
 	for _, j := range jobs {

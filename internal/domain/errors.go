@@ -111,8 +111,11 @@ var (
 	ErrSavedSearchNotFound     = errors.New("saved search not found")
 	ErrSavedSearchLimitReached = errors.New("saved search limit reached")
 
-	ErrBookingModificationLimit = errors.New("booking modification limit reached")
-	ErrBookingNotModifiable     = errors.New("booking cannot be modified in current status")
+	ErrBookingModificationLimit          = errors.New("booking modification limit reached")
+	ErrBookingNotModifiable              = errors.New("booking cannot be modified in current status")
+	ErrModificationRequestNotFound       = errors.New("booking modification request not found")
+	ErrModificationRequestPending        = errors.New("a pending modification request already exists for this booking")
+	ErrModificationRequestExpired        = errors.New("booking modification request has expired")
 
 	ErrCheckinTooEarly = errors.New("check-in is not yet available")
 	ErrCheckinTooLate       = errors.New("check-in window has passed")

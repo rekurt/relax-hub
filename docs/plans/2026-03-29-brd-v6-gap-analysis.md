@@ -59,17 +59,17 @@ BRD требует: "Изменение требует подтверждени�
 - Create: `internal/repository/postgres/booking_modification_repo.go`
 - Create: `migrations/XXXXXX_booking_modification_requests.up.sql`
 
-- [ ] Создать домен модели ModificationRequest (old values, new values, status: pending/approved/rejected)
-- [ ] Миграция: таблица booking_modification_requests
-- [ ] Репозиторий: CRUD для modification requests
-- [ ] Сервис: Modify() → создаёт pending request, отправляет уведомление владельцу
-- [ ] Сервис: ApproveModification() → применяет изменения, пересчитывает цену
-- [ ] Сервис: RejectModification() → уведомляет клиента
-- [ ] Cron: таймаут на ответ владельца (24ч) → авто-отклонение
-- [ ] Handler: POST /api/v1/my/bookings/{id}/modification/approve, /reject
-- [ ] Тесты сервиса и хендлера
-- [ ] Frontend: UI подтверждения для владельца
-- [ ] run project test suite — must pass before Task A3
+- [x] Создать домен модели ModificationRequest (old values, new values, status: pending/approved/rejected)
+- [x] Миграция: таблица booking_modification_requests
+- [x] Репозиторий: CRUD для modification requests
+- [x] Сервис: Modify() → создаёт pending request, отправляет уведомление владельцу
+- [x] Сервис: ApproveModification() → применяет изменения, пересчитывает цену
+- [x] Сервис: RejectModification() → уведомляет клиента
+- [x] Cron: таймаут на ответ владельца (24ч) → авто-отклонение
+- [x] Handler: POST /api/v1/my/bookings/{id}/modification/approve, /reject
+- [x] Тесты сервиса и хендлера
+- [x] Frontend: UI подтверждения для владельца
+- [x] run project test suite — must pass before Task A3
 
 ### Task A3: Подтверждение продления сеанса обеими сторонами (FR-065)
 

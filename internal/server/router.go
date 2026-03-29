@@ -97,6 +97,7 @@ type RouterParams struct {
 	IsochroneHandler             *handler.IsochroneHandler
 	TransportHandler             *handler.TransportHandler
 	PhotoOrderHandler            *handler.PhotoOrderHandler
+	BookingModificationHandler   *handler.BookingModificationHandler
 	PrerenderHandler             *handler.PrerenderHandler
 	AuditLogRepo              repository.AuditLogRepository
 	AdminSubRoleResolver  middleware.AdminSubRoleResolver
@@ -292,6 +293,12 @@ func NewRouter(p RouterParams) http.Handler {
 		r.With(auth).Post("/bookings/{id}/extend", p.BookingHandler.Extend)
 		r.With(auth).Post("/bookings/{id}/dispute-noshow", p.BookingHandler.DisputeNoShow)
 		r.With(auth).Get("/bookings/{id}/rebook-data", p.BookingHandler.GetRebookData)
+
+		// Booking modification requests (two-party approval)
+		r.With(auth, middleware.RequireRole(domain.RoleClient)).Post("/bookings/{id}/modification-request", p.BookingModificationHandler.RequestModification)
+		r.With(auth).Get("/bookings/{id}/modification-requests", p.BookingModificationHandler.ListModificationRequests)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/modification-requests/{id}/approve", p.BookingModificationHandler.ApproveModification)
+		r.With(auth, middleware.RequireOwnerOrRepresentative()).Patch("/bookings/modification-requests/{id}/reject", p.BookingModificationHandler.RejectModification)
 
 		// Booking share links
 		r.With(auth).Post("/bookings/share", p.ShareHandler.CreateShareLink)

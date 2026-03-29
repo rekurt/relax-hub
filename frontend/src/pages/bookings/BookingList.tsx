@@ -8,6 +8,7 @@ import {
   CheckOutlined,
   EyeOutlined,
   DollarOutlined,
+  SwapOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import {
@@ -24,6 +25,7 @@ import { formatPrice, formatDateTime } from '@/lib/format'
 import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 import { useQueryClient } from '@tanstack/react-query'
 import BookingDetails from './BookingDetails'
+import ModificationRequests from './ModificationRequests'
 import EmptyState from '@/components/EmptyState'
 
 const { Title } = Typography
@@ -48,6 +50,7 @@ export default function BookingList() {
   const [statusFilter, setStatusFilter] = useState('')
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
   const [detailsBooking, setDetailsBooking] = useState<InternalHandlerBookingResponse | null>(null)
+  const [modRequestsBookingId, setModRequestsBookingId] = useState<string | null>(null)
 
   const hasActiveFilter = !!statusFilter || !!(dateRange?.[0] && dateRange?.[1])
 
@@ -148,6 +151,20 @@ export default function BookingList() {
         Детали
       </Button>,
     )
+
+    if (record.status === 'confirmed' || record.status === 'pending') {
+      actions.push(
+        <Button
+          key="mod-requests"
+          type="link"
+          size="small"
+          icon={<SwapOutlined />}
+          onClick={() => record.id && setModRequestsBookingId(record.id)}
+        >
+          Изменения
+        </Button>,
+      )
+    }
 
     if (record.status === 'pending') {
       actions.push(
@@ -356,6 +373,12 @@ export default function BookingList() {
       <BookingDetails
         booking={detailsBooking}
         onClose={() => setDetailsBooking(null)}
+      />
+
+      <ModificationRequests
+        bookingId={modRequestsBookingId ?? ''}
+        open={!!modRequestsBookingId}
+        onClose={() => setModRequestsBookingId(null)}
       />
     </div>
   )

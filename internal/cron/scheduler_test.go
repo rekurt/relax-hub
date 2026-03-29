@@ -23,7 +23,7 @@ func newTestScheduler(redisClient *redis.Client) *CronScheduler {
 	cfg.Cron.Timezone = "UTC"
 	mockSvc := &MockAnalyticsService{}
 	mockRepo := mock.NewAnalyticsRepo()
-	return NewCronScheduler(cfg, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, redisClient, nil, nil, nil, nil, nil)
+	return NewCronScheduler(cfg, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, redisClient, nil, nil, nil, nil, nil, nil)
 }
 
 func TestRegister_ValidSpec(t *testing.T) {
@@ -173,7 +173,7 @@ func TestStart_CronDisabled(t *testing.T) {
 	cfg.Cron.Enabled = false
 	mockSvc := &MockAnalyticsService{}
 	mockRepo := mock.NewAnalyticsRepo()
-	cs := NewCronScheduler(cfg, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	cs := NewCronScheduler(cfg, log, mockSvc, mockRepo, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	err := cs.Start(context.Background())
 	assert.NoError(t, err)

@@ -99,6 +99,15 @@ type BookingRepository interface {
 	ListAll(ctx context.Context, filter domain.AdminBookingFilter) (*domain.PaginatedResult[domain.Booking], error)
 }
 
+type BookingModificationRequestRepository interface {
+	Create(ctx context.Context, req *domain.BookingModificationRequest) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.BookingModificationRequest, error)
+	GetPendingByBookingID(ctx context.Context, bookingID uuid.UUID) (*domain.BookingModificationRequest, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ModificationRequestStatus, reason string) error
+	ListExpired(ctx context.Context) ([]domain.BookingModificationRequest, error)
+	ListByBookingID(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingModificationRequest, error)
+}
+
 type ReviewRepository interface {
 	Create(ctx context.Context, review *domain.Review) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Review, error)

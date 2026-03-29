@@ -308,6 +308,12 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "booking_modification_limit", err.Error())
 	case errors.Is(err, domain.ErrBookingNotModifiable):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "booking_not_modifiable", err.Error())
+	case errors.Is(err, domain.ErrModificationRequestNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "modification_request_not_found", err.Error())
+	case errors.Is(err, domain.ErrModificationRequestPending):
+		writeErrorWithContext(w, r, http.StatusConflict, "modification_request_pending", err.Error())
+	case errors.Is(err, domain.ErrModificationRequestExpired):
+		writeErrorWithContext(w, r, http.StatusBadRequest, "modification_request_expired", err.Error())
 	case errors.Is(err, domain.ErrCheckinTooEarly):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "checkin_too_early", err.Error())
 	case errors.Is(err, domain.ErrCheckinTooLate):

@@ -53,7 +53,11 @@ const (
 	NotifAutoScenario                  NotificationType = "auto_scenario"
 	NotifClientReview                  NotificationType = "client_review"
 	NotifReviewRevealed                NotificationType = "review_revealed"
-	NotifContactInfoFiltered           NotificationType = "contact_info_filtered"
+	NotifContactInfoFiltered             NotificationType = "contact_info_filtered"
+	NotifBookingModificationRequested    NotificationType = "booking_modification_requested"
+	NotifBookingModificationApproved     NotificationType = "booking_modification_approved"
+	NotifBookingModificationRejected     NotificationType = "booking_modification_rejected"
+	NotifBookingModificationExpired      NotificationType = "booking_modification_expired"
 )
 
 func (t NotificationType) IsValid() bool {
@@ -76,7 +80,9 @@ func (t NotificationType) IsValid() bool {
 		NotifLowRatingWarning, NotifBathhouseDepublished,
 		NotifBroadcast, NotifAutoScenario,
 		NotifClientReview, NotifReviewRevealed,
-		NotifContactInfoFiltered:
+		NotifContactInfoFiltered,
+		NotifBookingModificationRequested, NotifBookingModificationApproved,
+		NotifBookingModificationRejected, NotifBookingModificationExpired:
 		return true
 	}
 	return false
@@ -155,7 +161,9 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 		NotifOwnerResponseRateWarning, NotifOwnerCancellationCompensation,
 		NotifLoyaltyUpgrade, NotifReferralBonus,
 		NotifSubscriptionExpiring, NotifSubscriptionExpired,
-		NotifBonusExpiring, NotifBonusExpired:
+		NotifBonusExpiring, NotifBonusExpired,
+		NotifBookingModificationRequested, NotifBookingModificationApproved,
+		NotifBookingModificationRejected, NotifBookingModificationExpired:
 		return p.BookingEvents
 	case NotifNewReview, NotifReviewResponse, NotifReviewApproved, NotifReviewRejected,
 		NotifReviewHidden:
