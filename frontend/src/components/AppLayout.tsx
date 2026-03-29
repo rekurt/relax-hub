@@ -25,6 +25,7 @@ import {
   CodeOutlined,
   CameraOutlined,
   ContactsOutlined,
+  FundOutlined,
   UserOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
@@ -64,6 +65,16 @@ function useMenuItems(unreadCount: number): MenuProps['items'] {
     { key: '/subscriptions', icon: <CrownOutlined />, label: 'Подписки' },
     { key: '/widget', icon: <CodeOutlined />, label: 'Виджет' },
     { key: '/photos', icon: <CameraOutlined />, label: 'Фото' },
+    {
+      key: '/finance',
+      icon: <FundOutlined />,
+      label: 'Финансы',
+      children: [
+        { key: '/finance', label: 'Обзор' },
+        { key: '/finance/payouts', label: 'Выплаты' },
+        { key: '/finance/reports', label: 'Отчёты' },
+      ],
+    },
     {
       key: '/crm',
       icon: <ContactsOutlined />,
@@ -110,6 +121,9 @@ const breadcrumbNameMap: Record<string, string> = {
   '/crm/broadcasts/new': 'Новая рассылка',
   '/crm/scenarios': 'Сценарии',
   '/crm/templates': 'Шаблоны',
+  '/finance': 'Финансы',
+  '/finance/payouts': 'Выплаты',
+  '/finance/reports': 'Отчёты',
   '/settings': 'Настройки',
   '/settings/webhooks': 'Вебхуки',
   '/settings/pms': 'PMS интеграции',
@@ -154,14 +168,14 @@ export default function AppLayout() {
   const breadcrumbs = useBreadcrumbs()
 
   const pathParts = location.pathname.split('/').filter(Boolean)
-  const selectedKey = (pathParts.length >= 2 && pathParts[0] === 'crm')
+  const subMenuPrefixes = ['crm', 'settings', 'finance']
+  const selectedKey = (pathParts.length >= 2 && subMenuPrefixes.includes(pathParts[0]))
     ? '/' + pathParts.slice(0, 2).join('/')
-    : (pathParts.length >= 2 && pathParts[0] === 'settings')
-      ? '/' + pathParts.slice(0, 2).join('/')
-      : '/' + (pathParts[0] ?? '')
+    : '/' + (pathParts[0] ?? '')
   const selectedKeys = [selectedKey === '/' ? '/' : selectedKey]
   const openKeys: string[] = []
   if (pathParts[0] === 'crm') openKeys.push('/crm')
+  if (pathParts[0] === 'finance') openKeys.push('/finance')
   if (pathParts[0] === 'settings') openKeys.push('/settings')
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {

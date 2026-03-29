@@ -87,6 +87,9 @@ import AdminNotificationCenter from '@/pages/admin/AdminNotificationCenter'
 import GeoHeatmap from '@/pages/admin/GeoHeatmap'
 import OAuthCallback from '@/pages/OAuthCallback'
 import ShareRedirect from '@/pages/ShareRedirect'
+import FinanceDashboard from '@/pages/finance/FinanceDashboard'
+import PayoutPage from '@/pages/finance/PayoutPage'
+import FinancialReports from '@/pages/finance/FinancialReports'
 
 export default function AppRouter() {
   return (
@@ -132,6 +135,9 @@ export default function AppRouter() {
         <Route path="crm/broadcasts/new" element={<BroadcastCreate />} />
         <Route path="crm/scenarios" element={<AutoScenarios />} />
         <Route path="crm/templates" element={<ResponseTemplates />} />
+        <Route path="finance" element={<FinanceDashboard />} />
+        <Route path="finance/payouts" element={<PayoutPage />} />
+        <Route path="finance/reports" element={<FinancialReports />} />
         <Route path="settings" element={<ProfileSettings />} />
         <Route path="settings/webhooks" element={<WebhookSettings />} />
         <Route path="settings/pms" element={<PMSIntegration />} />

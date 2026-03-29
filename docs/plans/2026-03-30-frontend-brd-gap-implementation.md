@@ -122,12 +122,12 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/router.tsx`
 - Modify: `frontend/src/components/AppLayout.tsx`
 
-- [ ] Build FinanceDashboard with: wallet balance (available + frozen), income chart (week/month/year), recent transactions table with type/date/amount/booking link, filters by type and date
-- [ ] Build PayoutPage with: payout form (amount, method: SBP/bank transfer), daily/monthly limit display, payout history table, auto-payout threshold toggle (FR-102)
-- [ ] Build FinancialReports with: act generation (PDF), wallet history export (CSV/PDF), 1C XML export for legal entities (FR-104)
-- [ ] Add routes `/finance`, `/finance/payouts`, `/finance/reports` and sidebar section in AppLayout
-- [ ] Write tests for finance dashboard, payout form validation, export actions
-- [ ] Run project test suite + lint
+- [x] Build FinanceDashboard with: wallet balance (available + frozen), income chart (week/month/year), recent transactions table with type/date/amount/booking link, filters by type and date
+- [x] Build PayoutPage with: payout form (amount, method: SBP/bank transfer), daily/monthly limit display, payout history table, auto-payout threshold toggle (FR-102)
+- [x] Build FinancialReports with: act generation (PDF), wallet history export (CSV/PDF), 1C XML export for legal entities (FR-104)
+- [x] Add routes `/finance`, `/finance/payouts`, `/finance/reports` and sidebar section in AppLayout
+- [x] Write tests for finance dashboard, payout form validation, export actions
+- [x] Run project test suite + lint
 
 ### Task 9: Owner Smart Pricing & Analytics (FR-089, owner analytics)
 
