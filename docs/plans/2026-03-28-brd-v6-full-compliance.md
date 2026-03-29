@@ -516,12 +516,12 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `internal/service/chat_service.go` (filter outgoing messages)
 - Modify: `internal/moderation/filter.go` (add contact detection patterns)
 
-- [ ] Verify existing chat filter covers: phone numbers (various RU/BY formats), email addresses, URLs
-- [ ] Add pattern: Telegram usernames (@username), WhatsApp links
-- [ ] Replace detected contacts with "[contact info hidden]" message + notification to both parties
-- [ ] Log filtered messages for anti-fraud review
-- [ ] Write tests for all contact detection patterns
-- [ ] Run project test suite - must pass before task 27
+- [x] Verify existing chat filter covers: phone numbers (various RU/BY formats), email addresses, URLs
+- [x] Add pattern: Telegram usernames (@username), WhatsApp links
+- [x] Replace detected contacts with "[contact info hidden]" message + notification to both parties
+- [x] Log filtered messages for anti-fraud review
+- [x] Write tests for all contact detection patterns
+- [x] Run project test suite - must pass before task 27
 
 ### Task 27: Empty States & UX Polish (FR section 2.15, 2.18)
 

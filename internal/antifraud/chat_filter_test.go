@@ -255,6 +255,62 @@ func TestChatFilter_WhatsApp(t *testing.T) {
 	assertDetectionType(t, result, "whatsapp", "wa.me/79991234567")
 }
 
+func TestChatFilter_Viber(t *testing.T) {
+	f := newTestFilter()
+	ctx := context.Background()
+
+	tests := []string{
+		"Пишите viber://chat?number=79991234567",
+		"Добавляйтесь viber://add?number=375291234567",
+	}
+	for _, input := range tests {
+		result := f.Filter(ctx, input)
+		if !result.WasFiltered {
+			t.Errorf("expected filtering for Viber link: %q", input)
+		}
+		assertDetectionType(t, result, "viber", input)
+	}
+}
+
+func TestChatFilter_Instagram(t *testing.T) {
+	f := newTestFilter()
+	ctx := context.Background()
+
+	tests := []string{
+		"Мой инстаграм instagram.com/myprofile",
+		"Подписывайтесь instagr.am/myprofile",
+	}
+	for _, input := range tests {
+		result := f.Filter(ctx, input)
+		if !result.WasFiltered {
+			t.Errorf("expected filtering for Instagram link: %q", input)
+		}
+		assertDetectionType(t, result, "instagram", input)
+	}
+}
+
+func TestChatFilter_OK(t *testing.T) {
+	f := newTestFilter()
+	ctx := context.Background()
+
+	result := f.Filter(ctx, "Добавляйтесь ok.ru/profile/123456")
+	if !result.WasFiltered {
+		t.Error("expected filtering for OK link")
+	}
+	assertDetectionType(t, result, "ok", "ok.ru/profile/123456")
+}
+
+func TestChatFilter_WhatsAppGroup(t *testing.T) {
+	f := newTestFilter()
+	ctx := context.Background()
+
+	result := f.Filter(ctx, "Вступайте chat.whatsapp.com/invite123abc")
+	if !result.WasFiltered {
+		t.Error("expected filtering for WhatsApp group link")
+	}
+	assertDetectionType(t, result, "whatsapp", "chat.whatsapp.com/invite123abc")
+}
+
 func TestChatFilter_MessengerKeywords(t *testing.T) {
 	f := newTestFilter()
 	ctx := context.Background()
@@ -267,6 +323,9 @@ func TestChatFilter_MessengerKeywords(t *testing.T) {
 		"Вот мой вайбер",
 		"Пиши в лс",
 		"Пиши в личку",
+		"Свяжемся в телеграм",
+		"Давай в вотсап",
+		"Мой одноклассники",
 	}
 	for _, input := range tests {
 		result := f.Filter(ctx, input)

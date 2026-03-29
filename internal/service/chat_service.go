@@ -25,15 +25,15 @@ type ChatService interface {
 }
 
 type chatService struct {
-	convRepo    repository.ConversationRepository
-	msgRepo     repository.MessageRepository
-	bhRepo      repository.BathhouseRepository
-	repRepo     repository.RepresentativeRepository
-	access      *AccessChecker
-	notifSvc    NotificationService
-	hub         *notification.Hub
-	chatFilter  antifraud.ChatFilter
-	logger      *logger.Logger
+	convRepo   repository.ConversationRepository
+	msgRepo    repository.MessageRepository
+	bhRepo     repository.BathhouseRepository
+	repRepo    repository.RepresentativeRepository
+	access     *AccessChecker
+	notifSvc   NotificationService
+	hub        *notification.Hub
+	chatFilter antifraud.ChatFilter
+	logger     *logger.Logger
 }
 
 func NewChatService(
@@ -106,6 +106,9 @@ func (s *chatService) SendMessage(ctx context.Context, senderID uuid.UUID, role 
 	if filterResult.WasFiltered {
 		text = filterResult.Filtered
 		s.chatFilter.LogFiltered(ctx, conversationID, senderID, originalText, filterResult)
+
+		// Notify both parties that contact info was filtered.
+		go s.notifyContactInfoFiltered(context.WithoutCancel(ctx), conv, senderID)
 	}
 
 	msg := &domain.Message{
@@ -247,6 +250,47 @@ func (s *chatService) CanAccessConversation(ctx context.Context, userID uuid.UUI
 
 	// Use the user's actual role to check bathhouse management access
 	return s.access.CanManageBathhouse(ctx, userID, role, conv.BathhouseID) == nil
+}
+
+// notifyContactInfoFiltered sends a system notification to both the sender and
+// the other conversation party informing them that contact info was hidden.
+func (s *chatService) notifyContactInfoFiltered(ctx context.Context, conv *domain.Conversation, senderID uuid.UUID) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.logger.Error("panic in notifyContactInfoFiltered", "error", r)
+		}
+	}()
+
+	data := map[string]string{
+		"conversation_id": conv.ID.String(),
+	}
+
+	senderTitle := "Контактные данные скрыты"
+	senderBody := "Ваше сообщение содержало контактные данные, которые были скрыты. Для безопасности сделок общение и оплата проходят через платформу."
+
+	recipientTitle := "Контактные данные скрыты"
+	recipientBody := "Сообщение собеседника содержало контактные данные, которые были скрыты. Для безопасности сделок общение и оплата проходят через платформу."
+
+	// Notify sender.
+	if err := s.notifSvc.Send(ctx, senderID, domain.NotifContactInfoFiltered, senderTitle, senderBody, data); err != nil {
+		s.logger.Warn("failed to send contact filter notification to sender", "sender_id", senderID, "error", err)
+	}
+
+	// Notify the other party (client or owner/reps).
+	if senderID == conv.ClientID {
+		bh, err := s.bhRepo.GetByID(ctx, conv.BathhouseID)
+		if err != nil {
+			s.logger.Warn("failed to get bathhouse for filter notification", "bathhouse_id", conv.BathhouseID, "error", err)
+			return
+		}
+		if err := s.notifSvc.Send(ctx, bh.OwnerID, domain.NotifContactInfoFiltered, recipientTitle, recipientBody, data); err != nil {
+			s.logger.Warn("failed to send contact filter notification to owner", "owner_id", bh.OwnerID, "error", err)
+		}
+	} else {
+		if err := s.notifSvc.Send(ctx, conv.ClientID, domain.NotifContactInfoFiltered, recipientTitle, recipientBody, data); err != nil {
+			s.logger.Warn("failed to send contact filter notification to client", "client_id", conv.ClientID, "error", err)
+		}
+	}
 }
 
 func (s *chatService) sendMessageNotification(ctx context.Context, conv *domain.Conversation, senderID uuid.UUID, text string) {

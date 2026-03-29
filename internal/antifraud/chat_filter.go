@@ -120,7 +120,25 @@ func NewChatFilter(log *logger.Logger) ChatFilter {
 		{
 			name:    "whatsapp",
 			pattern: "whatsapp_link",
-			re:      regexp.MustCompile(`(?i)wa\.me/[^\s]+`),
+			re:      regexp.MustCompile(`(?i)(?:wa\.me/|chat\.whatsapp\.com/)[^\s]+`),
+		},
+		// Viber deep links
+		{
+			name:    "viber",
+			pattern: "viber_link",
+			re:      regexp.MustCompile(`(?i)viber://[^\s]+`),
+		},
+		// Instagram links
+		{
+			name:    "instagram",
+			pattern: "instagram_link",
+			re:      regexp.MustCompile(`(?i)(?:instagram\.com|instagr\.am)/[^\s]+`),
+		},
+		// OK.ru (Odnoklassniki) links
+		{
+			name:    "ok",
+			pattern: "ok_link",
+			re:      regexp.MustCompile(`(?i)ok\.ru/[^\s]+`),
 		},
 		// --- Generic URLs ---
 		// With protocol or www prefix
@@ -139,7 +157,7 @@ func NewChatFilter(log *logger.Logger) ChatFilter {
 		{
 			name:    "messenger_keyword",
 			pattern: "messenger_keyword",
-			re:      regexp.MustCompile(`(?i)(?:напиши\s+(?:в\s+)?(?:вотсап|whatsapp|ватсап|вацап|телегр(?:ам|амм)|вайбер|viber)|мой\s+(?:телегр(?:ам|амм)|вотсап|whatsapp|ватсап|вацап|вайбер|viber|инст(?:а|аграм)|instagram)|пиши\s+в\s+(?:лс|личк[уи]|директ|direct))`),
+			re:      regexp.MustCompile(`(?i)(?:напиши\s+(?:в\s+)?(?:вотсап|whatsapp|ватсап|вацап|телегр(?:ам|амм)|вайбер|viber|одноклассник[иах])|мой\s+(?:телегр(?:ам|амм)|вотсап|whatsapp|ватсап|вацап|вайбер|viber|инст(?:а|аграм)|instagram|одноклассник[иах])|пиши\s+в\s+(?:лс|личк[уи]|директ|direct)|свяжемся\s+(?:в\s+)?(?:вотсап|whatsapp|ватсап|телегр(?:ам|амм)|вайбер|viber)|давай\s+(?:в\s+)?(?:вотсап|whatsapp|ватсап|телегр(?:ам|амм)|вайбер|viber))`),
 		},
 	}
 

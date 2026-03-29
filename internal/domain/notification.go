@@ -53,6 +53,7 @@ const (
 	NotifAutoScenario                  NotificationType = "auto_scenario"
 	NotifClientReview                  NotificationType = "client_review"
 	NotifReviewRevealed                NotificationType = "review_revealed"
+	NotifContactInfoFiltered           NotificationType = "contact_info_filtered"
 )
 
 func (t NotificationType) IsValid() bool {
@@ -74,7 +75,8 @@ func (t NotificationType) IsValid() bool {
 		NotifSavedSearchMatch,
 		NotifLowRatingWarning, NotifBathhouseDepublished,
 		NotifBroadcast, NotifAutoScenario,
-		NotifClientReview, NotifReviewRevealed:
+		NotifClientReview, NotifReviewRevealed,
+		NotifContactInfoFiltered:
 		return true
 	}
 	return false
@@ -167,7 +169,8 @@ func (p *NotificationPreferences) WantsEventType(t NotificationType) bool {
 		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal,
 		NotifSavedSearchMatch,
 		NotifLowRatingWarning, NotifBathhouseDepublished,
-		NotifClientReview, NotifReviewRevealed:
+		NotifClientReview, NotifReviewRevealed,
+		NotifContactInfoFiltered:
 		return true
 	}
 	return false

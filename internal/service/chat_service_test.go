@@ -494,3 +494,82 @@ func TestChatService_CanAccessConversation_NotFound(t *testing.T) {
 		t.Error("should return false for non-existent conversation")
 	}
 }
+
+func TestChatService_SendMessage_ContactInfoFiltered(t *testing.T) {
+	env := newChatTestEnv()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	conv, _ := env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
+
+	// Message with phone number should be filtered.
+	msg, err := env.svc.SendMessage(context.Background(), clientID, domain.RoleClient, conv.ID, "Звоните +7 999 123 45 67")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if msg.Text == "Звоните +7 999 123 45 67" {
+		t.Error("phone number should have been filtered from message text")
+	}
+	if msg.Text != "Звоните [контактные данные скрыты]" {
+		t.Errorf("filtered text = %q, want %q", msg.Text, "Звоните [контактные данные скрыты]")
+	}
+}
+
+func TestChatService_SendMessage_EmailFiltered(t *testing.T) {
+	env := newChatTestEnv()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	conv, _ := env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
+
+	msg, err := env.svc.SendMessage(context.Background(), clientID, domain.RoleClient, conv.ID, "Пишите на user@mail.ru")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if msg.Text == "Пишите на user@mail.ru" {
+		t.Error("email should have been filtered from message text")
+	}
+	if msg.Text != "Пишите на [контактные данные скрыты]" {
+		t.Errorf("filtered text = %q, want %q", msg.Text, "Пишите на [контактные данные скрыты]")
+	}
+}
+
+func TestChatService_SendMessage_TelegramFiltered(t *testing.T) {
+	env := newChatTestEnv()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	conv, _ := env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
+
+	msg, err := env.svc.SendMessage(context.Background(), clientID, domain.RoleClient, conv.ID, "Мой телеграм t.me/myuser")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if msg.Text == "Мой телеграм t.me/myuser" {
+		t.Error("telegram link should have been filtered from message text")
+	}
+}
+
+func TestChatService_SendMessage_CleanMessageNotFiltered(t *testing.T) {
+	env := newChatTestEnv()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, env.bhRepo, ownerID)
+
+	conv, _ := env.svc.StartConversation(context.Background(), clientID, bh.ID, nil)
+
+	msg, err := env.svc.SendMessage(context.Background(), clientID, domain.RoleClient, conv.ID, "Хочу забронировать на субботу в 14:00")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if msg.Text != "Хочу забронировать на субботу в 14:00" {
+		t.Errorf("clean message was modified: %q", msg.Text)
+	}
+}

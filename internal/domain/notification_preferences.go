@@ -153,7 +153,8 @@ func MapNotificationTypeToEvent(t NotificationType) NotificationEventType {
 		NotifOwnerCancellationWarning, NotifOwnerCancellationPenalty,
 		NotifOwnerResponseRateWarning, NotifOwnerCancellationCompensation,
 		NotifAccountDeletionRequested, NotifAccountDeletionReminder, NotifAccountDeletionFinal,
-		NotifSystem, NotifReminder, NotifReviewHidden, NotifBookingReminderOwner5min:
+		NotifSystem, NotifReminder, NotifReviewHidden, NotifBookingReminderOwner5min,
+		NotifContactInfoFiltered:
 		return EventSystem
 	default:
 		return EventSystem
