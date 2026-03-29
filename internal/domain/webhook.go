@@ -108,15 +108,21 @@ func isPrivateHost(host string) bool {
 	}
 	ip := net.ParseIP(host)
 	if ip == nil {
-		// Could be a hostname — resolve it
+		// Could be a hostname — resolve it and check all addresses
 		addrs, err := net.LookupHost(host)
 		if err != nil || len(addrs) == 0 {
 			return true // unresolvable hosts are blocked
 		}
-		ip = net.ParseIP(addrs[0])
-		if ip == nil {
-			return true
+		for _, addr := range addrs {
+			resolved := net.ParseIP(addr)
+			if resolved == nil {
+				continue
+			}
+			if resolved.IsLoopback() || resolved.IsPrivate() || resolved.IsLinkLocalUnicast() || resolved.IsLinkLocalMulticast() || resolved.IsUnspecified() {
+				return true
+			}
 		}
+		return false
 	}
 	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified()
 }

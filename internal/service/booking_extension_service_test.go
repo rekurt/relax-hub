@@ -80,9 +80,10 @@ func createConfirmedBooking(t *testing.T, _ service.BookingService, bhRepo *mock
 	bh := createBathhouse(t, bhRepo, ownerID)
 
 	now := time.Now()
-	// Booking is happening right now (confirmed, active session)
-	start := time.Date(now.Year(), now.Month(), now.Day(), now.Hour()-1, 0, 0, 0, now.Location())
-	end := start.Add(3 * time.Hour)
+	// Use tomorrow at 10:00 to ensure the session hasn't ended and extension stays within working hours
+	tomorrow := now.AddDate(0, 0, 1)
+	start := time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 10, 0, 0, 0, tomorrow.Location())
+	end := start.Add(3 * time.Hour) // 13:00
 
 	booking := &domain.Booking{
 		ID:          uuid.New(),

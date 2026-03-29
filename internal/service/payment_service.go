@@ -103,18 +103,38 @@ func NewPaymentService(
 	}
 }
 
-// currencyAndProvider returns the payment currency and provider name based on the user's wallet.
-// Falls back to RUB/yookassa if the wallet is not found.
-func (s *paymentService) currencyAndProvider(ctx context.Context, userID uuid.UUID) (string, string) {
+// currencyAndProvider returns the payment currency, provider name, and the actual PaymentProvider
+// for the user's region. Falls back to RUB/yookassa/default provider if the wallet is not found.
+func (s *paymentService) currencyAndProvider(ctx context.Context, userID uuid.UUID) (string, string, payment.PaymentProvider) {
 	if s.walletSvc != nil {
 		if w, err := s.walletSvc.GetWallet(ctx, userID); err == nil {
 			switch w.Currency {
 			case domain.WalletCurrencyBYN:
-				return "BYN", "bepaid"
+				if factory, ok := s.provider.(*payment.ProviderFactory); ok {
+					if p, fErr := factory.ProviderForRegion("BY"); fErr == nil {
+						return "BYN", "bepaid", p
+					}
+				}
+				return "BYN", "bepaid", s.provider
 			}
 		}
 	}
-	return "RUB", "yookassa"
+	return "RUB", "yookassa", s.provider
+}
+
+// providerForPayment returns the PaymentProvider for an existing payment record,
+// based on its stored Provider field.
+func (s *paymentService) providerForPayment(p *domain.Payment) payment.PaymentProvider {
+	if factory, ok := s.provider.(*payment.ProviderFactory); ok {
+		region := "RU"
+		if p.Provider == "bepaid" {
+			region = "BY"
+		}
+		if prov, err := factory.ProviderForRegion(region); err == nil {
+			return prov
+		}
+	}
+	return s.provider
 }
 
 func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, bookingID uuid.UUID, paymentMethod domain.PaymentMethod) (string, error) {
@@ -156,7 +176,7 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 	isHold := booking.Status == domain.BookingPendingOwner
 	capture := !isHold
 
-	currency, providerName := s.currencyAndProvider(ctx, userID)
+	currency, providerName, regionProvider := s.currencyAndProvider(ctx, userID)
 
 	now := time.Now()
 	p := &domain.Payment{
@@ -186,7 +206,7 @@ func (s *paymentService) InitiatePayment(ctx context.Context, userID uuid.UUID, 
 	}
 
 	description := fmt.Sprintf("Оплата бронирования %s", bookingID.String()[:8])
-	result, err := s.provider.CreatePayment(ctx, payment.CreatePaymentRequest{
+	result, err := regionProvider.CreatePayment(ctx, payment.CreatePaymentRequest{
 		Amount:      p.Amount,
 		Currency:    p.Currency,
 		Description: description,
@@ -258,7 +278,7 @@ func (s *paymentService) InitiateTokenPayment(ctx context.Context, userID uuid.U
 	isHold := booking.Status == domain.BookingPendingOwner
 	capture := !isHold
 
-	currency, providerName := s.currencyAndProvider(ctx, userID)
+	currency, providerName, regionProvider := s.currencyAndProvider(ctx, userID)
 
 	now := time.Now()
 	p := &domain.Payment{
@@ -288,7 +308,7 @@ func (s *paymentService) InitiateTokenPayment(ctx context.Context, userID uuid.U
 	}
 
 	description := fmt.Sprintf("Оплата бронирования %s", bookingID.String()[:8])
-	result, err := s.provider.CreatePayment(ctx, payment.CreatePaymentRequest{
+	result, err := regionProvider.CreatePayment(ctx, payment.CreatePaymentRequest{
 		Amount:       p.Amount,
 		Currency:     p.Currency,
 		Description:  description,
@@ -370,7 +390,7 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 	}
 	// If CardAmount only, keep the provided method (card/sbp)
 
-	currency, providerName := s.currencyAndProvider(ctx, userID)
+	currency, providerName, regionProvider := s.currencyAndProvider(ctx, userID)
 
 	now := time.Now()
 	p := &domain.Payment{
@@ -481,7 +501,7 @@ func (s *paymentService) InitiateComboPayment(ctx context.Context, userID uuid.U
 	}
 
 	description := fmt.Sprintf("Оплата бронирования %s", bookingID.String()[:8])
-	result, err := s.provider.CreatePayment(ctx, payment.CreatePaymentRequest{
+	result, err := regionProvider.CreatePayment(ctx, payment.CreatePaymentRequest{
 		Amount:      req.CardAmount,
 		Currency:    p.Currency,
 		Description: description,
@@ -557,7 +577,7 @@ func (s *paymentService) CaptureHoldPayment(ctx context.Context, bookingID uuid.
 		if captureAmount == 0 {
 			captureAmount = p.Amount
 		}
-		if err := s.provider.CapturePayment(ctx, p.ExternalID, captureAmount); err != nil {
+		if err := s.providerForPayment(p).CapturePayment(ctx, p.ExternalID, captureAmount); err != nil {
 			return fmt.Errorf("failed to capture card hold: %w", err)
 		}
 	}
@@ -615,7 +635,7 @@ func (s *paymentService) ReleaseHoldPayment(ctx context.Context, bookingID uuid.
 
 	// Cancel card authorization if external payment exists
 	if p.ExternalID != "" {
-		if err := s.provider.CancelPayment(ctx, p.ExternalID); err != nil {
+		if err := s.providerForPayment(p).CancelPayment(ctx, p.ExternalID); err != nil {
 			s.logger.Error("failed to cancel card hold", "booking_id", bookingID, "external_id", p.ExternalID, "error", err)
 		}
 	}
@@ -674,7 +694,7 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 					cardRefundAmount = p.Amount
 				}
 				if cardRefundAmount > 0 && p.ExternalID != "" {
-					if refundErr := s.provider.CreateRefund(ctx, p.ExternalID, cardRefundAmount); refundErr != nil {
+					if refundErr := s.providerForPayment(p).CreateRefund(ctx, p.ExternalID, cardRefundAmount); refundErr != nil {
 						return fmt.Errorf("failed to auto-refund cancelled booking on retry: %w", refundErr)
 					}
 				}
@@ -697,7 +717,7 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 	}
 
 	// Verify the webhook by checking the actual payment status at the provider
-	providerStatus, err := s.provider.GetPaymentStatus(ctx, event.ExternalID)
+	providerStatus, err := s.providerForPayment(p).GetPaymentStatus(ctx, event.ExternalID)
 	if err != nil {
 		s.logger.Error("failed to verify payment status with provider",
 			"external_id", event.ExternalID, "error", err)
@@ -750,7 +770,7 @@ func (s *paymentService) HandleWebhook(ctx context.Context, event WebhookEvent) 
 				cardRefundAmount = p.Amount
 			}
 			if cardRefundAmount > 0 && p.ExternalID != "" {
-				if refundErr := s.provider.CreateRefund(ctx, event.ExternalID, cardRefundAmount); refundErr != nil {
+				if refundErr := s.providerForPayment(p).CreateRefund(ctx, event.ExternalID, cardRefundAmount); refundErr != nil {
 					s.logger.Error("failed to auto-refund cancelled booking payment",
 						"booking_id", p.BookingID, "payment_id", p.ID, "error", refundErr)
 					return fmt.Errorf("failed to auto-refund cancelled booking: %w", refundErr)
@@ -923,7 +943,7 @@ func (s *paymentService) executeRefund(ctx context.Context, p *domain.Payment, u
 
 	// Default: refund to card
 	if p.ExternalID != "" {
-		if err := s.provider.CreateRefund(ctx, p.ExternalID, refundAmount); err != nil {
+		if err := s.providerForPayment(p).CreateRefund(ctx, p.ExternalID, refundAmount); err != nil {
 			return fmt.Errorf("failed to create refund: %w", err)
 		}
 	}
@@ -990,7 +1010,7 @@ func (s *paymentService) executeComboRefund(ctx context.Context, p *domain.Payme
 				return fmt.Errorf("failed to redirect card refund to wallet: %w", err)
 			}
 		} else if p.ExternalID != "" {
-			if err := s.provider.CreateRefund(ctx, p.ExternalID, cardRefund); err != nil {
+			if err := s.providerForPayment(p).CreateRefund(ctx, p.ExternalID, cardRefund); err != nil {
 				return fmt.Errorf("failed to create card refund: %w", err)
 			}
 		}
