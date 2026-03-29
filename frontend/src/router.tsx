@@ -18,6 +18,7 @@ import ChatPage from '@/pages/chat/ChatPage'
 import NotificationList from '@/pages/notifications/NotificationList'
 import ProfileSettings from '@/pages/settings/ProfileSettings'
 import WebhookSettings from '@/pages/settings/WebhookSettings'
+import PMSIntegration from '@/pages/settings/PMSIntegration'
 import SubscriptionPage from '@/pages/subscriptions/SubscriptionPage'
 import PromotionCampaign from '@/pages/promotion/PromotionCampaign'
 import WidgetSettings from '@/pages/widget/WidgetSettings'
@@ -128,6 +129,7 @@ export default function AppRouter() {
         <Route path="crm/templates" element={<ResponseTemplates />} />
         <Route path="settings" element={<ProfileSettings />} />
         <Route path="settings/webhooks" element={<WebhookSettings />} />
+        <Route path="settings/pms" element={<PMSIntegration />} />
         <Route path="notifications" element={<NotificationList />} />
       </Route>
 

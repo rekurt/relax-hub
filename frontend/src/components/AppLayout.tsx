@@ -30,6 +30,8 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MenuOutlined,
+  SettingOutlined,
+  ApiOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -74,7 +76,16 @@ function useMenuItems(unreadCount: number): MenuProps['items'] {
         { key: '/crm/templates', label: 'Шаблоны' },
       ],
     },
-    { key: '/settings', icon: <UserOutlined />, label: 'Настройки' },
+    {
+      key: '/settings',
+      icon: <SettingOutlined />,
+      label: 'Настройки',
+      children: [
+        { key: '/settings', label: 'Профиль' },
+        { key: '/settings/webhooks', label: 'Вебхуки' },
+        { key: '/settings/pms', label: 'PMS интеграции', icon: <ApiOutlined /> },
+      ],
+    },
   ]
 }
 
@@ -100,6 +111,8 @@ const breadcrumbNameMap: Record<string, string> = {
   '/crm/scenarios': 'Сценарии',
   '/crm/templates': 'Шаблоны',
   '/settings': 'Настройки',
+  '/settings/webhooks': 'Вебхуки',
+  '/settings/pms': 'PMS интеграции',
   '/notifications': 'Уведомления',
 }
 
@@ -141,11 +154,15 @@ export default function AppLayout() {
   const breadcrumbs = useBreadcrumbs()
 
   const pathParts = location.pathname.split('/').filter(Boolean)
-  const selectedKey = pathParts.length >= 2 && pathParts[0] === 'crm'
+  const selectedKey = (pathParts.length >= 2 && pathParts[0] === 'crm')
     ? '/' + pathParts.slice(0, 2).join('/')
-    : '/' + (pathParts[0] ?? '')
+    : (pathParts.length >= 2 && pathParts[0] === 'settings')
+      ? '/' + pathParts.slice(0, 2).join('/')
+      : '/' + (pathParts[0] ?? '')
   const selectedKeys = [selectedKey === '/' ? '/' : selectedKey]
-  const openKeys = pathParts[0] === 'crm' ? ['/crm'] : []
+  const openKeys: string[] = []
+  if (pathParts[0] === 'crm') openKeys.push('/crm')
+  if (pathParts[0] === 'settings') openKeys.push('/settings')
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     navigate(key)
