@@ -59,12 +59,15 @@ const (
 	MaxVideoSizeBytes  = 50 * 1024 * 1024 // 50MB
 	MaxImageWidth      = 1920
 	ThumbnailSize      = 300
+	MediumImageSize    = 800
+	LargeImageSize     = 1200
 )
 
 var (
 	AllowedImageMimeTypes = map[string]bool{
 		"image/jpeg": true,
 		"image/png":  true,
+		"image/webp": true,
 	}
 	AllowedVideoMimeTypes = map[string]bool{
 		"video/mp4":  true,
@@ -80,6 +83,9 @@ type Media struct {
 	Type         MediaType
 	URL          string
 	ThumbnailURL string
+	MediumURL    string
+	LargeURL     string
+	BlurHash     string
 	OriginalName string
 	Size         int64
 	MimeType     string

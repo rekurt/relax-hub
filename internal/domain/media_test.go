@@ -147,7 +147,7 @@ func TestMedia_ValidateMimeType(t *testing.T) {
 	}{
 		{"jpeg", Media{Type: MediaTypeImage, MimeType: "image/jpeg"}, false},
 		{"png", Media{Type: MediaTypeImage, MimeType: "image/png"}, false},
-		{"webp", Media{Type: MediaTypeImage, MimeType: "image/webp"}, true},
+		{"webp", Media{Type: MediaTypeImage, MimeType: "image/webp"}, false},
 		{"invalid image mime", Media{Type: MediaTypeImage, MimeType: "image/gif"}, true},
 		{"mp4", Media{Type: MediaTypeVideo, MimeType: "video/mp4"}, false},
 		{"webm", Media{Type: MediaTypeVideo, MimeType: "video/webm"}, false},

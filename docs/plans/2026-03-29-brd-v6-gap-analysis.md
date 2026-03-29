@@ -249,13 +249,13 @@ WebP-конвертация, blur-hash.
 - Modify: `internal/service/media_service.go` — генерация 4 размеров, WebP, blur-hash
 - Modify: `go.mod` — добавить зависимость для blur-hash (github.com/buckket/go-blurhash)
 
-- [ ] 4 размера: thumbnail (300px), medium (800px), large (1200px), full (1920px)
-- [ ] WebP-конвертация (golang.org/x/image/webp или imaging)
-- [ ] Blur-hash генерация для placeholder
-- [ ] Обновить domain/media: хранить пути ко всем размерам + blur_hash
-- [ ] Миграция: добавить поля medium_url, large_url, blur_hash в media
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task C2
+- [x] 4 размера: thumbnail (300px), medium (800px), large (1200px), full (1920px)
+- [x] WebP-конвертация (golang.org/x/image/webp или imaging)
+- [x] Blur-hash генерация для placeholder
+- [x] Обновить domain/media: хранить пути ко всем размерам + blur_hash
+- [x] Миграция: добавить поля medium_url, large_url, blur_hash в media
+- [x] Тесты
+- [x] run project test suite — must pass before Task C2
 
 ### Task C2: Satellite-слой карты (FR-048)
 

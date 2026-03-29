@@ -22,14 +22,14 @@ func NewMediaRepository(pool *pgxpool.Pool) repository.MediaRepository {
 	return &mediaRepo{pool: pool}
 }
 
-var mediaColumns = `id, owner_type, owner_id, user_id, type, url, thumbnail_url, original_name, size, mime_type, width, height, status, created_at`
+var mediaColumns = `id, owner_type, owner_id, user_id, type, url, thumbnail_url, medium_url, large_url, blur_hash, original_name, size, mime_type, width, height, status, created_at`
 
 func scanMedia(row pgx.Row) (*domain.Media, error) {
 	var m domain.Media
 	err := row.Scan(
 		&m.ID, &m.OwnerType, &m.OwnerID, &m.UserID,
-		&m.Type, &m.URL, &m.ThumbnailURL, &m.OriginalName,
-		&m.Size, &m.MimeType, &m.Width, &m.Height,
+		&m.Type, &m.URL, &m.ThumbnailURL, &m.MediumURL, &m.LargeURL, &m.BlurHash,
+		&m.OriginalName, &m.Size, &m.MimeType, &m.Width, &m.Height,
 		&m.Status, &m.CreatedAt,
 	)
 	if err != nil {
@@ -55,8 +55,8 @@ func scanMediaRows(rows pgx.Rows) ([]domain.Media, error) {
 
 func (r *mediaRepo) Create(ctx context.Context, media *domain.Media) error {
 	query := `
-		INSERT INTO media (id, owner_type, owner_id, user_id, type, url, thumbnail_url, original_name, size, mime_type, width, height, status, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+		INSERT INTO media (id, owner_type, owner_id, user_id, type, url, thumbnail_url, medium_url, large_url, blur_hash, original_name, size, mime_type, width, height, status, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`
 
 	if media.ID == uuid.Nil {
 		media.ID = uuid.New()
@@ -70,8 +70,8 @@ func (r *mediaRepo) Create(ctx context.Context, media *domain.Media) error {
 
 	_, err := r.pool.Exec(ctx, query,
 		media.ID, string(media.OwnerType), media.OwnerID, media.UserID,
-		string(media.Type), media.URL, media.ThumbnailURL, media.OriginalName,
-		media.Size, media.MimeType, media.Width, media.Height,
+		string(media.Type), media.URL, media.ThumbnailURL, media.MediumURL, media.LargeURL, media.BlurHash,
+		media.OriginalName, media.Size, media.MimeType, media.Width, media.Height,
 		string(media.Status), media.CreatedAt,
 	)
 	if err != nil {
@@ -171,7 +171,7 @@ func (r *mediaRepo) ListByBathhouseReviews(ctx context.Context, bathhouseID uuid
 	}
 
 	offset := (page - 1) * pageSize
-	query := `SELECT m.id, m.owner_type, m.owner_id, m.user_id, m.type, m.url, m.thumbnail_url, m.original_name, m.size, m.mime_type, m.width, m.height, m.status, m.created_at FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image' AND rv.status = 'approved' AND m.status = 'approved' ORDER BY m.created_at DESC LIMIT $2 OFFSET $3`
+	query := `SELECT m.id, m.owner_type, m.owner_id, m.user_id, m.type, m.url, m.thumbnail_url, m.medium_url, m.large_url, m.blur_hash, m.original_name, m.size, m.mime_type, m.width, m.height, m.status, m.created_at FROM media m JOIN reviews rv ON m.owner_type = 'review' AND m.owner_id = rv.id WHERE rv.bathhouse_id = $1 AND m.type = 'image' AND rv.status = 'approved' AND m.status = 'approved' ORDER BY m.created_at DESC LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, query, bathhouseID, pageSize, offset)
 	if err != nil {

@@ -91,6 +91,135 @@ func TestMediaService_Upload_Image_Success(t *testing.T) {
 	}
 }
 
+func TestMediaService_Upload_Image_MultiSize(t *testing.T) {
+	env := newMediaTestEnv()
+	imgData := createTestJPEGData(t, 2500, 1800)
+
+	media, err := env.svc.Upload(context.Background(), uuid.New(), service.UploadMediaInput{
+		OwnerType:    domain.MediaOwnerReview,
+		OwnerID:      uuid.New(),
+		Data:         imgData,
+		OriginalName: "large-photo.jpg",
+		Size:         int64(imgData.Len()),
+		MimeType:     "image/jpeg",
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// All 4 size URLs should be populated
+	if media.URL == "" {
+		t.Error("full URL should not be empty")
+	}
+	if media.ThumbnailURL == "" {
+		t.Error("thumbnail URL should not be empty")
+	}
+	if media.MediumURL == "" {
+		t.Error("medium URL should not be empty")
+	}
+	if media.LargeURL == "" {
+		t.Error("large URL should not be empty")
+	}
+
+	// URLs should be distinct
+	urls := map[string]bool{media.URL: true, media.ThumbnailURL: true, media.MediumURL: true, media.LargeURL: true}
+	if len(urls) != 4 {
+		t.Errorf("expected 4 distinct URLs, got %d", len(urls))
+	}
+
+	// Full size should be capped at MaxImageWidth
+	if media.Width > domain.MaxImageWidth {
+		t.Errorf("width = %d, should be <= %d after resize", media.Width, domain.MaxImageWidth)
+	}
+}
+
+func TestMediaService_Upload_Image_WebPGenerated(t *testing.T) {
+	env := newMediaTestEnv()
+	imgData := createTestJPEGData(t, 1000, 800)
+
+	media, err := env.svc.Upload(context.Background(), uuid.New(), service.UploadMediaInput{
+		OwnerType:    domain.MediaOwnerReview,
+		OwnerID:      uuid.New(),
+		Data:         imgData,
+		OriginalName: "photo.jpg",
+		Size:         int64(imgData.Len()),
+		MimeType:     "image/jpeg",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// WebP variants should exist in storage alongside JPEG
+	// The JPEG URL contains the media ID, derive the WebP path
+	baseID := media.ID.String()
+	webpFiles := []string{
+		"media/" + baseID + "/full.webp",
+		"media/" + baseID + "/large.webp",
+		"media/" + baseID + "/medium.webp",
+		"media/" + baseID + "/thumb.webp",
+	}
+
+	for _, f := range webpFiles {
+		if !env.store.Has(f) {
+			t.Errorf("WebP file %q should exist in storage", f)
+		}
+	}
+}
+
+func TestMediaService_Upload_Image_BlurHash(t *testing.T) {
+	env := newMediaTestEnv()
+	imgData := createTestJPEGData(t, 600, 400)
+
+	media, err := env.svc.Upload(context.Background(), uuid.New(), service.UploadMediaInput{
+		OwnerType:    domain.MediaOwnerReview,
+		OwnerID:      uuid.New(),
+		Data:         imgData,
+		OriginalName: "photo.jpg",
+		Size:         int64(imgData.Len()),
+		MimeType:     "image/jpeg",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if media.BlurHash == "" {
+		t.Error("blur_hash should not be empty")
+	}
+	// BlurHash strings are typically 20-30+ characters
+	if len(media.BlurHash) < 6 {
+		t.Errorf("blur_hash too short: %q", media.BlurHash)
+	}
+}
+
+func TestMediaService_Upload_Image_SmallImageNoUpscale(t *testing.T) {
+	env := newMediaTestEnv()
+	// Image smaller than all size targets except thumbnail
+	imgData := createTestJPEGData(t, 500, 400)
+
+	media, err := env.svc.Upload(context.Background(), uuid.New(), service.UploadMediaInput{
+		OwnerType:    domain.MediaOwnerReview,
+		OwnerID:      uuid.New(),
+		Data:         imgData,
+		OriginalName: "small.jpg",
+		Size:         int64(imgData.Len()),
+		MimeType:     "image/jpeg",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Width should not exceed original (no upscaling)
+	if media.Width > 500 {
+		t.Errorf("width = %d, should not be upscaled beyond 500", media.Width)
+	}
+
+	// All URLs should still be set (using original size for larger targets)
+	if media.URL == "" || media.MediumURL == "" || media.LargeURL == "" || media.ThumbnailURL == "" {
+		t.Error("all size URLs should be set even for small images")
+	}
+}
+
 func TestMediaService_Upload_Image_ResizeLarge(t *testing.T) {
 	env := newMediaTestEnv()
 	imgData := createTestJPEGData(t, 3000, 2000)
@@ -135,6 +264,10 @@ func TestMediaService_Upload_Video_Success(t *testing.T) {
 	}
 	if media.URL == "" {
 		t.Error("url should not be empty")
+	}
+	// Videos should not have multi-size URLs or blur hash
+	if media.MediumURL != "" || media.LargeURL != "" || media.BlurHash != "" {
+		t.Error("videos should not have medium/large/blurhash")
 	}
 }
 
@@ -381,5 +514,34 @@ func TestMediaService_ListByBathhouse(t *testing.T) {
 	}
 	if result.TotalCount != 2 {
 		t.Errorf("total_count = %d, want 2", result.TotalCount)
+	}
+}
+
+func TestMediaService_Upload_WebP_Accepted(t *testing.T) {
+	// Verify that image/webp is accepted as input mime type
+	env := newMediaTestEnv()
+	// WebP input validation should pass (actual decode may fail with fake data,
+	// but the mime type should be accepted)
+	imgData := createTestJPEGData(t, 400, 300)
+
+	// Upload as JPEG first, then verify WebP mime type is in allowed list
+	if !domain.AllowedImageMimeTypes["image/webp"] {
+		t.Error("image/webp should be in AllowedImageMimeTypes")
+	}
+
+	// Actual upload with JPEG data but verifying the flow works
+	media, err := env.svc.Upload(context.Background(), uuid.New(), service.UploadMediaInput{
+		OwnerType:    domain.MediaOwnerReview,
+		OwnerID:      uuid.New(),
+		Data:         imgData,
+		OriginalName: "photo.jpg",
+		Size:         int64(imgData.Len()),
+		MimeType:     "image/jpeg",
+	})
+	if err != nil {
+		t.Fatalf("upload: %v", err)
+	}
+	if media.MediumURL == "" || media.LargeURL == "" {
+		t.Error("medium and large URLs should be populated")
 	}
 }

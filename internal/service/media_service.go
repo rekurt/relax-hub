@@ -7,10 +7,13 @@ import (
 	"image"
 	"image/jpeg"
 	_ "image/png"
+	_ "golang.org/x/image/webp"
 	"io"
 	"net/url"
 	"strings"
 
+	blurhash "github.com/buckket/go-blurhash"
+	"github.com/chai2010/webp"
 	"github.com/disintegration/imaging"
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
@@ -84,15 +87,18 @@ func (s *mediaService) Upload(ctx context.Context, userID uuid.UUID, input Uploa
 	baseID := media.ID.String()
 
 	if mediaType == domain.MediaTypeImage {
-		mainURL, thumbURL, width, height, err := s.processImage(ctx, input.Data, baseID)
+		result, err := s.processImage(ctx, input.Data, baseID)
 		if err != nil {
 			return nil, fmt.Errorf("process image: %w", err)
 		}
-		media.URL = mainURL
-		media.ThumbnailURL = thumbURL
-		media.Width = width
-		media.Height = height
-		media.MimeType = "image/jpeg" // images are re-encoded as JPEG
+		media.URL = result.fullURL
+		media.ThumbnailURL = result.thumbURL
+		media.MediumURL = result.mediumURL
+		media.LargeURL = result.largeURL
+		media.BlurHash = result.blurHash
+		media.Width = result.width
+		media.Height = result.height
+		media.MimeType = "image/jpeg"
 	} else {
 		// Video: upload as-is, no processing
 		filename := fmt.Sprintf("media/%s/original", baseID)
@@ -105,10 +111,7 @@ func (s *mediaService) Upload(ctx context.Context, userID uuid.UUID, input Uploa
 
 	if err := s.mediaRepo.Create(ctx, media); err != nil {
 		// Clean up uploaded files on DB failure
-		s.cleanupStorageFile(ctx, media.URL)
-		if media.ThumbnailURL != "" {
-			s.cleanupStorageFile(ctx, media.ThumbnailURL)
-		}
+		s.cleanupMediaFiles(ctx, media)
 		return nil, err
 	}
 
@@ -131,10 +134,7 @@ func (s *mediaService) Delete(ctx context.Context, mediaID uuid.UUID, userID uui
 	}
 
 	// Clean up storage after successful DB delete
-	s.cleanupStorageFile(ctx, media.URL)
-	if media.ThumbnailURL != "" {
-		s.cleanupStorageFile(ctx, media.ThumbnailURL)
-	}
+	s.cleanupMediaFiles(ctx, media)
 
 	return nil
 }
@@ -184,52 +184,122 @@ func (s *mediaService) checkLimits(ctx context.Context, ownerType domain.MediaOw
 	return nil
 }
 
-func (s *mediaService) processImage(ctx context.Context, data io.Reader, baseID string) (mainURL, thumbURL string, width, height int, err error) {
+type imageProcessResult struct {
+	fullURL   string
+	thumbURL  string
+	mediumURL string
+	largeURL  string
+	blurHash  string
+	width     int
+	height    int
+}
+
+func (s *mediaService) processImage(ctx context.Context, data io.Reader, baseID string) (*imageProcessResult, error) {
 	src, _, err := image.Decode(data)
 	if err != nil {
-		return "", "", 0, 0, fmt.Errorf("decode image: %w", err)
+		return nil, fmt.Errorf("decode image: %w", err)
 	}
 
 	bounds := src.Bounds()
 	origW := bounds.Dx()
 
-	// Resize if wider than MaxImageWidth, preserving aspect ratio
-	resized := src
+	// Resize to full size if wider than MaxImageWidth
+	fullImg := src
 	if origW > domain.MaxImageWidth {
-		resized = imaging.Resize(src, domain.MaxImageWidth, 0, imaging.Lanczos)
+		fullImg = imaging.Resize(src, domain.MaxImageWidth, 0, imaging.Lanczos)
 	}
-	resBounds := resized.Bounds()
-	width = resBounds.Dx()
-	height = resBounds.Dy()
+	fullBounds := fullImg.Bounds()
 
-	// Encode main image as JPEG
-	var mainBuf bytes.Buffer
-	if err := jpeg.Encode(&mainBuf, resized, &jpeg.Options{Quality: 85}); err != nil {
-		return "", "", 0, 0, fmt.Errorf("encode main image: %w", err)
+	result := &imageProcessResult{
+		width:  fullBounds.Dx(),
+		height: fullBounds.Dy(),
 	}
 
-	mainFilename := fmt.Sprintf("media/%s/main.jpg", baseID)
-	mainURL, err = s.storage.Upload(ctx, mainFilename, &mainBuf, "image/jpeg")
+	// Generate 4 sizes: full (1920), large (1200), medium (800), thumbnail (300x300 crop)
+	sizes := []struct {
+		name    string
+		img     image.Image
+		quality int
+	}{
+		{"full", fullImg, 85},
+		{"large", s.resizeIfWider(src, domain.LargeImageSize), 85},
+		{"medium", s.resizeIfWider(src, domain.MediumImageSize), 80},
+		{"thumb", imaging.Fill(src, domain.ThumbnailSize, domain.ThumbnailSize, imaging.Center, imaging.Lanczos), 80},
+	}
+
+	for _, sz := range sizes {
+		// Upload JPEG
+		jpegURL, err := s.uploadJPEG(ctx, sz.img, fmt.Sprintf("media/%s/%s.jpg", baseID, sz.name), sz.quality)
+		if err != nil {
+			return nil, fmt.Errorf("upload %s jpeg: %w", sz.name, err)
+		}
+
+		// Upload WebP alongside
+		s.uploadWebP(ctx, sz.img, fmt.Sprintf("media/%s/%s.webp", baseID, sz.name), sz.quality)
+
+		switch sz.name {
+		case "full":
+			result.fullURL = jpegURL
+		case "large":
+			result.largeURL = jpegURL
+		case "medium":
+			result.mediumURL = jpegURL
+		case "thumb":
+			result.thumbURL = jpegURL
+		}
+	}
+
+	// Generate blur-hash from thumbnail (small image = fast computation)
+	result.blurHash = s.generateBlurHash(sizes[3].img)
+
+	return result, nil
+}
+
+func (s *mediaService) resizeIfWider(src image.Image, maxWidth int) image.Image {
+	if src.Bounds().Dx() > maxWidth {
+		return imaging.Resize(src, maxWidth, 0, imaging.Lanczos)
+	}
+	return src
+}
+
+func (s *mediaService) uploadJPEG(ctx context.Context, img image.Image, filename string, quality int) (string, error) {
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: quality}); err != nil {
+		return "", fmt.Errorf("encode jpeg: %w", err)
+	}
+	return s.storage.Upload(ctx, filename, &buf, "image/jpeg")
+}
+
+func (s *mediaService) uploadWebP(ctx context.Context, img image.Image, filename string, quality int) {
+	var buf bytes.Buffer
+	if err := webp.Encode(&buf, img, &webp.Options{Quality: float32(quality)}); err != nil {
+		s.log.Warn("failed to encode webp", "filename", filename, "error", err)
+		return
+	}
+	if _, err := s.storage.Upload(ctx, filename, &buf, "image/webp"); err != nil {
+		s.log.Warn("failed to upload webp", "filename", filename, "error", err)
+	}
+}
+
+func (s *mediaService) generateBlurHash(img image.Image) string {
+	hash, err := blurhash.Encode(4, 3, img)
 	if err != nil {
-		return "", "", 0, 0, fmt.Errorf("upload main image: %w", err)
+		s.log.Warn("failed to generate blur hash", "error", err)
+		return ""
 	}
+	return hash
+}
 
-	// Create thumbnail
-	thumb := imaging.Fill(src, domain.ThumbnailSize, domain.ThumbnailSize, imaging.Center, imaging.Lanczos)
-	var thumbBuf bytes.Buffer
-	if err := jpeg.Encode(&thumbBuf, thumb, &jpeg.Options{Quality: 80}); err != nil {
-		s.log.Warn("failed to create thumbnail", "error", err)
-		return mainURL, "", width, height, nil
+func (s *mediaService) cleanupMediaFiles(ctx context.Context, media *domain.Media) {
+	for _, u := range []string{media.URL, media.ThumbnailURL, media.MediumURL, media.LargeURL} {
+		if u != "" {
+			s.cleanupStorageFile(ctx, u)
+			// Also try to clean up corresponding WebP variant
+			if strings.HasSuffix(u, ".jpg") {
+				s.cleanupStorageFile(ctx, strings.TrimSuffix(u, ".jpg")+".webp")
+			}
+		}
 	}
-
-	thumbFilename := fmt.Sprintf("media/%s/thumb.jpg", baseID)
-	thumbURL, err = s.storage.Upload(ctx, thumbFilename, &thumbBuf, "image/jpeg")
-	if err != nil {
-		s.log.Warn("failed to upload thumbnail", "error", err)
-		return mainURL, "", width, height, nil
-	}
-
-	return mainURL, thumbURL, width, height, nil
 }
 
 func (s *mediaService) cleanupStorageFile(ctx context.Context, fileURL string) {
