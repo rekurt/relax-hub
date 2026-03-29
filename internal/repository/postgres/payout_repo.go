@@ -37,12 +37,12 @@ func (r *payoutRepo) Create(ctx context.Context, payout *domain.Payout) error {
 	}
 
 	query := `
-		INSERT INTO payouts (id, user_id, amount, status, bank_details, requested_at, processed_at, failure_reason, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+		INSERT INTO payouts (id, user_id, amount, status, payout_method, bank_details, external_id, requested_at, processed_at, failure_reason, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 
 	_, err := r.pool.Exec(ctx, query,
-		payout.ID, payout.UserID, payout.Amount, payout.Status,
-		payout.BankDetails, payout.RequestedAt, payout.ProcessedAt,
+		payout.ID, payout.UserID, payout.Amount, payout.Status, payout.PayoutMethod,
+		payout.BankDetails, payout.ExternalID, payout.RequestedAt, payout.ProcessedAt,
 		payout.FailureReason, payout.CreatedAt,
 	)
 	return err
@@ -50,13 +50,13 @@ func (r *payoutRepo) Create(ctx context.Context, payout *domain.Payout) error {
 
 func (r *payoutRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Payout, error) {
 	query := `
-		SELECT id, user_id, amount, status, bank_details, requested_at, processed_at, failure_reason, created_at
+		SELECT id, user_id, amount, status, payout_method, bank_details, external_id, requested_at, processed_at, failure_reason, created_at
 		FROM payouts WHERE id = $1`
 
 	var p domain.Payout
 	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&p.ID, &p.UserID, &p.Amount, &p.Status,
-		&p.BankDetails, &p.RequestedAt, &p.ProcessedAt,
+		&p.ID, &p.UserID, &p.Amount, &p.Status, &p.PayoutMethod,
+		&p.BankDetails, &p.ExternalID, &p.RequestedAt, &p.ProcessedAt,
 		&p.FailureReason, &p.CreatedAt,
 	)
 	if err != nil {
@@ -84,7 +84,7 @@ func (r *payoutRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pag
 
 	offset := (page - 1) * pageSize
 	query := `
-		SELECT id, user_id, amount, status, bank_details, requested_at, processed_at, failure_reason, created_at
+		SELECT id, user_id, amount, status, payout_method, bank_details, external_id, requested_at, processed_at, failure_reason, created_at
 		FROM payouts WHERE user_id = $1
 		ORDER BY requested_at DESC
 		LIMIT $2 OFFSET $3`
@@ -99,8 +99,8 @@ func (r *payoutRepo) ListByUser(ctx context.Context, userID uuid.UUID, page, pag
 	for rows.Next() {
 		var p domain.Payout
 		if err := rows.Scan(
-			&p.ID, &p.UserID, &p.Amount, &p.Status,
-			&p.BankDetails, &p.RequestedAt, &p.ProcessedAt,
+			&p.ID, &p.UserID, &p.Amount, &p.Status, &p.PayoutMethod,
+			&p.BankDetails, &p.ExternalID, &p.RequestedAt, &p.ProcessedAt,
 			&p.FailureReason, &p.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -125,6 +125,18 @@ func (r *payoutRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status doma
 		WHERE id = $1`
 
 	tag, err := r.pool.Exec(ctx, query, id, status, processedAt, failureReason)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrPayoutNotFound
+	}
+	return nil
+}
+
+func (r *payoutRepo) UpdateExternalID(ctx context.Context, id uuid.UUID, externalID string) error {
+	query := `UPDATE payouts SET external_id = $2 WHERE id = $1`
+	tag, err := r.pool.Exec(ctx, query, id, externalID)
 	if err != nil {
 		return err
 	}

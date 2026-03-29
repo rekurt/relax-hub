@@ -403,6 +403,7 @@ type PayoutRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Payout, error)
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payout], error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.PayoutStatus, processedAt *time.Time, failureReason string) error
+	UpdateExternalID(ctx context.Context, id uuid.UUID, externalID string) error
 	GetDailyTotal(ctx context.Context, userID uuid.UUID, date time.Time) (int64, error)
 	GetMonthlyTotal(ctx context.Context, userID uuid.UUID, year int, month time.Month) (int64, error)
 	GetPendingTotal(ctx context.Context, userID uuid.UUID) (int64, error)

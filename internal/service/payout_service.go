@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/nikitaaldaev/bani/internal/payment"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
 
@@ -22,21 +23,36 @@ type PayoutService interface {
 }
 
 type payoutService struct {
-	payoutRepo repository.PayoutRepository
-	walletRepo repository.WalletRepository
-	logger     *logger.Logger
+	payoutRepo     repository.PayoutRepository
+	walletRepo     repository.WalletRepository
+	userRepo       repository.UserRepository
+	payoutProvider payment.PayoutProvider // nil = manual processing only
+	logger         *logger.Logger
 }
 
 func NewPayoutService(
 	payoutRepo repository.PayoutRepository,
 	walletRepo repository.WalletRepository,
+	userRepo repository.UserRepository,
+	payoutProvider payment.PayoutProvider,
 	log *logger.Logger,
 ) PayoutService {
 	return &payoutService{
-		payoutRepo: payoutRepo,
-		walletRepo: walletRepo,
-		logger:     log,
+		payoutRepo:     payoutRepo,
+		walletRepo:     walletRepo,
+		userRepo:       userRepo,
+		payoutProvider: payoutProvider,
+		logger:         log,
 	}
+}
+
+// DeterminePayoutMethod selects the payout method based on user region and phone availability.
+// RU users with a verified phone get SBP (instant), everyone else gets bank transfer.
+func DeterminePayoutMethod(user *domain.User) domain.PayoutMethod {
+	if user.Region == domain.RegionRU && user.Phone != "" && user.PhoneVerified {
+		return domain.PayoutMethodSBP
+	}
+	return domain.PayoutMethodBankTransfer
 }
 
 func (s *payoutService) RequestPayout(ctx context.Context, userID uuid.UUID, amount int64, bankDetails json.RawMessage) (*domain.Payout, error) {
@@ -72,21 +88,31 @@ func (s *payoutService) RequestPayout(ctx context.Context, userID uuid.UUID, amo
 		return nil, domain.ErrPayoutMonthlyLimitExceeded
 	}
 
+	// Determine payout method based on user profile
+	payoutMethod := domain.PayoutMethodBankTransfer
+	if s.userRepo != nil {
+		user, userErr := s.userRepo.GetByID(ctx, userID)
+		if userErr == nil {
+			payoutMethod = DeterminePayoutMethod(user)
+		}
+	}
+
 	payout := &domain.Payout{
-		ID:          uuid.New(),
-		UserID:      userID,
-		Amount:      amount,
-		Status:      domain.PayoutStatusPending,
-		BankDetails: bankDetails,
-		RequestedAt: now,
-		CreatedAt:   now,
+		ID:           uuid.New(),
+		UserID:       userID,
+		Amount:       amount,
+		Status:       domain.PayoutStatusPending,
+		PayoutMethod: payoutMethod,
+		BankDetails:  bankDetails,
+		RequestedAt:  now,
+		CreatedAt:    now,
 	}
 
 	if err := s.payoutRepo.Create(ctx, payout); err != nil {
 		return nil, err
 	}
 
-	s.logger.Info("payout requested", "user_id", userID, "amount", amount, "payout_id", payout.ID)
+	s.logger.Info("payout requested", "user_id", userID, "amount", amount, "payout_id", payout.ID, "method", payoutMethod)
 	return payout, nil
 }
 
@@ -194,11 +220,32 @@ func (s *payoutService) ProcessPayout(ctx context.Context, payoutID uuid.UUID) e
 		return fmt.Errorf("create payout transaction: %w", err)
 	}
 
+	// Execute payout via payment provider if available
+	if s.payoutProvider != nil && payout.PayoutMethod == domain.PayoutMethodSBP {
+		user, userErr := s.userRepo.GetByID(ctx, payout.UserID)
+		if userErr == nil && user.Phone != "" {
+			currency := string(domain.CurrencyForRegion(user.Region))
+			result, providerErr := s.payoutProvider.CreatePayout(ctx, payment.CreatePayoutRequest{
+				Amount:      payout.Amount,
+				Currency:    currency,
+				Method:      "sbp",
+				Phone:       user.Phone,
+				Description: fmt.Sprintf("Вывод средств #%s", payout.ID.String()[:8]),
+			})
+			if providerErr != nil {
+				s.logger.Error("SBP payout failed, falling back to manual processing",
+					"error", providerErr, "payout_id", payoutID)
+			} else {
+				_ = s.payoutRepo.UpdateExternalID(ctx, payoutID, result.ExternalID)
+			}
+		}
+	}
+
 	now := time.Now()
 	if err := s.payoutRepo.UpdateStatus(ctx, payoutID, domain.PayoutStatusCompleted, &now, ""); err != nil {
 		return err
 	}
 
-	s.logger.Info("payout processed", "payout_id", payoutID, "amount", payout.Amount)
+	s.logger.Info("payout processed", "payout_id", payoutID, "amount", payout.Amount, "method", payout.PayoutMethod)
 	return nil
 }

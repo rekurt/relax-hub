@@ -92,6 +92,18 @@ func (r *PayoutRepo) UpdateStatus(_ context.Context, id uuid.UUID, status domain
 	return nil
 }
 
+func (r *PayoutRepo) UpdateExternalID(_ context.Context, id uuid.UUID, externalID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	p, ok := r.payouts[id]
+	if !ok {
+		return domain.ErrPayoutNotFound
+	}
+	p.ExternalID = externalID
+	return nil
+}
+
 func (r *PayoutRepo) GetDailyTotal(_ context.Context, userID uuid.UUID, date time.Time) (int64, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

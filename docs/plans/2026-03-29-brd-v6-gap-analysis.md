@@ -230,11 +230,11 @@ BRD требует: "Изменение требует подтверждени�
 - Modify: `internal/service/payout_service.go` — выбор метода выплаты (SBP vs bank transfer)
 - Modify: `internal/domain/payout.go` — добавить payout_method: sbp, bank_transfer
 
-- [ ] Интеграция с YooKassa Payouts API для СБП-выплат
-- [ ] Поле payout_method в domain + миграция
-- [ ] Логика выбора: если owner из РФ и указан телефон → СБП, иначе bank transfer
-- [ ] Тесты
-- [ ] run project test suite — must pass before Block C
+- [x] Интеграция с YooKassa Payouts API для СБП-выплат
+- [x] Поле payout_method в domain + миграция
+- [x] Логика выбора: если owner из РФ и указан телефон → СБП, иначе bank transfer
+- [x] Тесты
+- [x] run project test suite — must pass before Block C
 
 ---
 

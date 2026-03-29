@@ -28,5 +28,15 @@ var Module = fx.Module("payment",
 
 			return NewProviderFactory(providers)
 		},
+		func(cfg *config.Config) PayoutProvider {
+			if cfg.Payment.YooKassa.PayoutAgentID != "" {
+				return NewYooKassaPayoutProvider(
+					cfg.Payment.YooKassa.PayoutAgentID,
+					cfg.Payment.YooKassa.PayoutSecretKey,
+				)
+			}
+			// Return a no-op provider when payouts are not configured
+			return NewNoopPayoutProvider()
+		},
 	),
 )

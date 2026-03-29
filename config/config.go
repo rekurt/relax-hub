@@ -121,8 +121,10 @@ type PaymentConfig struct {
 }
 
 type YooKassaConfig struct {
-	ShopID    string `mapstructure:"shop_id"`
-	SecretKey string `mapstructure:"secret_key"`
+	ShopID         string `mapstructure:"shop_id"`
+	SecretKey      string `mapstructure:"secret_key"`
+	PayoutAgentID  string `mapstructure:"payout_agent_id"`  // agent_id for YooKassa Payouts API (SBP payouts)
+	PayoutSecretKey string `mapstructure:"payout_secret_key"` // secret key for Payouts API
 }
 
 type BePaidConfig struct {

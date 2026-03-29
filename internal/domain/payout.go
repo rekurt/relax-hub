@@ -7,6 +7,22 @@ import (
 	"github.com/google/uuid"
 )
 
+// PayoutMethod - метод выплаты
+type PayoutMethod string
+
+const (
+	PayoutMethodSBP          PayoutMethod = "sbp"
+	PayoutMethodBankTransfer PayoutMethod = "bank_transfer"
+)
+
+func (m PayoutMethod) IsValid() bool {
+	switch m {
+	case PayoutMethodSBP, PayoutMethodBankTransfer:
+		return true
+	}
+	return false
+}
+
 // PayoutStatus - статус выплаты
 type PayoutStatus string
 
@@ -31,7 +47,9 @@ type Payout struct {
 	UserID        uuid.UUID
 	Amount        int64 // в копейках
 	Status        PayoutStatus
+	PayoutMethod  PayoutMethod
 	BankDetails   json.RawMessage // JSONB с реквизитами
+	ExternalID    string          // ID выплаты в платёжной системе
 	RequestedAt   time.Time
 	ProcessedAt   *time.Time
 	FailureReason string

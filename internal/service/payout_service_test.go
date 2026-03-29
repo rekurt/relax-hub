@@ -9,22 +9,27 @@ import (
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/nikitaaldaev/bani/internal/payment"
 	"github.com/nikitaaldaev/bani/internal/repository/mock"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 type payoutTestEnv struct {
-	payoutSvc service.PayoutService
-	walletSvc service.WalletService
+	payoutSvc      service.PayoutService
+	walletSvc      service.WalletService
+	userRepo       *mock.UserRepo
+	payoutProvider *payment.MockPayoutProvider
 }
 
 func newPayoutTestEnv() *payoutTestEnv {
 	walletRepo := mock.NewWalletRepo()
 	payoutRepo := mock.NewPayoutRepo()
+	userRepo := mock.NewUserRepo()
+	payoutProvider := payment.NewMockPayoutProvider()
 	log := logger.New(logger.LevelWarn)
 	walletSvc := service.NewWalletService(walletRepo, log)
-	payoutSvc := service.NewPayoutService(payoutRepo, walletRepo, log)
-	return &payoutTestEnv{payoutSvc: payoutSvc, walletSvc: walletSvc}
+	payoutSvc := service.NewPayoutService(payoutRepo, walletRepo, userRepo, payoutProvider, log)
+	return &payoutTestEnv{payoutSvc: payoutSvc, walletSvc: walletSvc, userRepo: userRepo, payoutProvider: payoutProvider}
 }
 
 func setupOwnerWithBalance(t *testing.T, env *payoutTestEnv, balance int64) (*domain.Wallet, uuid.UUID) {
@@ -55,6 +60,38 @@ func setupOwnerWithBalance(t *testing.T, env *payoutTestEnv, balance int64) (*do
 	return wallet, userID
 }
 
+func createRUUser(t *testing.T, env *payoutTestEnv, userID uuid.UUID) {
+	t.Helper()
+	user := &domain.User{
+		ID:            userID,
+		Email:         "owner@test.ru",
+		Phone:         "+79001234567",
+		PhoneVerified: true,
+		Region:        domain.RegionRU,
+		Role:          domain.RoleOwner,
+		Name:          "Test Owner",
+	}
+	if err := env.userRepo.Create(context.Background(), user); err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+}
+
+func createBYUser(t *testing.T, env *payoutTestEnv, userID uuid.UUID) {
+	t.Helper()
+	user := &domain.User{
+		ID:            userID,
+		Email:         "owner@test.by",
+		Phone:         "+375291234567",
+		PhoneVerified: true,
+		Region:        domain.RegionBY,
+		Role:          domain.RoleOwner,
+		Name:          "Test Owner BY",
+	}
+	if err := env.userRepo.Create(context.Background(), user); err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+}
+
 func TestPayoutService_RequestPayout_Success(t *testing.T) {
 	env := newPayoutTestEnv()
 	_, userID := setupOwnerWithBalance(t, env, 1_000_000) // 10,000 RUB
@@ -72,6 +109,85 @@ func TestPayoutService_RequestPayout_Success(t *testing.T) {
 	}
 	if payout.UserID != userID {
 		t.Errorf("user_id = %v, want %v", payout.UserID, userID)
+	}
+}
+
+func TestPayoutService_RequestPayout_SBPMethod_ForRUUser(t *testing.T) {
+	env := newPayoutTestEnv()
+	_, userID := setupOwnerWithBalance(t, env, 1_000_000)
+	createRUUser(t, env, userID)
+
+	payout, err := env.payoutSvc.RequestPayout(context.Background(), userID, 500_000, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if payout.PayoutMethod != domain.PayoutMethodSBP {
+		t.Errorf("payout_method = %v, want sbp", payout.PayoutMethod)
+	}
+}
+
+func TestPayoutService_RequestPayout_BankTransfer_ForBYUser(t *testing.T) {
+	env := newPayoutTestEnv()
+	_, userID := setupOwnerWithBalance(t, env, 1_000_000)
+	createBYUser(t, env, userID)
+
+	payout, err := env.payoutSvc.RequestPayout(context.Background(), userID, 500_000, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if payout.PayoutMethod != domain.PayoutMethodBankTransfer {
+		t.Errorf("payout_method = %v, want bank_transfer", payout.PayoutMethod)
+	}
+}
+
+func TestPayoutService_RequestPayout_BankTransfer_NoPhone(t *testing.T) {
+	env := newPayoutTestEnv()
+	_, userID := setupOwnerWithBalance(t, env, 1_000_000)
+
+	// RU user without phone
+	user := &domain.User{
+		ID:     userID,
+		Email:  "nophone@test.ru",
+		Region: domain.RegionRU,
+		Role:   domain.RoleOwner,
+		Name:   "No Phone Owner",
+	}
+	if err := env.userRepo.Create(context.Background(), user); err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+
+	payout, err := env.payoutSvc.RequestPayout(context.Background(), userID, 500_000, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if payout.PayoutMethod != domain.PayoutMethodBankTransfer {
+		t.Errorf("payout_method = %v, want bank_transfer (no phone)", payout.PayoutMethod)
+	}
+}
+
+func TestPayoutService_RequestPayout_BankTransfer_UnverifiedPhone(t *testing.T) {
+	env := newPayoutTestEnv()
+	_, userID := setupOwnerWithBalance(t, env, 1_000_000)
+
+	user := &domain.User{
+		ID:            userID,
+		Email:         "unverified@test.ru",
+		Phone:         "+79001234567",
+		PhoneVerified: false,
+		Region:        domain.RegionRU,
+		Role:          domain.RoleOwner,
+		Name:          "Unverified Phone Owner",
+	}
+	if err := env.userRepo.Create(context.Background(), user); err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+
+	payout, err := env.payoutSvc.RequestPayout(context.Background(), userID, 500_000, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if payout.PayoutMethod != domain.PayoutMethodBankTransfer {
+		t.Errorf("payout_method = %v, want bank_transfer (unverified phone)", payout.PayoutMethod)
 	}
 }
 
@@ -207,6 +323,36 @@ func TestPayoutService_ProcessPayout_Success(t *testing.T) {
 	}
 }
 
+func TestPayoutService_ProcessPayout_SBP_CallsProvider(t *testing.T) {
+	env := newPayoutTestEnv()
+	_, userID := setupOwnerWithBalance(t, env, 1_000_000)
+	createRUUser(t, env, userID)
+
+	payout, err := env.payoutSvc.RequestPayout(context.Background(), userID, 200_000, nil)
+	if err != nil {
+		t.Fatalf("request payout: %v", err)
+	}
+	if payout.PayoutMethod != domain.PayoutMethodSBP {
+		t.Fatalf("expected SBP payout method, got %v", payout.PayoutMethod)
+	}
+
+	if err := env.payoutSvc.ProcessPayout(context.Background(), payout.ID); err != nil {
+		t.Fatalf("process payout: %v", err)
+	}
+
+	// Verify the mock payout provider was called
+	lastPayout := env.payoutProvider.GetLastPayout()
+	if lastPayout == nil {
+		t.Fatal("expected payout provider to be called for SBP payout")
+	}
+	if lastPayout.Method != "sbp" {
+		t.Errorf("provider method = %v, want sbp", lastPayout.Method)
+	}
+	if lastPayout.Phone != "+79001234567" {
+		t.Errorf("provider phone = %v, want +79001234567", lastPayout.Phone)
+	}
+}
+
 func TestPayoutService_ProcessPayout_AlreadyProcessed(t *testing.T) {
 	env := newPayoutTestEnv()
 	_, userID := setupOwnerWithBalance(t, env, 1_000_000)
@@ -292,5 +438,48 @@ func TestPayoutService_GetAutoPayoutSettings_Default(t *testing.T) {
 	}
 	if settings.Threshold != 0 {
 		t.Errorf("threshold = %d, want 0 (disabled by default)", settings.Threshold)
+	}
+}
+
+func TestDeterminePayoutMethod(t *testing.T) {
+	tests := []struct {
+		name     string
+		user     *domain.User
+		expected domain.PayoutMethod
+	}{
+		{
+			name:     "RU user with verified phone -> SBP",
+			user:     &domain.User{Region: domain.RegionRU, Phone: "+79001234567", PhoneVerified: true},
+			expected: domain.PayoutMethodSBP,
+		},
+		{
+			name:     "RU user without phone -> bank transfer",
+			user:     &domain.User{Region: domain.RegionRU, Phone: "", PhoneVerified: false},
+			expected: domain.PayoutMethodBankTransfer,
+		},
+		{
+			name:     "RU user with unverified phone -> bank transfer",
+			user:     &domain.User{Region: domain.RegionRU, Phone: "+79001234567", PhoneVerified: false},
+			expected: domain.PayoutMethodBankTransfer,
+		},
+		{
+			name:     "BY user with verified phone -> bank transfer",
+			user:     &domain.User{Region: domain.RegionBY, Phone: "+375291234567", PhoneVerified: true},
+			expected: domain.PayoutMethodBankTransfer,
+		},
+		{
+			name:     "No region set -> bank transfer",
+			user:     &domain.User{Phone: "+79001234567", PhoneVerified: true},
+			expected: domain.PayoutMethodBankTransfer,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := service.DeterminePayoutMethod(tt.user)
+			if result != tt.expected {
+				t.Errorf("DeterminePayoutMethod() = %v, want %v", result, tt.expected)
+			}
+		})
 	}
 }

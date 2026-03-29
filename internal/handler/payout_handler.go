@@ -27,6 +27,7 @@ type payoutResponse struct {
 	ID            string          `json:"id"`
 	Amount        int64           `json:"amount"`
 	Status        string          `json:"status"`
+	PayoutMethod  string          `json:"payout_method"`
 	BankDetails   json.RawMessage `json:"bank_details,omitempty"`
 	RequestedAt   string          `json:"requested_at"`
 	ProcessedAt   *string         `json:"processed_at,omitempty"`
@@ -47,6 +48,7 @@ func toPayoutResponse(p *domain.Payout) payoutResponse {
 		ID:            p.ID.String(),
 		Amount:        p.Amount,
 		Status:        string(p.Status),
+		PayoutMethod:  string(p.PayoutMethod),
 		BankDetails:   p.BankDetails,
 		RequestedAt:   p.RequestedAt.Format(time.RFC3339),
 		FailureReason: p.FailureReason,
