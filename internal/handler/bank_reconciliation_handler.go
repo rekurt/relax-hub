@@ -52,7 +52,7 @@ type bankStatementUploadResponse struct {
 // @Tags admin,finance
 // @Security BearerAuth
 // @Accept multipart/form-data
-// @Param file formance file true "Bank statement file (CSV or 1C format)"
+// @Param file formData file true "Bank statement file (CSV or 1C format)"
 // @Success 200 {object} APIResponse{data=bankStatementUploadResponse}
 // @Failure 400 {object} APIResponse
 // @Router /api/v1/admin/finance/bank-statement [post]

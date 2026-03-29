@@ -28,6 +28,82 @@ definitions:
       sender_id:
         type: string
     type: object
+  github_com_nikitaaldaev_bani_internal_domain.AdminPermission:
+    enum:
+    - users.manage
+    - bathhouses.moderate
+    - reviews.moderate
+    - photos.moderate
+    - kyc.moderate
+    - complaints.manage
+    - bookings.manage
+    - analytics.view
+    - finance.manage
+    - wallets.manage
+    - settings.manage
+    - feature_flags.manage
+    - force_majeure.manage
+    - antifraud.manage
+    - tickets.manage
+    - disputes.manage
+    - promo.manage
+    - service_fee.manage
+    - holidays.manage
+    - amenities.manage
+    - object_types.manage
+    - audit_log.view
+    - reconciliation.view
+    - admin_roles.manage
+    - cities.manage
+    - admin_notifications.view
+    - faq.manage
+    - photo_orders.manage
+    type: string
+    x-enum-varnames:
+    - PermUserManage
+    - PermBathhouseModerate
+    - PermReviewModerate
+    - PermPhotoModerate
+    - PermKYCModerate
+    - PermComplaintManage
+    - PermBookingManage
+    - PermAnalyticsView
+    - PermFinanceManage
+    - PermWalletManage
+    - PermSettingsManage
+    - PermFeatureFlagsManage
+    - PermForceMajeureManage
+    - PermAntiFraudManage
+    - PermTicketManage
+    - PermDisputeManage
+    - PermPromoManage
+    - PermServiceFeeManage
+    - PermHolidayManage
+    - PermAmenityManage
+    - PermObjectTypeManage
+    - PermAuditLogView
+    - PermReconciliationView
+    - PermAdminRolesManage
+    - PermCityManage
+    - PermAdminNotificationsView
+    - PermFAQManage
+    - PermPhotoOrderManage
+  github_com_nikitaaldaev_bani_internal_domain.AdminSubRole:
+    enum:
+    - super_admin
+    - moderator
+    - support_l1
+    - support_l2
+    - support_l3
+    - finance
+    type: string
+    x-enum-varnames:
+    - AdminSubRoleSuperAdmin
+    - AdminSubRoleModerator
+    - AdminSubRoleSupportL1
+    - AdminSubRoleSupportL2
+    - AdminSubRoleSupportL3
+    - AdminSubRoleFinance
   github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod:
     enum:
     - 1d
@@ -91,6 +167,49 @@ definitions:
         items:
           $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.FunnelStep'
         type: array
+    type: object
+  github_com_nikitaaldaev_bani_internal_domain.CustomSegmentCondition:
+    properties:
+      avg_check_max:
+        description: kopecks
+        type: integer
+      avg_check_min:
+        description: kopecks
+        type: integer
+      last_visit_days_max:
+        type: integer
+      last_visit_days_min:
+        type: integer
+      rfm_frequency_max:
+        type: integer
+      rfm_frequency_min:
+        type: integer
+      rfm_monetary_max:
+        type: integer
+      rfm_monetary_min:
+        type: integer
+      rfm_recency_max:
+        type: integer
+      rfm_recency_min:
+        type: integer
+      tags_exclude:
+        items:
+          type: string
+        type: array
+      tags_include:
+        items:
+          type: string
+        type: array
+      total_spent_max:
+        description: kopecks
+        type: integer
+      total_spent_min:
+        description: kopecks
+        type: integer
+      visit_count_max:
+        type: integer
+      visit_count_min:
+        type: integer
     type: object
   github_com_nikitaaldaev_bani_internal_domain.FunnelStep:
     properties:
@@ -172,6 +291,16 @@ definitions:
       label:
         type: string
     type: object
+  github_com_nikitaaldaev_bani_internal_domain.TwoFAMethod:
+    enum:
+    - none
+    - totp
+    - sms
+    type: string
+    x-enum-varnames:
+    - TwoFANone
+    - TwoFATOTP
+    - TwoFASMS
   github_com_nikitaaldaev_bani_internal_domain.WalletMetrics:
     properties:
       active_wallets:
@@ -465,6 +594,42 @@ definitions:
       body:
         type: string
     type: object
+  internal_handler.adminCancelBookingRequest:
+    properties:
+      reason:
+        type: string
+    type: object
+  internal_handler.adminChangeStatusRequest:
+    properties:
+      reason:
+        type: string
+      status:
+        type: string
+    type: object
+  internal_handler.adminNotificationResponse:
+    properties:
+      body:
+        type: string
+      created_at:
+        type: string
+      data: {}
+      id:
+        type: string
+      is_read:
+        type: boolean
+      read_at:
+        type: string
+      read_by:
+        type: string
+      role:
+        type: string
+      severity:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+    type: object
   internal_handler.adminRefundRequest:
     properties:
       amount:
@@ -521,6 +686,56 @@ definitions:
         type: string
       value_for_money:
         type: number
+    type: object
+  internal_handler.adminRoleResponse:
+    properties:
+      admin_sub_role:
+        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminSubRole'
+      email:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      two_fa_method:
+        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.TwoFAMethod'
+    type: object
+  internal_handler.adminUpdatePhotoOrderRequest:
+    properties:
+      admin_notes:
+        type: string
+      photographer_name:
+        type: string
+      price:
+        type: integer
+      scheduled_at:
+        type: string
+      status:
+        type: string
+    type: object
+  internal_handler.adminWalletRequest:
+    properties:
+      amount:
+        type: integer
+      reason:
+        type: string
+    type: object
+  internal_handler.adminWalletResponse:
+    properties:
+      balance:
+        type: integer
+      currency:
+        type: string
+      held_amount:
+        type: integer
+      id:
+        type: string
+      status:
+        type: string
+      user_id:
+        type: string
     type: object
   internal_handler.amenityResponse:
     properties:
@@ -621,12 +836,96 @@ definitions:
       updated_at:
         type: string
     type: object
+  internal_handler.bankStatementEntryResponse:
+    properties:
+      amount:
+        type: integer
+      counterparty:
+        type: string
+      created_at:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      matched_tx_id:
+        type: string
+      matched_tx_type:
+        type: string
+      reference_num:
+        type: string
+      status:
+        type: string
+      upload_batch_id:
+        type: string
+    type: object
+  internal_handler.bankStatementUploadResponse:
+    properties:
+      created_at:
+        type: string
+      file_name:
+        type: string
+      format:
+        type: string
+      id:
+        type: string
+      ignored_count:
+        type: integer
+      matched_count:
+        type: integer
+      pending_count:
+        type: integer
+      total_rows:
+        type: integer
+    type: object
+  internal_handler.batchActionRequest:
+    properties:
+      action:
+        type: string
+      ids:
+        items:
+          type: string
+        type: array
+      reason:
+        type: string
+    type: object
+  internal_handler.batchCreditRequest:
+    properties:
+      amount:
+        type: integer
+      ids:
+        items:
+          type: string
+        type: array
+      reason:
+        type: string
+    type: object
+  internal_handler.batchDetailedResult:
+    properties:
+      failed:
+        items:
+          $ref: '#/definitions/internal_handler.batchItemResult'
+        type: array
+      succeeded:
+        items:
+          $ref: '#/definitions/internal_handler.batchItemResult'
+        type: array
+    type: object
   internal_handler.batchIDsRequest:
     properties:
       ids:
         items:
           type: string
         type: array
+    type: object
+  internal_handler.batchItemResult:
+    properties:
+      error:
+        type: string
+      id:
+        type: string
     type: object
   internal_handler.batchRejectRequest:
     properties:
@@ -648,6 +947,8 @@ definitions:
     properties:
       address:
         type: string
+      area_avg_price_per_hour:
+        type: integer
       avg_accuracy:
         type: number
       avg_cleanliness:
@@ -708,6 +1009,8 @@ definitions:
         type: boolean
       is_promoted:
         type: boolean
+      last_minute_active:
+        type: boolean
       last_minute_discount_percent:
         type: integer
       last_minute_enabled:
@@ -736,6 +1039,8 @@ definitions:
         type: string
       owner_id:
         type: string
+      owner_profile:
+        $ref: '#/definitions/internal_handler.ownerProfileResponse'
       price_per_hour:
         type: integer
       rating:
@@ -859,6 +1164,8 @@ definitions:
         items:
           type: string
         type: array
+      clicked:
+        type: integer
       created_at:
         type: string
       delivered:
@@ -1249,6 +1556,30 @@ definitions:
       text:
         type: string
     type: object
+  internal_handler.createCustomSegmentRequest:
+    properties:
+      bathhouse_id:
+        type: string
+      conditions:
+        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.CustomSegmentCondition'
+      name:
+        type: string
+    type: object
+  internal_handler.createFAQRequest:
+    properties:
+      answer:
+        type: string
+      category:
+        type: string
+      keywords:
+        items:
+          type: string
+        type: array
+      question:
+        type: string
+      sort_order:
+        type: integer
+    type: object
   internal_handler.createHolidayRequest:
     properties:
       date:
@@ -1271,6 +1602,28 @@ definitions:
       sort_order:
         type: integer
     type: object
+  internal_handler.createPMSConnectionRequest:
+    properties:
+      bathhouse_id:
+        type: string
+      credentials:
+        type: string
+      external_id:
+        type: string
+      provider:
+        type: string
+      sync_direction:
+        type: string
+      sync_interval_minutes:
+        type: integer
+    type: object
+  internal_handler.createPhotoOrderRequest:
+    properties:
+      notes:
+        type: string
+      region:
+        type: string
+    type: object
   internal_handler.createPromoRequest:
     properties:
       code:
@@ -1291,6 +1644,8 @@ definitions:
   internal_handler.createPromotionRequest:
     properties:
       budget_kopecks:
+        type: integer
+      daily_bid_kopecks:
         type: integer
       duration_days:
         type: integer
@@ -1313,6 +1668,21 @@ definitions:
         type: string
       value_for_money:
         type: number
+    type: object
+  internal_handler.createSavedCardRequest:
+    properties:
+      brand:
+        type: string
+      expiry_month:
+        type: integer
+      expiry_year:
+        type: integer
+      is_default:
+        type: boolean
+      last4:
+        type: string
+      provider_token:
+        type: string
     type: object
   internal_handler.createSavedSearchRequest:
     properties:
@@ -1355,6 +1725,36 @@ definitions:
       message:
         type: string
       subject:
+        type: string
+    type: object
+  internal_handler.createWebhookRequest:
+    properties:
+      events:
+        items:
+          type: string
+        type: array
+      secret:
+        type: string
+      url:
+        type: string
+    type: object
+  internal_handler.customSegmentResponse:
+    properties:
+      bathhouse_id:
+        type: string
+      conditions:
+        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.CustomSegmentCondition'
+      created_at:
+        type: string
+      guest_count:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      owner_id:
+        type: string
+      updated_at:
         type: string
     type: object
   internal_handler.deviceTokenResponse:
@@ -1433,6 +1833,30 @@ definitions:
       updated_at:
         type: string
     type: object
+  internal_handler.eventPreferenceResponse:
+    properties:
+      email_enabled:
+        type: boolean
+      event_type:
+        type: string
+      is_mandatory:
+        type: boolean
+      push_enabled:
+        type: boolean
+      sms_enabled:
+        type: boolean
+    type: object
+  internal_handler.eventPreferenceUpdate:
+    properties:
+      email_enabled:
+        type: boolean
+      event_type:
+        type: string
+      push_enabled:
+        type: boolean
+      sms_enabled:
+        type: boolean
+    type: object
   internal_handler.extendBookingRequest:
     properties:
       extra_hours:
@@ -1469,6 +1893,36 @@ definitions:
         type: string
       url:
         example: https://calendar.google.com/calendar/ical/xxx/basic.ics
+        type: string
+    type: object
+  internal_handler.faqMatchResponse:
+    properties:
+      faq:
+        $ref: '#/definitions/internal_handler.faqResponse'
+      score:
+        type: number
+    type: object
+  internal_handler.faqResponse:
+    properties:
+      active:
+        type: boolean
+      answer:
+        type: string
+      category:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      keywords:
+        items:
+          type: string
+        type: array
+      question:
+        type: string
+      sort_order:
+        type: integer
+      updated_at:
         type: string
     type: object
   internal_handler.favoriteResponse:
@@ -1658,7 +2112,10 @@ definitions:
         description: 'for combo: "card" (default) or "sbp"'
         type: string
       payment_method:
-        description: '"card", "sbp", "wallet", "combo"'
+        description: '"card", "sbp", "wallet", "combo", "apple_pay", "google_pay"'
+        type: string
+      payment_token:
+        description: token from Apple Pay JS or Google Pay API
         type: string
       wallet_amount:
         description: for combo/wallet
@@ -1674,6 +2131,28 @@ definitions:
       role:
         type: string
       user_email:
+        type: string
+    type: object
+  internal_handler.isochroneResponse:
+    properties:
+      center_lat:
+        type: number
+      center_lng:
+        type: number
+      coordinates:
+        description: '[lng, lat] pairs'
+        items:
+          items:
+            format: float64
+            type: number
+          type: array
+        type: array
+      minutes:
+        type: integer
+      mode:
+        type: string
+      wkt:
+        description: WKT polygon for use with search filter
         type: string
     type: object
   internal_handler.kycResponse:
@@ -1813,6 +2292,19 @@ definitions:
       type:
         type: string
       user_id:
+        type: string
+    type: object
+  internal_handler.manualMatchRequest:
+    properties:
+      transaction_id:
+        type: string
+      tx_type:
+        description: '"payment" or "wallet_transaction"'
+        type: string
+    type: object
+  internal_handler.matchFAQRequest:
+    properties:
+      query:
         type: string
     type: object
   internal_handler.mediaResponse:
@@ -1973,6 +2465,21 @@ definitions:
       message:
         type: string
     type: object
+  internal_handler.ownerProfileResponse:
+    properties:
+      avatar_url:
+        type: string
+      id:
+        type: string
+      member_since:
+        type: string
+      name:
+        type: string
+      object_count:
+        type: integer
+      rating:
+        type: number
+    type: object
   internal_handler.ownerResponseRequest:
     properties:
       response:
@@ -2070,6 +2577,50 @@ definitions:
       pending_count:
         type: integer
     type: object
+  internal_handler.permissionsMatrixResponse:
+    properties:
+      matrix:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminPermission'
+          type: array
+        type: object
+      permissions:
+        items:
+          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminPermission'
+        type: array
+      roles:
+        items:
+          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminSubRole'
+        type: array
+    type: object
+  internal_handler.photoOrderResponse:
+    properties:
+      admin_notes:
+        type: string
+      bathhouse_id:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      notes:
+        type: string
+      owner_id:
+        type: string
+      photographer_name:
+        type: string
+      price:
+        type: integer
+      region:
+        type: string
+      scheduled_at:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
   internal_handler.photoResponse:
     properties:
       bathhouse_id:
@@ -2108,6 +2659,52 @@ definitions:
       value:
         type: string
     type: object
+  internal_handler.pmsConnectionResponse:
+    properties:
+      bathhouse_id:
+        type: string
+      created_at:
+        type: string
+      external_id:
+        type: string
+      id:
+        type: string
+      last_sync_at:
+        type: string
+      last_sync_error:
+        type: string
+      owner_id:
+        type: string
+      provider:
+        type: string
+      status:
+        type: string
+      sync_direction:
+        type: string
+      sync_interval_minutes:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  internal_handler.pmsSyncLogResponse:
+    properties:
+      completed_at:
+        type: string
+      connection_id:
+        type: string
+      direction:
+        type: string
+      error_message:
+        type: string
+      id:
+        type: string
+      items_synced:
+        type: integer
+      started_at:
+        type: string
+      status:
+        type: string
+    type: object
   internal_handler.preferencesResponse:
     properties:
       booking_events:
@@ -2123,6 +2720,8 @@ definitions:
       reminders:
         type: boolean
       review_events:
+        type: boolean
+      sms:
         type: boolean
     type: object
   internal_handler.priceCalculatorResponse:
@@ -2246,13 +2845,21 @@ definitions:
         type: integer
       click_count:
         type: integer
+      cost_per_click:
+        type: number
       created_at:
         type: string
+      ctr:
+        type: number
+      daily_bid_kopecks:
+        type: integer
       end_date:
         type: string
       id:
         type: string
       impression_count:
+        type: integer
+      remaining_budget:
         type: integer
       spent_kopecks:
         type: integer
@@ -2285,6 +2892,13 @@ definitions:
         type: integer
       visit_count:
         type: integer
+    type: object
+  internal_handler.publicSettingResponse:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
     type: object
   internal_handler.purchaseCertificateRequest:
     properties:
@@ -2344,6 +2958,10 @@ definitions:
         type: string
       id:
         type: string
+      images:
+        items:
+          type: string
+        type: array
       latitude:
         type: number
       longitude:
@@ -2356,6 +2974,8 @@ definitions:
         type: number
       review_count:
         type: integer
+      slug:
+        type: string
     type: object
   internal_handler.reconciliationReportResponse:
     properties:
@@ -2596,12 +3216,81 @@ definitions:
       value_for_money:
         type: number
     type: object
+  internal_handler.rfmAnalysisResponse:
+    properties:
+      guests:
+        items:
+          $ref: '#/definitions/internal_handler.rfmGuestResponse'
+        type: array
+      matrix:
+        items:
+          $ref: '#/definitions/internal_handler.rfmMatrixResp'
+        type: array
+    type: object
+  internal_handler.rfmGuestResponse:
+    properties:
+      avg_check:
+        type: integer
+      bathhouse_id:
+        type: string
+      client_id:
+        type: string
+      id:
+        type: string
+      last_visit_at:
+        type: string
+      rfm:
+        $ref: '#/definitions/internal_handler.rfmScoreResp'
+      tags:
+        items:
+          type: string
+        type: array
+      total_spent:
+        type: integer
+      visit_count:
+        type: integer
+    type: object
+  internal_handler.rfmMatrixResp:
+    properties:
+      count:
+        type: integer
+      frequency:
+        type: integer
+      recency:
+        type: integer
+    type: object
+  internal_handler.rfmScoreResp:
+    properties:
+      frequency:
+        type: integer
+      monetary:
+        type: integer
+      recency:
+        type: integer
+    type: object
   internal_handler.saveStepRequest:
     properties:
       data:
         items:
           type: integer
         type: array
+    type: object
+  internal_handler.savedCardResponse:
+    properties:
+      brand:
+        type: string
+      created_at:
+        type: string
+      expiry_month:
+        type: integer
+      expiry_year:
+        type: integer
+      id:
+        type: string
+      is_default:
+        type: boolean
+      last4:
+        type: string
     type: object
   internal_handler.savedSearchResponse:
     properties:
@@ -2701,6 +3390,11 @@ definitions:
         type: boolean
       last_active_at:
         type: string
+    type: object
+  internal_handler.setAdminSubRoleRequest:
+    properties:
+      sub_role:
+        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminSubRole'
     type: object
   internal_handler.setMultiplierRequest:
     properties:
@@ -3003,6 +3697,26 @@ definitions:
       secret:
         type: string
     type: object
+  internal_handler.transportInfoResponse:
+    properties:
+      distance_meters:
+        type: integer
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+      type:
+        type: string
+    type: object
+  internal_handler.transportResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/internal_handler.transportInfoResponse'
+        type: array
+    type: object
   internal_handler.twoFAVerifyLoginRequest:
     properties:
       code:
@@ -3136,6 +3850,30 @@ definitions:
       slug:
         type: string
     type: object
+  internal_handler.updateEventPreferencesRequest:
+    properties:
+      preferences:
+        items:
+          $ref: '#/definitions/internal_handler.eventPreferenceUpdate'
+        type: array
+    type: object
+  internal_handler.updateFAQRequest:
+    properties:
+      active:
+        type: boolean
+      answer:
+        type: string
+      category:
+        type: string
+      keywords:
+        items:
+          type: string
+        type: array
+      question:
+        type: string
+      sort_order:
+        type: integer
+    type: object
   internal_handler.updateFeatureFlagRequest:
     properties:
       enabled:
@@ -3179,6 +3917,21 @@ definitions:
       sort_order:
         type: integer
     type: object
+  internal_handler.updatePMSConnectionRequest:
+    properties:
+      credentials:
+        type: string
+      external_id:
+        type: string
+      provider:
+        type: string
+      status:
+        type: string
+      sync_direction:
+        type: string
+      sync_interval_minutes:
+        type: integer
+    type: object
   internal_handler.updatePreferencesRequest:
     properties:
       booking_events:
@@ -3195,6 +3948,8 @@ definitions:
         type: boolean
       review_events:
         type: boolean
+      sms:
+        type: boolean
     type: object
   internal_handler.updateProfileRequest:
     properties:
@@ -3205,6 +3960,15 @@ definitions:
       name:
         type: string
       phone:
+        type: string
+    type: object
+  internal_handler.updatePromotionRequest:
+    properties:
+      budget_kopecks:
+        type: integer
+      daily_bid_kopecks:
+        type: integer
+      end_date:
         type: string
     type: object
   internal_handler.updateRecommendationPreferencesRequest:
@@ -3259,6 +4023,19 @@ definitions:
       sort_order:
         type: integer
       title:
+        type: string
+    type: object
+  internal_handler.updateWebhookRequest:
+    properties:
+      events:
+        items:
+          type: string
+        type: array
+      is_active:
+        type: boolean
+      secret:
+        type: string
+      url:
         type: string
     type: object
   internal_handler.uploadPhotoRequest:
@@ -3414,6 +4191,46 @@ definitions:
       status:
         type: string
       type:
+        type: string
+    type: object
+  internal_handler.webhookDeliveryResponse:
+    properties:
+      attempt_count:
+        type: integer
+      created_at:
+        type: string
+      error_message:
+        type: string
+      event_type:
+        type: string
+      http_status:
+        type: integer
+      id:
+        type: string
+      next_retry_at:
+        type: string
+      status:
+        type: string
+      webhook_id:
+        type: string
+    type: object
+  internal_handler.webhookResponse:
+    properties:
+      created_at:
+        type: string
+      events:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      is_active:
+        type: boolean
+      owner_id:
+        type: string
+      updated_at:
+        type: string
+      url:
         type: string
     type: object
   internal_handler.widgetBathhouseResponse:
@@ -4573,6 +5390,231 @@ paths:
       summary: Reject bathhouse
       tags:
       - admin-bathhouses
+  /admin/bookings:
+    get:
+      description: Returns a paginated list of all bookings with optional filters
+        for admin.
+      parameters:
+      - description: Filter by user ID
+        in: query
+        name: user_id
+        type: string
+      - description: Filter by bathhouse ID
+        in: query
+        name: bathhouse_id
+        type: string
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter from date (RFC3339)
+        in: query
+        name: from_date
+        type: string
+      - description: Filter to date (RFC3339)
+        in: query
+        name: to_date
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.bookingResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/internal_handler.Meta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Admin list bookings
+      tags:
+      - admin-bookings
+  /admin/bookings/{id}/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Admin cancels any booking regardless of ownership. Issues full
+        wallet refund. Logged to audit.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Cancel reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.adminCancelBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Admin cancel booking
+      tags:
+      - admin-bookings
+  /admin/bookings/{id}/change-status:
+    post:
+      consumes:
+      - application/json
+      description: Admin changes the status of any booking. Use for edge cases that
+        normal flows don't cover.
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New status and reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.adminChangeStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Admin change booking status
+      tags:
+      - admin-bookings
   /admin/bookings/{id}/refund:
     post:
       consumes:
@@ -5467,6 +6509,223 @@ paths:
       summary: Resolve a dispute
       tags:
       - disputes-admin
+  /admin/faq:
+    get:
+      description: Returns a paginated list of FAQ entries with optional filters.
+        Admin only.
+      parameters:
+      - description: Filter by category
+        in: query
+        name: category
+        type: string
+      - description: Filter by active status
+        in: query
+        name: active
+        type: boolean
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.faqResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List FAQ entries
+      tags:
+      - faq
+    post:
+      consumes:
+      - application/json
+      description: Creates a new FAQ entry. Admin only.
+      parameters:
+      - description: FAQ data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createFAQRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.faqResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create FAQ entry
+      tags:
+      - faq
+  /admin/faq/{id}:
+    delete:
+      description: Deletes an FAQ entry. Admin only.
+      parameters:
+      - description: FAQ ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete FAQ entry
+      tags:
+      - faq
+    get:
+      description: Returns a single FAQ entry by ID. Admin only.
+      parameters:
+      - description: FAQ ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.faqResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get FAQ entry
+      tags:
+      - faq
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing FAQ entry. Admin only.
+      parameters:
+      - description: FAQ ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: FAQ data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updateFAQRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.faqResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update FAQ entry
+      tags:
+      - faq
+  /admin/faq/seed:
+    post:
+      description: Seeds the FAQ table with default entries if empty. Admin only.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Seed default FAQ entries
+      tags:
+      - faq
   /admin/feature-flags:
     get:
       description: Returns all feature flags (admin only)
@@ -6087,6 +7346,241 @@ paths:
       tags:
       - kyc
       - admin
+  /admin/listings/batch:
+    post:
+      consumes:
+      - application/json
+      description: Performs batch approve or reject on up to 1000 listings. Processes
+        in chunks of 100.
+      parameters:
+      - description: Action (approve/reject) and list of IDs
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.batchActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.batchDetailedResult'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Batch listing operations
+      tags:
+      - admin-bathhouses
+  /admin/notifications:
+    get:
+      description: Returns paginated list of admin notifications filtered by role,
+        severity, type
+      parameters:
+      - description: Filter by severity (info, warning, error, critical)
+        in: query
+        name: severity
+        type: string
+      - description: Filter by notification type
+        in: query
+        name: type
+        type: string
+      - description: Filter by read status (true/false)
+        in: query
+        name: is_read
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.adminNotificationResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/internal_handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List admin notifications
+      tags:
+      - admin-notifications
+  /admin/notifications/{id}/read:
+    put:
+      description: Marks a single admin notification as read
+      parameters:
+      - description: Notification ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.statusResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Mark admin notification as read
+      tags:
+      - admin-notifications
+  /admin/notifications/read-all:
+    put:
+      description: Marks all notifications for the admin's role as read
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.statusResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Mark all admin notifications as read
+      tags:
+      - admin-notifications
+  /admin/notifications/unread-count:
+    get:
+      description: Returns the count of unread admin notifications for the admin's
+        role
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.unreadCountResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get unread notification count
+      tags:
+      - admin-notifications
   /admin/object-types:
     get:
       description: Returns all bathhouse object types
@@ -6312,6 +7806,97 @@ paths:
       tags:
       - admin
       - object-types
+  /admin/photo-orders:
+    get:
+      parameters:
+      - description: Filter by status
+        in: query
+        name: status
+        type: string
+      - description: Filter by region
+        in: query
+        name: region
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.photoOrderResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all photo orders (admin)
+      tags:
+      - admin-photo-orders
+  /admin/photo-orders/{id}:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.adminUpdatePhotoOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.photoOrderResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update photo order (admin)
+      tags:
+      - admin-photo-orders
   /admin/photos/{id}/reject:
     patch:
       consumes:
@@ -6497,6 +8082,22 @@ paths:
       summary: List pending photos
       tags:
       - admin-photos
+  /admin/prerender/invalidate/{slug}:
+    post:
+      description: Removes cached pre-rendered HTML pages for a specific bathhouse
+        (admin use)
+      parameters:
+      - description: Bathhouse slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+      summary: Invalidate pre-rendered cache for a bathhouse
+      tags:
+      - seo
   /admin/promo-codes:
     post:
       consumes:
@@ -6926,6 +8527,156 @@ paths:
       summary: Get pending reviews count
       tags:
       - admin-reviews
+  /admin/roles:
+    get:
+      description: Returns all users with admin role and their sub-roles. Super admin
+        only.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.adminRoleResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List admin users with sub-roles
+      tags:
+      - admin-roles
+  /admin/roles/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Assigns a sub-role to an admin user. Super admin only.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Sub-role to assign
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.setAdminSubRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.statusResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Set admin sub-role
+      tags:
+      - admin-roles
+  /admin/roles/permissions:
+    get:
+      description: Returns the full permissions matrix showing which sub-roles have
+        which permissions.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.permissionsMatrixResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get admin permissions matrix
+      tags:
+      - admin-roles
   /admin/service-fee:
     get:
       description: Returns all service fee configurations
@@ -7689,6 +9440,575 @@ paths:
       summary: Unblock user
       tags:
       - admin-users
+  /admin/users/batch:
+    post:
+      consumes:
+      - application/json
+      description: Performs batch block or unblock on up to 1000 users. Processes
+        in chunks of 100.
+      parameters:
+      - description: Action (block/unblock) and list of IDs
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.batchActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.batchDetailedResult'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Batch user operations
+      tags:
+      - admin-users
+  /admin/wallets/{id}:
+    get:
+      description: Returns wallet details by wallet ID. Admin only.
+      parameters:
+      - description: Wallet ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.adminWalletResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Admin get wallet by ID
+      tags:
+      - admin-wallets
+  /admin/wallets/{id}/credit:
+    post:
+      consumes:
+      - application/json
+      description: Credits (adds funds to) a wallet by admin. Amount is in kopecks.
+        Requires reason for audit log.
+      parameters:
+      - description: Wallet ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Credit amount and reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.adminWalletRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.walletTransactionResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Admin credit wallet
+      tags:
+      - admin-wallets
+  /admin/wallets/{id}/debit:
+    post:
+      consumes:
+      - application/json
+      description: Debits (removes funds from) a wallet by admin. Amount is in kopecks.
+        Requires reason for audit log.
+      parameters:
+      - description: Wallet ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Debit amount and reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.adminWalletRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.walletTransactionResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Admin debit wallet
+      tags:
+      - admin-wallets
+  /admin/wallets/{id}/freeze:
+    post:
+      consumes:
+      - application/json
+      description: Freezes a wallet, preventing any transactions. Requires reason
+        for audit log.
+      parameters:
+      - description: Wallet ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Reason for freezing
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.adminWalletRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.adminWalletResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Admin freeze wallet
+      tags:
+      - admin-wallets
+  /admin/wallets/{id}/unfreeze:
+    post:
+      consumes:
+      - application/json
+      description: Unfreezes a frozen wallet, restoring normal operation. Requires
+        reason for audit log.
+      parameters:
+      - description: Wallet ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Reason for unfreezing
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.adminWalletRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.adminWalletResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Admin unfreeze wallet
+      tags:
+      - admin-wallets
+  /admin/wallets/batch-credit:
+    post:
+      consumes:
+      - application/json
+      description: Credits multiple wallets at once (up to 1000). Amount in kopecks.
+        Processes in chunks of 100.
+      parameters:
+      - description: Wallet IDs, amount, and reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.batchCreditRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.batchDetailedResult'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Batch credit wallets
+      tags:
+      - admin-wallets
+  /api/v1/admin/finance/bank-statement:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Bank statement file (CSV or 1C format)
+        in: formData
+        name: file
+        required: true
+        type: file
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.bankStatementUploadResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload bank statement
+      tags:
+      - admin
+      - finance
+  /api/v1/admin/finance/reconciliation:
+    get:
+      parameters:
+      - description: Filter by status (pending, matched, manual, ignored)
+        in: query
+        name: status
+        type: string
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: date_from
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: date_to
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.bankStatementEntryResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List unmatched bank entries
+      tags:
+      - admin
+      - finance
+  /api/v1/admin/finance/reconciliation/{id}/match:
+    put:
+      parameters:
+      - description: Bank entry ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Match details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.manualMatchRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Manual match bank entry
+      tags:
+      - admin
+      - finance
   /api/v1/admin/reconciliation/reconcile:
     post:
       parameters:
@@ -10089,7 +12409,7 @@ paths:
         name: id
         required: true
         type: string
-      - default: 10
+      - default: 6
         description: Max results
         in: query
         name: limit
@@ -10120,6 +12440,39 @@ paths:
       summary: Get similar bathhouses
       tags:
       - recommendations
+  /bathhouses/{id}/transport:
+    get:
+      description: Returns nearest metro stations, bus stops, and parking near the
+        bathhouse
+      parameters:
+      - description: Bathhouse ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.transportResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+      summary: Get nearby transport for a bathhouse
+      tags:
+      - bathhouses
   /bathhouses/by-slug/{slug}:
     get:
       description: Get detailed bathhouse information by its URL-friendly slug.
@@ -11008,9 +13361,10 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates a payment for a booking. Supports card, SBP, wallet, and
-        combo (wallet+card/SBP) payment methods. For wallet/combo, provide wallet_amount
-        and card_amount fields.
+      description: Creates a payment for a booking. Supports card, SBP, wallet, combo
+        (wallet+card/SBP), apple_pay, and google_pay payment methods. For wallet/combo,
+        provide wallet_amount and card_amount fields. For Apple Pay/Google Pay, provide
+        payment_token from the client-side SDK.
       parameters:
       - description: Booking ID (UUID)
         in: path
@@ -11795,6 +14149,50 @@ paths:
       summary: Delete device token
       tags:
       - device-tokens
+  /isochrone:
+    get:
+      description: Returns a polygon representing the area reachable within the specified
+        travel time from a point
+      parameters:
+      - description: Latitude of the origin point
+        in: query
+        name: lat
+        required: true
+        type: number
+      - description: Longitude of the origin point
+        in: query
+        name: lon
+        required: true
+        type: number
+      - description: 'Travel mode: car or transit'
+        in: query
+        name: mode
+        required: true
+        type: string
+      - description: Travel time in minutes (1-60)
+        in: query
+        name: minutes
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.isochroneResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+      summary: Get isochrone polygon
+      tags:
+      - geo
   /media/{id}:
     delete:
       description: Deletes a media attachment from a review. Only the review author
@@ -13142,6 +15540,57 @@ paths:
       tags:
       - pricing
       - holidays
+  /my/bathhouses/{id}/photo-order:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bathhouse ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createPhotoOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.photoOrderResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Request professional photography
+      tags:
+      - photo-orders
   /my/bathhouses/{id}/photos:
     get:
       description: Get all photos (pending, verified, rejected) for a bathhouse. Owner
@@ -13756,6 +16205,74 @@ paths:
       security:
       - BearerAuth: []
       summary: Create promotion
+      tags:
+      - subscriptions
+  /my/bathhouses/{id}/promotions:
+    get:
+      description: Returns a paginated list of all promotion campaigns for a bathhouse.
+        Owner or representative only.
+      parameters:
+      - description: Bathhouse ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.promotionResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/internal_handler.Meta'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List promotion campaigns
       tags:
       - subscriptions
   /my/bathhouses/{id}/seasonal-tariffs:
@@ -15010,6 +17527,44 @@ paths:
       summary: Export guest cards as CSV
       tags:
       - crm
+  /my/crm/rfm:
+    get:
+      description: Get RFM (Recency-Frequency-Monetary) analysis for all guests
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.rfmAnalysisResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get RFM analysis
+      tags:
+      - crm
   /my/crm/segments:
     get:
       description: Get all predefined CRM segments with guest counts
@@ -15102,6 +17657,286 @@ paths:
       security:
       - BearerAuth: []
       summary: Get guests in segment
+      tags:
+      - crm
+  /my/crm/segments/custom:
+    get:
+      description: Get all custom CRM segments for the owner
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.customSegmentResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List custom segments
+      tags:
+      - crm
+    post:
+      consumes:
+      - application/json
+      description: Create a new custom CRM segment with filter conditions
+      parameters:
+      - description: Segment data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createCustomSegmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.customSegmentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create custom segment
+      tags:
+      - crm
+  /my/crm/segments/custom/{id}:
+    delete:
+      description: Delete a custom CRM segment
+      parameters:
+      - description: Segment ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete custom segment
+      tags:
+      - crm
+    put:
+      consumes:
+      - application/json
+      description: Update an existing custom CRM segment
+      parameters:
+      - description: Segment ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Segment data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createCustomSegmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.customSegmentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update custom segment
+      tags:
+      - crm
+  /my/crm/segments/custom/{id}/guests:
+    get:
+      description: Get paginated list of guests matching a custom segment's conditions
+      parameters:
+      - description: Segment ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.guestCardResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get guests in custom segment
       tags:
       - crm
   /my/crm/stats:
@@ -16264,10 +19099,10 @@ paths:
     post:
       consumes:
       - multipart/form-data
-      description: Upload a CSV file to create multiple bathhouse listings as pending
-        drafts
+      description: Upload a CSV or XLSX file to create multiple bathhouse listings
+        as pending drafts
       parameters:
-      - description: CSV file
+      - description: CSV or XLSX file
         in: formData
         name: file
         required: true
@@ -16290,23 +19125,31 @@ paths:
             $ref: '#/definitions/internal_handler.APIResponse'
       security:
       - BearerAuth: []
-      summary: Import listings from CSV
+      summary: Import listings from CSV or XLSX
       tags:
       - listings
   /my/listings/import/template:
     get:
-      description: Download a CSV template with header and example row for listing
-        import
+      description: Download a CSV or XLSX template with header and example row for
+        listing import
+      parameters:
+      - description: 'Template format: csv (default) or xlsx'
+        enum:
+        - csv
+        - xlsx
+        in: query
+        name: format
+        type: string
       produces:
-      - text/csv
+      - application/octet-stream
       responses:
         "200":
           description: OK
           schema:
-            type: string
+            type: file
       security:
       - BearerAuth: []
-      summary: Get CSV import template
+      summary: Get import template (CSV or XLSX)
       tags:
       - listings
   /my/loyalty:
@@ -16490,6 +19333,86 @@ paths:
       security:
       - BearerAuth: []
       summary: Update notification preferences
+      tags:
+      - notifications
+  /my/notification-preferences/events:
+    get:
+      description: Returns per-event channel preferences for all event types
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.eventPreferenceResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get per-event notification preferences
+      tags:
+      - notifications
+    put:
+      consumes:
+      - application/json
+      description: Updates per-event channel preferences. Mandatory events cannot
+        be disabled.
+      parameters:
+      - description: Event preferences to update
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updateEventPreferencesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.eventPreferenceResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update per-event notification preferences
       tags:
       - notifications
   /my/notifications:
@@ -16867,6 +19790,584 @@ paths:
       summary: List my payments
       tags:
       - payments
+  /my/photo-orders:
+    get:
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.photoOrderResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List my photo orders
+      tags:
+      - photo-orders
+  /my/photo-orders/{id}:
+    get:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.photoOrderResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get photo order by ID
+      tags:
+      - photo-orders
+  /my/photo-orders/{id}/cancel:
+    post:
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Cancel photo order (owner)
+      tags:
+      - photo-orders
+  /my/pms-connections:
+    get:
+      description: List all PMS connections for the authenticated owner
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.pmsConnectionResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List PMS connections
+      tags:
+      - pms
+    post:
+      consumes:
+      - application/json
+      description: Connect a bathhouse to an external PMS (Yclients or Restoplace)
+      parameters:
+      - description: PMS connection data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createPMSConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.pmsConnectionResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a PMS connection
+      tags:
+      - pms
+  /my/pms-connections/{id}:
+    delete:
+      description: Delete a PMS connection
+      parameters:
+      - description: Connection ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a PMS connection
+      tags:
+      - pms
+    get:
+      description: Get PMS connection details by ID
+      parameters:
+      - description: Connection ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.pmsConnectionResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get a PMS connection
+      tags:
+      - pms
+    put:
+      consumes:
+      - application/json
+      description: Update an existing PMS connection
+      parameters:
+      - description: Connection ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated connection data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updatePMSConnectionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.pmsConnectionResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update a PMS connection
+      tags:
+      - pms
+  /my/pms-connections/{id}/logs:
+    get:
+      description: List synchronization logs for a PMS connection
+      parameters:
+      - description: Connection ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.pmsSyncLogResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List PMS sync logs
+      tags:
+      - pms
+  /my/pms-connections/{id}/sync:
+    post:
+      description: Manually trigger synchronization with the external PMS
+      parameters:
+      - description: Connection ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Trigger PMS sync
+      tags:
+      - pms
+  /my/pms-connections/{id}/test:
+    post:
+      description: Test connectivity to the external PMS
+      parameters:
+      - description: Connection ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Test a PMS connection
+      tags:
+      - pms
   /my/preferences:
     get:
       description: Returns the user's current recommendation preferences (city, price
@@ -16973,6 +20474,200 @@ paths:
       summary: Get profile completeness
       tags:
       - users
+  /my/promotions/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates a promotion campaign parameters (daily bid, budget, end
+        date). Owner or representative only.
+      parameters:
+      - description: Promotion ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updatePromotionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.promotionResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update promotion campaign
+      tags:
+      - subscriptions
+  /my/promotions/{id}/pause:
+    post:
+      description: Pauses an active promotion campaign. Owner or representative only.
+      parameters:
+      - description: Promotion ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Pause promotion campaign
+      tags:
+      - subscriptions
+  /my/promotions/{id}/resume:
+    post:
+      description: Resumes a paused promotion campaign. Owner or representative only.
+      parameters:
+      - description: Promotion ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handler.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Resume promotion campaign
+      tags:
+      - subscriptions
   /my/recently-viewed:
     get:
       description: Returns the user's recently viewed bathhouses (up to 20)
@@ -17175,6 +20870,211 @@ paths:
       summary: Switch region
       tags:
       - region
+  /my/saved-cards:
+    get:
+      description: Returns paginated list of user's saved cards
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.savedCardResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/internal_handler.Meta'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List saved cards
+      tags:
+      - saved-cards
+    post:
+      consumes:
+      - application/json
+      description: Creates a new saved card token. User can have max 10 saved cards.
+      parameters:
+      - description: Card data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createSavedCardRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.savedCardResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Save a card for future payments
+      tags:
+      - saved-cards
+  /my/saved-cards/{id}:
+    delete:
+      description: Deletes a saved card by ID
+      parameters:
+      - description: Card ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete saved card
+      tags:
+      - saved-cards
+  /my/saved-cards/{id}/default:
+    post:
+      description: Sets a saved card as the default payment method
+      parameters:
+      - description: Card ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.savedCardResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Set default saved card
+      tags:
+      - saved-cards
   /my/saved-searches:
     get:
       description: Returns paginated list of the user's saved searches
@@ -17581,6 +21481,47 @@ paths:
       summary: List my subscriptions
       tags:
       - subscriptions
+  /my/support/faq-match:
+    post:
+      consumes:
+      - application/json
+      description: Search FAQ entries by query text. Returns top 3 matching FAQs.
+        Used by support chat widget before ticket creation.
+      parameters:
+      - description: Search query
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.matchFAQRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.faqMatchResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Match FAQ entries
+      tags:
+      - faq
   /my/tickets:
     get:
       description: Get all support tickets for the authenticated user
@@ -18416,6 +22357,413 @@ paths:
       summary: List wallet transactions
       tags:
       - wallet
+  /my/webhooks:
+    get:
+      description: List all webhooks for the authenticated owner
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.webhookResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List webhooks
+      tags:
+      - webhooks
+    post:
+      consumes:
+      - application/json
+      description: Create a new outgoing webhook for booking/payment events
+      parameters:
+      - description: Webhook data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createWebhookRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.webhookResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "409":
+          description: Conflict
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a webhook
+      tags:
+      - webhooks
+  /my/webhooks/{id}:
+    delete:
+      description: Delete a webhook
+      parameters:
+      - description: Webhook ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a webhook
+      tags:
+      - webhooks
+    get:
+      description: Get webhook details by ID
+      parameters:
+      - description: Webhook ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.webhookResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get a webhook
+      tags:
+      - webhooks
+    put:
+      consumes:
+      - application/json
+      description: Update an existing webhook
+      parameters:
+      - description: Webhook ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Webhook data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.updateWebhookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.webhookResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update a webhook
+      tags:
+      - webhooks
+  /my/webhooks/{id}/deliveries:
+    get:
+      description: List delivery attempts for a webhook
+      parameters:
+      - description: Webhook ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.webhookDeliveryResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List webhook deliveries
+      tags:
+      - webhooks
+  /my/webhooks/{id}/test:
+    post:
+      description: Send a test event to the webhook URL
+      parameters:
+      - description: Webhook ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.simpleMessageResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Test a webhook
+      tags:
+      - webhooks
   /photos/{id}:
     delete:
       description: Delete a bathhouse photo by its ID.
@@ -18513,6 +22861,90 @@ paths:
       summary: Get popular bathhouses
       tags:
       - recommendations
+  /prerender/bathhouses/{slug}:
+    get:
+      description: Returns pre-rendered HTML with meta tags and Schema.org JSON-LD
+        for search engine bots
+      parameters:
+      - description: Bathhouse slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML page
+          schema:
+            type: string
+        "404":
+          description: Not found
+          schema:
+            type: string
+      summary: Get pre-rendered bathhouse page for SEO
+      tags:
+      - seo
+  /prerender/bathhouses/{slug}/reviews:
+    get:
+      description: Returns pre-rendered HTML with reviews content for search engine
+        bots
+      parameters:
+      - description: Bathhouse slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML page
+          schema:
+            type: string
+        "404":
+          description: Not found
+          schema:
+            type: string
+      summary: Get pre-rendered reviews page for SEO
+      tags:
+      - seo
+  /prerender/catalog:
+    get:
+      description: Returns pre-rendered HTML for main bathhouse catalog
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML page
+          schema:
+            type: string
+      summary: Get pre-rendered main listing page for SEO
+      tags:
+      - seo
+  /prerender/cities/{citySlug}:
+    get:
+      description: Returns pre-rendered HTML for city bathhouse catalog
+      parameters:
+      - description: City slug
+        in: path
+        name: citySlug
+        required: true
+        type: string
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: HTML page
+          schema:
+            type: string
+        "404":
+          description: Not found
+          schema:
+            type: string
+      summary: Get pre-rendered city listing page for SEO
+      tags:
+      - seo
   /pricing-rules/{id}:
     delete:
       description: Deletes a pricing rule. Owner or representative only.
@@ -19357,6 +23789,40 @@ paths:
       summary: Update seasonal tariff
       tags:
       - pricing
+  /settings/{key}:
+    get:
+      description: Returns a single platform setting by key (only whitelisted public
+        keys)
+      parameters:
+      - description: Setting key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.publicSettingResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Get a public platform setting
+      tags:
+      - platform-settings
   /users/{id}/profile:
     get:
       description: Returns a user's public profile by ID
@@ -19461,6 +23927,61 @@ paths:
       summary: Report a user
       tags:
       - complaints
+  /webhooks/bepaid:
+    post:
+      consumes:
+      - application/json
+      description: Processes payment status updates from bePaid (Belarus). Returns
+        200 even for domain errors to prevent infinite retries.
+      parameters:
+      - description: bePaid webhook payload
+        in: body
+        name: body
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.statusResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "429":
+          description: Rate limited (30/min)
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: bePaid webhook
+      tags:
+      - payments
   /webhooks/yookassa:
     post:
       consumes:

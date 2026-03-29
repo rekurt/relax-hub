@@ -60,6 +60,8 @@ Clean architecture: **handler → service → repository**
 - `internal/payment/` — payment provider abstraction (YooKassa integration)
 - `internal/antifraud/` — fraud detection engine, rules (wallet/booking/payout), chat content filtering
 - `internal/cron/` — centralized cron scheduler with distributed locking, all background jobs
+- `internal/geo/` — geolocation services (isochrone zones, transport accessibility)
+- `internal/pms/` — PMS integration adapters (Yclients, Restoplace)
 - `internal/bot/` — Telegram bot (separate binary: `cmd/bot/`)
 - `internal/app/` — Uber fx DI container
 
@@ -334,7 +336,11 @@ frontend/src/
 │   │   ├── TicketManagement   #   Support ticket admin queue
 │   │   ├── TicketDetail       #   Admin ticket response/escalation
 │   │   ├── DisputeManagement  #   Dispute mediation queue
-│   │   └── DisputeDetail      #   Admin dispute resolution
+│   │   ├── DisputeDetail      #   Admin dispute resolution
+│   │   ├── WalletManagement   #   Admin wallet credit/debit/freeze
+│   │   ├── BookingManagement  #   Admin booking cancel/refund/status
+│   │   ├── RoleManagement     #   Admin sub-role assignment
+│   │   └── AdminNotificationCenter # Critical alerts per role
 │   ├── client/                # Client role pages:
 │   │   ├── BathhouseSearch    #   Search with filters, geo-search
 │   │   ├── BathhouseDetail    #   Full info, gallery, reviews, slots
@@ -359,18 +365,20 @@ frontend/src/
 │   │   ├── TicketDetail       #   Ticket thread with CSAT
 │   │   ├── DisputeCreate      #   Open dispute with evidence
 │   │   ├── DisputeDetail      #   Dispute status and appeal
-│   │   └── DisputeList        #   Client disputes list
+│   │   ├── DisputeList        #   Client disputes list
+│   │   └── NotificationPreferences # Per-event channel toggles
 │   ├── bathhouses/            # Owner: BathhouseList, BathhouseForm (create/edit)
 │   ├── bookings/              # Owner: BookingList (with payment info), BookingDetails
 │   ├── calendar/              # Owner: CalendarPage (weekly view, slot management)
 │   ├── chat/                  # Owner: ChatPage, ConversationList, MessageArea
 │   ├── notifications/         # Owner: NotificationList
-│   ├── photos/                # Owner: PhotoManager (upload, reorder, status)
+│   ├── photos/                # Owner: PhotoManager (upload, reorder, status), PhotoOrderPage (professional photography)
+│   ├── promotion/             # Owner: PromotionCampaign (auction-based promotion management)
 │   ├── pricing/               # Owner: PricingRules (dynamic pricing)
 │   ├── promo/                 # Owner: PromoList (promo code management)
 │   ├── representatives/       # Owner: RepresentativeList
 │   ├── reviews/               # Owner: ReviewList (with media display, response form)
-│   ├── settings/              # Owner: ProfileSettings
+│   ├── settings/              # Owner: ProfileSettings, WebhookSettings, PMSIntegration
 │   ├── subscriptions/         # Owner: SubscriptionPage
 │   ├── crm/                   # Owner CRM:
 │   │   ├── GuestCardList      #   Guest card search/filter/export
@@ -379,7 +387,9 @@ frontend/src/
 │   │   ├── BroadcastList      #   Broadcast message management
 │   │   ├── BroadcastCreate    #   Create broadcast to segment
 │   │   ├── AutoScenarios      #   Auto-scenario toggle/customize
-│   │   └── ResponseTemplates  #   Quick reply template CRUD
+│   │   ├── ResponseTemplates  #   Quick reply template CRUD
+│   │   ├── RFMAnalysis        #   RFM scoring matrix
+│   │   └── SegmentBuilder     #   Custom segment constructor
 │   └── widget/                # Owner: WidgetSettings
 ├── stores/                    # Zustand: auth.ts (user/token/role), bathhouse.ts (selected bathhouse)
 ├── lib/                       # format.ts, constants.ts, useWebSocketNotifications.ts, useDeviceToken.ts
@@ -423,7 +433,7 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Booking modifications**: clients can modify confirmed bookings (change date/time/duration/guests/addons), max 3 modifications per booking. Price difference charged or refunded proportionally. Combo payment adjustments handled. `PUT /api/v1/bookings/{id}/modify`
 - **Security deposit**: per-bathhouse configurable deposit (0-50% of base price). Card hold on booking creation, auto-release 48h after check-out if no dispute, freeze on dispute. Deposit statuses: none/held/released/claimed
 - **Seasonal tariffs**: date-range pricing multipliers per bathhouse (name, date_from, date_to, multiplier). Applied in price calculation pipeline after base price. CRUD endpoints for owner management. `internal/domain/seasonal_tariff.go`, `internal/repository/postgres/seasonal_tariff_repo.go`
-- **Online payments**: YooKassa integration via PaymentProvider interface, automatic refund on booking cancellation (policy-based), webhook processing. Payment error retry with exponential backoff (3 attempts: 2s, 4s, 8s) for retryable errors (timeout, network). Russian user-friendly error messages. Payment methods: card, SBP (sbp), wallet, combo (wallet + card/SBP). Combo payments: wallet debited first, card payment for remainder, rollback on failure. Payment holds for request-based bookings (capture=false). Enhanced refunds: wallet refund with bonus (default 5%), proportional combo refund, admin manual refund. Config: `BANI_PAYMENT_YOOKASSA_SHOP_ID`, `BANI_PAYMENT_YOOKASSA_SECRET_KEY`, `BANI_PAYMENT_RETURN_URL`
+- **Online payments**: Multi-region payment via PaymentProvider interface. RU: YooKassa, BY: bePaid — provider factory selects by user region (`internal/payment/provider_factory.go`). Payment methods: card, SBP, wallet, combo, MIR, Belkart, ERIP, Apple Pay, Google Pay. Token-based payments for Apple/Google Pay. Saved card tokenization (`internal/domain/saved_card.go`): store provider tokens with last4/brand/expiry, one-click repeat payments. Payment error retry with exponential backoff (3 attempts: 2s, 4s, 8s). Combo payments: wallet first, card remainder, rollback on failure. Payment holds for request-based bookings. Enhanced refunds: wallet refund with bonus (default 5%), proportional combo refund, admin manual refund. Config: `BANI_PAYMENT_YOOKASSA_SHOP_ID`, `BANI_PAYMENT_YOOKASSA_SECRET_KEY`, `BANI_PAYMENT_BEPAID_SHOP_ID`, `BANI_PAYMENT_BEPAID_SECRET_KEY`, `BANI_PAYMENT_RETURN_URL`
 - **Wallet system**: user balance with top-up/spend/hold/refund, priority spending (expiring bonuses first), balance limits (max 100,000 RUB), top-up limits (min 500, max 30,000 RUB per tx), bonus expiration cron (180 days, configurable). Owner payouts with daily/monthly limits and auto-payout threshold
 - **Phone + OTP auth**: Redis-backed 6-digit codes, 5 min TTL, 3 attempts, rate limiting. SMSProvider interface + SMS.ru adapter. Config: `BANI_SMS_PROVIDER`, `BANI_SMS_API_KEY`
 - **Two-factor authentication**: TOTP (pquerna/otp) + SMS 2FA, partial token flow for 2FA during login
@@ -453,7 +463,7 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Financial reports**: wallet history export (CSV/PDF), act generation for owners (PDF), 1C XML export for legal entities. `GET /api/v1/my/wallet/export?format=csv|pdf`, `GET /api/v1/my/finance/acts`. `internal/service/financial_report_service.go`
 - **Transaction reconciliation**: daily float snapshot (client wallets + owner wallets + escrow = expected total), YooKassa transaction reconciliation with zero-tolerance discrepancy alerting. Admin dashboard widget. Daily cron job. `internal/service/reconciliation_service.go`
 - **Bonus expiry notifications**: cron job sends push + email for bonuses expiring in 14 days and 3 days, with deduplication
-- **Mass listing import**: CSV upload with validation, creates listings as drafts (pending moderation), returns import report with per-row errors. `POST /api/v1/my/listings/import`. `internal/service/listing_import_service.go`
+- **Mass listing import**: CSV and Excel (.xlsx) upload with validation, creates listings as drafts (pending moderation), returns import report with per-row errors. Downloadable xlsx template. Auto-detects format by Content-Type. `POST /api/v1/my/listings/import`. `internal/service/listing_import_service.go`. Dependency: `github.com/xuri/excelize/v2`
 - **Share listing/booking**: Open Graph meta tags on bathhouse pages, shareable booking links with pre-filled params. `POST /api/v1/bookings/{id}/share`, deep link resolution at `/share/booking/{token}`. `internal/handler/share_handler.go`
 - **Representative sub-roles**: manager (manage bookings, reply messages) and observer (read-only). Per-bathhouse access control. Invite-by-email flow
 - **Smart pricing**: recommended price based on occupancy, area averages, demand patterns. Coefficient range 0.8-1.5. `GET /api/v1/my/bathhouses/{id}/price-recommendation`. `internal/service/smart_pricing_service.go`
@@ -477,3 +487,19 @@ Each subsystem follows the same handler→service→repository pattern:
 - **Platform settings**: admin-configurable key-value store with typed values (int/float/string/bool/json), Redis cache (5 min TTL, prefix `platform:settings:`). 12 seeded settings: service_fee_percent, welcome_bonus_amount, escrow_claim_hours, etc. Admin endpoints: `GET /api/v1/admin/settings`, `PUT /api/v1/admin/settings/{key}`
 - **Feature flags**: toggleable platform features with optional region scoping (via `cities.region`), Redis cache (1 min TTL). `IsEnabled(key)` and `IsEnabledForRegion(key, region)` checks. 13 seeded flags (wallet, phone auth, 2FA, KYC, add-ons, escrow, CRM, disputes, anti-fraud, SBP, etc.). Admin endpoints: `GET /api/v1/admin/feature-flags`, `PUT /api/v1/admin/feature-flags/{key}`
 - **Force majeure**: mass booking cancellation by region for emergency situations. Admin activates with region + date range + reason, system cancels all confirmed bookings in affected region, issues 100% wallet refunds, notifies clients and owners. Audit trail via `force_majeure_events` table. Booking status: `force_majeure_cancelled`. Admin endpoints: `POST /api/v1/admin/force-majeure`, `GET /api/v1/admin/force-majeure`
+- **Admin sub-roles & permissions**: 6 granular admin sub-roles (super_admin, moderator, support_l1, support_l2, support_l3, finance) with 27-permission matrix. Middleware `RequireAdminPermission(permission)` for endpoint-level access control. Mandatory 2FA for all admin sub-roles. `internal/domain/admin_permission.go`, `migrations/XXXX_admin_roles.up.sql`
+- **Admin notifications**: role-targeted alert system with 8 notification types (antifraud_flag, sla_violation, reconciliation_mismatch, float_drift, ticket_escalation, dispute_opened, kyc_pending, system). 4 severity levels (info, warning, critical, urgent). Daily email digest cron aggregates unread critical alerts per admin role. `internal/domain/admin_notification.go`. Endpoints: `GET /api/v1/admin/notifications`, `PUT /api/v1/admin/notifications/{id}/read`
+- **Admin mass operations**: batch operations for up to 1000 records with chunked DB transactions (100 per batch). Batch approve/reject listings, block/unblock users, credit wallets. Returns succeeded/failed arrays with reasons. `POST /api/v1/admin/listings/batch`, `POST /api/v1/admin/users/batch`, `POST /api/v1/admin/wallets/batch-credit`
+- **Bank reconciliation**: bank statement import (CSV, 1C XML format) with auto-matching against internal payment transactions by amount + date (±1 day) + reference number. Manual match fallback for unmatched entries. Admin endpoints: `POST /api/v1/admin/finance/bank-statement`, `GET /api/v1/admin/finance/reconciliation`, `PUT /api/v1/admin/finance/reconciliation/{id}/match`. `internal/service/bank_reconciliation_service.go`
+- **Owner webhooks**: outbound webhook delivery for 5 event types (booking.created, booking.confirmed, booking.cancelled, booking.completed, payment.received). HMAC-SHA256 signature in X-Webhook-Signature header. Async delivery with retry (3 attempts, exponential backoff). Max 20 webhooks per owner. Delivery log tracking. Owner endpoints: CRUD `/api/v1/my/webhooks`, `GET /api/v1/my/webhooks/{id}/deliveries`. `internal/domain/webhook.go`
+- **PMS integration**: external Property Management System connectors (Yclients, Restoplace). PMSProvider interface: SyncBookings, SyncSchedule, PushBooking, PullBookings. Bidirectional sync every 15 min via cron. Credentials stored encrypted. Owner endpoints: CRUD `/api/v1/my/pms-connections`, `POST /api/v1/my/pms-connections/{id}/sync`. `internal/pms/`
+- **Isochrone search**: travel-time based search zones ("15 min by car", "30 min by transit") via OpenRouteService API. Returns GeoJSON polygons, filtered via PostGIS ST_Within. Redis cache (1h TTL). `GET /api/v1/isochrone?lat=&lon=&mode=car|transit&minutes=15`. `internal/geo/isochrone.go`
+- **Transport accessibility**: nearby metro/bus/parking discovery via Yandex Maps Search API. Distance calculation (Haversine). 7-day Redis cache per bathhouse. `GET /api/v1/bathhouses/{id}/transport`. `internal/geo/transport.go`
+- **SSR/prerender**: bot user-agent detection middleware serves pre-rendered HTML for SEO crawlers (Yandex, Google, social). Pre-renders bathhouse listing, detail, reviews pages. OG/Twitter Card/Schema.org meta tags. Redis cache (1h TTL, invalidated on update). `internal/seo/renderer.go`
+- **Professional photography**: order professional photographers from owner cabinet. Status flow: requested -> confirmed -> completed -> cancelled. Payment from owner wallet on completion. Admin manages photographer queue. Owner endpoint: `POST /api/v1/my/bathhouses/{id}/photo-order`. Admin endpoints: `GET /api/v1/admin/photo-orders`, `PUT /api/v1/admin/photo-orders/{id}`. `internal/domain/photo_order.go`
+- **FAQ bot (L1 support)**: automated FAQ matching before ticket creation. Keyword/trigram search against incoming support messages. Shows top 3 matching FAQ answers. "Not helpful" escalates to L2 (creates ticket). 6 categories (booking, payment, cancellation, wallet, account, general). Admin CRUD: `/api/v1/admin/faq`. `internal/domain/faq.go`, `internal/service/faq_bot_service.go`
+- **Notification preferences**: per-event/per-channel (push/email/SMS) notification preferences. 28+ event types. Mandatory events (booking confirmed, dispute resolution, payment, system) cannot be disabled. Fallback chain: push -> email (5 min) -> SMS (critical only). FCM delivery receipt tracking. `GET/PUT /api/v1/my/notification-preferences`. `internal/domain/notification_preferences.go`
+- **RFM analysis**: Recency-Frequency-Monetary scoring (1-5 each) for CRM guest cards. `GET /api/v1/my/crm/rfm`. Custom segments with multi-condition filters (visit count, avg check, last visit days, tags, RFM ranges). Dynamic evaluation resolves segment to guest list. CRUD: `/api/v1/my/crm/segments/custom`. `internal/service/rfm_service.go`, `internal/domain/custom_segment.go`
+- **Broadcast personalization**: template tokens ({{guest_name}}, {{last_visit_date}}, {{visit_count}}, {{promo_code}}) replaced with guest card data on send. SMS channel via SMSProvider. Broadcast click tracking. `internal/service/broadcast_service.go`
+- **Moderation SLA**: moderation queue metrics — queue size, avg wait time, SLA compliance (48h), per-moderator throughput. Alerts when items > 24h without review. `internal/admin/pages/moderation.go`
+- **Promoted listing campaigns**: auction-based promotion with min 50 rub/day bid, budget management. Daily wallet deduction via cron. Auto-pause on budget exhaustion. Campaign statistics: impressions, clicks, CTR, cost. Higher bid = weighted search ranking boost. `internal/service/promotion_service.go`

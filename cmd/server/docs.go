@@ -11,7 +11,7 @@ import (
 //	@version					1.0
 //	@description				API for the Bani bathhouse marketplace platform.
 //
-//	@BasePath	/api/v1
+//	@BasePath					/api/v1
 //
 //	@securityDefinitions.apikey	BearerAuth
 //	@in							header
