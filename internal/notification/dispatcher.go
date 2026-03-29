@@ -19,6 +19,7 @@ type TelegramSender interface {
 // Dispatcher routes notifications to appropriate delivery channels based on user preferences.
 type Dispatcher struct {
 	notifRepo       repository.NotificationRepository
+	userRepo        repository.UserRepository
 	emailSender     EmailSender
 	telegramSender  TelegramSender
 	telegramRepo    repository.TelegramLinkRepository
@@ -32,6 +33,7 @@ type Dispatcher struct {
 // NewDispatcher creates a new notification Dispatcher.
 func NewDispatcher(
 	notifRepo repository.NotificationRepository,
+	userRepo repository.UserRepository,
 	emailSender EmailSender,
 	telegramSender TelegramSender,
 	telegramRepo repository.TelegramLinkRepository,
@@ -43,6 +45,7 @@ func NewDispatcher(
 ) *Dispatcher {
 	return &Dispatcher{
 		notifRepo:       notifRepo,
+		userRepo:        userRepo,
 		emailSender:     emailSender,
 		telegramSender:  telegramSender,
 		telegramRepo:    telegramRepo,
@@ -164,8 +167,16 @@ func (d *Dispatcher) DispatchFallback(ctx context.Context, fallbackThreshold tim
 		}
 
 		// Fallback to email if not already sent via email
-		if prefs.Email && eventPref.EmailEnabled && d.emailSender != nil {
-			d.logger.Info("sending email fallback for undelivered push", "user_id", p.UserID, "notification_id", p.NotificationID)
+		if prefs.Email && eventPref.EmailEnabled && d.emailSender != nil && d.userRepo != nil {
+			user, err := d.userRepo.GetByID(ctx, p.UserID)
+			if err != nil {
+				d.logger.Warn("failed to get user for email fallback", "user_id", p.UserID, "error", err)
+			} else if user.Email != "" {
+				d.logger.Info("sending email fallback for undelivered push", "user_id", p.UserID, "notification_id", p.NotificationID)
+				if err := d.emailSender.Send(ctx, user.Email, notif.Title, notif.Body); err != nil {
+					d.logger.Warn("failed to send email fallback", "user_id", p.UserID, "error", err)
+				}
+			}
 		}
 
 		// Fallback to SMS for critical events
@@ -184,9 +195,17 @@ func (d *Dispatcher) sendSMSFallback(ctx context.Context, notif *domain.Notifica
 		return
 	}
 
-	// Get user phone from user repo indirectly via notification data or skip
-	phone, ok := notif.Data["phone"]
-	if !ok || phone == "" {
+	// Look up user phone from repository
+	var phone string
+	if d.userRepo != nil {
+		user, err := d.userRepo.GetByID(ctx, notif.UserID)
+		if err != nil {
+			d.logger.Warn("failed to get user for SMS fallback", "user_id", notif.UserID, "error", err)
+			return
+		}
+		phone = user.Phone
+	}
+	if phone == "" {
 		d.logger.Debug("no phone number for SMS fallback", "user_id", notif.UserID)
 		return
 	}

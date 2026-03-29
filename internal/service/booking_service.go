@@ -2284,7 +2284,9 @@ func (s *bookingService) AdminCancel(ctx context.Context, adminID uuid.UUID, boo
 		return err
 	}
 
-	if booking.Status == domain.BookingCancelled || booking.Status == domain.BookingRejected || booking.Status == domain.BookingForceMajeure {
+	if booking.Status == domain.BookingCancelled || booking.Status == domain.BookingRejected ||
+		booking.Status == domain.BookingForceMajeure || booking.Status == domain.BookingCompleted ||
+		booking.Status == domain.BookingNoShow {
 		return domain.ErrInvalidInput
 	}
 
@@ -2337,6 +2339,13 @@ func (s *bookingService) AdminChangeStatus(ctx context.Context, adminID uuid.UUI
 
 	// Prevent no-op transitions
 	if booking.Status == status {
+		return domain.ErrInvalidInput
+	}
+
+	// Block transitions out of terminal states
+	switch booking.Status {
+	case domain.BookingCompleted, domain.BookingCancelled, domain.BookingRejected,
+		domain.BookingForceMajeure, domain.BookingNoShow:
 		return domain.ErrInvalidInput
 	}
 
