@@ -358,9 +358,15 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	}
 
 	// Calculate service fee on base price (before discounts and add-ons)
-	// Use global default "*" — City has no region field; per-city fees require adding region to City model
+	// Resolve bathhouse region from city for per-region fee configs
+	feeRegion := "*"
+	if s.cityRepo != nil {
+		if city, cityErr := s.cityRepo.GetByID(ctx, bh.CityID); cityErr == nil && city.Region != "" {
+			feeRegion = city.Region
+		}
+	}
 	var serviceFeeAmount int64
-	serviceFeeAmount, err = s.serviceFeeSvc.CalculateFee(ctx, priceBreakdown.BasePrice, "*", nil)
+	serviceFeeAmount, err = s.serviceFeeSvc.CalculateFee(ctx, priceBreakdown.BasePrice, feeRegion, nil)
 	if err != nil {
 		s.logger.Warn("failed to calculate service fee, defaulting to 0", "error", err)
 		serviceFeeAmount = 0
@@ -1974,8 +1980,14 @@ func (s *bookingService) Modify(ctx context.Context, userID uuid.UUID, bookingID
 		}
 	}
 
-	// Calculate service fee
-	serviceFeeAmount, err := s.serviceFeeSvc.CalculateFee(ctx, priceBreakdown.BasePrice, "*", nil)
+	// Calculate service fee — resolve region from bathhouse city
+	modFeeRegion := "*"
+	if s.cityRepo != nil {
+		if modCity, cityErr := s.cityRepo.GetByID(ctx, bh.CityID); cityErr == nil && modCity.Region != "" {
+			modFeeRegion = modCity.Region
+		}
+	}
+	serviceFeeAmount, err := s.serviceFeeSvc.CalculateFee(ctx, priceBreakdown.BasePrice, modFeeRegion, nil)
 	if err != nil {
 		s.logger.Warn("failed to calculate service fee on modification, defaulting to 0", "error", err)
 		serviceFeeAmount = 0

@@ -340,3 +340,13 @@ func (r *userRepo) AnonymizeUser(ctx context.Context, userID uuid.UUID, anonEmai
 	}
 	return nil
 }
+
+func (r *userRepo) CountByCreatedAtRange(ctx context.Context, from, to time.Time) (int64, error) {
+	query := `SELECT COUNT(*) FROM users WHERE created_at >= $1 AND created_at <= $2`
+	var count int64
+	err := r.pool.QueryRow(ctx, query, from, to).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count users by created_at range: %w", err)
+	}
+	return count, nil
+}

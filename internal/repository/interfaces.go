@@ -23,6 +23,7 @@ type UserRepository interface {
 	SetDeletionSchedule(ctx context.Context, userID uuid.UUID, requestedAt, scheduledAt *time.Time) error
 	ListPendingDeletions(ctx context.Context, before time.Time) ([]domain.User, error)
 	AnonymizeUser(ctx context.Context, userID uuid.UUID, anonEmail string) error
+	CountByCreatedAtRange(ctx context.Context, from, to time.Time) (int64, error)
 }
 
 type CityRepository interface {

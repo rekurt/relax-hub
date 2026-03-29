@@ -219,6 +219,18 @@ func (r *UserRepo) AnonymizeUser(_ context.Context, userID uuid.UUID, anonEmail 
 	return nil
 }
 
+func (r *UserRepo) CountByCreatedAtRange(_ context.Context, from, to time.Time) (int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var count int64
+	for _, u := range r.users {
+		if !u.CreatedAt.Before(from) && !u.CreatedAt.After(to) {
+			count++
+		}
+	}
+	return count, nil
+}
+
 // CityRepo is an in-memory mock implementation of repository.CityRepository.
 type CityRepo struct {
 	mu     sync.RWMutex

@@ -548,23 +548,10 @@ func (s *analyticsService) calculateUserActivity(ctx context.Context, from, to t
 
 // countNewUsers returns the count of users created in the given period
 func (s *analyticsService) countNewUsers(ctx context.Context, from, to time.Time) int64 {
-	// Get all users and count those created in the period
-	// This is simplified - in production we'd have a dedicated query for this
-	allUsers, err := s.userRepo.List(ctx, 1, 10000)
+	count, err := s.userRepo.CountByCreatedAtRange(ctx, from, to)
 	if err != nil {
 		s.logger.Warn("Failed to count new users", "error", err)
 		return 0
-	}
-	if allUsers == nil {
-		return 0
-	}
-
-	count := int64(0)
-	for _, user := range allUsers.Items {
-		// Use >= and <= for inclusive bounds
-		if !user.CreatedAt.Before(from) && !user.CreatedAt.After(to) {
-			count++
-		}
 	}
 	return count
 }
