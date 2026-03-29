@@ -564,11 +564,11 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 **Files:**
 - Modify: `frontend/src/pages/bathhouses/BathhouseForm.tsx` (step 1)
 
-- [ ] Add welcome/intro step with embedded video player (YouTube/Vimeo embed or self-hosted)
-- [ ] Video placeholder with "How to create a listing" content
-- [ ] "Skip" button to proceed directly to step 2
-- [ ] Store video URL in platform_settings for admin configurability
-- [ ] Run project test suite - must pass before task 30
+- [x] Add welcome/intro step with embedded video player (YouTube/Vimeo embed or self-hosted)
+- [x] Video placeholder with "How to create a listing" content
+- [x] "Skip" button to proceed directly to step 2
+- [x] Store video URL in platform_settings for admin configurability
+- [x] Run project test suite - must pass before task 30
 
 ### Task 30: Verify Acceptance Criteria
 

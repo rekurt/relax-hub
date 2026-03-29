@@ -208,6 +208,9 @@ func NewRouter(p RouterParams) http.Handler {
 		// Search suggestions (public)
 		r.Get("/search/suggestions", p.SearchHandler.GetSuggestions)
 
+		// Public platform settings (whitelisted keys only)
+		r.Get("/settings/{key}", p.PlatformSettingsHandler.GetPublic)
+
 		// Isochrone (public)
 		r.Get("/isochrone", p.IsochroneHandler.GetIsochrone)
 

@@ -101,3 +101,39 @@ func (h *PlatformSettingsHandler) Update(w http.ResponseWriter, r *http.Request)
 
 	writeJSON(w, http.StatusOK, simpleMessageResponse{Message: "setting updated"})
 }
+
+// publicSettingKeys is the whitelist of setting keys accessible without admin auth.
+var publicSettingKeys = map[string]bool{
+	"listing_wizard_video_url": true,
+}
+
+type publicSettingResponse struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+// GetPublic godoc
+//
+//	@Summary		Get a public platform setting
+//	@Description	Returns a single platform setting by key (only whitelisted public keys)
+//	@Tags			platform-settings
+//	@Produce		json
+//	@Param			key	path		string	true	"Setting key"
+//	@Success		200	{object}	APIResponse{data=publicSettingResponse}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/settings/{key} [get]
+func (h *PlatformSettingsHandler) GetPublic(w http.ResponseWriter, r *http.Request) {
+	key := chi.URLParam(r, "key")
+	if !publicSettingKeys[key] {
+		writeError(w, http.StatusNotFound, "not_found", "setting not found")
+		return
+	}
+
+	val, err := h.svc.GetString(r.Context(), key)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, publicSettingResponse{Key: key, Value: val})
+}

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   App,
   Button,
@@ -14,8 +14,9 @@ import {
   TimePicker,
   Typography,
 } from 'antd'
+import { PlayCircleOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import {
   useGetBathhousesId,
@@ -28,8 +29,9 @@ import type {
   InternalHandlerWorkingHoursRequest,
 } from '@/api/generated/model'
 import { formatDayOfWeek } from '@/lib/format'
+import { axiosInstance } from '@/api/axios-instance'
 
-const { Title } = Typography
+const { Title, Paragraph } = Typography
 const { TextArea } = Input
 
 const AMENITY_FIELDS = [
@@ -118,6 +120,31 @@ const DEFAULT_WORKING_HOURS: WorkingHoursFormItem[] = Array.from({ length: 7 }, 
   close_time: dayjs('21:00', 'HH:mm'),
 }))
 
+function useWizardVideoUrl() {
+  return useQuery({
+    queryKey: ['settings', 'listing_wizard_video_url'],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ success: boolean; data: { key: string; value: string } }>('/settings/listing_wizard_video_url')
+      return data.data?.value || ''
+    },
+    staleTime: 10 * 60 * 1000,
+    retry: false,
+  })
+}
+
+function getEmbedUrl(url: string): string | null {
+  if (!url) return null
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`
+  // Vimeo
+  const vimeoMatch = url.match(/(?:vimeo\.com\/(?:video\/)?|player\.vimeo\.com\/video\/)(\d+)/)
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`
+  // Direct embed URL (already an embed)
+  if (url.includes('/embed/') || url.includes('player.vimeo.com')) return url
+  return null
+}
+
 export default function BathhouseForm() {
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
@@ -125,6 +152,8 @@ export default function BathhouseForm() {
   const { message } = App.useApp()
   const queryClient = useQueryClient()
   const [form] = Form.useForm<BathhouseFormValues>()
+  const [showIntro, setShowIntro] = useState(!isEdit)
+  const { data: videoUrl } = useWizardVideoUrl()
 
   const { data: bathhouseData, isLoading: bathhouseLoading } = useGetBathhousesId(id ?? '', {
     query: { enabled: isEdit },
@@ -212,6 +241,58 @@ export default function BathhouseForm() {
     return (
       <div style={{ textAlign: 'center', padding: 48 }}>
         <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (showIntro && !isEdit) {
+    const embedUrl = getEmbedUrl(videoUrl ?? '')
+    return (
+      <div style={{ maxWidth: 800 }}>
+        <Title level={3}>Создание объекта</Title>
+        <Card style={{ marginBottom: 24, textAlign: 'center' }}>
+          <PlayCircleOutlined style={{ fontSize: 48, color: '#1677ff', marginBottom: 16 }} />
+          <Title level={4}>Как создать объявление</Title>
+          <Paragraph type="secondary">
+            Посмотрите короткое видео о том, как заполнить информацию о вашем объекте,
+            чтобы он привлекал больше гостей.
+          </Paragraph>
+          {embedUrl && (
+            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, marginBottom: 24 }}>
+              <iframe
+                src={embedUrl}
+                title="Как создать объявление"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  borderRadius: 8,
+                }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+            <Button
+              type="primary"
+              size="large"
+              icon={<RightOutlined />}
+              onClick={() => setShowIntro(false)}
+            >
+              Начать заполнение
+            </Button>
+            <Button
+              size="large"
+              onClick={() => setShowIntro(false)}
+            >
+              Пропустить
+            </Button>
+          </div>
+        </Card>
       </div>
     )
   }
