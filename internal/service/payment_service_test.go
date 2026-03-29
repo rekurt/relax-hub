@@ -53,7 +53,7 @@ func newPaymentService() (service.PaymentService, *mock.PaymentRepo, *mock.Booki
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fiscal.NewNoOpProvider(), &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, nil, nil, provider, fiscal.NewNoOpProvider(), &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 
@@ -62,7 +62,7 @@ func newPaymentServiceWithWallet(walletSvc *testWalletService) (service.PaymentS
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, nil, nil, provider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 
@@ -105,7 +105,7 @@ func newPaymentServiceWithFiscal(fp fiscal.FiscalProvider) (service.PaymentServi
 	bookingRepo := mock.NewBookingRepo()
 	provider := payment.NewMockProvider()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, provider, fp, &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, nil, nil, nil, provider, fp, &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
 	return svc, paymentRepo, bookingRepo, provider
 }
 
@@ -710,7 +710,7 @@ func TestPaymentService_ComboPayment_CardFailure_WalletRefunded(t *testing.T) {
 	failProvider := &failingMockProvider{}
 	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
 	log := logger.New(logger.LevelWarn)
-	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
+	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, nil, nil, failProvider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
 
 	walletPortion := int64(5000)
 	cardPortion := booking.TotalPrice - walletPortion
@@ -938,7 +938,7 @@ func TestPaymentService_ComboHold_CardFailure_WalletHoldReleased(t *testing.T) {
 	failProvider := &failingMockProvider{}
 	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
 	log := logger.New(logger.LevelWarn)
-	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, failProvider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
+	failSvc := service.NewPaymentService(paymentRepo, bookingRepo, nil, nil, nil, failProvider, fiscal.NewNoOpProvider(), walletSvc, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
 
 	walletPortion := int64(5000)
 	cardPortion := booking.TotalPrice - walletPortion
@@ -1392,6 +1392,150 @@ func TestPaymentService_FiscalFailure_DoesNotBlockRefund(t *testing.T) {
 	updated, _ := paymentRepo.GetByID(context.Background(), p.ID)
 	if updated.Status != domain.PaymentRefunded {
 		t.Errorf("expected payment status refunded, got %s", updated.Status)
+	}
+}
+
+func newPaymentServiceWithFiscalAndRepos(fp fiscal.FiscalProvider, bathhouseRepo *mock.BathhouseRepo, kycRepo *mock.KYCRepo) (service.PaymentService, *mock.PaymentRepo, *mock.BookingRepo, *payment.MockProvider) {
+	paymentRepo := mock.NewPaymentRepo().(*mock.PaymentRepo)
+	bookingRepo := mock.NewBookingRepo()
+	provider := payment.NewMockProvider()
+	log := logger.New(logger.LevelWarn)
+	svc := service.NewPaymentService(paymentRepo, bookingRepo, bathhouseRepo, kycRepo, nil, provider, fp, &noopWalletService{}, &noopNotifService{}, "http://localhost:3000/callback", 5, log)
+	return svc, paymentRepo, bookingRepo, provider
+}
+
+func TestPaymentService_FiscalReceipt_AdaptsByEntityType(t *testing.T) {
+	tests := []struct {
+		name       string
+		entityType domain.KYCEntityType
+		wantVAT    string
+		wantTax    fiscal.TaxSystem
+	}{
+		{"legal entity gets VAT 20% and OSN", domain.KYCEntityLegalEntity, "vat20", fiscal.TaxSystemOSN},
+		{"sole proprietor gets no VAT and USN", domain.KYCEntitySoleProprietor, "none", fiscal.TaxSystemUSN},
+		{"self-employed gets no VAT and NPD", domain.KYCEntitySelfEmployed, "none", fiscal.TaxSystemNPD},
+		{"individual gets no VAT and OSN", domain.KYCEntityIndividual, "none", fiscal.TaxSystemOSN},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fp := &mockFiscalProvider{}
+			bathhouseRepo := mock.NewBathhouseRepo()
+			kycRepo := mock.NewKYCRepo()
+
+			ownerID := uuid.New()
+			bathhouseID := uuid.New()
+
+			// Create bathhouse owned by our test owner
+			bh := &domain.Bathhouse{
+				ID:      bathhouseID,
+				OwnerID: ownerID,
+				Name:    "Test Banya",
+				Status:  domain.BathhouseStatusActive,
+			}
+			_ = bathhouseRepo.Create(context.Background(), bh)
+
+			// Create approved KYC for the owner
+			kyc := &domain.KYCApplication{
+				ID:           uuid.New(),
+				UserID:       ownerID,
+				Status:       domain.KYCStatusApproved,
+				EntityType:   tt.entityType,
+				FullName:     "Test Owner",
+				INN:          "1234567890",
+				DocumentURLs: []string{"doc.pdf"},
+			}
+			_ = kycRepo.Create(context.Background(), kyc)
+			_ = kycRepo.Approve(context.Background(), kyc.ID, uuid.New(), time.Now().Add(365*24*time.Hour))
+
+			svc, paymentRepo, bookingRepo, provider := newPaymentServiceWithFiscalAndRepos(fp, bathhouseRepo, kycRepo)
+
+			userID := uuid.New()
+			booking := createTestBooking(t, bookingRepo, userID, bathhouseID, time.Now().Add(48*time.Hour), domain.BookingPending)
+
+			_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+			if err != nil {
+				t.Fatalf("initiate failed: %v", err)
+			}
+
+			p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+			provider.SetPaymentStatus(p.ExternalID, "succeeded")
+
+			err = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+				ExternalID: p.ExternalID,
+				Status:     "succeeded",
+			})
+			if err != nil {
+				t.Fatalf("webhook failed: %v", err)
+			}
+
+			if len(fp.receipts) != 1 {
+				t.Fatalf("expected 1 receipt, got %d", len(fp.receipts))
+			}
+
+			receipt := fp.receipts[0]
+			if receipt.TaxSystem != tt.wantTax {
+				t.Errorf("TaxSystem = %q, want %q", receipt.TaxSystem, tt.wantTax)
+			}
+			if len(receipt.Items) != 1 {
+				t.Fatalf("expected 1 item, got %d", len(receipt.Items))
+			}
+			if receipt.Items[0].VAT != tt.wantVAT {
+				t.Errorf("VAT = %q, want %q", receipt.Items[0].VAT, tt.wantVAT)
+			}
+		})
+	}
+}
+
+func TestPaymentService_FiscalReceipt_NoKYC_UsesDefaults(t *testing.T) {
+	fp := &mockFiscalProvider{}
+	bathhouseRepo := mock.NewBathhouseRepo()
+	kycRepo := mock.NewKYCRepo()
+
+	ownerID := uuid.New()
+	bathhouseID := uuid.New()
+
+	bh := &domain.Bathhouse{
+		ID:      bathhouseID,
+		OwnerID: ownerID,
+		Name:    "Test Banya",
+		Status:  domain.BathhouseStatusActive,
+	}
+	_ = bathhouseRepo.Create(context.Background(), bh)
+
+	// No KYC for this owner
+
+	svc, paymentRepo, bookingRepo, provider := newPaymentServiceWithFiscalAndRepos(fp, bathhouseRepo, kycRepo)
+
+	userID := uuid.New()
+	booking := createTestBooking(t, bookingRepo, userID, bathhouseID, time.Now().Add(48*time.Hour), domain.BookingPending)
+
+	_, err := svc.InitiatePayment(context.Background(), userID, booking.ID, domain.PaymentMethodCard)
+	if err != nil {
+		t.Fatalf("initiate failed: %v", err)
+	}
+
+	p, _ := paymentRepo.GetByBookingID(context.Background(), booking.ID)
+	provider.SetPaymentStatus(p.ExternalID, "succeeded")
+
+	err = svc.HandleWebhook(context.Background(), service.WebhookEvent{
+		ExternalID: p.ExternalID,
+		Status:     "succeeded",
+	})
+	if err != nil {
+		t.Fatalf("webhook failed: %v", err)
+	}
+
+	if len(fp.receipts) != 1 {
+		t.Fatalf("expected 1 receipt, got %d", len(fp.receipts))
+	}
+
+	receipt := fp.receipts[0]
+	if receipt.TaxSystem != fiscal.TaxSystemDefault {
+		t.Errorf("TaxSystem = %q, want default %q", receipt.TaxSystem, fiscal.TaxSystemDefault)
+	}
+	if receipt.Items[0].VAT != "none" {
+		t.Errorf("VAT = %q, want 'none' (default)", receipt.Items[0].VAT)
 	}
 }
 

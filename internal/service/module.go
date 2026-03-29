@@ -65,8 +65,8 @@ var Module = fx.Module("service",
 			fx.As(new(middleware.SessionValidator)),
 		),
 		fx.Annotate(
-			func(paymentRepo repository.PaymentRepository, bookingRepo repository.BookingRepository, auditLogRepo repository.AuditLogRepository, provider payment.PaymentProvider, fiscalProvider fiscal.FiscalProvider, walletSvc WalletService, notifSvc NotificationService, cfg *config.Config, log *logger.Logger) PaymentService {
-				return NewPaymentService(paymentRepo, bookingRepo, auditLogRepo, provider, fiscalProvider, walletSvc, notifSvc, cfg.Payment.ReturnURL, cfg.Payment.WalletRefundBonusPercent, log)
+			func(paymentRepo repository.PaymentRepository, bookingRepo repository.BookingRepository, bathhouseRepo repository.BathhouseRepository, kycRepo repository.KYCRepository, auditLogRepo repository.AuditLogRepository, provider payment.PaymentProvider, fiscalProvider fiscal.FiscalProvider, walletSvc WalletService, notifSvc NotificationService, cfg *config.Config, log *logger.Logger) PaymentService {
+				return NewPaymentService(paymentRepo, bookingRepo, bathhouseRepo, kycRepo, auditLogRepo, provider, fiscalProvider, walletSvc, notifSvc, cfg.Payment.ReturnURL, cfg.Payment.WalletRefundBonusPercent, log)
 			},
 			fx.As(new(PaymentService)),
 		),

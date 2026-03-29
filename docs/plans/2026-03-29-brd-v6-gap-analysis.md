@@ -392,10 +392,10 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 **Files:**
 - Modify: `internal/fiscal/atol.go` — разные НДС-ставки и параметры по entity_type
 
-- [ ] Определить НДС-ставку по entity_type (физлицо: без НДС, ИП/юрлицо: 20%, самозанятый: НПД)
-- [ ] Передавать корректный tax_system в ATOL
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task E3
+- [x] Определить НДС-ставку по entity_type (физлицо: без НДС, ИП/юрлицо: 20%, самозанятый: НПД)
+- [x] Передавать корректный tax_system в ATOL
+- [x] Тесты
+- [x] run project test suite — must pass before Task E3
 
 ### Task E3: iCal export endpoint (FR-074)
 

@@ -58,6 +58,8 @@ const defaultWalletRefundBonusPercent = 5
 type paymentService struct {
 	paymentRepo              repository.PaymentRepository
 	bookingRepo              repository.BookingRepository
+	bathhouseRepo            repository.BathhouseRepository
+	kycRepo                  repository.KYCRepository
 	auditLogRepo             repository.AuditLogRepository
 	provider                 payment.PaymentProvider
 	fiscalProvider           fiscal.FiscalProvider
@@ -71,6 +73,8 @@ type paymentService struct {
 func NewPaymentService(
 	paymentRepo repository.PaymentRepository,
 	bookingRepo repository.BookingRepository,
+	bathhouseRepo repository.BathhouseRepository,
+	kycRepo repository.KYCRepository,
 	auditLogRepo repository.AuditLogRepository,
 	provider payment.PaymentProvider,
 	fiscalProvider fiscal.FiscalProvider,
@@ -86,6 +90,8 @@ func NewPaymentService(
 	return &paymentService{
 		paymentRepo:              paymentRepo,
 		bookingRepo:              bookingRepo,
+		bathhouseRepo:            bathhouseRepo,
+		kycRepo:                  kycRepo,
 		auditLogRepo:             auditLogRepo,
 		provider:                 provider,
 		fiscalProvider:           fiscalProvider,
@@ -1054,15 +1060,20 @@ func (s *paymentService) createFiscalReceipt(ctx context.Context, p *domain.Paym
 	if len(amounts) > 0 && amounts[0] > 0 {
 		amount = amounts[0]
 	}
+
+	// Resolve owner's entity type for correct VAT and tax system
+	vat, taxSystem := s.resolveOwnerTaxInfo(ctx, p.BookingID)
+
 	req := fiscal.ReceiptRequest{
-		Type:   receiptType,
-		Amount: amount,
+		Type:      receiptType,
+		Amount:    amount,
+		TaxSystem: taxSystem,
 		Items: []fiscal.ReceiptItem{
 			{
 				Name:     fmt.Sprintf("Бронирование %s", p.BookingID.String()[:8]),
 				Quantity: 1,
 				Price:    amount,
-				VAT:      "none",
+				VAT:      vat,
 			},
 		},
 	}
@@ -1074,8 +1085,43 @@ func (s *paymentService) createFiscalReceipt(ctx context.Context, p *domain.Paym
 	}
 	if receipt != nil {
 		s.logger.Info("fiscal receipt created",
-			"payment_id", p.ID, "receipt_id", receipt.ID, "receipt_type", string(receiptType))
+			"payment_id", p.ID, "receipt_id", receipt.ID, "receipt_type", string(receiptType),
+			"tax_system", string(taxSystem), "vat", vat)
 	}
+}
+
+// resolveOwnerTaxInfo looks up the bathhouse owner's KYC entity type to determine
+// the correct VAT rate and tax system for fiscal receipts.
+func (s *paymentService) resolveOwnerTaxInfo(ctx context.Context, bookingID uuid.UUID) (string, fiscal.TaxSystem) {
+	defaultVAT, defaultTax := "none", fiscal.TaxSystemDefault
+
+	if s.bathhouseRepo == nil || s.kycRepo == nil {
+		return defaultVAT, defaultTax
+	}
+
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		s.logger.Warn("fiscal: failed to get booking for tax info", "booking_id", bookingID, "error", err)
+		return defaultVAT, defaultTax
+	}
+
+	bh, err := s.bathhouseRepo.GetByID(ctx, booking.BathhouseID)
+	if err != nil {
+		s.logger.Warn("fiscal: failed to get bathhouse for tax info", "bathhouse_id", booking.BathhouseID, "error", err)
+		return defaultVAT, defaultTax
+	}
+
+	kyc, err := s.kycRepo.GetByUserID(ctx, bh.OwnerID)
+	if err != nil {
+		s.logger.Debug("fiscal: no KYC for owner, using default tax info", "owner_id", bh.OwnerID)
+		return defaultVAT, defaultTax
+	}
+
+	if kyc.Status != domain.KYCStatusApproved {
+		return defaultVAT, defaultTax
+	}
+
+	return fiscal.TaxInfoForEntityType(kyc.EntityType)
 }
 
 func (s *paymentService) sendPaymentConfirmationNotification(ctx context.Context, booking *domain.Booking) {

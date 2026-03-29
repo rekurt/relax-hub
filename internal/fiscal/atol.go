@@ -28,12 +28,17 @@ func NewATOLProvider(login, password, groupCode string, log *logger.Logger) *ATO
 
 // CreateReceipt logs the receipt request and returns a mock receipt.
 func (p *ATOLProvider) CreateReceipt(_ context.Context, req ReceiptRequest) (*Receipt, error) {
+	taxSystem := req.TaxSystem
+	if taxSystem == "" {
+		taxSystem = TaxSystemDefault
+	}
 	p.logger.Info("ATOL receipt created (placeholder)",
 		"type", string(req.Type),
 		"amount", req.Amount,
 		"email", req.Email,
 		"phone", req.Phone,
 		"items_count", len(req.Items),
+		"tax_system", string(taxSystem),
 	)
 	return &Receipt{
 		ID:     uuid.New().String(),
