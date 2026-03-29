@@ -20,7 +20,7 @@ func TestPricingService_CalculatePrice_NoRules(t *testing.T) {
 	repRepo := mock.NewRepresentativeRepo()
 	access := NewAccessChecker(repRepo, bhRepo)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, testPricingLogger)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -49,7 +49,7 @@ func TestPricingService_CalculatePrice_SingleRule(t *testing.T) {
 	repRepo := mock.NewRepresentativeRepo()
 	access := NewAccessChecker(repRepo, bhRepo)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, testPricingLogger)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -95,7 +95,7 @@ func TestPricingService_CalculatePrice_PriorityConflict(t *testing.T) {
 	repRepo := mock.NewRepresentativeRepo()
 	access := NewAccessChecker(repRepo, bhRepo)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, testPricingLogger)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -161,7 +161,7 @@ func TestPricingService_CalculatePrice_PartialRuleApplication(t *testing.T) {
 	repRepo := mock.NewRepresentativeRepo()
 	access := NewAccessChecker(repRepo, bhRepo)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, testPricingLogger)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -212,7 +212,7 @@ func TestPricingService_CreateRule_InvalidInput(t *testing.T) {
 	repRepo := mock.NewRepresentativeRepo()
 	access := NewAccessChecker(repRepo, bhRepo)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, testPricingLogger)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -244,7 +244,7 @@ func TestPricingService_CreateRule_UnauthorizedUser(t *testing.T) {
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 	log := logger.New(logger.LevelError)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, log)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	ownerID := uuid.New()
@@ -278,7 +278,7 @@ func TestPricingService_ListRules(t *testing.T) {
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 	log := logger.New(logger.LevelError)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, log)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -321,7 +321,7 @@ func TestPricingService_CalculatePrice_HolidayRule(t *testing.T) {
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 	log := logger.New(logger.LevelError)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, log)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -370,7 +370,7 @@ func TestPricingService_CalculatePrice_InactiveRule(t *testing.T) {
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 	log := logger.New(logger.LevelError)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, log)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -416,7 +416,7 @@ func TestPricingService_CalculatePrice_WraparoundTimeRange(t *testing.T) {
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 	log := logger.New(logger.LevelError)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, log)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -494,7 +494,7 @@ func TestPricingService_UpdateRule(t *testing.T) {
 	access := NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelError)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, log)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	ownerID := uuid.New()
@@ -561,7 +561,7 @@ func TestPricingService_DeleteRule(t *testing.T) {
 	access := NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelError)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, log)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	ownerID := uuid.New()
@@ -609,7 +609,7 @@ func TestPricingService_GetActiveRules(t *testing.T) {
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 	log := logger.New(logger.LevelError)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, log)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -686,7 +686,7 @@ func TestPricingService_CalculatePrice_DateRangeBoundary(t *testing.T) {
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 	log := logger.New(logger.LevelError)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, log)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -761,7 +761,7 @@ func TestPricingService_CalculateFullPrice_LongSessionDiscount(t *testing.T) {
 	bhRepo := mock.NewBathhouseRepo()
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 
-	svc := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+	svc := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, testPricingLogger)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -859,7 +859,7 @@ func TestPricingService_CalculateFullPrice_ExtraGuestSurcharge(t *testing.T) {
 	bhRepo := mock.NewBathhouseRepo()
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 
-	svc := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+	svc := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, testPricingLogger)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -954,7 +954,7 @@ func TestPricingService_CalculatePrice_PerDayRule(t *testing.T) {
 	bhRepo := mock.NewBathhouseRepo()
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, testPricingLogger)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -1051,7 +1051,7 @@ func TestPricingService_CalculatePrice_PerDayOverridesWeekday(t *testing.T) {
 	bhRepo := mock.NewBathhouseRepo()
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 
-	service := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+	service := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, testPricingLogger)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -1126,7 +1126,7 @@ func TestPricingService_CalculateFullPrice_Combined(t *testing.T) {
 	bhRepo := mock.NewBathhouseRepo()
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 
-	svc := NewPricingService(priceRepo, nil, bhRepo, nil, access, testPricingLogger)
+	svc := NewPricingService(priceRepo, nil, bhRepo, nil, nil, access, testPricingLogger)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}

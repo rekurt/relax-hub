@@ -27,7 +27,7 @@ func newModificationService() (service.BookingModificationService, service.Booki
 	cityRepo := mock.NewCityRepo()
 	access := service.NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelWarn)
-	pricingSvc := service.NewPricingService(pricingRepo, nil, bhRepo, nil, access, log)
+	pricingSvc := service.NewPricingService(pricingRepo, nil, bhRepo, nil, nil, access, log)
 	loyaltySvc := service.NewLoyaltyService(loyaltyRepo, log)
 	addonSvc := service.NewAddOnService(addonRepo, access, log)
 	bookingSvc := service.NewBookingService(bookingRepo, bhRepo, slotBlockRepo, addonRepo, userRepo, cityRepo, pricingSvc, addonSvc, loyaltySvc, &noopReferralService{}, &noopPromoService{}, &noopCertificateService{}, &noopPaymentService{}, &noopServiceFeeService{}, nil, nil, nil, nil, nil, access, &noopNotifService{}, log)

@@ -19,7 +19,7 @@ func TestSeasonalTariff_CRUD(t *testing.T) {
 	access := NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelError)
 
-	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, access, log)
+	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, nil, access, log)
 
 	ownerID := uuid.New()
 	bathhouseID := uuid.New()
@@ -86,7 +86,7 @@ func TestSeasonalTariff_UnauthorizedUser(t *testing.T) {
 	access := NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelError)
 
-	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, access, log)
+	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, nil, access, log)
 
 	ownerID := uuid.New()
 	otherUserID := uuid.New()
@@ -120,7 +120,7 @@ func TestSeasonalTariff_InvalidInput(t *testing.T) {
 	access := NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelError)
 
-	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, access, log)
+	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, nil, access, log)
 
 	ownerID := uuid.New()
 	bathhouseID := uuid.New()
@@ -154,7 +154,7 @@ func TestSeasonalTariff_PriceCalculation_SingleTariff(t *testing.T) {
 	access := NewAccessChecker(repRepo, bhRepo)
 	log := logger.New(logger.LevelError)
 
-	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, access, log)
+	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -217,7 +217,7 @@ func TestSeasonalTariff_PriceCalculation_NoTariffApplied(t *testing.T) {
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 	log := logger.New(logger.LevelError)
 
-	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, access, log)
+	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -273,7 +273,7 @@ func TestSeasonalTariff_PriceCalculation_OverlappingTariffs(t *testing.T) {
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 	log := logger.New(logger.LevelError)
 
-	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, access, log)
+	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -373,7 +373,7 @@ func TestSeasonalTariff_PriceCalculation_InactiveTariffIgnored(t *testing.T) {
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 	log := logger.New(logger.LevelError)
 
-	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, access, log)
+	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -428,7 +428,7 @@ func TestSeasonalTariff_PriceCalculation_BoundaryDates(t *testing.T) {
 	access := NewAccessChecker(mock.NewRepresentativeRepo(), bhRepo)
 	log := logger.New(logger.LevelError)
 
-	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, access, log)
+	svc := NewPricingService(priceRepo, tariffRepo, bhRepo, nil, nil, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}

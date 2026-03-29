@@ -57,6 +57,7 @@ type pricingService struct {
 	priceRuleRepo      repository.PricingRuleRepository
 	seasonalTariffRepo repository.SeasonalTariffRepository
 	bhRepo             repository.BathhouseRepository
+	cityRepo           repository.CityRepository
 	holidaySvc         HolidayService
 	access             *AccessChecker
 	logger             *logger.Logger
@@ -66,6 +67,7 @@ func NewPricingService(
 	priceRuleRepo repository.PricingRuleRepository,
 	seasonalTariffRepo repository.SeasonalTariffRepository,
 	bhRepo repository.BathhouseRepository,
+	cityRepo repository.CityRepository,
 	holidaySvc HolidayService,
 	access *AccessChecker,
 	log *logger.Logger,
@@ -74,6 +76,7 @@ func NewPricingService(
 		priceRuleRepo:      priceRuleRepo,
 		seasonalTariffRepo: seasonalTariffRepo,
 		bhRepo:             bhRepo,
+		cityRepo:           cityRepo,
 		holidaySvc:         holidaySvc,
 		access:             access,
 		logger:             log,
@@ -136,7 +139,15 @@ func (s *pricingService) CalculateFullPrice(ctx context.Context, input PriceCalc
 	breakdown := &PriceBreakdown{}
 
 	if s.holidaySvc != nil {
-		holiday, multiplier, err := s.holidaySvc.IsHolidayDate(ctx, input.StartTime, "RU", input.BathhouseID)
+		region := "RU"
+		if s.bhRepo != nil && s.cityRepo != nil {
+			if bh, bhErr := s.bhRepo.GetByID(ctx, input.BathhouseID); bhErr == nil && bh != nil {
+				if city, cErr := s.cityRepo.GetByID(ctx, bh.CityID); cErr == nil && city != nil {
+					region = city.Region
+				}
+			}
+		}
+		holiday, multiplier, err := s.holidaySvc.IsHolidayDate(ctx, input.StartTime, region, input.BathhouseID)
 		if err != nil {
 			s.logger.Warn("failed to check holiday pricing, continuing without", "error", err)
 		} else if holiday != nil && multiplier > 0 {

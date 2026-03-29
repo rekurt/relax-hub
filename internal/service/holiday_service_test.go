@@ -291,7 +291,7 @@ func TestPricingService_CalculateFullPrice_HolidayMultiplier(t *testing.T) {
 	}
 
 	// Create pricing service with holiday service
-	svc := NewPricingService(priceRepo, nil, bhRepo, holidaySvc, access, log)
+	svc := NewPricingService(priceRepo, nil, bhRepo, nil, holidaySvc, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -358,7 +358,7 @@ func TestPricingService_CalculateFullPrice_HolidayWithDynamicRule(t *testing.T) 
 		t.Fatalf("failed to create holiday: %v", err)
 	}
 
-	svc := NewPricingService(priceRepo, nil, bhRepo, holidaySvc, access, log)
+	svc := NewPricingService(priceRepo, nil, bhRepo, nil, holidaySvc, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
@@ -439,7 +439,7 @@ func TestPricingService_CalculateFullPrice_NonHolidayDate(t *testing.T) {
 		t.Fatalf("failed to create holiday: %v", err)
 	}
 
-	svc := NewPricingService(priceRepo, nil, bhRepo, holidaySvc, access, log)
+	svc := NewPricingService(priceRepo, nil, bhRepo, nil, holidaySvc, access, log)
 
 	bathhouseID := uuid.New()
 	bh := &domain.Bathhouse{ID: bathhouseID, OwnerID: uuid.New()}
