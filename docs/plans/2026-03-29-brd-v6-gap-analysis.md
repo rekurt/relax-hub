@@ -265,10 +265,10 @@ WebP-конвертация, blur-hash.
 **Files:**
 - Modify: `frontend/src/components/BathhouseMap.tsx` — добавить переключатель слоёв
 
-- [ ] Добавить Yandex Maps LayerSwitch (yandex.map.layer.satellite)
-- [ ] Кнопка переключения "Схема / Спутник"
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task C3
+- [x] Добавить Yandex Maps LayerSwitch (yandex.map.layer.satellite)
+- [x] Кнопка переключения "Схема / Спутник"
+- [x] Тесты
+- [x] run project test suite — must pass before Task C3
 
 ### Task C3: Frontend slug-based маршруты (FR-047, SEO)
 

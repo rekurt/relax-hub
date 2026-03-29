@@ -38,6 +38,8 @@ interface YMap {
   getBounds(): number[][]
   getCenter(): number[]
   setCenter(center: number[], zoom?: number): void
+  setType(type: string): void
+  getType(): string
   destroy(): void
 }
 
@@ -111,6 +113,17 @@ export default function BathhouseMap({
   const polygonRef = useRef<YGeoObject | null>(null)
   const [loading, setLoading] = useState(true)
   const [showSearchArea, setShowSearchArea] = useState(false)
+  const [mapType, setMapType] = useState<'scheme' | 'satellite'>('scheme')
+
+  const handleToggleMapType = useCallback(() => {
+    setMapType((prev) => {
+      const next = prev === 'scheme' ? 'satellite' : 'scheme'
+      if (mapRef.current) {
+        mapRef.current.setType(next === 'scheme' ? 'yandex#map' : 'yandex#satellite')
+      }
+      return next
+    })
+  }, [])
 
   const handleBoundsChange = useCallback(() => {
     if (!mapRef.current || !onBoundsChange) return
@@ -290,6 +303,25 @@ export default function BathhouseMap({
           onClick={handleSearchArea}
         >
           Искать в этой области
+        </Button>
+      )}
+
+      {!loading && (
+        <Button
+          size="small"
+          data-testid="map-layer-toggle"
+          style={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            zIndex: 10,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            background: '#fff',
+            fontWeight: 500,
+          }}
+          onClick={handleToggleMapType}
+        >
+          {mapType === 'scheme' ? 'Спутник' : 'Схема'}
         </Button>
       )}
     </div>

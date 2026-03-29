@@ -1,31 +1,39 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { useState } from 'react'
 import BathhouseMap from '@/components/BathhouseMap'
+
+interface MockProps {
+  bathhouses: { id?: string; latitude?: number; longitude?: number; name?: string; price_per_hour?: number }[]
+  highlightedId?: string | null
+  style?: React.CSSProperties
+}
+
+function MockBathhouseMap({ bathhouses, highlightedId, style }: MockProps) {
+  const [mapType, setMapType] = useState<'scheme' | 'satellite'>('scheme')
+  const markersWithCoords = bathhouses.filter((b) => b.latitude && b.longitude)
+  return (
+    <div data-testid="bathhouse-map" style={style}>
+      <span data-testid="marker-count">{markersWithCoords.length}</span>
+      {highlightedId && <span data-testid="highlighted">{highlightedId}</span>}
+      {markersWithCoords.map((b) => (
+        <div key={b.id} data-testid={`marker-${b.id}`}>
+          {b.name}
+        </div>
+      ))}
+      <button
+        data-testid="map-layer-toggle"
+        onClick={() => setMapType((prev) => (prev === 'scheme' ? 'satellite' : 'scheme'))}
+      >
+        {mapType === 'scheme' ? 'Спутник' : 'Схема'}
+      </button>
+    </div>
+  )
+}
 
 // Mock the Yandex Maps API loading - we can't load real scripts in jsdom
 vi.mock('@/components/BathhouseMap', () => ({
-  default: ({
-    bathhouses,
-    highlightedId,
-    style,
-  }: {
-    bathhouses: { id?: string; latitude?: number; longitude?: number; name?: string; price_per_hour?: number }[]
-    highlightedId?: string | null
-    style?: React.CSSProperties
-  }) => {
-    const markersWithCoords = bathhouses.filter((b) => b.latitude && b.longitude)
-    return (
-      <div data-testid="bathhouse-map" style={style}>
-        <span data-testid="marker-count">{markersWithCoords.length}</span>
-        {highlightedId && <span data-testid="highlighted">{highlightedId}</span>}
-        {markersWithCoords.map((b) => (
-          <div key={b.id} data-testid={`marker-${b.id}`}>
-            {b.name}
-          </div>
-        ))}
-      </div>
-    )
-  },
+  default: MockBathhouseMap,
 }))
 
 const mockBathhouses = [
@@ -75,5 +83,28 @@ describe('BathhouseMap', () => {
   it('renders with empty bathhouses array', () => {
     render(<BathhouseMap bathhouses={[]} />)
     expect(screen.getByTestId('marker-count')).toHaveTextContent('0')
+  })
+
+  it('renders layer toggle button with default "Спутник" label', () => {
+    render(<BathhouseMap bathhouses={mockBathhouses} />)
+    const toggle = screen.getByTestId('map-layer-toggle')
+    expect(toggle).toBeInTheDocument()
+    expect(toggle).toHaveTextContent('Спутник')
+  })
+
+  it('toggles map layer between scheme and satellite', () => {
+    render(<BathhouseMap bathhouses={mockBathhouses} />)
+    const toggle = screen.getByTestId('map-layer-toggle')
+
+    // Initially shows "Спутник" (meaning we're on scheme, click to switch to satellite)
+    expect(toggle).toHaveTextContent('Спутник')
+
+    // Click to switch to satellite
+    fireEvent.click(toggle)
+    expect(toggle).toHaveTextContent('Схема')
+
+    // Click again to switch back to scheme
+    fireEvent.click(toggle)
+    expect(toggle).toHaveTextContent('Спутник')
   })
 })
