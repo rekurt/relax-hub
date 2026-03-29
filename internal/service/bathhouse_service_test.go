@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -1361,5 +1362,164 @@ func TestComputeBadges_NoPremiumWithoutSubscription(t *testing.T) {
 	badges := env.svc.ComputeBadges(ctx, bh)
 	if containsBadge(badges, "premium") {
 		t.Error("unexpected 'premium' badge - no active subscription")
+	}
+}
+
+func TestIsLastMinuteActive_Enabled_SlotInWindow(t *testing.T) {
+	env := newBathhouseTestEnv()
+	now := time.Now()
+	wd := now.Weekday()
+	dayOfWeek := int(wd) - 1
+	if wd == time.Sunday {
+		dayOfWeek = 6
+	}
+	// Open time 1 hour from now
+	openTime := now.Add(1 * time.Hour).Format("15:04")
+
+	bh := &domain.Bathhouse{
+		LastMinuteEnabled:        true,
+		LastMinuteDiscountPercent: 20,
+		LastMinuteHoursThreshold: 6,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: dayOfWeek, OpenTime: openTime, CloseTime: "23:00"},
+		},
+	}
+	if !env.svc.IsLastMinuteActive(bh) {
+		t.Error("expected last-minute active for slot starting 1 hour from now with 6h threshold")
+	}
+}
+
+func TestIsLastMinuteActive_Enabled_NoSlotInWindow(t *testing.T) {
+	env := newBathhouseTestEnv()
+	now := time.Now()
+	wd := now.Weekday()
+	dayOfWeek := int(wd) - 1
+	if wd == time.Sunday {
+		dayOfWeek = 6
+	}
+	// Open time 10 hours from now (beyond 6h threshold)
+	openTime := now.Add(10 * time.Hour).Format("15:04")
+
+	bh := &domain.Bathhouse{
+		LastMinuteEnabled:        true,
+		LastMinuteDiscountPercent: 20,
+		LastMinuteHoursThreshold: 6,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: dayOfWeek, OpenTime: openTime, CloseTime: "23:59"},
+		},
+	}
+	if env.svc.IsLastMinuteActive(bh) {
+		t.Error("expected last-minute NOT active for slot starting 10 hours from now with 6h threshold")
+	}
+}
+
+func TestIsLastMinuteActive_Disabled(t *testing.T) {
+	env := newBathhouseTestEnv()
+	bh := &domain.Bathhouse{
+		LastMinuteEnabled:        false,
+		LastMinuteDiscountPercent: 20,
+		LastMinuteHoursThreshold: 6,
+	}
+	if env.svc.IsLastMinuteActive(bh) {
+		t.Error("expected last-minute NOT active when feature is disabled")
+	}
+}
+
+func TestComputeBadges_LastMinute(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ctx := context.Background()
+	now := time.Now()
+	wd := now.Weekday()
+	dayOfWeek := int(wd) - 1
+	if wd == time.Sunday {
+		dayOfWeek = 6
+	}
+	openTime := now.Add(1 * time.Hour).Format("15:04")
+
+	bh := &domain.Bathhouse{
+		ID: uuid.New(), OwnerID: uuid.New(), Name: "Last Minute Баня", Slug: "lm",
+		Address: "ул. Скидки 1", CityID: 1, PricePerHour: 5000,
+		MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+		CreatedAt:                time.Now().Add(-60 * 24 * time.Hour),
+		LastMinuteEnabled:        true,
+		LastMinuteDiscountPercent: 20,
+		LastMinuteHoursThreshold: 6,
+		WorkingHours: []domain.WorkingHours{
+			{DayOfWeek: dayOfWeek, OpenTime: openTime, CloseTime: "23:00"},
+		},
+	}
+	_ = env.bhRepo.Create(ctx, bh)
+
+	badges := env.svc.ComputeBadges(ctx, bh)
+	if !containsBadge(badges, "last_minute") {
+		t.Error("expected 'last_minute' badge for bathhouse with active last-minute discount")
+	}
+}
+
+func TestSearch_PromotedLimit(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ctx := context.Background()
+
+	// Create 5 bathhouses, all will show as "promoted" in mock
+	// The mock repo doesn't check promotions table so we test the service capping logic
+	// by verifying that Search() caps promoted count to 3
+	for i := 0; i < 5; i++ {
+		bh := &domain.Bathhouse{
+			ID: uuid.New(), OwnerID: uuid.New(),
+			Name: fmt.Sprintf("Баня %d", i), Slug: fmt.Sprintf("banya-%d", i),
+			Address: "ул. Тест 1", CityID: 1, PricePerHour: 5000,
+			MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+			IsPromoted: true,
+		}
+		_ = env.bhRepo.Create(ctx, bh)
+	}
+
+	result, err := env.svc.Search(ctx, domain.BathhouseFilter{Page: 1, PageSize: 20})
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+
+	promotedCount := 0
+	for _, bh := range result.Items {
+		if bh.IsPromoted {
+			promotedCount++
+		}
+	}
+	if promotedCount > 3 {
+		t.Errorf("expected max 3 promoted per page, got %d", promotedCount)
+	}
+}
+
+func TestGetAreaAvgPrice(t *testing.T) {
+	env := newBathhouseTestEnv()
+	ctx := context.Background()
+
+	// Create 3 active bathhouses in city 1
+	for i := 0; i < 3; i++ {
+		bh := &domain.Bathhouse{
+			ID: uuid.New(), OwnerID: uuid.New(),
+			Name: fmt.Sprintf("Баня avg %d", i), Slug: fmt.Sprintf("avg-%d", i),
+			Address: "ул. Средняя 1", CityID: 1, PricePerHour: int64((i + 1) * 100000),
+			MaxGuests: 10, MinDuration: 1, Status: domain.BathhouseStatusActive,
+		}
+		_ = env.bhRepo.Create(ctx, bh)
+	}
+
+	// Prices: 100000, 200000, 300000 -> avg = 200000
+	avgPrice, err := env.svc.GetAreaAvgPrice(ctx, 1, 55.7, 37.6)
+	if err != nil {
+		t.Fatalf("GetAreaAvgPrice failed: %v", err)
+	}
+	if avgPrice != 200000 {
+		t.Errorf("expected avg price 200000, got %d", avgPrice)
+	}
+
+	// City with no bathhouses
+	avgPrice, err = env.svc.GetAreaAvgPrice(ctx, 999, 55.7, 37.6)
+	if err != nil {
+		t.Fatalf("GetAreaAvgPrice for empty city failed: %v", err)
+	}
+	if avgPrice != 0 {
+		t.Errorf("expected avg price 0 for empty city, got %d", avgPrice)
 	}
 }

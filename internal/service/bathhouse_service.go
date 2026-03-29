@@ -104,6 +104,8 @@ type BathhouseService interface {
 	ArchiveBathhouse(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID) error
 	IncrementViewCount(ctx context.Context, id uuid.UUID) error
 	ComputeBadges(ctx context.Context, bh *domain.Bathhouse) []string
+	IsLastMinuteActive(bh *domain.Bathhouse) bool
+	GetAreaAvgPrice(ctx context.Context, cityID int64, lat, lng float64) (int64, error)
 	// Admin moderation:
 	Approve(ctx context.Context, id uuid.UUID) error
 	Reject(ctx context.Context, id uuid.UUID) error
@@ -390,8 +392,26 @@ func (s *bathhouseService) Delete(ctx context.Context, ownerID uuid.UUID, id uui
 	return s.bhRepo.Delete(ctx, id)
 }
 
+const maxPromotedPerPage = 3
+
 func (s *bathhouseService) Search(ctx context.Context, filter domain.BathhouseFilter) (*domain.PaginatedResult[domain.Bathhouse], error) {
-	return s.bhRepo.List(ctx, filter)
+	result, err := s.bhRepo.List(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	// Enforce max promoted listings per page: cap at maxPromotedPerPage
+	promotedCount := 0
+	for i := range result.Items {
+		if result.Items[i].IsPromoted {
+			promotedCount++
+			if promotedCount > maxPromotedPerPage {
+				result.Items[i].IsPromoted = false
+			}
+		}
+	}
+
+	return result, nil
 }
 
 func (s *bathhouseService) ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Bathhouse], error) {
@@ -781,10 +801,11 @@ func workingHoursEqual(a, b []domain.WorkingHours) bool {
 }
 
 const (
-	badgeVerified = "verified"
-	badgeTop      = "top"
-	badgePremium  = "premium"
-	badgeNew      = "new"
+	badgeVerified   = "verified"
+	badgeTop        = "top"
+	badgePremium    = "premium"
+	badgeNew        = "new"
+	badgeLastMinute = "last_minute"
 
 	badgeTopMinRating  = 4.5
 	badgeTopMinReviews = 10
@@ -820,7 +841,59 @@ func (s *bathhouseService) ComputeBadges(ctx context.Context, bh *domain.Bathhou
 		badges = append(badges, badgeNew)
 	}
 
+	// "LastMinute": last-minute discount is currently active
+	if s.IsLastMinuteActive(bh) {
+		badges = append(badges, badgeLastMinute)
+	}
+
 	return badges
+}
+
+// IsLastMinuteActive checks whether a bathhouse currently qualifies for its last-minute discount.
+// Returns true when the bathhouse has last-minute enabled and there are open working hours
+// starting within the threshold window from now.
+func (s *bathhouseService) IsLastMinuteActive(bh *domain.Bathhouse) bool {
+	if !bh.LastMinuteEnabled || bh.LastMinuteHoursThreshold <= 0 {
+		return false
+	}
+
+	now := time.Now()
+	threshold := now.Add(time.Duration(bh.LastMinuteHoursThreshold) * time.Hour)
+
+	// Check if any working hours slot today or tomorrow starts within the threshold window
+	for dayOffset := 0; dayOffset <= 1; dayOffset++ {
+		checkDate := now.AddDate(0, 0, dayOffset)
+		wd := checkDate.Weekday()
+		dayOfWeek := int(wd) - 1
+		if wd == time.Sunday {
+			dayOfWeek = 6
+		}
+
+		for _, wh := range bh.WorkingHours {
+			if wh.DayOfWeek != dayOfWeek {
+				continue
+			}
+			// Parse open time on that day
+			if len(wh.OpenTime) != 5 {
+				continue
+			}
+			h := (int(wh.OpenTime[0]-'0') * 10) + int(wh.OpenTime[1]-'0')
+			m := (int(wh.OpenTime[3]-'0') * 10) + int(wh.OpenTime[4]-'0')
+			slotStart := time.Date(checkDate.Year(), checkDate.Month(), checkDate.Day(), h, m, 0, 0, now.Location())
+
+			// Slot must be in the future and within threshold
+			if slotStart.After(now) && !slotStart.After(threshold) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// GetAreaAvgPrice returns the average price per hour for active bathhouses in the same city
+// within a 5km radius of the given coordinates. Returns 0 if no data available.
+func (s *bathhouseService) GetAreaAvgPrice(ctx context.Context, cityID int64, lat, lng float64) (int64, error) {
+	return s.bhRepo.GetAreaAvgPrice(ctx, cityID, lat, lng)
 }
 
 func countAmenities(bh *domain.Bathhouse) int {

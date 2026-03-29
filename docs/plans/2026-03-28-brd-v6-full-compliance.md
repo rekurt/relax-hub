@@ -465,13 +465,13 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `frontend/src/components/BathhouseCard.tsx` (badges)
 - Modify: `frontend/src/pages/client/BathhouseDetail.tsx` (area avg price)
 
-- [ ] Add last_minute_active boolean to search results (true if discount currently applies)
-- [ ] Display "Last minute -XX%" badge on BathhouseCard when active
-- [ ] Limit promoted listings to max 3 per page in search results
-- [ ] Calculate average hourly price in area (same city + 5km radius) for bathhouse detail page
-- [ ] Display "Average in area: X rub/h" on price breakdown
-- [ ] Write tests for promoted limit and area avg calculation
-- [ ] Run project test suite - must pass before task 24
+- [x] Add last_minute_active boolean to search results (true if discount currently applies)
+- [x] Display "Last minute -XX%" badge on BathhouseCard when active
+- [x] Limit promoted listings to max 3 per page in search results
+- [x] Calculate average hourly price in area (same city + 5km radius) for bathhouse detail page
+- [x] Display "Average in area: X rub/h" on price breakdown
+- [x] Write tests for promoted limit and area avg calculation
+- [x] Run project test suite - must pass before task 24
 
 ### Task 24: Promoted Listing Campaigns (FR-043)
 

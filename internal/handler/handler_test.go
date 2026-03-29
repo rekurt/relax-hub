@@ -308,6 +308,10 @@ func (m *mockBathhouseService) IncrementViewCount(_ context.Context, _ uuid.UUID
 func (m *mockBathhouseService) ComputeBadges(_ context.Context, _ *domain.Bathhouse) []string {
 	return nil
 }
+func (m *mockBathhouseService) IsLastMinuteActive(_ *domain.Bathhouse) bool { return false }
+func (m *mockBathhouseService) GetAreaAvgPrice(_ context.Context, _ int64, _, _ float64) (int64, error) {
+	return 0, nil
+}
 
 type mockBookingService struct {
 	createFn          func(ctx context.Context, userID uuid.UUID, input service.CreateBookingInput) (*service.BookingResult, error)

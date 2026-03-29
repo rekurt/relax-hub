@@ -143,7 +143,9 @@ type bathhouseResponse struct {
 	IsFavorite                 bool               `json:"is_favorite"`
 	IsPromoted                 bool               `json:"is_promoted"`
 	IsPhotoVerified            bool               `json:"is_photo_verified"`
+	LastMinuteActive           bool               `json:"last_minute_active"`
 	Badges                     []string           `json:"badges"`
+	AreaAvgPricePerHour        int64              `json:"area_avg_price_per_hour,omitempty"`
 	GalleryPreview             []mediaResponse    `json:"gallery_preview,omitempty"`
 	Meta                       *seo.MetaTags      `json:"meta,omitempty"`
 	CreatedAt                  time.Time          `json:"created_at"`
@@ -448,13 +450,14 @@ func (h *BathhouseHandler) Search(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Compute badges for each bathhouse
+	// Compute badges and last-minute status for each bathhouse
 	for i := range result.Items {
 		badges := h.bathhouseService.ComputeBadges(r.Context(), &result.Items[i])
 		if badges == nil {
 			badges = []string{}
 		}
 		items[i].Badges = badges
+		items[i].LastMinuteActive = h.bathhouseService.IsLastMinuteActive(&result.Items[i])
 	}
 
 	// Record impressions for promoted bathhouses
@@ -594,12 +597,18 @@ func (h *BathhouseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Compute badges
+	// Compute badges and last-minute status
 	badges := h.bathhouseService.ComputeBadges(r.Context(), bh)
 	if badges == nil {
 		badges = []string{}
 	}
 	resp.Badges = badges
+	resp.LastMinuteActive = h.bathhouseService.IsLastMinuteActive(bh)
+
+	// Area average price for price context
+	if avgPrice, err := h.bathhouseService.GetAreaAvgPrice(r.Context(), bh.CityID, bh.Latitude, bh.Longitude); err == nil && avgPrice > 0 {
+		resp.AreaAvgPricePerHour = avgPrice
+	}
 
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -658,12 +667,18 @@ func (h *BathhouseHandler) GetBySlug(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Compute badges
+	// Compute badges and last-minute status
 	badges := h.bathhouseService.ComputeBadges(r.Context(), bh)
 	if badges == nil {
 		badges = []string{}
 	}
 	resp.Badges = badges
+	resp.LastMinuteActive = h.bathhouseService.IsLastMinuteActive(bh)
+
+	// Area average price for price context
+	if avgPrice, err := h.bathhouseService.GetAreaAvgPrice(r.Context(), bh.CityID, bh.Latitude, bh.Longitude); err == nil && avgPrice > 0 {
+		resp.AreaAvgPricePerHour = avgPrice
+	}
 
 	writeJSON(w, http.StatusOK, resp)
 }

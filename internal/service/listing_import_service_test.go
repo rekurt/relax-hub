@@ -68,6 +68,10 @@ func (s *stubBathhouseService) IncrementViewCount(context.Context, uuid.UUID) er
 func (s *stubBathhouseService) ComputeBadges(context.Context, *domain.Bathhouse) []string {
 	return nil
 }
+func (s *stubBathhouseService) IsLastMinuteActive(*domain.Bathhouse) bool { return false }
+func (s *stubBathhouseService) GetAreaAvgPrice(context.Context, int64, float64, float64) (int64, error) {
+	return 0, nil
+}
 func (s *stubBathhouseService) Approve(context.Context, uuid.UUID) error { return nil }
 func (s *stubBathhouseService) Reject(context.Context, uuid.UUID) error  { return nil }
 

@@ -954,3 +954,24 @@ func (r *bathhouseRepo) SuggestNames(ctx context.Context, filter repository.Sugg
 
 	return names, rows.Err()
 }
+
+// GetAreaAvgPrice returns the average price_per_hour for active bathhouses in the same city
+// within a 5 km radius. Returns 0 if no qualifying bathhouses exist.
+func (r *bathhouseRepo) GetAreaAvgPrice(ctx context.Context, cityID int64, lat, lng float64) (int64, error) {
+	query := `
+		SELECT COALESCE(AVG(price_per_hour), 0)::bigint
+		FROM bathhouses
+		WHERE status = 'active'
+			AND city_id = $1
+			AND ST_DWithin(
+				location,
+				ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography,
+				5000
+			)`
+	var avg int64
+	err := r.pool.QueryRow(ctx, query, cityID, lng, lat).Scan(&avg)
+	if err != nil {
+		return 0, fmt.Errorf("get area avg price: %w", err)
+	}
+	return avg, nil
+}

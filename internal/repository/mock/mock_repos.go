@@ -1540,6 +1540,23 @@ func (r *BathhouseRepo) ListRequestModeBathhouses(_ context.Context) ([]domain.B
 	return result, nil
 }
 
+func (r *BathhouseRepo) GetAreaAvgPrice(_ context.Context, cityID int64, _, _ float64) (int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	var total int64
+	var count int64
+	for _, bh := range r.bathhouses {
+		if bh.CityID == cityID && bh.Status == domain.BathhouseStatusActive {
+			total += bh.PricePerHour
+			count++
+		}
+	}
+	if count == 0 {
+		return 0, nil
+	}
+	return total / count, nil
+}
+
 func isBathhouseOpenNow(bh *domain.Bathhouse) bool {
 	now := time.Now()
 	d := now.Weekday()

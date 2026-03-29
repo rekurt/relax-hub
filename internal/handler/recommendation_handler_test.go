@@ -139,6 +139,10 @@ func (m *mockBHService) ArchiveBathhouse(_ context.Context, _ uuid.UUID, _ domai
 }
 func (m *mockBHService) IncrementViewCount(_ context.Context, _ uuid.UUID) error { return nil }
 func (m *mockBHService) ComputeBadges(_ context.Context, _ *domain.Bathhouse) []string { return nil }
+func (m *mockBHService) IsLastMinuteActive(_ *domain.Bathhouse) bool                  { return false }
+func (m *mockBHService) GetAreaAvgPrice(_ context.Context, _ int64, _, _ float64) (int64, error) {
+	return 0, nil
+}
 
 // mockBathhouseRepository implements repository.BathhouseRepository for AccessChecker tests.
 type mockBathhouseRepository struct {
@@ -234,6 +238,9 @@ func (m *mockBathhouseRepository) UpdateResponseRate(_ context.Context, _ uuid.U
 
 func (m *mockBathhouseRepository) ListRequestModeBathhouses(_ context.Context) ([]domain.Bathhouse, error) {
 	return nil, nil
+}
+func (m *mockBathhouseRepository) GetAreaAvgPrice(_ context.Context, _ int64, _, _ float64) (int64, error) {
+	return 0, nil
 }
 
 // Mock AuthService for testing

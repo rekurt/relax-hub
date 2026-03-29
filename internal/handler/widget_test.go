@@ -90,6 +90,10 @@ func (m *mockWidgetBathhouseService) IncrementViewCount(_ context.Context, _ uui
 func (m *mockWidgetBathhouseService) ComputeBadges(_ context.Context, _ *domain.Bathhouse) []string {
 	return nil
 }
+func (m *mockWidgetBathhouseService) IsLastMinuteActive(_ *domain.Bathhouse) bool { return false }
+func (m *mockWidgetBathhouseService) GetAreaAvgPrice(_ context.Context, _ int64, _, _ float64) (int64, error) {
+	return 0, nil
+}
 
 // Mock BookingService for widget testing
 type mockWidgetBookingService struct {

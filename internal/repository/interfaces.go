@@ -57,6 +57,7 @@ type BathhouseRepository interface {
 	UpdateRankingFields(ctx context.Context, id uuid.UUID, conversionRate, occupancyRate float64) error
 	UpdateResponseRate(ctx context.Context, id uuid.UUID, responseRate float64, avgResponseMinutes int) error
 	ListRequestModeBathhouses(ctx context.Context) ([]domain.Bathhouse, error)
+	GetAreaAvgPrice(ctx context.Context, cityID int64, lat, lng float64) (int64, error)
 }
 
 // SuggestionFilter specifies parameters for name-based suggestions.

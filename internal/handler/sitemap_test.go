@@ -83,6 +83,10 @@ func (m *sitemapMockBHService) IncrementViewCount(_ context.Context, _ uuid.UUID
 func (m *sitemapMockBHService) ComputeBadges(_ context.Context, _ *domain.Bathhouse) []string {
 	return nil
 }
+func (m *sitemapMockBHService) IsLastMinuteActive(_ *domain.Bathhouse) bool { return false }
+func (m *sitemapMockBHService) GetAreaAvgPrice(_ context.Context, _ int64, _, _ float64) (int64, error) {
+	return 0, nil
+}
 func (m *sitemapMockBHService) GetByAPIKey(_ context.Context, _ string) (*domain.Bathhouse, error) {
 	return nil, domain.ErrNotFound
 }
