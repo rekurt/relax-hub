@@ -63,13 +63,13 @@ func TestHaversineDistance(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := haversineDistance(tc.lat1, tc.lng1, tc.lat2, tc.lng2)
+			got := HaversineDistance(tc.lat1, tc.lng1, tc.lat2, tc.lng2)
 			diff := got - tc.expected
 			if diff < 0 {
 				diff = -diff
 			}
 			if diff > tc.delta {
-				t.Errorf("haversineDistance() = %d, want %d (±%d)", got, tc.expected, tc.delta)
+				t.Errorf("HaversineDistance() = %d, want %d (±%d)", got, tc.expected, tc.delta)
 			}
 		})
 	}

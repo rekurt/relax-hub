@@ -117,10 +117,10 @@ BRD требует: "Изменение требует подтверждени�
 - Modify: `internal/service/booking_service.go` — DisputeNoShow() добавить проверку расстояния
 - Modify: `internal/domain/bathhouse.go` — убедиться что Latitude/Longitude доступны
 
-- [ ] Haversine-функция или PostGIS ST_DWithin для проверки расстояния (200м)
-- [ ] Если расстояние > 200м → отклонить спор автоматически или пометить как слабое доказательство
-- [ ] Тесты с координатами внутри/вне радиуса
-- [ ] run project test suite — must pass before Block B
+- [x] Haversine-функция или PostGIS ST_DWithin для проверки расстояния (200м)
+- [x] Если расстояние > 200м → отклонить спор автоматически или пометить как слабое доказательство
+- [x] Тесты с координатами внутри/вне радиуса
+- [x] run project test suite — must pass before Block B
 
 ---
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/geo"
 	"github.com/nikitaaldaev/bani/internal/logger"
 	"github.com/nikitaaldaev/bani/internal/repository"
 )
@@ -1687,7 +1688,20 @@ func (s *bookingService) DisputeNoShow(ctx context.Context, userID uuid.UUID, bo
 		return domain.ErrNoShowDisputeExpired
 	}
 
-	description := fmt.Sprintf("GPS: %.6f, %.6f", gpsLat, gpsLon)
+	// GPS validation: check distance from bathhouse
+	bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+	if err != nil {
+		return fmt.Errorf("get bathhouse for GPS validation: %w", err)
+	}
+
+	const maxGPSDistanceMeters = 200
+	gpsDistanceMeters := geo.HaversineDistance(gpsLat, gpsLon, bh.Latitude, bh.Longitude)
+	gpsValid := gpsDistanceMeters <= maxGPSDistanceMeters
+
+	description := fmt.Sprintf("GPS: %.6f, %.6f (расстояние: %d м)", gpsLat, gpsLon, gpsDistanceMeters)
+	if !gpsValid {
+		description += fmt.Sprintf("\n⚠️ GPS_WEAK_EVIDENCE: клиент находился в %d м от объекта (порог: %d м)", gpsDistanceMeters, maxGPSDistanceMeters)
+	}
 	if comment != "" {
 		description += "\n" + comment
 	}

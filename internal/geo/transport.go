@@ -222,7 +222,7 @@ func (s *TransportService) searchCategoryWithURL(ctx context.Context, lat, lng f
 
 		poiLng := feature.Geometry.Coordinates[0]
 		poiLat := feature.Geometry.Coordinates[1]
-		distance := haversineDistance(lat, lng, poiLat, poiLng)
+		distance := HaversineDistance(lat, lng, poiLat, poiLng)
 
 		name := feature.Properties.Name
 		if name == "" && feature.Properties.CompanyMetaData != nil {
@@ -252,8 +252,8 @@ func (s *TransportService) searchCategoryWithURL(ctx context.Context, lat, lng f
 	return items, nil
 }
 
-// haversineDistance calculates the distance in meters between two lat/lng points.
-func haversineDistance(lat1, lng1, lat2, lng2 float64) int {
+// HaversineDistance calculates the distance in meters between two lat/lng points.
+func HaversineDistance(lat1, lng1, lat2, lng2 float64) int {
 	const earthRadius = 6371000 // meters
 
 	dLat := degreesToRadians(lat2 - lat1)

@@ -2839,6 +2839,10 @@ func TestBookingService_DisputeNoShow_WithinWindow(t *testing.T) {
 	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
+	// Set bathhouse coordinates (Moscow center)
+	bh.Latitude = 55.7
+	bh.Longitude = 37.6
+	bhRepo.Update(context.Background(), bh)
 	clientID := uuid.New()
 
 	booking := &domain.Booking{
@@ -2854,8 +2858,8 @@ func TestBookingService_DisputeNoShow_WithinWindow(t *testing.T) {
 	}
 	bookingRepo.Create(context.Background(), booking)
 
-	// complaintSvc is nil so no actual complaint created, but no error expected
-	err := svc.DisputeNoShow(context.Background(), clientID, booking.ID, 55.7, 37.6, "I was there")
+	// GPS within 200m of bathhouse — no error expected
+	err := svc.DisputeNoShow(context.Background(), clientID, booking.ID, 55.7001, 37.6001, "I was there")
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -2931,6 +2935,9 @@ func TestBookingService_DisputeNoShow_Expired(t *testing.T) {
 	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
 	ownerID := uuid.New()
 	bh := createBathhouse(t, bhRepo, ownerID)
+	bh.Latitude = 55.7
+	bh.Longitude = 37.6
+	bhRepo.Update(context.Background(), bh)
 	clientID := uuid.New()
 
 	booking := &domain.Booking{
@@ -2949,6 +2956,67 @@ func TestBookingService_DisputeNoShow_Expired(t *testing.T) {
 	err := svc.DisputeNoShow(context.Background(), clientID, booking.ID, 55.7, 37.6, "")
 	if !errors.Is(err, domain.ErrNoShowDisputeExpired) {
 		t.Errorf("expected ErrNoShowDisputeExpired, got: %v", err)
+	}
+}
+
+func TestBookingService_DisputeNoShow_GPSWithinRadius(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+	// Bathhouse at Moscow center
+	bh.Latitude = 55.751244
+	bh.Longitude = 37.618423
+	bhRepo.Update(context.Background(), bh)
+	clientID := uuid.New()
+
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      clientID,
+		BathhouseID: bh.ID,
+		StartTime:   time.Now().Add(-1 * time.Hour),
+		EndTime:     time.Now().Add(1 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingNoShow,
+		UpdatedAt:   time.Now().Add(-30 * time.Minute),
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	// GPS ~100m away from bathhouse (within 200m radius)
+	err := svc.DisputeNoShow(context.Background(), clientID, booking.ID, 55.75214, 37.61842, "I was there")
+	if err != nil {
+		t.Fatalf("expected no error for GPS within radius, got: %v", err)
+	}
+}
+
+func TestBookingService_DisputeNoShow_GPSOutsideRadius(t *testing.T) {
+	svc, bhRepo, bookingRepo, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+	// Bathhouse at Moscow center
+	bh.Latitude = 55.751244
+	bh.Longitude = 37.618423
+	bhRepo.Update(context.Background(), bh)
+	clientID := uuid.New()
+
+	booking := &domain.Booking{
+		ID:          uuid.New(),
+		UserID:      clientID,
+		BathhouseID: bh.ID,
+		StartTime:   time.Now().Add(-1 * time.Hour),
+		EndTime:     time.Now().Add(1 * time.Hour),
+		GuestCount:  2,
+		TotalPrice:  200000,
+		Status:      domain.BookingNoShow,
+		UpdatedAt:   time.Now().Add(-30 * time.Minute),
+	}
+	bookingRepo.Create(context.Background(), booking)
+
+	// GPS ~5km away from bathhouse (well outside 200m radius)
+	// The dispute should still succeed but be marked as weak evidence (not blocked)
+	err := svc.DisputeNoShow(context.Background(), clientID, booking.ID, 55.79, 37.62, "I was there")
+	if err != nil {
+		t.Fatalf("expected no error (weak GPS still allowed), got: %v", err)
 	}
 }
 
