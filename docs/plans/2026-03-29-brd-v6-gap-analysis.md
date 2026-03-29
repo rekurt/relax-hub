@@ -406,10 +406,10 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 - Modify: `internal/handler/calendar_handler.go` — зарегистрировать GET /api/v1/my/bathhouses/{id}/calendar.ics
 - Modify: `internal/server/router.go`
 
-- [ ] Проверить наличие маршрута calendar.ics
-- [ ] Если отсутствует — зарегистрировать, Content-Type: text/calendar
-- [ ] Тест
-- [ ] run project test suite — must pass before Task E4
+- [x] Проверить наличие маршрута calendar.ics
+- [x] Если отсутствует — зарегистрировать, Content-Type: text/calendar
+- [x] Тест
+- [x] run project test suite — must pass before Task E4
 
 ### Task E4: Пустые состояния (empty states) на всех экранах (FR раздел 2.15, 2.18)
 
