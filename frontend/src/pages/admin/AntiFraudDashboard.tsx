@@ -9,6 +9,7 @@ import {
   Descriptions,
   Drawer,
   App,
+  Empty,
   Segmented,
   Statistic,
   Row,
@@ -257,6 +258,7 @@ export default function AntiFraudDashboard() {
         loading={isLoading}
         rowKey="id"
         scroll={{ x: 'max-content' }}
+        locale={{ emptyText: <Empty description="Нет подозрительных операций. Система антифрода не обнаружила нарушений" /> }}
         pagination={
           meta && meta.total_pages && meta.total_pages > 1
             ? {

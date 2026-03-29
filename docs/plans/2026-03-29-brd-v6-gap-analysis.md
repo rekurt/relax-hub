@@ -419,10 +419,10 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 **Files:**
 - Modify: множество frontend компонентов (BookingList, ReviewList, Favorites, Wallet, CRM pages, etc.)
 
-- [ ] Аудит всех страниц: проверить наличие empty state
-- [ ] Добавить недостающие empty states с поясняющим текстом и CTA-кнопкой
-- [ ] Использовать Ant Design Empty компонент
-- [ ] run project test suite — must pass before Task E5
+- [x] Аудит всех страниц: проверить наличие empty state
+- [x] Добавить недостающие empty states с поясняющим текстом и CTA-кнопкой
+- [x] Использовать Ant Design Empty компонент
+- [x] run project test suite — must pass before Task E5
 
 ### Task E5: Счётчик результатов в реальном времени при фильтрации (FR-040)
 

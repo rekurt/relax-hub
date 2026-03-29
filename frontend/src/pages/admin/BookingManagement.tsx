@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   DatePicker,
+  Empty,
   Form,
   Input,
   Modal,
@@ -267,6 +268,7 @@ export default function BookingManagement() {
         dataSource={bookings}
         rowKey="id"
         loading={loading}
+        locale={{ emptyText: <Empty description="Нет бронирований. Используйте фильтры и нажмите «Поиск» для загрузки данных" /> }}
         pagination={{
           ...pagination,
           showSizeChanger: true,

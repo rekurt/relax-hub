@@ -2,6 +2,7 @@ import {
   App,
   Card,
   Col,
+  Empty,
   Input,
   InputNumber,
   Row,
@@ -88,6 +89,13 @@ export default function AutoScenarios() {
         {isLoading ? (
           <Col span={24}>
             <Card loading />
+          </Col>
+        ) : scenarios.length === 0 ? (
+          <Col span={24}>
+            <Empty
+              description="Нет настроенных сценариев. Автоматические сценарии появятся после подключения CRM"
+              style={{ padding: 48 }}
+            />
           </Col>
         ) : (
           scenarios.map((scenario) => (

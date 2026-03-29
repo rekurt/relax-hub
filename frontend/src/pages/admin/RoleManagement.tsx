@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { App, Select, Table, Tag, Typography, Card, Descriptions, Spin, Badge } from 'antd'
+import { App, Empty, Select, Table, Tag, Typography, Card, Descriptions, Spin, Badge } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { axiosInstance } from '@/api/axios-instance'
 
@@ -168,6 +168,7 @@ export default function RoleManagement() {
         dataSource={admins}
         rowKey="id"
         pagination={false}
+        locale={{ emptyText: <Empty description="Нет администраторов" /> }}
         style={{ marginBottom: 32 }}
       />
 

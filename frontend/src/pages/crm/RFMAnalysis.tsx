@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Card, Col, Row, Table, Tag, Tooltip, Typography, Spin } from 'antd'
+import { Card, Col, Empty, Row, Table, Tag, Tooltip, Typography, Spin } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { axiosInstance } from '@/api/axios-instance'
@@ -297,6 +297,7 @@ export default function RFMAnalysis() {
           rowKey="id"
           size="small"
           pagination={{ pageSize, showSizeChanger: false }}
+          locale={{ emptyText: <Empty description="Нет данных для RFM-анализа. Гости появятся после завершённых бронирований" /> }}
         />
       </Card>
     </div>

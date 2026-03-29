@@ -4,6 +4,7 @@ import {
   Table,
   Button,
   Badge,
+  Empty,
   Tag,
   Space,
   Select,
@@ -264,6 +265,7 @@ export default function AdminNotificationCenter() {
           columns={columns}
           dataSource={notifications}
           loading={isLoading}
+          locale={{ emptyText: <Empty description="Нет уведомлений" /> }}
           rowClassName={(record) => (record.is_read ? '' : 'ant-table-row-unread')}
           pagination={{
             current: page,
