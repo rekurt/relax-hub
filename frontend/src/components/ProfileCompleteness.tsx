@@ -24,9 +24,9 @@ const FIELD_ACTIONS: Record<string, string> = {
   name: 'Укажите имя в форме ниже',
   avatar: 'Загрузите фото в разделе "Аватар"',
   phone: 'Добавьте номер телефона',
-  bio: 'Расскажите о себе',
-  city: 'Выберите ваш город',
+  email: 'Укажите адрес электронной почты',
   preferences: 'Настройте предпочтения',
+  notification_settings: 'Настройте уведомления в разделе "Настройки уведомлений"',
 }
 
 export default function ProfileCompleteness({ onNavigate }: ProfileCompletenessProps) {

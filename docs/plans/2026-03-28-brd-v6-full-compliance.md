@@ -501,12 +501,12 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 - Modify: `frontend/src/components/OnboardingTour.tsx` (completeness widget)
 - Modify: `frontend/src/pages/client/ClientProfile.tsx`
 
-- [ ] Endpoint returns completeness: name (required), photo, phone, email, preferences, notification_settings
-- [ ] Calculate percentage (0-100%) based on filled fields
-- [ ] Show progress bar in client profile with specific prompts for missing items
-- [ ] Show "complete your profile" nudge on client dashboard
-- [ ] Write tests for completeness calculation
-- [ ] Run project test suite - must pass before task 26
+- [x] Endpoint returns completeness: name (required), photo, phone, email, preferences, notification_settings
+- [x] Calculate percentage (0-100%) based on filled fields
+- [x] Show progress bar in client profile with specific prompts for missing items
+- [x] Show "complete your profile" nudge on client dashboard
+- [x] Write tests for completeness calculation
+- [x] Run project test suite - must pass before task 26
 
 ### Task 26: Chat Content Filtering Enhancement (FR-063)
 

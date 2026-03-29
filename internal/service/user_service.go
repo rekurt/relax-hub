@@ -63,12 +63,13 @@ type userService struct {
 	bookingRepo repository.BookingRepository
 	reviewRepo  repository.ReviewRepository
 	recRepo     repository.RecommendationRepository
+	notifRepo   repository.NotificationRepository
 	storage     storage.FileStorage
 	log         *logger.Logger
 }
 
-func NewUserService(userRepo repository.UserRepository, bookingRepo repository.BookingRepository, reviewRepo repository.ReviewRepository, recRepo repository.RecommendationRepository, fileStorage storage.FileStorage, log *logger.Logger) UserService {
-	return &userService{userRepo: userRepo, bookingRepo: bookingRepo, reviewRepo: reviewRepo, recRepo: recRepo, storage: fileStorage, log: log}
+func NewUserService(userRepo repository.UserRepository, bookingRepo repository.BookingRepository, reviewRepo repository.ReviewRepository, recRepo repository.RecommendationRepository, notifRepo repository.NotificationRepository, fileStorage storage.FileStorage, log *logger.Logger) UserService {
+	return &userService{userRepo: userRepo, bookingRepo: bookingRepo, reviewRepo: reviewRepo, recRepo: recRepo, notifRepo: notifRepo, storage: fileStorage, log: log}
 }
 
 func (s *userService) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
@@ -231,7 +232,13 @@ func (s *userService) GetProfileCompleteness(ctx context.Context, userID uuid.UU
 			prefs.PreferredCityID != nil || prefs.PriceRangeMin != nil || prefs.PriceRangeMax != nil
 	}
 
-	pct, items := user.ProfileCompleteness(hasPreferences)
+	hasNotificationSettings := false
+	eventPrefs, err := s.notifRepo.GetEventPreferences(ctx, userID)
+	if err == nil && len(eventPrefs) > 0 {
+		hasNotificationSettings = true
+	}
+
+	pct, items := user.ProfileCompleteness(hasPreferences, hasNotificationSettings)
 	return &ProfileCompletenessOutput{Percentage: pct, Items: items}, nil
 }
 

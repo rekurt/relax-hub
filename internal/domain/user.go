@@ -90,14 +90,16 @@ type ProfileCompletenessItem struct {
 }
 
 // ProfileCompleteness returns the completeness percentage (0-100) and individual field statuses.
-func (u *User) ProfileCompleteness(hasPreferences bool) (int, []ProfileCompletenessItem) {
+// hasPreferences indicates whether the user has set recommendation preferences.
+// hasNotificationSettings indicates whether the user has customized notification preferences.
+func (u *User) ProfileCompleteness(hasPreferences, hasNotificationSettings bool) (int, []ProfileCompletenessItem) {
 	items := []ProfileCompletenessItem{
 		{Field: "name", Label: "Имя", Complete: u.Name != ""},
 		{Field: "avatar", Label: "Фото профиля", Complete: u.AvatarURL != ""},
 		{Field: "phone", Label: "Телефон", Complete: u.Phone != ""},
-		{Field: "bio", Label: "О себе", Complete: u.Bio != ""},
-		{Field: "city", Label: "Город", Complete: u.CityID != nil},
+		{Field: "email", Label: "Email", Complete: u.Email != ""},
 		{Field: "preferences", Label: "Предпочтения", Complete: hasPreferences},
+		{Field: "notification_settings", Label: "Настройки уведомлений", Complete: hasNotificationSettings},
 	}
 	filled := 0
 	for _, item := range items {

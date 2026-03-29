@@ -22,7 +22,7 @@ var testLogger = logger.New(logger.LevelError)
 
 // newUserService is a test helper that creates a UserService with mock repos.
 func newUserService(userRepo *mock.UserRepo, fileStorage storage.FileStorage) service.UserService {
-	return service.NewUserService(userRepo, mock.NewBookingRepo(), mock.NewReviewRepo(), mock.NewRecommendationRepo(), fileStorage, testLogger)
+	return service.NewUserService(userRepo, mock.NewBookingRepo(), mock.NewReviewRepo(), mock.NewRecommendationRepo(), mock.NewNotificationRepo(), fileStorage, testLogger)
 }
 
 // createTestJPEG creates a valid test JPEG image
@@ -363,7 +363,7 @@ func TestUserService_GetMyStats(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	bookingRepo := mock.NewBookingRepo()
 	reviewRepo := mock.NewReviewRepo()
-	svc := service.NewUserService(userRepo, bookingRepo, reviewRepo, mock.NewRecommendationRepo(), storage.NewMockStorage(), testLogger)
+	svc := service.NewUserService(userRepo, bookingRepo, reviewRepo, mock.NewRecommendationRepo(), mock.NewNotificationRepo(), storage.NewMockStorage(), testLogger)
 
 	userID := uuid.New()
 	bathhouseID := uuid.New()
@@ -428,7 +428,7 @@ func TestUserService_GetMyStats_Empty(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	bookingRepo := mock.NewBookingRepo()
 	reviewRepo := mock.NewReviewRepo()
-	svc := service.NewUserService(userRepo, bookingRepo, reviewRepo, mock.NewRecommendationRepo(), storage.NewMockStorage(), testLogger)
+	svc := service.NewUserService(userRepo, bookingRepo, reviewRepo, mock.NewRecommendationRepo(), mock.NewNotificationRepo(), storage.NewMockStorage(), testLogger)
 
 	userID := uuid.New()
 	_ = userRepo.Create(context.Background(), &domain.User{
@@ -471,9 +471,9 @@ func TestUserService_GetProfileCompleteness_Empty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	// Name is filled (1/6), so 16%
-	if result.Percentage != 16 {
-		t.Errorf("percentage = %d, want 16 (only name filled)", result.Percentage)
+	// Name + Email filled (2/6), so 33%
+	if result.Percentage != 33 {
+		t.Errorf("percentage = %d, want 33 (name + email filled)", result.Percentage)
 	}
 	if len(result.Items) != 6 {
 		t.Errorf("items count = %d, want 6", len(result.Items))
@@ -483,13 +483,12 @@ func TestUserService_GetProfileCompleteness_Empty(t *testing.T) {
 func TestUserService_GetProfileCompleteness_Full(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	recRepo := mock.NewRecommendationRepo()
-	svc := service.NewUserService(userRepo, mock.NewBookingRepo(), mock.NewReviewRepo(), recRepo, storage.NewMockStorage(), testLogger)
+	notifRepo := mock.NewNotificationRepo()
+	svc := service.NewUserService(userRepo, mock.NewBookingRepo(), mock.NewReviewRepo(), recRepo, notifRepo, storage.NewMockStorage(), testLogger)
 
-	cityID := int64(1)
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test User",
 		Phone: "+79001234567", AvatarURL: "http://example.com/avatar.jpg",
-		Bio: "My bio", CityID: &cityID,
 		Role: domain.RoleClient, IsActive: true,
 	}
 	_ = userRepo.Create(context.Background(), user)
@@ -498,6 +497,13 @@ func TestUserService_GetProfileCompleteness_Full(t *testing.T) {
 	_ = recRepo.SaveUserPreferences(context.Background(), &domain.UserPreferences{
 		UserID:     user.ID,
 		PreferPool: true,
+	})
+
+	// Save notification event preferences to make that field complete
+	_ = notifRepo.UpsertEventPreference(context.Background(), &domain.NotificationEventPreference{
+		UserID:      user.ID,
+		EventType:   domain.EventBookingConfirmed,
+		PushEnabled: true,
 	})
 
 	result, err := svc.GetProfileCompleteness(context.Background(), user.ID)
@@ -518,10 +524,9 @@ func TestUserService_GetProfileCompleteness_Partial(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	svc := newUserService(userRepo, storage.NewMockStorage())
 
-	cityID := int64(1)
 	user := &domain.User{
 		ID: uuid.New(), Email: "test@example.com", Name: "Test User",
-		Phone: "+79001234567", CityID: &cityID,
+		Phone: "+79001234567",
 		Role: domain.RoleClient, IsActive: true,
 	}
 	_ = userRepo.Create(context.Background(), user)
@@ -530,7 +535,7 @@ func TestUserService_GetProfileCompleteness_Partial(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	// Name + Phone + City = 3/6 = 50%
+	// Name + Phone + Email = 3/6 = 50%
 	if result.Percentage != 50 {
 		t.Errorf("percentage = %d, want 50", result.Percentage)
 	}
