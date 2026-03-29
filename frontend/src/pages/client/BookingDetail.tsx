@@ -33,8 +33,10 @@ import { useGetBookingsIdPayment, usePostBookingsIdPay } from '@/api/generated/p
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 import { axiosInstance } from '@/api/axios-instance'
+import { usePostApiV1BookingsShare } from '@/api/generated/share/share'
 import ApplePayButton from '@/components/ApplePayButton'
 import GooglePayButton from '@/components/GooglePayButton'
+import ShareButton from '@/components/ShareButton'
 
 const { Title, Text } = Typography
 
@@ -84,6 +86,22 @@ export default function ClientBookingDetail() {
       onError: () => message.error('Не удалось инициировать оплату'),
     },
   })
+
+  const shareMutation = usePostApiV1BookingsShare()
+
+  const handleShareBooking = async (): Promise<string | undefined> => {
+    if (!id || !booking) return undefined
+    const result = await shareMutation.mutateAsync({
+      data: {
+        booking_id: id,
+        bathhouse_id: booking.bathhouse_id,
+        start_time: booking.start_time,
+        end_time: booking.end_time,
+        guest_count: booking.guest_count,
+      },
+    })
+    return result?.data?.share_url ?? undefined
+  }
 
   const handleTokenPayment = (paymentMethod: 'apple_pay' | 'google_pay') => (token: string) => {
     if (!id) return
@@ -290,7 +308,13 @@ export default function ClientBookingDetail() {
 
       <Divider />
 
-      <Space>
+      <Space wrap>
+        <ShareButton
+          url={`${window.location.origin}/client/bookings/${id}`}
+          title="Бронирование на Bani"
+          text={`Бронирование ${booking.start_time ? formatDateTime(booking.start_time) : ''}`}
+          onBeforeShare={handleShareBooking}
+        />
         {canModify && (
           <Button
             size="large"

@@ -106,12 +106,12 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Create: `frontend/src/pages/ShareRedirect.tsx`
 - Modify: `frontend/src/router.tsx`
 
-- [ ] Create ShareButton component: native Web Share API with fallback to copy-to-clipboard, generates shareable URL
-- [ ] Add share button to BookingDetail (generates share token via POST /api/v1/bookings/{id}/share)
-- [ ] Add share button to BathhouseDetail (copy URL with slug)
-- [ ] Create ShareRedirect page at `/share/booking/:token` that resolves deep link and redirects
-- [ ] Write tests for ShareButton component and ShareRedirect
-- [ ] Run project test suite + lint
+- [x] Create ShareButton component: native Web Share API with fallback to copy-to-clipboard, generates shareable URL
+- [x] Add share button to BookingDetail (generates share token via POST /api/v1/bookings/{id}/share)
+- [x] Add share button to BathhouseDetail (copy URL with slug)
+- [x] Create ShareRedirect page at `/share/booking/:token` that resolves deep link and redirects
+- [x] Write tests for ShareButton component and ShareRedirect
+- [x] Run project test suite + lint
 
 ### Task 8: Owner Finance & Wallet Dashboard (FR-100-104, FR-117-120)
 

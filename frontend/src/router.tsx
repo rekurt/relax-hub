@@ -86,6 +86,7 @@ import RoleManagement from '@/pages/admin/RoleManagement'
 import AdminNotificationCenter from '@/pages/admin/AdminNotificationCenter'
 import GeoHeatmap from '@/pages/admin/GeoHeatmap'
 import OAuthCallback from '@/pages/OAuthCallback'
+import ShareRedirect from '@/pages/ShareRedirect'
 
 export default function AppRouter() {
   return (
@@ -95,6 +96,7 @@ export default function AppRouter() {
       <Route path="/auth/oauth/callback/:provider" element={<OAuthCallback />} />
       <Route path="/certificates/purchase" element={<CertificatePurchase />} />
       <Route path="/bathhouses/:slug" element={<BathhouseDetail />} />
+      <Route path="/share/booking/:token" element={<ShareRedirect />} />
 
       {/* Owner/Representative routes */}
       <Route

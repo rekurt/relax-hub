@@ -45,6 +45,7 @@ import { formatPrice, formatDayOfWeek } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
 import BathhouseCard from '@/components/BathhouseCard'
 import ReviewCard from '@/components/ReviewCard'
+import ShareButton from '@/components/ShareButton'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -246,14 +247,21 @@ export default function BathhouseDetail() {
                     </Text>
                   )}
                 </div>
-                <Button
-                  type={bathhouse.is_favorite ? 'primary' : 'default'}
-                  icon={bathhouse.is_favorite ? <HeartFilled /> : <HeartOutlined />}
-                  onClick={() => id && favoriteMutation.mutate({ id })}
-                  loading={favoriteMutation.isPending}
-                >
-                  {bathhouse.is_favorite ? 'В избранном' : 'В избранное'}
-                </Button>
+                <Space>
+                  <ShareButton
+                    url={`${window.location.origin}/bathhouses/${slug}`}
+                    title={bathhouse.name ?? 'Баня на Bani'}
+                    text={bathhouse.description?.slice(0, 100) ?? ''}
+                  />
+                  <Button
+                    type={bathhouse.is_favorite ? 'primary' : 'default'}
+                    icon={bathhouse.is_favorite ? <HeartFilled /> : <HeartOutlined />}
+                    onClick={() => id && favoriteMutation.mutate({ id })}
+                    loading={favoriteMutation.isPending}
+                  >
+                    {bathhouse.is_favorite ? 'В избранном' : 'В избранное'}
+                  </Button>
+                </Space>
               </div>
 
               <Space style={{ marginTop: 8 }}>
