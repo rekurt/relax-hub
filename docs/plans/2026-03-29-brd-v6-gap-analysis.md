@@ -358,11 +358,11 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 - Create: `internal/handler/analytics_handler.go` — эндпоинт heatmap data (или добавить метод в существующий)
 - Create: `frontend/src/pages/admin/GeoHeatmap.tsx`
 
-- [ ] Backend: агрегация по координатам (кластеризация поисковых запросов и объектов по ячейкам)
-- [ ] API endpoint: GET /api/v1/admin/analytics/heatmap
-- [ ] Frontend: тепловая карта на Yandex Maps
-- [ ] Тесты
-- [ ] run project test suite — must pass before Block E
+- [x] Backend: агрегация по координатам (кластеризация поисковых запросов и объектов по ячейкам)
+- [x] API endpoint: GET /api/v1/admin/analytics/heatmap
+- [x] Frontend: тепловая карта на Yandex Maps
+- [x] Тесты
+- [x] run project test suite — must pass before Block E
 
 ---
 

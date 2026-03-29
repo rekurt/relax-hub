@@ -289,6 +289,9 @@ type AnalyticsRepository interface {
 	// P&L metrics (FR-150)
 	GetGMV(ctx context.Context, from, to time.Time) (int64, int64, error) // returns (gmv, bookingCount)
 	GetPlatformRevenue(ctx context.Context, from, to time.Time) (serviceFees, subscriptions, promotions int64, err error)
+
+	// Heatmap (FR-153)
+	GetHeatmapData(ctx context.Context, from, to time.Time, cellSize float64) ([]domain.HeatmapCell, error)
 }
 
 type TelegramLinkRepository interface {

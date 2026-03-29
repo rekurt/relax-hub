@@ -876,3 +876,90 @@ func TestAnalyticsService_AdminDashboard_IncludesADRAndChurn(t *testing.T) {
 		t.Errorf("ChurnRate = %f, want 12.5", dashboard.ChurnRate)
 	}
 }
+
+func TestAnalyticsService_GetHeatmapData_Success(t *testing.T) {
+	svc, analyticsRepo, _, _, _, _ := newAnalyticsService()
+
+	analyticsRepo.HeatmapCells = []domain.HeatmapCell{
+		{Latitude: 55.75, Longitude: 37.62, ListingCount: 30, BookingCount: 120, SearchCount: 500},
+		{Latitude: 59.93, Longitude: 30.32, ListingCount: 20, BookingCount: 80, SearchCount: 350},
+	}
+
+	result, err := svc.GetHeatmapData(context.Background(), domain.RoleAdmin, domain.PeriodMonth, 0.01)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	if result.Period != domain.PeriodMonth {
+		t.Errorf("Period = %s, want %s", result.Period, domain.PeriodMonth)
+	}
+	if result.CellSize != 0.01 {
+		t.Errorf("CellSize = %f, want 0.01", result.CellSize)
+	}
+	if len(result.Cells) != 2 {
+		t.Fatalf("expected 2 cells, got %d", len(result.Cells))
+	}
+	if result.Cells[0].ListingCount != 30 {
+		t.Errorf("Cells[0].ListingCount = %d, want 30", result.Cells[0].ListingCount)
+	}
+	if result.Cells[1].SearchCount != 350 {
+		t.Errorf("Cells[1].SearchCount = %d, want 350", result.Cells[1].SearchCount)
+	}
+}
+
+func TestAnalyticsService_GetHeatmapData_Forbidden(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	_, err := svc.GetHeatmapData(context.Background(), domain.RoleClient, domain.PeriodMonth, 0.01)
+	if err != domain.ErrForbidden {
+		t.Errorf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestAnalyticsService_GetHeatmapData_InvalidPeriod(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	_, err := svc.GetHeatmapData(context.Background(), domain.RoleAdmin, domain.AnalyticsPeriod("invalid"), 0.01)
+	if err == nil {
+		t.Error("expected error for invalid period")
+	}
+}
+
+func TestAnalyticsService_GetHeatmapData_DefaultCellSize(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	// cellSize 0 should default to 0.01
+	result, err := svc.GetHeatmapData(context.Background(), domain.RoleAdmin, domain.PeriodWeek, 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.CellSize != 0.01 {
+		t.Errorf("CellSize = %f, want 0.01 (default)", result.CellSize)
+	}
+
+	// cellSize > 1.0 should also default
+	result, err = svc.GetHeatmapData(context.Background(), domain.RoleAdmin, domain.PeriodWeek, 5.0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.CellSize != 0.01 {
+		t.Errorf("CellSize = %f, want 0.01 (default for >1.0)", result.CellSize)
+	}
+}
+
+func TestAnalyticsService_GetHeatmapData_EmptyCells(t *testing.T) {
+	svc, analyticsRepo, _, _, _, _ := newAnalyticsService()
+
+	analyticsRepo.HeatmapCells = []domain.HeatmapCell{}
+
+	result, err := svc.GetHeatmapData(context.Background(), domain.RoleAdmin, domain.PeriodDay, 0.05)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Cells) != 0 {
+		t.Errorf("expected 0 cells, got %d", len(result.Cells))
+	}
+}

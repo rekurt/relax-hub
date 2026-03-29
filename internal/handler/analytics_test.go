@@ -24,6 +24,7 @@ type mockAnalyticsService struct {
 	aggregateDailyFn          func(ctx context.Context) error
 	getBusinessMetricsFn      func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.BusinessMetrics, error)
 	getPnLFn                  func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.PnLMetrics, error)
+	getHeatmapDataFn          func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod, cellSize float64) (*domain.HeatmapData, error)
 }
 
 func (m *mockAnalyticsService) RecordView(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error {
@@ -104,6 +105,13 @@ func (m *mockAnalyticsService) GetPnL(ctx context.Context, userRole domain.UserR
 		return m.getPnLFn(ctx, userRole, period)
 	}
 	return &service.PnLMetrics{}, nil
+}
+
+func (m *mockAnalyticsService) GetHeatmapData(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod, cellSize float64) (*domain.HeatmapData, error) {
+	if m.getHeatmapDataFn != nil {
+		return m.getHeatmapDataFn(ctx, userRole, period, cellSize)
+	}
+	return &domain.HeatmapData{}, nil
 }
 
 func TestGetAdminDashboard_ValidRequest(t *testing.T) {
@@ -323,6 +331,88 @@ func TestGetPnL_NonAdminForbidden(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	handler.GetPnL(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("got status %d, want %d", w.Code, http.StatusForbidden)
+	}
+}
+
+func TestGetHeatmap_Success(t *testing.T) {
+	mock := &mockAnalyticsService{
+		getHeatmapDataFn: func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod, cellSize float64) (*domain.HeatmapData, error) {
+			return &domain.HeatmapData{
+				Period:   period,
+				CellSize: cellSize,
+				Cells: []domain.HeatmapCell{
+					{Latitude: 55.75, Longitude: 37.62, ListingCount: 10, BookingCount: 50, SearchCount: 200},
+				},
+			}, nil
+		},
+	}
+	handler := NewAnalyticsHandler(mock, &logger.Logger{})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/analytics/heatmap?period=30d&cell_size=0.05", nil)
+	ctx := req.Context()
+	ctx = middleware.SetUserRoleForTesting(ctx, domain.RoleAdmin)
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+	handler.GetHeatmap(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("got status %d, want %d", w.Code, http.StatusOK)
+	}
+
+	var response APIResponse
+	if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
+		t.Errorf("failed to decode response: %v", err)
+	}
+	if !response.Success {
+		t.Errorf("expected success=true")
+	}
+}
+
+func TestGetHeatmap_DefaultParams(t *testing.T) {
+	var capturedCellSize float64
+	mock := &mockAnalyticsService{
+		getHeatmapDataFn: func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod, cellSize float64) (*domain.HeatmapData, error) {
+			capturedCellSize = cellSize
+			return &domain.HeatmapData{Period: period, CellSize: cellSize}, nil
+		},
+	}
+	handler := NewAnalyticsHandler(mock, &logger.Logger{})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/analytics/heatmap", nil)
+	ctx := req.Context()
+	ctx = middleware.SetUserRoleForTesting(ctx, domain.RoleAdmin)
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+	handler.GetHeatmap(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("got status %d, want %d", w.Code, http.StatusOK)
+	}
+	if capturedCellSize != 0.01 {
+		t.Errorf("default cellSize = %f, want 0.01", capturedCellSize)
+	}
+}
+
+func TestGetHeatmap_Forbidden(t *testing.T) {
+	mock := &mockAnalyticsService{
+		getHeatmapDataFn: func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod, cellSize float64) (*domain.HeatmapData, error) {
+			return nil, domain.ErrForbidden
+		},
+	}
+	handler := NewAnalyticsHandler(mock, &logger.Logger{})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/analytics/heatmap?period=30d", nil)
+	ctx := req.Context()
+	ctx = middleware.SetUserRoleForTesting(ctx, domain.RoleClient)
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+	handler.GetHeatmap(w, req)
 
 	if w.Code != http.StatusForbidden {
 		t.Errorf("got status %d, want %d", w.Code, http.StatusForbidden)

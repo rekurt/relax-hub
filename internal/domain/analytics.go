@@ -140,6 +140,22 @@ type GeoDemandSupplyMap struct {
 	Cities []GeoSupplyDemand `json:"cities"`
 }
 
+// HeatmapCell represents one grid cell on the geographic heatmap.
+type HeatmapCell struct {
+	Latitude     float64 `json:"latitude"`      // center of the cell
+	Longitude    float64 `json:"longitude"`     // center of the cell
+	ListingCount int64   `json:"listing_count"` // supply (active bathhouses)
+	BookingCount int64   `json:"booking_count"` // realized demand
+	SearchCount  int64   `json:"search_count"`  // demand (search views)
+}
+
+// HeatmapData holds the full heatmap response.
+type HeatmapData struct {
+	Period    AnalyticsPeriod `json:"period"`
+	CellSize  float64        `json:"cell_size"`  // grid cell size in degrees
+	Cells    []HeatmapCell   `json:"cells"`
+}
+
 // WalletMetrics holds aggregate wallet statistics.
 type WalletMetrics struct {
 	TotalClientBalance int64   `json:"total_client_balance"` // kopecks

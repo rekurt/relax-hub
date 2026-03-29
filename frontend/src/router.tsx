@@ -80,6 +80,7 @@ import WalletManagement from '@/pages/admin/WalletManagement'
 import BookingManagement from '@/pages/admin/BookingManagement'
 import RoleManagement from '@/pages/admin/RoleManagement'
 import AdminNotificationCenter from '@/pages/admin/AdminNotificationCenter'
+import GeoHeatmap from '@/pages/admin/GeoHeatmap'
 import OAuthCallback from '@/pages/OAuthCallback'
 
 export default function AppRouter() {
@@ -196,6 +197,7 @@ export default function AppRouter() {
         <Route path="roles" element={<RoleManagement />} />
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="notification-center" element={<AdminNotificationCenter />} />
+        <Route path="heatmap" element={<GeoHeatmap />} />
         <Route path="profile" element={<AdminProfile />} />
       </Route>
 

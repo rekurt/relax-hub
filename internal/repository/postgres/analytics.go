@@ -741,6 +741,78 @@ func (r *analyticsRepo) GetPlatformRevenue(ctx context.Context, from, to time.Ti
 	return serviceFees, subscriptions, promotions, nil
 }
 
+// GetHeatmapData aggregates bathhouses and bookings/search views into grid cells for a heatmap.
+// cellSize controls grid granularity in degrees (e.g., 0.01 ~ 1km).
+func (r *analyticsRepo) GetHeatmapData(ctx context.Context, from, to time.Time, cellSize float64) ([]domain.HeatmapCell, error) {
+	fromDate := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+	toDate := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
+
+	query := `
+		WITH grid AS (
+			SELECT
+				ROUND(bh.latitude / $3) * $3 + $3 / 2.0 AS cell_lat,
+				ROUND(bh.longitude / $3) * $3 + $3 / 2.0 AS cell_lon,
+				bh.id AS bathhouse_id
+			FROM bathhouses bh
+			WHERE bh.status = 'active' AND bh.latitude != 0 AND bh.longitude != 0
+		),
+		supply AS (
+			SELECT cell_lat, cell_lon, COUNT(DISTINCT bathhouse_id) AS listing_count
+			FROM grid
+			GROUP BY cell_lat, cell_lon
+		),
+		demand AS (
+			SELECT
+				ROUND(bh.latitude / $3) * $3 + $3 / 2.0 AS cell_lat,
+				ROUND(bh.longitude / $3) * $3 + $3 / 2.0 AS cell_lon,
+				COUNT(DISTINCT bv.ip_hash) AS search_count
+			FROM bathhouse_views bv
+			JOIN bathhouses bh ON bh.id = bv.bathhouse_id
+			WHERE bv.viewed_at >= $1 AND bv.viewed_at <= $2
+			  AND bv.source = 'search'
+			  AND bh.latitude != 0 AND bh.longitude != 0
+			GROUP BY cell_lat, cell_lon
+		),
+		bookings_agg AS (
+			SELECT
+				ROUND(bh.latitude / $3) * $3 + $3 / 2.0 AS cell_lat,
+				ROUND(bh.longitude / $3) * $3 + $3 / 2.0 AS cell_lon,
+				COUNT(*) AS booking_count
+			FROM bookings b
+			JOIN bathhouses bh ON bh.id = b.bathhouse_id
+			WHERE b.created_at >= $1 AND b.created_at <= $2
+			  AND bh.latitude != 0 AND bh.longitude != 0
+			GROUP BY cell_lat, cell_lon
+		)
+		SELECT
+			COALESCE(s.cell_lat, d.cell_lat, ba.cell_lat) AS latitude,
+			COALESCE(s.cell_lon, d.cell_lon, ba.cell_lon) AS longitude,
+			COALESCE(s.listing_count, 0) AS listing_count,
+			COALESCE(ba.booking_count, 0) AS booking_count,
+			COALESCE(d.search_count, 0) AS search_count
+		FROM supply s
+		FULL OUTER JOIN demand d ON s.cell_lat = d.cell_lat AND s.cell_lon = d.cell_lon
+		FULL OUTER JOIN bookings_agg ba ON COALESCE(s.cell_lat, d.cell_lat) = ba.cell_lat
+			AND COALESCE(s.cell_lon, d.cell_lon) = ba.cell_lon
+		ORDER BY listing_count DESC, booking_count DESC`
+
+	rows, err := r.pool.Query(ctx, query, fromDate, toDate, cellSize)
+	if err != nil {
+		return nil, fmt.Errorf("heatmap data: %w", err)
+	}
+	defer rows.Close()
+
+	var cells []domain.HeatmapCell
+	for rows.Next() {
+		var c domain.HeatmapCell
+		if err := rows.Scan(&c.Latitude, &c.Longitude, &c.ListingCount, &c.BookingCount, &c.SearchCount); err != nil {
+			return nil, fmt.Errorf("scan heatmap cell: %w", err)
+		}
+		cells = append(cells, c)
+	}
+	return cells, rows.Err()
+}
+
 func (r *analyticsRepo) GetOwnerPerformance(ctx context.Context, bathhouseID uuid.UUID, from, to time.Time) (*domain.OwnerPerformance, error) {
 	fromDate := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
 	toDate := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())

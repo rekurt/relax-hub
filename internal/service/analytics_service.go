@@ -118,6 +118,9 @@ type AnalyticsService interface {
 
 	// P&L and unit economics (FR-150)
 	GetPnL(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*PnLMetrics, error)
+
+	// Heatmap (FR-153)
+	GetHeatmapData(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod, cellSize float64) (*domain.HeatmapData, error)
 }
 
 type analyticsService struct {
@@ -822,4 +825,47 @@ func (s *analyticsService) UpdateBathhouseMetrics(ctx context.Context) (int, err
 	}
 
 	return updated, nil
+}
+
+// GetHeatmapData returns geographic heatmap data with supply/demand per grid cell (FR-153).
+func (s *analyticsService) GetHeatmapData(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod, cellSize float64) (*domain.HeatmapData, error) {
+	if userRole != domain.RoleAdmin {
+		return nil, domain.ErrForbidden
+	}
+	if !period.IsValid() {
+		return nil, fmt.Errorf("invalid period: %s", period)
+	}
+	if cellSize <= 0 || cellSize > 1.0 {
+		cellSize = 0.01 // default ~1km grid
+	}
+
+	from, to := s.periodToRange(period)
+
+	cacheKey := fmt.Sprintf("analytics:heatmap:%s:%.4f", period, cellSize)
+	cachedResult := s.redis.Get(ctx, cacheKey)
+	if cachedResult.Err() == nil && cachedResult.Val() != "" {
+		var data domain.HeatmapData
+		if err := json.Unmarshal([]byte(cachedResult.Val()), &data); err == nil {
+			return &data, nil
+		}
+	}
+
+	cells, err := s.analyticsRepo.GetHeatmapData(ctx, from, to, cellSize)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &domain.HeatmapData{
+		Period:   period,
+		CellSize: cellSize,
+		Cells:    cells,
+	}
+
+	if encoded, err := json.Marshal(result); err == nil {
+		if err := s.redis.Set(ctx, cacheKey, encoded, cacheTTL).Err(); err != nil {
+			s.logger.Warn("Failed to cache heatmap data", "error", err)
+		}
+	}
+
+	return result, nil
 }

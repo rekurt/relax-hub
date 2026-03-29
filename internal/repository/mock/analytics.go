@@ -21,6 +21,7 @@ type AnalyticsRepo struct {
 	GeoDemand      []domain.GeoSupplyDemand
 	WalletMetrics  *domain.WalletMetrics
 	OwnerPerfData  map[uuid.UUID]*domain.OwnerPerformance
+	HeatmapCells   []domain.HeatmapCell
 }
 
 func NewAnalyticsRepo() *AnalyticsRepo {
@@ -338,6 +339,21 @@ func (r *AnalyticsRepo) GetOwnerPerformance(_ context.Context, bathhouseID uuid.
 		AvgCityConversionRate: 0.06,
 		AvgCityOccupancyRate:  0.55,
 		AvgCityRating:         4.1,
+	}, nil
+}
+
+// --- Heatmap mock method (FR-153) ---
+
+func (r *AnalyticsRepo) GetHeatmapData(_ context.Context, _, _ time.Time, cellSize float64) ([]domain.HeatmapCell, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if r.HeatmapCells != nil {
+		return r.HeatmapCells, nil
+	}
+	return []domain.HeatmapCell{
+		{Latitude: 55.75, Longitude: 37.62, ListingCount: 30, BookingCount: 120, SearchCount: 500},
+		{Latitude: 55.76, Longitude: 37.63, ListingCount: 15, BookingCount: 60, SearchCount: 250},
+		{Latitude: 59.93, Longitude: 30.32, ListingCount: 20, BookingCount: 80, SearchCount: 350},
 	}, nil
 }
 

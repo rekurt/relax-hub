@@ -653,6 +653,7 @@ func NewRouter(p RouterParams) http.Handler {
 			r.With(middleware.RequireAdminPermission(domain.PermAnalyticsView)).Get("/analytics/wallet", p.AnalyticsHandler.GetWalletMetrics)
 			r.With(middleware.RequireAdminPermission(domain.PermAnalyticsView)).Get("/analytics/business-metrics", p.AnalyticsHandler.GetBusinessMetrics)
 			r.With(middleware.RequireAdminPermission(domain.PermAnalyticsView)).Get("/analytics/pnl", p.AnalyticsHandler.GetPnL)
+			r.With(middleware.RequireAdminPermission(domain.PermAnalyticsView)).Get("/analytics/heatmap", p.AnalyticsHandler.GetHeatmap)
 
 			// Complaints
 			r.With(middleware.RequireAdminPermission(domain.PermComplaintManage)).Get("/complaints", p.ComplaintHandler.List)

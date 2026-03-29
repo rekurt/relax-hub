@@ -438,6 +438,39 @@ func (h *AnalyticsHandler) GetPnL(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, pnl)
 }
 
+// GetHeatmap godoc
+//
+//	@Summary		Get geographic heatmap data
+//	@Description	Returns heatmap grid cells with supply (listings), demand (searches), and bookings aggregated by coordinates. Admin only.
+//	@Tags			admin-analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			period		query		string	false	"Period: 1d, 7d, 30d, 90d"		default(30d)
+//	@Param			cell_size	query		number	false	"Grid cell size in degrees"		default(0.01)
+//	@Success		200			{object}	APIResponse{data=domain.HeatmapData}
+//	@Failure		400			{object}	APIResponse{error=APIError}
+//	@Failure		401			{object}	APIResponse{error=APIError}
+//	@Failure		403			{object}	APIResponse{error=APIError}
+//	@Router			/admin/analytics/heatmap [get]
+func (h *AnalyticsHandler) GetHeatmap(w http.ResponseWriter, r *http.Request) {
+	userRole := middleware.GetUserRole(r.Context())
+	period := parsePeriodParam(r)
+
+	cellSize := 0.01
+	if cs := r.URL.Query().Get("cell_size"); cs != "" {
+		if val, err := strconv.ParseFloat(cs, 64); err == nil && val > 0 && val <= 1.0 {
+			cellSize = val
+		}
+	}
+
+	data, err := h.analyticsService.GetHeatmapData(r.Context(), userRole, period, cellSize)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, data)
+}
+
 func parsePeriodParam(r *http.Request) domain.AnalyticsPeriod {
 	periodStr := r.URL.Query().Get("period")
 	if periodStr == "" {
