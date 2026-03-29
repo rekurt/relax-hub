@@ -153,11 +153,11 @@ starting interactive plan creation
 [26-03-29 09:40:19]   - Modify: `internal/service/bathhouse_service.go` — метод GetAreaAveragePrice()
 [26-03-29 09:40:19]   - Modify: `internal/handler/bathhouse_handler.go` — добавить в ответ GetByID
 [26-03-29 09:40:19]   - Modify: `internal/repository/postgres/bathhouse_repo.go` — SQL-запрос средней цены в радиусе
-[26-03-29 09:40:19]   - [ ] SQL: AVG(base_price) WHERE city_id = X AND status = active AND id != current
-[26-03-29 09:40:19]   - [ ] Добавить поле area_average_price в ответ детальной карточки
-[26-03-29 09:40:19]   - [ ] Redis-кеш (1ч) по city_id
-[26-03-29 09:40:19]   - [ ] Frontend: отображение на странице BathhouseDetail
-[26-03-29 09:40:19]   - [ ] Тесты
+[26-03-29 09:40:19]   - [x] SQL: AVG(base_price) WHERE city_id = X AND status = active AND id != current
+[26-03-29 09:40:19]   - [x] Добавить поле area_average_price в ответ детальной карточки
+[26-03-29 09:40:19]   - [x] Redis-кеш (1ч) по city_id
+[26-03-29 09:40:19]   - [x] Frontend: отображение на странице BathhouseDetail
+[26-03-29 09:40:19]   - [x] Тесты
 [26-03-29 09:40:19] ### Task B6: Региональный приветственный бонус (FR-016)
 [26-03-29 09:40:19] **Проблема:** BRD указывает 500₽ для РФ и 15 BYN для РБ. Сейчас только глобальная настройка
 [26-03-29 09:40:19] 500₽.
