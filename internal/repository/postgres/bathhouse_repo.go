@@ -94,7 +94,8 @@ func (r *bathhouseRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Bath
 			bathhouses.booking_mode, bathhouses.request_timeout,
 			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
 			bathhouses.cancellation_policy, bathhouses.security_deposit_percent,
-			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
+			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted,
+			NULL::bigint as promo_rank
 		FROM bathhouses
 		WHERE bathhouses.id = $1`
 
@@ -127,7 +128,8 @@ func (r *bathhouseRepo) GetBySlug(ctx context.Context, slug string) (*domain.Bat
 			bathhouses.booking_mode, bathhouses.request_timeout,
 			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
 			bathhouses.cancellation_policy, bathhouses.security_deposit_percent,
-			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted
+			EXISTS (SELECT 1 FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active') as is_promoted,
+			NULL::bigint as promo_rank
 		FROM bathhouses
 		WHERE bathhouses.slug = $1`
 
@@ -417,6 +419,10 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		%s * 0.10
 	)`, promotionBoost)
 
+	// Promoted ordering: only top 3 promoted items (by bid) get priority positioning per BRD FR-043
+	// promo_rank is computed via ROW_NUMBER in the SELECT; this expression caps promoted priority at 3
+	promotedCap := "CASE WHEN is_promoted AND promo_rank <= 3 THEN 0 ELSE 1 END"
+
 	orderBy := "created_at DESC"
 
 	switch filter.SortBy {
@@ -432,9 +438,9 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			orderBy = compositeRank + " DESC, created_at DESC"
 		}
 	case "price_asc":
-		orderBy = "is_promoted DESC, price_per_hour ASC"
+		orderBy = promotedCap + ", price_per_hour ASC"
 	case "price_desc":
-		orderBy = "is_promoted DESC, price_per_hour DESC"
+		orderBy = promotedCap + ", price_per_hour DESC"
 	case "price":
 		// Legacy support: use sort_order
 		sortDir := "ASC"
@@ -442,11 +448,11 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			sortDir = "DESC"
 		}
 		orderBy = fmt.Sprintf(
-			"is_promoted DESC, price_per_hour %s",
-			sortDir,
+			"%s, price_per_hour %s",
+			promotedCap, sortDir,
 		)
 	case "rating":
-		orderBy = "is_promoted DESC, rating DESC, review_count DESC"
+		orderBy = promotedCap + ", rating DESC, review_count DESC"
 	case "distance":
 		if filter.Latitude != nil && filter.Longitude != nil {
 			sortDir := "ASC"
@@ -454,12 +460,12 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 				sortDir = "DESC"
 			}
 			orderBy = fmt.Sprintf(
-				"is_promoted DESC, ST_Distance(location, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) %s",
-				addArg(*filter.Longitude), addArg(*filter.Latitude), sortDir,
+				"%s, ST_Distance(location, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography) %s",
+				promotedCap, addArg(*filter.Longitude), addArg(*filter.Latitude), sortDir,
 			)
 		}
 	case "newest":
-		orderBy = "is_promoted DESC, created_at DESC"
+		orderBy = promotedCap + ", created_at DESC"
 	default:
 		// Default to relevance-based ranking
 		filter.SortBy = "relevance"
@@ -476,6 +482,12 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 
 	offset := (filter.Page - 1) * filter.PageSize
 
+	// Bid-based rank for promoted items: ROW_NUMBER() partitioned by promoted status, ordered by bid descending.
+	// Only the top 3 promoted items (by bid) get priority positioning in search results.
+	promoRankExpr := fmt.Sprintf(`CASE WHEN %s
+			THEN ROW_NUMBER() OVER (PARTITION BY (%s) ORDER BY COALESCE((SELECT daily_bid_kopecks FROM promotions WHERE bathhouse_id = bathhouses.id AND status = 'active' ORDER BY daily_bid_kopecks DESC LIMIT 1), 0) DESC)
+		END`, promotionExists, promotionExists)
+
 	selectQuery := fmt.Sprintf(`
 		SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,
 			bathhouses.latitude, bathhouses.longitude, bathhouses.price_per_hour, bathhouses.min_duration, bathhouses.max_guests,
@@ -488,9 +500,10 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 			bathhouses.booking_mode, bathhouses.request_timeout,
 			bathhouses.response_rate, bathhouses.avg_response_time_minutes,
 			bathhouses.cancellation_policy, bathhouses.security_deposit_percent,
-			%s as is_promoted
+			%s as is_promoted,
+			%s as promo_rank
 		FROM bathhouses %s ORDER BY %s LIMIT %s OFFSET %s`,
-		promotionExists, whereClause, orderBy, addArg(filter.PageSize), addArg(offset),
+		promotionExists, promoRankExpr, whereClause, orderBy, addArg(filter.PageSize), addArg(offset),
 	)
 
 	rows, err := r.pool.Query(ctx, selectQuery, args...)
@@ -748,6 +761,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*do
 		imagesJSON []byte
 		whJSON     []byte
 		isPromoted bool
+		promoRank  *int64 // used for ORDER BY only, ignored in domain
 	)
 	err := rows.Scan(
 		&bh.ID, &bh.OwnerID, &bh.Name, &bh.Slug, &bh.Description, &bh.Address, &bh.CityID,
@@ -762,6 +776,7 @@ func (r *bathhouseRepo) scanBathhouseFromRowWithSubscription(rows pgx.Rows) (*do
 		&bh.ResponseRate, &bh.AvgResponseTimeMinutes,
 		&bh.CancellationPolicy, &bh.SecurityDepositPercent,
 		&isPromoted,
+		&promoRank,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("scan bathhouse row: %w", err)

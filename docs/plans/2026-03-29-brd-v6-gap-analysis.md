@@ -445,10 +445,10 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 **Files:**
 - Modify: `internal/repository/postgres/bathhouse_repo.go` — ограничение promoted в выдаче
 
-- [ ] Проверить SQL-запрос поиска: лимитированы ли promoted записи до 3 на страницу
-- [ ] Если нет — добавить WITH promoted AS (... LIMIT 3) UNION ALL unpromoted
-- [ ] Тест
-- [ ] run project test suite — must pass before Block F
+- [x] Проверить SQL-запрос поиска: лимитированы ли promoted записи до 3 на страницу
+- [x] Если нет — добавить WITH promoted AS (... LIMIT 3) UNION ALL unpromoted
+- [x] Тест
+- [x] run project test suite — must pass before Block F
 
 ---
 
