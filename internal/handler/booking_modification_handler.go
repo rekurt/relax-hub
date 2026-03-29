@@ -237,7 +237,7 @@ func (h *BookingModificationHandler) ListModificationRequests(w http.ResponseWri
 		return
 	}
 
-	var resp []modificationRequestResponse
+	resp := make([]modificationRequestResponse, 0, len(requests))
 	for _, req := range requests {
 		resp = append(resp, toModificationRequestResponse(&req))
 	}

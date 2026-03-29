@@ -232,11 +232,13 @@ func (s *payoutService) ProcessPayout(ctx context.Context, payoutID uuid.UUID) e
 		if userErr != nil {
 			s.logger.Error("SBP payout failed: cannot load user",
 				"error", userErr, "payout_id", payoutID, "user_id", payout.UserID)
+			s.failPayoutAndRefundWallet(ctx, payout, "user not found")
 			return fmt.Errorf("SBP payout: load user: %w", userErr)
 		}
 		if user.Phone == "" {
 			s.logger.Error("SBP payout failed: user has no phone",
 				"payout_id", payoutID, "user_id", payout.UserID)
+			s.failPayoutAndRefundWallet(ctx, payout, "user has no phone")
 			return fmt.Errorf("SBP payout: user has no phone number")
 		}
 		currency := string(domain.CurrencyForRegion(user.Region))
@@ -262,4 +264,26 @@ func (s *payoutService) ProcessPayout(ctx context.Context, payoutID uuid.UUID) e
 
 	s.logger.Info("payout processed", "payout_id", payoutID, "amount", payout.Amount, "method", payout.PayoutMethod)
 	return nil
+}
+
+// failPayoutAndRefundWallet marks a payout as failed and refunds the wallet.
+// Wallet was deducted in the first ProcessPayout call (before SBP provider), so refund is always needed.
+func (s *payoutService) failPayoutAndRefundWallet(ctx context.Context, payout *domain.Payout, reason string) {
+	failedAt := time.Now()
+	_ = s.payoutRepo.UpdateStatus(ctx, payout.ID, domain.PayoutStatusFailed, &failedAt, reason)
+
+	wallet, err := s.walletRepo.GetByUserID(ctx, payout.UserID)
+	if err != nil {
+		s.logger.Error("CRITICAL: cannot refund wallet for failed payout, manual reconciliation required",
+			"error", err, "payout_id", payout.ID, "user_id", payout.UserID, "amount", payout.Amount)
+		return
+	}
+	newBalance := wallet.Balance + payout.Amount
+	if err := s.walletRepo.UpdateBalance(ctx, wallet.ID, wallet.Balance, newBalance, wallet.HeldAmount, wallet.HeldAmount); err != nil {
+		s.logger.Error("CRITICAL: wallet refund failed for failed payout, manual reconciliation required",
+			"error", err, "payout_id", payout.ID, "wallet_id", wallet.ID, "amount", payout.Amount)
+		return
+	}
+	s.logger.Info("wallet refunded for permanently failed SBP payout",
+		"payout_id", payout.ID, "wallet_id", wallet.ID, "amount", payout.Amount)
 }
