@@ -2442,11 +2442,17 @@ definitions:
     type: object
   internal_handler.mediaResponse:
     properties:
+      blur_hash:
+        type: string
       created_at:
         type: string
       height:
         type: integer
       id:
+        type: string
+      large_url:
+        type: string
+      medium_url:
         type: string
       mime_type:
         type: string

@@ -41404,6 +41404,9 @@ const docTemplate = `{
         "internal_handler.mediaResponse": {
             "type": "object",
             "properties": {
+                "blur_hash": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -41411,6 +41414,12 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "large_url": {
+                    "type": "string"
+                },
+                "medium_url": {
                     "type": "string"
                 },
                 "mime_type": {

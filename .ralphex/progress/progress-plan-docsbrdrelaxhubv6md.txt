@@ -320,13 +320,13 @@ starting interactive plan creation
 [26-03-29 09:40:19] ---
 [26-03-29 09:40:19] ## БЛОК F: ФИНАЛЬНАЯ ВЕРИФИКАЦИЯ
 [26-03-29 09:40:19] ### Task F1: Прогон тестов и линтера
-[26-03-29 09:40:19]   - [ ] go test ./... -race
-[26-03-29 09:40:19]   - [ ] make lint
-[26-03-29 09:40:19]   - [ ] cd frontend && npm run lint
-[26-03-29 09:40:19]   - [ ] cd frontend && npx vitest run
+[26-03-29 09:40:19]   - [x] go test ./... -race
+[26-03-29 09:40:19]   - [x] make lint
+[26-03-29 09:40:19]   - [x] cd frontend && npm run lint
+[26-03-29 09:40:19]   - [x] cd frontend && npx vitest run
 [26-03-29 09:40:19] ### Task F2: Обновление swagger-документации
-[26-03-29 09:40:19]   - [ ] make swagger для всех новых/изменённых эндпоинтов
-[26-03-29 09:40:19]   - [ ] Regenerate frontend API client: make frontend-generate-api
+[26-03-29 09:40:19]   - [x] make swagger для всех новых/изменённых эндпоинтов
+[26-03-29 09:40:19]   - [x] Regenerate frontend API client: make frontend-generate-api
 [26-03-29 09:40:19] ### Task F3: Обновление CLAUDE.md
 [26-03-29 09:40:19]   - [ ] Добавить описание новых подсистем (booking modification requests, extension requests, auto-payout cron, etc.)
 [26-03-29 09:40:19]   - [ ] Обновить список ошибок в Error Mapping
