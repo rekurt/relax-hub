@@ -197,9 +197,9 @@ starting interactive plan creation
 [26-03-29 09:40:19] и спутник".
 [26-03-29 09:40:19] **Files:**
 [26-03-29 09:40:19]   - Modify: `frontend/src/components/BathhouseMap.tsx` — добавить переключатель слоёв
-[26-03-29 09:40:19]   - [ ] Добавить Yandex Maps LayerSwitch (yandex.map.layer.satellite)
-[26-03-29 09:40:19]   - [ ] Кнопка переключения "Схема / Спутник"
-[26-03-29 09:40:19]   - [ ] Тесты
+[26-03-29 09:40:19]   - [x] Добавить Yandex Maps LayerSwitch (yandex.map.layer.satellite)
+[26-03-29 09:40:19]   - [x] Кнопка переключения "Схема / Спутник"
+[26-03-29 09:40:19]   - [x] Тесты
 [26-03-29 09:40:19] ### Task C3: Frontend slug-based маршруты (FR-047, SEO)
 [26-03-29 09:40:19] **Проблема:** Backend поддерживает slug-маршруты (/city/bathhouse-slug), но frontend SPA использует UUID. Для
 [26-03-29 09:40:19] SEO и ЧПУ нужны slug-маршруты в SPA.
