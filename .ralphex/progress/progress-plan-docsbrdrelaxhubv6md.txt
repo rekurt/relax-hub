@@ -258,11 +258,11 @@ starting interactive plan creation
 [26-03-29 09:40:19] **Files:**
 [26-03-29 09:40:19]   - Create: `internal/handler/analytics_handler.go` — эндпоинт heatmap data
 [26-03-29 09:40:19]   - Create: `frontend/src/pages/admin/GeoHeatmap.tsx`
-[26-03-29 09:40:19]   - [ ] Backend: агрегация по координатам (кластеризация поисковых запросов и объектов по
+[26-03-29 09:40:19]   - [x] Backend: агрегация по координатам (кластеризация поисковых запросов и объектов по
 [26-03-29 09:40:19] ячейкам)
-[26-03-29 09:40:19]   - [ ] API endpoint: GET /api/v1/admin/analytics/heatmap
-[26-03-29 09:40:19]   - [ ] Frontend: тепловая карта на Yandex Maps
-[26-03-29 09:40:19]   - [ ] Тесты
+[26-03-29 09:40:19]   - [x] API endpoint: GET /api/v1/admin/analytics/heatmap
+[26-03-29 09:40:19]   - [x] Frontend: тепловая карта на Yandex Maps
+[26-03-29 09:40:19]   - [x] Тесты
 [26-03-29 09:40:19] ---
 [26-03-29 09:40:19] ## БЛОК E: МЕЛКИЕ РАСХОЖДЕНИЯ И ДОРАБОТКИ
 [26-03-29 09:40:19] ### Task E1: Промокод типа "бесплатный add-on" (FR-099)
