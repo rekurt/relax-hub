@@ -60,6 +60,9 @@ type mediaResponse struct {
 	Type         string    `json:"type"`
 	URL          string    `json:"url"`
 	ThumbnailURL string    `json:"thumbnail_url,omitempty"`
+	MediumURL    string    `json:"medium_url,omitempty"`
+	LargeURL     string    `json:"large_url,omitempty"`
+	BlurHash     string    `json:"blur_hash,omitempty"`
 	OriginalName string    `json:"original_name"`
 	Size         int64     `json:"size"`
 	MimeType     string    `json:"mime_type"`
@@ -97,6 +100,9 @@ func toMediaResponse(m *domain.Media) mediaResponse {
 		Type:         string(m.Type),
 		URL:          m.URL,
 		ThumbnailURL: m.ThumbnailURL,
+		MediumURL:    m.MediumURL,
+		LargeURL:     m.LargeURL,
+		BlurHash:     m.BlurHash,
 		OriginalName: m.OriginalName,
 		Size:         m.Size,
 		MimeType:     m.MimeType,

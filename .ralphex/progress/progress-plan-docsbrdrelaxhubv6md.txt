@@ -186,12 +186,12 @@ starting interactive plan creation
 [26-03-29 09:40:19] **Files:**
 [26-03-29 09:40:19]   - Modify: `internal/service/media_service.go` — генерация 4 размеров, WebP, blur-hash
 [26-03-29 09:40:19]   - Modify: `go.mod` — добавить зависимость для blur-hash (github.com/buckket/go-blurhash)
-[26-03-29 09:40:19]   - [ ] 4 размера: thumbnail (300px), medium (800px), large (1200px), full (1920px)
-[26-03-29 09:40:19]   - [ ] WebP-конвертация (golang.org/x/image/webp или imaging)
-[26-03-29 09:40:19]   - [ ] Blur-hash генерация для placeholder
-[26-03-29 09:40:19]   - [ ] Обновить domain/media: хранить пути ко всем размерам + blur_hash
-[26-03-29 09:40:19]   - [ ] Миграция: добавить поля medium_url, large_url, blur_hash в media
-[26-03-29 09:40:19]   - [ ] Тесты
+[26-03-29 09:40:19]   - [x] 4 размера: thumbnail (300px), medium (800px), large (1200px), full (1920px)
+[26-03-29 09:40:19]   - [x] WebP-конвертация (golang.org/x/image/webp или imaging)
+[26-03-29 09:40:19]   - [x] Blur-hash генерация для placeholder
+[26-03-29 09:40:19]   - [x] Обновить domain/media: хранить пути ко всем размерам + blur_hash
+[26-03-29 09:40:19]   - [x] Миграция: добавить поля medium_url, large_url, blur_hash в media
+[26-03-29 09:40:19]   - [x] Тесты
 [26-03-29 09:40:19] ### Task C2: Satellite-слой карты (FR-048)
 [26-03-29 09:40:19] **Проблема:** Карта поддерживает только стандартный вид. BRD требует: "два слоя — схема
 [26-03-29 09:40:19] и спутник".

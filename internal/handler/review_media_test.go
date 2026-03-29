@@ -51,8 +51,11 @@ func TestReviewHandler_UploadMedia(t *testing.T) {
 				OwnerID:      input.OwnerID,
 				UserID:       uid,
 				Type:         domain.MediaTypeImage,
-				URL:          "https://s3.example.com/media/test.jpg",
-				ThumbnailURL: "https://s3.example.com/media/test_thumb.jpg",
+				URL:          "https://s3.example.com/media/test/full.jpg",
+				ThumbnailURL: "https://s3.example.com/media/test/thumb.jpg",
+				MediumURL:    "https://s3.example.com/media/test/medium.jpg",
+				LargeURL:     "https://s3.example.com/media/test/large.jpg",
+				BlurHash:     "LEHV6nWB2yk8pyoJadR*.7kCMdnj",
 				OriginalName: input.OriginalName,
 				Size:         input.Size,
 				MimeType:     "image/jpeg",
@@ -89,6 +92,21 @@ func TestReviewHandler_UploadMedia(t *testing.T) {
 	resp := parseResponse(t, rec)
 	if !resp.Success {
 		t.Errorf("expected success, got error: %v", resp.Error)
+	}
+
+	// Verify multi-size URLs and blur_hash in response
+	var data map[string]interface{}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("failed to unmarshal data: %v", err)
+	}
+	if data["medium_url"] != "https://s3.example.com/media/test/medium.jpg" {
+		t.Errorf("medium_url = %v, want medium URL", data["medium_url"])
+	}
+	if data["large_url"] != "https://s3.example.com/media/test/large.jpg" {
+		t.Errorf("large_url = %v, want large URL", data["large_url"])
+	}
+	if data["blur_hash"] != "LEHV6nWB2yk8pyoJadR*.7kCMdnj" {
+		t.Errorf("blur_hash = %v, want blur hash string", data["blur_hash"])
 	}
 }
 
