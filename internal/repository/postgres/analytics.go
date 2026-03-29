@@ -607,6 +607,78 @@ func (r *analyticsRepo) GetWalletMetrics(ctx context.Context, from, to time.Time
 	return m, nil
 }
 
+// --- Business metrics (FR-148, FR-149) ---
+
+// GetChurnRate returns the percentage of users who had bookings before `inactiveDays` ago
+// but have not made any bookings in the last `inactiveDays` days.
+func (r *analyticsRepo) GetChurnRate(ctx context.Context, inactiveDays int) (float64, error) {
+	query := `
+		WITH active_before AS (
+			SELECT DISTINCT user_id
+			FROM bookings
+			WHERE status = 'completed'
+			  AND created_at < NOW() - ($1 || ' days')::interval
+		),
+		active_recently AS (
+			SELECT DISTINCT user_id
+			FROM bookings
+			WHERE status IN ('confirmed', 'completed')
+			  AND created_at >= NOW() - ($1 || ' days')::interval
+		)
+		SELECT
+			CASE WHEN (SELECT COUNT(*) FROM active_before) = 0 THEN 0
+			ELSE (
+				SELECT COUNT(*) FROM active_before ab
+				WHERE ab.user_id NOT IN (SELECT user_id FROM active_recently)
+			)::float / (SELECT COUNT(*) FROM active_before) * 100
+			END`
+
+	var churnRate float64
+	err := r.pool.QueryRow(ctx, query, inactiveDays).Scan(&churnRate)
+	if err != nil {
+		return 0, fmt.Errorf("get churn rate: %w", err)
+	}
+	return churnRate, nil
+}
+
+// GetLTV returns the average lifetime value per user (total revenue from completed bookings / distinct users)
+func (r *analyticsRepo) GetLTV(ctx context.Context) (int64, error) {
+	query := `
+		SELECT CASE WHEN COUNT(DISTINCT user_id) = 0 THEN 0
+		ELSE COALESCE(SUM(total_price), 0) / COUNT(DISTINCT user_id)
+		END
+		FROM bookings
+		WHERE status = 'completed'`
+
+	var ltv int64
+	err := r.pool.QueryRow(ctx, query).Scan(&ltv)
+	if err != nil {
+		return 0, fmt.Errorf("get ltv: %w", err)
+	}
+	return ltv, nil
+}
+
+// GetARPU returns the average revenue per user for the given period
+func (r *analyticsRepo) GetARPU(ctx context.Context, from, to time.Time) (int64, error) {
+	fromDate := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+	toDate := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
+
+	query := `
+		SELECT CASE WHEN COUNT(DISTINCT user_id) = 0 THEN 0
+		ELSE COALESCE(SUM(total_price), 0) / COUNT(DISTINCT user_id)
+		END
+		FROM bookings
+		WHERE status = 'completed'
+		  AND created_at >= $1 AND created_at <= $2`
+
+	var arpu int64
+	err := r.pool.QueryRow(ctx, query, fromDate, toDate).Scan(&arpu)
+	if err != nil {
+		return 0, fmt.Errorf("get arpu: %w", err)
+	}
+	return arpu, nil
+}
+
 func (r *analyticsRepo) GetOwnerPerformance(ctx context.Context, bathhouseID uuid.UUID, from, to time.Time) (*domain.OwnerPerformance, error) {
 	fromDate := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
 	toDate := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())

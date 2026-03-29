@@ -280,6 +280,11 @@ type AnalyticsRepository interface {
 	GetGeoSupplyDemand(ctx context.Context, from, to time.Time) ([]domain.GeoSupplyDemand, error)
 	GetWalletMetrics(ctx context.Context, from, to time.Time) (*domain.WalletMetrics, error)
 	GetOwnerPerformance(ctx context.Context, bathhouseID uuid.UUID, from, to time.Time) (*domain.OwnerPerformance, error)
+
+	// Business metrics (FR-148, FR-149)
+	GetChurnRate(ctx context.Context, inactiveDays int) (float64, error)
+	GetLTV(ctx context.Context) (int64, error)
+	GetARPU(ctx context.Context, from, to time.Time) (int64, error)
 }
 
 type TelegramLinkRepository interface {

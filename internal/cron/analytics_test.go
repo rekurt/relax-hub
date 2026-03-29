@@ -72,6 +72,10 @@ func (m *MockAnalyticsService) GetOwnerPerformance(_ context.Context, _ uuid.UUI
 	return nil, nil
 }
 
+func (m *MockAnalyticsService) GetBusinessMetrics(_ context.Context, _ domain.UserRole, _ domain.AnalyticsPeriod) (*service.BusinessMetrics, error) {
+	return nil, nil
+}
+
 func TestNewCronScheduler(t *testing.T) {
 	log := logger.New(logger.LevelInfo)
 	mockSvc := &MockAnalyticsService{}

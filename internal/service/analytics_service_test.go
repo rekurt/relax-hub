@@ -679,3 +679,134 @@ func TestAnalyticsService_GetOwnerPerformance_WithCustomMockData(t *testing.T) {
 		t.Error("city benchmark should be lower than individual for this test data")
 	}
 }
+
+// --- Business metrics tests (FR-148, FR-149) ---
+
+func TestAnalyticsService_GetBusinessMetrics_Success(t *testing.T) {
+	svc, analyticsRepo, _, _, _, _ := newAnalyticsService()
+
+	// Create snapshots so ADR can be computed
+	bathhouseID := uuid.New()
+	today := time.Now()
+	dayStart := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+
+	snapshot := &domain.AnalyticsSnapshot{
+		BathhouseID: bathhouseID,
+		Date:        dayStart,
+		Views:       200,
+		UniqueViews: 100,
+		Bookings:    20,
+		Revenue:     100000, // 1000 rubles total
+		ReviewCount: 5,
+		AvgRating:   4.5,
+	}
+	if err := analyticsRepo.CreateSnapshot(context.Background(), snapshot); err != nil {
+		t.Fatalf("failed to create snapshot: %v", err)
+	}
+
+	metrics, err := svc.GetBusinessMetrics(context.Background(), domain.RoleAdmin, domain.PeriodDay)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if metrics == nil {
+		t.Fatal("metrics is nil")
+	}
+
+	if metrics.Period != domain.PeriodDay {
+		t.Errorf("period = %s, want %s", metrics.Period, domain.PeriodDay)
+	}
+
+	// ADR should be revenue / bookings = 100000 / 20 = 5000
+	if metrics.ADR != 5000 {
+		t.Errorf("ADR = %d, want 5000", metrics.ADR)
+	}
+
+	// Churn rate from mock defaults to 12.5
+	if metrics.ChurnRate != 12.5 {
+		t.Errorf("ChurnRate = %f, want 12.5", metrics.ChurnRate)
+	}
+
+	// LTV from mock defaults to 1500000
+	if metrics.LTV != 1500000 {
+		t.Errorf("LTV = %d, want 1500000", metrics.LTV)
+	}
+
+	// ARPU from mock defaults to 300000
+	if metrics.ARPU != 300000 {
+		t.Errorf("ARPU = %d, want 300000", metrics.ARPU)
+	}
+}
+
+func TestAnalyticsService_GetBusinessMetrics_Forbidden(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	_, err := svc.GetBusinessMetrics(context.Background(), domain.RoleClient, domain.PeriodMonth)
+	if err != domain.ErrForbidden {
+		t.Errorf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestAnalyticsService_GetBusinessMetrics_InvalidPeriod(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	_, err := svc.GetBusinessMetrics(context.Background(), domain.RoleAdmin, domain.AnalyticsPeriod("invalid"))
+	if err == nil {
+		t.Fatal("expected error for invalid period")
+	}
+}
+
+func TestAnalyticsService_GetBusinessMetrics_ZeroBookings(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	// No snapshots = zero bookings = ADR should be 0
+	metrics, err := svc.GetBusinessMetrics(context.Background(), domain.RoleAdmin, domain.PeriodDay)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if metrics.ADR != 0 {
+		t.Errorf("ADR = %d, want 0 when no bookings", metrics.ADR)
+	}
+}
+
+func TestAnalyticsService_AdminDashboard_IncludesADRAndChurn(t *testing.T) {
+	svc, analyticsRepo, _, _, _, _ := newAnalyticsService()
+
+	bathhouseID := uuid.New()
+	today := time.Now()
+	dayStart := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, today.Location())
+
+	snapshot := &domain.AnalyticsSnapshot{
+		BathhouseID: bathhouseID,
+		Date:        dayStart,
+		Views:       200,
+		UniqueViews: 100,
+		Bookings:    10,
+		Revenue:     50000,
+		ReviewCount: 5,
+		AvgRating:   4.5,
+	}
+	if err := analyticsRepo.CreateSnapshot(context.Background(), snapshot); err != nil {
+		t.Fatalf("failed to create snapshot: %v", err)
+	}
+
+	// Use PeriodMonth (30d) to avoid date boundary edge cases with PeriodDay
+	dashboard, err := svc.GetAdminDashboard(context.Background(), domain.RoleAdmin, domain.PeriodMonth)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify ADR is computed when bookings > 0
+	if dashboard.TotalBookings > 0 {
+		expectedADR := dashboard.TotalRevenue / dashboard.TotalBookings
+		if dashboard.ADR != expectedADR {
+			t.Errorf("ADR = %d, want %d (revenue=%d / bookings=%d)", dashboard.ADR, expectedADR, dashboard.TotalRevenue, dashboard.TotalBookings)
+		}
+	}
+
+	// ChurnRate should be populated from repo (mock returns 12.5)
+	if dashboard.ChurnRate != 12.5 {
+		t.Errorf("ChurnRate = %f, want 12.5", dashboard.ChurnRate)
+	}
+}

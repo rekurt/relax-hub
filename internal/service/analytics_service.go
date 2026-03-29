@@ -53,10 +53,23 @@ type AdminDashboard struct {
 	TotalRevenue    int64                  `json:"total_revenue"`
 	TotalViews      int64                  `json:"total_views"`
 	AvgRating       float64                `json:"avg_rating"`
-	DAU             int64                  `json:"dau"` // daily active users (from bookings)
-	WAU             int64                  `json:"wau"` // weekly active users
-	MAU             int64                  `json:"mau"` // monthly active users
+	DAU             int64                  `json:"dau"`              // daily active users (from bookings)
+	WAU             int64                  `json:"wau"`              // weekly active users
+	MAU             int64                  `json:"mau"`              // monthly active users
+	ADR             int64                  `json:"adr"`              // average daily rate (avg booking value in kopecks)
+	ChurnRate       float64                `json:"churn_rate"`       // % of users with no bookings in last 90 days
 	TopBathhouses   []TopBathhouseInfo     `json:"top_bathhouses"`
+}
+
+// BusinessMetrics represents detailed business metrics for admin analytics (FR-148, FR-149)
+type BusinessMetrics struct {
+	Period    domain.AnalyticsPeriod `json:"period"`
+	ADR       int64                  `json:"adr"`        // average booking value (kopecks)
+	DAU       int64                  `json:"dau"`        // daily active users
+	MAU       int64                  `json:"mau"`        // monthly active users
+	ChurnRate float64                `json:"churn_rate"` // % users churned (90 days no activity)
+	LTV       int64                  `json:"ltv"`        // average lifetime value per user (kopecks)
+	ARPU      int64                  `json:"arpu"`       // average revenue per user in period (kopecks)
 }
 
 // TopBathhouseInfo contains info about a top-ranked bathhouse
@@ -85,6 +98,9 @@ type AnalyticsService interface {
 	GetGeoDemandSupply(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*domain.GeoDemandSupplyMap, error)
 	GetWalletMetrics(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*domain.WalletMetrics, error)
 	GetOwnerPerformance(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*domain.OwnerPerformance, error)
+
+	// Business metrics (FR-148, FR-149)
+	GetBusinessMetrics(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*BusinessMetrics, error)
 }
 
 type analyticsService struct {
@@ -373,6 +389,19 @@ func (s *analyticsService) GetAdminDashboard(ctx context.Context, userRole domai
 	// Get new users for the period
 	dashboard.NewUsers = s.countNewUsers(ctx, from, to)
 
+	// ADR: average booking value
+	if dashboard.TotalBookings > 0 {
+		dashboard.ADR = dashboard.TotalRevenue / dashboard.TotalBookings
+	}
+
+	// Churn rate: % of users active before 90 days ago who had no bookings in last 90 days
+	churnRate, err := s.analyticsRepo.GetChurnRate(ctx, 90)
+	if err != nil {
+		s.logger.Warn("Failed to get churn rate", "error", err)
+	} else {
+		dashboard.ChurnRate = churnRate
+	}
+
 	// Cache the result
 	if data, err := json.Marshal(dashboard); err == nil {
 		if err := s.redis.Set(ctx, cacheKey, data, cacheTTL).Err(); err != nil {
@@ -632,6 +661,59 @@ func (s *analyticsService) GetOwnerPerformance(ctx context.Context, userID uuid.
 
 	from, to := s.periodToRange(period)
 	return s.analyticsRepo.GetOwnerPerformance(ctx, bathhouseID, from, to)
+}
+
+// GetBusinessMetrics returns detailed business metrics for admin analytics (FR-148, FR-149)
+func (s *analyticsService) GetBusinessMetrics(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*BusinessMetrics, error) {
+	if userRole != domain.RoleAdmin {
+		return nil, domain.ErrForbidden
+	}
+	if !period.IsValid() {
+		return nil, fmt.Errorf("invalid period: %s", period)
+	}
+
+	from, to := s.periodToRange(period)
+	metrics := &BusinessMetrics{Period: period}
+
+	// Get platform stats for ADR calculation
+	stats, err := s.analyticsRepo.GetPlatformStats(ctx, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("get platform stats: %w", err)
+	}
+
+	// ADR: average booking value
+	if stats.Bookings > 0 {
+		metrics.ADR = stats.Revenue / stats.Bookings
+	}
+
+	// DAU and MAU
+	metrics.DAU, _, metrics.MAU = s.calculateUserActivity(ctx, from, to)
+
+	// Churn rate (90 days inactivity window)
+	churnRate, err := s.analyticsRepo.GetChurnRate(ctx, 90)
+	if err != nil {
+		s.logger.Warn("Failed to get churn rate", "error", err)
+	} else {
+		metrics.ChurnRate = churnRate
+	}
+
+	// LTV
+	ltv, err := s.analyticsRepo.GetLTV(ctx)
+	if err != nil {
+		s.logger.Warn("Failed to get LTV", "error", err)
+	} else {
+		metrics.LTV = ltv
+	}
+
+	// ARPU
+	arpu, err := s.analyticsRepo.GetARPU(ctx, from, to)
+	if err != nil {
+		s.logger.Warn("Failed to get ARPU", "error", err)
+	} else {
+		metrics.ARPU = arpu
+	}
+
+	return metrics, nil
 }
 
 func (s *analyticsService) UpdateBathhouseMetrics(ctx context.Context) (int, error) {

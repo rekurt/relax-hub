@@ -16,12 +16,13 @@ import (
 )
 
 type mockAnalyticsService struct {
-	recordViewFn           func(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error
-	getOwnerDashboardFn    func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*service.OwnerDashboard, error)
-	getDailyStatsFn        func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error)
-	getAdminDashboardFn    func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.AdminDashboard, error)
+	recordViewFn              func(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error
+	getOwnerDashboardFn       func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*service.OwnerDashboard, error)
+	getDailyStatsFn           func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error)
+	getAdminDashboardFn       func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.AdminDashboard, error)
 	getTopBathhousesByMetricFn func(ctx context.Context, userRole domain.UserRole, metric domain.TopMetric, limit int64) ([]service.TopBathhouseInfo, error)
-	aggregateDailyFn       func(ctx context.Context) error
+	aggregateDailyFn          func(ctx context.Context) error
+	getBusinessMetricsFn      func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.BusinessMetrics, error)
 }
 
 func (m *mockAnalyticsService) RecordView(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error {
@@ -88,6 +89,13 @@ func (m *mockAnalyticsService) GetWalletMetrics(_ context.Context, _ domain.User
 
 func (m *mockAnalyticsService) GetOwnerPerformance(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID, _ domain.AnalyticsPeriod) (*domain.OwnerPerformance, error) {
 	return &domain.OwnerPerformance{}, nil
+}
+
+func (m *mockAnalyticsService) GetBusinessMetrics(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.BusinessMetrics, error) {
+	if m.getBusinessMetricsFn != nil {
+		return m.getBusinessMetricsFn(ctx, userRole, period)
+	}
+	return &service.BusinessMetrics{}, nil
 }
 
 func TestGetAdminDashboard_ValidRequest(t *testing.T) {
@@ -206,6 +214,53 @@ func TestGetTopBathhouses_InvalidMetric(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("got status %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+func TestGetBusinessMetrics_ValidRequest(t *testing.T) {
+	mock := &mockAnalyticsService{}
+	handler := NewAnalyticsHandler(mock, &logger.Logger{})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/analytics/business-metrics?period=30d", nil)
+	ctx := req.Context()
+	ctx = middleware.SetUserRoleForTesting(ctx, domain.RoleAdmin)
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+	handler.GetBusinessMetrics(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("got status %d, want %d", w.Code, http.StatusOK)
+	}
+
+	var response APIResponse
+	if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
+		t.Errorf("failed to decode response: %v", err)
+	}
+	if !response.Success {
+		t.Errorf("expected success=true")
+	}
+}
+
+func TestGetBusinessMetrics_NonAdminForbidden(t *testing.T) {
+	mock := &mockAnalyticsService{
+		getBusinessMetricsFn: func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.BusinessMetrics, error) {
+			return nil, domain.ErrForbidden
+		},
+	}
+	handler := NewAnalyticsHandler(mock, &logger.Logger{})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/analytics/business-metrics?period=30d", nil)
+	ctx := req.Context()
+	ctx = middleware.SetUserRoleForTesting(ctx, domain.RoleClient)
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+	handler.GetBusinessMetrics(w, req)
+
+	// The service returns ErrForbidden, which maps to 403
+	if w.Code != http.StatusForbidden {
+		t.Errorf("got status %d, want %d", w.Code, http.StatusForbidden)
 	}
 }
 

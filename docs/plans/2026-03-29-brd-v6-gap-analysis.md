@@ -328,10 +328,10 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 - Modify: `internal/service/analytics_service.go` — убедиться что все метрики реализованы
 - Modify: `internal/handler/analytics_handler.go`
 
-- [ ] Проверить наличие: ADR, DAU/MAU, churn rate (90 дней без визита)
-- [ ] Добавить недостающие метрики
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task D3
+- [x] Проверить наличие: ADR, DAU/MAU, churn rate (90 дней без визита)
+- [x] Добавить недостающие метрики
+- [x] Тесты
+- [x] run project test suite — must pass before Task D3
 
 ### Task D3: P&L и unit-экономика (FR-150, "Операционная")
 

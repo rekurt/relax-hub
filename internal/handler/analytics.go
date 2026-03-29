@@ -388,6 +388,31 @@ func (h *AnalyticsHandler) GetOwnerPerformance(w http.ResponseWriter, r *http.Re
 	writeJSON(w, http.StatusOK, perf)
 }
 
+// GetBusinessMetrics godoc
+//
+//	@Summary		Get business metrics
+//	@Description	Returns business metrics: ADR, DAU/MAU, churn rate, LTV, ARPU. Admin only.
+//	@Tags			admin-analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			period	query		string	false	"Period: 1d, 7d, 30d, 90d"	default(30d)
+//	@Success		200		{object}	APIResponse{data=service.BusinessMetrics}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/analytics/business-metrics [get]
+func (h *AnalyticsHandler) GetBusinessMetrics(w http.ResponseWriter, r *http.Request) {
+	userRole := middleware.GetUserRole(r.Context())
+	period := parsePeriodParam(r)
+
+	metrics, err := h.analyticsService.GetBusinessMetrics(r.Context(), userRole, period)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, metrics)
+}
+
 func parsePeriodParam(r *http.Request) domain.AnalyticsPeriod {
 	periodStr := r.URL.Query().Get("period")
 	if periodStr == "" {

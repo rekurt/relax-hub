@@ -340,3 +340,28 @@ func (r *AnalyticsRepo) GetOwnerPerformance(_ context.Context, bathhouseID uuid.
 		AvgCityRating:         4.1,
 	}, nil
 }
+
+// --- Business metrics mock methods (FR-148, FR-149) ---
+
+// ChurnRateOverride allows tests to set a custom churn rate value
+var ChurnRateDefault float64 = 12.5
+
+func (r *AnalyticsRepo) GetChurnRate(_ context.Context, inactiveDays int) (float64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return ChurnRateDefault, nil
+}
+
+func (r *AnalyticsRepo) GetLTV(_ context.Context) (int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	// Default mock LTV: 15000 rub = 1500000 kopecks
+	return 1500000, nil
+}
+
+func (r *AnalyticsRepo) GetARPU(_ context.Context, _, _ time.Time) (int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	// Default mock ARPU: 3000 rub = 300000 kopecks
+	return 300000, nil
+}
