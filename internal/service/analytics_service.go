@@ -72,6 +72,20 @@ type BusinessMetrics struct {
 	ARPU      int64                  `json:"arpu"`       // average revenue per user in period (kopecks)
 }
 
+// PnLMetrics represents P&L and unit-economics for admin analytics (FR-150)
+type PnLMetrics struct {
+	Period             domain.AnalyticsPeriod `json:"period"`
+	GMV                int64                  `json:"gmv"`                  // gross merchandise value (kopecks) — total booking value
+	ServiceFeesTotal   int64                  `json:"service_fees_total"`   // platform service fees (kopecks)
+	SubscriptionsTotal int64                  `json:"subscriptions_total"`  // subscription revenue (kopecks)
+	PromotionsTotal    int64                  `json:"promotions_total"`     // promotion revenue (kopecks)
+	PlatformRevenue    int64                  `json:"platform_revenue"`     // total platform revenue (kopecks)
+	TakeRate           float64                `json:"take_rate"`            // platform_revenue / GMV * 100
+	TotalBookings      int64                  `json:"total_bookings"`       // booking count in period
+	RevenuePerBooking  int64                  `json:"revenue_per_booking"`  // platform revenue per booking (kopecks)
+	GMVPerBooking      int64                  `json:"gmv_per_booking"`      // average booking value (kopecks)
+}
+
 // TopBathhouseInfo contains info about a top-ranked bathhouse
 type TopBathhouseInfo struct {
 	BathhouseID uuid.UUID `json:"bathhouse_id"`
@@ -101,6 +115,9 @@ type AnalyticsService interface {
 
 	// Business metrics (FR-148, FR-149)
 	GetBusinessMetrics(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*BusinessMetrics, error)
+
+	// P&L and unit economics (FR-150)
+	GetPnL(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*PnLMetrics, error)
 }
 
 type analyticsService struct {
@@ -714,6 +731,50 @@ func (s *analyticsService) GetBusinessMetrics(ctx context.Context, userRole doma
 	}
 
 	return metrics, nil
+}
+
+// GetPnL returns P&L and unit-economics metrics for admin (FR-150)
+func (s *analyticsService) GetPnL(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*PnLMetrics, error) {
+	if userRole != domain.RoleAdmin {
+		return nil, domain.ErrForbidden
+	}
+	if !period.IsValid() {
+		return nil, fmt.Errorf("invalid period: %s", period)
+	}
+
+	from, to := s.periodToRange(period)
+	pnl := &PnLMetrics{Period: period}
+
+	// GMV
+	gmv, bookingCount, err := s.analyticsRepo.GetGMV(ctx, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("get gmv: %w", err)
+	}
+	pnl.GMV = gmv
+	pnl.TotalBookings = bookingCount
+
+	// Platform revenue breakdown
+	serviceFees, subscriptions, promotions, err := s.analyticsRepo.GetPlatformRevenue(ctx, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("get platform revenue: %w", err)
+	}
+	pnl.ServiceFeesTotal = serviceFees
+	pnl.SubscriptionsTotal = subscriptions
+	pnl.PromotionsTotal = promotions
+	pnl.PlatformRevenue = serviceFees + subscriptions + promotions
+
+	// Take Rate
+	if pnl.GMV > 0 {
+		pnl.TakeRate = float64(pnl.PlatformRevenue) / float64(pnl.GMV) * 100
+	}
+
+	// Unit economics
+	if bookingCount > 0 {
+		pnl.RevenuePerBooking = pnl.PlatformRevenue / bookingCount
+		pnl.GMVPerBooking = gmv / bookingCount
+	}
+
+	return pnl, nil
 }
 
 func (s *analyticsService) UpdateBathhouseMetrics(ctx context.Context) (int, error) {

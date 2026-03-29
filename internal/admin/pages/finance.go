@@ -118,6 +118,20 @@ type WalletMetrics struct {
 	PendingBonusesCount  int
 }
 
+// PnLData holds P&L and unit economics for the finance dashboard.
+type PnLData struct {
+	GMV                int64
+	ServiceFeesTotal   int64
+	SubscriptionsTotal int64
+	PromotionsTotal    int64
+	PlatformRevenue    int64
+	TakeRate           float64
+	TotalBookings      int64
+	RevenuePerBooking  int64
+	GMVPerBooking      int64
+	PeriodLabel        string
+}
+
 // FinanceData is the full data model for the finance dashboard page.
 type FinanceData struct {
 	CurrentFloat    FinanceSnapshot
@@ -126,6 +140,7 @@ type FinanceData struct {
 	RecentSnapshots []FinanceSnapshot
 	Revenue         RevenueBreakdown
 	Wallet          WalletMetrics
+	PnL             PnLData
 	GeneratedAt     time.Time
 	PagesPrefix     string
 	AdminPrefix     string
@@ -180,6 +195,11 @@ func (p *PostgresFinanceProvider) GetFinanceData(ctx context.Context) (*FinanceD
 	// Wallet metrics
 	if err := p.loadWalletMetrics(ctx, data); err != nil {
 		p.log.Error("finance: load wallet metrics", "error", err)
+	}
+
+	// P&L (last 30 days)
+	if err := p.loadPnL(ctx, data); err != nil {
+		p.log.Error("finance: load pnl", "error", err)
 	}
 
 	return data, nil
@@ -378,6 +398,66 @@ func (p *PostgresFinanceProvider) loadWalletMetrics(ctx context.Context, data *F
 	).Scan(&data.Wallet.PendingBonusesTotal, &data.Wallet.PendingBonusesCount)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (p *PostgresFinanceProvider) loadPnL(ctx context.Context, data *FinanceData) error {
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+	data.PnL.PeriodLabel = "Последние 30 дней"
+
+	// GMV and booking count
+	err := p.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(total_price), 0), COUNT(*)
+		FROM bookings
+		WHERE status IN ('completed', 'confirmed') AND created_at >= $1`,
+		thirtyDaysAgo,
+	).Scan(&data.PnL.GMV, &data.PnL.TotalBookings)
+	if err != nil {
+		return err
+	}
+
+	// Service fees
+	err = p.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(service_fee), 0)
+		FROM bookings
+		WHERE status IN ('completed', 'confirmed') AND created_at >= $1`,
+		thirtyDaysAgo,
+	).Scan(&data.PnL.ServiceFeesTotal)
+	if err != nil {
+		return err
+	}
+
+	// Subscriptions
+	err = p.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(price), 0)
+		FROM subscriptions
+		WHERE status = 'active' AND created_at >= $1`,
+		thirtyDaysAgo,
+	).Scan(&data.PnL.SubscriptionsTotal)
+	if err != nil {
+		return err
+	}
+
+	// Promotions
+	err = p.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(price), 0)
+		FROM subscriptions
+		WHERE status = 'active' AND tier = 'promoted' AND created_at >= $1`,
+		thirtyDaysAgo,
+	).Scan(&data.PnL.PromotionsTotal)
+	if err != nil {
+		return err
+	}
+
+	data.PnL.PlatformRevenue = data.PnL.ServiceFeesTotal + data.PnL.SubscriptionsTotal + data.PnL.PromotionsTotal
+	if data.PnL.GMV > 0 {
+		data.PnL.TakeRate = float64(data.PnL.PlatformRevenue) / float64(data.PnL.GMV) * 100
+	}
+	if data.PnL.TotalBookings > 0 {
+		data.PnL.RevenuePerBooking = data.PnL.PlatformRevenue / data.PnL.TotalBookings
+		data.PnL.GMVPerBooking = data.PnL.GMV / data.PnL.TotalBookings
 	}
 
 	return nil

@@ -76,6 +76,10 @@ func (m *MockAnalyticsService) GetBusinessMetrics(_ context.Context, _ domain.Us
 	return nil, nil
 }
 
+func (m *MockAnalyticsService) GetPnL(_ context.Context, _ domain.UserRole, _ domain.AnalyticsPeriod) (*service.PnLMetrics, error) {
+	return nil, nil
+}
+
 func TestNewCronScheduler(t *testing.T) {
 	log := logger.New(logger.LevelInfo)
 	mockSvc := &MockAnalyticsService{}

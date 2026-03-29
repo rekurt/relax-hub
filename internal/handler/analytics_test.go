@@ -23,6 +23,7 @@ type mockAnalyticsService struct {
 	getTopBathhousesByMetricFn func(ctx context.Context, userRole domain.UserRole, metric domain.TopMetric, limit int64) ([]service.TopBathhouseInfo, error)
 	aggregateDailyFn          func(ctx context.Context) error
 	getBusinessMetricsFn      func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.BusinessMetrics, error)
+	getPnLFn                  func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.PnLMetrics, error)
 }
 
 func (m *mockAnalyticsService) RecordView(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error {
@@ -96,6 +97,13 @@ func (m *mockAnalyticsService) GetBusinessMetrics(ctx context.Context, userRole 
 		return m.getBusinessMetricsFn(ctx, userRole, period)
 	}
 	return &service.BusinessMetrics{}, nil
+}
+
+func (m *mockAnalyticsService) GetPnL(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.PnLMetrics, error) {
+	if m.getPnLFn != nil {
+		return m.getPnLFn(ctx, userRole, period)
+	}
+	return &service.PnLMetrics{}, nil
 }
 
 func TestGetAdminDashboard_ValidRequest(t *testing.T) {
@@ -259,6 +267,63 @@ func TestGetBusinessMetrics_NonAdminForbidden(t *testing.T) {
 	handler.GetBusinessMetrics(w, req)
 
 	// The service returns ErrForbidden, which maps to 403
+	if w.Code != http.StatusForbidden {
+		t.Errorf("got status %d, want %d", w.Code, http.StatusForbidden)
+	}
+}
+
+func TestGetPnL_ValidRequest(t *testing.T) {
+	mock := &mockAnalyticsService{
+		getPnLFn: func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.PnLMetrics, error) {
+			return &service.PnLMetrics{
+				Period:          period,
+				GMV:             50000000,
+				PlatformRevenue: 6500000,
+				TakeRate:        13.0,
+				TotalBookings:   200,
+			}, nil
+		},
+	}
+
+	handler := NewAnalyticsHandler(mock, &logger.Logger{})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/analytics/pnl?period=30d", nil)
+	ctx := req.Context()
+	ctx = middleware.SetUserRoleForTesting(ctx, domain.RoleAdmin)
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+	handler.GetPnL(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("got status %d, want %d", w.Code, http.StatusOK)
+	}
+
+	var response APIResponse
+	if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
+		t.Errorf("failed to decode response: %v", err)
+	}
+	if !response.Success {
+		t.Errorf("expected success=true")
+	}
+}
+
+func TestGetPnL_NonAdminForbidden(t *testing.T) {
+	mock := &mockAnalyticsService{
+		getPnLFn: func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.PnLMetrics, error) {
+			return nil, domain.ErrForbidden
+		},
+	}
+	handler := NewAnalyticsHandler(mock, &logger.Logger{})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/analytics/pnl?period=30d", nil)
+	ctx := req.Context()
+	ctx = middleware.SetUserRoleForTesting(ctx, domain.RoleClient)
+	req = req.WithContext(ctx)
+
+	w := httptest.NewRecorder()
+	handler.GetPnL(w, req)
+
 	if w.Code != http.StatusForbidden {
 		t.Errorf("got status %d, want %d", w.Code, http.StatusForbidden)
 	}

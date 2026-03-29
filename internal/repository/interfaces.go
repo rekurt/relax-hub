@@ -285,6 +285,10 @@ type AnalyticsRepository interface {
 	GetChurnRate(ctx context.Context, inactiveDays int) (float64, error)
 	GetLTV(ctx context.Context) (int64, error)
 	GetARPU(ctx context.Context, from, to time.Time) (int64, error)
+
+	// P&L metrics (FR-150)
+	GetGMV(ctx context.Context, from, to time.Time) (int64, int64, error) // returns (gmv, bookingCount)
+	GetPlatformRevenue(ctx context.Context, from, to time.Time) (serviceFees, subscriptions, promotions int64, err error)
 }
 
 type TelegramLinkRepository interface {

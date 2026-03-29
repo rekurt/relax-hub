@@ -770,6 +770,72 @@ func TestAnalyticsService_GetBusinessMetrics_ZeroBookings(t *testing.T) {
 	}
 }
 
+// --- P&L and unit economics tests (FR-150) ---
+
+func TestAnalyticsService_GetPnL_Success(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	pnl, err := svc.GetPnL(context.Background(), domain.RoleAdmin, domain.PeriodMonth)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if pnl == nil {
+		t.Fatal("pnl is nil")
+	}
+	if pnl.Period != domain.PeriodMonth {
+		t.Errorf("period = %s, want %s", pnl.Period, domain.PeriodMonth)
+	}
+
+	// Mock defaults: GMV=50_000_000, bookings=200
+	if pnl.GMV != 50000000 {
+		t.Errorf("GMV = %d, want 50000000", pnl.GMV)
+	}
+	if pnl.TotalBookings != 200 {
+		t.Errorf("TotalBookings = %d, want 200", pnl.TotalBookings)
+	}
+
+	// Platform revenue = service_fees(5M) + subscriptions(1M) + promotions(500K) = 6.5M
+	expectedRevenue := int64(5000000 + 1000000 + 500000)
+	if pnl.PlatformRevenue != expectedRevenue {
+		t.Errorf("PlatformRevenue = %d, want %d", pnl.PlatformRevenue, expectedRevenue)
+	}
+
+	// Take rate = 6.5M / 50M * 100 = 13%
+	if pnl.TakeRate < 12.9 || pnl.TakeRate > 13.1 {
+		t.Errorf("TakeRate = %f, want ~13.0", pnl.TakeRate)
+	}
+
+	// Unit economics
+	expectedRevPerBooking := expectedRevenue / 200
+	if pnl.RevenuePerBooking != expectedRevPerBooking {
+		t.Errorf("RevenuePerBooking = %d, want %d", pnl.RevenuePerBooking, expectedRevPerBooking)
+	}
+
+	expectedGMVPerBooking := int64(50000000 / 200)
+	if pnl.GMVPerBooking != expectedGMVPerBooking {
+		t.Errorf("GMVPerBooking = %d, want %d", pnl.GMVPerBooking, expectedGMVPerBooking)
+	}
+}
+
+func TestAnalyticsService_GetPnL_Forbidden(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	_, err := svc.GetPnL(context.Background(), domain.RoleClient, domain.PeriodMonth)
+	if err != domain.ErrForbidden {
+		t.Errorf("expected ErrForbidden, got %v", err)
+	}
+}
+
+func TestAnalyticsService_GetPnL_InvalidPeriod(t *testing.T) {
+	svc, _, _, _, _, _ := newAnalyticsService()
+
+	_, err := svc.GetPnL(context.Background(), domain.RoleAdmin, domain.AnalyticsPeriod("invalid"))
+	if err == nil {
+		t.Fatal("expected error for invalid period")
+	}
+}
+
 func TestAnalyticsService_AdminDashboard_IncludesADRAndChurn(t *testing.T) {
 	svc, analyticsRepo, _, _, _, _ := newAnalyticsService()
 

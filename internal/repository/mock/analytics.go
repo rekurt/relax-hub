@@ -365,3 +365,19 @@ func (r *AnalyticsRepo) GetARPU(_ context.Context, _, _ time.Time) (int64, error
 	// Default mock ARPU: 3000 rub = 300000 kopecks
 	return 300000, nil
 }
+
+// --- P&L metrics mock methods (FR-150) ---
+
+func (r *AnalyticsRepo) GetGMV(_ context.Context, _, _ time.Time) (int64, int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	// Default mock GMV: 500,000 rub = 50_000_000 kopecks, 200 bookings
+	return 50000000, 200, nil
+}
+
+func (r *AnalyticsRepo) GetPlatformRevenue(_ context.Context, _, _ time.Time) (int64, int64, int64, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	// Default mock: service_fees=5M kop, subscriptions=1M kop, promotions=500K kop
+	return 5000000, 1000000, 500000, nil
+}

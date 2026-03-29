@@ -679,6 +679,68 @@ func (r *analyticsRepo) GetARPU(ctx context.Context, from, to time.Time) (int64,
 	return arpu, nil
 }
 
+// --- P&L metrics (FR-150) ---
+
+// GetGMV returns the gross merchandise value (sum of total_price) and booking count for the period.
+func (r *analyticsRepo) GetGMV(ctx context.Context, from, to time.Time) (int64, int64, error) {
+	fromDate := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+	toDate := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
+
+	query := `
+		SELECT COALESCE(SUM(total_price), 0), COUNT(*)
+		FROM bookings
+		WHERE status = 'completed'
+		  AND created_at >= $1 AND created_at <= $2`
+
+	var gmv, count int64
+	err := r.pool.QueryRow(ctx, query, fromDate, toDate).Scan(&gmv, &count)
+	if err != nil {
+		return 0, 0, fmt.Errorf("get gmv: %w", err)
+	}
+	return gmv, count, nil
+}
+
+// GetPlatformRevenue returns platform revenue broken down by source for the period.
+func (r *analyticsRepo) GetPlatformRevenue(ctx context.Context, from, to time.Time) (int64, int64, int64, error) {
+	fromDate := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+	toDate := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())
+
+	// Service fees from completed bookings
+	var serviceFees int64
+	err := r.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(service_fee), 0)
+		FROM bookings
+		WHERE status = 'completed' AND created_at >= $1 AND created_at <= $2`,
+		fromDate, toDate).Scan(&serviceFees)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("pnl service fees: %w", err)
+	}
+
+	// Subscriptions revenue
+	var subscriptions int64
+	err = r.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(price), 0)
+		FROM subscriptions
+		WHERE status = 'active' AND created_at >= $1 AND created_at <= $2`,
+		fromDate, toDate).Scan(&subscriptions)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("pnl subscriptions: %w", err)
+	}
+
+	// Promotions revenue (promoted listings spending)
+	var promotions int64
+	err = r.pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(price), 0)
+		FROM subscriptions
+		WHERE status = 'active' AND tier = 'promoted' AND created_at >= $1 AND created_at <= $2`,
+		fromDate, toDate).Scan(&promotions)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("pnl promotions: %w", err)
+	}
+
+	return serviceFees, subscriptions, promotions, nil
+}
+
 func (r *analyticsRepo) GetOwnerPerformance(ctx context.Context, bathhouseID uuid.UUID, from, to time.Time) (*domain.OwnerPerformance, error) {
 	fromDate := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
 	toDate := time.Date(to.Year(), to.Month(), to.Day(), 23, 59, 59, 999999999, to.Location())

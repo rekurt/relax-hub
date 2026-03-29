@@ -413,6 +413,31 @@ func (h *AnalyticsHandler) GetBusinessMetrics(w http.ResponseWriter, r *http.Req
 	writeJSON(w, http.StatusOK, metrics)
 }
 
+// GetPnL godoc
+//
+//	@Summary		Get P&L and unit economics
+//	@Description	Returns P&L metrics: GMV, take rate, platform revenue breakdown, unit economics per booking. Admin only.
+//	@Tags			admin-analytics
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			period	query		string	false	"Period: 1d, 7d, 30d, 90d"	default(30d)
+//	@Success		200		{object}	APIResponse{data=service.PnLMetrics}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		403		{object}	APIResponse{error=APIError}
+//	@Router			/admin/analytics/pnl [get]
+func (h *AnalyticsHandler) GetPnL(w http.ResponseWriter, r *http.Request) {
+	userRole := middleware.GetUserRole(r.Context())
+	period := parsePeriodParam(r)
+
+	pnl, err := h.analyticsService.GetPnL(r.Context(), userRole, period)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, pnl)
+}
+
 func parsePeriodParam(r *http.Request) domain.AnalyticsPeriod {
 	periodStr := r.URL.Query().Get("period")
 	if periodStr == "" {

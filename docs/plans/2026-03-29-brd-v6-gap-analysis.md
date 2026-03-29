@@ -342,12 +342,12 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 - Modify: `internal/service/analytics_service.go`
 - Modify: `internal/admin/pages/finance.go` — виджет P&L
 
-- [ ] GMV = сумма всех бронирований за период
-- [ ] Take Rate = (сервисный сбор + подписки + продвижение) / GMV
-- [ ] Unit economics: доход и расход на одно бронирование
-- [ ] Admin UI: P&L дашборд
-- [ ] Тесты
-- [ ] run project test suite — must pass before Task D4
+- [x] GMV = сумма всех бронирований за период
+- [x] Take Rate = (сервисный сбор + подписки + продвижение) / GMV
+- [x] Unit economics: доход и расход на одно бронирование
+- [x] Admin UI: P&L дашборд
+- [x] Тесты
+- [x] run project test suite — must pass before Task D4
 
 ### Task D4: Тепловая карта спроса/предложения (FR-153)
 

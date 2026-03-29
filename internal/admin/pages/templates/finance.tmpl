@@ -12,6 +12,7 @@
     .finance-card.warn { border-left: 4px solid #e74c3c; }
     .finance-card.revenue { border-left: 4px solid #9b59b6; }
     .finance-card.wallet { border-left: 4px solid #1abc9c; }
+    .finance-card.pnl { border-left: 4px solid #2980b9; }
 
     .section-title { font-size: 16px; font-weight: 600; color: #2c3e50; margin: 24px 0 12px 0; }
 
@@ -134,6 +135,43 @@
     <div class="finance-card total">
         <div class="label">Итого выручка</div>
         <div class="value">{{kopecksToRub .Revenue.GrandTotal}} ₽</div>
+    </div>
+</div>
+
+<div class="section-title">P&L и unit-экономика ({{.PnL.PeriodLabel}})</div>
+<div class="finance-grid">
+    <div class="finance-card pnl">
+        <div class="label">GMV (оборот)</div>
+        <div class="value">{{kopecksToRub .PnL.GMV}} ₽</div>
+        <div class="sub">{{.PnL.TotalBookings}} бронирований</div>
+    </div>
+    <div class="finance-card pnl">
+        <div class="label">Выручка платформы</div>
+        <div class="value">{{kopecksToRub .PnL.PlatformRevenue}} ₽</div>
+        <div class="sub">Take Rate: {{printf "%.1f" .PnL.TakeRate}}%</div>
+    </div>
+    <div class="finance-card pnl">
+        <div class="label">Сервисные комиссии</div>
+        <div class="value">{{kopecksToRub .PnL.ServiceFeesTotal}} ₽</div>
+        <div class="sub">{{pctOf .PnL.ServiceFeesTotal .PnL.PlatformRevenue}}% от выручки</div>
+    </div>
+    <div class="finance-card pnl">
+        <div class="label">Подписки</div>
+        <div class="value">{{kopecksToRub .PnL.SubscriptionsTotal}} ₽</div>
+        <div class="sub">{{pctOf .PnL.SubscriptionsTotal .PnL.PlatformRevenue}}% от выручки</div>
+    </div>
+    <div class="finance-card pnl">
+        <div class="label">Продвижение</div>
+        <div class="value">{{kopecksToRub .PnL.PromotionsTotal}} ₽</div>
+        <div class="sub">{{pctOf .PnL.PromotionsTotal .PnL.PlatformRevenue}}% от выручки</div>
+    </div>
+    <div class="finance-card pnl">
+        <div class="label">Доход на 1 бронирование</div>
+        <div class="value">{{kopecksToRub .PnL.RevenuePerBooking}} ₽</div>
+    </div>
+    <div class="finance-card pnl">
+        <div class="label">Средний чек (GMV)</div>
+        <div class="value">{{kopecksToRub .PnL.GMVPerBooking}} ₽</div>
     </div>
 </div>
 
