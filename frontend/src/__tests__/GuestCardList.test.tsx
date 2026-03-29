@@ -152,7 +152,7 @@ describe('GuestCardList', () => {
 
     renderWithProviders(<GuestCardList />)
 
-    expect(screen.getByText('Нет гостевых карточек')).toBeInTheDocument()
+    expect(screen.getByText('Гостей пока нет. Они появятся после первого завершённого бронирования')).toBeInTheDocument()
   })
 
   it('shows export CSV button', () => {

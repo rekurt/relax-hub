@@ -257,7 +257,7 @@ describe('ReviewList', () => {
 
     renderWithProviders(<ReviewList />)
 
-    expect(screen.getByText('Нет отзывов')).toBeInTheDocument()
+    expect(screen.getByText('Отзывов пока нет. Забронируйте визит, чтобы оставить первый отзыв')).toBeInTheDocument()
   })
 
   it('has filter dropdown with options', () => {

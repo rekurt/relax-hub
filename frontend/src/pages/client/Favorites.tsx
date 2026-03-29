@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Typography, Row, Col, Pagination, Spin, Empty } from 'antd'
+import { Typography, Row, Col, Pagination, Spin } from 'antd'
 import { useQueries } from '@tanstack/react-query'
 import { useGetMyFavorites } from '@/api/generated/favorites/favorites'
 import { getGetBathhousesIdQueryOptions } from '@/api/generated/bathhouses/bathhouses'
 import BathhouseCard from '@/components/BathhouseCard'
+import EmptyState from '@/components/EmptyState'
 
 const { Title } = Typography
 
@@ -63,9 +64,10 @@ export default function Favorites() {
           </>
         ) : (
           !isLoading && (
-            <Empty
-              description="У вас пока нет избранных бань"
-              style={{ marginTop: 48 }}
+            <EmptyState
+              description="Ваш список избранного пуст. Начните исследовать!"
+              actionText="Найти баню"
+              actionLink="/client/search"
             />
           )
         )}

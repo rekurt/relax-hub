@@ -124,7 +124,7 @@ describe('PaymentHistory', () => {
 
     renderWithProviders(<PaymentHistory />)
 
-    expect(screen.getByText('Нет платежей')).toBeInTheDocument()
+    expect(screen.getByText('Ваш кошелёк пуст. Пополните, чтобы оплачивать быстрее')).toBeInTheDocument()
   })
 
   it('renders status filter dropdown', () => {

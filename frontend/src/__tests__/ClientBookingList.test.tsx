@@ -154,7 +154,7 @@ describe('ClientBookingList', () => {
 
     renderWithProviders(<ClientBookingList />)
 
-    expect(screen.getByText('Нет бронирований')).toBeInTheDocument()
+    expect(screen.getByText('У вас пока нет бронирований')).toBeInTheDocument()
   })
 
   it('renders status filter dropdown', () => {

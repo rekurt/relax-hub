@@ -27,6 +27,7 @@ import type { InternalHandlerGuestCardResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
 import { customInstance } from '@/api/axios-instance'
+import EmptyState from '@/components/EmptyState'
 
 const { Title } = Typography
 
@@ -202,7 +203,7 @@ export default function GuestCardList() {
         columns={columns}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: 'Нет гостевых карточек' }}
+        locale={{ emptyText: <EmptyState description="Гостей пока нет. Они появятся после первого завершённого бронирования" /> }}
         onRow={(record: InternalHandlerGuestCardResponse) => ({
           onClick: () => record.id && navigate(`/crm/guests/${record.id}`),
           style: { cursor: 'pointer' },

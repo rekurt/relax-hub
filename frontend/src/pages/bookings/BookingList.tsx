@@ -24,6 +24,7 @@ import { formatPrice, formatDateTime } from '@/lib/format'
 import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 import { useQueryClient } from '@tanstack/react-query'
 import BookingDetails from './BookingDetails'
+import EmptyState from '@/components/EmptyState'
 
 const { Title } = Typography
 const { RangePicker } = DatePicker
@@ -302,9 +303,7 @@ export default function BookingList() {
     return (
       <div>
         <Title level={3}>Бронирования</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
-          Выберите баню для просмотра бронирований
-        </div>
+        <EmptyState description="Выберите баню для просмотра бронирований" />
       </div>
     )
   }
@@ -336,7 +335,7 @@ export default function BookingList() {
         dataSource={filteredBookings}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: 'Нет бронирований' }}
+        locale={{ emptyText: <EmptyState description="Пока нет бронирований. Убедитесь, что ваш объект активен и заполнен" /> }}
         pagination={hasActiveFilter ? {
           pageSize: pageSize,
           showSizeChanger: true,

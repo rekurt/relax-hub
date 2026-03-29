@@ -252,7 +252,7 @@ describe('BookingList', () => {
 
     renderWithProviders(<BookingList />)
 
-    expect(screen.getByText('Нет бронирований')).toBeInTheDocument()
+    expect(screen.getByText('Пока нет бронирований. Убедитесь, что ваш объект активен и заполнен')).toBeInTheDocument()
   })
 
   it('shows loading state', () => {

@@ -8,6 +8,7 @@ import { useGetMyPayments } from '@/api/generated/payments/payments'
 import type { InternalHandlerPaymentResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { PAYMENT_STATUS_CONFIG, AUTH_TOKEN_KEY } from '@/lib/constants'
+import EmptyState from '@/components/EmptyState'
 
 const { Title } = Typography
 const { RangePicker } = DatePicker
@@ -164,7 +165,7 @@ export default function PaymentHistory() {
         dataSource={filteredPayments}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: 'Нет платежей' }}
+        locale={{ emptyText: <EmptyState description="Ваш кошелёк пуст. Пополните, чтобы оплачивать быстрее" actionText="Найти баню" actionLink="/client/search" /> }}
         pagination={{
           current: page,
           pageSize: pageSize,

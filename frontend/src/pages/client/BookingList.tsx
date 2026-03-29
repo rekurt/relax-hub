@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { App, Button, DatePicker, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { EyeOutlined, StopOutlined } from '@ant-design/icons'
+import { EyeOutlined, SearchOutlined, StopOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useGetBookings, usePatchBookingsIdCancel } from '@/api/generated/bookings/bookings'
 import type { InternalHandlerBookingResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { BOOKING_STATUS_CONFIG } from '@/lib/constants'
 import { useQueryClient } from '@tanstack/react-query'
+import EmptyState from '@/components/EmptyState'
 
 const { Title } = Typography
 const { RangePicker } = DatePicker
@@ -183,7 +184,7 @@ export default function ClientBookingList() {
         dataSource={filteredBookings}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: 'Нет бронирований' }}
+        locale={{ emptyText: <EmptyState description="У вас пока нет бронирований" actionText="Найти баню" actionLink="/client/search" icon={<SearchOutlined />} /> }}
         pagination={hasActiveFilter ? {
           pageSize: 999,
           hideOnSinglePage: true,

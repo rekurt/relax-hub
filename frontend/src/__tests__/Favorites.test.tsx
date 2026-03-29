@@ -70,7 +70,7 @@ describe('Favorites', () => {
     } as unknown as ReturnType<typeof useGetMyFavorites>)
 
     renderWithProviders(<Favorites />)
-    expect(screen.getByText('У вас пока нет избранных бань')).toBeInTheDocument()
+    expect(screen.getByText('Ваш список избранного пуст. Начните исследовать!')).toBeInTheDocument()
   })
 
   it('renders loading state', () => {

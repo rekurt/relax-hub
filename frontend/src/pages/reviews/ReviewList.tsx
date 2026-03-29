@@ -28,6 +28,7 @@ import { useBathhouseStore } from '@/stores/bathhouse'
 import { useQueryClient } from '@tanstack/react-query'
 import ReportModal from '@/components/ReportModal'
 import type { ReportTargetType } from '@/components/ReportModal'
+import EmptyState from '@/components/EmptyState'
 
 const { Title, Paragraph, Text } = Typography
 const { TextArea } = Input
@@ -194,9 +195,7 @@ export default function ReviewList() {
     return (
       <div>
         <Title level={3}>Отзывы</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
-          Выберите баню для просмотра отзывов
-        </div>
+        <EmptyState description="Выберите баню для просмотра отзывов" />
       </div>
     )
   }
@@ -221,7 +220,7 @@ export default function ReviewList() {
       <List
         loading={isLoading}
         dataSource={filteredReviews}
-        locale={{ emptyText: 'Нет отзывов' }}
+        locale={{ emptyText: <EmptyState description="Отзывов пока нет. Забронируйте визит, чтобы оставить первый отзыв" /> }}
         pagination={hasActiveFilter ? {
           pageSize: pageSize,
           showSizeChanger: true,

@@ -530,16 +530,16 @@ Comprehensive gap analysis and implementation plan to bring the RelaxHub codebas
 **Files:**
 - Modify: multiple frontend pages (BookingList, ReviewList, Favorites, etc.)
 
-- [ ] Audit all list/grid pages for empty state handling
-- [ ] Add empty state components with illustration, text, and CTA for:
+- [x] Audit all list/grid pages for empty state handling
+- [x] Add empty state components with illustration, text, and CTA for:
   - Bookings: "You have no bookings yet. Find a bathhouse nearby?"
   - Reviews: "No reviews yet. Book a visit to leave your first review"
   - Favorites: "Your favorites list is empty. Start exploring!"
   - Owner bookings: "No bookings yet. Make sure your listing is active and complete"
   - Owner CRM: "No guests yet. They'll appear after the first completed booking"
   - Wallet: "Your wallet is empty. Top up to pay faster"
-- [ ] Write snapshot tests for empty states
-- [ ] Run project test suite - must pass before task 28
+- [x] Write snapshot tests for empty states
+- [x] Run project test suite - must pass before task 28
 
 ### Task 28: Bathhouse Card Enhancements (FR-044)
 
