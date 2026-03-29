@@ -188,4 +188,75 @@ describe('BathhouseSearch', () => {
     const pagination = document.querySelector('.ant-pagination')
     expect(pagination).toBeInTheDocument()
   })
+
+  it('displays live result counter with total count', () => {
+    vi.mocked(useGetBathhouses).mockReturnValue({
+      data: {
+        data: mockBathhouses,
+        success: true,
+        meta: { page: 1, page_size: 12, total_count: 42, total_pages: 4 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhouses>)
+
+    renderWithProviders(<BathhouseSearch />)
+
+    const counter = screen.getByTestId('result-counter')
+    expect(counter).toBeInTheDocument()
+    expect(counter).toHaveTextContent('Найдено: 42 бани')
+  })
+
+  it('shows correct pluralization for result counter', () => {
+    vi.mocked(useGetBathhouses).mockReturnValue({
+      data: {
+        data: [mockBathhouses[0]],
+        success: true,
+        meta: { page: 1, page_size: 12, total_count: 1, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhouses>)
+
+    renderWithProviders(<BathhouseSearch />)
+
+    expect(screen.getByTestId('result-counter')).toHaveTextContent('Найдено: 1 баня')
+  })
+
+  it('shows counter with 0 results', () => {
+    vi.mocked(useGetBathhouses).mockReturnValue({
+      data: {
+        data: [],
+        success: true,
+        meta: { page: 1, page_size: 12, total_count: 0, total_pages: 0 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhouses>)
+
+    renderWithProviders(<BathhouseSearch />)
+
+    expect(screen.getByTestId('result-counter')).toHaveTextContent('Найдено: 0 бань')
+  })
+
+  it('debounces search input before querying', async () => {
+    vi.useFakeTimers()
+
+    vi.mocked(useGetBathhouses).mockReturnValue({
+      data: { data: [], success: true, meta: { page: 1, page_size: 12, total_count: 0, total_pages: 0 } },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhouses>)
+
+    renderWithProviders(<BathhouseSearch />)
+
+    const input = screen.getByPlaceholderText('Поиск по названию...')
+    fireEvent.change(input, { target: { value: 'люкс' } })
+
+    // Before debounce, query should still use empty string (debouncedSearch hasn't updated)
+    const callsBefore = vi.mocked(useGetBathhouses).mock.calls
+    const lastCallBefore = callsBefore[callsBefore.length - 1]
+    expect(lastCallBefore[0]).toHaveProperty('q', undefined)
+
+    // After debounce timer fires
+    vi.advanceTimersByTime(300)
+
+    vi.useRealTimers()
+  })
 })

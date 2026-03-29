@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   Typography,
   Input,
@@ -18,6 +18,7 @@ import {
   Badge,
   Segmented,
   App,
+  Tag,
 } from 'antd'
 import {
   SearchOutlined,
@@ -97,6 +98,17 @@ export default function BathhouseSearch() {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [compareIds, setCompareIds] = useState<string[]>([])
   const [highlightedId, setHighlightedId] = useState<string | null>(null)
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, 300)
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    }
+  }, [search])
 
   // Isochrone state
   const [geoMode, setGeoMode] = useState<GeoMode>('radius')
@@ -117,7 +129,7 @@ export default function BathhouseSearch() {
     page_size: pageSize,
     sort_by,
     sort_order,
-    q: search || undefined,
+    q: debouncedSearch || undefined,
     ...filters,
     ...(geoEnabled && geoCoords && geoMode === 'radius'
       ? { lat: geoCoords.lat, lng: geoCoords.lng, radius_km: filters.radius_km ?? 10 }
@@ -506,6 +518,15 @@ export default function BathhouseSearch() {
         </div>
       )}
 
+      {/* Result counter */}
+      {meta?.total_count != null && (
+        <div style={{ marginBottom: 12 }} data-testid="result-counter">
+          <Tag color="blue" style={{ fontSize: 14, padding: '2px 10px' }}>
+            {isLoading ? '...' : `Найдено: ${pluralizeBathhouse(meta.total_count)}`}
+          </Tag>
+        </div>
+      )}
+
       {/* Content area */}
       {viewMode === 'list' && listContent}
 
@@ -543,6 +564,15 @@ export default function BathhouseSearch() {
       )}
     </div>
   )
+}
+
+function pluralizeBathhouse(count: number): string {
+  const mod10 = count % 10
+  const mod100 = count % 100
+  if (mod100 >= 11 && mod100 <= 19) return `${count} бань`
+  if (mod10 === 1) return `${count} баня`
+  if (mod10 >= 2 && mod10 <= 4) return `${count} бани`
+  return `${count} бань`
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {

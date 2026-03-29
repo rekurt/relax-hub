@@ -432,10 +432,10 @@ SEO и ЧПУ нужны slug-маршруты в SPA.
 **Files:**
 - Modify: `frontend/src/pages/client/BathhouseSearch.tsx`
 
-- [ ] Проверить наличие live-счётчика при смене каждого фильтра
-- [ ] Если отсутствует — добавить debounced запрос total_count при изменении фильтров
-- [ ] Тест
-- [ ] run project test suite — must pass before Task E6
+- [x] Проверить наличие live-счётчика при смене каждого фильтра
+- [x] Если отсутствует — добавить debounced запрос total_count при изменении фильтров
+- [x] Тест
+- [x] run project test suite — must pass before Task E6
 
 ### Task E6: Ограничение 3 promoted объектов на страницу поиска (FR-043)
 

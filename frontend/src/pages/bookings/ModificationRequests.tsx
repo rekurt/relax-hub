@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { App, Button, Card, Descriptions, Empty, Input, Modal, Space, Spin, Tag, Typography } from 'antd'
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -47,7 +47,7 @@ export default function ModificationRequests({ bookingId, open, onClose }: Modif
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
 
-  const queryKey = ['modification-requests', bookingId]
+  const queryKey = useMemo(() => ['modification-requests', bookingId], [bookingId])
 
   const { data, isLoading } = useQuery({
     queryKey,
