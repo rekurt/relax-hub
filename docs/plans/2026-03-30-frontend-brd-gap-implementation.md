@@ -308,14 +308,14 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 **Files:**
 - Modify: `frontend/src/pages/client/BookingCreate.tsx`
 
-- [ ] Restructure into stepped wizard: Step 1 (Date/Time/Duration/Guests) -> Step 2 (Add-ons selection) -> Step 3 (Promo/Certificate/Wallet) -> Step 4 (Price breakdown + Payment method) per FR-055
-- [ ] Add payment method selection with visual cards: full wallet / card / SBP / Apple Pay / Google Pay / combo (FR-057)
-- [ ] Add combo payment slider: drag to choose wallet vs card split amount (FR-093)
-- [ ] Show clear breakdown per source: "X from wallet + Y from card" (FR-057)
-- [ ] Handle request-mode bookings: show "request" flow with hold explanation (FR-058)
-- [ ] Handle concurrent slot conflict: show "Slot just taken" message with nearest alternatives (FR-061)
-- [ ] Write tests for stepper flow, combo payment, request mode
-- [ ] Run project test suite + lint
+- [x] Restructure into stepped wizard: Step 1 (Date/Time/Duration/Guests) -> Step 2 (Add-ons selection) -> Step 3 (Promo/Certificate/Wallet) -> Step 4 (Price breakdown + Payment method) per FR-055
+- [x] Add payment method selection with visual cards: full wallet / card / SBP / Apple Pay / Google Pay / combo (FR-057)
+- [x] Add combo payment slider: drag to choose wallet vs card split amount (FR-093)
+- [x] Show clear breakdown per source: "X from wallet + Y from card" (FR-057)
+- [x] Handle request-mode bookings: show "request" flow with hold explanation (FR-058)
+- [x] Handle concurrent slot conflict: show "Slot just taken" message with nearest alternatives (FR-061)
+- [x] Write tests for stepper flow, combo payment, request mode
+- [x] Run project test suite + lint
 
 ### Task 22: Push Notification Permission & Onboarding (FR-016, FR-142)
 
