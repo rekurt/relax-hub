@@ -96,6 +96,7 @@ import AdminAuditLog from '@/pages/admin/AdminAuditLog'
 import ConversionFunnels from '@/pages/admin/ConversionFunnels'
 import CohortAnalysis from '@/pages/admin/CohortAnalysis'
 import SupplyDemandMetrics from '@/pages/admin/SupplyDemandMetrics'
+import ForceMajeure from '@/pages/admin/ForceMajeure'
 import OAuthCallback from '@/pages/OAuthCallback'
 import ShareRedirect from '@/pages/ShareRedirect'
 import OwnerAnalytics from '@/pages/analytics/OwnerAnalytics'
@@ -239,6 +240,7 @@ export default function AppRouter() {
         <Route path="analytics/funnels" element={<ConversionFunnels />} />
         <Route path="analytics/cohorts" element={<CohortAnalysis />} />
         <Route path="analytics/supply-demand" element={<SupplyDemandMetrics />} />
+        <Route path="force-majeure" element={<ForceMajeure />} />
         <Route path="profile" element={<AdminProfile />} />
       </Route>
 

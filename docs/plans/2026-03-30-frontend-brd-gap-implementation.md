@@ -267,12 +267,12 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/pages/admin/UserManagement.tsx`
 - Modify: `frontend/src/router.tsx`
 
-- [ ] Build ForceMajeure page: activate force majeure with region selector, date range, reason text, preview affected bookings count, confirmation dialog, history of past force majeure events (FR-080)
-- [ ] Enhance BathhouseModeration with batch approve/reject (select multiple, act on all) - already partially exists but verify completeness per FR-144
-- [ ] Enhance UserManagement with batch block/unblock operations
-- [ ] Add route `/admin/force-majeure`
-- [ ] Write tests for force majeure activation flow, batch operations
-- [ ] Run project test suite + lint
+- [x] Build ForceMajeure page: activate force majeure with region selector, date range, reason text, preview affected bookings count, confirmation dialog, history of past force majeure events (FR-080)
+- [x] Enhance BathhouseModeration with batch approve/reject (select multiple, act on all) - already partially exists but verify completeness per FR-144
+- [x] Enhance UserManagement with batch block/unblock operations
+- [x] Add route `/admin/force-majeure`
+- [x] Write tests for force majeure activation flow, batch operations
+- [x] Run project test suite + lint
 
 ### Task 19: Admin Subscription & Loyalty Management
 
