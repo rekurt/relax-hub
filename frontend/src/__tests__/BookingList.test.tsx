@@ -465,6 +465,38 @@ describe('BookingList', () => {
     expect(checkInMutate).toHaveBeenCalledWith({ id: 'booking-2' })
   })
 
+  it('shows extension request button for confirmed bookings', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [mockBookings[1]],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+
+    expect(screen.getByText('Продление')).toBeInTheDocument()
+  })
+
+  it('does not show extension request button for pending bookings', () => {
+    mockBathhouseStore('bathhouse-1')
+    vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
+      data: {
+        data: [mockBookings[0]],
+        success: true,
+        meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdBookings>)
+
+    renderWithProviders(<BookingList />)
+
+    expect(screen.queryByText('Продление')).not.toBeInTheDocument()
+  })
+
   it('calls pay mutation when pay button clicked', () => {
     const payMutate = vi.fn()
     vi.mocked(usePostBookingsIdPay).mockReturnValue({

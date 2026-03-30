@@ -207,10 +207,10 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/pages/bookings/BookingList.tsx` (owner)
 - Create: `frontend/src/pages/bookings/ExtensionRequests.tsx`
 
-- [ ] Build ExtensionRequests component (similar to ModificationRequests): shows pending extension requests with requested hours, held amount, approve/reject buttons, 30-min timeout warning
-- [ ] Integrate extension request notifications into owner BookingList
-- [ ] Write tests for extension request approval/rejection flow
-- [ ] Run project test suite + lint
+- [x] Build ExtensionRequests component (similar to ModificationRequests): shows pending extension requests with requested hours, held amount, approve/reject buttons, 30-min timeout warning
+- [x] Integrate extension request notifications into owner BookingList
+- [x] Write tests for extension request approval/rejection flow
+- [x] Run project test suite + lint
 
 ### Task 15: Admin Platform Settings (FR-097 service fee, feature flags, platform settings)
 

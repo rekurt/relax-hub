@@ -11,6 +11,7 @@ import {
   SwapOutlined,
   LoginOutlined,
   LogoutOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import {
@@ -30,6 +31,7 @@ import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 import { useQueryClient } from '@tanstack/react-query'
 import BookingDetails from './BookingDetails'
 import ModificationRequests from './ModificationRequests'
+import ExtensionRequests from './ExtensionRequests'
 import EmptyState from '@/components/EmptyState'
 
 const { Title } = Typography
@@ -55,6 +57,7 @@ export default function BookingList() {
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
   const [detailsBooking, setDetailsBooking] = useState<InternalHandlerBookingResponse | null>(null)
   const [modRequestsBookingId, setModRequestsBookingId] = useState<string | null>(null)
+  const [extRequestsBookingId, setExtRequestsBookingId] = useState<string | null>(null)
 
   const hasActiveFilter = !!statusFilter || !!(dateRange?.[0] && dateRange?.[1])
 
@@ -186,6 +189,20 @@ export default function BookingList() {
           onClick={() => record.id && setModRequestsBookingId(record.id)}
         >
           Изменения
+        </Button>,
+      )
+    }
+
+    if (record.status === 'confirmed') {
+      actions.push(
+        <Button
+          key="ext-requests"
+          type="link"
+          size="small"
+          icon={<ClockCircleOutlined />}
+          onClick={() => record.id && setExtRequestsBookingId(record.id)}
+        >
+          Продление
         </Button>,
       )
     }
@@ -456,6 +473,12 @@ export default function BookingList() {
         bookingId={modRequestsBookingId ?? ''}
         open={!!modRequestsBookingId}
         onClose={() => setModRequestsBookingId(null)}
+      />
+
+      <ExtensionRequests
+        bookingId={extRequestsBookingId ?? ''}
+        open={!!extRequestsBookingId}
+        onClose={() => setExtRequestsBookingId(null)}
       />
     </div>
   )
