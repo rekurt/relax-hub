@@ -94,7 +94,9 @@ export default function SecuritySettings() {
   })
 
   // --- 2FA TOTP ---
-  const [totpStep, setTotpStep] = useState<'idle' | 'qr' | 'verify' | 'done'>('idle')
+  const [totpStep, setTotpStep] = useState<'idle' | 'qr' | 'verify' | 'done'>(
+    (user as Record<string, unknown>)?.totp_enabled ? 'done' : 'idle',
+  )
   const [qrUrl, setQrUrl] = useState('')
   const [totpSecret, setTotpSecret] = useState('')
   const [verifyCode, setVerifyCode] = useState('')
@@ -135,7 +137,9 @@ export default function SecuritySettings() {
   })
 
   // --- 2FA SMS ---
-  const [smsEnabled, setSmsEnabled] = useState(false)
+  const [smsEnabled, setSmsEnabled] = useState(
+    !!(user as Record<string, unknown>)?.sms_2fa_enabled,
+  )
 
   const enableSms2fa = usePostAuth2faSmsEnable({
     mutation: {

@@ -1,5 +1,6 @@
 import { Button } from 'antd'
 import { AppleOutlined } from '@ant-design/icons'
+import { axiosInstance } from '@/api/axios-instance'
 
 interface ApplePayButtonProps {
   amount: number // kopecks
@@ -49,13 +50,10 @@ export default function ApplePayButton({ amount, onToken, disabled, loading }: A
 
     session.onvalidatemerchant = async (event: { validationURL: string }) => {
       try {
-        const resp = await fetch('/api/v1/apple-pay/validate-merchant', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ validation_url: event.validationURL }),
+        const resp = await axiosInstance.post('/apple-pay/validate-merchant', {
+          validation_url: event.validationURL,
         })
-        const merchantSession = await resp.json()
-        session.completeMerchantValidation(merchantSession.data)
+        session.completeMerchantValidation(resp.data?.data)
       } catch {
         session.completePayment({ status: window.ApplePaySession!.STATUS_FAILURE })
       }

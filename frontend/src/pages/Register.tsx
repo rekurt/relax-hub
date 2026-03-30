@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Form, Input, Button, Card, Typography, Space, App, Segmented } from 'antd'
+import { Form, Input, Button, Card, Typography, Space, App, Segmented, Checkbox } from 'antd'
 import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined } from '@ant-design/icons'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { postAuthRegister } from '@/api/generated/auth/auth'
@@ -49,6 +49,7 @@ export default function Register() {
         phone: values.phone,
         role,
         referral_code: referralCode,
+        age_confirmed: true,
       })
       if (response.success && response.data?.token && response.data.user) {
         setAuth(response.data.token, response.data.user)
@@ -137,6 +138,19 @@ export default function Register() {
               ]}
             >
               <Input.Password prefix={<LockOutlined />} placeholder="Подтвердите пароль" size="large" />
+            </Form.Item>
+
+            <Form.Item
+              name="ageConfirmed"
+              valuePropName="checked"
+              rules={[
+                {
+                  validator: (_, value) =>
+                    value ? Promise.resolve() : Promise.reject(new Error('Необходимо подтвердить возраст')),
+                },
+              ]}
+            >
+              <Checkbox>Мне исполнилось 18 лет</Checkbox>
             </Form.Item>
 
             <Form.Item>

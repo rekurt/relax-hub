@@ -94,7 +94,7 @@ export default function WalletDashboard() {
     page_size: pageSize,
     ...(typeFilter ? { type: typeFilter } : {}),
   })
-  const transactions = txData?.data ?? []
+  const allTransactions = txData?.data ?? []
   const txMeta = txData?.meta
 
   const { data: holdsData } = useGetMyWalletHolds()
@@ -102,7 +102,7 @@ export default function WalletDashboard() {
 
   const topupMutation = usePostMyWalletTopup()
 
-  const filteredTransactions = transactions.filter((tx) => {
+  const transactions = allTransactions.filter((tx) => {
     if (dateRange?.[0] && dateRange?.[1] && tx.created_at) {
       const txDate = dayjs(tx.created_at)
       if (txDate.isBefore(dateRange[0], 'day') || txDate.isAfter(dateRange[1], 'day')) {
@@ -377,7 +377,7 @@ export default function WalletDashboard() {
 
       <Table
         columns={txColumns}
-        dataSource={filteredTransactions}
+        dataSource={transactions}
         rowKey="id"
         loading={txLoading}
         locale={{ emptyText: <EmptyState description="Нет операций по кошельку" /> }}

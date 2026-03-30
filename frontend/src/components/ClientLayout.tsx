@@ -58,6 +58,7 @@ const clientMenuItems: MenuProps['items'] = [
   { key: '/client/tickets', icon: <CustomerServiceOutlined />, label: 'Поддержка' },
   { key: '/client/disputes', icon: <ExclamationCircleOutlined />, label: 'Споры' },
   { key: '/client/notifications', icon: <BellOutlined />, label: 'Уведомления' },
+  { key: '/client/notification-preferences', icon: <SettingOutlined />, label: 'Настройки уведомлений' },
   { key: '/client/security', icon: <SafetyOutlined />, label: 'Безопасность' },
   { key: '/client/profile', icon: <UserOutlined />, label: 'Профиль' },
 ]

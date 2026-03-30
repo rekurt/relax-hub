@@ -33,9 +33,9 @@ function renderWithProviders(ui: React.ReactElement) {
 }
 
 const mockItems = [
-  { id: '1', name: 'Баня на Неве', slug: 'banya-na-neve', viewed_at: '2026-03-29T12:00:00Z' },
-  { id: '2', name: 'Парная Люкс', slug: 'parnaya-lyuks', viewed_at: '2026-03-28T10:00:00Z' },
-  { id: '3', name: 'Сауна Релакс', slug: 'sauna-relax', viewed_at: '2026-03-27T08:00:00Z' },
+  { id: '1', name: 'Баня на Неве', slug: 'banya-na-neve', viewed_at: '2026-03-29T12:00:00Z', base_price: 350000, rating: 4.5, cover_photo: '/photos/1.jpg' },
+  { id: '2', name: 'Парная Люкс', slug: 'parnaya-lyuks', viewed_at: '2026-03-28T10:00:00Z', base_price: 500000, rating: 4.0 },
+  { id: '3', name: 'Сауна Релакс', slug: 'sauna-relax', viewed_at: '2026-03-27T08:00:00Z', base_price: 200000, rating: 3.5 },
 ]
 
 describe('RecentlyViewed', () => {
@@ -94,13 +94,13 @@ describe('RecentlyViewed', () => {
     expect(screen.queryByText('Недавно просмотренные')).not.toBeInTheDocument()
   })
 
-  it('displays viewed date for items', () => {
+  it('displays price for items', () => {
     vi.mocked(useGetMyRecentlyViewed).mockReturnValue({
       data: { data: mockItems, success: true },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetMyRecentlyViewed>)
 
     renderWithProviders(<RecentlyViewed />)
-    expect(screen.getByText('29.03.2026')).toBeInTheDocument()
+    expect(screen.getByText('от 3500 ₽')).toBeInTheDocument()
   })
 })

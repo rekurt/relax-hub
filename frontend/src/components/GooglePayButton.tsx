@@ -39,7 +39,7 @@ const tokenizationSpecification = {
   type: 'PAYMENT_GATEWAY',
   parameters: {
     gateway: 'yookassa',
-    gatewayMerchantId: '', // set from config at runtime
+    gatewayMerchantId: import.meta.env.VITE_GPAY_MERCHANT_ID ?? '',
   },
 }
 
@@ -62,7 +62,7 @@ export default function GooglePayButton({ amount, onToken, disabled, loading }: 
     if (!window.google?.payments?.api?.PaymentsClient) return
 
     const client = new window.google.payments.api.PaymentsClient({
-      environment: 'PRODUCTION',
+      environment: import.meta.env.VITE_GPAY_ENVIRONMENT ?? 'TEST',
     })
     clientRef.current = client
 

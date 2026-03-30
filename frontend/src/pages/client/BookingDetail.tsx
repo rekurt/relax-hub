@@ -27,8 +27,8 @@ import {
   ExclamationCircleOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { useQueryClient } from '@tanstack/react-query'
-import { useGetBookings, usePatchBookingsIdCancel } from '@/api/generated/bookings/bookings'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { usePatchBookingsIdCancel } from '@/api/generated/bookings/bookings'
 import { useGetBathhousesId } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBookingsIdPayment, usePostBookingsIdPay } from '@/api/generated/payments/payments'
 import { formatPrice, formatDateTime } from '@/lib/format'
@@ -54,11 +54,16 @@ export default function ClientBookingDetail() {
   const [modifyLoading, setModifyLoading] = useState(false)
   const [form] = Form.useForm()
 
-  // Fetch user's bookings and find the one we need
-  const { data: bookingsData, isLoading } = useGetBookings(
-    { page: 1, page_size: 999 },
-  )
-  const booking = (bookingsData?.data ?? []).find((b) => b.id === id)
+  // Fetch single booking by ID
+  const { data: bookingResponse, isLoading } = useQuery({
+    queryKey: ['/bookings', id],
+    queryFn: async () => {
+      const resp = await axiosInstance.get(`/bookings/${id}`)
+      return resp.data
+    },
+    enabled: !!id,
+  })
+  const booking = bookingResponse?.data
 
   const { data: bathhouseData } = useGetBathhousesId(
     booking?.bathhouse_id ?? '',

@@ -1,5 +1,6 @@
-import { Card, Typography, Space } from 'antd'
+import { Card, Typography, Space, Rate } from 'antd'
 import { ClockCircleOutlined } from '@ant-design/icons'
+import { formatPrice } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
 import { useGetMyRecentlyViewed } from '@/api/generated/saved-searches/saved-searches'
 import { useAuthStore } from '@/stores/auth'
@@ -14,7 +15,7 @@ export default function RecentlyViewed() {
     { limit: 20 },
     { query: { enabled: !!user } },
   )
-  const items = data?.data ?? []
+  const items = (data?.data ?? []) as Array<Record<string, unknown> & { id: string; name: string; slug?: string; viewed_at?: string }>
 
   if (!user || isLoading || items.length === 0) return null
 
@@ -44,15 +45,25 @@ export default function RecentlyViewed() {
               flex: '0 0 auto',
               scrollSnapAlign: 'start',
             }}
+            cover={item.cover_photo ? (
+              <img
+                alt={item.name}
+                src={item.cover_photo as string}
+                style={{ height: 100, objectFit: 'cover' }}
+              />
+            ) : undefined}
             onClick={() => navigate(`/client/bathhouse/${item.slug ?? item.id}`)}
           >
             <Space direction="vertical" size={2}>
               <Text strong ellipsis style={{ maxWidth: 190 }}>
                 {item.name}
               </Text>
-              {item.viewed_at && (
+              {item.rating != null && (
+                <Rate disabled allowHalf value={item.rating as number} style={{ fontSize: 12 }} />
+              )}
+              {item.base_price != null && (
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  {new Date(item.viewed_at).toLocaleDateString('ru-RU')}
+                  от {formatPrice(item.base_price as number)}
                 </Text>
               )}
             </Space>
