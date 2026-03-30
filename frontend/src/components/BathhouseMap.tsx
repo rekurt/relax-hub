@@ -4,6 +4,15 @@ import { AimOutlined } from '@ant-design/icons'
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 declare global {
   interface Window {
     ymaps?: YMaps
@@ -211,26 +220,30 @@ export default function BathhouseMap({
         const reviewCountStr = b.review_count ?? 0
         const slug = b.slug ?? b.id
 
+        const safeName = escapeHtml(b.name ?? '')
+        const safeAddress = escapeHtml(b.address ?? '')
+        const safeSlug = encodeURIComponent(slug)
+
         const balloonBody = showMiniCard
           ? `<div style="min-width:200px;max-width:260px;">
-              ${coverImage ? `<img src="${coverImage}" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:6px;margin-bottom:8px;" />` : ''}
-              <div style="font-weight:600;font-size:14px;margin-bottom:4px;">${b.name ?? ''}</div>
-              <div style="color:#666;font-size:12px;margin-bottom:4px;">${b.address ?? ''}</div>
+              ${coverImage ? `<img src="${escapeHtml(coverImage)}" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:6px;margin-bottom:8px;" />` : ''}
+              <div style="font-weight:600;font-size:14px;margin-bottom:4px;">${safeName}</div>
+              <div style="color:#666;font-size:12px;margin-bottom:4px;">${safeAddress}</div>
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                 <span style="color:#faad14;">★ ${ratingStr}</span>
                 <span style="color:#999;font-size:12px;">(${reviewCountStr})</span>
                 <strong>${priceLabel}/ч</strong>
               </div>
-              <a href="/client/bathhouse/${slug}" style="display:inline-block;background:#722ed1;color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-size:13px;">Подробнее</a>
+              <a href="/client/bathhouse/${safeSlug}" style="display:inline-block;background:#722ed1;color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-size:13px;">Подробнее</a>
             </div>`
-          : `<div>${b.address ?? ''}<br/><strong>${priceLabel}/ч</strong></div>`
+          : `<div>${safeAddress}<br/><strong>${priceLabel}/ч</strong></div>`
 
         const placemark = new window.ymaps!.Placemark(
           [b.latitude!, b.longitude!],
           {
-            balloonContentHeader: showMiniCard ? '' : (b.name ?? ''),
+            balloonContentHeader: showMiniCard ? '' : safeName,
             balloonContentBody: balloonBody,
-            hintContent: `${b.name} — ${priceLabel}/ч`,
+            hintContent: `${safeName} — ${priceLabel}/ч`,
           },
           {
             preset: isHighlighted

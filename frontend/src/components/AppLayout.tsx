@@ -69,7 +69,7 @@ function useMenuItems(unreadCount: number): MenuProps['items'] {
     { key: '/widget', icon: <CodeOutlined />, label: 'Виджет' },
     { key: '/photos', icon: <CameraOutlined />, label: 'Фото' },
     {
-      key: '/finance',
+      key: '/finance-group',
       icon: <FundOutlined />,
       label: 'Финансы',
       children: [

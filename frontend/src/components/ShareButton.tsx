@@ -17,8 +17,8 @@ export default function ShareButton({ url, title, text, onBeforeShare, size = 'm
 
   const handleShare = async () => {
     setLoading(true)
+    let shareUrl = url
     try {
-      let shareUrl = url
       if (onBeforeShare) {
         const result = await onBeforeShare()
         if (result) shareUrl = result
@@ -39,7 +39,6 @@ export default function ShareButton({ url, title, text, onBeforeShare, size = 'm
     } catch (err) {
       if ((err as DOMException)?.name === 'AbortError') return
       try {
-        const shareUrl = url
         await navigator.clipboard.writeText(shareUrl)
         setCopied(true)
         message.success('Ссылка скопирована')

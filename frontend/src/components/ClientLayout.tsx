@@ -30,6 +30,7 @@ import {
   CustomerServiceOutlined,
   SafetyOutlined,
   CreditCardOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -55,6 +56,7 @@ const clientMenuItems: MenuProps['items'] = [
   { key: '/client/chat', icon: <MessageOutlined />, label: 'Чат' },
   { key: '/client/saved-searches', icon: <SearchOutlined />, label: 'Сохранённые поиски' },
   { key: '/client/tickets', icon: <CustomerServiceOutlined />, label: 'Поддержка' },
+  { key: '/client/disputes', icon: <ExclamationCircleOutlined />, label: 'Споры' },
   { key: '/client/notifications', icon: <BellOutlined />, label: 'Уведомления' },
   { key: '/client/security', icon: <SafetyOutlined />, label: 'Безопасность' },
   { key: '/client/profile', icon: <UserOutlined />, label: 'Профиль' },
@@ -230,6 +232,7 @@ export default function ClientLayout() {
           setShowTour(false)
           loadProfile()
         }}
+        region={user?.region}
       />
     </Layout>
   )

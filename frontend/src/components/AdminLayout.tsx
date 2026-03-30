@@ -43,6 +43,7 @@ import {
   CrownOutlined,
   IdcardOutlined,
   HeatMapOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -75,6 +76,7 @@ const adminMenuItems: MenuProps['items'] = [
   { key: '/admin/service-fees', icon: <DollarOutlined />, label: 'Комиссии' },
   { key: '/admin/finance', icon: <BankOutlined />, label: 'Финансы' },
   { key: '/admin/finance/reconciliation', icon: <BankOutlined />, label: 'Банк. сверка' },
+  { key: '/admin/disputes', icon: <ExclamationCircleOutlined />, label: 'Споры' },
   { key: '/admin/audit-log', icon: <FileTextOutlined />, label: 'Журнал аудита' },
   { key: '/admin/analytics/funnels', icon: <FunnelPlotOutlined />, label: 'Воронка' },
   { key: '/admin/analytics/cohorts', icon: <LineChartOutlined />, label: 'Когорты' },

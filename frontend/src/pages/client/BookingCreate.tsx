@@ -222,6 +222,8 @@ export default function BookingCreate() {
         use_points: usePoints ? pointsAmount : undefined,
         use_referral_bonus: useReferral ? referralAmount : undefined,
         addons: addonPayload,
+        payment_method: paymentMethod,
+        ...(paymentMethod === 'combo' && comboWalletAmount > 0 ? { wallet_amount: comboWalletAmount } : {}),
       },
     })
   }
