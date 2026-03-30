@@ -188,7 +188,7 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 **Files:**
 - Modify: `frontend/src/pages/bathhouses/BathhouseForm.tsx`
 
-- [ ] Restructure form into proper 7-step wizard with stepper UI:
+- [x] Restructure form into proper 7-step wizard with stepper UI:
   1. Welcome - video/intro and process overview
   2. Object info - name, address (with map marker drag), type, description, capacity, amenities, rules
   3. Photos - upload, drag-to-reorder, cover selection
@@ -196,10 +196,10 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
   5. Schedule - working days/hours with template presets ("standard work week")
   6. Cancellation policy - three options with visual comparison
   7. Preview - how card looks to clients
-- [ ] Add save draft capability on each step with progress indicator
-- [ ] Add back/forward navigation between steps
-- [ ] Write tests for step navigation, draft save, preview rendering
-- [ ] Run project test suite + lint
+- [x] Add save draft capability on each step with progress indicator
+- [x] Add back/forward navigation between steps
+- [x] Write tests for step navigation, draft save, preview rendering
+- [x] Run project test suite + lint
 
 ### Task 14: Owner Extension Request Handling (FR-065)
 
