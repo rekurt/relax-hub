@@ -70,7 +70,7 @@ function useWebhooks(page: number) {
   return useQuery({
     queryKey: ['webhooks', page],
     queryFn: async () => {
-      const { data } = await axiosInstance.get('/api/v1/my/webhooks', { params: { page, page_size: 20 } })
+      const { data } = await axiosInstance.get('/my/webhooks', { params: { page, page_size: 20 } })
       return data
     },
   })
@@ -80,7 +80,7 @@ function useWebhookDeliveries(webhookId: string | null) {
   return useQuery({
     queryKey: ['webhook-deliveries', webhookId],
     queryFn: async () => {
-      const { data } = await axiosInstance.get(`/api/v1/my/webhooks/${webhookId}/deliveries`, { params: { page: 1, page_size: 20 } })
+      const { data } = await axiosInstance.get(`/my/webhooks/${webhookId}/deliveries`, { params: { page: 1, page_size: 20 } })
       return data
     },
     enabled: !!webhookId,
@@ -104,7 +104,7 @@ export default function WebhookSettings() {
 
   const createMutation = useMutation({
     mutationFn: (values: { url: string; secret: string; events: string[] }) =>
-      axiosInstance.post('/api/v1/my/webhooks', values),
+      axiosInstance.post('/my/webhooks', values),
     onSuccess: () => {
       message.success('Вебхук создан')
       queryClient.invalidateQueries({ queryKey: ['webhooks'] })
@@ -116,7 +116,7 @@ export default function WebhookSettings() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, ...values }: { id: string; url: string; secret: string; events: string[]; is_active: boolean }) =>
-      axiosInstance.put(`/api/v1/my/webhooks/${id}`, values),
+      axiosInstance.put(`/my/webhooks/${id}`, values),
     onSuccess: () => {
       message.success('Вебхук обновлён')
       queryClient.invalidateQueries({ queryKey: ['webhooks'] })
@@ -128,7 +128,7 @@ export default function WebhookSettings() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => axiosInstance.delete(`/api/v1/my/webhooks/${id}`),
+    mutationFn: (id: string) => axiosInstance.delete(`/my/webhooks/${id}`),
     onSuccess: () => {
       message.success('Вебхук удалён')
       queryClient.invalidateQueries({ queryKey: ['webhooks'] })
@@ -137,7 +137,7 @@ export default function WebhookSettings() {
   })
 
   const testMutation = useMutation({
-    mutationFn: (id: string) => axiosInstance.post(`/api/v1/my/webhooks/${id}/test`),
+    mutationFn: (id: string) => axiosInstance.post(`/my/webhooks/${id}/test`),
     onSuccess: () => {
       message.success('Тестовое событие отправлено')
       if (selectedWebhookId) {

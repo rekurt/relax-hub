@@ -165,6 +165,11 @@ export default function BathhouseDetail() {
   })()
 
   useEffect(() => {
+    if (!id || !currentUser) return
+    axiosInstance.post('/my/recently-viewed', { bathhouse_id: id }).catch(() => {})
+  }, [id, currentUser])
+
+  useEffect(() => {
     if (!schemaJsonLd) return
     const script = document.createElement('script')
     script.type = 'application/ld+json'

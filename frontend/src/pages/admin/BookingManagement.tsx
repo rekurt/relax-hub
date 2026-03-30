@@ -98,7 +98,7 @@ export default function BookingManagement() {
         params.to_date = filterDates[1].toISOString()
       }
 
-      const { data } = await axiosInstance.get<PaginatedResponse>('/api/v1/admin/bookings', { params })
+      const { data } = await axiosInstance.get<PaginatedResponse>('/admin/bookings', { params })
       setBookings(data.data || [])
       setPagination({
         current: data.meta.page,
@@ -117,12 +117,12 @@ export default function BookingManagement() {
     try {
       const values = await form.validateFields()
       if (actionModal.type === 'cancel') {
-        await axiosInstance.post(`/api/v1/admin/bookings/${actionModal.bookingId}/cancel`, {
+        await axiosInstance.post(`/admin/bookings/${actionModal.bookingId}/cancel`, {
           reason: values.reason,
         })
         message.success('Бронирование отменено')
       } else {
-        await axiosInstance.post(`/api/v1/admin/bookings/${actionModal.bookingId}/change-status`, {
+        await axiosInstance.post(`/admin/bookings/${actionModal.bookingId}/change-status`, {
           status: values.status,
           reason: values.reason,
         })

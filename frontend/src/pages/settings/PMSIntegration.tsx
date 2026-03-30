@@ -84,7 +84,7 @@ function usePMSConnections(page: number) {
   return useQuery({
     queryKey: ['pms-connections', page],
     queryFn: async () => {
-      const { data } = await axiosInstance.get('/api/v1/my/pms-connections', { params: { page, page_size: 20 } })
+      const { data } = await axiosInstance.get('/my/pms-connections', { params: { page, page_size: 20 } })
       return data
     },
   })
@@ -94,7 +94,7 @@ function usePMSSyncLogs(connectionId: string | null) {
   return useQuery({
     queryKey: ['pms-sync-logs', connectionId],
     queryFn: async () => {
-      const { data } = await axiosInstance.get(`/api/v1/my/pms-connections/${connectionId}/logs`, { params: { page: 1, page_size: 20 } })
+      const { data } = await axiosInstance.get(`/my/pms-connections/${connectionId}/logs`, { params: { page: 1, page_size: 20 } })
       return data
     },
     enabled: !!connectionId,
@@ -118,7 +118,7 @@ export default function PMSIntegration() {
 
   const createMutation = useMutation({
     mutationFn: (values: Record<string, unknown>) =>
-      axiosInstance.post('/api/v1/my/pms-connections', values),
+      axiosInstance.post('/my/pms-connections', values),
     onSuccess: () => {
       message.success('PMS-подключение создано')
       queryClient.invalidateQueries({ queryKey: ['pms-connections'] })
@@ -130,7 +130,7 @@ export default function PMSIntegration() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, ...values }: { id: string } & Record<string, unknown>) =>
-      axiosInstance.put(`/api/v1/my/pms-connections/${id}`, values),
+      axiosInstance.put(`/my/pms-connections/${id}`, values),
     onSuccess: () => {
       message.success('PMS-подключение обновлено')
       queryClient.invalidateQueries({ queryKey: ['pms-connections'] })
@@ -142,7 +142,7 @@ export default function PMSIntegration() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => axiosInstance.delete(`/api/v1/my/pms-connections/${id}`),
+    mutationFn: (id: string) => axiosInstance.delete(`/my/pms-connections/${id}`),
     onSuccess: () => {
       message.success('PMS-подключение удалено')
       queryClient.invalidateQueries({ queryKey: ['pms-connections'] })
@@ -151,13 +151,13 @@ export default function PMSIntegration() {
   })
 
   const testMutation = useMutation({
-    mutationFn: (id: string) => axiosInstance.post(`/api/v1/my/pms-connections/${id}/test`),
+    mutationFn: (id: string) => axiosInstance.post(`/my/pms-connections/${id}/test`),
     onSuccess: () => message.success('Подключение к PMS работает'),
     onError: () => message.error('Не удалось подключиться к PMS. Проверьте учётные данные.'),
   })
 
   const syncMutation = useMutation({
-    mutationFn: (id: string) => axiosInstance.post(`/api/v1/my/pms-connections/${id}/sync`),
+    mutationFn: (id: string) => axiosInstance.post(`/my/pms-connections/${id}/sync`),
     onSuccess: () => {
       message.success('Синхронизация выполнена')
       queryClient.invalidateQueries({ queryKey: ['pms-connections'] })

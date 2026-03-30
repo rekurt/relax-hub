@@ -70,7 +70,7 @@ export default function ListingImport() {
         params: { format },
         responseType: 'blob',
       })
-      const blob = new Blob([response as unknown as BlobPart])
+      const blob = new Blob([(response as { data: BlobPart }).data])
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url

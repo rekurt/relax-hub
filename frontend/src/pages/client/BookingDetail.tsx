@@ -181,7 +181,7 @@ export default function ClientBookingDetail() {
     text: payment?.status ?? '—',
   }
 
-  const canCancel = booking.status === 'pending' || booking.status === 'confirmed'
+  const canCancel = booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'pending_owner'
   const canPay = booking.status === 'confirmed' && (!payment || payment.status === 'pending' || !payment.status)
   const canReview = booking.status === 'completed'
   const canDispute = booking.status === 'completed' || booking.status === 'no_show'

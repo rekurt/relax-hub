@@ -54,6 +54,7 @@ export default function PayoutPage() {
   const [form] = Form.useForm()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
+  const [autoPayoutEnabled, setAutoPayoutEnabled] = useState(false)
 
   const { data: walletData, isLoading: walletLoading } = useGetMyWallet()
   const wallet = walletData?.data
@@ -89,6 +90,7 @@ export default function PayoutPage() {
       { data: { threshold } },
       {
         onSuccess: () => {
+          setAutoPayoutEnabled(checked)
           message.success(checked ? 'Автовыплата включена' : 'Автовыплата отключена')
         },
         onError: () => {
@@ -231,6 +233,7 @@ export default function PayoutPage() {
       <Card title="Автовыплата" size="small" style={{ marginTop: 16 }}>
         <Space>
           <Switch
+            checked={autoPayoutEnabled}
             onChange={handleAutoPayoutToggle}
             loading={autoPayoutMutation.isPending}
           />

@@ -64,7 +64,7 @@ export default function ClientBookingList() {
     return true
   })
 
-  const canCancel = (status?: string) => status === 'pending' || status === 'confirmed'
+  const canCancel = (status?: string) => status === 'pending' || status === 'confirmed' || status === 'pending_owner'
 
   const getRefundInfo = (startTime?: string) => {
     if (!startTime) return ''

@@ -128,7 +128,7 @@ export default function PromotionCampaign() {
 
   const pauseMutation = useMutation({
     mutationFn: async (id: string) => {
-      await axiosInstance.post(`/api/v1/my/promotions/${id}/pause`)
+      await axiosInstance.post(`/my/promotions/${id}/pause`)
     },
     onSuccess: () => {
       message.success('Кампания приостановлена')
@@ -139,7 +139,7 @@ export default function PromotionCampaign() {
 
   const resumeMutation = useMutation({
     mutationFn: async (id: string) => {
-      await axiosInstance.post(`/api/v1/my/promotions/${id}/resume`)
+      await axiosInstance.post(`/my/promotions/${id}/resume`)
     },
     onSuccess: () => {
       message.success('Кампания возобновлена')
