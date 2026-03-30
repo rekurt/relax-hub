@@ -337,11 +337,11 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/router.tsx`
 - Modify: `frontend/src/pages/chat/MessageArea.tsx`
 
-- [ ] Build ActivePromoCodes page: list of available promo codes for the client with conditions (min amount, valid until, discount type), copy code button
-- [ ] Add route `/client/promos`
-- [ ] Verify chat message area handles blocked content (phone numbers, emails, URLs) per FR-063 - show warning when message is filtered
-- [ ] Write tests for promo list rendering, chat filter warning display
-- [ ] Run project test suite + lint
+- [x] Build ActivePromoCodes page: list of available promo codes for the client with conditions (min amount, valid until, discount type), copy code button
+- [x] Add route `/client/promos`
+- [x] Verify chat message area handles blocked content (phone numbers, emails, URLs) per FR-063 - show warning when message is filtered
+- [x] Write tests for promo list rendering, chat filter warning display
+- [x] Run project test suite + lint
 
 ### Task 24: Admin Support Operations Metrics
 

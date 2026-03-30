@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Input, Button, Empty, Spin, Typography, Space } from 'antd'
-import { SendOutlined } from '@ant-design/icons'
+import { Input, Button, Empty, Spin, Typography, Space, Alert } from 'antd'
+import { SendOutlined, WarningOutlined } from '@ant-design/icons'
 import {
   useGetConversationsIdMessages,
   usePostConversationsIdMessages,
@@ -63,6 +63,8 @@ function MessageBubble({
 
 export default function MessageArea({ conversationId }: MessageAreaProps) {
   const [text, setText] = useState('')
+  const [filterWarning, setFilterWarning] = useState(false)
+  const lastSentTextRef = useRef<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
   const currentUser = useAuthStore((s) => s.user)
@@ -75,7 +77,13 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
 
   const sendMutation = usePostConversationsIdMessages({
     mutation: {
-      onSuccess: () => {
+      onSuccess: (response) => {
+        const sentText = lastSentTextRef.current
+        const returnedText = response?.data?.text
+        if (sentText && returnedText && sentText !== returnedText) {
+          setFilterWarning(true)
+        }
+        lastSentTextRef.current = null
         setText('')
         queryClient.invalidateQueries({
           queryKey: getGetConversationsIdMessagesQueryKey(conversationId ?? ''),
@@ -117,10 +125,13 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
   }, [conversationId, messages, currentUser?.id])
 
   const handleSend = () => {
-    if (!text.trim() || !conversationId) return
+    const trimmed = text.trim()
+    if (!trimmed || !conversationId) return
+    lastSentTextRef.current = trimmed
+    setFilterWarning(false)
     sendMutation.mutate({
       id: conversationId,
-      data: { text: text.trim() },
+      data: { text: trimmed },
     })
   }
 
@@ -185,6 +196,19 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
           </>
         )}
       </div>
+
+      {filterWarning && (
+        <Alert
+          message="Контактные данные скрыты"
+          description="Телефоны, email и ссылки автоматически скрываются в чате для вашей безопасности. Обмен контактами возможен после бронирования."
+          type="warning"
+          showIcon
+          icon={<WarningOutlined />}
+          closable
+          onClose={() => setFilterWarning(false)}
+          style={{ margin: '0 16px' }}
+        />
+      )}
 
       <div
         style={{
