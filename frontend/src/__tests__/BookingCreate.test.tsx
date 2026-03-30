@@ -390,7 +390,7 @@ describe('BookingCreate', () => {
         onErrorCallback = options?.mutation?.onError as (error: unknown) => void
         return {
           mutate: vi.fn().mockImplementation(() => {
-            onErrorCallback?.({ error: { code: 'slot_unavailable', message: 'Slot taken' } })
+            onErrorCallback?.({ response: { data: { error: { code: 'slot_unavailable', message: 'Slot taken' } } } })
           }),
           isPending: false,
         } as unknown as ReturnType<typeof usePostBookings>

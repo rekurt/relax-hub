@@ -192,12 +192,13 @@ export default function BookingCreate() {
         }
       },
       onError: (error) => {
-        const resp = error as { error?: { code?: string; message?: string } }
-        if (resp?.error?.code === 'slot_unavailable') {
+        const axiosErr = error as { response?: { data?: { error?: { code?: string; message?: string } } } }
+        const errData = axiosErr?.response?.data?.error
+        if (errData?.code === 'slot_unavailable') {
           setSlotConflict(true)
           return
         }
-        const errorMsg = resp?.error?.message ?? 'Не удалось создать бронирование'
+        const errorMsg = errData?.message ?? 'Не удалось создать бронирование'
         message.error(errorMsg)
       },
     },
@@ -222,9 +223,7 @@ export default function BookingCreate() {
         use_points: usePoints ? pointsAmount : undefined,
         use_referral_bonus: useReferral ? referralAmount : undefined,
         addons: addonPayload,
-        ...(paymentMethod ? { payment_method: paymentMethod } as Record<string, string> : {}),
-        ...(paymentMethod === 'combo' && comboWalletAmount > 0 ? { wallet_amount: comboWalletAmount } as Record<string, number> : {}),
-      } as Parameters<typeof createBookingMutation.mutate>[0]['data'],
+      },
     })
   }
 
