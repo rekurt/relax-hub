@@ -188,7 +188,12 @@ export default function BookingCreate() {
         const booking = response?.data
         if (booking?.id) {
           message.success(isRequestMode ? 'Заявка на бронирование отправлена!' : 'Бронирование создано!')
-          navigate(`/client/bookings/${booking.id}`)
+          navigate(`/client/bookings/${booking.id}`, {
+            state: {
+              paymentMethod,
+              ...(paymentMethod === 'combo' && comboWalletAmount > 0 ? { comboWalletAmount } : {}),
+            },
+          })
         }
       },
       onError: (error) => {

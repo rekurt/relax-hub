@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  App,
   Button,
   Card,
   Col,
@@ -13,7 +14,6 @@ import {
   Table,
   Tag,
   Typography,
-  message,
 } from 'antd'
 import {
   BankOutlined,
@@ -50,6 +50,7 @@ const DAILY_LIMIT = 10000000
 const MONTHLY_LIMIT = 100000000
 
 export default function PayoutPage() {
+  const { message } = App.useApp()
   const [form] = Form.useForm()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)

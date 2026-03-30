@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  App,
   Button,
   Card,
   Col,
@@ -14,7 +15,6 @@ import {
   Table,
   Tag,
   Typography,
-  message,
 } from 'antd'
 import {
   PlusOutlined,
@@ -309,6 +309,7 @@ function SegmentForm({
 }
 
 export default function SegmentBuilder() {
+  const { message } = App.useApp()
   const [selectedSegment, setSelectedSegment] = useState<CustomSegment>()
   const [formOpen, setFormOpen] = useState(false)
   const [editSegment, setEditSegment] = useState<CustomSegment>()

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Alert,
+  App,
   Button,
   Card,
   Col,
@@ -16,7 +17,6 @@ import {
   Table,
   Tag,
   Typography,
-  message,
 } from 'antd'
 import {
   DownloadOutlined,
@@ -77,6 +77,7 @@ const MAX_TOPUP = 30000
 
 export default function WalletDashboard() {
   const navigate = useNavigate()
+  const { message } = App.useApp()
   const [form] = Form.useForm()
 
   const [page, setPage] = useState(1)
@@ -152,7 +153,7 @@ export default function WalletDashboard() {
     } finally {
       setExporting(false)
     }
-  }, [dateRange])
+  }, [dateRange, message])
 
   const txColumns: ColumnsType<InternalHandlerWalletTransactionResponse> = [
     {

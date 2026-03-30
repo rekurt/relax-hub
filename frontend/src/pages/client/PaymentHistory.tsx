@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, DatePicker, Dropdown, Select, Space, Table, Tag, Typography, message } from 'antd'
+import { App, Button, DatePicker, Dropdown, Select, Space, Table, Tag, Typography } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
@@ -20,6 +20,7 @@ const STATUS_OPTIONS = [
 
 export default function PaymentHistory() {
   const navigate = useNavigate()
+  const { message } = App.useApp()
 
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -58,7 +59,7 @@ export default function PaymentHistory() {
     } finally {
       setExporting(false)
     }
-  }, [dateRange])
+  }, [dateRange, message])
 
   const payments = data?.data ?? []
   const meta = data?.meta

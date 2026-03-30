@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   Typography,
   Card,
@@ -29,6 +29,7 @@ import {
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useGetBookings, usePatchBookingsIdCancel } from '@/api/generated/bookings/bookings'
+import { useGetBathhousesId } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBookingsIdPayment, usePostBookingsIdPay } from '@/api/generated/payments/payments'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
@@ -45,7 +46,9 @@ const PUSH_PROMPTED_KEY = 'bani_push_prompted'
 export default function ClientBookingDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const { message } = App.useApp()
+  const routeState = location.state as { paymentMethod?: string; comboWalletAmount?: number } | null
   const queryClient = useQueryClient()
   const [modifyModalOpen, setModifyModalOpen] = useState(false)
   const [modifyLoading, setModifyLoading] = useState(false)
@@ -56,6 +59,12 @@ export default function ClientBookingDetail() {
     { page: 1, page_size: 999 },
   )
   const booking = (bookingsData?.data ?? []).find((b) => b.id === id)
+
+  const { data: bathhouseData } = useGetBathhousesId(
+    booking?.bathhouse_id ?? '',
+    { query: { enabled: !!booking?.bathhouse_id } },
+  )
+  const cancellationPolicy = bathhouseData?.data?.cancellation_policy ?? 'flexible'
 
   const { data: paymentData, isLoading: paymentLoading } = useGetBookingsIdPayment(
     id ?? '',
@@ -180,6 +189,19 @@ export default function ClientBookingDetail() {
   const getRefundInfo = () => {
     if (!booking.start_time) return ''
     const hoursUntil = dayjs(booking.start_time).diff(dayjs(), 'hour')
+
+    if (cancellationPolicy === 'strict') {
+      const daysUntil = hoursUntil / 24
+      if (daysUntil > 7) return 'При отмене сейчас вы получите 100% возврат.'
+      if (daysUntil >= 3) return 'При отмене сейчас вы получите 50% возврат.'
+      return 'При отмене менее чем за 3 дня возврат не предусмотрен.'
+    }
+    if (cancellationPolicy === 'moderate') {
+      if (hoursUntil > 72) return 'При отмене сейчас вы получите 100% возврат.'
+      if (hoursUntil >= 24) return 'При отмене сейчас вы получите 50% возврат.'
+      return 'При отмене менее чем за 24 часа возврат не предусмотрен.'
+    }
+    // flexible (default)
     if (hoursUntil > 24) return 'При отмене сейчас вы получите 100% возврат.'
     if (hoursUntil >= 2) return 'При отмене сейчас вы получите 50% возврат.'
     return 'При отмене менее чем за 2 часа возврат не предусмотрен.'
@@ -362,10 +384,21 @@ export default function ClientBookingDetail() {
               type="primary"
               size="large"
               icon={<DollarOutlined />}
-              onClick={() => id && payMutation.mutate({ id, data: {} })}
+              onClick={() => id && payMutation.mutate({
+                id,
+                data: {
+                  payment_method: routeState?.paymentMethod ?? 'card',
+                  ...(routeState?.paymentMethod === 'combo' && routeState?.comboWalletAmount
+                    ? { wallet_amount: routeState.comboWalletAmount, card_amount: (booking.total_price ?? 0) - routeState.comboWalletAmount }
+                    : {}),
+                },
+              })}
               loading={payMutation.isPending}
             >
-              Оплатить картой
+              {routeState?.paymentMethod === 'sbp' ? 'Оплатить через СБП'
+                : routeState?.paymentMethod === 'wallet' ? 'Оплатить с кошелька'
+                : routeState?.paymentMethod === 'combo' ? 'Оплатить (кошелёк + карта)'
+                : 'Оплатить картой'}
             </Button>
             <ApplePayButton
               amount={booking.total_price ?? 0}

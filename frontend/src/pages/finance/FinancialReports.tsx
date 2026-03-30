@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import {
+  App,
   Button,
   Card,
   Col,
@@ -9,7 +10,6 @@ import {
   Select,
   Space,
   Typography,
-  message,
 } from 'antd'
 import {
   DownloadOutlined,
@@ -24,6 +24,7 @@ const { Title, Text } = Typography
 const { RangePicker } = DatePicker
 
 export default function FinancialReports() {
+  const { message } = App.useApp()
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
   const [selectedBathhouse, setSelectedBathhouse] = useState<string>('')
   const [loading, setLoading] = useState<string | null>(null)
@@ -59,7 +60,7 @@ export default function FinancialReports() {
     } finally {
       setLoading(null)
     }
-  }, [])
+  }, [message])
 
   const handleWalletExport = useCallback((format: 'csv' | 'pdf') => {
     const params = new URLSearchParams({ format })
@@ -85,7 +86,7 @@ export default function FinancialReports() {
       'act.pdf',
       'act',
     )
-  }, [selectedBathhouse, dateRange, downloadFile])
+  }, [selectedBathhouse, dateRange, downloadFile, message])
 
   const handleXmlExport = useCallback(() => {
     const params = new URLSearchParams()
