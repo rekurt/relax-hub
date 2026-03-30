@@ -11,7 +11,14 @@ vi.mock('@/api/generated/admin-analytics/admin-analytics', () => ({
   useGetAdminAnalyticsTop: vi.fn(),
 }))
 
+vi.mock('@/api/axios-instance', () => ({
+  axiosInstance: {
+    get: vi.fn(),
+  },
+}))
+
 import { useGetAdminAnalytics, useGetAdminAnalyticsTop } from '@/api/generated/admin-analytics/admin-analytics'
+import { axiosInstance } from '@/api/axios-instance'
 
 function renderWithProviders(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -63,6 +70,22 @@ const mockTopBathhouses = [
     rating: 4.5,
   },
 ]
+
+const mockSupportMetrics = {
+  fcr_percent: 75.2,
+  aht_seconds: 1800,
+  sla_compliance_percent: 92.5,
+  queue_size: 8,
+}
+
+function setupMocks(opts?: { withSupportMetrics?: boolean }) {
+  vi.mocked(axiosInstance.get).mockImplementation((url: string) => {
+    if (url === '/admin/tickets/metrics' && opts?.withSupportMetrics !== false) {
+      return Promise.resolve({ data: { data: mockSupportMetrics } })
+    }
+    return Promise.reject(new Error('not found'))
+  })
+}
 
 describe('AdminDashboard', () => {
   it('renders KPI cards with analytics data', () => {
@@ -181,5 +204,26 @@ describe('AdminDashboard', () => {
     expect(screen.getByText('DAU')).toBeInTheDocument()
     expect(screen.getByText(/WAU: 210/)).toBeInTheDocument()
     expect(screen.getByText(/MAU: 340/)).toBeInTheDocument()
+  })
+
+  it('renders support metrics widget when data is available', async () => {
+    setupMocks({ withSupportMetrics: true })
+    vi.mocked(useGetAdminAnalytics).mockReturnValue({
+      data: { data: mockDashboard, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetAdminAnalytics>)
+    vi.mocked(useGetAdminAnalyticsTop).mockReturnValue({
+      data: { data: { bathhouses: [], metric: 'bookings', limit: 10 }, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetAdminAnalyticsTop>)
+
+    renderWithProviders(<AdminDashboard />)
+
+    // The widget renders async via useQuery, so check for the title text
+    expect(await screen.findByText('Поддержка')).toBeInTheDocument()
+    expect(screen.getByText('FCR')).toBeInTheDocument()
+    expect(screen.getByText('AHT')).toBeInTheDocument()
+    expect(screen.getByText('SLA (24ч)')).toBeInTheDocument()
+    expect(screen.getByText('В очереди')).toBeInTheDocument()
   })
 })

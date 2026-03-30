@@ -12,10 +12,17 @@ vi.mock('@/api/generated/support-admin/support-admin', () => ({
   useGetAdminTicketsStats: vi.fn(),
 }))
 
+vi.mock('@/api/axios-instance', () => ({
+  axiosInstance: {
+    get: vi.fn(),
+  },
+}))
+
 import {
   useGetAdminTickets,
   useGetAdminTicketsStats,
 } from '@/api/generated/support-admin/support-admin'
+import { axiosInstance } from '@/api/axios-instance'
 
 function renderWithProviders(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -81,7 +88,31 @@ const mockStats = {
   closed: 20,
 }
 
+const mockMetrics = {
+  fcr_percent: 72.0,
+  aht_seconds: 2400,
+  avg_csat: 4.1,
+  sla_compliance_percent: 88.5,
+  total_resolved: 150,
+  total_tickets: 200,
+}
+
+const mockAgentThroughput = [
+  { agent_id: 'a-1', agent_name: 'Иван Петров', resolved_count: 45, avg_resolution_seconds: 1800, csat_avg: 4.3 },
+  { agent_id: 'a-2', agent_name: 'Мария Сидорова', resolved_count: 38, avg_resolution_seconds: 2100, csat_avg: 4.5 },
+]
+
 beforeEach(() => {
+  vi.mocked(axiosInstance.get).mockImplementation((url: string) => {
+    if (url === '/admin/tickets/metrics') {
+      return Promise.resolve({ data: { data: mockMetrics } })
+    }
+    if (url === '/admin/tickets/agent-throughput') {
+      return Promise.resolve({ data: { data: mockAgentThroughput } })
+    }
+    return Promise.reject(new Error('not found'))
+  })
+
   vi.mocked(useGetAdminTickets).mockReturnValue({
     data: {
       data: mockTickets,
@@ -177,5 +208,83 @@ describe('TicketManagement', () => {
 
     expect(screen.getByText('Управление обращениями')).toBeInTheDocument()
     expect(document.querySelector('.ant-spin')).toBeTruthy()
+  })
+
+  it('renders operation metrics when available', async () => {
+    renderWithProviders(<TicketManagement />)
+
+    expect(await screen.findByText('Операционные метрики')).toBeInTheDocument()
+    expect(screen.getByText('FCR')).toBeInTheDocument()
+    expect(screen.getByText('AHT')).toBeInTheDocument()
+    expect(screen.getByText('SLA (24ч)')).toBeInTheDocument()
+  })
+
+  it('renders escalation indicator on escalated tickets', () => {
+    renderWithProviders(<TicketManagement />)
+
+    const escalationIcons = screen.getAllByTestId('escalation-icon')
+    expect(escalationIcons.length).toBe(1)
+  })
+
+  it('renders SLA timer for recent open tickets', () => {
+    const recentDate = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+    vi.mocked(useGetAdminTickets).mockReturnValue({
+      data: {
+        data: [
+          {
+            id: 't-recent',
+            user_id: 'u-200',
+            category: 'question',
+            status: 'open',
+            priority: 'medium',
+            level: 'L1',
+            subject: 'Свежий тикет',
+            created_at: recentDate,
+          },
+        ],
+        success: true,
+        meta: { page: 1, page_size: 20, total_count: 1, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetAdminTickets>)
+
+    renderWithProviders(<TicketManagement />)
+
+    const slaTimers = screen.getAllByTestId('sla-timer')
+    expect(slaTimers.length).toBe(1)
+  })
+
+  it('renders SLA breached tag for old tickets', () => {
+    vi.mocked(useGetAdminTickets).mockReturnValue({
+      data: {
+        data: [
+          {
+            id: 't-old',
+            user_id: 'u-999',
+            category: 'problem',
+            status: 'open',
+            priority: 'critical',
+            level: 'L1',
+            subject: 'Просроченный тикет',
+            created_at: '2026-03-01T10:00:00Z',
+          },
+        ],
+        success: true,
+        meta: { page: 1, page_size: 20, total_count: 1, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetAdminTickets>)
+
+    renderWithProviders(<TicketManagement />)
+
+    expect(screen.getByTestId('sla-breached')).toBeInTheDocument()
+    expect(screen.getByText('Просрочен')).toBeInTheDocument()
+  })
+
+  it('renders agent throughput card', async () => {
+    renderWithProviders(<TicketManagement />)
+
+    expect(await screen.findByTestId('agent-throughput-card')).toBeInTheDocument()
+    expect(screen.getByText('Производительность агентов')).toBeInTheDocument()
   })
 })

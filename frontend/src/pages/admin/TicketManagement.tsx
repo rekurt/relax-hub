@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Badge,
   Card,
   Col,
   Empty,
   Pagination,
+  Progress,
   Row,
   Segmented,
   Select,
@@ -13,11 +14,18 @@ import {
   Statistic,
   Table,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import {
+  ClockCircleOutlined,
+  ArrowUpOutlined,
+  WarningOutlined,
+} from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import dayjs from 'dayjs'
 import {
   useGetAdminTickets,
   useGetAdminTicketsStats,
@@ -35,6 +43,14 @@ interface OperationMetrics {
   total_tickets: number
 }
 
+interface AgentThroughput {
+  agent_id: string
+  agent_name: string
+  resolved_count: number
+  avg_resolution_seconds: number
+  csat_avg: number
+}
+
 function useOperationMetrics() {
   return useQuery({
     queryKey: ['admin', 'tickets', 'metrics'],
@@ -46,11 +62,47 @@ function useOperationMetrics() {
   })
 }
 
+function useAgentThroughput() {
+  return useQuery({
+    queryKey: ['admin', 'tickets', 'agent-throughput'],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: AgentThroughput[] }>('/admin/tickets/agent-throughput')
+      return data.data
+    },
+    staleTime: 60_000,
+  })
+}
+
 function formatDuration(seconds: number): string {
   if (seconds < 3600) return `${Math.round(seconds / 60)} мин`
   const hours = Math.floor(seconds / 3600)
   const mins = Math.round((seconds % 3600) / 60)
   return mins > 0 ? `${hours} ч ${mins} мин` : `${hours} ч`
+}
+
+const SLA_THRESHOLDS: Record<string, number> = {
+  L1: 24,
+  L2: 48,
+  L3: 72,
+}
+
+function getSlaInfo(ticket: InternalHandlerTicketResponse) {
+  if (ticket.status === 'resolved' || ticket.status === 'closed') return null
+  if (!ticket.created_at) return null
+
+  const level = ticket.level ?? 'L1'
+  const thresholdHours = SLA_THRESHOLDS[level] ?? 24
+  const created = dayjs(ticket.created_at)
+  const deadline = created.add(thresholdHours, 'hour')
+  const now = dayjs()
+  const remainingHours = deadline.diff(now, 'hour', true)
+
+  return {
+    deadline,
+    remainingHours,
+    isBreached: remainingHours <= 0,
+    isWarning: remainingHours > 0 && remainingHours <= 4,
+  }
 }
 
 const { Title, Text } = Typography
@@ -147,21 +199,41 @@ export default function TicketManagement() {
 
   const { data: statsData } = useGetAdminTicketsStats()
   const { data: metrics } = useOperationMetrics()
+  const { data: agentThroughput } = useAgentThroughput()
+  const [showAgentStats, setShowAgentStats] = useState(false)
 
-  const tickets: InternalHandlerTicketResponse[] = data?.data ?? []
   const meta = data?.meta
   const stats = statsData?.data
 
-  const columns: ColumnsType<InternalHandlerTicketResponse> = [
+  const ticketsWithSla = useMemo(() => {
+    const items: InternalHandlerTicketResponse[] = data?.data ?? []
+    return items.map((t) => ({
+      ...t,
+      _sla: getSlaInfo(t),
+    }))
+  }, [data?.data])
+
+  type TicketWithSla = InternalHandlerTicketResponse & {
+    _sla: ReturnType<typeof getSlaInfo>
+  }
+
+  const columns: ColumnsType<TicketWithSla> = [
     {
       title: 'Тема',
       dataIndex: 'subject',
       key: 'subject',
       ellipsis: true,
-      render: (text: string, record: InternalHandlerTicketResponse) => (
-        <a onClick={() => navigate(`/admin/tickets/${record.id}`)}>
-          {text || <Text type="secondary">Без темы</Text>}
-        </a>
+      render: (text: string, record: TicketWithSla) => (
+        <Space>
+          <a onClick={() => navigate(`/admin/tickets/${record.id}`)}>
+            {text || <Text type="secondary">Без темы</Text>}
+          </a>
+          {record.status === 'escalated' && (
+            <Tooltip title={`Эскалирован на ${record.level ?? 'L2'}`}>
+              <ArrowUpOutlined style={{ color: '#fa8c16' }} data-testid="escalation-icon" />
+            </Tooltip>
+          )}
+        </Space>
       ),
     },
     {
@@ -199,6 +271,44 @@ export default function TicketManagement() {
       key: 'level',
       width: 80,
       render: (level: string) => <Tag>{level}</Tag>,
+    },
+    {
+      title: 'SLA',
+      key: 'sla',
+      width: 140,
+      render: (_: unknown, record: TicketWithSla) => {
+        const sla = record._sla
+        if (!sla) return <Text type="secondary">-</Text>
+        if (sla.isBreached) {
+          return (
+            <Tooltip title={`Дедлайн: ${sla.deadline.format('DD.MM HH:mm')}`}>
+              <Tag color="red" icon={<WarningOutlined />} data-testid="sla-breached">
+                Просрочен
+              </Tag>
+            </Tooltip>
+          )
+        }
+        const hours = Math.floor(sla.remainingHours)
+        const mins = Math.round((sla.remainingHours - hours) * 60)
+        const label = hours > 0 ? `${hours}ч ${mins}м` : `${mins}м`
+        const percent = Math.max(0, Math.min(100, (1 - sla.remainingHours / (SLA_THRESHOLDS[record.level ?? 'L1'] ?? 24)) * 100))
+        return (
+          <Tooltip title={`Дедлайн: ${sla.deadline.format('DD.MM HH:mm')}`}>
+            <div data-testid="sla-timer">
+              <Progress
+                percent={percent}
+                size="small"
+                strokeColor={sla.isWarning ? '#fa8c16' : '#52c41a'}
+                format={() => (
+                  <span style={{ fontSize: 11 }}>
+                    <ClockCircleOutlined /> {label}
+                  </span>
+                )}
+              />
+            </div>
+          </Tooltip>
+        )
+      },
     },
     {
       title: 'Пользователь',
@@ -310,6 +420,47 @@ export default function TicketManagement() {
         </Card>
       )}
 
+      {agentThroughput && agentThroughput.length > 0 && (
+        <Card
+          size="small"
+          title="Производительность агентов"
+          style={{ marginBottom: 16 }}
+          extra={
+            <a onClick={() => setShowAgentStats(!showAgentStats)}>
+              {showAgentStats ? 'Скрыть' : 'Показать'}
+            </a>
+          }
+          data-testid="agent-throughput-card"
+        >
+          {showAgentStats && (
+            <Table
+              dataSource={agentThroughput}
+              rowKey="agent_id"
+              pagination={false}
+              size="small"
+              columns={[
+                { title: 'Агент', dataIndex: 'agent_name', key: 'agent_name' },
+                { title: 'Решено', dataIndex: 'resolved_count', key: 'resolved_count', width: 100 },
+                {
+                  title: 'Среднее время',
+                  dataIndex: 'avg_resolution_seconds',
+                  key: 'avg_resolution_seconds',
+                  width: 140,
+                  render: (v: number) => formatDuration(v),
+                },
+                {
+                  title: 'CSAT',
+                  dataIndex: 'csat_avg',
+                  key: 'csat_avg',
+                  width: 80,
+                  render: (v: number) => v?.toFixed(1) ?? '-',
+                },
+              ]}
+            />
+          )}
+        </Card>
+      )}
+
       <Space direction="vertical" size={16} style={{ width: '100%', marginBottom: 16 }}>
         <Segmented
           options={STATUS_OPTIONS}
@@ -372,12 +523,12 @@ export default function TicketManagement() {
         <div style={{ textAlign: 'center', padding: 48 }}>
           <Spin size="large" />
         </div>
-      ) : tickets.length === 0 ? (
+      ) : ticketsWithSla.length === 0 ? (
         <Empty description="Нет обращений" />
       ) : (
         <>
           <Table
-            dataSource={tickets}
+            dataSource={ticketsWithSla}
             columns={columns}
             rowKey="id"
             pagination={false}

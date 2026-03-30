@@ -349,10 +349,10 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/pages/admin/TicketManagement.tsx`
 - Modify: `frontend/src/pages/admin/AdminDashboard.tsx`
 
-- [ ] Add support metrics dashboard widget to AdminDashboard: FCR%, AHT, SLA compliance, queue size
-- [ ] Enhance TicketManagement with: per-agent throughput stats, SLA countdown timers, escalation indicators
-- [ ] Write tests for metrics widget, SLA timer display
-- [ ] Run project test suite + lint
+- [x] Add support metrics dashboard widget to AdminDashboard: FCR%, AHT, SLA compliance, queue size
+- [x] Enhance TicketManagement with: per-agent throughput stats, SLA countdown timers, escalation indicators
+- [x] Write tests for metrics widget, SLA timer display
+- [x] Run project test suite + lint
 
 ### Task 25: Verify Acceptance Criteria & Final Integration
 

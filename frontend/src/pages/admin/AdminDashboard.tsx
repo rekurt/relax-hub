@@ -9,10 +9,38 @@ import {
   EyeOutlined,
   StarOutlined,
   UserOutlined,
+  CustomerServiceOutlined,
 } from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
 import { useGetAdminAnalytics, useGetAdminAnalyticsTop } from '@/api/generated/admin-analytics/admin-analytics'
 import type { GithubComNikitaaldaevBaniInternalServiceTopBathhouseInfo } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
+import { axiosInstance } from '@/api/axios-instance'
+
+interface SupportMetrics {
+  fcr_percent: number
+  aht_seconds: number
+  sla_compliance_percent: number
+  queue_size: number
+}
+
+function useSupportMetrics() {
+  return useQuery({
+    queryKey: ['admin', 'support', 'metrics'],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<{ data: SupportMetrics }>('/admin/tickets/metrics')
+      return data.data
+    },
+    staleTime: 60_000,
+  })
+}
+
+function formatDuration(seconds: number): string {
+  if (seconds < 3600) return `${Math.round(seconds / 60)} мин`
+  const hours = Math.floor(seconds / 3600)
+  const mins = Math.round((seconds % 3600) / 60)
+  return mins > 0 ? `${hours} ч ${mins} мин` : `${hours} ч`
+}
 
 const { Title } = Typography
 
@@ -36,6 +64,7 @@ export default function AdminDashboard() {
 
   const { data: analyticsData, isLoading: analyticsLoading } = useGetAdminAnalytics({ period })
   const { data: topData, isLoading: topLoading } = useGetAdminAnalyticsTop({ metric, limit: 10 })
+  const { data: supportMetrics } = useSupportMetrics()
 
   const dashboard = analyticsData?.data
   const topBathhouses = topData?.data?.bathhouses ?? []
@@ -169,6 +198,49 @@ export default function AdminDashboard() {
           </Col>
         </Row>
       </Spin>
+
+      {supportMetrics && (
+        <Card
+          size="small"
+          title={<><CustomerServiceOutlined /> Поддержка</>}
+          style={{ marginBottom: 24 }}
+          data-testid="support-metrics-widget"
+        >
+          <Row gutter={[16, 16]}>
+            <Col xs={12} sm={6}>
+              <Statistic
+                title="FCR"
+                value={supportMetrics.fcr_percent}
+                precision={1}
+                suffix="%"
+                valueStyle={{ color: supportMetrics.fcr_percent >= 70 ? '#52c41a' : '#fa8c16' }}
+              />
+            </Col>
+            <Col xs={12} sm={6}>
+              <Statistic
+                title="AHT"
+                value={formatDuration(supportMetrics.aht_seconds)}
+              />
+            </Col>
+            <Col xs={12} sm={6}>
+              <Statistic
+                title="SLA (24ч)"
+                value={supportMetrics.sla_compliance_percent}
+                precision={1}
+                suffix="%"
+                valueStyle={{ color: supportMetrics.sla_compliance_percent >= 90 ? '#52c41a' : '#fa8c16' }}
+              />
+            </Col>
+            <Col xs={12} sm={6}>
+              <Statistic
+                title="В очереди"
+                value={supportMetrics.queue_size}
+                valueStyle={{ color: supportMetrics.queue_size > 20 ? '#f5222d' : supportMetrics.queue_size > 10 ? '#fa8c16' : undefined }}
+              />
+            </Col>
+          </Row>
+        </Card>
+      )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>Топ бань</Title>
