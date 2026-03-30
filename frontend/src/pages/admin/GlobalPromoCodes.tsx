@@ -67,9 +67,9 @@ export default function GlobalPromoCodes() {
         data: {
           code: values.code,
           type: values.type,
-          value: values.type === 'free_hour' ? 1 : values.type === 'fixed_amount' ? values.value * 100 : values.value,
+          value: values.type === 'free_hour' ? 1 : values.type === 'fixed_amount' ? Math.round(values.value * 100) : values.value,
           max_uses: values.max_uses,
-          min_amount: values.min_amount ? values.min_amount * 100 : undefined,
+          min_amount: values.min_amount ? Math.round(values.min_amount * 100) : undefined,
           valid_from: values.valid_from?.toISOString(),
           valid_until: values.valid_until?.toISOString(),
         },

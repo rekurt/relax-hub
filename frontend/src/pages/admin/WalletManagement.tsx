@@ -71,7 +71,7 @@ export default function WalletManagement() {
     if (!wallet) return
     try {
       await axiosInstance.post(`/admin/wallets/${wallet.id}/${action}`, {
-        amount: values.amount ? values.amount * 100 : undefined,
+        amount: values.amount ? Math.round(values.amount * 100) : undefined,
         reason: values.reason,
       })
       message.success(

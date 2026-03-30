@@ -114,7 +114,7 @@ export default function WalletDashboard() {
 
   const handleTopUp = (values: { amount: number }) => {
     topupMutation.mutate(
-      { data: { amount: values.amount * 100 } },
+      { data: { amount: Math.round(values.amount * 100) } },
       {
         onSuccess: () => {
           message.success('Пополнение инициировано')

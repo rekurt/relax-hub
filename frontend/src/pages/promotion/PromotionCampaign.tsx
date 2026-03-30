@@ -92,7 +92,7 @@ export default function PromotionCampaign() {
     queryKey: [`/my/bathhouses/${selectedBathhouseId}/promotions`, page, pageSize],
     queryFn: async () => {
       const res = await axiosInstance.get(
-        `/api/v1/my/bathhouses/${selectedBathhouseId}/promotions`,
+        `/my/bathhouses/${selectedBathhouseId}/promotions`,
         { params: { page, page_size: pageSize } },
       )
       return res.data
@@ -107,10 +107,10 @@ export default function PromotionCampaign() {
   const createMutation = useMutation({
     mutationFn: async (values: CampaignFormValues) => {
       const res = await axiosInstance.post(
-        `/api/v1/my/bathhouses/${selectedBathhouseId}/promotion`,
+        `/my/bathhouses/${selectedBathhouseId}/promotion`,
         {
-          daily_bid_kopecks: values.daily_bid * 100,
-          budget_kopecks: values.budget * 100,
+          daily_bid_kopecks: Math.round(values.daily_bid * 100),
+          budget_kopecks: Math.round(values.budget * 100),
           duration_days: values.duration_days,
           target_city_id: values.target_city_id ?? null,
         },
