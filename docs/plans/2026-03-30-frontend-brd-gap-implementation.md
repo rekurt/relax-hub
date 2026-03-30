@@ -282,12 +282,12 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Create: `frontend/src/pages/admin/CertificateManagement.tsx`
 - Modify: `frontend/src/router.tsx`
 
-- [ ] Build SubscriptionManagement: view owner subscriptions, tiers, status, manual activation/deactivation
-- [ ] Build LoyaltyManagement: configure tiers (bronze/silver/gold/platinum thresholds), cashback percentages, points multipliers
-- [ ] Build CertificateManagement: view all certificates, search by code, view redemption history, void certificates
-- [ ] Add routes `/admin/subscriptions`, `/admin/loyalty`, `/admin/certificates`
-- [ ] Write tests for subscription CRUD, loyalty tier editing, certificate search
-- [ ] Run project test suite + lint
+- [x] Build SubscriptionManagement: view owner subscriptions, tiers, status, manual activation/deactivation
+- [x] Build LoyaltyManagement: configure tiers (bronze/silver/gold/platinum thresholds), cashback percentages, points multipliers
+- [x] Build CertificateManagement: view all certificates, search by code, view redemption history, void certificates
+- [x] Add routes `/admin/subscriptions`, `/admin/loyalty`, `/admin/certificates`
+- [x] Write tests for subscription CRUD, loyalty tier editing, certificate search
+- [x] Run project test suite + lint
 
 ### Task 20: Search View Modes & Map Interactions (FR-048-050)
 

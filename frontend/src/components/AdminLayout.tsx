@@ -40,6 +40,8 @@ import {
   LineChartOutlined,
   BarChartOutlined,
   ThunderboltOutlined,
+  CrownOutlined,
+  IdcardOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -77,6 +79,9 @@ const adminMenuItems: MenuProps['items'] = [
   { key: '/admin/analytics/cohorts', icon: <LineChartOutlined />, label: 'Когорты' },
   { key: '/admin/analytics/supply-demand', icon: <BarChartOutlined />, label: 'Спрос/Предл.' },
   { key: '/admin/force-majeure', icon: <ThunderboltOutlined />, label: 'Форс-мажор' },
+  { key: '/admin/subscriptions', icon: <CrownOutlined />, label: 'Подписки' },
+  { key: '/admin/loyalty', icon: <GiftOutlined />, label: 'Лояльность' },
+  { key: '/admin/certificates', icon: <IdcardOutlined />, label: 'Сертификаты' },
   { key: '/admin/profile', icon: <UserOutlined />, label: 'Профиль' },
 ]
 
