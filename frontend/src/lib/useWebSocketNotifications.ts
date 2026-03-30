@@ -43,9 +43,9 @@ export function useWebSocketNotifications({
       if (!token) return
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/notifications`
+      const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/notifications?token=${encodeURIComponent(token)}`
 
-      const ws = new WebSocket(wsUrl, [token])
+      const ws = new WebSocket(wsUrl)
       wsRef.current = ws
 
       ws.onopen = () => {

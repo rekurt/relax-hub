@@ -26,6 +26,7 @@ interface RegisterFormValues {
   confirmPassword: string
   name: string
   phone: string
+  ageConfirmed: boolean
 }
 
 export default function Register() {
@@ -49,7 +50,7 @@ export default function Register() {
         phone: values.phone,
         role,
         referral_code: referralCode,
-        age_confirmed: true,
+        age_confirmed: values.ageConfirmed,
       })
       if (response.success && response.data?.token && response.data.user) {
         setAuth(response.data.token, response.data.user)

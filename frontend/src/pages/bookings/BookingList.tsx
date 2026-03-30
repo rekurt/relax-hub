@@ -40,6 +40,7 @@ const { RangePicker } = DatePicker
 const STATUS_OPTIONS = [
   { value: '', label: 'Все статусы' },
   { value: 'pending', label: 'Ожидает' },
+  { value: 'pending_owner', label: 'Ожидает подтверждения' },
   { value: 'confirmed', label: 'Подтверждено' },
   { value: 'completed', label: 'Завершено' },
   { value: 'cancelled', label: 'Отменено' },
@@ -207,7 +208,7 @@ export default function BookingList() {
       )
     }
 
-    if (record.status === 'pending') {
+    if (record.status === 'pending' || record.status === 'pending_owner') {
       actions.push(
         <Button
           key="confirm"
