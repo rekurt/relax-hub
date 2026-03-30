@@ -329,13 +329,14 @@ frontend/src/
 │       └── model/             # Shared TypeScript types
 ├── components/                # Reusable: AppLayout, ClientLayout, AdminLayout, BathhouseCard,
 │   │                          #   BathhouseSelector, MediaUploader, NotificationBell, OAuthButtons,
-│   │                          #   ProtectedRoute, ReportModal, ReviewCard,
-│   │                          #   OnboardingTour, BathhouseMap
+│   │                          #   ProtectedRoute, ReportModal, ReviewCard, OnboardingTour,
+│   │                          #   BathhouseMap, RecentlyViewed, ShareButton, ProfileCompleteness,
+│   │                          #   EmptyState, ApplePayButton, GooglePayButton, SupportChatBot
 ├── pages/
 │   ├── admin/                 # Admin role pages:
-│   │   ├── AdminDashboard     #   KPI analytics, top bathhouses
-│   │   ├── UserManagement     #   User list, block/unblock
-│   │   ├── BathhouseModeration#   Approve/reject bathhouses
+│   │   ├── AdminDashboard     #   KPI analytics, top bathhouses, support ops metrics widget
+│   │   ├── UserManagement     #   User list, block/unblock, batch operations
+│   │   ├── BathhouseModeration#   Approve/reject bathhouses, batch operations
 │   │   ├── ReviewModeration   #   Single & batch review moderation
 │   │   ├── PhotoVerification  #   Verify/reject bathhouse photos
 │   │   ├── ComplaintManagement#   Resolve/dismiss complaints
@@ -347,20 +348,35 @@ frontend/src/
 │   │   ├── ObjectTypeManagement # Bathhouse category CRUD
 │   │   ├── HolidayManagement  #   Holiday management per region
 │   │   ├── AntiFraudDashboard #   Fraud flag review queue
-│   │   ├── TicketManagement   #   Support ticket admin queue
+│   │   ├── TicketManagement   #   Support ticket admin queue, SLA timers
 │   │   ├── TicketDetail       #   Admin ticket response/escalation
 │   │   ├── DisputeManagement  #   Dispute mediation queue
 │   │   ├── DisputeDetail      #   Admin dispute resolution
 │   │   ├── WalletManagement   #   Admin wallet credit/debit/freeze
 │   │   ├── BookingManagement  #   Admin booking cancel/refund/status
 │   │   ├── RoleManagement     #   Admin sub-role assignment
-│   │   └── AdminNotificationCenter # Critical alerts per role
+│   │   ├── AdminNotificationCenter # Critical alerts per role
+│   │   ├── AdminFinanceDashboard # Float monitoring, GMV, reconciliation
+│   │   ├── AdminAuditLog      #   Admin action audit trail
+│   │   ├── BankReconciliation #   Bank statement import & matching
+│   │   ├── PlatformSettings   #   Key-value platform config editor
+│   │   ├── FeatureFlags       #   Feature flag toggles with region scoping
+│   │   ├── ServiceFeeConfig   #   Service fee by region/category
+│   │   ├── ConversionFunnels  #   Visit->search->book->complete funnels
+│   │   ├── CohortAnalysis     #   Registration cohort retention
+│   │   ├── SupplyDemandMetrics#   Listings, occupancy, DAU/MAU metrics
+│   │   ├── ForceMajeure       #   Emergency mass booking cancellation
+│   │   ├── SubscriptionManagement # Owner subscription tiers
+│   │   ├── LoyaltyManagement  #   Loyalty tier configuration
+│   │   ├── CertificateManagement # Certificate search & void
+│   │   └── GeoHeatmap         #   Geographic demand/supply heatmap
 │   ├── client/                # Client role pages:
-│   │   ├── BathhouseSearch    #   Search with filters, geo-search
-│   │   ├── BathhouseDetail    #   Full info, gallery, reviews, slots
-│   │   ├── BookingCreate      #   Booking flow with promo/certificate/loyalty
+│   │   ├── ClientHome         #   Home page: search, recently viewed, recommendations
+│   │   ├── BathhouseSearch    #   Search with filters, geo-search, map/list/split view
+│   │   ├── BathhouseDetail    #   Full info, gallery, reviews, slots, share
+│   │   ├── BookingCreate      #   4-step booking wizard with combo payment
 │   │   ├── BookingList        #   Client bookings with status filters
-│   │   ├── BookingDetail      #   Booking info, cancel, payment
+│   │   ├── BookingDetail      #   Booking info, cancel, payment, share
 │   │   ├── ReviewForm         #   Create/edit review with media
 │   │   ├── Favorites          #   Favorite bathhouses grid
 │   │   ├── Recommendations    #   Personalized + popular bathhouses
@@ -370,7 +386,7 @@ frontend/src/
 │   │   ├── CertificateList    #   Owned certificates
 │   │   ├── CertificatePurchase#   Purchase flow
 │   │   ├── PaymentHistory     #   Payment list with filters
-│   │   ├── ClientProfile      #   Profile, social accounts, notifications
+│   │   ├── ClientProfile      #   Profile, social accounts, region switch, account deletion
 │   │   ├── ClientChat         #   Real-time chat with bathhouses
 │   │   ├── ClientNotifications#   Notification list
 │   │   ├── SavedSearches      #   Saved search management
@@ -380,15 +396,21 @@ frontend/src/
 │   │   ├── DisputeCreate      #   Open dispute with evidence
 │   │   ├── DisputeDetail      #   Dispute status and appeal
 │   │   ├── DisputeList        #   Client disputes list
-│   │   └── NotificationPreferences # Per-event channel toggles
-│   ├── bathhouses/            # Owner: BathhouseList, BathhouseForm (create/edit)
-│   ├── bookings/              # Owner: BookingList (with payment info), BookingDetails
+│   │   ├── NotificationPreferences # Per-event channel toggles
+│   │   ├── WalletDashboard    #   Balance, top-up, transactions, export
+│   │   ├── SavedCards         #   Saved payment cards management
+│   │   ├── SecuritySettings   #   Sessions, 2FA, password change
+│   │   └── ActivePromoCodes   #   Available promo codes list
+│   ├── bathhouses/            # Owner: BathhouseList, BathhouseForm (7-step wizard), ListingImport, AuditLog
+│   ├── bookings/              # Owner: BookingList (check-in/out), BookingDetails, ExtensionRequests, ModificationRequests
 │   ├── calendar/              # Owner: CalendarPage (weekly view, slot management)
-│   ├── chat/                  # Owner: ChatPage, ConversationList, MessageArea
+│   ├── chat/                  # Owner: ChatPage, ConversationList, MessageArea (content filter warning)
 │   ├── notifications/         # Owner: NotificationList
 │   ├── photos/                # Owner: PhotoManager (upload, reorder, status), PhotoOrderPage (professional photography)
 │   ├── promotion/             # Owner: PromotionCampaign (auction-based promotion management)
-│   ├── pricing/               # Owner: PricingRules (dynamic pricing)
+│   ├── pricing/               # Owner: PricingRules (dynamic pricing, smart pricing recommendations)
+│   ├── finance/               # Owner: FinanceDashboard, PayoutPage, FinancialReports
+│   ├── analytics/             # Owner: OwnerAnalytics (occupancy, income, conversion, competitor benchmarks)
 │   ├── promo/                 # Owner: PromoList (promo code management)
 │   ├── representatives/       # Owner: RepresentativeList
 │   ├── reviews/               # Owner: ReviewList (with media display, response form)
@@ -424,6 +446,11 @@ frontend/src/
 - Prices displayed via `formatPrice()` from `lib/format.ts` (kopecks -> rubles with ₽ symbol)
 - Dev server proxies `/api` -> `http://localhost:8080` and `/ws` -> `ws://localhost:8080`
 - Path alias: `@/` maps to `src/` in imports
+- Multi-step wizard pattern: BathhouseForm (7-step), BookingCreate (4-step) use Ant Design Steps with draft save per step
+- Share functionality: Web Share API with clipboard fallback via ShareButton component
+- Combo payments: wallet + card split with visual slider in BookingCreate
+- Push notifications: permission requested after first booking completion (not at registration)
+- ShareRedirect page at `/share/booking/:token` resolves deep links
 
 ## Feature Subsystems
 
