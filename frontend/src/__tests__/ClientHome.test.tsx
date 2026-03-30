@@ -50,7 +50,7 @@ function renderWithProviders(ui: React.ReactElement) {
 describe('ClientHome', () => {
   beforeEach(() => {
     vi.mocked(useAuthStore).mockImplementation((selector) => {
-      const state = { user: { id: 'u1', role: 'client' }, token: 'tok', setAuth: vi.fn(), logout: vi.fn() }
+      const state = { user: { id: 'u1', role: 'client' }, token: 'tok', setAuth: vi.fn(), logout: vi.fn(), isLoading: false, isAuthenticated: true, loadProfile: vi.fn() }
       return (selector as (s: typeof state) => unknown)(state)
     })
 

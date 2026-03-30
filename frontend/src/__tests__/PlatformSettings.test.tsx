@@ -104,7 +104,7 @@ describe('PlatformSettings', () => {
     renderWithProviders(<PlatformSettings />)
 
     const editButtons = screen.getAllByText('Изменить')
-    fireEvent.click(editButtons[0])
+    fireEvent.click(editButtons[0]!)
 
     expect(screen.getByText('Изменить: service_fee_percent')).toBeInTheDocument()
     expect(screen.getByText('Процент комиссии платформы')).toBeInTheDocument()
@@ -132,7 +132,7 @@ describe('PlatformSettings', () => {
     renderWithProviders(<PlatformSettings />)
 
     const editButtons = screen.getAllByText('Изменить')
-    fireEvent.click(editButtons[0])
+    fireEvent.click(editButtons[0]!)
 
     await waitFor(() => {
       expect(screen.getByText('Сохранить')).toBeInTheDocument()

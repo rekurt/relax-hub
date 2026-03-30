@@ -132,7 +132,7 @@ describe('ForceMajeure', () => {
     renderWithProviders(<ForceMajeure />)
 
     const detailLinks = screen.getAllByText('Подробнее')
-    fireEvent.click(detailLinks[0])
+    fireEvent.click(detailLinks[0]!)
 
     expect(screen.getByText('Детали форс-мажора')).toBeInTheDocument()
     expect(screen.getByText('Затронутые бронирования')).toBeInTheDocument()

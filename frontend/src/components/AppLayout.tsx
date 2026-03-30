@@ -65,6 +65,7 @@ function useMenuItems(unreadCount: number): MenuProps['items'] {
     },
     { key: '/representatives', icon: <TeamOutlined />, label: 'Представители' },
     { key: '/subscriptions', icon: <CrownOutlined />, label: 'Подписки' },
+    { key: '/promotion', icon: <FundOutlined />, label: 'Продвижение' },
     { key: '/widget', icon: <CodeOutlined />, label: 'Виджет' },
     { key: '/photos', icon: <CameraOutlined />, label: 'Фото' },
     {
@@ -84,6 +85,7 @@ function useMenuItems(unreadCount: number): MenuProps['items'] {
       children: [
         { key: '/crm/guests', label: 'Гости' },
         { key: '/crm/segments', label: 'Сегменты' },
+        { key: '/crm/rfm', label: 'RFM-анализ' },
         { key: '/crm/broadcasts', label: 'Рассылки' },
         { key: '/crm/scenarios', label: 'Сценарии' },
         { key: '/crm/templates', label: 'Шаблоны' },
@@ -120,6 +122,7 @@ const breadcrumbNameMap: Record<string, string> = {
   '/crm': 'CRM',
   '/crm/guests': 'Гости',
   '/crm/segments': 'Сегменты',
+  '/crm/rfm': 'RFM-анализ',
   '/crm/broadcasts': 'Рассылки',
   '/crm/broadcasts/new': 'Новая рассылка',
   '/crm/scenarios': 'Сценарии',
@@ -130,6 +133,7 @@ const breadcrumbNameMap: Record<string, string> = {
   '/settings': 'Настройки',
   '/settings/webhooks': 'Вебхуки',
   '/settings/pms': 'PMS интеграции',
+  '/promotion': 'Продвижение',
   '/notifications': 'Уведомления',
 }
 
@@ -172,7 +176,7 @@ export default function AppLayout() {
 
   const pathParts = location.pathname.split('/').filter(Boolean)
   const subMenuPrefixes = ['crm', 'settings', 'finance']
-  const selectedKey = (pathParts.length >= 2 && subMenuPrefixes.includes(pathParts[0]))
+  const selectedKey = (pathParts.length >= 2 && subMenuPrefixes.includes(pathParts[0] ?? ''))
     ? '/' + pathParts.slice(0, 2).join('/')
     : '/' + (pathParts[0] ?? '')
   const selectedKeys = [selectedKey === '/' ? '/' : selectedKey]

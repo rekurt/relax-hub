@@ -356,14 +356,14 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 
 ### Task 25: Verify Acceptance Criteria & Final Integration
 
-- [ ] Manual test: complete client registration -> search -> book -> pay -> review flow
-- [ ] Manual test: owner onboarding -> create listing -> manage bookings -> finance -> payout flow
-- [ ] Manual test: admin moderation -> settings -> analytics -> force majeure flow
-- [ ] Run full test suite: `cd frontend && npx vitest run`
-- [ ] Run linter: `cd frontend && npm run lint`
-- [ ] Run build: `cd frontend && npm run build`
-- [ ] Verify all new routes are accessible from navigation menus
-- [ ] Cross-reference every FR in BRD sections 2.1-2.18 against implemented pages
+- [x] Manual test: complete client registration -> search -> book -> pay -> review flow
+- [x] Manual test: owner onboarding -> create listing -> manage bookings -> finance -> payout flow
+- [x] Manual test: admin moderation -> settings -> analytics -> force majeure flow
+- [x] Run full test suite: `cd frontend && npx vitest run`
+- [x] Run linter: `cd frontend && npm run lint`
+- [x] Run build: `cd frontend && npm run build`
+- [x] Verify all new routes are accessible from navigation menus
+- [x] Cross-reference every FR in BRD sections 2.1-2.18 against implemented pages
 
 ### Task 26: Update Documentation
 

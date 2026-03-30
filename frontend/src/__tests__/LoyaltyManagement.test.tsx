@@ -86,7 +86,7 @@ describe('LoyaltyManagement', () => {
     renderWithProviders(<LoyaltyManagement />)
 
     const editButtons = screen.getAllByText('Изменить')
-    fireEvent.click(editButtons[0])
+    fireEvent.click(editButtons[0]!)
 
     expect(screen.getByText(/Редактировать уровень/)).toBeInTheDocument()
     expect(screen.getByText('Минимальное количество визитов')).toBeInTheDocument()

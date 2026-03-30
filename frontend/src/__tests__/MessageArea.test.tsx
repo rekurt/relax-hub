@@ -52,7 +52,7 @@ function renderWithProviders(conversationId: string | null) {
 
 function setupMocks(overrides?: {
   messages?: Array<{ id: string; text: string; sender_id: string; created_at: string; is_read?: boolean }>
-  sendOnSuccess?: (response: unknown) => void
+  sendOnSuccess?: unknown
 }) {
   const messages = overrides?.messages ?? []
 

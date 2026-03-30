@@ -165,7 +165,7 @@ describe('CertificateManagement', () => {
     renderWithProviders(<CertificateManagement />)
 
     const voidButtons = screen.getAllByText('Аннулировать')
-    fireEvent.click(voidButtons[0])
+    fireEvent.click(voidButtons[0]!)
 
     expect(screen.getAllByText('Аннулировать сертификат?').length).toBeGreaterThanOrEqual(1)
   })

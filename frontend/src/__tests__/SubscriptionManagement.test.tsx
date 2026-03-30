@@ -178,7 +178,7 @@ describe('SubscriptionManagement', () => {
     renderWithProviders(<SubscriptionManagement />)
 
     const deactivateButtons = screen.getAllByText('Деактивировать')
-    fireEvent.click(deactivateButtons[0])
+    fireEvent.click(deactivateButtons[0]!)
 
     expect(screen.getAllByText('Деактивировать подписку?').length).toBeGreaterThanOrEqual(1)
   })

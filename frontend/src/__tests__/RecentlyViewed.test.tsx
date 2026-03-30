@@ -41,7 +41,7 @@ const mockItems = [
 describe('RecentlyViewed', () => {
   beforeEach(() => {
     vi.mocked(useAuthStore).mockImplementation((selector) => {
-      const state = { user: { id: 'u1', role: 'client' }, token: 'tok', setAuth: vi.fn(), logout: vi.fn() }
+      const state = { user: { id: 'u1', role: 'client' }, token: 'tok', setAuth: vi.fn(), logout: vi.fn(), isLoading: false, isAuthenticated: true, loadProfile: vi.fn() }
       return (selector as (s: typeof state) => unknown)(state)
     })
   })
@@ -81,7 +81,7 @@ describe('RecentlyViewed', () => {
 
   it('renders nothing when user is not authenticated', () => {
     vi.mocked(useAuthStore).mockImplementation((selector) => {
-      const state = { user: null, token: null, setAuth: vi.fn(), logout: vi.fn() }
+      const state = { user: null, token: null, setAuth: vi.fn(), logout: vi.fn(), isLoading: false, isAuthenticated: false, loadProfile: vi.fn() }
       return (selector as (s: typeof state) => unknown)(state)
     })
 

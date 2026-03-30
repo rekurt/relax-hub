@@ -54,7 +54,7 @@ export default function ShareButton({ url, title, text, onBeforeShare, size = 'm
 
   return (
     <Button
-      icon={copied ? <CheckOutlined /> : navigator.share ? <ShareAltOutlined /> : <CopyOutlined />}
+      icon={copied ? <CheckOutlined /> : ('share' in navigator) ? <ShareAltOutlined /> : <CopyOutlined />}
       onClick={handleShare}
       loading={loading}
       size={size}

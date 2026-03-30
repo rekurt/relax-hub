@@ -114,7 +114,7 @@ describe('ServiceFeeConfig', () => {
     renderWithProviders(<ServiceFeeConfig />)
 
     const editButtons = screen.getAllByText('Изменить')
-    fireEvent.click(editButtons[0])
+    fireEvent.click(editButtons[0]!)
 
     expect(screen.getByText('Редактировать комиссию')).toBeInTheDocument()
   })

@@ -265,7 +265,7 @@ export default function SecuritySettings() {
           Дополнительная защита аккаунта. После включения при входе потребуется ввести одноразовый код.
         </Paragraph>
 
-        <Divider orientation="left">TOTP (приложение-аутентификатор)</Divider>
+        <Divider titlePlacement="left">TOTP (приложение-аутентификатор)</Divider>
 
         {totpStep === 'idle' && (
           <Space direction="vertical">
@@ -369,7 +369,7 @@ export default function SecuritySettings() {
           </Space>
         )}
 
-        <Divider orientation="left">SMS 2FA</Divider>
+        <Divider titlePlacement="left">SMS 2FA</Divider>
 
         {smsEnabled ? (
           <Alert

@@ -148,7 +148,7 @@ describe('SavedCards', () => {
     renderWithProviders(<SavedCards />)
 
     const deleteButtons = screen.getAllByText('Удалить')
-    fireEvent.click(deleteButtons[0])
+    fireEvent.click(deleteButtons[0]!)
 
     await waitFor(() => {
       expect(screen.getByText('Удалить карту?')).toBeInTheDocument()
@@ -161,7 +161,7 @@ describe('SavedCards', () => {
     renderWithProviders(<SavedCards />)
 
     const deleteButtons = screen.getAllByText('Удалить')
-    fireEvent.click(deleteButtons[0])
+    fireEvent.click(deleteButtons[0]!)
 
     await waitFor(() => {
       expect(screen.getByText('Удалить карту?')).toBeInTheDocument()
@@ -194,7 +194,7 @@ describe('SavedCards', () => {
     renderWithProviders(<SavedCards />)
 
     const defaultButtons = screen.getAllByRole('button', { name: /По умолчанию/i })
-    fireEvent.click(defaultButtons[0])
+    fireEvent.click(defaultButtons[0]!)
 
     expect(mockSetDefaultMutate).toHaveBeenCalledWith({ id: 'card-2' })
   })

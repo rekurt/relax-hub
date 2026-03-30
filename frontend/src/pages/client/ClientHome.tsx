@@ -76,7 +76,7 @@ function PopularNearby() {
   const navigate = useNavigate()
   const { data: citiesData } = useGetCities()
   const cities = citiesData?.data ?? []
-  const firstCityId = cities.length > 0 ? cities[0].id : undefined
+  const firstCityId = cities.length > 0 ? cities[0]?.id : undefined
 
   const { data: popularData, isLoading } = useGetPopular(
     { city_id: firstCityId ?? 0, limit: 6 },

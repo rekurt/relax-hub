@@ -29,6 +29,7 @@ import {
   SettingOutlined,
   CustomerServiceOutlined,
   SafetyOutlined,
+  CreditCardOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -48,8 +49,9 @@ const clientMenuItems: MenuProps['items'] = [
   { key: '/client/referral', icon: <UsergroupAddOutlined />, label: 'Рефералы' },
   { key: '/client/certificates', icon: <GiftOutlined />, label: 'Сертификаты' },
   { key: '/client/promos', icon: <TagOutlined />, label: 'Промокоды' },
-  { key: '/client/wallet', icon: <WalletOutlined />, label: 'Кошелёк' },
+  { key: '/client/wallet', icon: <WalletOutlined />, label: 'Кошел��к' },
   { key: '/client/payments', icon: <WalletOutlined />, label: 'Платежи' },
+  { key: '/client/cards', icon: <CreditCardOutlined />, label: 'Карты' },
   { key: '/client/chat', icon: <MessageOutlined />, label: 'Чат' },
   { key: '/client/saved-searches', icon: <SearchOutlined />, label: 'Сохранённые поиски' },
   { key: '/client/tickets', icon: <CustomerServiceOutlined />, label: 'Поддержка' },

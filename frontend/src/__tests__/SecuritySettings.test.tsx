@@ -186,7 +186,7 @@ describe('SecuritySettings', () => {
   })
 
   it('does not show terminate all button with single session', () => {
-    setupMocks({ sessions: [mockSessions[0]] })
+    setupMocks({ sessions: [mockSessions[0]!] })
     renderWithProviders(<SecuritySettings />)
 
     expect(screen.queryByText('Завершить все другие')).not.toBeInTheDocument()
@@ -198,7 +198,7 @@ describe('SecuritySettings', () => {
 
     // Find the terminate button for non-current session
     const terminateButtons = screen.getAllByText('Завершить')
-    fireEvent.click(terminateButtons[0])
+    fireEvent.click(terminateButtons[0]!)
 
     await waitFor(() => {
       expect(screen.getByText('Завершить сессию?')).toBeInTheDocument()

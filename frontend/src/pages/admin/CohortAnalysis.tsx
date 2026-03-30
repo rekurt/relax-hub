@@ -65,7 +65,7 @@ export default function CohortAnalysis() {
       render: (_: unknown, record: GithubComNikitaaldaevBaniInternalDomainCohortRow) => {
         const weeks = record.retention_weeks ?? []
         if (i >= weeks.length) return '—'
-        const val = weeks[i]
+        const val = weeks[i] ?? 0
         return (
           <div
             style={{
