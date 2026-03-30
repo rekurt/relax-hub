@@ -221,12 +221,12 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/router.tsx`
 - Modify: `frontend/src/components/AdminLayout.tsx`
 
-- [ ] Build PlatformSettings page: key-value editor for 12+ platform settings (service_fee_percent, welcome_bonus_amount, escrow_claim_hours, etc.), typed inputs (int/float/string/bool/json)
-- [ ] Build FeatureFlags page: toggle list for 13+ feature flags, region scoping selector, enabled/disabled status with description
-- [ ] Build ServiceFeeConfig page: fee configuration by region and category, global default, CRUD table
-- [ ] Add routes `/admin/settings`, `/admin/feature-flags`, `/admin/service-fees` and sidebar links
-- [ ] Write tests for settings editor, feature flag toggles, service fee CRUD
-- [ ] Run project test suite + lint
+- [x] Build PlatformSettings page: key-value editor for 12+ platform settings (service_fee_percent, welcome_bonus_amount, escrow_claim_hours, etc.), typed inputs (int/float/string/bool/json)
+- [x] Build FeatureFlags page: toggle list for 13+ feature flags, region scoping selector, enabled/disabled status with description
+- [x] Build ServiceFeeConfig page: fee configuration by region and category, global default, CRUD table
+- [x] Add routes `/admin/settings`, `/admin/feature-flags`, `/admin/service-fees` and sidebar links
+- [x] Write tests for settings editor, feature flag toggles, service fee CRUD
+- [x] Run project test suite + lint
 
 ### Task 16: Admin Finance Dashboard (FR-124-128, FR-150-152)
 

@@ -31,6 +31,9 @@ import {
   CalendarOutlined,
   WalletOutlined,
   ScheduleOutlined,
+  SettingOutlined,
+  ControlOutlined,
+  DollarOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -58,6 +61,9 @@ const adminMenuItems: MenuProps['items'] = [
   { key: '/admin/roles', icon: <SafetyOutlined />, label: 'Роли' },
   { key: '/admin/notifications', icon: <BellOutlined />, label: 'Уведомления' },
   { key: '/admin/notification-center', icon: <BellOutlined />, label: 'Центр оповещений' },
+  { key: '/admin/settings', icon: <SettingOutlined />, label: 'Настройки' },
+  { key: '/admin/feature-flags', icon: <ControlOutlined />, label: 'Флаги' },
+  { key: '/admin/service-fees', icon: <DollarOutlined />, label: 'Комиссии' },
   { key: '/admin/profile', icon: <UserOutlined />, label: 'Профиль' },
 ]
 

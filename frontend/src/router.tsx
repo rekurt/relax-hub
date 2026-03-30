@@ -87,6 +87,9 @@ import BookingManagement from '@/pages/admin/BookingManagement'
 import RoleManagement from '@/pages/admin/RoleManagement'
 import AdminNotificationCenter from '@/pages/admin/AdminNotificationCenter'
 import GeoHeatmap from '@/pages/admin/GeoHeatmap'
+import PlatformSettings from '@/pages/admin/PlatformSettings'
+import FeatureFlags from '@/pages/admin/FeatureFlags'
+import ServiceFeeConfig from '@/pages/admin/ServiceFeeConfig'
 import OAuthCallback from '@/pages/OAuthCallback'
 import ShareRedirect from '@/pages/ShareRedirect'
 import OwnerAnalytics from '@/pages/analytics/OwnerAnalytics'
@@ -221,6 +224,9 @@ export default function AppRouter() {
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="notification-center" element={<AdminNotificationCenter />} />
         <Route path="heatmap" element={<GeoHeatmap />} />
+        <Route path="settings" element={<PlatformSettings />} />
+        <Route path="feature-flags" element={<FeatureFlags />} />
+        <Route path="service-fees" element={<ServiceFeeConfig />} />
         <Route path="profile" element={<AdminProfile />} />
       </Route>
 
