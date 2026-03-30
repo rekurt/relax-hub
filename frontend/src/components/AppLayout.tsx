@@ -92,7 +92,7 @@ function useMenuItems(unreadCount: number): MenuProps['items'] {
       ],
     },
     {
-      key: '/settings',
+      key: '/settings-group',
       icon: <SettingOutlined />,
       label: 'Настройки',
       children: [
@@ -182,8 +182,8 @@ export default function AppLayout() {
   const selectedKeys = [selectedKey === '/' ? '/' : selectedKey]
   const openKeys: string[] = []
   if (pathParts[0] === 'crm') openKeys.push('/crm')
-  if (pathParts[0] === 'finance') openKeys.push('/finance')
-  if (pathParts[0] === 'settings') openKeys.push('/settings')
+  if (pathParts[0] === 'finance') openKeys.push('/finance-group')
+  if (pathParts[0] === 'settings') openKeys.push('/settings-group')
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     navigate(key)

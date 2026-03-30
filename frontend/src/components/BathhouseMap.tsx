@@ -218,7 +218,7 @@ export default function BathhouseMap({
         const coverImage = b.images?.[0] ?? b.gallery_preview?.[0]?.url
         const ratingStr = b.rating ? b.rating.toFixed(1) : '—'
         const reviewCountStr = b.review_count ?? 0
-        const slug = b.slug ?? b.id
+        const slug = b.slug ?? b.id ?? ''
 
         const safeName = escapeHtml(b.name ?? '')
         const safeAddress = escapeHtml(b.address ?? '')
