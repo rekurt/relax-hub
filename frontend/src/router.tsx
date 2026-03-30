@@ -93,6 +93,9 @@ import ServiceFeeConfig from '@/pages/admin/ServiceFeeConfig'
 import AdminFinanceDashboard from '@/pages/admin/AdminFinanceDashboard'
 import BankReconciliation from '@/pages/admin/BankReconciliation'
 import AdminAuditLog from '@/pages/admin/AdminAuditLog'
+import ConversionFunnels from '@/pages/admin/ConversionFunnels'
+import CohortAnalysis from '@/pages/admin/CohortAnalysis'
+import SupplyDemandMetrics from '@/pages/admin/SupplyDemandMetrics'
 import OAuthCallback from '@/pages/OAuthCallback'
 import ShareRedirect from '@/pages/ShareRedirect'
 import OwnerAnalytics from '@/pages/analytics/OwnerAnalytics'
@@ -233,6 +236,9 @@ export default function AppRouter() {
         <Route path="finance" element={<AdminFinanceDashboard />} />
         <Route path="finance/reconciliation" element={<BankReconciliation />} />
         <Route path="audit-log" element={<AdminAuditLog />} />
+        <Route path="analytics/funnels" element={<ConversionFunnels />} />
+        <Route path="analytics/cohorts" element={<CohortAnalysis />} />
+        <Route path="analytics/supply-demand" element={<SupplyDemandMetrics />} />
         <Route path="profile" element={<AdminProfile />} />
       </Route>
 

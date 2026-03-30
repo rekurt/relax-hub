@@ -36,6 +36,9 @@ import {
   DollarOutlined,
   BankOutlined,
   FileTextOutlined,
+  FunnelPlotOutlined,
+  LineChartOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -69,6 +72,9 @@ const adminMenuItems: MenuProps['items'] = [
   { key: '/admin/finance', icon: <BankOutlined />, label: 'Финансы' },
   { key: '/admin/finance/reconciliation', icon: <BankOutlined />, label: 'Банк. сверка' },
   { key: '/admin/audit-log', icon: <FileTextOutlined />, label: 'Журнал аудита' },
+  { key: '/admin/analytics/funnels', icon: <FunnelPlotOutlined />, label: 'Воронка' },
+  { key: '/admin/analytics/cohorts', icon: <LineChartOutlined />, label: 'Когорты' },
+  { key: '/admin/analytics/supply-demand', icon: <BarChartOutlined />, label: 'Спрос/Предл.' },
   { key: '/admin/profile', icon: <UserOutlined />, label: 'Профиль' },
 ]
 

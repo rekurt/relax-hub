@@ -252,12 +252,12 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Create: `frontend/src/pages/admin/SupplyDemandMetrics.tsx`
 - Modify: `frontend/src/router.tsx`
 
-- [ ] Build ConversionFunnels page: visual funnel chart (visit -> search -> view -> book -> complete), filter by region/period/type (FR-147)
-- [ ] Build CohortAnalysis page: registration cohort table, retention/frequency/avg check over time (FR-154)
-- [ ] Build SupplyDemandMetrics page: active listings, avg occupancy, ADR, new/deactivated listings, DAU/MAU, wallet metrics (FR-148, FR-149, FR-151)
-- [ ] Add routes under `/admin/analytics/*` and sidebar sub-menu
-- [ ] Write tests for funnel chart, cohort table, metrics rendering
-- [ ] Run project test suite + lint
+- [x] Build ConversionFunnels page: visual funnel chart (visit -> search -> view -> book -> complete), filter by region/period/type (FR-147)
+- [x] Build CohortAnalysis page: registration cohort table, retention/frequency/avg check over time (FR-154)
+- [x] Build SupplyDemandMetrics page: active listings, avg occupancy, ADR, new/deactivated listings, DAU/MAU, wallet metrics (FR-148, FR-149, FR-151)
+- [x] Add routes under `/admin/analytics/*` and sidebar sub-menu
+- [x] Write tests for funnel chart, cohort table, metrics rendering
+- [x] Run project test suite + lint
 
 ### Task 18: Admin Force Majeure & Mass Operations (FR-080)
 
