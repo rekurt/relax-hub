@@ -34,6 +34,8 @@ import {
   SettingOutlined,
   ControlOutlined,
   DollarOutlined,
+  BankOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/stores/auth'
@@ -64,6 +66,9 @@ const adminMenuItems: MenuProps['items'] = [
   { key: '/admin/settings', icon: <SettingOutlined />, label: 'Настройки' },
   { key: '/admin/feature-flags', icon: <ControlOutlined />, label: 'Флаги' },
   { key: '/admin/service-fees', icon: <DollarOutlined />, label: 'Комиссии' },
+  { key: '/admin/finance', icon: <BankOutlined />, label: 'Финансы' },
+  { key: '/admin/finance/reconciliation', icon: <BankOutlined />, label: 'Банк. сверка' },
+  { key: '/admin/audit-log', icon: <FileTextOutlined />, label: 'Журнал аудита' },
   { key: '/admin/profile', icon: <UserOutlined />, label: 'Профиль' },
 ]
 

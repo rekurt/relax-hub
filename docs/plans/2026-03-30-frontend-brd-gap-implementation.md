@@ -237,12 +237,12 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/router.tsx`
 - Modify: `frontend/src/components/AdminLayout.tsx`
 
-- [ ] Build FinanceDashboard with: float monitoring widget (client wallets + owner wallets + escrow totals), daily reconciliation status, GMV/Take Rate/Revenue KPIs, revenue breakdown (service fees, subscriptions, promotions), transaction reconciliation alerts (FR-125, FR-127, FR-152)
-- [ ] Build BankReconciliation page: bank statement upload (CSV, 1C XML), auto-matched transactions table, unmatched entries queue with manual match interface (FR-128)
-- [ ] Build AuditLog page: searchable log of all admin actions (who/what/when), filter by action type, user, date range
-- [ ] Add routes `/admin/finance`, `/admin/finance/reconciliation`, `/admin/audit-log` and sidebar links
-- [ ] Write tests for finance widgets, reconciliation upload, audit log filtering
-- [ ] Run project test suite + lint
+- [x] Build FinanceDashboard with: float monitoring widget (client wallets + owner wallets + escrow totals), daily reconciliation status, GMV/Take Rate/Revenue KPIs, revenue breakdown (service fees, subscriptions, promotions), transaction reconciliation alerts (FR-125, FR-127, FR-152)
+- [x] Build BankReconciliation page: bank statement upload (CSV, 1C XML), auto-matched transactions table, unmatched entries queue with manual match interface (FR-128)
+- [x] Build AuditLog page: searchable log of all admin actions (who/what/when), filter by action type, user, date range
+- [x] Add routes `/admin/finance`, `/admin/finance/reconciliation`, `/admin/audit-log` and sidebar links
+- [x] Write tests for finance widgets, reconciliation upload, audit log filtering
+- [x] Run project test suite + lint
 
 ### Task 17: Admin Advanced Analytics (FR-147-154)
 
