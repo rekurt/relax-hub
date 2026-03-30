@@ -79,5 +79,23 @@ export function useDeviceToken() {
     }
   }, [isAuthenticated, registerToken])
 
-  return { registerToken, unregisterToken }
+  const requestPushPermission = useCallback(async () => {
+    if (!('Notification' in window) || Notification.permission !== 'default') return
+    const permission = await Notification.requestPermission()
+    if (permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
+      try {
+        const registration = await navigator.serviceWorker.ready
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: undefined,
+        })
+        const token = JSON.stringify(subscription.toJSON())
+        await registerToken(token)
+      } catch {
+        // Push subscription failed - non-critical
+      }
+    }
+  }, [registerToken])
+
+  return { registerToken, unregisterToken, requestPushPermission }
 }

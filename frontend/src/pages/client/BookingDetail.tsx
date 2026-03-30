@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   Typography,
@@ -37,8 +37,10 @@ import { usePostApiV1BookingsShare } from '@/api/generated/share/share'
 import ApplePayButton from '@/components/ApplePayButton'
 import GooglePayButton from '@/components/GooglePayButton'
 import ShareButton from '@/components/ShareButton'
+import { useDeviceToken } from '@/lib/useDeviceToken'
 
 const { Title, Text } = Typography
+const PUSH_PROMPTED_KEY = 'bani_push_prompted'
 
 export default function ClientBookingDetail() {
   const { id } = useParams<{ id: string }>()
@@ -86,6 +88,16 @@ export default function ClientBookingDetail() {
       onError: () => message.error('Не удалось инициировать оплату'),
     },
   })
+
+  const { requestPushPermission } = useDeviceToken()
+
+  // FR-142: Request push permission after first booking completion
+  useEffect(() => {
+    if (booking?.status === 'completed' && !localStorage.getItem(PUSH_PROMPTED_KEY)) {
+      localStorage.setItem(PUSH_PROMPTED_KEY, '1')
+      requestPushPermission()
+    }
+  }, [booking?.status, requestPushPermission])
 
   const shareMutation = usePostApiV1BookingsShare()
 

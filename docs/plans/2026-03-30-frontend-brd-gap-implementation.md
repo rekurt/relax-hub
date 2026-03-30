@@ -324,11 +324,11 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/lib/useDeviceToken.ts`
 - Modify: `frontend/src/pages/client/BookingDetail.tsx`
 
-- [ ] Implement push permission request after first booking completion (not at registration) per FR-142
-- [ ] Verify OnboardingTour shows: how to search, how to book, what is wallet, nearby recommendations (FR-016)
-- [ ] Add welcome bonus display in onboarding (500 RUB / 15 BYN) per FR-016
-- [ ] Write tests for push permission timing, onboarding steps
-- [ ] Run project test suite + lint
+- [x] Implement push permission request after first booking completion (not at registration) per FR-142
+- [x] Verify OnboardingTour shows: how to search, how to book, what is wallet, nearby recommendations (FR-016)
+- [x] Add welcome bonus display in onboarding (500 RUB / 15 BYN) per FR-016
+- [x] Write tests for push permission timing, onboarding steps
+- [x] Run project test suite + lint
 
 ### Task 23: Client Active Promo Codes & Chat Content Filter (FR-099, FR-063)
 

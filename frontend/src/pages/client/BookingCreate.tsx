@@ -188,9 +188,6 @@ export default function BookingCreate() {
         const booking = response?.data
         if (booking?.id) {
           message.success(isRequestMode ? 'Заявка на бронирование отправлена!' : 'Бронирование создано!')
-          if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission()
-          }
           navigate(`/client/bookings/${booking.id}`)
         }
       },

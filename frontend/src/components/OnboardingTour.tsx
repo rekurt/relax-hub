@@ -1,56 +1,76 @@
 import { useState } from 'react'
-import { Modal, Button, Steps, Typography, Space } from 'antd'
+import { Modal, Button, Steps, Typography, Space, Alert } from 'antd'
 import {
   SearchOutlined,
   CalendarOutlined,
   WalletOutlined,
   StarOutlined,
-  UserOutlined,
+  EnvironmentOutlined,
+  GiftOutlined,
 } from '@ant-design/icons'
 import { axiosInstance } from '@/api/axios-instance'
+import { formatPrice } from '@/lib/format'
 
-const { Title, Paragraph } = Typography
+const { Title, Paragraph, Text } = Typography
 
 interface OnboardingTourProps {
   open: boolean
   onComplete: () => void
+  region?: string
 }
 
-const STEPS = [
-  {
-    icon: <SearchOutlined style={{ fontSize: 48, color: '#1677ff' }} />,
-    title: 'Поиск бань',
-    description:
-      'Используйте поиск, чтобы найти идеальную баню. Фильтруйте по городу, цене, удобствам и расположению на карте.',
-  },
-  {
-    icon: <CalendarOutlined style={{ fontSize: 48, color: '#52c41a' }} />,
-    title: 'Бронирование',
-    description:
-      'Выберите дату и время, укажите количество гостей и дополнительные услуги. Оплатите онлайн картой или через кошелёк.',
-  },
-  {
-    icon: <WalletOutlined style={{ fontSize: 48, color: '#faad14' }} />,
-    title: 'Кошелёк и бонусы',
-    description:
-      'Пополняйте кошелёк для быстрой оплаты. Получайте бонусы за бронирования и приглашение друзей.',
-  },
-  {
-    icon: <StarOutlined style={{ fontSize: 48, color: '#eb2f96' }} />,
-    title: 'Отзывы и рейтинг',
-    description:
-      'Оставляйте отзывы после посещения. Оценивайте чистоту, точность описания, общение и цену. Ваши отзывы помогут другим.',
-  },
-  {
-    icon: <UserOutlined style={{ fontSize: 48, color: '#722ed1' }} />,
-    title: 'Ваш профиль',
-    description:
-      'Заполните профиль для персональных рекомендаций. Укажите предпочтения, город и загрузите фото.',
-  },
-]
+const WELCOME_BONUS_RU = 50000 // 500 RUB in kopecks
+const WELCOME_BONUS_BY = 1500 // 15 BYN in kopecks
 
-export default function OnboardingTour({ open, onComplete }: OnboardingTourProps) {
+function getSteps(region?: string) {
+  const bonusAmount = region === 'BY' ? WELCOME_BONUS_BY : WELCOME_BONUS_RU
+  const currencySymbol = region === 'BY' ? 'BYN' : '₽'
+
+  return [
+    {
+      icon: <GiftOutlined style={{ fontSize: 48, color: '#52c41a' }} />,
+      title: 'Добро пожаловать!',
+      description:
+        `Вам начислен приветственный бонус ${formatPrice(bonusAmount)}! Бонус действует 30 дней и может быть использован для оплаты первого бронирования.`,
+      bonusAmount,
+      currencySymbol,
+    },
+    {
+      icon: <SearchOutlined style={{ fontSize: 48, color: '#1677ff' }} />,
+      title: 'Поиск бань',
+      description:
+        'Используйте поиск, чтобы найти идеальную баню. Фильтруйте по городу, цене, удобствам и расположению на карте.',
+    },
+    {
+      icon: <CalendarOutlined style={{ fontSize: 48, color: '#fa8c16' }} />,
+      title: 'Бронирование',
+      description:
+        'Выберите дату и время, укажите количество гостей и дополнительные услуги. Оплатите онлайн картой, через СБП или из кошелька.',
+    },
+    {
+      icon: <WalletOutlined style={{ fontSize: 48, color: '#faad14' }} />,
+      title: 'Кошелёк и бонусы',
+      description:
+        'Пополняйте кошелёк для быстрой оплаты. Получайте кешбэк за бронирования, бонусы за приглашение друзей и повышайте уровень лояльности.',
+    },
+    {
+      icon: <EnvironmentOutlined style={{ fontSize: 48, color: '#13c2c2' }} />,
+      title: 'Рекомендации рядом',
+      description:
+        'Разрешите определение местоположения, и мы покажем лучшие бани поблизости. Персональные рекомендации учитывают ваши предпочтения и историю посещений.',
+    },
+    {
+      icon: <StarOutlined style={{ fontSize: 48, color: '#eb2f96' }} />,
+      title: 'Отзывы и рейтинг',
+      description:
+        'Оставляйте отзывы после посещения. Оценивайте чистоту, точность описания, общение и цену. Ваши отзывы помогут другим.',
+    },
+  ]
+}
+
+export default function OnboardingTour({ open, onComplete, region }: OnboardingTourProps) {
   const [current, setCurrent] = useState(0)
+  const steps = getSteps(region)
 
   const handleComplete = async () => {
     try {
@@ -61,7 +81,8 @@ export default function OnboardingTour({ open, onComplete }: OnboardingTourProps
     onComplete()
   }
 
-  const isLast = current === STEPS.length - 1
+  const isLast = current === steps.length - 1
+  const step = steps[current]!
 
   return (
     <Modal
@@ -72,19 +93,32 @@ export default function OnboardingTour({ open, onComplete }: OnboardingTourProps
       centered
     >
       <div style={{ textAlign: 'center', padding: '24px 0 8px' }}>
-        {STEPS[current]!.icon}
+        {step.icon}
         <Title level={4} style={{ marginTop: 16 }}>
-          {STEPS[current]!.title}
+          {step.title}
         </Title>
         <Paragraph type="secondary" style={{ fontSize: 15, minHeight: 66 }}>
-          {STEPS[current]!.description}
+          {step.description}
         </Paragraph>
+        {current === 0 && (
+          <Alert
+            type="success"
+            showIcon
+            icon={<GiftOutlined />}
+            message={
+              <Text strong>
+                Приветственный бонус: {formatPrice(region === 'BY' ? WELCOME_BONUS_BY : WELCOME_BONUS_RU)}
+              </Text>
+            }
+            style={{ marginTop: 8, textAlign: 'left' }}
+          />
+        )}
       </div>
 
       <Steps
         current={current}
         size="small"
-        items={STEPS.map((_, i) => ({ title: '', key: i }))}
+        items={steps.map((_, i) => ({ title: '', key: i }))}
         style={{ marginBottom: 24 }}
       />
 
