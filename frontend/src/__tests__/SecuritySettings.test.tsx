@@ -208,9 +208,8 @@ describe('SecuritySettings', () => {
     const popconfirmButton = confirmButtons.find(
       (btn) => btn.closest('.ant-popconfirm-buttons'),
     )
-    if (popconfirmButton) {
-      fireEvent.click(popconfirmButton)
-    }
+    expect(popconfirmButton).toBeTruthy()
+    fireEvent.click(popconfirmButton!)
 
     await waitFor(() => {
       expect(mockTerminateMutate).toHaveBeenCalledWith({ id: 'sess-2' })

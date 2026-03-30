@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import {
-  App,
   Button,
   Card,
   Col,
@@ -14,7 +13,7 @@ import {
   Tag,
   Typography,
 } from 'antd'
-import { EditOutlined, TrophyOutlined } from '@ant-design/icons'
+import { EyeOutlined, TrophyOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import {
   useGetMyLoyaltyLevels,
@@ -44,7 +43,6 @@ interface TierFormValues {
 }
 
 export default function LoyaltyManagement() {
-  const { message } = App.useApp()
   const [form] = Form.useForm<TierFormValues>()
 
   const [editModalOpen, setEditModalOpen] = useState(false)
@@ -54,7 +52,7 @@ export default function LoyaltyManagement() {
 
   const levels: InternalHandlerLoyaltyLevelResponse[] = data?.data ?? []
 
-  const openEditModal = (level: InternalHandlerLoyaltyLevelResponse) => {
+  const openViewModal = (level: InternalHandlerLoyaltyLevelResponse) => {
     setEditingLevel(level)
     form.setFieldsValue({
       min_visits: level.min_visits ?? 0,
@@ -62,14 +60,6 @@ export default function LoyaltyManagement() {
       point_multiplier: level.point_multiplier ?? 1,
     })
     setEditModalOpen(true)
-  }
-
-  const handleFormSubmit = async () => {
-    await form.validateFields()
-    // Admin loyalty level editing would require a dedicated admin endpoint
-    // For now, show a success message indicating the configuration was saved
-    message.success(`Уровень "${LEVEL_NAMES[editingLevel?.level ?? ''] ?? editingLevel?.level}" обновлён`)
-    setEditModalOpen(false)
   }
 
   const columns: ColumnsType<InternalHandlerLoyaltyLevelResponse> = [
@@ -117,10 +107,10 @@ export default function LoyaltyManagement() {
         <Button
           type="link"
           size="small"
-          icon={<EditOutlined />}
-          onClick={() => openEditModal(record)}
+          icon={<EyeOutlined />}
+          onClick={() => openViewModal(record)}
         >
-          Изменить
+          Просмотр
         </Button>
       ),
     },
@@ -174,34 +164,20 @@ export default function LoyaltyManagement() {
       )}
 
       <Modal
-        title={`Редактировать уровень: ${LEVEL_NAMES[editingLevel?.level ?? ''] ?? editingLevel?.level}`}
+        title={`Уровень: ${LEVEL_NAMES[editingLevel?.level ?? ''] ?? editingLevel?.level}`}
         open={editModalOpen}
         onCancel={() => setEditModalOpen(false)}
-        onOk={handleFormSubmit}
-        okText="Сохранить"
-        cancelText="Отмена"
+        footer={<Button onClick={() => setEditModalOpen(false)}>Закрыть</Button>}
       >
         <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-          <Form.Item
-            name="min_visits"
-            label="Минимальное количество визитов"
-            rules={[{ required: true, message: 'Укажите количество визитов' }]}
-          >
-            <InputNumber style={{ width: '100%' }} min={0} max={1000} />
+          <Form.Item name="min_visits" label="Минимальное количество визитов">
+            <InputNumber style={{ width: '100%' }} disabled />
           </Form.Item>
-          <Form.Item
-            name="discount_percent"
-            label="Процент кэшбэка"
-            rules={[{ required: true, message: 'Укажите процент' }]}
-          >
-            <InputNumber style={{ width: '100%' }} min={0} max={50} step={0.5} addonAfter="%" />
+          <Form.Item name="discount_percent" label="Процент кэшбэка">
+            <InputNumber style={{ width: '100%' }} disabled addonAfter="%" />
           </Form.Item>
-          <Form.Item
-            name="point_multiplier"
-            label="Множитель баллов"
-            rules={[{ required: true, message: 'Укажите множитель' }]}
-          >
-            <InputNumber style={{ width: '100%' }} min={1} max={10} step={0.1} addonAfter="×" />
+          <Form.Item name="point_multiplier" label="Множитель баллов">
+            <InputNumber style={{ width: '100%' }} disabled addonAfter="×" />
           </Form.Item>
         </Form>
       </Modal>

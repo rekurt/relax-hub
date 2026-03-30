@@ -73,22 +73,22 @@ describe('LoyaltyManagement', () => {
     expect(screen.getByText('от 25 визитов')).toBeInTheDocument()
   })
 
-  it('renders edit buttons for each level', () => {
+  it('renders view buttons for each level', () => {
     setupMocks()
     renderWithProviders(<LoyaltyManagement />)
 
-    const editButtons = screen.getAllByText('Изменить')
-    expect(editButtons.length).toBe(4)
+    const viewButtons = screen.getAllByText('Просмотр')
+    expect(viewButtons.length).toBe(4)
   })
 
-  it('opens edit modal on click', () => {
+  it('opens view modal on click', () => {
     setupMocks()
     renderWithProviders(<LoyaltyManagement />)
 
-    const editButtons = screen.getAllByText('Изменить')
-    fireEvent.click(editButtons[0]!)
+    const viewButtons = screen.getAllByText('Просмотр')
+    fireEvent.click(viewButtons[0]!)
 
-    expect(screen.getByText(/Редактировать уровень/)).toBeInTheDocument()
+    expect(screen.getByText(/Уровень:/)).toBeInTheDocument()
     expect(screen.getByText('Минимальное количество визитов')).toBeInTheDocument()
     expect(screen.getByText('Процент кэшбэка')).toBeInTheDocument()
     // "Множитель баллов" appears in both table and modal

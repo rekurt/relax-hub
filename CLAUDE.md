@@ -349,9 +349,9 @@ frontend/src/
 │   │   ├── HolidayManagement  #   Holiday management per region
 │   │   ├── AntiFraudDashboard #   Fraud flag review queue
 │   │   ├── TicketManagement   #   Support ticket admin queue, SLA timers
-│   │   ├── TicketDetail       #   Admin ticket response/escalation
+│   │   ├── AdminTicketDetail   #   Admin ticket response/escalation
 │   │   ├── DisputeManagement  #   Dispute mediation queue
-│   │   ├── DisputeDetail      #   Admin dispute resolution
+│   │   ├── AdminDisputeDetail #   Admin dispute resolution
 │   │   ├── WalletManagement   #   Admin wallet credit/debit/freeze
 │   │   ├── BookingManagement  #   Admin booking cancel/refund/status
 │   │   ├── RoleManagement     #   Admin sub-role assignment
