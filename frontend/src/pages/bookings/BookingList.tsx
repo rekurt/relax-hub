@@ -45,6 +45,7 @@ const STATUS_OPTIONS = [
   { value: 'completed', label: 'Завершено' },
   { value: 'cancelled', label: 'Отменено' },
   { value: 'rejected', label: 'Отклонено' },
+  { value: 'no_show', label: 'Неявка' },
 ]
 
 export default function BookingList() {

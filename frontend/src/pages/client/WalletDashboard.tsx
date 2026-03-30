@@ -177,7 +177,7 @@ export default function WalletDashboard() {
       dataIndex: 'amount',
       key: 'amount',
       render: (amount: number, record) => {
-        const isPositive = record.type !== 'spend'
+        const isPositive = !['spend', 'bonus_expiry', 'hold_capture', 'payout', 'admin_debit'].includes(record.type ?? '')
         return (
           <span style={{ color: isPositive ? '#52c41a' : '#ff4d4f', fontWeight: 500 }}>
             {isPositive ? '+' : ''}{formatPrice(amount ?? 0)}

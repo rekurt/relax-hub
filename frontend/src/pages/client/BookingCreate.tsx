@@ -128,13 +128,27 @@ export default function BookingCreate() {
 
   const isRequestMode = (bathhouse as Record<string, unknown>)?.booking_mode === 'request'
 
-  // Calculated final price with add-ons
+  // Calculate booking duration in hours for per_hour add-ons
+  const durationHours = useMemo(() => {
+    if (!startTime || !endTime) return 1
+    const sParts = startTime.split(':').map(Number)
+    const eParts = endTime.split(':').map(Number)
+    let diff = ((eParts[0] ?? 0) * 60 + (eParts[1] ?? 0)) - ((sParts[0] ?? 0) * 60 + (sParts[1] ?? 0))
+    if (diff <= 0) diff += 24 * 60 // wraparound midnight
+    return Math.max(1, diff / 60)
+  }, [startTime, endTime])
+
+  // Calculated final price with add-ons (accounting for unit type)
   const addonsTotal = useMemo(() => {
     return selectedAddons.reduce((sum, sel) => {
       const addon = addons.find((a) => a.id === sel.addon_id)
-      return sum + (addon?.price ?? 0) * sel.quantity
+      if (!addon) return sum
+      let multiplier = sel.quantity
+      if (addon.unit === 'per_hour') multiplier = sel.quantity * durationHours
+      else if (addon.unit === 'per_person') multiplier = sel.quantity * guestCount
+      return sum + (addon.price ?? 0) * multiplier
     }, 0)
-  }, [selectedAddons, addons])
+  }, [selectedAddons, addons, durationHours, guestCount])
 
   const totalPrice = (priceInfo?.final_price ?? 0) + addonsTotal
 
