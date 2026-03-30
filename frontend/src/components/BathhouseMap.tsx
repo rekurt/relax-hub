@@ -62,6 +62,7 @@ interface BathhouseMapProps {
   onBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void
   onMarkerClick?: (id: string) => void
   onMarkerHover?: (id: string | null) => void
+  showMiniCard?: boolean
   center?: { lat: number; lng: number }
   zoom?: number
   isochronePolygon?: number[][] | null // [lat, lng] pairs for Yandex Maps
@@ -103,6 +104,7 @@ export default function BathhouseMap({
   onBoundsChange,
   onMarkerClick,
   onMarkerHover,
+  showMiniCard = false,
   center,
   zoom,
   isochronePolygon,
@@ -204,11 +206,30 @@ export default function BathhouseMap({
         const isHighlighted = highlightedId === b.id
         const priceLabel = b.price_per_hour ? formatPrice(b.price_per_hour) : ''
 
+        const coverImage = b.images?.[0] ?? b.gallery_preview?.[0]?.url
+        const ratingStr = b.rating ? b.rating.toFixed(1) : '—'
+        const reviewCountStr = b.review_count ?? 0
+        const slug = b.slug ?? b.id
+
+        const balloonBody = showMiniCard
+          ? `<div style="min-width:200px;max-width:260px;">
+              ${coverImage ? `<img src="${coverImage}" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:6px;margin-bottom:8px;" />` : ''}
+              <div style="font-weight:600;font-size:14px;margin-bottom:4px;">${b.name ?? ''}</div>
+              <div style="color:#666;font-size:12px;margin-bottom:4px;">${b.address ?? ''}</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="color:#faad14;">★ ${ratingStr}</span>
+                <span style="color:#999;font-size:12px;">(${reviewCountStr})</span>
+                <strong>${priceLabel}/ч</strong>
+              </div>
+              <a href="/client/bathhouse/${slug}" style="display:inline-block;background:#722ed1;color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-size:13px;">Подробнее</a>
+            </div>`
+          : `<div>${b.address ?? ''}<br/><strong>${priceLabel}/ч</strong></div>`
+
         const placemark = new window.ymaps!.Placemark(
           [b.latitude!, b.longitude!],
           {
-            balloonContentHeader: b.name ?? '',
-            balloonContentBody: `<div>${b.address ?? ''}<br/><strong>${priceLabel}/ч</strong></div>`,
+            balloonContentHeader: showMiniCard ? '' : (b.name ?? ''),
+            balloonContentBody: balloonBody,
             hintContent: `${b.name} — ${priceLabel}/ч`,
           },
           {
@@ -237,7 +258,11 @@ export default function BathhouseMap({
         )
 
         placemark.events.add('click', () => {
-          if (b.id && onMarkerClick) onMarkerClick(b.id)
+          if (showMiniCard) {
+            // Let the balloon open naturally (default behavior)
+          } else if (b.id && onMarkerClick) {
+            onMarkerClick(b.id)
+          }
         })
         placemark.events.add('mouseenter', () => {
           if (b.id && onMarkerHover) onMarkerHover(b.id)
@@ -250,7 +275,7 @@ export default function BathhouseMap({
       })
 
     clustererRef.current.add(placemarks)
-  }, [bathhouses, highlightedId, onMarkerClick, onMarkerHover])
+  }, [bathhouses, highlightedId, onMarkerClick, onMarkerHover, showMiniCard])
 
   // Update isochrone polygon overlay
   useEffect(() => {

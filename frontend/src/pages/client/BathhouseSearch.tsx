@@ -279,12 +279,24 @@ export default function BathhouseSearch() {
                 onMouseEnter={() => setHighlightedId(b.id ?? null)}
                 onMouseLeave={() => setHighlightedId(null)}
               >
-                <BathhouseCard
-                  bathhouse={b}
-                  showCompare
-                  isCompareSelected={compareIds.includes(b.id ?? '')}
-                  onCompareToggle={handleCompareToggle}
-                />
+                <div
+                  data-testid={`card-wrapper-${b.id}`}
+                  style={{
+                    transition: 'box-shadow 0.2s, transform 0.2s',
+                    borderRadius: 8,
+                    ...(highlightedId === b.id ? {
+                      boxShadow: '0 0 0 2px #722ed1',
+                      transform: 'scale(1.02)',
+                    } : {}),
+                  }}
+                >
+                  <BathhouseCard
+                    bathhouse={b}
+                    showCompare
+                    isCompareSelected={compareIds.includes(b.id ?? '')}
+                    onCompareToggle={handleCompareToggle}
+                  />
+                </div>
               </Col>
             ))}
           </Row>
@@ -540,6 +552,7 @@ export default function BathhouseSearch() {
           onBoundsChange={handleBoundsChange}
           onMarkerClick={handleMarkerClick}
           onMarkerHover={setHighlightedId}
+          showMiniCard
           center={geoCoords ?? undefined}
           isochronePolygon={isochronePolygon}
           style={{ height: 600, borderRadius: 8, overflow: 'hidden' }}
@@ -558,6 +571,7 @@ export default function BathhouseSearch() {
               onBoundsChange={handleBoundsChange}
               onMarkerClick={handleMarkerClick}
               onMarkerHover={setHighlightedId}
+              showMiniCard
               center={geoCoords ?? undefined}
               isochronePolygon={isochronePolygon}
               style={{ height: 700, borderRadius: 8, overflow: 'hidden' }}

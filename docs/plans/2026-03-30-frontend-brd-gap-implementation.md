@@ -295,13 +295,13 @@ Comprehensive frontend implementation plan to close all gaps between the BRD Rel
 - Modify: `frontend/src/pages/client/BathhouseSearch.tsx`
 - Modify: `frontend/src/components/BathhouseMap.tsx`
 
-- [ ] Verify and enhance three view modes (List / Map / Split-view) per FR-050
-- [ ] Add map cluster behavior when >50 markers (FR-048)
-- [ ] Add "Search in this area" button on map pan (FR-049)
-- [ ] Add hover synchronization: hover on list item highlights map marker and vice versa (FR-049)
-- [ ] Add mini-card popup on marker click (photo, name, price, rating) with link to full page (FR-049)
-- [ ] Write tests for view mode switching, map interactions
-- [ ] Run project test suite + lint
+- [x] Verify and enhance three view modes (List / Map / Split-view) per FR-050
+- [x] Add map cluster behavior when >50 markers (FR-048)
+- [x] Add "Search in this area" button on map pan (FR-049)
+- [x] Add hover synchronization: hover on list item highlights map marker and vice versa (FR-049)
+- [x] Add mini-card popup on marker click (photo, name, price, rating) with link to full page (FR-049)
+- [x] Write tests for view mode switching, map interactions
+- [x] Run project test suite + lint
 
 ### Task 21: Booking Flow Stepper Enhancement (FR-055-058)
 

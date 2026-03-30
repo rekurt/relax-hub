@@ -29,9 +29,23 @@ vi.mock('@/api/generated/favorites/favorites', () => ({
 }))
 
 vi.mock('@/components/BathhouseMap', () => ({
-  default: ({ bathhouses, onBoundsChange }: { bathhouses: unknown[]; onBoundsChange?: (b: unknown) => void }) => (
+  default: ({
+    bathhouses,
+    onBoundsChange,
+    onMarkerHover,
+    showMiniCard,
+    highlightedId,
+  }: {
+    bathhouses: { id?: string; name?: string }[]
+    onBoundsChange?: (b: unknown) => void
+    onMarkerHover?: (id: string | null) => void
+    showMiniCard?: boolean
+    highlightedId?: string | null
+  }) => (
     <div data-testid="bathhouse-map">
       Map with {bathhouses.length} markers
+      {showMiniCard && <span data-testid="mini-card-enabled" />}
+      {highlightedId && <span data-testid="map-highlighted">{highlightedId}</span>}
       {onBoundsChange && (
         <button
           data-testid="search-area-btn"
@@ -42,6 +56,16 @@ vi.mock('@/components/BathhouseMap', () => ({
           Search area
         </button>
       )}
+      {onMarkerHover && bathhouses.map((b) => (
+        <div
+          key={b.id}
+          data-testid={`map-marker-${b.id}`}
+          onMouseEnter={() => onMarkerHover(b.id ?? null)}
+          onMouseLeave={() => onMarkerHover(null)}
+        >
+          {b.name}
+        </div>
+      ))}
     </div>
   ),
 }))
@@ -166,7 +190,8 @@ describe('BathhouseSearch - Map & Compare features', () => {
     fireEvent.click(screen.getByText('Сплит'))
 
     expect(screen.getByTestId('bathhouse-map')).toBeInTheDocument()
-    expect(screen.getByText('Баня Классик')).toBeInTheDocument()
+    // Both list and map markers show bathhouse names, so use getAllByText
+    expect(screen.getAllByText('Баня Классик').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows compare checkboxes on cards', () => {
@@ -240,5 +265,61 @@ describe('BathhouseSearch - Map & Compare features', () => {
     expect(screen.getByPlaceholderText('Поиск по названию...')).toBeInTheDocument()
     expect(screen.getByText('Фильтры')).toBeInTheDocument()
     expect(screen.getByText('Найти рядом')).toBeInTheDocument()
+  })
+
+  it('enables mini-card popups on map view', () => {
+    renderWithProviders(<BathhouseSearch />)
+
+    fireEvent.click(screen.getByText('Карта'))
+
+    expect(screen.getByTestId('mini-card-enabled')).toBeInTheDocument()
+  })
+
+  it('enables mini-card popups on split view', () => {
+    renderWithProviders(<BathhouseSearch />)
+
+    fireEvent.click(screen.getByText('Сплит'))
+
+    expect(screen.getByTestId('mini-card-enabled')).toBeInTheDocument()
+  })
+
+  it('highlights list card when map marker is hovered', () => {
+    renderWithProviders(<BathhouseSearch />)
+
+    fireEvent.click(screen.getByText('Сплит'))
+
+    // Hover over map marker
+    const marker = screen.getByTestId('map-marker-1')
+    fireEvent.mouseEnter(marker)
+
+    // Check that the card wrapper has highlight styling
+    const cardWrapper = screen.getByTestId('card-wrapper-1')
+    expect(cardWrapper.style.boxShadow).toContain('722ed1')
+  })
+
+  it('removes highlight when map marker hover ends', () => {
+    renderWithProviders(<BathhouseSearch />)
+
+    fireEvent.click(screen.getByText('Сплит'))
+
+    const marker = screen.getByTestId('map-marker-1')
+    fireEvent.mouseEnter(marker)
+    fireEvent.mouseLeave(marker)
+
+    const cardWrapper = screen.getByTestId('card-wrapper-1')
+    expect(cardWrapper.style.boxShadow).toBe('')
+  })
+
+  it('highlights map marker when list card is hovered', () => {
+    renderWithProviders(<BathhouseSearch />)
+
+    fireEvent.click(screen.getByText('Сплит'))
+
+    // Hover over list card
+    const cardWrapper = screen.getByTestId('card-wrapper-1')
+    const col = cardWrapper.closest('.ant-col')
+    if (col) fireEvent.mouseEnter(col)
+
+    expect(screen.getByTestId('map-highlighted')).toHaveTextContent('1')
   })
 })

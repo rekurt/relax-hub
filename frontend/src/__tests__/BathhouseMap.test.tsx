@@ -4,20 +4,29 @@ import { useState } from 'react'
 import BathhouseMap from '@/components/BathhouseMap'
 
 interface MockProps {
-  bathhouses: { id?: string; latitude?: number; longitude?: number; name?: string; price_per_hour?: number }[]
+  bathhouses: { id?: string; latitude?: number; longitude?: number; name?: string; price_per_hour?: number; slug?: string; rating?: number; review_count?: number; images?: string[] }[]
   highlightedId?: string | null
+  showMiniCard?: boolean
+  onMarkerClick?: (id: string) => void
   style?: React.CSSProperties
 }
 
-function MockBathhouseMap({ bathhouses, highlightedId, style }: MockProps) {
+function MockBathhouseMap({ bathhouses, highlightedId, showMiniCard, onMarkerClick, style }: MockProps) {
   const [mapType, setMapType] = useState<'scheme' | 'satellite'>('scheme')
   const markersWithCoords = bathhouses.filter((b) => b.latitude && b.longitude)
   return (
     <div data-testid="bathhouse-map" style={style}>
       <span data-testid="marker-count">{markersWithCoords.length}</span>
       {highlightedId && <span data-testid="highlighted">{highlightedId}</span>}
+      {showMiniCard && <span data-testid="mini-card-mode" />}
       {markersWithCoords.map((b) => (
-        <div key={b.id} data-testid={`marker-${b.id}`}>
+        <div
+          key={b.id}
+          data-testid={`marker-${b.id}`}
+          onClick={() => {
+            if (!showMiniCard && b.id && onMarkerClick) onMarkerClick(b.id)
+          }}
+        >
           {b.name}
         </div>
       ))}
@@ -106,5 +115,29 @@ describe('BathhouseMap', () => {
     // Click again to switch back to scheme
     fireEvent.click(toggle)
     expect(toggle).toHaveTextContent('Спутник')
+  })
+
+  it('renders mini-card mode indicator when showMiniCard is true', () => {
+    render(<BathhouseMap bathhouses={mockBathhouses} showMiniCard />)
+    expect(screen.getByTestId('mini-card-mode')).toBeInTheDocument()
+  })
+
+  it('does not show mini-card mode indicator by default', () => {
+    render(<BathhouseMap bathhouses={mockBathhouses} />)
+    expect(screen.queryByTestId('mini-card-mode')).not.toBeInTheDocument()
+  })
+
+  it('does not call onMarkerClick in mini-card mode', () => {
+    const handleClick = vi.fn()
+    render(<BathhouseMap bathhouses={mockBathhouses} showMiniCard onMarkerClick={handleClick} />)
+    fireEvent.click(screen.getByTestId('marker-1'))
+    expect(handleClick).not.toHaveBeenCalled()
+  })
+
+  it('calls onMarkerClick when not in mini-card mode', () => {
+    const handleClick = vi.fn()
+    render(<BathhouseMap bathhouses={mockBathhouses} onMarkerClick={handleClick} />)
+    fireEvent.click(screen.getByTestId('marker-1'))
+    expect(handleClick).toHaveBeenCalledWith('1')
   })
 })
