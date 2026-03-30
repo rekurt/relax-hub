@@ -62,6 +62,15 @@ export default function DisputeCreate() {
     }
   }
 
+  if (!bookingId) {
+    return (
+      <div style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', padding: '40px 0' }}>
+        <Title level={4}>Бронирование не указано</Title>
+        <Button onClick={() => navigate('/client/bookings')}>К бронированиям</Button>
+      </div>
+    )
+  }
+
   return (
     <div style={{ maxWidth: 600, margin: '0 auto' }}>
       <Space style={{ marginBottom: 16 }}>

@@ -201,10 +201,9 @@ export default function ClientBookingDetail() {
       if (hoursUntil >= 24) return 'При отмене сейчас вы получите 50% возврат.'
       return 'При отмене менее чем за 24 часа возврат не предусмотрен.'
     }
-    // flexible (default)
+    // flexible (default): 100% if >24h, 50% if <24h
     if (hoursUntil > 24) return 'При отмене сейчас вы получите 100% возврат.'
-    if (hoursUntil >= 2) return 'При отмене сейчас вы получите 50% возврат.'
-    return 'При отмене менее чем за 2 часа возврат не предусмотрен.'
+    return 'При отмене сейчас вы получите 50% возврат.'
   }
 
   const openModifyModal = () => {

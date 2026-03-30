@@ -381,7 +381,7 @@ export default function WalletDashboard() {
         rowKey="id"
         loading={txLoading}
         locale={{ emptyText: <EmptyState description="Нет операций по кошельку" /> }}
-        pagination={{
+        pagination={dateRange?.[0] && dateRange?.[1] ? false : {
           current: page,
           pageSize: pageSize,
           total: txMeta?.total_count ?? 0,

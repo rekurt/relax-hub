@@ -294,7 +294,7 @@ export default function BookingList() {
         )
       }
 
-      if (!record.checked_in_at) {
+      if (record.checked_in_at && record.checked_out_at) {
         actions.push(
           <Button
             key="complete"

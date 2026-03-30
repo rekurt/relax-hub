@@ -189,11 +189,16 @@ describe('BookingList', () => {
     expect(screen.getByText('Отклонить')).toBeInTheDocument()
   })
 
-  it('shows complete/cancel actions for confirmed bookings', () => {
+  it('shows complete/cancel actions for confirmed bookings with check-in and check-out', () => {
     mockBathhouseStore('bathhouse-1')
+    const checkedOutBooking = {
+      ...mockBookings[1],
+      checked_in_at: '2026-03-21T10:00:00Z',
+      checked_out_at: '2026-03-21T12:00:00Z',
+    }
     vi.mocked(useGetBathhousesIdBookings).mockReturnValue({
       data: {
-        data: [mockBookings[1]],
+        data: [checkedOutBooking],
         success: true,
         meta: { total_count: 1, page: 0, page_size: 10, total_pages: 1 },
       },
