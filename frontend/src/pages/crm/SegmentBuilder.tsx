@@ -105,6 +105,7 @@ function SegmentForm({
   initialValues?: CustomSegment
 }) {
   const [form] = Form.useForm()
+  const { message } = App.useApp()
   const queryClient = useQueryClient()
   const isEdit = !!initialValues
 

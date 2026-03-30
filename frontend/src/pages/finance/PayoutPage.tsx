@@ -70,7 +70,7 @@ export default function PayoutPage() {
 
   const handlePayout = (values: { amount: number; method: string }) => {
     payoutMutation.mutate(
-      { data: { amount: values.amount * 100 } },
+      { data: { ...{ amount: values.amount * 100 }, payout_method: values.method } as Parameters<typeof payoutMutation.mutate>[0]['data'] },
       {
         onSuccess: () => {
           message.success('Заявка на выплату создана')

@@ -2,10 +2,13 @@ export const AUTH_TOKEN_KEY = 'bani_token'
 
 export const BOOKING_STATUS_CONFIG: Record<string, { color: string; text: string; hexColor: string }> = {
   pending: { color: 'orange', text: 'Ожидает', hexColor: '#faad14' },
+  pending_owner: { color: 'orange', text: 'Ожидает подтверждения', hexColor: '#faad14' },
   confirmed: { color: 'blue', text: 'Подтверждено', hexColor: '#1677ff' },
   completed: { color: 'green', text: 'Завершено', hexColor: '#52c41a' },
   cancelled: { color: 'default', text: 'Отменено', hexColor: '#d9d9d9' },
   rejected: { color: 'red', text: 'Отклонено', hexColor: '#ff4d4f' },
+  no_show: { color: 'volcano', text: 'Неявка', hexColor: '#fa541c' },
+  force_majeure_cancelled: { color: 'purple', text: 'Форс-мажор', hexColor: '#722ed1' },
 }
 
 export const PAYMENT_STATUS_CONFIG: Record<string, { color: string; text: string }> = {

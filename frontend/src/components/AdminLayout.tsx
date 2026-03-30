@@ -101,12 +101,15 @@ export default function AdminLayout() {
   const isMobile = !screens.md
 
   const selectedKey = location.pathname
-  const matchedKey = adminMenuItems?.find(item => {
-    if (!item || !('key' in item)) return false
-    const key = item.key as string
-    if (key === '/admin') return selectedKey === '/admin'
-    return selectedKey.startsWith(key)
-  })?.key as string
+  const matchedKey = adminMenuItems
+    ?.filter(item => {
+      if (!item || !('key' in item)) return false
+      const key = item.key as string
+      if (key === '/admin') return selectedKey === '/admin'
+      return selectedKey.startsWith(key)
+    })
+    .sort((a, b) => ((b as { key: string }).key.length - (a as { key: string }).key.length))[0]
+    ?.key as string
   const selectedKeys = [matchedKey || '/admin']
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
