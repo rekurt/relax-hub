@@ -19,6 +19,8 @@ import {
   Segmented,
   App,
   Tag,
+  DatePicker,
+  TimePicker,
 } from 'antd'
 import {
   SearchOutlined,
@@ -33,11 +35,13 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import dayjs from 'dayjs'
 import { useGetBathhouses } from '@/api/generated/bathhouses/bathhouses'
 import { useGetCities } from '@/api/generated/cities/cities'
 import type { GetBathhousesParams } from '@/api/generated/model'
 import BathhouseCard from '@/components/BathhouseCard'
 import BathhouseMap from '@/components/BathhouseMap'
+import SearchSuggestions from '@/components/SearchSuggestions'
 import { formatPrice } from '@/lib/format'
 import { axiosInstance } from '@/api/axios-instance'
 
@@ -99,6 +103,14 @@ export default function BathhouseSearch() {
   const [compareIds, setCompareIds] = useState<string[]>([])
   const [highlightedId, setHighlightedId] = useState<string | null>(null)
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [availableDate, setAvailableDate] = useState<dayjs.Dayjs | null>(null)
+  const [availableTimeFrom, setAvailableTimeFrom] = useState<dayjs.Dayjs | null>(null)
+  const [availableTimeTo, setAvailableTimeTo] = useState<dayjs.Dayjs | null>(null)
+  const [bookingMode, setBookingMode] = useState<string | undefined>(undefined)
+  const [minRating, setMinRating] = useState<number | undefined>(undefined)
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined)
+  const searchWrapperRef = useRef<HTMLDivElement>(null)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -130,6 +142,10 @@ export default function BathhouseSearch() {
     sort_by,
     sort_order,
     q: debouncedSearch || undefined,
+    min_rating: minRating,
+    available_date: availableDate ? availableDate.format('YYYY-MM-DD') : undefined,
+    available_time_from: availableTimeFrom ? availableTimeFrom.format('HH:mm') : undefined,
+    available_time_to: availableTimeTo ? availableTimeTo.format('HH:mm') : undefined,
     ...filters,
     ...(geoEnabled && geoCoords && geoMode === 'radius'
       ? { lat: geoCoords.lat, lng: geoCoords.lng, radius_km: filters.radius_km ?? 10 }
@@ -140,8 +156,15 @@ export default function BathhouseSearch() {
   }
 
   const { data, isLoading } = useGetBathhouses(queryParams as GetBathhousesParams)
-  const bathhouses = data?.data ?? []
+  const allBathhouses = data?.data ?? []
   const meta = data?.meta
+
+  // Client-side filters for fields not supported by API params
+  const bathhouses = allBathhouses.filter((b) => {
+    if (bookingMode && b.booking_mode !== bookingMode) return false
+    if (statusFilter && !(b.badges ?? []).includes(statusFilter)) return false
+    return true
+  })
 
   const fetchIsochrone = useCallback(async (lat: number, lng: number, mode: string, minutes: number) => {
     setIsochroneLoading(true)
@@ -330,13 +353,27 @@ export default function BathhouseSearch() {
       <Space direction="vertical" size="middle" style={{ width: '100%', marginBottom: 24 }}>
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} sm={12} md={8}>
-            <Input
-              placeholder="Поиск по названию..."
-              prefix={<SearchOutlined />}
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              allowClear
-            />
+            <div ref={searchWrapperRef} style={{ position: 'relative' }}>
+              <Input
+                placeholder="Поиск по названию..."
+                prefix={<SearchOutlined />}
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); setShowSuggestions(true) }}
+                onFocus={() => { if (search.length >= 2) setShowSuggestions(true) }}
+                allowClear
+              />
+              <SearchSuggestions
+                query={search}
+                visible={showSuggestions}
+                onSelect={(text) => {
+                  setSearch(text)
+                  setDebouncedSearch(text)
+                  setShowSuggestions(false)
+                  setPage(1)
+                }}
+                onClose={() => setShowSuggestions(false)}
+              />
+            </div>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Select
@@ -405,17 +442,6 @@ export default function BathhouseSearch() {
                       />
                     </Col>
                     <Col xs={24} sm={12}>
-                      <Typography.Text type="secondary">Мин. рейтинг</Typography.Text>
-                      <Slider
-                        min={0}
-                        max={5}
-                        step={0.5}
-                        value={filters.min_rating ?? 0}
-                        onChange={(v) => updateFilter('min_rating', v || undefined)}
-                        tooltip={{ formatter: (v) => v?.toString() ?? '' }}
-                      />
-                    </Col>
-                    <Col xs={24} sm={12}>
                       <Typography.Text type="secondary">Гости</Typography.Text>
                       <InputNumber
                         min={1}
@@ -475,6 +501,89 @@ export default function BathhouseSearch() {
                         </Col>
                       </>
                     )}
+                    <Col xs={24} sm={12}>
+                      <Typography.Text type="secondary">Дата</Typography.Text>
+                      <DatePicker
+                        style={{ width: '100%' }}
+                        placeholder="Выберите дату"
+                        value={availableDate}
+                        onChange={(d) => { setAvailableDate(d); setPage(1) }}
+                        disabledDate={(current) => current && current.isBefore(dayjs(), 'day')}
+                        data-testid="date-filter"
+                      />
+                    </Col>
+                    <Col xs={12} sm={6}>
+                      <Typography.Text type="secondary">Время с</Typography.Text>
+                      <TimePicker
+                        style={{ width: '100%' }}
+                        format="HH:mm"
+                        minuteStep={30}
+                        placeholder="С"
+                        value={availableTimeFrom}
+                        onChange={(t) => { setAvailableTimeFrom(t); setPage(1) }}
+                        data-testid="time-from-filter"
+                      />
+                    </Col>
+                    <Col xs={12} sm={6}>
+                      <Typography.Text type="secondary">Время до</Typography.Text>
+                      <TimePicker
+                        style={{ width: '100%' }}
+                        format="HH:mm"
+                        minuteStep={30}
+                        placeholder="До"
+                        value={availableTimeTo}
+                        onChange={(t) => { setAvailableTimeTo(t); setPage(1) }}
+                        data-testid="time-to-filter"
+                      />
+                    </Col>
+                    <Col xs={24} sm={12}>
+                      <Typography.Text type="secondary">Тип бронирования</Typography.Text>
+                      <Select
+                        style={{ width: '100%' }}
+                        placeholder="Любой"
+                        allowClear
+                        value={bookingMode}
+                        onChange={(v) => { setBookingMode(v); setPage(1) }}
+                        options={[
+                          { value: 'instant', label: 'Мгновенное' },
+                          { value: 'request', label: 'По запросу' },
+                        ]}
+                        data-testid="booking-mode-filter"
+                      />
+                    </Col>
+                    <Col xs={24} sm={12}>
+                      <Typography.Text type="secondary">Мин. рейтинг</Typography.Text>
+                      <Select
+                        style={{ width: '100%' }}
+                        placeholder="Любой"
+                        allowClear
+                        value={minRating}
+                        onChange={(v) => { setMinRating(v); setPage(1) }}
+                        options={[
+                          { value: 3, label: 'От 3.0' },
+                          { value: 3.5, label: 'От 3.5' },
+                          { value: 4, label: 'От 4.0' },
+                          { value: 4.5, label: 'От 4.5' },
+                        ]}
+                        data-testid="min-rating-filter"
+                      />
+                    </Col>
+                    <Col xs={24} sm={12}>
+                      <Typography.Text type="secondary">Статус</Typography.Text>
+                      <Select
+                        style={{ width: '100%' }}
+                        placeholder="Все"
+                        allowClear
+                        value={statusFilter}
+                        onChange={(v) => { setStatusFilter(v); setPage(1) }}
+                        options={[
+                          { value: 'verified', label: 'Проверенные' },
+                          { value: 'top', label: 'Топ' },
+                          { value: 'premium', label: 'Премиум' },
+                        ]}
+                        data-testid="status-filter"
+                      />
+                    </Col>
                     <Col xs={24}>
                       <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>Удобства</Typography.Text>
                       <Space wrap>

@@ -120,18 +120,18 @@ Comprehensive gap analysis and implementation plan to bring the React frontend i
 - Modify: `frontend/src/components/BathhouseMap.tsx`
 - Modify: `frontend/src/components/BathhouseCard.tsx`
 
-- [ ] Create SearchSuggestions dropdown (popular queries, bathhouse names, cities from API with debounce 300ms)
-- [ ] Add date+time filter to search (FR-037) - DatePicker + TimePicker that filters by available slots
-- [ ] Add "Search in this area" button on map pan (FR-049)
-- [ ] Add marker price labels on map markers
-- [ ] Add marker clustering for 50+ results (FR-048)
-- [ ] Add hover highlight sync: list item <-> map marker (FR-049)
-- [ ] Add booking type filter (instant/request) (FR-040)
-- [ ] Add minimum rating filter (FR-040)
-- [ ] Add status filter (verified/top/premium) (FR-040)
-- [ ] Add last-minute badge on cards with discount (FR-090)
-- [ ] Write tests for SearchSuggestions, updated BathhouseSearch filters and map interactions
-- [ ] Run project test suite - must pass before task 4
+- [x] Create SearchSuggestions dropdown (popular queries, bathhouse names, cities from API with debounce 300ms)
+- [x] Add date+time filter to search (FR-037) - DatePicker + TimePicker that filters by available slots
+- [x] Add "Search in this area" button on map pan (FR-049)
+- [x] Add marker price labels on map markers
+- [x] Add marker clustering for 50+ results (FR-048)
+- [x] Add hover highlight sync: list item <-> map marker (FR-049)
+- [x] Add booking type filter (instant/request) (FR-040)
+- [x] Add minimum rating filter (FR-040)
+- [x] Add status filter (verified/top/premium) (FR-040)
+- [x] Add last-minute badge on cards with discount (FR-090)
+- [x] Write tests for SearchSuggestions, updated BathhouseSearch filters and map interactions
+- [x] Run project test suite - must pass before task 4
 
 ### Task 4: Bathhouse Detail - Complete Feature Set
 
