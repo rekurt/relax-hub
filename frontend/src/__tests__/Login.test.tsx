@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfigProvider, App as AntApp } from 'antd'
@@ -7,7 +7,13 @@ import Login from '@/pages/Login'
 
 vi.mock('@/api/generated/auth/auth', () => ({
   postAuthLogin: vi.fn(),
+  postAuthLoginPhone: vi.fn(),
+  postAuthVerifyPhone: vi.fn(),
   getAuthMe: vi.fn(),
+}))
+
+vi.mock('@/api/generated/2fa/2fa', () => ({
+  postAuth2faVerify: vi.fn(),
 }))
 
 function renderLogin(initialRoute = '/login') {
@@ -26,7 +32,7 @@ function renderLogin(initialRoute = '/login') {
 }
 
 describe('Login page', () => {
-  it('renders login form', () => {
+  it('renders login form with email tab by default', () => {
     renderLogin()
     expect(screen.getByText('Вход в личный кабинет')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Email')).toBeInTheDocument()
@@ -37,5 +43,24 @@ describe('Login page', () => {
   it('renders registration link', () => {
     renderLogin()
     expect(screen.getByText('Зарегистрироваться')).toBeInTheDocument()
+  })
+
+  it('renders forgot password link', () => {
+    renderLogin()
+    expect(screen.getByText('Забыли пароль?')).toBeInTheDocument()
+  })
+
+  it('renders email/phone tab switcher', () => {
+    renderLogin()
+    expect(screen.getByText('Email')).toBeInTheDocument()
+    expect(screen.getByText('Телефон')).toBeInTheDocument()
+  })
+
+  it('switches to phone login mode', () => {
+    renderLogin()
+    fireEvent.click(screen.getByText('Телефон'))
+    expect(screen.getByPlaceholderText('Телефон')).toBeInTheDocument()
+    expect(screen.getByText('Получить код')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('Пароль')).not.toBeInTheDocument()
   })
 })

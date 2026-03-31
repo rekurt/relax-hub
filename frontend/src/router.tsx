@@ -5,6 +5,7 @@ import AdminLayout from '@/components/AdminLayout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
+import ForgotPassword from '@/pages/ForgotPassword'
 import Dashboard from '@/pages/Dashboard'
 import BathhouseList from '@/pages/bathhouses/BathhouseList'
 import BathhouseForm from '@/pages/bathhouses/BathhouseForm'
@@ -113,6 +114,7 @@ export default function AppRouter() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/oauth/callback/:provider" element={<OAuthCallback />} />
       <Route path="/certificates/purchase" element={<CertificatePurchase />} />
       <Route path="/bathhouses/:slug" element={<BathhouseDetail />} />

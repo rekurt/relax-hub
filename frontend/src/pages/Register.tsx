@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { Form, Input, Button, Card, Typography, Space, App, Segmented, Checkbox } from 'antd'
 import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined } from '@ant-design/icons'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { postAuthRegister } from '@/api/generated/auth/auth'
+import { postAuthRegister, postAuthRegisterPhone, postAuthVerifyPhone } from '@/api/generated/auth/auth'
 import { useAuthStore } from '@/stores/auth'
 import OAuthButtons from '@/components/OAuthButtons'
+import PhoneOTPInput from '@/components/PhoneOTPInput'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
 
 const { Title, Text } = Typography
+
+type AuthMethod = 'email' | 'phone'
 
 const ROLE_OPTIONS = [
   { label: 'Клиент', value: 'client' },
@@ -20,12 +23,22 @@ const ROLE_DESCRIPTIONS: Record<string, { title: string; subtitle: string }> = {
   owner: { title: 'Регистрация владельца', subtitle: 'Создайте аккаунт для управления банями' },
 }
 
-interface RegisterFormValues {
+const AUTH_METHOD_OPTIONS = [
+  { label: 'Email', value: 'email', icon: <MailOutlined /> },
+  { label: 'Телефон', value: 'phone', icon: <PhoneOutlined /> },
+]
+
+interface EmailRegisterFormValues {
   email: string
   password: string
   confirmPassword: string
   name: string
   phone: string
+  ageConfirmed: boolean
+}
+
+interface PhoneRegisterFormValues {
+  name: string
   ageConfirmed: boolean
 }
 
@@ -37,10 +50,12 @@ export default function Register() {
   const { message } = App.useApp()
   const [loading, setLoading] = useState(false)
   const [role, setRole] = useState<string>('client')
+  const [authMethod, setAuthMethod] = useState<AuthMethod>('email')
+  const [phoneRegData, setPhoneRegData] = useState<{ name: string; ageConfirmed: boolean } | null>(null)
 
   const getRoleHomePath = (r: string) => (r === 'client' ? '/client' : '/')
 
-  const onFinish = async (values: RegisterFormValues) => {
+  const onEmailFinish = async (values: EmailRegisterFormValues) => {
     setLoading(true)
     try {
       const response = await postAuthRegister({
@@ -68,6 +83,38 @@ export default function Register() {
     }
   }
 
+  const [phoneForm] = Form.useForm<PhoneRegisterFormValues>()
+
+  const handlePhoneSendOTP = async (phone: string) => {
+    const values = await phoneForm.validateFields()
+    setPhoneRegData(values)
+    await postAuthRegisterPhone({
+      phone,
+      name: values.name,
+      age_confirmed: values.ageConfirmed,
+    })
+  }
+
+  const handlePhoneVerified = async (phone: string, code: string) => {
+    setLoading(true)
+    try {
+      const name = phoneRegData?.name || ''
+      const response = await postAuthVerifyPhone({ phone, code, name })
+      if (response.success && response.data?.token && response.data.user) {
+        setAuth(response.data.token, response.data.user)
+        message.success('Регистрация прошла успешно')
+        navigate(getRoleHomePath(role), { replace: true })
+      } else {
+        message.error(response.error?.message || 'Ошибка регистрации')
+      }
+    } catch (err) {
+      const error = err as AxiosError<InternalHandlerAPIResponse>
+      message.error(error.response?.data?.error?.message || 'Неверный код')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const roleDesc = ROLE_DESCRIPTIONS[role] ?? ROLE_DESCRIPTIONS['client']!
   const title = roleDesc.title
   const subtitle = roleDesc.subtitle
@@ -88,78 +135,115 @@ export default function Register() {
             block
           />
 
-          <Form layout="vertical" onFinish={onFinish} autoComplete="off">
-            <Form.Item
-              name="name"
-              rules={[{ required: true, message: 'Введите имя' }]}
-            >
-              <Input prefix={<UserOutlined />} placeholder="Имя" size="large" />
-            </Form.Item>
+          <Segmented
+            options={AUTH_METHOD_OPTIONS}
+            value={authMethod}
+            onChange={(v) => setAuthMethod(v as AuthMethod)}
+            block
+          />
 
-            <Form.Item
-              name="email"
-              rules={[
-                { required: true, message: 'Введите email' },
-                { type: 'email', message: 'Некорректный email' },
-              ]}
-            >
-              <Input prefix={<MailOutlined />} placeholder="Email" size="large" />
-            </Form.Item>
+          {authMethod === 'email' ? (
+            <Form layout="vertical" onFinish={onEmailFinish} autoComplete="off">
+              <Form.Item
+                name="name"
+                rules={[{ required: true, message: 'Введите имя' }]}
+              >
+                <Input prefix={<UserOutlined />} placeholder="Имя" size="large" />
+              </Form.Item>
 
-            <Form.Item
-              name="phone"
-              rules={[{ required: true, message: 'Введите телефон' }]}
-            >
-              <Input prefix={<PhoneOutlined />} placeholder="Телефон" size="large" />
-            </Form.Item>
+              <Form.Item
+                name="email"
+                rules={[
+                  { required: true, message: 'Введите email' },
+                  { type: 'email', message: 'Некорректный email' },
+                ]}
+              >
+                <Input prefix={<MailOutlined />} placeholder="Email" size="large" />
+              </Form.Item>
 
-            <Form.Item
-              name="password"
-              rules={[
-                { required: true, message: 'Введите пароль' },
-                { min: 6, message: 'Минимум 6 символов' },
-              ]}
-            >
-              <Input.Password prefix={<LockOutlined />} placeholder="Пароль" size="large" />
-            </Form.Item>
+              <Form.Item
+                name="phone"
+                rules={[{ required: true, message: 'Введите телефон' }]}
+              >
+                <Input prefix={<PhoneOutlined />} placeholder="Телефон" size="large" />
+              </Form.Item>
 
-            <Form.Item
-              name="confirmPassword"
-              dependencies={['password']}
-              rules={[
-                { required: true, message: 'Подтвердите пароль' },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || getFieldValue('password') === value) {
-                      return Promise.resolve()
-                    }
-                    return Promise.reject(new Error('Пароли не совпадают'))
+              <Form.Item
+                name="password"
+                rules={[
+                  { required: true, message: 'Введите пароль' },
+                  { min: 6, message: 'Минимум 6 символов' },
+                ]}
+              >
+                <Input.Password prefix={<LockOutlined />} placeholder="Пароль" size="large" />
+              </Form.Item>
+
+              <Form.Item
+                name="confirmPassword"
+                dependencies={['password']}
+                rules={[
+                  { required: true, message: 'Подтвердите пароль' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue('password') === value) {
+                        return Promise.resolve()
+                      }
+                      return Promise.reject(new Error('Пароли не совпадают'))
+                    },
+                  }),
+                ]}
+              >
+                <Input.Password prefix={<LockOutlined />} placeholder="Подтвердите пароль" size="large" />
+              </Form.Item>
+
+              <Form.Item
+                name="ageConfirmed"
+                valuePropName="checked"
+                rules={[
+                  {
+                    validator: (_, value) =>
+                      value ? Promise.resolve() : Promise.reject(new Error('Необходимо подтвердить возраст')),
                   },
-                }),
-              ]}
-            >
-              <Input.Password prefix={<LockOutlined />} placeholder="Подтвердите пароль" size="large" />
-            </Form.Item>
+                ]}
+              >
+                <Checkbox>Мне исполнилось 18 лет</Checkbox>
+              </Form.Item>
 
-            <Form.Item
-              name="ageConfirmed"
-              valuePropName="checked"
-              rules={[
-                {
-                  validator: (_, value) =>
-                    value ? Promise.resolve() : Promise.reject(new Error('Необходимо подтвердить возраст')),
-                },
-              ]}
-            >
-              <Checkbox>Мне исполнилось 18 лет</Checkbox>
-            </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" loading={loading} block size="large">
+                  Зарегистрироваться
+                </Button>
+              </Form.Item>
+            </Form>
+          ) : (
+            <Form form={phoneForm} layout="vertical" autoComplete="off">
+              <Form.Item
+                name="name"
+                rules={[{ required: true, message: 'Введите имя' }]}
+              >
+                <Input prefix={<UserOutlined />} placeholder="Имя" size="large" />
+              </Form.Item>
 
-            <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading} block size="large">
-                Зарегистрироваться
-              </Button>
-            </Form.Item>
-          </Form>
+              <Form.Item
+                name="ageConfirmed"
+                valuePropName="checked"
+                rules={[
+                  {
+                    validator: (_, value) =>
+                      value ? Promise.resolve() : Promise.reject(new Error('Необходимо подтвердить возраст')),
+                  },
+                ]}
+              >
+                <Checkbox>Мне исполнилось 18 лет</Checkbox>
+              </Form.Item>
+
+              <PhoneOTPInput
+                onSendOTP={handlePhoneSendOTP}
+                onVerified={handlePhoneVerified}
+                loading={loading}
+              />
+            </Form>
+          )}
 
           <OAuthButtons referralCode={referralCode} />
 
