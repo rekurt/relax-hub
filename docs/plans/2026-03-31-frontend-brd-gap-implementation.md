@@ -141,17 +141,17 @@ Comprehensive gap analysis and implementation plan to bring the React frontend i
 - Create: `frontend/src/components/PriceBreakdown.tsx`
 - Modify: `frontend/src/pages/client/BathhouseDetail.tsx`
 
-- [ ] Create TransportAccessibility component (nearby metro/bus/parking from API) (FR-054)
-- [ ] Create SimilarBathhouses component (up to 6 similar, from API) (FR-044)
-- [ ] Create PriceBreakdown component (base price, add-ons, service fee, discounts, area average comparison, total) (FR-044)
-- [ ] Add owner profile block (rating, objects count, registration date) (FR-044)
-- [ ] Add cancellation policy display (FR-022)
-- [ ] Add booking mode indicator (instant/request) (FR-058)
-- [ ] Add area average price comparison (FR-044)
-- [ ] Add full price breakdown preview for selected slot (FR-044)
-- [ ] Add visiting rules display (FR-021)
-- [ ] Write tests for all new components and updated BathhouseDetail
-- [ ] Run project test suite - must pass before task 5
+- [x] Create TransportAccessibility component (nearby metro/bus/parking from API) (FR-054)
+- [x] Create SimilarBathhouses component (up to 6 similar, from API) (FR-044)
+- [x] Create PriceBreakdown component (base price, add-ons, service fee, discounts, area average comparison, total) (FR-044)
+- [x] Add owner profile block (rating, objects count, registration date) (FR-044)
+- [x] Add cancellation policy display (FR-022)
+- [x] Add booking mode indicator (instant/request) (FR-058)
+- [x] Add area average price comparison (FR-044)
+- [x] Add full price breakdown preview for selected slot (FR-044)
+- [x] Add visiting rules display (FR-021)
+- [x] Write tests for all new components and updated BathhouseDetail
+- [x] Run project test suite - must pass before task 5
 
 ### Task 5: Booking Create - Certificate, Saved Cards, Re-booking
 

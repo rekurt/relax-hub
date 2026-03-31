@@ -17,6 +17,7 @@ import {
   Empty,
   Pagination,
   Avatar,
+  Alert,
 } from 'antd'
 import {
   ArrowLeftOutlined,
@@ -25,8 +26,7 @@ import {
   HeartFilled,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  CarOutlined,
-  NodeIndexOutlined,
+  ThunderboltOutlined,
   UserOutlined,
   WalletOutlined,
 } from '@ant-design/icons'
@@ -43,31 +43,27 @@ import { useGetMyWallet } from '@/api/generated/wallet/wallet'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice, formatDayOfWeek } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
-import BathhouseCard from '@/components/BathhouseCard'
 import ReviewCard from '@/components/ReviewCard'
 import ShareButton from '@/components/ShareButton'
+import TransportAccessibility, { type TransportItem } from '@/components/TransportAccessibility'
+import SimilarBathhouses from '@/components/SimilarBathhouses'
+import PriceBreakdown from '@/components/PriceBreakdown'
 
 const { Title, Text, Paragraph } = Typography
 
-interface TransportItem {
-  type: 'metro' | 'bus_stop' | 'parking'
-  name: string
-  distance_meters: number
-  lat: number
-  lng: number
-}
-
-const TRANSPORT_LABELS: Record<string, { label: string; color: string }> = {
-  metro: { label: 'Метро', color: '#1677ff' },
-  bus_stop: { label: 'Остановка', color: '#52c41a' },
-  parking: { label: 'Парковка', color: '#faad14' },
-}
-
-function formatDistance(meters: number): string {
-  if (meters >= 1000) {
-    return `${(meters / 1000).toFixed(1)} км`
-  }
-  return `${meters} м`
+const CANCELLATION_POLICY_DETAILS: Record<string, { label: string; description: string }> = {
+  flexible: {
+    label: 'Гибкая',
+    description: 'Бесплатная отмена за 24+ ч. Возврат 50% менее чем за 24 ч.',
+  },
+  moderate: {
+    label: 'Умеренная',
+    description: 'Бесплатная отмена за 72+ ч. Возврат 50% за 24-72 ч. Без возврата менее 24 ч.',
+  },
+  strict: {
+    label: 'Строгая',
+    description: 'Бесплатная отмена за 7+ дней. Возврат 50% за 3-7 дней. Без возврата менее 3 дней.',
+  },
 }
 
 const AMENITY_LIST = [
@@ -293,15 +289,27 @@ export default function BathhouseDetail() {
                 <Descriptions.Item label="Макс. гостей">
                   {bathhouse.max_guests ?? '—'}
                 </Descriptions.Item>
+                <Descriptions.Item label="Режим бронирования">
+                  {(() => {
+                    const mode = (bathhouse as Record<string, unknown>).booking_mode as string
+                    return mode === 'request' ? (
+                      <Tag color="orange">По запросу</Tag>
+                    ) : (
+                      <Tag icon={<ThunderboltOutlined />} color="green">Мгновенное</Tag>
+                    )
+                  })()}
+                </Descriptions.Item>
                 <Descriptions.Item label="Политика отмены">
                   {(() => {
                     const policy = (bathhouse as Record<string, unknown>).cancellation_policy as string
-                    switch (policy) {
-                      case 'flexible': return 'Гибкая'
-                      case 'moderate': return 'Умеренная'
-                      case 'strict': return 'Строгая'
-                      default: return 'Гибкая'
-                    }
+                    const details = CANCELLATION_POLICY_DETAILS[policy] ?? CANCELLATION_POLICY_DETAILS.flexible
+                    return (
+                      <div>
+                        <Text strong>{details.label}</Text>
+                        <br />
+                        <Text type="secondary" style={{ fontSize: 12 }}>{details.description}</Text>
+                      </div>
+                    )
                   })()}
                 </Descriptions.Item>
                 {(() => {
@@ -342,28 +350,21 @@ export default function BathhouseDetail() {
                 </div>
               )}
 
-              {transportItems.length > 0 && (
+              <TransportAccessibility items={transportItems} />
+
+              {(bathhouse as Record<string, unknown>).visiting_rules && (
                 <div style={{ marginTop: 16 }}>
-                  <Text strong>Транспорт рядом:</Text>
-                  <div style={{ marginTop: 8 }}>
-                    {transportItems.map((item, idx) => {
-                      const meta = TRANSPORT_LABELS[item.type] ?? { label: item.type, color: '#999' }
-                      return (
-                        <div key={`${item.type}-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                          {item.type === 'metro' ? (
-                            <NodeIndexOutlined style={{ color: meta.color }} />
-                          ) : item.type === 'parking' ? (
-                            <CarOutlined style={{ color: meta.color }} />
-                          ) : (
-                            <EnvironmentOutlined style={{ color: meta.color }} />
-                          )}
-                          <Tag color={meta.color} style={{ margin: 0 }}>{meta.label}</Tag>
-                          <Text>{item.name}</Text>
-                          <Text type="secondary">— {formatDistance(item.distance_meters)}</Text>
-                        </div>
-                      )
-                    })}
-                  </div>
+                  <Text strong>Правила посещения:</Text>
+                  <Alert
+                    type="info"
+                    showIcon={false}
+                    style={{ marginTop: 8 }}
+                    message={
+                      <Paragraph style={{ margin: 0, whiteSpace: 'pre-line' }}>
+                        {(bathhouse as Record<string, unknown>).visiting_rules as string}
+                      </Paragraph>
+                    }
+                  />
                 </div>
               )}
 
@@ -445,6 +446,16 @@ export default function BathhouseDetail() {
             </Spin>
           </Card>
 
+          {bathhouse.price_per_hour && (
+            <Card title="Примерная стоимость" size="small" style={{ marginTop: 16 }}>
+              <PriceBreakdown
+                basePrice={bathhouse.price_per_hour}
+                serviceFee={bathhouse.price_per_hour ? Math.round(bathhouse.price_per_hour * 0.1) : undefined}
+                areaAveragePrice={bathhouse.area_avg_price_per_hour}
+              />
+            </Card>
+          )}
+
           {currentUser && walletBalance?.balance != null && walletBalance.balance > 0 && bathhouse.price_per_hour && walletBalance.balance >= bathhouse.price_per_hour && (
             <Card size="small" style={{ marginTop: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -497,29 +508,7 @@ export default function BathhouseDetail() {
       {similar.length > 0 && (
         <>
           <Divider />
-          <Title level={4}>Похожие бани</Title>
-          <Row gutter={[16, 16]}>
-            {similar.slice(0, 6).map((s) => (
-              <Col key={s.id} xs={24} sm={12} md={8}>
-                <BathhouseCard
-                  bathhouse={{
-                    id: s.id,
-                    slug: s.slug,
-                    name: s.name,
-                    address: s.address,
-                    price_per_hour: s.price_per_hour,
-                    rating: s.rating,
-                    review_count: s.review_count,
-                    city_id: s.city_id,
-                    latitude: s.latitude,
-                    longitude: s.longitude,
-                    description: s.description,
-                  }}
-                  showFavorite={false}
-                />
-              </Col>
-            ))}
-          </Row>
+          <SimilarBathhouses items={similar} />
         </>
       )}
     </div>

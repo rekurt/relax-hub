@@ -90,6 +90,17 @@ const mockBathhouse = {
     { day_of_week: 0, open_time: '09:00', close_time: '23:00' },
     { day_of_week: 1, open_time: '09:00', close_time: '23:00' },
   ],
+  booking_mode: 'instant',
+  cancellation_policy: 'flexible',
+  visiting_rules: 'Сменная обувь обязательна. Дети до 12 лет — бесплатно.',
+  area_avg_price_per_hour: 250000,
+  owner_profile: {
+    name: 'Иван Петров',
+    avatar_url: null,
+    rating: 4.9,
+    object_count: 3,
+    member_since: '2024-06-01T00:00:00Z',
+  },
 }
 
 const mockSlots = [
@@ -266,6 +277,78 @@ describe('BathhouseDetail', () => {
     renderWithProviders(<BathhouseDetail />)
 
     expect(screen.getByText('К поиску')).toBeInTheDocument()
+  })
+
+  it('renders booking mode indicator', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: mockBathhouse, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    renderWithProviders(<BathhouseDetail />)
+
+    expect(screen.getByText('Мгновенное')).toBeInTheDocument()
+  })
+
+  it('renders request booking mode', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: { ...mockBathhouse, booking_mode: 'request' }, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    renderWithProviders(<BathhouseDetail />)
+
+    expect(screen.getByText('По запросу')).toBeInTheDocument()
+  })
+
+  it('renders cancellation policy with details', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: mockBathhouse, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    renderWithProviders(<BathhouseDetail />)
+
+    expect(screen.getByText('Гибкая')).toBeInTheDocument()
+    expect(screen.getByText(/Бесплатная отмена за 24/)).toBeInTheDocument()
+  })
+
+  it('renders visiting rules', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: mockBathhouse, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    renderWithProviders(<BathhouseDetail />)
+
+    expect(screen.getByText('Правила посещения:')).toBeInTheDocument()
+    expect(screen.getByText(/Сменная обувь обязательна/)).toBeInTheDocument()
+  })
+
+  it('renders owner profile block', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: mockBathhouse, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    renderWithProviders(<BathhouseDetail />)
+
+    expect(screen.getByText('Иван Петров')).toBeInTheDocument()
+    expect(screen.getByText('Объектов: 3')).toBeInTheDocument()
+    expect(screen.getByText(/Рейтинг: 4.9/)).toBeInTheDocument()
+  })
+
+  it('renders price breakdown card', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: mockBathhouse, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    renderWithProviders(<BathhouseDetail />)
+
+    expect(screen.getByText('Примерная стоимость')).toBeInTheDocument()
+    expect(screen.getByText('Базовая стоимость')).toBeInTheDocument()
+    expect(screen.getByText('Сервисный сбор')).toBeInTheDocument()
   })
 
   it('works with public /bathhouses/:slug route', () => {
