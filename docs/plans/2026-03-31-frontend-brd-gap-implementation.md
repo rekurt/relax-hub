@@ -106,11 +106,11 @@ Comprehensive gap analysis and implementation plan to bring the React frontend i
 - Modify: `frontend/src/pages/client/ClientHome.tsx`
 - Modify: `frontend/src/components/OnboardingTour.tsx`
 
-- [ ] Integrate OnboardingTour trigger for first-time users (check onboarding_completed flag)
-- [ ] Add city selection when GPS unavailable (FR-036)
-- [ ] Improve PromoBanner to show actual active promotions from API
-- [ ] Write tests for ClientHome onboarding integration
-- [ ] Run project test suite - must pass before task 3
+- [x] Integrate OnboardingTour trigger for first-time users (check onboarding_completed flag)
+- [x] Add city selection when GPS unavailable (FR-036)
+- [x] Improve PromoBanner to show actual active promotions from API
+- [x] Write tests for ClientHome onboarding integration
+- [x] Run project test suite - must pass before task 3
 
 ### Task 3: Search - Autocomplete, Filters, Map Interaction
 
