@@ -50,8 +50,18 @@ func New(cfg *config.Config) *fx.App {
 		admin.ProvideConditionalModule(cfg),
 		// Cross-package interface bindings
 		fx.Provide(
-			// TelegramSender: nil by default, override with bot.Module when configured
-			func() notification.TelegramSender { return nil },
+			func(cfg *config.Config, log *logger.Logger) notification.TelegramSender {
+				if cfg.Telegram.BotToken == "" {
+					log.Warn("Telegram bot token not configured, telegram notifications disabled (set BANI_TELEGRAM_BOT_TOKEN)")
+					return nil
+				}
+				sender, err := notification.NewTelegramSender(cfg.Telegram.BotToken, log)
+				if err != nil {
+					log.Error("failed to create telegram sender, notifications disabled", "error", err)
+					return nil
+				}
+				return sender
+			},
 			calendar.NewCalendarSyncService,
 		),
 	)

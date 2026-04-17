@@ -162,6 +162,21 @@ func (r *CertificateRepo) Redeem(_ context.Context, id uuid.UUID, userID uuid.UU
 	return nil
 }
 
+func (r *CertificateRepo) CountActiveByUser(_ context.Context, userID uuid.UUID) (int, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	count := 0
+	for _, cert := range r.certs {
+		isOwner := (cert.PurchaserID != nil && *cert.PurchaserID == userID) ||
+			(cert.RedeemedByID != nil && *cert.RedeemedByID == userID)
+		if isOwner && cert.Status == domain.CertificateStatusActive && cert.Balance > 0 && time.Now().Before(cert.ValidUntil) {
+			count++
+		}
+	}
+	return count, nil
+}
+
 // ForceUpdate overwrites a certificate in the mock store (for testing only).
 func (r *CertificateRepo) ForceUpdate(cert *domain.GiftCertificate) {
 	r.mu.Lock()

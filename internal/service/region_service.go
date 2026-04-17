@@ -22,6 +22,7 @@ type regionService struct {
 	bookingRepo repository.BookingRepository
 	disputeRepo repository.DisputeRepository
 	loyaltyRepo repository.LoyaltyRepository
+	certRepo    repository.GiftCertificateRepository
 	log         *logger.Logger
 }
 
@@ -31,6 +32,7 @@ func NewRegionService(
 	bookingRepo repository.BookingRepository,
 	disputeRepo repository.DisputeRepository,
 	loyaltyRepo repository.LoyaltyRepository,
+	certRepo repository.GiftCertificateRepository,
 	log *logger.Logger,
 ) RegionService {
 	return &regionService{
@@ -39,6 +41,7 @@ func NewRegionService(
 		bookingRepo: bookingRepo,
 		disputeRepo: disputeRepo,
 		loyaltyRepo: loyaltyRepo,
+		certRepo:    certRepo,
 		log:         log,
 	}
 }
@@ -150,8 +153,14 @@ func (s *regionService) validateRegionSwitch(ctx context.Context, userID uuid.UU
 		return domain.ErrRegionSwitchBlocked
 	}
 
-	// TODO: check for unactivated gift certificates (requires adding GiftCertificateRepository dependency)
-	// Certificates purchased in one region's currency should not be left unresolved during region switch.
+	// 4. Check active gift certificates with remaining balance
+	activeCerts, err := s.certRepo.CountActiveByUser(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("check active certificates: %w", err)
+	}
+	if activeCerts > 0 {
+		return domain.ErrRegionSwitchBlocked
+	}
 
 	return nil
 }

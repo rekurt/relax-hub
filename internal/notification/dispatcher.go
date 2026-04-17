@@ -11,11 +11,6 @@ import (
 	"github.com/nikitaaldaev/bani/internal/sms"
 )
 
-// TelegramSender sends notifications via Telegram bot.
-type TelegramSender interface {
-	Send(ctx context.Context, chatID int64, title, body string) error
-}
-
 // Dispatcher routes notifications to appropriate delivery channels based on user preferences.
 type Dispatcher struct {
 	notifRepo       repository.NotificationRepository

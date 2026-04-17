@@ -325,6 +325,7 @@ type GiftCertificateRepository interface {
 	RefundUsage(ctx context.Context, bookingID uuid.UUID) error
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error)
 	Redeem(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	CountActiveByUser(ctx context.Context, userID uuid.UUID) (int, error)
 }
 
 type BathhousePhotoRepository interface {

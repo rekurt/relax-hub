@@ -26,6 +26,7 @@ type Config struct {
 	Admin        AdminConfig        `mapstructure:"admin"`
 	Escrow       EscrowConfig       `mapstructure:"escrow"`
 	Payment      PaymentConfig      `mapstructure:"payment"`
+	Email        EmailConfig        `mapstructure:"email"`
 	WebPush      WebPushConfig      `mapstructure:"webpush"`
 	SMS          SMSConfig          `mapstructure:"sms"`
 	WelcomeBonus WelcomeBonusConfig `mapstructure:"welcome_bonus"`
@@ -71,6 +72,14 @@ type WelcomeBonusConfig struct {
 	Amount     int64 `mapstructure:"amount"`      // in kopecks, default 50000 (500 RUB)
 	AmountBY   int64 `mapstructure:"amount_by"`   // in kopecks, default 1500 (15 BYN)
 	ExpiryDays int   `mapstructure:"expiry_days"` // default 30
+}
+
+type EmailConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
+	From     string `mapstructure:"from"`
 }
 
 type WebPushConfig struct {
@@ -225,6 +234,11 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("payment.bepaid.shop_id", "")
 	v.SetDefault("payment.bepaid.secret_key", "")
 	v.SetDefault("payment.return_url", "http://localhost:3000/payment/callback")
+	v.SetDefault("email.host", "")
+	v.SetDefault("email.port", 587)
+	v.SetDefault("email.username", "")
+	v.SetDefault("email.password", "")
+	v.SetDefault("email.from", "")
 	v.SetDefault("sms.provider", "smsru")
 	v.SetDefault("sms.api_key", "")
 	v.SetDefault("welcome_bonus.amount", 50000) // 500 RUB in kopecks

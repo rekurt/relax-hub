@@ -249,3 +249,17 @@ func (r *certificateRepo) Redeem(ctx context.Context, id uuid.UUID, userID uuid.
 	}
 	return nil
 }
+
+func (r *certificateRepo) CountActiveByUser(ctx context.Context, userID uuid.UUID) (int, error) {
+	var count int
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM gift_certificates
+		 WHERE (purchaser_id = $1 OR redeemed_by_id = $1)
+		   AND status = 'active'
+		   AND balance > 0
+		   AND valid_until > NOW()`, userID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count active certificates: %w", err)
+	}
+	return count, nil
+}

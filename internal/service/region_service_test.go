@@ -17,8 +17,9 @@ func newRegionService() (service.RegionService, *mock.UserRepo, *mock.WalletRepo
 	bookingRepo := mock.NewBookingRepo()
 	disputeRepo := mock.NewDisputeRepo().(*mock.DisputeRepo)
 	loyaltyRepo := mock.NewLoyaltyRepo()
+	certRepo := mock.NewCertificateRepo()
 	log := logger.New(logger.LevelError)
-	svc := service.NewRegionService(userRepo, walletRepo, bookingRepo, disputeRepo, loyaltyRepo, log)
+	svc := service.NewRegionService(userRepo, walletRepo, bookingRepo, disputeRepo, loyaltyRepo, certRepo, log)
 	return svc, userRepo, walletRepo, bookingRepo, disputeRepo, loyaltyRepo
 }
 

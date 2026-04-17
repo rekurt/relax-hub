@@ -7,17 +7,25 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/nikitaaldaev/bani/internal/payment"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
 
 type WalletHandler struct {
-	walletService service.WalletService
+	walletService   service.WalletService
+	paymentProvider payment.PaymentProvider
+	paymentCfg      config.PaymentConfig
 }
 
-func NewWalletHandler(walletService service.WalletService) *WalletHandler {
-	return &WalletHandler{walletService: walletService}
+func NewWalletHandler(walletService service.WalletService, paymentProvider payment.PaymentProvider, cfg *config.Config) *WalletHandler {
+	return &WalletHandler{
+		walletService:   walletService,
+		paymentProvider: paymentProvider,
+		paymentCfg:      cfg.Payment,
+	}
 }
 
 type walletResponse struct {
@@ -55,13 +63,14 @@ type walletHoldResponse struct {
 }
 
 type topUpRequest struct {
-	Amount int64 `json:"amount"`
+	Amount        int64  `json:"amount"`
+	PaymentMethod string `json:"payment_method,omitempty"` // "card" (default), "sbp"
 }
 
 type topUpResponse struct {
-	TransactionID string `json:"transaction_id"`
-	Amount        int64  `json:"amount"`
-	BalanceAfter  int64  `json:"balance_after"`
+	PaymentID       string `json:"payment_id"`
+	Amount          int64  `json:"amount"`
+	ConfirmationURL string `json:"confirmation_url"`
 }
 
 func toWalletResponse(s *service.WalletBalanceSummary) walletResponse {
@@ -217,15 +226,6 @@ func (h *WalletHandler) ListTransactions(w http.ResponseWriter, r *http.Request)
 //	@Failure		404		{object}	APIResponse{error=APIError}
 //	@Router			/my/wallet/topup [post]
 func (h *WalletHandler) TopUp(w http.ResponseWriter, r *http.Request) {
-	// TODO: This endpoint directly credits the wallet without payment verification.
-	// Must be integrated with YooKassa: create payment -> return confirmation_url ->
-	// credit wallet only on successful webhook callback. Until then, restrict to admin.
-	userRole := middleware.GetUserRole(r.Context())
-	if userRole != domain.RoleAdmin {
-		writeError(w, http.StatusForbidden, "forbidden", "wallet top-up via API is not yet available")
-		return
-	}
-
 	userID := middleware.GetUserID(r.Context())
 
 	var req topUpRequest
@@ -239,16 +239,60 @@ func (h *WalletHandler) TopUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tx, err := h.walletService.TopUp(r.Context(), userID, req.Amount)
+	// Validate amount range against wallet limits
+	wallet, err := h.walletService.GetWallet(r.Context(), userID)
 	if err != nil {
 		handleServiceError(w, err)
 		return
 	}
 
+	minAmount := domain.TopUpMinForCurrency(wallet.Currency)
+	maxAmount := domain.TopUpMaxForCurrency(wallet.Currency)
+	if req.Amount < minAmount {
+		writeError(w, http.StatusBadRequest, "invalid_input", fmt.Sprintf("minimum top-up amount is %d", minAmount))
+		return
+	}
+	if req.Amount > maxAmount {
+		writeError(w, http.StatusBadRequest, "invalid_input", fmt.Sprintf("maximum top-up amount is %d", maxAmount))
+		return
+	}
+
+	if h.paymentProvider == nil {
+		writeError(w, http.StatusServiceUnavailable, "service_unavailable", "payment provider is not configured")
+		return
+	}
+
+	method := req.PaymentMethod
+	if method == "" {
+		method = "card"
+	}
+
+	currency := "RUB"
+	if wallet.Currency == domain.WalletCurrencyBYN {
+		currency = "BYN"
+	}
+
+	result, err := h.paymentProvider.CreatePayment(r.Context(), payment.CreatePaymentRequest{
+		Amount:      req.Amount,
+		Currency:    currency,
+		Description: fmt.Sprintf("Пополнение кошелька на %d коп.", req.Amount),
+		ReturnURL:   h.paymentCfg.ReturnURL,
+		Metadata: map[string]string{
+			"type":    "wallet_topup",
+			"user_id": userID.String(),
+		},
+		Method:  method,
+		Capture: true,
+	})
+	if err != nil {
+		writeError(w, http.StatusBadGateway, "payment_failed", "failed to create payment")
+		return
+	}
+
 	writeJSON(w, http.StatusOK, topUpResponse{
-		TransactionID: tx.ID.String(),
-		Amount:        tx.Amount,
-		BalanceAfter:  tx.BalanceAfter,
+		PaymentID:       result.ExternalID,
+		Amount:          req.Amount,
+		ConfirmationURL: result.ConfirmationURL,
 	})
 }
 

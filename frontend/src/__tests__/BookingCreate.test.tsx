@@ -17,6 +17,7 @@ vi.mock('@/api/generated/pricing/pricing', () => ({
 
 vi.mock('@/api/generated/bookings/bookings', () => ({
   usePostBookings: vi.fn(),
+  useGetBookingsIdRebookData: vi.fn(),
 }))
 
 vi.mock('@/api/generated/promo-codes/promo-codes', () => ({
@@ -35,13 +36,32 @@ vi.mock('@/api/generated/wallet/wallet', () => ({
   useGetMyWallet: vi.fn(),
 }))
 
+vi.mock('@/api/generated/saved-cards/saved-cards', () => ({
+  useGetMySavedCards: vi.fn(),
+}))
+
+vi.mock('@/components/PriceBreakdown', () => ({
+  default: (props: Record<string, unknown>) => (
+    <div data-testid="price-breakdown">
+      <span>base:{String(props.basePrice)}</span>
+      {props.promoDiscount && <span>promo:-{String(props.promoDiscount)}</span>}
+      {props.certificateDiscount && <span>cert:-{String(props.certificateDiscount)}</span>}
+      {props.walletPayment && <span>wallet:-{String(props.walletPayment)}</span>}
+      {(props.addOns as Array<{ name: string; price: number }> | undefined)?.map((a, i) => (
+        <span key={i}>addon:{a.name}:{a.price}</span>
+      ))}
+    </div>
+  ),
+}))
+
 import { useGetBathhousesId, useGetBathhousesIdAvailableSlots } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPriceCalculator } from '@/api/generated/pricing/pricing'
-import { usePostBookings } from '@/api/generated/bookings/bookings'
+import { usePostBookings, useGetBookingsIdRebookData } from '@/api/generated/bookings/bookings'
 import { usePostPromoCodesValidate } from '@/api/generated/promo-codes/promo-codes'
 import { useGetCertificatesCodeBalance } from '@/api/generated/certificates/certificates'
 import { useGetBathhousesIdAddons } from '@/api/generated/add-ons/add-ons'
 import { useGetMyWallet } from '@/api/generated/wallet/wallet'
+import { useGetMySavedCards } from '@/api/generated/saved-cards/saved-cards'
 
 function renderWithProviders(
   ui: React.ReactElement,
@@ -96,6 +116,11 @@ const mockAddons = [
   { id: 'addon-2', name: 'Полотенце', description: '', price: 20000, unit: 'per_person', is_active: true, sort_order: 2 },
 ]
 
+const mockSavedCards = [
+  { id: 'card-1', last4: '4242', brand: 'Visa', expiry_month: 12, expiry_year: 2027, is_default: true },
+  { id: 'card-2', last4: '5555', brand: 'Mastercard', expiry_month: 6, expiry_year: 2028, is_default: false },
+]
+
 function setupDefaultMocks() {
   vi.mocked(useGetBathhousesId).mockReturnValue({
     data: { data: mockBathhouse, success: true },
@@ -136,6 +161,16 @@ function setupDefaultMocks() {
     data: { data: { balance: 500000 }, success: true },
     isLoading: false,
   } as unknown as ReturnType<typeof useGetMyWallet>)
+
+  vi.mocked(useGetMySavedCards).mockReturnValue({
+    data: { data: [], success: true },
+    isLoading: false,
+  } as unknown as ReturnType<typeof useGetMySavedCards>)
+
+  vi.mocked(useGetBookingsIdRebookData).mockReturnValue({
+    data: undefined,
+    isLoading: false,
+  } as unknown as ReturnType<typeof useGetBookingsIdRebookData>)
 }
 
 describe('BookingCreate', () => {
@@ -298,6 +333,21 @@ describe('BookingCreate', () => {
         },
       })
     })
+
+    it('shows certificate balance when checked', () => {
+      vi.mocked(useGetCertificatesCodeBalance).mockReturnValue({
+        data: { data: { balance: 150000 }, success: true },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetCertificatesCodeBalance>)
+
+      goToStep3()
+
+      const input = screen.getByPlaceholderText('BANI-XXXX-XXXX')
+      fireEvent.change(input, { target: { value: 'BANI-TEST-1234' } })
+      fireEvent.click(screen.getByText('Проверить'))
+
+      expect(screen.getByText(/Баланс сертификата: 1500 ₽/)).toBeInTheDocument()
+    })
   })
 
   describe('Step 4: Payment', () => {
@@ -315,15 +365,10 @@ describe('BookingCreate', () => {
       expect(screen.getByText('СБП')).toBeInTheDocument()
     })
 
-    it('renders price summary on step 4', () => {
+    it('renders PriceBreakdown component on step 4', () => {
       goToStep4()
-      expect(screen.getByText('3000 ₽')).toBeInTheDocument() // base price
-      expect(screen.getByText('2700 ₽')).toBeInTheDocument() // total price
-    })
-
-    it('renders price saving', () => {
-      goToStep4()
-      expect(screen.getByText(/-300 ₽/)).toBeInTheDocument()
+      expect(screen.getByTestId('price-breakdown')).toBeInTheDocument()
+      expect(screen.getByText('base:300000')).toBeInTheDocument()
     })
 
     it('renders booking button on step 4', () => {
@@ -357,6 +402,83 @@ describe('BookingCreate', () => {
     })
   })
 
+  describe('Saved cards', () => {
+    it('shows saved cards section when user has saved cards and card payment selected', () => {
+      vi.mocked(useGetMySavedCards).mockReturnValue({
+        data: { data: mockSavedCards, success: true },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetMySavedCards>)
+
+      renderWithProviders(<BookingCreate />)
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Далее'))
+
+      expect(screen.getByTestId('saved-cards-section')).toBeInTheDocument()
+      expect(screen.getByText('Сохранённые карты:')).toBeInTheDocument()
+      expect(screen.getByText(/•••• 4242/)).toBeInTheDocument()
+      expect(screen.getByText(/•••• 5555/)).toBeInTheDocument()
+      expect(screen.getByText('Основная')).toBeInTheDocument()
+      expect(screen.getByText('Новая карта')).toBeInTheDocument()
+    })
+
+    it('shows card brand and expiry date', () => {
+      vi.mocked(useGetMySavedCards).mockReturnValue({
+        data: { data: mockSavedCards, success: true },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetMySavedCards>)
+
+      renderWithProviders(<BookingCreate />)
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Далее'))
+
+      expect(screen.getByText(/Visa/)).toBeInTheDocument()
+      expect(screen.getByText(/12\/27/)).toBeInTheDocument()
+      expect(screen.getByText(/Mastercard/)).toBeInTheDocument()
+    })
+
+    it('does not show saved cards section when no saved cards', () => {
+      renderWithProviders(<BookingCreate />)
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Далее'))
+
+      expect(screen.queryByTestId('saved-cards-section')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Re-booking', () => {
+    it('shows rebook alert when rebook param is present and data loaded', () => {
+      vi.mocked(useGetBookingsIdRebookData).mockReturnValue({
+        data: {
+          data: {
+            bathhouse_id: 'bath-1',
+            guest_count: 3,
+            duration_hours: 2,
+            time_from: '14:00',
+            time_to: '16:00',
+            addons: [{ addon_id: 'addon-1', quantity: 2 }],
+          },
+          success: true,
+        },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetBookingsIdRebookData>)
+
+      renderWithProviders(<BookingCreate />, {
+        route: '/client/booking/new?bathhouse=bath-1&date=2026-04-01&from=2026-04-01T10:00:00Z&to=2026-04-01T11:00:00Z&rebook=booking-123',
+      })
+
+      expect(screen.getByTestId('rebook-alert')).toBeInTheDocument()
+      expect(screen.getByText('Повторное бронирование')).toBeInTheDocument()
+    })
+
+    it('does not show rebook alert when no rebook param', () => {
+      renderWithProviders(<BookingCreate />)
+      expect(screen.queryByTestId('rebook-alert')).not.toBeInTheDocument()
+    })
+  })
+
   describe('Request mode', () => {
     it('shows request mode alert for request-mode bathhouse', () => {
       vi.mocked(useGetBathhousesId).mockReturnValue({
@@ -380,6 +502,21 @@ describe('BookingCreate', () => {
       fireEvent.click(screen.getByText('Далее'))
 
       expect(screen.getByText('Отправить заявку')).toBeInTheDocument()
+    })
+
+    it('shows hold indicator on step 4 for request mode', () => {
+      vi.mocked(useGetBathhousesId).mockReturnValue({
+        data: { data: mockRequestModeBathhouse, success: true },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetBathhousesId>)
+
+      renderWithProviders(<BookingCreate />)
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Далее'))
+
+      expect(screen.getByTestId('hold-indicator')).toBeInTheDocument()
+      expect(screen.getByText('Средства будут заблокированы')).toBeInTheDocument()
     })
   })
 
@@ -406,6 +543,77 @@ describe('BookingCreate', () => {
 
       expect(screen.getByText('Слот только что занят')).toBeInTheDocument()
       expect(screen.getByText('Выбрать другое время')).toBeInTheDocument()
+    })
+  })
+
+  describe('Booking submission with new fields', () => {
+    it('includes saved_card_id in booking mutation when card selected', () => {
+      const mutateFn = vi.fn()
+      vi.mocked(usePostBookings).mockReturnValue({
+        mutate: mutateFn,
+        isPending: false,
+      } as unknown as ReturnType<typeof usePostBookings>)
+
+      vi.mocked(useGetMySavedCards).mockReturnValue({
+        data: { data: mockSavedCards, success: true },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetMySavedCards>)
+
+      renderWithProviders(<BookingCreate />)
+      // Go to step 4
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Далее'))
+
+      // Select saved card
+      const visaCard = screen.getByText(/•••• 4242/)
+      fireEvent.click(visaCard)
+
+      fireEvent.click(screen.getByText('Забронировать'))
+
+      expect(mutateFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            bathhouse_id: 'bath-1',
+            saved_card_id: 'card-1',
+          }),
+        }),
+      )
+    })
+
+    it('includes certificate_code when certificate has balance', () => {
+      const mutateFn = vi.fn()
+      vi.mocked(usePostBookings).mockReturnValue({
+        mutate: mutateFn,
+        isPending: false,
+      } as unknown as ReturnType<typeof usePostBookings>)
+
+      vi.mocked(useGetCertificatesCodeBalance).mockReturnValue({
+        data: { data: { balance: 150000 }, success: true },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetCertificatesCodeBalance>)
+
+      renderWithProviders(<BookingCreate />)
+
+      // Go to step 3 and enter certificate
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Далее'))
+
+      const certInput = screen.getByPlaceholderText('BANI-XXXX-XXXX')
+      fireEvent.change(certInput, { target: { value: 'BANI-TEST-1234' } })
+      fireEvent.click(screen.getByText('Проверить'))
+
+      // Go to step 4 and book
+      fireEvent.click(screen.getByText('Далее'))
+      fireEvent.click(screen.getByText('Забронировать'))
+
+      expect(mutateFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            certificate_code: 'BANI-TEST-1234',
+          }),
+        }),
+      )
     })
   })
 })

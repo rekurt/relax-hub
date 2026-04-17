@@ -8,7 +8,6 @@ import {
   InputNumber,
   Input,
   Space,
-  Descriptions,
   Spin,
   Alert,
   Divider,
@@ -34,15 +33,19 @@ import {
   GoogleOutlined,
   ShoppingCartOutlined,
   CheckCircleOutlined,
+  LockOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useGetBathhousesId, useGetBathhousesIdAvailableSlots } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPriceCalculator } from '@/api/generated/pricing/pricing'
-import { usePostBookings } from '@/api/generated/bookings/bookings'
+import { usePostBookings, useGetBookingsIdRebookData } from '@/api/generated/bookings/bookings'
 import { usePostPromoCodesValidate } from '@/api/generated/promo-codes/promo-codes'
 import { useGetCertificatesCodeBalance } from '@/api/generated/certificates/certificates'
 import { useGetBathhousesIdAddons } from '@/api/generated/add-ons/add-ons'
 import { useGetMyWallet } from '@/api/generated/wallet/wallet'
+import { useGetMySavedCards } from '@/api/generated/saved-cards/saved-cards'
+import PriceBreakdown from '@/components/PriceBreakdown'
 import { formatPrice } from '@/lib/format'
 
 const { Title, Text } = Typography
@@ -63,6 +66,7 @@ export default function BookingCreate() {
   const initialDate = searchParams.get('date') ?? dayjs().format('YYYY-MM-DD')
   const initialFrom = searchParams.get('from') ?? ''
   const initialTo = searchParams.get('to') ?? ''
+  const rebookId = searchParams.get('rebook') ?? ''
 
   // Step state
   const [currentStep, setCurrentStep] = useState(0)
@@ -90,10 +94,14 @@ export default function BookingCreate() {
 
   // Step 4: Payment
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card')
+  const [selectedSavedCardId, setSelectedSavedCardId] = useState<string | null>(null)
   const [comboWalletAmount, setComboWalletAmount] = useState(0)
 
   // Slot conflict
   const [slotConflict, setSlotConflict] = useState(false)
+
+  // Re-booking pre-fill applied flag
+  const [rebookApplied, setRebookApplied] = useState(false)
 
   // Data fetching
   const { data: bathhouseData, isLoading: bathhouseLoading } = useGetBathhousesId(bathhouseId, {
@@ -125,6 +133,49 @@ export default function BookingCreate() {
 
   const { data: walletData } = useGetMyWallet({ query: { retry: false } })
   const walletBalance = (walletData?.data as Record<string, unknown>)?.balance as number ?? 0
+
+  // Saved cards
+  const { data: savedCardsData } = useGetMySavedCards(undefined, {
+    query: { retry: false },
+  })
+  const savedCards = (savedCardsData?.data ?? []) as Array<{
+    id?: string
+    last4?: string
+    brand?: string
+    expiry_month?: number
+    expiry_year?: number
+    is_default?: boolean
+  }>
+
+  // Re-booking data — apply pre-fill via onSuccess (runs once when data first arrives)
+  const { data: rebookData } = useGetBookingsIdRebookData(rebookId, {
+    query: {
+      enabled: !!rebookId && !rebookApplied,
+      retry: false,
+    },
+  })
+
+  // Apply rebook pre-fill from fetched data
+  const applyRebookData = () => {
+    if (rebookApplied || !rebookData?.data) return
+    const rebook = rebookData.data
+    if (rebook.guest_count) setGuestCount(rebook.guest_count)
+    if (rebook.addons && rebook.addons.length > 0) {
+      setSelectedAddons(
+        rebook.addons.map((a) => ({
+          addon_id: a.addon_id ?? '',
+          quantity: a.quantity ?? 1,
+        })).filter((a) => a.addon_id),
+      )
+    }
+    setRebookApplied(true)
+  }
+
+  // Trigger rebook apply when data becomes available
+  if (rebookData?.data && !rebookApplied) {
+    // Schedule for next microtask to avoid setState during render
+    queueMicrotask(applyRebookData)
+  }
 
   const isRequestMode = (bathhouse as Record<string, unknown>)?.booking_mode === 'request'
 
@@ -164,6 +215,11 @@ export default function BookingCreate() {
     },
   )
   const certificateBalance = certBalanceData?.data?.balance ?? null
+
+  // Certificate amount to apply (min of balance and total)
+  const certificateApplied = certificateBalance != null && certificateBalance > 0
+    ? Math.min(certificateBalance, totalPrice)
+    : 0
 
   // Promo validation
   const promoValidateMutation = usePostPromoCodesValidate({
@@ -238,10 +294,11 @@ export default function BookingCreate() {
         guest_count: guestCount,
         comment: comment || undefined,
         promo_code: promoValidated ? promoCode.trim() : undefined,
-        certificate_code: certificateBalance != null && certificateBalance > 0 ? certificateCode.trim() : undefined,
+        certificate_code: certificateApplied > 0 ? certificateCode.trim() : undefined,
         use_points: usePoints ? pointsAmount : undefined,
         use_referral_bonus: useReferral ? referralAmount : undefined,
         addons: addonPayload,
+        saved_card_id: selectedSavedCardId ?? undefined,
       },
     })
   }
@@ -294,6 +351,27 @@ export default function BookingCreate() {
   // Combo payment: max wallet amount is the lesser of wallet balance and total price
   const maxWalletForCombo = Math.min(walletBalance, totalPrice)
   const comboCardAmount = paymentMethod === 'combo' ? totalPrice - comboWalletAmount : 0
+
+  // Build add-on line items for PriceBreakdown
+  const addonLineItems = useMemo(() => {
+    return selectedAddons.map((sel) => {
+      const addon = addons.find((a) => a.id === sel.addon_id)
+      if (!addon) return { name: 'Доп. услуга', price: 0 }
+      let multiplier = sel.quantity
+      if (addon.unit === 'per_hour') multiplier = sel.quantity * durationHours
+      else if (addon.unit === 'per_person') multiplier = sel.quantity * guestCount
+      return { name: addon.name ?? 'Доп. услуга', price: (addon.price ?? 0) * multiplier }
+    }).filter((item) => item.price > 0)
+  }, [selectedAddons, addons, durationHours, guestCount])
+
+  // Promo discount in absolute amount
+  const promoDiscountAmount = useMemo(() => {
+    if (!promoValidated) return 0
+    if (promoValidated.type === 'percentage') {
+      return Math.round((priceInfo?.base_price ?? 0) * promoValidated.discount / 100)
+    }
+    return promoValidated.discount
+  }, [promoValidated, priceInfo])
 
   if (bathhouseLoading) {
     return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
@@ -364,6 +442,9 @@ export default function BookingCreate() {
     { title: 'Оплата' },
   ]
 
+  const depositPercent = (bathhouse as Record<string, unknown>)?.security_deposit_percent as number | undefined
+  const areaAvgPrice = (bathhouse as Record<string, unknown>)?.area_average_price as number | undefined
+
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
       <Button
@@ -376,6 +457,18 @@ export default function BookingCreate() {
       </Button>
 
       <Title level={3}>Бронирование: {bathhouse.name}</Title>
+
+      {rebookId && rebookData?.data && (
+        <Alert
+          type="info"
+          showIcon
+          icon={<ReloadOutlined />}
+          style={{ marginBottom: 16 }}
+          message="Повторное бронирование"
+          description="Параметры предыдущего бронирования предзаполнены. Выберите удобную дату и время."
+          data-testid="rebook-alert"
+        />
+      )}
 
       {isRequestMode && (
         <Alert
@@ -588,9 +681,16 @@ export default function BookingCreate() {
                 </Button>
               </Space.Compact>
               {checkCertificate && certificateBalance != null && (
-                <Text type="success" style={{ fontSize: 12 }}>
-                  Баланс сертификата: {formatPrice(certificateBalance)}
-                </Text>
+                <div style={{ marginTop: 4 }}>
+                  <Text type="success" style={{ fontSize: 12 }}>
+                    Баланс сертификата: {formatPrice(certificateBalance)}
+                  </Text>
+                  {certificateApplied > 0 && (
+                    <Text type="success" style={{ fontSize: 12, marginLeft: 8 }}>
+                      (будет списано: {formatPrice(certificateApplied)})
+                    </Text>
+                  )}
+                </div>
               )}
             </div>
 
@@ -630,70 +730,37 @@ export default function BookingCreate() {
       {/* Step 4: Price breakdown + Payment method */}
       {currentStep === 3 && (
         <>
-          {/* Price Summary */}
+          {/* Price Breakdown */}
           <Card title="Итого" style={{ marginBottom: 16 }}>
             {priceLoading ? (
               <Spin />
             ) : priceInfo ? (
-              <Descriptions column={1} size="small">
-                <Descriptions.Item label="Базовая цена">
-                  {formatPrice(priceInfo.base_price ?? 0)}
-                </Descriptions.Item>
-                {priceInfo.hours != null && (
-                  <Descriptions.Item label="Часов">
-                    {priceInfo.hours}
-                  </Descriptions.Item>
-                )}
-                {(priceInfo.price_saving ?? 0) > 0 && (
-                  <Descriptions.Item label="Экономия (динамическое ценообразование)">
-                    <Text type="success">-{formatPrice(priceInfo.price_saving ?? 0)}</Text>
-                  </Descriptions.Item>
-                )}
-                {addonsTotal > 0 && (
-                  <Descriptions.Item label="Дополнительные услуги">
-                    {formatPrice(addonsTotal)}
-                  </Descriptions.Item>
-                )}
-                {promoValidated && (
-                  <Descriptions.Item label="Скидка по промокоду">
-                    <Text type="success">
-                      -{promoValidated.type === 'percentage' ? `${promoValidated.discount}%` : formatPrice(promoValidated.discount)}
-                    </Text>
-                  </Descriptions.Item>
-                )}
-                {certificateBalance != null && certificateBalance > 0 && (
-                  <Descriptions.Item label="Сертификат">
-                    <Text type="success">до -{formatPrice(certificateBalance)}</Text>
-                  </Descriptions.Item>
-                )}
-                {(() => {
-                  const depositPercent = (bathhouse as Record<string, unknown>)?.security_deposit_percent as number
-                  return depositPercent > 0 ? (
-                    <Descriptions.Item label="Залог (возвратный)">
-                      <Text type="warning">
-                        ~{formatPrice(Math.round((priceInfo.base_price ?? 0) * depositPercent / 100))}
-                      </Text>
-                    </Descriptions.Item>
-                  ) : null
-                })()}
-                <Descriptions.Item label="К оплате">
-                  <Text strong style={{ fontSize: 18 }}>
-                    {formatPrice(totalPrice)}
-                  </Text>
-                </Descriptions.Item>
-                {paymentMethod === 'combo' && comboWalletAmount > 0 && (
-                  <>
-                    <Descriptions.Item label="Из кошелька">
-                      <Text type="success">{formatPrice(comboWalletAmount)}</Text>
-                    </Descriptions.Item>
-                    <Descriptions.Item label="Картой">
-                      <Text>{formatPrice(comboCardAmount)}</Text>
-                    </Descriptions.Item>
-                  </>
-                )}
-              </Descriptions>
+              <PriceBreakdown
+                basePrice={priceInfo.base_price ?? 0}
+                addOns={addonLineItems.length > 0 ? addonLineItems : undefined}
+                longSessionDiscount={priceInfo.price_saving}
+                promoDiscount={promoDiscountAmount > 0 ? promoDiscountAmount : undefined}
+                certificateDiscount={certificateApplied > 0 ? certificateApplied : undefined}
+                serviceFee={(priceInfo as Record<string, unknown>)?.service_fee as number | undefined}
+                extraGuestSurcharge={(priceInfo as Record<string, unknown>)?.extra_guest_surcharge as number | undefined}
+                holidaySurcharge={(priceInfo as Record<string, unknown>)?.holiday_surcharge as number | undefined}
+                holidayName={(priceInfo as Record<string, unknown>)?.holiday_name as string | undefined}
+                seasonalTariffMultiplier={(priceInfo as Record<string, unknown>)?.seasonal_tariff_multiplier as number | undefined}
+                seasonalTariffName={(priceInfo as Record<string, unknown>)?.seasonal_tariff_name as string | undefined}
+                walletPayment={paymentMethod === 'combo' && comboWalletAmount > 0 ? comboWalletAmount : paymentMethod === 'wallet' ? walletBalance : undefined}
+                areaAveragePrice={areaAvgPrice}
+              />
             ) : (
               <Text type="secondary">Выберите слот для расчёта цены</Text>
+            )}
+
+            {depositPercent != null && depositPercent > 0 && priceInfo && (
+              <div style={{ marginTop: 8 }}>
+                <Text type="warning">
+                  <LockOutlined style={{ marginRight: 4 }} />
+                  Залог (возвратный): ~{formatPrice(Math.round((priceInfo.base_price ?? 0) * depositPercent / 100))}
+                </Text>
+              </div>
             )}
           </Card>
 
@@ -705,6 +772,9 @@ export default function BookingCreate() {
                 setPaymentMethod(e.target.value)
                 if (e.target.value !== 'combo') {
                   setComboWalletAmount(0)
+                }
+                if (e.target.value !== 'card') {
+                  setSelectedSavedCardId(null)
                 }
               }}
               style={{ width: '100%' }}
@@ -761,6 +831,37 @@ export default function BookingCreate() {
               </Space>
             </Radio.Group>
 
+            {/* Saved cards selection */}
+            {paymentMethod === 'card' && savedCards.length > 0 && (
+              <div style={{ marginTop: 16 }} data-testid="saved-cards-section">
+                <Text strong style={{ display: 'block', marginBottom: 8 }}>Сохранённые карты:</Text>
+                <Radio.Group
+                  value={selectedSavedCardId}
+                  onChange={(e) => setSelectedSavedCardId(e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                    {savedCards.map((card) => (
+                      <Radio key={card.id} value={card.id} style={{ display: 'block' }}>
+                        <CreditCardOutlined style={{ marginRight: 8 }} />
+                        {card.brand ?? 'Карта'} •••• {card.last4}
+                        {card.expiry_month != null && card.expiry_year != null && (
+                          <Text type="secondary" style={{ marginLeft: 8 }}>
+                            {String(card.expiry_month).padStart(2, '0')}/{String(card.expiry_year).slice(-2)}
+                          </Text>
+                        )}
+                        {card.is_default && <Tag color="blue" style={{ marginLeft: 8 }}>Основная</Tag>}
+                      </Radio>
+                    ))}
+                    <Radio value={null} style={{ display: 'block' }}>
+                      <CreditCardOutlined style={{ marginRight: 8 }} />
+                      Новая карта
+                    </Radio>
+                  </Space>
+                </Radio.Group>
+              </div>
+            )}
+
             {/* Combo payment slider */}
             {paymentMethod === 'combo' && maxWalletForCombo > 0 && (
               <div style={{ marginTop: 16 }}>
@@ -804,13 +905,16 @@ export default function BookingCreate() {
             })()}
           />
 
+          {/* Hold indicator for request-based bookings */}
           {isRequestMode && (
             <Alert
               type="warning"
               showIcon
+              icon={<LockOutlined />}
               style={{ marginBottom: 16 }}
-              message="Бронирование по заявке"
+              message="Средства будут заблокированы"
               description="Средства будут заблокированы на вашей карте до подтверждения владельцем. Если заявка будет отклонена или истечёт время ожидания, средства разблокируются автоматически."
+              data-testid="hold-indicator"
             />
           )}
         </>

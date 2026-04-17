@@ -6,6 +6,7 @@ import (
 
 	gacontext "github.com/GoAdminGroup/go-admin/context"
 	"github.com/GoAdminGroup/go-admin/plugins/admin/models"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/nikitaaldaev/bani/internal/domain"
 	"github.com/nikitaaldaev/bani/internal/logger"
@@ -66,7 +67,7 @@ func extractToken(r *http.Request) string {
 // validates it via the app's AuthService, and maps admin users to GoAdmin's UserModel.
 // When isProduction is true, the Secure cookie flag is always set (for reverse-proxy setups
 // where TLS is terminated upstream).
-func NewAuthProcessor(authService middleware.AuthService, log *logger.Logger, isProduction bool) func(ctx *gacontext.Context) (models.UserModel, bool, string) {
+func NewAuthProcessor(authService middleware.AuthService, pool *pgxpool.Pool, log *logger.Logger, isProduction bool) func(ctx *gacontext.Context) (models.UserModel, bool, string) {
 	return func(ctx *gacontext.Context) (models.UserModel, bool, string) {
 		empty := models.UserModel{}
 
@@ -109,12 +110,26 @@ func NewAuthProcessor(authService middleware.AuthService, log *logger.Logger, is
 			})
 		}
 
-		// TODO: Look up GoAdmin user ID from goadmin_users by username (email)
-		// to properly distinguish admin users in GoAdmin's audit log.
+		// Look up GoAdmin user from goadmin_users to properly track admin identity.
+		goAdminID := 1
+		goAdminName := "Admin"
+		if pool != nil {
+			var dbID int
+			var dbName string
+			err := pool.QueryRow(ctx.Request.Context(),
+				`SELECT id, name FROM goadmin_users WHERE username = $1 LIMIT 1`,
+				userID.String(),
+			).Scan(&dbID, &dbName)
+			if err == nil {
+				goAdminID = dbID
+				goAdminName = dbName
+			}
+		}
+
 		user := models.UserModel{
-			Id:       1,
+			Id:       int64(goAdminID),
 			UserName: userID.String(),
-			Name:     "Admin",
+			Name:     goAdminName,
 			Roles:    []models.RoleModel{{Id: 1, Name: "administrator", Slug: "administrator"}},
 		}
 

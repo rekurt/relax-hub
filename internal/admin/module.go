@@ -61,7 +61,7 @@ var Module = fx.Module("goadmin",
 )
 
 func registerLifecycle(lc fx.Lifecycle, ga *GoAdmin, pool *pgxpool.Pool, cfg *appconfig.Config, authService middleware.AuthService, log *logger.Logger) {
-	processor := NewAuthProcessor(authService, log, cfg.Environment == "production")
+	processor := NewAuthProcessor(authService, pool, log, cfg.Environment == "production")
 	ga.Engine.AddAuthService(processor)
 
 	pagesPrefix := cfg.Admin.Prefix + "/pages"

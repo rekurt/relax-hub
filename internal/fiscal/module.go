@@ -18,10 +18,8 @@ var Module = fx.Module("fiscal",
 					log,
 				)
 			case "by":
-				// Belarus fiscalization placeholder — not yet implemented.
-				// Returns no-op provider until a BY fiscal provider is integrated.
-				log.Info("using no-op fiscal provider for BY region (placeholder)")
-				return NewNoOpProvider()
+				log.Info("using BY fiscal provider (receipt logging for manual processing)")
+				return NewBYProvider(log)
 			default:
 				return NewNoOpProvider()
 			}

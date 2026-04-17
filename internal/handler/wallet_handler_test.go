@@ -11,7 +11,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/nikitaaldaev/bani/config"
 	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/nikitaaldaev/bani/internal/payment"
 	"github.com/nikitaaldaev/bani/internal/middleware"
 	"github.com/nikitaaldaev/bani/internal/service"
 )
@@ -171,6 +173,26 @@ func (m *mockWalletService) GetWalletByID(ctx context.Context, walletID uuid.UUI
 	return nil, nil
 }
 
+type mockPaymentProvider struct {
+	createPaymentFn func(ctx context.Context, req payment.CreatePaymentRequest) (*payment.PaymentResult, error)
+}
+
+func (m *mockPaymentProvider) CreatePayment(ctx context.Context, req payment.CreatePaymentRequest) (*payment.PaymentResult, error) {
+	if m.createPaymentFn != nil {
+		return m.createPaymentFn(ctx, req)
+	}
+	return nil, nil
+}
+
+func (m *mockPaymentProvider) GetPaymentStatus(_ context.Context, _ string) (string, error) {
+	return "", nil
+}
+func (m *mockPaymentProvider) CreateRefund(_ context.Context, _ string, _ int64) error { return nil }
+func (m *mockPaymentProvider) CapturePayment(_ context.Context, _ string, _ int64) error {
+	return nil
+}
+func (m *mockPaymentProvider) CancelPayment(_ context.Context, _ string) error { return nil }
+
 func TestWalletHandler_GetWallet(t *testing.T) {
 	userID := uuid.New()
 	expiry := time.Now().Add(7 * 24 * time.Hour)
@@ -191,7 +213,7 @@ func TestWalletHandler_GetWallet(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -251,7 +273,7 @@ func TestWalletHandler_GetWallet_NotFound(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -270,26 +292,22 @@ func TestWalletHandler_GetWallet_NotFound(t *testing.T) {
 
 func TestWalletHandler_TopUp(t *testing.T) {
 	userID := uuid.New()
-	txID := uuid.New()
+	walletID := uuid.New()
 
 	walletSvc := &mockWalletService{
-		topUpFn: func(ctx context.Context, uid uuid.UUID, amount int64) (*domain.WalletTransaction, error) {
-			if uid == userID && amount == 100_000 {
-				return &domain.WalletTransaction{
-					ID:           txID,
-					WalletID:     uuid.New(),
-					Type:         domain.WalletTxTopUp,
-					Amount:       100_000,
-					BalanceAfter: 600_000,
-					Status:       domain.WalletTxStatusCompleted,
-				}, nil
-			}
-			return nil, domain.ErrInvalidInput
+		getWalletFn: func(ctx context.Context, uid uuid.UUID) (*domain.Wallet, error) {
+			return &domain.Wallet{ID: walletID, UserID: uid, Currency: domain.WalletCurrencyRUB, Status: domain.WalletStatusActive}, nil
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
-	authService := &mockAuthService{userID: userID, role: domain.RoleAdmin}
+	mockPay := &mockPaymentProvider{
+		createPaymentFn: func(ctx context.Context, req payment.CreatePaymentRequest) (*payment.PaymentResult, error) {
+			return &payment.PaymentResult{ExternalID: "ext-123", ConfirmationURL: "https://pay.example.com/confirm"}, nil
+		},
+	}
+
+	h := NewWalletHandler(walletSvc, mockPay, &config.Config{})
+	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequireAuth(authService))
@@ -317,22 +335,25 @@ func TestWalletHandler_TopUp(t *testing.T) {
 	}
 
 	data := resp.Data.(map[string]interface{})
-	if data["transaction_id"] != txID.String() {
-		t.Errorf("expected transaction_id %s, got %v", txID.String(), data["transaction_id"])
+	if data["confirmation_url"] != "https://pay.example.com/confirm" {
+		t.Errorf("expected confirmation_url, got %v", data["confirmation_url"])
 	}
 	if data["amount"].(float64) != 100_000 {
 		t.Errorf("expected amount 100000, got %v", data["amount"])
 	}
-	if data["balance_after"].(float64) != 600_000 {
-		t.Errorf("expected balance_after 600000, got %v", data["balance_after"])
-	}
 }
 
-func TestWalletHandler_TopUp_NonAdminForbidden(t *testing.T) {
+func TestWalletHandler_TopUp_NoPaymentProvider(t *testing.T) {
 	userID := uuid.New()
+	walletID := uuid.New()
 
-	walletSvc := &mockWalletService{}
-	h := NewWalletHandler(walletSvc)
+	walletSvc := &mockWalletService{
+		getWalletFn: func(ctx context.Context, uid uuid.UUID) (*domain.Wallet, error) {
+			return &domain.Wallet{ID: walletID, UserID: uid, Currency: domain.WalletCurrencyRUB, Status: domain.WalletStatusActive}, nil
+		},
+	}
+
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -346,22 +367,23 @@ func TestWalletHandler_TopUp_NonAdminForbidden(t *testing.T) {
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusForbidden {
-		t.Errorf("expected status 403, got %d: %s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected status 503, got %d: %s", rec.Code, rec.Body.String())
 	}
 }
 
 func TestWalletHandler_TopUp_BelowMinimum(t *testing.T) {
 	userID := uuid.New()
+	walletID := uuid.New()
 
 	walletSvc := &mockWalletService{
-		topUpFn: func(ctx context.Context, uid uuid.UUID, amount int64) (*domain.WalletTransaction, error) {
-			return nil, domain.ErrTopUpBelowMinimum
+		getWalletFn: func(ctx context.Context, uid uuid.UUID) (*domain.Wallet, error) {
+			return &domain.Wallet{ID: walletID, UserID: uid, Currency: domain.WalletCurrencyRUB, Status: domain.WalletStatusActive}, nil
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
-	authService := &mockAuthService{userID: userID, role: domain.RoleAdmin}
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
+	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequireAuth(authService))
@@ -383,7 +405,7 @@ func TestWalletHandler_TopUp_InvalidBody(t *testing.T) {
 	userID := uuid.New()
 
 	walletSvc := &mockWalletService{}
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
@@ -405,7 +427,7 @@ func TestWalletHandler_TopUp_ZeroAmount(t *testing.T) {
 	userID := uuid.New()
 
 	walletSvc := &mockWalletService{}
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
@@ -455,7 +477,7 @@ func TestWalletHandler_ListTransactions(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -514,7 +536,7 @@ func TestWalletHandler_ListTransactions_WithTypeFilter(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -577,7 +599,7 @@ func TestWalletHandler_ListHolds(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -629,7 +651,7 @@ func TestWalletHandler_ListHolds_WalletNotFound(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
@@ -648,7 +670,7 @@ func TestWalletHandler_ListHolds_WalletNotFound(t *testing.T) {
 
 func TestWalletHandler_GetWallet_Unauthorized(t *testing.T) {
 	walletSvc := &mockWalletService{}
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{err: domain.ErrUnauthorized}
 
 	r := chi.NewRouter()
@@ -664,17 +686,17 @@ func TestWalletHandler_GetWallet_Unauthorized(t *testing.T) {
 	}
 }
 
-func TestWalletHandler_TopUp_WalletFrozen(t *testing.T) {
+func TestWalletHandler_TopUp_WalletNotFound(t *testing.T) {
 	userID := uuid.New()
 
 	walletSvc := &mockWalletService{
-		topUpFn: func(ctx context.Context, uid uuid.UUID, amount int64) (*domain.WalletTransaction, error) {
-			return nil, domain.ErrWalletFrozen
+		getWalletFn: func(ctx context.Context, uid uuid.UUID) (*domain.Wallet, error) {
+			return nil, domain.ErrWalletNotFound
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
-	authService := &mockAuthService{userID: userID, role: domain.RoleAdmin}
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
+	authService := &mockAuthService{userID: userID, role: domain.RoleClient}
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequireAuth(authService))
@@ -687,8 +709,8 @@ func TestWalletHandler_TopUp_WalletFrozen(t *testing.T) {
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusForbidden {
-		t.Errorf("expected status 403, got %d", rec.Code)
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected status 404, got %d", rec.Code)
 	}
 }
 
@@ -715,7 +737,7 @@ func TestWalletHandler_AdminCreditWallet(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
@@ -753,7 +775,7 @@ func TestWalletHandler_AdminCreditWallet_MissingReason(t *testing.T) {
 	walletID := uuid.New()
 
 	walletSvc := &mockWalletService{}
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
@@ -794,7 +816,7 @@ func TestWalletHandler_AdminDebitWallet(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
@@ -838,7 +860,7 @@ func TestWalletHandler_AdminFreezeWallet(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
@@ -892,7 +914,7 @@ func TestWalletHandler_AdminUnfreezeWallet(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
@@ -941,7 +963,7 @@ func TestWalletHandler_AdminGetWallet(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
@@ -973,7 +995,7 @@ func TestWalletHandler_AdminGetWallet(t *testing.T) {
 
 func TestWalletHandler_AdminCreditWallet_InvalidID(t *testing.T) {
 	walletSvc := &mockWalletService{}
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: uuid.New(), role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
@@ -1010,7 +1032,7 @@ func TestWalletHandler_AdminBatchCreditWallets(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
@@ -1055,7 +1077,7 @@ func TestWalletHandler_AdminBatchCreditWallets(t *testing.T) {
 func TestWalletHandler_AdminBatchCreditWallets_Validation(t *testing.T) {
 	adminID := uuid.New()
 	walletSvc := &mockWalletService{}
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
 
 	tests := []struct {
@@ -1107,7 +1129,7 @@ func TestWalletHandler_AdminBatchCreditWallets_PartialFailure(t *testing.T) {
 		},
 	}
 
-	h := NewWalletHandler(walletSvc)
+	h := NewWalletHandler(walletSvc, nil, &config.Config{})
 	authService := &mockAuthService{userID: adminID, role: domain.RoleAdmin}
 
 	r := chi.NewRouter()
