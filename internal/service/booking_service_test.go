@@ -4546,3 +4546,112 @@ func TestBookingService_Create_ConcurrentDifferentSlots(t *testing.T) {
 		}
 	}
 }
+
+// Regression tests for bug #9 in E2E-TESTING-LOG (2026-04-18):
+// BookingService.GetByID was missing — frontend /bookings/:id 404'd on client detail view.
+// Access contract under test:
+//   - admin can read any booking
+//   - client can read their own booking, ErrForbidden on others'
+//   - owner can read bookings for bathhouses they own
+//   - unknown booking id → ErrNotFound (bubbled from repo)
+func TestBookingService_GetByID_Client_Own(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID, StartTime: start, EndTime: start.Add(2 * time.Hour), GuestCount: 5,
+	})
+	if err != nil {
+		t.Fatalf("create booking: %v", err)
+	}
+
+	got, err := svc.GetByID(context.Background(), clientID, domain.RoleClient, result.Booking.ID)
+	if err != nil {
+		t.Fatalf("client should access own booking, got: %v", err)
+	}
+	if got.ID != result.Booking.ID {
+		t.Errorf("booking id mismatch: got %s, want %s", got.ID, result.Booking.ID)
+	}
+}
+
+func TestBookingService_GetByID_Client_Forbidden(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientA := uuid.New()
+	clientB := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	result, err := svc.Create(context.Background(), clientA, service.CreateBookingInput{
+		BathhouseID: bh.ID, StartTime: start, EndTime: start.Add(2 * time.Hour), GuestCount: 5,
+	})
+	if err != nil {
+		t.Fatalf("create booking: %v", err)
+	}
+
+	_, err = svc.GetByID(context.Background(), clientB, domain.RoleClient, result.Booking.ID)
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("other client should be forbidden, got: %v", err)
+	}
+}
+
+func TestBookingService_GetByID_Owner_OwnBathhouse(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID, StartTime: start, EndTime: start.Add(2 * time.Hour), GuestCount: 5,
+	})
+	if err != nil {
+		t.Fatalf("create booking: %v", err)
+	}
+
+	got, err := svc.GetByID(context.Background(), ownerID, domain.RoleOwner, result.Booking.ID)
+	if err != nil {
+		t.Fatalf("owner of bathhouse should access booking, got: %v", err)
+	}
+	if got.BathhouseID != bh.ID {
+		t.Errorf("wrong bathhouse: got %s, want %s", got.BathhouseID, bh.ID)
+	}
+}
+
+func TestBookingService_GetByID_Admin_AnyBooking(t *testing.T) {
+	svc, bhRepo, _, _, _, _, _, _ := newBookingService()
+	ownerID := uuid.New()
+	clientID := uuid.New()
+	bh := createBathhouse(t, bhRepo, ownerID)
+
+	now := time.Now()
+	start := time.Date(now.Year(), now.Month(), now.Day()+1, 10, 0, 0, 0, now.Location())
+	result, err := svc.Create(context.Background(), clientID, service.CreateBookingInput{
+		BathhouseID: bh.ID, StartTime: start, EndTime: start.Add(2 * time.Hour), GuestCount: 5,
+	})
+	if err != nil {
+		t.Fatalf("create booking: %v", err)
+	}
+
+	got, err := svc.GetByID(context.Background(), uuid.New(), domain.RoleAdmin, result.Booking.ID)
+	if err != nil {
+		t.Fatalf("admin should access any booking, got: %v", err)
+	}
+	if got.ID != result.Booking.ID {
+		t.Errorf("booking id mismatch: got %s, want %s", got.ID, result.Booking.ID)
+	}
+}
+
+func TestBookingService_GetByID_NotFound(t *testing.T) {
+	svc, _, _, _, _, _, _, _ := newBookingService()
+	_, err := svc.GetByID(context.Background(), uuid.New(), domain.RoleAdmin, uuid.New())
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Fatalf("unknown booking id should return ErrNotFound, got: %v", err)
+	}
+}

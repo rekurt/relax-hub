@@ -149,6 +149,10 @@ func (m *mockWidgetBookingService) ListByUser(ctx context.Context, userID uuid.U
 	return nil, nil
 }
 
+func (m *mockWidgetBookingService) GetByID(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*domain.Booking, error) {
+	return nil, nil
+}
+
 func (m *mockWidgetBookingService) ListByBathhouse(ctx context.Context, userID uuid.UUID, role domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {
 	return nil, nil
 }

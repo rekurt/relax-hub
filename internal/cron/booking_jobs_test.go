@@ -44,6 +44,9 @@ func (m *mockBookingServiceForReminders) Complete(_ context.Context, _ uuid.UUID
 func (m *mockBookingServiceForReminders) ListByUser(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Booking], error) {
 	return nil, nil
 }
+func (m *mockBookingServiceForReminders) GetByID(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) (*domain.Booking, error) {
+	return nil, domain.ErrNotFound
+}
 func (m *mockBookingServiceForReminders) ListByBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.Booking], error) {
 	return nil, nil
 }

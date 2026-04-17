@@ -374,6 +374,10 @@ func (m *mockBookingService) ListByUser(ctx context.Context, userID uuid.UUID, p
 	return &domain.PaginatedResult[domain.Booking]{}, nil
 }
 
+func (m *mockBookingService) GetByID(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*domain.Booking, error) {
+	return nil, domain.ErrNotFound
+}
+
 func (m *mockBookingService) ListByBathhouse(ctx context.Context, userID uuid.UUID, role domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {
 	if m.listByBathhouseFn != nil {
 		return m.listByBathhouseFn(ctx, userID, role, bathhouseID, page, pageSize)
