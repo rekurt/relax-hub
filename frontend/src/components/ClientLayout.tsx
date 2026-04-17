@@ -50,7 +50,7 @@ const clientMenuItems: MenuProps['items'] = [
   { key: '/client/referral', icon: <UsergroupAddOutlined />, label: 'Рефералы' },
   { key: '/client/certificates', icon: <GiftOutlined />, label: 'Сертификаты' },
   { key: '/client/promos', icon: <TagOutlined />, label: 'Промокоды' },
-  { key: '/client/wallet', icon: <WalletOutlined />, label: 'Кошел��к' },
+  { key: '/client/wallet', icon: <WalletOutlined />, label: 'Кошелёк' },
   { key: '/client/payments', icon: <WalletOutlined />, label: 'Платежи' },
   { key: '/client/cards', icon: <CreditCardOutlined />, label: 'Карты' },
   { key: '/client/chat', icon: <MessageOutlined />, label: 'Чат' },
