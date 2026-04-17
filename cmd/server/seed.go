@@ -62,7 +62,7 @@ var seedAdminCmd = &cobra.Command{
 		tag, err := pool.Exec(ctx,
 			`INSERT INTO users (id, email, password_hash, name, phone, role, is_active, created_at, updated_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-			ON CONFLICT (email) DO NOTHING`,
+			ON CONFLICT (email) WHERE email::text <> ''::text DO NOTHING`,
 			user.ID, user.Email, user.PasswordHash, user.Name, user.Phone,
 			string(user.Role), user.IsActive, user.CreatedAt, user.UpdatedAt,
 		)

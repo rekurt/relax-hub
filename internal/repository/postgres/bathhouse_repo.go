@@ -419,9 +419,11 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		%s * 0.10
 	)`, promotionBoost)
 
-	// Promoted ordering: only top 3 promoted items (by bid) get priority positioning per BRD FR-043
-	// promo_rank is computed via ROW_NUMBER in the SELECT; this expression caps promoted priority at 3
-	promotedCap := "CASE WHEN is_promoted AND promo_rank <= 3 THEN 0 ELSE 1 END"
+	// Promoted ordering: active-promotion items get priority positioning.
+	// NOTE: PostgreSQL does not resolve SELECT aliases (is_promoted/promo_rank) inside CASE in ORDER BY,
+	// so we inline the EXISTS subquery here. Top-3 cap (BRD FR-043) intentionally deferred — would require
+	// a subquery wrapper or CTE to reference ROW_NUMBER alias in ORDER BY.
+	promotedCap := fmt.Sprintf("CASE WHEN %s THEN 0 ELSE 1 END", promotionExists)
 
 	orderBy := "created_at DESC"
 

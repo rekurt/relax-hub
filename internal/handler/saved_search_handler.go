@@ -78,6 +78,46 @@ func (h *SavedSearchHandler) ListRecentlyViewed(w http.ResponseWriter, r *http.R
 	writeJSON(w, http.StatusOK, items)
 }
 
+type recordRecentlyViewedRequest struct {
+	BathhouseID string `json:"bathhouse_id"`
+}
+
+// RecordRecentlyViewed godoc
+//
+//	@Summary		Record a bathhouse view
+//	@Description	Records that the current user viewed a specific bathhouse (for recently-viewed list).
+//	@Tags			saved-searches
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			body	body		recordRecentlyViewedRequest	true	"Bathhouse ID"
+//	@Success		204
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Router			/my/recently-viewed [post]
+func (h *SavedSearchHandler) RecordRecentlyViewed(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+
+	var req recordRecentlyViewedRequest
+	if err := readJSON(w, r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid request body")
+		return
+	}
+
+	bathhouseID, err := uuid.Parse(req.BathhouseID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse_id")
+		return
+	}
+
+	if err := h.savedSearchService.RecordView(r.Context(), userID, bathhouseID); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 type savedSearchResponse struct {
 	ID          string          `json:"id"`
 	UserID      string          `json:"user_id"`

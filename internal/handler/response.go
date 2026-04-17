@@ -427,6 +427,11 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 	case errors.Is(err, domain.ErrPhotoOrderInvalidStatus):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "photo_order_invalid_status", err.Error())
 	default:
+		path := ""
+		if r != nil {
+			path = r.URL.Path
+		}
+		fmt.Fprintf(os.Stderr, "[unhandled service error] path=%s err=%v\n", path, err)
 		writeErrorWithContext(w, r, http.StatusInternalServerError, "internal_error", "internal server error")
 	}
 }

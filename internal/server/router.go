@@ -344,6 +344,7 @@ func NewRouter(p RouterParams) http.Handler {
 
 		// Recently viewed & saved searches (authenticated)
 		r.With(auth).Get("/my/recently-viewed", p.SavedSearchHandler.ListRecentlyViewed)
+		r.With(auth).Post("/my/recently-viewed", p.SavedSearchHandler.RecordRecentlyViewed)
 		r.With(auth).Post("/my/saved-searches", p.SavedSearchHandler.CreateSavedSearch)
 		r.With(auth).Get("/my/saved-searches", p.SavedSearchHandler.ListSavedSearches)
 		r.With(auth).Delete("/my/saved-searches/{id}", p.SavedSearchHandler.DeleteSavedSearch)

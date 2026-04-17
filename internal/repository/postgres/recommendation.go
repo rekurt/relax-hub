@@ -112,10 +112,10 @@ func (r *recommendationRepo) GetUserBookedBathhouses(ctx context.Context, userID
 	}
 
 	query := `
-		SELECT DISTINCT bathhouse_id
+		SELECT DISTINCT ON (bathhouse_id) bathhouse_id
 		FROM bookings
 		WHERE user_id = $1 AND status IN ('confirmed', 'completed')
-		ORDER BY created_at DESC
+		ORDER BY bathhouse_id, created_at DESC
 		LIMIT $2`
 
 	rows, err := r.pool.Query(ctx, query, userID, limit)
@@ -183,7 +183,7 @@ func (r *recommendationRepo) GetSimilarUsers(ctx context.Context, userID uuid.UU
 
 	// Find users who have booked the same bathhouses
 	query := `
-		SELECT DISTINCT u.user_id
+		SELECT u.user_id
 		FROM (
 			SELECT bathhouse_id FROM bookings WHERE user_id = $1 AND status IN ('confirmed', 'completed')
 		) my_bookings
