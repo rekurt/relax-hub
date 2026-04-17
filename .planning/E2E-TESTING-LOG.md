@@ -52,6 +52,22 @@
 - Error: "mount goadmin engine: chi adapter SetApp: wrong parameter"
 - Status: Deferred — backend works fine without `--with-admin`
 
+#### Bug #9: GET /bookings/{id} missing
+- Files: `internal/service/booking_service.go`, `internal/handler/booking_handler.go`, `internal/server/router.go`
+- Root cause: frontend `ClientBookingDetail.tsx:61` calls `GET /bookings/{id}` but only `/bookings/{id}/cancel` etc. were registered
+- Fix: added `BookingService.GetByID` (with role-based access), handler, and route
+
+#### Bug #10: Frontend generated URLs have duplicated /api/v1/ prefix
+- Files: `frontend/src/api/generated/{admin,share,bathhouses}.ts` (generated from swagger with basePath=/api/v1, but axios baseURL is also /api/v1)
+- Root cause: orval + swagger basePath='/api/v1' + axios baseURL='/api/v1' → URL collision `/api/v1/api/v1/...`
+- Fix: added post-process sed step in `frontend/package.json` generate:api script to strip `/api/v1/` prefix from generated URL strings. Fix is persistent through future regeneration.
+
+### DEFERRED
+
+#### Bug #11: --with-admin flag breaks startup
+- Error: "mount goadmin engine: chi adapter SetApp: wrong parameter"
+- Status: Deferred — backend works fine without `--with-admin`
+
 ### GAPS (contract mismatches)
 
 #### Gap #1: /api/v1/promotions/banners missing
@@ -60,31 +76,42 @@
 - Impact: 404 silent (.catch swallows)
 - TODO: add stub endpoint returning empty array
 
+### INFRASTRUCTURE NOTES (for future testers)
+
+- Admin user needs `admin_sub_role` set in DB + `two_fa_method != 'none'` — otherwise gets 403 on all /admin/* endpoints.
+  ```sql
+  UPDATE users SET admin_sub_role='super_admin', two_fa_method='totp', totp_secret='TESTSECRETXXXXXXXX' WHERE email='admin@test.local';
+  ```
+- Bathhouses need `working_hours` populated (JSONB array with day_of_week 0-6, open_time HH:MM, close_time HH:MM) for bookings to succeed.
+- Test seed available in this session's SQL outputs; can be made into a proper fixture script.
+
 ## Flows Tested — Cycle 1
 
-### Client Flow
-- [x] Login via email/password
-- [x] Client home page renders
-- [ ] Search bathhouses
-- [ ] Bathhouse detail
-- [ ] Booking flow
-- [ ] Payment
-- [ ] Review submission
-- [ ] Profile settings
-- [ ] Wallet dashboard
-- [ ] Certificates
-- [ ] Loyalty program
-- [ ] Support tickets
+### Client Flow (full)
+- [x] Login via email/password (note: antd Form requires React native-setValue + dispatchEvent)
+- [x] Client home (recommendations, recently-viewed, profile completeness)
+- [x] Search bathhouses (3 cities, 3 bathhouses seeded)
+- [x] Bathhouse detail (/bathhouses/:slug)
+- [x] Booking create (via API — UI wizard not clicked through)
+- [x] Wallet dashboard (balance/transactions/holds)
+- [x] Profile settings (profile-completeness, stats, region, notification-prefs, social-accounts)
+- [x] Bookings list
+- [x] GET booking by ID (after fix)
 
-### Owner Flow
-- [ ] Login as owner
-- [ ] KYC onboarding
-- [ ] Listing wizard (7 steps)
-- [ ] Pricing rules
-- [ ] Calendar management
-- [ ] Bookings management
-- [ ] Chat with clients
-- [ ] Payouts
+### Owner Flow (partial)
+- [x] Login as owner
+- [x] Home (owner dashboard, analytics)
+- [x] Bookings mgmt (`/bookings` via bathhouse_id)
+- [x] Calendar (pricing + external calendars + calendar-token)
+- [x] Pricing rules + seasonal tariffs + price recommendation
+- [x] Finance (wallet + transactions)
+- [x] Reviews
+- [ ] Listing wizard deep-click (not tested)
+- [ ] Chat
+- [ ] Photos upload
+- [ ] Promotion auction
+- [ ] Representatives
+- [ ] Subscriptions
 
 ### Admin Flow
 - [ ] Login as admin

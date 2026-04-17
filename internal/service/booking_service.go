@@ -114,6 +114,7 @@ type BookingService interface {
 	Reject(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, reason string) error
 	Approve(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) error
 	Complete(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*BookingResult, error)
+	GetByID(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*domain.Booking, error)
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	ListByBathhouse(ctx context.Context, userID uuid.UUID, role domain.UserRole, bathhouseID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error)
 	GetAvailableSlots(ctx context.Context, bathhouseID uuid.UUID, date time.Time) ([]TimeSlot, error)
@@ -710,6 +711,42 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		HolidayName:         priceBreakdown.HolidayName,
 		HolidayMultiplier:   priceBreakdown.HolidayMultiplier,
 	}, nil
+}
+
+// GetByID returns a booking if the caller is allowed to see it.
+// Access rules: admin sees any booking; client sees their own; owner/representative
+// sees bookings of their bathhouses.
+func (s *bookingService) GetByID(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID) (*domain.Booking, error) {
+	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
+	if err != nil {
+		return nil, err
+	}
+
+	switch role {
+	case domain.RoleAdmin:
+		return booking, nil
+	case domain.RoleClient:
+		if booking.UserID != userID {
+			return nil, domain.ErrForbidden
+		}
+		return booking, nil
+	case domain.RoleOwner, domain.RoleRepresentative:
+		bh, err := s.bhRepo.GetByID(ctx, booking.BathhouseID)
+		if err != nil {
+			return nil, err
+		}
+		if bh.OwnerID != userID {
+			if s.access == nil {
+				return nil, domain.ErrForbidden
+			}
+			if err := s.access.CanManageBathhouse(ctx, userID, role, bh.ID); err != nil {
+				return nil, err
+			}
+		}
+		return booking, nil
+	default:
+		return nil, domain.ErrForbidden
+	}
 }
 
 func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, refundTo string) error {

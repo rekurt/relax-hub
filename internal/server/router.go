@@ -281,6 +281,7 @@ func NewRouter(p RouterParams) http.Handler {
 		// Bookings (authenticated)
 		r.With(auth, middleware.RequireRole(domain.RoleClient)).Post("/bookings", p.BookingHandler.Create)
 		r.With(auth).Get("/bookings", p.BookingHandler.ListByUser)
+		r.With(auth).Get("/bookings/{id}", p.BookingHandler.GetByID)
 		r.With(auth).Patch("/bookings/{id}/cancel", p.BookingHandler.Cancel)
 		r.With(auth).Post("/bookings/{id}/pay", p.PaymentHandler.InitiatePayment)
 		r.With(auth).Get("/bookings/{id}/payment", p.PaymentHandler.GetBookingPayment)

@@ -282,6 +282,41 @@ func (h *BookingHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetByID godoc
+//
+//	@Summary		Get booking by ID
+//	@Description	Returns a single booking. Access: admin sees any, client sees their own, owner/representative sees bookings for their bathhouses.
+//	@Tags			bookings
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Booking ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=bookingResponse}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/bookings/{id} [get]
+func (h *BookingHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	role := middleware.GetUserRole(r.Context())
+
+	bookingID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid booking id")
+		return
+	}
+
+	booking, err := h.bookingService.GetByID(r.Context(), userID, role, bookingID)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	resp := toBookingResponse(booking)
+	h.enrichWithPaymentStatus(r.Context(), &resp)
+	writeJSON(w, http.StatusOK, resp)
+}
+
 type cancelBookingRequest struct {
 	RefundTo string `json:"refund_to"` // "wallet" or "card", default "card"
 }

@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint src/ --max-warnings 0",
-    "generate:api": "orval"
+    "generate:api": "orval && find src/api/generated -name '*.ts' -exec sed -i.bak -E 's|`/api/v1/|`/|g' {} \\; && find src/api/generated -name '*.bak' -delete"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
