@@ -34,7 +34,7 @@ import {
   CarOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { useGetBathhouses } from '@/api/generated/bathhouses/bathhouses'
 import { useGetCities } from '@/api/generated/cities/cities'
@@ -44,6 +44,7 @@ import BathhouseMap from '@/components/BathhouseMap'
 import SearchSuggestions from '@/components/SearchSuggestions'
 import { formatPrice } from '@/lib/format'
 import { axiosInstance } from '@/api/axios-instance'
+import { useAuthStore } from '@/stores/auth'
 
 const { Title } = Typography
 
@@ -76,6 +77,8 @@ const TRAVEL_MODE_OPTIONS = [
   { value: 'transit', label: 'Пешком/транспорт', icon: <ClockCircleOutlined /> },
 ]
 
+const PRICE_FILTER_MAX = 2_500_000
+
 interface IsochroneData {
   coordinates: number[][]
   wkt: string
@@ -91,7 +94,13 @@ function parseSortOption(value: string): { sort_by: string; sort_order: string }
 
 const MAX_COMPARE = 3
 
+function parseBooleanParam(value: string | null) {
+  if (value == null) return undefined
+  return value === 'true'
+}
+
 export default function BathhouseSearch() {
+  const [searchParams] = useSearchParams()
   const [page, setPage] = useState(1)
   const [pageSize] = useState(12)
   const [search, setSearch] = useState('')
@@ -131,8 +140,27 @@ export default function BathhouseSearch() {
 
   const navigate = useNavigate()
   const { message } = App.useApp()
+  const currentUser = useAuthStore((s) => s.user)
   const { data: citiesData } = useGetCities()
   const cities = citiesData?.data ?? []
+  const canCompare = currentUser?.role === 'client'
+
+  useEffect(() => {
+    const nextSearch = searchParams.get('q') ?? ''
+    setSearch(nextSearch)
+    setDebouncedSearch(nextSearch)
+    setAvailableDate(searchParams.get('available_date') ? dayjs(searchParams.get('available_date')) : null)
+    setAvailableTimeFrom(searchParams.get('available_time_from') ? dayjs(searchParams.get('available_time_from'), 'HH:mm') : null)
+    setAvailableTimeTo(searchParams.get('available_time_to') ? dayjs(searchParams.get('available_time_to'), 'HH:mm') : null)
+    setMinRating(searchParams.get('min_rating') ? Number(searchParams.get('min_rating')) : undefined)
+    setFilters({
+      city_slug: searchParams.get('city_slug') ?? undefined,
+      guest_count: searchParams.get('guest_count') ? Number(searchParams.get('guest_count')) : undefined,
+      has_hot_tub: parseBooleanParam(searchParams.get('has_hot_tub')),
+      has_pool: parseBooleanParam(searchParams.get('has_pool')),
+    })
+    setPage(1)
+  }, [searchParams])
 
   const { sort_by, sort_order } = parseSortOption(sortValue)
 
@@ -243,6 +271,7 @@ export default function BathhouseSearch() {
   }
 
   const handleGoCompare = () => {
+    if (!canCompare) return
     if (compareIds.length < 2) {
       message.warning('Выберите минимум 2 бани для сравнения')
       return
@@ -274,7 +303,7 @@ export default function BathhouseSearch() {
 
   const handleMarkerClick = (id: string) => {
     const found = bathhouses.find((b) => b.id === id)
-    navigate(`/client/bathhouse/${found?.slug ?? id}`)
+    navigate(`/bathhouses/${found?.slug ?? id}`)
   }
 
   // Polygon for map display (convert [lng, lat] -> [lat, lng] for Yandex Maps)
@@ -315,7 +344,7 @@ export default function BathhouseSearch() {
                 >
                   <BathhouseCard
                     bathhouse={b}
-                    showCompare
+                    showCompare={canCompare}
                     isCompareSelected={compareIds.includes(b.id ?? '')}
                     onCompareToggle={handleCompareToggle}
                   />
@@ -350,7 +379,7 @@ export default function BathhouseSearch() {
         />
       </div>
 
-      <Space direction="vertical" size="middle" style={{ width: '100%', marginBottom: 24 }}>
+      <Space orientation="vertical" size="middle" style={{ width: '100%', marginBottom: 24 }}>
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} sm={12} md={8}>
             <div ref={searchWrapperRef} style={{ position: 'relative' }}>
@@ -380,9 +409,9 @@ export default function BathhouseSearch() {
               placeholder="Город"
               style={{ width: '100%' }}
               allowClear
-              value={filters.city_id}
-              onChange={(v) => updateFilter('city_id', v)}
-              options={cities.map((c) => ({ value: c.id, label: c.name }))}
+              value={filters.city_slug as string | undefined}
+              onChange={(slug) => updateFilter('city_slug', slug)}
+              options={cities.map((c) => ({ value: c.slug ?? String(c.id), label: c.name }))}
             />
           </Col>
           <Col xs={12} md={5}>
@@ -424,15 +453,15 @@ export default function BathhouseSearch() {
                       <Slider
                         range
                         min={0}
-                        max={1000000}
-                        step={10000}
-                        value={[filters.price_min ?? 0, filters.price_max ?? 1000000]}
+                        max={PRICE_FILTER_MAX}
+                        step={25000}
+                        value={[filters.price_min ?? 0, filters.price_max ?? PRICE_FILTER_MAX]}
                         onChange={(values: number[]) => {
                           const [min, max] = values
                           setFilters((prev) => ({
                             ...prev,
                             price_min: min !== 0 ? min : undefined,
-                            price_max: max !== undefined && max < 1000000 ? max : undefined,
+                            price_max: max !== undefined && max < PRICE_FILTER_MAX ? max : undefined,
                           }))
                           setPage(1)
                         }}

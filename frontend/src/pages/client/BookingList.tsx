@@ -184,7 +184,7 @@ export default function ClientBookingList() {
         dataSource={filteredBookings}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: <EmptyState description="У вас пока нет бронирований" actionText="Найти баню" actionLink="/client/search" icon={<SearchOutlined />} /> }}
+        locale={{ emptyText: <EmptyState description="У вас пока нет бронирований" actionText="Найти баню" actionLink="/catalog" icon={<SearchOutlined />} /> }}
         pagination={hasActiveFilter ? {
           pageSize: 999,
           hideOnSinglePage: true,

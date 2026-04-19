@@ -12,6 +12,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
 import { formatPrice } from '@/lib/format'
+import { useAuthStore } from '@/stores/auth'
 
 const { Text, Title } = Typography
 
@@ -42,6 +43,7 @@ export default function BathhouseCard({
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { message } = App.useApp()
+  const currentUser = useAuthStore((s) => s.user)
 
   const favoriteMutation = usePostBathhousesIdFavorite({
     mutation: {
@@ -67,7 +69,7 @@ export default function BathhouseCard({
   }
 
   const cardActions: React.ReactNode[] = []
-  if (showFavorite) {
+  if (showFavorite && currentUser?.role === 'client') {
     cardActions.push(
       <Button
         key="favorite"
@@ -99,7 +101,7 @@ export default function BathhouseCard({
   return (
     <Card
       hoverable
-      onClick={() => navigate(`/client/bathhouse/${bathhouse.slug ?? bathhouse.id}`)}
+      onClick={() => navigate(`/bathhouses/${bathhouse.slug ?? bathhouse.id}`)}
       cover={
         coverImage ? (
           <Image
@@ -125,7 +127,7 @@ export default function BathhouseCard({
       }
       actions={cardActions.length > 0 ? cardActions : undefined}
     >
-      <Space direction="vertical" size={4} style={{ width: '100%' }}>
+      <Space orientation="vertical" size={4} style={{ width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Title level={5} style={{ margin: 0 }}>
             {bathhouse.name}

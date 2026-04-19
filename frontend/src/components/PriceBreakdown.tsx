@@ -41,6 +41,10 @@ export default function PriceBreakdown({
   areaAveragePrice,
 }: PriceBreakdownProps) {
   const lines: PriceLineItem[] = []
+  const showAreaAverage = areaAveragePrice != null
+    && areaAveragePrice > 0
+    && areaAveragePrice >= Math.round(basePrice * 0.2)
+    && areaAveragePrice <= Math.round(basePrice * 5)
 
   lines.push({ label: 'Базовая стоимость', amount: basePrice })
 
@@ -130,14 +134,14 @@ export default function PriceBreakdown({
         </div>
       )}
 
-      {areaAveragePrice != null && areaAveragePrice > 0 && (
+      {showAreaAverage && (
         <div style={{ marginTop: 8 }}>
           <Text type="secondary">
-            Средняя цена в районе: {formatPrice(areaAveragePrice)}/ч
-            {basePrice > areaAveragePrice
-              ? ` (выше на ${Math.round(((basePrice - areaAveragePrice) / areaAveragePrice) * 100)}%)`
-              : basePrice < areaAveragePrice
-                ? ` (ниже на ${Math.round(((areaAveragePrice - basePrice) / areaAveragePrice) * 100)}%)`
+            Средняя цена в районе: {formatPrice(areaAveragePrice!)}/ч
+            {basePrice > areaAveragePrice!
+              ? ` (выше на ${Math.round(((basePrice - areaAveragePrice!) / areaAveragePrice!) * 100)}%)`
+              : basePrice < areaAveragePrice!
+                ? ` (ниже на ${Math.round(((areaAveragePrice! - basePrice) / areaAveragePrice!) * 100)}%)`
                 : ' (на уровне средней)'}
           </Text>
         </div>

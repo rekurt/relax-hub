@@ -28,11 +28,15 @@ func mountAPIRoutes(
 	r.With(middleware.RateLimit(webhookRateLimiter, 0.5)).Post("/webhooks/yookassa", p.PaymentHandler.HandleWebhook)
 	r.With(middleware.RateLimit(webhookRateLimiter, 0.5)).Post("/webhooks/bepaid", p.PaymentHandler.HandleBePaidWebhook)
 
+	// Apple Pay merchant validation (public, called during Apple Pay session init)
+	r.Post("/apple-pay/validate-merchant", p.PaymentHandler.ValidateApplePayMerchant)
+
 	// Auth (public, rate-limited)
 	r.With(middleware.RateLimit(authRegisterRateLimiter, 5.0/60.0)).Post("/auth/register", p.AuthHandler.Register)
 	r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/login", p.AuthHandler.Login)
 	r.With(middleware.RateLimit(authRegisterRateLimiter, 5.0/60.0)).Post("/auth/register-phone", p.AuthHandler.RegisterPhone)
 	r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/login-phone", p.AuthHandler.LoginPhone)
+	r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/phone/start", p.AuthHandler.StartPhone)
 	r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/verify-phone", p.AuthHandler.VerifyPhone)
 	r.With(auth).Get("/auth/me", p.AuthHandler.Me)
 	r.With(auth).Put("/auth/me", p.AuthHandler.UpdateProfile)
@@ -72,6 +76,9 @@ func mountAPIRoutes(
 	// Public platform settings (whitelisted keys only)
 	r.Get("/settings/{key}", p.PlatformSettingsHandler.GetPublic)
 
+	// FAQ (public)
+	r.Get("/faq", p.FAQHandler.PublicListFAQ)
+
 	// Isochrone (public)
 	r.Get("/isochrone", p.IsochroneHandler.GetIsochrone)
 
@@ -106,6 +113,9 @@ func mountAPIRoutes(
 
 	// Promo codes (owner/representative/admin deactivation)
 	r.With(auth, middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative, domain.RoleAdmin)).Delete("/promo-codes/{id}", p.PromoHandler.Deactivate)
+
+	// Promotion banners (public, home page)
+	r.Get("/promotions/banners", p.SubscriptionHandler.GetPromotionBanners)
 
 	// Bookings (authenticated)
 	r.With(auth, middleware.RequireRole(domain.RoleClient)).Post("/bookings", p.BookingHandler.Create)

@@ -1,0 +1,88 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - button "BANI Публичный каталог и бронирование" [ref=e7] [cursor=pointer]:
+          - strong [ref=e9]: BANI
+          - generic [ref=e10]: Публичный каталог и бронирование
+        - generic [ref=e12]:
+          - button "Все бани" [ref=e14] [cursor=pointer]:
+            - generic [ref=e15]: Все бани
+          - button "Для двоих" [ref=e17] [cursor=pointer]:
+            - generic [ref=e18]: Для двоих
+          - button "Для компании" [ref=e20] [cursor=pointer]:
+            - generic [ref=e21]: Для компании
+          - button "На выходные" [ref=e23] [cursor=pointer]:
+            - generic [ref=e24]: На выходные
+          - button "С чаном" [ref=e26] [cursor=pointer]:
+            - generic [ref=e27]: С чаном
+          - button "С бассейном" [ref=e29] [cursor=pointer]:
+            - generic [ref=e30]: С бассейном
+          - button "Сертификаты" [ref=e32] [cursor=pointer]:
+            - generic [ref=e33]: Сертификаты
+        - generic [ref=e34]:
+          - generic [ref=e35] [cursor=pointer]:
+            - generic [ref=e36]:
+              - generic: Город
+              - combobox [ref=e37]
+            - img "down" [ref=e39]:
+              - img [ref=e40]
+          - button "Войти" [ref=e42] [cursor=pointer]:
+            - generic [ref=e43]: Войти
+    - main [ref=e44]:
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - heading "Поиск бань" [level=3] [ref=e48]
+          - radiogroup "segmented control" [ref=e49]:
+            - generic [ref=e50]:
+              - generic [ref=e51] [cursor=pointer]:
+                - radio "unordered-list Список" [checked]
+                - generic [ref=e52]:
+                  - img "unordered-list" [ref=e54]:
+                    - img [ref=e55]
+                  - text: Список
+              - generic [ref=e57] [cursor=pointer]:
+                - radio "split-cells Сплит"
+                - generic [ref=e58]:
+                  - img "split-cells" [ref=e60]:
+                    - img [ref=e61]
+                  - text: Сплит
+              - generic [ref=e63] [cursor=pointer]:
+                - radio "environment Карта"
+                - generic [ref=e64]:
+                  - img "environment" [ref=e66]:
+                    - img [ref=e67]
+                  - text: Карта
+        - generic [ref=e69]:
+          - generic [ref=e71]:
+            - generic [ref=e74]:
+              - img "search" [ref=e76]:
+                - img [ref=e77]
+              - textbox "Поиск по названию..." [ref=e79]
+            - generic [ref=e82] [cursor=pointer]:
+              - generic [ref=e83]:
+                - generic: Город
+                - combobox [ref=e84]
+              - img "down" [ref=e86]:
+                - img [ref=e87]
+            - generic [ref=e90] [cursor=pointer]:
+              - generic "По рейтингу" [ref=e91]:
+                - text: По рейтингу
+                - combobox [ref=e92]
+              - img "sort-ascending" [ref=e94]:
+                - img [ref=e95]
+            - button "environment Найти рядом" [ref=e98] [cursor=pointer]:
+              - img "environment" [ref=e100]:
+                - img [ref=e101]
+              - generic [ref=e103]: Найти рядом
+          - button "collapsed filter Фильтры" [ref=e107] [cursor=pointer]:
+            - img "collapsed" [ref=e109]:
+              - img [ref=e110]
+            - generic [ref=e113]:
+              - img "filter" [ref=e115]:
+                - img [ref=e116]
+              - generic [ref=e118]: Фильтры
+  - generic [ref=e126]:
+    - img [ref=e128]
+    - button "Open Tanstack query devtools" [ref=e176] [cursor=pointer]:
+      - img [ref=e177]

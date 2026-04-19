@@ -75,8 +75,8 @@ type createPromotionRequest struct {
 }
 
 type updatePromotionRequest struct {
-	DailyBidKopecks *int64 `json:"daily_bid_kopecks,omitempty"`
-	BudgetKopecks   *int64 `json:"budget_kopecks,omitempty"`
+	DailyBidKopecks *int64  `json:"daily_bid_kopecks,omitempty"`
+	BudgetKopecks   *int64  `json:"budget_kopecks,omitempty"`
 	EndDate         *string `json:"end_date,omitempty"`
 }
 
@@ -277,6 +277,50 @@ func (h *SubscriptionHandler) ListSubscriptions(w http.ResponseWriter, r *http.R
 		PageSize:   result.PageSize,
 		TotalCount: result.TotalCount,
 		TotalPages: result.TotalPages,
+	})
+}
+
+type promotionBannerResponse struct {
+	ID           string `json:"id"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	Type         string `json:"type"`
+	PromoCode    string `json:"promo_code,omitempty"`
+	DiscountText string `json:"discount_text,omitempty"`
+}
+
+// GetPromotionBanners godoc
+//
+//	@Summary		Get promotion banners
+//	@Description	Returns active promotional banners for the home page
+//	@Tags			promotions
+//	@Produce		json
+//	@Success		200	{object}	APIResponse{data=[]promotionBannerResponse}
+//	@Router			/promotions/banners [get]
+func (h *SubscriptionHandler) GetPromotionBanners(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, []promotionBannerResponse{
+		{
+			ID:           "public-premium-dvor",
+			Title:        "Премиум Двор для подарочного выезда",
+			Description:  "Флагманский объект demo-мира с высокой оценкой, приватным форматом и понятным checkout для нового клиента.",
+			Type:         "promo",
+			PromoCode:    "WEEKEND10",
+			DiscountText: "скидка 10% на длинную сессию",
+		},
+		{
+			ID:          "public-sms-checkout",
+			Title:       "Первое бронирование без отдельной регистрации",
+			Description: "Каталог, слот и SMS-подтверждение собраны в один публичный поток. Телефон подтверждаем прямо внутри checkout.",
+			Type:        "welcome",
+		},
+		{
+			ID:           "public-certificates",
+			Title:        "Подарочные сертификаты уже в публичной витрине",
+			Description:  "Можно выбрать баню, купить сертификат и вернуться к брони позже. В demo-мире уже есть активные и использованные кейсы.",
+			Type:         "loyalty",
+			PromoCode:    "GIFT1500",
+			DiscountText: "сертификат на спокойный сценарий",
+		},
 	})
 }
 

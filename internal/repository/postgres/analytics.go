@@ -399,7 +399,7 @@ func (r *analyticsRepo) GetCohortAnalysis(ctx context.Context, months int) ([]do
 				to_char(u.created_at, 'YYYY-MM') AS cohort_month,
 				u.id AS user_id
 			FROM users u
-			WHERE u.created_at >= NOW() - ($1 || ' months')::interval
+			WHERE u.created_at >= NOW() - make_interval(months := $1)
 		),
 		activity AS (
 			SELECT
@@ -579,7 +579,9 @@ func (r *analyticsRepo) GetWalletMetrics(ctx context.Context, from, to time.Time
 	if err != nil {
 		return nil, fmt.Errorf("wallet total bookings: %w", err)
 	}
-	err = r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM bookings WHERE created_at >= $1 AND created_at <= $2 AND payment_method IN ('wallet', 'combo')`,
+	err = r.pool.QueryRow(ctx, `SELECT COUNT(*) FROM payments p
+		JOIN bookings b ON b.id = p.booking_id
+		WHERE b.created_at >= $1 AND b.created_at <= $2 AND p.payment_method IN ('wallet', 'combo')`,
 		fromDate, toDate).Scan(&walletBookings)
 	if err != nil {
 		return nil, fmt.Errorf("wallet wallet bookings: %w", err)
@@ -708,7 +710,7 @@ func (r *analyticsRepo) GetPlatformRevenue(ctx context.Context, from, to time.Ti
 	// Service fees from completed bookings
 	var serviceFees int64
 	err := r.pool.QueryRow(ctx, `
-		SELECT COALESCE(SUM(service_fee), 0)
+		SELECT COALESCE(SUM(service_fee_amount), 0)
 		FROM bookings
 		WHERE status = 'completed' AND created_at >= $1 AND created_at <= $2`,
 		fromDate, toDate).Scan(&serviceFees)
@@ -719,7 +721,7 @@ func (r *analyticsRepo) GetPlatformRevenue(ctx context.Context, from, to time.Ti
 	// Subscriptions revenue
 	var subscriptions int64
 	err = r.pool.QueryRow(ctx, `
-		SELECT COALESCE(SUM(price), 0)
+		SELECT COALESCE(SUM(price_kopecks), 0)
 		FROM subscriptions
 		WHERE status = 'active' AND created_at >= $1 AND created_at <= $2`,
 		fromDate, toDate).Scan(&subscriptions)
@@ -730,9 +732,9 @@ func (r *analyticsRepo) GetPlatformRevenue(ctx context.Context, from, to time.Ti
 	// Promotions revenue (promoted listings spending)
 	var promotions int64
 	err = r.pool.QueryRow(ctx, `
-		SELECT COALESCE(SUM(price), 0)
+		SELECT COALESCE(SUM(price_kopecks), 0)
 		FROM subscriptions
-		WHERE status = 'active' AND tier = 'promoted' AND created_at >= $1 AND created_at <= $2`,
+		WHERE status = 'active' AND plan = 'promoted' AND created_at >= $1 AND created_at <= $2`,
 		fromDate, toDate).Scan(&promotions)
 	if err != nil {
 		return 0, 0, 0, fmt.Errorf("pnl promotions: %w", err)

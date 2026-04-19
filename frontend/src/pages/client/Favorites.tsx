@@ -67,7 +67,7 @@ export default function Favorites() {
             <EmptyState
               description="Ваш список избранного пуст. Начните исследовать!"
               actionText="Найти баню"
-              actionLink="/client/search"
+              actionLink="/catalog"
             />
           )
         )}

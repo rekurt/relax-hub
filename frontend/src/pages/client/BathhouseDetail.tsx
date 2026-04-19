@@ -194,13 +194,19 @@ export default function BathhouseDetail() {
   const amenities = AMENITY_LIST.filter(
     (a) => bathhouse[a.key as keyof typeof bathhouse],
   )
+  const areaAveragePrice = bathhouse.area_avg_price_per_hour
+  const showAreaAveragePrice = areaAveragePrice != null
+    && areaAveragePrice > 0
+    && bathhouse.price_per_hour != null
+    && areaAveragePrice >= Math.round(bathhouse.price_per_hour * 0.2)
+    && areaAveragePrice <= Math.round(bathhouse.price_per_hour * 5)
 
   return (
     <div>
       <Button
         type="text"
         icon={<ArrowLeftOutlined />}
-        onClick={() => navigate('/client')}
+        onClick={() => navigate('/catalog')}
         style={{ marginBottom: 16 }}
       >
         К поиску
@@ -254,14 +260,16 @@ export default function BathhouseDetail() {
                     title={bathhouse.name ?? 'Баня на Bani'}
                     text={bathhouse.description?.slice(0, 100) ?? ''}
                   />
-                  <Button
-                    type={bathhouse.is_favorite ? 'primary' : 'default'}
-                    icon={bathhouse.is_favorite ? <HeartFilled /> : <HeartOutlined />}
-                    onClick={() => id && favoriteMutation.mutate({ id })}
-                    loading={favoriteMutation.isPending}
-                  >
-                    {bathhouse.is_favorite ? 'В избранном' : 'В избранное'}
-                  </Button>
+                  {currentUser?.role === 'client' && (
+                    <Button
+                      type={bathhouse.is_favorite ? 'primary' : 'default'}
+                      icon={bathhouse.is_favorite ? <HeartFilled /> : <HeartOutlined />}
+                      onClick={() => id && favoriteMutation.mutate({ id })}
+                      loading={favoriteMutation.isPending}
+                    >
+                      {bathhouse.is_favorite ? 'В избранном' : 'В избранное'}
+                    </Button>
+                  )}
                 </Space>
               </div>
 
@@ -278,9 +286,9 @@ export default function BathhouseDetail() {
                 <Descriptions.Item label="Цена за час">
                   {bathhouse.price_per_hour ? formatPrice(bathhouse.price_per_hour) : '—'}
                 </Descriptions.Item>
-                {bathhouse.area_avg_price_per_hour ? (
+                {showAreaAveragePrice ? (
                   <Descriptions.Item label="Средняя цена в районе">
-                    {formatPrice(bathhouse.area_avg_price_per_hour)}
+                    {formatPrice(areaAveragePrice)}
                   </Descriptions.Item>
                 ) : null}
                 <Descriptions.Item label="Мин. длительность">
@@ -359,7 +367,7 @@ export default function BathhouseDetail() {
                     type="info"
                     showIcon={false}
                     style={{ marginTop: 8 }}
-                    message={
+                    title={
                       <Paragraph style={{ margin: 0, whiteSpace: 'pre-line' }}>
                         {(bathhouse as Record<string, unknown>).visiting_rules as string}
                       </Paragraph>
@@ -414,7 +422,7 @@ export default function BathhouseDetail() {
               {slots.length === 0 ? (
                 <Empty description="Нет доступных слотов" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               ) : (
-                <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                <Space orientation="vertical" style={{ width: '100%' }} size={8}>
                   {slots.map((slot) => (
                     <Card
                       key={`${slot.startTime}-${slot.endTime}`}
@@ -425,7 +433,7 @@ export default function BathhouseDetail() {
                       }}
                       onClick={() => {
                         if (slot.available) {
-                          navigate(`/client/booking/new?bathhouse=${id}&date=${selectedDate}&from=${slot.startTime}&to=${slot.endTime}`)
+                          navigate(`/checkout?bathhouse=${id}&date=${selectedDate}&from=${slot.startTime}&to=${slot.endTime}`)
                         }
                       }}
                     >
@@ -451,12 +459,12 @@ export default function BathhouseDetail() {
               <PriceBreakdown
                 basePrice={bathhouse.price_per_hour}
                 serviceFee={bathhouse.price_per_hour ? Math.round(bathhouse.price_per_hour * 0.1) : undefined}
-                areaAveragePrice={bathhouse.area_avg_price_per_hour}
+                areaAveragePrice={showAreaAveragePrice ? areaAveragePrice : undefined}
               />
             </Card>
           )}
 
-          {currentUser && walletBalance?.balance != null && walletBalance.balance > 0 && bathhouse.price_per_hour && walletBalance.balance >= bathhouse.price_per_hour && (
+          {currentUser?.role === 'client' && walletBalance?.balance != null && walletBalance.balance > 0 && bathhouse.price_per_hour && walletBalance.balance >= bathhouse.price_per_hour && (
             <Card size="small" style={{ marginTop: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <WalletOutlined style={{ fontSize: 18, color: '#52c41a' }} />
@@ -467,9 +475,9 @@ export default function BathhouseDetail() {
                 ghost
                 block
                 icon={<WalletOutlined />}
-                onClick={() => navigate(`/client/booking/new?bathhouse=${id}&payment_method=wallet`)}
+                onClick={() => navigate(`/checkout?bathhouse=${id}`)}
               >
-                Оплатить из кошелька
+                Перейти к бронированию
               </Button>
             </Card>
           )}
@@ -487,7 +495,7 @@ export default function BathhouseDetail() {
             <ReviewCard
               key={review.id}
               review={review}
-              showActions={true}
+              showActions={!!currentUser}
               isAuthor={!!currentUser?.id && currentUser.id === review.user_id}
               onEdit={(reviewId) => navigate(`/client/review?bathhouse=${id}&edit=${reviewId}`)}
               onDeleted={() => queryClient.invalidateQueries({ queryKey: [`/bathhouses/${id}/reviews`] })}

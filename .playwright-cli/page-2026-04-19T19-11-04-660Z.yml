@@ -1,0 +1,148 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - button "BANI Публичный каталог и бронирование" [ref=e7] [cursor=pointer]:
+        - strong [ref=e9]: BANI
+        - generic [ref=e10]: Публичный каталог и бронирование
+      - generic [ref=e12]:
+        - button "Все бани" [ref=e14] [cursor=pointer]:
+          - generic [ref=e15]: Все бани
+        - button "Для двоих" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]: Для двоих
+        - button "Для компании" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: Для компании
+        - button "На выходные" [ref=e23] [cursor=pointer]:
+          - generic [ref=e24]: На выходные
+        - button "С чаном" [ref=e26] [cursor=pointer]:
+          - generic [ref=e27]: С чаном
+        - button "С бассейном" [ref=e29] [cursor=pointer]:
+          - generic [ref=e30]: С бассейном
+        - button "Сертификаты" [ref=e32] [cursor=pointer]:
+          - generic [ref=e33]: Сертификаты
+      - generic [ref=e34]:
+        - generic [ref=e35] [cursor=pointer]:
+          - generic [ref=e36]:
+            - generic: Москва
+            - combobox [ref=e37]
+          - img "down" [ref=e39]:
+            - img [ref=e40]
+        - button "Войти" [ref=e42] [cursor=pointer]:
+          - generic [ref=e43]: Войти
+  - main [ref=e44]:
+    - generic [ref=e45]:
+      - generic [ref=e48]:
+        - generic [ref=e50]:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - img:
+                            - img
+                        - generic:
+                          - heading [level=3]: Подарочные сертификаты уже в публичной витрине
+                      - generic: Можно выбрать баню, купить сертификат и вернуться к брони позже. В demo-мире уже есть активные и использованные кейсы.
+                      - generic: GIFT1500 — сертификат на спокойный сценарий
+          - generic [ref=e56]:
+            - generic [ref=e57]:
+              - img "tag" [ref=e59]:
+                - img [ref=e60]
+              - heading "Премиум Двор для подарочного выезда" [level=3] [ref=e63]
+            - generic [ref=e64]: Флагманский объект demo-мира с высокой оценкой, приватным форматом и понятным checkout для нового клиента.
+            - generic [ref=e65]: WEEKEND10 — скидка 10% на длинную сессию
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - img:
+                            - img
+                        - generic:
+                          - heading [level=3]: Первое бронирование без отдельной регистрации
+                      - generic: Каталог, слот и SMS-подтверждение собраны в один публичный поток. Телефон подтверждаем прямо внутри checkout.
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - img:
+                            - img
+                        - generic:
+                          - heading [level=3]: Подарочные сертификаты уже в публичной витрине
+                      - generic: Можно выбрать баню, купить сертификат и вернуться к брони позже. В demo-мире уже есть активные и использованные кейсы.
+                      - generic: GIFT1500 — сертификат на спокойный сценарий
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - img:
+                            - img
+                        - generic:
+                          - heading [level=3]: Премиум Двор для подарочного выезда
+                      - generic: Флагманский объект demo-мира с высокой оценкой, приватным форматом и понятным checkout для нового клиента.
+                      - generic: WEEKEND10 — скидка 10% на длинную сессию
+        - list [ref=e66]:
+          - listitem [ref=e67]:
+            - button "1" [ref=e68] [cursor=pointer]
+          - listitem [ref=e69]:
+            - button "2" [ref=e70] [cursor=pointer]
+          - listitem [ref=e71]:
+            - button "3" [ref=e72] [cursor=pointer]
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]: Быстрое бронирование
+          - heading "Бани для вечера вдвоем, компании и выходных за городом" [level=1] [ref=e78]
+          - text: Выбирайте по сценарию отдыха, смотрите доступные слоты и подтверждайте телефон только в финальном шаге. Без длинной регистрации и без лишних экранов.
+          - generic [ref=e79]:
+            - button "Подобрать баню" [ref=e81] [cursor=pointer]:
+              - generic [ref=e82]: Подобрать баню
+            - button "Подарочный сертификат" [ref=e84] [cursor=pointer]:
+              - generic [ref=e85]: Подарочный сертификат
+        - generic [ref=e87]:
+          - generic [ref=e90] [cursor=pointer]:
+            - generic [ref=e91]: Сценарий
+            - heading "Для двоих" [level=4] [ref=e92]
+            - text: Камерные приватные бани для спокойного вечера без лишнего шума.
+          - generic [ref=e95] [cursor=pointer]:
+            - generic [ref=e96]: Компания
+            - heading "Для компании" [level=4] [ref=e97]
+            - text: Большие объекты на 6+ гостей для дней рождений, сборов и выездов.
+          - generic [ref=e100] [cursor=pointer]:
+            - generic [ref=e101]: Выходные
+            - heading "На выходные" [level=4] [ref=e102]
+            - text: Подборка с доступностью на ближайшую субботу без ручной фильтрации.
+          - generic [ref=e105] [cursor=pointer]:
+            - generic [ref=e106]: Комфорт
+            - heading "С чаном" [level=4] [ref=e107]
+            - text: Витрина объектов с чаном, уличным парением и вечерним сценарием отдыха.
+      - generic [ref=e108] [cursor=pointer]:
+        - img "search" [ref=e110]:
+          - img [ref=e111]
+        - textbox "Поиск бань..." [ref=e113]
+      - separator [ref=e114]
+      - generic [ref=e116]:
+        - generic [ref=e117]:
+          - heading "fire Популярные рядом" [level=4] [ref=e118]:
+            - img "fire" [ref=e119]:
+              - img [ref=e120]
+            - text: Популярные рядом
+          - text: Москва по умолчанию, если геолокация недоступна
+        - generic [ref=e122] [cursor=pointer]:
+          - generic "Москва" [ref=e123]:
+            - text: Москва
+            - combobox [ref=e124]
+          - img "environment" [ref=e126]:
+            - img [ref=e127]

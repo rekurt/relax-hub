@@ -1,4 +1,4 @@
-.PHONY: build run test test-hurl lint vet migrate-up migrate-down docker-up docker-down seed-admin clean swagger swagger-fmt frontend-dev frontend-build frontend-generate-api frontend-test
+.PHONY: build run test test-hurl lint vet migrate-up migrate-down docker-up docker-down seed-admin seed-demo clean swagger swagger-fmt frontend-dev frontend-build frontend-generate-api frontend-test
 
 APP_NAME := bani-server
 BUILD_DIR := ./bin
@@ -43,6 +43,9 @@ seed-admin:
 	read -p "Name [Admin]: " name; \
 	name=$${name:-Admin}; \
 	go run ./cmd/server seed-admin --email="$$email" --password="$$password" --name="$$name"
+
+seed-demo:
+	go run ./cmd/server seed-demo
 
 clean:
 	rm -rf $(BUILD_DIR)

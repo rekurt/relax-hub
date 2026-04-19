@@ -52,9 +52,9 @@ export default function RecentlyViewed() {
                 style={{ height: 100, objectFit: 'cover' }}
               />
             ) : undefined}
-            onClick={() => navigate(`/client/bathhouse/${item.slug ?? item.id}`)}
+            onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}
           >
-            <Space direction="vertical" size={2}>
+            <Space orientation="vertical" size={2}>
               <Text strong ellipsis style={{ maxWidth: 190 }}>
                 {item.name}
               </Text>

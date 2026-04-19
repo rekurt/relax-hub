@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { Alert, Progress, Typography, Input, Row, Col, Card, Rate, Divider, Select, Space, Tag, Carousel } from 'antd'
+import { Alert, Progress, Typography, Input, Row, Col, Card, Rate, Divider, Select, Space, Tag, Carousel, Button } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import {
   SearchOutlined,
@@ -9,7 +9,6 @@ import {
   GiftOutlined,
   TagOutlined,
   RocketOutlined,
-  AimOutlined,
 } from '@ant-design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { useGetRecommendations, useGetPopular } from '@/api/generated/recommendations/recommendations'
@@ -18,6 +17,7 @@ import { useAuthStore } from '@/stores/auth'
 import { formatPrice } from '@/lib/format'
 import RecentlyViewed from '@/components/RecentlyViewed'
 import OnboardingTour from '@/components/OnboardingTour'
+import { PUBLIC_SHORTCUT_CARDS } from '@/navigation/menu'
 
 const { Title, Text } = Typography
 
@@ -38,13 +38,17 @@ interface PromotionBanner {
 function ProfileNudge() {
   const [data, setData] = useState<CompletenessData | null>(null)
   const navigate = useNavigate()
+  const user = useAuthStore((s) => s.user)
 
   useEffect(() => {
+    if (!user) return
     axiosInstance
       .get<{ success: boolean; data: CompletenessData }>('/my/profile-completeness')
       .then((res) => setData(res.data.data))
       .catch(() => {})
-  }, [])
+  }, [user])
+
+  if (!user) return null
 
   if (!data || data.percentage === 100) return null
 
@@ -57,7 +61,7 @@ function ProfileNudge() {
       showIcon
       closable
       style={{ marginBottom: 16 }}
-      message={
+      title={
         <span style={{ cursor: 'pointer' }} onClick={() => navigate('/client/profile')}>
           Заполните профиль ({data.percentage}%) — не хватает: {missing.join(', ')}
         </span>
@@ -109,9 +113,9 @@ function PromoBanner() {
                 ) : (
                   <GiftOutlined style={{ fontSize: 20 }} />
                 )}
-                <Title level={3} style={{ color: '#fff', margin: 0 }}>
-                  {banner.title}
-                </Title>
+              <Title level={3} style={{ color: '#fff', margin: 0 }}>
+                {banner.title}
+              </Title>
               </Space>
               <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, display: 'block', marginTop: 8 }}>
                 {banner.description}
@@ -150,7 +154,7 @@ function PromoBanner() {
         marginBottom: 24,
         background: isNewUser
           ? 'linear-gradient(135deg, #52c41a 0%, #13c2c2 100%)'
-          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          : 'linear-gradient(135deg, #1f4853 0%, #80502c 100%)',
         border: 'none',
         borderRadius: 12,
       }}
@@ -163,13 +167,13 @@ function PromoBanner() {
             <GiftOutlined style={{ fontSize: 20 }} />
           )}
           <Title level={3} style={{ color: '#fff', margin: 0 }}>
-            {isNewUser ? 'Добро пожаловать в Bani!' : 'Найдите идеальную баню'}
+            {isNewUser ? 'Вечер уже можно планировать' : 'Бронирование без лишних шагов'}
           </Title>
         </Space>
         <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, display: 'block', marginTop: 8 }}>
           {isNewUser
-            ? 'Бонус 500 ₽ уже на вашем кошельке! Пройдите знакомство с платформой и забронируйте первую баню.'
-            : 'Поиск, бронирование и оплата — всё в одном месте. Бонус 500 ₽ новым пользователям!'}
+            ? 'Приветственный бонус 500 ₽ уже в кошельке. Выберите сценарий, подтвердите телефон по SMS и переходите к брони.'
+            : 'Каталог, понятные цены и SMS-подтверждение собраны в один короткий маршрут до бронирования.'}
         </Text>
       </div>
     </Card>
@@ -216,14 +220,20 @@ function PopularNearby({ detectedCityId }: { detectedCityId?: number }) {
     [cities],
   )
 
+  const preferredMoscow = useMemo(
+    () => cities.find((city) => city.slug === 'moscow' || city.slug === 'moskva' || city.name === 'Москва'),
+    [cities],
+  )
+
   const defaultCityId = useMemo(() => {
     if (cities.length === 0) return undefined
     if (detectedCityId && cities.some((c) => c.id === detectedCityId)) return detectedCityId
-    return cities[0]?.id
-  }, [cities, detectedCityId])
+    return preferredMoscow?.id ?? cities[0]?.id
+  }, [cities, detectedCityId, preferredMoscow])
 
   const [userSelectedCityId, setUserSelectedCityId] = useState<number | undefined>(undefined)
   const selectedCityId = userSelectedCityId ?? defaultCityId
+  const selectedCity = cities.find((city) => city.id === selectedCityId)
 
   const { data: popularData, isLoading } = useGetPopular(
     { city_id: selectedCityId ?? 0, limit: 6 },
@@ -235,16 +245,28 @@ function PopularNearby({ detectedCityId }: { detectedCityId?: number }) {
 
   return (
     <div style={{ marginBottom: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>
-          <FireOutlined style={{ marginRight: 8, color: '#ff4d4f' }} />
-          Популярные рядом
-        </Title>
-        <CitySelector
-          cities={cityOptions}
-          selectedCityId={selectedCityId}
-          onSelect={setUserSelectedCityId}
-        />
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 16,
+          marginBottom: 16,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>
+          <Title level={4} style={{ margin: 0 }}>
+            <FireOutlined style={{ marginRight: 8, color: '#ff4d4f' }} />
+            Популярные рядом
+          </Title>
+          <Text data-testid="popular-city-caption" type="secondary">
+            {detectedCityId && selectedCity?.name
+              ? `Показываем подборку рядом с вами: ${selectedCity.name}`
+              : `${selectedCity?.name ?? 'Москва'} по умолчанию, если геолокация недоступна`}
+          </Text>
+        </div>
+        <CitySelector cities={cityOptions} selectedCityId={selectedCityId} onSelect={setUserSelectedCityId} />
       </div>
       {isLoading ? null : popular.length === 0 ? (
         <Text type="secondary">В выбранном городе пока нет популярных бань</Text>
@@ -254,7 +276,7 @@ function PopularNearby({ detectedCityId }: { detectedCityId?: number }) {
             <Col key={item.id} xs={24} sm={12} md={8}>
               <Card
                 hoverable
-                onClick={() => navigate(`/client/bathhouse/${item.slug ?? item.id}`)}
+                onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}
               >
                 <Title level={5} style={{ margin: 0, marginBottom: 8 }}>{item.name}</Title>
                 {item.address && (
@@ -304,7 +326,7 @@ function PersonalRecommendations() {
           <Col key={item.id} xs={24} sm={12} md={8}>
             <Card
               hoverable
-              onClick={() => navigate(`/client/bathhouse/${item.slug ?? item.id}`)}
+              onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}
             >
               <Title level={5} style={{ margin: 0, marginBottom: 8 }}>{item.name}</Title>
               {item.address && (
@@ -332,10 +354,7 @@ function PersonalRecommendations() {
 
 function useGeoCity(cities: Array<{ id?: number; name?: string; latitude?: number; longitude?: number }>) {
   const [detectedCityId, setDetectedCityId] = useState<number | undefined>(undefined)
-  const [gpsStatus, setGpsStatus] = useState<'pending' | 'success' | 'unavailable'>('pending')
-
   const hasGeoApi = typeof navigator !== 'undefined' && !!navigator.geolocation
-  const gpsUnavailable = !hasGeoApi || gpsStatus === 'unavailable'
 
   useEffect(() => {
     if (!hasGeoApi || cities.length === 0) return
@@ -352,53 +371,14 @@ function useGeoCity(cities: Array<{ id?: number; name?: string; latitude?: numbe
         }
         if (closest.id != null) {
           setDetectedCityId(closest.id)
-          setGpsStatus('success')
-        } else {
-          setGpsStatus('unavailable')
         }
       },
-      () => {
-        setGpsStatus('unavailable')
-      },
+      () => {},
       { timeout: 5000, maximumAge: 300000 },
     )
   }, [cities, hasGeoApi])
 
-  return { detectedCityId, gpsUnavailable }
-}
-
-function CityPickerBanner({
-  cities,
-  selectedCityId,
-  onSelect,
-}: {
-  cities: CityOption[]
-  selectedCityId: number | undefined
-  onSelect: (cityId: number) => void
-}) {
-  if (cities.length === 0) return null
-
-  return (
-    <Alert
-      type="info"
-      showIcon
-      icon={<AimOutlined />}
-      style={{ marginBottom: 16 }}
-      message={
-        <Space wrap>
-          <span>Не удалось определить местоположение. Выберите город:</span>
-          <Select
-            value={selectedCityId}
-            onChange={onSelect}
-            options={cities}
-            placeholder="Выберите город"
-            style={{ minWidth: 180 }}
-            size="small"
-          />
-        </Space>
-      }
-    />
-  )
+  return { detectedCityId }
 }
 
 export default function ClientHome() {
@@ -411,13 +391,7 @@ export default function ClientHome() {
   const { data: citiesData } = useGetCities()
   const citiesRawHome = citiesData?.data
   const cities = useMemo(() => citiesRawHome ?? [], [citiesRawHome])
-  const cityOptions: CityOption[] = useMemo(
-    () => cities.map((c) => ({ value: c.id!, label: c.name! })),
-    [cities],
-  )
-  const { detectedCityId, gpsUnavailable } = useGeoCity(cities)
-  const [manualCityId, setManualCityId] = useState<number | undefined>(undefined)
-  const activeCityId = manualCityId ?? detectedCityId
+  const { detectedCityId } = useGeoCity(cities)
 
   const handleTourComplete = useCallback(() => {
     setTourDismissed(true)
@@ -438,13 +412,53 @@ export default function ClientHome() {
 
       <PromoBanner />
 
-      {gpsUnavailable && !manualCityId && (
-        <CityPickerBanner
-          cities={cityOptions}
-          selectedCityId={manualCityId}
-          onSelect={setManualCityId}
-        />
-      )}
+      <Card
+        style={{
+          borderRadius: 28,
+          border: 'none',
+          background: 'linear-gradient(135deg, #14323b 0%, #7a4a2c 100%)',
+          marginBottom: 24,
+        }}
+      >
+        <Row gutter={[24, 24]} align="middle">
+          <Col xs={24} lg={14}>
+            <Tag color="gold">Быстрое бронирование</Tag>
+            <Title level={1} style={{ color: '#fff', marginTop: 16, marginBottom: 12 }}>
+              Бани для вечера вдвоем, компании и выходных за городом
+            </Title>
+            <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 16 }}>
+              Выбирайте по сценарию отдыха, смотрите доступные слоты и подтверждайте телефон только в финальном шаге. Без длинной регистрации и без лишних экранов.
+            </Text>
+            <Space wrap style={{ display: 'flex', marginTop: 24 }}>
+              <Button size="large" type="primary" onClick={() => navigate('/catalog')}>
+                Подобрать баню
+              </Button>
+              <Button size="large" ghost onClick={() => navigate('/certificates')}>
+                Подарочный сертификат
+              </Button>
+            </Space>
+          </Col>
+          <Col xs={24} lg={10}>
+            <Row gutter={[12, 12]}>
+              {PUBLIC_SHORTCUT_CARDS.map((card) => (
+                <Col key={card.key} xs={24} sm={12}>
+                  <Card
+                    hoverable
+                    onClick={() => navigate(card.to)}
+                    style={{ borderRadius: 20, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
+                  >
+                    <Tag color="cyan">{card.eyebrow}</Tag>
+                    <Title level={4} style={{ color: '#fff', marginTop: 12, marginBottom: 8 }}>
+                      {card.title}
+                    </Title>
+                    <Text style={{ color: 'rgba(255,255,255,0.76)' }}>{card.description}</Text>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </Col>
+        </Row>
+      </Card>
 
       <Input
         size="large"
@@ -452,9 +466,9 @@ export default function ClientHome() {
         prefix={<SearchOutlined />}
         onPressEnter={(e) => {
           const val = (e.target as HTMLInputElement).value
-          navigate(`/client/search${val ? `?q=${encodeURIComponent(val)}` : ''}`)
+          navigate(`/catalog${val ? `?q=${encodeURIComponent(val)}` : ''}`)
         }}
-        onClick={() => navigate('/client/search')}
+        onClick={() => navigate('/catalog')}
         readOnly
         style={{ marginBottom: 24, cursor: 'pointer' }}
       />
@@ -465,7 +479,7 @@ export default function ClientHome() {
 
       <Divider />
 
-      <PopularNearby detectedCityId={activeCityId} />
+      <PopularNearby detectedCityId={detectedCityId} />
     </>
   )
 }

@@ -509,3 +509,65 @@ func TestPaymentHandler_InitiatePayment_ApplePay_MissingToken(t *testing.T) {
 		t.Errorf("expected status 400 for missing token, got %d: %s", rec.Code, rec.Body.String())
 	}
 }
+
+func TestPaymentHandler_ValidateApplePayMerchant(t *testing.T) {
+	svc := &mockPaymentService{}
+	h := handler.NewPaymentHandler(svc)
+	router := chi.NewRouter()
+	router.Post("/apple-pay/validate-merchant", h.ValidateApplePayMerchant)
+
+	tests := []struct {
+		name     string
+		body     string
+		wantCode int
+	}{
+		{"valid URL", `{"validation_url":"https://apple.com/validate"}`, http.StatusOK},
+		{"missing field", `{}`, http.StatusBadRequest},
+		{"empty string", `{"validation_url":""}`, http.StatusBadRequest},
+		{"invalid JSON", `not-json`, http.StatusBadRequest},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/apple-pay/validate-merchant", bytes.NewBufferString(tc.body))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+			if rec.Code != tc.wantCode {
+				t.Errorf("expected %d, got %d: %s", tc.wantCode, rec.Code, rec.Body.String())
+			}
+		})
+	}
+}
+
+func TestPaymentHandler_ValidateApplePayMerchant_ResponseBody(t *testing.T) {
+	svc := &mockPaymentService{}
+	h := handler.NewPaymentHandler(svc)
+	router := chi.NewRouter()
+	router.Post("/apple-pay/validate-merchant", h.ValidateApplePayMerchant)
+
+	req := httptest.NewRequest(http.MethodPost, "/apple-pay/validate-merchant",
+		bytes.NewBufferString(`{"validation_url":"https://apple.com/validate"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+	var resp struct {
+		Success bool `json:"success"`
+		Data    struct {
+			DisplayName string `json:"displayName"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode error: %v", err)
+	}
+	if !resp.Success {
+		t.Error("expected success=true")
+	}
+	if resp.Data.DisplayName != "RelaxHub" {
+		t.Errorf("expected displayName RelaxHub, got %q", resp.Data.DisplayName)
+	}
+}

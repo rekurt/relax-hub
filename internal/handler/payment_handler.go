@@ -394,6 +394,38 @@ func (h *PaymentHandler) GetBookingPayment(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, toPaymentResponse(p))
 }
 
+// ValidateApplePayMerchant godoc
+//
+//	@Summary		Validate Apple Pay merchant
+//	@Description	Performs Apple Pay merchant validation. In production requires server-side Apple certificates.
+//	@Tags			payments
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		applePayValidationRequest	true	"Validation URL from Apple Pay session"
+//	@Success		200		{object}	APIResponse{data=interface{}}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Router			/apple-pay/validate-merchant [post]
+func (h *PaymentHandler) ValidateApplePayMerchant(w http.ResponseWriter, r *http.Request) {
+	var req applePayValidationRequest
+	if err := readJSON(w, r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_input", "invalid request body")
+		return
+	}
+	if req.ValidationURL == "" {
+		writeError(w, http.StatusBadRequest, "invalid_input", "validation_url is required")
+		return
+	}
+	// Production: call Apple's validation_url with merchant identity certificate.
+	// Dev: return stub so frontend completes the session flow.
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"displayName": "RelaxHub",
+	})
+}
+
+type applePayValidationRequest struct {
+	ValidationURL string `json:"validation_url"`
+}
+
 type adminRefundRequest struct {
 	Amount   int64  `json:"amount"`
 	Reason   string `json:"reason"`

@@ -22,7 +22,7 @@ import { useGetBathhouses } from '@/api/generated/bathhouses/bathhouses'
 import { useGetCities } from '@/api/generated/cities/cities'
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
 
-function renderWithProviders(ui: React.ReactElement) {
+function renderWithProviders(ui: React.ReactElement, route = '/catalog') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -30,7 +30,7 @@ function renderWithProviders(ui: React.ReactElement) {
     <QueryClientProvider client={queryClient}>
       <ConfigProvider locale={ruRU}>
         <AntApp>
-          <MemoryRouter>{ui}</MemoryRouter>
+          <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
         </AntApp>
       </ConfigProvider>
     </QueryClientProvider>,
@@ -134,6 +134,17 @@ describe('BathhouseSearch', () => {
     renderWithProviders(<BathhouseSearch />)
 
     expect(screen.getByText('Город')).toBeInTheDocument()
+  })
+
+  it('syncs city selector with city_slug from URL', () => {
+    vi.mocked(useGetBathhouses).mockReturnValue({
+      data: { data: [], success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhouses>)
+
+    renderWithProviders(<BathhouseSearch />, '/catalog?city_slug=spb')
+
+    expect(screen.getByText('Санкт-Петербург')).toBeInTheDocument()
   })
 
   it('renders geo search button', () => {

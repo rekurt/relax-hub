@@ -45,6 +45,7 @@ type AuthService interface {
 	ParseToken(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error)
 	ParseTokenWithSession(ctx context.Context, token string) (uuid.UUID, domain.UserRole, uuid.UUID, error)
 	ParsePartialToken(ctx context.Context, token string) (uuid.UUID, error)
+	StartPhone(ctx context.Context, phone string) error
 	RegisterPhone(ctx context.Context, input RegisterPhoneInput) error
 	LoginPhone(ctx context.Context, phone string) error
 	VerifyPhone(ctx context.Context, phone string, code string, name string, ageConfirmed bool) (*LoginResult, error)
@@ -340,6 +341,15 @@ func (s *authService) RegisterPhone(ctx context.Context, input RegisterPhoneInpu
 	}
 	if existing != nil {
 		return domain.ErrAlreadyExists
+	}
+
+	return s.otpSvc.SendOTP(ctx, phone)
+}
+
+func (s *authService) StartPhone(ctx context.Context, phone string) error {
+	phone = normalizePhone(phone)
+	if !isValidPhone(phone) {
+		return domain.ErrPhoneInvalid
 	}
 
 	return s.otpSvc.SendOTP(ctx, phone)

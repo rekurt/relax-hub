@@ -6,7 +6,11 @@ import { AUTH_TOKEN_KEY } from '@/lib/constants'
 export function getRoleHomePath(role?: string): string {
   switch (role) {
     case 'client':
-      return '/client'
+      return '/catalog'
+    case 'owner':
+      return '/dashboard'
+    case 'representative':
+      return '/dashboard'
     case 'admin':
       return '/admin'
     default:

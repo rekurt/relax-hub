@@ -20,11 +20,14 @@ export default function ShareRedirect() {
       navigate(`/client/bookings/${resolved.booking_id}`, { replace: true })
     } else if (resolved.bathhouse_id) {
       const params = new URLSearchParams()
-      if (resolved.start_time) params.set('start', resolved.start_time)
-      if (resolved.end_time) params.set('end', resolved.end_time)
+      if (resolved.start_time) {
+        params.set('from', resolved.start_time)
+        params.set('date', resolved.start_time.slice(0, 10))
+      }
+      if (resolved.end_time) params.set('to', resolved.end_time)
       if (resolved.guest_count) params.set('guests', String(resolved.guest_count))
       const qs = params.toString()
-      navigate(`/client/booking/new?bathhouse=${resolved.bathhouse_id}${qs ? `&${qs}` : ''}`, { replace: true })
+      navigate(`/checkout?bathhouse=${resolved.bathhouse_id}${qs ? `&${qs}` : ''}`, { replace: true })
     }
   }, [resolved, navigate])
 
@@ -39,7 +42,7 @@ export default function ShareRedirect() {
         title="Ссылка недействительна"
         subTitle="Срок действия ссылки истёк или она некорректна."
         extra={
-          <Button type="primary" onClick={() => navigate('/client')}>
+          <Button type="primary" onClick={() => navigate('/')}>
             На главную
           </Button>
         }

@@ -234,7 +234,7 @@ export default function BathhouseMap({
                 <span style="color:#999;font-size:12px;">(${reviewCountStr})</span>
                 <strong>${priceLabel}/ч</strong>
               </div>
-              <a href="/client/bathhouse/${safeSlug}" style="display:inline-block;background:#722ed1;color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-size:13px;">Подробнее</a>
+              <a href="/bathhouses/${safeSlug}" style="display:inline-block;background:#722ed1;color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-size:13px;">Подробнее</a>
             </div>`
           : `<div>${safeAddress}<br/><strong>${priceLabel}/ч</strong></div>`
 

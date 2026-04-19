@@ -362,6 +362,27 @@ func TestAuthService_RegisterPhone_Success(t *testing.T) {
 	}
 }
 
+func TestAuthService_StartPhone_Success(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	cfg := newTestConfig()
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
+
+	if err := svc.StartPhone(context.Background(), "+79001234567"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestAuthService_StartPhone_InvalidPhone(t *testing.T) {
+	userRepo := mock.NewUserRepo()
+	cfg := newTestConfig()
+	svc := service.NewAuthService(userRepo, &noopReferralService{}, &noopOTPService{}, nil, nil, cfg, logger.New(logger.LevelWarn))
+
+	err := svc.StartPhone(context.Background(), "invalid")
+	if !errors.Is(err, domain.ErrPhoneInvalid) {
+		t.Errorf("expected ErrPhoneInvalid, got: %v", err)
+	}
+}
+
 func TestAuthService_RegisterPhone_InvalidPhone(t *testing.T) {
 	userRepo := mock.NewUserRepo()
 	cfg := newTestConfig()

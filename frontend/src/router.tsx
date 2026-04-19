@@ -1,7 +1,8 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import AppLayout from '@/components/AppLayout'
 import ClientLayout from '@/components/ClientLayout'
 import AdminLayout from '@/components/AdminLayout'
+import PublicLayout from '@/components/PublicLayout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
@@ -39,22 +40,16 @@ import SegmentBuilder from '@/pages/crm/SegmentBuilder'
 import ClientHome from '@/pages/client/ClientHome'
 import BathhouseSearch from '@/pages/client/BathhouseSearch'
 import BathhouseDetail from '@/pages/client/BathhouseDetail'
-import BookingCreate from '@/pages/client/BookingCreate'
 import ClientBookingList from '@/pages/client/BookingList'
 import ClientBookingDetail from '@/pages/client/BookingDetail'
 import ReviewForm from '@/pages/client/ReviewForm'
 import Favorites from '@/pages/client/Favorites'
-import Recommendations from '@/pages/client/Recommendations'
-import Preferences from '@/pages/client/Preferences'
-import LoyaltyDashboard from '@/pages/client/LoyaltyDashboard'
-import ReferralProgram from '@/pages/client/ReferralProgram'
 import CertificateList from '@/pages/client/CertificateList'
 import CertificatePurchase from '@/pages/client/CertificatePurchase'
 import PaymentHistory from '@/pages/client/PaymentHistory'
 import WalletDashboard from '@/pages/client/WalletDashboard'
 import ClientProfile from '@/pages/client/ClientProfile'
 import SavedCards from '@/pages/client/SavedCards'
-import ActivePromoCodes from '@/pages/client/ActivePromoCodes'
 import SecuritySettings from '@/pages/client/SecuritySettings'
 import ClientChat from '@/pages/client/ClientChat'
 import ClientNotifications from '@/pages/client/ClientNotifications'
@@ -78,8 +73,6 @@ import ClientDisputeDetail from '@/pages/client/DisputeDetail'
 import DisputeCreate from '@/pages/client/DisputeCreate'
 import DisputeManagement from '@/pages/admin/DisputeManagement'
 import AdminDisputeDetail from '@/pages/admin/AdminDisputeDetail'
-import ComparisonPage from '@/pages/client/ComparisonPage'
-import SavedSearches from '@/pages/client/SavedSearches'
 import AntiFraudDashboard from '@/pages/admin/AntiFraudDashboard'
 import AmenityManagement from '@/pages/admin/AmenityManagement'
 import ObjectTypeManagement from '@/pages/admin/ObjectTypeManagement'
@@ -111,6 +104,24 @@ import FinancialReports from '@/pages/finance/FinancialReports'
 import KYCSettings from '@/pages/settings/KYCSettings'
 import OfferAcceptance from '@/pages/settings/OfferAcceptance'
 import FAQManagement from '@/pages/admin/FAQManagement'
+import PublicFAQ from '@/pages/public/PublicFAQ'
+import PublicContacts from '@/pages/public/PublicContacts'
+import PublicCheckout from '@/pages/public/PublicCheckout'
+
+function RedirectToCatalog() {
+  const location = useLocation()
+  return <Navigate to={location.search ? `/catalog${location.search}` : '/catalog'} replace />
+}
+
+function RedirectToCheckout() {
+  const location = useLocation()
+  return <Navigate to={location.search ? `/checkout${location.search}` : '/checkout'} replace />
+}
+
+function RedirectBathhouseLegacy() {
+  const { slug } = useParams<{ slug: string }>()
+  return <Navigate to={slug ? `/bathhouses/${slug}` : '/catalog'} replace />
+}
 
 export default function AppRouter() {
   return (
@@ -119,11 +130,24 @@ export default function AppRouter() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/auth/oauth/callback/:provider" element={<OAuthCallback />} />
-      <Route path="/certificates/purchase" element={<CertificatePurchase />} />
-      <Route path="/bathhouses/:slug" element={<BathhouseDetail />} />
       <Route path="/share/booking/:token" element={<ShareRedirect />} />
 
-      {/* Owner/Representative routes */}
+      <Route path="/" element={<PublicLayout />}>
+        <Route index element={<ClientHome />} />
+        <Route path="catalog" element={<BathhouseSearch />} />
+        <Route path="bathhouses/:slug" element={<BathhouseDetail />} />
+        <Route path="checkout" element={<PublicCheckout />} />
+        <Route path="certificates" element={<CertificatePurchase />} />
+        <Route path="faq" element={<PublicFAQ />} />
+        <Route path="contacts" element={<PublicContacts />} />
+      </Route>
+
+      <Route path="/certificates/purchase" element={<Navigate to="/certificates" replace />} />
+      <Route path="/client/search" element={<RedirectToCatalog />} />
+      <Route path="/client/bathhouse/:slug" element={<RedirectBathhouseLegacy />} />
+      <Route path="/client/booking/new" element={<RedirectToCheckout />} />
+      <Route path="/client/certificates/purchase" element={<Navigate to="/certificates" replace />} />
+
       <Route
         path="/"
         element={
@@ -132,7 +156,8 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Dashboard />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="owner" element={<Navigate to="/dashboard" replace />} />
         <Route path="bathhouses" element={<BathhouseList />} />
         <Route path="bathhouses/new" element={<BathhouseForm />} />
         <Route path="bathhouses/import" element={<ListingImport />} />
@@ -171,7 +196,6 @@ export default function AppRouter() {
         <Route path="notifications" element={<NotificationList />} />
       </Route>
 
-      {/* Client routes */}
       <Route
         path="/client"
         element={
@@ -180,20 +204,12 @@ export default function AppRouter() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<ClientHome />} />
-        <Route path="search" element={<BathhouseSearch />} />
-        <Route path="bathhouse/:slug" element={<BathhouseDetail />} />
-        <Route path="booking/new" element={<BookingCreate />} />
+        <Route index element={<Navigate to="bookings" replace />} />
         <Route path="bookings" element={<ClientBookingList />} />
         <Route path="bookings/:id" element={<ClientBookingDetail />} />
         <Route path="review" element={<ReviewForm />} />
         <Route path="favorites" element={<Favorites />} />
-        <Route path="recommendations" element={<Recommendations />} />
-        <Route path="preferences" element={<Preferences />} />
-        <Route path="loyalty" element={<LoyaltyDashboard />} />
-        <Route path="referral" element={<ReferralProgram />} />
         <Route path="certificates" element={<CertificateList />} />
-        <Route path="certificates/purchase" element={<CertificatePurchase />} />
         <Route path="payments" element={<PaymentHistory />} />
         <Route path="cards" element={<SavedCards />} />
         <Route path="wallet" element={<WalletDashboard />} />
@@ -203,16 +219,19 @@ export default function AppRouter() {
         <Route path="disputes" element={<DisputeList />} />
         <Route path="disputes/new" element={<DisputeCreate />} />
         <Route path="disputes/:id" element={<ClientDisputeDetail />} />
-        <Route path="comparison" element={<ComparisonPage />} />
-        <Route path="saved-searches" element={<SavedSearches />} />
         <Route path="notifications" element={<ClientNotifications />} />
         <Route path="notification-preferences" element={<NotificationPreferences />} />
-        <Route path="promos" element={<ActivePromoCodes />} />
         <Route path="security" element={<SecuritySettings />} />
         <Route path="profile" element={<ClientProfile />} />
+        <Route path="recommendations" element={<Navigate to="/catalog" replace />} />
+        <Route path="preferences" element={<Navigate to="/catalog" replace />} />
+        <Route path="loyalty" element={<Navigate to="/catalog" replace />} />
+        <Route path="referral" element={<Navigate to="/catalog" replace />} />
+        <Route path="comparison" element={<Navigate to="/catalog" replace />} />
+        <Route path="saved-searches" element={<Navigate to="/catalog" replace />} />
+        <Route path="promos" element={<Navigate to="/client/profile" replace />} />
       </Route>
 
-      {/* Admin routes */}
       <Route
         path="/admin"
         element={

@@ -89,6 +89,33 @@ func (h *AuthHandler) LoginPhone(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, otpSentResponse{Message: "OTP sent"})
 }
 
+// StartPhone godoc
+//
+//	@Summary		Start public phone auth
+//	@Description	Sends OTP to the provided phone number for public checkout/login flow
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		loginPhoneRequest	true	"Phone data"
+//	@Success		200		{object}	APIResponse{data=otpSentResponse}
+//	@Failure		400		{object}	APIResponse{error=APIError}
+//	@Failure		429		{object}	APIResponse{error=APIError}
+//	@Router			/auth/phone/start [post]
+func (h *AuthHandler) StartPhone(w http.ResponseWriter, r *http.Request) {
+	var req loginPhoneRequest
+	if err := readJSON(w, r, &req); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	if err := h.authService.StartPhone(r.Context(), req.Phone); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, otpSentResponse{Message: "OTP sent"})
+}
+
 // VerifyPhone godoc
 //
 //	@Summary		Verify phone OTP
@@ -125,4 +152,3 @@ func (h *AuthHandler) VerifyPhone(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
-

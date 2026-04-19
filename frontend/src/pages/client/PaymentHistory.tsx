@@ -166,7 +166,7 @@ export default function PaymentHistory() {
         dataSource={filteredPayments}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: <EmptyState description="Ваш кошелёк пуст. Пополните, чтобы оплачивать быстрее" actionText="Найти баню" actionLink="/client/search" /> }}
+        locale={{ emptyText: <EmptyState description="Ваш кошелёк пуст. Пополните, чтобы оплачивать быстрее" actionText="Найти баню" actionLink="/catalog" /> }}
         pagination={{
           current: page,
           pageSize: pageSize,

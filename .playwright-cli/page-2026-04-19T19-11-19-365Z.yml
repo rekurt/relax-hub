@@ -1,0 +1,87 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - button "BANI Публичный каталог и бронирование" [ref=e7] [cursor=pointer]:
+        - strong [ref=e9]: BANI
+        - generic [ref=e10]: Публичный каталог и бронирование
+      - generic [ref=e12]:
+        - button "Все бани" [ref=e14] [cursor=pointer]:
+          - generic [ref=e15]: Все бани
+        - button "Для двоих" [ref=e17] [cursor=pointer]:
+          - generic [ref=e18]: Для двоих
+        - button "Для компании" [ref=e20] [cursor=pointer]:
+          - generic [ref=e21]: Для компании
+        - button "На выходные" [ref=e23] [cursor=pointer]:
+          - generic [ref=e24]: На выходные
+        - button "С чаном" [ref=e26] [cursor=pointer]:
+          - generic [ref=e27]: С чаном
+        - button "С бассейном" [ref=e29] [cursor=pointer]:
+          - generic [ref=e30]: С бассейном
+        - button "Сертификаты" [ref=e32] [cursor=pointer]:
+          - generic [ref=e33]: Сертификаты
+      - generic [ref=e34]:
+        - generic [ref=e35] [cursor=pointer]:
+          - generic "Москва" [ref=e36]:
+            - text: Москва
+            - combobox [ref=e37]
+          - img "down" [ref=e39]:
+            - img [ref=e40]
+          - img "close-circle" [ref=e43]:
+            - img [ref=e44]
+        - button "Войти" [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]: Войти
+  - main [ref=e48]:
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - heading "Поиск бань" [level=3] [ref=e52]
+        - radiogroup "segmented control" [ref=e53]:
+          - generic [ref=e54]:
+            - generic [ref=e55] [cursor=pointer]:
+              - radio "unordered-list Список" [checked]
+              - generic [ref=e56]:
+                - img "unordered-list" [ref=e58]:
+                  - img [ref=e59]
+                - text: Список
+            - generic [ref=e61] [cursor=pointer]:
+              - radio "split-cells Сплит"
+              - generic [ref=e62]:
+                - img "split-cells" [ref=e64]:
+                  - img [ref=e65]
+                - text: Сплит
+            - generic [ref=e67] [cursor=pointer]:
+              - radio "environment Карта"
+              - generic [ref=e68]:
+                - img "environment" [ref=e70]:
+                  - img [ref=e71]
+                - text: Карта
+      - generic [ref=e73]:
+        - generic [ref=e75]:
+          - generic [ref=e78]:
+            - img "search" [ref=e80]:
+              - img [ref=e81]
+            - textbox "Поиск по названию..." [ref=e83]
+          - generic [ref=e86] [cursor=pointer]:
+            - generic "Москва" [ref=e87]:
+              - text: Москва
+              - combobox [ref=e88]
+            - img "down" [ref=e90]:
+              - img [ref=e91]
+            - img "close-circle" [ref=e94]:
+              - img [ref=e95]
+          - generic [ref=e98] [cursor=pointer]:
+            - generic "По рейтингу" [ref=e99]:
+              - text: По рейтингу
+              - combobox [ref=e100]
+            - img "sort-ascending" [ref=e102]:
+              - img [ref=e103]
+          - button "environment Найти рядом" [ref=e106] [cursor=pointer]:
+            - img "environment" [ref=e108]:
+              - img [ref=e109]
+            - generic [ref=e111]: Найти рядом
+        - button "collapsed filter Фильтры" [ref=e115] [cursor=pointer]:
+          - img "collapsed" [ref=e117]:
+            - img [ref=e118]
+          - generic [ref=e121]:
+            - img "filter" [ref=e123]:
+              - img [ref=e124]
+            - generic [ref=e126]: Фильтры

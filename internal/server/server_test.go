@@ -45,6 +45,10 @@ func (m *mockAuthServiceForRouter) Complete2FALogin(_ context.Context, _ uuid.UU
 	return nil, "", nil
 }
 
+func (m *mockAuthServiceForRouter) StartPhone(_ context.Context, _ string) error {
+	return nil
+}
+
 func (m *mockAuthServiceForRouter) RegisterPhone(_ context.Context, _ service.RegisterPhoneInput) error {
 	return nil
 }

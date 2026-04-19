@@ -79,6 +79,42 @@ func toFAQListResponse(items []domain.FAQ) []faqResponse {
 	return result
 }
 
+// PublicListFAQ godoc
+//
+//	@Summary		List public FAQ entries
+//	@Description	Returns active FAQ entries for the public site
+//	@Tags			faq
+//	@Produce		json
+//	@Param			category	query		string	false	"Filter by category"
+//	@Success		200			{object}	APIResponse{data=[]faqResponse,meta=Meta}
+//	@Router			/faq [get]
+func (h *FAQHandler) PublicListFAQ(w http.ResponseWriter, r *http.Request) {
+	active := true
+	filter := domain.FAQFilter{
+		Page:     1,
+		PageSize: 100,
+		Active:   &active,
+	}
+
+	if cat := r.URL.Query().Get("category"); cat != "" {
+		category := domain.FAQCategory(cat)
+		filter.Category = &category
+	}
+
+	result, err := h.faqService.ListFAQ(r.Context(), filter)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSONWithMeta(w, http.StatusOK, toFAQListResponse(result.Items), &Meta{
+		Page:       result.Page,
+		PageSize:   result.PageSize,
+		TotalCount: result.TotalCount,
+		TotalPages: result.TotalPages,
+	})
+}
+
 // AdminCreateFAQ godoc
 //
 //	@Summary		Create FAQ entry

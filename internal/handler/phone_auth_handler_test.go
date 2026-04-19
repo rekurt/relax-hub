@@ -14,6 +14,7 @@ import (
 )
 
 type phoneAuthMock struct {
+	startPhoneFn    func(ctx context.Context, phone string) error
 	registerPhoneFn func(ctx context.Context, input service.RegisterPhoneInput) error
 	loginPhoneFn    func(ctx context.Context, phone string) error
 	verifyPhoneFn   func(ctx context.Context, phone, code string) (*service.LoginResult, error)
@@ -37,6 +38,12 @@ func (m *phoneAuthMock) ParsePartialToken(_ context.Context, _ string) (uuid.UUI
 }
 func (m *phoneAuthMock) Complete2FALogin(_ context.Context, _ uuid.UUID) (*domain.User, string, error) {
 	return nil, "", nil
+}
+func (m *phoneAuthMock) StartPhone(ctx context.Context, phone string) error {
+	if m.startPhoneFn != nil {
+		return m.startPhoneFn(ctx, phone)
+	}
+	return nil
 }
 func (m *phoneAuthMock) RegisterPhone(ctx context.Context, input service.RegisterPhoneInput) error {
 	if m.registerPhoneFn != nil {
@@ -127,6 +134,24 @@ func TestLoginPhone_Success(t *testing.T) {
 
 	body := `{"phone":"+79001234567"}`
 	req := httptest.NewRequest(http.MethodPost, "/auth/login-phone", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestStartPhone_Success(t *testing.T) {
+	authSvc := &phoneAuthMock{}
+	h := NewAuthHandler(authSvc, nil, &noopTwoFAServicePhone{}, nil, nil)
+
+	r := chi.NewRouter()
+	r.Post("/auth/phone/start", h.StartPhone)
+
+	body := `{"phone":"+79001234567"}`
+	req := httptest.NewRequest(http.MethodPost, "/auth/phone/start", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)

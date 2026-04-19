@@ -72,24 +72,21 @@ describe('AppLayout', () => {
     useBathhouseStore.setState({ selectedBathhouseId: null })
   })
 
-  it('renders all sidebar menu items', () => {
+  it('renders top navigation items for owner area', () => {
     const { container } = renderLayout()
-    const menuEl = container.querySelector('.ant-menu')
-    expect(menuEl).toBeTruthy()
+    const header = container.querySelector('.ant-layout-header')
+    expect(header).toBeTruthy()
 
-    const menuText = menuEl!.textContent ?? ''
-    expect(menuText).toContain('Дашборд')
-    expect(menuText).toContain('Бани')
-    expect(menuText).toContain('Бронирования')
-    expect(menuText).toContain('Отзывы')
+    const menuText = header!.textContent ?? ''
+    expect(menuText).toContain('Обзор')
+    expect(menuText).toContain('Объекты')
+    expect(menuText).toContain('Брони')
     expect(menuText).toContain('Календарь')
     expect(menuText).toContain('Цены')
-    expect(menuText).toContain('Промокоды')
-    expect(menuText).toContain('Чат')
-    expect(menuText).toContain('Представители')
-    expect(menuText).toContain('Подписки')
-    expect(menuText).toContain('Виджет')
-    expect(menuText).toContain('Настройки')
+    expect(menuText).toContain('Финансы')
+    expect(menuText).toContain('CRM')
+    expect(menuText).toContain('Продвижение')
+    expect(menuText).toContain('Еще')
   })
 
   it('renders user name in header dropdown button', () => {
@@ -99,17 +96,15 @@ describe('AppLayout', () => {
     expect(header!.textContent).toContain('Иван')
   })
 
-  it('renders breadcrumbs', () => {
+  it('does not render legacy breadcrumbs in the new shell', () => {
     renderLayout()
-    expect(screen.getByText('Главная')).toBeInTheDocument()
+    expect(document.querySelector('.ant-breadcrumb')).toBeNull()
   })
 
-  it('renders breadcrumbs for nested route', () => {
+  it('keeps the header navigation on nested route', () => {
     renderLayout('/bookings')
-    expect(screen.getByText('Главная')).toBeInTheDocument()
-    const breadcrumbNav = document.querySelector('.ant-breadcrumb')
-    expect(breadcrumbNav).toBeTruthy()
-    expect(breadcrumbNav!.textContent).toContain('Бронирования')
+    expect(document.querySelector('.ant-breadcrumb')).toBeNull()
+    expect(screen.getByText('Брони')).toBeInTheDocument()
   })
 
   it('renders BathhouseSelector with bathhouses', () => {

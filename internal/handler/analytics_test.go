@@ -16,15 +16,17 @@ import (
 )
 
 type mockAnalyticsService struct {
-	recordViewFn              func(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error
-	getOwnerDashboardFn       func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*service.OwnerDashboard, error)
-	getDailyStatsFn           func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error)
-	getAdminDashboardFn       func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.AdminDashboard, error)
+	recordViewFn               func(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error
+	getOwnerDashboardFn        func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, period domain.AnalyticsPeriod) (*service.OwnerDashboard, error)
+	getDailyStatsFn            func(ctx context.Context, userID uuid.UUID, userRole domain.UserRole, bathhouseID uuid.UUID, from, to time.Time) ([]domain.AnalyticsSnapshot, error)
+	getAdminDashboardFn        func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.AdminDashboard, error)
 	getTopBathhousesByMetricFn func(ctx context.Context, userRole domain.UserRole, metric domain.TopMetric, limit int64) ([]service.TopBathhouseInfo, error)
-	aggregateDailyFn          func(ctx context.Context) error
-	getBusinessMetricsFn      func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.BusinessMetrics, error)
-	getPnLFn                  func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.PnLMetrics, error)
-	getHeatmapDataFn          func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod, cellSize float64) (*domain.HeatmapData, error)
+	aggregateDailyFn           func(ctx context.Context) error
+	getBusinessMetricsFn       func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.BusinessMetrics, error)
+	getPnLFn                   func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*service.PnLMetrics, error)
+	getHeatmapDataFn           func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod, cellSize float64) (*domain.HeatmapData, error)
+	getCohortAnalysisFn        func(ctx context.Context, userRole domain.UserRole, months int) (*domain.CohortAnalysis, error)
+	getWalletMetricsFn         func(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*domain.WalletMetrics, error)
 }
 
 func (m *mockAnalyticsService) RecordView(ctx context.Context, bathhouseID uuid.UUID, viewerID *uuid.UUID, source domain.ViewSource, ipHash string) error {
@@ -77,7 +79,10 @@ func (m *mockAnalyticsService) GetConversionFunnel(_ context.Context, _ domain.U
 	return &domain.ConversionFunnel{}, nil
 }
 
-func (m *mockAnalyticsService) GetCohortAnalysis(_ context.Context, _ domain.UserRole, _ int) (*domain.CohortAnalysis, error) {
+func (m *mockAnalyticsService) GetCohortAnalysis(ctx context.Context, userRole domain.UserRole, months int) (*domain.CohortAnalysis, error) {
+	if m.getCohortAnalysisFn != nil {
+		return m.getCohortAnalysisFn(ctx, userRole, months)
+	}
 	return &domain.CohortAnalysis{}, nil
 }
 
@@ -85,7 +90,10 @@ func (m *mockAnalyticsService) GetGeoDemandSupply(_ context.Context, _ domain.Us
 	return &domain.GeoDemandSupplyMap{}, nil
 }
 
-func (m *mockAnalyticsService) GetWalletMetrics(_ context.Context, _ domain.UserRole, _ domain.AnalyticsPeriod) (*domain.WalletMetrics, error) {
+func (m *mockAnalyticsService) GetWalletMetrics(ctx context.Context, userRole domain.UserRole, period domain.AnalyticsPeriod) (*domain.WalletMetrics, error) {
+	if m.getWalletMetricsFn != nil {
+		return m.getWalletMetricsFn(ctx, userRole, period)
+	}
 	return &domain.WalletMetrics{}, nil
 }
 
@@ -416,6 +424,114 @@ func TestGetHeatmap_Forbidden(t *testing.T) {
 
 	if w.Code != http.StatusForbidden {
 		t.Errorf("got status %d, want %d", w.Code, http.StatusForbidden)
+	}
+}
+
+// Regression tests for SQL fixes: cohort pgx encoding, wallet JOIN, pnl column names
+
+func TestGetCohortAnalysis_ValidRequest(t *testing.T) {
+	var capturedMonths int
+	mock := &mockAnalyticsService{
+		getCohortAnalysisFn: func(_ context.Context, _ domain.UserRole, months int) (*domain.CohortAnalysis, error) {
+			capturedMonths = months
+			return &domain.CohortAnalysis{
+				Cohorts: []domain.CohortRow{
+					{CohortMonth: "2026-01", UsersCount: 100, TotalSpending: 5000000},
+				},
+			}, nil
+		},
+	}
+	h := NewAnalyticsHandler(mock, &logger.Logger{})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/analytics/cohorts?months=3", nil)
+	req = req.WithContext(middleware.SetUserRoleForTesting(req.Context(), domain.RoleAdmin))
+	w := httptest.NewRecorder()
+	h.GetCohortAnalysis(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	if capturedMonths != 3 {
+		t.Errorf("expected months=3 passed to service, got %d", capturedMonths)
+	}
+	var resp APIResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode error: %v", err)
+	}
+	if !resp.Success {
+		t.Error("expected success=true")
+	}
+}
+
+func TestGetCohortAnalysis_DefaultMonths(t *testing.T) {
+	var capturedMonths int
+	mock := &mockAnalyticsService{
+		getCohortAnalysisFn: func(_ context.Context, _ domain.UserRole, months int) (*domain.CohortAnalysis, error) {
+			capturedMonths = months
+			return &domain.CohortAnalysis{}, nil
+		},
+	}
+	h := NewAnalyticsHandler(mock, &logger.Logger{})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/analytics/cohorts", nil)
+	req = req.WithContext(middleware.SetUserRoleForTesting(req.Context(), domain.RoleAdmin))
+	w := httptest.NewRecorder()
+	h.GetCohortAnalysis(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+	if capturedMonths != 6 {
+		t.Errorf("expected default months=6, got %d", capturedMonths)
+	}
+}
+
+func TestGetWalletMetrics_ValidRequest(t *testing.T) {
+	mock := &mockAnalyticsService{
+		getWalletMetricsFn: func(_ context.Context, _ domain.UserRole, _ domain.AnalyticsPeriod) (*domain.WalletMetrics, error) {
+			return &domain.WalletMetrics{
+				TotalClientBalance: 25000000,
+				TotalOwnerBalance:  10000000,
+				TotalEscrow:        5000000,
+				WalletPaymentShare: 32.5,
+				ActiveWallets:      500,
+			}, nil
+		},
+	}
+	h := NewAnalyticsHandler(mock, &logger.Logger{})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/analytics/wallet?period=30d", nil)
+	req = req.WithContext(middleware.SetUserRoleForTesting(req.Context(), domain.RoleAdmin))
+	w := httptest.NewRecorder()
+	h.GetWalletMetrics(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var resp APIResponse
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatalf("decode error: %v", err)
+	}
+	if !resp.Success {
+		t.Error("expected success=true")
+	}
+}
+
+func TestGetWalletMetrics_Forbidden(t *testing.T) {
+	mock := &mockAnalyticsService{
+		getWalletMetricsFn: func(_ context.Context, _ domain.UserRole, _ domain.AnalyticsPeriod) (*domain.WalletMetrics, error) {
+			return nil, domain.ErrForbidden
+		},
+	}
+	h := NewAnalyticsHandler(mock, &logger.Logger{})
+
+	req := httptest.NewRequest(http.MethodGet, "/admin/analytics/wallet", nil)
+	req = req.WithContext(middleware.SetUserRoleForTesting(req.Context(), domain.RoleClient))
+	w := httptest.NewRecorder()
+	h.GetWalletMetrics(w, req)
+
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403, got %d", w.Code)
 	}
 }
 

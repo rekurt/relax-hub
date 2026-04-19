@@ -33,6 +33,7 @@ type mockAuthService struct {
 	registerFn      func(ctx context.Context, input service.RegisterInput) (*domain.User, string, error)
 	loginFn         func(ctx context.Context, email, password string) (*service.LoginResult, error)
 	parseTokenFn    func(ctx context.Context, token string) (uuid.UUID, domain.UserRole, error)
+	startPhoneFn    func(ctx context.Context, phone string) error
 	registerPhoneFn func(ctx context.Context, input service.RegisterPhoneInput) error
 	loginPhoneFn    func(ctx context.Context, phone string) error
 	verifyPhoneFn   func(ctx context.Context, phone, code string) (*service.LoginResult, error)
@@ -70,6 +71,13 @@ func (m *mockAuthService) ParsePartialToken(_ context.Context, _ string) (uuid.U
 
 func (m *mockAuthService) Complete2FALogin(_ context.Context, _ uuid.UUID) (*domain.User, string, error) {
 	return nil, "", nil
+}
+
+func (m *mockAuthService) StartPhone(ctx context.Context, phone string) error {
+	if m.startPhoneFn != nil {
+		return m.startPhoneFn(ctx, phone)
+	}
+	return nil
 }
 
 func (m *mockAuthService) RegisterPhone(ctx context.Context, input service.RegisterPhoneInput) error {

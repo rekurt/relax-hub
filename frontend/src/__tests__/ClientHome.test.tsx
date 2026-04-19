@@ -143,13 +143,13 @@ describe('ClientHome', () => {
 
   it('renders promo banner with fallback text for returning user', () => {
     renderWithProviders(<ClientHome />)
-    expect(screen.getByText('Найдите идеальную баню')).toBeInTheDocument()
+    expect(screen.getByText('Бани для вечера вдвоем, компании и выходных за городом')).toBeInTheDocument()
   })
 
   it('renders welcome message for new user', () => {
     mockAuthStore({ onboarding_completed: false })
     renderWithProviders(<ClientHome />)
-    expect(screen.getByText('Добро пожаловать в Bani!')).toBeInTheDocument()
+    expect(screen.getByText('Вечер уже можно планировать')).toBeInTheDocument()
   })
 
   it('shows onboarding tour modal for new users', () => {
@@ -173,9 +173,9 @@ describe('ClientHome', () => {
     expect(screen.queryByTestId('onboarding-tour')).not.toBeInTheDocument()
   })
 
-  it('shows city picker when GPS is unavailable', () => {
+  it('does not show noisy geolocation warning when GPS is unavailable', () => {
     renderWithProviders(<ClientHome />)
-    expect(screen.getByText(/Не удалось определить местоположение/)).toBeInTheDocument()
+    expect(screen.queryByText(/Не удалось определить местоположение/)).not.toBeInTheDocument()
   })
 
   it('does not show city picker when GPS succeeds', () => {
@@ -203,6 +203,26 @@ describe('ClientHome', () => {
 
     renderWithProviders(<ClientHome />)
     expect(screen.queryByText(/Не удалось определить местоположение/)).not.toBeInTheDocument()
+  })
+
+  it('prefers Moscow as default public city when GPS is unavailable', () => {
+    vi.mocked(useGetCities).mockReturnValue({
+      data: {
+        data: [
+          { id: 2, name: 'Красногорск', slug: 'krasnogorsk', latitude: 55.83, longitude: 37.33 },
+          { id: 1, name: 'Москва', slug: 'moscow', latitude: 55.75, longitude: 37.62 },
+        ],
+        success: true,
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetCities>)
+
+    renderWithProviders(<ClientHome />)
+
+    expect(screen.getByTestId('popular-city-caption')).toHaveTextContent('Москва по умолчанию')
+    const popularCalls = vi.mocked(useGetPopular).mock.calls
+    const lastPopularCall = popularCalls[popularCalls.length - 1]
+    expect(lastPopularCall?.[0]).toMatchObject({ city_id: 1, limit: 6 })
   })
 
   it('renders promo banner from API when available', async () => {

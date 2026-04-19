@@ -121,17 +121,17 @@ describe('AppRouter', () => {
     expect(screen.getByText('Вход в личный кабинет')).toBeInTheDocument()
   })
 
-  it('redirects unknown routes to / (then to login)', () => {
+  it('redirects unknown routes to public home', () => {
     renderRouter('/nonexistent-route')
-    expect(screen.getByText('Вход в личный кабинет')).toBeInTheDocument()
+    expect(screen.getByText('Бани для вечера вдвоем, компании и выходных за городом')).toBeInTheDocument()
   })
 
   // Owner role tests
   describe('owner role', () => {
     beforeEach(() => setAuth('owner'))
 
-    it('renders dashboard at / for owner', () => {
-      const { container } = renderRouter('/')
+    it('renders dashboard at /dashboard for owner', () => {
+      const { container } = renderRouter('/dashboard')
       const mainContent = container.querySelector('.ant-layout-content')
       expect(mainContent).toBeTruthy()
       expect(mainContent!.textContent).toContain('Дашборд')
@@ -152,7 +152,7 @@ describe('AppRouter', () => {
     it('renders pricing page at /pricing for owner', () => {
       const { container } = renderRouter('/pricing')
       const mainContent = container.querySelector('.ant-layout-content')
-      expect(mainContent!.textContent).toContain('Цены')
+      expect(mainContent!.textContent).toContain('Правила ценообразования')
     })
 
     it('renders settings page at /settings for owner', () => {
@@ -161,7 +161,7 @@ describe('AppRouter', () => {
       expect(mainContent!.textContent).toContain('Настройки')
     })
 
-    it('redirects owner away from /client to /', () => {
+    it('redirects owner away from /client to /dashboard', () => {
       const { container } = renderRouter('/client')
       const mainContent = container.querySelector('.ant-layout-content')
       expect(mainContent!.textContent).toContain('Дашборд')
@@ -178,23 +178,23 @@ describe('AppRouter', () => {
   describe('client role', () => {
     beforeEach(() => setAuth('client'))
 
-    it('renders client home at /client', () => {
+    it('renders booking list at /client', () => {
       const { container } = renderRouter('/client')
       const mainContent = container.querySelector('.ant-layout-content')
       expect(mainContent).toBeTruthy()
-      expect(mainContent!.textContent).toContain('Добро пожаловать в Bani!')
+      expect(mainContent!.textContent).toContain('Мои бронирования')
     })
 
-    it('redirects client away from / (owner area) to /client', () => {
+  it('keeps public home available at / for client', () => {
       const { container } = renderRouter('/')
       const mainContent = container.querySelector('.ant-layout-content')
-      expect(mainContent!.textContent).toContain('Добро пожаловать в Bani!')
+      expect(mainContent!.textContent).toContain('Бани для вечера вдвоем, компании и выходных за городом')
     })
 
-    it('redirects client away from /admin to /client', () => {
+    it('redirects client away from /admin to /catalog', () => {
       const { container } = renderRouter('/admin')
       const mainContent = container.querySelector('.ant-layout-content')
-      expect(mainContent!.textContent).toContain('Добро пожаловать в Bani!')
+      expect(mainContent!.textContent).toContain('Поиск бань')
     })
   })
 
@@ -209,10 +209,10 @@ describe('AppRouter', () => {
       expect(mainContent!.textContent).toContain('Панель администратора')
     })
 
-    it('redirects admin away from / (owner area) to /admin', () => {
+  it('keeps public home available at / for admin', () => {
       const { container } = renderRouter('/')
       const mainContent = container.querySelector('.ant-layout-content')
-      expect(mainContent!.textContent).toContain('Панель администратора')
+      expect(mainContent!.textContent).toContain('Бани для вечера вдвоем, компании и выходных за городом')
     })
 
     it('redirects admin away from /client to /admin', () => {
@@ -226,8 +226,8 @@ describe('AppRouter', () => {
   describe('representative role', () => {
     beforeEach(() => setAuth('representative'))
 
-    it('renders dashboard at / for representative', () => {
-      const { container } = renderRouter('/')
+    it('renders dashboard at /dashboard for representative', () => {
+      const { container } = renderRouter('/dashboard')
       const mainContent = container.querySelector('.ant-layout-content')
       expect(mainContent!.textContent).toContain('Дашборд')
     })
