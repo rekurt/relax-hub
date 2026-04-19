@@ -2,9 +2,10 @@
 
 APP_NAME := bani-server
 BUILD_DIR := ./bin
+VERSION ?= dev
 
 build:
-	go build -o $(BUILD_DIR)/$(APP_NAME) ./cmd/server
+	go build -ldflags "-X main.Version=$(VERSION) -X main.Commit=$$(git rev-parse --short HEAD) -X main.BuildTime=$$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o $(BUILD_DIR)/$(APP_NAME) ./cmd/server
 
 run: build
 	$(BUILD_DIR)/$(APP_NAME) serve

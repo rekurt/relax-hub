@@ -22,9 +22,10 @@ coverage.out
 dist/
 build/
 vendor/
+**/*_test.go
 
 # Documentation
-docs/
+docs/CODEMAPS
 README.md
 CHANGELOG.md
 LICENSE
@@ -33,16 +34,16 @@ LICENSE
 .github/
 .gitlab-ci.yml
 .travis.yml
-Makefile
 
 # Environment
 .env
-.env.*.local
-.env.production
-.env.staging
+.env.*
+!.env.production.example
 
 # Dependencies (keep go.mod and go.sum for build)
 node_modules/
+frontend/node_modules
+frontend/dist
 
 # Temporary files
 *.tmp
@@ -53,3 +54,5 @@ node_modules/
 # Development files
 .ralphex/
 .claude/
+.planning/
+tests/

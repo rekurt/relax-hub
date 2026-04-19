@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/go-chi/chi/v5"
+	"github.com/rekurt/relax-hub/internal/handler"
 	"github.com/rekurt/relax-hub/internal/middleware"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
@@ -10,6 +11,7 @@ import (
 func mountPublicRoutes(r chi.Router, p RouterParams) {
 	r.Get("/health", p.HealthHandler.Health)
 	r.Get("/ready", p.HealthHandler.Ready)
+	r.Get("/version", handler.VersionHandler(p.BuildInfo.Version, p.BuildInfo.Commit, p.BuildInfo.BuildTime))
 	r.Get("/sitemap.xml", p.SitemapHandler.Sitemap)
 	r.Get("/calendar/{token}.ics", p.CalendarHandler.ExportICalByToken)
 

@@ -98,6 +98,7 @@ type RouterParams struct {
 	BookingModificationHandler   *handler.BookingModificationHandler
 	BookingExtensionHandler      *handler.BookingExtensionHandler
 	PrerenderHandler             *handler.PrerenderHandler
+	BuildInfo             handler.BuildInfo `optional:"true"`
 	AuditLogRepo              repository.AuditLogRepository
 	AdminSubRoleResolver  middleware.AdminSubRoleResolver
 	Admin2FAChecker       middleware.Admin2FAChecker
@@ -112,6 +113,10 @@ func NewRouter(p RouterParams) http.Handler {
 	r.Use(middleware.Logging(*p.Log))
 	r.Use(middleware.RecoveryMiddleware(middleware.IsDevEnvironment(p.Config.Environment), p.Log))
 	r.Use(p.CORS.Handler)
+	r.Use(middleware.SecurityHeaders)
+	r.Use(func(next http.Handler) http.Handler {
+		return http.MaxBytesHandler(next, 10<<20) // 10MB
+	})
 
 	mountPublicRoutes(r, p)
 

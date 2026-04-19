@@ -13,6 +13,13 @@ import (
 	"go.uber.org/fx"
 )
 
+// BuildInfo holds version metadata injected at build time via ldflags.
+type BuildInfo struct {
+	Version   string
+	Commit    string
+	BuildTime string
+}
+
 type HealthHandler struct {
 	db    *pgxpool.Pool
 	redis *redis.Client
@@ -42,6 +49,18 @@ type HealthResponse struct {
 type ReadyResponse struct {
 	Status   string            `json:"status"`
 	Services map[string]string `json:"services"`
+}
+
+// VersionHandler returns build version information.
+func VersionHandler(version, commit, buildTime string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"version":    version,
+			"commit":     commit,
+			"build_time": buildTime,
+		})
+	}
 }
 
 // Health returns a simple liveness probe response

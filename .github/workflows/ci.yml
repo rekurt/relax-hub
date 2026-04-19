@@ -30,6 +30,11 @@ jobs:
       - name: Vet
         run: go vet ./...
 
+      - name: Security scan
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          gosec -severity medium -confidence medium -quiet ./...
+
       - name: Test with coverage
         run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
 

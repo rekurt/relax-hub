@@ -10,8 +10,10 @@ import (
 
 	"github.com/rekurt/relax-hub/config"
 	"github.com/rekurt/relax-hub/internal/app"
+	"github.com/rekurt/relax-hub/internal/handler"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/spf13/cobra"
+	"go.uber.org/fx"
 )
 
 var withAdmin bool
@@ -37,7 +39,11 @@ var serveCmd = &cobra.Command{
 			log.Info("Admin panel enabled", "url", adminURL)
 		}
 
-		fxApp := app.New(cfg)
+		fxApp := app.New(cfg, fx.Supply(handler.BuildInfo{
+			Version:   Version,
+			Commit:    Commit,
+			BuildTime: BuildTime,
+		}))
 
 		// Create a channel to listen for interrupt signals
 		sigChan := make(chan os.Signal, 1)

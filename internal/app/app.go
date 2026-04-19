@@ -25,8 +25,8 @@ import (
 	"go.uber.org/fx"
 )
 
-func New(cfg *config.Config) *fx.App {
-	return fx.New(
+func New(cfg *config.Config, extraOpts ...fx.Option) *fx.App {
+	opts := []fx.Option{
 		fx.Supply(cfg),
 		logger.Module,
 		database.PostgresModule,
@@ -64,5 +64,7 @@ func New(cfg *config.Config) *fx.App {
 			},
 			calendar.NewCalendarSyncService,
 		),
-	)
+	}
+	opts = append(opts, extraOpts...)
+	return fx.New(opts...)
 }
