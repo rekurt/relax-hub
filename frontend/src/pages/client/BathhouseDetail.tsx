@@ -302,14 +302,14 @@ export default function BathhouseDetail() {
                 <Descriptions.Item label="Политика отмены">
                   {(() => {
                     const policy = (bathhouse as Record<string, unknown>).cancellation_policy as string
-                    const details = CANCELLATION_POLICY_DETAILS[policy] ?? CANCELLATION_POLICY_DETAILS.flexible
-                    return (
+                    const details = CANCELLATION_POLICY_DETAILS[policy] ?? CANCELLATION_POLICY_DETAILS['flexible']
+                    return details ? (
                       <div>
                         <Text strong>{details.label}</Text>
                         <br />
                         <Text type="secondary" style={{ fontSize: 12 }}>{details.description}</Text>
                       </div>
-                    )
+                    ) : null
                   })()}
                 </Descriptions.Item>
                 {(() => {
@@ -352,7 +352,7 @@ export default function BathhouseDetail() {
 
               <TransportAccessibility items={transportItems} />
 
-              {(bathhouse as Record<string, unknown>).visiting_rules && (
+              {!!(bathhouse as Record<string, unknown>).visiting_rules && (
                 <div style={{ marginTop: 16 }}>
                   <Text strong>Правила посещения:</Text>
                   <Alert

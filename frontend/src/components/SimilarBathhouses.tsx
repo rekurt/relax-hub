@@ -11,7 +11,7 @@ interface SimilarBathhouse {
   price_per_hour?: number
   rating?: number
   review_count?: number
-  city_id?: string
+  city_id?: number
   latitude?: number
   longitude?: number
   description?: string

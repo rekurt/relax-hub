@@ -18,17 +18,20 @@ type PricingHandler struct {
 	pricingService      service.PricingService
 	bathhouseService    service.BathhouseService
 	smartPricingService service.SmartPricingService
+	accessCheck         *service.AccessChecker
 }
 
 func NewPricingHandler(
 	pricingService service.PricingService,
 	bathhouseService service.BathhouseService,
 	smartPricingService service.SmartPricingService,
+	accessCheck *service.AccessChecker,
 ) *PricingHandler {
 	return &PricingHandler{
 		pricingService:      pricingService,
 		bathhouseService:    bathhouseService,
 		smartPricingService: smartPricingService,
+		accessCheck:         accessCheck,
 	}
 }
 
@@ -199,6 +202,13 @@ func (h *PricingHandler) ListRules(w http.ResponseWriter, r *http.Request) {
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
+	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, userRole, bathhouseID); err != nil {
+		handleServiceError(w, err)
 		return
 	}
 
@@ -475,6 +485,13 @@ func (h *PricingHandler) ListSeasonalTariffs(w http.ResponseWriter, r *http.Requ
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_input", "invalid bathhouse id")
+		return
+	}
+
+	userID := middleware.GetUserID(r.Context())
+	userRole := middleware.GetUserRole(r.Context())
+	if err := h.accessCheck.CanManageBathhouse(r.Context(), userID, userRole, bathhouseID); err != nil {
+		handleServiceError(w, err)
 		return
 	}
 

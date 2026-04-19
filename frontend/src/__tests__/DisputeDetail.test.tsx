@@ -54,7 +54,7 @@ const mockDispute = {
   reason: 'poor_quality',
   description: 'Баня была грязной, не соответствует описанию',
   status: 'evidence_collection',
-  evidence_deadline: '2026-04-01T10:00:00Z',
+  evidence_deadline: '2027-04-01T10:00:00Z',
   created_at: '2026-03-28T10:00:00Z',
 }
 
@@ -150,7 +150,7 @@ describe('DisputeDetail', () => {
           status: 'resolved',
           resolution: 'no_refund',
           refund_amount: 0,
-          appeal_deadline: '2026-04-10T10:00:00Z',
+          appeal_deadline: '2027-04-10T10:00:00Z',
           resolved_at: '2026-03-28T14:00:00Z',
         },
         success: true,

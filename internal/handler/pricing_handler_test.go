@@ -133,7 +133,7 @@ func TestPricingHandler_CreateRule(t *testing.T) {
 		},
 	}
 
-	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{}, newTestAccessChecker(userID, bathhouseID))
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -198,7 +198,7 @@ func TestPricingHandler_ListRules(t *testing.T) {
 		},
 	}
 
-	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{}, newTestAccessChecker(userID, bathhouseID))
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -227,6 +227,7 @@ func TestPricingHandler_ListRules(t *testing.T) {
 
 func TestPricingHandler_UpdateRule(t *testing.T) {
 	userID := uuid.New()
+	bathhouseID := uuid.New()
 	ruleID := uuid.New()
 
 	pricingSvc := &mockPricingService{
@@ -239,7 +240,7 @@ func TestPricingHandler_UpdateRule(t *testing.T) {
 	}
 
 	bhSvc := &mockBHService{}
-	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{}, newTestAccessChecker(userID, bathhouseID))
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -269,6 +270,7 @@ func TestPricingHandler_UpdateRule(t *testing.T) {
 
 func TestPricingHandler_DeleteRule(t *testing.T) {
 	userID := uuid.New()
+	bathhouseID := uuid.New()
 	ruleID := uuid.New()
 
 	pricingSvc := &mockPricingService{
@@ -281,7 +283,7 @@ func TestPricingHandler_DeleteRule(t *testing.T) {
 	}
 
 	bhSvc := &mockBHService{}
-	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{}, newTestAccessChecker(userID, bathhouseID))
 	authService := &mockAuthService{userID: userID, role: domain.RoleOwner}
 
 	r := chi.NewRouter()
@@ -309,6 +311,7 @@ func TestPricingHandler_DeleteRule(t *testing.T) {
 }
 
 func TestPricingHandler_CalculatePrice(t *testing.T) {
+	userID := uuid.New()
 	bathhouseID := uuid.New()
 	startTime := time.Now().Round(time.Hour)
 	endTime := startTime.Add(2 * time.Hour)
@@ -332,7 +335,7 @@ func TestPricingHandler_CalculatePrice(t *testing.T) {
 		},
 	}
 
-	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{}, newTestAccessChecker(userID, bathhouseID))
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}/price-calculator", h.CalculatePrice)
@@ -360,11 +363,12 @@ func TestPricingHandler_CalculatePrice(t *testing.T) {
 }
 
 func TestPricingHandler_CalculatePrice_MissingParams(t *testing.T) {
+	userID := uuid.New()
 	bathhouseID := uuid.New()
 
 	pricingSvc := &mockPricingService{}
 	bhSvc := &mockBHService{}
-	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{})
+	h := NewPricingHandler(pricingSvc, bhSvc, &mockSmartPricingService{}, newTestAccessChecker(userID, bathhouseID))
 
 	r := chi.NewRouter()
 	r.Get("/bathhouses/{id}/price-calculator", h.CalculatePrice)

@@ -44,9 +44,9 @@ vi.mock('@/components/PriceBreakdown', () => ({
   default: (props: Record<string, unknown>) => (
     <div data-testid="price-breakdown">
       <span>base:{String(props.basePrice)}</span>
-      {props.promoDiscount && <span>promo:-{String(props.promoDiscount)}</span>}
-      {props.certificateDiscount && <span>cert:-{String(props.certificateDiscount)}</span>}
-      {props.walletPayment && <span>wallet:-{String(props.walletPayment)}</span>}
+      {!!props.promoDiscount && <span>promo:-{String(props.promoDiscount)}</span>}
+      {!!props.certificateDiscount && <span>cert:-{String(props.certificateDiscount)}</span>}
+      {!!props.walletPayment && <span>wallet:-{String(props.walletPayment)}</span>}
       {(props.addOns as Array<{ name: string; price: number }> | undefined)?.map((a, i) => (
         <span key={i}>addon:{a.name}:{a.price}</span>
       ))}

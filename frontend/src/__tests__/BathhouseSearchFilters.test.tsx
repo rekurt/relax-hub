@@ -181,7 +181,8 @@ describe('BathhouseSearch - New Filters', () => {
 
     // Just verify the hook is called (filters start undefined/null)
     expect(useGetBathhouses).toHaveBeenCalled()
-    const lastCall = vi.mocked(useGetBathhouses).mock.calls.at(-1)
+    const calls = vi.mocked(useGetBathhouses).mock.calls
+    const lastCall = calls[calls.length - 1]
     expect(lastCall?.[0]).toHaveProperty('sort_by')
   })
 })

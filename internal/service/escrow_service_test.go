@@ -504,3 +504,218 @@ func TestProcessRefund(t *testing.T) {
 		assert.ErrorIs(t, err, domain.ErrEscrowAlreadyReleased)
 	})
 }
+
+func TestNewEscrowService_ClaimHoursClamp(t *testing.T) {
+	escrowRepo := mock.NewEscrowRepo().(*mock.EscrowRepo)
+	bookingRepo := mock.NewBookingRepo()
+	bhRepo := mock.NewBathhouseRepo()
+	walletSvc := newMockWalletService()
+	log := logger.New(logger.LevelWarn)
+	ctx := context.Background()
+
+	tests := []struct {
+		name           string
+		claimHours     int
+		expectedWindow time.Duration
+	}{
+		{"below_minimum_clamped_to_48", 10, 48 * time.Hour},
+		{"above_maximum_clamped_to_48", 200, 48 * time.Hour},
+		{"zero_clamped_to_48", 0, 48 * time.Hour},
+		{"negative_clamped_to_48", -5, 48 * time.Hour},
+		{"valid_24", 24, 24 * time.Hour},
+		{"valid_168", 168, 168 * time.Hour},
+		{"valid_72", 72, 72 * time.Hour},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := service.NewEscrowService(escrowRepo, bookingRepo, bhRepo, walletSvc, log, tc.claimHours)
+			bookingID := uuid.New()
+
+			escrow, err := svc.CreateEscrow(ctx, bookingID, 50000, 5000)
+			require.NoError(t, err)
+			expectedEnd := time.Now().Add(tc.expectedWindow)
+			assert.WithinDuration(t, expectedEnd, escrow.ClaimPeriodEndsAt, 5*time.Second)
+		})
+	}
+}
+
+func TestMarkDisputedByBookingID(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("success", func(t *testing.T) {
+		svc, escrowRepo, _, _, _ := setupEscrowTest(t)
+
+		bookingID := uuid.New()
+		escrow := &domain.Escrow{
+			ID: uuid.New(), BookingID: bookingID,
+			Amount: 80000, ServiceFee: 8000,
+			Status:            domain.EscrowHeld,
+			ClaimPeriodEndsAt: time.Now().Add(24 * time.Hour),
+			CreatedAt:         time.Now(),
+		}
+		require.NoError(t, escrowRepo.Create(ctx, escrow))
+
+		err := svc.MarkDisputedByBookingID(ctx, bookingID)
+		require.NoError(t, err)
+
+		updated, err := escrowRepo.GetByID(ctx, escrow.ID)
+		require.NoError(t, err)
+		assert.Equal(t, domain.EscrowDisputed, updated.Status)
+	})
+
+	t.Run("booking_not_found", func(t *testing.T) {
+		svc, _, _, _, _ := setupEscrowTest(t)
+
+		err := svc.MarkDisputedByBookingID(ctx, uuid.New())
+		assert.ErrorIs(t, err, domain.ErrEscrowNotFound)
+	})
+}
+
+func TestProcessRefundByBookingID(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("success", func(t *testing.T) {
+		svc, escrowRepo, bookingRepo, _, walletSvc := setupEscrowTest(t)
+
+		clientID := uuid.New()
+		bookingID := uuid.New()
+
+		// Setup client wallet
+		clientWallet := &domain.Wallet{ID: uuid.New(), UserID: clientID, Balance: 0, Currency: "RUB"}
+		walletSvc.wallets[clientWallet.ID] = clientWallet
+
+		// Setup booking
+		booking := &domain.Booking{
+			ID: bookingID, UserID: clientID, BathhouseID: uuid.New(),
+			StartTime: time.Now().Add(-2 * time.Hour), EndTime: time.Now().Add(-1 * time.Hour),
+			GuestCount: 1, TotalPrice: 60000, Status: domain.BookingCompleted,
+		}
+		require.NoError(t, bookingRepo.Create(ctx, booking))
+
+		escrow := &domain.Escrow{
+			ID: uuid.New(), BookingID: bookingID,
+			Amount: 60000, ServiceFee: 6000,
+			Status:            domain.EscrowHeld,
+			ClaimPeriodEndsAt: time.Now().Add(24 * time.Hour),
+			CreatedAt:         time.Now(),
+		}
+		require.NoError(t, escrowRepo.Create(ctx, escrow))
+
+		err := svc.ProcessRefundByBookingID(ctx, bookingID, 30000)
+		require.NoError(t, err)
+
+		updated, err := escrowRepo.GetByID(ctx, escrow.ID)
+		require.NoError(t, err)
+		assert.Equal(t, domain.EscrowRefunded, updated.Status)
+
+		require.Len(t, walletSvc.refundCalls, 1)
+		assert.Equal(t, int64(30000), walletSvc.refundCalls[0].Amount)
+	})
+
+	t.Run("no_escrow_for_booking", func(t *testing.T) {
+		svc, _, _, _, _ := setupEscrowTest(t)
+
+		err := svc.ProcessRefundByBookingID(ctx, uuid.New(), 10000)
+		assert.ErrorIs(t, err, domain.ErrEscrowNotFound)
+	})
+}
+
+func TestProcessRefund_ZeroAmount(t *testing.T) {
+	svc, escrowRepo, bookingRepo, _, walletSvc := setupEscrowTest(t)
+	ctx := context.Background()
+
+	clientID := uuid.New()
+	bookingID := uuid.New()
+
+	booking := &domain.Booking{
+		ID: bookingID, UserID: clientID, BathhouseID: uuid.New(),
+		StartTime: time.Now().Add(-2 * time.Hour), EndTime: time.Now().Add(-1 * time.Hour),
+		GuestCount: 1, TotalPrice: 50000, Status: domain.BookingCompleted,
+	}
+	require.NoError(t, bookingRepo.Create(ctx, booking))
+
+	escrow := &domain.Escrow{
+		ID: uuid.New(), BookingID: bookingID,
+		Amount: 50000, ServiceFee: 5000,
+		Status:            domain.EscrowHeld,
+		ClaimPeriodEndsAt: time.Now().Add(24 * time.Hour),
+		CreatedAt:         time.Now(),
+	}
+	require.NoError(t, escrowRepo.Create(ctx, escrow))
+
+	// Zero refund amount: escrow status changes but no wallet refund happens
+	err := svc.ProcessRefund(ctx, escrow.ID, 0)
+	require.NoError(t, err)
+
+	updated, err := escrowRepo.GetByID(ctx, escrow.ID)
+	require.NoError(t, err)
+	assert.Equal(t, domain.EscrowRefunded, updated.Status)
+
+	// No wallet calls for zero amount
+	assert.Empty(t, walletSvc.refundCalls)
+}
+
+func TestReleaseToOwner_NotFound(t *testing.T) {
+	svc, _, _, _, _ := setupEscrowTest(t)
+	ctx := context.Background()
+
+	err := svc.ReleaseToOwner(ctx, uuid.New())
+	assert.ErrorIs(t, err, domain.ErrEscrowNotFound)
+}
+
+func TestMarkDisputed_AlreadyReleased(t *testing.T) {
+	svc, escrowRepo, _, _, _ := setupEscrowTest(t)
+	ctx := context.Background()
+
+	now := time.Now()
+	escrow := &domain.Escrow{
+		ID: uuid.New(), BookingID: uuid.New(),
+		Amount: 50000, ServiceFee: 5000,
+		Status:            domain.EscrowReleased,
+		ClaimPeriodEndsAt: now.Add(-1 * time.Hour),
+		ReleasedAt:        &now,
+		CreatedAt:         now.Add(-49 * time.Hour),
+	}
+	require.NoError(t, escrowRepo.Create(ctx, escrow))
+
+	err := svc.MarkDisputed(ctx, escrow.ID)
+	assert.ErrorIs(t, err, domain.ErrEscrowAlreadyReleased)
+}
+
+func TestProcessRefund_DisputedEscrow(t *testing.T) {
+	svc, escrowRepo, bookingRepo, _, walletSvc := setupEscrowTest(t)
+	ctx := context.Background()
+
+	clientID := uuid.New()
+	bookingID := uuid.New()
+
+	clientWallet := &domain.Wallet{ID: uuid.New(), UserID: clientID, Balance: 0, Currency: "RUB"}
+	walletSvc.wallets[clientWallet.ID] = clientWallet
+
+	booking := &domain.Booking{
+		ID: bookingID, UserID: clientID, BathhouseID: uuid.New(),
+		StartTime: time.Now().Add(-2 * time.Hour), EndTime: time.Now().Add(-1 * time.Hour),
+		GuestCount: 1, TotalPrice: 80000, Status: domain.BookingCompleted,
+	}
+	require.NoError(t, bookingRepo.Create(ctx, booking))
+
+	// Create a disputed escrow
+	escrow := &domain.Escrow{
+		ID: uuid.New(), BookingID: bookingID,
+		Amount: 80000, ServiceFee: 8000,
+		Status:            domain.EscrowDisputed,
+		ClaimPeriodEndsAt: time.Now().Add(24 * time.Hour),
+		CreatedAt:         time.Now(),
+	}
+	require.NoError(t, escrowRepo.Create(ctx, escrow))
+
+	// Refund of a disputed escrow should succeed (dispute resolution can trigger refund)
+	err := svc.ProcessRefund(ctx, escrow.ID, 80000)
+	require.NoError(t, err)
+
+	updated, err := escrowRepo.GetByID(ctx, escrow.ID)
+	require.NoError(t, err)
+	assert.Equal(t, domain.EscrowRefunded, updated.Status)
+	assert.Len(t, walletSvc.refundCalls, 1)
+}

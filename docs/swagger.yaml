@@ -1595,6 +1595,8 @@ definitions:
         type: integer
       promo_code:
         type: string
+      saved_card_id:
+        type: string
       start_time:
         type: string
       use_points:
@@ -3194,6 +3196,11 @@ definitions:
       status:
         type: string
     type: object
+  internal_handler.recordRecentlyViewedRequest:
+    properties:
+      bathhouse_id:
+        type: string
+    type: object
   internal_handler.redeemCertificateRequest:
     properties:
       code:
@@ -3918,14 +3925,17 @@ definitions:
     properties:
       amount:
         type: integer
+      payment_method:
+        description: '"card" (default), "sbp"'
+        type: string
     type: object
   internal_handler.topUpResponse:
     properties:
       amount:
         type: integer
-      balance_after:
-        type: integer
-      transaction_id:
+      confirmation_url:
+        type: string
+      payment_id:
         type: string
     type: object
   internal_handler.totpEnableResponse:
@@ -4365,6 +4375,8 @@ definitions:
     type: object
   internal_handler.verifyPhoneRequest:
     properties:
+      age_confirmed:
+        type: boolean
       code:
         type: string
       name:
@@ -13263,6 +13275,69 @@ paths:
       summary: Create booking
       tags:
       - bookings
+  /bookings/{id}:
+    get:
+      description: 'Returns a single booking. Access: admin sees any, client sees
+        their own, owner/representative sees bookings for their bathhouses.'
+      parameters:
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.bookingResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get booking by ID
+      tags:
+      - bookings
   /bookings/{id}/approve:
     patch:
       description: Approves a pending_owner booking request. Captures wallet hold.
@@ -21746,6 +21821,46 @@ paths:
       security:
       - BearerAuth: []
       summary: List recently viewed bathhouses
+      tags:
+      - saved-searches
+    post:
+      consumes:
+      - application/json
+      description: Records that the current user viewed a specific bathhouse (for
+        recently-viewed list).
+      parameters:
+      - description: Bathhouse ID
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.recordRecentlyViewedRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Record a bathhouse view
       tags:
       - saved-searches
   /my/referral:

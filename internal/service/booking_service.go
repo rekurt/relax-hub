@@ -24,6 +24,7 @@ type CreateBookingInput struct {
 	UseReferralBonus int64            // Optional: referral bonus to spend (reduces total price)
 	PromoCode        string           // Optional: promo code to apply for a discount
 	CertificateCode  string           // Optional: gift certificate code to apply
+	SavedCardID      uuid.UUID        // Optional: saved card to use for payment
 	AddOns           []AddOnSelection // Optional: add-ons to include in booking
 }
 

@@ -2,6 +2,10 @@ package fiscal_test
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/nikitaaldaev/bani/internal/domain"
@@ -9,9 +13,47 @@ import (
 	"github.com/nikitaaldaev/bani/internal/logger"
 )
 
-func TestATOLProvider_CreateReceipt(t *testing.T) {
+// newMockATOLServer creates a httptest server that simulates ATOL Online API v4.
+func newMockATOLServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		switch {
+		case r.URL.Path == "/getToken" && r.Method == http.MethodPost:
+			json.NewEncoder(w).Encode(map[string]string{"token": "mock-token"})
+
+		case strings.HasSuffix(r.URL.Path, "/sell") && r.Method == http.MethodPost:
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"uuid":   "mock-uuid-sell",
+				"status": "pending",
+			})
+
+		case strings.HasSuffix(r.URL.Path, "/sell_refund") && r.Method == http.MethodPost:
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"uuid":   "mock-uuid-refund",
+				"status": "pending",
+			})
+
+		default:
+			http.Error(w, `{"error":{"code":999,"text":"unknown endpoint"}}`, http.StatusBadRequest)
+		}
+	}))
+}
+
+// newTestATOLProvider creates an ATOLProvider pointed at the mock server.
+func newTestATOLProvider(t *testing.T, server *httptest.Server) *fiscal.ATOLProvider {
+	t.Helper()
 	log := logger.New(logger.LevelWarn)
 	provider := fiscal.NewATOLProvider("test_login", "test_pass", "test_group", log)
+	provider.SetBaseURL(server.URL)
+	return provider
+}
+
+func TestATOLProvider_CreateReceipt(t *testing.T) {
+	server := newMockATOLServer(t)
+	defer server.Close()
+	provider := newTestATOLProvider(t, server)
 
 	req := fiscal.ReceiptRequest{
 		Type:   fiscal.ReceiptAdvance,
@@ -41,11 +83,15 @@ func TestATOLProvider_CreateReceipt(t *testing.T) {
 	if receipt.Status != "pending" {
 		t.Errorf("expected status 'pending', got %q", receipt.Status)
 	}
+	if receipt.ExternalID != "mock-uuid-sell" {
+		t.Errorf("expected external ID 'mock-uuid-sell', got %q", receipt.ExternalID)
+	}
 }
 
 func TestATOLProvider_CreateReceipt_RefundType(t *testing.T) {
-	log := logger.New(logger.LevelWarn)
-	provider := fiscal.NewATOLProvider("login", "pass", "group", log)
+	server := newMockATOLServer(t)
+	defer server.Close()
+	provider := newTestATOLProvider(t, server)
 
 	req := fiscal.ReceiptRequest{
 		Type:   fiscal.ReceiptRefund,
@@ -64,6 +110,9 @@ func TestATOLProvider_CreateReceipt_RefundType(t *testing.T) {
 	}
 	if receipt.ID == "" {
 		t.Error("expected receipt ID to be non-empty")
+	}
+	if receipt.ExternalID != "mock-uuid-refund" {
+		t.Errorf("expected external ID 'mock-uuid-refund', got %q", receipt.ExternalID)
 	}
 }
 
@@ -146,8 +195,9 @@ func TestTaxInfoForEntityType(t *testing.T) {
 }
 
 func TestATOLProvider_CreateReceipt_WithTaxSystem(t *testing.T) {
-	log := logger.New(logger.LevelWarn)
-	provider := fiscal.NewATOLProvider("login", "pass", "group", log)
+	server := newMockATOLServer(t)
+	defer server.Close()
+	provider := newTestATOLProvider(t, server)
 
 	req := fiscal.ReceiptRequest{
 		Type:      fiscal.ReceiptAdvance,

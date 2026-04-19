@@ -36,6 +36,7 @@ type createBookingRequest struct {
 	UseReferralBonus int64                   `json:"use_referral_bonus,omitempty"`
 	PromoCode        string                  `json:"promo_code,omitempty"`
 	CertificateCode  string                  `json:"certificate_code,omitempty"`
+	SavedCardID      string                  `json:"saved_card_id,omitempty"`
 	AddOns           []addOnSelectionRequest `json:"addons,omitempty"`
 }
 
@@ -225,6 +226,15 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	var savedCardID uuid.UUID
+	if req.SavedCardID != "" {
+		savedCardID, err = uuid.Parse(req.SavedCardID)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "invalid saved_card_id")
+			return
+		}
+	}
+
 	result, err := h.bookingService.Create(r.Context(), userID, service.CreateBookingInput{
 		BathhouseID:      bathhouseID,
 		StartTime:        startTime,
@@ -235,6 +245,7 @@ func (h *BookingHandler) Create(w http.ResponseWriter, r *http.Request) {
 		UseReferralBonus: req.UseReferralBonus,
 		PromoCode:        req.PromoCode,
 		CertificateCode:  req.CertificateCode,
+		SavedCardID:      savedCardID,
 		AddOns:           addOnSelections,
 	})
 	if err != nil {
