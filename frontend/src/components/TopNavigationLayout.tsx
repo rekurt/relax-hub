@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Layout, Button, Drawer, Dropdown, Grid, Space, Typography, theme } from 'antd'
 import type { MenuProps } from 'antd'
-import { DownOutlined, LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
+import { LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/stores/auth'
 import type { NavigationItem } from '@/navigation/menu'
 import NotificationBell from '@/components/NotificationBell'
@@ -23,6 +23,20 @@ interface TopNavigationLayoutProps {
   contentWidth?: number
 }
 
+type DropdownItem = NonNullable<MenuProps['items']>[number]
+
+function groupNavigationItems(items: NavigationItem[]) {
+  return items.reduce<Array<{ section?: string; items: NavigationItem[] }>>((acc, item) => {
+    const lastGroup = acc[acc.length - 1]
+    if (lastGroup && lastGroup.section === item.section) {
+      lastGroup.items.push(item)
+      return acc
+    }
+    acc.push({ section: item.section, items: [item] })
+    return acc
+  }, [])
+}
+
 function NavButton({
   item,
   active,
@@ -39,6 +53,7 @@ function NavButton({
       style={{
         borderRadius: 999,
         fontWeight: active ? 600 : 500,
+        whiteSpace: 'nowrap',
         boxShadow: active ? '0 10px 24px rgba(19, 79, 92, 0.12)' : 'none',
       }}
     >
@@ -64,17 +79,35 @@ export default function TopNavigationLayout({
   const screens = useBreakpoint()
   const { token } = theme.useToken()
   const isMobile = !screens.lg
+  const showBrandSubtitle = !isMobile && !!screens.xl
   const { user, logout } = useAuthStore()
   const searchParams = new URLSearchParams(location.search)
 
   const isActive = (item: NavigationItem) => item.isActive(location.pathname, searchParams)
   const overflowActive = overflowItems.some(isActive)
+  const groupedOverflowItems = groupNavigationItems(overflowItems)
 
-  const overflowMenuItems: MenuProps['items'] = overflowItems.map((item) => ({
+  const buildDropdownLeaf = (item: NavigationItem): DropdownItem => ({
     key: item.key,
     label: item.label,
     onClick: () => navigate(item.to),
-  }))
+  })
+
+  const overflowMenuItems = groupedOverflowItems.reduce<NonNullable<MenuProps['items']>>((acc, group) => {
+    const children = group.items.map(buildDropdownLeaf)
+    if (!group.section) {
+      acc.push(...children)
+      return acc
+    }
+
+    acc.push({
+      key: `group-${group.section}`,
+      type: 'group',
+      label: group.section,
+      children,
+    } satisfies DropdownItem)
+    return acc
+  }, [])
 
   const userMenuItems: MenuProps['items'] = [
     ...(profilePath
@@ -145,7 +178,7 @@ export default function TopNavigationLayout({
             <Text strong style={{ fontSize: 20, color: '#16343d', letterSpacing: '0.04em' }}>
               {brandTitle}
             </Text>
-            {!isMobile && (
+            {showBrandSubtitle && (
               <Text type="secondary" style={{ fontSize: 12, letterSpacing: '0.02em' }}>
                 {brandSubtitle}
               </Text>
@@ -153,8 +186,8 @@ export default function TopNavigationLayout({
           </button>
 
           {!isMobile && (
-            <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-              <Space size={8} wrap>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Space size={8} wrap={false}>
                 {primaryItems.map((item) => (
                   <NavButton
                     key={item.key}
@@ -166,10 +199,15 @@ export default function TopNavigationLayout({
                 {overflowItems.length > 0 && (
                   <Dropdown menu={{ items: overflowMenuItems }} trigger={['click']} placement="bottomRight">
                     <Button
-                      type={overflowActive ? 'primary' : 'text'}
-                      style={{ borderRadius: 999, fontWeight: overflowActive ? 600 : 500 }}
+                      type={overflowActive ? 'primary' : 'default'}
+                      icon={<MenuOutlined />}
+                      style={{
+                        borderRadius: 999,
+                        fontWeight: overflowActive ? 600 : 500,
+                        whiteSpace: 'nowrap',
+                      }}
                     >
-                      Еще <DownOutlined />
+                      Разделы
                     </Button>
                   </Dropdown>
                 )}
@@ -185,7 +223,20 @@ export default function TopNavigationLayout({
                 {showNotifications && <NotificationBell />}
                 <Dropdown menu={{ items: userMenuItems }} trigger={['click']} placement="bottomRight">
                   <Button type="text" icon={<UserOutlined />} style={{ borderRadius: 999 }}>
-                    {!isMobile && (user.name ?? user.email ?? 'Профиль')}
+                    {!isMobile && (
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          maxWidth: 180,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          verticalAlign: 'bottom',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {user.name ?? user.email ?? 'Профиль'}
+                      </span>
+                    )}
                   </Button>
                 </Dropdown>
               </>
@@ -218,21 +269,32 @@ export default function TopNavigationLayout({
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       >
-        <Space orientation="vertical" style={{ width: '100%' }} size={8}>
+        <Space orientation="vertical" style={{ width: '100%' }} size={12}>
           {headerAccessory}
-          {drawerItems.map((item) => (
-            <Button
-              key={item.key}
-              type={isActive(item) ? 'primary' : 'text'}
-              block
-              style={{ justifyContent: 'flex-start', borderRadius: 16, height: 44 }}
-              onClick={() => {
-                navigate(item.to)
-                setDrawerOpen(false)
-              }}
-            >
-              {item.label}
-            </Button>
+          {groupNavigationItems(drawerItems).map((group, index) => (
+            <div key={group.section ?? `drawer-group-${index}`}>
+              {group.section && (
+                <Text type="secondary" style={{ display: 'block', marginBottom: 8, fontSize: 12 }}>
+                  {group.section}
+                </Text>
+              )}
+              <Space orientation="vertical" style={{ width: '100%' }} size={8}>
+                {group.items.map((item) => (
+                  <Button
+                    key={item.key}
+                    type={isActive(item) ? 'primary' : 'text'}
+                    block
+                    style={{ justifyContent: 'flex-start', borderRadius: 16, height: 44 }}
+                    onClick={() => {
+                      navigate(item.to)
+                      setDrawerOpen(false)
+                    }}
+                  >
+                    {item.label}
+                  </Button>
+                ))}
+              </Space>
+            </div>
           ))}
         </Space>
       </Drawer>

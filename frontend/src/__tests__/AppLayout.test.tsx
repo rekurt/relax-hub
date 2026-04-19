@@ -81,12 +81,7 @@ describe('AppLayout', () => {
     expect(menuText).toContain('Обзор')
     expect(menuText).toContain('Объекты')
     expect(menuText).toContain('Брони')
-    expect(menuText).toContain('Календарь')
-    expect(menuText).toContain('Цены')
-    expect(menuText).toContain('Финансы')
-    expect(menuText).toContain('CRM')
-    expect(menuText).toContain('Продвижение')
-    expect(menuText).toContain('Еще')
+    expect(menuText).toContain('Разделы')
   })
 
   it('renders user name in header dropdown button', () => {

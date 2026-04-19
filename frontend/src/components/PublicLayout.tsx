@@ -4,7 +4,13 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useGetCities } from '@/api/generated/cities/cities'
 import { useAuthStore } from '@/stores/auth'
 import TopNavigationLayout from '@/components/TopNavigationLayout'
-import { CLIENT_PRIMARY_NAV_ITEMS, PUBLIC_NAV_ITEMS, getProfilePath } from '@/navigation/menu'
+import {
+  CLIENT_OVERFLOW_NAV_ITEMS,
+  CLIENT_PRIMARY_NAV_ITEMS,
+  PUBLIC_OVERFLOW_NAV_ITEMS,
+  PUBLIC_PRIMARY_NAV_ITEMS,
+  getProfilePath,
+} from '@/navigation/menu'
 
 export default function PublicLayout() {
   const navigate = useNavigate()
@@ -37,7 +43,7 @@ export default function PublicLayout() {
       value={selectedCitySlug}
       allowClear
       placeholder={preferredCity?.name ?? 'Город'}
-      style={{ minWidth: 168 }}
+      style={{ minWidth: 140, maxWidth: 176 }}
       size="middle"
       options={cities.map((city) => ({
         label: city.name ?? 'Город',
@@ -61,7 +67,8 @@ export default function PublicLayout() {
       brandTitle="BANI"
       brandSubtitle="Публичный каталог и бронирование"
       homeTo="/"
-      primaryItems={user?.role === 'client' ? CLIENT_PRIMARY_NAV_ITEMS : PUBLIC_NAV_ITEMS}
+      primaryItems={user?.role === 'client' ? CLIENT_PRIMARY_NAV_ITEMS : PUBLIC_PRIMARY_NAV_ITEMS}
+      overflowItems={user?.role === 'client' ? CLIENT_OVERFLOW_NAV_ITEMS : PUBLIC_OVERFLOW_NAV_ITEMS}
       profilePath={user ? getProfilePath(user.role) : undefined}
       headerAccessory={cityAccessory}
     />

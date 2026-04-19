@@ -4,6 +4,7 @@ export interface NavigationItem {
   key: string
   label: string
   to: string
+  section?: string
   isActive: (pathname: string, searchParams: URLSearchParams) => boolean
 }
 
@@ -15,20 +16,22 @@ export interface PublicShortcutCard {
   to: string
 }
 
-function exactItem(key: string, label: string, to: string): NavigationItem {
+function exactItem(key: string, label: string, to: string, section?: string): NavigationItem {
   return {
     key,
     label,
     to,
+    section,
     isActive: (pathname) => pathname === to,
   }
 }
 
-function prefixItem(key: string, label: string, to: string, prefixes: string[] = [to]): NavigationItem {
+function prefixItem(key: string, label: string, to: string, prefixes: string[] = [to], section?: string): NavigationItem {
   return {
     key,
     label,
     to,
+    section,
     isActive: (pathname) => prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)),
   }
 }
@@ -46,12 +49,13 @@ function nextSaturdayString() {
   return cursor.format('YYYY-MM-DD')
 }
 
-function catalogItem(key: string, label: string, params?: Record<string, string>): NavigationItem {
+function catalogItem(key: string, label: string, params?: Record<string, string>, section?: string): NavigationItem {
   const to = params ? buildCatalogPath(params) : '/catalog'
   return {
     key,
     label,
     to,
+    section,
     isActive: (pathname, searchParams) => {
       if (pathname !== '/catalog') return false
       if (!params) {
@@ -65,14 +69,32 @@ function catalogItem(key: string, label: string, params?: Record<string, string>
   }
 }
 
-export const PUBLIC_NAV_ITEMS: NavigationItem[] = [
+const PUBLIC_FILTER_NAV_ITEMS: NavigationItem[] = [
+  catalogItem('catalog-couple', 'Для двоих', { guest_count: '2' }, 'Подборки'),
+  catalogItem('catalog-company', 'Для компании', { guest_count: '6' }, 'Подборки'),
+  catalogItem('catalog-weekend', 'На выходные', { available_date: nextSaturdayString() }, 'Подборки'),
+  catalogItem('catalog-hot-tub', 'С чаном', { has_hot_tub: 'true' }, 'Подборки'),
+  catalogItem('catalog-pool', 'С бассейном', { has_pool: 'true' }, 'Подборки'),
+]
+
+const PUBLIC_SUPPORT_NAV_ITEMS: NavigationItem[] = [
+  exactItem('faq', 'FAQ', '/faq', 'Помощь'),
+  exactItem('contacts', 'Контакты', '/contacts', 'Помощь'),
+]
+
+export const PUBLIC_PRIMARY_NAV_ITEMS: NavigationItem[] = [
   catalogItem('catalog-all', 'Все бани'),
-  catalogItem('catalog-couple', 'Для двоих', { guest_count: '2' }),
-  catalogItem('catalog-company', 'Для компании', { guest_count: '6' }),
-  catalogItem('catalog-weekend', 'На выходные', { available_date: nextSaturdayString() }),
-  catalogItem('catalog-hot-tub', 'С чаном', { has_hot_tub: 'true' }),
-  catalogItem('catalog-pool', 'С бассейном', { has_pool: 'true' }),
   exactItem('certificates', 'Сертификаты', '/certificates'),
+]
+
+export const PUBLIC_OVERFLOW_NAV_ITEMS: NavigationItem[] = [
+  ...PUBLIC_FILTER_NAV_ITEMS,
+  ...PUBLIC_SUPPORT_NAV_ITEMS,
+]
+
+export const PUBLIC_NAV_ITEMS: NavigationItem[] = [
+  ...PUBLIC_PRIMARY_NAV_ITEMS,
+  ...PUBLIC_OVERFLOW_NAV_ITEMS,
 ]
 
 export const PUBLIC_SHORTCUT_CARDS: PublicShortcutCard[] = [
@@ -107,70 +129,73 @@ export const PUBLIC_SHORTCUT_CARDS: PublicShortcutCard[] = [
 ]
 
 export const CLIENT_PRIMARY_NAV_ITEMS: NavigationItem[] = [
-  ...PUBLIC_NAV_ITEMS,
+  catalogItem('catalog-all', 'Все бани'),
   prefixItem('client-bookings', 'Мои брони', '/client/bookings'),
 ]
 
 export const CLIENT_OVERFLOW_NAV_ITEMS: NavigationItem[] = [
-  prefixItem('client-favorites', 'Избранное', '/client/favorites'),
-  prefixItem('client-wallet', 'Кошелек', '/client/wallet'),
-  prefixItem('client-payments', 'Платежи', '/client/payments'),
-  prefixItem('client-cards', 'Карты', '/client/cards'),
-  prefixItem('client-chat', 'Чат', '/client/chat'),
-  prefixItem('client-tickets', 'Поддержка', '/client/tickets'),
-  prefixItem('client-disputes', 'Споры', '/client/disputes'),
-  prefixItem('client-notifications', 'Уведомления', '/client/notifications'),
-  prefixItem('client-security', 'Безопасность', '/client/security'),
-  prefixItem('client-profile', 'Профиль', '/client/profile'),
+  exactItem('client-certificates', 'Сертификаты', '/certificates', 'Публичное'),
+  ...PUBLIC_FILTER_NAV_ITEMS,
+  ...PUBLIC_SUPPORT_NAV_ITEMS,
+  prefixItem('client-favorites', 'Избранное', '/client/favorites', ['/client/favorites'], 'Кабинет'),
+  prefixItem('client-wallet', 'Кошелек', '/client/wallet', ['/client/wallet'], 'Кабинет'),
+  prefixItem('client-payments', 'Платежи', '/client/payments', ['/client/payments'], 'Кабинет'),
+  prefixItem('client-cards', 'Карты', '/client/cards', ['/client/cards'], 'Кабинет'),
+  prefixItem('client-chat', 'Чат', '/client/chat', ['/client/chat'], 'Кабинет'),
+  prefixItem('client-tickets', 'Поддержка', '/client/tickets', ['/client/tickets'], 'Кабинет'),
+  prefixItem('client-disputes', 'Споры', '/client/disputes', ['/client/disputes'], 'Кабинет'),
+  prefixItem('client-notifications', 'Уведомления', '/client/notifications', ['/client/notifications'], 'Кабинет'),
+  prefixItem('client-security', 'Безопасность', '/client/security', ['/client/security'], 'Кабинет'),
+  prefixItem('client-profile', 'Профиль', '/client/profile', ['/client/profile'], 'Кабинет'),
 ]
 
 export const OWNER_PRIMARY_NAV_ITEMS: NavigationItem[] = [
   exactItem('owner-dashboard', 'Обзор', '/dashboard'),
   prefixItem('owner-bathhouses', 'Объекты', '/bathhouses'),
   prefixItem('owner-bookings', 'Брони', '/bookings'),
-  prefixItem('owner-calendar', 'Календарь', '/calendar'),
-  prefixItem('owner-pricing', 'Цены', '/pricing'),
-  prefixItem('owner-finance', 'Финансы', '/finance'),
-  prefixItem('owner-crm', 'CRM', '/crm/guests', ['/crm']),
-  prefixItem('owner-promotion', 'Продвижение', '/promotion', ['/promotion', '/promo']),
 ]
 
 export const OWNER_OVERFLOW_NAV_ITEMS: NavigationItem[] = [
-  prefixItem('owner-photos', 'Фото', '/photos', ['/photos', '/photo-order']),
-  prefixItem('owner-widget', 'Виджет', '/widget'),
-  prefixItem('owner-representatives', 'Представители', '/representatives'),
-  prefixItem('owner-subscriptions', 'Подписки', '/subscriptions'),
-  prefixItem('owner-notifications', 'Уведомления', '/notifications'),
-  prefixItem('owner-pms', 'PMS', '/settings/pms'),
-  prefixItem('owner-webhooks', 'Вебхуки', '/settings/webhooks'),
-  prefixItem('owner-kyc', 'KYC', '/settings/kyc'),
-  prefixItem('owner-offer', 'Оферта', '/settings/offer'),
-  prefixItem('owner-profile', 'Профиль', '/settings'),
+  prefixItem('owner-calendar', 'Календарь', '/calendar', ['/calendar'], 'Операции'),
+  prefixItem('owner-pricing', 'Цены', '/pricing', ['/pricing'], 'Операции'),
+  prefixItem('owner-finance', 'Финансы', '/finance', ['/finance'], 'Операции'),
+  prefixItem('owner-crm', 'CRM', '/crm/guests', ['/crm'], 'Операции'),
+  prefixItem('owner-promotion', 'Продвижение', '/promotion', ['/promotion', '/promo'], 'Рост'),
+  prefixItem('owner-photos', 'Фото', '/photos', ['/photos', '/photo-order'], 'Рост'),
+  prefixItem('owner-widget', 'Виджет', '/widget', ['/widget'], 'Рост'),
+  prefixItem('owner-representatives', 'Представители', '/representatives', ['/representatives'], 'Рост'),
+  prefixItem('owner-subscriptions', 'Подписки', '/subscriptions', ['/subscriptions'], 'Аккаунт'),
+  prefixItem('owner-notifications', 'Уведомления', '/notifications', ['/notifications'], 'Аккаунт'),
+  prefixItem('owner-pms', 'PMS', '/settings/pms', ['/settings/pms'], 'Настройки'),
+  prefixItem('owner-webhooks', 'Вебхуки', '/settings/webhooks', ['/settings/webhooks'], 'Настройки'),
+  prefixItem('owner-kyc', 'KYC', '/settings/kyc', ['/settings/kyc'], 'Настройки'),
+  prefixItem('owner-offer', 'Оферта', '/settings/offer', ['/settings/offer'], 'Настройки'),
+  prefixItem('owner-profile', 'Профиль', '/settings', ['/settings'], 'Настройки'),
 ]
 
 export const ADMIN_PRIMARY_NAV_ITEMS: NavigationItem[] = [
   exactItem('admin-dashboard', 'Обзор', '/admin'),
   prefixItem('admin-moderation', 'Модерация', '/admin/bathhouses', ['/admin/bathhouses', '/admin/reviews', '/admin/photos', '/admin/complaints']),
   prefixItem('admin-users', 'Пользователи', '/admin/users'),
-  prefixItem('admin-bookings', 'Брони', '/admin/bookings', ['/admin/bookings', '/admin/disputes', '/admin/tickets']),
-  prefixItem('admin-finance', 'Финансы', '/admin/finance'),
-  prefixItem('admin-analytics', 'Аналитика', '/admin/analytics/funnels', ['/admin/analytics', '/admin/heatmap']),
-  prefixItem('admin-settings', 'Настройки', '/admin/settings'),
 ]
 
 export const ADMIN_OVERFLOW_NAV_ITEMS: NavigationItem[] = [
-  prefixItem('admin-cities', 'Города', '/admin/cities'),
-  prefixItem('admin-promos', 'Промокоды', '/admin/promos'),
-  prefixItem('admin-antifraud', 'Антифрод', '/admin/antifraud'),
-  prefixItem('admin-amenities', 'Удобства', '/admin/amenities'),
-  prefixItem('admin-object-types', 'Типы объектов', '/admin/object-types'),
-  prefixItem('admin-holidays', 'Праздники', '/admin/holidays'),
-  prefixItem('admin-wallets', 'Кошельки', '/admin/wallets'),
-  prefixItem('admin-roles', 'Роли', '/admin/roles'),
-  prefixItem('admin-feature-flags', 'Флаги', '/admin/feature-flags'),
-  prefixItem('admin-service-fees', 'Комиссии', '/admin/service-fees'),
-  prefixItem('admin-faq', 'FAQ', '/admin/faq'),
-  prefixItem('admin-profile', 'Профиль', '/admin/profile'),
+  prefixItem('admin-bookings', 'Брони', '/admin/bookings', ['/admin/bookings', '/admin/disputes', '/admin/tickets'], 'Операции'),
+  prefixItem('admin-finance', 'Финансы', '/admin/finance', ['/admin/finance'], 'Операции'),
+  prefixItem('admin-analytics', 'Аналитика', '/admin/analytics/funnels', ['/admin/analytics', '/admin/heatmap'], 'Операции'),
+  prefixItem('admin-settings', 'Настройки', '/admin/settings', ['/admin/settings'], 'Операции'),
+  prefixItem('admin-cities', 'Города', '/admin/cities', ['/admin/cities'], 'Справочники'),
+  prefixItem('admin-promos', 'Промокоды', '/admin/promos', ['/admin/promos'], 'Справочники'),
+  prefixItem('admin-antifraud', 'Антифрод', '/admin/antifraud', ['/admin/antifraud'], 'Контроль'),
+  prefixItem('admin-amenities', 'Удобства', '/admin/amenities', ['/admin/amenities'], 'Справочники'),
+  prefixItem('admin-object-types', 'Типы объектов', '/admin/object-types', ['/admin/object-types'], 'Справочники'),
+  prefixItem('admin-holidays', 'Праздники', '/admin/holidays', ['/admin/holidays'], 'Справочники'),
+  prefixItem('admin-wallets', 'Кошельки', '/admin/wallets', ['/admin/wallets'], 'Контроль'),
+  prefixItem('admin-roles', 'Роли', '/admin/roles', ['/admin/roles'], 'Контроль'),
+  prefixItem('admin-feature-flags', 'Флаги', '/admin/feature-flags', ['/admin/feature-flags'], 'Контроль'),
+  prefixItem('admin-service-fees', 'Комиссии', '/admin/service-fees', ['/admin/service-fees'], 'Контроль'),
+  prefixItem('admin-faq', 'FAQ', '/admin/faq', ['/admin/faq'], 'Контроль'),
+  prefixItem('admin-profile', 'Профиль', '/admin/profile', ['/admin/profile'], 'Аккаунт'),
 ]
 
 export function getProfilePath(role?: string): string {

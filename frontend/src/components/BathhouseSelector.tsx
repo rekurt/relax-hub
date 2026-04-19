@@ -30,7 +30,8 @@ export default function BathhouseSelector() {
         value={selectedBathhouseId}
         onChange={setSelectedBathhouseId}
         loading={isLoading}
-        style={{ minWidth: 200 }}
+        style={{ minWidth: 156, maxWidth: 220 }}
+        popupMatchSelectWidth={false}
         placeholder="Выберите баню"
         options={bathhouses.map((b) => ({
           label: b.name ?? 'Без названия',

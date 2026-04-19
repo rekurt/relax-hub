@@ -468,8 +468,6 @@ export default function ClientHome() {
 
       <ProfileNudge />
 
-      <PromoBanner />
-
       <Card
         style={{
           borderRadius: 28,
@@ -487,6 +485,24 @@ export default function ClientHome() {
             <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 16 }}>
               Выбирайте по сценарию отдыха, смотрите доступные слоты и подтверждайте телефон только в финальном шаге. Без длинной регистрации и без лишних экранов.
             </Text>
+            <Input
+              size="large"
+              placeholder="Поиск бань..."
+              prefix={<SearchOutlined />}
+              onPressEnter={(e) => {
+                const val = (e.target as HTMLInputElement).value
+                navigate(`/catalog${val ? `?q=${encodeURIComponent(val)}` : ''}`)
+              }}
+              onClick={() => navigate('/catalog')}
+              readOnly
+              style={{
+                marginTop: 20,
+                cursor: 'pointer',
+                borderRadius: 18,
+                height: 52,
+                background: 'rgba(255,255,255,0.96)',
+              }}
+            />
             <Space wrap style={{ display: 'flex', marginTop: 24 }}>
               <Button size="large" type="primary" onClick={() => navigate('/catalog')}>
                 Подобрать баню
@@ -518,18 +534,7 @@ export default function ClientHome() {
         </Row>
       </Card>
 
-      <Input
-        size="large"
-        placeholder="Поиск бань..."
-        prefix={<SearchOutlined />}
-        onPressEnter={(e) => {
-          const val = (e.target as HTMLInputElement).value
-          navigate(`/catalog${val ? `?q=${encodeURIComponent(val)}` : ''}`)
-        }}
-        onClick={() => navigate('/catalog')}
-        readOnly
-        style={{ marginBottom: 24, cursor: 'pointer' }}
-      />
+      <PromoBanner />
 
       <RecentlyViewed />
 

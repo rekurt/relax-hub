@@ -126,6 +126,11 @@ describe('AppRouter', () => {
     expect(screen.getByText('Бани для вечера вдвоем, компании и выходных за городом')).toBeInTheDocument()
   })
 
+  it('redirects legacy client search route to public catalog', () => {
+    renderRouter('/client/search')
+    expect(screen.getByText('Поиск бань')).toBeInTheDocument()
+  })
+
   // Owner role tests
   describe('owner role', () => {
     beforeEach(() => setAuth('owner'))
@@ -193,6 +198,12 @@ describe('AppRouter', () => {
 
     it('redirects client away from /admin to /catalog', () => {
       const { container } = renderRouter('/admin')
+      const mainContent = container.querySelector('.ant-layout-content')
+      expect(mainContent!.textContent).toContain('Поиск бань')
+    })
+
+    it('redirects hidden client recommendation route to public catalog', () => {
+      const { container } = renderRouter('/client/recommendations')
       const mainContent = container.querySelector('.ant-layout-content')
       expect(mainContent!.textContent).toContain('Поиск бань')
     })

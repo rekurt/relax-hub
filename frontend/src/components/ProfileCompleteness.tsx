@@ -48,7 +48,7 @@ export default function ProfileCompleteness({ onNavigate }: ProfileCompletenessP
     <Card
       title="Заполненность профиля"
       size="small"
-      style={{ marginBottom: 24 }}
+      style={{ marginBottom: 0 }}
     >
       <Progress
         percent={data.percentage}
