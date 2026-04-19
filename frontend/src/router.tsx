@@ -108,6 +108,9 @@ import OwnerAnalytics from '@/pages/analytics/OwnerAnalytics'
 import FinanceDashboard from '@/pages/finance/FinanceDashboard'
 import PayoutPage from '@/pages/finance/PayoutPage'
 import FinancialReports from '@/pages/finance/FinancialReports'
+import KYCSettings from '@/pages/settings/KYCSettings'
+import OfferAcceptance from '@/pages/settings/OfferAcceptance'
+import FAQManagement from '@/pages/admin/FAQManagement'
 
 export default function AppRouter() {
   return (
@@ -163,6 +166,8 @@ export default function AppRouter() {
         <Route path="settings" element={<ProfileSettings />} />
         <Route path="settings/webhooks" element={<WebhookSettings />} />
         <Route path="settings/pms" element={<PMSIntegration />} />
+        <Route path="settings/kyc" element={<KYCSettings />} />
+        <Route path="settings/offer" element={<OfferAcceptance />} />
         <Route path="notifications" element={<NotificationList />} />
       </Route>
 
@@ -251,6 +256,7 @@ export default function AppRouter() {
         <Route path="subscriptions" element={<SubscriptionManagement />} />
         <Route path="loyalty" element={<LoyaltyManagement />} />
         <Route path="certificates" element={<CertificateManagement />} />
+        <Route path="faq" element={<FAQManagement />} />
         <Route path="profile" element={<AdminProfile />} />
       </Route>
 
