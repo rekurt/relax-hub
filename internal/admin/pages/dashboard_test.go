@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 func testLogger() *logger.Logger {

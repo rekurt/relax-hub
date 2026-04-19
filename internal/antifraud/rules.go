@@ -1,6 +1,6 @@
 package antifraud
 
-import "github.com/nikitaaldaev/bani/internal/domain"
+import "github.com/rekurt/relax-hub/internal/domain"
 
 // DefaultRules returns the default set of anti-fraud rules.
 func DefaultRules() []Rule {

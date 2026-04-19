@@ -3,7 +3,7 @@ package sms
 import (
 	"context"
 
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 type noopProvider struct {

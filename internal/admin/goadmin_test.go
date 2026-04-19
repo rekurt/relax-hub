@@ -10,9 +10,9 @@ import (
 	gacontext "github.com/GoAdminGroup/go-admin/context"
 	gaconfig "github.com/GoAdminGroup/go-admin/modules/config"
 	"github.com/google/uuid"
-	appconfig "github.com/nikitaaldaev/bani/config"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	appconfig "github.com/rekurt/relax-hub/config"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 type mockAuthService struct {

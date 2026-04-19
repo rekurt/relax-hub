@@ -16,8 +16,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/middleware"
 )
 
 var moderationFuncMap = template.FuncMap{

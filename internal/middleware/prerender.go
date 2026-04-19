@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/nikitaaldaev/bani/internal/seo"
+	"github.com/rekurt/relax-hub/internal/seo"
 )
 
 // Prerender is a middleware that detects bot user-agents and redirects them

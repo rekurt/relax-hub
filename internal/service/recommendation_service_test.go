@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	mockrepo "github.com/nikitaaldaev/bani/internal/repository/mock"
+	"github.com/rekurt/relax-hub/internal/domain"
+	mockrepo "github.com/rekurt/relax-hub/internal/repository/mock"
 )
 
 func TestRecommendationService_UpdatePreferences(t *testing.T) {

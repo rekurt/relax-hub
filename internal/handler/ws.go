@@ -8,12 +8,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/nikitaaldaev/bani/config"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/middleware"
-	"github.com/nikitaaldaev/bani/internal/notification"
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/config"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/middleware"
+	"github.com/rekurt/relax-hub/internal/notification"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
 const (

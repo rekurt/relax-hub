@@ -1,4 +1,4 @@
-module github.com/nikitaaldaev/bani
+module github.com/rekurt/relax-hub
 
 go 1.25.1
 

@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/calendar"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/repository/mock"
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/internal/calendar"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/repository/mock"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
 func newCalendarService() (service.CalendarService, *mock.BathhouseRepo, *mock.BookingRepo, *mock.RepresentativeRepo, *mock.ExternalCalendarRepo, *mock.SlotBlockRepo) {

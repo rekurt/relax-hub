@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 // FunnelStepRu translates funnel step names to Russian.

@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/repository/mock"
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/repository/mock"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
 func newRepresentativeService() (service.RepresentativeService, *mock.BathhouseRepo, *mock.UserRepo, *mock.RepresentativeRepo) {

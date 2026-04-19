@@ -1,6 +1,6 @@
 package mock
 
-import "github.com/nikitaaldaev/bani/internal/domain"
+import "github.com/rekurt/relax-hub/internal/domain"
 
 // paginate applies pagination to a pre-filtered slice and returns a PaginatedResult.
 // It normalizes page/pageSize defaults and handles boundary conditions.

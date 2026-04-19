@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 type ReconciliationRepo struct {

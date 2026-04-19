@@ -3,7 +3,7 @@ package fiscal
 import (
 	"context"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 // ReceiptType identifies the type of fiscal receipt.

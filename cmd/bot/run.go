@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/nikitaaldaev/bani/config"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/config"
+	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/spf13/cobra"
 )
 

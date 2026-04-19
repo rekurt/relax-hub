@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/notification"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/notification"
 )
 
 type telegramSender struct {

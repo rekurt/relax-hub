@@ -7,7 +7,7 @@ import (
 	"runtime/debug"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 // RecoveryMiddleware recovers from panics and logs the error with stack trace

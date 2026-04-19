@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
 type CityHandler struct {

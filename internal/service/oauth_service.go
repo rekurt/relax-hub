@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/config"
-	"github.com/nikitaaldaev/bani/internal/auth"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/rekurt/relax-hub/config"
+	"github.com/rekurt/relax-hub/internal/auth"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/repository"
 	"github.com/redis/go-redis/v9"
 )
 

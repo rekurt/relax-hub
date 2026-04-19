@@ -1,14 +1,14 @@
 package service
 
 import (
-	"github.com/nikitaaldaev/bani/config"
-	"github.com/nikitaaldaev/bani/internal/antifraud"
-	"github.com/nikitaaldaev/bani/internal/fiscal"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/middleware"
-	"github.com/nikitaaldaev/bani/internal/notification"
-	"github.com/nikitaaldaev/bani/internal/payment"
-	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/rekurt/relax-hub/config"
+	"github.com/rekurt/relax-hub/internal/antifraud"
+	"github.com/rekurt/relax-hub/internal/fiscal"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/middleware"
+	"github.com/rekurt/relax-hub/internal/notification"
+	"github.com/rekurt/relax-hub/internal/payment"
+	"github.com/rekurt/relax-hub/internal/repository"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 )

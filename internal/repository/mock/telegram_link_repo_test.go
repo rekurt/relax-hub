@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 func TestTelegramLinkRepo_Create(t *testing.T) {

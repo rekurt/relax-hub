@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 // ParsedBankEntry represents a parsed bank statement row before persisting.

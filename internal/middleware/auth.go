@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 type contextKey string

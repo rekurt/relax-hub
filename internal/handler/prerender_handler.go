@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/seo"
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/seo"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
 // PrerenderHandler serves pre-rendered HTML pages for search engine bots.

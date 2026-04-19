@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/repository/mock"
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/repository/mock"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
 func setupServiceFee(t *testing.T) (service.ServiceFeeService, *mock.ServiceFeeRepo) {

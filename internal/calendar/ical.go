@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 // GenerateICal generates an iCalendar (RFC 5545) feed from a list of bookings.

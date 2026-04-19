@@ -10,11 +10,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/nikitaaldaev/bani/internal/antifraud"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/repository"
-	"github.com/nikitaaldaev/bani/internal/seo"
+	"github.com/rekurt/relax-hub/internal/antifraud"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/repository"
+	"github.com/rekurt/relax-hub/internal/seo"
 )
 
 const (

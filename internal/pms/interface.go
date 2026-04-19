@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 // PMSProvider defines the interface for external Property Management System integrations.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/smtp"
 
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 // EmailSender sends email notifications.

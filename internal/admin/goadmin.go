@@ -11,7 +11,7 @@ import (
 	_ "github.com/GoAdminGroup/themes/adminlte"
 	_ "github.com/GoAdminGroup/themes/sword"
 
-	appconfig "github.com/nikitaaldaev/bani/config"
+	appconfig "github.com/rekurt/relax-hub/config"
 )
 
 // BuildGoAdminConfig creates a GoAdmin config from the app config.

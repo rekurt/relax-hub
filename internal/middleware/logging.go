@@ -5,7 +5,7 @@ import (
 	"time"
 
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 func Logging(l logger.Logger) func(http.Handler) http.Handler {

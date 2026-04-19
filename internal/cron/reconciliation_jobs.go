@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 func (cs *CronScheduler) dailyFloatSnapshot(ctx context.Context) error {

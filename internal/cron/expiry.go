@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 // subscriptionExpiryNotify notifies owners about subscriptions expiring within 3 days.

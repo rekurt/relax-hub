@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"github.com/nikitaaldaev/bani/config"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/repository"
-	"github.com/nikitaaldaev/bani/internal/seo"
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/config"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/repository"
+	"github.com/rekurt/relax-hub/internal/seo"
+	"github.com/rekurt/relax-hub/internal/service"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 )

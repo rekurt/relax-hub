@@ -11,7 +11,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/redis/go-redis/v9"
 )
 

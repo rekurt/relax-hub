@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 const (

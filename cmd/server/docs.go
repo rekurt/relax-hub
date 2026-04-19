@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "github.com/nikitaaldaev/bani/docs" // swagger generated docs
+	_ "github.com/rekurt/relax-hub/docs" // swagger generated docs
 )
 
 // Swagger general API annotations.

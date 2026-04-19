@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/fiscal"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/fiscal"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 // newMockATOLServer creates a httptest server that simulates ATOL Online API v4.

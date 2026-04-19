@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 // TestWithAdminFlag tests that --with-admin flag is registered on serve command

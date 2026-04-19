@@ -8,14 +8,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/config"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/geo"
-	"github.com/nikitaaldaev/bani/internal/handler"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/middleware"
-	"github.com/nikitaaldaev/bani/internal/server"
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/config"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/geo"
+	"github.com/rekurt/relax-hub/internal/handler"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/middleware"
+	"github.com/rekurt/relax-hub/internal/server"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
 type mockAuthServiceForRouter struct{}

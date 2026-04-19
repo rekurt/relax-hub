@@ -11,9 +11,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/handler"
-	"github.com/nikitaaldaev/bani/internal/middleware"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/handler"
+	"github.com/rekurt/relax-hub/internal/middleware"
 )
 
 // --- BatchListings Tests ---

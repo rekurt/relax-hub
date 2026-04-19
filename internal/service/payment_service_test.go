@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/fiscal"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/payment"
-	"github.com/nikitaaldaev/bani/internal/repository/mock"
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/fiscal"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/payment"
+	"github.com/rekurt/relax-hub/internal/repository/mock"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
 // testWalletService is a configurable mock for wallet operations in payment tests.

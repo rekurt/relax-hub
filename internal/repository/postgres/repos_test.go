@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/rekurt/relax-hub/internal/repository"
 )
 
 func TestNewUserRepository_ImplementsInterface(t *testing.T) {

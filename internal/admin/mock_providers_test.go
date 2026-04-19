@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/admin/pages"
+	"github.com/rekurt/relax-hub/internal/admin/pages"
 )
 
 // mockDashProvider returns empty dashboard data for testing.

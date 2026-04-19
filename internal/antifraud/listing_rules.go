@@ -1,6 +1,6 @@
 package antifraud
 
-import "github.com/nikitaaldaev/bani/internal/domain"
+import "github.com/rekurt/relax-hub/internal/domain"
 
 // listingStoplistRule blocks listing creation if the owner is on the antifraud stoplist.
 func listingStoplistRule() Rule {

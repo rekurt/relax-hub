@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/repository/mock"
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/internal/repository/mock"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
 type favoriteTestEnv struct {

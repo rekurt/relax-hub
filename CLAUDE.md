@@ -215,7 +215,7 @@ All API endpoints are annotated with swaggo/swag comments. Swagger UI is served 
 
 ## Critical Conventions
 
-- Module path: `github.com/nikitaaldaev/bani`
+- Module path: `github.com/rekurt/relax-hub`
 - chi router: `chi.URLParam(r, "id")` for URL params
 - UUID (google/uuid) for all entity IDs
 - Prices in **kopecks** (int64), not rubles

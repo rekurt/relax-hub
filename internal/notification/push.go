@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	webpush "github.com/SherClockHolmes/webpush-go"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 // PushSender sends push notifications to device tokens.

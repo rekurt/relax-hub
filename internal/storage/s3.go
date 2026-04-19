@@ -10,8 +10,8 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/nikitaaldaev/bani/config"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/config"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 // S3Storage implements FileStorage using S3-compatible object storage (MinIO, AWS S3).

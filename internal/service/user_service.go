@@ -9,10 +9,10 @@ import (
 	"unicode/utf8"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/logger"
-	"github.com/nikitaaldaev/bani/internal/repository"
-	"github.com/nikitaaldaev/bani/internal/storage"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/repository"
+	"github.com/rekurt/relax-hub/internal/storage"
 )
 
 const maxBioLength = 1000

@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/nikitaaldaev/bani/internal/geo"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/geo"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 func newTestIsochroneHandler(apiURL string) *IsochroneHandler {

@@ -3,7 +3,7 @@ package domain_test
 import (
 	"testing"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 func TestPaymentDetails_Validate_Individual(t *testing.T) {

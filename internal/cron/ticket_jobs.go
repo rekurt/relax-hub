@@ -3,7 +3,7 @@ package cron
 import (
 	"context"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 func (cs *CronScheduler) ticketAutoEscalation(ctx context.Context) error {

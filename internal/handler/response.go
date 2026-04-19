@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 type APIResponse struct {

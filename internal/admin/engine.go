@@ -8,8 +8,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nikitaaldaev/bani/internal/admin/pages"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/admin/pages"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 // PagesRouter creates a chi router with all custom admin pages.

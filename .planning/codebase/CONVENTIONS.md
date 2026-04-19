@@ -55,7 +55,7 @@
     "net/http"
     
     "github.com/google/uuid"
-    "github.com/nikitaaldaev/bani/internal/domain"
+    "github.com/rekurt/relax-hub/internal/domain"
   )
   ```
 - TypeScript: Path aliases with `@/` prefix mapped to `src/` (in `tsconfig.json`)

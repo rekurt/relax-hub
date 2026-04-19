@@ -13,8 +13,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/repository"
 )
 
 const bookingColumns = `id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, modification_count, deposit_amount, deposit_status, deposit_external_id, deposit_released_at, checked_in_at, checked_out_at, hold_id, rejection_reason, cancelled_by_owner, points_spent, referral_bonus_used, status, comment, created_at, updated_at`

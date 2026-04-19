@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nikitaaldaev/bani/internal/middleware"
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/internal/middleware"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
 type OfferHandler struct {

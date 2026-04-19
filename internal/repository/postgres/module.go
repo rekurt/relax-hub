@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"github.com/nikitaaldaev/bani/internal/repository"
+	"github.com/rekurt/relax-hub/internal/repository"
 	"go.uber.org/fx"
 )
 

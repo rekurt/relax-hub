@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nikitaaldaev/bani/config"
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/config"
+	"github.com/rekurt/relax-hub/internal/domain"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/bcrypt"
 )

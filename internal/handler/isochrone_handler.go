@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/nikitaaldaev/bani/internal/geo"
+	"github.com/rekurt/relax-hub/internal/geo"
 )
 
 // IsochroneHandler handles isochrone-related endpoints.

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/service"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
 type ServiceFeeHandler struct {

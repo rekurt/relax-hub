@@ -247,7 +247,7 @@
 ## Module System
 
 **Backend:**
-- Go module path: `github.com/nikitaaldaev/bani`
+- Go module path: `github.com/rekurt/relax-hub`
 - fx modules per layer: `internal/{domain,repository,service,handler,middleware,cron,payment,notification}/module.go`
 - Central DI container in `internal/app/app.go`
 

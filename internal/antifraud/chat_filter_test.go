@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/antifraud"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/internal/antifraud"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 func newTestFilter() antifraud.ChatFilter {

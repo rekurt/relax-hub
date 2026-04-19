@@ -10,8 +10,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/handler"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/handler"
 )
 
 func TestComparisonHandler_Compare(t *testing.T) {

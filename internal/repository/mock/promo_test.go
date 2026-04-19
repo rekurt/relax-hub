@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nikitaaldaev/bani/internal/domain"
-	"github.com/nikitaaldaev/bani/internal/repository/mock"
+	"github.com/rekurt/relax-hub/internal/domain"
+	"github.com/rekurt/relax-hub/internal/repository/mock"
 )
 
 func newTestPromo(code string, creatorID uuid.UUID, bathhouseID *uuid.UUID) *domain.PromoCode {

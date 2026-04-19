@@ -5,7 +5,7 @@
 Full monetary wallet system with tagged transactions, holds, expiration, priority spending, owner payouts, and bonus lifecycle. This is the most foundational new subsystem — many other features depend on it.
 
 ## Context
-- Module path: `github.com/nikitaaldaev/bani`
+- Module path: `github.com/rekurt/relax-hub`
 - Architecture: handler → service → repository (clean architecture)
 - DI: Uber fx with `module.go` per package
 - DB: PostgreSQL + PostGIS, migrations in `migrations/`

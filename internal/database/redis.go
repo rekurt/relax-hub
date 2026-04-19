@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nikitaaldaev/bani/config"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/config"
+	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 )

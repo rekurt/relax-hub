@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nikitaaldaev/bani/config"
+	"github.com/rekurt/relax-hub/config"
 	"go.uber.org/fx"
 )
 

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nikitaaldaev/bani/config"
-	"github.com/nikitaaldaev/bani/internal/logger"
+	"github.com/rekurt/relax-hub/config"
+	"github.com/rekurt/relax-hub/internal/logger"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxtest"
 )

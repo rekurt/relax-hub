@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/nikitaaldaev/bani/internal/domain"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 func TestServiceFeeRepo_CRUD(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/nikitaaldaev/bani/config"
+	"github.com/rekurt/relax-hub/config"
 )
 
 func TestNewCORSMiddleware_DefaultOrigins(t *testing.T) {
