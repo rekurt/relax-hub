@@ -1,5 +1,20 @@
 import '@testing-library/jest-dom'
 
+// jsdom 28 + vitest 4: localStorage.clear may be non-enumerable; provide a stable mock
+;(() => {
+  let store: Record<string, string> = {}
+  const storageMock: Storage = {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => { store[key] = String(value) },
+    removeItem: (key: string) => { delete store[key] },
+    clear: () => { store = {} },
+    get length() { return Object.keys(store).length },
+    key: (i: number) => Object.keys(store)[i] ?? null,
+  }
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, writable: true, value: storageMock })
+  Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, writable: true, value: { ...storageMock } })
+})()
+
 ;(globalThis as Record<string, unknown>).ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
