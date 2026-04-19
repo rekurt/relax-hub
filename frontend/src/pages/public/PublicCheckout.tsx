@@ -25,8 +25,10 @@ import { CalendarOutlined, CheckCircleOutlined, ClockCircleOutlined, LockOutline
 import { useGetBathhousesId, useGetBathhousesIdAvailableSlots } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPriceCalculator } from '@/api/generated/pricing/pricing'
 import { axiosInstance } from '@/api/axios-instance'
+import PublicState from '@/components/PublicState'
 import { useAuthStore } from '@/stores/auth'
 import { formatPrice } from '@/lib/format'
+import { getPublicErrorMessage } from '@/lib/public-route'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -79,13 +81,26 @@ export default function PublicCheckout() {
   const [sendingOtp, setSendingOtp] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [createdBookingId, setCreatedBookingId] = useState<string | null>(null)
+  const [otpError, setOtpError] = useState<string | null>(null)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [slotConflictError, setSlotConflictError] = useState<string | null>(null)
 
-  const { data: bathhouseData, isLoading: bathhouseLoading } = useGetBathhousesId(bathhouseId, {
+  const {
+    data: bathhouseData,
+    isLoading: bathhouseLoading,
+    isError: bathhouseIsError,
+    refetch: refetchBathhouse,
+  } = useGetBathhousesId(bathhouseId, {
     query: { enabled: !!bathhouseId },
   })
   const bathhouse = bathhouseData?.data
 
-  const { data: slotsData, isLoading: slotsLoading } = useGetBathhousesIdAvailableSlots(
+  const {
+    data: slotsData,
+    isLoading: slotsLoading,
+    isError: slotsIsError,
+    refetch: refetchSlots,
+  } = useGetBathhousesIdAvailableSlots(
     bathhouseId,
     { date: selectedDate },
     { query: { enabled: !!bathhouseId && !!selectedDate } },
@@ -107,6 +122,12 @@ export default function PublicCheckout() {
 
   const availableSlots = slots.filter((slot) => slot.available)
 
+  const clearCheckoutErrors = () => {
+    setOtpError(null)
+    setCheckoutError(null)
+    setSlotConflictError(null)
+  }
+
   const createBooking = async () => {
     if (!selectedSlot || !bathhouseId) return
     const response = await axiosInstance.post<{ data?: BookingData }>('/bookings', {
@@ -126,6 +147,7 @@ export default function PublicCheckout() {
   }
 
   const handleStartOTP = async () => {
+    clearCheckoutErrors()
     if (!phone.trim()) {
       message.warning('Введите телефон')
       return
@@ -148,15 +170,15 @@ export default function PublicCheckout() {
       await publicHttp.post('/auth/phone/start', { phone })
       setOtpSent(true)
       message.success('Код отправлен')
-    } catch (error) {
-      void error
-      message.error('Не удалось отправить код')
+    } catch {
+      setOtpError('Не удалось отправить код')
     } finally {
       setSendingOtp(false)
     }
   }
 
   const handleVerifyAndBook = async () => {
+    clearCheckoutErrors()
     if (!otpCode.trim() || otpCode.trim().length !== 6) {
       message.warning('Введите 6-значный код')
       return
@@ -168,51 +190,82 @@ export default function PublicCheckout() {
 
     setSubmitting(true)
     try {
-      if (currentUser?.role === 'client') {
-        await createBooking()
-        return
-      }
+      if (!currentUser?.role) {
+        const authResponse = await publicHttp.post<{ data?: AuthVerifyData }>('/auth/verify-phone', {
+          phone,
+          code: otpCode.trim(),
+          name,
+          age_confirmed: ageConfirmed,
+        })
 
-      const authResponse = await publicHttp.post<{ data?: AuthVerifyData }>('/auth/verify-phone', {
-        phone,
-        code: otpCode.trim(),
-        name,
-        age_confirmed: ageConfirmed,
-      })
+        const authData = authResponse.data.data
+        if (authData?.requires_2fa) {
+          message.warning('Для этого номера включена дополнительная защита. Завершите вход через страницу логина.')
+          navigate('/login')
+          return
+        }
 
-      const authData = authResponse.data.data
-      if (authData?.requires_2fa) {
-        message.warning('Для этого номера включена дополнительная защита. Завершите вход через страницу логина.')
-        navigate('/login')
-        return
-      }
-
-      if (authData?.token && authData.user) {
-        setAuth(authData.token, authData.user)
-      } else {
-        throw new Error('auth_incomplete')
+        if (authData?.token && authData.user) {
+          setAuth(authData.token, authData.user)
+        } else {
+          throw new Error('auth_incomplete')
+        }
       }
 
       await createBooking()
     } catch (error) {
-      const errorMessage = Axios.isAxiosError(error)
-        ? error.response?.data?.error?.message
-        : 'Не удалось завершить бронирование'
-      message.error(errorMessage || 'Не удалось завершить бронирование')
+      if (Axios.isAxiosError(error) && error.response?.status === 409) {
+        setSlotConflictError('Выбранный слот уже недоступен')
+        return
+      }
+
+      const fallbackMessage = currentUser?.role === 'client'
+        ? 'Не удалось завершить бронирование. Попробуйте еще раз.'
+        : 'Не удалось подтвердить код. Проверьте его и попробуйте еще раз.'
+      const errorMessage = getPublicErrorMessage(error, fallbackMessage)
+
+      if (currentUser?.role === 'client') {
+        setCheckoutError(errorMessage)
+      } else {
+        setOtpError(errorMessage)
+      }
     } finally {
       setSubmitting(false)
     }
   }
 
   if (bathhouseLoading) {
-    return <Spin size="large" style={{ display: 'block', margin: '120px auto' }} />
+    return (
+      <PublicState
+        kind="loading"
+        title="Загружаем бронирование"
+        description="Проверяем баню, слоты и стоимость."
+      />
+    )
+  }
+
+  if (bathhouseIsError) {
+    return (
+      <PublicState
+        kind="error"
+        title="Не удалось загрузить страницу бронирования"
+        description="Повторите попытку или вернитесь в каталог."
+        actionText="Повторить"
+        onAction={() => void refetchBathhouse()}
+        secondaryActionText="В каталог"
+        secondaryActionLink="/catalog"
+      />
+    )
   }
 
   if (!bathhouseId || !bathhouse) {
     return (
-      <Empty
-        description="Для публичного бронирования сначала выберите баню и слот"
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
+      <PublicState
+        kind="empty"
+        title="Сначала выберите баню и слот"
+        description="Для публичного бронирования вернитесь в каталог и откройте свободное время."
+        actionText="В каталог"
+        actionLink="/catalog"
       />
     )
   }
@@ -261,6 +314,7 @@ export default function PublicCheckout() {
                   const nextDate = value ? value.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
                   setSelectedDate(nextDate)
                   setSelectedSlot(null)
+                  setSlotConflictError(null)
                 }}
                 style={{ width: '100%', marginTop: 8 }}
               />
@@ -280,12 +334,21 @@ export default function PublicCheckout() {
           <div style={{ marginTop: 24 }}>
             <Text strong>Доступные слоты</Text>
             <div style={{ marginTop: 12 }}>
-              <Spin spinning={slotsLoading}>
-                {availableSlots.length === 0 ? (
+              <Spin spinning={slotsLoading && !slotsIsError}>
+                {slotsIsError ? (
+                  <PublicState
+                    kind="error"
+                    compact
+                    title="Не удалось загрузить доступные слоты"
+                    description="Обновите список слотов или выберите другую дату."
+                    actionText="Обновить слоты"
+                    onAction={() => void refetchSlots()}
+                  />
+                ) : availableSlots.length === 0 ? (
                   <Alert
                     type="info"
                     showIcon
-                    title="На выбранную дату нет доступных слотов"
+                    message="На выбранную дату нет доступных слотов"
                     description="Попробуйте другую дату или вернитесь в каталог, чтобы посмотреть похожие варианты."
                   />
                 ) : (
@@ -302,6 +365,7 @@ export default function PublicCheckout() {
                           icon={<ClockCircleOutlined />}
                           onClick={() => {
                             if (slot.startTime && slot.endTime) {
+                              clearCheckoutErrors()
                               setSelectedSlot({ from: slot.startTime, to: slot.endTime })
                             }
                           }}
@@ -356,6 +420,29 @@ export default function PublicCheckout() {
             </Row>
           </div>
 
+          {slotConflictError && (
+            <div style={{ marginTop: 24 }}>
+              <PublicState
+                kind="error"
+                compact
+                title={slotConflictError}
+                description="Обновите список слотов и выберите другое время, не теряя введенные данные."
+                actionText="Обновить слоты"
+                onAction={() => void refetchSlots()}
+              />
+            </div>
+          )}
+
+          {checkoutError && (
+            <div style={{ marginTop: 24 }}>
+              <Alert
+                type="error"
+                showIcon
+                message={checkoutError}
+              />
+            </div>
+          )}
+
           {!currentUser && (
             <div style={{ marginTop: 24 }}>
               <Alert
@@ -366,6 +453,14 @@ export default function PublicCheckout() {
                 description="Мы подтверждаем телефон по SMS, создаем клиентский аккаунт и сохраняем бронь в ваш личный кабинет без отдельной регистрации."
                 style={{ marginBottom: 16 }}
               />
+              {otpError && (
+                <Alert
+                  type="error"
+                  showIcon
+                  message={otpError}
+                  style={{ marginBottom: 16 }}
+                />
+              )}
               {!otpSent ? (
                 <Button type="primary" size="large" loading={sendingOtp} onClick={handleStartOTP}>
                   Получить SMS-код

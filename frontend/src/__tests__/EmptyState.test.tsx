@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import EmptyState from '@/components/EmptyState'
+import PublicState from '@/components/PublicState'
 
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
@@ -92,5 +93,40 @@ describe('EmptyState', () => {
       actionLink: '/client/search',
     })
     expect(container.firstChild).toMatchSnapshot()
+  })
+
+  it('renders blocking public error with recovery action', () => {
+    const onRetry = vi.fn()
+    render(
+      <MemoryRouter>
+        <PublicState
+          kind="error"
+          title="Не удалось загрузить доступные варианты"
+          description="Повторите попытку или вернитесь к поиску."
+          actionText="Повторить"
+          onAction={onRetry}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Не удалось загрузить доступные варианты')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить' }))
+    expect(onRetry).toHaveBeenCalledOnce()
+  })
+
+  it('renders compact degraded state without blocking the page', () => {
+    render(
+      <MemoryRouter>
+        <PublicState
+          kind="degraded"
+          title="Похожие варианты временно недоступны"
+          description="Попробуйте обновить блок позже."
+          compact
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Похожие варианты временно недоступны')).toBeInTheDocument()
+    expect(document.querySelector('.ant-alert')).toBeInTheDocument()
   })
 })

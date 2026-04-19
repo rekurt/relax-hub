@@ -9,7 +9,7 @@ bani-bot
 *.dll
 *.so
 *.dylib
-
+/.playwright-cli
 # Go test binary
 *.test
 
@@ -40,6 +40,9 @@ redis_data/
 
 # Temporary files
 tmp/
+
+# Local planning artifacts
+.planning/
 
 # Node modules
 node_modules/

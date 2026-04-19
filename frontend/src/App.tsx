@@ -10,6 +10,13 @@ function AppWithAuth() {
     loadProfile()
   }, [loadProfile])
 
+  useEffect(() => {
+    document.body.classList.add('bani-app')
+    return () => {
+      document.body.classList.remove('bani-app')
+    }
+  }, [])
+
   return <AppRouter />
 }
 

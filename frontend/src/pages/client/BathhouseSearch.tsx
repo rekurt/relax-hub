@@ -44,6 +44,7 @@ import BathhouseMap from '@/components/BathhouseMap'
 import SearchSuggestions from '@/components/SearchSuggestions'
 import { formatPrice } from '@/lib/format'
 import { axiosInstance } from '@/api/axios-instance'
+import PublicState from '@/components/PublicState'
 import { useAuthStore } from '@/stores/auth'
 
 const { Title } = Typography
@@ -137,6 +138,7 @@ export default function BathhouseSearch() {
   const [travelMinutes, setTravelMinutes] = useState<number>(15)
   const [isochroneData, setIsochroneData] = useState<IsochroneData | null>(null)
   const [isochroneLoading, setIsochroneLoading] = useState(false)
+  const [geoError, setGeoError] = useState<string | null>(null)
 
   const navigate = useNavigate()
   const { message } = App.useApp()
@@ -183,7 +185,7 @@ export default function BathhouseSearch() {
       : {}),
   }
 
-  const { data, isLoading } = useGetBathhouses(queryParams as GetBathhousesParams)
+  const { data, isLoading, isError, refetch } = useGetBathhouses(queryParams as GetBathhousesParams)
   const allBathhouses = data?.data ?? []
   const meta = data?.meta
 
@@ -203,10 +205,12 @@ export default function BathhouseSearch() {
       const result = resp.data?.data ?? resp.data
       if (result?.coordinates && result?.wkt) {
         setIsochroneData({ coordinates: result.coordinates, wkt: result.wkt })
+        setGeoError(null)
       }
     } catch {
       message.error('Не удалось построить зону доступности')
       setIsochroneData(null)
+      setGeoError('Не удалось построить зону доступности. Показываем общую выдачу без зоны поездки.')
     } finally {
       setIsochroneLoading(false)
     }
@@ -312,13 +316,56 @@ export default function BathhouseSearch() {
     : null
 
   const listContent = (
-    <Spin spinning={isLoading || isochroneLoading}>
-      {bathhouses.length === 0 && !isLoading ? (
-        <Empty
-          description="По вашему запросу ничего не найдено. Попробуйте изменить параметры поиска или сбросить фильтры."
-          style={{ padding: '48px 0' }}
+    <>
+      {geoError && (
+        <div style={{ marginBottom: 16 }}>
+          <PublicState
+            kind="degraded"
+            compact
+            title="Зона доступности временно недоступна"
+            description={geoError}
+          />
+        </div>
+      )}
+      {isLoading ? (
+        <PublicState
+          kind="loading"
+          title="Загружаем варианты"
+          description="Подбираем бани по вашим параметрам."
+        />
+      ) : isError ? (
+        <PublicState
+          kind="error"
+          title="Не удалось загрузить варианты"
+          description="Повторите попытку или скорректируйте параметры поиска."
+          actionText="Повторить"
+          onAction={() => void refetch()}
+        />
+      ) : bathhouses.length === 0 ? (
+        <PublicState
+          kind="empty"
+          title="Ничего не найдено"
+          description="Попробуйте изменить параметры поиска или сбросить фильтры."
+          actionText="Сбросить фильтры"
+          onAction={() => {
+            setSearch('')
+            setDebouncedSearch('')
+            setFilters({})
+            setAvailableDate(null)
+            setAvailableTimeFrom(null)
+            setAvailableTimeTo(null)
+            setBookingMode(undefined)
+            setMinRating(undefined)
+            setStatusFilter(undefined)
+            setGeoEnabled(false)
+            setGeoCoords(null)
+            setIsochroneData(null)
+            setGeoError(null)
+            setPage(1)
+          }}
         />
       ) : (
+        <Spin spinning={isochroneLoading}>
         <>
           <Row gutter={[16, 16]}>
             {bathhouses.map((b) => (
@@ -364,8 +411,9 @@ export default function BathhouseSearch() {
             </div>
           )}
         </>
+        </Spin>
       )}
-    </Spin>
+    </>
   )
 
   return (

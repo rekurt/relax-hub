@@ -254,6 +254,14 @@ describe('ClientHome', () => {
     expect(screen.getByText(/FIRST20/)).toBeInTheDocument()
   })
 
+  it('shows visible degraded state when promo banners fail to load', async () => {
+    vi.mocked(axiosInstance.get).mockRejectedValue(new Error('promo unavailable'))
+
+    renderWithProviders(<ClientHome />)
+
+    expect(await screen.findByText('Акционные предложения временно недоступны')).toBeInTheDocument()
+  })
+
   it('renders multiple banners in carousel', async () => {
     vi.mocked(axiosInstance.get).mockImplementation((url: string) => {
       if (url === '/promotions/banners') {

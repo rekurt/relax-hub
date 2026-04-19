@@ -111,7 +111,21 @@ describe('BathhouseSearch', () => {
 
     renderWithProviders(<BathhouseSearch />)
 
-    expect(screen.getByText(/По вашему запросу ничего не найдено/)).toBeInTheDocument()
+    expect(screen.getByText(/Попробуйте изменить параметры поиска или сбросить фильтры/)).toBeInTheDocument()
+  })
+
+  it('shows blocking error state when catalog request fails', () => {
+    vi.mocked(useGetBathhouses).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useGetBathhouses>)
+
+    renderWithProviders(<BathhouseSearch />)
+
+    expect(screen.getByText('Не удалось загрузить варианты')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Повторить' })).toBeInTheDocument()
   })
 
   it('renders search input', () => {

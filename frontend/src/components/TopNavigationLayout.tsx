@@ -56,7 +56,7 @@ export default function TopNavigationLayout({
   profilePath,
   headerAccessory,
   showNotifications = true,
-  contentWidth = 1360,
+  contentWidth = 1480,
 }: TopNavigationLayoutProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const navigate = useNavigate()
@@ -104,7 +104,7 @@ export default function TopNavigationLayout({
     <Layout
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(180deg, #f7efe6 0%, #f4f5f1 18%, #ffffff 42%, #fffaf5 100%)',
+        background: 'transparent',
       }}
     >
       <Header
@@ -114,9 +114,10 @@ export default function TopNavigationLayout({
           zIndex: 20,
           height: 'auto',
           padding: '18px 24px',
-          background: 'rgba(255, 251, 246, 0.92)',
-          backdropFilter: 'blur(18px)',
+          background: 'rgba(255, 252, 247, 0.80)',
+          backdropFilter: 'blur(20px)',
           borderBottom: `1px solid ${token.colorBorderSecondary}`,
+          boxShadow: '0 12px 36px rgba(15, 23, 42, 0.05)',
         }}
       >
         <div
@@ -145,7 +146,7 @@ export default function TopNavigationLayout({
               {brandTitle}
             </Text>
             {!isMobile && (
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" style={{ fontSize: 12, letterSpacing: '0.02em' }}>
                 {brandSubtitle}
               </Text>
             )}

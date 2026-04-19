@@ -3,7 +3,7 @@ import { Button, Empty } from 'antd'
 import { useNavigate } from 'react-router-dom'
 
 interface EmptyStateProps {
-  description: string
+  description: ReactNode
   actionText?: string
   actionLink?: string
   onAction?: () => void

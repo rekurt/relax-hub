@@ -221,6 +221,25 @@ describe('BathhouseDetail', () => {
     expect(screen.getByText('Занято')).toBeInTheDocument()
   })
 
+  it('shows slot recovery state when availability request fails', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: mockBathhouse, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    vi.mocked(useGetBathhousesIdAvailableSlots).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useGetBathhousesIdAvailableSlots>)
+
+    renderWithProviders(<BathhouseDetail />)
+
+    expect(screen.getByText('Не удалось загрузить доступные слоты')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Обновить слоты' })).toBeInTheDocument()
+  })
+
   it('renders reviews section', () => {
     vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: mockBathhouse, success: true },

@@ -15,6 +15,7 @@ import { useGetRecommendations, useGetPopular } from '@/api/generated/recommenda
 import { useGetCities } from '@/api/generated/cities/cities'
 import { useAuthStore } from '@/stores/auth'
 import { formatPrice } from '@/lib/format'
+import PublicState from '@/components/PublicState'
 import RecentlyViewed from '@/components/RecentlyViewed'
 import OnboardingTour from '@/components/OnboardingTour'
 import { PUBLIC_SHORTCUT_CARDS } from '@/navigation/menu'
@@ -37,6 +38,7 @@ interface PromotionBanner {
 
 function ProfileNudge() {
   const [data, setData] = useState<CompletenessData | null>(null)
+  const [failedToLoad, setFailedToLoad] = useState(false)
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
 
@@ -44,11 +46,27 @@ function ProfileNudge() {
     if (!user) return
     axiosInstance
       .get<{ success: boolean; data: CompletenessData }>('/my/profile-completeness')
-      .then((res) => setData(res.data.data))
-      .catch(() => {})
+      .then((res) => {
+        setData(res.data.data)
+        setFailedToLoad(false)
+      })
+      .catch(() => {
+        setFailedToLoad(true)
+      })
   }, [user])
 
   if (!user) return null
+
+  if (failedToLoad) {
+    return (
+      <PublicState
+        kind="degraded"
+        compact
+        title="Прогресс профиля временно недоступен"
+        description="Попробуйте открыть профиль позже."
+      />
+    )
+  }
 
   if (!data || data.percentage === 100) return null
 
@@ -76,6 +94,7 @@ function ProfileNudge() {
 function PromoBanner() {
   const user = useAuthStore((s) => s.user)
   const [banners, setBanners] = useState<PromotionBanner[]>([])
+  const [failedToLoad, setFailedToLoad] = useState(false)
 
   useEffect(() => {
     axiosInstance
@@ -84,8 +103,11 @@ function PromoBanner() {
         if (res.data.data?.length) {
           setBanners(res.data.data)
         }
+        setFailedToLoad(false)
       })
-      .catch(() => {})
+      .catch(() => {
+        setFailedToLoad(true)
+      })
   }, [])
 
   const isNewUser = user && !user.onboarding_completed
@@ -149,34 +171,44 @@ function PromoBanner() {
   }
 
   return (
-    <Card
-      style={{
-        marginBottom: 24,
-        background: isNewUser
-          ? 'linear-gradient(135deg, #52c41a 0%, #13c2c2 100%)'
-          : 'linear-gradient(135deg, #1f4853 0%, #80502c 100%)',
-        border: 'none',
-        borderRadius: 12,
-      }}
-    >
-      <div style={{ color: '#fff' }}>
-        <Space>
-          {isNewUser ? (
-            <RocketOutlined style={{ fontSize: 20 }} />
-          ) : (
-            <GiftOutlined style={{ fontSize: 20 }} />
-          )}
-          <Title level={3} style={{ color: '#fff', margin: 0 }}>
-            {isNewUser ? 'Вечер уже можно планировать' : 'Бронирование без лишних шагов'}
-          </Title>
-        </Space>
-        <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, display: 'block', marginTop: 8 }}>
-          {isNewUser
-            ? 'Приветственный бонус 500 ₽ уже в кошельке. Выберите сценарий, подтвердите телефон по SMS и переходите к брони.'
-            : 'Каталог, понятные цены и SMS-подтверждение собраны в один короткий маршрут до бронирования.'}
-        </Text>
-      </div>
-    </Card>
+    <div style={{ marginBottom: 24 }}>
+      <Card
+        style={{
+          marginBottom: failedToLoad ? 12 : 0,
+          background: isNewUser
+            ? 'linear-gradient(135deg, #52c41a 0%, #13c2c2 100%)'
+            : 'linear-gradient(135deg, #1f4853 0%, #80502c 100%)',
+          border: 'none',
+          borderRadius: 12,
+        }}
+      >
+        <div style={{ color: '#fff' }}>
+          <Space>
+            {isNewUser ? (
+              <RocketOutlined style={{ fontSize: 20 }} />
+            ) : (
+              <GiftOutlined style={{ fontSize: 20 }} />
+            )}
+            <Title level={3} style={{ color: '#fff', margin: 0 }}>
+              {isNewUser ? 'Вечер уже можно планировать' : 'Бронирование без лишних шагов'}
+            </Title>
+          </Space>
+          <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, display: 'block', marginTop: 8 }}>
+            {isNewUser
+              ? 'Приветственный бонус 500 ₽ уже в кошельке. Выберите сценарий, подтвердите телефон по SMS и переходите к брони.'
+              : 'Каталог, понятные цены и SMS-подтверждение собраны в один короткий маршрут до бронирования.'}
+          </Text>
+        </div>
+      </Card>
+      {failedToLoad && (
+        <PublicState
+          kind="degraded"
+          compact
+          title="Акционные предложения временно недоступны"
+          description="Показываем базовую подборку, пока промо-блок обновляется."
+        />
+      )}
+    </div>
   )
 }
 
@@ -235,7 +267,7 @@ function PopularNearby({ detectedCityId }: { detectedCityId?: number }) {
   const selectedCityId = userSelectedCityId ?? defaultCityId
   const selectedCity = cities.find((city) => city.id === selectedCityId)
 
-  const { data: popularData, isLoading } = useGetPopular(
+  const { data: popularData, isLoading, isError, refetch } = useGetPopular(
     { city_id: selectedCityId ?? 0, limit: 6 },
     { query: { enabled: !!selectedCityId } },
   )
@@ -268,7 +300,16 @@ function PopularNearby({ detectedCityId }: { detectedCityId?: number }) {
         </div>
         <CitySelector cities={cityOptions} selectedCityId={selectedCityId} onSelect={setUserSelectedCityId} />
       </div>
-      {isLoading ? null : popular.length === 0 ? (
+      {isLoading ? null : isError ? (
+        <PublicState
+          kind="degraded"
+          compact
+          title="Популярные подборки временно недоступны"
+          description="Попробуйте обновить блок позже."
+          actionText="Повторить"
+          onAction={() => void refetch()}
+        />
+      ) : popular.length === 0 ? (
         <Text type="secondary">В выбранном городе пока нет популярных бань</Text>
       ) : (
         <Row gutter={[16, 16]}>
@@ -307,13 +348,30 @@ function PersonalRecommendations() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
 
-  const { data: recsData, isLoading } = useGetRecommendations(
+  const { data: recsData, isLoading, isError, refetch } = useGetRecommendations(
     { page: 1, page_size: 6 },
     { query: { enabled: !!user } },
   )
   const recs = recsData?.data ?? []
 
-  if (!user || isLoading || recs.length === 0) return null
+  if (!user || isLoading) return null
+
+  if (isError) {
+    return (
+      <div style={{ marginBottom: 24 }}>
+        <PublicState
+          kind="degraded"
+          compact
+          title="Персональные рекомендации временно недоступны"
+          description="Попробуйте обновить подборку позже."
+          actionText="Повторить"
+          onAction={() => void refetch()}
+        />
+      </div>
+    )
+  }
+
+  if (recs.length === 0) return null
 
   return (
     <div style={{ marginBottom: 24 }}>

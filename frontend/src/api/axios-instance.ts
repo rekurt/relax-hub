@@ -1,5 +1,6 @@
 import Axios, { AxiosRequestConfig } from 'axios'
 import { AUTH_TOKEN_KEY } from '@/lib/constants'
+import { redirectToLogin, shouldRedirectToLogin } from '@/lib/public-route'
 import { useAuthStore } from '@/stores/auth'
 
 export const axiosInstance = Axios.create({
@@ -19,8 +20,8 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       useAuthStore.getState().logout()
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
+      if (shouldRedirectToLogin(window.location.pathname)) {
+        redirectToLogin()
       }
     }
     return Promise.reject(error)

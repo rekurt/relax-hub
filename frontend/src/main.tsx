@@ -8,7 +8,9 @@ import ruRU from 'antd/locale/ru_RU'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ru'
 import isoWeek from 'dayjs/plugin/isoWeek'
+import './styles/app.css'
 import App from './App'
+import { appTheme } from './theme'
 
 dayjs.locale('ru')
 dayjs.extend(isoWeek)
@@ -26,7 +28,7 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ConfigProvider locale={ruRU}>
+      <ConfigProvider locale={ruRU} theme={appTheme}>
         <BrowserRouter>
           <App />
         </BrowserRouter>

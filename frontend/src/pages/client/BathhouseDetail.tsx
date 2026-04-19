@@ -43,6 +43,7 @@ import { useGetMyWallet } from '@/api/generated/wallet/wallet'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice, formatDayOfWeek } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
+import PublicState from '@/components/PublicState'
 import ReviewCard from '@/components/ReviewCard'
 import ShareButton from '@/components/ShareButton'
 import TransportAccessibility, { type TransportItem } from '@/components/TransportAccessibility'
@@ -84,7 +85,7 @@ export default function BathhouseDetail() {
   const [selectedDate, setSelectedDate] = useState<string>(dayjs().format('YYYY-MM-DD'))
   const [reviewPage, setReviewPage] = useState(1)
 
-  const { data: bathhouseData, isLoading } = useGetBathhousesBySlugSlug(slug ?? '', {
+  const { data: bathhouseData, isLoading, isError: bathhouseIsError, refetch: refetchBathhouse } = useGetBathhousesBySlugSlug(slug ?? '', {
     query: { enabled: !!slug },
   })
   const bathhouse = bathhouseData?.data
@@ -95,7 +96,12 @@ export default function BathhouseDetail() {
   })
   const photos = photosData?.data ?? []
 
-  const { data: slotsData, isLoading: slotsLoading } = useGetBathhousesIdAvailableSlots(
+  const {
+    data: slotsData,
+    isLoading: slotsLoading,
+    isError: slotsIsError,
+    refetch: refetchSlots,
+  } = useGetBathhousesIdAvailableSlots(
     id ?? '',
     { date: selectedDate },
     { query: { enabled: !!id && !!selectedDate } },
@@ -108,7 +114,7 @@ export default function BathhouseDetail() {
   const reviews = reviewsData?.data ?? []
   const reviewMeta = reviewsData?.meta
 
-  const { data: similarData } = useGetBathhousesIdSimilar(id ?? '', { limit: 6 }, {
+  const { data: similarData, isError: similarIsError, refetch: refetchSimilar } = useGetBathhousesIdSimilar(id ?? '', { limit: 6 }, {
     query: { enabled: !!id },
   })
   const similar = similarData?.data ?? []
@@ -122,7 +128,7 @@ export default function BathhouseDetail() {
     query: { enabled: !!id },
   })
 
-  const { data: transportData } = useQuery({
+  const { data: transportData, isError: transportIsError, refetch: refetchTransport } = useQuery({
     queryKey: [`/bathhouses/${id}/transport`],
     queryFn: () => axiosInstance.get<{ success: boolean; data: { items: TransportItem[] } }>(`/bathhouses/${id}/transport`).then((r) => r.data),
     enabled: !!id,
@@ -177,11 +183,39 @@ export default function BathhouseDetail() {
   }, [schemaJsonLd])
 
   if (isLoading) {
-    return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
+    return (
+      <PublicState
+        kind="loading"
+        title="Загружаем баню"
+        description="Собираем описание, фото и ближайшие доступные слоты."
+      />
+    )
+  }
+
+  if (bathhouseIsError) {
+    return (
+      <PublicState
+        kind="error"
+        title="Не удалось загрузить карточку бани"
+        description="Повторите попытку или вернитесь в каталог."
+        actionText="Повторить"
+        onAction={() => void refetchBathhouse()}
+        secondaryActionText="В каталог"
+        secondaryActionLink="/catalog"
+      />
+    )
   }
 
   if (!bathhouse) {
-    return <Empty description="Баня не найдена" />
+    return (
+      <PublicState
+        kind="empty"
+        title="Баня не найдена"
+        description="Возможно, объект уже недоступен или ссылка устарела."
+        actionText="Вернуться в каталог"
+        actionLink="/catalog"
+      />
+    )
   }
 
   const allPhotos = [
@@ -358,7 +392,20 @@ export default function BathhouseDetail() {
                 </div>
               )}
 
-              <TransportAccessibility items={transportItems} />
+              {transportIsError ? (
+                <div style={{ marginTop: 16 }}>
+                  <PublicState
+                    kind="degraded"
+                    compact
+                    title="Транспортная информация временно недоступна"
+                    description="Попробуйте обновить этот блок позже."
+                    actionText="Повторить"
+                    onAction={() => void refetchTransport()}
+                  />
+                </div>
+              ) : (
+                <TransportAccessibility items={transportItems} />
+              )}
 
               {!!(bathhouse as Record<string, unknown>).visiting_rules && (
                 <div style={{ marginTop: 16 }}>
@@ -418,8 +465,17 @@ export default function BathhouseDetail() {
               disabledDate={(d) => d.isBefore(dayjs(), 'day')}
               style={{ width: '100%', marginBottom: 16 }}
             />
-            <Spin spinning={slotsLoading}>
-              {slots.length === 0 ? (
+            <Spin spinning={slotsLoading && !slotsIsError}>
+              {slotsIsError ? (
+                <PublicState
+                  kind="error"
+                  compact
+                  title="Не удалось загрузить доступные слоты"
+                  description="Обновите список слотов или выберите другую дату."
+                  actionText="Обновить слоты"
+                  onAction={() => void refetchSlots()}
+                />
+              ) : slots.length === 0 ? (
                 <Empty description="Нет доступных слотов" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               ) : (
                 <Space orientation="vertical" style={{ width: '100%' }} size={8}>
@@ -513,7 +569,19 @@ export default function BathhouseDetail() {
         </>
       )}
 
-      {similar.length > 0 && (
+      {similarIsError ? (
+        <>
+          <Divider />
+          <PublicState
+            kind="degraded"
+            compact
+            title="Похожие бани временно недоступны"
+            description="Попробуйте обновить подборку позже."
+            actionText="Повторить"
+            onAction={() => void refetchSimilar()}
+          />
+        </>
+      ) : similar.length > 0 && (
         <>
           <Divider />
           <SimilarBathhouses items={similar} />

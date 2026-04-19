@@ -72,16 +72,16 @@ export default function NotificationBell() {
   }
 
   const content = (
-    <div style={{ width: 360 }}>
+    <div style={{ width: 388 }}>
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 8,
+          marginBottom: 12,
         }}
       >
-        <Text strong>Уведомления</Text>
+        <Text strong style={{ fontSize: 15 }}>Уведомления</Text>
         {unreadCount > 0 && (
           <Button
             type="link"
@@ -103,9 +103,11 @@ export default function NotificationBell() {
           <List.Item
             style={{
               cursor: 'pointer',
-              background: item.is_read ? undefined : 'rgba(22, 119, 255, 0.04)',
-              padding: '8px 12px',
-              borderRadius: 6,
+              background: item.is_read ? undefined : 'rgba(15, 118, 110, 0.05)',
+              padding: '10px 12px',
+              borderRadius: 14,
+              border: '1px solid rgba(15, 23, 42, 0.06)',
+              marginBottom: 8,
             }}
             onClick={() => handleItemClick(item.id!, item.is_read ?? false)}
           >
@@ -115,7 +117,7 @@ export default function NotificationBell() {
                   {!item.is_read && (
                     <Badge status="processing" />
                   )}
-                  <Text style={{ fontSize: 13 }}>
+                  <Text style={{ fontSize: 13, fontWeight: item.is_read ? 500 : 700 }}>
                     {item.title ?? NOTIFICATION_TYPE_LABELS[item.type ?? ''] ?? 'Уведомление'}
                   </Text>
                 </Space>
