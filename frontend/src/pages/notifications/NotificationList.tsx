@@ -11,11 +11,12 @@ import {
 } from '@/api/generated/notifications/notifications'
 import { useQueryClient } from '@tanstack/react-query'
 import { NOTIFICATION_TYPE_LABELS } from '@/lib/constants'
+import PageHeader from '@/components/PageHeader'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 export default function NotificationList() {
   const [page, setPage] = useState(1)
@@ -53,16 +54,20 @@ export default function NotificationList() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>Уведомления</Title>
-        <Button
-          icon={<CheckOutlined />}
-          onClick={() => markAllRead.mutate()}
-          loading={markAllRead.isPending}
-        >
-          Прочитать все
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Лента"
+        title="Уведомления"
+        description="Все события собраны в одном месте. Непрочитанные помечены акцентом и доступны для быстрого чтения."
+        extra={
+          <Button
+            icon={<CheckOutlined />}
+            onClick={() => markAllRead.mutate()}
+            loading={markAllRead.isPending}
+          >
+            Прочитать все
+          </Button>
+        }
+      />
 
       <Card>
         <List

@@ -24,6 +24,7 @@ import { axiosInstance } from '@/api/axios-instance'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/ru'
+import PageHeader from '@/components/PageHeader'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
@@ -190,9 +191,21 @@ export default function AdminNotificationCenter() {
 
   return (
     <div>
-      <Title level={4} style={{ marginBottom: 24 }}>
-        Центр уведомлений
-      </Title>
+      <PageHeader
+        eyebrow="Мониторинг"
+        title="Центр уведомлений"
+        description="Операционная лента критичных и информационных событий платформы."
+        extra={
+          <Button
+            icon={<CheckOutlined />}
+            onClick={() => markAllRead.mutate()}
+            loading={markAllRead.isPending}
+            disabled={unreadCount === 0}
+          >
+            Прочитать все
+          </Button>
+        }
+      />
 
       <div style={{ marginBottom: 16 }}>
         <Card size="small">
@@ -249,14 +262,6 @@ export default function AdminNotificationCenter() {
                 { value: 'true', label: 'Прочитанные' },
               ]}
             />
-            <Button
-              icon={<CheckOutlined />}
-              onClick={() => markAllRead.mutate()}
-              loading={markAllRead.isPending}
-              disabled={unreadCount === 0}
-            >
-              Прочитать все
-            </Button>
           </Space>
         }
       >

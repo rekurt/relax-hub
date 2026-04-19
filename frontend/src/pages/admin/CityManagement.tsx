@@ -29,6 +29,7 @@ import {
   useDeleteAdminCitiesId,
 } from '@/api/generated/admin-cities/admin-cities'
 import type { InternalHandlerCityResponse } from '@/api/generated/model'
+import PageHeader from '@/components/PageHeader'
 
 const { Title } = Typography
 
@@ -167,14 +168,16 @@ export default function CityManagement() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Управление городами
-        </Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
-          Добавить город
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Справочник"
+        title="Управление городами"
+        description="Города, координаты и slug теперь собраны в чистый рабочий каталог."
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+            Добавить город
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: 48 }}>

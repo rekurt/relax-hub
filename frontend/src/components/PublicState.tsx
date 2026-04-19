@@ -54,7 +54,7 @@ export default function PublicState({
   if (kind === 'loading') {
     return (
       <Card style={{ borderRadius: 24, textAlign: 'center', padding: 24 }}>
-        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+        <Space orientation="vertical" size={16} style={{ width: '100%' }}>
           <Spin size="large" />
           <Text strong>{resolvedTitle}</Text>
           <Paragraph style={{ marginBottom: 0 }}>{resolvedDescription}</Paragraph>
@@ -68,7 +68,7 @@ export default function PublicState({
       <Alert
         type={kind === 'error' ? 'error' : 'warning'}
         showIcon
-        message={resolvedTitle}
+        title={resolvedTitle}
         description={resolvedDescription}
         action={actionText ? <Button size="small" onClick={onAction}>{actionText}</Button> : undefined}
       />
@@ -79,7 +79,7 @@ export default function PublicState({
     return (
       <EmptyState
         description={(
-          <Space direction="vertical" size={8}>
+          <Space orientation="vertical" size={8}>
             <Text strong>{resolvedTitle}</Text>
             <Text type="secondary">{resolvedDescription}</Text>
           </Space>

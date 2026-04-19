@@ -13,11 +13,12 @@ import {
 } from '@/api/generated/notifications/notifications'
 import { useQueryClient } from '@tanstack/react-query'
 import { NOTIFICATION_TYPE_LABELS } from '@/lib/constants'
+import PageHeader from '@/components/PageHeader'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 export default function AdminNotifications() {
   const [page, setPage] = useState(1)
@@ -87,7 +88,11 @@ export default function AdminNotifications() {
 
   return (
     <div>
-      <Title level={4} style={{ marginBottom: 24 }}>Уведомления</Title>
+      <PageHeader
+        eyebrow="Служебные события"
+        title="Уведомления"
+        description="Рабочая лента уведомлений и базовые настройки каналов доставки."
+      />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <Card

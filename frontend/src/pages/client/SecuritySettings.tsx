@@ -48,6 +48,7 @@ import {
 import { usePostAuthForgotPassword } from '@/api/generated/auth/auth'
 import { useAuthStore } from '@/stores/auth'
 import { useQueryClient } from '@tanstack/react-query'
+import PageHeader from '@/components/PageHeader'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
@@ -224,9 +225,11 @@ export default function SecuritySettings() {
 
   return (
     <div>
-      <Title level={3}>
-        <SafetyOutlined /> Безопасность
-      </Title>
+      <PageHeader
+        eyebrow="Защита"
+        title="Безопасность"
+        description="Сессии, 2FA и сброс пароля собраны в отдельный безопасный контур."
+      />
 
       {/* Section 1: Active Sessions */}
       <Card

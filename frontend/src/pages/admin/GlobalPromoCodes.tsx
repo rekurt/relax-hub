@@ -19,6 +19,7 @@ import { usePostAdminPromoCodes } from '@/api/generated/promo-codes/promo-codes'
 import type { InternalHandlerPromoResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import dayjs from 'dayjs'
+import PageHeader from '@/components/PageHeader'
 
 const { Title, Text } = Typography
 
@@ -93,25 +94,23 @@ export default function GlobalPromoCodes() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Глобальные промокоды
-        </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            form.resetFields()
-            setFormVisible(true)
-          }}
-        >
-          Создать промокод
-        </Button>
-      </div>
-
-      <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
-        Глобальные промокоды действуют на все бани и создаются администратором.
-      </Text>
+      <PageHeader
+        eyebrow="Маркетинг"
+        title="Глобальные промокоды"
+        description="Единый экран для создания и просмотра промокодов, применимых ко всем объектам."
+        extra={
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              form.resetFields()
+              setFormVisible(true)
+            }}
+          >
+            Создать промокод
+          </Button>
+        }
+      />
 
       {formVisible && (
         <Card

@@ -60,6 +60,7 @@ import { useGetMyRegion, usePutMyRegion } from '@/api/generated/region/region'
 import { formatPrice } from '@/lib/format'
 import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
 import ProfileCompleteness from '@/components/ProfileCompleteness'
+import PageHeader from '@/components/PageHeader'
 
 const REGION_LABELS: Record<string, string> = {
   RU: 'Россия',
@@ -295,7 +296,11 @@ export default function ClientProfile() {
 
   return (
     <div>
-      <Title level={4} style={{ marginBottom: 24 }}>Мой профиль</Title>
+      <PageHeader
+        eyebrow="Личный кабинет"
+        title="Мой профиль"
+        description="Профиль, безопасность, уведомления и платёжные привязки собраны в единую рабочую панель."
+      />
 
       <ProfileCompleteness />
 

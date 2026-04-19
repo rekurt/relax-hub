@@ -38,6 +38,7 @@ import {
 } from '@/api/generated/oauth/oauth'
 import { useGetCities } from '@/api/generated/cities/cities'
 import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
+import PageHeader from '@/components/PageHeader'
 
 const { Title, Text } = Typography
 
@@ -159,7 +160,11 @@ export default function ProfileSettings() {
 
   return (
     <div>
-      <Title level={4} style={{ marginBottom: 24 }}>Настройки профиля</Title>
+      <PageHeader
+        eyebrow="Профиль"
+        title="Настройки профиля"
+        description="Контактные данные, уведомления и привязанные аккаунты в одном месте."
+      />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <Card title="Аватар">

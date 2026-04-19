@@ -22,6 +22,7 @@ import {
   usePostAuthMeAvatar,
   useDeleteAuthMeAvatar,
 } from '@/api/generated/auth/auth'
+import PageHeader from '@/components/PageHeader'
 
 const { Title } = Typography
 
@@ -86,7 +87,11 @@ export default function AdminProfile() {
 
   return (
     <div>
-      <Title level={4} style={{ marginBottom: 24 }}>Профиль администратора</Title>
+      <PageHeader
+        eyebrow="Админка"
+        title="Профиль администратора"
+        description="Базовые данные администратора и аватар для служебных сценариев."
+      />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <Card title="Аватар">

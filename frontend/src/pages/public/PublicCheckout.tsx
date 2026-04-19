@@ -179,12 +179,12 @@ export default function PublicCheckout() {
 
   const handleVerifyAndBook = async () => {
     clearCheckoutErrors()
-    if (!otpCode.trim() || otpCode.trim().length !== 6) {
-      message.warning('Введите 6-значный код')
-      return
-    }
     if (!selectedSlot) {
       message.warning('Слот не выбран')
+      return
+    }
+    if (!currentUser?.role && (!otpCode.trim() || otpCode.trim().length !== 6)) {
+      message.warning('Введите 6-значный код')
       return
     }
 
@@ -348,7 +348,7 @@ export default function PublicCheckout() {
                   <Alert
                     type="info"
                     showIcon
-                    message="На выбранную дату нет доступных слотов"
+                    title="На выбранную дату нет доступных слотов"
                     description="Попробуйте другую дату или вернитесь в каталог, чтобы посмотреть похожие варианты."
                   />
                 ) : (
@@ -438,7 +438,7 @@ export default function PublicCheckout() {
               <Alert
                 type="error"
                 showIcon
-                message={checkoutError}
+                title={checkoutError}
               />
             </div>
           )}
@@ -457,7 +457,7 @@ export default function PublicCheckout() {
                 <Alert
                   type="error"
                   showIcon
-                  message={otpError}
+                  title={otpError}
                   style={{ marginBottom: 16 }}
                 />
               )}

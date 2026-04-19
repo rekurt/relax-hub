@@ -12,6 +12,7 @@ import {
 } from '@/api/generated/notifications/notifications'
 import { axiosInstance } from '@/api/axios-instance'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import PageHeader from '@/components/PageHeader'
 
 const { Title, Text } = Typography
 
@@ -175,10 +176,12 @@ export default function NotificationPreferences() {
   const eventPrefMap = new Map(localEventPrefs.map((p) => [p.event_type, p]))
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
-      <Title level={3}>
-        <BellOutlined /> Настройки уведомлений
-      </Title>
+    <div>
+      <PageHeader
+        eyebrow="Личные настройки"
+        title="Настройки уведомлений"
+        description="Управляйте каналами доставки и типами событий без лишнего шума."
+      />
 
       <Card title="Каналы доставки" style={{ marginBottom: 24 }}>
         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>

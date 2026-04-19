@@ -159,6 +159,6 @@ describe('PublicCheckout', () => {
       expect(mockAxiosPost).toHaveBeenCalled()
     })
     expect(await screen.findByText('Выбранный слот уже недоступен')).toBeInTheDocument()
-    expect(screen.getByText(/10:00 - 12:00/)).toBeInTheDocument()
+    expect(screen.getAllByText(/10:00 - 12:00/).length).toBeGreaterThan(0)
   })
 })

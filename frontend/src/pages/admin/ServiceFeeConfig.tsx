@@ -23,6 +23,7 @@ import {
 } from '@/api/generated/admin/admin'
 import type { InternalHandlerServiceFeeConfigResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
 const { Title } = Typography
 
@@ -137,14 +138,16 @@ export default function ServiceFeeConfig() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Комиссия платформы
-        </Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
-          Добавить
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Финансовая политика"
+        title="Комиссия платформы"
+        description="Настройка комиссий по регионам и категориям теперь выглядит как управляемый справочник."
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+            Добавить
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: 48 }}><Spin size="large" /></div>

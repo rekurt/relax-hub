@@ -12,6 +12,7 @@ import {
 } from '@/api/generated/admin-users/admin-users'
 import type { InternalHandlerUserResponse } from '@/api/generated/model'
 import { axiosInstance } from '@/api/axios-instance'
+import PageHeader from '@/components/PageHeader'
 
 const { Title } = Typography
 const { Search } = Input
@@ -199,7 +200,11 @@ export default function UserManagement() {
 
   return (
     <div>
-      <Title level={3} style={{ marginBottom: 16 }}>Управление пользователями</Title>
+      <PageHeader
+        eyebrow="Справочник"
+        title="Управление пользователями"
+        description="Поиск, массовые операции и блокировки в одном аккуратном рабочем экране."
+      />
 
       <Search
         placeholder="Поиск по имени, email или телефону"

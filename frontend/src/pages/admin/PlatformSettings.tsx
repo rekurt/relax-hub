@@ -10,6 +10,7 @@ import {
 } from '@/api/generated/admin/admin'
 import type { InternalHandlerPlatformSettingResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -170,9 +171,11 @@ export default function PlatformSettings() {
 
   return (
     <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Настройки платформы
-      </Title>
+      <PageHeader
+        eyebrow="Системные параметры"
+        title="Настройки платформы"
+        description="Служебные параметры и их значения в более читаемом рабочем виде."
+      />
 
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: 48 }}><Spin size="large" /></div>
