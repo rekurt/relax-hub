@@ -257,7 +257,7 @@ describe('BathhouseDetail', () => {
     expect(screen.getByText('Баня не найдена')).toBeInTheDocument()
   })
 
-  it('renders favorite button', () => {
+  it('does not render favorite button for public visitor', () => {
     vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: mockBathhouse, success: true },
       isLoading: false,
@@ -265,7 +265,7 @@ describe('BathhouseDetail', () => {
 
     renderWithProviders(<BathhouseDetail />)
 
-    expect(screen.getByText('В избранное')).toBeInTheDocument()
+    expect(screen.queryByText('В избранное')).not.toBeInTheDocument()
   })
 
   it('renders back button', () => {
