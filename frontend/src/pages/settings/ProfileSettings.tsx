@@ -40,7 +40,7 @@ import { useGetCities } from '@/api/generated/cities/cities'
 import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
 import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 export default function ProfileSettings() {
   const { user, loadProfile } = useAuthStore()

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { App, Button, Checkbox, Input, Space, Table, Tag, Typography } from 'antd'
+import { App, Button, Checkbox, Input, Space, Table, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -14,7 +14,6 @@ import type { InternalHandlerUserResponse } from '@/api/generated/model'
 import { axiosInstance } from '@/api/axios-instance'
 import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
 const { Search } = Input
 
 const ROLE_LABELS: Record<string, { color: string; text: string }> = {

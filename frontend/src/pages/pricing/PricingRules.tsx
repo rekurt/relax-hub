@@ -607,7 +607,7 @@ export default function PricingRules() {
             <Statistic
               title="Рекомендуемая цена/час"
               value={formatPrice(recommendationData.recommended_price)}
-              valueStyle={{ color: recommendationData.coefficient > 1 ? '#3f8600' : recommendationData.coefficient < 1 ? '#cf1322' : undefined }}
+              styles={{ content: { color: recommendationData.coefficient > 1 ? '#3f8600' : recommendationData.coefficient < 1 ? '#cf1322' : undefined } }}
               prefix={recommendationData.coefficient > 1 ? <ArrowUpOutlined /> : recommendationData.coefficient < 1 ? <ArrowDownOutlined /> : undefined}
             />
             <Statistic title="Коэффициент" value={`x${recommendationData.coefficient}`} />
@@ -619,7 +619,7 @@ export default function PricingRules() {
             style={{ marginTop: 12 }}
             type="info"
             showIcon
-            message={recommendationData.recommendation_basis}
+            title={recommendationData.recommendation_basis}
           />
         </Card>
       )}
@@ -663,7 +663,7 @@ export default function PricingRules() {
         open={modalOpen}
         onCancel={() => { setModalOpen(false); setEditingRule(null) }}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form
           form={form}
@@ -783,7 +783,7 @@ export default function PricingRules() {
         open={tariffModalOpen}
         onCancel={() => { setTariffModalOpen(false); setEditingTariff(null) }}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form
           form={tariffForm}

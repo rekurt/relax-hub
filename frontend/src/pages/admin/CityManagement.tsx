@@ -10,7 +10,6 @@ import {
   Space,
   Spin,
   Table,
-  Typography,
 } from 'antd'
 import {
   PlusOutlined,
@@ -30,8 +29,6 @@ import {
 } from '@/api/generated/admin-cities/admin-cities'
 import type { InternalHandlerCityResponse } from '@/api/generated/model'
 import PageHeader from '@/components/PageHeader'
-
-const { Title } = Typography
 
 interface CityFormValues {
   name: string

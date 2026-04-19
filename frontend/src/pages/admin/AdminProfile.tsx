@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import {
-  Typography,
   Card,
   Form,
   Input,
@@ -23,8 +22,6 @@ import {
   useDeleteAuthMeAvatar,
 } from '@/api/generated/auth/auth'
 import PageHeader from '@/components/PageHeader'
-
-const { Title } = Typography
 
 export default function AdminProfile() {
   const { user, loadProfile } = useAuthStore()

@@ -279,7 +279,7 @@ export default function WalletDashboard() {
           type="warning"
           showIcon
           icon={<WarningOutlined />}
-          message={`Бонусы на сумму ${formatPrice(wallet.expiring_soon)} скоро сгорят${wallet.earliest_expiry ? ` (до ${formatDateTime(wallet.earliest_expiry, 'DD.MM.YYYY')})` : ''}`}
+          title={`Бонусы на сумму ${formatPrice(wallet.expiring_soon)} скоро сгорят${wallet.earliest_expiry ? ` (до ${formatDateTime(wallet.earliest_expiry, 'DD.MM.YYYY')})` : ''}`}
           style={{ marginTop: 16 }}
         />
       )}
@@ -329,7 +329,6 @@ export default function WalletDashboard() {
               min={MIN_TOPUP}
               max={MAX_TOPUP}
               style={{ width: 200 }}
-              addonAfter="₽"
             />
           </Form.Item>
           <Form.Item>

@@ -298,7 +298,7 @@ export default function PromoList() {
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form
           form={form}

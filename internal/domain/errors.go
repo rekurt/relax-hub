@@ -111,17 +111,17 @@ var (
 	ErrSavedSearchNotFound     = errors.New("saved search not found")
 	ErrSavedSearchLimitReached = errors.New("saved search limit reached")
 
-	ErrBookingModificationLimit          = errors.New("booking modification limit reached")
-	ErrBookingNotModifiable              = errors.New("booking cannot be modified in current status")
-	ErrModificationRequestNotFound       = errors.New("booking modification request not found")
-	ErrModificationRequestPending        = errors.New("a pending modification request already exists for this booking")
-	ErrModificationRequestExpired        = errors.New("booking modification request has expired")
+	ErrBookingModificationLimit    = errors.New("booking modification limit reached")
+	ErrBookingNotModifiable        = errors.New("booking cannot be modified in current status")
+	ErrModificationRequestNotFound = errors.New("booking modification request not found")
+	ErrModificationRequestPending  = errors.New("a pending modification request already exists for this booking")
+	ErrModificationRequestExpired  = errors.New("booking modification request has expired")
 
 	ErrExtensionRequestNotFound = errors.New("booking extension request not found")
 	ErrExtensionRequestPending  = errors.New("a pending extension request already exists for this booking")
 	ErrExtensionRequestExpired  = errors.New("booking extension request has expired")
 
-	ErrCheckinTooEarly = errors.New("check-in is not yet available")
+	ErrCheckinTooEarly      = errors.New("check-in is not yet available")
 	ErrCheckinTooLate       = errors.New("check-in window has passed")
 	ErrNotCheckedIn         = errors.New("guest has not checked in")
 	ErrNoShowDisputeExpired = errors.New("no-show dispute window has expired")
@@ -164,10 +164,9 @@ var (
 	ErrClientReviewNotFound = errors.New("client review not found")
 	ErrReviewBlindPeriod    = errors.New("review is in blind period")
 
-	ErrRegionSwitchBlocked  = errors.New("region switch blocked: resolve wallet balance, active bookings, open disputes, or unactivated certificates first")
-	ErrCrossRegionalBooking = errors.New("cross-regional booking not allowed: client region must match bathhouse region")
-	ErrRegionSameAsCurrent  = errors.New("already in the requested region")
-	ErrRegionInvalid        = errors.New("invalid region")
+	ErrRegionSwitchBlocked = errors.New("region switch blocked: resolve wallet balance, active bookings, open disputes, or unactivated certificates first")
+	ErrRegionSameAsCurrent = errors.New("already in the requested region")
+	ErrRegionInvalid       = errors.New("invalid region")
 
 	ErrSeasonalTariffOverlap  = errors.New("seasonal tariff date range overlaps with existing tariff")
 	ErrSeasonalTariffNotFound = errors.New("seasonal tariff not found")
@@ -178,14 +177,14 @@ var (
 	ErrSavedCardNotFound     = errors.New("saved card not found")
 	ErrSavedCardLimitReached = errors.New("saved card limit reached")
 
-	ErrBankEntryNotFound      = errors.New("bank statement entry not found")
+	ErrBankEntryNotFound       = errors.New("bank statement entry not found")
 	ErrBankEntryAlreadyMatched = errors.New("bank statement entry already matched")
 
-	ErrAdminRoleNotFound       = errors.New("admin role not found")
-	ErrAdmin2FARequired        = errors.New("admin accounts require two-factor authentication")
-	ErrAdminPermissionDenied   = errors.New("insufficient admin permissions")
-	ErrImportValidationFailed  = errors.New("import validation failed")
-	ErrImportFileTooLarge      = errors.New("import file too large")
+	ErrAdminRoleNotFound      = errors.New("admin role not found")
+	ErrAdmin2FARequired       = errors.New("admin accounts require two-factor authentication")
+	ErrAdminPermissionDenied  = errors.New("insufficient admin permissions")
+	ErrImportValidationFailed = errors.New("import validation failed")
+	ErrImportFileTooLarge     = errors.New("import file too large")
 
 	ErrFAQNotFound = errors.New("FAQ entry not found")
 

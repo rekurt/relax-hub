@@ -141,7 +141,7 @@ Domain errors (`domain/errors.go`) → HTTP status codes (`handler/response.go`)
 - ErrModificationRequestNotFound→404, ErrModificationRequestPending→409, ErrModificationRequestExpired→400
 - ErrExtensionRequestNotFound→404, ErrExtensionRequestPending→409, ErrExtensionRequestExpired→400
 - ErrSavedCardNotFound→404, ErrSavedCardLimitReached→409
-- ErrRegionSwitchBlocked→409, ErrCrossRegionalBooking→403
+- ErrRegionSwitchBlocked→409
 - ErrRegionSameAsCurrent→400, ErrRegionInvalid→400
 - ErrSeasonalTariffOverlap→409, ErrSeasonalTariffNotFound→404
 - ErrShareTokenNotFound→404, ErrShareTokenExpired→400

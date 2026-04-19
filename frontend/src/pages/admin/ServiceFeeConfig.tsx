@@ -11,7 +11,6 @@ import {
   Spin,
   Table,
   Tag,
-  Typography,
 } from 'antd'
 import { PlusOutlined, EditOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -24,8 +23,6 @@ import {
 import type { InternalHandlerServiceFeeConfigResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
 import PageHeader from '@/components/PageHeader'
-
-const { Title } = Typography
 
 const REGION_OPTIONS = [
   { value: '*', label: 'Глобальный (по умолчанию)' },

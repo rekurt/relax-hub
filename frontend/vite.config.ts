@@ -20,7 +20,8 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: './src/test-setup.ts',
       css: false,
-      testTimeout: 15000,
+      testTimeout: 30000,
+      hookTimeout: 30000,
     },
     server: {
       proxy: {

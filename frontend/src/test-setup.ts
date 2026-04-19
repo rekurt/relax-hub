@@ -50,3 +50,8 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: vi.fn(),
   })),
 })
+
+const originalGetComputedStyle = window.getComputedStyle.bind(window)
+window.getComputedStyle = ((element: Element, pseudoElt?: string | null) =>
+  originalGetComputedStyle(element, pseudoElt ? null : undefined)
+) as typeof window.getComputedStyle

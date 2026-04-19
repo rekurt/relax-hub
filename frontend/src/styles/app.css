@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-
 :root {
   color-scheme: light;
   --bani-primary: #0f766e;
@@ -27,7 +25,7 @@ body,
 
 body {
   margin: 0;
-  font-family: 'Manrope', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Manrope', 'Avenir Next', 'Segoe UI', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--bani-text);
   background:
     radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 30%),
@@ -166,8 +164,11 @@ body.bani-app .ant-picker-focused {
 body.bani-app .ant-btn {
   border-radius: 999px;
   font-weight: 600;
-  height: 44px;
   box-shadow: none;
+}
+
+body.bani-app .ant-btn:not(.ant-btn-link):not(.ant-btn-text) {
+  height: 44px;
 }
 
 body.bani-app .ant-btn-sm {
@@ -191,7 +192,12 @@ body.bani-app .ant-btn-default {
 }
 
 body.bani-app .ant-btn-link {
+  height: auto;
   padding-inline: 4px;
+}
+
+body.bani-app .ant-btn-text {
+  height: auto;
 }
 
 body.bani-app .ant-switch {

@@ -22,7 +22,6 @@ import {
   LaptopOutlined,
   MobileOutlined,
   DeleteOutlined,
-  SafetyOutlined,
   KeyOutlined,
   MailOutlined,
   CheckCircleOutlined,
@@ -53,7 +52,7 @@ import PageHeader from '@/components/PageHeader'
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Paragraph } = Typography
 
 interface SessionRow {
   id?: string

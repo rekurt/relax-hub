@@ -14,7 +14,7 @@ import { axiosInstance } from '@/api/axios-instance'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 interface EventPreference {
   event_type: string

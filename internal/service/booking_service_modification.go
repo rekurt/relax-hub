@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -522,39 +521,3 @@ func (s *bookingService) RecalculateResponseRates(ctx context.Context) (int, err
 
 	return updated, nil
 }
-
-// checkCrossRegion verifies that the user's region matches the bathhouse's city region.
-// Skips the check gracefully if user or city data is unavailable (e.g., in tests).
-func (s *bookingService) checkCrossRegion(ctx context.Context, userID uuid.UUID, cityID int64) error {
-	if s.userRepo == nil || s.cityRepo == nil {
-		return nil
-	}
-
-	user, err := s.userRepo.GetByID(ctx, userID)
-	if err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			return nil
-		}
-		return fmt.Errorf("get user for cross-region check: %w", err)
-	}
-
-	city, err := s.cityRepo.GetByID(ctx, cityID)
-	if err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			return nil
-		}
-		return fmt.Errorf("get city for cross-region check: %w", err)
-	}
-
-	userRegion := user.Region
-	if userRegion == "" {
-		userRegion = domain.RegionRU
-	}
-
-	if city.Region != "" && city.Region != string(userRegion) {
-		return domain.ErrCrossRegionalBooking
-	}
-
-	return nil
-}
-

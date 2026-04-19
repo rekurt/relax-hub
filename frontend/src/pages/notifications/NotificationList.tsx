@@ -96,9 +96,11 @@ export default function NotificationList() {
             <List.Item
               style={{
                 cursor: item.is_read ? 'default' : 'pointer',
-                background: item.is_read ? undefined : 'rgba(22, 119, 255, 0.04)',
-                padding: '12px 16px',
-                borderRadius: 6,
+                background: item.is_read ? undefined : 'rgba(15, 118, 110, 0.05)',
+                padding: '14px 16px',
+                borderRadius: 14,
+                border: '1px solid rgba(15, 23, 42, 0.06)',
+                marginBottom: 8,
               }}
               onClick={() => {
                 if (!item.is_read && item.id) {

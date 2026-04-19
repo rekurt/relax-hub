@@ -21,7 +21,7 @@ import { formatPrice, formatDateTime } from '@/lib/format'
 import dayjs from 'dayjs'
 import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const PROMO_TYPES = [
   { label: 'Процент', value: 'percentage' },
@@ -97,7 +97,7 @@ export default function GlobalPromoCodes() {
       <PageHeader
         eyebrow="Маркетинг"
         title="Глобальные промокоды"
-        description="Единый экран для создания и просмотра промокодов, применимых ко всем объектам."
+        description="Глобальные промокоды действуют на все бани и создаются администратором. Единый экран для создания и просмотра промокодов."
         extra={
           <Button
             type="primary"

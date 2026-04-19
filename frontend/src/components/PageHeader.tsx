@@ -1,7 +1,4 @@
 import type { ReactNode } from 'react'
-import { Typography } from 'antd'
-
-const { Title, Text } = Typography
 
 interface PageHeaderProps {
   eyebrow?: ReactNode
@@ -15,17 +12,17 @@ export default function PageHeader({ eyebrow, title, description, extra }: PageH
     <header className="bani-page-header">
       <div className="bani-page-header__copy">
         {eyebrow && (
-          <Text className="bani-page-header__eyebrow">
+          <div className="bani-page-header__eyebrow">
             {eyebrow}
-          </Text>
+          </div>
         )}
-        <Title level={3} className="bani-page-header__title">
+        <h1 className="bani-page-header__title">
           {title}
-        </Title>
+        </h1>
         {description && (
-          <Text className="bani-page-header__description">
+          <p className="bani-page-header__description">
             {description}
-          </Text>
+          </p>
         )}
       </div>
 

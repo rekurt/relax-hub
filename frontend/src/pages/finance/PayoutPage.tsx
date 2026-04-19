@@ -205,7 +205,6 @@ export default function PayoutPage() {
               min={100}
               max={availableRubles}
               style={{ width: 200 }}
-              addonAfter="\u20BD"
             />
           </Form.Item>
           <Form.Item

@@ -2,3 +2,11 @@
 [ 8349174ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:50709/node_modules/.vite/deps/chunk-SXRIVT2P.js?v=1c649f5e:21608
 [ 8349332ms] [ERROR] Warning: [antd: Space] `direction` is deprecated. Please use `orientation` instead. @ http://localhost:50709/node_modules/.vite/deps/chunk-WWIUSZ42.js?v=1c649f5e:1250
 [ 8350613ms] [ERROR] Warning: [antd: Alert] `message` is deprecated. Please use `title` instead. @ http://localhost:50709/node_modules/.vite/deps/chunk-WWIUSZ42.js?v=1c649f5e:1250
+[ 9388081ms] [ERROR] Failed to load resource: net::ERR_EMPTY_RESPONSE @ http://localhost:50709/src/pages/promo/PromoList.tsx?t=1776635489931:0
+[ 9388086ms] [ERROR] [vite] Failed to reload /src/pages/promo/PromoList.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:50709/@vite/client:881
+[ 9388105ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:50709/src/pages/pricing/PricingRules.tsx?t=1776635489937:0
+[ 9388106ms] [ERROR] [vite] Failed to reload /src/pages/pricing/PricingRules.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:50709/@vite/client:881
+[ 9388117ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:50709/src/pages/client/CertificateList.tsx?t=1776635489941:0
+[ 9388119ms] [ERROR] [vite] Failed to reload /src/pages/client/CertificateList.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:50709/@vite/client:881
+[ 9391086ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:50709/@vite/client:963
+[ 9392253ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:50709/node_modules/.vite/deps/chunk-SXRIVT2P.js?v=1c649f5e:21608

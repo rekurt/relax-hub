@@ -28,6 +28,10 @@ vi.mock('@/api/generated/favorites/favorites', () => ({
   usePostBathhousesIdFavorite: vi.fn(),
 }))
 
+vi.mock('@/stores/auth', () => ({
+  useAuthStore: vi.fn(),
+}))
+
 vi.mock('@/components/BathhouseMap', () => ({
   default: ({
     bathhouses,
@@ -73,6 +77,7 @@ vi.mock('@/components/BathhouseMap', () => ({
 import { useGetBathhouses } from '@/api/generated/bathhouses/bathhouses'
 import { useGetCities } from '@/api/generated/cities/cities'
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
+import { useAuthStore } from '@/stores/auth'
 
 function renderWithProviders(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -148,6 +153,18 @@ describe('BathhouseSearch - Map & Compare features', () => {
       mutate: vi.fn(),
       isPending: false,
     } as unknown as ReturnType<typeof usePostBathhousesIdFavorite>)
+
+    vi.mocked(useAuthStore).mockImplementation((selector) =>
+      selector({
+        user: { id: 'client-1', role: 'client', name: 'Иван' } as never,
+        token: 'jwt-token',
+        isLoading: false,
+        isAuthenticated: true,
+        setAuth: vi.fn(),
+        logout: vi.fn(),
+        loadProfile: vi.fn(),
+      }),
+    )
 
     vi.mocked(useGetBathhouses).mockReturnValue({
       data: {

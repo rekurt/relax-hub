@@ -12,7 +12,7 @@ import type { InternalHandlerPlatformSettingResponse } from '@/api/generated/mod
 import { formatDateTime } from '@/lib/format'
 import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 const { TextArea } = Input
 
 const TYPE_LABELS: Record<string, { color: string; text: string }> = {

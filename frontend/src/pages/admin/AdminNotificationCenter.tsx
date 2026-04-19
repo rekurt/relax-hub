@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import {
-  Typography,
   Table,
   Button,
   Badge,
@@ -28,8 +27,6 @@ import PageHeader from '@/components/PageHeader'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
-
-const { Title } = Typography
 
 interface AdminNotification {
   id: string

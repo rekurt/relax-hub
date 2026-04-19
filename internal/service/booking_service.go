@@ -216,11 +216,6 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 		return nil, domain.ErrBathhouseNotActive
 	}
 
-	// Cross-regional booking check: block if client region doesn't match bathhouse region
-	if err := s.checkCrossRegion(ctx, userID, bh.CityID); err != nil {
-		return nil, err
-	}
-
 	// Enforce lead time (configurable per bathhouse, minimum 5 minutes fallback)
 	leadTime := time.Duration(bh.LeadTimeHours) * time.Hour
 	if leadTime < 5*time.Minute {
@@ -712,7 +707,6 @@ func (s *bookingService) Create(ctx context.Context, userID uuid.UUID, input Cre
 	}, nil
 }
 
-
 func (s *bookingService) GetAvailableSlots(ctx context.Context, bathhouseID uuid.UUID, date time.Time) ([]TimeSlot, error) {
 	bh, err := s.bhRepo.GetByID(ctx, bathhouseID)
 	if err != nil {
@@ -951,4 +945,3 @@ func validateWithinWorkingHours(bh *domain.Bathhouse, startTime, endTime time.Ti
 
 	return nil
 }
-

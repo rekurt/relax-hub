@@ -48,6 +48,7 @@ vi.mock('@/stores/auth', () => ({
 
 import { useGetBathhousesId, useGetBathhousesIdAvailableSlots } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPriceCalculator } from '@/api/generated/pricing/pricing'
+import type { AuthState } from '@/stores/auth'
 import { useAuthStore } from '@/stores/auth'
 
 function renderWithProviders(route = '/checkout?bathhouse=bath-1&date=2026-04-20') {
@@ -72,11 +73,17 @@ function renderWithProviders(route = '/checkout?bathhouse=bath-1&date=2026-04-20
 function mockAuthStore(user: Record<string, unknown> | null = null) {
   const state = {
     user,
+    token: null,
+    isLoading: false,
+    isAuthenticated: false,
     setAuth: vi.fn(),
-  }
+    logout: vi.fn(),
+    loadProfile: vi.fn(),
+  } as unknown as AuthState
   vi.mocked(useAuthStore).mockImplementation((selector) => {
-    return (selector as (s: typeof state) => unknown)(state)
+    return selector(state)
   })
+  return state
 }
 
 describe('PublicCheckout', () => {
@@ -135,6 +142,34 @@ describe('PublicCheckout', () => {
     expect(screen.getByDisplayValue('+79990000000')).toBeInTheDocument()
   })
 
+  it('shows inline OTP verification error without resetting the form', async () => {
+    mockPublicPost
+      .mockResolvedValueOnce({ data: { success: true } })
+      .mockRejectedValueOnce({
+        isAxiosError: true,
+        response: {
+          status: 400,
+          data: { error: { message: 'Неверный код' } },
+        },
+      })
+
+    renderWithProviders()
+
+    fireEvent.click(screen.getByRole('button', { name: /10:00 - 12:00/ }))
+    fireEvent.change(screen.getByPlaceholderText('Имя'), { target: { value: 'Иван' } })
+    fireEvent.change(screen.getByPlaceholderText('Телефон'), { target: { value: '+79990000000' } })
+    fireEvent.click(screen.getByText('Мне исполнилось 18 лет'))
+    fireEvent.click(screen.getByRole('button', { name: 'Получить SMS-код' }))
+
+    expect(await screen.findByPlaceholderText('Код из SMS')).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText('Код из SMS'), { target: { value: '123456' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Подтвердить и создать бронь' }))
+
+    expect(await screen.findByText('Неверный код')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Иван')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('+79990000000')).toBeInTheDocument()
+  })
+
   it('shows slot conflict inline for logged-in client booking failure', async () => {
     mockAuthStore({
       id: 'client-1',
@@ -160,5 +195,48 @@ describe('PublicCheckout', () => {
     })
     expect(await screen.findByText('Выбранный слот уже недоступен')).toBeInTheDocument()
     expect(screen.getAllByText(/10:00 - 12:00/).length).toBeGreaterThan(0)
+  })
+
+  it('completes guest booking and redirects to client booking page', async () => {
+    const authState = mockAuthStore(null)
+    mockPublicPost
+      .mockResolvedValueOnce({ data: { success: true } })
+      .mockResolvedValueOnce({
+        data: {
+          data: {
+            token: 'jwt-token',
+            user: {
+              id: 'client-2',
+              role: 'client',
+              name: 'Иван',
+              phone: '+79990000000',
+            },
+          },
+        },
+      })
+    mockAxiosPost.mockResolvedValueOnce({
+      data: {
+        data: {
+          id: 'booking-77',
+        },
+      },
+    })
+
+    renderWithProviders()
+
+    fireEvent.click(screen.getByRole('button', { name: /10:00 - 12:00/ }))
+    fireEvent.change(screen.getByPlaceholderText('Имя'), { target: { value: 'Иван' } })
+    fireEvent.change(screen.getByPlaceholderText('Телефон'), { target: { value: '+79990000000' } })
+    fireEvent.click(screen.getByText('Мне исполнилось 18 лет'))
+    fireEvent.click(screen.getByRole('button', { name: 'Получить SMS-код' }))
+
+    expect(await screen.findByPlaceholderText('Код из SMS')).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText('Код из SMS'), { target: { value: '123456' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Подтвердить и создать бронь' }))
+
+    await waitFor(() => {
+      expect(authState.setAuth).toHaveBeenCalled()
+      expect(mockNavigate).toHaveBeenCalledWith('/client/bookings/booking-77', { replace: true })
+    })
   })
 })

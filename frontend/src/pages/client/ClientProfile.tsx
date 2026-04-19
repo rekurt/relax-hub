@@ -72,7 +72,7 @@ const REGION_CURRENCIES: Record<string, string> = {
   BY: 'BYN',
 }
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 export default function ClientProfile() {
   const { user, loadProfile } = useAuthStore()

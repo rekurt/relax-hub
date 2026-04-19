@@ -130,7 +130,7 @@ export default function CertificateList() {
             <Statistic
               title="Общий баланс"
               value={formatPrice(totalBalance)}
-              valueStyle={{ color: totalBalance > 0 ? '#52c41a' : undefined }}
+              styles={{ content: { color: totalBalance > 0 ? '#52c41a' : undefined } }}
             />
           </Card>
         </Col>
@@ -145,7 +145,7 @@ export default function CertificateList() {
       </Row>
 
       <Card title="Активировать сертификат" style={{ marginTop: 16 }}>
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Space orientation="vertical" style={{ width: '100%' }}>
           <Text>Введите код сертификата для активации или проверки баланса</Text>
           <Space.Compact style={{ width: '100%', maxWidth: 500 }}>
             <Input
@@ -228,7 +228,7 @@ export default function CertificateList() {
       </Card>
 
       <Alert
-        message="Как использовать сертификат"
+        title="Как использовать сертификат"
         description="Введите код сертификата при создании бронирования в поле «Подарочный сертификат». Сумма сертификата будет вычтена из стоимости бронирования. Неиспользованный остаток сохраняется на сертификате."
         type="info"
         showIcon
