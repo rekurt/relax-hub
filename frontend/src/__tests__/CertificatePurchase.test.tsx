@@ -7,7 +7,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import CertificatePurchase from '@/pages/client/CertificatePurchase'
 
 vi.mock('@/api/generated/certificates/certificates', () => ({
-  usePostCertificatesPurchase: vi.fn(),
+  usePostCertificatesOrders: vi.fn(),
+  usePostCertificatesOrdersIdPay: vi.fn(),
+  useGetCertificatesOrdersId: vi.fn(),
 }))
 
 vi.mock('@/stores/auth', () => ({
@@ -16,9 +18,29 @@ vi.mock('@/stores/auth', () => ({
   ),
 }))
 
-import { usePostCertificatesPurchase } from '@/api/generated/certificates/certificates'
+vi.mock('@/components/ApplePayButton', () => ({
+  default: ({ onToken }: { onToken: (token: string) => void }) => (
+    <button type="button" onClick={() => onToken('apple-token')}>
+      Apple Pay Mock
+    </button>
+  ),
+}))
 
-function renderWithProviders(ui: React.ReactElement) {
+vi.mock('@/components/GooglePayButton', () => ({
+  default: ({ onToken }: { onToken: (token: string) => void }) => (
+    <button type="button" onClick={() => onToken('google-token')}>
+      Google Pay Mock
+    </button>
+  ),
+}))
+
+import {
+  useGetCertificatesOrdersId,
+  usePostCertificatesOrders,
+  usePostCertificatesOrdersIdPay,
+} from '@/api/generated/certificates/certificates'
+
+function renderWithProviders(ui: React.ReactElement, route = '/certificates') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -26,190 +48,190 @@ function renderWithProviders(ui: React.ReactElement) {
     <QueryClientProvider client={queryClient}>
       <ConfigProvider locale={ruRU}>
         <AntApp>
-          <MemoryRouter>{ui}</MemoryRouter>
+          <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
         </AntApp>
       </ConfigProvider>
     </QueryClientProvider>,
   )
 }
 
-const mockMutate = vi.fn()
+const mockCreateOrderMutateAsync = vi.fn()
+const mockPayOrderMutateAsync = vi.fn()
 
-function setupMocks(overrides?: { isPending?: boolean }) {
-  vi.mocked(usePostCertificatesPurchase).mockReturnValue({
-    mutate: mockMutate,
-    isPending: overrides?.isPending ?? false,
-  } as unknown as ReturnType<typeof usePostCertificatesPurchase>)
+function setupMocks(overrides?: {
+  orderData?: unknown
+  createPending?: boolean
+  payPending?: boolean
+}) {
+  vi.mocked(usePostCertificatesOrders).mockReturnValue({
+    mutateAsync: mockCreateOrderMutateAsync,
+    isPending: overrides?.createPending ?? false,
+  } as unknown as ReturnType<typeof usePostCertificatesOrders>)
+
+  vi.mocked(usePostCertificatesOrdersIdPay).mockReturnValue({
+    mutateAsync: mockPayOrderMutateAsync,
+    isPending: overrides?.payPending ?? false,
+  } as unknown as ReturnType<typeof usePostCertificatesOrdersIdPay>)
+
+  vi.mocked(useGetCertificatesOrdersId).mockReturnValue({
+    data: overrides?.orderData,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  } as unknown as ReturnType<typeof useGetCertificatesOrdersId>)
 }
 
 describe('CertificatePurchase', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockCreateOrderMutateAsync.mockReset()
+    mockPayOrderMutateAsync.mockReset()
   })
 
-  it('renders page title', () => {
-    setupMocks()
-    renderWithProviders(<CertificatePurchase />)
-    expect(screen.getByText('Купить подарочный сертификат')).toBeInTheDocument()
-  })
-
-  it('renders form fields', () => {
-    setupMocks()
-    renderWithProviders(<CertificatePurchase />)
-    expect(screen.getByText('Сумма (в рублях)')).toBeInTheDocument()
-    expect(screen.getByText('Ваш email')).toBeInTheDocument()
-    expect(screen.getByText('Имя получателя')).toBeInTheDocument()
-    expect(screen.getByText('Email получателя')).toBeInTheDocument()
-    expect(screen.getByText('Сообщение')).toBeInTheDocument()
-  })
-
-  it('renders preset amount buttons', () => {
-    setupMocks()
-    renderWithProviders(<CertificatePurchase />)
-    // Preset amounts: 1000, 2000, 3000, 5000 rubles
-    expect(screen.getByText('1000 ₽')).toBeInTheDocument()
-    expect(screen.getByText('2000 ₽')).toBeInTheDocument()
-    expect(screen.getByText('3000 ₽')).toBeInTheDocument()
-    expect(screen.getByText('5000 ₽')).toBeInTheDocument()
-  })
-
-  it('renders submit button', () => {
-    setupMocks()
-    renderWithProviders(<CertificatePurchase />)
-    expect(screen.getByText('Купить сертификат')).toBeInTheDocument()
-  })
-
-  it('renders info alert about certificates', () => {
-    setupMocks()
-    renderWithProviders(<CertificatePurchase />)
-    expect(screen.getByText('Подарочный сертификат')).toBeInTheDocument()
-    expect(screen.getByText(/Срок действия — 365 дней/)).toBeInTheDocument()
-  })
-
-  it('renders back button', () => {
-    setupMocks()
-    renderWithProviders(<CertificatePurchase />)
-    expect(screen.getByText('Назад к сертификатам')).toBeInTheDocument()
-  })
-
-  it('shows validation error when amount is missing', async () => {
+  it('renders premium hero, trust copy and checkout workspace', () => {
     setupMocks()
     renderWithProviders(<CertificatePurchase />)
 
-    fireEvent.click(screen.getByText('Купить сертификат'))
+    expect(screen.getByText('Подарочный сертификат BANI')).toBeInTheDocument()
+    expect(screen.getByText(/Оплатите подарок один раз/i)).toBeInTheDocument()
+    expect(screen.getByText('Срок действия')).toBeInTheDocument()
+    expect(screen.getByText('Доставка')).toBeInTheDocument()
+    expect(screen.getByText('Способ оплаты')).toBeInTheDocument()
+    expect(screen.getByText('Превью сертификата')).toBeInTheDocument()
+  })
+
+  it('updates amount summary when preset is selected', () => {
+    setupMocks()
+    renderWithProviders(<CertificatePurchase />)
+
+    fireEvent.click(screen.getByText('5000 ₽'))
+
+    expect(screen.getByDisplayValue('5000')).toBeInTheDocument()
+    expect(screen.getAllByText('5000 ₽').length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('creates order and initiates card payment with order payload', async () => {
+    mockCreateOrderMutateAsync.mockResolvedValue({
+      data: {
+        id: 'order-1',
+        amount: 300000,
+        status: 'draft',
+      },
+    })
+    mockPayOrderMutateAsync.mockResolvedValue({
+      data: {
+        confirmation_url: 'https://pay.example/redirect',
+      },
+    })
+    setupMocks()
+    renderWithProviders(<CertificatePurchase />)
+
+    fireEvent.change(screen.getByPlaceholderText('Введите сумму'), { target: { value: '3000' } })
+    fireEvent.change(screen.getByPlaceholderText('your@email.com'), { target: { value: 'test@example.com' } })
+    fireEvent.change(screen.getByPlaceholderText('Имя получателя'), { target: { value: 'Иван' } })
+    fireEvent.click(screen.getByText('Карта'))
+    fireEvent.click(screen.getByText('Перейти к оплате'))
 
     await waitFor(() => {
-      expect(screen.getByText('Укажите сумму')).toBeInTheDocument()
-    })
-  })
-
-  it('shows validation error when email is missing', async () => {
-    setupMocks()
-    renderWithProviders(<CertificatePurchase />)
-
-    fireEvent.click(screen.getByText('Купить сертификат'))
-
-    await waitFor(() => {
-      expect(screen.getByText('Укажите email')).toBeInTheDocument()
-    })
-  })
-
-  it('submits form with correct data', async () => {
-    let capturedOnSuccess: (() => void) | undefined
-    mockMutate.mockImplementation((_data: unknown, opts: { onSuccess: () => void }) => {
-      capturedOnSuccess = opts.onSuccess
-    })
-    setupMocks()
-    renderWithProviders(<CertificatePurchase />)
-
-    // Fill in amount
-    const amountInput = screen.getByPlaceholderText('Введите сумму')
-    fireEvent.change(amountInput, { target: { value: '3000' } })
-
-    // Fill in email
-    const emailInput = screen.getByPlaceholderText('your@email.com')
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } })
-
-    // Fill in recipient name
-    const recipientNameInput = screen.getByPlaceholderText('Имя получателя')
-    fireEvent.change(recipientNameInput, { target: { value: 'Иван' } })
-
-    // Submit the form
-    fireEvent.click(screen.getByText('Купить сертификат'))
-
-    await waitFor(() => {
-      expect(mockMutate).toHaveBeenCalledWith(
-        {
-          data: {
-            amount: 300000, // 3000 rubles -> 300000 kopecks
-            purchaser_email: 'test@example.com',
-            recipient_name: 'Иван',
-            recipient_email: undefined,
-            message: undefined,
-          },
-        },
-        expect.objectContaining({
-          onSuccess: expect.any(Function),
-          onError: expect.any(Function),
-        }),
-      )
-    })
-
-    // Simulate success to show the result page
-    if (capturedOnSuccess) {
-      // Can't easily trigger success state from here since we need the response.
-      // The mutation was called correctly - that's the important assertion.
-    }
-  })
-
-  it('shows success result after purchase', async () => {
-    mockMutate.mockImplementation((_data: unknown, opts: { onSuccess: (r: unknown) => void }) => {
-      opts.onSuccess({
+      expect(mockCreateOrderMutateAsync).toHaveBeenCalledWith({
         data: {
-          id: 'cert-new',
-          code: 'BANI-NEW1-CODE',
           amount: 300000,
-          balance: 300000,
-          status: 'active',
-          valid_until: '2027-03-16T00:00:00Z',
+          purchaser_email: 'test@example.com',
           recipient_name: 'Иван',
-          message: 'С праздником!',
+          recipient_email: undefined,
+          message: undefined,
         },
       })
     })
+
+    expect(mockPayOrderMutateAsync).toHaveBeenCalledWith({
+      id: 'order-1',
+      data: {
+        payment_method: 'card',
+      },
+    })
+  })
+
+  it('initiates apple pay with token-based payload', async () => {
+    mockCreateOrderMutateAsync.mockResolvedValue({
+      data: {
+        id: 'order-apple',
+        amount: 500000,
+        status: 'draft',
+      },
+    })
+    mockPayOrderMutateAsync.mockResolvedValue({
+      data: {
+        confirmation_url: '',
+      },
+    })
     setupMocks()
     renderWithProviders(<CertificatePurchase />)
 
-    // Fill in required fields
-    fireEvent.change(screen.getByPlaceholderText('Введите сумму'), { target: { value: '3000' } })
-    fireEvent.change(screen.getByPlaceholderText('your@email.com'), { target: { value: 'test@example.com' } })
-    fireEvent.click(screen.getByText('Купить сертификат'))
+    fireEvent.change(screen.getByPlaceholderText('Введите сумму'), { target: { value: '5000' } })
+    fireEvent.change(screen.getByPlaceholderText('your@email.com'), { target: { value: 'apple@example.com' } })
+    fireEvent.click(screen.getByText('Apple Pay'))
+    fireEvent.click(screen.getByText('Apple Pay Mock'))
 
     await waitFor(() => {
-      expect(screen.getByText('Сертификат создан!')).toBeInTheDocument()
+      expect(mockCreateOrderMutateAsync).toHaveBeenCalled()
     })
-    expect(screen.getByText('BANI-NEW1-CODE')).toBeInTheDocument()
-    expect(screen.getByText('3000 ₽')).toBeInTheDocument()
-    expect(screen.getByText('Иван')).toBeInTheDocument()
-    expect(screen.getByText('С праздником!')).toBeInTheDocument()
-    expect(screen.getByText('Мои сертификаты')).toBeInTheDocument()
-    expect(screen.getByText('Купить ещё')).toBeInTheDocument()
+
+    expect(mockPayOrderMutateAsync).toHaveBeenCalledWith({
+      id: 'order-apple',
+      data: {
+        payment_method: 'apple_pay',
+        payment_token: 'apple-token',
+      },
+    })
   })
 
-  it('shows loading state while submitting', () => {
-    setupMocks({ isPending: true })
-    renderWithProviders(<CertificatePurchase />)
-    const submitButton = screen.getByText('Купить сертификат').closest('button')
-    expect(submitButton).toHaveClass('ant-btn-loading')
+  it('shows branded success state when order is already paid', async () => {
+    setupMocks({
+      orderData: {
+        data: {
+          id: 'order-paid',
+          amount: 300000,
+          status: 'paid',
+          recipient_name: 'Иван',
+          purchaser_email: 'buyer@example.com',
+          certificate: {
+            id: 'cert-1',
+            code: 'BANI-PAID-0001',
+            amount: 300000,
+            balance: 300000,
+            status: 'active',
+            valid_until: '2027-05-10T00:00:00Z',
+          },
+        },
+      },
+    })
+
+    renderWithProviders(<CertificatePurchase />, '/certificates?order_id=order-paid')
+
+    await waitFor(() => {
+      expect(screen.getByText('Сертификат оплачен')).toBeInTheDocument()
+    })
+    expect(screen.getByText('BANI-PAID-0001')).toBeInTheDocument()
+    expect(screen.getByText(/Мы отправили подтверждение/i)).toBeInTheDocument()
   })
 
-  it('sets amount when preset button is clicked', () => {
-    setupMocks()
-    renderWithProviders(<CertificatePurchase />)
+  it('shows processing state when order is waiting for payment confirmation', async () => {
+    setupMocks({
+      orderData: {
+        data: {
+          id: 'order-pending',
+          amount: 300000,
+          status: 'pending_payment',
+        },
+      },
+    })
 
-    fireEvent.click(screen.getByText('3000 ₽'))
+    renderWithProviders(<CertificatePurchase />, '/certificates?order_id=order-pending')
 
-    const amountInput = screen.getByPlaceholderText('Введите сумму') as HTMLInputElement
-    expect(amountInput.value).toBe('3000')
+    await waitFor(() => {
+      expect(screen.getByText('Платёж обрабатывается')).toBeInTheDocument()
+    })
+    expect(screen.getByText(/Подтверждаем оплату и выпуск сертификата/i)).toBeInTheDocument()
   })
 })

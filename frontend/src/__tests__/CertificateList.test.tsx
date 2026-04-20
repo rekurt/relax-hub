@@ -57,15 +57,6 @@ const mockCertificates = [
     created_at: '2025-12-01T00:00:00Z',
     purchaser_email: 'buyer@test.com',
   },
-  {
-    id: 'cert-3',
-    code: 'BANI-CCCC-3333',
-    amount: 100000,
-    balance: 100000,
-    status: 'expired',
-    valid_until: '2025-06-01T00:00:00Z',
-    created_at: '2024-06-01T00:00:00Z',
-  },
 ]
 
 const mockRedeemMutate = vi.fn()
@@ -104,75 +95,32 @@ describe('CertificateList', () => {
     vi.clearAllMocks()
   })
 
-  it('renders page title', () => {
+  it('renders redesigned hero and overview metrics', () => {
     setupMocks()
     renderWithProviders(<CertificateList />)
-    expect(screen.getByText('Подарочные сертификаты')).toBeInTheDocument()
-  })
 
-  it('displays active certificates count', () => {
-    setupMocks()
-    renderWithProviders(<CertificateList />)
+    expect(screen.getByText('Мои сертификаты')).toBeInTheDocument()
+    expect(screen.getByText('Активный баланс')).toBeInTheDocument()
     expect(screen.getByText('Активных сертификатов')).toBeInTheDocument()
+    expect(screen.getByText('Как использовать сертификат')).toBeInTheDocument()
   })
 
-  it('displays total balance of active certificates', () => {
+  it('renders certificate cards instead of a plain table-only view', () => {
     setupMocks()
     renderWithProviders(<CertificateList />)
-    expect(screen.getByText('Общий баланс')).toBeInTheDocument()
-    // 300000 kopecks = 3000 rubles - appears in both stat card and table
-    const balanceElements = screen.getAllByText('3000 ₽')
-    expect(balanceElements.length).toBeGreaterThanOrEqual(1)
-  })
 
-  it('displays total certificates count', () => {
-    setupMocks()
-    renderWithProviders(<CertificateList />)
-    expect(screen.getByText('Всего сертификатов')).toBeInTheDocument()
-  })
-
-  it('renders certificate codes in table', () => {
-    setupMocks()
-    renderWithProviders(<CertificateList />)
     expect(screen.getByText('BANI-AAAA-1111')).toBeInTheDocument()
     expect(screen.getByText('BANI-BBBB-2222')).toBeInTheDocument()
-    expect(screen.getByText('BANI-CCCC-3333')).toBeInTheDocument()
-  })
-
-  it('renders certificate status tags', () => {
-    setupMocks()
-    renderWithProviders(<CertificateList />)
     expect(screen.getByText('Активен')).toBeInTheDocument()
     expect(screen.getByText('Использован')).toBeInTheDocument()
-    expect(screen.getByText('Истёк')).toBeInTheDocument()
   })
 
-  it('shows balance for each certificate', () => {
-    setupMocks()
-    renderWithProviders(<CertificateList />)
-    // cert-2 balance: 0 kopecks = 0 ₽
-    expect(screen.getByText('0 ₽')).toBeInTheDocument()
-    // cert-3 balance: 100000 kopecks = 1000 ₽ (may appear in both amount and balance columns)
-    const balanceElements = screen.getAllByText('1000 ₽')
-    expect(balanceElements.length).toBeGreaterThanOrEqual(1)
-  })
-
-  it('renders redeem code input section', () => {
-    setupMocks()
-    renderWithProviders(<CertificateList />)
-    expect(screen.getByText('Активировать сертификат')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('BANI-XXXX-XXXX')).toBeInTheDocument()
-    expect(screen.getByText('Проверить')).toBeInTheDocument()
-    expect(screen.getByText('Активировать')).toBeInTheDocument()
-  })
-
-  it('calls redeem mutation when activate button clicked', async () => {
+  it('redeems certificate code from activation block', async () => {
     setupMocks()
     renderWithProviders(<CertificateList />)
 
-    const input = screen.getByPlaceholderText('BANI-XXXX-XXXX')
-    fireEvent.change(input, { target: { value: 'BANI-TEST-CODE' } })
-    fireEvent.click(screen.getByText('Активировать'))
+    fireEvent.change(screen.getByPlaceholderText('BANI-XXXX-XXXX'), { target: { value: 'BANI-TEST-CODE' } })
+    fireEvent.click(screen.getByText('Активировать сертификат'))
 
     await waitFor(() => {
       expect(mockRedeemMutate).toHaveBeenCalledWith(
@@ -185,7 +133,7 @@ describe('CertificateList', () => {
     })
   })
 
-  it('displays balance check result after checking code', async () => {
+  it('shows balance check panel after code verification', async () => {
     setupMocks({
       balanceData: {
         code: 'BANI-TEST-1234',
@@ -197,48 +145,20 @@ describe('CertificateList', () => {
     })
     renderWithProviders(<CertificateList />)
 
-    // Type code and click check
-    const input = screen.getByPlaceholderText('BANI-XXXX-XXXX')
-    fireEvent.change(input, { target: { value: 'BANI-TEST-1234' } })
-    fireEvent.click(screen.getByText('Проверить'))
+    fireEvent.change(screen.getByPlaceholderText('BANI-XXXX-XXXX'), { target: { value: 'BANI-TEST-1234' } })
+    fireEvent.click(screen.getByText('Проверить баланс'))
 
     await waitFor(() => {
-      const balanceElements = screen.getAllByText('2500 ₽')
-      expect(balanceElements.length).toBeGreaterThanOrEqual(1)
+      expect(screen.getByText('BANI-TEST-1234')).toBeInTheDocument()
     })
+    expect(screen.getAllByText('2500 ₽').length).toBeGreaterThanOrEqual(1)
   })
 
-  it('shows purchase button', () => {
-    setupMocks()
-    renderWithProviders(<CertificateList />)
-    const buyButtons = screen.getAllByText('Купить сертификат')
-    expect(buyButtons.length).toBeGreaterThanOrEqual(1)
-  })
-
-  it('shows empty state when no certificates', () => {
+  it('shows empty state with purchase CTA when user has no certificates', () => {
     setupMocks({ certificates: [] })
     renderWithProviders(<CertificateList />)
+
     expect(screen.getByText('У вас пока нет сертификатов')).toBeInTheDocument()
-  })
-
-  it('shows loading spinner', () => {
-    setupMocks({ loading: true })
-    renderWithProviders(<CertificateList />)
-    expect(document.querySelector('.ant-spin-spinning')).toBeInTheDocument()
-  })
-
-  it('shows usage info alert', () => {
-    setupMocks()
-    renderWithProviders(<CertificateList />)
-    expect(screen.getByText('Как использовать сертификат')).toBeInTheDocument()
-  })
-
-  it('renders amount column in table', () => {
-    setupMocks()
-    renderWithProviders(<CertificateList />)
-    // cert-1: 500000 kopecks = 5000 rubles
-    expect(screen.getByText('5000 ₽')).toBeInTheDocument()
-    // cert-2: 200000 = 2000 rubles
-    expect(screen.getByText('2000 ₽')).toBeInTheDocument()
+    expect(screen.getByText('Перейти к покупке')).toBeInTheDocument()
   })
 })

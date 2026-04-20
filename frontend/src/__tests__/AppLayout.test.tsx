@@ -72,16 +72,15 @@ describe('AppLayout', () => {
     useBathhouseStore.setState({ selectedBathhouseId: null })
   })
 
-  it('renders top navigation items for owner area', () => {
+  it('renders compact section trigger for owner area', () => {
     const { container } = renderLayout()
     const header = container.querySelector('.ant-layout-header')
     expect(header).toBeTruthy()
 
-    const menuText = header!.textContent ?? ''
-    expect(menuText).toContain('Обзор')
-    expect(menuText).toContain('Объекты')
-    expect(menuText).toContain('Брони')
-    expect(menuText).toContain('Разделы')
+    expect(screen.getByText('RelaxHUB')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Раздел: Обзор' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Объекты' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Брони' })).not.toBeInTheDocument()
   })
 
   it('renders user name in header dropdown button', () => {
@@ -99,7 +98,7 @@ describe('AppLayout', () => {
   it('keeps the header navigation on nested route', () => {
     renderLayout('/bookings')
     expect(document.querySelector('.ant-breadcrumb')).toBeNull()
-    expect(screen.getByText('Брони')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Раздел: Брони' })).toBeInTheDocument()
   })
 
   it('renders BathhouseSelector with bathhouses', () => {

@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
+import { resolveAssetUrl } from '@/lib/asset-url'
 import { formatPrice } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
 
@@ -59,7 +60,7 @@ export default function BathhouseCard({
     .filter(([key]) => bathhouse[key as keyof InternalHandlerBathhouseResponse])
     .map(([, label]) => label)
 
-  const coverImage = bathhouse.images?.[0] ?? bathhouse.gallery_preview?.[0]?.url
+  const coverImage = resolveAssetUrl(bathhouse.images?.[0] ?? bathhouse.gallery_preview?.[0]?.url)
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation()

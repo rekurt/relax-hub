@@ -42,7 +42,7 @@ var seedDemoCmd = &cobra.Command{
 			return fmt.Errorf("failed to hash demo password: %w", err)
 		}
 
-		if err := seedDemoWorld(ctx, pool, string(hash)); err != nil {
+		if err := seedDemoWorld(ctx, pool, string(hash), cfg.FrontendURL); err != nil {
 			return err
 		}
 		if err := clearDemoCaches(ctx, cfg); err != nil {
@@ -453,7 +453,7 @@ type demoFAQ struct {
 	UpdatedAt time.Time
 }
 
-func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string) error {
+func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, frontendURL string) error {
 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
@@ -545,6 +545,8 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Bio:       "Свежий пользователь для onboarding, публичного checkout и нового клиентского UX.", ReferralCode: "FRESH034", OnboardingCompleted: false,
 		},
 	}
+	reviewerUsers := buildSyntheticReviewUsers(cityIDs)
+	users = append(users, reviewerUsers...)
 
 	bh1 := uuid.MustParse("40000000-0000-0000-0000-000000000001")
 	bh2 := uuid.MustParse("40000000-0000-0000-0000-000000000002")
@@ -566,7 +568,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Москва, Серебряническая наб., 24", Latitude: 55.7489, Longitude: 37.6452, PricePerHour: rub(6900),
 			MinDuration: 2, MaxGuests: 4, BaseCapacity: 2, HasSauna: true, HasSteamRoom: true, HasHotTub: true,
 			Rating: 4.9, BayesianRating: 4.82, ReviewCount: 18, ConversionRate: 0.29, OccupancyRate: 0.74, ViewCount: 928,
-			Images: demoImages("banya-couple", 4), WorkingHours: hours, Status: domain.BathhouseStatusActive,
+			Images: demoBathhouseImages(frontendURL, "banya-couple"), WorkingHours: hours, Status: domain.BathhouseStatusActive,
 			LongSessionThresholdHours: 4, LongSessionDiscountPercent: 10, ExtraGuestSurcharge: rub(1200), LastMinuteEnabled: true,
 			LastMinuteDiscountPercent: 15, LastMinuteHoursThreshold: 6, BufferMinutes: 30, LeadTimeHours: 1, MaxAdvanceDays: 90,
 			BookingMode: domain.BookingModeInstant, RequestTimeout: 24, ResponseRate: 0.98, AvgResponseTimeMinutes: 6,
@@ -579,7 +581,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Москва, ул. Доватора, 8", Latitude: 55.7243, Longitude: 37.5645, PricePerHour: rub(8400),
 			MinDuration: 2, MaxGuests: 6, BaseCapacity: 4, HasPool: true, HasSauna: true, HasSteamRoom: true, HasHotTub: true,
 			Rating: 4.8, BayesianRating: 4.74, ReviewCount: 24, ConversionRate: 0.27, OccupancyRate: 0.69, ViewCount: 1210,
-			Images: demoImages("banya-pool", 4), WorkingHours: hours, Status: domain.BathhouseStatusActive,
+			Images: demoBathhouseImages(frontendURL, "banya-pool"), WorkingHours: hours, Status: domain.BathhouseStatusActive,
 			LongSessionThresholdHours: 5, LongSessionDiscountPercent: 12, ExtraGuestSurcharge: rub(900), LastMinuteEnabled: true,
 			LastMinuteDiscountPercent: 20, LastMinuteHoursThreshold: 8, BufferMinutes: 45, LeadTimeHours: 2, MaxAdvanceDays: 120,
 			BookingMode: domain.BookingModeInstant, RequestTimeout: 24, ResponseRate: 0.97, AvgResponseTimeMinutes: 10,
@@ -592,7 +594,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Одинцово, Подушкинское ш., 17", Latitude: 55.6707, Longitude: 37.2394, PricePerHour: rub(9800),
 			MinDuration: 3, MaxGuests: 10, BaseCapacity: 6, HasSauna: true, HasSteamRoom: true, HasBBQ: true, HasKaraoke: true,
 			Rating: 4.7, BayesianRating: 4.66, ReviewCount: 16, ConversionRate: 0.22, OccupancyRate: 0.61, ViewCount: 874,
-			Images: demoImages("banya-company", 4), WorkingHours: hours, Status: domain.BathhouseStatusActive,
+			Images: demoBathhouseImages(frontendURL, "banya-company"), WorkingHours: hours, Status: domain.BathhouseStatusActive,
 			LongSessionThresholdHours: 5, LongSessionDiscountPercent: 15, ExtraGuestSurcharge: rub(700), LastMinuteEnabled: false,
 			LastMinuteDiscountPercent: 20, LastMinuteHoursThreshold: 6, BufferMinutes: 60, LeadTimeHours: 3, MaxAdvanceDays: 120,
 			BookingMode: domain.BookingModeInstant, RequestTimeout: 24, ResponseRate: 0.95, AvgResponseTimeMinutes: 18,
@@ -605,7 +607,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Красногорск, Ильинское ш., 5", Latitude: 55.8215, Longitude: 37.3168, PricePerHour: rub(7600),
 			MinDuration: 2, MaxGuests: 8, BaseCapacity: 4, HasSauna: true, HasSteamRoom: true, HasHotTub: true, HasBBQ: true,
 			Rating: 4.9, BayesianRating: 4.81, ReviewCount: 27, ConversionRate: 0.31, OccupancyRate: 0.77, ViewCount: 1324,
-			Images: demoImages("banya-hottub", 4), WorkingHours: hours, Status: domain.BathhouseStatusActive,
+			Images: demoBathhouseImages(frontendURL, "banya-hottub"), WorkingHours: hours, Status: domain.BathhouseStatusActive,
 			LongSessionThresholdHours: 4, LongSessionDiscountPercent: 12, ExtraGuestSurcharge: rub(800), LastMinuteEnabled: true,
 			LastMinuteDiscountPercent: 18, LastMinuteHoursThreshold: 10, BufferMinutes: 45, LeadTimeHours: 2, MaxAdvanceDays: 150,
 			BookingMode: domain.BookingModeInstant, RequestTimeout: 24, ResponseRate: 0.99, AvgResponseTimeMinutes: 5,
@@ -618,7 +620,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Москва, Ленинградский проспект, 39", Latitude: 55.7933, Longitude: 37.5454, PricePerHour: rub(9200),
 			MinDuration: 2, MaxGuests: 6, BaseCapacity: 4, HasPool: true, HasSauna: true, HasSteamRoom: true, HasHotTub: false,
 			Rating: 4.8, BayesianRating: 4.78, ReviewCount: 33, ConversionRate: 0.34, OccupancyRate: 0.81, ViewCount: 1670,
-			Images: demoImages("banya-premium-pool", 4), WorkingHours: hours, Status: domain.BathhouseStatusActive,
+			Images: demoBathhouseImages(frontendURL, "banya-premium-pool"), WorkingHours: hours, Status: domain.BathhouseStatusActive,
 			LongSessionThresholdHours: 4, LongSessionDiscountPercent: 10, ExtraGuestSurcharge: rub(1000), LastMinuteEnabled: true,
 			LastMinuteDiscountPercent: 15, LastMinuteHoursThreshold: 6, BufferMinutes: 30, LeadTimeHours: 1, MaxAdvanceDays: 100,
 			BookingMode: domain.BookingModeInstant, RequestTimeout: 24, ResponseRate: 0.99, AvgResponseTimeMinutes: 7,
@@ -631,7 +633,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Одинцово, Дачная ул., 44", Latitude: 55.6591, Longitude: 37.2601, PricePerHour: rub(8700),
 			MinDuration: 3, MaxGuests: 9, BaseCapacity: 5, HasSauna: true, HasSteamRoom: true, HasBBQ: true, HasPool: false,
 			Rating: 4.6, BayesianRating: 4.58, ReviewCount: 11, ConversionRate: 0.19, OccupancyRate: 0.56, ViewCount: 614,
-			Images: demoImages("banya-weekend", 4), WorkingHours: hours, Status: domain.BathhouseStatusActive,
+			Images: demoBathhouseImages(frontendURL, "banya-weekend"), WorkingHours: hours, Status: domain.BathhouseStatusActive,
 			LongSessionThresholdHours: 5, LongSessionDiscountPercent: 18, ExtraGuestSurcharge: rub(700), LastMinuteEnabled: false,
 			LastMinuteDiscountPercent: 20, LastMinuteHoursThreshold: 6, BufferMinutes: 45, LeadTimeHours: 5, MaxAdvanceDays: 180,
 			BookingMode: domain.BookingModeInstant, RequestTimeout: 24, ResponseRate: 0.94, AvgResponseTimeMinutes: 22,
@@ -644,7 +646,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Красногорск, Речная ул., 14", Latitude: 55.8204, Longitude: 37.3384, PricePerHour: rub(7100),
 			MinDuration: 2, MaxGuests: 5, BaseCapacity: 3, HasSauna: true, HasSteamRoom: true, HasHotTub: true,
 			Rating: 4.5, BayesianRating: 4.41, ReviewCount: 8, ConversionRate: 0.16, OccupancyRate: 0.49, ViewCount: 502,
-			Images: demoImages("banya-request", 4), WorkingHours: hours, Status: domain.BathhouseStatusActive,
+			Images: demoBathhouseImages(frontendURL, "banya-request"), WorkingHours: hours, Status: domain.BathhouseStatusActive,
 			LongSessionThresholdHours: 4, LongSessionDiscountPercent: 8, ExtraGuestSurcharge: rub(900), LastMinuteEnabled: false,
 			LastMinuteDiscountPercent: 20, LastMinuteHoursThreshold: 6, BufferMinutes: 30, LeadTimeHours: 2, MaxAdvanceDays: 60,
 			BookingMode: domain.BookingModeRequest, RequestTimeout: 12, ResponseRate: 0.83, AvgResponseTimeMinutes: 38,
@@ -657,7 +659,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Москва, Рублевское ш., 91", Latitude: 55.7583, Longitude: 37.4031, PricePerHour: rub(12900),
 			MinDuration: 3, MaxGuests: 8, BaseCapacity: 4, HasPool: true, HasSauna: true, HasSteamRoom: true, HasHotTub: true, HasBBQ: true,
 			Rating: 5.0, BayesianRating: 4.92, ReviewCount: 41, ConversionRate: 0.37, OccupancyRate: 0.84, ViewCount: 2110,
-			Images: demoImages("banya-premium", 4), WorkingHours: hours, Status: domain.BathhouseStatusActive,
+			Images: demoBathhouseImages(frontendURL, "banya-premium"), WorkingHours: hours, Status: domain.BathhouseStatusActive,
 			LongSessionThresholdHours: 5, LongSessionDiscountPercent: 12, ExtraGuestSurcharge: rub(1500), LastMinuteEnabled: true,
 			LastMinuteDiscountPercent: 10, LastMinuteHoursThreshold: 4, BufferMinutes: 60, LeadTimeHours: 4, MaxAdvanceDays: 180,
 			BookingMode: domain.BookingModeInstant, RequestTimeout: 24, ResponseRate: 0.99, AvgResponseTimeMinutes: 4,
@@ -670,7 +672,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Одинцово, Лесная ул., 7", Latitude: 55.6860, Longitude: 37.2842, PricePerHour: rub(7900),
 			MinDuration: 3, MaxGuests: 7, BaseCapacity: 4, HasSauna: true, HasSteamRoom: true, HasBBQ: true,
 			Rating: 4.7, BayesianRating: 4.63, ReviewCount: 13, ConversionRate: 0.21, OccupancyRate: 0.57, ViewCount: 720,
-			Images: demoImages("banya-family", 4), WorkingHours: hours, Status: domain.BathhouseStatusActive,
+			Images: demoBathhouseImages(frontendURL, "banya-family"), WorkingHours: hours, Status: domain.BathhouseStatusActive,
 			LongSessionThresholdHours: 4, LongSessionDiscountPercent: 15, ExtraGuestSurcharge: rub(750), LastMinuteEnabled: false,
 			LastMinuteDiscountPercent: 20, LastMinuteHoursThreshold: 6, BufferMinutes: 45, LeadTimeHours: 4, MaxAdvanceDays: 150,
 			BookingMode: domain.BookingModeInstant, RequestTimeout: 24, ResponseRate: 0.93, AvgResponseTimeMinutes: 19,
@@ -683,7 +685,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Красногорск, Набережная ул., 18", Latitude: 55.8222, Longitude: 37.3514, PricePerHour: rub(6800),
 			MinDuration: 2, MaxGuests: 6, BaseCapacity: 3, HasSauna: true, HasSteamRoom: true, HasPool: false, HasHotTub: false,
 			Rating: 4.6, BayesianRating: 4.55, ReviewCount: 9, ConversionRate: 0.18, OccupancyRate: 0.54, ViewCount: 488,
-			Images: demoImages("banya-river", 4), WorkingHours: hours, Status: domain.BathhouseStatusActive,
+			Images: demoBathhouseImages(frontendURL, "banya-river"), WorkingHours: hours, Status: domain.BathhouseStatusActive,
 			LongSessionThresholdHours: 4, LongSessionDiscountPercent: 8, ExtraGuestSurcharge: rub(650), LastMinuteEnabled: true,
 			LastMinuteDiscountPercent: 20, LastMinuteHoursThreshold: 5, BufferMinutes: 30, LeadTimeHours: 1, MaxAdvanceDays: 90,
 			BookingMode: domain.BookingModeInstant, RequestTimeout: 24, ResponseRate: 0.96, AvgResponseTimeMinutes: 12,
@@ -696,7 +698,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Москва, ул. Академика Королева, 11", Latitude: 55.8230, Longitude: 37.6260, PricePerHour: rub(7500),
 			MinDuration: 2, MaxGuests: 6, BaseCapacity: 4, HasSauna: true, HasSteamRoom: true,
 			Rating: 0, BayesianRating: 0, ReviewCount: 0, ConversionRate: 0, OccupancyRate: 0, ViewCount: 31,
-			Images: demoImages("banya-pending", 3), WorkingHours: hours, Status: domain.BathhouseStatusPending,
+			Images: demoBathhouseImages(frontendURL, "banya-pending"), WorkingHours: hours, Status: domain.BathhouseStatusPending,
 			LongSessionThresholdHours: 4, LongSessionDiscountPercent: 10, ExtraGuestSurcharge: rub(500), LastMinuteEnabled: false,
 			LastMinuteDiscountPercent: 20, LastMinuteHoursThreshold: 6, BufferMinutes: 30, LeadTimeHours: 2, MaxAdvanceDays: 90,
 			BookingMode: domain.BookingModeInstant, RequestTimeout: 24, ResponseRate: 1.0, AvgResponseTimeMinutes: 0,
@@ -709,7 +711,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Address:     "Красногорск, Центральная ул., 3", Latitude: 55.8295, Longitude: 37.3241, PricePerHour: rub(6200),
 			MinDuration: 2, MaxGuests: 5, BaseCapacity: 3, HasSauna: true, HasSteamRoom: false,
 			Rating: 0, BayesianRating: 0, ReviewCount: 0, ConversionRate: 0, OccupancyRate: 0, ViewCount: 17,
-			Images: demoImages("banya-rejected", 3), WorkingHours: hours, Status: domain.BathhouseStatusRejected,
+			Images: demoBathhouseImages(frontendURL, "banya-rejected"), WorkingHours: hours, Status: domain.BathhouseStatusRejected,
 			LongSessionThresholdHours: 4, LongSessionDiscountPercent: 8, ExtraGuestSurcharge: rub(400), LastMinuteEnabled: false,
 			LastMinuteDiscountPercent: 20, LastMinuteHoursThreshold: 6, BufferMinutes: 30, LeadTimeHours: 2, MaxAdvanceDays: 90,
 			BookingMode: domain.BookingModeInstant, RequestTimeout: 24, ResponseRate: 0.72, AvgResponseTimeMinutes: 0,
@@ -906,7 +908,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Text:   "Чисто, спокойно и без лишней суеты. Бассейн прогрет, хозяева быстро отвечают, повторила бы такой визит без сомнений.",
 			Status: domain.ReviewStatusApproved, OwnerResponse: "Спасибо, уже сохранили ваши пожелания по чаю к следующему визиту.",
 			OwnerResponseAt: &review1ResponseAt, ModerationScore: &moderationScore1, ModerationFlags: []string{},
-			Images: demoReviewImages("review-couple"), RevealAt: &reviewRevealAt, IsRevealed: true,
+			Images: demoReviewImages(frontendURL, "review-couple"), RevealAt: &reviewRevealAt, IsRevealed: true,
 			ModeratedBy: &adminID, ModeratedAt: &review1ResponseAt, CreatedAt: booking2End.Add(10 * time.Hour), UpdatedAt: review1ResponseAt,
 		},
 		{
@@ -915,7 +917,7 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Text:   "Чан и вид из окна реально работают как на фото. Для подарочного семейного выезда место идеальное, детям тоже было удобно.",
 			Status: domain.ReviewStatusApproved, OwnerResponse: "Благодарим, добавили ваш отзыв в подборку для семейных сценариев.",
 			OwnerResponseAt: &review2ResponseAt, ModerationScore: &moderationScore2, ModerationFlags: []string{},
-			Images: demoReviewImages("review-family"), RevealAt: ptrTime(booking4End.Add(24 * time.Hour)), IsRevealed: true,
+			Images: demoReviewImages(frontendURL, "review-family"), RevealAt: ptrTime(booking4End.Add(24 * time.Hour)), IsRevealed: true,
 			ModeratedBy: &adminID, ModeratedAt: &review2ResponseAt, CreatedAt: booking4End.Add(12 * time.Hour), UpdatedAt: review2ResponseAt,
 		},
 		{
@@ -924,10 +926,13 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash string)
 			Text:   "Премиальный сервис без показухи. Заезд прошел вовремя, пространство приватное, подарок с сертификатом сработал идеально.",
 			Status: domain.ReviewStatusApproved, OwnerResponse: "Спасибо за точную обратную связь, рады что сценарий с сертификатом зашел.",
 			OwnerResponseAt: &review3ResponseAt, ModerationScore: &moderationScore3, ModerationFlags: []string{},
-			Images: demoReviewImages("review-premium"), RevealAt: ptrTime(booking7End.Add(24 * time.Hour)), IsRevealed: true,
+			Images: demoReviewImages(frontendURL, "review-premium"), RevealAt: ptrTime(booking7End.Add(24 * time.Hour)), IsRevealed: true,
 			ModeratedBy: &adminID, ModeratedAt: &review3ResponseAt, CreatedAt: booking7End.Add(8 * time.Hour), UpdatedAt: review3ResponseAt,
 		},
 	}
+	syntheticBookings, syntheticReviews := buildSyntheticReviewBackfill(frontendURL, now, bathhouses, reviews, reviewerUsers, adminID)
+	bookings = append(bookings, syntheticBookings...)
+	reviews = append(reviews, syntheticReviews...)
 
 	clientReviewScore := 0.95
 	clientReviews := []demoClientReview{
@@ -2033,19 +2038,122 @@ func defaultWorkingHours() []domain.WorkingHours {
 	}
 }
 
-func demoImages(seed string, count int) []string {
-	images := make([]string, 0, count)
-	for i := 1; i <= count; i++ {
-		images = append(images, fmt.Sprintf("https://picsum.photos/seed/%s-%d/1600/1000", seed, i))
+func demoBathhouseImages(frontendURL, theme string) []string {
+	assetSet := map[string][]string{
+		"banya-couple": {
+			"kupel-courtyard-evening.png",
+			"steam-room-birch.png",
+			"tea-lounge-samovar.png",
+			"log-bathhouse-entrance.png",
+		},
+		"banya-pool": {
+			"premium-indoor-pool.png",
+			"steam-room-birch.png",
+			"premium-courtyard-spa.png",
+			"sauna-benches-steam.png",
+		},
+		"banya-company": {
+			"group-getaway-log-house.png",
+			"steam-room-birch.png",
+			"tea-lounge-samovar.png",
+			"log-bathhouse-entrance.png",
+		},
+		"banya-hottub": {
+			"log-sauna-kupel-forest.png",
+			"kupel-courtyard-evening.png",
+			"steam-room-birch.png",
+			"premium-courtyard-spa.png",
+		},
+		"banya-premium-pool": {
+			"premium-indoor-pool.png",
+			"premium-courtyard-spa.png",
+			"tea-lounge-samovar.png",
+			"sauna-benches-steam.png",
+		},
+		"banya-weekend": {
+			"family-bathhouse-yard.png",
+			"group-getaway-log-house.png",
+			"tea-lounge-samovar.png",
+			"log-bathhouse-entrance.png",
+		},
+		"banya-request": {
+			"log-sauna-kupel-forest.png",
+			"steam-room-birch.png",
+			"kupel-courtyard-evening.png",
+			"log-bathhouse-entrance.png",
+		},
+		"banya-premium": {
+			"premium-courtyard-spa.png",
+			"premium-indoor-pool.png",
+			"kupel-courtyard-evening.png",
+			"tea-lounge-samovar.png",
+		},
+		"banya-family": {
+			"family-bathhouse-yard.png",
+			"tea-lounge-samovar.png",
+			"sauna-benches-steam.png",
+			"log-bathhouse-entrance.png",
+		},
+		"banya-river": {
+			"riverside-log-bathhouse.png",
+			"steam-room-birch.png",
+			"log-bathhouse-entrance.png",
+			"tea-lounge-samovar.png",
+		},
+		"banya-pending": {
+			"log-bathhouse-entrance.png",
+			"steam-room-birch.png",
+			"sauna-benches-steam.png",
+		},
+		"banya-rejected": {
+			"group-getaway-log-house.png",
+			"steam-room-birch.png",
+			"tea-lounge-samovar.png",
+		},
 	}
-	return images
+
+	assets := assetSet[theme]
+	if len(assets) == 0 {
+		assets = []string{
+			"kupel-courtyard-evening.png",
+			"steam-room-birch.png",
+			"tea-lounge-samovar.png",
+			"log-bathhouse-entrance.png",
+		}
+	}
+	return demoBathhouseAssetURLs(frontendURL, assets)
 }
 
-func demoReviewImages(seed string) []string {
-	return []string{
-		fmt.Sprintf("https://picsum.photos/seed/%s-1/1200/800", seed),
-		fmt.Sprintf("https://picsum.photos/seed/%s-2/1200/800", seed),
+func demoReviewImages(frontendURL, seed string) []string {
+	assets := []string{
+		"steam-room-birch.png",
+		"log-sauna-kupel-forest.png",
+		"premium-indoor-pool.png",
+		"tea-lounge-samovar.png",
+		"sauna-benches-steam.png",
+		"log-bathhouse-entrance.png",
 	}
+
+	offset := 0
+	for _, char := range []byte(seed) {
+		offset += int(char)
+	}
+
+	first := assets[offset%len(assets)]
+	second := assets[(offset+3)%len(assets)]
+	if second == first {
+		second = assets[(offset+1)%len(assets)]
+	}
+
+	return demoBathhouseAssetURLs(frontendURL, []string{first, second})
+}
+
+func demoBathhouseAssetURLs(_ string, assets []string) []string {
+	urls := make([]string, 0, len(assets))
+	for _, asset := range assets {
+		urls = append(urls, fmt.Sprintf("/demo/bathhouses/%s", asset))
+	}
+	return urls
 }
 
 func slotAt(base time.Time, dayOffset, hour, minute int, duration time.Duration) (time.Time, time.Time) {
@@ -2117,6 +2225,218 @@ func ptrInt64(value int64) *int64 {
 	return &value
 }
 
+func buildSyntheticReviewUsers(cityIDs map[string]int64) []demoUser {
+	names := []string{
+		"Никита Орлов", "Мария Белова", "Денис Климов", "Ольга Соколова",
+		"Павел Нестеров", "Ирина Журавлева", "Глеб Смирнов", "Дарья Корнеева",
+		"Виктор Лебедев", "Надежда Миронова", "Лев Громов", "Елена Давыдова",
+	}
+	cityOrder := []int64{cityIDs["moskva"], cityIDs["odintsovo"], cityIDs["krasnogorsk"]}
+
+	users := make([]demoUser, 0, len(names))
+	for index, name := range names {
+		userID := uuid.NewSHA1(uuid.NameSpaceURL, []byte(fmt.Sprintf("demo-reviewer:%02d", index+1)))
+		cityID := cityOrder[index%len(cityOrder)]
+		users = append(users, demoUser{
+			ID:                  userID,
+			Email:               fmt.Sprintf("demo.reviewer%02d@bani.local", index+1),
+			Name:                name,
+			Phone:               fmt.Sprintf("+799900001%02d", index+1),
+			Role:                domain.RoleClient,
+			CityID:              ptrInt64(cityID),
+			Region:              domain.RegionRU,
+			AvatarURL:           fmt.Sprintf("https://i.pravatar.cc/240?img=%d", 60+index),
+			Bio:                 "Технический демо-аккаунт для исторических отзывов и social proof в публичной витрине.",
+			ReferralCode:        fmt.Sprintf("REVIEW%02d", index+1),
+			OnboardingCompleted: true,
+		})
+	}
+
+	return users
+}
+
+func buildSyntheticReviewBackfill(
+	frontendURL string,
+	now time.Time,
+	bathhouses []demoBathhouse,
+	existingReviews []demoReview,
+	reviewerUsers []demoUser,
+	adminID uuid.UUID,
+) ([]demoBooking, []demoReview) {
+	if len(reviewerUsers) == 0 {
+		return nil, nil
+	}
+
+	existingCount := make(map[uuid.UUID]int, len(bathhouses))
+	for _, review := range existingReviews {
+		if review.Status == domain.ReviewStatusApproved {
+			existingCount[review.BathhouseID]++
+		}
+	}
+
+	reviewTexts := []string{
+		"Бронь прошла спокойно: внутри чисто, пар ровный, хозяин заранее прислал понятные инструкции по заезду.",
+		"Выбирали без долгих переписок. Фото совпали с реальностью, место подготовили вовремя, отдых получился без лишнего шума.",
+		"Хороший вариант для вечернего сценария: понятный вход, аккуратная зона отдыха и комфортная температура во всех помещениях.",
+		"Брали слот на несколько часов подряд. Нигде не подгоняли, объект был готов к приезду, по сервису всё предсказуемо.",
+		"Для компании формат оказался удобным: легко припарковались, внутри было чисто, коммуникация с владельцем без задержек.",
+		"Выезд получился именно таким, как ожидали по карточке. Особенно понравились приватность, чистота и внятные правила посещения.",
+	}
+	ownerResponses := []string{
+		"Спасибо, сохранили ваши замечания и уже внесли их в подготовку следующих визитов.",
+		"Благодарим за отзыв. Команда площадки отметила ваши комментарии по температуре и сервису.",
+		"Спасибо за визит. Приятно, что сценарий совпал с ожиданиями и карточка объекта не подвела.",
+	}
+
+	bookings := make([]demoBooking, 0)
+	reviews := make([]demoReview, 0)
+
+	for bathhouseIndex, bathhouse := range bathhouses {
+		if bathhouse.Status != domain.BathhouseStatusActive || bathhouse.ReviewCount <= 0 {
+			continue
+		}
+
+		missing := bathhouse.ReviewCount - existingCount[bathhouse.ID]
+		if missing <= 0 {
+			continue
+		}
+
+		for offset := 0; offset < missing; offset++ {
+			ordinal := existingCount[bathhouse.ID] + offset + 1
+			reviewer := reviewerUsers[(bathhouseIndex+offset)%len(reviewerUsers)]
+			durationHours := maxInt(bathhouse.MinDuration, 2+(ordinal%3))
+			if bathhouse.LongSessionThresholdHours > 0 && ordinal%5 == 0 {
+				durationHours = maxInt(durationHours, bathhouse.LongSessionThresholdHours)
+			}
+			guestCount := minInt(
+				bathhouse.MaxGuests,
+				maxInt(2, bathhouse.BaseCapacity+((ordinal+bathhouseIndex)%3)-1),
+			)
+
+			daysAgo := 45 + bathhouseIndex*11 + offset*2
+			startTime := time.Date(
+				now.Year(),
+				now.Month(),
+				now.Day()-daysAgo,
+				16+((ordinal+bathhouseIndex)%4),
+				0,
+				0,
+				0,
+				now.Location(),
+			)
+			endTime := startTime.Add(time.Duration(durationHours) * time.Hour)
+
+			basePrice := bathhouse.PricePerHour * int64(durationHours)
+			longSessionDiscount := int64(0)
+			if bathhouse.LongSessionThresholdHours > 0 && durationHours >= bathhouse.LongSessionThresholdHours {
+				longSessionDiscount = basePrice * int64(bathhouse.LongSessionDiscountPercent) / 100
+			}
+			extraGuests := maxInt(0, guestCount-bathhouse.BaseCapacity)
+			extraGuestSurcharge := int64(extraGuests) * bathhouse.ExtraGuestSurcharge * int64(durationHours)
+			netPrice := basePrice - longSessionDiscount + extraGuestSurcharge
+			serviceFee := netPrice / 10
+			totalPrice := netPrice + serviceFee
+			depositAmount := int64(0)
+			depositStatus := domain.DepositNone
+			var depositReleasedAt *time.Time
+			if bathhouse.SecurityDepositPercent > 0 {
+				depositAmount = netPrice * int64(bathhouse.SecurityDepositPercent) / 100
+				depositStatus = domain.DepositReleased
+				depositReleasedAt = ptrTime(endTime.Add(48 * time.Hour))
+			}
+
+			bookingID := uuid.NewSHA1(uuid.NameSpaceURL, []byte(fmt.Sprintf("demo-review-booking:%s:%03d", bathhouse.ID, ordinal)))
+			reviewID := uuid.NewSHA1(uuid.NameSpaceURL, []byte(fmt.Sprintf("demo-review:%s:%03d", bathhouse.ID, ordinal)))
+			createdAt := endTime.Add(time.Duration(3+(ordinal%9)) * time.Hour)
+			updatedAt := createdAt.Add(2 * time.Hour)
+			var ownerResponse string
+			var ownerResponseAt *time.Time
+			if ordinal%2 == 0 {
+				ownerResponse = ownerResponses[(bathhouseIndex+offset)%len(ownerResponses)]
+				ownerResponseAt = ptrTime(createdAt.Add(12 * time.Hour))
+				updatedAt = ownerResponseAt.Add(90 * time.Minute)
+			}
+
+			ratingBase := bathhouse.Rating
+			if ratingBase <= 0 {
+				ratingBase = 4.7
+			}
+			rating := int(ratingBase + 0.3)
+			if rating < 4 {
+				rating = 4
+			}
+			if rating > 5 {
+				rating = 5
+			}
+			score := clampReviewCriterion(ratingBase)
+			accuracyScore := clampReviewCriterion(score + 0.5)
+			communicationScore := clampReviewCriterion(score + 0.5)
+			valueScore := clampReviewCriterion(score)
+			moderationScore := 0.93 + float64((ordinal+bathhouseIndex)%6)*0.01
+			if moderationScore > 0.99 {
+				moderationScore = 0.99
+			}
+
+			bookings = append(bookings, demoBooking{
+				ID:                  bookingID,
+				UserID:              reviewer.ID,
+				BathhouseID:         bathhouse.ID,
+				StartTime:           startTime,
+				EndTime:             endTime,
+				GuestCount:          guestCount,
+				TotalPrice:          totalPrice,
+				BasePrice:           basePrice,
+				LongSessionDiscount: longSessionDiscount,
+				ExtraGuestSurcharge: extraGuestSurcharge,
+				LastMinuteDiscount:  0,
+				ServiceFeeAmount:    serviceFee,
+				DepositAmount:       depositAmount,
+				DepositStatus:       depositStatus,
+				DepositReleasedAt:   depositReleasedAt,
+				CheckedInAt:         ptrTime(startTime.Add(5 * time.Minute)),
+				CheckedOutAt:        ptrTime(endTime.Add(-10 * time.Minute)),
+				Status:              domain.BookingCompleted,
+				Comment:             "Историческая демо-бронь для наполнения карточки объекта и social proof.",
+				CreatedAt:           startTime.Add(-72 * time.Hour),
+				UpdatedAt:           updatedAt,
+			})
+			reviews = append(reviews, demoReview{
+				ID:              reviewID,
+				UserID:          reviewer.ID,
+				BathhouseID:     bathhouse.ID,
+				BookingID:       bookingID,
+				Rating:          rating,
+				Cleanliness:     score,
+				Accuracy:        accuracyScore,
+				Communication:   communicationScore,
+				ValueForMoney:   valueScore,
+				Text:            reviewTexts[(bathhouseIndex+offset)%len(reviewTexts)],
+				Status:          domain.ReviewStatusApproved,
+				OwnerResponse:   ownerResponse,
+				OwnerResponseAt: ownerResponseAt,
+				ModerationScore: &moderationScore,
+				ModerationFlags: []string{},
+				Images:          reviewImagesForOrdinal(frontendURL, bathhouse.Slug, ordinal),
+				RevealAt:        ptrTime(endTime.Add(24 * time.Hour)),
+				IsRevealed:      true,
+				ModeratedBy:     &adminID,
+				ModeratedAt:     ptrTime(createdAt.Add(90 * time.Minute)),
+				CreatedAt:       createdAt,
+				UpdatedAt:       updatedAt,
+			})
+		}
+	}
+
+	return bookings, reviews
+}
+
+func reviewImagesForOrdinal(frontendURL, seed string, ordinal int) []string {
+	if ordinal%3 != 0 {
+		return []string{}
+	}
+	return demoReviewImages(frontendURL, fmt.Sprintf("%s-%03d", seed, ordinal))
+}
+
 func mustJSON(value any) string {
 	data, err := json.Marshal(value)
 	if err != nil {
@@ -2130,4 +2450,33 @@ func stringSliceOrEmpty(values []string) []string {
 		return []string{}
 	}
 	return values
+}
+
+func maxInt(left, right int) int {
+	if left > right {
+		return left
+	}
+	return right
+}
+
+func minInt(left, right int) int {
+	if left < right {
+		return left
+	}
+	return right
+}
+
+func minFloat(left, right float64) float64 {
+	if left < right {
+		return left
+	}
+	return right
+}
+
+func clampReviewCriterion(value float64) float64 {
+	clamped := minFloat(5, value)
+	if clamped < 1 {
+		clamped = 1
+	}
+	return float64(int(clamped*2+0.5)) / 2
 }

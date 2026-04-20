@@ -13,6 +13,17 @@ vi.mock('@/api/generated/auth/auth', () => ({
   getAuthMe: vi.fn(),
 }))
 
+vi.mock('@/api/axios-instance', () => ({
+  axiosInstance: {
+    get: vi.fn().mockResolvedValue({
+      data: {
+        success: true,
+        data: { providers: ['vk', 'yandex', 'google'] },
+      },
+    }),
+  },
+}))
+
 function renderInProviders(ui: React.ReactElement, route = '/login') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
@@ -33,21 +44,21 @@ describe('Login page OAuth buttons', () => {
     vi.clearAllMocks()
   })
 
-  it('renders VK, Yandex, Google OAuth buttons', () => {
+  it('renders VK, Yandex, Google OAuth buttons', async () => {
     renderInProviders(<Login />)
-    expect(screen.getByRole('button', { name: /войти через vk/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /войти через яндекс/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /войти через google/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /войти через vk/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /войти через яндекс/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /войти через google/i })).toBeInTheDocument()
   })
 
-  it('renders divider text', () => {
+  it('renders divider text', async () => {
     renderInProviders(<Login />)
-    expect(screen.getByText('или войдите через')).toBeInTheDocument()
+    expect(await screen.findByText('или войдите через')).toBeInTheDocument()
   })
 
-  it('OAuth buttons are clickable', () => {
+  it('OAuth buttons are clickable', async () => {
     renderInProviders(<Login />)
-    const vkButton = screen.getByRole('button', { name: /войти через vk/i })
+    const vkButton = await screen.findByRole('button', { name: /войти через vk/i })
     expect(vkButton).toBeEnabled()
     expect(vkButton).toHaveAttribute('type', 'button')
   })
@@ -58,11 +69,11 @@ describe('Register page OAuth buttons', () => {
     vi.clearAllMocks()
   })
 
-  it('renders VK, Yandex, Google OAuth buttons on register page', () => {
+  it('renders VK, Yandex, Google OAuth buttons on register page', async () => {
     renderInProviders(<Register />, '/register')
-    expect(screen.getByRole('button', { name: /войти через vk/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /войти через яндекс/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /войти через google/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /войти через vk/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /войти через яндекс/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /войти через google/i })).toBeInTheDocument()
   })
 
   it('still renders the regular registration form', () => {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, Progress, List, Typography, Tag } from 'antd'
+import { Button, Card, Progress, List, Typography, Tag } from 'antd'
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 
@@ -25,8 +25,17 @@ const FIELD_ACTIONS: Record<string, string> = {
   avatar: 'Загрузите фото в разделе "Аватар"',
   phone: 'Добавьте номер телефона',
   email: 'Укажите адрес электронной почты',
-  preferences: 'Настройте предпочтения',
-  notification_settings: 'Настройте уведомления в разделе "Настройки уведомлений"',
+  preferences: 'Откройте страницу предпочтений и задайте критерии подбора',
+  notification_settings: 'Откройте страницу уведомлений и настройте нужные события',
+}
+
+const FIELD_LINK_LABELS: Record<string, string> = {
+  name: 'К форме',
+  avatar: 'К аватару',
+  phone: 'К форме',
+  email: 'К форме',
+  preferences: 'Открыть',
+  notification_settings: 'Открыть',
 }
 
 export default function ProfileCompleteness({ onNavigate }: ProfileCompletenessProps) {
@@ -46,7 +55,7 @@ export default function ProfileCompleteness({ onNavigate }: ProfileCompletenessP
 
   return (
     <Card
-      title="Заполненность профиля"
+      title="Что ещё заполнить"
       size="small"
       style={{ marginBottom: 0 }}
     >
@@ -78,11 +87,26 @@ export default function ProfileCompleteness({ onNavigate }: ProfileCompletenessP
                 </Text>
               }
             />
-            {!item.complete && (
-              <Tag color="orange" style={{ fontSize: 11 }}>
-                Не заполнено
-              </Tag>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {!item.complete && (
+                <Tag color="orange" style={{ fontSize: 11, marginInlineEnd: 0 }}>
+                  Не заполнено
+                </Tag>
+              )}
+              {onNavigate && !item.complete && (
+                <Button
+                  type="link"
+                  size="small"
+                  style={{ paddingInline: 0 }}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onNavigate(item.field)
+                  }}
+                >
+                  {FIELD_LINK_LABELS[item.field] ?? 'Открыть'}
+                </Button>
+              )}
+            </div>
           </List.Item>
         )}
       />

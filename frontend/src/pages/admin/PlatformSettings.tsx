@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { App, Button, Form, Input, InputNumber, Modal, Spin, Switch, Table, Tag, Typography } from 'antd'
+import { App, Button, Form, Input, InputNumber, Modal, Spin, Switch, Table, Tag, Typography, Card } from 'antd'
 import { EditOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient } from '@tanstack/react-query'
@@ -37,6 +37,8 @@ export default function PlatformSettings() {
   const updateMutation = usePutAdminSettingsKey()
 
   const settings: InternalHandlerPlatformSettingResponse[] = data?.data ?? []
+  const boolSettingsCount = settings.filter((setting) => setting.type === 'bool').length
+  const jsonSettingsCount = settings.filter((setting) => setting.type === 'json').length
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getGetAdminSettingsQueryKey() })
@@ -48,9 +50,9 @@ export default function PlatformSettings() {
     setEditingDescription(setting.description ?? '')
     if (setting.type === 'bool') {
       setBoolValue(setting.value === 'true')
-    } else {
-      setFormValue(setting.value ?? '')
+      return
     }
+    setFormValue(setting.value ?? '')
   }
 
   const handleSave = async () => {
@@ -68,7 +70,7 @@ export default function PlatformSettings() {
         return (
           <InputNumber
             value={formValue ? Number(formValue) : undefined}
-            onChange={(v) => setFormValue(String(v ?? ''))}
+            onChange={(value) => setFormValue(String(value ?? ''))}
             style={{ width: '100%' }}
             precision={0}
           />
@@ -77,7 +79,7 @@ export default function PlatformSettings() {
         return (
           <InputNumber
             value={formValue ? Number(formValue) : undefined}
-            onChange={(v) => setFormValue(String(v ?? ''))}
+            onChange={(value) => setFormValue(String(value ?? ''))}
             style={{ width: '100%' }}
             step={0.01}
           />
@@ -95,7 +97,7 @@ export default function PlatformSettings() {
         return (
           <TextArea
             value={formValue}
-            onChange={(e) => setFormValue(e.target.value)}
+            onChange={(event) => setFormValue(event.target.value)}
             rows={6}
             placeholder="{}"
           />
@@ -104,7 +106,7 @@ export default function PlatformSettings() {
         return (
           <Input
             value={formValue}
-            onChange={(e) => setFormValue(e.target.value)}
+            onChange={(event) => setFormValue(event.target.value)}
           />
         )
     }
@@ -150,7 +152,7 @@ export default function PlatformSettings() {
       key: 'updated_at',
       width: 160,
       responsive: ['md'] as const,
-      render: (val: string) => val ? formatDateTime(val) : '—',
+      render: (value: string) => value ? formatDateTime(value) : '—',
     },
     {
       title: '',
@@ -170,25 +172,47 @@ export default function PlatformSettings() {
   ]
 
   return (
-    <div>
+    <div className="bani-stack">
       <PageHeader
         eyebrow="Системные параметры"
         title="Настройки платформы"
         description="Служебные параметры и их значения в более читаемом рабочем виде."
       />
 
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}><Spin size="large" /></div>
-      ) : (
-        <Table
-          dataSource={settings}
-          columns={columns}
-          rowKey="key"
-          pagination={false}
-          size="middle"
-          locale={{ emptyText: 'Нет настроек' }}
-        />
-      )}
+      <div className="bani-stat-grid">
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Всего параметров</span>
+          <span className="bani-stat-tile__value">{settings.length}</span>
+          <span className="bani-stat-tile__hint">Все редактируемые настройки текущей платформы.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Логические флаги</span>
+          <span className="bani-stat-tile__value">{boolSettingsCount}</span>
+          <span className="bani-stat-tile__hint">Переключатели режимов и feature-toggle параметров.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">JSON параметры</span>
+          <span className="bani-stat-tile__value">{jsonSettingsCount}</span>
+          <span className="bani-stat-tile__hint">Структурированные служебные конфиги и схемы.</span>
+        </div>
+      </div>
+
+      <Card title="Текущие настройки">
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: 48 }}>
+            <Spin size="large" />
+          </div>
+        ) : (
+          <Table
+            dataSource={settings}
+            columns={columns}
+            rowKey="key"
+            pagination={false}
+            size="middle"
+            locale={{ emptyText: 'Нет настроек' }}
+          />
+        )}
+      </Card>
 
       <Modal
         title={`Изменить: ${editingKey}`}

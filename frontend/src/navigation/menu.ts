@@ -8,12 +8,19 @@ export interface NavigationItem {
   isActive: (pathname: string, searchParams: URLSearchParams) => boolean
 }
 
+export interface NavigationSection {
+  key: string
+  title: string
+  items: NavigationItem[]
+}
+
 export interface PublicShortcutCard {
   key: string
   title: string
   description: string
   eyebrow: string
   to: string
+  params: Record<string, string>
 }
 
 function exactItem(key: string, label: string, to: string, section?: string): NavigationItem {
@@ -78,18 +85,18 @@ const PUBLIC_FILTER_NAV_ITEMS: NavigationItem[] = [
 ]
 
 const PUBLIC_SUPPORT_NAV_ITEMS: NavigationItem[] = [
-  exactItem('faq', 'FAQ', '/faq', 'Помощь'),
-  exactItem('contacts', 'Контакты', '/contacts', 'Помощь'),
+  exactItem('faq', 'Помощь', '/faq'),
+  exactItem('contacts', 'Контакты', '/contacts'),
 ]
 
 export const PUBLIC_PRIMARY_NAV_ITEMS: NavigationItem[] = [
-  catalogItem('catalog-all', 'Все бани'),
+  catalogItem('catalog-all', 'Каталог'),
   exactItem('certificates', 'Сертификаты', '/certificates'),
+  ...PUBLIC_SUPPORT_NAV_ITEMS,
 ]
 
 export const PUBLIC_OVERFLOW_NAV_ITEMS: NavigationItem[] = [
   ...PUBLIC_FILTER_NAV_ITEMS,
-  ...PUBLIC_SUPPORT_NAV_ITEMS,
 ]
 
 export const PUBLIC_NAV_ITEMS: NavigationItem[] = [
@@ -103,6 +110,7 @@ export const PUBLIC_SHORTCUT_CARDS: PublicShortcutCard[] = [
     eyebrow: 'Сценарий',
     title: 'Для двоих',
     description: 'Камерные приватные бани для спокойного вечера без лишнего шума.',
+    params: { guest_count: '2' },
     to: buildCatalogPath({ guest_count: '2' }),
   },
   {
@@ -110,6 +118,7 @@ export const PUBLIC_SHORTCUT_CARDS: PublicShortcutCard[] = [
     eyebrow: 'Компания',
     title: 'Для компании',
     description: 'Большие объекты на 6+ гостей для дней рождений, сборов и выездов.',
+    params: { guest_count: '6' },
     to: buildCatalogPath({ guest_count: '6' }),
   },
   {
@@ -117,6 +126,7 @@ export const PUBLIC_SHORTCUT_CARDS: PublicShortcutCard[] = [
     eyebrow: 'Выходные',
     title: 'На выходные',
     description: 'Подборка с доступностью на ближайшую субботу без ручной фильтрации.',
+    params: { available_date: nextSaturdayString() },
     to: buildCatalogPath({ available_date: nextSaturdayString() }),
   },
   {
@@ -124,29 +134,90 @@ export const PUBLIC_SHORTCUT_CARDS: PublicShortcutCard[] = [
     eyebrow: 'Комфорт',
     title: 'С чаном',
     description: 'Витрина объектов с чаном, уличным парением и вечерним сценарием отдыха.',
+    params: { has_hot_tub: 'true' },
     to: buildCatalogPath({ has_hot_tub: 'true' }),
+  },
+  {
+    key: 'pool',
+    eyebrow: 'Комфорт',
+    title: 'С бассейном',
+    description: 'Объекты с бассейном для долгого маршрута отдыха без отдельного поиска по удобствам.',
+    params: { has_pool: 'true' },
+    to: buildCatalogPath({ has_pool: 'true' }),
   },
 ]
 
 export const CLIENT_PRIMARY_NAV_ITEMS: NavigationItem[] = [
-  catalogItem('catalog-all', 'Все бани'),
+  catalogItem('catalog-all', 'Каталог'),
   prefixItem('client-bookings', 'Мои брони', '/client/bookings'),
+  exactItem('client-certificates', 'Сертификаты', '/certificates'),
+  exactItem('client-faq', 'Помощь', '/faq'),
+  exactItem('client-contacts', 'Контакты', '/contacts'),
 ]
 
 export const CLIENT_OVERFLOW_NAV_ITEMS: NavigationItem[] = [
-  exactItem('client-certificates', 'Сертификаты', '/certificates', 'Публичное'),
   ...PUBLIC_FILTER_NAV_ITEMS,
-  ...PUBLIC_SUPPORT_NAV_ITEMS,
-  prefixItem('client-favorites', 'Избранное', '/client/favorites', ['/client/favorites'], 'Кабинет'),
-  prefixItem('client-wallet', 'Кошелек', '/client/wallet', ['/client/wallet'], 'Кабинет'),
-  prefixItem('client-payments', 'Платежи', '/client/payments', ['/client/payments'], 'Кабинет'),
-  prefixItem('client-cards', 'Карты', '/client/cards', ['/client/cards'], 'Кабинет'),
-  prefixItem('client-chat', 'Чат', '/client/chat', ['/client/chat'], 'Кабинет'),
-  prefixItem('client-tickets', 'Поддержка', '/client/tickets', ['/client/tickets'], 'Кабинет'),
-  prefixItem('client-disputes', 'Споры', '/client/disputes', ['/client/disputes'], 'Кабинет'),
-  prefixItem('client-notifications', 'Уведомления', '/client/notifications', ['/client/notifications'], 'Кабинет'),
-  prefixItem('client-security', 'Безопасность', '/client/security', ['/client/security'], 'Кабинет'),
-  prefixItem('client-profile', 'Профиль', '/client/profile', ['/client/profile'], 'Кабинет'),
+]
+
+export const CLIENT_PROFILE_MENU_ITEMS: NavigationItem[] = [
+  prefixItem('client-profile', 'Профиль', '/client/profile', ['/client/profile'], 'Аккаунт'),
+  prefixItem('client-notifications', 'Уведомления', '/client/notification-preferences', ['/client/notification-preferences'], 'Аккаунт'),
+  prefixItem('client-security', 'Безопасность', '/client/security', ['/client/security'], 'Аккаунт'),
+  prefixItem('client-wallet', 'Кошелёк', '/client/wallet', ['/client/wallet'], 'Финансы'),
+  prefixItem('client-payments', 'Платежи', '/client/payments', ['/client/payments'], 'Финансы'),
+  prefixItem('client-cards', 'Карты', '/client/cards', ['/client/cards'], 'Финансы'),
+]
+
+export const CLIENT_MOBILE_SERVICE_ITEMS: NavigationItem[] = [
+  prefixItem('client-favorites', 'Избранное', '/client/favorites', ['/client/favorites']),
+  prefixItem('client-chat', 'Чат', '/client/chat', ['/client/chat']),
+  prefixItem('client-tickets', 'Поддержка', '/client/tickets', ['/client/tickets']),
+  prefixItem('client-disputes', 'Споры', '/client/disputes', ['/client/disputes']),
+]
+
+export const PUBLIC_DRAWER_SECTIONS: NavigationSection[] = [
+  {
+    key: 'public-navigation',
+    title: 'Навигация',
+    items: PUBLIC_PRIMARY_NAV_ITEMS,
+  },
+  {
+    key: 'public-picks',
+    title: 'Подборки',
+    items: PUBLIC_FILTER_NAV_ITEMS,
+  },
+]
+
+export const CLIENT_DRAWER_SECTIONS: NavigationSection[] = [
+  {
+    key: 'client-navigation',
+    title: 'Навигация',
+    items: CLIENT_PRIMARY_NAV_ITEMS,
+  },
+  {
+    key: 'client-account',
+    title: 'Аккаунт и финансы',
+    items: CLIENT_PROFILE_MENU_ITEMS,
+  },
+  {
+    key: 'client-services',
+    title: 'Сервисы',
+    items: CLIENT_MOBILE_SERVICE_ITEMS,
+  },
+]
+
+export const PUBLIC_FOOTER_NAV_ITEMS: NavigationItem[] = [
+  catalogItem('footer-catalog', 'Каталог'),
+  exactItem('footer-certificates', 'Сертификаты', '/certificates'),
+  exactItem('footer-help', 'Помощь', '/faq'),
+  exactItem('footer-contacts', 'Контакты', '/contacts'),
+]
+
+export const CLIENT_FOOTER_ACCOUNT_ITEMS: NavigationItem[] = [
+  prefixItem('footer-client-bookings', 'Мои брони', '/client/bookings', ['/client/bookings']),
+  prefixItem('footer-client-wallet', 'Кошелёк', '/client/wallet', ['/client/wallet']),
+  prefixItem('footer-client-payments', 'Платежи', '/client/payments', ['/client/payments']),
+  prefixItem('footer-client-cards', 'Карты', '/client/cards', ['/client/cards']),
 ]
 
 export const OWNER_PRIMARY_NAV_ITEMS: NavigationItem[] = [

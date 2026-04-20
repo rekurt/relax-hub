@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { Typography, List, Button, Badge, Space, Empty, Card, App } from 'antd'
+import { useMemo, useState } from 'react'
+import { App, Button, Card, Empty, List, Pagination, Typography } from 'antd'
 import { CheckOutlined, BellOutlined } from '@ant-design/icons'
+import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/ru'
@@ -9,9 +10,8 @@ import {
   usePatchMyNotificationsIdRead,
   usePatchMyNotificationsReadAll,
 } from '@/api/generated/notifications/notifications'
-import { useQueryClient } from '@tanstack/react-query'
-import { NOTIFICATION_TYPE_LABELS } from '@/lib/constants'
 import PageHeader from '@/components/PageHeader'
+import { NOTIFICATION_TYPE_LABELS } from '@/lib/constants'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
@@ -31,6 +31,11 @@ export default function NotificationList() {
 
   const notifications = data?.data ?? []
   const meta = data?.meta
+
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => !notification.is_read).length,
+    [notifications],
+  )
 
   const markOneRead = usePatchMyNotificationsIdRead({
     mutation: {
@@ -53,12 +58,12 @@ export default function NotificationList() {
   })
 
   return (
-    <div>
+    <div className="bani-stack">
       <PageHeader
         eyebrow="Лента"
         title="Уведомления"
-        description="Все события собраны в одном месте. Непрочитанные помечены акцентом и доступны для быстрого чтения."
-        extra={
+        description="Уведомления сгруппированы как рабочая лента: непрочитанные стоят выше по вниманию, а массовое чтение доступно без лишних переходов."
+        extra={(
           <Button
             icon={<CheckOutlined />}
             onClick={() => markAllRead.mutate()}
@@ -66,8 +71,33 @@ export default function NotificationList() {
           >
             Прочитать все
           </Button>
-        }
+        )}
       />
+
+      <section className="bani-hero-panel">
+        <div className="bani-hero-panel__eyebrow">Сводка</div>
+        <h2 className="bani-hero-panel__title">Лента сделана как очередь внимания, а не как сырой список</h2>
+        <div className="bani-hero-panel__description">
+          Пользователь сразу понимает, сколько сообщений требуют реакции прямо сейчас и сколько уже обработано. Это удобнее, чем длинная плоская лента без приоритетов.
+        </div>
+        <div className="bani-stat-grid">
+          <div className="bani-stat-tile">
+            <span className="bani-stat-tile__eyebrow">Непрочитанные</span>
+            <div className="bani-stat-tile__value">{unreadCount}</div>
+            <span className="bani-stat-tile__hint">Сообщения, которые требуют просмотра</span>
+          </div>
+          <div className="bani-stat-tile">
+            <span className="bani-stat-tile__eyebrow">Всего на странице</span>
+            <div className="bani-stat-tile__value">{notifications.length}</div>
+            <span className="bani-stat-tile__hint">Текущий блок ленты с пагинацией</span>
+          </div>
+          <div className="bani-stat-tile">
+            <span className="bani-stat-tile__eyebrow">Всего в истории</span>
+            <div className="bani-stat-tile__value">{meta?.total_count ?? 0}</div>
+            <span className="bani-stat-tile__hint">Полный объём уведомлений аккаунта</span>
+          </div>
+        </div>
+      </section>
 
       <Card>
         <List
@@ -81,75 +111,61 @@ export default function NotificationList() {
               />
             ),
           }}
-          pagination={{
-            current: page,
-            pageSize: pageSize,
-            total: meta?.total_count ?? 0,
-            onChange: (p, ps) => {
-              setPage(p)
-              setPageSize(ps)
-            },
-            showSizeChanger: true,
-            showTotal: (total) => `Всего: ${total}`,
-          }}
           renderItem={(item) => (
-            <List.Item
-              style={{
-                cursor: item.is_read ? 'default' : 'pointer',
-                background: item.is_read ? undefined : 'rgba(15, 118, 110, 0.05)',
-                padding: '14px 16px',
-                borderRadius: 14,
-                border: '1px solid rgba(15, 23, 42, 0.06)',
-                marginBottom: 8,
-              }}
-              onClick={() => {
-                if (!item.is_read && item.id) {
-                  markOneRead.mutate({ id: item.id })
-                }
-              }}
-              actions={
-                !item.is_read
-                  ? [
-                      <Button
-                        key="read"
-                        type="link"
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (item.id) markOneRead.mutate({ id: item.id })
-                        }}
-                      >
-                        Прочитать
-                      </Button>,
-                    ]
-                  : undefined
-              }
-            >
-              <List.Item.Meta
-                avatar={
-                  <Space>
-                    {!item.is_read && <Badge status="processing" />}
-                    {item.is_read && <Badge status="default" />}
-                  </Space>
-                }
-                title={
-                  <Text strong={!item.is_read}>
-                    {item.title ?? NOTIFICATION_TYPE_LABELS[item.type ?? ''] ?? 'Уведомление'}
-                  </Text>
-                }
-                description={
-                  <div>
-                    <Text type="secondary">{item.body}</Text>
-                    <br />
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      {item.created_at ? dayjs(item.created_at).fromNow() : ''}
+            <List.Item style={{ padding: 0, border: 0, marginBottom: 12 }}>
+              <div
+                className={`bani-feed-item${item.is_read ? '' : ' bani-feed-item--unread'}`}
+                style={{ width: '100%', cursor: item.is_read ? 'default' : 'pointer' }}
+                onClick={() => {
+                  if (!item.is_read && item.id) {
+                    markOneRead.mutate({ id: item.id })
+                  }
+                }}
+              >
+                <div className="bani-feed-item__main">
+                  <div className="bani-feed-item__badge" />
+                  <div className="bani-feed-item__copy">
+                    <Text strong={!item.is_read}>
+                      {item.title ?? NOTIFICATION_TYPE_LABELS[item.type ?? ''] ?? 'Уведомление'}
                     </Text>
+                    <Text type="secondary">{item.body}</Text>
+                    <span className="bani-feed-item__meta">
+                      {item.created_at ? dayjs(item.created_at).fromNow() : ''}
+                    </span>
                   </div>
-                }
-              />
+                </div>
+                {!item.is_read && (
+                  <div className="bani-feed-item__actions">
+                    <Button
+                      type="link"
+                      size="small"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        if (item.id) markOneRead.mutate({ id: item.id })
+                      }}
+                    >
+                      Прочитать
+                    </Button>
+                  </div>
+                )}
+              </div>
             </List.Item>
           )}
         />
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+          <Pagination
+            current={page}
+            pageSize={pageSize}
+            total={meta?.total_count ?? 0}
+            onChange={(nextPage, nextPageSize) => {
+              setPage(nextPage)
+              setPageSize(nextPageSize)
+            }}
+            showSizeChanger
+            showTotal={(total) => `Всего: ${total}`}
+          />
+        </div>
       </Card>
     </div>
   )

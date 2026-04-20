@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { Form, Input, Button, Card, Typography, Space, App, Result } from 'antd'
+import { Form, Input, Button, Card, Space, App, Result } from 'antd'
 import { MailOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
 import { postAuthForgotPassword } from '@/api/generated/auth/auth'
+import AuthShell from '@/components/AuthShell'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
-
-const { Title, Text } = Typography
 
 export default function ForgotPassword() {
   const { message } = App.useApp()
@@ -33,8 +32,19 @@ export default function ForgotPassword() {
 
   if (sent) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f5f5f5' }}>
-        <Card style={{ width: 400 }}>
+      <AuthShell
+        eyebrow="Восстановление доступа"
+        title="Инструкция отправлена"
+        description="Мы отправили инструкцию на указанный email."
+        asideTitle="Доступ восстанавливается без поддержки"
+        asideDescription="Страница сброса пароля должна закрывать задачу пользователя за пару минут, без ручных обращений и без лишних форм."
+        highlights={[
+          'Ссылка приходит на email, указанный при регистрации.',
+          'После перехода по ссылке можно сразу задать новый пароль.',
+          'Если письма нет, проверьте папку со спамом и повторите запрос.',
+        ]}
+      >
+        <Card bordered={false} className="bani-auth-surface">
           <Result
             status="success"
             title="Письмо отправлено"
@@ -46,21 +56,34 @@ export default function ForgotPassword() {
             }
           />
         </Card>
-      </div>
+      </AuthShell>
     )
   }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f5f5f5' }}>
-      <Card style={{ width: 400 }}>
+    <AuthShell
+      eyebrow="Восстановление доступа"
+      title="Восстановление пароля"
+      description="Введите email, указанный при регистрации"
+      asideTitle="Возврат доступа без долгого сценария"
+      asideDescription="Восстановление пароля должно быть предсказуемым: один email, одно письмо, один переход обратно к входу."
+      highlights={[
+        'Ссылка для восстановления приходит только на подтверждённый email аккаунта.',
+        'Пароль меняется по защищённой ссылке, без общения с поддержкой.',
+        'После смены можно сразу вернуться ко входу и продолжить работу.',
+      ]}
+      footer={<Link to="/login">Вернуться к входу</Link>}
+    >
+      <Card bordered={false} className="bani-auth-surface">
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div style={{ textAlign: 'center' }}>
-            <Title level={3}>Восстановление пароля</Title>
-            <Text type="secondary">Введите email, указанный при регистрации</Text>
-          </div>
-
-          <Form layout="vertical" onFinish={onFinish} autoComplete="off">
+          <Form
+            className="bani-auth-form"
+            layout="vertical"
+            onFinish={onFinish}
+            autoComplete="off"
+          >
             <Form.Item
+              label="Адрес email"
               name="email"
               rules={[
                 { required: true, message: 'Введите email' },
@@ -70,18 +93,14 @@ export default function ForgotPassword() {
               <Input prefix={<MailOutlined />} placeholder="Email" size="large" />
             </Form.Item>
 
-            <Form.Item>
+            <Form.Item className="bani-auth-form__actions">
               <Button type="primary" htmlType="submit" loading={loading} block size="large">
                 Отправить ссылку
               </Button>
             </Form.Item>
           </Form>
-
-          <div style={{ textAlign: 'center' }}>
-            <Link to="/login">Вернуться к входу</Link>
-          </div>
         </Space>
       </Card>
-    </div>
+    </AuthShell>
   )
 }

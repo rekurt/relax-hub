@@ -92,6 +92,46 @@ func (m *mockPaymentService) ListUserPayments(ctx context.Context, userID uuid.U
 
 var _ service.PaymentService = (*mockPaymentService)(nil)
 
+type mockCertificateWebhookService struct {
+	handleWebhookFn func(ctx context.Context, event service.WebhookEvent) error
+}
+
+func (m *mockCertificateWebhookService) Purchase(_ context.Context, _ int64, _ *uuid.UUID, _, _, _, _ string) (*domain.GiftCertificate, error) {
+	return nil, nil
+}
+func (m *mockCertificateWebhookService) CreateOrder(_ context.Context, _ int64, _ *uuid.UUID, _, _, _, _ string) (*domain.CertificateOrder, error) {
+	return nil, nil
+}
+func (m *mockCertificateWebhookService) InitiatePayment(_ context.Context, _ uuid.UUID, _ service.CertificateOrderPaymentRequest) (string, error) {
+	return "", nil
+}
+func (m *mockCertificateWebhookService) GetOrder(_ context.Context, _ uuid.UUID) (*domain.CertificateOrder, error) {
+	return nil, nil
+}
+func (m *mockCertificateWebhookService) HandlePaymentWebhook(ctx context.Context, event service.WebhookEvent) error {
+	if m.handleWebhookFn != nil {
+		return m.handleWebhookFn(ctx, event)
+	}
+	return nil
+}
+func (m *mockCertificateWebhookService) Redeem(_ context.Context, _ string, _ uuid.UUID) (*domain.GiftCertificate, error) {
+	return nil, nil
+}
+func (m *mockCertificateWebhookService) Apply(_ context.Context, _, _ uuid.UUID, _ int64) error {
+	return nil
+}
+func (m *mockCertificateWebhookService) RefundUsage(_ context.Context, _ uuid.UUID) error {
+	return nil
+}
+func (m *mockCertificateWebhookService) GetBalance(_ context.Context, _ string) (*domain.GiftCertificate, error) {
+	return nil, nil
+}
+func (m *mockCertificateWebhookService) ListByUser(_ context.Context, _ uuid.UUID, _, _ int) (*domain.PaginatedResult[domain.GiftCertificate], error) {
+	return &domain.PaginatedResult[domain.GiftCertificate]{}, nil
+}
+
+var _ service.CertificateService = (*mockCertificateWebhookService)(nil)
+
 // --- Tests ---
 
 func TestPaymentHandler_InitiatePayment(t *testing.T) {
@@ -208,6 +248,45 @@ func TestPaymentHandler_HandleWebhook(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d", rec.Code)
+	}
+}
+
+func TestPaymentHandler_HandleWebhook_FallsBackToCertificateOrders(t *testing.T) {
+	var certificateWebhookCalled bool
+
+	paymentSvc := &mockPaymentService{
+		handleWebhookFn: func(ctx context.Context, event service.WebhookEvent) error {
+			return domain.ErrPaymentNotFound
+		},
+	}
+	certificateSvc := &mockCertificateWebhookService{
+		handleWebhookFn: func(ctx context.Context, event service.WebhookEvent) error {
+			certificateWebhookCalled = true
+			if event.ExternalID != "certificate-external-id" {
+				t.Fatalf("unexpected external id: %s", event.ExternalID)
+			}
+			if event.Status != "succeeded" {
+				t.Fatalf("unexpected status: %s", event.Status)
+			}
+			return nil
+		},
+	}
+
+	h := handler.NewPaymentHandler(paymentSvc, certificateSvc)
+	router := chi.NewRouter()
+	router.Post("/webhooks/yookassa", h.HandleWebhook)
+
+	body := `{"event":"payment.succeeded","object":{"id":"certificate-external-id","status":"succeeded"}}`
+	req := httptest.NewRequest(http.MethodPost, "/webhooks/yookassa", bytes.NewBufferString(body))
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !certificateWebhookCalled {
+		t.Fatal("expected webhook to be delegated to certificate service")
 	}
 }
 

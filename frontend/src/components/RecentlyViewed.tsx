@@ -4,6 +4,7 @@ import { formatPrice } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
 import { useGetMyRecentlyViewed } from '@/api/generated/saved-searches/saved-searches'
 import PublicState from '@/components/PublicState'
+import { resolveAssetUrl } from '@/lib/asset-url'
 import { useAuthStore } from '@/stores/auth'
 
 const { Text, Title } = Typography
@@ -68,7 +69,7 @@ export default function RecentlyViewed() {
             cover={item.cover_photo ? (
               <img
                 alt={item.name}
-                src={item.cover_photo as string}
+                src={resolveAssetUrl(item.cover_photo as string)}
                 style={{ height: 100, objectFit: 'cover' }}
               />
             ) : undefined}

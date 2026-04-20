@@ -41,6 +41,13 @@ import { useGetBathhousesIdGallery } from '@/api/generated/review-media/review-m
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
 import { useGetMyWallet } from '@/api/generated/wallet/wallet'
 import { axiosInstance } from '@/api/axios-instance'
+import {
+  getBookingModeLabel,
+  getBookingModeTrustCopy,
+  getCancellationPolicyDetails,
+  getCancellationPolicyLabel,
+  getDepositSummary,
+} from '@/lib/booking-flow'
 import { formatPrice, formatDayOfWeek } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
 import PublicState from '@/components/PublicState'
@@ -49,23 +56,11 @@ import ShareButton from '@/components/ShareButton'
 import TransportAccessibility, { type TransportItem } from '@/components/TransportAccessibility'
 import SimilarBathhouses from '@/components/SimilarBathhouses'
 import PriceBreakdown from '@/components/PriceBreakdown'
+import ContiguousSlotSelector from '@/components/ContiguousSlotSelector'
+import { resolveAssetUrl } from '@/lib/asset-url'
+import { formatSlotTimeLabel, getRangeHours, resolveSlotRangeSelection, type SlotRangeSelection } from '@/lib/slot-selection'
 
 const { Title, Text, Paragraph } = Typography
-
-const CANCELLATION_POLICY_DETAILS: Record<string, { label: string; description: string }> = {
-  flexible: {
-    label: 'Гибкая',
-    description: 'Бесплатная отмена за 24+ ч. Возврат 50% менее чем за 24 ч.',
-  },
-  moderate: {
-    label: 'Умеренная',
-    description: 'Бесплатная отмена за 72+ ч. Возврат 50% за 24-72 ч. Без возврата менее 24 ч.',
-  },
-  strict: {
-    label: 'Строгая',
-    description: 'Бесплатная отмена за 7+ дней. Возврат 50% за 3-7 дней. Без возврата менее 3 дней.',
-  },
-}
 
 const AMENITY_LIST = [
   { key: 'has_sauna', label: 'Сауна' },
@@ -84,6 +79,7 @@ export default function BathhouseDetail() {
   const currentUser = useAuthStore((s) => s.user)
   const [selectedDate, setSelectedDate] = useState<string>(dayjs().format('YYYY-MM-DD'))
   const [reviewPage, setReviewPage] = useState(1)
+  const [selectedSlotRange, setSelectedSlotRange] = useState<SlotRangeSelection | null>(null)
 
   const { data: bathhouseData, isLoading, isError: bathhouseIsError, refetch: refetchBathhouse } = useGetBathhousesBySlugSlug(slug ?? '', {
     query: { enabled: !!slug },
@@ -108,7 +104,7 @@ export default function BathhouseDetail() {
   )
   const slots = slotsData?.data ?? []
 
-  const { data: reviewsData } = useGetBathhousesIdReviews(id ?? '', { page: reviewPage, page_size: 5 }, {
+  const { data: reviewsData } = useGetBathhousesIdReviews(id ?? '', { page: reviewPage, page_size: 20 }, {
     query: { enabled: !!id },
   })
   const reviews = reviewsData?.data ?? []
@@ -182,6 +178,34 @@ export default function BathhouseDetail() {
     }
   }, [schemaJsonLd])
 
+  const minDurationHours = Math.max(1, bathhouse?.min_duration ?? 1)
+  const resolvedSlotRange = resolveSlotRangeSelection(slots, selectedSlotRange)
+  const selectedRangeHours = resolvedSlotRange ? getRangeHours(resolvedSlotRange.from, resolvedSlotRange.to) : 0
+  const selectedRange = resolvedSlotRange && selectedRangeHours >= minDurationHours
+    ? {
+      ...resolvedSlotRange,
+      hours: selectedRangeHours,
+    }
+    : null
+  const selectedRangeNeedsHours = resolvedSlotRange ? Math.max(0, minDurationHours - selectedRangeHours) : 0
+  const displayedReviewCount = reviewMeta?.total_count ?? bathhouse?.review_count ?? reviews.length
+
+  useEffect(() => {
+    const nextRange = resolveSlotRangeSelection(slots, selectedSlotRange)
+    if (selectedSlotRange && !nextRange) {
+      setSelectedSlotRange(null)
+      return
+    }
+
+    if (
+      selectedSlotRange
+      && nextRange
+      && (selectedSlotRange.from !== nextRange.from || selectedSlotRange.to !== nextRange.to)
+    ) {
+      setSelectedSlotRange(nextRange)
+    }
+  }, [selectedSlotRange, slots])
+
   if (isLoading) {
     return (
       <PublicState
@@ -219,15 +243,22 @@ export default function BathhouseDetail() {
   }
 
   const allPhotos = [
-    ...photos.map((p) => p.url).filter(Boolean),
-    ...(bathhouse.images ?? []),
-    ...gallery.map((g) => g.url).filter(Boolean),
+    ...photos.map((p) => resolveAssetUrl(p.url)).filter(Boolean),
+    ...(bathhouse.images ?? []).map((url) => resolveAssetUrl(url)),
+    ...gallery.map((g) => resolveAssetUrl(g.url)).filter(Boolean),
   ] as string[]
   const uniquePhotos = [...new Set(allPhotos)]
 
   const amenities = AMENITY_LIST.filter(
     (a) => bathhouse[a.key as keyof typeof bathhouse],
   )
+  const bookingMode = (bathhouse as Record<string, unknown>).booking_mode as string | undefined
+  const cancellationPolicy = (bathhouse as Record<string, unknown>).cancellation_policy as string | undefined
+  const depositPercent = (bathhouse as Record<string, unknown>).security_deposit_percent as number | undefined
+  const bookingModeLabel = getBookingModeLabel(bookingMode)
+  const bookingModeTrustCopy = getBookingModeTrustCopy(bookingMode)
+  const cancellationDetails = getCancellationPolicyDetails(cancellationPolicy)
+  const minimumDurationLabel = bathhouse.min_duration ? `от ${bathhouse.min_duration} ч` : 'Без ограничения'
   const areaAveragePrice = bathhouse.area_avg_price_per_hour
   const showAreaAveragePrice = areaAveragePrice != null
     && areaAveragePrice > 0
@@ -235,16 +266,77 @@ export default function BathhouseDetail() {
     && areaAveragePrice >= Math.round(bathhouse.price_per_hour * 0.2)
     && areaAveragePrice <= Math.round(bathhouse.price_per_hour * 5)
 
+  const scrollToSection = (sectionId: string) => {
+    const section = document.getElementById(sectionId)
+    section?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
-    <div>
+    <div className="bani-stack">
       <Button
         type="text"
         icon={<ArrowLeftOutlined />}
         onClick={() => navigate('/catalog')}
-        style={{ marginBottom: 16 }}
       >
         К поиску
       </Button>
+
+      <section className="bani-hero-panel bani-hero-panel--dark bani-detail-hero">
+        <div className="bani-detail-hero__header">
+          <div className="bani-stack">
+            <div className="bani-hero-panel__eyebrow">Публичное бронирование</div>
+            <h1 className="bani-hero-panel__title">
+              {bathhouse.name}
+              {bathhouse.is_photo_verified && <CheckCircleOutlined style={{ marginLeft: 10, fontSize: 22 }} />}
+            </h1>
+            <div className="bani-detail-hero__lead">
+              {bathhouse.address && (
+                <span className="bani-detail-hero__lead-item">
+                  <EnvironmentOutlined />
+                  {bathhouse.address}
+                </span>
+              )}
+              <span className="bani-detail-hero__lead-item">
+                <Rate disabled allowHalf value={bathhouse.rating ?? 0} />
+                <span>{bathhouse.rating?.toFixed(1)} · {displayedReviewCount} отзывов</span>
+              </span>
+            </div>
+            <div className="bani-hero-panel__description">
+              {bathhouse.description || 'Свободные слоты, правила и стоимость собраны прямо на этой странице.'}
+            </div>
+          </div>
+
+          <div className="bani-detail-hero__actions">
+            <Button type="primary" size="large" onClick={() => scrollToSection('bathhouse-slots')}>
+              Выбрать слот
+            </Button>
+            <Button size="large" onClick={() => scrollToSection('bathhouse-rules')}>
+              Правила и условия
+            </Button>
+          </div>
+        </div>
+
+        <div className="bani-hero-panel__meta">
+          <div className="bani-hero-panel__meta-item">
+            <span className="bani-hero-panel__meta-label">Цена от</span>
+            <div className="bani-hero-panel__meta-value">
+              {bathhouse.price_per_hour ? formatPrice(bathhouse.price_per_hour) : 'По запросу'}
+            </div>
+          </div>
+          <div className="bani-hero-panel__meta-item">
+            <span className="bani-hero-panel__meta-label">Минимум</span>
+            <div className="bani-hero-panel__meta-value">{minimumDurationLabel}</div>
+          </div>
+          <div className="bani-hero-panel__meta-item">
+            <span className="bani-hero-panel__meta-label">Подтверждение</span>
+            <div className="bani-hero-panel__meta-value">{bookingModeTrustCopy}</div>
+          </div>
+          <div className="bani-hero-panel__meta-item">
+            <span className="bani-hero-panel__meta-label">Отмена</span>
+            <div className="bani-hero-panel__meta-value">{getCancellationPolicyLabel(cancellationPolicy)} отмена</div>
+          </div>
+        </div>
+      </section>
 
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={16}>
@@ -273,20 +365,10 @@ export default function BathhouseDetail() {
             )}
 
             <div style={{ marginTop: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div className="bani-toolbar">
                 <div>
-                  <Title level={3} style={{ margin: 0 }}>
-                    {bathhouse.name}
-                    {bathhouse.is_photo_verified && (
-                      <CheckCircleOutlined style={{ color: '#52c41a', marginLeft: 8, fontSize: 18 }} />
-                    )}
-                  </Title>
-                  {bathhouse.address && (
-                    <Text type="secondary">
-                      <EnvironmentOutlined style={{ marginRight: 4 }} />
-                      {bathhouse.address}
-                    </Text>
-                  )}
+                  <Title level={3} style={{ margin: 0 }}>Описание и условия</Title>
+                  <Text type="secondary">Сначала то, что влияет на бронирование, затем вторичные детали объекта.</Text>
                 </div>
                 <Space>
                   <ShareButton
@@ -306,11 +388,6 @@ export default function BathhouseDetail() {
                   )}
                 </Space>
               </div>
-
-              <Space style={{ marginTop: 8 }}>
-                <Rate disabled allowHalf value={bathhouse.rating ?? 0} />
-                <Text>{bathhouse.rating?.toFixed(1)} ({bathhouse.review_count ?? 0} отзывов)</Text>
-              </Space>
 
               <Divider />
 
@@ -332,36 +409,24 @@ export default function BathhouseDetail() {
                   {bathhouse.max_guests ?? '—'}
                 </Descriptions.Item>
                 <Descriptions.Item label="Режим бронирования">
-                  {(() => {
-                    const mode = (bathhouse as Record<string, unknown>).booking_mode as string
-                    return mode === 'request' ? (
-                      <Tag color="orange">По запросу</Tag>
-                    ) : (
-                      <Tag icon={<ThunderboltOutlined />} color="green">Мгновенное</Tag>
-                    )
-                  })()}
+                  {bookingMode === 'request' ? (
+                    <Tag color="orange">{bookingModeLabel}</Tag>
+                  ) : (
+                    <Tag icon={<ThunderboltOutlined />} color="green">{bookingModeLabel}</Tag>
+                  )}
                 </Descriptions.Item>
                 <Descriptions.Item label="Политика отмены">
-                  {(() => {
-                    const policy = (bathhouse as Record<string, unknown>).cancellation_policy as string
-                    const details = CANCELLATION_POLICY_DETAILS[policy] ?? CANCELLATION_POLICY_DETAILS['flexible']
-                    return details ? (
-                      <div>
-                        <Text strong>{details.label}</Text>
-                        <br />
-                        <Text type="secondary" style={{ fontSize: 12 }}>{details.description}</Text>
-                      </div>
-                    ) : null
-                  })()}
+                  <div>
+                    <Text strong>{cancellationDetails.label}</Text>
+                    <br />
+                    <Text type="secondary" style={{ fontSize: 12 }}>{cancellationDetails.description}</Text>
+                  </div>
                 </Descriptions.Item>
-                {(() => {
-                  const depositPercent = (bathhouse as Record<string, unknown>).security_deposit_percent as number
-                  return depositPercent > 0 ? (
-                    <Descriptions.Item label="Залог">
-                      {depositPercent}% от базовой цены (возврат через 48ч после визита)
-                    </Descriptions.Item>
-                  ) : null
-                })()}
+                {depositPercent && depositPercent > 0 ? (
+                  <Descriptions.Item label="Залог">
+                    {depositPercent}% от базовой цены (возврат через 48ч после визита)
+                  </Descriptions.Item>
+                ) : null}
               </Descriptions>
 
               {amenities.length > 0 && (
@@ -408,7 +473,7 @@ export default function BathhouseDetail() {
               )}
 
               {!!(bathhouse as Record<string, unknown>).visiting_rules && (
-                <div style={{ marginTop: 16 }}>
+                <div id="bathhouse-rules" style={{ marginTop: 16 }}>
                   <Text strong>Правила посещения:</Text>
                   <Alert
                     type="info"
@@ -458,91 +523,140 @@ export default function BathhouseDetail() {
         </Col>
 
         <Col xs={24} lg={8}>
-          <Card title="Доступные слоты">
-            <DatePicker
-              value={dayjs(selectedDate)}
-              onChange={(d) => d && setSelectedDate(d.format('YYYY-MM-DD'))}
-              disabledDate={(d) => d.isBefore(dayjs(), 'day')}
-              style={{ width: '100%', marginBottom: 16 }}
-            />
-            <Spin spinning={slotsLoading && !slotsIsError}>
-              {slotsIsError ? (
-                <PublicState
-                  kind="error"
-                  compact
-                  title="Не удалось загрузить доступные слоты"
-                  description="Обновите список слотов или выберите другую дату."
-                  actionText="Обновить слоты"
-                  onAction={() => void refetchSlots()}
+          <div className="bani-detail-rail">
+            <Card id="bathhouse-slots" title="Свободные слоты">
+              <div className="bani-section-card">
+                <Text type="secondary">
+                  Сначала дата и время, потом checkout. Никаких скрытых условий перед переходом к брони.
+                </Text>
+                <DatePicker
+                  value={dayjs(selectedDate)}
+                  onChange={(d) => {
+                    if (!d) return
+                    setSelectedDate(d.format('YYYY-MM-DD'))
+                    setSelectedSlotRange(null)
+                  }}
+                  disabledDate={(d) => d.isBefore(dayjs(), 'day')}
+                  style={{ width: '100%' }}
                 />
-              ) : slots.length === 0 ? (
-                <Empty description="Нет доступных слотов" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-              ) : (
-                <Space orientation="vertical" style={{ width: '100%' }} size={8}>
-                  {slots.map((slot) => (
-                    <Card
-                      key={`${slot.startTime}-${slot.endTime}`}
-                      size="small"
-                      style={{
-                        opacity: slot.available ? 1 : 0.5,
-                        cursor: slot.available ? 'pointer' : 'not-allowed',
-                      }}
-                      onClick={() => {
-                        if (slot.available) {
-                          navigate(`/checkout?bathhouse=${id}&date=${selectedDate}&from=${slot.startTime}&to=${slot.endTime}`)
-                        }
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Space>
-                          <ClockCircleOutlined />
-                          <Text>{typeof slot.startTime === 'string' && slot.startTime.length > 5 ? slot.startTime.slice(11, 16) : slot.startTime} — {typeof slot.endTime === 'string' && slot.endTime.length > 5 ? slot.endTime.slice(11, 16) : slot.endTime}</Text>
-                        </Space>
-                        <div>
-                          {slot.price != null && <Text strong>{formatPrice(slot.price)}</Text>}
-                          {!slot.available && <Tag color="red" style={{ marginLeft: 8 }}>Занято</Tag>}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </Space>
-              )}
-            </Spin>
-          </Card>
+                <Spin spinning={slotsLoading && !slotsIsError}>
+                  {slotsIsError ? (
+                    <PublicState
+                      kind="error"
+                      compact
+                      title="Не удалось загрузить доступные слоты"
+                      description="Обновите список слотов или выберите другую дату."
+                      actionText="Обновить слоты"
+                      onAction={() => void refetchSlots()}
+                    />
+                ) : slots.length === 0 ? (
+                  <Empty description="Нет доступных слотов" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                ) : (
+                  <Space orientation="vertical" style={{ width: '100%' }} size={12}>
+                    <ContiguousSlotSelector
+                      slots={slots}
+                      value={selectedSlotRange}
+                      onChange={setSelectedSlotRange}
+                      minDurationHours={minDurationHours}
+                      label={`1. Выберите непрерывный интервал${minDurationHours > 1 ? ` (от ${minDurationHours} ч)` : ''}`}
+                      description="Выбирайте соседние слоты подряд в одном блоке. Повторный клик по краю диапазона сокращает интервал."
+                    />
 
-          {bathhouse.price_per_hour && (
-            <Card title="Примерная стоимость" size="small" style={{ marginTop: 16 }}>
-              <PriceBreakdown
-                basePrice={bathhouse.price_per_hour}
-                serviceFee={bathhouse.price_per_hour ? Math.round(bathhouse.price_per_hour * 0.1) : undefined}
-                areaAveragePrice={showAreaAveragePrice ? areaAveragePrice : undefined}
-              />
+                    {resolvedSlotRange && (
+                      <Alert
+                        type={selectedRange ? 'success' : 'info'}
+                        showIcon={false}
+                        title={`${formatSlotTimeLabel(resolvedSlotRange.from)} - ${formatSlotTimeLabel(resolvedSlotRange.to)} · ${selectedRangeHours} ч`}
+                        description={selectedRange
+                          ? 'В checkout уже попадет выбранный непрерывный интервал.'
+                          : `Добавьте ещё ${selectedRangeNeedsHours} ч, чтобы перейти к бронированию.`}
+                        action={(
+                          <Button
+                            type="primary"
+                            disabled={!selectedRange}
+                            onClick={() => {
+                              if (!selectedRange) return
+                              navigate(`/checkout?bathhouse=${id}&date=${selectedDate}&from=${selectedRange.from}&to=${selectedRange.to}`)
+                            }}
+                          >
+                            Забронировать
+                          </Button>
+                        )}
+                      />
+                    )}
+                  </Space>
+                )}
+              </Spin>
+            </div>
             </Card>
-          )}
 
-          {currentUser?.role === 'client' && walletBalance?.balance != null && walletBalance.balance > 0 && bathhouse.price_per_hour && walletBalance.balance >= bathhouse.price_per_hour && (
-            <Card size="small" style={{ marginTop: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <WalletOutlined style={{ fontSize: 18, color: '#52c41a' }} />
-                <Text>Баланс кошелька: <Text strong>{formatPrice(walletBalance.balance)}</Text></Text>
+            <Card title="Что важно до бронирования" size="small">
+              <div className="bani-feature-list">
+                <div className="bani-feature-item">
+                  <div className="bani-feature-item__icon"><ClockCircleOutlined /></div>
+                  <div className="bani-feature-item__copy">
+                    <div className="bani-feature-item__title">Минимум {bathhouse.min_duration ?? 1} ч</div>
+                    <div className="bani-feature-item__description">Минимальная длительность совпадает с реальными правилами объекта.</div>
+                  </div>
+                </div>
+                <div className="bani-feature-item">
+                  <div className="bani-feature-item__icon"><ThunderboltOutlined /></div>
+                  <div className="bani-feature-item__copy">
+                    <div className="bani-feature-item__title">{bookingModeTrustCopy}</div>
+                    <div className="bani-feature-item__description">Модель подтверждения известна заранее, до ввода контактов.</div>
+                  </div>
+                </div>
+                <div className="bani-feature-item">
+                  <div className="bani-feature-item__icon"><CheckCircleOutlined /></div>
+                  <div className="bani-feature-item__copy">
+                    <div className="bani-feature-item__title">{getCancellationPolicyLabel(cancellationPolicy)} отмена</div>
+                    <div className="bani-feature-item__description">{cancellationDetails.description}</div>
+                  </div>
+                </div>
+                <div className="bani-feature-item">
+                  <div className="bani-feature-item__icon"><WalletOutlined /></div>
+                  <div className="bani-feature-item__copy">
+                    <div className="bani-feature-item__title">{getDepositSummary(depositPercent)}</div>
+                    <div className="bani-feature-item__description">Размер залога, если он нужен, виден ещё до checkout.</div>
+                  </div>
+                </div>
               </div>
-              <Button
-                type="primary"
-                ghost
-                block
-                icon={<WalletOutlined />}
-                onClick={() => navigate(`/checkout?bathhouse=${id}`)}
-              >
-                Перейти к бронированию
-              </Button>
             </Card>
-          )}
+
+            {bathhouse.price_per_hour && (
+              <Card title="Примерная стоимость" size="small">
+                <PriceBreakdown
+                  basePrice={bathhouse.price_per_hour}
+                  serviceFee={bathhouse.price_per_hour ? Math.round(bathhouse.price_per_hour * 0.1) : undefined}
+                  areaAveragePrice={showAreaAveragePrice ? areaAveragePrice : undefined}
+                />
+              </Card>
+            )}
+
+            {currentUser?.role === 'client' && walletBalance?.balance != null && walletBalance.balance > 0 && bathhouse.price_per_hour && walletBalance.balance >= bathhouse.price_per_hour && (
+              <Card size="small">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <WalletOutlined style={{ fontSize: 18, color: '#52c41a' }} />
+                  <Text>Баланс кошелька: <Text strong>{formatPrice(walletBalance.balance)}</Text></Text>
+                </div>
+                <Button
+                  type="primary"
+                  ghost
+                  block
+                  icon={<WalletOutlined />}
+                  onClick={() => navigate(`/checkout?bathhouse=${id}`)}
+                >
+                  Перейти к бронированию
+                </Button>
+              </Card>
+            )}
+          </div>
         </Col>
       </Row>
 
       <Divider />
 
-      <Title level={4}>Отзывы ({bathhouse.review_count ?? 0})</Title>
+      <Title level={4}>Отзывы ({displayedReviewCount})</Title>
       {reviews.length === 0 ? (
         <Empty description="Нет отзывов" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       ) : (
@@ -560,7 +674,7 @@ export default function BathhouseDetail() {
           {reviewMeta && reviewMeta.total_pages && reviewMeta.total_pages > 1 && (
             <Pagination
               current={reviewPage}
-              pageSize={5}
+              pageSize={20}
               total={reviewMeta.total_count}
               onChange={setReviewPage}
               style={{ marginTop: 16 }}

@@ -35,7 +35,8 @@ import {
   SwapOutlined,
   GlobalOutlined,
   BellOutlined,
-  LockOutlined,
+  MailOutlined,
+  MobileOutlined,
 } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
@@ -58,6 +59,7 @@ import {
 import { useGetCities } from '@/api/generated/cities/cities'
 import { useGetMyStats } from '@/api/generated/users/users'
 import { useGetMyRegion, usePutMyRegion } from '@/api/generated/region/region'
+import { PLATFORM_NAME } from '@/content/support'
 import { formatPrice } from '@/lib/format'
 import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
 import ProfileCompleteness from '@/components/ProfileCompleteness'
@@ -78,16 +80,22 @@ const DELIVERY_CHANNELS = [
     name: 'in_app',
     label: 'В приложении',
     description: 'Служебные события прямо в личном кабинете.',
+    eyebrow: 'Основной канал',
+    icon: BellOutlined,
   },
   {
     name: 'email',
     label: 'Email',
     description: 'Краткие письма с важными обновлениями.',
+    eyebrow: 'Спокойный контур',
+    icon: MailOutlined,
   },
   {
     name: 'push',
     label: 'Push-уведомления',
     description: 'Мгновенные напоминания на устройстве.',
+    eyebrow: 'Срочный сигнал',
+    icon: MobileOutlined,
   },
 ]
 
@@ -96,21 +104,29 @@ const EVENT_SETTINGS = [
     name: 'booking_events',
     label: 'Бронирования',
     description: 'Подтверждения, изменения и напоминания.',
+    eyebrow: 'Операционный контур',
+    icon: CalendarOutlined,
   },
   {
     name: 'review_events',
     label: 'Отзывы',
     description: 'Новые отзывы и ответы на них.',
+    eyebrow: 'Обратная связь',
+    icon: StarOutlined,
   },
   {
     name: 'promo_events',
     label: 'Промокоды',
     description: 'Скидки, акции и персональные предложения.',
+    eyebrow: 'Маркетинг',
+    icon: TrophyOutlined,
   },
   {
     name: 'reminders',
     label: 'Напоминания',
     description: 'Заблаговременные напоминания о визите.',
+    eyebrow: 'Контроль визита',
+    icon: BellOutlined,
   },
 ]
 
@@ -122,14 +138,20 @@ interface ToggleRowProps {
   name: string
   label: string
   description: string
+  eyebrow?: string
+  icon?: ReactNode
 }
 
-function ToggleRow({ name, label, description }: ToggleRowProps) {
+function ToggleRow({ name, label, description, eyebrow, icon }: ToggleRowProps) {
   return (
-    <div className="bani-profile-toggle-row">
-      <div className="bani-profile-toggle-row__copy">
-        <Text strong>{label}</Text>
-        <Text type="secondary">{description}</Text>
+    <div className="bani-notification-toggle">
+      <div className="bani-notification-toggle__copy">
+        <div className="bani-notification-toggle__meta">
+          {icon ? <span className="bani-notification-toggle__icon">{icon}</span> : null}
+          {eyebrow ? <span className="bani-notification-toggle__eyebrow">{eyebrow}</span> : null}
+        </div>
+        <Text strong className="bani-notification-toggle__title">{label}</Text>
+        <Text type="secondary" className="bani-notification-toggle__description">{description}</Text>
       </div>
       <Form.Item name={name} valuePropName="checked" noStyle>
         <Switch />
@@ -180,6 +202,7 @@ export default function ClientProfile() {
 
   const { data: prefsData, isLoading: prefsLoading } = useGetMyNotificationPreferences()
   const prefs = prefsData?.data
+  const watchedPrefs = Form.useWatch([], prefsForm) as Record<string, boolean | undefined> | undefined
 
   const { data: socialData, isLoading: socialLoading } = useGetAuthMeSocialAccounts()
   const socialAccounts = socialData?.data ?? []
@@ -187,6 +210,9 @@ export default function ClientProfile() {
   const { data: regionData, isLoading: regionLoading } = useGetMyRegion()
   const currentRegion = regionData?.data?.region ?? user?.region ?? 'RU'
   const currentCityName = cities.find((city) => city.id === user?.city_id)?.name
+  const activeDeliveryChannels = DELIVERY_CHANNELS.filter((channel) => watchedPrefs?.[channel.name]).length
+  const activeEventScenarios = EVENT_SETTINGS.filter((event) => watchedPrefs?.[event.name]).length
+  const promoSignal = watchedPrefs?.promo_events ? 'Включен' : 'Приглушён'
 
   useEffect(() => {
     if (user) {
@@ -341,8 +367,13 @@ export default function ClientProfile() {
       return
     }
 
-    if (field === 'preferences' || field === 'notification_settings') {
-      scrollToSection(notificationsSectionRef)
+    if (field === 'preferences') {
+      navigate('/client/preferences')
+      return
+    }
+
+    if (field === 'notification_settings') {
+      navigate('/client/notification-preferences')
       return
     }
 
@@ -409,19 +440,13 @@ export default function ClientProfile() {
         eyebrow="Личный кабинет"
         title="Мой профиль"
         description="Профиль, безопасность, уведомления и платёжные привязки собраны в единую рабочую панель."
-        extra={
+        extra={(
           <Space wrap>
-            <Button icon={<CreditCardOutlined />} onClick={() => navigate('/client/cards')}>
-              Карты
-            </Button>
-            <Button icon={<BellOutlined />} onClick={() => navigate('/client/notification-preferences')}>
-              Уведомления
-            </Button>
-            <Button icon={<LockOutlined />} onClick={() => navigate('/client/security')}>
-              Безопасность
+            <Button icon={<StarOutlined />} onClick={() => navigate('/client/preferences')}>
+              Предпочтения
             </Button>
           </Space>
-        }
+        )}
       />
 
       <div className="bani-profile-layout">
@@ -563,54 +588,93 @@ export default function ClientProfile() {
                     layout="vertical"
                     onFinish={handlePrefsSubmit}
                   >
-                    <div className="bani-profile-section">
-                      <div className="bani-profile-section__header">
-                        <div>
-                          <Text strong>Каналы доставки</Text>
-                          <Text type="secondary">
-                            Где показывать общие уведомления.
+                    <div className="bani-notification-prefs">
+                      <section className="bani-notification-prefs__hero">
+                        <div className="bani-notification-prefs__hero-copy">
+                          <div className="bani-notification-prefs__eyebrow">Контур уведомлений</div>
+                          <Title level={3} className="bani-notification-prefs__title">
+                            Только нужные сигналы
+                          </Title>
+                          <Paragraph className="bani-notification-prefs__description">
+                            Выберите, через какие каналы {PLATFORM_NAME} может связываться с вами, и оставьте
+                            включёнными только те сценарии, которые действительно требуют внимания.
+                          </Paragraph>
+                        </div>
+
+                        <div className="bani-notification-prefs__stats">
+                          <div className="bani-notification-prefs__stat">
+                            <span>Активных каналов</span>
+                            <strong>{activeDeliveryChannels}/3</strong>
+                          </div>
+                          <div className="bani-notification-prefs__stat">
+                            <span>Активных сценариев</span>
+                            <strong>{activeEventScenarios}/4</strong>
+                          </div>
+                          <div className="bani-notification-prefs__stat">
+                            <span>Промо-поток</span>
+                            <strong>{promoSignal}</strong>
+                          </div>
+                        </div>
+                      </section>
+
+                      <div className="bani-notification-prefs__section">
+                        <div className="bani-notification-prefs__section-header">
+                          <div className="bani-notification-prefs__section-eyebrow">Каналы связи</div>
+                          <Text strong className="bani-notification-prefs__section-title">Куда отправлять общие уведомления</Text>
+                          <Text type="secondary" className="bani-notification-prefs__section-description">
+                            Сначала настройте базовые каналы. После этого ниже можно выбрать,
+                            какие типы событий будут в них попадать.
                           </Text>
+                        </div>
+
+                        <div className="bani-notification-prefs__grid">
+                          {DELIVERY_CHANNELS.map((channel) => (
+                            <ToggleRow
+                              key={channel.name}
+                              name={channel.name}
+                              label={channel.label}
+                              description={channel.description}
+                              eyebrow={channel.eyebrow}
+                              icon={<channel.icon />}
+                            />
+                          ))}
                         </div>
                       </div>
 
-                      <div className="bani-profile-toggle-grid">
-                        {DELIVERY_CHANNELS.map((channel) => (
-                          <ToggleRow
-                            key={channel.name}
-                            name={channel.name}
-                            label={channel.label}
-                            description={channel.description}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="bani-profile-section">
-                      <div className="bani-profile-section__header">
-                        <div>
-                          <Text strong>События</Text>
-                          <Text type="secondary">
-                            Что именно должно приходить в выбранные каналы.
+                      <div className="bani-notification-prefs__section">
+                        <div className="bani-notification-prefs__section-header">
+                          <div className="bani-notification-prefs__section-eyebrow">Сценарии</div>
+                          <Text strong className="bani-notification-prefs__section-title">Какие события должны доходить до вас</Text>
+                          <Text type="secondary" className="bani-notification-prefs__section-description">
+                            Операционные и сервисные события держите включёнными, а маркетинговые
+                            сигналы можно приглушить без потери важной информации.
                           </Text>
+                        </div>
+
+                        <div className="bani-notification-prefs__grid bani-notification-prefs__grid--events">
+                          {EVENT_SETTINGS.map((event) => (
+                            <ToggleRow
+                              key={event.name}
+                              name={event.name}
+                              label={event.label}
+                              description={event.description}
+                              eyebrow={event.eyebrow}
+                              icon={<event.icon />}
+                            />
+                          ))}
                         </div>
                       </div>
 
-                      <div className="bani-profile-toggle-grid bani-profile-toggle-grid--events">
-                        {EVENT_SETTINGS.map((event) => (
-                          <ToggleRow
-                            key={event.name}
-                            name={event.name}
-                            label={event.label}
-                            description={event.description}
-                          />
-                        ))}
+                      <div className="bani-notification-prefs__footer">
+                        <Text type="secondary">
+                          Изменения применяются только к вашему профилю и не затрагивают системные уведомления.
+                        </Text>
+                        <div className="bani-profile-form-actions">
+                          <Button type="primary" htmlType="submit" loading={updatePrefs.isPending}>
+                            Сохранить настройки
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="bani-profile-form-actions">
-                      <Button type="primary" htmlType="submit" loading={updatePrefs.isPending}>
-                        Сохранить настройки
-                      </Button>
                     </div>
                   </Form>
                 )}

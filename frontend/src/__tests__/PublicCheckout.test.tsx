@@ -99,6 +99,10 @@ describe('PublicCheckout', () => {
           name: 'Баня Премиум',
           address: 'ул. Мира, 10',
           max_guests: 10,
+          min_duration: 2,
+          booking_mode: 'instant',
+          cancellation_policy: 'flexible',
+          security_deposit_percent: 30,
         },
       },
       isLoading: false,
@@ -109,7 +113,17 @@ describe('PublicCheckout', () => {
         data: [
           {
             startTime: '2026-04-20T10:00:00',
+            endTime: '2026-04-20T11:00:00',
+            available: true,
+          },
+          {
+            startTime: '2026-04-20T11:00:00',
             endTime: '2026-04-20T12:00:00',
+            available: true,
+          },
+          {
+            startTime: '2026-04-20T12:00:00',
+            endTime: '2026-04-20T13:00:00',
             available: true,
           },
         ],
@@ -131,15 +145,25 @@ describe('PublicCheckout', () => {
 
     renderWithProviders()
 
-    fireEvent.click(screen.getByRole('button', { name: /10:00 - 12:00/ }))
+    fireEvent.click(screen.getByRole('button', { name: /10:00/ }))
+    fireEvent.click(screen.getByRole('button', { name: /11:00/ }))
     fireEvent.change(screen.getByPlaceholderText('Имя'), { target: { value: 'Иван' } })
     fireEvent.change(screen.getByPlaceholderText('Телефон'), { target: { value: '+79990000000' } })
-    fireEvent.click(screen.getByText('Мне исполнилось 18 лет'))
+    fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: 'Получить SMS-код' }))
 
-    expect(await screen.findByText('Не удалось отправить код')).toBeInTheDocument()
+    expect((await screen.findAllByText('Не удалось отправить код')).length).toBeGreaterThan(0)
     expect(screen.getByDisplayValue('Иван')).toBeInTheDocument()
     expect(screen.getByDisplayValue('+79990000000')).toBeInTheDocument()
+  })
+
+  it('shows trust summary and booking rules next to checkout', () => {
+    renderWithProviders('/checkout?bathhouse=bath-1&date=2026-04-20&from=2026-04-20T10:00:00&to=2026-04-20T12:00:00')
+
+    expect(screen.getByText('Что важно до подтверждения')).toBeInTheDocument()
+    expect(screen.getByText('Минимум 2 ч')).toBeInTheDocument()
+    expect(screen.getByText('Гибкая отмена')).toBeInTheDocument()
+    expect(screen.getAllByText('Мгновенное подтверждение').length).toBeGreaterThan(0)
   })
 
   it('shows inline OTP verification error without resetting the form', async () => {
@@ -155,10 +179,11 @@ describe('PublicCheckout', () => {
 
     renderWithProviders()
 
-    fireEvent.click(screen.getByRole('button', { name: /10:00 - 12:00/ }))
+    fireEvent.click(screen.getByRole('button', { name: /10:00/ }))
+    fireEvent.click(screen.getByRole('button', { name: /11:00/ }))
     fireEvent.change(screen.getByPlaceholderText('Имя'), { target: { value: 'Иван' } })
     fireEvent.change(screen.getByPlaceholderText('Телефон'), { target: { value: '+79990000000' } })
-    fireEvent.click(screen.getByText('Мне исполнилось 18 лет'))
+    fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: 'Получить SMS-код' }))
 
     expect(await screen.findByPlaceholderText('Код из SMS')).toBeInTheDocument()
@@ -186,9 +211,15 @@ describe('PublicCheckout', () => {
       },
     })
 
-    renderWithProviders('/checkout?bathhouse=bath-1&date=2026-04-20&from=2026-04-20T10:00:00&to=2026-04-20T12:00:00')
+    renderWithProviders('/checkout?bathhouse=bath-1&date=2026-04-20')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Создать бронь' }))
+    fireEvent.click(screen.getByRole('button', { name: /10:00/ }))
+    fireEvent.click(screen.getByRole('button', { name: /11:00/ }))
+    const submitButton = screen.getByRole('button', { name: 'Создать бронь' })
+    await waitFor(() => {
+      expect(submitButton).toBeEnabled()
+    })
+    fireEvent.click(submitButton)
 
     await waitFor(() => {
       expect(mockAxiosPost).toHaveBeenCalled()
@@ -224,10 +255,11 @@ describe('PublicCheckout', () => {
 
     renderWithProviders()
 
-    fireEvent.click(screen.getByRole('button', { name: /10:00 - 12:00/ }))
+    fireEvent.click(screen.getByRole('button', { name: /10:00/ }))
+    fireEvent.click(screen.getByRole('button', { name: /11:00/ }))
     fireEvent.change(screen.getByPlaceholderText('Имя'), { target: { value: 'Иван' } })
     fireEvent.change(screen.getByPlaceholderText('Телефон'), { target: { value: '+79990000000' } })
-    fireEvent.click(screen.getByText('Мне исполнилось 18 лет'))
+    fireEvent.click(screen.getByRole('checkbox'))
     fireEvent.click(screen.getByRole('button', { name: 'Получить SMS-код' }))
 
     expect(await screen.findByPlaceholderText('Код из SMS')).toBeInTheDocument()
@@ -238,5 +270,14 @@ describe('PublicCheckout', () => {
       expect(authState.setAuth).toHaveBeenCalled()
       expect(mockNavigate).toHaveBeenCalledWith('/client/bookings/booking-77', { replace: true })
     })
+  })
+
+  it('does not render separate duration controls', () => {
+    renderWithProviders()
+
+    expect(screen.queryByText(/Длительность/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /10:00/ }))
+    expect(screen.getByText(/Выберите конечный слот/)).toBeInTheDocument()
   })
 })

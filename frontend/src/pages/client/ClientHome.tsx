@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { Alert, Progress, Typography, Input, Row, Col, Card, Rate, Divider, Select, Space, Tag, Carousel, Button } from 'antd'
+import { Typography, Input, Row, Col, Card, Rate, Select, Space, Tag, Carousel, Button } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import {
   SearchOutlined,
@@ -13,6 +13,7 @@ import {
 import { axiosInstance } from '@/api/axios-instance'
 import { useGetRecommendations, useGetPopular } from '@/api/generated/recommendations/recommendations'
 import { useGetCities } from '@/api/generated/cities/cities'
+import type { InternalHandlerRecommendationResponse } from '@/api/generated/model'
 import { useAuthStore } from '@/stores/auth'
 import { formatPrice } from '@/lib/format'
 import PublicState from '@/components/PublicState'
@@ -22,10 +23,32 @@ import { PUBLIC_SHORTCUT_CARDS } from '@/navigation/menu'
 
 const { Title, Text } = Typography
 
-interface CompletenessData {
-  percentage: number
-  items: Array<{ field: string; label: string; complete: boolean }>
-}
+const DISCOVERY_PROOF_POINTS = [
+  {
+    key: 'slots',
+    eyebrow: 'Маршрут',
+    title: 'Каталог с понятным входом в бронь',
+    description: 'Поиск, сценарии отдыха и переход к слоту собраны в один public-first контур без кабинетообразной навигации.',
+  },
+  {
+    key: 'filters',
+    eyebrow: 'Фильтры',
+    title: 'Сценарии вместо перегруза',
+    description: 'Город, гости, дата и ключевые удобства вынесены на первый план, а вторичные настройки не мешают выбору.',
+  },
+  {
+    key: 'trust',
+    eyebrow: 'Доверие',
+    title: 'Реальные объекты, рейтинги и ценовые ориентиры',
+    description: 'Решение строится на живой выдаче, а не на рекламных обещаниях или vanity-метриках.',
+  },
+]
+
+const DISCOVERY_STEPS = [
+  'Выберите сценарий отдыха или сразу откройте каталог.',
+  'Уточните город, гостей и дату без длинной формы.',
+  'Перейдите к объекту и завершите бронь уже ближе к финалу.',
+]
 
 interface PromotionBanner {
   id: string
@@ -36,58 +59,84 @@ interface PromotionBanner {
   discount_text?: string
 }
 
-function ProfileNudge() {
-  const [data, setData] = useState<CompletenessData | null>(null)
-  const [failedToLoad, setFailedToLoad] = useState(false)
+const HOME_BATHHOUSE_STATUS_TAGS = [
+  { label: 'Фото проверены', matches: (item: InternalHandlerRecommendationResponse) => Boolean(item.is_photo_verified) },
+  { label: 'Мгновенно', matches: (item: InternalHandlerRecommendationResponse) => item.booking_mode === 'instant' },
+] as const
+
+const HOME_BATHHOUSE_AMENITIES = [
+  { label: 'Бассейн', matches: (item: InternalHandlerRecommendationResponse) => Boolean(item.has_pool) },
+  { label: 'Чан', matches: (item: InternalHandlerRecommendationResponse) => Boolean(item.has_hot_tub) },
+  { label: 'Сауна', matches: (item: InternalHandlerRecommendationResponse) => Boolean(item.has_sauna) },
+  { label: 'Парная', matches: (item: InternalHandlerRecommendationResponse) => Boolean(item.has_steam_room) },
+  { label: 'Мангал', matches: (item: InternalHandlerRecommendationResponse) => Boolean(item.has_bbq) },
+  { label: 'Караоке', matches: (item: InternalHandlerRecommendationResponse) => Boolean(item.has_karaoke) },
+] as const
+
+function getBathhouseStatusTags(item: InternalHandlerRecommendationResponse) {
+  return HOME_BATHHOUSE_STATUS_TAGS
+    .filter((entry) => entry.matches(item))
+    .map((entry) => entry.label)
+}
+
+function getBathhouseAmenities(item: InternalHandlerRecommendationResponse) {
+  return HOME_BATHHOUSE_AMENITIES
+    .filter((entry) => entry.matches(item))
+    .map((entry) => entry.label)
+}
+
+function DiscoveryBathhouseCard({ item }: { item: InternalHandlerRecommendationResponse }) {
   const navigate = useNavigate()
-  const user = useAuthStore((s) => s.user)
-
-  useEffect(() => {
-    if (!user) return
-    axiosInstance
-      .get<{ success: boolean; data: CompletenessData }>('/my/profile-completeness')
-      .then((res) => {
-        setData(res.data.data)
-        setFailedToLoad(false)
-      })
-      .catch(() => {
-        setFailedToLoad(true)
-      })
-  }, [user])
-
-  if (!user) return null
-
-  if (failedToLoad) {
-    return (
-      <PublicState
-        kind="degraded"
-        compact
-        title="Прогресс профиля временно недоступен"
-        description="Попробуйте открыть профиль позже."
-      />
-    )
-  }
-
-  if (!data || data.percentage === 100) return null
-
-  const missing = data.items.filter((i) => !i.complete).map((i) => i.label)
-  const strokeColor = data.percentage >= 80 ? '#52c41a' : data.percentage >= 50 ? '#faad14' : '#ff4d4f'
+  const statusTags = getBathhouseStatusTags(item)
+  const amenities = getBathhouseAmenities(item)
 
   return (
-    <Alert
-      type="info"
-      showIcon
-      closable
-      style={{ marginBottom: 16 }}
-      title={
-        <span style={{ cursor: 'pointer' }} onClick={() => navigate('/client/profile')}>
-          Заполните профиль ({data.percentage}%) — не хватает: {missing.join(', ')}
-        </span>
-      }
-      description={
-        <Progress percent={data.percentage} strokeColor={strokeColor} size="small" showInfo={false} />
-      }
-    />
+    <Card
+      hoverable
+      className="bani-home__listing-card"
+      onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}
+    >
+      <Title level={5} className="bani-home__listing-card-title">{item.name}</Title>
+      {item.address && (
+        <Text type="secondary" className="bani-home__listing-card-address">
+          <EnvironmentOutlined style={{ marginRight: 4 }} />
+          {item.address}
+        </Text>
+      )}
+      <div className="bani-home__listing-card-rating">
+        <Rate disabled allowHalf value={item.rating ?? 0} style={{ fontSize: 14 }} />
+        <Text type="secondary" className="bani-home__listing-card-rating-text">
+          {item.rating?.toFixed(1)} ({item.review_count ?? 0})
+        </Text>
+      </div>
+      {statusTags.length > 0 && (
+        <div className="bani-home__listing-card-tags">
+          {statusTags.map((label) => (
+            <Tag key={label} className="bani-home__listing-card-tag">
+              {label}
+            </Tag>
+          ))}
+        </div>
+      )}
+      {amenities.length > 0 && (
+        <div className="bani-home__listing-card-amenities">
+          <Text className="bani-home__listing-card-amenities-label">Удобства</Text>
+          <div className="bani-home__listing-card-tags bani-home__listing-card-tags--amenities">
+            {amenities.slice(0, 4).map((label) => (
+              <Tag key={label} className="bani-home__listing-card-tag bani-home__listing-card-tag--amenity">
+                {label}
+              </Tag>
+            ))}
+            {amenities.length > 4 && (
+              <Tag className="bani-home__listing-card-tag bani-home__listing-card-tag--amenity">+{amenities.length - 4}</Tag>
+            )}
+          </div>
+        </div>
+      )}
+      {item.price_per_hour != null && (
+        <Text strong className="bani-home__listing-card-price">{formatPrice(item.price_per_hour)}/ч</Text>
+      )}
+    </Card>
   )
 }
 
@@ -242,7 +291,6 @@ function CitySelector({
 }
 
 function PopularNearby({ detectedCityId }: { detectedCityId?: number }) {
-  const navigate = useNavigate()
   const { data: citiesData } = useGetCities()
   const citiesRaw = citiesData?.data
   const cities = useMemo(() => citiesRaw ?? [], [citiesRaw])
@@ -315,27 +363,7 @@ function PopularNearby({ detectedCityId }: { detectedCityId?: number }) {
         <Row gutter={[16, 16]}>
           {popular.slice(0, 6).map((item) => (
             <Col key={item.id} xs={24} sm={12} md={8}>
-              <Card
-                hoverable
-                onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}
-              >
-                <Title level={5} style={{ margin: 0, marginBottom: 8 }}>{item.name}</Title>
-                {item.address && (
-                  <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 4 }}>
-                    <EnvironmentOutlined style={{ marginRight: 4 }} />
-                    {item.address}
-                  </Text>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <Rate disabled allowHalf value={item.rating ?? 0} style={{ fontSize: 14 }} />
-                  <Text type="secondary" style={{ fontSize: 13 }}>
-                    {item.rating?.toFixed(1)} ({item.review_count ?? 0})
-                  </Text>
-                </div>
-                {item.price_per_hour != null && (
-                  <Text strong>{formatPrice(item.price_per_hour)}/ч</Text>
-                )}
-              </Card>
+              <DiscoveryBathhouseCard item={item} />
             </Col>
           ))}
         </Row>
@@ -345,7 +373,6 @@ function PopularNearby({ detectedCityId }: { detectedCityId?: number }) {
 }
 
 function PersonalRecommendations() {
-  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
 
   const { data: recsData, isLoading, isError, refetch } = useGetRecommendations(
@@ -382,27 +409,7 @@ function PersonalRecommendations() {
       <Row gutter={[16, 16]}>
         {recs.slice(0, 6).map((item) => (
           <Col key={item.id} xs={24} sm={12} md={8}>
-            <Card
-              hoverable
-              onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}
-            >
-              <Title level={5} style={{ margin: 0, marginBottom: 8 }}>{item.name}</Title>
-              {item.address && (
-                <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 4 }}>
-                  <EnvironmentOutlined style={{ marginRight: 4 }} />
-                  {item.address}
-                </Text>
-              )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <Rate disabled allowHalf value={item.rating ?? 0} style={{ fontSize: 14 }} />
-                <Text type="secondary" style={{ fontSize: 13 }}>
-                  {item.rating?.toFixed(1)} ({item.review_count ?? 0})
-                </Text>
-              </div>
-              {item.price_per_hour != null && (
-                <Text strong>{formatPrice(item.price_per_hour)}/ч</Text>
-              )}
-            </Card>
+            <DiscoveryBathhouseCard item={item} />
           </Col>
         ))}
       </Row>
@@ -457,7 +464,7 @@ export default function ClientHome() {
   }, [])
 
   return (
-    <>
+    <div className="bani-home">
       {showTour && (
         <OnboardingTour
           open={showTour}
@@ -465,84 +472,113 @@ export default function ClientHome() {
           region={user?.region}
         />
       )}
+      <section className="bani-home__hero">
+        <div className="bani-home__hero-copy">
+          <Tag color="gold">Быстрое бронирование</Tag>
+          <Title level={1} className="bani-home__hero-title">
+            Бани для вечера вдвоем, компании и выходных за городом
+          </Title>
+          <Text className="bani-home__hero-description">
+            Public-маршрут начинается с выбора сценария: находите подходящий формат отдыха, уточняете параметры и переходите к слоту без длинной регистрации и без лишних экранов.
+          </Text>
+          <Input
+            size="large"
+            placeholder="Поиск бань..."
+            prefix={<SearchOutlined />}
+            onPressEnter={(e) => {
+              const val = (e.target as HTMLInputElement).value
+              navigate(`/catalog${val ? `?q=${encodeURIComponent(val)}` : ''}`)
+            }}
+            onClick={() => navigate('/catalog')}
+            readOnly
+            className="bani-home__search"
+          />
+          <Space wrap className="bani-home__hero-actions">
+            <Button size="large" type="primary" onClick={() => navigate('/catalog')}>
+              Подобрать баню
+            </Button>
+            <Button size="large" className="bani-home__hero-secondary" onClick={() => navigate('/certificates')}>
+              Подарочный сертификат
+            </Button>
+          </Space>
+          <div className="bani-home__steps">
+            {DISCOVERY_STEPS.map((step, index) => (
+              <div key={step} className="bani-home__step">
+                <span className="bani-home__step-index">{index + 1}</span>
+                <Text className="bani-home__step-text">{step}</Text>
+              </div>
+            ))}
+          </div>
+        </div>
 
-      <ProfileNudge />
-
-      <Card
-        style={{
-          borderRadius: 28,
-          border: 'none',
-          background: 'linear-gradient(135deg, #14323b 0%, #7a4a2c 100%)',
-          marginBottom: 24,
-        }}
-      >
-        <Row gutter={[24, 24]} align="middle">
-          <Col xs={24} lg={14}>
-            <Tag color="gold">Быстрое бронирование</Tag>
-            <Title level={1} style={{ color: '#fff', marginTop: 16, marginBottom: 12 }}>
-              Бани для вечера вдвоем, компании и выходных за городом
+        <div className="bani-home__hero-side">
+          <div className="bani-home__section-copy">
+            <Text className="bani-home__section-eyebrow">Сценарии</Text>
+            <Title level={3} className="bani-home__section-title">
+              Начните с готовой подборки
             </Title>
-            <Text style={{ color: 'rgba(255,255,255,0.78)', fontSize: 16 }}>
-              Выбирайте по сценарию отдыха, смотрите доступные слоты и подтверждайте телефон только в финальном шаге. Без длинной регистрации и без лишних экранов.
+            <Text className="bani-home__section-description">
+              Сценарии привязаны к реальным фильтрам каталога, поэтому переход сразу открывает рабочую выдачу, а не декоративный экран.
             </Text>
-            <Input
-              size="large"
-              placeholder="Поиск бань..."
-              prefix={<SearchOutlined />}
-              onPressEnter={(e) => {
-                const val = (e.target as HTMLInputElement).value
-                navigate(`/catalog${val ? `?q=${encodeURIComponent(val)}` : ''}`)
-              }}
-              onClick={() => navigate('/catalog')}
-              readOnly
-              style={{
-                marginTop: 20,
-                cursor: 'pointer',
-                borderRadius: 18,
-                height: 52,
-                background: 'rgba(255,255,255,0.96)',
-              }}
-            />
-            <Space wrap style={{ display: 'flex', marginTop: 24 }}>
-              <Button size="large" type="primary" onClick={() => navigate('/catalog')}>
-                Подобрать баню
-              </Button>
-              <Button size="large" ghost onClick={() => navigate('/certificates')}>
-                Подарочный сертификат
-              </Button>
-            </Space>
-          </Col>
-          <Col xs={24} lg={10}>
-            <Row gutter={[12, 12]}>
-              {PUBLIC_SHORTCUT_CARDS.map((card) => (
-                <Col key={card.key} xs={24} sm={12}>
-                  <Card
-                    hoverable
-                    onClick={() => navigate(card.to)}
-                    style={{ borderRadius: 20, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
-                  >
-                    <Tag color="cyan">{card.eyebrow}</Tag>
-                    <Title level={4} style={{ color: '#fff', marginTop: 12, marginBottom: 8 }}>
-                      {card.title}
-                    </Title>
-                    <Text style={{ color: 'rgba(255,255,255,0.76)' }}>{card.description}</Text>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </Col>
-        </Row>
-      </Card>
+          </div>
+          <div className="bani-home__shortcut-grid">
+            {PUBLIC_SHORTCUT_CARDS.map((card) => (
+              <button
+                key={card.key}
+                type="button"
+                className="bani-home__shortcut-card"
+                onClick={() => navigate(card.to)}
+              >
+                <Tag color="cyan">{card.eyebrow}</Tag>
+                <Title level={4} className="bani-home__shortcut-title">
+                  {card.title}
+                </Title>
+                <Text className="bani-home__shortcut-description">{card.description}</Text>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      <PromoBanner />
+      <section className="bani-home__proof">
+        <div className="bani-home__section-copy">
+          <Text className="bani-home__section-eyebrow">Как устроен выбор</Text>
+          <Title level={3} className="bani-home__section-title">
+            Discovery без дешёвого маркетингового шума
+          </Title>
+          <Text className="bani-home__section-description">
+            Новый клиент должен сразу понимать, что здесь можно выбрать, по каким параметрам сравнивать варианты и как быстро дойти до бронирования.
+          </Text>
+        </div>
+        <div className="bani-home__proof-grid">
+          {DISCOVERY_PROOF_POINTS.map((item) => (
+            <Card key={item.key} bordered={false} className="bani-home__proof-card">
+              <Text className="bani-home__proof-eyebrow">{item.eyebrow}</Text>
+              <Title level={4} className="bani-home__proof-title">
+                {item.title}
+              </Title>
+              <Text className="bani-home__proof-description">{item.description}</Text>
+            </Card>
+          ))}
+        </div>
+      </section>
 
-      <RecentlyViewed />
+      <section className="bani-home__inventory">
+        <div className="bani-home__section-copy bani-home__section-copy--compact">
+          <Text className="bani-home__section-eyebrow">Подборка</Text>
+          <Title level={3} className="bani-home__section-title">
+            С чего обычно начинают выбор
+          </Title>
+        </div>
+        <PopularNearby detectedCityId={detectedCityId} />
+      </section>
 
       <PersonalRecommendations />
 
-      <Divider />
-
-      <PopularNearby detectedCityId={detectedCityId} />
-    </>
+      <section className="bani-home__secondary">
+        <PromoBanner />
+        <RecentlyViewed />
+      </section>
+    </div>
   )
 }

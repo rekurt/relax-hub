@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   Typography,
   Card,
@@ -28,10 +28,11 @@ import {
   getGetMyKycQueryKey,
 } from '@/api/generated/kyc/kyc'
 import type { InternalHandlerKycResponse } from '@/api/generated/model'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
-const STATUS_MAP: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
+const STATUS_MAP: Record<string, { color: string; label: string; icon: ReactNode }> = {
   pending: { color: 'processing', label: 'На рассмотрении', icon: <ClockCircleOutlined /> },
   approved: { color: 'success', label: 'Одобрено', icon: <CheckCircleOutlined /> },
   rejected: { color: 'error', label: 'Отклонено', icon: <CloseCircleOutlined /> },
@@ -100,8 +101,12 @@ export default function KYCSettings() {
 
   if (isLoading) {
     return (
-      <div>
-        <Title level={4} style={{ marginBottom: 24 }}>Верификация KYC</Title>
+      <div className="bani-stack">
+        <PageHeader
+          eyebrow="Комплаенс"
+          title="Верификация KYC"
+          description="Проверка данных владельца и юридической сущности для работы на платформе."
+        />
         <Skeleton active />
       </div>
     )
@@ -110,173 +115,195 @@ export default function KYCSettings() {
   const statusInfo = hasKyc ? STATUS_MAP[kyc.status ?? ''] : null
 
   return (
-    <div>
-      <Title level={4} style={{ marginBottom: 24 }}>Верификация KYC</Title>
+    <div className="bani-stack">
+      <PageHeader
+        eyebrow="Комплаенс"
+        title="Верификация KYC"
+        description="Проверка данных владельца и юридической сущности для работы на платформе."
+      />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        {hasKyc && (
-          <Card title="Текущий статус">
-            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-              <Space>
-                <Text strong>Статус:</Text>
-                {statusInfo ? (
-                  <Tag color={statusInfo.color} icon={statusInfo.icon}>
-                    {statusInfo.label}
-                  </Tag>
-                ) : (
-                  <Tag>Неизвестно</Tag>
-                )}
-              </Space>
+      <div className="bani-stat-grid">
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Статус</span>
+          <span className="bani-stat-tile__value">{statusInfo?.label ?? 'Не начато'}</span>
+          <span className="bani-stat-tile__hint">Текущая стадия проверки профиля и документов.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Тип лица</span>
+          <span className="bani-stat-tile__value">
+            {hasKyc ? (ENTITY_TYPE_LABELS[kyc.entity_type ?? ''] ?? kyc.entity_type ?? '—') : 'Не выбран'}
+          </span>
+          <span className="bani-stat-tile__hint">Влияет на набор документов и реквизитов заявки.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Документы</span>
+          <span className="bani-stat-tile__value">{documentUrls.length || kyc?.document_urls?.length || 0}</span>
+          <span className="bani-stat-tile__hint">Загруженные файлы для проверки и повторной подачи.</span>
+        </div>
+      </div>
 
-              <Descriptions column={1} size="small" bordered>
-                <Descriptions.Item label="Тип лица">
-                  {ENTITY_TYPE_LABELS[kyc.entity_type ?? ''] ?? kyc.entity_type}
-                </Descriptions.Item>
-                <Descriptions.Item label="ФИО / Название">
-                  {kyc.full_name}
-                </Descriptions.Item>
-                <Descriptions.Item label="ИНН">
-                  {kyc.inn}
-                </Descriptions.Item>
-                {kyc.ogrnip && (
-                  <Descriptions.Item label="ОГРНИП">
-                    {kyc.ogrnip}
-                  </Descriptions.Item>
-                )}
-                {kyc.company_name && (
-                  <Descriptions.Item label="Название компании">
-                    {kyc.company_name}
-                  </Descriptions.Item>
-                )}
-                <Descriptions.Item label="Дата подачи">
-                  {kyc.submitted_at
-                    ? new Date(kyc.submitted_at).toLocaleString('ru-RU')
-                    : '-'}
-                </Descriptions.Item>
-                {kyc.reviewed_at && (
-                  <Descriptions.Item label="Дата проверки">
-                    {new Date(kyc.reviewed_at).toLocaleString('ru-RU')}
-                  </Descriptions.Item>
-                )}
-                {kyc.expires_at && (
-                  <Descriptions.Item label="Действует до">
-                    {new Date(kyc.expires_at).toLocaleString('ru-RU')}
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-
-              {kyc.status === 'rejected' && kyc.rejection_reason && (
-                <Alert
-                  type="error"
-                  showIcon
-                  message="Причина отклонения"
-                  description={kyc.rejection_reason}
-                />
-              )}
-
-              {kyc.status === 'approved' && (
-                <Alert
-                  type="success"
-                  showIcon
-                  message="Верификация пройдена"
-                  description="Вы можете создавать объявления на платформе."
-                />
-              )}
-
-              {kyc.status === 'pending' && (
-                <Alert
-                  type="info"
-                  showIcon
-                  message="Заявка на рассмотрении"
-                  description="Обычно проверка занимает 1-3 рабочих дня."
-                />
+      {hasKyc && (
+        <Card title="Текущий статус">
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            <Space>
+              <Text strong>Статус:</Text>
+              {statusInfo ? (
+                <Tag color={statusInfo.color} icon={statusInfo.icon}>
+                  {statusInfo.label}
+                </Tag>
+              ) : (
+                <Tag>Неизвестно</Tag>
               )}
             </Space>
-          </Card>
-        )}
 
-        {(!hasKyc || kyc?.status === 'rejected') && (
-          <Card title={hasKyc ? 'Подать заявку повторно' : 'Подать заявку на KYC'}>
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleSubmit}
-              style={{ maxWidth: 600 }}
+            <Descriptions column={1} size="small" bordered>
+              <Descriptions.Item label="Тип лица">
+                {ENTITY_TYPE_LABELS[kyc.entity_type ?? ''] ?? kyc.entity_type}
+              </Descriptions.Item>
+              <Descriptions.Item label="ФИО / Название">
+                {kyc.full_name}
+              </Descriptions.Item>
+              <Descriptions.Item label="ИНН">
+                {kyc.inn}
+              </Descriptions.Item>
+              {kyc.ogrnip && (
+                <Descriptions.Item label="ОГРНИП">
+                  {kyc.ogrnip}
+                </Descriptions.Item>
+              )}
+              {kyc.company_name && (
+                <Descriptions.Item label="Название компании">
+                  {kyc.company_name}
+                </Descriptions.Item>
+              )}
+              <Descriptions.Item label="Дата подачи">
+                {kyc.submitted_at
+                  ? new Date(kyc.submitted_at).toLocaleString('ru-RU')
+                  : '-'}
+              </Descriptions.Item>
+              {kyc.reviewed_at && (
+                <Descriptions.Item label="Дата проверки">
+                  {new Date(kyc.reviewed_at).toLocaleString('ru-RU')}
+                </Descriptions.Item>
+              )}
+              {kyc.expires_at && (
+                <Descriptions.Item label="Действует до">
+                  {new Date(kyc.expires_at).toLocaleString('ru-RU')}
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+
+            {kyc.status === 'rejected' && kyc.rejection_reason && (
+              <Alert
+                type="error"
+                showIcon
+                message="Причина отклонения"
+                description={kyc.rejection_reason}
+              />
+            )}
+
+            {kyc.status === 'approved' && (
+              <Alert
+                type="success"
+                showIcon
+                message="Верификация пройдена"
+                description="Вы можете создавать объявления на платформе."
+              />
+            )}
+
+            {kyc.status === 'pending' && (
+              <Alert
+                type="info"
+                showIcon
+                message="Заявка на рассмотрении"
+                description="Обычно проверка занимает 1-3 рабочих дня."
+              />
+            )}
+          </Space>
+        </Card>
+      )}
+
+      {(!hasKyc || kyc?.status === 'rejected') && (
+        <Card title={hasKyc ? 'Подать заявку повторно' : 'Подать заявку на KYC'}>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+            style={{ maxWidth: 640 }}
+          >
+            <Form.Item
+              name="entity_type"
+              label="Тип лица"
+              rules={[{ required: true, message: 'Выберите тип лица' }]}
             >
+              <Select
+                placeholder="Выберите тип"
+                options={ENTITY_TYPE_OPTIONS}
+                onChange={(value) => setEntityType(value)}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="full_name"
+              label="ФИО"
+              rules={[{ required: true, message: 'Введите ФИО' }]}
+            >
+              <Input placeholder="Иванов Иван Иванович" />
+            </Form.Item>
+
+            <Form.Item
+              name="inn"
+              label="ИНН"
+              rules={[{ required: true, message: 'Введите ИНН' }]}
+            >
+              <Input placeholder="1234567890" maxLength={12} />
+            </Form.Item>
+
+            {entityType === 'sole_proprietor' && (
               <Form.Item
-                name="entity_type"
-                label="Тип лица"
-                rules={[{ required: true, message: 'Выберите тип лица' }]}
+                name="ogrnip"
+                label="ОГРНИП"
               >
-                <Select
-                  placeholder="Выберите тип"
-                  options={ENTITY_TYPE_OPTIONS}
-                  onChange={(val) => setEntityType(val)}
-                />
+                <Input placeholder="123456789012345" maxLength={15} />
               </Form.Item>
+            )}
 
+            {entityType === 'legal_entity' && (
               <Form.Item
-                name="full_name"
-                label="ФИО"
-                rules={[{ required: true, message: 'Введите ФИО' }]}
+                name="company_name"
+                label="Название компании"
               >
-                <Input placeholder="Иванов Иван Иванович" />
+                <Input placeholder='ООО "Название"' />
               </Form.Item>
+            )}
 
-              <Form.Item
-                name="inn"
-                label="ИНН"
-                rules={[{ required: true, message: 'Введите ИНН' }]}
+            <Form.Item label="Документы">
+              <Upload
+                multiple
+                showUploadList
+                beforeUpload={handleDocumentUpload}
+                accept=".pdf,.jpg,.jpeg,.png"
               >
-                <Input placeholder="1234567890" maxLength={12} />
-              </Form.Item>
+                <Button icon={<UploadOutlined />}>Загрузить документ</Button>
+              </Upload>
+              <Text type="secondary" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
+                Паспорт, свидетельство о регистрации и другие подтверждающие документы
+              </Text>
+            </Form.Item>
 
-              {(entityType === 'sole_proprietor') && (
-                <Form.Item
-                  name="ogrnip"
-                  label="ОГРНИП"
-                >
-                  <Input placeholder="123456789012345" maxLength={15} />
-                </Form.Item>
-              )}
-
-              {(entityType === 'legal_entity') && (
-                <Form.Item
-                  name="company_name"
-                  label="Название компании"
-                >
-                  <Input placeholder='ООО "Название"' />
-                </Form.Item>
-              )}
-
-              <Form.Item label="Документы">
-                <Upload
-                  multiple
-                  showUploadList
-                  beforeUpload={handleDocumentUpload}
-                  accept=".pdf,.jpg,.jpeg,.png"
-                >
-                  <Button icon={<UploadOutlined />}>Загрузить документ</Button>
-                </Upload>
-                <Text type="secondary" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
-                  Паспорт, свидетельство о регистрации и другие подтверждающие документы
-                </Text>
-              </Form.Item>
-
-              <Form.Item>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  icon={<SendOutlined />}
-                  loading={submitKyc.isPending}
-                >
-                  Подать заявку
-                </Button>
-              </Form.Item>
-            </Form>
-          </Card>
-        )}
-      </div>
+            <Form.Item>
+              <Button
+                type="primary"
+                htmlType="submit"
+                icon={<SendOutlined />}
+                loading={submitKyc.isPending}
+              >
+                Подать заявку
+              </Button>
+            </Form.Item>
+          </Form>
+        </Card>
+      )}
     </div>
   )
 }

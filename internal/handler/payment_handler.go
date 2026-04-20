@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -15,11 +16,19 @@ import (
 )
 
 type PaymentHandler struct {
-	paymentService service.PaymentService
+	paymentService     service.PaymentService
+	certificateService service.CertificateService
 }
 
-func NewPaymentHandler(paymentService service.PaymentService) *PaymentHandler {
-	return &PaymentHandler{paymentService: paymentService}
+func NewPaymentHandler(paymentService service.PaymentService, certificateService ...service.CertificateService) *PaymentHandler {
+	var certSvc service.CertificateService
+	if len(certificateService) > 0 {
+		certSvc = certificateService[0]
+	}
+	return &PaymentHandler{
+		paymentService:     paymentService,
+		certificateService: certSvc,
+	}
 }
 
 type paymentResponse struct {
@@ -235,10 +244,10 @@ func (h *PaymentHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		Status:     webhook.Object.Status,
 	}
 
-	if err := h.paymentService.HandleWebhook(r.Context(), event); err != nil {
+	if err := h.handleWebhookWithCertificateFallback(r.Context(), event); err != nil {
 		// For domain errors (not found, invalid input), return 200 to prevent infinite retries
 		// since these won't resolve on retry. For transient errors, return 500 so provider retries.
-		if errors.Is(err, domain.ErrPaymentNotFound) || errors.Is(err, domain.ErrInvalidInput) {
+		if errors.Is(err, domain.ErrPaymentNotFound) || errors.Is(err, domain.ErrCertificateOrderNotFound) || errors.Is(err, domain.ErrInvalidInput) {
 			writeJSON(w, http.StatusOK, map[string]string{"status": "error"})
 			return
 		}
@@ -298,8 +307,8 @@ func (h *PaymentHandler) HandleBePaidWebhook(w http.ResponseWriter, r *http.Requ
 		Status:     internalStatus,
 	}
 
-	if err := h.paymentService.HandleWebhook(r.Context(), event); err != nil {
-		if errors.Is(err, domain.ErrPaymentNotFound) || errors.Is(err, domain.ErrInvalidInput) {
+	if err := h.handleWebhookWithCertificateFallback(r.Context(), event); err != nil {
+		if errors.Is(err, domain.ErrPaymentNotFound) || errors.Is(err, domain.ErrCertificateOrderNotFound) || errors.Is(err, domain.ErrInvalidInput) {
 			writeJSON(w, http.StatusOK, map[string]string{"status": "error"})
 			return
 		}
@@ -308,6 +317,17 @@ func (h *PaymentHandler) HandleBePaidWebhook(w http.ResponseWriter, r *http.Requ
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (h *PaymentHandler) handleWebhookWithCertificateFallback(ctx context.Context, event service.WebhookEvent) error {
+	err := h.paymentService.HandleWebhook(ctx, event)
+	if !errors.Is(err, domain.ErrPaymentNotFound) {
+		return err
+	}
+	if h.certificateService == nil {
+		return err
+	}
+	return h.certificateService.HandlePaymentWebhook(ctx, event)
 }
 
 // mapBePaidWebhookStatus maps bePaid webhook statuses to our internal status strings.

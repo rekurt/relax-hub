@@ -33,6 +33,7 @@ var (
 	ErrInsufficientReferralBalance = errors.New("insufficient referral balance")
 
 	ErrCertificateNotFound            = errors.New("gift certificate not found")
+	ErrCertificateOrderNotFound       = errors.New("gift certificate order not found")
 	ErrCertificateExpired             = errors.New("gift certificate expired")
 	ErrCertificateInsufficientBalance = errors.New("gift certificate insufficient balance")
 

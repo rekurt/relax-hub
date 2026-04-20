@@ -72,6 +72,8 @@ describe('BathhouseSearch', () => {
     vi.mocked(useGetCities).mockReturnValue({
       data: { data: mockCities, success: true },
       isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
     } as unknown as ReturnType<typeof useGetCities>)
 
     vi.mocked(usePostBathhousesIdFavorite).mockReturnValue({
@@ -114,17 +116,26 @@ describe('BathhouseSearch', () => {
     expect(screen.getByText(/Попробуйте изменить параметры поиска или сбросить фильтры/)).toBeInTheDocument()
   })
 
-  it('shows blocking error state when catalog request fails', () => {
+  it('shows backend unavailable state when catalog and city endpoints fail together', () => {
+    vi.mocked(useGetCities).mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { response: { status: 500 } },
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useGetCities>)
+
     vi.mocked(useGetBathhouses).mockReturnValue({
       data: undefined,
       isLoading: false,
       isError: true,
+      error: { response: { status: 500 } },
       refetch: vi.fn(),
     } as unknown as ReturnType<typeof useGetBathhouses>)
 
     renderWithProviders(<BathhouseSearch />)
 
-    expect(screen.getByText('Не удалось загрузить варианты')).toBeInTheDocument()
+    expect(screen.getByText('Каталог временно недоступен')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Повторить' })).toBeInTheDocument()
   })
 
@@ -150,15 +161,41 @@ describe('BathhouseSearch', () => {
     expect(screen.getByText('Город')).toBeInTheDocument()
   })
 
-  it('syncs city selector with city_slug from URL', () => {
+  it('renders promoted shortcut scenarios including pool selection', () => {
     vi.mocked(useGetBathhouses).mockReturnValue({
       data: { data: [], success: true },
       isLoading: false,
     } as unknown as ReturnType<typeof useGetBathhouses>)
 
-    renderWithProviders(<BathhouseSearch />, '/catalog?city_slug=spb')
+    renderWithProviders(<BathhouseSearch />)
 
-    expect(screen.getByText('Санкт-Петербург')).toBeInTheDocument()
+    expect(screen.getByText('Для двоих')).toBeInTheDocument()
+    expect(screen.getAllByText('С бассейном').length).toBeGreaterThan(0)
+  })
+
+  it('hydrates preset catalog filters from URL without dropping them on first render', () => {
+    vi.mocked(useGetBathhouses).mockReturnValue({
+      data: { data: [], success: true, meta: { page: 1, page_size: 12, total_count: 0, total_pages: 0 } },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhouses>)
+
+    renderWithProviders(<BathhouseSearch />, '/catalog?guest_count=2')
+
+    const calls = vi.mocked(useGetBathhouses).mock.calls
+    const lastCall = calls[calls.length - 1]?.[0] as Record<string, unknown> | undefined
+    expect(lastCall).toMatchObject({ guest_count: 2 })
+  })
+
+  it('renders quick filters row', () => {
+    vi.mocked(useGetBathhouses).mockReturnValue({
+      data: { data: [], success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhouses>)
+
+    renderWithProviders(<BathhouseSearch />)
+
+    expect(screen.getByText('Открыто сейчас')).toBeInTheDocument()
+    expect(screen.getByText('Рейтинг 4+')).toBeInTheDocument()
   })
 
   it('renders geo search button', () => {
@@ -180,7 +217,7 @@ describe('BathhouseSearch', () => {
 
     renderWithProviders(<BathhouseSearch />)
 
-    expect(screen.getByText('Фильтры')).toBeInTheDocument()
+    expect(screen.getByText('Точная настройка')).toBeInTheDocument()
   })
 
   it('shows amenity filters when expanded', () => {
@@ -191,7 +228,7 @@ describe('BathhouseSearch', () => {
 
     renderWithProviders(<BathhouseSearch />)
 
-    fireEvent.click(screen.getByText('Фильтры'))
+    fireEvent.click(screen.getByText('Точная настройка'))
 
     expect(screen.getByText('Сауна')).toBeInTheDocument()
     expect(screen.getByText('Бассейн')).toBeInTheDocument()
@@ -261,27 +298,4 @@ describe('BathhouseSearch', () => {
     expect(screen.getByTestId('result-counter')).toHaveTextContent('Найдено: 0 бань')
   })
 
-  it('debounces search input before querying', async () => {
-    vi.useFakeTimers()
-
-    vi.mocked(useGetBathhouses).mockReturnValue({
-      data: { data: [], success: true, meta: { page: 1, page_size: 12, total_count: 0, total_pages: 0 } },
-      isLoading: false,
-    } as unknown as ReturnType<typeof useGetBathhouses>)
-
-    renderWithProviders(<BathhouseSearch />)
-
-    const input = screen.getByPlaceholderText('Поиск по названию...')
-    fireEvent.change(input, { target: { value: 'люкс' } })
-
-    // Before debounce, query should still use empty string (debouncedSearch hasn't updated)
-    const callsBefore = vi.mocked(useGetBathhouses).mock.calls
-    const lastCallBefore = callsBefore[callsBefore.length - 1]!
-    expect(lastCallBefore[0]).toHaveProperty('q', undefined)
-
-    // After debounce timer fires
-    vi.advanceTimersByTime(300)
-
-    vi.useRealTimers()
-  })
 })

@@ -201,6 +201,18 @@ type noopCertificateService struct{}
 func (n *noopCertificateService) Purchase(_ context.Context, _ int64, _ *uuid.UUID, _, _, _, _ string) (*domain.GiftCertificate, error) {
 	return nil, nil
 }
+func (n *noopCertificateService) CreateOrder(_ context.Context, _ int64, _ *uuid.UUID, _, _, _, _ string) (*domain.CertificateOrder, error) {
+	return nil, nil
+}
+func (n *noopCertificateService) InitiatePayment(_ context.Context, _ uuid.UUID, _ service.CertificateOrderPaymentRequest) (string, error) {
+	return "", nil
+}
+func (n *noopCertificateService) GetOrder(_ context.Context, _ uuid.UUID) (*domain.CertificateOrder, error) {
+	return nil, nil
+}
+func (n *noopCertificateService) HandlePaymentWebhook(_ context.Context, _ service.WebhookEvent) error {
+	return nil
+}
 func (n *noopCertificateService) Redeem(_ context.Context, _ string, _ uuid.UUID) (*domain.GiftCertificate, error) {
 	return nil, nil
 }

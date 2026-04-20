@@ -1,30 +1,21 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+import { Alert, Card, Segmented, Skeleton, Space, Typography } from 'antd'
 import {
-  Card,
-  Col,
-  Row,
-  Skeleton,
-  Segmented,
-  Statistic,
-  Alert,
-  Typography,
-  Space,
-} from 'antd'
-import {
-  ShoppingOutlined,
+  ArrowDownOutlined,
+  ArrowUpOutlined,
+  CalculatorOutlined,
   DollarOutlined,
   EyeOutlined,
-  StarOutlined,
-  CalculatorOutlined,
   FunnelPlotOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
+  ShoppingOutlined,
+  StarOutlined,
 } from '@ant-design/icons'
 import { useGetMyBathhousesIdAnalytics } from '@/api/generated/analytics/analytics'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { formatPrice } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 type Period = '1d' | '7d' | '30d' | '90d'
 
@@ -39,12 +30,13 @@ interface KpiCardProps {
   title: string
   value: string | number
   change?: number
-  icon: React.ReactNode
+  icon: ReactNode
   loading?: boolean
   suffix?: string
+  hint: string
 }
 
-function KpiCard({ title, value, change, icon, loading, suffix }: KpiCardProps) {
+function KpiCard({ title, value, change, icon, loading, suffix, hint }: KpiCardProps) {
   if (loading) {
     return (
       <Card>
@@ -61,42 +53,36 @@ function KpiCard({ title, value, change, icon, loading, suffix }: KpiCardProps) 
         : '#ff4d4f'
 
   const changeIcon =
-    change !== undefined && change !== 0 ? (
-      change > 0 ? (
-        <ArrowUpOutlined />
-      ) : (
-        <ArrowDownOutlined />
-      )
-    ) : null
+    change !== undefined && change !== 0
+      ? (change > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />)
+      : null
 
   return (
-    <Card>
-      <Statistic
-        title={
-          <Space>
-            {icon}
-            <span>{title}</span>
-          </Space>
-        }
-        value={value}
-        suffix={suffix}
-        styles={{ content: { fontSize: 28 } }}
-      />
-      {change !== undefined && (
-        <Text
-          style={{ color: changeColor, fontSize: 13, marginTop: 4, display: 'block' }}
-        >
+    <div className="bani-stat-tile">
+      <span className="bani-stat-tile__eyebrow">
+        <Space size={8}>
+          {icon}
+          <span>{title}</span>
+        </Space>
+      </span>
+      <div className="bani-stat-tile__value">
+        {value}{suffix ?? ''}
+      </div>
+      {change !== undefined ? (
+        <Text style={{ color: changeColor, fontSize: 13 }}>
           {changeIcon} {change > 0 ? '+' : ''}
           {change.toFixed(1)}% к пред. периоду
         </Text>
+      ) : (
+        <span className="bani-stat-tile__hint">{hint}</span>
       )}
-    </Card>
+    </div>
   )
 }
 
 export default function Dashboard() {
   const [period, setPeriod] = useState<Period>('30d')
-  const selectedBathhouseId = useBathhouseStore((s) => s.selectedBathhouseId)
+  const selectedBathhouseId = useBathhouseStore((state) => state.selectedBathhouseId)
 
   const { data, isLoading, isError, error } = useGetMyBathhousesIdAnalytics(
     selectedBathhouseId ?? '',
@@ -108,8 +94,12 @@ export default function Dashboard() {
 
   if (!selectedBathhouseId) {
     return (
-      <div>
-        <Title level={3}>Дашборд</Title>
+      <div className="bani-stack">
+        <PageHeader
+          eyebrow="Аналитика"
+          title="Дашборд"
+          description="Аналитика жёстко привязана к конкретной бане, поэтому сначала нужно выбрать объект в верхнем меню."
+        />
         <Alert
           message="Выберите баню"
           description="Для просмотра аналитики выберите баню в верхнем меню."
@@ -127,8 +117,12 @@ export default function Dashboard() {
         : 'Не удалось загрузить аналитику'
 
     return (
-      <div>
-        <Title level={3}>Дашборд</Title>
+      <div className="bani-stack">
+        <PageHeader
+          eyebrow="Аналитика"
+          title="Дашборд"
+          description="Если аналитика недоступна, пользователь всё равно должен видеть понятное состояние ошибки, а не пустой экран."
+        />
         <Alert
           message="Ошибка загрузки"
           description={errorMessage}
@@ -140,56 +134,51 @@ export default function Dashboard() {
   }
 
   return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 24,
-          flexWrap: 'wrap',
-          gap: 12,
-        }}
-      >
-        <Title level={3} style={{ margin: 0 }}>
-          Дашборд
-        </Title>
-        <Segmented
-          options={PERIOD_OPTIONS}
-          value={period}
-          onChange={(val) => setPeriod(val as Period)}
-        />
-      </div>
+    <div className="bani-stack">
+      <PageHeader
+        eyebrow="Аналитика"
+        title="Дашборд"
+        description="Это рабочий экран владельца: здесь быстро читаются объём бронирований, деньги, просмотры, конверсия и динамика относительно прошлого периода."
+        extra={(
+          <Segmented
+            options={PERIOD_OPTIONS}
+            value={period}
+            onChange={(value) => setPeriod(value as Period)}
+          />
+        )}
+      />
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={8}>
+      <section className="bani-hero-panel">
+        <div className="bani-hero-panel__eyebrow">Состояние объекта</div>
+        <h2 className="bani-hero-panel__title">Главные метрики вынесены в первый экран</h2>
+        <div className="bani-hero-panel__description">
+          Владелец должен видеть не набор разрозненных карточек, а цельную картину: что происходит с трафиком, бронями, чеком и качеством сервиса за выбранный период.
+        </div>
+        <div className="bani-stat-grid">
           <KpiCard
             title="Бронирования"
-            value={dashboard?.bookings ?? 0}
+            value={(dashboard?.bookings ?? 0).toLocaleString('en-US')}
             change={dashboard?.bookings_change}
             icon={<ShoppingOutlined />}
             loading={isLoading}
+            hint="Количество подтверждённых бронирований"
           />
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
           <KpiCard
             title="Выручка"
             value={formatPrice(dashboard?.revenue ?? 0)}
             change={dashboard?.revenue_change}
             icon={<DollarOutlined />}
             loading={isLoading}
+            hint="Оборот за выбранный период"
           />
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
           <KpiCard
             title="Просмотры"
-            value={dashboard?.views ?? 0}
+            value={(dashboard?.views ?? 0).toLocaleString('en-US')}
             change={dashboard?.views_change}
             icon={<EyeOutlined />}
             loading={isLoading}
+            hint="Интерес к карточке объекта"
           />
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
           <KpiCard
             title="Рейтинг"
             value={dashboard?.rating?.toFixed(1) ?? '0.0'}
@@ -197,25 +186,24 @@ export default function Dashboard() {
             icon={<StarOutlined />}
             loading={isLoading}
             suffix="/ 5"
+            hint="Качество сервиса глазами клиента"
           />
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
           <KpiCard
             title="Средний чек"
             value={formatPrice(dashboard?.avg_check ?? 0)}
             icon={<CalculatorOutlined />}
             loading={isLoading}
+            hint="Помогает быстро оценить ценовой профиль бронирований"
           />
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
           <KpiCard
             title="Конверсия"
             value={`${((dashboard?.conversion_rate ?? 0) * 100).toFixed(1)}%`}
             icon={<FunnelPlotOutlined />}
             loading={isLoading}
+            hint="Доля просмотров, которая дошла до брони"
           />
-        </Col>
-      </Row>
+        </div>
+      </section>
     </div>
   )
 }

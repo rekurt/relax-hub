@@ -60,6 +60,17 @@ type myStatsResponse struct {
 	AvgRating   float64 `json:"avg_rating"`
 }
 
+type profileCompletenessItemResponse struct {
+	Field    string `json:"field"`
+	Label    string `json:"label"`
+	Complete bool   `json:"complete"`
+}
+
+type profileCompletenessResponse struct {
+	Percentage int                               `json:"percentage"`
+	Items      []profileCompletenessItemResponse `json:"items"`
+}
+
 func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -156,6 +167,8 @@ func handleServiceErrorWithRequest(w http.ResponseWriter, r *http.Request, err e
 		writeErrorWithContext(w, r, http.StatusBadRequest, "insufficient_referral_balance", err.Error())
 	case errors.Is(err, domain.ErrCertificateNotFound):
 		writeErrorWithContext(w, r, http.StatusNotFound, "certificate_not_found", err.Error())
+	case errors.Is(err, domain.ErrCertificateOrderNotFound):
+		writeErrorWithContext(w, r, http.StatusNotFound, "certificate_order_not_found", err.Error())
 	case errors.Is(err, domain.ErrCertificateExpired):
 		writeErrorWithContext(w, r, http.StatusBadRequest, "certificate_expired", err.Error())
 	case errors.Is(err, domain.ErrCertificateInsufficientBalance):

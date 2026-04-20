@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from 'antd'
@@ -85,7 +85,7 @@ const mockBathhouse = {
   has_karaoke: false,
   is_favorite: false,
   is_photo_verified: true,
-  images: ['https://example.com/photo1.jpg'],
+  images: ['/uploads/photo1.jpg'],
   working_hours: [
     { day_of_week: 0, open_time: '09:00', close_time: '23:00' },
     { day_of_week: 1, open_time: '09:00', close_time: '23:00' },
@@ -104,9 +104,9 @@ const mockBathhouse = {
 }
 
 const mockSlots = [
-  { startTime: '10:00', endTime: '11:00', price: 300000, available: true },
-  { startTime: '11:00', endTime: '12:00', price: 300000, available: false },
-  { startTime: '12:00', endTime: '13:00', price: 350000, available: true },
+  { startTime: '2026-04-20T10:00:00', endTime: '2026-04-20T11:00:00', price: 300000, available: true },
+  { startTime: '2026-04-20T11:00:00', endTime: '2026-04-20T12:00:00', price: 300000, available: true },
+  { startTime: '2026-04-20T12:00:00', endTime: '2026-04-20T13:00:00', price: 350000, available: false },
 ]
 
 const mockReviews = [
@@ -177,7 +177,7 @@ describe('BathhouseDetail', () => {
     renderWithProviders(<BathhouseDetail />)
 
     expect(screen.getByText('Баня Премиум')).toBeInTheDocument()
-    expect(screen.getByText('Лучшая баня в городе')).toBeInTheDocument()
+    expect(screen.getAllByText('Лучшая баня в городе').length).toBeGreaterThan(0)
   })
 
   it('renders price and capacity info', () => {
@@ -192,6 +192,20 @@ describe('BathhouseDetail', () => {
     expect(priceElements.length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('2 ч')).toBeInTheDocument()
     expect(screen.getByText('10')).toBeInTheDocument()
+  })
+
+  it('renders public trust hero with booking facts and slot cta', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: mockBathhouse, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    renderWithProviders(<BathhouseDetail />)
+
+    expect(screen.getByText('Цена от')).toBeInTheDocument()
+    expect(screen.getByText('Минимум')).toBeInTheDocument()
+    expect(screen.getByText('Подтверждение')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Выбрать слот' })).toBeInTheDocument()
   })
 
   it('renders amenity tags', () => {
@@ -215,10 +229,38 @@ describe('BathhouseDetail', () => {
 
     renderWithProviders(<BathhouseDetail />)
 
-    expect(screen.getByText('Доступные слоты')).toBeInTheDocument()
-    expect(screen.getByText('10:00 — 11:00')).toBeInTheDocument()
-    expect(screen.getByText('11:00 — 12:00')).toBeInTheDocument()
-    expect(screen.getByText('Занято')).toBeInTheDocument()
+    expect(screen.getByText('Свободные слоты')).toBeInTheDocument()
+    expect(document.body.textContent).toContain('10:00')
+    expect(document.body.textContent).toContain('11:00')
+  })
+
+  it('selects a continuous range in one block without duration buttons', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: mockBathhouse, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    renderWithProviders(<BathhouseDetail />)
+
+    expect(screen.queryByText(/Длительность/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /10:00/ }))
+    fireEvent.click(screen.getByRole('button', { name: /11:00/ }))
+
+    expect(screen.getByText(/10:00 - 12:00 · 2 ч/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Забронировать' })).toBeEnabled()
+  })
+
+  it('normalizes relative bathhouse photo urls', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: mockBathhouse, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    renderWithProviders(<BathhouseDetail />)
+
+    const photo = screen.getByAltText('Баня Премиум фото 1')
+    expect(photo).toHaveAttribute('src', new URL('/uploads/photo1.jpg', window.location.origin).toString())
   })
 
   it('shows slot recovery state when availability request fails', () => {
@@ -248,7 +290,7 @@ describe('BathhouseDetail', () => {
 
     renderWithProviders(<BathhouseDetail />)
 
-    expect(screen.getByText('Отзывы (15)')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Отзывы/i })).toBeInTheDocument()
     expect(screen.getByText('Отличная баня!')).toBeInTheDocument()
     expect(screen.getByText('Спасибо за отзыв!')).toBeInTheDocument()
   })
@@ -329,7 +371,7 @@ describe('BathhouseDetail', () => {
     renderWithProviders(<BathhouseDetail />)
 
     expect(screen.getByText('Гибкая')).toBeInTheDocument()
-    expect(screen.getByText(/Бесплатная отмена за 24/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Бесплатная отмена за 24/).length).toBeGreaterThan(0)
   })
 
   it('renders visiting rules', () => {

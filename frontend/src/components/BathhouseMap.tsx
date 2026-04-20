@@ -3,6 +3,7 @@ import { Button, Spin } from 'antd'
 import { AimOutlined } from '@ant-design/icons'
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 function escapeHtml(str: string): string {
   return str
@@ -215,7 +216,7 @@ export default function BathhouseMap({
         const isHighlighted = highlightedId === b.id
         const priceLabel = b.price_per_hour ? formatPrice(b.price_per_hour) : ''
 
-        const coverImage = b.images?.[0] ?? b.gallery_preview?.[0]?.url
+        const coverImage = resolveAssetUrl(b.images?.[0] ?? b.gallery_preview?.[0]?.url)
         const ratingStr = b.rating ? b.rating.toFixed(1) : '—'
         const reviewCountStr = b.review_count ?? 0
         const slug = b.slug ?? b.id ?? ''

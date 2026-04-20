@@ -24,6 +24,7 @@ type mockOAuthService struct {
 	linkSocialAccountFn   func(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider, code string) error
 	unlinkSocialAccountFn func(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider) error
 	listSocialAccountsFn  func(ctx context.Context, userID uuid.UUID) ([]domain.SocialAccount, error)
+	listConfiguredFn      func() []domain.OAuthProvider
 }
 
 func (m *mockOAuthService) GetOAuthURL(provider domain.OAuthProvider, referralCode string) (string, error) {
@@ -61,6 +62,13 @@ func (m *mockOAuthService) ListSocialAccounts(ctx context.Context, userID uuid.U
 	return nil, nil
 }
 
+func (m *mockOAuthService) ListConfiguredProviders() []domain.OAuthProvider {
+	if m.listConfiguredFn != nil {
+		return m.listConfiguredFn()
+	}
+	return nil
+}
+
 // Compile-time check
 var _ service.OAuthService = (*mockOAuthService)(nil)
 
@@ -90,6 +98,44 @@ func TestOAuthHandler_OAuthRedirect(t *testing.T) {
 	location := rec.Result().Header.Get("Location")
 	if location != "https://oauth.example.com/authorize?state=abc" {
 		t.Errorf("expected redirect to oauth URL, got %q", location)
+	}
+}
+
+func TestOAuthHandler_ListConfiguredProviders(t *testing.T) {
+	oauthSvc := &mockOAuthService{
+		listConfiguredFn: func() []domain.OAuthProvider {
+			return []domain.OAuthProvider{domain.OAuthProviderVK, domain.OAuthProviderGoogle}
+		},
+	}
+
+	h := handler.NewOAuthHandler(oauthSvc)
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/oauth/providers", nil)
+	rec := httptest.NewRecorder()
+
+	h.ListConfiguredProviders(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+
+	var body struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Providers []string `json:"providers"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+
+	if len(body.Data.Providers) != 2 {
+		t.Fatalf("expected 2 providers, got %d", len(body.Data.Providers))
+	}
+
+	if body.Data.Providers[0] != "vk" || body.Data.Providers[1] != "google" {
+		t.Fatalf("unexpected providers: %#v", body.Data.Providers)
 	}
 }
 

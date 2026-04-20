@@ -15,6 +15,9 @@ interface SimilarBathhouse {
   latitude?: number
   longitude?: number
   description?: string
+  images?: string[]
+  gallery_preview?: Array<{ url?: string }>
+  is_photo_verified?: boolean
 }
 
 interface SimilarBathhousesProps {
@@ -44,6 +47,9 @@ export default function SimilarBathhouses({ items, maxCount = 6 }: SimilarBathho
                 latitude: s.latitude,
                 longitude: s.longitude,
                 description: s.description,
+                images: s.images,
+                gallery_preview: s.gallery_preview,
+                is_photo_verified: s.is_photo_verified,
               }}
               showFavorite={false}
             />

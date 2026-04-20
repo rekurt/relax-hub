@@ -13,6 +13,7 @@ import (
 	"github.com/rekurt/relax-hub/internal/domain"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/rekurt/relax-hub/internal/notification"
+	"github.com/rekurt/relax-hub/internal/payment"
 	"github.com/rekurt/relax-hub/internal/repository"
 )
 
@@ -26,6 +27,10 @@ const (
 
 type CertificateService interface {
 	Purchase(ctx context.Context, amount int64, purchaserID *uuid.UUID, purchaserEmail, recipientEmail, recipientName, message string) (*domain.GiftCertificate, error)
+	CreateOrder(ctx context.Context, amount int64, purchaserID *uuid.UUID, purchaserEmail, recipientEmail, recipientName, message string) (*domain.CertificateOrder, error)
+	InitiatePayment(ctx context.Context, orderID uuid.UUID, req CertificateOrderPaymentRequest) (confirmationURL string, err error)
+	GetOrder(ctx context.Context, orderID uuid.UUID) (*domain.CertificateOrder, error)
+	HandlePaymentWebhook(ctx context.Context, event WebhookEvent) error
 	Redeem(ctx context.Context, code string, userID uuid.UUID) (*domain.GiftCertificate, error)
 	Apply(ctx context.Context, certificateID, bookingID uuid.UUID, amount int64) error
 	RefundUsage(ctx context.Context, bookingID uuid.UUID) error
@@ -33,43 +38,75 @@ type CertificateService interface {
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.GiftCertificate], error)
 }
 
+type CertificateOrderPaymentRequest struct {
+	PaymentMethod domain.PaymentMethod
+	PaymentToken  string
+}
+
 type certificateService struct {
 	certRepo    repository.GiftCertificateRepository
+	orderRepo   repository.CertificateOrderRepository
+	paymentProv payment.PaymentProvider
 	emailSender notification.EmailSender
+	frontendURL string
 	logger      *logger.Logger
 }
 
 func NewCertificateService(
 	certRepo repository.GiftCertificateRepository,
+	orderRepo repository.CertificateOrderRepository,
+	paymentProv payment.PaymentProvider,
 	emailSender notification.EmailSender,
+	frontendURL string,
 	log *logger.Logger,
 ) CertificateService {
 	return &certificateService{
 		certRepo:    certRepo,
+		orderRepo:   orderRepo,
+		paymentProv: paymentProv,
 		emailSender: emailSender,
+		frontendURL: frontendURL,
 		logger:      log,
 	}
 }
 
 func (s *certificateService) Purchase(ctx context.Context, amount int64, purchaserID *uuid.UUID, purchaserEmail, recipientEmail, recipientName, message string) (*domain.GiftCertificate, error) {
+	if err := validateCertificatePurchaseInput(amount, purchaserEmail, recipientEmail, recipientName, message); err != nil {
+		return nil, err
+	}
+
+	cert, err := s.issueCertificate(ctx, amount, purchaserID, purchaserEmail, recipientEmail, recipientName, message)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("certificate purchased", "certificate_id", cert.ID, "amount", amount)
+	s.sendCertificateEmail(ctx, cert)
+	return cert, nil
+}
+
+func validateCertificatePurchaseInput(amount int64, purchaserEmail, recipientEmail, recipientName, message string) error {
 	if amount <= 0 || amount > certificateMaxAmount {
-		return nil, domain.ErrInvalidInput
+		return domain.ErrInvalidInput
 	}
 	if _, err := mail.ParseAddress(purchaserEmail); err != nil {
-		return nil, domain.ErrInvalidInput
+		return domain.ErrInvalidInput
 	}
 	if recipientEmail != "" {
 		if _, err := mail.ParseAddress(recipientEmail); err != nil {
-			return nil, domain.ErrInvalidInput
+			return domain.ErrInvalidInput
 		}
 	}
 	if len(recipientName) > 255 {
-		return nil, domain.ErrInvalidInput
+		return domain.ErrInvalidInput
 	}
 	if len(message) > 1000 {
-		return nil, domain.ErrInvalidInput
+		return domain.ErrInvalidInput
 	}
+	return nil
+}
 
+func (s *certificateService) issueCertificate(ctx context.Context, amount int64, purchaserID *uuid.UUID, purchaserEmail, recipientEmail, recipientName, message string) (*domain.GiftCertificate, error) {
 	var cert *domain.GiftCertificate
 	for i := 0; i < certificateCodeRetries; i++ {
 		code, err := generateCertificateCode()
@@ -99,12 +136,6 @@ func (s *certificateService) Purchase(ctx context.Context, amount int64, purchas
 			}
 			return nil, err
 		}
-
-		s.logger.Info("certificate purchased", "certificate_id", cert.ID, "amount", amount)
-
-		// Send email to recipient with certificate code
-		s.sendCertificateEmail(ctx, cert)
-
 		return cert, nil
 	}
 

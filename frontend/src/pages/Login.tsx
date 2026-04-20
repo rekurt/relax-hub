@@ -5,6 +5,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { postAuthLogin, postAuthLoginPhone, postAuthVerifyPhone } from '@/api/generated/auth/auth'
 import { useAuthStore } from '@/stores/auth'
 import { getRoleHomePath } from '@/stores/auth'
+import AuthShell from '@/components/AuthShell'
 import OAuthButtons from '@/components/OAuthButtons'
 import PhoneOTPInput from '@/components/PhoneOTPInput'
 import TwoFactorChallenge from '@/components/TwoFactorChallenge'
@@ -12,8 +13,9 @@ import type { InternalHandlerLoginRequest } from '@/api/generated/model'
 import type { InternalHandlerUserResponse } from '@/api/generated/model'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
+import { PLATFORM_NAME } from '@/content/support'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 type AuthMethod = 'email' | 'phone'
 
@@ -102,28 +104,52 @@ export default function Login() {
 
   if (twoFAState) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f5f5f5' }}>
-        <Card style={{ width: 400 }}>
+      <AuthShell
+        eyebrow="Авторизация"
+        title="Подтверждение входа"
+        description="Завершите вход одноразовым кодом из включенного второго фактора."
+        asideTitle="Один короткий шаг до кабинета"
+        asideDescription={`Если на аккаунте включена дополнительная защита, ${PLATFORM_NAME} просит подтвердить вход отдельным кодом. Это закрывает случайные входы с чужих устройств.`}
+        highlights={[
+          'Подтверждение занимает несколько секунд и не требует повторного ввода логина и пароля.',
+          'После успешной проверки вы попадете в тот раздел, куда шли изначально.',
+          'Если код не приходит, вернитесь назад и повторите вход удобным способом.',
+        ]}
+      >
+        <Card bordered={false} className="bani-auth-surface">
           <TwoFactorChallenge
             partialToken={twoFAState.partialToken}
             onSuccess={handle2FASuccess}
             onCancel={() => setTwoFAState(null)}
           />
         </Card>
-      </div>
+      </AuthShell>
     )
   }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f5f5f5' }}>
-      <Card style={{ width: 400 }}>
+    <AuthShell
+      eyebrow="Авторизация"
+      title="Вход в личный кабинет"
+      description="Управление банями и бронированиями"
+      asideTitle="Вход без лишнего трения"
+      asideDescription="Каталог, бронирования, чаты и служебные разделы открываются через один аккуратный сценарий входа. Выберите привычный способ и продолжайте с того места, где остановились."
+      highlights={[
+        'Email и телефон работают как равноправные сценарии, без скрытых шагов и лишних редиректов.',
+        `Если на аккаунте включен второй фактор, ${PLATFORM_NAME} запросит подтверждение только после успешной проверки основного входа.`,
+        'Для клиентов, владельцев и администраторов используется один и тот же поток входа, дальше система сама направит в нужный кабинет.',
+      ]}
+      footer={(
+        <>
+          <Text>Нет аккаунта? </Text>
+          <Link to="/register">Зарегистрироваться</Link>
+        </>
+      )}
+    >
+      <Card bordered={false} className="bani-auth-surface">
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div style={{ textAlign: 'center' }}>
-            <Title level={3}>Вход в личный кабинет</Title>
-            <Text type="secondary">Управление банями и бронированиями</Text>
-          </div>
-
           <Segmented
+            className="bani-auth-segmented"
             options={AUTH_METHOD_OPTIONS}
             value={authMethod}
             onChange={(v) => setAuthMethod(v as AuthMethod)}
@@ -131,8 +157,14 @@ export default function Login() {
           />
 
           {authMethod === 'email' ? (
-            <Form layout="vertical" onFinish={onEmailFinish} autoComplete="off">
+            <Form
+              className="bani-auth-form"
+              layout="vertical"
+              onFinish={onEmailFinish}
+              autoComplete="off"
+            >
               <Form.Item
+                label="Адрес email"
                 name="email"
                 rules={[
                   { required: true, message: 'Введите email' },
@@ -143,14 +175,15 @@ export default function Login() {
               </Form.Item>
 
               <Form.Item
+                label="Пароль"
                 name="password"
                 rules={[{ required: true, message: 'Введите пароль' }]}
               >
                 <Input.Password prefix={<LockOutlined />} placeholder="Пароль" size="large" />
               </Form.Item>
 
-              <Form.Item>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+              <Form.Item className="bani-auth-form__actions">
+                <div className="bani-auth-form__link-row">
                   <Link to="/forgot-password">Забыли пароль?</Link>
                 </div>
                 <Button type="primary" htmlType="submit" loading={loading} block size="large">
@@ -167,13 +200,8 @@ export default function Login() {
           )}
 
           <OAuthButtons />
-
-          <div style={{ textAlign: 'center' }}>
-            <Text>Нет аккаунта? </Text>
-            <Link to="/register">Зарегистрироваться</Link>
-          </div>
         </Space>
       </Card>
-    </div>
+    </AuthShell>
   )
 }

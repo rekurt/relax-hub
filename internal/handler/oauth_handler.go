@@ -23,6 +23,10 @@ type oauthCallbackResponse struct {
 	Token string       `json:"token"`
 }
 
+type configuredOAuthProvidersResponse struct {
+	Providers []string `json:"providers"`
+}
+
 type socialAccountResponse struct {
 	ID        string    `json:"id"`
 	Provider  string    `json:"provider"`
@@ -75,6 +79,26 @@ func (h *OAuthHandler) OAuthRedirect(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, url, http.StatusFound)
+}
+
+// ListConfiguredProviders godoc
+//
+//	@Summary		List configured OAuth providers
+//	@Description	Returns only the providers that are configured on the backend and safe to show in UI
+//	@Tags			oauth
+//	@Produce		json
+//	@Success		200	{object}	APIResponse{data=configuredOAuthProvidersResponse}
+//	@Router			/auth/oauth/providers [get]
+func (h *OAuthHandler) ListConfiguredProviders(w http.ResponseWriter, _ *http.Request) {
+	configuredProviders := h.oauthService.ListConfiguredProviders()
+	items := make([]string, 0, len(configuredProviders))
+	for _, provider := range configuredProviders {
+		items = append(items, string(provider))
+	}
+
+	writeJSON(w, http.StatusOK, configuredOAuthProvidersResponse{
+		Providers: items,
+	})
 }
 
 // OAuthCallback godoc

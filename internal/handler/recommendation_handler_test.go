@@ -138,9 +138,9 @@ func (m *mockBHService) ActivateBathhouse(_ context.Context, _ uuid.UUID, _ doma
 func (m *mockBHService) ArchiveBathhouse(_ context.Context, _ uuid.UUID, _ domain.UserRole, _ uuid.UUID) error {
 	return nil
 }
-func (m *mockBHService) IncrementViewCount(_ context.Context, _ uuid.UUID) error { return nil }
+func (m *mockBHService) IncrementViewCount(_ context.Context, _ uuid.UUID) error       { return nil }
 func (m *mockBHService) ComputeBadges(_ context.Context, _ *domain.Bathhouse) []string { return nil }
-func (m *mockBHService) IsLastMinuteActive(_ *domain.Bathhouse) bool                  { return false }
+func (m *mockBHService) IsLastMinuteActive(_ *domain.Bathhouse) bool                   { return false }
 func (m *mockBHService) GetAreaAvgPrice(_ context.Context, _ int64, _, _ float64) (int64, error) {
 	return 0, nil
 }
@@ -379,6 +379,7 @@ func TestRecommendationHandler_GetPopular(t *testing.T) {
 			return &domain.Bathhouse{
 				ID: id, Name: "Popular Bath", Address: "789 Elm St", CityID: 1,
 				Latitude: 12.0, Longitude: 22.0, PricePerHour: 6000, Rating: 4.7, ReviewCount: 50,
+				BookingMode: "instant", IsPhotoVerified: true, HasPool: true, HasSauna: true, HasHotTub: true,
 			}, nil
 		},
 	}
@@ -395,6 +396,38 @@ func TestRecommendationHandler_GetPopular(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected status 200, got %d", rec.Code)
+		return
+	}
+
+	var apiResp APIResponse
+	if err := json.NewDecoder(rec.Body).Decode(&apiResp); err != nil {
+		t.Fatalf("failed to decode response: %v", err)
+	}
+
+	itemsBytes, err := json.Marshal(apiResp.Data)
+	if err != nil {
+		t.Fatalf("failed to marshal items: %v", err)
+	}
+
+	var items []recommendationResponse
+	if err := json.Unmarshal(itemsBytes, &items); err != nil {
+		t.Fatalf("failed to unmarshal items: %v", err)
+	}
+
+	if len(items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(items))
+	}
+
+	if !items[0].HasPool || !items[0].HasHotTub || !items[0].HasSauna {
+		t.Fatalf("expected amenity flags in response, got %+v", items[0])
+	}
+
+	if !items[0].IsPhotoVerified {
+		t.Fatalf("expected photo verification flag in response, got %+v", items[0])
+	}
+
+	if items[0].BookingMode != "instant" {
+		t.Fatalf("expected booking mode instant, got %q", items[0].BookingMode)
 	}
 }
 

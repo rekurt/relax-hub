@@ -122,10 +122,10 @@ func TestGenerateSchema_PriceRanges(t *testing.T) {
 		pricePerHour int64
 		expected     string
 	}{
-		{"cheap", 100000, "$"},          // 1000 rub
-		{"mid", 200000, "$$"},           // 2000 rub
-		{"expensive", 400000, "$$$"},    // 4000 rub
-		{"luxury", 600000, "$$$$"},      // 6000 rub
+		{"cheap", 100000, "$"},       // 1000 rub
+		{"mid", 200000, "$$"},        // 2000 rub
+		{"expensive", 400000, "$$$"}, // 4000 rub
+		{"luxury", 600000, "$$$$"},   // 6000 rub
 		{"zero", 0, ""},
 	}
 
@@ -211,5 +211,23 @@ func TestGenerateSchema_InvalidDayOfWeek(t *testing.T) {
 
 	if len(schema.OpeningHours) != 0 {
 		t.Errorf("expected 0 opening hours for invalid day, got %d", len(schema.OpeningHours))
+	}
+}
+
+func TestGenerateSchema_RelativeImagesUseBaseURL(t *testing.T) {
+	input := SchemaInput{
+		Name:    "Тест",
+		Slug:    "test-banya",
+		BaseURL: "https://bani.ru",
+		Images:  []string{"/demo/bathhouses/steam-room-birch.png"},
+	}
+
+	schema := GenerateSchema(input)
+
+	if len(schema.Image) != 1 {
+		t.Fatalf("expected 1 schema image, got %d", len(schema.Image))
+	}
+	if schema.Image[0] != "https://bani.ru/demo/bathhouses/steam-room-birch.png" {
+		t.Fatalf("schema image = %q, want absolute base-url image", schema.Image[0])
 	}
 }

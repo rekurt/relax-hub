@@ -1,6 +1,6 @@
 basePath: /api/v1
 definitions:
-  github_com_nikitaaldaev_bani_internal_antifraud.Detection:
+  github_com_rekurt_relax-hub_internal_antifraud.Detection:
     properties:
       match:
         type: string
@@ -9,7 +9,7 @@ definitions:
       type:
         type: string
     type: object
-  github_com_nikitaaldaev_bani_internal_antifraud.FilteredChatMessage:
+  github_com_rekurt_relax-hub_internal_antifraud.FilteredChatMessage:
     properties:
       conversation_id:
         type: string
@@ -17,7 +17,7 @@ definitions:
         type: string
       detections:
         items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_antifraud.Detection'
+          $ref: '#/definitions/github_com_rekurt_relax-hub_internal_antifraud.Detection'
         type: array
       filtered_text:
         type: string
@@ -28,7 +28,7 @@ definitions:
       sender_id:
         type: string
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.AdminPermission:
+  github_com_rekurt_relax-hub_internal_domain.AdminPermission:
     enum:
     - users.manage
     - bathhouses.moderate
@@ -88,7 +88,7 @@ definitions:
     - PermAdminNotificationsView
     - PermFAQManage
     - PermPhotoOrderManage
-  github_com_nikitaaldaev_bani_internal_domain.AdminSubRole:
+  github_com_rekurt_relax-hub_internal_domain.AdminSubRole:
     enum:
     - super_admin
     - moderator
@@ -104,7 +104,7 @@ definitions:
     - AdminSubRoleSupportL2
     - AdminSubRoleSupportL3
     - AdminSubRoleFinance
-  github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod:
+  github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod:
     enum:
     - 1d
     - 7d
@@ -116,7 +116,7 @@ definitions:
     - PeriodWeek
     - PeriodMonth
     - Period90d
-  github_com_nikitaaldaev_bani_internal_domain.AnalyticsSnapshot:
+  github_com_rekurt_relax-hub_internal_domain.AnalyticsSnapshot:
     properties:
       avg_rating:
         type: number
@@ -135,14 +135,14 @@ definitions:
       views:
         type: integer
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.CohortAnalysis:
+  github_com_rekurt_relax-hub_internal_domain.CohortAnalysis:
     properties:
       cohorts:
         items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.CohortRow'
+          $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.CohortRow'
         type: array
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.CohortRow:
+  github_com_rekurt_relax-hub_internal_domain.CohortRow:
     properties:
       cohort_month:
         description: '"2026-01"'
@@ -159,16 +159,16 @@ definitions:
         description: users in cohort
         type: integer
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.ConversionFunnel:
+  github_com_rekurt_relax-hub_internal_domain.ConversionFunnel:
     properties:
       period:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod'
       steps:
         items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.FunnelStep'
+          $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.FunnelStep'
         type: array
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.CustomSegmentCondition:
+  github_com_rekurt_relax-hub_internal_domain.CustomSegmentCondition:
     properties:
       avg_check_max:
         description: kopecks
@@ -211,7 +211,7 @@ definitions:
       visit_count_min:
         type: integer
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.FunnelStep:
+  github_com_rekurt_relax-hub_internal_domain.FunnelStep:
     properties:
       count:
         type: integer
@@ -221,16 +221,16 @@ definitions:
         description: '% of the first step'
         type: number
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.GeoDemandSupplyMap:
+  github_com_rekurt_relax-hub_internal_domain.GeoDemandSupplyMap:
     properties:
       cities:
         items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.GeoSupplyDemand'
+          $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.GeoSupplyDemand'
         type: array
       period:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod'
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.GeoSupplyDemand:
+  github_com_rekurt_relax-hub_internal_domain.GeoSupplyDemand:
     properties:
       booking_count:
         description: realized demand
@@ -246,7 +246,7 @@ definitions:
         description: demand (searches)
         type: integer
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.GuestCardStats:
+  github_com_rekurt_relax-hub_internal_domain.GuestCardStats:
     properties:
       avg_spent:
         type: integer
@@ -257,7 +257,7 @@ definitions:
       total_guests:
         type: integer
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.HeatmapCell:
+  github_com_rekurt_relax-hub_internal_domain.HeatmapCell:
     properties:
       booking_count:
         description: realized demand
@@ -275,19 +275,19 @@ definitions:
         description: demand (search views)
         type: integer
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.HeatmapData:
+  github_com_rekurt_relax-hub_internal_domain.HeatmapData:
     properties:
       cell_size:
         description: grid cell size in degrees
         type: number
       cells:
         items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.HeatmapCell'
+          $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.HeatmapCell'
         type: array
       period:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod'
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.OwnerPerformance:
+  github_com_rekurt_relax-hub_internal_domain.OwnerPerformance:
     properties:
       avg_city_conversion_rate:
         description: anonymous benchmark
@@ -312,16 +312,7 @@ definitions:
         description: kopecks
         type: integer
     type: object
-  github_com_nikitaaldaev_bani_internal_domain.ProfileCompletenessItem:
-    properties:
-      complete:
-        type: boolean
-      field:
-        type: string
-      label:
-        type: string
-    type: object
-  github_com_nikitaaldaev_bani_internal_domain.TwoFAMethod:
+  github_com_rekurt_relax-hub_internal_domain.TwoFAMethod:
     enum:
     - none
     - totp
@@ -331,7 +322,7 @@ definitions:
     - TwoFANone
     - TwoFATOTP
     - TwoFASMS
-  github_com_nikitaaldaev_bani_internal_domain.WalletMetrics:
+  github_com_rekurt_relax-hub_internal_domain.WalletMetrics:
     properties:
       active_wallets:
         type: integer
@@ -351,7 +342,7 @@ definitions:
         description: '% of bookings paid via wallet'
         type: number
     type: object
-  github_com_nikitaaldaev_bani_internal_seo.MetaTags:
+  github_com_rekurt_relax-hub_internal_seo.MetaTags:
     properties:
       canonical:
         type: string
@@ -372,7 +363,7 @@ definitions:
       twitter_card:
         type: string
     type: object
-  github_com_nikitaaldaev_bani_internal_service.AdminDashboard:
+  github_com_rekurt_relax-hub_internal_service.AdminDashboard:
     properties:
       adr:
         description: average daily rate (avg booking value in kopecks)
@@ -391,10 +382,10 @@ definitions:
       new_users:
         type: integer
       period:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod'
       top_bathhouses:
         items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.TopBathhouseInfo'
+          $ref: '#/definitions/github_com_rekurt_relax-hub_internal_service.TopBathhouseInfo'
         type: array
       total_bathhouses:
         type: integer
@@ -410,7 +401,7 @@ definitions:
         description: weekly active users
         type: integer
     type: object
-  github_com_nikitaaldaev_bani_internal_service.BusinessMetrics:
+  github_com_rekurt_relax-hub_internal_service.BusinessMetrics:
     properties:
       adr:
         description: average booking value (kopecks)
@@ -431,39 +422,9 @@ definitions:
         description: monthly active users
         type: integer
       period:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod'
     type: object
-  github_com_nikitaaldaev_bani_internal_service.CompletenessItem:
-    properties:
-      complete:
-        type: boolean
-      field:
-        type: string
-      label:
-        type: string
-      required:
-        type: boolean
-    type: object
-  github_com_nikitaaldaev_bani_internal_service.CompletenessResult:
-    properties:
-      done_optional:
-        type: integer
-      done_required:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.CompletenessItem'
-        type: array
-      ready:
-        type: boolean
-      score:
-        type: integer
-      total_optional:
-        type: integer
-      total_required:
-        type: integer
-    type: object
-  github_com_nikitaaldaev_bani_internal_service.ImportError:
+  github_com_rekurt_relax-hub_internal_service.ImportError:
     properties:
       field:
         type: string
@@ -472,7 +433,7 @@ definitions:
       row:
         type: integer
     type: object
-  github_com_nikitaaldaev_bani_internal_service.ImportReport:
+  github_com_rekurt_relax-hub_internal_service.ImportReport:
     properties:
       created_ids:
         items:
@@ -482,14 +443,14 @@ definitions:
         type: integer
       errors:
         items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.ImportError'
+          $ref: '#/definitions/github_com_rekurt_relax-hub_internal_service.ImportError'
         type: array
       success_count:
         type: integer
       total_rows:
         type: integer
     type: object
-  github_com_nikitaaldaev_bani_internal_service.OwnerDashboard:
+  github_com_rekurt_relax-hub_internal_service.OwnerDashboard:
     properties:
       avg_check:
         description: revenue / bookings
@@ -502,9 +463,9 @@ definitions:
         description: bookings / views
         type: number
       period:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod'
       previous_period:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.OwnerDashboard'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_service.OwnerDashboard'
       rating:
         type: number
       rating_change:
@@ -522,7 +483,7 @@ definitions:
       views_change:
         type: number
     type: object
-  github_com_nikitaaldaev_bani_internal_service.PnLMetrics:
+  github_com_rekurt_relax-hub_internal_service.PnLMetrics:
     properties:
       gmv:
         description: gross merchandise value (kopecks) — total booking value
@@ -531,7 +492,7 @@ definitions:
         description: average booking value (kopecks)
         type: integer
       period:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod'
       platform_revenue:
         description: total platform revenue (kopecks)
         type: integer
@@ -554,16 +515,7 @@ definitions:
         description: booking count in period
         type: integer
     type: object
-  github_com_nikitaaldaev_bani_internal_service.ProfileCompletenessOutput:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.ProfileCompletenessItem'
-        type: array
-      percentage:
-        type: integer
-    type: object
-  github_com_nikitaaldaev_bani_internal_service.TimeSlot:
+  github_com_rekurt_relax-hub_internal_service.TimeSlot:
     properties:
       available:
         type: boolean
@@ -581,7 +533,7 @@ definitions:
       startTime:
         type: string
     type: object
-  github_com_nikitaaldaev_bani_internal_service.TopBathhouseInfo:
+  github_com_rekurt_relax-hub_internal_service.TopBathhouseInfo:
     properties:
       bathhouse_id:
         type: string
@@ -781,7 +733,7 @@ definitions:
   internal_handler.adminRoleResponse:
     properties:
       admin_sub_role:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminSubRole'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AdminSubRole'
       email:
         type: string
       id:
@@ -791,7 +743,7 @@ definitions:
       name:
         type: string
       two_fa_method:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.TwoFAMethod'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.TwoFAMethod'
     type: object
   internal_handler.adminUpdatePhotoOrderRequest:
     properties:
@@ -843,6 +795,11 @@ definitions:
       sort_order:
         type: integer
       updated_at:
+        type: string
+    type: object
+  internal_handler.applePayValidationRequest:
+    properties:
+      validation_url:
         type: string
     type: object
   internal_handler.approveRejectRequest:
@@ -1123,7 +1080,7 @@ definitions:
       max_guests:
         type: integer
       meta:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_seo.MetaTags'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_seo.MetaTags'
       min_duration:
         type: integer
       name:
@@ -1340,6 +1297,44 @@ definitions:
       valid_until:
         type: string
     type: object
+  internal_handler.certificateOrderPaymentRequest:
+    properties:
+      payment_method:
+        type: string
+      payment_token:
+        type: string
+    type: object
+  internal_handler.certificateOrderResponse:
+    properties:
+      amount:
+        type: integer
+      certificate:
+        $ref: '#/definitions/internal_handler.certificateResponse'
+      created_at:
+        type: string
+      external_id:
+        type: string
+      id:
+        type: string
+      message:
+        type: string
+      paid_at:
+        type: string
+      payment_method:
+        type: string
+      provider:
+        type: string
+      purchaser_email:
+        type: string
+      recipient_email:
+        type: string
+      recipient_name:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
   internal_handler.certificateResponse:
     properties:
       amount:
@@ -1497,6 +1492,13 @@ definitions:
       target_type:
         type: string
     type: object
+  internal_handler.configuredOAuthProvidersResponse:
+    properties:
+      providers:
+        items:
+          type: string
+        type: array
+    type: object
   internal_handler.conversationResponse:
     properties:
       bathhouse_id:
@@ -1621,6 +1623,19 @@ definitions:
       title:
         type: string
     type: object
+  internal_handler.createCertificateOrderRequest:
+    properties:
+      amount:
+        type: integer
+      message:
+        type: string
+      purchaser_email:
+        type: string
+      recipient_email:
+        type: string
+      recipient_name:
+        type: string
+    type: object
   internal_handler.createCityRequest:
     properties:
       latitude:
@@ -1654,7 +1669,7 @@ definitions:
       bathhouse_id:
         type: string
       conditions:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.CustomSegmentCondition'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.CustomSegmentCondition'
       name:
         type: string
     type: object
@@ -1851,7 +1866,7 @@ definitions:
       bathhouse_id:
         type: string
       conditions:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.CustomSegmentCondition'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.CustomSegmentCondition'
       created_at:
         type: string
       guest_count:
@@ -2236,6 +2251,11 @@ definitions:
       region:
         type: string
       updated_at:
+        type: string
+    type: object
+  internal_handler.initiateCertificateOrderPaymentResponse:
+    properties:
+      confirmation_url:
         type: string
     type: object
   internal_handler.initiatePaymentRequest:
@@ -2762,16 +2782,16 @@ definitions:
       matrix:
         additionalProperties:
           items:
-            $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminPermission'
+            $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AdminPermission'
           type: array
         type: object
       permissions:
         items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminPermission'
+          $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AdminPermission'
         type: array
       roles:
         items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminSubRole'
+          $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AdminSubRole'
         type: array
     type: object
   internal_handler.photoOrderResponse:
@@ -2988,6 +3008,24 @@ definitions:
       type:
         type: string
     type: object
+  internal_handler.profileCompletenessItemResponse:
+    properties:
+      complete:
+        type: boolean
+      field:
+        type: string
+      label:
+        type: string
+    type: object
+  internal_handler.profileCompletenessResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/internal_handler.profileCompletenessItemResponse'
+        type: array
+      percentage:
+        type: integer
+    type: object
   internal_handler.promoResponse:
     properties:
       bathhouse_id:
@@ -3018,6 +3056,21 @@ definitions:
         type: string
       value:
         type: integer
+    type: object
+  internal_handler.promotionBannerResponse:
+    properties:
+      description:
+        type: string
+      discount_text:
+        type: string
+      id:
+        type: string
+      promo_code:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
     type: object
   internal_handler.promotionResponse:
     properties:
@@ -3134,16 +3187,32 @@ definitions:
     properties:
       address:
         type: string
+      booking_mode:
+        type: string
       city_id:
         type: integer
       description:
         type: string
+      has_bbq:
+        type: boolean
+      has_hot_tub:
+        type: boolean
+      has_karaoke:
+        type: boolean
+      has_pool:
+        type: boolean
+      has_sauna:
+        type: boolean
+      has_steam_room:
+        type: boolean
       id:
         type: string
       images:
         items:
           type: string
         type: array
+      is_photo_verified:
+        type: boolean
       latitude:
         type: number
       longitude:
@@ -3605,7 +3674,7 @@ definitions:
   internal_handler.setAdminSubRoleRequest:
     properties:
       sub_role:
-        $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminSubRole'
+        $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AdminSubRole'
     type: object
   internal_handler.setMultiplierRequest:
     properties:
@@ -3912,7 +3981,7 @@ definitions:
     properties:
       bathhouses:
         items:
-          $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.TopBathhouseInfo'
+          $ref: '#/definitions/github_com_rekurt_relax-hub_internal_service.TopBathhouseInfo'
         type: array
       limit:
         type: integer
@@ -4839,7 +4908,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.AdminDashboard'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_service.AdminDashboard'
               type: object
         "400":
           description: Bad Request
@@ -4893,7 +4962,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.BusinessMetrics'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_service.BusinessMetrics'
               type: object
         "400":
           description: Bad Request
@@ -4947,7 +5016,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.CohortAnalysis'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.CohortAnalysis'
               type: object
         "400":
           description: Bad Request
@@ -5001,7 +5070,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.ConversionFunnel'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.ConversionFunnel'
               type: object
         "400":
           description: Bad Request
@@ -5055,7 +5124,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.GeoDemandSupplyMap'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.GeoDemandSupplyMap'
               type: object
         "400":
           description: Bad Request
@@ -5114,7 +5183,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.HeatmapData'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.HeatmapData'
               type: object
         "400":
           description: Bad Request
@@ -5168,7 +5237,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.PnLMetrics'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_service.PnLMetrics'
               type: object
         "400":
           description: Bad Request
@@ -5281,7 +5350,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.WalletMetrics'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.WalletMetrics'
               type: object
         "400":
           description: Bad Request
@@ -6307,7 +6376,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_antifraud.FilteredChatMessage'
+                    $ref: '#/definitions/github_com_rekurt_relax-hub_internal_antifraud.FilteredChatMessage'
                   type: array
                 meta:
                   $ref: '#/definitions/internal_handler.Meta'
@@ -7941,63 +8010,6 @@ paths:
       tags:
       - kyc
       - admin
-  /admin/listings/batch:
-    post:
-      consumes:
-      - application/json
-      description: Performs batch approve or reject on up to 1000 listings. Processes
-        in chunks of 100.
-      parameters:
-      - description: Action (approve/reject) and list of IDs
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/internal_handler.batchActionRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_handler.batchDetailedResult'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Batch listing operations
-      tags:
-      - admin-bathhouses
   /admin/notifications:
     get:
       description: Returns paginated list of admin notifications filtered by role,
@@ -10883,6 +10895,42 @@ paths:
       summary: Resolve a shareable booking link
       tags:
       - share
+  /apple-pay/validate-merchant:
+    post:
+      consumes:
+      - application/json
+      description: Performs Apple Pay merchant validation. In production requires
+        server-side Apple certificates.
+      parameters:
+      - description: Validation URL from Apple Pay session
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.applePayValidationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data: {}
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Validate Apple Pay merchant
+      tags:
+      - payments
   /auth/2fa/sms/enable:
     post:
       description: Enables SMS-based 2FA (requires verified phone)
@@ -11666,6 +11714,71 @@ paths:
       summary: OAuth callback
       tags:
       - oauth
+  /auth/oauth/providers:
+    get:
+      description: Returns only the providers that are configured on the backend and
+        safe to show in UI
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.configuredOAuthProvidersResponse'
+              type: object
+      summary: List configured OAuth providers
+      tags:
+      - oauth
+  /auth/phone/start:
+    post:
+      consumes:
+      - application/json
+      description: Sends OTP to the provided phone number for public checkout/login
+        flow
+      parameters:
+      - description: Phone data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.loginPhoneRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.otpSentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "429":
+          description: Too Many Requests
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Start public phone auth
+      tags:
+      - auth
   /auth/register:
     post:
       consumes:
@@ -12331,7 +12444,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.TimeSlot'
+                    $ref: '#/definitions/github_com_rekurt_relax-hub_internal_service.TimeSlot'
                   type: array
               type: object
         "400":
@@ -12567,49 +12680,6 @@ paths:
       summary: Get bathhouse gallery
       tags:
       - review-media
-  /bathhouses/{id}/meta:
-    get:
-      description: Get SEO meta tags (title, description, og:image, canonical) for
-        a bathhouse.
-      parameters:
-      - description: Bathhouse ID (UUID)
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_seo.MetaTags'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-        "404":
-          description: Not Found
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-      summary: Get bathhouse SEO meta tags
-      tags:
-      - bathhouses
   /bathhouses/{id}/photos:
     get:
       description: Get verified photos for a bathhouse.
@@ -14777,6 +14847,126 @@ paths:
       summary: Get certificate balance
       tags:
       - certificates
+  /certificates/orders:
+    post:
+      consumes:
+      - application/json
+      description: Creates a draft order for a gift certificate checkout flow. Can
+        be used without authentication.
+      parameters:
+      - description: Certificate order data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handler.createCertificateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.certificateOrderResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Create gift certificate order
+      tags:
+      - certificates
+  /certificates/orders/{id}:
+    get:
+      description: Returns the current status of a gift certificate order and the
+        issued certificate after successful payment.
+      parameters:
+      - description: Certificate order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.certificateOrderResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Get gift certificate order
+      tags:
+      - certificates
+  /certificates/orders/{id}/pay:
+    post:
+      consumes:
+      - application/json
+      description: Starts payment for a previously created gift certificate order.
+      parameters:
+      - description: Certificate order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Payment method and token
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/internal_handler.certificateOrderPaymentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_handler.initiateCertificateOrderPaymentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                error:
+                  $ref: '#/definitions/internal_handler.APIError'
+              type: object
+      summary: Initiate gift certificate payment
+      tags:
+      - certificates
   /certificates/purchase:
     post:
       consumes:
@@ -15268,6 +15458,33 @@ paths:
       summary: Delete device token
       tags:
       - device-tokens
+  /faq:
+    get:
+      description: Returns active FAQ entries for the public site
+      parameters:
+      - description: Filter by category
+        in: query
+        name: category
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.faqResponse'
+                  type: array
+                meta:
+                  $ref: '#/definitions/internal_handler.Meta'
+              type: object
+      summary: List public FAQ entries
+      tags:
+      - faq
   /isochrone:
     get:
       description: Returns a polygon representing the area reachable within the specified
@@ -15757,7 +15974,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.OwnerDashboard'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_service.OwnerDashboard'
               type: object
         "400":
           description: Bad Request
@@ -15831,7 +16048,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsSnapshot'
+                    $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsSnapshot'
                   type: array
               type: object
         "400":
@@ -15900,7 +16117,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.OwnerPerformance'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.OwnerPerformance'
               type: object
         "400":
           description: Bad Request
@@ -16173,69 +16390,6 @@ paths:
       summary: Export calendar as ICS
       tags:
       - calendar
-  /my/bathhouses/{id}/completeness:
-    get:
-      description: Check how complete a bathhouse listing is before submitting for
-        moderation.
-      parameters:
-      - description: Bathhouse ID (UUID)
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.CompletenessResult'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-        "404":
-          description: Not Found
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Check listing completeness
-      tags:
-      - bathhouses
   /my/bathhouses/{id}/deactivate:
     post:
       description: Temporarily deactivate a bathhouse. It will be hidden from search
@@ -19071,7 +19225,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_domain.GuestCardStats'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.GuestCardStats'
               type: object
         "401":
           description: Unauthorized
@@ -20236,7 +20390,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.ImportReport'
+                  $ref: '#/definitions/github_com_rekurt_relax-hub_internal_service.ImportReport'
               type: object
         "400":
           description: Bad Request
@@ -21577,7 +21731,7 @@ paths:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/github_com_nikitaaldaev_bani_internal_service.ProfileCompletenessOutput'
+                  $ref: '#/definitions/internal_handler.profileCompletenessResponse'
               type: object
         "401":
           description: Unauthorized
@@ -24347,6 +24501,26 @@ paths:
       summary: Validate promo code
       tags:
       - promo-codes
+  /promotions/banners:
+    get:
+      description: Returns active promotional banners for the home page
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/internal_handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_handler.promotionBannerResponse'
+                  type: array
+              type: object
+      summary: Get promotion banners
+      tags:
+      - promotions
   /recommendations:
     get:
       description: Returns personalized bathhouse recommendations based on user preferences

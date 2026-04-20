@@ -468,7 +468,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.AdminDashboard"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_service.AdminDashboard"
                                         }
                                     }
                                 }
@@ -568,7 +568,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.BusinessMetrics"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_service.BusinessMetrics"
                                         }
                                     }
                                 }
@@ -668,7 +668,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.CohortAnalysis"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.CohortAnalysis"
                                         }
                                     }
                                 }
@@ -768,7 +768,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.ConversionFunnel"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.ConversionFunnel"
                                         }
                                     }
                                 }
@@ -868,7 +868,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.GeoDemandSupplyMap"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.GeoDemandSupplyMap"
                                         }
                                     }
                                 }
@@ -975,7 +975,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.HeatmapData"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.HeatmapData"
                                         }
                                     }
                                 }
@@ -1075,7 +1075,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.PnLMetrics"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_service.PnLMetrics"
                                         }
                                     }
                                 }
@@ -1282,7 +1282,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.WalletMetrics"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.WalletMetrics"
                                         }
                                     }
                                 }
@@ -3130,7 +3130,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_antifraud.FilteredChatMessage"
+                                                "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_antifraud.FilteredChatMessage"
                                             }
                                         },
                                         "meta": {
@@ -6115,111 +6115,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/admin/listings/batch": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Performs batch approve or reject on up to 1000 listings. Processes in chunks of 100.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "admin-bathhouses"
-                ],
-                "summary": "Batch listing operations",
-                "parameters": [
-                    {
-                        "description": "Action (approve/reject) and list of IDs",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_handler.batchActionRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/internal_handler.batchDetailedResult"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
                         "schema": {
                             "allOf": [
                                 {
@@ -11506,6 +11401,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/apple-pay/validate-merchant": {
+            "post": {
+                "description": "Performs Apple Pay merchant validation. In production requires server-side Apple certificates.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "payments"
+                ],
+                "summary": "Validate Apple Pay merchant",
+                "parameters": [
+                    {
+                        "description": "Validation URL from Apple Pay session",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.applePayValidationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {}
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/auth/2fa/sms/enable": {
             "post": {
                 "security": [
@@ -12824,6 +12781,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/oauth/providers": {
+            "get": {
+                "description": "Returns only the providers that are configured on the backend and safe to show in UI",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "oauth"
+                ],
+                "summary": "List configured OAuth providers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.configuredOAuthProvidersResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/auth/oauth/{provider}": {
             "get": {
                 "description": "Redirects the user to the OAuth provider's authorization page",
@@ -12925,6 +12914,88 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/phone/start": {
+            "post": {
+                "description": "Sends OTP to the provided phone number for public checkout/login flow",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Start public phone auth",
+                "parameters": [
+                    {
+                        "description": "Phone data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.loginPhoneRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.otpSentResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
                         "schema": {
                             "allOf": [
                                 {
@@ -14200,7 +14271,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.TimeSlot"
+                                                "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_service.TimeSlot"
                                             }
                                         }
                                     }
@@ -14602,83 +14673,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/bathhouses/{id}/meta": {
-            "get": {
-                "description": "Get SEO meta tags (title, description, og:image, canonical) for a bathhouse.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "bathhouses"
-                ],
-                "summary": "Get bathhouse SEO meta tags",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bathhouse ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_seo.MetaTags"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "allOf": [
                                 {
@@ -18489,6 +18483,217 @@ const docTemplate = `{
                 }
             }
         },
+        "/certificates/orders": {
+            "post": {
+                "description": "Creates a draft order for a gift certificate checkout flow. Can be used without authentication.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "certificates"
+                ],
+                "summary": "Create gift certificate order",
+                "parameters": [
+                    {
+                        "description": "Certificate order data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.createCertificateOrderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.certificateOrderResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/certificates/orders/{id}": {
+            "get": {
+                "description": "Returns the current status of a gift certificate order and the issued certificate after successful payment.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "certificates"
+                ],
+                "summary": "Get gift certificate order",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Certificate order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.certificateOrderResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/certificates/orders/{id}/pay": {
+            "post": {
+                "description": "Starts payment for a previously created gift certificate order.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "certificates"
+                ],
+                "summary": "Initiate gift certificate payment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Certificate order ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Payment method and token",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handler.certificateOrderPaymentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_handler.initiateCertificateOrderPaymentResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "$ref": "#/definitions/internal_handler.APIError"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/certificates/purchase": {
             "post": {
                 "description": "Creates a new gift certificate. Can be used without authentication. Amount is in kopecks.",
@@ -19453,6 +19658,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/faq": {
+            "get": {
+                "description": "Returns active FAQ entries for the public site",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "faq"
+                ],
+                "summary": "List public FAQ entries",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by category",
+                        "name": "category",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_handler.faqResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "$ref": "#/definitions/internal_handler.Meta"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/isochrone": {
             "get": {
                 "description": "Returns a polygon representing the area reachable within the specified travel time from a point",
@@ -20342,7 +20593,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.OwnerDashboard"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_service.OwnerDashboard"
                                         }
                                     }
                                 }
@@ -20476,7 +20727,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsSnapshot"
+                                                "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsSnapshot"
                                             }
                                         }
                                     }
@@ -20602,7 +20853,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.OwnerPerformance"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.OwnerPerformance"
                                         }
                                     }
                                 }
@@ -21031,124 +21282,6 @@ const docTemplate = `{
                         "description": "ICS file content",
                         "schema": {
                             "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/my/bathhouses/{id}/completeness": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Check how complete a bathhouse listing is before submitting for moderation.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "bathhouses"
-                ],
-                "summary": "Check listing completeness",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bathhouse ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.CompletenessResult"
-                                        }
-                                    }
-                                }
-                            ]
                         }
                     },
                     "400": {
@@ -26408,7 +26541,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.GuestCardStats"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.GuestCardStats"
                                         }
                                     }
                                 }
@@ -28561,7 +28694,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.ImportReport"
+                                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_service.ImportReport"
                                         }
                                     }
                                 }
@@ -31017,7 +31150,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.ProfileCompletenessOutput"
+                                            "$ref": "#/definitions/internal_handler.profileCompletenessResponse"
                                         }
                                     }
                                 }
@@ -36072,6 +36205,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/promotions/banners": {
+            "get": {
+                "description": "Returns active promotional banners for the home page",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "promotions"
+                ],
+                "summary": "Get promotion banners",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/internal_handler.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_handler.promotionBannerResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/recommendations": {
             "get": {
                 "security": [
@@ -37942,7 +38110,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_nikitaaldaev_bani_internal_antifraud.Detection": {
+        "github_com_rekurt_relax-hub_internal_antifraud.Detection": {
             "type": "object",
             "properties": {
                 "match": {
@@ -37956,7 +38124,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_antifraud.FilteredChatMessage": {
+        "github_com_rekurt_relax-hub_internal_antifraud.FilteredChatMessage": {
             "type": "object",
             "properties": {
                 "conversation_id": {
@@ -37968,7 +38136,7 @@ const docTemplate = `{
                 "detections": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_antifraud.Detection"
+                        "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_antifraud.Detection"
                     }
                 },
                 "filtered_text": {
@@ -37985,7 +38153,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.AdminPermission": {
+        "github_com_rekurt_relax-hub_internal_domain.AdminPermission": {
             "type": "string",
             "enum": [
                 "users.manage",
@@ -38048,7 +38216,7 @@ const docTemplate = `{
                 "PermPhotoOrderManage"
             ]
         },
-        "github_com_nikitaaldaev_bani_internal_domain.AdminSubRole": {
+        "github_com_rekurt_relax-hub_internal_domain.AdminSubRole": {
             "type": "string",
             "enum": [
                 "super_admin",
@@ -38067,7 +38235,7 @@ const docTemplate = `{
                 "AdminSubRoleFinance"
             ]
         },
-        "github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod": {
+        "github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod": {
             "type": "string",
             "enum": [
                 "1d",
@@ -38082,7 +38250,7 @@ const docTemplate = `{
                 "Period90d"
             ]
         },
-        "github_com_nikitaaldaev_bani_internal_domain.AnalyticsSnapshot": {
+        "github_com_rekurt_relax-hub_internal_domain.AnalyticsSnapshot": {
             "type": "object",
             "properties": {
                 "avg_rating": {
@@ -38111,18 +38279,18 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.CohortAnalysis": {
+        "github_com_rekurt_relax-hub_internal_domain.CohortAnalysis": {
             "type": "object",
             "properties": {
                 "cohorts": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.CohortRow"
+                        "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.CohortRow"
                     }
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.CohortRow": {
+        "github_com_rekurt_relax-hub_internal_domain.CohortRow": {
             "type": "object",
             "properties": {
                 "cohort_month": {
@@ -38146,21 +38314,21 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.ConversionFunnel": {
+        "github_com_rekurt_relax-hub_internal_domain.ConversionFunnel": {
             "type": "object",
             "properties": {
                 "period": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod"
                 },
                 "steps": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.FunnelStep"
+                        "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.FunnelStep"
                     }
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.CustomSegmentCondition": {
+        "github_com_rekurt_relax-hub_internal_domain.CustomSegmentCondition": {
             "type": "object",
             "properties": {
                 "avg_check_max": {
@@ -38223,7 +38391,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.FunnelStep": {
+        "github_com_rekurt_relax-hub_internal_domain.FunnelStep": {
             "type": "object",
             "properties": {
                 "count": {
@@ -38238,21 +38406,21 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.GeoDemandSupplyMap": {
+        "github_com_rekurt_relax-hub_internal_domain.GeoDemandSupplyMap": {
             "type": "object",
             "properties": {
                 "cities": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.GeoSupplyDemand"
+                        "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.GeoSupplyDemand"
                     }
                 },
                 "period": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod"
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.GeoSupplyDemand": {
+        "github_com_rekurt_relax-hub_internal_domain.GeoSupplyDemand": {
             "type": "object",
             "properties": {
                 "booking_count": {
@@ -38275,7 +38443,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.GuestCardStats": {
+        "github_com_rekurt_relax-hub_internal_domain.GuestCardStats": {
             "type": "object",
             "properties": {
                 "avg_spent": {
@@ -38292,7 +38460,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.HeatmapCell": {
+        "github_com_rekurt_relax-hub_internal_domain.HeatmapCell": {
             "type": "object",
             "properties": {
                 "booking_count": {
@@ -38317,7 +38485,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.HeatmapData": {
+        "github_com_rekurt_relax-hub_internal_domain.HeatmapData": {
             "type": "object",
             "properties": {
                 "cell_size": {
@@ -38327,15 +38495,15 @@ const docTemplate = `{
                 "cells": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.HeatmapCell"
+                        "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.HeatmapCell"
                     }
                 },
                 "period": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod"
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.OwnerPerformance": {
+        "github_com_rekurt_relax-hub_internal_domain.OwnerPerformance": {
             "type": "object",
             "properties": {
                 "avg_city_conversion_rate": {
@@ -38371,21 +38539,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_domain.ProfileCompletenessItem": {
-            "type": "object",
-            "properties": {
-                "complete": {
-                    "type": "boolean"
-                },
-                "field": {
-                    "type": "string"
-                },
-                "label": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_nikitaaldaev_bani_internal_domain.TwoFAMethod": {
+        "github_com_rekurt_relax-hub_internal_domain.TwoFAMethod": {
             "type": "string",
             "enum": [
                 "none",
@@ -38398,7 +38552,7 @@ const docTemplate = `{
                 "TwoFASMS"
             ]
         },
-        "github_com_nikitaaldaev_bani_internal_domain.WalletMetrics": {
+        "github_com_rekurt_relax-hub_internal_domain.WalletMetrics": {
             "type": "object",
             "properties": {
                 "active_wallets": {
@@ -38426,7 +38580,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_seo.MetaTags": {
+        "github_com_rekurt_relax-hub_internal_seo.MetaTags": {
             "type": "object",
             "properties": {
                 "canonical": {
@@ -38458,7 +38612,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_service.AdminDashboard": {
+        "github_com_rekurt_relax-hub_internal_service.AdminDashboard": {
             "type": "object",
             "properties": {
                 "adr": {
@@ -38484,12 +38638,12 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "period": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod"
                 },
                 "top_bathhouses": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.TopBathhouseInfo"
+                        "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_service.TopBathhouseInfo"
                     }
                 },
                 "total_bathhouses": {
@@ -38513,7 +38667,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_service.BusinessMetrics": {
+        "github_com_rekurt_relax-hub_internal_service.BusinessMetrics": {
             "type": "object",
             "properties": {
                 "adr": {
@@ -38541,57 +38695,11 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "period": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod"
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_service.CompletenessItem": {
-            "type": "object",
-            "properties": {
-                "complete": {
-                    "type": "boolean"
-                },
-                "field": {
-                    "type": "string"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "required": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "github_com_nikitaaldaev_bani_internal_service.CompletenessResult": {
-            "type": "object",
-            "properties": {
-                "done_optional": {
-                    "type": "integer"
-                },
-                "done_required": {
-                    "type": "integer"
-                },
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.CompletenessItem"
-                    }
-                },
-                "ready": {
-                    "type": "boolean"
-                },
-                "score": {
-                    "type": "integer"
-                },
-                "total_optional": {
-                    "type": "integer"
-                },
-                "total_required": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_nikitaaldaev_bani_internal_service.ImportError": {
+        "github_com_rekurt_relax-hub_internal_service.ImportError": {
             "type": "object",
             "properties": {
                 "field": {
@@ -38605,7 +38713,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_service.ImportReport": {
+        "github_com_rekurt_relax-hub_internal_service.ImportReport": {
             "type": "object",
             "properties": {
                 "created_ids": {
@@ -38620,7 +38728,7 @@ const docTemplate = `{
                 "errors": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.ImportError"
+                        "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_service.ImportError"
                     }
                 },
                 "success_count": {
@@ -38631,7 +38739,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_service.OwnerDashboard": {
+        "github_com_rekurt_relax-hub_internal_service.OwnerDashboard": {
             "type": "object",
             "properties": {
                 "avg_check": {
@@ -38649,10 +38757,10 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "period": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod"
                 },
                 "previous_period": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.OwnerDashboard"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_service.OwnerDashboard"
                 },
                 "rating": {
                     "type": "number"
@@ -38679,7 +38787,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_service.PnLMetrics": {
+        "github_com_rekurt_relax-hub_internal_service.PnLMetrics": {
             "type": "object",
             "properties": {
                 "gmv": {
@@ -38691,7 +38799,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "period": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AnalyticsPeriod"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod"
                 },
                 "platform_revenue": {
                     "description": "total platform revenue (kopecks)",
@@ -38723,21 +38831,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_service.ProfileCompletenessOutput": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.ProfileCompletenessItem"
-                    }
-                },
-                "percentage": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_nikitaaldaev_bani_internal_service.TimeSlot": {
+        "github_com_rekurt_relax-hub_internal_service.TimeSlot": {
             "type": "object",
             "properties": {
                 "available": {
@@ -38763,7 +38857,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_nikitaaldaev_bani_internal_service.TopBathhouseInfo": {
+        "github_com_rekurt_relax-hub_internal_service.TopBathhouseInfo": {
             "type": "object",
             "properties": {
                 "bathhouse_id": {
@@ -39067,7 +39161,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "admin_sub_role": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminSubRole"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AdminSubRole"
                 },
                 "email": {
                     "type": "string"
@@ -39082,7 +39176,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "two_fa_method": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.TwoFAMethod"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.TwoFAMethod"
                 }
             }
         },
@@ -39162,6 +39256,14 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.applePayValidationRequest": {
+            "type": "object",
+            "properties": {
+                "validation_url": {
                     "type": "string"
                 }
             }
@@ -39591,7 +39693,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "meta": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_seo.MetaTags"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_seo.MetaTags"
                 },
                 "min_duration": {
                     "type": "integer"
@@ -39915,6 +40017,64 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handler.certificateOrderPaymentRequest": {
+            "type": "object",
+            "properties": {
+                "payment_method": {
+                    "type": "string"
+                },
+                "payment_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.certificateOrderResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "certificate": {
+                    "$ref": "#/definitions/internal_handler.certificateResponse"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "external_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "paid_at": {
+                    "type": "string"
+                },
+                "payment_method": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "purchaser_email": {
+                    "type": "string"
+                },
+                "recipient_email": {
+                    "type": "string"
+                },
+                "recipient_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_handler.certificateResponse": {
             "type": "object",
             "properties": {
@@ -40154,6 +40314,17 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handler.configuredOAuthProvidersResponse": {
+            "type": "object",
+            "properties": {
+                "providers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "internal_handler.conversationResponse": {
             "type": "object",
             "properties": {
@@ -40343,6 +40514,26 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handler.createCertificateOrderRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "purchaser_email": {
+                    "type": "string"
+                },
+                "recipient_email": {
+                    "type": "string"
+                },
+                "recipient_name": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_handler.createCityRequest": {
             "type": "object",
             "properties": {
@@ -40393,7 +40584,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "conditions": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.CustomSegmentCondition"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.CustomSegmentCondition"
                 },
                 "name": {
                     "type": "string"
@@ -40695,7 +40886,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "conditions": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.CustomSegmentCondition"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.CustomSegmentCondition"
                 },
                 "created_at": {
                     "type": "string"
@@ -41279,6 +41470,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.initiateCertificateOrderPaymentResponse": {
+            "type": "object",
+            "properties": {
+                "confirmation_url": {
                     "type": "string"
                 }
             }
@@ -42082,20 +42281,20 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminPermission"
+                            "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AdminPermission"
                         }
                     }
                 },
                 "permissions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminPermission"
+                        "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AdminPermission"
                     }
                 },
                 "roles": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminSubRole"
+                        "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AdminSubRole"
                     }
                 }
             }
@@ -42426,6 +42625,34 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handler.profileCompletenessItemResponse": {
+            "type": "object",
+            "properties": {
+                "complete": {
+                    "type": "boolean"
+                },
+                "field": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handler.profileCompletenessResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_handler.profileCompletenessItemResponse"
+                    }
+                },
+                "percentage": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_handler.promoResponse": {
             "type": "object",
             "properties": {
@@ -42470,6 +42697,29 @@ const docTemplate = `{
                 },
                 "value": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_handler.promotionBannerResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "discount_text": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "promo_code": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
                 }
             }
         },
@@ -42649,11 +42899,32 @@ const docTemplate = `{
                 "address": {
                     "type": "string"
                 },
+                "booking_mode": {
+                    "type": "string"
+                },
                 "city_id": {
                     "type": "integer"
                 },
                 "description": {
                     "type": "string"
+                },
+                "has_bbq": {
+                    "type": "boolean"
+                },
+                "has_hot_tub": {
+                    "type": "boolean"
+                },
+                "has_karaoke": {
+                    "type": "boolean"
+                },
+                "has_pool": {
+                    "type": "boolean"
+                },
+                "has_sauna": {
+                    "type": "boolean"
+                },
+                "has_steam_room": {
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "string"
@@ -42663,6 +42934,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "is_photo_verified": {
+                    "type": "boolean"
                 },
                 "latitude": {
                     "type": "number"
@@ -43375,7 +43649,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "sub_role": {
-                    "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_domain.AdminSubRole"
+                    "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_domain.AdminSubRole"
                 }
             }
         },
@@ -43844,7 +44118,7 @@ const docTemplate = `{
                 "bathhouses": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_nikitaaldaev_bani_internal_service.TopBathhouseInfo"
+                        "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_service.TopBathhouseInfo"
                     }
                 },
                 "limit": {

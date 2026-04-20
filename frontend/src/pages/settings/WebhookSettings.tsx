@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   Typography,
   Card,
@@ -27,8 +27,9 @@ import {
 } from '@ant-design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 interface Webhook {
   id: string
@@ -60,7 +61,7 @@ const EVENT_OPTIONS = [
   { value: 'payment.received', label: 'Платёж получен' },
 ]
 
-const STATUS_TAGS: Record<string, { color: string; icon: React.ReactNode; text: string }> = {
+const STATUS_TAGS: Record<string, { color: string; icon: ReactNode; text: string }> = {
   success: { color: 'success', icon: <CheckCircleOutlined />, text: 'Доставлено' },
   failed: { color: 'error', icon: <CloseCircleOutlined />, text: 'Ошибка' },
   pending: { color: 'processing', icon: <ClockCircleOutlined />, text: 'Ожидание' },
@@ -101,6 +102,8 @@ export default function WebhookSettings() {
 
   const webhooks: Webhook[] = webhooksData?.data ?? []
   const meta = webhooksData?.meta
+  const deliveries: WebhookDelivery[] = deliveriesData?.data ?? []
+  const activeWebhooks = webhooks.filter((webhook) => webhook.is_active).length
 
   const createMutation = useMutation({
     mutationFn: (values: { url: string; secret: string; events: string[] }) =>
@@ -150,9 +153,9 @@ export default function WebhookSettings() {
   const handleSubmit = (values: { url: string; secret: string; events: string[]; is_active?: boolean }) => {
     if (editingWebhook) {
       updateMutation.mutate({ id: editingWebhook.id, is_active: values.is_active ?? true, ...values })
-    } else {
-      createMutation.mutate(values)
+      return
     }
+    createMutation.mutate(values)
   }
 
   const openEdit = (webhook: Webhook) => {
@@ -172,8 +175,6 @@ export default function WebhookSettings() {
     setModalOpen(true)
   }
 
-  const deliveries: WebhookDelivery[] = deliveriesData?.data ?? []
-
   const columns = [
     {
       title: 'URL',
@@ -188,9 +189,9 @@ export default function WebhookSettings() {
       key: 'events',
       render: (events: string[]) => (
         <Space wrap>
-          {events.map(e => {
-            const opt = EVENT_OPTIONS.find(o => o.value === e)
-            return <Tag key={e}>{opt?.label ?? e}</Tag>
+          {events.map((event) => {
+            const option = EVENT_OPTIONS.find((item) => item.value === event)
+            return <Tag key={event}>{option?.label ?? event}</Tag>
           })}
         </Space>
       ),
@@ -225,8 +226,8 @@ export default function WebhookSettings() {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
-        const cfg = STATUS_TAGS[status] ?? { color: 'default', icon: null, text: status }
-        return <Tag color={cfg.color} icon={cfg.icon}>{cfg.text}</Tag>
+        const config = STATUS_TAGS[status] ?? { color: 'default', icon: null, text: status }
+        return <Tag color={config.color} icon={config.icon}>{config.text}</Tag>
       },
     },
     { title: 'HTTP', dataIndex: 'http_status', key: 'http_status' },
@@ -241,20 +242,42 @@ export default function WebhookSettings() {
       title: 'Дата',
       dataIndex: 'created_at',
       key: 'created_at',
-      render: (d: string) => new Date(d).toLocaleString('ru-RU'),
+      render: (value: string) => new Date(value).toLocaleString('ru-RU'),
     },
   ]
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
-      <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>Вебхуки</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          Добавить вебхук
-        </Button>
-      </Space>
+    <div className="bani-stack">
+      <PageHeader
+        eyebrow="Интеграции"
+        title="Вебхуки"
+        description="Подключение внешних CRM и обработчиков событий через аккуратный операционный интерфейс."
+        extra={(
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+            Добавить вебхук
+          </Button>
+        )}
+      />
 
-      <Card>
+      <div className="bani-stat-grid">
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Всего вебхуков</span>
+          <span className="bani-stat-tile__value">{meta?.total_count ?? webhooks.length}</span>
+          <span className="bani-stat-tile__hint">Все подключённые конечные точки интеграции.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Активные</span>
+          <span className="bani-stat-tile__value">{activeWebhooks}</span>
+          <span className="bani-stat-tile__hint">Именно они получают боевые события платформы.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Последняя история</span>
+          <span className="bani-stat-tile__value">{deliveries.length}</span>
+          <span className="bani-stat-tile__hint">Записи в раскрытом журнале доставок выбранного вебхука.</span>
+        </div>
+      </div>
+
+      <Card title="Подключённые вебхуки">
         <Table
           dataSource={webhooks}
           columns={columns}
@@ -298,7 +321,10 @@ export default function WebhookSettings() {
       <Modal
         title={editingWebhook ? 'Редактировать вебхук' : 'Новый вебхук'}
         open={modalOpen}
-        onCancel={() => { setModalOpen(false); setEditingWebhook(null) }}
+        onCancel={() => {
+          setModalOpen(false)
+          setEditingWebhook(null)
+        }}
         onOk={() => form.submit()}
         confirmLoading={createMutation.isPending || updateMutation.isPending}
         okText={editingWebhook ? 'Сохранить' : 'Создать'}

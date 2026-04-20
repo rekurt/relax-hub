@@ -59,6 +59,7 @@ func mountAPIRoutes(
 	r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/2fa/verify", p.AuthHandler.Verify2FALogin)
 
 	// OAuth (public)
+	r.Get("/auth/oauth/providers", p.OAuthHandler.ListConfiguredProviders)
 	r.Get("/auth/oauth/{provider}", p.OAuthHandler.OAuthRedirect)
 	r.Get("/auth/oauth/{provider}/callback", p.OAuthHandler.OAuthCallback)
 
@@ -200,6 +201,9 @@ func mountAPIRoutes(
 	r.With(auth).Post("/bookings/{id}/dispute", p.DisputeHandler.OpenDispute)
 
 	// Gift certificates (optionally authenticated)
+	r.With(optionalAuth).Post("/certificates/orders", p.CertificateHandler.CreateOrder)
+	r.With(optionalAuth).Post("/certificates/orders/{id}/pay", p.CertificateHandler.InitiateOrderPayment)
+	r.Get("/certificates/orders/{id}", p.CertificateHandler.GetOrder)
 	r.With(optionalAuth).Post("/certificates/purchase", p.CertificateHandler.Purchase)
 	r.Get("/certificates/{code}/balance", p.CertificateHandler.GetBalance)
 

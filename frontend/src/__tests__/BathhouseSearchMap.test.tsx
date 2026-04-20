@@ -280,7 +280,7 @@ describe('BathhouseSearch - Map & Compare features', () => {
     renderWithProviders(<BathhouseSearch />)
 
     expect(screen.getByPlaceholderText('Поиск по названию...')).toBeInTheDocument()
-    expect(screen.getByText('Фильтры')).toBeInTheDocument()
+    expect(screen.getByText('Быстрые фильтры')).toBeInTheDocument()
     expect(screen.getByText('Найти рядом')).toBeInTheDocument()
   })
 
@@ -309,9 +309,8 @@ describe('BathhouseSearch - Map & Compare features', () => {
     const marker = screen.getByTestId('map-marker-1')
     fireEvent.mouseEnter(marker)
 
-    // Check that the card wrapper has highlight styling
     const cardWrapper = screen.getByTestId('card-wrapper-1')
-    expect(cardWrapper.style.boxShadow).toContain('722ed1')
+    expect(cardWrapper.className).toContain('bani-catalog__card-shell--highlighted')
   })
 
   it('removes highlight when map marker hover ends', () => {
@@ -324,7 +323,7 @@ describe('BathhouseSearch - Map & Compare features', () => {
     fireEvent.mouseLeave(marker)
 
     const cardWrapper = screen.getByTestId('card-wrapper-1')
-    expect(cardWrapper.style.boxShadow).toBe('')
+    expect(cardWrapper.className).not.toContain('bani-catalog__card-shell--highlighted')
   })
 
   it('highlights map marker when list card is hovered', () => {

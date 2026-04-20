@@ -19,7 +19,6 @@ type GuestCardRepository interface {
 	GetRFMScores(ctx context.Context, filter domain.GuestCardFilter) (*domain.RFMResult, error)
 }
 
-
 type CustomSegmentRepository interface {
 	Create(ctx context.Context, segment *domain.CustomSegment) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.CustomSegment, error)
@@ -30,7 +29,6 @@ type CustomSegmentRepository interface {
 	CountSegmentGuests(ctx context.Context, segment *domain.CustomSegment, ownerFilter domain.GuestCardFilter) (int64, error)
 }
 
-
 type BroadcastRepository interface {
 	Create(ctx context.Context, broadcast *domain.Broadcast) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Broadcast, error)
@@ -39,7 +37,6 @@ type BroadcastRepository interface {
 	UpdateStats(ctx context.Context, id uuid.UUID, delivered, read, clicked int64) error
 	CountRecentByOwner(ctx context.Context, ownerID uuid.UUID, since time.Time) (int64, error)
 }
-
 
 type AutoScenarioRepository interface {
 	Upsert(ctx context.Context, scenario *domain.AutoScenario) error
@@ -50,7 +47,6 @@ type AutoScenarioRepository interface {
 	HasBeenExecuted(ctx context.Context, scenarioID, guestCardID uuid.UUID) (bool, error)
 }
 
-
 type ResponseTemplateRepository interface {
 	Create(ctx context.Context, template *domain.ResponseTemplate) error
 	Update(ctx context.Context, template *domain.ResponseTemplate) error
@@ -59,7 +55,6 @@ type ResponseTemplateRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.ResponseTemplate, error)
 	CountByOwner(ctx context.Context, ownerID uuid.UUID) (int64, error)
 }
-
 
 type LoyaltyRepository interface {
 	GetAccount(ctx context.Context, userID uuid.UUID) (*domain.LoyaltyAccount, error)
@@ -73,7 +68,6 @@ type LoyaltyRepository interface {
 	CreateTransaction(ctx context.Context, tx *domain.LoyaltyTransaction) error
 }
 
-
 type ReferralRepository interface {
 	Create(ctx context.Context, referral *domain.Referral) error
 	GetByReferee(ctx context.Context, refereeID uuid.UUID) (*domain.Referral, error)
@@ -86,7 +80,6 @@ type ReferralRepository interface {
 	CountByReferrer(ctx context.Context, referrerID uuid.UUID) (int, int, error) // totalInvited, totalCompleted
 }
 
-
 type GiftCertificateRepository interface {
 	Create(ctx context.Context, cert *domain.GiftCertificate) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.GiftCertificate, error)
@@ -98,6 +91,14 @@ type GiftCertificateRepository interface {
 	CountActiveByUser(ctx context.Context, userID uuid.UUID) (int, error)
 }
 
+type CertificateOrderRepository interface {
+	Create(ctx context.Context, order *domain.CertificateOrder) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.CertificateOrder, error)
+	GetByExternalID(ctx context.Context, externalID string) (*domain.CertificateOrder, error)
+	UpdatePayment(ctx context.Context, id uuid.UUID, status domain.CertificateOrderStatus, paymentMethod domain.PaymentMethod, provider, externalID string) error
+	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.CertificateOrderStatus) error
+	MarkPaid(ctx context.Context, id uuid.UUID, certificateID uuid.UUID, paidAt time.Time) error
+}
 
 type PromoCodeRepository interface {
 	Create(ctx context.Context, promo *domain.PromoCode) error
@@ -116,7 +117,6 @@ type PromoCodeRepository interface {
 	DeactivateExpired(ctx context.Context, before time.Time) (int64, error)
 }
 
-
 type SubscriptionRepository interface {
 	Create(ctx context.Context, sub *domain.Subscription) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Subscription, error)
@@ -125,7 +125,6 @@ type SubscriptionRepository interface {
 	ListByOwner(ctx context.Context, ownerID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Subscription], error)
 	GetExpiring(ctx context.Context, before time.Time) ([]domain.Subscription, error)
 }
-
 
 type PromotionRepository interface {
 	Create(ctx context.Context, promo *domain.Promotion) error
@@ -139,7 +138,6 @@ type PromotionRepository interface {
 	RecordClick(ctx context.Context, promotionID uuid.UUID) error
 }
 
-
 type SeasonalTariffRepository interface {
 	Create(ctx context.Context, tariff *domain.SeasonalTariff) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.SeasonalTariff, error)
@@ -149,7 +147,6 @@ type SeasonalTariffRepository interface {
 	GetActiveTariffs(ctx context.Context, bathhouseID uuid.UUID, date time.Time) ([]domain.SeasonalTariff, error)
 }
 
-
 type PricingRuleRepository interface {
 	Create(ctx context.Context, rule *domain.PricingRule) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.PricingRule, error)
@@ -158,4 +155,3 @@ type PricingRuleRepository interface {
 	ListByBathhouse(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
 	GetActiveRules(ctx context.Context, bathhouseID uuid.UUID) ([]domain.PricingRule, error)
 }
-

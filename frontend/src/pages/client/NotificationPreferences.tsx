@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Typography, Card, Switch, Table, Tag, Button, Space, App, Spin, Divider } from 'antd'
 import {
   BellOutlined,
@@ -109,6 +109,35 @@ function useUpdateEventPreferences() {
   })
 }
 
+function ChannelToggleCard({
+  icon,
+  title,
+  description,
+  checked,
+  disabled,
+  onChange,
+}: {
+  icon: ReactNode
+  title: string
+  description: string
+  checked: boolean
+  disabled?: boolean
+  onChange?: (checked: boolean) => void
+}) {
+  return (
+    <div className="bani-toggle-card">
+      <div className="bani-toggle-card__copy">
+        <Space size={8}>
+          {icon}
+          <Text className="bani-toggle-card__title">{title}</Text>
+        </Space>
+        <Text className="bani-toggle-card__description">{description}</Text>
+      </div>
+      <Switch checked={checked} disabled={disabled} onChange={onChange} />
+    </div>
+  )
+}
+
 export default function NotificationPreferences() {
   const { message } = App.useApp()
   const queryClient = useQueryClient()
@@ -174,61 +203,69 @@ export default function NotificationPreferences() {
   }
 
   const eventPrefMap = new Map(localEventPrefs.map((p) => [p.event_type, p]))
+  const activeChannels = [globalPrefs?.push, globalPrefs?.email, globalPrefs?.sms, globalPrefs?.telegram].filter(Boolean).length
+  const mandatoryEvents = localEventPrefs.filter((event) => event.is_mandatory).length
 
   return (
-    <div>
+    <div className="bani-stack">
       <PageHeader
         eyebrow="Личные настройки"
         title="Настройки уведомлений"
         description="Управляйте каналами доставки и типами событий без лишнего шума."
       />
 
-      <Card title="Каналы доставки" style={{ marginBottom: 24 }}>
+      <div className="bani-stat-grid">
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Активных каналов</span>
+          <span className="bani-stat-tile__value">{activeChannels}</span>
+          <span className="bani-stat-tile__hint">Push, email, SMS и Telegram с текущим состоянием на аккаунте.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Событий под настройку</span>
+          <span className="bani-stat-tile__value">{localEventPrefs.length}</span>
+          <span className="bani-stat-tile__hint">Можно гибко включать каналы для каждого типа события.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Обязательных событий</span>
+          <span className="bani-stat-tile__value">{mandatoryEvents}</span>
+          <span className="bani-stat-tile__hint">Системные уведомления, которые нельзя полностью отключить.</span>
+        </div>
+      </div>
+
+      <Card title="Каналы доставки">
         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
           Включите или выключите каналы доставки уведомлений
         </Text>
-        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Space>
-              <BellOutlined />
-              <Text>Push-уведомления</Text>
-            </Space>
-            <Switch
-              checked={globalPrefs?.push ?? false}
-              onChange={(checked) => handleGlobalToggle('push', checked)}
-            />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Space>
-              <MailOutlined />
-              <Text>Email</Text>
-            </Space>
-            <Switch
-              checked={globalPrefs?.email ?? true}
-              onChange={(checked) => handleGlobalToggle('email', checked)}
-            />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Space>
-              <MobileOutlined />
-              <Text>SMS</Text>
-            </Space>
-            <Switch
-              checked={globalPrefs?.sms ?? false}
-              onChange={(checked) => handleGlobalToggle('sms', checked)}
-            />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Space>
-              <MessageOutlined />
-              <Text>Telegram</Text>
-            </Space>
-            <Switch
-              checked={globalPrefs?.telegram ?? false}
-              disabled
-            />
-          </div>
-        </Space>
+        <div className="bani-toggle-grid">
+          <ChannelToggleCard
+            icon={<BellOutlined />}
+            title="Push-уведомления"
+            description="Быстрые уведомления в интерфейсе и на устройстве."
+            checked={globalPrefs?.push ?? false}
+            onChange={(checked) => handleGlobalToggle('push', checked)}
+          />
+          <ChannelToggleCard
+            icon={<MailOutlined />}
+            title="Email"
+            description="Письма для подтверждений, итогов и важных изменений."
+            checked={globalPrefs?.email ?? true}
+            onChange={(checked) => handleGlobalToggle('email', checked)}
+          />
+          <ChannelToggleCard
+            icon={<MobileOutlined />}
+            title="SMS"
+            description="Короткие уведомления для критичных сценариев и напоминаний."
+            checked={globalPrefs?.sms ?? false}
+            onChange={(checked) => handleGlobalToggle('sms', checked)}
+          />
+          <ChannelToggleCard
+            icon={<MessageOutlined />}
+            title="Telegram"
+            description="Канал подготовлен, но пока недоступен для самостоятельного включения."
+            checked={globalPrefs?.telegram ?? false}
+            disabled
+          />
+        </div>
       </Card>
 
       <Card

@@ -9,6 +9,7 @@ import {
   Space,
   Popconfirm,
   App,
+  Typography,
 } from 'antd'
 import {
   UserOutlined,
@@ -22,6 +23,8 @@ import {
   useDeleteAuthMeAvatar,
 } from '@/api/generated/auth/auth'
 import PageHeader from '@/components/PageHeader'
+
+const { Text } = Typography
 
 export default function AdminProfile() {
   const { user, loadProfile } = useAuthStore()
@@ -83,22 +86,67 @@ export default function AdminProfile() {
   }
 
   return (
-    <div>
+    <div className="bani-stack">
       <PageHeader
         eyebrow="Админка"
         title="Профиль администратора"
         description="Базовые данные администратора и аватар для служебных сценариев."
       />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className="bani-stat-grid">
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Администратор</span>
+          <span className="bani-stat-tile__value">{user?.name ?? 'Без имени'}</span>
+          <span className="bani-stat-tile__hint">{user?.email ?? 'Email не указан'}</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Телефон</span>
+          <span className="bani-stat-tile__value">{user?.phone ?? 'Не указан'}</span>
+          <span className="bani-stat-tile__hint">Используется для служебных контактов и восстановления доступа.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Статус фото</span>
+          <span className="bani-stat-tile__value">{user?.avatar_url ? 'Загружен' : 'Не загружен'}</span>
+          <span className="bani-stat-tile__hint">Отображается в служебных сценариях и внутренних списках.</span>
+        </div>
+      </div>
+
+      <div className="bani-grid bani-grid--content-aside">
+        <Card title="Основная информация">
+          <Form
+            form={profileForm}
+            layout="vertical"
+            onFinish={handleProfileSubmit}
+            style={{ maxWidth: 560 }}
+          >
+            <Form.Item label="Email">
+              <Input value={user?.email ?? ''} disabled />
+            </Form.Item>
+            <Form.Item label="Имя" name="name">
+              <Input placeholder="Ваше имя" />
+            </Form.Item>
+            <Form.Item label="Телефон" name="phone">
+              <Input placeholder="+7 999 123-45-67" />
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" loading={updateProfile.isPending}>
+                Сохранить
+              </Button>
+            </Form.Item>
+          </Form>
+        </Card>
+
         <Card title="Аватар">
           <Space size={16} align="center">
             <Avatar
-              size={80}
+              size={88}
               src={user?.avatar_url}
               icon={!user?.avatar_url && <UserOutlined />}
             />
             <Space direction="vertical">
+              <Text type="secondary">
+                Используется в карточках профиля и служебных действиях администратора.
+              </Text>
               <Upload
                 showUploadList={false}
                 accept="image/jpeg,image/png"
@@ -122,30 +170,6 @@ export default function AdminProfile() {
               )}
             </Space>
           </Space>
-        </Card>
-
-        <Card title="Основная информация">
-          <Form
-            form={profileForm}
-            layout="vertical"
-            onFinish={handleProfileSubmit}
-            style={{ maxWidth: 500 }}
-          >
-            <Form.Item label="Email">
-              <Input value={user?.email ?? ''} disabled />
-            </Form.Item>
-            <Form.Item label="Имя" name="name">
-              <Input placeholder="Ваше имя" />
-            </Form.Item>
-            <Form.Item label="Телефон" name="phone">
-              <Input placeholder="+7 999 123-45-67" />
-            </Form.Item>
-            <Form.Item>
-              <Button type="primary" htmlType="submit" loading={updateProfile.isPending}>
-                Сохранить
-              </Button>
-            </Form.Item>
-          </Form>
         </Card>
       </div>
     </div>

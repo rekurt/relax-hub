@@ -1,21 +1,22 @@
 import { useState } from 'react'
-import { Card, Col, Row, Segmented, Spin, Statistic, Table, Typography } from 'antd'
+import { Card, Col, Row, Segmented, Spin, Statistic, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
-  TeamOutlined,
-  ShopOutlined,
   CalendarOutlined,
+  CustomerServiceOutlined,
   DollarOutlined,
   EyeOutlined,
+  ShopOutlined,
   StarOutlined,
+  TeamOutlined,
   UserOutlined,
-  CustomerServiceOutlined,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useGetAdminAnalytics, useGetAdminAnalyticsTop } from '@/api/generated/admin-analytics/admin-analytics'
 import type { GithubComNikitaaldaevBaniInternalServiceTopBathhouseInfo } from '@/api/generated/model'
-import { formatPrice } from '@/lib/format'
 import { axiosInstance } from '@/api/axios-instance'
+import { formatPrice } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
 interface SupportMetrics {
   fcr_percent: number
@@ -38,11 +39,9 @@ function useSupportMetrics() {
 function formatDuration(seconds: number): string {
   if (seconds < 3600) return `${Math.round(seconds / 60)} мин`
   const hours = Math.floor(seconds / 3600)
-  const mins = Math.round((seconds % 3600) / 60)
-  return mins > 0 ? `${hours} ч ${mins} мин` : `${hours} ч`
+  const minutes = Math.round((seconds % 3600) / 60)
+  return minutes > 0 ? `${hours} ч ${minutes} мин` : `${hours} ч`
 }
-
-const { Title } = Typography
 
 const PERIOD_OPTIONS = [
   { label: 'День', value: '1d' },
@@ -80,7 +79,7 @@ export default function AdminDashboard() {
       title: 'Просмотры',
       dataIndex: 'views',
       key: 'views',
-      render: (v: number) => v?.toLocaleString('ru-RU') ?? '—',
+      render: (value: number) => value?.toLocaleString('ru-RU') ?? '—',
       sorter: (a, b) => (a.views ?? 0) - (b.views ?? 0),
     },
     {
@@ -93,119 +92,96 @@ export default function AdminDashboard() {
       title: 'Выручка',
       dataIndex: 'revenue',
       key: 'revenue',
-      render: (v: number) => formatPrice(v ?? 0),
+      render: (value: number) => formatPrice(value ?? 0),
       sorter: (a, b) => (a.revenue ?? 0) - (b.revenue ?? 0),
     },
     {
       title: 'Рейтинг',
       dataIndex: 'rating',
       key: 'rating',
-      render: (v: number) => v?.toFixed(1) ?? '—',
+      render: (value: number) => value?.toFixed(1) ?? '—',
       sorter: (a, b) => (a.rating ?? 0) - (b.rating ?? 0),
     },
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>Панель администратора</Title>
-        <Segmented
-          options={PERIOD_OPTIONS}
-          value={period}
-          onChange={(v) => setPeriod(v as string)}
-        />
-      </div>
+    <div className="bani-stack">
+      <PageHeader
+        eyebrow="Администрирование"
+        title="Панель администратора"
+        description="Первый экран собран как обзор платформы: объёмы, выручка, рост аудитории, операционные метрики поддержки и топ объектов по ключевому показателю."
+        extra={(
+          <Segmented
+            options={PERIOD_OPTIONS}
+            value={period}
+            onChange={(value) => setPeriod(value as string)}
+          />
+        )}
+      />
 
-      <Spin spinning={analyticsLoading}>
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Бронирования"
-                value={dashboard?.total_bookings ?? 0}
-                prefix={<CalendarOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Выручка"
-                value={dashboard?.total_revenue ? dashboard.total_revenue / 100 : 0}
-                precision={0}
-                suffix="₽"
-                prefix={<DollarOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Пользователи"
-                value={dashboard?.total_users ?? 0}
-                prefix={<TeamOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Бани"
-                value={dashboard?.total_bathhouses ?? 0}
-                prefix={<ShopOutlined />}
-              />
-            </Card>
-          </Col>
-        </Row>
+      <section className="bani-hero-panel">
+        <div className="bani-hero-panel__eyebrow">Платформа</div>
+        <h2 className="bani-hero-panel__title">Главные числа за выбранный период</h2>
+        <div className="bani-hero-panel__description">
+          Админу не нужен «красивый набор карточек». Нужен быстрый ответ: сколько бронирований, сколько денег, как растёт платформа и где могут появляться операционные риски.
+        </div>
 
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Просмотры"
-                value={dashboard?.total_views ?? 0}
-                prefix={<EyeOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Средний рейтинг"
-                value={dashboard?.avg_rating ?? 0}
-                precision={1}
-                prefix={<StarOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card>
-              <Statistic
-                title="Новые пользователи"
-                value={dashboard?.new_users ?? 0}
-                prefix={<UserOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={8} lg={6}>
-            <Card>
-              <Statistic title="DAU" value={dashboard?.dau ?? 0} />
-              <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 12, color: '#888' }}>
-                <span>WAU: {dashboard?.wau ?? 0}</span>
-                <span>MAU: {dashboard?.mau ?? 0}</span>
-              </div>
-            </Card>
-          </Col>
-        </Row>
-      </Spin>
+        <Spin spinning={analyticsLoading}>
+          <div className="bani-stat-grid">
+            <div className="bani-stat-tile">
+              <span className="bani-stat-tile__eyebrow">Бронирования</span>
+              <div className="bani-stat-tile__value">{(dashboard?.total_bookings ?? 0).toLocaleString('en-US')}</div>
+              <span className="bani-stat-tile__hint"><CalendarOutlined /> Суммарный объём заказов по платформе</span>
+            </div>
+            <div className="bani-stat-tile">
+              <span className="bani-stat-tile__eyebrow">Выручка</span>
+              <div className="bani-stat-tile__value">{((dashboard?.total_revenue ?? 0) / 100).toLocaleString('en-US')}</div>
+              <span className="bani-stat-tile__hint"><DollarOutlined /> Валовая сумма по заказам, ₽</span>
+            </div>
+            <div className="bani-stat-tile">
+              <span className="bani-stat-tile__eyebrow">Пользователи</span>
+              <div className="bani-stat-tile__value">{(dashboard?.total_users ?? 0).toLocaleString('en-US')}</div>
+              <span className="bani-stat-tile__hint"><TeamOutlined /> Все зарегистрированные клиенты и владельцы</span>
+            </div>
+            <div className="bani-stat-tile">
+              <span className="bani-stat-tile__eyebrow">Бани</span>
+              <div className="bani-stat-tile__value">{(dashboard?.total_bathhouses ?? 0).toLocaleString('en-US')}</div>
+              <span className="bani-stat-tile__hint"><ShopOutlined /> Активные объекты в каталоге</span>
+            </div>
+            <div className="bani-stat-tile">
+              <span className="bani-stat-tile__eyebrow">Просмотры</span>
+              <div className="bani-stat-tile__value">{(dashboard?.total_views ?? 0).toLocaleString('en-US')}</div>
+              <span className="bani-stat-tile__hint"><EyeOutlined /> Интерес к каталогу и карточкам объектов</span>
+            </div>
+            <div className="bani-stat-tile">
+              <span className="bani-stat-tile__eyebrow">Средний рейтинг</span>
+              <div className="bani-stat-tile__value">{(dashboard?.avg_rating ?? 0).toFixed(1)}</div>
+              <span className="bani-stat-tile__hint"><StarOutlined /> Средняя оценка сервиса по платформе</span>
+            </div>
+            <div className="bani-stat-tile">
+              <span className="bani-stat-tile__eyebrow">Новые пользователи</span>
+              <div className="bani-stat-tile__value">{(dashboard?.new_users ?? 0).toLocaleString('en-US')}</div>
+              <span className="bani-stat-tile__hint"><UserOutlined /> Прирост за выбранный период</span>
+            </div>
+            <div className="bani-stat-tile">
+              <span className="bani-stat-tile__eyebrow">DAU</span>
+              <div className="bani-stat-tile__value">{(dashboard?.dau ?? 0).toLocaleString('en-US')}</div>
+              <span className="bani-stat-tile__hint">WAU: {dashboard?.wau ?? 0} · MAU: {dashboard?.mau ?? 0}</span>
+            </div>
+          </div>
+        </Spin>
+      </section>
 
       {supportMetrics && (
-        <Card
-          size="small"
-          title={<><CustomerServiceOutlined /> Поддержка</>}
-          style={{ marginBottom: 24 }}
-          data-testid="support-metrics-widget"
-        >
+        <Card data-testid="support-metrics-widget">
+          <div className="bani-toolbar" style={{ marginBottom: 18 }}>
+            <div>
+              <h2 className="bani-section-card__title"><CustomerServiceOutlined /> Поддержка</h2>
+              <div className="bani-section-card__description">
+                Операционные показатели поддержки рядом с бизнес-метриками помогают вовремя заметить просадку качества сервиса.
+              </div>
+            </div>
+          </div>
           <Row gutter={[16, 16]}>
             <Col xs={12} sm={6}>
               <Statistic
@@ -217,10 +193,7 @@ export default function AdminDashboard() {
               />
             </Col>
             <Col xs={12} sm={6}>
-              <Statistic
-                title="AHT"
-                value={formatDuration(supportMetrics.aht_seconds)}
-              />
+              <Statistic title="AHT" value={formatDuration(supportMetrics.aht_seconds)} />
             </Col>
             <Col xs={12} sm={6}>
               <Statistic
@@ -242,23 +215,32 @@ export default function AdminDashboard() {
         </Card>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>Топ бань</Title>
-        <Segmented
-          options={METRIC_OPTIONS}
-          value={metric}
-          onChange={(v) => setMetric(v as string)}
-        />
-      </div>
+      <Card>
+        <div className="bani-table-shell">
+          <div className="bani-toolbar">
+            <div>
+              <h2 className="bani-section-card__title">Топ бань</h2>
+              <div className="bani-section-card__description">
+                Сортировка по ключевому показателю позволяет быстро увидеть лидеров и понять, какие объекты тянут рост платформы.
+              </div>
+            </div>
+            <Segmented
+              options={METRIC_OPTIONS}
+              value={metric}
+              onChange={(value) => setMetric(value as string)}
+            />
+          </div>
 
-      <Table
-        columns={topColumns}
-        dataSource={topBathhouses}
-        rowKey="bathhouse_id"
-        loading={topLoading}
-        pagination={false}
-        locale={{ emptyText: 'Нет данных' }}
-      />
+          <Table
+            columns={topColumns}
+            dataSource={topBathhouses}
+            rowKey="bathhouse_id"
+            loading={topLoading}
+            pagination={false}
+            locale={{ emptyText: 'Нет данных' }}
+          />
+        </div>
+      </Card>
     </div>
   )
 }

@@ -146,6 +146,55 @@ describe('ClientHome', () => {
     expect(screen.getByText('Бани для вечера вдвоем, компании и выходных за городом')).toBeInTheDocument()
   })
 
+  it('does not render profile completeness banner on home page', () => {
+    renderWithProviders(<ClientHome />)
+    expect(screen.queryByText(/Заполните профиль/)).not.toBeInTheDocument()
+  })
+
+  it('renders curated public shortcut set including pool scenario', () => {
+    renderWithProviders(<ClientHome />)
+    expect(screen.getByText('Начните с готовой подборки')).toBeInTheDocument()
+    expect(screen.getByText('С бассейном')).toBeInTheDocument()
+  })
+
+  it('renders bathhouse status tags and amenities on discovery cards', () => {
+    vi.mocked(useGetPopular).mockReturnValue({
+      data: {
+        data: [
+          {
+            id: 'bath-1',
+            name: 'Премиум Двор',
+            slug: 'premium-dvor',
+            address: 'Москва, Рублевское ш., 91',
+            price_per_hour: 12900,
+            rating: 5,
+            review_count: 41,
+            is_photo_verified: true,
+            booking_mode: 'instant',
+            has_pool: true,
+            has_hot_tub: true,
+            has_sauna: true,
+            has_bbq: true,
+            has_karaoke: true,
+          },
+        ],
+        success: true,
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetPopular>)
+
+    renderWithProviders(<ClientHome />)
+
+    expect(screen.getByText('Фото проверены')).toBeInTheDocument()
+    expect(screen.getByText('Мгновенно')).toBeInTheDocument()
+    expect(screen.getByText('Удобства')).toBeInTheDocument()
+    expect(screen.getByText('Бассейн')).toBeInTheDocument()
+    expect(screen.getByText('Чан')).toBeInTheDocument()
+    expect(screen.getByText('Сауна')).toBeInTheDocument()
+    expect(screen.getByText('Мангал')).toBeInTheDocument()
+    expect(screen.getByText('+1')).toBeInTheDocument()
+  })
+
   it('renders welcome message for new user', () => {
     mockAuthStore({ onboarding_completed: false })
     renderWithProviders(<ClientHome />)

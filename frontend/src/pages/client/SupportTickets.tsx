@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   App,
   Button,
@@ -10,26 +10,26 @@ import {
   Pagination,
   Select,
   Segmented,
-  Space,
   Spin,
   Table,
   Tag,
   Typography,
 } from 'antd'
 import { PlusOutlined, RobotOutlined } from '@ant-design/icons'
-import SupportChatBot from '@/components/SupportChatBot'
 import type { ColumnsType } from 'antd/es/table'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  useGetMyTickets,
   getGetMyTicketsQueryKey,
+  useGetMyTickets,
   usePostMyTickets,
 } from '@/api/generated/support/support'
 import type { InternalHandlerTicketResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
+import SupportChatBot from '@/components/SupportChatBot'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const STATUS_OPTIONS = [
   { label: 'Все', value: '' },
@@ -107,9 +107,21 @@ export default function SupportTickets() {
 
   const allTickets: InternalHandlerTicketResponse[] = data?.data ?? []
   const tickets = statusFilter
-    ? allTickets.filter((t) => t.status === statusFilter)
+    ? allTickets.filter((ticket) => ticket.status === statusFilter)
     : allTickets
   const meta = data?.meta
+
+  const stats = useMemo(() => {
+    return allTickets.reduce(
+      (acc, ticket) => {
+        if (ticket.status === 'open') acc.open += 1
+        if (ticket.status === 'in_progress') acc.inProgress += 1
+        if (ticket.status === 'resolved') acc.resolved += 1
+        return acc
+      },
+      { open: 0, inProgress: 0, resolved: 0 },
+    )
+  }, [allTickets])
 
   const handleCreate = async () => {
     try {
@@ -150,7 +162,7 @@ export default function SupportTickets() {
       dataIndex: 'category',
       key: 'category',
       width: 160,
-      render: (cat: string) => categoryLabel[cat] ?? cat,
+      render: (category: string) => categoryLabel[category] ?? category,
     },
     {
       title: 'Статус',
@@ -178,93 +190,121 @@ export default function SupportTickets() {
       title: 'Дата',
       dataIndex: 'created_at',
       key: 'created_at',
-      width: 160,
-      render: (date: string) => (date ? formatDateTime(date) : '-'),
+      width: 170,
+      render: (value: string) => (value ? formatDateTime(value) : '-'),
     },
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Мои обращения
-        </Title>
-        <Space>
-          <Button
-            icon={<RobotOutlined />}
-            onClick={() => setFaqBotOpen(true)}
-          >
-            Быстрая помощь
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setCreateModalOpen(true)}
-          >
-            Новое обращение
-          </Button>
-        </Space>
-      </div>
-
-      <Space direction="vertical" size={16} style={{ width: '100%', marginBottom: 16 }}>
-        <Segmented
-          options={STATUS_OPTIONS}
-          value={statusFilter}
-          onChange={(val) => {
-            setStatusFilter(val as string)
-            setPage(1)
-          }}
-        />
-      </Space>
-
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}>
-          <Spin size="large" />
-        </div>
-      ) : tickets.length === 0 ? (
-        <Card>
-          <Empty description="Нет обращений">
-            <Button type="primary" onClick={() => setCreateModalOpen(true)}>
-              Создать обращение
+    <div className="bani-stack">
+      <PageHeader
+        eyebrow="Поддержка"
+        title="Мои обращения"
+        description="Экран показывает состояние текущих кейсов без лишнего кликанья: сверху быстрый обзор, ниже фильтр по статусу и рабочая таблица."
+        extra={(
+          <div className="bani-toolbar__group">
+            <Button icon={<RobotOutlined />} onClick={() => setFaqBotOpen(true)}>
+              Быстрая помощь
             </Button>
-          </Empty>
-        </Card>
-      ) : (
-        <>
-          <Table
-            dataSource={tickets}
-            columns={columns}
-            rowKey="id"
-            pagination={false}
-            size="middle"
-            locale={{
-              emptyText: (
-                <Empty description="Нет обращений с выбранным статусом." />
-              ),
-            }}
-            onRow={(record) => ({
-              onClick: () => navigate(`/client/tickets/${record.id}`),
-              style: { cursor: 'pointer' },
-            })}
-          />
-          {meta && meta.total_pages! > 1 && (
-            <div style={{ marginTop: 16, textAlign: 'right' }}>
-              <Pagination
-                current={page}
-                pageSize={pageSize}
-                total={meta.total_count}
-                showSizeChanger
-                pageSizeOptions={['10', '20', '50']}
-                showTotal={(total) => `Всего: ${total}`}
-                onChange={(p, ps) => {
-                  setPage(p)
-                  setPageSize(ps)
-                }}
-              />
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
+              Новое обращение
+            </Button>
+          </div>
+        )}
+      />
+
+      <section className="bani-hero-panel">
+        <div className="bani-hero-panel__eyebrow">Состояние поддержки</div>
+        <h2 className="bani-hero-panel__title">Пользователь видит статус вопроса за один взгляд</h2>
+        <div className="bani-hero-panel__description">
+          Вместо пустого списка с таблицей сначала показываем текущую картину по обращениям. Это снижает тревогу: пользователь понимает, что уже открыто, что в работе и что закрыто.
+        </div>
+          <div className="bani-stat-grid">
+            <div className="bani-stat-tile">
+            <span className="bani-stat-tile__eyebrow">Открыто сейчас</span>
+            <div className="bani-stat-tile__value">{stats.open}</div>
+            <span className="bani-stat-tile__hint">Требуют реакции поддержки</span>
+          </div>
+          <div className="bani-stat-tile">
+            <span className="bani-stat-tile__eyebrow">Активные кейсы</span>
+            <div className="bani-stat-tile__value">{stats.inProgress}</div>
+            <span className="bani-stat-tile__hint">По ним уже идёт коммуникация или разбор</span>
+          </div>
+          <div className="bani-stat-tile">
+            <span className="bani-stat-tile__eyebrow">Решено</span>
+            <div className="bani-stat-tile__value">{stats.resolved}</div>
+            <span className="bani-stat-tile__hint">История кейсов, к которой можно вернуться</span>
+          </div>
+        </div>
+      </section>
+
+      <Card>
+        <div className="bani-table-shell">
+          <div className="bani-toolbar">
+            <div>
+              <h2 className="bani-section-card__title">Лента обращений</h2>
+              <div className="bani-section-card__description">
+                Фильтр по статусу вынесен наверх и не мешает чтению таблицы. Клик по строке открывает конкретный диалог с поддержкой.
+              </div>
             </div>
+          </div>
+
+          <Segmented
+            options={STATUS_OPTIONS}
+            value={statusFilter}
+            onChange={(value) => {
+              setStatusFilter(value as string)
+              setPage(1)
+            }}
+          />
+
+          {isLoading ? (
+            <div className="bani-feed-empty">
+              <Spin size="large" />
+            </div>
+          ) : tickets.length === 0 ? (
+            <div className="bani-feed-empty">
+              <Empty description="Нет обращений">
+                <Button type="primary" onClick={() => setCreateModalOpen(true)}>
+                  Создать обращение
+                </Button>
+              </Empty>
+            </div>
+          ) : (
+            <>
+              <Table
+                dataSource={tickets}
+                columns={columns}
+                rowKey="id"
+                pagination={false}
+                size="middle"
+                locale={{ emptyText: <Empty description="Нет обращений с выбранным статусом." /> }}
+                onRow={(record) => ({
+                  onClick: () => navigate(`/client/tickets/${record.id}`),
+                  style: { cursor: 'pointer' },
+                })}
+              />
+
+              {meta && meta.total_pages! > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Pagination
+                    current={page}
+                    pageSize={pageSize}
+                    total={meta.total_count}
+                    showSizeChanger
+                    pageSizeOptions={['10', '20', '50']}
+                    showTotal={(total) => `Всего: ${total}`}
+                    onChange={(nextPage, nextPageSize) => {
+                      setPage(nextPage)
+                      setPageSize(nextPageSize)
+                    }}
+                  />
+                </div>
+              )}
+            </>
           )}
-        </>
-      )}
+        </div>
+      </Card>
 
       <Modal
         title="Новое обращение"
@@ -320,14 +360,14 @@ export default function SupportTickets() {
         onCancel={() => setFaqBotOpen(false)}
         footer={null}
         width={600}
-        destroyOnClose
+        destroyOnHidden
       >
         <SupportChatBot
-          onEscalate={(subject, msg) => {
+          onEscalate={(subject, messageText) => {
             setFaqBotOpen(false)
             form.setFieldsValue({
               subject,
-              message: msg,
+              message: messageText,
               category: 'question',
             })
             setCreateModalOpen(true)

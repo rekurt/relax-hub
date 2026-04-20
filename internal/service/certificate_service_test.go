@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rekurt/relax-hub/internal/domain"
 	"github.com/rekurt/relax-hub/internal/logger"
+	"github.com/rekurt/relax-hub/internal/payment"
 	"github.com/rekurt/relax-hub/internal/repository/mock"
 	"github.com/rekurt/relax-hub/internal/service"
 )
@@ -20,8 +21,9 @@ type certTestEnv struct {
 
 func newCertTestEnv() *certTestEnv {
 	certRepo := mock.NewCertificateRepo().(*mock.CertificateRepo)
+	orderRepo := mock.NewCertificateOrderRepo().(*mock.CertificateOrderRepo)
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewCertificateService(certRepo, nil, log)
+	svc := service.NewCertificateService(certRepo, orderRepo, payment.NewMockProvider(), nil, "http://localhost:5173", log)
 	return &certTestEnv{
 		svc:      svc,
 		certRepo: certRepo,

@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from 'antd'
@@ -153,16 +153,19 @@ describe('SecuritySettings', () => {
     renderWithProviders(<SecuritySettings />)
 
     expect(screen.getByText('Безопасность')).toBeInTheDocument()
+    expect(screen.getByText('Контур безопасности')).toBeInTheDocument()
+    expect(screen.getByText('Индекс защиты')).toBeInTheDocument()
+    expect(screen.getByText('Способы защиты')).toBeInTheDocument()
     expect(screen.getByText('Активные сессии')).toBeInTheDocument()
     expect(screen.getByText('Двухфакторная аутентификация')).toBeInTheDocument()
-    expect(screen.getByText('Пароль')).toBeInTheDocument()
+    expect(screen.getAllByText('Пароль').length).toBeGreaterThan(0)
   })
 
   it('renders session list with device info', () => {
     setupMocks()
     renderWithProviders(<SecuritySettings />)
 
-    expect(screen.getByText('Chrome Desktop')).toBeInTheDocument()
+    expect(screen.getAllByText('Chrome Desktop').length).toBeGreaterThan(0)
     expect(screen.getByText('Mobile Safari')).toBeInTheDocument()
     expect(screen.getByText('Chrome 120')).toBeInTheDocument()
     expect(screen.getByText('Текущая')).toBeInTheDocument()
@@ -220,14 +223,22 @@ describe('SecuritySettings', () => {
     setupMocks()
     renderWithProviders(<SecuritySettings />)
 
-    expect(screen.getByText('Настроить TOTP')).toBeInTheDocument()
+    const securityCard = screen.getByText('Двухфакторная аутентификация').closest('.ant-card')
+    expect(securityCard).toBeTruthy()
+    expect(
+      within(securityCard as HTMLElement).getAllByRole('button', { name: /Настроить TOTP/ }).length,
+    ).toBeGreaterThan(0)
   })
 
   it('calls enable TOTP mutation on click', () => {
     setupMocks()
     renderWithProviders(<SecuritySettings />)
 
-    fireEvent.click(screen.getByText('Настроить TOTP'))
+    const securityCard = screen.getByText('Двухфакторная аутентификация').closest('.ant-card')
+    expect(securityCard).toBeTruthy()
+    fireEvent.click(
+      within(securityCard as HTMLElement).getAllByRole('button', { name: /Настроить TOTP/ })[0]!,
+    )
     expect(mockEnableTotpMutate).toHaveBeenCalled()
   })
 
@@ -235,14 +246,22 @@ describe('SecuritySettings', () => {
     setupMocks()
     renderWithProviders(<SecuritySettings />)
 
-    expect(screen.getByText('Включить SMS 2FA')).toBeInTheDocument()
+    const securityCard = screen.getByText('Двухфакторная аутентификация').closest('.ant-card')
+    expect(securityCard).toBeTruthy()
+    expect(
+      within(securityCard as HTMLElement).getAllByRole('button', { name: /Включить SMS 2FA/ }).length,
+    ).toBeGreaterThan(0)
   })
 
   it('calls SMS 2FA enable mutation on click', () => {
     setupMocks()
     renderWithProviders(<SecuritySettings />)
 
-    fireEvent.click(screen.getByText('Включить SMS 2FA'))
+    const securityCard = screen.getByText('Двухфакторная аутентификация').closest('.ant-card')
+    expect(securityCard).toBeTruthy()
+    fireEvent.click(
+      within(securityCard as HTMLElement).getAllByRole('button', { name: /Включить SMS 2FA/ })[0]!,
+    )
     expect(mockEnableSmsMutate).toHaveBeenCalled()
   })
 

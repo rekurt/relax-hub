@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
+import BrandLockup from '@/components/BrandLockup'
 import OnboardingTour from '@/components/OnboardingTour'
+import ShellFooter from '@/components/ShellFooter'
 import TopNavigationLayout from '@/components/TopNavigationLayout'
+import { PLATFORM_NAME } from '@/content/support'
 import { useAuthStore } from '@/stores/auth'
-import { CLIENT_OVERFLOW_NAV_ITEMS, CLIENT_PRIMARY_NAV_ITEMS } from '@/navigation/menu'
+import { CLIENT_DRAWER_SECTIONS, CLIENT_PRIMARY_NAV_ITEMS, CLIENT_PROFILE_MENU_ITEMS } from '@/navigation/menu'
 
 export default function ClientLayout() {
   const [showTour, setShowTour] = useState(false)
@@ -19,12 +22,21 @@ export default function ClientLayout() {
   return (
     <>
       <TopNavigationLayout
-        brandTitle="BANI"
-        brandSubtitle="Каталог, бронирование и личные поездки"
+        brandTitle={(
+          <BrandLockup
+            size="header"
+            subtitle="Каталог, бронирование и личные поездки"
+            className="bani-topnav__brand-lockup"
+          />
+        )}
+        brandSubtitle={null}
+        brandAriaLabel={PLATFORM_NAME}
         homeTo="/"
         primaryItems={CLIENT_PRIMARY_NAV_ITEMS}
-        overflowItems={CLIENT_OVERFLOW_NAV_ITEMS}
+        drawerSections={CLIENT_DRAWER_SECTIONS}
+        profileMenuItems={CLIENT_PROFILE_MENU_ITEMS}
         profilePath="/client/profile"
+        footer={<ShellFooter showClientSection />}
       />
       {showTour && (
         <OnboardingTour

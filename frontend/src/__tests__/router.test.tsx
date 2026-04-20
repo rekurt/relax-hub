@@ -131,6 +131,11 @@ describe('AppRouter', () => {
     expect(screen.getByText('Поиск бань')).toBeInTheDocument()
   })
 
+  it('renders public terms page at /terms', () => {
+    renderRouter('/terms')
+    expect(screen.getByText('Условия использования RelaxHUB')).toBeInTheDocument()
+  })
+
   // Owner role tests
   describe('owner role', () => {
     beforeEach(() => setAuth('owner'))

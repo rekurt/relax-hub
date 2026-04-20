@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Axios from 'axios'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -16,20 +16,24 @@ import {
   Space,
   Spin,
   Steps,
-  Tag,
-  Typography,
 } from 'antd'
 import dayjs from 'dayjs'
 import { CalendarOutlined, CheckCircleOutlined, ClockCircleOutlined, LockOutlined, UserOutlined } from '@ant-design/icons'
 import { useGetBathhousesId, useGetBathhousesIdAvailableSlots } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPriceCalculator } from '@/api/generated/pricing/pricing'
 import { axiosInstance } from '@/api/axios-instance'
+import ContiguousSlotSelector from '@/components/ContiguousSlotSelector'
+import PageHeader from '@/components/PageHeader'
 import PublicState from '@/components/PublicState'
-import { useAuthStore } from '@/stores/auth'
+import {
+  getBookingModeTrustCopy,
+  getCancellationPolicyLabel,
+  getDepositSummary,
+} from '@/lib/booking-flow'
 import { formatPrice } from '@/lib/format'
+import { useAuthStore } from '@/stores/auth'
 import { getPublicErrorMessage } from '@/lib/public-route'
-
-const { Title, Text, Paragraph } = Typography
+import { formatSlotTimeLabel, getRangeHours, resolveSlotRangeSelection, type SlotRangeSelection } from '@/lib/slot-selection'
 
 const publicHttp = Axios.create({
   baseURL: '/api/v1',
@@ -65,7 +69,7 @@ export default function PublicCheckout() {
       ?? searchParams.get('start')?.slice(0, 10)
       ?? dayjs().format('YYYY-MM-DD'),
   )
-  const [selectedSlot, setSelectedSlot] = useState<{ from: string; to: string } | null>(() => {
+  const [selectedSlotRange, setSelectedSlotRange] = useState<SlotRangeSelection | null>(() => {
     const from = searchParams.get('from') ?? searchParams.get('start')
     const to = searchParams.get('to') ?? searchParams.get('end')
     return from && to ? { from, to } : null
@@ -105,6 +109,11 @@ export default function PublicCheckout() {
     { query: { enabled: !!bathhouseId && !!selectedDate } },
   )
   const slots = slotsData?.data ?? []
+  const minDurationHours = Math.max(1, bathhouse?.min_duration ?? 1)
+  const resolvedSlotRange = resolveSlotRangeSelection(slots, selectedSlotRange)
+  const selectedRangeHours = resolvedSlotRange ? getRangeHours(resolvedSlotRange.from, resolvedSlotRange.to) : 0
+  const selectedSlot = resolvedSlotRange && selectedRangeHours >= minDurationHours ? resolvedSlotRange : null
+  const selectedRangeNeedsHours = resolvedSlotRange ? Math.max(0, minDurationHours - selectedRangeHours) : 0
 
   const { data: priceData } = useGetBathhousesIdPriceCalculator(
     bathhouseId,
@@ -119,13 +128,36 @@ export default function PublicCheckout() {
     return 0
   }, [createdBookingId, currentUser?.role, otpSent])
 
-  const availableSlots = slots.filter((slot) => slot.available)
+  const bookingModeLabel = getBookingModeTrustCopy((bathhouse as Record<string, unknown> | undefined)?.booking_mode as string | undefined)
+  const cancellationPolicyLabel = getCancellationPolicyLabel((bathhouse as Record<string, unknown> | undefined)?.cancellation_policy as string | undefined)
+  const minimumDurationLabel = (bathhouse as Record<string, unknown> | undefined)?.min_duration
+    ? `Минимум ${(bathhouse as Record<string, unknown>).min_duration} ч`
+    : 'Минимум без ограничений'
+  const depositSummary = getDepositSummary((bathhouse as Record<string, unknown> | undefined)?.security_deposit_percent as number | undefined)
 
   const clearCheckoutErrors = () => {
     setOtpError(null)
     setCheckoutError(null)
     setSlotConflictError(null)
   }
+
+  useEffect(() => {
+    if (slotsLoading) return
+
+    const nextRange = resolveSlotRangeSelection(slots, selectedSlotRange)
+    if (selectedSlotRange && !nextRange) {
+      setSelectedSlotRange(null)
+      return
+    }
+
+    if (
+      selectedSlotRange
+      && nextRange
+      && (selectedSlotRange.from !== nextRange.from || selectedSlotRange.to !== nextRange.to)
+    ) {
+      setSelectedSlotRange(nextRange)
+    }
+  }, [selectedSlotRange, slots, slotsLoading])
 
   const createBooking = async () => {
     if (!selectedSlot || !bathhouseId) return
@@ -281,58 +313,80 @@ export default function PublicCheckout() {
   }
 
   return (
-    <Row gutter={[24, 24]} align="top">
-      <Col xs={24} xl={16}>
-        <Card style={{ borderRadius: 24, marginBottom: 16 }}>
-          <Tag color="gold">Публичное бронирование</Tag>
-          <Title level={1} style={{ marginTop: 12, marginBottom: 12 }}>
-            {bathhouse.name}
-          </Title>
-          <Paragraph style={{ maxWidth: 720, fontSize: 16, marginBottom: 0 }}>
-            Мы оставили только ключевой flow: выбрать слот, подтвердить телефон и сразу перейти к броне без отдельной регистрации.
-          </Paragraph>
-        </Card>
+    <div className="bani-stack">
+      <PageHeader
+        eyebrow="Публичное бронирование"
+        title={bathhouse.name}
+        description="Вы выбираете слот, подтверждаете телефон и сразу попадаете в свою бронь без отдельной регистрации и лишних ответвлений."
+      />
 
-        <Card style={{ borderRadius: 24 }}>
-          <Steps
-            current={currentStep}
-            items={[
-              { title: 'Слот' },
-              { title: currentUser?.role === 'client' ? 'Подтверждение' : 'Контакты и SMS' },
-              { title: 'Готово' },
-            ]}
-            style={{ marginBottom: 24 }}
-          />
+      <section className="bani-hero-panel">
+        <div className="bani-hero-panel__eyebrow">Checkout</div>
+        <h2 className="bani-hero-panel__title">Остался один короткий шаг до брони</h2>
+        <div className="bani-hero-panel__description">
+          На этом экране остаются только реальные действия: слот, контакты, SMS и создание брони. Ограничения и правила видны рядом со сводкой.
+        </div>
+        <div className="bani-hero-panel__meta">
+          <div className="bani-hero-panel__meta-item">
+            <span className="bani-hero-panel__meta-label">Подтверждение</span>
+            <div className="bani-hero-panel__meta-value">{bookingModeLabel}</div>
+          </div>
+          <div className="bani-hero-panel__meta-item">
+            <span className="bani-hero-panel__meta-label">Минимум</span>
+            <div className="bani-hero-panel__meta-value">
+              {(bathhouse as Record<string, unknown>).min_duration ? `${(bathhouse as Record<string, unknown>).min_duration} ч` : 'Без ограничения'}
+            </div>
+          </div>
+          <div className="bani-hero-panel__meta-item">
+            <span className="bani-hero-panel__meta-label">Оплата</span>
+            <div className="bani-hero-panel__meta-value">После создания брони в кабинете клиента</div>
+          </div>
+        </div>
+      </section>
 
-          <Row gutter={[16, 16]}>
-            <Col xs={24} lg={12}>
-              <Text strong>Дата посещения</Text>
-              <DatePicker
-                value={dayjs(selectedDate)}
-                onChange={(value) => {
-                  const nextDate = value ? value.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
-                  setSelectedDate(nextDate)
-                  setSelectedSlot(null)
-                  setSlotConflictError(null)
-                }}
-                style={{ width: '100%', marginTop: 8 }}
-              />
-            </Col>
-            <Col xs={24} lg={12}>
-              <Text strong>Количество гостей</Text>
-              <InputNumber
-                min={1}
-                max={bathhouse.max_guests ?? 20}
-                value={guestCount}
-                onChange={(value) => setGuestCount(value ?? 1)}
-                style={{ width: '100%', marginTop: 8 }}
-              />
-            </Col>
-          </Row>
+      <div className="bani-grid bani-grid--content-aside">
+        <Card>
+          <div className="bani-section-card">
+            <Steps
+              current={currentStep}
+              items={[
+                { title: 'Слот' },
+                { title: currentUser?.role === 'client' ? 'Подтверждение' : 'Контакты и SMS' },
+                { title: 'Готово' },
+              ]}
+            />
 
-          <div style={{ marginTop: 24 }}>
-            <Text strong>Доступные слоты</Text>
-            <div style={{ marginTop: 12 }}>
+            <div className="bani-info-grid">
+              <div className="bani-info-card">
+                <span className="bani-info-card__label">Дата посещения</span>
+                <DatePicker
+                  value={dayjs(selectedDate)}
+                  onChange={(value) => {
+                    const nextDate = value ? value.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
+                    setSelectedDate(nextDate)
+                    setSelectedSlotRange(null)
+                    setSlotConflictError(null)
+                  }}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div className="bani-info-card">
+                <span className="bani-info-card__label">Количество гостей</span>
+                <InputNumber
+                  min={1}
+                  max={bathhouse.max_guests ?? 20}
+                  value={guestCount}
+                  onChange={(value) => setGuestCount(value ?? 1)}
+                  style={{ width: '100%' }}
+                />
+              </div>
+            </div>
+
+            <div className="bani-section-card">
+              <h2 className="bani-section-card__title">Доступные слоты</h2>
+              <div className="bani-section-card__description">
+                Сначала показываем только доступные интервалы. После выбора слот закрепляется в правой сводке вместе с ценой.
+              </div>
               <Spin spinning={slotsLoading && !slotsIsError}>
                 {slotsIsError ? (
                   <PublicState
@@ -343,7 +397,7 @@ export default function PublicCheckout() {
                     actionText="Обновить слоты"
                     onAction={() => void refetchSlots()}
                   />
-                ) : availableSlots.length === 0 ? (
+                ) : slots.filter((slot) => slot.available).length === 0 ? (
                   <Alert
                     type="info"
                     showIcon
@@ -351,176 +405,211 @@ export default function PublicCheckout() {
                     description="Попробуйте другую дату или вернитесь в каталог, чтобы посмотреть похожие варианты."
                   />
                 ) : (
-                  <Space wrap size={12}>
-                    {availableSlots.map((slot) => {
-                      const isSelected = selectedSlot?.from === slot.startTime && selectedSlot?.to === slot.endTime
-                      const fromTime = dayjs(slot.startTime).format('HH:mm')
-                      const toTime = dayjs(slot.endTime).format('HH:mm')
-                      return (
-                        <Button
-                          key={`${slot.startTime}-${slot.endTime}`}
-                          type={isSelected ? 'primary' : 'default'}
-                          size="large"
-                          icon={<ClockCircleOutlined />}
-                          onClick={() => {
-                            if (slot.startTime && slot.endTime) {
-                              clearCheckoutErrors()
-                              setSelectedSlot({ from: slot.startTime, to: slot.endTime })
-                            }
-                          }}
-                        >
-                          {fromTime} - {toTime}
-                        </Button>
-                      )
-                    })}
+                  <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+                    <ContiguousSlotSelector
+                      slots={slots}
+                      value={selectedSlotRange}
+                      onChange={(nextRange) => {
+                        clearCheckoutErrors()
+                        setSelectedSlotRange(nextRange)
+                      }}
+                      minDurationHours={minDurationHours}
+                      label={`Выберите непрерывный интервал${minDurationHours > 1 ? ` (от ${minDurationHours} ч)` : ''}`}
+                      description="В одном блоке выбираются соседние слоты подряд. Ненужный край диапазона можно снять повторным кликом."
+                    />
+
+                    {resolvedSlotRange && !selectedSlot && (
+                      <Alert
+                        type="info"
+                        showIcon={false}
+                        title={`${formatSlotTimeLabel(resolvedSlotRange.from)} - ${formatSlotTimeLabel(resolvedSlotRange.to)} · ${selectedRangeHours} ч`}
+                        description={`Добавьте ещё ${selectedRangeNeedsHours} ч, чтобы продолжить checkout.`}
+                      />
+                    )}
                   </Space>
                 )}
               </Spin>
             </div>
-          </div>
 
-          <div style={{ marginTop: 24 }}>
-            <Text strong>Контактные данные</Text>
-            <Row gutter={[16, 16]} style={{ marginTop: 8 }}>
-              <Col xs={24} lg={12}>
-                <Input
-                  size="large"
-                  prefix={<UserOutlined />}
-                  placeholder="Имя"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  disabled={currentUser?.role === 'client'}
-                />
-              </Col>
-              <Col xs={24} lg={12}>
-                <Input
-                  size="large"
-                  placeholder="Телефон"
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                  disabled={currentUser?.role === 'client'}
-                />
-              </Col>
-              <Col xs={24}>
-                <Input.TextArea
-                  rows={3}
-                  placeholder="Комментарий к бронированию"
-                  value={comment}
-                  onChange={(event) => setComment(event.target.value)}
-                />
-              </Col>
-              {!currentUser && (
-                <Col xs={24}>
-                  <Checkbox checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)}>
-                    Мне исполнилось 18 лет
-                  </Checkbox>
+            <div className="bani-section-card">
+              <h2 className="bani-section-card__title">Контактные данные</h2>
+              <div className="bani-section-card__description">
+                Поля оставлены только для того, что реально нужно для создания брони и входа в кабинет.
+              </div>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} lg={12}>
+                  <Input
+                    size="large"
+                    prefix={<UserOutlined />}
+                    placeholder="Имя"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    disabled={currentUser?.role === 'client'}
+                  />
                 </Col>
-              )}
-            </Row>
-          </div>
+                <Col xs={24} lg={12}>
+                  <Input
+                    size="large"
+                    placeholder="Телефон"
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    disabled={currentUser?.role === 'client'}
+                  />
+                </Col>
+                <Col xs={24}>
+                  <Input.TextArea
+                    rows={3}
+                    placeholder="Комментарий к бронированию"
+                    value={comment}
+                    onChange={(event) => setComment(event.target.value)}
+                  />
+                </Col>
+                {!currentUser && (
+                  <Col xs={24}>
+                    <Checkbox checked={ageConfirmed} onChange={(event) => setAgeConfirmed(event.target.checked)}>
+                      Мне исполнилось 18 лет
+                    </Checkbox>
+                  </Col>
+                )}
+              </Row>
+            </div>
 
-          {slotConflictError && (
-            <div style={{ marginTop: 24 }}>
+            {slotConflictError && (
               <PublicState
                 kind="error"
                 compact
                 title={slotConflictError}
-                description="Обновите список слотов и выберите другое время, не теряя введенные данные."
+                description="Обновите список слотов и выберите другое время. Имя, телефон и комментарий сохраняются."
                 actionText="Обновить слоты"
                 onAction={() => void refetchSlots()}
               />
-            </div>
-          )}
+            )}
 
-          {checkoutError && (
-            <div style={{ marginTop: 24 }}>
+            {checkoutError && (
               <Alert
                 type="error"
                 showIcon
                 title={checkoutError}
               />
-            </div>
-          )}
+            )}
 
-          {!currentUser && (
-            <div style={{ marginTop: 24 }}>
-              <Alert
-                type="info"
-                showIcon
-                icon={<LockOutlined />}
-                title="Авторизация встроена в checkout"
-                description="Мы подтверждаем телефон по SMS, создаем клиентский аккаунт и сохраняем бронь в ваш личный кабинет без отдельной регистрации."
-                style={{ marginBottom: 16 }}
-              />
-              {otpError && (
+            {!currentUser && (
+              <div className="bani-section-card">
                 <Alert
-                  type="error"
+                  type="info"
                   showIcon
-                  title={otpError}
-                  style={{ marginBottom: 16 }}
+                  icon={<LockOutlined />}
+                  title="Авторизация встроена в checkout"
+                  description="Мы подтверждаем телефон по SMS, создаем клиентский аккаунт и сохраняем бронь в ваш личный кабинет без отдельной регистрации."
                 />
-              )}
-              {!otpSent ? (
-                <Button type="primary" size="large" loading={sendingOtp} onClick={handleStartOTP}>
-                  Получить SMS-код
-                </Button>
-              ) : (
-                <Space orientation="vertical" style={{ width: '100%' }} size="middle">
-                  <Input
-                    size="large"
-                    placeholder="Код из SMS"
-                    maxLength={6}
-                    value={otpCode}
-                    onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, ''))}
+                {otpError && (
+                  <Alert
+                    type="error"
+                    showIcon
+                    title={otpError}
                   />
-                  <Button type="primary" size="large" loading={submitting} onClick={handleVerifyAndBook}>
-                    Подтвердить и создать бронь
+                )}
+                {!otpSent ? (
+                  <Button type="primary" size="large" loading={sendingOtp} onClick={handleStartOTP}>
+                    Получить SMS-код
                   </Button>
-                </Space>
-              )}
-            </div>
-          )}
+                ) : (
+                  <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+                    <Input
+                      size="large"
+                      placeholder="Код из SMS"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, ''))}
+                    />
+                    <Button type="primary" size="large" loading={submitting} onClick={handleVerifyAndBook}>
+                      Подтвердить и создать бронь
+                    </Button>
+                  </Space>
+                )}
+              </div>
+            )}
 
-          {currentUser?.role === 'client' && (
-            <div style={{ marginTop: 24 }}>
+            {currentUser?.role === 'client' && (
               <Button type="primary" size="large" loading={submitting} onClick={handleVerifyAndBook}>
                 Создать бронь
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </Card>
-      </Col>
 
-      <Col xs={24} xl={8}>
-        <Card style={{ borderRadius: 24, position: 'sticky', top: 112 }}>
-          <Title level={4}>Сводка бронирования</Title>
-          <Space orientation="vertical" style={{ width: '100%' }} size={12}>
-            <div>
-              <Text type="secondary">Баня</Text>
-              <div>{bathhouse.name}</div>
-            </div>
-            <div>
-              <Text type="secondary">Адрес</Text>
-              <div>{bathhouse.address || '—'}</div>
-            </div>
-            <div>
-              <Text type="secondary">Дата и время</Text>
-              <div>
-                {selectedSlot
-                  ? `${dayjs(selectedSlot.from).format('D MMMM')} · ${dayjs(selectedSlot.from).format('HH:mm')} - ${dayjs(selectedSlot.to).format('HH:mm')}`
-                  : 'Выберите слот'}
+        <div className="bani-stack">
+          <Card>
+            <div className="bani-section-card">
+              <h2 className="bani-section-card__title">Сводка бронирования</h2>
+              <div className="bani-kv">
+                <div className="bani-kv__row">
+                  <span className="bani-kv__label">Баня</span>
+                  <span className="bani-kv__value">{bathhouse.name}</span>
+                </div>
+                <div className="bani-kv__row">
+                  <span className="bani-kv__label">Адрес</span>
+                  <span className="bani-kv__value">{bathhouse.address || '—'}</span>
+                </div>
+                <div className="bani-kv__row">
+                  <span className="bani-kv__label">Дата и время</span>
+                  <span className="bani-kv__value">
+                    {resolvedSlotRange
+                      ? `${dayjs(resolvedSlotRange.from).format('D MMMM')} · ${dayjs(resolvedSlotRange.from).format('HH:mm')} - ${dayjs(resolvedSlotRange.to).format('HH:mm')} · ${selectedRangeHours} ч${selectedSlot ? '' : ` · нужно ещё ${selectedRangeNeedsHours} ч`}`
+                      : 'Выберите слот'}
+                  </span>
+                </div>
+                <div className="bani-kv__row">
+                  <span className="bani-kv__label">Гостей</span>
+                  <span className="bani-kv__value">{guestCount}</span>
+                </div>
+                <div className="bani-kv__row">
+                  <span className="bani-kv__label">Цена</span>
+                  <span className="bani-kv__value">
+                    {price?.final_price ? formatPrice(price.final_price) : 'Будет рассчитана после выбора слота'}
+                  </span>
+                </div>
               </div>
             </div>
-            <div>
-              <Text type="secondary">Гостей</Text>
-              <div>{guestCount}</div>
-            </div>
-            <div>
-              <Text type="secondary">Цена</Text>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>
-                {price?.final_price ? formatPrice(price.final_price) : 'Будет рассчитана после выбора слота'}
+          </Card>
+
+          <Card>
+            <div className="bani-section-card">
+              <h2 className="bani-section-card__title">Что важно до подтверждения</h2>
+              <div className="bani-feature-list">
+                <div className="bani-feature-item">
+                  <div className="bani-feature-item__icon"><ClockCircleOutlined /></div>
+                  <div className="bani-feature-item__copy">
+                    <div className="bani-feature-item__title">{minimumDurationLabel}</div>
+                    <div className="bani-feature-item__description">Минимальная длительность фиксирована заранее и не меняется после отправки SMS.</div>
+                  </div>
+                </div>
+                <div className="bani-feature-item">
+                  <div className="bani-feature-item__icon"><CheckCircleOutlined /></div>
+                  <div className="bani-feature-item__copy">
+                    <div className="bani-feature-item__title">{cancellationPolicyLabel} отмена</div>
+                    <div className="bani-feature-item__description">Правила отмены видны до создания брони, а не после handoff в кабинет.</div>
+                  </div>
+                </div>
+                <div className="bani-feature-item">
+                  <div className="bani-feature-item__icon"><LockOutlined /></div>
+                  <div className="bani-feature-item__copy">
+                    <div className="bani-feature-item__title">{bookingModeLabel}</div>
+                    <div className="bani-feature-item__description">Сценарий один для гостя и клиента, отличается только шаг с OTP.</div>
+                  </div>
+                </div>
+                <div className="bani-feature-item">
+                  <div className="bani-feature-item__icon"><CalendarOutlined /></div>
+                  <div className="bani-feature-item__copy">
+                    <div className="bani-feature-item__title">{depositSummary}</div>
+                    <div className="bani-feature-item__description">Если по объекту нужен залог, вы видите это до перехода к созданной брони.</div>
+                  </div>
+                </div>
               </div>
             </div>
+          </Card>
+
+          <Card>
             <Alert
               type="warning"
               showIcon
@@ -528,9 +617,9 @@ export default function PublicCheckout() {
               title="Оплата после создания брони"
               description="После подтверждения телефона бронь появляется в кабинете клиента, где вы сможете завершить оплату и дальнейшие действия."
             />
-          </Space>
-        </Card>
-      </Col>
-    </Row>
+          </Card>
+        </div>
+      </div>
+    </div>
   )
 }

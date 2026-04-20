@@ -26,7 +26,7 @@ func TestGenerateMetaTags_FullData(t *testing.T) {
 	meta := GenerateMetaTags(input)
 
 	// Title should include city and site name
-	expectedTitle := "Баня на Липовой в Москве — Bani.ru"
+	expectedTitle := "Баня на Липовой в Москве — relaxhub"
 	if meta.Title != expectedTitle {
 		t.Errorf("Title = %q, want %q", meta.Title, expectedTitle)
 	}
@@ -78,7 +78,7 @@ func TestGenerateMetaTags_WithoutCity(t *testing.T) {
 
 	meta := GenerateMetaTags(input)
 
-	expectedTitle := "Сауна Люкс — Bani.ru"
+	expectedTitle := "Сауна Люкс — relaxhub"
 	if meta.Title != expectedTitle {
 		t.Errorf("Title = %q, want %q", meta.Title, expectedTitle)
 	}
@@ -163,5 +163,20 @@ func TestGenerateMetaTags_NoSlug(t *testing.T) {
 
 	if meta.Canonical != "" {
 		t.Errorf("Canonical should be empty when no slug, got %q", meta.Canonical)
+	}
+}
+
+func TestGenerateMetaTags_RelativeImageUsesBaseURL(t *testing.T) {
+	input := MetaInput{
+		Name:    "Тестовая баня",
+		Slug:    "test-banya",
+		BaseURL: "https://bani.ru",
+		Images:  []string{"/demo/bathhouses/steam-room-birch.png"},
+	}
+
+	meta := GenerateMetaTags(input)
+
+	if meta.OGImage != "https://bani.ru/demo/bathhouses/steam-room-birch.png" {
+		t.Fatalf("OGImage = %q, want absolute base-url image", meta.OGImage)
 	}
 }

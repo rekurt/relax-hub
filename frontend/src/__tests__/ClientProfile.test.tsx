@@ -208,6 +208,13 @@ describe('ClientProfile', () => {
     expect(screen.getByText('Привязанные аккаунты')).toBeInTheDocument()
   })
 
+  it('does not render duplicated header quick actions moved to profile menu', () => {
+    renderWithProviders(<ClientProfile />)
+    expect(screen.queryByRole('button', { name: 'Карты' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Уведомления' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Безопасность' })).not.toBeInTheDocument()
+  })
+
   it('displays user statistics', () => {
     renderWithProviders(<ClientProfile />)
     expect(screen.getByText('Визиты')).toBeInTheDocument()
@@ -291,6 +298,18 @@ describe('ClientProfile', () => {
     expect(screen.getByText('Push-уведомления')).toBeInTheDocument()
     expect(screen.getByText('Бронирования')).toBeInTheDocument()
     expect(screen.getByText('Напоминания')).toBeInTheDocument()
+  })
+
+  it('renders explicit preferences entry point in profile header', () => {
+    renderWithProviders(<ClientProfile />)
+    expect(screen.getByRole('button', { name: /Предпочтения/ })).toBeInTheDocument()
+  })
+
+  it('renders premium notification cockpit in profile', () => {
+    renderWithProviders(<ClientProfile />)
+    expect(screen.getByText('Контур уведомлений')).toBeInTheDocument()
+    expect(screen.getByText('Активных каналов')).toBeInTheDocument()
+    expect(screen.getByText('Активных сценариев')).toBeInTheDocument()
   })
 
   it('renders linked social account (Google)', () => {

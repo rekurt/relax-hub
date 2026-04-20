@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Typography, List, Button, Badge, Space, Empty, Card, App, Form, Switch, Divider, Skeleton } from 'antd'
+import { Typography, List, Button, Badge, Space, Empty, Card, App, Form, Switch, Skeleton } from 'antd'
 import { CheckOutlined, BellOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -20,6 +20,44 @@ dayjs.locale('ru')
 
 const { Text } = Typography
 
+const PREFERENCE_CARDS = [
+  {
+    name: 'in_app',
+    title: 'В приложении',
+    description: 'Служебные события прямо в интерфейсе админки.',
+  },
+  {
+    name: 'email',
+    title: 'Email',
+    description: 'Дублирование важных событий в почту.',
+  },
+  {
+    name: 'push',
+    title: 'Push-уведомления',
+    description: 'Короткие сигналы по критичным операциям.',
+  },
+  {
+    name: 'booking_events',
+    title: 'Бронирования',
+    description: 'Изменения по заказам и операционным действиям.',
+  },
+  {
+    name: 'review_events',
+    title: 'Отзывы',
+    description: 'Новые отзывы, модерация и ответы.',
+  },
+  {
+    name: 'promo_events',
+    title: 'Промокоды',
+    description: 'События по акциям и служебным рассылкам.',
+  },
+  {
+    name: 'reminders',
+    title: 'Напоминания',
+    description: 'Дедлайны и системные триггеры платформы.',
+  },
+] as const
+
 export default function AdminNotifications() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
@@ -34,6 +72,7 @@ export default function AdminNotifications() {
 
   const notifications = data?.data ?? []
   const meta = data?.meta
+  const unreadCount = notifications.filter((item) => !item.is_read).length
 
   const { data: prefsData, isLoading: prefsLoading } = useGetMyNotificationPreferences()
   const prefs = prefsData?.data
@@ -87,14 +126,34 @@ export default function AdminNotifications() {
   }
 
   return (
-    <div>
+    <div className="bani-stack">
       <PageHeader
         eyebrow="Служебные события"
         title="Уведомления"
         description="Рабочая лента уведомлений и базовые настройки каналов доставки."
       />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div className="bani-stat-grid">
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Всего в ленте</span>
+          <span className="bani-stat-tile__value">{meta?.total_count ?? notifications.length}</span>
+          <span className="bani-stat-tile__hint">Текущий объём уведомлений на выбранной странице.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Непрочитанных</span>
+          <span className="bani-stat-tile__value">{unreadCount}</span>
+          <span className="bani-stat-tile__hint">Их стоит разбирать в первую очередь.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Активные каналы</span>
+          <span className="bani-stat-tile__value">
+            {[prefs?.in_app, prefs?.email, prefs?.push].filter(Boolean).length}
+          </span>
+          <span className="bani-stat-tile__hint">Активные каналы для служебных событий.</span>
+        </div>
+      </div>
+
+      <div className="bani-grid bani-grid--content-aside">
         <Card
           title="Список уведомлений"
           extra={
@@ -120,25 +179,18 @@ export default function AdminNotifications() {
             }}
             pagination={{
               current: page,
-              pageSize: pageSize,
+              pageSize,
               total: meta?.total_count ?? 0,
-              onChange: (p, ps) => {
-                setPage(p)
-                setPageSize(ps)
+              onChange: (nextPage, nextPageSize) => {
+                setPage(nextPage)
+                setPageSize(nextPageSize)
               },
               showSizeChanger: true,
               showTotal: (total) => `Всего: ${total}`,
             }}
             renderItem={(item) => (
               <List.Item
-                style={{
-                  cursor: item.is_read ? 'default' : 'pointer',
-                  background: item.is_read ? undefined : 'rgba(15, 118, 110, 0.05)',
-                  padding: '14px 16px',
-                  borderRadius: 14,
-                  border: '1px solid rgba(15, 23, 42, 0.06)',
-                  marginBottom: 8,
-                }}
+                className={`bani-feed-item ${item.is_read ? '' : 'bani-feed-item--unread'}`.trim()}
                 onClick={() => {
                   if (!item.is_read && item.id) {
                     markOneRead.mutate({ id: item.id })
@@ -151,9 +203,11 @@ export default function AdminNotifications() {
                           key="read"
                           type="link"
                           size="small"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (item.id) markOneRead.mutate({ id: item.id })
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            if (item.id) {
+                              markOneRead.mutate({ id: item.id })
+                            }
                           }}
                         >
                           Прочитать
@@ -162,28 +216,21 @@ export default function AdminNotifications() {
                     : undefined
                 }
               >
-                <List.Item.Meta
-                  avatar={
-                    <Space>
-                      {!item.is_read && <Badge status="processing" />}
-                      {item.is_read && <Badge status="default" />}
-                    </Space>
-                  }
-                  title={
+                <div className="bani-feed-item__main">
+                  <span className="bani-feed-item__badge" />
+                  <div className="bani-feed-item__copy">
                     <Text strong={!item.is_read}>
                       {item.title ?? NOTIFICATION_TYPE_LABELS[item.type ?? ''] ?? 'Уведомление'}
                     </Text>
-                  }
-                  description={
-                    <div>
-                      <Text type="secondary">{item.body}</Text>
-                      <br />
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        {item.created_at ? dayjs(item.created_at).fromNow() : ''}
-                      </Text>
-                    </div>
-                  }
-                />
+                    <Text type="secondary">{item.body}</Text>
+                    <Text className="bani-feed-item__meta">
+                      {item.created_at ? dayjs(item.created_at).fromNow() : ''}
+                    </Text>
+                  </div>
+                </div>
+                <Space>
+                  <Badge status={item.is_read ? 'default' : 'processing'} />
+                </Space>
               </List.Item>
             )}
           />
@@ -193,36 +240,30 @@ export default function AdminNotifications() {
           {prefsLoading ? (
             <Skeleton active />
           ) : (
-            <Form
-              form={prefsForm}
-              layout="vertical"
-              onFinish={handlePrefsSubmit}
-              style={{ maxWidth: 500 }}
-            >
-              <Divider plain>Каналы доставки</Divider>
-              <Form.Item label="В приложении" name="in_app" valuePropName="checked">
-                <Switch />
-              </Form.Item>
-              <Form.Item label="Email" name="email" valuePropName="checked">
-                <Switch />
-              </Form.Item>
-              <Form.Item label="Push-уведомления" name="push" valuePropName="checked">
-                <Switch />
-              </Form.Item>
+            <Form form={prefsForm} layout="vertical" onFinish={handlePrefsSubmit}>
+              <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+                Каналы доставки
+              </Text>
 
-              <Divider plain>События</Divider>
-              <Form.Item label="Бронирования" name="booking_events" valuePropName="checked">
-                <Switch />
-              </Form.Item>
-              <Form.Item label="Отзывы" name="review_events" valuePropName="checked">
-                <Switch />
-              </Form.Item>
-              <Form.Item label="Промокоды" name="promo_events" valuePropName="checked">
-                <Switch />
-              </Form.Item>
-              <Form.Item label="Напоминания" name="reminders" valuePropName="checked">
-                <Switch />
-              </Form.Item>
+              <div className="bani-toggle-grid" style={{ marginBottom: 20 }}>
+                {PREFERENCE_CARDS.map((item) => (
+                  <div key={item.name} className="bani-toggle-card">
+                    <div className="bani-toggle-card__copy">
+                      <Text className="bani-toggle-card__title">{item.title}</Text>
+                      <Text className="bani-toggle-card__description">
+                        {item.description}
+                      </Text>
+                    </div>
+                    <Form.Item name={item.name} valuePropName="checked" style={{ marginBottom: 0 }}>
+                      <Switch />
+                    </Form.Item>
+                  </div>
+                ))}
+              </div>
+
+              <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+                События
+              </Text>
 
               <Form.Item>
                 <Button type="primary" htmlType="submit" loading={updatePrefs.isPending}>

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/redis/go-redis/v9"
 	"github.com/rekurt/relax-hub/config"
 	"github.com/rekurt/relax-hub/internal/antifraud"
 	"github.com/rekurt/relax-hub/internal/fiscal"
@@ -9,7 +10,6 @@ import (
 	"github.com/rekurt/relax-hub/internal/notification"
 	"github.com/rekurt/relax-hub/internal/payment"
 	"github.com/rekurt/relax-hub/internal/repository"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 )
 
@@ -48,7 +48,12 @@ var Module = fx.Module("service",
 		fx.Annotate(NewTelegramLinkService, fx.As(new(TelegramLinkService))),
 		fx.Annotate(NewComplaintService, fx.As(new(ComplaintService))),
 		fx.Annotate(NewReferralService, fx.As(new(ReferralService))),
-		fx.Annotate(NewCertificateService, fx.As(new(CertificateService))),
+		fx.Annotate(
+			func(certRepo repository.GiftCertificateRepository, orderRepo repository.CertificateOrderRepository, provider payment.PaymentProvider, emailSender notification.EmailSender, cfg *config.Config, log *logger.Logger) CertificateService {
+				return NewCertificateService(certRepo, orderRepo, provider, emailSender, cfg.FrontendURL, log)
+			},
+			fx.As(new(CertificateService)),
+		),
 		fx.Annotate(NewPhotoVerificationService, fx.As(new(PhotoVerificationService))),
 		fx.Annotate(NewPromoService, fx.As(new(PromoService))),
 		fx.Annotate(NewMediaService, fx.As(new(MediaService))),

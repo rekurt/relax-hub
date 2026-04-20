@@ -42,6 +42,44 @@ import PageHeader from '@/components/PageHeader'
 
 const { Text } = Typography
 
+const NOTIFICATION_CARDS = [
+  {
+    name: 'in_app',
+    title: 'В приложении',
+    description: 'События внутри кабинета и в рабочей ленте.',
+  },
+  {
+    name: 'email',
+    title: 'Email',
+    description: 'Подтверждения, итоги и важные изменения по объектам.',
+  },
+  {
+    name: 'push',
+    title: 'Push-уведомления',
+    description: 'Быстрые сигналы по бронированиям и действиям гостей.',
+  },
+  {
+    name: 'booking_events',
+    title: 'Бронирования',
+    description: 'Системные уведомления по созданию и изменению брони.',
+  },
+  {
+    name: 'review_events',
+    title: 'Отзывы',
+    description: 'Новые отзывы и ответы по объектам.',
+  },
+  {
+    name: 'promo_events',
+    title: 'Промокоды',
+    description: 'Маркетинговые кампании и промо-сценарии.',
+  },
+  {
+    name: 'reminders',
+    title: 'Напоминания',
+    description: 'Напоминания по ближайшим действиям и срокам.',
+  },
+] as const
+
 export default function ProfileSettings() {
   const { user, loadProfile } = useAuthStore()
   const { message } = App.useApp()
@@ -156,196 +194,203 @@ export default function ProfileSettings() {
     window.location.assign(`/api/v1/auth/oauth/${provider}?action=link`)
   }
 
-  const linkedProviders = new Set(socialAccounts.map((a) => a.provider))
+  const linkedProviders = new Set(socialAccounts.map((account) => account.provider))
+  const currentCity = cities.find((city) => city.id === user?.city_id)?.name
 
   return (
-    <div>
+    <div className="bani-stack">
       <PageHeader
         eyebrow="Профиль"
         title="Настройки профиля"
         description="Контактные данные, уведомления и привязанные аккаунты в одном месте."
       />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <Card title="Аватар">
-          <Space size={16} align="center">
-            <Avatar
-              size={80}
-              src={user?.avatar_url}
-              icon={!user?.avatar_url && <UserOutlined />}
-            />
-            <Space direction="vertical">
-              <Upload
-                showUploadList={false}
-                accept="image/jpeg,image/png"
-                beforeUpload={handleAvatarUpload}
-              >
-                <Button icon={<UploadOutlined />} loading={avatarUploading}>
-                  Загрузить
-                </Button>
-              </Upload>
-              {user?.avatar_url && (
-                <Popconfirm
-                  title="Удалить аватар?"
-                  onConfirm={() => deleteAvatar.mutate()}
-                  okText="Да"
-                  cancelText="Нет"
-                >
-                  <Button danger icon={<DeleteOutlined />} loading={deleteAvatar.isPending}>
-                    Удалить
-                  </Button>
-                </Popconfirm>
-              )}
-            </Space>
-          </Space>
-        </Card>
+      <div className="bani-stat-grid">
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Профиль</span>
+          <span className="bani-stat-tile__value">{user?.name ?? 'Без имени'}</span>
+          <span className="bani-stat-tile__hint">{user?.email ?? 'Email не указан'}</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Город</span>
+          <span className="bani-stat-tile__value">{currentCity ?? 'Не выбран'}</span>
+          <span className="bani-stat-tile__hint">Используется в локальных сценариях и подстановках.</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Социальные связи</span>
+          <span className="bani-stat-tile__value">{socialAccounts.length}</span>
+          <span className="bani-stat-tile__hint">Дополнительные способы входа и восстановления доступа.</span>
+        </div>
+      </div>
 
-        <Card title="Основная информация">
-          <Form
-            form={profileForm}
-            layout="vertical"
-            onFinish={handleProfileSubmit}
-            style={{ maxWidth: 500 }}
-          >
-            <Form.Item label="Имя" name="name">
-              <Input placeholder="Ваше имя" />
-            </Form.Item>
-            <Form.Item label="Телефон" name="phone">
-              <Input placeholder="+7 999 123-45-67" />
-            </Form.Item>
-            <Form.Item label="О себе" name="bio">
-              <Input.TextArea rows={3} placeholder="Расскажите о себе" />
-            </Form.Item>
-            <Form.Item label="Город" name="city_id">
-              <Select
-                placeholder="Выберите город"
-                allowClear
-                options={(cities as Array<{ id?: number; name?: string }>).map((c) => ({
-                  value: c.id,
-                  label: c.name,
-                }))}
-              />
-            </Form.Item>
-            <Form.Item>
-              <Button type="primary" htmlType="submit" loading={updateProfile.isPending}>
-                Сохранить
-              </Button>
-            </Form.Item>
-          </Form>
-        </Card>
-
-        <Card title="Настройки уведомлений">
-          {prefsLoading ? (
-            <Skeleton active />
-          ) : (
+      <div className="bani-grid bani-grid--content-aside">
+        <div className="bani-stack">
+          <Card title="Основная информация">
             <Form
-              form={prefsForm}
+              form={profileForm}
               layout="vertical"
-              onFinish={handlePrefsSubmit}
-              style={{ maxWidth: 500 }}
+              onFinish={handleProfileSubmit}
+              style={{ maxWidth: 560 }}
             >
-              <Divider plain>Каналы доставки</Divider>
-              <Form.Item label="В приложении" name="in_app" valuePropName="checked">
-                <Switch />
+              <Form.Item label="Имя" name="name">
+                <Input placeholder="Ваше имя" />
               </Form.Item>
-              <Form.Item label="Email" name="email" valuePropName="checked">
-                <Switch />
+              <Form.Item label="Телефон" name="phone">
+                <Input placeholder="+7 999 123-45-67" />
               </Form.Item>
-              <Form.Item label="Push-уведомления" name="push" valuePropName="checked">
-                <Switch />
+              <Form.Item label="О себе" name="bio">
+                <Input.TextArea rows={4} placeholder="Расскажите о себе" />
               </Form.Item>
-
-              <Divider plain>События</Divider>
-              <Form.Item label="Бронирования" name="booking_events" valuePropName="checked">
-                <Switch />
+              <Form.Item label="Город" name="city_id">
+                <Select
+                  placeholder="Выберите город"
+                  allowClear
+                  options={(cities as Array<{ id?: number; name?: string }>).map((city) => ({
+                    value: city.id,
+                    label: city.name,
+                  }))}
+                />
               </Form.Item>
-              <Form.Item label="Отзывы" name="review_events" valuePropName="checked">
-                <Switch />
-              </Form.Item>
-              <Form.Item label="Промокоды" name="promo_events" valuePropName="checked">
-                <Switch />
-              </Form.Item>
-              <Form.Item label="Напоминания" name="reminders" valuePropName="checked">
-                <Switch />
-              </Form.Item>
-
               <Form.Item>
-                <Button type="primary" htmlType="submit" loading={updatePrefs.isPending}>
-                  Сохранить настройки
+                <Button type="primary" htmlType="submit" loading={updateProfile.isPending}>
+                  Сохранить
                 </Button>
               </Form.Item>
             </Form>
-          )}
-        </Card>
+          </Card>
 
-        <Card title="Привязанные аккаунты">
-          {socialLoading ? (
-            <Skeleton active />
-          ) : (
-            <>
-              <List
-                dataSource={socialAccounts}
-                locale={{ emptyText: 'Нет привязанных аккаунтов' }}
-                renderItem={(account) => (
-                  <List.Item
-                    actions={[
-                      <Popconfirm
-                        key="unlink"
-                        title={`Отвязать ${PROVIDER_LABELS[account.provider ?? ''] ?? account.provider}?`}
-                        onConfirm={() => {
-                          if (account.provider) unlinkSocial.mutate({ provider: account.provider })
-                        }}
-                        okText="Да"
-                        cancelText="Нет"
-                      >
-                        <Button danger size="small">
-                          Отвязать
-                        </Button>
-                      </Popconfirm>,
-                    ]}
-                  >
-                    <List.Item.Meta
-                      avatar={
-                        <Avatar
-                          src={account.avatar_url}
-                          style={{
-                            backgroundColor: PROVIDER_COLORS[account.provider ?? ''] ?? '#999',
-                          }}
-                        >
-                          {(account.provider ?? '')[0]?.toUpperCase()}
-                        </Avatar>
-                      }
-                      title={
-                        <Text>
-                          {PROVIDER_LABELS[account.provider ?? ''] ?? account.provider}
-                        </Text>
-                      }
-                      description={account.email ?? account.name ?? ''}
-                    />
-                  </List.Item>
-                )}
+          <Card title="Настройки уведомлений">
+            {prefsLoading ? (
+              <Skeleton active />
+            ) : (
+              <Form
+                form={prefsForm}
+                layout="vertical"
+                onFinish={handlePrefsSubmit}
+              >
+                <div className="bani-toggle-grid" style={{ marginBottom: 20 }}>
+                  {NOTIFICATION_CARDS.map((item) => (
+                    <div key={item.name} className="bani-toggle-card">
+                      <div className="bani-toggle-card__copy">
+                        <Text className="bani-toggle-card__title">{item.title}</Text>
+                        <Text className="bani-toggle-card__description">{item.description}</Text>
+                      </div>
+                      <Form.Item name={item.name} valuePropName="checked" style={{ marginBottom: 0 }}>
+                        <Switch />
+                      </Form.Item>
+                    </div>
+                  ))}
+                </div>
+
+                <Form.Item>
+                  <Button type="primary" htmlType="submit" loading={updatePrefs.isPending}>
+                    Сохранить настройки
+                  </Button>
+                </Form.Item>
+              </Form>
+            )}
+          </Card>
+        </div>
+
+        <div className="bani-stack">
+          <Card title="Аватар">
+            <Space size={16} align="center">
+              <Avatar
+                size={88}
+                src={user?.avatar_url}
+                icon={!user?.avatar_url && <UserOutlined />}
               />
-
-              <Divider />
-              <Space wrap>
-                {(['vk', 'yandex', 'google'] as const).map((provider) =>
-                  !linkedProviders.has(provider) ? (
-                    <Button
-                      key={provider}
-                      onClick={() => handleLinkProvider(provider)}
-                      style={{
-                        borderColor: PROVIDER_COLORS[provider],
-                        color: PROVIDER_COLORS[provider],
-                      }}
-                    >
-                      Привязать {PROVIDER_LABELS[provider]}
+              <Space direction="vertical">
+                <Upload
+                  showUploadList={false}
+                  accept="image/jpeg,image/png"
+                  beforeUpload={handleAvatarUpload}
+                >
+                  <Button icon={<UploadOutlined />} loading={avatarUploading}>
+                    Загрузить
+                  </Button>
+                </Upload>
+                {user?.avatar_url && (
+                  <Popconfirm
+                    title="Удалить аватар?"
+                    onConfirm={() => deleteAvatar.mutate()}
+                    okText="Да"
+                    cancelText="Нет"
+                  >
+                    <Button danger icon={<DeleteOutlined />} loading={deleteAvatar.isPending}>
+                      Удалить
                     </Button>
-                  ) : null,
+                  </Popconfirm>
                 )}
               </Space>
-            </>
-          )}
-        </Card>
+            </Space>
+          </Card>
+
+          <Card title="Привязанные аккаунты">
+            {socialLoading ? (
+              <Skeleton active />
+            ) : (
+              <>
+                <List
+                  dataSource={socialAccounts}
+                  locale={{ emptyText: 'Нет привязанных аккаунтов' }}
+                  renderItem={(account) => (
+                    <List.Item
+                      actions={[
+                        <Popconfirm
+                          key="unlink"
+                          title={`Отвязать ${PROVIDER_LABELS[account.provider ?? ''] ?? account.provider}?`}
+                          onConfirm={() => {
+                            if (account.provider) unlinkSocial.mutate({ provider: account.provider })
+                          }}
+                          okText="Да"
+                          cancelText="Нет"
+                        >
+                          <Button danger size="small">
+                            Отвязать
+                          </Button>
+                        </Popconfirm>,
+                      ]}
+                    >
+                      <List.Item.Meta
+                        avatar={
+                          <Avatar
+                            src={account.avatar_url}
+                            style={{
+                              backgroundColor: PROVIDER_COLORS[account.provider ?? ''] ?? '#999',
+                            }}
+                          >
+                            {(account.provider ?? '')[0]?.toUpperCase()}
+                          </Avatar>
+                        }
+                        title={PROVIDER_LABELS[account.provider ?? ''] ?? account.provider}
+                        description={account.email ?? account.name ?? ''}
+                      />
+                    </List.Item>
+                  )}
+                />
+
+                <Divider />
+                <Space wrap>
+                  {(['vk', 'yandex', 'google'] as const).map((provider) =>
+                    !linkedProviders.has(provider) ? (
+                      <Button
+                        key={provider}
+                        onClick={() => handleLinkProvider(provider)}
+                        style={{
+                          borderColor: PROVIDER_COLORS[provider],
+                          color: PROVIDER_COLORS[provider],
+                        }}
+                      >
+                        Привязать {PROVIDER_LABELS[provider]}
+                      </Button>
+                    ) : null,
+                  )}
+                </Space>
+              </>
+            )}
+          </Card>
+        </div>
       </div>
     </div>
   )

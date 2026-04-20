@@ -113,7 +113,7 @@ func GenerateSchema(input SchemaInput) SchemaLocalBusiness {
 
 	// Images
 	if len(input.Images) > 0 {
-		schema.Image = input.Images
+		schema.Image = normalizeAssetURLs(input.BaseURL, input.Images)
 	}
 
 	// Address

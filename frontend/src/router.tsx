@@ -51,6 +51,7 @@ import WalletDashboard from '@/pages/client/WalletDashboard'
 import ClientProfile from '@/pages/client/ClientProfile'
 import SavedCards from '@/pages/client/SavedCards'
 import SecuritySettings from '@/pages/client/SecuritySettings'
+import Preferences from '@/pages/client/Preferences'
 import ClientChat from '@/pages/client/ClientChat'
 import ClientNotifications from '@/pages/client/ClientNotifications'
 import NotificationPreferences from '@/pages/client/NotificationPreferences'
@@ -107,6 +108,7 @@ import FAQManagement from '@/pages/admin/FAQManagement'
 import PublicFAQ from '@/pages/public/PublicFAQ'
 import PublicContacts from '@/pages/public/PublicContacts'
 import PublicCheckout from '@/pages/public/PublicCheckout'
+import PublicTerms from '@/pages/public/PublicTerms'
 
 function RedirectToCatalog() {
   const location = useLocation()
@@ -140,6 +142,7 @@ export default function AppRouter() {
         <Route path="certificates" element={<CertificatePurchase />} />
         <Route path="faq" element={<PublicFAQ />} />
         <Route path="contacts" element={<PublicContacts />} />
+        <Route path="terms" element={<PublicTerms />} />
       </Route>
 
       <Route path="/certificates/purchase" element={<Navigate to="/certificates" replace />} />
@@ -224,7 +227,7 @@ export default function AppRouter() {
         <Route path="security" element={<SecuritySettings />} />
         <Route path="profile" element={<ClientProfile />} />
         <Route path="recommendations" element={<Navigate to="/catalog" replace />} />
-        <Route path="preferences" element={<Navigate to="/catalog" replace />} />
+        <Route path="preferences" element={<Preferences />} />
         <Route path="loyalty" element={<Navigate to="/catalog" replace />} />
         <Route path="referral" element={<Navigate to="/catalog" replace />} />
         <Route path="comparison" element={<Navigate to="/catalog" replace />} />

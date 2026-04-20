@@ -38,7 +38,7 @@ type MetaInput struct {
 	BaseURL      string // e.g. "https://bani.ru"
 }
 
-const siteName = "Bani.ru"
+const siteName = "relaxhub"
 
 // GenerateMetaTags creates SEO meta-tags from bathhouse data.
 func GenerateMetaTags(input MetaInput) MetaTags {
@@ -47,7 +47,7 @@ func GenerateMetaTags(input MetaInput) MetaTags {
 
 	var ogImage string
 	if len(input.Images) > 0 {
-		ogImage = input.Images[0]
+		ogImage = normalizeAssetURL(input.BaseURL, input.Images[0])
 	}
 
 	canonical := generateCanonical(input)

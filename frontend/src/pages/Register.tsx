@@ -4,12 +4,14 @@ import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined } from '@ant-de
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { postAuthRegister, postAuthRegisterPhone, postAuthVerifyPhone } from '@/api/generated/auth/auth'
 import { useAuthStore } from '@/stores/auth'
+import AuthShell from '@/components/AuthShell'
 import OAuthButtons from '@/components/OAuthButtons'
 import PhoneOTPInput from '@/components/PhoneOTPInput'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
+import { PLATFORM_NAME } from '@/content/support'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 type AuthMethod = 'email' | 'phone'
 
@@ -120,15 +122,28 @@ export default function Register() {
   const subtitle = roleDesc.subtitle
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f5f5f5' }}>
-      <Card style={{ width: 440 }}>
+    <AuthShell
+      eyebrow="Регистрация"
+      title={title}
+      description={subtitle}
+      asideTitle="Создание аккаунта без перегруза"
+      asideDescription={`${PLATFORM_NAME} не превращает регистрацию в длинную анкету. Сначала создаём рабочий аккаунт, а профиль и операционные настройки можно спокойно дозаполнить уже внутри кабинета.`}
+      highlights={[
+        'Один поток для клиента и владельца: различается только маршрут после входа и доступные разделы.',
+        'Телефон и email доступны как альтернативные способы регистрации, а не как две разные формы жизни.',
+        referralCode ? `Реферальный код ${referralCode} будет применён автоматически после завершения регистрации.` : 'Если вы пришли по рекомендации, код прикрепится автоматически через ссылку приглашения.',
+      ]}
+      footer={(
+        <>
+          <Text>Уже есть аккаунт? </Text>
+          <Link to="/login">Войти</Link>
+        </>
+      )}
+    >
+      <Card bordered={false} className="bani-auth-surface">
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div style={{ textAlign: 'center' }}>
-            <Title level={3}>{title}</Title>
-            <Text type="secondary">{subtitle}</Text>
-          </div>
-
           <Segmented
+            className="bani-auth-segmented"
             options={ROLE_OPTIONS}
             value={role}
             onChange={(v) => setRole(v as string)}
@@ -136,6 +151,7 @@ export default function Register() {
           />
 
           <Segmented
+            className="bani-auth-segmented"
             options={AUTH_METHOD_OPTIONS}
             value={authMethod}
             onChange={(v) => setAuthMethod(v as AuthMethod)}
@@ -143,8 +159,14 @@ export default function Register() {
           />
 
           {authMethod === 'email' ? (
-            <Form layout="vertical" onFinish={onEmailFinish} autoComplete="off">
+            <Form
+              className="bani-auth-form"
+              layout="vertical"
+              onFinish={onEmailFinish}
+              autoComplete="off"
+            >
               <Form.Item
+                label="Имя"
                 name="name"
                 rules={[{ required: true, message: 'Введите имя' }]}
               >
@@ -152,6 +174,7 @@ export default function Register() {
               </Form.Item>
 
               <Form.Item
+                label="Адрес email"
                 name="email"
                 rules={[
                   { required: true, message: 'Введите email' },
@@ -162,6 +185,7 @@ export default function Register() {
               </Form.Item>
 
               <Form.Item
+                label="Номер телефона"
                 name="phone"
                 rules={[{ required: true, message: 'Введите телефон' }]}
               >
@@ -169,6 +193,7 @@ export default function Register() {
               </Form.Item>
 
               <Form.Item
+                label="Пароль"
                 name="password"
                 rules={[
                   { required: true, message: 'Введите пароль' },
@@ -179,6 +204,7 @@ export default function Register() {
               </Form.Item>
 
               <Form.Item
+                label="Подтверждение пароля"
                 name="confirmPassword"
                 dependencies={['password']}
                 rules={[
@@ -209,15 +235,16 @@ export default function Register() {
                 <Checkbox>Мне исполнилось 18 лет</Checkbox>
               </Form.Item>
 
-              <Form.Item>
+              <Form.Item className="bani-auth-form__actions">
                 <Button type="primary" htmlType="submit" loading={loading} block size="large">
                   Зарегистрироваться
                 </Button>
               </Form.Item>
             </Form>
           ) : (
-            <Form form={phoneForm} layout="vertical" autoComplete="off">
+            <Form form={phoneForm} className="bani-auth-form" layout="vertical" autoComplete="off">
               <Form.Item
+                label="Имя"
                 name="name"
                 rules={[{ required: true, message: 'Введите имя' }]}
               >
@@ -246,13 +273,8 @@ export default function Register() {
           )}
 
           <OAuthButtons referralCode={referralCode} />
-
-          <div style={{ textAlign: 'center' }}>
-            <Text>Уже есть аккаунт? </Text>
-            <Link to="/login">Войти</Link>
-          </div>
         </Space>
       </Card>
-    </div>
+    </AuthShell>
   )
 }

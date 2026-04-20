@@ -21,6 +21,8 @@ import { useGetMyReferral } from '@/api/generated/referral/referral'
 import { useGetMyReferralStats } from '@/api/generated/referral/referral'
 import { useGetMyReferralBalance } from '@/api/generated/referral/referral'
 import { formatPrice } from '@/lib/format'
+import { copyToClipboard } from '@/components/ShareButton'
+import { PLATFORM_NAME } from '@/content/support'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -39,7 +41,7 @@ export default function ReferralProgram() {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(referralCode)
+      await copyToClipboard(referralCode)
       message.success('Код скопирован')
     } catch {
       message.error('Не удалось скопировать')
@@ -48,7 +50,7 @@ export default function ReferralProgram() {
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(referralLink)
+      await copyToClipboard(referralLink)
       message.success('Ссылка скопирована')
     } catch {
       message.error('Не удалось скопировать')
@@ -56,18 +58,18 @@ export default function ReferralProgram() {
   }
 
   const handleShare = async () => {
-    if (navigator.share) {
+    if (typeof navigator.share === 'function') {
       try {
         await navigator.share({
-          title: 'Приглашение в BANI',
+          title: `Приглашение в ${PLATFORM_NAME}`,
           text: `Присоединяйтесь! Используйте мой реферальный код: ${referralCode}`,
           url: referralLink,
         })
       } catch {
-        // user cancelled share
+        await handleCopyLink()
       }
     } else {
-      handleCopyLink()
+      await handleCopyLink()
     }
   }
 

@@ -5,6 +5,7 @@ import { App as AntApp, ConfigProvider } from 'antd'
 import ruRU from 'antd/locale/ru_RU'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import BookingCreate from '@/pages/client/BookingCreate'
+import { formatSlotTimeLabel } from '@/lib/slot-selection'
 
 vi.mock('@/api/generated/bathhouses/bathhouses', () => ({
   useGetBathhousesId: vi.fn(),
@@ -121,6 +122,9 @@ const mockSavedCards = [
   { id: 'card-2', last4: '5555', brand: 'Mastercard', expiry_month: 6, expiry_year: 2028, is_default: false },
 ]
 
+const firstSlotLabel = formatSlotTimeLabel(mockSlots[0]?.startTime)
+const secondSlotLabel = formatSlotTimeLabel(mockSlots[1]?.startTime)
+
 function setupDefaultMocks() {
   vi.mocked(useGetBathhousesId).mockReturnValue({
     data: { data: mockBathhouse, success: true },
@@ -195,8 +199,9 @@ describe('BookingCreate', () => {
 
     it('renders available slots on step 1', () => {
       renderWithProviders(<BookingCreate />)
-      expect(screen.getByText(/10:00 — 11:00/)).toBeInTheDocument()
-      expect(screen.getByText(/11:00 — 12:00/)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: new RegExp(firstSlotLabel) })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: new RegExp(secondSlotLabel) })).toBeInTheDocument()
+      expect(screen.queryByText(/Длительность/)).not.toBeInTheDocument()
     })
 
     it('renders "Далее" button on step 1', () => {
@@ -217,6 +222,23 @@ describe('BookingCreate', () => {
     it('shows back to bathhouse button', () => {
       renderWithProviders(<BookingCreate />)
       expect(screen.getByText('Назад к бане')).toBeInTheDocument()
+    })
+
+    it('allows selecting a continuous range inside one selector', () => {
+      vi.mocked(useGetBathhousesId).mockReturnValue({
+        data: { data: { ...mockBathhouse, min_duration: 2 }, success: true },
+        isLoading: false,
+      } as unknown as ReturnType<typeof useGetBathhousesId>)
+
+      renderWithProviders(<BookingCreate />, {
+        route: '/client/booking/new?bathhouse=bath-1&date=2026-04-01',
+      })
+
+      fireEvent.click(screen.getByRole('button', { name: new RegExp(firstSlotLabel) }))
+      expect(screen.getByText(/Выберите конечный слот/)).toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole('button', { name: new RegExp(secondSlotLabel) }))
+      expect(screen.getByText('Далее')).toBeEnabled()
     })
   })
 
@@ -262,7 +284,7 @@ describe('BookingCreate', () => {
       expect(screen.getByText('Веники')).toBeInTheDocument()
 
       fireEvent.click(screen.getByText('Назад'))
-      expect(screen.getByText(/10:00 — 11:00/)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: new RegExp(firstSlotLabel) })).toBeInTheDocument()
     })
   })
 

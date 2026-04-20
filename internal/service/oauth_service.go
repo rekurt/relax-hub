@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/rekurt/relax-hub/config"
 	"github.com/rekurt/relax-hub/internal/auth"
 	"github.com/rekurt/relax-hub/internal/domain"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/rekurt/relax-hub/internal/repository"
-	"github.com/redis/go-redis/v9"
 )
 
 type OAuthService interface {
@@ -22,19 +22,20 @@ type OAuthService interface {
 	LinkSocialAccount(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider, code string) error
 	UnlinkSocialAccount(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider) error
 	ListSocialAccounts(ctx context.Context, userID uuid.UUID) ([]domain.SocialAccount, error)
+	ListConfiguredProviders() []domain.OAuthProvider
 }
 
 type oauthService struct {
-	userRepo           repository.UserRepository
-	socialRepo         repository.SocialAccountRepository
-	redisClient        *redis.Client
-	providers          map[domain.OAuthProvider]auth.OAuthProvider
-	referralSvc        ReferralService
-	walletSvc          WalletService
-	sessionSvc         SessionService
-	logger             *logger.Logger
-	jwtSecret          []byte
-	tokenTTL           time.Duration
+	userRepo             repository.UserRepository
+	socialRepo           repository.SocialAccountRepository
+	redisClient          *redis.Client
+	providers            map[domain.OAuthProvider]auth.OAuthProvider
+	referralSvc          ReferralService
+	walletSvc            WalletService
+	sessionSvc           SessionService
+	logger               *logger.Logger
+	jwtSecret            []byte
+	tokenTTL             time.Duration
 	welcomeBonusAmount   int64
 	welcomeBonusAmountBY int64
 	welcomeBonusExpiry   int
@@ -69,16 +70,16 @@ func NewOAuthService(
 	}
 
 	return &oauthService{
-		userRepo:           userRepo,
-		socialRepo:         socialRepo,
-		redisClient:        redisClient,
-		providers:          providers,
-		referralSvc:        referralSvc,
-		walletSvc:          walletSvc,
-		sessionSvc:         sessionSvc,
-		logger:             log,
-		jwtSecret:          []byte(cfg.JWT.Secret),
-		tokenTTL:           cfg.JWT.TokenTTL,
+		userRepo:             userRepo,
+		socialRepo:           socialRepo,
+		redisClient:          redisClient,
+		providers:            providers,
+		referralSvc:          referralSvc,
+		walletSvc:            walletSvc,
+		sessionSvc:           sessionSvc,
+		logger:               log,
+		jwtSecret:            []byte(cfg.JWT.Secret),
+		tokenTTL:             cfg.JWT.TokenTTL,
 		welcomeBonusAmount:   cfg.WelcomeBonus.Amount,
 		welcomeBonusAmountBY: cfg.WelcomeBonus.AmountBY,
 		welcomeBonusExpiry:   cfg.WelcomeBonus.ExpiryDays,
@@ -362,6 +363,14 @@ func (s *oauthService) UnlinkSocialAccount(ctx context.Context, userID uuid.UUID
 
 func (s *oauthService) ListSocialAccounts(ctx context.Context, userID uuid.UUID) ([]domain.SocialAccount, error) {
 	return s.socialRepo.ListByUser(ctx, userID)
+}
+
+func (s *oauthService) ListConfiguredProviders() []domain.OAuthProvider {
+	providers := make([]domain.OAuthProvider, 0, len(s.providers))
+	for provider := range s.providers {
+		providers = append(providers, provider)
+	}
+	return providers
 }
 
 func (s *oauthService) getProvider(provider domain.OAuthProvider) (auth.OAuthProvider, error) {

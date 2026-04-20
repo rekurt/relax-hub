@@ -119,7 +119,7 @@ func (h *AuthHandler) RestoreAccount(w http.ResponseWriter, r *http.Request) {
 //	@Tags			users
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Success		200	{object}	APIResponse{data=service.ProfileCompletenessOutput}
+//	@Success		200	{object}	APIResponse{data=profileCompletenessResponse}
 //	@Failure		401	{object}	APIResponse{error=APIError}
 //	@Router			/my/profile-completeness [get]
 func (h *AuthHandler) GetProfileCompleteness(w http.ResponseWriter, r *http.Request) {

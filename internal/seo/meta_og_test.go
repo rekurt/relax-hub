@@ -22,7 +22,7 @@ func TestGenerateMetaTags_OGFields(t *testing.T) {
 	meta := GenerateMetaTags(input)
 
 	assert.Equal(t, "https://bani.ru/moscow/banya-lyuks", meta.OGUrl)
-	assert.Equal(t, "Bani.ru", meta.OGSiteName)
+	assert.Equal(t, "relaxhub", meta.OGSiteName)
 	assert.Equal(t, "ru_RU", meta.OGLocale)
 	assert.Equal(t, "summary_large_image", meta.TwitterCard)
 }

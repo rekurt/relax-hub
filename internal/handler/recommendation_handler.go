@@ -27,18 +27,51 @@ func NewRecommendationHandler(
 }
 
 type recommendationResponse struct {
-	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	Slug         string   `json:"slug,omitempty"`
-	Description  string   `json:"description"`
-	Address      string   `json:"address"`
-	CityID       int64    `json:"city_id"`
-	Latitude     float64  `json:"latitude"`
-	Longitude    float64  `json:"longitude"`
-	PricePerHour int64    `json:"price_per_hour"`
-	Rating       float64  `json:"rating"`
-	ReviewCount  int      `json:"review_count"`
-	Images       []string `json:"images,omitempty"`
+	ID              string   `json:"id"`
+	Name            string   `json:"name"`
+	Slug            string   `json:"slug,omitempty"`
+	Description     string   `json:"description"`
+	Address         string   `json:"address"`
+	CityID          int64    `json:"city_id"`
+	Latitude        float64  `json:"latitude"`
+	Longitude       float64  `json:"longitude"`
+	PricePerHour    int64    `json:"price_per_hour"`
+	Rating          float64  `json:"rating"`
+	ReviewCount     int      `json:"review_count"`
+	Images          []string `json:"images,omitempty"`
+	BookingMode     string   `json:"booking_mode,omitempty"`
+	IsPhotoVerified bool     `json:"is_photo_verified,omitempty"`
+	HasPool         bool     `json:"has_pool,omitempty"`
+	HasSauna        bool     `json:"has_sauna,omitempty"`
+	HasSteamRoom    bool     `json:"has_steam_room,omitempty"`
+	HasHotTub       bool     `json:"has_hot_tub,omitempty"`
+	HasBBQ          bool     `json:"has_bbq,omitempty"`
+	HasKaraoke      bool     `json:"has_karaoke,omitempty"`
+}
+
+func buildRecommendationResponse(bh *domain.Bathhouse) recommendationResponse {
+	return recommendationResponse{
+		ID:              bh.ID.String(),
+		Name:            bh.Name,
+		Slug:            bh.Slug,
+		Description:     bh.Description,
+		Address:         bh.Address,
+		CityID:          bh.CityID,
+		Latitude:        bh.Latitude,
+		Longitude:       bh.Longitude,
+		PricePerHour:    bh.PricePerHour,
+		Rating:          bh.Rating,
+		ReviewCount:     bh.ReviewCount,
+		Images:          bh.Images,
+		BookingMode:     bh.BookingMode,
+		IsPhotoVerified: bh.IsPhotoVerified,
+		HasPool:         bh.HasPool,
+		HasSauna:        bh.HasSauna,
+		HasSteamRoom:    bh.HasSteamRoom,
+		HasHotTub:       bh.HasHotTub,
+		HasBBQ:          bh.HasBBQ,
+		HasKaraoke:      bh.HasKaraoke,
+	}
 }
 
 type userPreferencesResponse struct {
@@ -100,20 +133,7 @@ func (h *RecommendationHandler) GetPersonalized(w http.ResponseWriter, r *http.R
 		if err != nil {
 			continue
 		}
-		items = append(items, recommendationResponse{
-			ID:           bh.ID.String(),
-			Name:         bh.Name,
-			Slug:         bh.Slug,
-			Description:  bh.Description,
-			Address:      bh.Address,
-			CityID:       bh.CityID,
-			Latitude:     bh.Latitude,
-			Longitude:    bh.Longitude,
-			PricePerHour: bh.PricePerHour,
-			Rating:       bh.Rating,
-			ReviewCount:  bh.ReviewCount,
-			Images:       bh.Images,
-		})
+		items = append(items, buildRecommendationResponse(bh))
 	}
 
 	totalPages := (int(totalCount) + pageSize - 1) / pageSize
@@ -167,20 +187,7 @@ func (h *RecommendationHandler) GetSimilar(w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			continue
 		}
-		items = append(items, recommendationResponse{
-			ID:           bh.ID.String(),
-			Name:         bh.Name,
-			Slug:         bh.Slug,
-			Description:  bh.Description,
-			Address:      bh.Address,
-			CityID:       bh.CityID,
-			Latitude:     bh.Latitude,
-			Longitude:    bh.Longitude,
-			PricePerHour: bh.PricePerHour,
-			Rating:       bh.Rating,
-			ReviewCount:  bh.ReviewCount,
-			Images:       bh.Images,
-		})
+		items = append(items, buildRecommendationResponse(bh))
 	}
 
 	writeJSON(w, http.StatusOK, items)
@@ -230,20 +237,7 @@ func (h *RecommendationHandler) GetPopular(w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			continue
 		}
-		items = append(items, recommendationResponse{
-			ID:           bh.ID.String(),
-			Name:         bh.Name,
-			Slug:         bh.Slug,
-			Description:  bh.Description,
-			Address:      bh.Address,
-			CityID:       bh.CityID,
-			Latitude:     bh.Latitude,
-			Longitude:    bh.Longitude,
-			PricePerHour: bh.PricePerHour,
-			Rating:       bh.Rating,
-			ReviewCount:  bh.ReviewCount,
-			Images:       bh.Images,
-		})
+		items = append(items, buildRecommendationResponse(bh))
 	}
 
 	writeJSON(w, http.StatusOK, items)

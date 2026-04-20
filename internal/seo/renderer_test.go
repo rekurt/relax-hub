@@ -15,12 +15,12 @@ func TestRenderer_RenderPage(t *testing.T) {
 	r := NewRenderer(nil, "https://bani.ru")
 
 	data := PageData{
-		Title:       "Баня Люкс в Москве — Bani.ru",
+		Title:       "Баня Люкс в Москве — relaxhub",
 		Description: "Баня Люкс: сауна, бассейн. Цена от 2000 руб/ч.",
 		Canonical:   "https://bani.ru/moscow/banya-lyuks",
 		OGImage:     "https://bani.ru/images/photo.jpg",
 		OGType:      "business.business",
-		OGSiteName:  "Bani.ru",
+		OGSiteName:  "relaxhub",
 		OGLocale:    "ru_RU",
 		TwitterCard: "summary_large_image",
 		SchemaJSON:  `{"@context":"https://schema.org","@type":"LocalBusiness","name":"Баня Люкс"}`,
@@ -35,7 +35,7 @@ func TestRenderer_RenderPage(t *testing.T) {
 	assert.Contains(t, html, `<meta charset="utf-8">`)
 
 	// Check title
-	assert.Contains(t, html, "<title>Баня Люкс в Москве — Bani.ru</title>")
+	assert.Contains(t, html, "<title>Баня Люкс в Москве — relaxhub</title>")
 
 	// Check meta description
 	assert.Contains(t, html, `<meta name="description" content="Баня Люкс: сауна, бассейн. Цена от 2000 руб/ч.">`)
@@ -45,15 +45,15 @@ func TestRenderer_RenderPage(t *testing.T) {
 
 	// Check OG tags
 	assert.Contains(t, html, `<meta property="og:type" content="business.business">`)
-	assert.Contains(t, html, `<meta property="og:title" content="Баня Люкс в Москве — Bani.ru">`)
+	assert.Contains(t, html, `<meta property="og:title" content="Баня Люкс в Москве — relaxhub">`)
 	assert.Contains(t, html, `<meta property="og:url" content="https://bani.ru/moscow/banya-lyuks">`)
 	assert.Contains(t, html, `<meta property="og:image" content="https://bani.ru/images/photo.jpg">`)
-	assert.Contains(t, html, `<meta property="og:site_name" content="Bani.ru">`)
+	assert.Contains(t, html, `<meta property="og:site_name" content="relaxhub">`)
 	assert.Contains(t, html, `<meta property="og:locale" content="ru_RU">`)
 
 	// Check Twitter Card
 	assert.Contains(t, html, `<meta name="twitter:card" content="summary_large_image">`)
-	assert.Contains(t, html, `<meta name="twitter:title" content="Баня Люкс в Москве — Bani.ru">`)
+	assert.Contains(t, html, `<meta name="twitter:title" content="Баня Люкс в Москве — relaxhub">`)
 
 	// Check Schema.org JSON-LD
 	assert.Contains(t, html, `<script type="application/ld+json">`)
@@ -157,11 +157,11 @@ func TestRenderer_BuildBathhouseDetailPage(t *testing.T) {
 	}
 
 	meta := MetaTags{
-		Title:       "Баня Люкс в Москве — Bani.ru",
+		Title:       "Баня Люкс в Москве — relaxhub",
 		Description: "Баня Люкс: сауна, бассейн. Цена от 2000 руб/ч.",
 		Canonical:   "https://bani.ru/moscow/banya-lyuks",
 		OGType:      "business.business",
-		OGSiteName:  "Bani.ru",
+		OGSiteName:  "relaxhub",
 		OGLocale:    "ru_RU",
 		TwitterCard: "summary",
 	}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
   Typography,
@@ -45,8 +45,10 @@ import { useGetCertificatesCodeBalance } from '@/api/generated/certificates/cert
 import { useGetBathhousesIdAddons } from '@/api/generated/add-ons/add-ons'
 import { useGetMyWallet } from '@/api/generated/wallet/wallet'
 import { useGetMySavedCards } from '@/api/generated/saved-cards/saved-cards'
+import ContiguousSlotSelector from '@/components/ContiguousSlotSelector'
 import PriceBreakdown from '@/components/PriceBreakdown'
 import { formatPrice } from '@/lib/format'
+import { formatSlotTimeLabel, getRangeHours, resolveSlotRangeSelection, type SlotRangeSelection } from '@/lib/slot-selection'
 
 const { Title, Text } = Typography
 
@@ -73,7 +75,7 @@ export default function BookingCreate() {
 
   // Step 1: Date/Time/Duration/Guests
   const [selectedDate, setSelectedDate] = useState(initialDate)
-  const [selectedSlot, setSelectedSlot] = useState<{ from: string; to: string } | null>(
+  const [selectedSlotRange, setSelectedSlotRange] = useState<SlotRangeSelection | null>(
     initialFrom && initialTo ? { from: initialFrom, to: initialTo } : null,
   )
   const [guestCount, setGuestCount] = useState(1)
@@ -108,6 +110,7 @@ export default function BookingCreate() {
     query: { enabled: !!bathhouseId },
   })
   const bathhouse = bathhouseData?.data
+  const minDurationHours = Math.max(1, bathhouse?.min_duration ?? 1)
 
   const { data: slotsData, isLoading: slotsLoading } = useGetBathhousesIdAvailableSlots(
     bathhouseId,
@@ -115,9 +118,29 @@ export default function BookingCreate() {
     { query: { enabled: !!bathhouseId && !!selectedDate } },
   )
   const slots = slotsData?.data ?? []
+  const resolvedSlotRange = resolveSlotRangeSelection(slots, selectedSlotRange)
+  const selectedRangeHours = resolvedSlotRange ? getRangeHours(resolvedSlotRange.from, resolvedSlotRange.to) : 0
+  const selectedSlot = resolvedSlotRange && selectedRangeHours >= minDurationHours ? resolvedSlotRange : null
+  const selectedRangeNeedsHours = resolvedSlotRange ? Math.max(0, minDurationHours - selectedRangeHours) : 0
 
   const startTime = selectedSlot?.from ?? ''
   const endTime = selectedSlot?.to ?? ''
+
+  useEffect(() => {
+    const nextRange = resolveSlotRangeSelection(slots, selectedSlotRange)
+    if (selectedSlotRange && !nextRange) {
+      setSelectedSlotRange(null)
+      return
+    }
+
+    if (
+      selectedSlotRange
+      && nextRange
+      && (selectedSlotRange.from !== nextRange.from || selectedSlotRange.to !== nextRange.to)
+    ) {
+      setSelectedSlotRange(nextRange)
+    }
+  }, [selectedSlotRange, slots])
 
   const { data: priceData, isLoading: priceLoading } = useGetBathhousesIdPriceCalculator(
     bathhouseId,
@@ -397,7 +420,7 @@ export default function BookingCreate() {
               key="back"
               onClick={() => {
                 setSlotConflict(false)
-                setSelectedSlot(null)
+                setSelectedSlotRange(null)
                 setCurrentStep(0)
               }}
             >
@@ -416,11 +439,10 @@ export default function BookingCreate() {
                     key={`${slot.startTime}-${slot.endTime}`}
                     icon={<ClockCircleOutlined />}
                     onClick={() => {
-                      if (slot.startTime && slot.endTime) {
-                        setSelectedSlot({ from: slot.startTime, to: slot.endTime })
-                        setSlotConflict(false)
-                        setCurrentStep(0)
-                      }
+                      if (!slot.startTime || !slot.endTime) return
+                      setSelectedSlotRange({ from: slot.startTime, to: slot.endTime })
+                      setSlotConflict(false)
+                      setCurrentStep(0)
                     }}
                   >
                     {fromTime} — {toTime}
@@ -464,7 +486,7 @@ export default function BookingCreate() {
           showIcon
           icon={<ReloadOutlined />}
           style={{ marginBottom: 16 }}
-          message="Повторное бронирование"
+          title="Повторное бронирование"
           description="Параметры предыдущего бронирования предзаполнены. Выберите удобную дату и время."
           data-testid="rebook-alert"
         />
@@ -475,7 +497,7 @@ export default function BookingCreate() {
           type="warning"
           showIcon
           style={{ marginBottom: 16 }}
-          message="Бронирование по заявке"
+          title="Бронирование по заявке"
           description="Это заведение работает по заявкам. После оформления заявки владелец подтвердит бронирование в течение установленного времени. Средства будут заблокированы до подтверждения."
         />
       )}
@@ -494,7 +516,7 @@ export default function BookingCreate() {
         }}
       />
 
-      {/* Step 1: Date/Time/Duration/Guests */}
+      {/* Step 1: Date/Time/Guests */}
       {currentStep === 0 && (
         <Card title="Дата и время" style={{ marginBottom: 16 }}>
           <Space direction="vertical" style={{ width: '100%' }} size={16}>
@@ -505,7 +527,7 @@ export default function BookingCreate() {
                 onChange={(d) => {
                   if (d) {
                     setSelectedDate(d.format('YYYY-MM-DD'))
-                    setSelectedSlot(null)
+                    setSelectedSlotRange(null)
                   }
                 }}
                 disabledDate={(d) => d.isBefore(dayjs(), 'day')}
@@ -519,28 +541,25 @@ export default function BookingCreate() {
                 {slots.length === 0 ? (
                   <Empty description="Нет доступных слотов" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ margin: '16px 0' }} />
                 ) : (
-                  <Space wrap style={{ marginTop: 8 }}>
-                    {slots.map((slot) => {
-                      const isSelected = selectedSlot?.from === slot.startTime && selectedSlot?.to === slot.endTime
-                      const fromTime = slot.startTime?.slice(11, 16) ?? slot.startTime ?? ''
-                      const toTime = slot.endTime?.slice(11, 16) ?? slot.endTime ?? ''
-                      return (
-                        <Button
-                          key={`${slot.startTime}-${slot.endTime}`}
-                          type={isSelected ? 'primary' : 'default'}
-                          disabled={!slot.available || !slot.startTime || !slot.endTime}
-                          icon={<ClockCircleOutlined />}
-                          onClick={() => {
-                            if (slot.startTime && slot.endTime) {
-                              setSelectedSlot({ from: slot.startTime, to: slot.endTime })
-                            }
-                          }}
-                        >
-                          {fromTime} — {toTime}
-                          {slot.price != null && ` (${formatPrice(slot.price)})`}
-                        </Button>
-                      )
-                    })}
+                  <Space direction="vertical" style={{ width: '100%', marginTop: 8 }} size="middle">
+                    <ContiguousSlotSelector
+                      slots={slots}
+                      value={selectedSlotRange}
+                      onChange={setSelectedSlotRange}
+                      minDurationHours={minDurationHours}
+                      label={`Выберите непрерывный интервал${minDurationHours > 1 ? ` (от ${minDurationHours} ч)` : ''}`}
+                      description="Выбор времени и длительности объединён: отмечайте соседние слоты подряд в одном блоке."
+                      size="middle"
+                    />
+
+                    {resolvedSlotRange && !selectedSlot && (
+                      <Alert
+                        type="info"
+                        showIcon={false}
+                        title={`${formatSlotTimeLabel(resolvedSlotRange.from)} - ${formatSlotTimeLabel(resolvedSlotRange.to)} · ${selectedRangeHours} ч`}
+                        description={`Добавьте ещё ${selectedRangeNeedsHours} ч, чтобы продолжить оформление.`}
+                      />
+                    )}
                   </Space>
                 )}
               </Spin>
@@ -891,7 +910,7 @@ export default function BookingCreate() {
             type="info"
             showIcon
             style={{ marginBottom: 16 }}
-            message="Политика отмены"
+            title="Политика отмены"
             description={(() => {
               const policy = (bathhouse as Record<string, unknown>)?.cancellation_policy as string
               switch (policy) {
@@ -912,7 +931,7 @@ export default function BookingCreate() {
               showIcon
               icon={<LockOutlined />}
               style={{ marginBottom: 16 }}
-              message="Средства будут заблокированы"
+              title="Средства будут заблокированы"
               description="Средства будут заблокированы на вашей карте до подтверждения владельцем. Если заявка будет отклонена или истечёт время ожидания, средства разблокируются автоматически."
               data-testid="hold-indicator"
             />

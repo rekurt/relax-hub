@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Input, Button, Space, App } from 'antd'
+import { Input, Button, App, Typography } from 'antd'
 import { PhoneOutlined } from '@ant-design/icons'
 
 const OTP_COOLDOWN_SECONDS = 60
@@ -11,6 +11,8 @@ interface PhoneOTPInputProps {
   loading?: boolean
   phoneLabel?: string
 }
+
+const { Text } = Typography
 
 export default function PhoneOTPInput({ onVerified, onSendOTP, loading, phoneLabel = 'Телефон' }: PhoneOTPInputProps) {
   const { message } = App.useApp()
@@ -54,18 +56,32 @@ export default function PhoneOTPInput({ onVerified, onSendOTP, loading, phoneLab
   }, [phone, code, onVerified, message])
 
   return (
-    <Space direction="vertical" style={{ width: '100%' }} size="middle">
-      <Space.Compact style={{ width: '100%' }}>
-        <Input
-          prefix={<PhoneOutlined />}
-          placeholder={phoneLabel}
-          size="large"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          disabled={otpSent && cooldown > 0}
-          style={{ flex: 1 }}
-        />
+    <div className="bani-auth-phone">
+      <div className="bani-auth-phone__block">
+        <div className="bani-auth-field">
+          <Text className="bani-auth-field__label">{phoneLabel}</Text>
+          <Input
+            prefix={<PhoneOutlined />}
+            placeholder={phoneLabel}
+            size="large"
+            autoComplete="tel"
+            inputMode="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            disabled={otpSent && cooldown > 0}
+          />
+        </div>
+        <div className="bani-auth-phone__meta">
+          <Text type="secondary" className="bani-auth-phone__hint">
+            Отправим одноразовый код по SMS. Номер можно вводить в привычном формате, включая `+7`.
+          </Text>
+          {otpSent && cooldown > 0 ? (
+            <Text className="bani-auth-phone__status">Повтор через {cooldown}с</Text>
+          ) : null}
+        </div>
         <Button
+          type={phone.trim() && cooldown <= 0 && !otpSent ? 'primary' : 'default'}
+          block
           size="large"
           onClick={handleSendOTP}
           loading={sending}
@@ -73,21 +89,29 @@ export default function PhoneOTPInput({ onVerified, onSendOTP, loading, phoneLab
         >
           {cooldown > 0 ? `${cooldown}с` : otpSent ? 'Отправить снова' : 'Получить код'}
         </Button>
-      </Space.Compact>
+      </div>
 
       {otpSent && (
-        <Space.Compact style={{ width: '100%' }}>
-          <Input
-            placeholder="Введите код из SMS"
-            size="large"
-            maxLength={OTP_LENGTH}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-            onPressEnter={handleVerify}
-            style={{ flex: 1 }}
-          />
+        <div className="bani-auth-phone__block bani-auth-phone__block--confirm">
+          <div className="bani-auth-field">
+            <Text className="bani-auth-field__label">Код из SMS</Text>
+            <Input
+              placeholder="Введите код из SMS"
+              size="large"
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              maxLength={OTP_LENGTH}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              onPressEnter={handleVerify}
+            />
+          </div>
+          <Text type="secondary" className="bani-auth-phone__hint">
+            Код состоит из {OTP_LENGTH} цифр. После подтверждения вы сразу попадёте в нужный кабинет.
+          </Text>
           <Button
             type="primary"
+            block
             size="large"
             onClick={handleVerify}
             loading={loading}
@@ -95,8 +119,8 @@ export default function PhoneOTPInput({ onVerified, onSendOTP, loading, phoneLab
           >
             Подтвердить
           </Button>
-        </Space.Compact>
+        </div>
       )}
-    </Space>
+    </div>
   )
 }

@@ -103,4 +103,18 @@ describe('RecentlyViewed', () => {
     renderWithProviders(<RecentlyViewed />)
     expect(screen.getByText('от 3500 ₽')).toBeInTheDocument()
   })
+
+  it('normalizes relative cover urls in cards', () => {
+    vi.mocked(useGetMyRecentlyViewed).mockReturnValue({
+      data: { data: mockItems, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetMyRecentlyViewed>)
+
+    renderWithProviders(<RecentlyViewed />)
+
+    expect(screen.getByAltText('Баня на Неве')).toHaveAttribute(
+      'src',
+      new URL('/photos/1.jpg', window.location.origin).toString(),
+    )
+  })
 })

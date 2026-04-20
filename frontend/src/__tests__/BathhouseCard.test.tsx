@@ -10,7 +10,12 @@ vi.mock('@/api/generated/favorites/favorites', () => ({
   usePostBathhousesIdFavorite: vi.fn(),
 }))
 
+vi.mock('@/stores/auth', () => ({
+  useAuthStore: vi.fn(),
+}))
+
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
+import { useAuthStore } from '@/stores/auth'
 
 function renderWithProviders(ui: React.ReactElement) {
   const queryClient = new QueryClient({
@@ -51,6 +56,11 @@ describe('BathhouseCard', () => {
       mutate: vi.fn(),
       isPending: false,
     } as unknown as ReturnType<typeof usePostBathhousesIdFavorite>)
+
+    vi.mocked(useAuthStore).mockImplementation((selector) => {
+      const state = { user: { id: 'client-1', role: 'client' } }
+      return (selector as (value: typeof state) => unknown)(state)
+    })
   })
 
   it('renders bathhouse name and address', () => {
@@ -108,6 +118,17 @@ describe('BathhouseCard', () => {
     )
 
     expect(screen.getByText('Нет фото')).toBeInTheDocument()
+  })
+
+  it('normalizes relative cover image urls', () => {
+    renderWithProviders(
+      <BathhouseCard bathhouse={{ ...mockBathhouse, images: ['uploads/photo1.jpg'] }} />,
+    )
+
+    expect(screen.getByAltText('Баня на Пушкина')).toHaveAttribute(
+      'src',
+      new URL('/uploads/photo1.jpg', window.location.origin).toString(),
+    )
   })
 
   it('shows last minute badge when last_minute_active is true', () => {

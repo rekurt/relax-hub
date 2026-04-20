@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfigProvider, App as AntApp } from 'antd'
 import ruRU from 'antd/locale/ru_RU'
 import Login from '@/pages/Login'
+import { vi } from 'vitest'
 
 vi.mock('@/api/generated/auth/auth', () => ({
   postAuthLogin: vi.fn(),
@@ -14,6 +15,17 @@ vi.mock('@/api/generated/auth/auth', () => ({
 
 vi.mock('@/api/generated/2fa/2fa', () => ({
   postAuth2faVerify: vi.fn(),
+}))
+
+vi.mock('@/api/axios-instance', () => ({
+  axiosInstance: {
+    get: vi.fn().mockResolvedValue({
+      data: {
+        success: true,
+        data: { providers: [] },
+      },
+    }),
+  },
 }))
 
 function renderLogin(initialRoute = '/login') {

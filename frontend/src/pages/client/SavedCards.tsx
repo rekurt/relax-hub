@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Typography, Table, Card, Button, Tag, Space, Popconfirm, Empty, Spin, Row, Col, Statistic } from 'antd'
+import { Typography, Table, Card, Button, Tag, Space, Popconfirm, Empty, Spin } from 'antd'
 import { CreditCardOutlined, DeleteOutlined, CheckCircleOutlined, StarOutlined } from '@ant-design/icons'
 import { App } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
@@ -11,8 +11,9 @@ import {
 } from '@/api/generated/saved-cards/saved-cards'
 import type { ColumnsType } from 'antd/es/table'
 import type { InternalHandlerSavedCardResponse } from '@/api/generated/model'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
+const { Text } = Typography
 
 const BRAND_COLORS: Record<string, string> = {
   visa: '#1a1f71',
@@ -137,34 +138,45 @@ export default function SavedCards() {
   }
 
   return (
-    <div>
-      <Title level={2}>
-        <CreditCardOutlined /> Сохранённые карты
-      </Title>
+    <div className="bani-stack">
+      <PageHeader
+        eyebrow="Личный кабинет"
+        title="Сохранённые карты"
+        description="Проверяйте карту по умолчанию и быстро управляйте способами оплаты без лишних действий."
+      />
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-        <Col xs={24} sm={12}>
-          <Card>
-            <Statistic
-              title="Сохранённых карт"
-              value={totalCards}
-              prefix={<CreditCardOutlined />}
-              suffix="/ 10"
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12}>
-          <Card>
-            <Statistic
-              title="Карта по умолчанию"
-              value={defaultCard ? `${defaultCard.brand ?? ''} •••• ${defaultCard.last4 ?? ''}` : 'Не выбрана'}
-              styles={{ content: { fontSize: defaultCard ? 20 : 16, color: defaultCard ? undefined : '#999' } }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div className="bani-stat-grid">
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Сохранённых карт</span>
+          <span className="bani-stat-tile__value">{totalCards}</span>
+          <span className="bani-stat-tile__hint">/ 10</span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Карта по умолчанию</span>
+          <span className="bani-stat-tile__value" style={{ fontSize: defaultCard ? 28 : 20 }}>
+            {defaultCard ? `${defaultCard.brand ?? ''} •••• ${defaultCard.last4 ?? ''}` : 'Не выбрана'}
+          </span>
+          <span className="bani-stat-tile__hint">
+            Используется первой при оплате, если не выбрана другая карта.
+          </span>
+        </div>
+        <div className="bani-stat-tile">
+          <span className="bani-stat-tile__eyebrow">Безопасность</span>
+          <span className="bani-stat-tile__value">Токенизация</span>
+          <span className="bani-stat-tile__hint">
+            В интерфейсе отображаются только бренд и последние четыре цифры.
+          </span>
+        </div>
+      </div>
 
-      <Card title="Мои карты">
+      <Card
+        title="Мои карты"
+        extra={(
+          <Text type="secondary">
+            Список карт для быстрых повторных оплат
+          </Text>
+        )}
+      >
         {cards.length === 0 ? (
           <Empty description="У вас нет сохранённых карт" />
         ) : (

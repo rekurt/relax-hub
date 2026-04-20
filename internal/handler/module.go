@@ -1,12 +1,12 @@
 package handler
 
 import (
+	"github.com/redis/go-redis/v9"
 	"github.com/rekurt/relax-hub/config"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/rekurt/relax-hub/internal/repository"
 	"github.com/rekurt/relax-hub/internal/seo"
 	"github.com/rekurt/relax-hub/internal/service"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 )
 
@@ -54,7 +54,9 @@ var Module = fx.Module("handler",
 		NewPhotoHandler,
 		NewPromoHandler,
 		NewMediaHandler,
-		NewPaymentHandler,
+		func(paymentService service.PaymentService, certificateService service.CertificateService) *PaymentHandler {
+			return NewPaymentHandler(paymentService, certificateService)
+		},
 		NewDeviceTokenHandler,
 		NewWalletHandler,
 		NewPayoutHandler,

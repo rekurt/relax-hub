@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/google/uuid"
@@ -308,6 +309,23 @@ func TestFAQBotService_Seed_Success(t *testing.T) {
 	}
 	if result.TotalCount < 10 {
 		t.Errorf("expected at least 10 seeded entries, got %d", result.TotalCount)
+	}
+
+	questions := make([]string, 0, len(result.Items))
+	for _, item := range result.Items {
+		questions = append(questions, item.Question)
+	}
+
+	expectedQuestions := []string{
+		"Что делать, если оплата не проходит?",
+		"Как пополнить кошелёк?",
+		"Как оставить отзыв?",
+	}
+
+	for _, question := range expectedQuestions {
+		if !slices.Contains(questions, question) {
+			t.Errorf("expected seeded FAQ to contain question %q", question)
+		}
 	}
 }
 

@@ -4,23 +4,28 @@ import { Layout, Button, Drawer, Dropdown, Grid, Space, Typography, theme } from
 import type { MenuProps } from 'antd'
 import { LogoutOutlined, MenuOutlined, UserOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/stores/auth'
-import type { NavigationItem } from '@/navigation/menu'
+import type { NavigationItem, NavigationSection } from '@/navigation/menu'
 import NotificationBell from '@/components/NotificationBell'
 
-const { Header, Content } = Layout
+const { Header, Content, Footer } = Layout
 const { useBreakpoint } = Grid
 const { Text } = Typography
 
 interface TopNavigationLayoutProps {
-  brandTitle: string
-  brandSubtitle: string
+  brandTitle: React.ReactNode
+  brandSubtitle: React.ReactNode
+  brandAriaLabel?: string
   homeTo: string
   primaryItems: NavigationItem[]
   overflowItems?: NavigationItem[]
+  navigationMode?: 'pills' | 'dropdown'
   profilePath?: string
+  profileMenuItems?: NavigationItem[]
   headerAccessory?: React.ReactNode
   showNotifications?: boolean
   contentWidth?: number
+  drawerSections?: NavigationSection[]
+  footer?: React.ReactNode
 }
 
 type DropdownItem = NonNullable<MenuProps['items']>[number]
@@ -37,64 +42,14 @@ function groupNavigationItems(items: NavigationItem[]) {
   }, [])
 }
 
-function NavButton({
-  item,
-  active,
-  onClick,
-}: {
-  item: NavigationItem
-  active: boolean
-  onClick: (to: string) => void
-}) {
-  return (
-    <Button
-      type={active ? 'primary' : 'text'}
-      onClick={() => onClick(item.to)}
-      style={{
-        borderRadius: 999,
-        fontWeight: active ? 600 : 500,
-        whiteSpace: 'nowrap',
-        boxShadow: active ? '0 10px 24px rgba(19, 79, 92, 0.12)' : 'none',
-      }}
-    >
-      {item.label}
-    </Button>
-  )
-}
+function buildGroupedMenuItems(items: NavigationItem[], navigate: (to: string) => void): NonNullable<MenuProps['items']> {
+  return groupNavigationItems(items).reduce<NonNullable<MenuProps['items']>>((acc, group) => {
+    const children = group.items.map((item) => ({
+      key: item.key,
+      label: item.label,
+      onClick: () => navigate(item.to),
+    } satisfies DropdownItem))
 
-export default function TopNavigationLayout({
-  brandTitle,
-  brandSubtitle,
-  homeTo,
-  primaryItems,
-  overflowItems = [],
-  profilePath,
-  headerAccessory,
-  showNotifications = true,
-  contentWidth = 1480,
-}: TopNavigationLayoutProps) {
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const navigate = useNavigate()
-  const location = useLocation()
-  const screens = useBreakpoint()
-  const { token } = theme.useToken()
-  const isMobile = !screens.lg
-  const showBrandSubtitle = !isMobile && !!screens.xl
-  const { user, logout } = useAuthStore()
-  const searchParams = new URLSearchParams(location.search)
-
-  const isActive = (item: NavigationItem) => item.isActive(location.pathname, searchParams)
-  const overflowActive = overflowItems.some(isActive)
-  const groupedOverflowItems = groupNavigationItems(overflowItems)
-
-  const buildDropdownLeaf = (item: NavigationItem): DropdownItem => ({
-    key: item.key,
-    label: item.label,
-    onClick: () => navigate(item.to),
-  })
-
-  const overflowMenuItems = groupedOverflowItems.reduce<NonNullable<MenuProps['items']>>((acc, group) => {
-    const children = group.items.map(buildDropdownLeaf)
     if (!group.section) {
       acc.push(...children)
       return acc
@@ -108,16 +63,71 @@ export default function TopNavigationLayout({
     } satisfies DropdownItem)
     return acc
   }, [])
+}
 
+function NavButton({
+  item,
+  active,
+  onClick,
+}: {
+  item: NavigationItem
+  active: boolean
+  onClick: (to: string) => void
+}) {
+  return (
+    <Button
+      className={`bani-topnav__nav-button${active ? ' bani-topnav__nav-button--active' : ''}`}
+      type="text"
+      onClick={() => onClick(item.to)}
+    >
+      {item.label}
+    </Button>
+  )
+}
+
+export default function TopNavigationLayout({
+  brandTitle,
+  brandSubtitle,
+  brandAriaLabel,
+  homeTo,
+  primaryItems,
+  overflowItems = [],
+  navigationMode = 'pills',
+  profilePath,
+  profileMenuItems = [],
+  headerAccessory,
+  showNotifications = true,
+  contentWidth = 1480,
+  drawerSections,
+  footer,
+}: TopNavigationLayoutProps) {
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const screens = useBreakpoint()
+  const { token } = theme.useToken()
+  const isMobile = !screens.lg
+  const showBrandSubtitle = !isMobile && (navigationMode === 'dropdown' ? !!screens.xxl : !!screens.xl)
+  const { user, logout } = useAuthStore()
+  const searchParams = new URLSearchParams(location.search)
+
+  const isActive = (item: NavigationItem) => item.isActive(location.pathname, searchParams)
+  const allNavigationItems = [...primaryItems, ...overflowItems]
+  const overflowActive = overflowItems.some(isActive)
+  const activeNavigationItem = allNavigationItems.find(isActive) ?? primaryItems[0] ?? overflowItems[0] ?? null
+  const overflowMenuItems = buildGroupedMenuItems(overflowItems, navigate)
+  const navigationMenuItems = buildGroupedMenuItems(allNavigationItems, navigate)
+  const customProfileMenuItems = profileMenuItems.length > 0 ? buildGroupedMenuItems(profileMenuItems, navigate) : []
+  const fallbackProfileMenuItems = profilePath
+    ? [{
+        key: 'profile',
+        icon: <UserOutlined />,
+        label: 'Профиль',
+        onClick: () => navigate(profilePath),
+      } satisfies NonNullable<MenuProps['items']>[number]]
+    : []
   const userMenuItems: MenuProps['items'] = [
-    ...(profilePath
-      ? [{
-          key: 'profile',
-          icon: <UserOutlined />,
-          label: 'Профиль',
-          onClick: () => navigate(profilePath),
-        } satisfies NonNullable<MenuProps['items']>[number]]
-      : []),
+    ...(customProfileMenuItems.length > 0 ? customProfileMenuItems : fallbackProfileMenuItems),
     { type: 'divider' as const },
     {
       key: 'logout',
@@ -130,110 +140,112 @@ export default function TopNavigationLayout({
       },
     },
   ]
-
-  const drawerItems = [...primaryItems, ...overflowItems]
+  const resolvedDrawerSections = drawerSections ?? groupNavigationItems(allNavigationItems).map((group, index) => ({
+    key: group.section ?? `drawer-group-${index}`,
+    title: group.section ?? '',
+    items: group.items,
+  }))
 
   return (
     <Layout
+      className="bani-shell"
       style={{
         minHeight: '100vh',
         background: 'transparent',
       }}
     >
       <Header
+        className="bani-topnav"
         style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 20,
           height: 'auto',
-          padding: '18px 24px',
-          background: 'rgba(255, 252, 247, 0.80)',
-          backdropFilter: 'blur(20px)',
-          borderBottom: `1px solid ${token.colorBorderSecondary}`,
-          boxShadow: '0 12px 36px rgba(15, 23, 42, 0.05)',
+          borderBottomColor: token.colorBorderSecondary,
         }}
       >
-        <div
-          style={{
-            maxWidth: contentWidth,
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 20,
-          }}
-        >
+        <div className="bani-topnav__inner" style={{ maxWidth: contentWidth }}>
           <button
             type="button"
             onClick={() => navigate(homeTo)}
-            style={{
-              border: 0,
-              background: 'transparent',
-              padding: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              cursor: 'pointer',
-            }}
+            className="bani-topnav__brand"
+            aria-label={brandAriaLabel}
           >
-            <Text strong style={{ fontSize: 20, color: '#16343d', letterSpacing: '0.04em' }}>
+            <span className="bani-topnav__brand-title">
               {brandTitle}
-            </Text>
-            {showBrandSubtitle && (
-              <Text type="secondary" style={{ fontSize: 12, letterSpacing: '0.02em' }}>
+            </span>
+            {showBrandSubtitle && brandSubtitle && (
+              <Text type="secondary" className="bani-topnav__brand-subtitle">
                 {brandSubtitle}
               </Text>
             )}
           </button>
 
           {!isMobile && (
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Space size={8} wrap={false}>
-                {primaryItems.map((item) => (
-                  <NavButton
-                    key={item.key}
-                    item={item}
-                    active={isActive(item)}
-                    onClick={navigate}
-                  />
-                ))}
-                {overflowItems.length > 0 && (
-                  <Dropdown menu={{ items: overflowMenuItems }} trigger={['click']} placement="bottomRight">
-                    <Button
-                      type={overflowActive ? 'primary' : 'default'}
-                      icon={<MenuOutlined />}
-                      style={{
-                        borderRadius: 999,
-                        fontWeight: overflowActive ? 600 : 500,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      Разделы
-                    </Button>
-                  </Dropdown>
-                )}
-              </Space>
+            <div className={`bani-topnav__nav${navigationMode === 'dropdown' ? ' bani-topnav__nav--dropdown' : ''}`}>
+              {navigationMode === 'dropdown' ? (
+                <Dropdown
+                  menu={{
+                    items: navigationMenuItems,
+                    selectable: true,
+                    selectedKeys: activeNavigationItem ? [activeNavigationItem.key] : [],
+                  }}
+                  trigger={['click']}
+                  placement="bottomRight"
+                >
+                  <Button
+                    className="bani-topnav__workspace-button bani-topnav__profile-button"
+                    type="default"
+                    icon={<MenuOutlined />}
+                    aria-label={`Раздел: ${activeNavigationItem?.label ?? 'Разделы'}`}
+                  >
+                    <span className="bani-topnav__workspace-label">
+                      {activeNavigationItem?.label ?? 'Разделы'}
+                    </span>
+                  </Button>
+                </Dropdown>
+              ) : (
+                <Space size={8} wrap={false}>
+                  {primaryItems.map((item) => (
+                    <NavButton
+                      key={item.key}
+                      item={item}
+                      active={isActive(item)}
+                      onClick={navigate}
+                    />
+                  ))}
+                  {overflowItems.length > 0 && (
+                    <Dropdown menu={{ items: overflowMenuItems }} trigger={['click']} placement="bottomRight">
+                      <Button
+                        className={`bani-topnav__nav-button${overflowActive ? ' bani-topnav__nav-button--active' : ''}`}
+                        type="text"
+                        icon={<MenuOutlined />}
+                      >
+                        Разделы
+                      </Button>
+                    </Dropdown>
+                  )}
+                </Space>
+              )}
             </div>
           )}
 
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
-            {!isMobile && headerAccessory}
+          <div className="bani-topnav__actions">
+            {!isMobile && headerAccessory && (
+              <div className="bani-topnav__accessory">
+                {headerAccessory}
+              </div>
+            )}
 
             {user ? (
               <>
                 {showNotifications && <NotificationBell />}
-                <Dropdown menu={{ items: userMenuItems }} trigger={['click']} placement="bottomRight">
-                  <Button type="text" icon={<UserOutlined />} style={{ borderRadius: 999 }}>
+                <Dropdown
+                  menu={{ items: userMenuItems }}
+                  trigger={['click']}
+                  placement="bottomRight"
+                  classNames={{ root: 'bani-topnav__profile-dropdown' }}
+                >
+                  <Button type="text" icon={<UserOutlined />} className="bani-topnav__profile-button">
                     {!isMobile && (
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          maxWidth: 180,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          verticalAlign: 'bottom',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
+                      <span className="bani-topnav__profile-label">
                         {user.name ?? user.email ?? 'Профиль'}
                       </span>
                     )}
@@ -241,7 +253,7 @@ export default function TopNavigationLayout({
                 </Dropdown>
               </>
             ) : (
-              <Button type="default" onClick={() => navigate('/login')} style={{ borderRadius: 999 }}>
+              <Button type="default" onClick={() => navigate('/login')} className="bani-topnav__profile-button">
                 Войти
               </Button>
             )}
@@ -250,6 +262,7 @@ export default function TopNavigationLayout({
               <Button
                 type="text"
                 icon={<MenuOutlined />}
+                aria-label="Открыть меню"
                 onClick={() => setDrawerOpen(true)}
               />
             )}
@@ -257,34 +270,52 @@ export default function TopNavigationLayout({
         </div>
       </Header>
 
-      <Content style={{ padding: isMobile ? '20px 16px 36px' : '28px 24px 52px' }}>
-        <div style={{ maxWidth: contentWidth, margin: '0 auto' }}>
+      <Content className="bani-topnav__content" style={{ padding: isMobile ? '20px 16px 36px' : '28px 24px 52px', flex: '1 0 auto' }}>
+        <div className="bani-topnav__content-inner" style={{ maxWidth: contentWidth }}>
           <Outlet />
         </div>
       </Content>
 
+      {footer && (
+        <Footer className="bani-topnav__footer">
+          <div className="bani-topnav__footer-inner" style={{ maxWidth: contentWidth }}>
+            {footer}
+          </div>
+        </Footer>
+      )}
+
       <Drawer
-        title={brandTitle}
+        title={<div className="bani-topnav__drawer-brand">{brandTitle}</div>}
         placement="right"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       >
         <Space orientation="vertical" style={{ width: '100%' }} size={12}>
-          {headerAccessory}
-          {groupNavigationItems(drawerItems).map((group, index) => (
-            <div key={group.section ?? `drawer-group-${index}`}>
-              {group.section && (
-                <Text type="secondary" style={{ display: 'block', marginBottom: 8, fontSize: 12 }}>
-                  {group.section}
+          {headerAccessory && (
+            <div className="bani-topnav__drawer-accessory">
+              {headerAccessory}
+            </div>
+          )}
+          {user && (
+            <div className="bani-topnav__drawer-user">
+              <Text strong>{user.name ?? user.email ?? 'Профиль'}</Text>
+              <Text type="secondary">{user.role === 'client' ? 'Личный кабинет клиента' : 'Панель управления'}</Text>
+            </div>
+          )}
+          {resolvedDrawerSections.map((section) => (
+            <div key={section.key} className="bani-topnav__drawer-group">
+              {section.title && (
+                <Text type="secondary" className="bani-topnav__drawer-section">
+                  {section.title}
                 </Text>
               )}
               <Space orientation="vertical" style={{ width: '100%' }} size={8}>
-                {group.items.map((item) => (
+                {section.items.map((item) => (
                   <Button
                     key={item.key}
-                    type={isActive(item) ? 'primary' : 'text'}
+                    className={`bani-topnav__drawer-button${isActive(item) ? ' bani-topnav__drawer-button--active' : ''}`}
+                    type="text"
                     block
-                    style={{ justifyContent: 'flex-start', borderRadius: 16, height: 44 }}
                     onClick={() => {
                       navigate(item.to)
                       setDrawerOpen(false)
