@@ -49,3 +49,7 @@ node_modules/
 
 # ralphex progress logs
 .ralphex/progress/
+
+# local deploy secrets (kubeconfig, passwords)
+.deploy-local/
+
