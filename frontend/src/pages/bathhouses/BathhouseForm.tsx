@@ -44,7 +44,7 @@ import {
   usePostMyListingDraftsIdSubmit,
 } from '@/api/generated/listing-drafts/listing-drafts'
 import type {
-  GithubComNikitaaldaevBaniInternalServiceCompletenessItem,
+  GithubComRekurtRelaxHubInternalServiceCompletenessItem,
   InternalHandlerCreateBathhouseRequest,
   InternalHandlerWorkingHoursRequest,
 } from '@/api/generated/model'
@@ -264,7 +264,7 @@ function CompletenessChecklist({ id }: { id: string }) {
           <List
             size="small"
             dataSource={requiredItems}
-            renderItem={(item: GithubComNikitaaldaevBaniInternalServiceCompletenessItem) => (
+            renderItem={(item: GithubComRekurtRelaxHubInternalServiceCompletenessItem) => (
               <List.Item style={{ padding: '4px 0', border: 'none' }}>
                 {item.complete ? (
                   <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 8 }} />
@@ -288,7 +288,7 @@ function CompletenessChecklist({ id }: { id: string }) {
           <List
             size="small"
             dataSource={optionalItems}
-            renderItem={(item: GithubComNikitaaldaevBaniInternalServiceCompletenessItem) => (
+            renderItem={(item: GithubComRekurtRelaxHubInternalServiceCompletenessItem) => (
               <List.Item style={{ padding: '4px 0', border: 'none' }}>
                 {item.complete ? (
                   <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 8 }} />

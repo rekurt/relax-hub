@@ -5,7 +5,7 @@ import {
   ArrowDownOutlined,
 } from '@ant-design/icons'
 import { useGetAdminAnalyticsFunnel } from '@/api/generated/admin-analytics/admin-analytics'
-import type { GithubComNikitaaldaevBaniInternalDomainFunnelStep } from '@/api/generated/model'
+import type { GithubComRekurtRelaxHubInternalDomainFunnelStep } from '@/api/generated/model'
 
 const { Title, Text } = Typography
 
@@ -91,7 +91,7 @@ export default function ConversionFunnels() {
             <Text type="secondary">Нет данных</Text>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {steps.map((step: GithubComNikitaaldaevBaniInternalDomainFunnelStep, index: number) => {
+              {steps.map((step: GithubComRekurtRelaxHubInternalDomainFunnelStep, index: number) => {
                 const percentage = step.percentage ?? 0
                 const color = STEP_COLORS[index % STEP_COLORS.length]
                 const nextStep = steps[index + 1]

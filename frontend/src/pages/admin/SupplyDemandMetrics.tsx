@@ -15,7 +15,7 @@ import {
   useGetAdminAnalyticsBusinessMetrics,
   useGetAdminAnalyticsPnl,
 } from '@/api/generated/admin-analytics/admin-analytics'
-import type { GithubComNikitaaldaevBaniInternalDomainGeoSupplyDemand } from '@/api/generated/model'
+import type { GithubComRekurtRelaxHubInternalDomainGeoSupplyDemand } from '@/api/generated/model'
 
 const { Title } = Typography
 
@@ -45,7 +45,7 @@ export default function SupplyDemandMetrics() {
   const totalSearches = cities.reduce((sum, c) => sum + (c.search_count ?? 0), 0)
   const totalBookings = cities.reduce((sum, c) => sum + (c.booking_count ?? 0), 0)
 
-  const cityColumns: ColumnsType<GithubComNikitaaldaevBaniInternalDomainGeoSupplyDemand> = [
+  const cityColumns: ColumnsType<GithubComRekurtRelaxHubInternalDomainGeoSupplyDemand> = [
     {
       title: 'Город',
       dataIndex: 'city_name',

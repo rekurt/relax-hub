@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useGetAdminAnalytics, useGetAdminAnalyticsTop } from '@/api/generated/admin-analytics/admin-analytics'
-import type { GithubComNikitaaldaevBaniInternalServiceTopBathhouseInfo } from '@/api/generated/model'
+import type { GithubComRekurtRelaxHubInternalServiceTopBathhouseInfo } from '@/api/generated/model'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
 import PageHeader from '@/components/PageHeader'
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
   const dashboard = analyticsData?.data
   const topBathhouses = topData?.data?.bathhouses ?? []
 
-  const topColumns: ColumnsType<GithubComNikitaaldaevBaniInternalServiceTopBathhouseInfo> = [
+  const topColumns: ColumnsType<GithubComRekurtRelaxHubInternalServiceTopBathhouseInfo> = [
     {
       title: 'Название',
       dataIndex: 'name',

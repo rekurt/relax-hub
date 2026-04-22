@@ -20,8 +20,8 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { usePostMyListingsImport } from '@/api/generated/listings/listings'
 import type {
-  GithubComNikitaaldaevBaniInternalServiceImportError,
-  GithubComNikitaaldaevBaniInternalServiceImportReport,
+  GithubComRekurtRelaxHubInternalServiceImportError,
+  GithubComRekurtRelaxHubInternalServiceImportReport,
 } from '@/api/generated/model'
 import { axiosInstance } from '@/api/axios-instance'
 
@@ -31,7 +31,7 @@ const { Dragger } = Upload
 export default function ListingImport() {
   const navigate = useNavigate()
   const { message } = App.useApp()
-  const [report, setReport] = useState<GithubComNikitaaldaevBaniInternalServiceImportReport | null>(null)
+  const [report, setReport] = useState<GithubComRekurtRelaxHubInternalServiceImportReport | null>(null)
 
   const importMutation = usePostMyListingsImport({
     mutation: {
@@ -177,7 +177,7 @@ export default function ListingImport() {
 
           {report.error_count && report.errors && report.errors.length > 0 ? (
             <Card title="Детализация ошибок" style={{ marginBottom: 24 }}>
-              <Table<GithubComNikitaaldaevBaniInternalServiceImportError>
+              <Table<GithubComRekurtRelaxHubInternalServiceImportError>
                 columns={errorColumns}
                 dataSource={report.errors}
                 rowKey={(record) => `${record.row}-${record.field}`}
