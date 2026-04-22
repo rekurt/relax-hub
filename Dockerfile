@@ -35,7 +35,6 @@ RUN groupadd --gid 1000 app && \
 WORKDIR /app
 
 COPY --from=builder /bin/bani-server /app/bani-server
-COPY config/config.yaml /app/config/config.yaml
 COPY migrations /app/migrations
 COPY widget/dist /app/widget/dist
 
