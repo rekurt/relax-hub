@@ -16,7 +16,7 @@ COPY . .
 ARG VERSION=dev
 RUN COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo unknown) && \
     BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) && \
-    CGO_ENABLED=0 GOOS=linux go build \
+    CGO_ENABLED=1 GOOS=linux go build \
       -ldflags "-X main.Version=${VERSION} -X main.Commit=${COMMIT} -X main.BuildTime=${BUILD_TIME}" \
       -o /bin/bani-server ./cmd/server
 
