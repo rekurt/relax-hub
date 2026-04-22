@@ -1,0 +1,99 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: relax-hub
+  labels:
+    app.kubernetes.io/name: relax-hub
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - relax-hub.ru
+      secretName: relax-hub-ru-tls
+  rules:
+    - host: relax-hub.ru
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: relax-hub-api
+                port:
+                  name: http
+          - path: /widget.js
+            pathType: Exact
+            backend:
+              service:
+                name: relax-hub-api
+                port:
+                  name: http
+          - path: /widget.css
+            pathType: Exact
+            backend:
+              service:
+                name: relax-hub-api
+                port:
+                  name: http
+          - path: /sitemap.xml
+            pathType: Exact
+            backend:
+              service:
+                name: relax-hub-api
+                port:
+                  name: http
+          - path: /calendar/
+            pathType: Prefix
+            backend:
+              service:
+                name: relax-hub-api
+                port:
+                  name: http
+          - path: /prerender
+            pathType: Prefix
+            backend:
+              service:
+                name: relax-hub-api
+                port:
+                  name: http
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: relax-hub-api
+                port:
+                  name: http
+          - path: /ready
+            pathType: Exact
+            backend:
+              service:
+                name: relax-hub-api
+                port:
+                  name: http
+          - path: /version
+            pathType: Exact
+            backend:
+              service:
+                name: relax-hub-api
+                port:
+                  name: http
+          - path: /relax-hub-media
+            pathType: Prefix
+            backend:
+              service:
+                name: relax-hub-minio
+                port:
+                  name: api
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: relax-hub-frontend
+                port:
+                  name: http

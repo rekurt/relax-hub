@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: relax-hub-redis
+  labels:
+    app.kubernetes.io/name: relax-hub
+    app.kubernetes.io/component: redis
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: relax-hub
+    app.kubernetes.io/component: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: relax-hub-redis
+  labels:
+    app.kubernetes.io/name: relax-hub
+    app.kubernetes.io/component: redis
+spec:
+  serviceName: relax-hub-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: relax-hub
+      app.kubernetes.io/component: redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: relax-hub
+        app.kubernetes.io/component: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: redis
+              containerPort: 6379
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: relax-hub-secrets
+                  key: REDIS_PASSWORD
+          command:
+            - sh
+            - -c
+            - exec redis-server --appendonly yes --requirepass "$REDIS_PASSWORD"
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli --no-auth-warning -a "$REDIS_PASSWORD" ping | grep PONG
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli --no-auth-warning -a "$REDIS_PASSWORD" ping | grep PONG
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: csi-ceph-ssd
+        resources:
+          requests:
+            storage: 2Gi
