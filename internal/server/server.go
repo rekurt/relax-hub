@@ -15,6 +15,7 @@ import (
 var Module = fx.Module("server",
 	fx.Provide(NewRouter),
 	fx.Invoke(RegisterServer),
+	fx.Invoke(RegisterMetricsServer),
 )
 
 // HTTP server timeout constants for production

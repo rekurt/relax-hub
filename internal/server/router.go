@@ -111,6 +111,7 @@ func NewRouter(p RouterParams) http.Handler {
 
 	r.Use(chiMiddleware.RequestID)
 	r.Use(middleware.Logging(*p.Log))
+	r.Use(middleware.Metrics)
 	r.Use(middleware.RecoveryMiddleware(middleware.IsDevEnvironment(p.Config.Environment), p.Log))
 	r.Use(p.CORS.Handler)
 	r.Use(middleware.SecurityHeaders)
