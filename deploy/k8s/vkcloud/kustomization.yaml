@@ -13,7 +13,7 @@ resources:
 images:
   - name: relax-hub-api
     newName: ghcr.io/rekurt/relax-hub-api
-    newTag: "04833fc"
+    newTag: "latest"
   - name: relax-hub-frontend
     newName: ghcr.io/rekurt/relax-hub-frontend
-    newTag: "04833fc"
+    newTag: "latest"
