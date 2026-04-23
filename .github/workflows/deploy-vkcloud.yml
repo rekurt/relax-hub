@@ -98,6 +98,8 @@ jobs:
       - name: Regenerate swagger & detect drift
         run: |
           set -euo pipefail
+          # swag --parseDependency needs the whole dep graph resolved.
+          go mod download
           go install github.com/swaggo/swag/cmd/swag@v1.16.3
           "$(go env GOPATH)/bin/swag" init \
             -g cmd/server/docs.go \
@@ -105,6 +107,7 @@ jobs:
             --parseDependency --parseInternal
           if ! git diff --exit-code -- docs/; then
             echo "::error::swagger spec drift detected. Run 'make swagger' locally and commit the result."
+            git --no-pager diff -- docs/ | head -200
             exit 1
           fi
 
