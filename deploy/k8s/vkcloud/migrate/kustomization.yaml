@@ -6,4 +6,4 @@ resources:
 images:
   - name: relax-hub-api
     newName: ghcr.io/rekurt/relax-hub-api
-    newTag: "04833fc"
+    newTag: "latest"

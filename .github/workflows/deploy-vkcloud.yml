@@ -3,6 +3,20 @@ name: Deploy VK Cloud Kubernetes
 on:
   push:
     branches: [master]
+    paths:
+      - 'cmd/**'
+      - 'internal/**'
+      - 'config/**'
+      - 'migrations/**'
+      - 'frontend/**'
+      - 'widget/**'
+      - 'docs/**'
+      - 'deploy/k8s/vkcloud/**'
+      - 'Dockerfile'
+      - 'frontend/Dockerfile'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/deploy-vkcloud.yml'
   workflow_dispatch:
 
 concurrency:
@@ -35,7 +49,13 @@ jobs:
 
       - name: Validate required secrets
         env:
-          KUBE_CONFIG_B64: ${{ secrets.KUBE_CONFIG_B64 }}
+          OS_AUTH_URL: ${{ secrets.OS_AUTH_URL }}
+          OS_PROJECT_ID: ${{ secrets.OS_PROJECT_ID }}
+          OS_USERNAME: ${{ secrets.OS_USERNAME }}
+          OS_USER_DOMAIN_NAME: ${{ secrets.OS_USER_DOMAIN_NAME }}
+          OS_PASSWORD: ${{ secrets.OS_PASSWORD }}
+          K8S_API_SERVER: ${{ secrets.K8S_API_SERVER }}
+          K8S_CA_B64: ${{ secrets.K8S_CA_B64 }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
@@ -46,7 +66,13 @@ jobs:
 
           missing=0
           for name in \
-            KUBE_CONFIG_B64 \
+            OS_AUTH_URL \
+            OS_PROJECT_ID \
+            OS_USERNAME \
+            OS_USER_DOMAIN_NAME \
+            OS_PASSWORD \
+            K8S_API_SERVER \
+            K8S_CA_B64 \
             REGISTRY_USERNAME \
             REGISTRY_PASSWORD \
             POSTGRES_PASSWORD \
@@ -61,6 +87,24 @@ jobs:
           done
 
           if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Regenerate swagger & detect drift
+        run: |
+          set -euo pipefail
+          go install github.com/swaggo/swag/cmd/swag@v1.16.3
+          "$(go env GOPATH)/bin/swag" init \
+            -g cmd/server/docs.go \
+            -o docs \
+            --parseDependency --parseInternal
+          if ! git diff --exit-code -- docs/; then
+            echo "::error::swagger spec drift detected. Run 'make swagger' locally and commit the result."
             exit 1
           fi
 
