@@ -11436,7 +11436,9 @@ const docTemplate = `{
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "data": {}
+                                        "data": {
+                                            "type": "object"
+                                        }
                                     }
                                 }
                             ]
@@ -21282,124 +21284,6 @@ const docTemplate = `{
                         "description": "ICS file content",
                         "schema": {
                             "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "error": {
-                                            "$ref": "#/definitions/internal_handler.APIError"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/my/bathhouses/{id}/completeness": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Check how complete a bathhouse listing is before submitting for moderation.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "bathhouses"
-                ],
-                "summary": "Check listing completeness",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bathhouse ID (UUID)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/internal_handler.ListingCompletenessResponse"
-                                        }
-                                    }
-                                }
-                            ]
                         }
                     },
                     "400": {
@@ -38817,23 +38701,6 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_rekurt_relax-hub_internal_service.CompletenessItem": {
-            "type": "object",
-            "properties": {
-                "complete": {
-                    "type": "boolean"
-                },
-                "field": {
-                    "type": "string"
-                },
-                "label": {
-                    "type": "string"
-                },
-                "required": {
-                    "type": "boolean"
-                }
-            }
-        },
         "github_com_rekurt_relax-hub_internal_service.ImportError": {
             "type": "object",
             "properties": {
@@ -39041,35 +38908,6 @@ const docTemplate = `{
                 },
                 "success": {
                     "type": "boolean"
-                }
-            }
-        },
-        "internal_handler.ListingCompletenessResponse": {
-            "type": "object",
-            "properties": {
-                "done_optional": {
-                    "type": "integer"
-                },
-                "done_required": {
-                    "type": "integer"
-                },
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_rekurt_relax-hub_internal_service.CompletenessItem"
-                    }
-                },
-                "ready": {
-                    "type": "boolean"
-                },
-                "score": {
-                    "type": "integer"
-                },
-                "total_optional": {
-                    "type": "integer"
-                },
-                "total_required": {
-                    "type": "integer"
                 }
             }
         },
@@ -41705,8 +41543,7 @@ const docTemplate = `{
                     "items": {
                         "type": "array",
                         "items": {
-                            "type": "number",
-                            "format": "float64"
+                            "type": "number"
                         }
                     }
                 },
