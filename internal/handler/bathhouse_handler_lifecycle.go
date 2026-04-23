@@ -6,8 +6,25 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/rekurt/relax-hub/internal/middleware"
+	"github.com/rekurt/relax-hub/internal/service"
 )
 
+// ListingCompletenessResponse exposes service.CompletenessResult under a
+// stable name for swaggo / orval client generation.
+type ListingCompletenessResponse = service.CompletenessResult
+
+// @Summary		Check listing completeness
+// @Description	Check how complete a bathhouse listing is before submitting for moderation.
+// @Tags			bathhouses
+// @Produce		json
+// @Security		BearerAuth
+// @Param			id	path		string	true	"Bathhouse ID (UUID)"
+// @Success		200	{object}	APIResponse{data=ListingCompletenessResponse}
+// @Failure		400	{object}	APIResponse{error=APIError}
+// @Failure		401	{object}	APIResponse{error=APIError}
+// @Failure		403	{object}	APIResponse{error=APIError}
+// @Failure		404	{object}	APIResponse{error=APIError}
+// @Router			/my/bathhouses/{id}/completeness [get]
 func (h *BathhouseHandler) CheckCompleteness(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
