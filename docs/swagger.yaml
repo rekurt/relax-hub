@@ -424,17 +424,6 @@ definitions:
       period:
         $ref: '#/definitions/github_com_rekurt_relax-hub_internal_domain.AnalyticsPeriod'
     type: object
-  github_com_rekurt_relax-hub_internal_service.CompletenessItem:
-    properties:
-      complete:
-        type: boolean
-      field:
-        type: string
-      label:
-        type: string
-      required:
-        type: boolean
-    type: object
   github_com_rekurt_relax-hub_internal_service.ImportError:
     properties:
       field:
@@ -577,25 +566,6 @@ definitions:
         $ref: '#/definitions/internal_handler.Meta'
       success:
         type: boolean
-    type: object
-  internal_handler.ListingCompletenessResponse:
-    properties:
-      done_optional:
-        type: integer
-      done_required:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/github_com_rekurt_relax-hub_internal_service.CompletenessItem'
-        type: array
-      ready:
-        type: boolean
-      score:
-        type: integer
-      total_optional:
-        type: integer
-      total_required:
-        type: integer
     type: object
   internal_handler.Meta:
     properties:
@@ -2328,7 +2298,6 @@ definitions:
         description: '[lng, lat] pairs'
         items:
           items:
-            format: float64
             type: number
           type: array
         type: array
@@ -10947,7 +10916,8 @@ paths:
             allOf:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
-                data: {}
+                data:
+                  type: object
               type: object
         "400":
           description: Bad Request
@@ -16420,69 +16390,6 @@ paths:
       summary: Export calendar as ICS
       tags:
       - calendar
-  /my/bathhouses/{id}/completeness:
-    get:
-      description: Check how complete a bathhouse listing is before submitting for
-        moderation.
-      parameters:
-      - description: Bathhouse ID (UUID)
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/internal_handler.ListingCompletenessResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-        "404":
-          description: Not Found
-          schema:
-            allOf:
-            - $ref: '#/definitions/internal_handler.APIResponse'
-            - properties:
-                error:
-                  $ref: '#/definitions/internal_handler.APIError'
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Check listing completeness
-      tags:
-      - bathhouses
   /my/bathhouses/{id}/deactivate:
     post:
       description: Temporarily deactivate a bathhouse. It will be hidden from search
