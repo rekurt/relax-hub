@@ -481,6 +481,12 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, fronte
 
 	adminID := uuid.MustParse("10000000-0000-0000-0000-000000000001")
 	supportID := uuid.MustParse("10000000-0000-0000-0000-000000000002")
+	// Extra admin sub-roles so the /admin UI has at least one user in every
+	// permission bucket (moderator, support L1, support L3, finance).
+	modID := uuid.MustParse("10000000-0000-0000-0000-000000000003")
+	support1ID := uuid.MustParse("10000000-0000-0000-0000-000000000004")
+	support3ID := uuid.MustParse("10000000-0000-0000-0000-000000000005")
+	financeID := uuid.MustParse("10000000-0000-0000-0000-000000000006")
 	owner1ID := uuid.MustParse("20000000-0000-0000-0000-000000000001")
 	owner2ID := uuid.MustParse("20000000-0000-0000-0000-000000000002")
 	rep1ID := uuid.MustParse("20000000-0000-0000-0000-000000000003")
@@ -501,6 +507,54 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, fronte
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL2, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=14",
 			Bio: "Ведет клиентские обращения, возвраты и споры в demo-мире.", ReferralCode: "SUPPORT12", OnboardingCompleted: true,
+		},
+		{
+			ID: modID, Email: "demo.admin.mod@bani.local", Name: "Вера Модератор", Phone: "+79990000013",
+			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleModerator, CityID: ptrInt64(cityIDs["moskva"]),
+			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=47",
+			Bio: "Модерирует заявки на публикацию объектов, фото и отзывы.", ReferralCode: "MOD00013", OnboardingCompleted: true,
+		},
+		{
+			ID: support1ID, Email: "demo.admin.sup1@bani.local", Name: "Паша Первая линия", Phone: "+79990000014",
+			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL1, CityID: ptrInt64(cityIDs["moskva"]),
+			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=52",
+			Bio: "Первая линия поддержки — FAQ, быстрые ответы, маршрутизация L2.", ReferralCode: "SUP1L014", OnboardingCompleted: true,
+		},
+		{
+			ID: support3ID, Email: "demo.admin.sup3@bani.local", Name: "Арсений Третья линия", Phone: "+79990000015",
+			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL3, CityID: ptrInt64(cityIDs["moskva"]),
+			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=11",
+			Bio: "Ведёт эскалированные споры, координирует с финансовой командой.", ReferralCode: "SUP3L015", OnboardingCompleted: true,
+		},
+		{
+			ID: financeID, Email: "demo.admin.fin@bani.local", Name: "Ольга Финансы", Phone: "+79990000016",
+			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleFinance, CityID: ptrInt64(cityIDs["moskva"]),
+			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=45",
+			Bio: "Сверка платежей, подтверждение выплат, реконсиляция банковских выписок.", ReferralCode: "FIN00016", OnboardingCompleted: true,
+		},
+		{
+			ID: modID, Email: "demo.admin.mod@bani.local", Name: "Вера Модератор", Phone: "+79990000013",
+			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleModerator, CityID: ptrInt64(cityIDs["moskva"]),
+			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=47",
+			Bio: "Модерирует заявки на публикацию объектов, фото и отзывы.", ReferralCode: "MOD00013", OnboardingCompleted: true,
+		},
+		{
+			ID: support1ID, Email: "demo.admin.sup1@bani.local", Name: "Паша Первая линия", Phone: "+79990000014",
+			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL1, CityID: ptrInt64(cityIDs["moskva"]),
+			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=52",
+			Bio: "Первая линия поддержки — FAQ, быстрые ответы, маршрутизация L2.", ReferralCode: "SUP1L014", OnboardingCompleted: true,
+		},
+		{
+			ID: support3ID, Email: "demo.admin.sup3@bani.local", Name: "Арсений Третья линия", Phone: "+79990000015",
+			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL3, CityID: ptrInt64(cityIDs["moskva"]),
+			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=11",
+			Bio: "Ведёт эскалированные споры, координирует с финансовой командой.", ReferralCode: "SUP3L015", OnboardingCompleted: true,
+		},
+		{
+			ID: financeID, Email: "demo.admin.fin@bani.local", Name: "Ольга Финансы", Phone: "+79990000016",
+			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleFinance, CityID: ptrInt64(cityIDs["moskva"]),
+			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=45",
+			Bio: "Сверка платежей, подтверждение выплат, реконсиляция банковских выписок.", ReferralCode: "FIN00016", OnboardingCompleted: true,
 		},
 		{
 			ID: owner1ID, Email: "demo.owner1@bani.local", Name: "Сергей Хозяев", Phone: "+79990000021",
