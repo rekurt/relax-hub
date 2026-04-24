@@ -1,0 +1,15 @@
+---
+# Persistent volume for lego state: ACME account key, registration JSON, and
+# cached cert/key materials between renew runs. ~10 MiB is plenty in practice
+# but Ceph SC has 1 GiB minimum; round up.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cert-renew-state
+  namespace: relax-hub
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: csi-ceph-ssd
+  resources:
+    requests:
+      storage: 1Gi

@@ -5,14 +5,16 @@ metadata:
   labels:
     app.kubernetes.io/name: relax-hub
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # TLS cert lifecycle is now managed by the in-cluster cert-renew CronJob
+    # (deploy/k8s/vkcloud/cert-renew/) which runs lego with DNS-01 against
+    # VK Cloud Public DNS to issue a wildcard *.relax-hub.ru cert. The
+    # cert-manager.io/cluster-issuer annotation is intentionally absent so
+    # cert-manager doesn't fight us over the same secret.
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    # 301 redirect for www.* → apex. ingress-nginx keeps
-    # /.well-known/acme-challenge/ open so cert-manager HTTP-01
-    # for the www SAN still works.
+    # 301 redirect for www.* → apex. The wildcard cert covers both hosts.
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
   ingressClassName: nginx
@@ -20,7 +22,7 @@ spec:
     - hosts:
         - relax-hub.ru
         - www.relax-hub.ru
-      secretName: relax-hub-ru-tls
+      secretName: relax-hub-ru-wildcard-tls
   rules:
     - host: relax-hub.ru
       http:

@@ -11,6 +11,7 @@ resources:
   - frontend.yaml
   - ingress.yaml
   - backup/cronjob.yaml
+  - cert-renew
 images:
   - name: relax-hub-api
     newName: ghcr.io/rekurt/relax-hub-api
