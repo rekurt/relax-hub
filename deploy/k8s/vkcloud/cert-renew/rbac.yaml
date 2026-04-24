@@ -1,0 +1,37 @@
+---
+# Service account that the cert-renew CronJob runs as. Scoped to namespace
+# `relax-hub` so it can only touch our own Secrets / Ingress.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cert-renew
+  namespace: relax-hub
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cert-renew
+  namespace: relax-hub
+rules:
+  # Manage TLS secret produced by lego.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "create", "update", "patch"]
+  # Read+annotate the Ingress (kubectl rollout / reload trigger).
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cert-renew
+  namespace: relax-hub
+subjects:
+  - kind: ServiceAccount
+    name: cert-renew
+    namespace: relax-hub
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cert-renew

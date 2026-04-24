@@ -1,0 +1,124 @@
+---
+# Auto-renewal of the wildcard Let's Encrypt cert for *.relax-hub.ru +
+# relax-hub.ru, using DNS-01 challenge against VK Cloud Public DNS.
+#
+# Why this exists:
+# - cert-manager in the cluster only does HTTP-01 well; for *.relax-hub.ru
+#   wildcard we need DNS-01, and there's no upstream cert-manager webhook for
+#   VK Cloud DNS yet.
+# - lego ships native VK Cloud DNS support (provider name: "vkcloud").
+# - reg.ru's ISPManager-issued cert needs manual TXT-record entry every 90
+#   days; this lifts that operational burden.
+#
+# Flow:
+# 1. CronJob fires monthly. lego sees existing cert in /lego/.lego/
+#    certificates/relax-hub.ru.crt → either no-ops (>30 days remaining) or
+#    requests a renewal via ACME DNS-01.
+# 2. lego authenticates to VK Cloud via OS_* creds, posts the _acme-challenge
+#    TXTs through the public-dns/v2 API, waits for propagation, then asks LE
+#    to verify.
+# 3. After issuance lego writes cert.crt/cert.key under /lego/.lego/.
+# 4. The script copies those files into the K8s Secret
+#    `relax-hub-ru-wildcard-tls`. ingress-nginx auto-reloads when the Secret
+#    changes — no pod restart needed.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: relax-hub-cert-renew
+  namespace: relax-hub
+  labels:
+    app.kubernetes.io/name: relax-hub
+    app.kubernetes.io/component: cert-renew
+spec:
+  schedule: "0 3 1 * *"
+  timeZone: "Europe/Moscow"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: relax-hub
+            app.kubernetes.io/component: cert-renew
+        spec:
+          serviceAccountName: cert-renew
+          restartPolicy: OnFailure
+          volumes:
+            - name: state
+              persistentVolumeClaim:
+                claimName: cert-renew-state
+          containers:
+            - name: lego
+              image: alpine:3.20
+              imagePullPolicy: IfNotPresent
+              envFrom:
+                - secretRef:
+                    name: cert-renew-vkcloud-creds
+              env:
+                - name: LEGO_VERSION
+                  value: "v4.21.0"
+                - name: KUBECTL_VERSION
+                  value: "v1.30.6"
+                - name: PRIMARY_DOMAIN
+                  value: "relax-hub.ru"
+                - name: WILDCARD_DOMAIN
+                  value: "*.relax-hub.ru"
+                - name: TLS_SECRET_NAME
+                  value: "relax-hub-ru-wildcard-tls"
+                - name: TLS_NAMESPACE
+                  value: "relax-hub"
+              volumeMounts:
+                - name: state
+                  mountPath: /lego
+              command:
+                - /bin/sh
+                - -ceu
+                - |
+                  set -euo pipefail
+                  echo "[$(date -u +%FT%TZ)] cert-renew start"
+
+                  apk add --no-cache --quiet curl ca-certificates tar openssl >/dev/null
+
+                  # Install pinned versions of lego + kubectl. We deliberately
+                  # do this at runtime rather than baking a custom image —
+                  # CronJob runs once a month, the ~5 s install cost is fine,
+                  # and this keeps the manifests independent of any registry.
+                  curl -fsSL "https://github.com/go-acme/lego/releases/download/${LEGO_VERSION}/lego_${LEGO_VERSION}_linux_amd64.tar.gz" \
+                    | tar -xzC /usr/local/bin lego
+                  curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" -o /usr/local/bin/kubectl
+                  chmod +x /usr/local/bin/lego /usr/local/bin/kubectl
+
+                  CERT_FILE="/lego/.lego/certificates/${PRIMARY_DOMAIN}.crt"
+                  KEY_FILE="/lego/.lego/certificates/${PRIMARY_DOMAIN}.key"
+
+                  COMMON_ARGS="--path /lego/.lego --email ${ACME_EMAIL} --accept-tos --dns vkcloud --domains ${PRIMARY_DOMAIN} --domains ${WILDCARD_DOMAIN}"
+
+                  if [ ! -f "$CERT_FILE" ]; then
+                    echo "[$(date -u +%FT%TZ)] no existing cert -> run (issue)"
+                    # shellcheck disable=SC2086
+                    lego $COMMON_ARGS run
+                  else
+                    echo "[$(date -u +%FT%TZ)] cert exists -> renew if <30d remain"
+                    # shellcheck disable=SC2086
+                    lego $COMMON_ARGS renew --days 30 --no-random-sleep
+                  fi
+
+                  echo "[$(date -u +%FT%TZ)] applying TLS Secret ${TLS_SECRET_NAME}"
+                  kubectl -n "$TLS_NAMESPACE" create secret tls "$TLS_SECRET_NAME" \
+                    --cert="$CERT_FILE" \
+                    --key="$KEY_FILE" \
+                    --dry-run=client -o yaml | kubectl apply -f -
+
+                  echo "[$(date -u +%FT%TZ)] cert-renew done; SAN:"
+                  openssl x509 -in "$CERT_FILE" -noout -ext subjectAltName 2>/dev/null || true
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 96Mi
+                limits:
+                  cpu: 500m
+                  memory: 256Mi

@@ -236,6 +236,13 @@ jobs:
           BANI_FISCAL_ATOL_LOGIN: ${{ secrets.BANI_FISCAL_ATOL_LOGIN }}
           BANI_FISCAL_ATOL_PASSWORD: ${{ secrets.BANI_FISCAL_ATOL_PASSWORD }}
           BANI_FISCAL_ATOL_GROUP_CODE: ${{ secrets.BANI_FISCAL_ATOL_GROUP_CODE }}
+          # OS_* are also needed downstream by the cert-renew CronJob (lego
+          # auths against VK Cloud Public DNS + Keystone with these creds).
+          OS_USERNAME: ${{ secrets.OS_USERNAME }}
+          OS_PASSWORD: ${{ secrets.OS_PASSWORD }}
+          OS_PROJECT_ID: ${{ secrets.OS_PROJECT_ID }}
+          OS_USER_DOMAIN_NAME: ${{ secrets.OS_USER_DOMAIN_NAME }}
+          ACME_EMAIL: ${{ secrets.ACME_EMAIL }}
         run: |
           set -euo pipefail
 
@@ -296,6 +303,19 @@ jobs:
             --from-literal=BANI_FISCAL_ATOL_LOGIN="$BANI_FISCAL_ATOL_LOGIN" \
             --from-literal=BANI_FISCAL_ATOL_PASSWORD="$BANI_FISCAL_ATOL_PASSWORD" \
             --from-literal=BANI_FISCAL_ATOL_GROUP_CODE="$BANI_FISCAL_ATOL_GROUP_CODE" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          # Separate Secret consumed by the cert-renew CronJob (lego + VK
+          # Cloud DNS-01 ACME). Field names match what lego expects via env
+          # vars: https://go-acme.github.io/lego/dns/vkcloud/
+          kubectl -n "$KUBE_NAMESPACE" create secret generic cert-renew-vkcloud-creds \
+            --from-literal=VK_CLOUD_USERNAME="$OS_USERNAME" \
+            --from-literal=VK_CLOUD_PASSWORD="$OS_PASSWORD" \
+            --from-literal=VK_CLOUD_PROJECT_ID="$OS_PROJECT_ID" \
+            --from-literal=VK_CLOUD_DOMAIN_NAME="${OS_USER_DOMAIN_NAME:-service-users}" \
+            --from-literal=VK_CLOUD_IDENTITY_ENDPOINT="https://infra.mail.ru/identity/v3/" \
+            --from-literal=VK_CLOUD_DNS_ENDPOINT="https://mcs.mail.ru/public-dns/v2/dns/" \
+            --from-literal=ACME_EMAIL="${ACME_EMAIL:-partners@relax-hub.ru}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Prepare rendered manifests
