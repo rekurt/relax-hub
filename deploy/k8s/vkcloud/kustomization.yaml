@@ -10,6 +10,7 @@ resources:
   - backend.yaml
   - frontend.yaml
   - ingress.yaml
+  - backup/cronjob.yaml
 images:
   - name: relax-hub-api
     newName: ghcr.io/rekurt/relax-hub-api
