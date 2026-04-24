@@ -97,16 +97,3 @@ spec:
                 name: relax-hub-frontend
                 port:
                   name: http
-    # Second host entry so ingress-nginx accepts requests on www.relax-hub.ru
-    # and the from-to-www-redirect annotation can turn them into a 301 to apex.
-    # Paths mirror apex as a fallback — in practice the 301 fires first.
-    - host: www.relax-hub.ru
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: relax-hub-frontend
-                port:
-                  name: http
