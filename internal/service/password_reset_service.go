@@ -18,8 +18,10 @@ import (
 
 const (
 	resetTokenTTL    = 30 * time.Minute
-	resetRateLimit   = 3
-	resetRateWindow  = 15 * time.Minute
+	// Per-email reset cap. Was 3/15min; relaxed 5x in 2026-04 because
+	// operators were tripping it during normal password resets.
+	resetRateLimit  = 15
+	resetRateWindow = 15 * time.Minute
 	resetTokenBytes  = 32
 	resetRedisPrefix = "password_reset:"
 	resetRatePrefix  = "password_reset_rate:"

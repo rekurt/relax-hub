@@ -31,21 +31,24 @@ func mountAPIRoutes(
 	// Apple Pay merchant validation (public, called during Apple Pay session init)
 	r.Post("/apple-pay/validate-merchant", p.PaymentHandler.ValidateApplePayMerchant)
 
-	// Auth (public, rate-limited)
-	r.With(middleware.RateLimit(authRegisterRateLimiter, 5.0/60.0)).Post("/auth/register", p.AuthHandler.Register)
-	r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/login", p.AuthHandler.Login)
-	r.With(middleware.RateLimit(authRegisterRateLimiter, 5.0/60.0)).Post("/auth/register-phone", p.AuthHandler.RegisterPhone)
-	r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/login-phone", p.AuthHandler.LoginPhone)
-	r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/phone/start", p.AuthHandler.StartPhone)
-	r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/verify-phone", p.AuthHandler.VerifyPhone)
+	// Auth (public, rate-limited).
+	// Per-IP token-bucket. Limits relaxed 5x in 2026-04 — operators were
+	// hitting "rate_limit_exceeded" during normal usage with the old caps
+	// (5/min register, 10/min login).
+	r.With(middleware.RateLimit(authRegisterRateLimiter, 25.0/60.0)).Post("/auth/register", p.AuthHandler.Register)
+	r.With(middleware.RateLimit(authLoginRateLimiter, 50.0/60.0)).Post("/auth/login", p.AuthHandler.Login)
+	r.With(middleware.RateLimit(authRegisterRateLimiter, 25.0/60.0)).Post("/auth/register-phone", p.AuthHandler.RegisterPhone)
+	r.With(middleware.RateLimit(authLoginRateLimiter, 50.0/60.0)).Post("/auth/login-phone", p.AuthHandler.LoginPhone)
+	r.With(middleware.RateLimit(authLoginRateLimiter, 50.0/60.0)).Post("/auth/phone/start", p.AuthHandler.StartPhone)
+	r.With(middleware.RateLimit(authLoginRateLimiter, 50.0/60.0)).Post("/auth/verify-phone", p.AuthHandler.VerifyPhone)
 	r.With(auth).Get("/auth/me", p.AuthHandler.Me)
 	r.With(auth).Put("/auth/me", p.AuthHandler.UpdateProfile)
 	r.With(auth).Post("/auth/me/avatar", p.AuthHandler.UploadAvatar)
 	r.With(auth).Delete("/auth/me/avatar", p.AuthHandler.DeleteAvatar)
 
-	// Password reset (public, rate-limited)
-	r.With(middleware.RateLimit(authRegisterRateLimiter, 3.0/60.0)).Post("/auth/forgot-password", p.AuthHandler.ForgotPassword)
-	r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/reset-password", p.AuthHandler.ResetPassword)
+	// Password reset (public, rate-limited). 5x relaxation, see auth block above.
+	r.With(middleware.RateLimit(authRegisterRateLimiter, 15.0/60.0)).Post("/auth/forgot-password", p.AuthHandler.ForgotPassword)
+	r.With(middleware.RateLimit(authLoginRateLimiter, 50.0/60.0)).Post("/auth/reset-password", p.AuthHandler.ResetPassword)
 
 	// Account deletion (authenticated)
 	r.With(auth).Post("/auth/delete-account", p.AuthHandler.DeleteAccount)
@@ -56,7 +59,7 @@ func mountAPIRoutes(
 	r.With(auth).Post("/auth/2fa/totp/verify", p.AuthHandler.VerifyAndActivateTOTP)
 	r.With(auth).Delete("/auth/2fa/totp", p.AuthHandler.DisableTOTP)
 	r.With(auth).Post("/auth/2fa/sms/enable", p.AuthHandler.EnableSMS2FA)
-	r.With(middleware.RateLimit(authLoginRateLimiter, 10.0/60.0)).Post("/auth/2fa/verify", p.AuthHandler.Verify2FALogin)
+	r.With(middleware.RateLimit(authLoginRateLimiter, 50.0/60.0)).Post("/auth/2fa/verify", p.AuthHandler.Verify2FALogin)
 
 	// OAuth (public)
 	r.Get("/auth/oauth/providers", p.OAuthHandler.ListConfiguredProviders)
@@ -110,7 +113,7 @@ func mountAPIRoutes(
 	r.Get("/bathhouses/{id}/photos", p.PhotoHandler.ListByBathhouse)
 
 	// Promo codes (validation - public, rate-limited)
-	r.With(middleware.RateLimit(promoRateLimiter, 20.0/60.0)).Post("/promo-codes/validate", p.PromoHandler.Validate)
+	r.With(middleware.RateLimit(promoRateLimiter, 100.0/60.0)).Post("/promo-codes/validate", p.PromoHandler.Validate)
 
 	// Promo codes (owner/representative/admin deactivation)
 	r.With(auth, middleware.RequireRole(domain.RoleOwner, domain.RoleRepresentative, domain.RoleAdmin)).Delete("/promo-codes/{id}", p.PromoHandler.Deactivate)
