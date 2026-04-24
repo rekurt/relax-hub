@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: relax-hub
+resources:
+  - job.yaml
+images:
+  - name: relax-hub-api
+    newName: ghcr.io/rekurt/relax-hub-api
+    newTag: "latest"
