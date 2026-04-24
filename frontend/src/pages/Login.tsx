@@ -14,6 +14,7 @@ import type { InternalHandlerUserResponse } from '@/api/generated/model'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
 import { PLATFORM_NAME } from '@/content/support'
+import { syncAntdFormFromDOM } from '@/lib/autofill'
 
 const { Text } = Typography
 
@@ -32,6 +33,13 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [authMethod, setAuthMethod] = useState<AuthMethod>('email')
   const [twoFAState, setTwoFAState] = useState<{ partialToken: string } | null>(null)
+  const [emailForm] = Form.useForm<InternalHandlerLoginRequest>()
+
+  // Chrome/Safari password-managers fill DOM values but may skip React change
+  // events — this drains the DOM into form state before submit fires.
+  const handleEmailSubmitMouseDown = () => {
+    syncAntdFormFromDOM(emailForm, ['email', 'password'])
+  }
 
   const navigateAfterLogin = (user: InternalHandlerUserResponse) => {
     const from = (location.state as { from?: { pathname: string } })?.from?.pathname
@@ -40,9 +48,21 @@ export default function Login() {
   }
 
   const onEmailFinish = async (values: InternalHandlerLoginRequest) => {
+    // Final defensive sync — if the mouse-down handler was bypassed (keyboard
+    // Enter, assistive tech) read the DOM values directly before posting.
+    const domEmail = (document.getElementById('email') as HTMLInputElement | null)?.value
+    const domPassword = (document.getElementById('password') as HTMLInputElement | null)?.value
+    const payload: InternalHandlerLoginRequest = {
+      email: values.email || domEmail || '',
+      password: values.password || domPassword || '',
+    }
+    if (!payload.email || !payload.password) {
+      message.error('Введите email и пароль')
+      return
+    }
     setLoading(true)
     try {
-      const response = await postAuthLogin(values)
+      const response = await postAuthLogin(payload)
       if (response.success && response.data) {
         if (response.data.requires_2fa && response.data.token) {
           setTwoFAState({ partialToken: response.data.token })
@@ -158,10 +178,11 @@ export default function Login() {
 
           {authMethod === 'email' ? (
             <Form
+              form={emailForm}
               className="bani-auth-form"
               layout="vertical"
               onFinish={onEmailFinish}
-              autoComplete="off"
+              autoComplete="on"
             >
               <Form.Item
                 label="Адрес email"
@@ -171,7 +192,14 @@ export default function Login() {
                   { type: 'email', message: 'Некорректный email' },
                 ]}
               >
-                <Input prefix={<MailOutlined />} placeholder="Email" size="large" />
+                <Input
+                  prefix={<MailOutlined />}
+                  placeholder="Email"
+                  size="large"
+                  autoComplete="email"
+                  name="email"
+                  type="email"
+                />
               </Form.Item>
 
               <Form.Item
@@ -179,14 +207,27 @@ export default function Login() {
                 name="password"
                 rules={[{ required: true, message: 'Введите пароль' }]}
               >
-                <Input.Password prefix={<LockOutlined />} placeholder="Пароль" size="large" />
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Пароль"
+                  size="large"
+                  autoComplete="current-password"
+                  name="password"
+                />
               </Form.Item>
 
               <Form.Item className="bani-auth-form__actions">
                 <div className="bani-auth-form__link-row">
                   <Link to="/forgot-password">Забыли пароль?</Link>
                 </div>
-                <Button type="primary" htmlType="submit" loading={loading} block size="large">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  onMouseDown={handleEmailSubmitMouseDown}
+                  block
+                  size="large"
+                >
                   Войти
                 </Button>
               </Form.Item>

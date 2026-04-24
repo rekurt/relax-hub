@@ -10,6 +10,7 @@ import PhoneOTPInput from '@/components/PhoneOTPInput'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
 import { PLATFORM_NAME } from '@/content/support'
+import { syncAntdFormFromDOM } from '@/lib/autofill'
 
 const { Text } = Typography
 
@@ -54,21 +55,42 @@ export default function Register() {
   const [role, setRole] = useState<string>('client')
   const [authMethod, setAuthMethod] = useState<AuthMethod>('email')
   const [phoneRegData, setPhoneRegData] = useState<{ name: string; ageConfirmed: boolean } | null>(null)
+  const [emailForm] = Form.useForm<EmailRegisterFormValues>()
+
+  // Chrome/Safari password-managers fill DOM values but may skip React change
+  // events — drain the DOM into form state before submit so antd validators
+  // don't reject autofilled fields as "empty".
+  const handleEmailSubmitMouseDown = () => {
+    syncAntdFormFromDOM(emailForm, ['name', 'email', 'phone', 'password', 'confirmPassword'])
+  }
 
   const getRoleHomePath = (r: string) => (r === 'client' ? '/client' : '/')
 
   const onEmailFinish = async (values: EmailRegisterFormValues) => {
+    // Defensive DOM fallback for autofill scenarios that bypass React change
+    // events (keyboard Enter, password-manager pickers).
+    const dom = {
+      name: (document.getElementById('name') as HTMLInputElement | null)?.value,
+      email: (document.getElementById('email') as HTMLInputElement | null)?.value,
+      phone: (document.getElementById('phone') as HTMLInputElement | null)?.value,
+      password: (document.getElementById('password') as HTMLInputElement | null)?.value,
+    }
+    const payload = {
+      email: values.email || dom.email || '',
+      password: values.password || dom.password || '',
+      name: values.name || dom.name || '',
+      phone: values.phone || dom.phone || '',
+      role,
+      referral_code: referralCode,
+      age_confirmed: values.ageConfirmed,
+    }
+    if (!payload.email || !payload.password || !payload.name) {
+      message.error('Заполните имя, email и пароль')
+      return
+    }
     setLoading(true)
     try {
-      const response = await postAuthRegister({
-        email: values.email,
-        password: values.password,
-        name: values.name,
-        phone: values.phone,
-        role,
-        referral_code: referralCode,
-        age_confirmed: values.ageConfirmed,
-      })
+      const response = await postAuthRegister(payload)
       if (response.success && response.data?.token && response.data.user) {
         setAuth(response.data.token, response.data.user)
         message.success('Регистрация прошла успешно')
@@ -160,17 +182,24 @@ export default function Register() {
 
           {authMethod === 'email' ? (
             <Form
+              form={emailForm}
               className="bani-auth-form"
               layout="vertical"
               onFinish={onEmailFinish}
-              autoComplete="off"
+              autoComplete="on"
             >
               <Form.Item
                 label="Имя"
                 name="name"
                 rules={[{ required: true, message: 'Введите имя' }]}
               >
-                <Input prefix={<UserOutlined />} placeholder="Имя" size="large" />
+                <Input
+                  prefix={<UserOutlined />}
+                  placeholder="Имя"
+                  size="large"
+                  autoComplete="name"
+                  name="name"
+                />
               </Form.Item>
 
               <Form.Item
@@ -181,7 +210,14 @@ export default function Register() {
                   { type: 'email', message: 'Некорректный email' },
                 ]}
               >
-                <Input prefix={<MailOutlined />} placeholder="Email" size="large" />
+                <Input
+                  prefix={<MailOutlined />}
+                  placeholder="Email"
+                  size="large"
+                  autoComplete="email"
+                  name="email"
+                  type="email"
+                />
               </Form.Item>
 
               <Form.Item
@@ -189,7 +225,14 @@ export default function Register() {
                 name="phone"
                 rules={[{ required: true, message: 'Введите телефон' }]}
               >
-                <Input prefix={<PhoneOutlined />} placeholder="Телефон" size="large" />
+                <Input
+                  prefix={<PhoneOutlined />}
+                  placeholder="Телефон"
+                  size="large"
+                  autoComplete="tel"
+                  name="phone"
+                  type="tel"
+                />
               </Form.Item>
 
               <Form.Item
@@ -200,7 +243,13 @@ export default function Register() {
                   { min: 6, message: 'Минимум 6 символов' },
                 ]}
               >
-                <Input.Password prefix={<LockOutlined />} placeholder="Пароль" size="large" />
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Пароль"
+                  size="large"
+                  autoComplete="new-password"
+                  name="password"
+                />
               </Form.Item>
 
               <Form.Item
@@ -219,7 +268,13 @@ export default function Register() {
                   }),
                 ]}
               >
-                <Input.Password prefix={<LockOutlined />} placeholder="Подтвердите пароль" size="large" />
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Подтвердите пароль"
+                  size="large"
+                  autoComplete="new-password"
+                  name="confirmPassword"
+                />
               </Form.Item>
 
               <Form.Item
@@ -236,7 +291,14 @@ export default function Register() {
               </Form.Item>
 
               <Form.Item className="bani-auth-form__actions">
-                <Button type="primary" htmlType="submit" loading={loading} block size="large">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  onMouseDown={handleEmailSubmitMouseDown}
+                  block
+                  size="large"
+                >
                   Зарегистрироваться
                 </Button>
               </Form.Item>
