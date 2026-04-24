@@ -223,6 +223,7 @@ jobs:
           BANI_OAUTH_GOOGLE_CLIENT_SECRET: ${{ secrets.BANI_OAUTH_GOOGLE_CLIENT_SECRET }}
           BANI_TELEGRAM_BOT_TOKEN: ${{ secrets.BANI_TELEGRAM_BOT_TOKEN }}
           BANI_EMAIL_HOST: ${{ secrets.BANI_EMAIL_HOST }}
+          BANI_EMAIL_PORT: ${{ secrets.BANI_EMAIL_PORT }}
           BANI_EMAIL_USERNAME: ${{ secrets.BANI_EMAIL_USERNAME }}
           BANI_EMAIL_PASSWORD: ${{ secrets.BANI_EMAIL_PASSWORD }}
           BANI_EMAIL_FROM: ${{ secrets.BANI_EMAIL_FROM }}
@@ -282,6 +283,7 @@ jobs:
             --from-literal=BANI_OAUTH_GOOGLE_CLIENT_SECRET="$BANI_OAUTH_GOOGLE_CLIENT_SECRET" \
             --from-literal=BANI_TELEGRAM_BOT_TOKEN="$BANI_TELEGRAM_BOT_TOKEN" \
             --from-literal=BANI_EMAIL_HOST="$BANI_EMAIL_HOST" \
+            --from-literal=BANI_EMAIL_PORT="$BANI_EMAIL_PORT" \
             --from-literal=BANI_EMAIL_USERNAME="$BANI_EMAIL_USERNAME" \
             --from-literal=BANI_EMAIL_PASSWORD="$BANI_EMAIL_PASSWORD" \
             --from-literal=BANI_EMAIL_FROM="$BANI_EMAIL_FROM" \
