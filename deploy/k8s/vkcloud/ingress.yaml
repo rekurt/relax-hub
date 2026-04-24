@@ -10,11 +10,16 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # 301 redirect for www.* → apex. ingress-nginx keeps
+    # /.well-known/acme-challenge/ open so cert-manager HTTP-01
+    # for the www SAN still works.
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
         - relax-hub.ru
+        - www.relax-hub.ru
       secretName: relax-hub-ru-tls
   rules:
     - host: relax-hub.ru
