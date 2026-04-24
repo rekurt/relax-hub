@@ -16,10 +16,14 @@ import (
 )
 
 const (
-	otpTTL         = 5 * time.Minute
+	otpTTL = 5 * time.Minute
+	// Per-OTP-code verification cap. Stays at 3: brute-force protection
+	// for a 6-digit code, must not be relaxed.
 	otpMaxAttempts = 3
-	otpRateLimit   = 3
-	otpRateWindow  = 15 * time.Minute
+	// Per-phone OTP send-rate. Relaxed 5x in 2026-04 (was 3/15min) — same
+	// reason as the password-reset cap: legitimate retries were tripping it.
+	otpRateLimit  = 15
+	otpRateWindow = 15 * time.Minute
 )
 
 type OTPService interface {

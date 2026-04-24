@@ -103,14 +103,16 @@ func TestPasswordResetService_ForgotPassword_RateLimit(t *testing.T) {
 	svc, userRepo, _, _, _ := newPasswordResetService(t)
 	createResetTestUser(t, userRepo, "test@example.com")
 
-	// Exhaust rate limit (3 requests)
-	for i := 0; i < 3; i++ {
+	// Exhaust rate limit. Cap is 15 (resetRateLimit in the service package);
+	// keep this in sync if the constant moves.
+	const limit = 15
+	for i := 0; i < limit; i++ {
 		if err := svc.ForgotPassword(context.Background(), "test@example.com"); err != nil {
 			t.Fatalf("request %d should succeed, got: %v", i+1, err)
 		}
 	}
 
-	// 4th request should be rate limited
+	// Next request should be rate limited.
 	err := svc.ForgotPassword(context.Background(), "test@example.com")
 	if err == nil {
 		t.Fatal("expected rate limit error")

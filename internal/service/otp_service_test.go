@@ -169,14 +169,15 @@ func TestOTPService_RateLimit(t *testing.T) {
 
 	phone := "+79001234567"
 
-	// Send 3 OTPs (within rate limit)
-	for i := 0; i < 3; i++ {
+	// Send up to the rate limit (otpRateLimit = 15 in the service package).
+	const limit = 15
+	for i := 0; i < limit; i++ {
 		if err := otpSvc.SendOTP(context.Background(), phone); err != nil {
 			t.Fatalf("unexpected error on attempt %d: %v", i+1, err)
 		}
 	}
 
-	// 4th should be rate limited
+	// Next call should be rate limited.
 	err := otpSvc.SendOTP(context.Background(), phone)
 	if !errors.Is(err, domain.ErrOTPRateLimited) {
 		t.Errorf("expected ErrOTPRateLimited, got: %v", err)
