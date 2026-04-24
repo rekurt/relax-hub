@@ -1,0 +1,81 @@
+---
+# Nightly pg_dump of the production database into the in-cluster MinIO bucket
+# 'relax-hub-backups'. Retention is 30 days, enforced in-script via `mc rm`.
+#
+# Scope: PROTECTS AGAINST LOGICAL CORRUPTION (bad migration, accidental
+# DROP TABLE, stray UPDATE). Does NOT protect against node loss — Postgres
+# and MinIO live on the same Ceph cluster. For DR we need an off-site copy
+# (future work: mirror to VK Cloud external S3).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: relax-hub-postgres-backup
+  namespace: relax-hub
+  labels:
+    app.kubernetes.io/name: relax-hub
+    app.kubernetes.io/component: backup
+spec:
+  schedule: "0 2 * * *"       # 02:00 Europe/Moscow, outside traffic spikes
+  timeZone: "Europe/Moscow"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: relax-hub
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: postgis/postgis:16-3.4   # same major as server → pg_dump format matches
+              imagePullPolicy: IfNotPresent
+              envFrom:
+                - secretRef:
+                    name: relax-hub-secrets
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -euo pipefail
+                  ts=$(date -u +%Y%m%dT%H%M%SZ)
+                  file=/tmp/relax_hub_${ts}.sql.gz
+                  echo "[$(date -u +%FT%TZ)] dumping $POSTGRES_DB to $file"
+                  PGPASSWORD="$POSTGRES_PASSWORD" pg_dump \
+                      -h relax-hub-postgres \
+                      -U "$POSTGRES_USER" \
+                      -d "$POSTGRES_DB" \
+                      --no-owner \
+                      --format=plain \
+                    | gzip -9 > "$file"
+                  ls -la "$file"
+
+                  echo "[$(date -u +%FT%TZ)] uploading to MinIO"
+                  apt-get update -qq
+                  apt-get install -y -qq --no-install-recommends curl ca-certificates
+                  curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc \
+                    -o /usr/local/bin/mc
+                  chmod +x /usr/local/bin/mc
+                  mc alias set local \
+                    http://relax-hub-minio:9000 \
+                    "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+                  mc mb --ignore-existing local/relax-hub-backups
+                  mc cp "$file" local/relax-hub-backups/postgres/
+
+                  echo "[$(date -u +%FT%TZ)] pruning backups older than 30d"
+                  mc rm --recursive --force --older-than 30d \
+                    local/relax-hub-backups/postgres/ || true
+
+                  echo "[$(date -u +%FT%TZ)] done"
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 500m
+                  memory: 512Mi
