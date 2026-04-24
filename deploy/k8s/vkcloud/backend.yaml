@@ -40,6 +40,8 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+            - name: metrics
+              containerPort: 9090
           envFrom:
             - configMapRef:
                 name: relax-hub-config
@@ -94,9 +96,6 @@ spec:
     - name: http
       port: 80
       targetPort: http
-    - name: metrics
-      port: 9090
-      targetPort: metrics
     - name: metrics
       port: 9090
       targetPort: metrics
