@@ -6,16 +6,28 @@ import { postAuthForgotPassword } from '@/api/generated/auth/auth'
 import AuthShell from '@/components/AuthShell'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
+import { syncAntdFormFromDOM } from '@/lib/autofill'
 
 export default function ForgotPassword() {
   const { message } = App.useApp()
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const [form] = Form.useForm<{ email: string }>()
+
+  const handleSubmitMouseDown = () => {
+    syncAntdFormFromDOM(form, ['email'])
+  }
 
   const onFinish = async (values: { email: string }) => {
+    const domEmail = (document.getElementById('email') as HTMLInputElement | null)?.value
+    const email = values.email || domEmail || ''
+    if (!email) {
+      message.error('Введите email')
+      return
+    }
     setLoading(true)
     try {
-      const response = await postAuthForgotPassword({ email: values.email })
+      const response = await postAuthForgotPassword({ email })
       if (response.success) {
         setSent(true)
       } else {
@@ -77,10 +89,11 @@ export default function ForgotPassword() {
       <Card bordered={false} className="bani-auth-surface">
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <Form
+            form={form}
             className="bani-auth-form"
             layout="vertical"
             onFinish={onFinish}
-            autoComplete="off"
+            autoComplete="on"
           >
             <Form.Item
               label="Адрес email"
@@ -90,11 +103,25 @@ export default function ForgotPassword() {
                 { type: 'email', message: 'Некорректный email' },
               ]}
             >
-              <Input prefix={<MailOutlined />} placeholder="Email" size="large" />
+              <Input
+                prefix={<MailOutlined />}
+                placeholder="Email"
+                size="large"
+                autoComplete="email"
+                name="email"
+                type="email"
+              />
             </Form.Item>
 
             <Form.Item className="bani-auth-form__actions">
-              <Button type="primary" htmlType="submit" loading={loading} block size="large">
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                onMouseDown={handleSubmitMouseDown}
+                block
+                size="large"
+              >
                 Отправить ссылку
               </Button>
             </Form.Item>
