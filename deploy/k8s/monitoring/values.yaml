@@ -1,0 +1,105 @@
+# kube-prometheus-stack values — minimal single-node footprint.
+#
+# Cluster is 4 vCPU / 14 GiB with Postgres+Redis+MinIO+API+frontend already
+# running, so every heavyweight sub-component is off. We keep only:
+#   - Prometheus Operator (so ServiceMonitor CRDs work)
+#   - Prometheus itself (7d retention, 10 GiB Ceph SSD PVC)
+#   - Grafana (ClusterIP, port-forward access only)
+#
+# Install:
+#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#   helm repo update
+#   GRAFANA_PASS=$(openssl rand -hex 24)
+#   echo "$GRAFANA_PASS" > .deploy-local/grafana-admin.txt
+#   helm upgrade --install kps prometheus-community/kube-prometheus-stack \
+#     -n monitoring --create-namespace \
+#     -f deploy/k8s/monitoring/values.yaml \
+#     --set grafana.adminPassword="$GRAFANA_PASS" \
+#     --version '~65'
+#   kubectl apply -f deploy/k8s/monitoring/servicemonitor.yaml
+
+defaultRules:
+  create: false
+
+alertmanager:
+  enabled: false
+
+nodeExporter:
+  enabled: false
+
+kubeStateMetrics:
+  enabled: false
+
+kubeApiServer:
+  enabled: false
+kubelet:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+coreDns:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    # Scrape every Service with a ServiceMonitor in any namespace (not just
+    # ones labelled release=kps). Lets `relax-hub/servicemonitor.yaml`
+    # target the relax-hub namespace.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorNamespaceSelector: {}
+    podMonitorSelectorNilUsesHelmValues: false
+    podMonitorNamespaceSelector: {}
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: csi-ceph-ssd
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 10Gi
+
+grafana:
+  # adminPassword is injected via --set at install time; never commit it here.
+  adminPassword: ""
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: true
+    storageClassName: csi-ceph-ssd
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      searchNamespace: ALL
+    datasources:
+      enabled: true

@@ -1,0 +1,31 @@
+---
+# ServiceMonitor telling Prometheus (installed via kube-prometheus-stack)
+# to scrape relax-hub-api's internal :9090/metrics endpoint.
+#
+# Lives in the monitoring namespace because Prometheus is there; the
+# namespaceSelector.matchNames lets it cross over to relax-hub.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: relax-hub-api
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: relax-hub
+    app.kubernetes.io/component: api
+    # Matches the default serviceMonitorSelector set by kube-prometheus-stack
+    # (release=kps). Keeps discovery scoped even if other charts land later.
+    release: kps
+spec:
+  namespaceSelector:
+    matchNames:
+      - relax-hub
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: relax-hub
+      app.kubernetes.io/component: api
+  endpoints:
+    - port: metrics          # matches Service port name in deploy/k8s/vkcloud/backend.yaml
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      honorLabels: false
