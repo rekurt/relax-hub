@@ -158,7 +158,7 @@
 - **Severity**: High in dev, Medium in prod (StrictMode is dev-only, but the no-arg+paginated split fires in prod too — owner role pages double-load `/my/bathhouses` on every nav).
 - **Fix pointer (D — query consolidation)**: in `frontend/src/components/BathhouseSelector.tsx` and the page-level `useGetMyBathhouses` hooks, normalize on a single paginated query key (e.g. `['my-bathhouses', { page: 1, pageSize: 20, status: 'active' }]`) with `staleTime: 30000`+. Cross-cutting fix benefits both A1.4 (admin) and A2.1 (owner).
 
-#### A2.2 — `/bathhouses/new` mount creates phantom `listing_drafts` rows (Critical, data integrity)
+#### A2.2 — `/bathhouses/new` mount creates phantom `listing_drafts` rows (Critical, data integrity) ✅ FIXED in fix/audit-owner-pack
 
 - **Repro**: log in as owner, navigate to `/bathhouses/new`. Without typing anything, observe network: `POST /api/v1/my/listing-drafts` fires immediately on mount and returns **201 twice** within milliseconds.
 - **Evidence**: SQL after 2 visits: `SELECT count(*) FROM listing_drafts WHERE owner_id = '<owner1>' AND created_at > now() - interval '5 minutes'` → **4 rows** (2 per visit). Total drafts in dev DB jumped from 8 to 12 after this experiment alone.
@@ -174,7 +174,10 @@
 - **Severity**: Medium — not data-breaking but breaks shareable deep links, support workflow, push notifications that link to a specific booking.
 - **Fix pointer**: add an owner-scoped `/bookings/:id` route reusing the same component (or rendering an inline drawer over `/bookings?focus=<uuid>`). BookingList already shows details inline; the route just needs to scroll/expand the matching row.
 
-#### A2.4 — `/dashboard` (owner home), `/promotion`, and `/pricing` render nothing despite endpoints succeeding (Critical, frontend)
+#### A2.4 — `/dashboard` (owner home), `/promotion`, and `/pricing` render nothing despite endpoints succeeding (~~Critical~~ → **FALSE ALARM, downgraded to Low cosmetic**)
+
+> **Re-test on 2026-04-25 after fresh navigation** found all three pages DO render: `/dashboard` shows `<h1>Дашборд` + 6 `bani-stat-tile` KPI tiles (custom CSS class, not `.ant-statistic` — my initial selector missed them); `/promotion` shows `<h3>Рекламные кампании` + table + empty-state CTA "Нет кампаний. Создайте первую!"; `/pricing` shows "Правила ценообразования" with smart-pricing recommendation card (current 8400 ₽, recommended 7896 ₽ at coefficient ×0.94). The original blank-page detection was a timing artifact: my JS query ran during initial cache-miss render before TanStack Query resolved + my selectors didn't match `.bani-stat-tile` / `<h3>` / Typography titles.
+> **Remaining real issue (Low cosmetic)**: `/promotion` and `/pricing` use `<Typography.Title level={3}>` (renders `<h3>`) instead of the standard `<PageHeader>` + `<h1>` pattern that `/dashboard` and `/finance` use. Inconsistent header levels across owner pages. Worth normalizing in C1 UI tokens pass.
 
 - **Repro**: log in as owner with a bathhouse selected (auto-selected from BathhouseSelector). Navigate to `/dashboard`, `/promotion`, or `/pricing`. Network: GETs return 200. DOM: `h1` for `/dashboard` says "Дашборд" but `.ant-statistic`, `.ant-card`, `canvas`, `.ant-list-item` all count **0**. `/promotion` and `/pricing` lack even an `h1`.
 - **Evidence**:
@@ -195,7 +198,7 @@
 - **Severity**: Medium — same shape as A1.5 but for owner role. Cross-cutting fix should land once for all roles.
 - **Fix pointer**: same as A1.5. Centralize `useDocumentTitle(pageTitle)` hook in each layout's outlet wrapper, keyed on route path.
 
-#### A2.6 — Seed-demo gaps render multiple owner UI surfaces empty when seed claims they should have data (High, seed completeness)
+#### A2.6 — Seed-demo gaps render multiple owner UI surfaces empty when seed claims they should have data (High, seed completeness) ⚠️ PARTIAL FIX in fix/audit-owner-pack (representatives only)
 
 - **Repro** (SQL): `psql ... -c "SELECT 'representatives' AS tbl, count(*) FROM representatives WHERE bathhouse_id IN (SELECT id FROM bathhouses WHERE owner_id=(SELECT id FROM users WHERE email='demo.owner1@relax-hub.ru')) UNION ALL SELECT 'bathhouse_photos', count(*) FROM bathhouse_photos WHERE … UNION ALL SELECT 'guest_cards', count(*) FROM guest_cards WHERE owner_id=… UNION ALL SELECT 'webhooks', count(*) FROM webhooks WHERE owner_id=…;"`
 - **Result**:
@@ -251,7 +254,16 @@
 | B5 CRM + Settings + Reps + Widget | /crm/{guests,segments,rfm,broadcasts,scenarios,templates}, RepresentativeList (A2.6 empty), Widget (A2.8 no code block), Settings/{webhooks,pms,kyc,offer} | ⚠️ A2.6 + A2.8 |
 | Dashboard | `/dashboard` (A2.4 blank) | ⚠️ A2.4 (Critical) |
 
-**Critical / High count**: 3 Critical (A2.2 phantom drafts, A2.4 blank dashboard/promotion/pricing) / 4 High (A2.1 quad-fetch, A2.6 seed gaps, A2.7 triple-fetch, A2.10 public endpoint). **Medium**: 3 (A2.3 missing detail route, A2.5 wrong title, A2.8 widget no code block). **Low**: 1 (A2.9 reports lacks summary).
+**Critical / High count after triage**: 1 Critical (A2.2 phantom drafts ✅ FIXED) / 4 High (A2.1 quad-fetch, A2.6 seed gaps ⚠️ PARTIAL FIX shipped reps for owner1, A2.7 triple-fetch, A2.10 public endpoint). **Medium**: 3 (A2.3 missing detail route, A2.5 wrong title, A2.8 widget no code block). **Low**: 2 (A2.4 false-alarm cosmetic header inconsistency, A2.9 reports lacks summary).
+
+**Fix-pack `fix/audit-owner-pack` ships**:
+- A2.2 frontend `useRef`-sentinel guard in `BathhouseForm.tsx` to stop StrictMode double-mount inserts (1 Critical closed).
+- A2.6 seed extension: 2 new `repAssignments` entries attaching `rep1ID` to owner1's `bh1` (manager) and `bh2` (observer) so `/representatives` is no longer empty in demo (1 of 4 sub-gaps closed).
+
+**Carry forward to next session**:
+- A2.6 remaining: bathhouse_photos verified seed (3/active bathhouse), webhooks seed (1 for owner1), guest_cards backfill from existing 129 completed bookings (likely needs a service-layer or migration approach).
+- A2.1 quad-fetch + A2.7 triple-fetch — cross-cutting D-phase query consolidation.
+- A2.3, A2.5, A2.8, A2.9, A2.10 — bundle into C1/C2 UI pass or a follow-up frontend-only PR.
 
 **No 5xx, no auth-bypass, no data-loss bugs found** in owner role this session. All `/api/v1/my/*` endpoints respond 200.
 
