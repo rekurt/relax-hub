@@ -140,6 +140,30 @@
 
 **Sub-projects still to do** (per spec §11): A2 owner / A3 rep / A4 client / D query consolidation / B menu redesign / C UI redesign / E prod data gap fill.
 
+### Session 2 wrap
+
+**Shipped**: PR [#22](https://github.com/rekurt/relax-hub/pull/22) `fix(audit-owner): A2.2 phantom listing_drafts + A2.6 owner1 reps` — closes A2.2 Critical and partial A2.6 (1 of 4 sub-gaps).
+
+**Outstanding owner findings** carry forward:
+- A2.1 (High) quad-fetch on `/my/bathhouses` (cross-cuts admin A1.4 — single D-phase fix benefits both)
+- A2.3 (Medium) owner missing `/bookings/:id` route — silent redirect to `/`
+- A2.5 (Medium) wrong document title (mirrors admin A1.5)
+- A2.6 (High remainder) seed gaps for `bathhouse_photos`, `webhooks`, `guest_cards` from existing 129 completed bookings — needs seed extension or backfill migration
+- A2.7 (High dev / Medium prod) `/chat` triple-fetches `/my/conversations` — hoist query to ChatPage parent
+- A2.8 (Medium) `/widget` doesn't render embed code block
+- A2.9 (Low) `/finance/reports` lacks summary stats
+- A2.10 (Low → Medium) `/reviews` uses public bathhouse endpoint instead of owner-scoped variant
+- A2.4 reclassified as **false alarm** + Low cosmetic header-level inconsistency on `/promotion` and `/pricing`
+
+**Next session entry-point**: Phase 3 representative role audit. Login as `demo.rep1@relax-hub.ru / DemoPass123!` (the only seeded rep — manager on `bh7` + `bh10` for owner2; after PR #22 merges, also manager on `bh1` + observer on `bh2` for owner1). Rep cabinet is a subset of owner cabinet — most pages are read-only or moderation-restricted. Walk plan:
+1. Smoke harness: `curl localhost:8081/health`, `docker ps`, login.
+2. Pre-flight: reset pgss, capture initial state.
+3. Walk pages for manager role (most permissive): `/bookings`, `/bookings/{id}` (rep should NOT redirect to `/` — verify), `/calendar`, `/chat`, `/reviews`, `/notifications`. Append findings as A3.* under `### Representative role`.
+4. Switch to observer role (read-only): repeat walk, capture which pages should be hidden / write-actions should be 403.
+5. Snapshot pgss → `docs/audit/2026-04-25-rep-role-pgss-snapshot.csv`.
+6. Triage Critical/High → fix-pack PR `fix/audit-rep-pack`.
+7. Update Session 3 wrap note pointing to client role for Session 4.
+
 ### Owner role
 
 **Auditor**: claude-opus-4-7 (Session 2, 2026-04-25)
