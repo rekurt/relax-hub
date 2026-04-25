@@ -19,9 +19,8 @@ import type { InternalHandlerCreateCertificateOrderRequest } from '@/api/generat
 import type { InternalHandlerCertificateOrderPaymentRequest } from '@/api/generated/model/internalHandlerCertificateOrderPaymentRequest'
 import CertificateGiftPreview from '@/components/certificates/CertificateGiftPreview'
 import CertificateOrderSummary from '@/components/certificates/CertificateOrderSummary'
-import CertificatePaymentMethodSelector, {
-  type CertificatePaymentMethod,
-} from '@/components/certificates/CertificatePaymentMethodSelector'
+import CertificatePaymentMethodSelector from '@/components/certificates/CertificatePaymentMethodSelector'
+import type { CertificatePaymentMethod } from '@/lib/certificate-payment'
 import { formatDateTime, formatPrice } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
 

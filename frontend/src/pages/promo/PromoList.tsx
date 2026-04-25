@@ -65,7 +65,7 @@ export default function PromoList() {
     { query: { enabled: !!selectedBathhouseId } },
   )
 
-  const promos = data?.data ?? []
+  const promos = useMemo(() => data?.data ?? [], [data?.data])
   const totalCount = data?.meta?.total_count ?? 0
 
   const invalidatePromos = () => {

@@ -1,6 +1,6 @@
 import { ClockCircleOutlined } from '@ant-design/icons'
 import { Alert, Button, Typography } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import {
   buildSlotRangeBetween,
@@ -41,13 +41,8 @@ export default function ContiguousSlotSelector<T extends SlotSelectionItem>({
   }, [slots])
 
   const resolvedValue = useMemo(() => resolveSlotRangeSelection(slots, value), [slots, value])
-  const pendingStartLabel = formatSlotTimeLabel(pendingStartTime)
-
-  useEffect(() => {
-    if (resolvedValue) {
-      setPendingStartTime(null)
-    }
-  }, [resolvedValue])
+  const activePendingStartTime = resolvedValue ? null : pendingStartTime
+  const pendingStartLabel = formatSlotTimeLabel(activePendingStartTime)
 
   return (
     <div>
@@ -68,7 +63,7 @@ export default function ContiguousSlotSelector<T extends SlotSelectionItem>({
           const isDisabled = !slot.available
           const isSelected = !isDisabled && (
             isSlotWithinRange(slot, resolvedValue)
-            || (!resolvedValue && pendingStartTime != null && slot.startTime === pendingStartTime)
+            || (activePendingStartTime != null && slot.startTime === activePendingStartTime)
           )
 
           return (
@@ -109,7 +104,7 @@ export default function ContiguousSlotSelector<T extends SlotSelectionItem>({
         })}
       </div>
 
-      {!resolvedValue && pendingStartTime ? (
+      {activePendingStartTime ? (
         <Alert
           style={{ marginTop: 12 }}
           type="info"

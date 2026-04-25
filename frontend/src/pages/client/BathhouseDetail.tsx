@@ -190,22 +190,6 @@ export default function BathhouseDetail() {
   const selectedRangeNeedsHours = resolvedSlotRange ? Math.max(0, minDurationHours - selectedRangeHours) : 0
   const displayedReviewCount = reviewMeta?.total_count ?? bathhouse?.review_count ?? reviews.length
 
-  useEffect(() => {
-    const nextRange = resolveSlotRangeSelection(slots, selectedSlotRange)
-    if (selectedSlotRange && !nextRange) {
-      setSelectedSlotRange(null)
-      return
-    }
-
-    if (
-      selectedSlotRange
-      && nextRange
-      && (selectedSlotRange.from !== nextRange.from || selectedSlotRange.to !== nextRange.to)
-    ) {
-      setSelectedSlotRange(nextRange)
-    }
-  }, [selectedSlotRange, slots])
-
   if (isLoading) {
     return (
       <PublicState

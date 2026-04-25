@@ -1,7 +1,6 @@
 import { CheckCircleOutlined, ClockCircleOutlined, MailOutlined } from '@ant-design/icons'
 import { formatPrice } from '@/lib/format'
-import type { CertificatePaymentMethod } from './CertificatePaymentMethodSelector'
-import { CERTIFICATE_PAYMENT_LABELS } from './CertificatePaymentMethodSelector'
+import { CERTIFICATE_PAYMENT_LABELS, type CertificatePaymentMethod } from '@/lib/certificate-payment'
 
 interface CertificateOrderSummaryProps {
   amount: number

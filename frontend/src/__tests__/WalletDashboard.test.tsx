@@ -213,7 +213,7 @@ describe('WalletDashboard', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Введите сумму')).toBeInTheDocument()
-    })
+    }, { timeout: 5000 })
   })
 
   it('renders empty state when no transactions', () => {

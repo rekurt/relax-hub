@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
   Typography,
@@ -117,7 +117,7 @@ export default function BookingCreate() {
     { date: selectedDate },
     { query: { enabled: !!bathhouseId && !!selectedDate } },
   )
-  const slots = slotsData?.data ?? []
+  const slots = useMemo(() => slotsData?.data ?? [], [slotsData?.data])
   const resolvedSlotRange = resolveSlotRangeSelection(slots, selectedSlotRange)
   const selectedRangeHours = resolvedSlotRange ? getRangeHours(resolvedSlotRange.from, resolvedSlotRange.to) : 0
   const selectedSlot = resolvedSlotRange && selectedRangeHours >= minDurationHours ? resolvedSlotRange : null
@@ -125,22 +125,6 @@ export default function BookingCreate() {
 
   const startTime = selectedSlot?.from ?? ''
   const endTime = selectedSlot?.to ?? ''
-
-  useEffect(() => {
-    const nextRange = resolveSlotRangeSelection(slots, selectedSlotRange)
-    if (selectedSlotRange && !nextRange) {
-      setSelectedSlotRange(null)
-      return
-    }
-
-    if (
-      selectedSlotRange
-      && nextRange
-      && (selectedSlotRange.from !== nextRange.from || selectedSlotRange.to !== nextRange.to)
-    ) {
-      setSelectedSlotRange(nextRange)
-    }
-  }, [selectedSlotRange, slots])
 
   const { data: priceData, isLoading: priceLoading } = useGetBathhousesIdPriceCalculator(
     bathhouseId,
@@ -203,14 +187,14 @@ export default function BookingCreate() {
   const isRequestMode = (bathhouse as Record<string, unknown>)?.booking_mode === 'request'
 
   // Calculate booking duration in hours for per_hour add-ons
-  const durationHours = useMemo(() => {
+  const durationHours = (() => {
     if (!startTime || !endTime) return 1
     const sParts = startTime.split(':').map(Number)
     const eParts = endTime.split(':').map(Number)
     let diff = ((eParts[0] ?? 0) * 60 + (eParts[1] ?? 0)) - ((sParts[0] ?? 0) * 60 + (sParts[1] ?? 0))
     if (diff <= 0) diff += 24 * 60 // wraparound midnight
     return Math.max(1, diff / 60)
-  }, [startTime, endTime])
+  })()
 
   // Calculated final price with add-ons (accounting for unit type)
   const addonsTotal = useMemo(() => {

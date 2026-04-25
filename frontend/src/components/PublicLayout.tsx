@@ -21,7 +21,7 @@ export default function PublicLayout() {
   const location = useLocation()
   const user = useAuthStore((s) => s.user)
   const { data: citiesData } = useGetCities()
-  const cities = citiesData?.data ?? []
+  const cities = useMemo(() => citiesData?.data ?? [], [citiesData?.data])
   const isClientUser = user?.role === 'client'
   const searchParams = new URLSearchParams(location.search)
   const selectedCitySlug = searchParams.get('city_slug') ?? undefined

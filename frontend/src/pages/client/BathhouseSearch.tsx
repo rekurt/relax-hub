@@ -304,6 +304,25 @@ export default function BathhouseSearch() {
   const [isochroneLoading, setIsochroneLoading] = useState(false)
   const [geoError, setGeoError] = useState<string | null>(null)
 
+  const applyCatalogState = useCallback((nextState: CatalogUrlState) => {
+    setSearch(nextState.search)
+    setDebouncedSearch(nextState.search)
+    setSortValue(nextState.sortValue)
+    setViewMode(nextState.viewMode)
+    setPage(nextState.page)
+    setAvailableDate(nextState.availableDate)
+    setAvailableTimeFrom(nextState.availableTimeFrom)
+    setAvailableTimeTo(nextState.availableTimeTo)
+    setOpenNow(nextState.openNow)
+    setMinRating(nextState.minRating)
+    setGeoEnabled(nextState.geoEnabled)
+    setGeoCoords(nextState.geoCoords)
+    setGeoMode(nextState.geoMode)
+    setTravelMode(nextState.travelMode)
+    setTravelMinutes(nextState.travelMinutes)
+    setFilters(nextState.filters)
+  }, [])
+
   const navigate = useNavigate()
   const { message } = App.useApp()
   const currentUser = useAuthStore((s) => s.user)
@@ -327,23 +346,8 @@ export default function BathhouseSearch() {
     }
     hasHydratedFromUrlRef.current = true
 
-    setSearch(nextState.search)
-    setDebouncedSearch(nextState.search)
-    setSortValue(nextState.sortValue)
-    setViewMode(nextState.viewMode)
-    setPage(nextState.page)
-    setAvailableDate(nextState.availableDate)
-    setAvailableTimeFrom(nextState.availableTimeFrom)
-    setAvailableTimeTo(nextState.availableTimeTo)
-    setOpenNow(nextState.openNow)
-    setMinRating(nextState.minRating)
-    setGeoEnabled(nextState.geoEnabled)
-    setGeoCoords(nextState.geoCoords)
-    setGeoMode(nextState.geoMode)
-    setTravelMode(nextState.travelMode)
-    setTravelMinutes(nextState.travelMinutes)
-    setFilters(nextState.filters)
-  }, [searchParamsString])
+    applyCatalogState(nextState)
+  }, [applyCatalogState, searchParamsString])
 
   useEffect(() => {
     if (skipNextUrlWriteRef.current) {
@@ -747,6 +751,13 @@ export default function BathhouseSearch() {
     setPage(1)
   }, [])
 
+  const handleShortcutSelect = useCallback((params: Record<string, string>) => {
+    const nextParams = new URLSearchParams(params)
+    skipNextUrlWriteRef.current = true
+    applyCatalogState(parseCatalogUrlState(nextParams.toString()))
+    setSearchParams(nextParams)
+  }, [applyCatalogState, setSearchParams])
+
   const activeShortcutKey = PUBLIC_SHORTCUT_CARDS.find((card) => {
     const [cardPath, cardQuery] = card.to.split('?')
     if (cardPath !== '/catalog') return false
@@ -884,7 +895,7 @@ export default function BathhouseSearch() {
             key={card.key}
             type="button"
             className={activeShortcutKey === card.key ? 'bani-catalog__shortcut bani-catalog__shortcut--active' : 'bani-catalog__shortcut'}
-            onClick={() => navigate(card.to)}
+            onClick={() => handleShortcutSelect(card.params)}
           >
             <span className="bani-catalog__shortcut-title">{card.title}</span>
             <span className="bani-catalog__shortcut-description">{card.description}</span>

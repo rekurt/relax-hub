@@ -21,7 +21,7 @@ import { useGetMyReferral } from '@/api/generated/referral/referral'
 import { useGetMyReferralStats } from '@/api/generated/referral/referral'
 import { useGetMyReferralBalance } from '@/api/generated/referral/referral'
 import { formatPrice } from '@/lib/format'
-import { copyToClipboard } from '@/components/ShareButton'
+import { copyToClipboard } from '@/lib/clipboard'
 import { PLATFORM_NAME } from '@/content/support'
 
 const { Title, Text, Paragraph } = Typography

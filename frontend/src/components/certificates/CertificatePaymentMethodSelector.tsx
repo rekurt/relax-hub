@@ -3,8 +3,7 @@ import { AppleOutlined, CreditCardOutlined, QrcodeOutlined } from '@ant-design/i
 import { Button } from 'antd'
 import ApplePayButton from '@/components/ApplePayButton'
 import GooglePayButton from '@/components/GooglePayButton'
-
-export type CertificatePaymentMethod = 'card' | 'sbp' | 'apple_pay' | 'google_pay'
+import type { CertificatePaymentMethod } from '@/lib/certificate-payment'
 
 interface CertificatePaymentMethodSelectorProps {
   amount: number
@@ -46,13 +45,6 @@ const PAYMENT_METHODS: Array<{
     description: 'Быстрый checkout через сохранённую карту Google Pay.',
   },
 ]
-
-export const CERTIFICATE_PAYMENT_LABELS: Record<CertificatePaymentMethod, string> = {
-  card: 'Банковская карта',
-  sbp: 'СБП',
-  apple_pay: 'Apple Pay',
-  google_pay: 'Google Pay',
-}
 
 export default function CertificatePaymentMethodSelector({
   amount,
