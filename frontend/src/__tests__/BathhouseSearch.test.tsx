@@ -1,6 +1,7 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { useEffect } from 'react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from 'antd'
 import ruRU from 'antd/locale/ru_RU'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -22,7 +23,17 @@ import { useGetBathhouses } from '@/api/generated/bathhouses/bathhouses'
 import { useGetCities } from '@/api/generated/cities/cities'
 import { usePostBathhousesIdFavorite } from '@/api/generated/favorites/favorites'
 
-function renderWithProviders(ui: React.ReactElement, route = '/catalog') {
+function LocationProbe({ onChange }: { onChange: (location: string) => void }) {
+  const location = useLocation()
+
+  useEffect(() => {
+    onChange(`${location.pathname}${location.search}`)
+  }, [location.pathname, location.search, onChange])
+
+  return null
+}
+
+function renderWithProviders(ui: React.ReactElement, route = '/catalog', onLocationChange?: (location: string) => void) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -30,7 +41,10 @@ function renderWithProviders(ui: React.ReactElement, route = '/catalog') {
     <QueryClientProvider client={queryClient}>
       <ConfigProvider locale={ruRU}>
         <AntApp>
-          <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+          <MemoryRouter initialEntries={[route]}>
+            {ui}
+            {onLocationChange ? <LocationProbe onChange={onLocationChange} /> : null}
+          </MemoryRouter>
         </AntApp>
       </ConfigProvider>
     </QueryClientProvider>,
@@ -186,6 +200,32 @@ describe('BathhouseSearch', () => {
     expect(lastCall).toMatchObject({ guest_count: 2 })
   })
 
+  it('does not restore previous shortcut params when switching catalog shortcuts', async () => {
+    vi.mocked(useGetBathhouses).mockReturnValue({
+      data: { data: [], success: true, meta: { page: 1, page_size: 12, total_count: 0, total_pages: 0 } },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhouses>)
+
+    const locations: string[] = []
+    let sawPoolLocation = false
+    renderWithProviders(<BathhouseSearch />, '/catalog?guest_count=6', (location) => {
+      locations.push(location)
+      if (location === '/catalog?has_pool=true') sawPoolLocation = true
+      if (sawPoolLocation && location === '/catalog?guest_count=6') {
+        throw new Error('Previous shortcut params were restored after selecting a new shortcut')
+      }
+    })
+
+    const shortcuts = screen.getByLabelText('Сценарии подбора')
+    fireEvent.click(within(shortcuts).getByRole('button', { name: /С бассейном/ }))
+
+    await waitFor(() => expect(locations).toContain('/catalog?has_pool=true'))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    const poolLocationIndex = locations.findIndex((location) => location === '/catalog?has_pool=true')
+    expect(locations.slice(poolLocationIndex + 1)).not.toContain('/catalog?guest_count=6')
+  })
+
   it('renders quick filters row', () => {
     vi.mocked(useGetBathhouses).mockReturnValue({
       data: { data: [], success: true },
@@ -217,7 +257,7 @@ describe('BathhouseSearch', () => {
 
     renderWithProviders(<BathhouseSearch />)
 
-    expect(screen.getByText('Точная настройка')).toBeInTheDocument()
+    expect(screen.getByText('Фильтры')).toBeInTheDocument()
   })
 
   it('shows amenity filters when expanded', () => {
@@ -228,7 +268,7 @@ describe('BathhouseSearch', () => {
 
     renderWithProviders(<BathhouseSearch />)
 
-    fireEvent.click(screen.getByText('Точная настройка'))
+    fireEvent.click(screen.getByText('Фильтры'))
 
     expect(screen.getByText('Сауна')).toBeInTheDocument()
     expect(screen.getByText('Бассейн')).toBeInTheDocument()

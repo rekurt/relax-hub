@@ -285,6 +285,8 @@ export default function BathhouseSearch() {
   const [minRating, setMinRating] = useState<number | undefined>(initialCatalogState.minRating)
   const searchWrapperRef = useRef<HTMLDivElement>(null)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasHydratedFromUrlRef = useRef(false)
+  const skipNextUrlWriteRef = useRef(false)
 
   useEffect(() => {
     debounceTimer.current = setTimeout(() => {
@@ -320,6 +322,11 @@ export default function BathhouseSearch() {
 
   useEffect(() => {
     const nextState = parseCatalogUrlState(searchParamsString)
+    if (hasHydratedFromUrlRef.current) {
+      skipNextUrlWriteRef.current = true
+    }
+    hasHydratedFromUrlRef.current = true
+
     setSearch(nextState.search)
     setDebouncedSearch(nextState.search)
     setSortValue(nextState.sortValue)
@@ -339,6 +346,11 @@ export default function BathhouseSearch() {
   }, [searchParamsString])
 
   useEffect(() => {
+    if (skipNextUrlWriteRef.current) {
+      skipNextUrlWriteRef.current = false
+      return
+    }
+
     const nextParams = buildCatalogSearchParams({
       search,
       sortValue,
@@ -1038,7 +1050,7 @@ export default function BathhouseSearch() {
                   label: (
                     <Space>
                       <FilterOutlined />
-                      Точная настройка
+                      Фильтры
                     </Space>
                   ),
                   children: (
