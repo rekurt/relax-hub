@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   App,
   Button,
@@ -849,11 +849,13 @@ export default function BathhouseForm() {
 
   const isSaving = createMutation.isPending || updateMutation.isPending || submitDraftMutation.isPending
 
-  // Create draft on first mount for new listings
+  // Create draft on first mount for new listings.
+  // useRef sentinel prevents React StrictMode double-mount from creating two phantom drafts (audit A2.2).
+  const draftCreateFiredRef = useRef(false)
   useEffect(() => {
-    if (!isEdit && !draftId && !createDraftMutation.isPending) {
-      createDraftMutation.mutate()
-    }
+    if (isEdit || draftId || draftCreateFiredRef.current) return
+    draftCreateFiredRef.current = true
+    createDraftMutation.mutate()
     // Only run once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

@@ -1,0 +1,51 @@
+total_ms,calls,mean_ms,rows_per_call,query
+306.35,274,1.12,1.0,"UPDATE sessions SET last_active_at = $2, expires_at = $3 WHERE id = $1"
+94.21,274,0.34,1.0,"SELECT id, user_id, device_info, browser, ip, last_active_at, created_at, expires_at   FROM sessions WHERE id = $1"
+32.33,62,0.52,6.0,"SELECT id, owner_id, name, slug, description, address, city_id,    latitude, longitude, price_per_hour, min_duration, max_guests,    has_pool, has_sauna, has_steam_room, has_hot_tub, has_bbq, has_kara"
+22.60,62,0.36,1.0,SELECT COUNT(*) FROM bathhouses WHERE owner_id = $1
+21.22,1,21.22,7.0,SELECT id FROM wallets WHERE status = $1 ORDER BY created_at
+11.49,1,11.49,0.0,"SELECT id, owner_id, client_id, booking_id, bathhouse_id,  punctuality, cleanliness, rule_compliance,  rating, text, reveal_at, is_revealed,  moderation_score, moderation_flags,  status, created_at, u"
+11.05,2,5.52,1.0,"INSERT INTO admin_notifications (id, role, severity, type, title, body, data, is_read, created_at)   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+10.25,81,0.13,1.0,SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = $2
+10.23,2,5.12,0.0,"SELECT t.id, t.user_id, t.booking_id, t.category, t.status, t.priority, t.level, t.subject, t.assigned_to, t.csat_score, t.created_at, t.updated_at, t.resolved_at FROM support_tickets t   WHERE t.leve"
+9.48,6,1.58,3.0,"SELECT id, name, slug, region, latitude, longitude FROM cities ORDER BY name"
+9.08,30,0.30,1.0,"SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,    bathhouses.latitude, bathhouses.longitude, bathhouses.pr"
+8.94,60,0.15,1.0,"SELECT id, email, password_hash, name, phone, phone_verified, role, COALESCE(admin_sub_role, $2), is_active, avatar_url, bio, city_id, COALESCE(region, $3), COALESCE(referral_code, $4), COALESCE(totp_"
+6.10,2,3.05,10.0,"SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,    bathhouses.latitude, bathhouses.longitude, bathhouses.pr"
+5.21,4,1.30,1.5,"SELECT id, user_id, type, title, body, data, is_read, read_at, created_at FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"
+4.73,2,2.36,1.0,SELECT COUNT(*) FROM bathhouses WHERE bathhouses.status = $1
+4.62,6,0.77,1.0,"UPDATE promotions   SET impression_count = impression_count + $2, updated_at = now()   WHERE id = $1"
+4.11,3,1.37,0.0,"SELECT id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, modif"
+3.78,12,0.31,1.0,"SELECT id, user_id, balance, held_amount, currency, status, created_at, updated_at   FROM wallets WHERE user_id = $1"
+3.69,1,3.69,0.0,"SELECT id, bathhouse_id, url, source, last_sync_at, last_error, created_at   FROM external_calendars ORDER BY created_at"
+3.53,2,1.76,3.0,"SELECT id, owner_id, title, body, is_default, sort_order, created_at FROM response_templates WHERE owner_id = $1 ORDER BY sort_order ASC, created_at ASC"
+3.32,22,0.15,1.0,"SELECT id, user_id, status, entity_type, full_name, inn, ogrnip, company_name, document_urls, rejection_reason, submitted_at, reviewed_at, reviewed_by, expires_at, created_at, updated_at FROM kyc_appl"
+3.11,2,1.56,1.0,"SELECT    COUNT(*) AS total_guests,    COUNT(*) FILTER (WHERE created_at >= date_trunc($2, NOW())) AS new_this_month,    COALESCE(AVG(visit_count), $3)::BIGINT AS avg_visit_count,    COALESCE(AVG(tota"
+3.11,2,1.55,1.0,"SELECT COALESCE(SUM(EXTRACT($4 FROM (end_time - start_time)) / $5), $6)    FROM bookings WHERE bathhouse_id = $1 AND status IN ($7, $8) AND start_time >= $2 AND end_time <= $3"
+3.01,1,3.01,4.0,"SELECT bathhouses.id, bathhouses.owner_id, bathhouses.name, bathhouses.slug, bathhouses.description, bathhouses.address, bathhouses.city_id,    bathhouses.latitude, bathhouses.longitude, bathhouses.pr"
+2.59,2,1.29,1.0,SELECT COUNT(*) FROM reviews WHERE bathhouse_id = $1 AND status = $2 AND is_revealed = $3
+2.49,1,2.49,6.0,"SELECT   d.datname as ""Name"",   pg_catalog.pg_get_userbyid(d.datdba) as ""Owner"",   pg_catalog.pg_encoding_to_char(d.encoding) as ""Encoding"",   CASE d.datlocprovider WHEN $1 THEN $2 WHEN $3 THEN $4 WHE"
+2.13,8,0.27,0.0,"SELECT id, wallet_id, type, amount, balance_after, status, COALESCE(description, $4), COALESCE(reference_type, $5), reference_id, is_bonus, expires_at, created_at   FROM wallet_transactions   WHERE wa"
+1.87,4,0.47,1.0,SELECT COUNT(*) FROM conversations WHERE bathhouse_id = ANY($1) OR client_id = $2
+1.72,2,0.86,6.0,"SELECT id, bathhouse_id, owner_id, plan, status, start_date, end_date, auto_renew, price_kopecks, created_at, updated_at   FROM subscriptions   WHERE owner_id = $1   ORDER BY created_at DESC   LIMIT $"
+1.58,1,1.58,0.0,"SELECT id, owner_id, client_id, bathhouse_id, first_visit_at, last_visit_at,    visit_count, total_spent, avg_check, notes, tags, created_at, updated_at,    NTILE($2) OVER (ORDER BY last_visit_at ASC)"
+1.42,4,0.36,1.0,SELECT COUNT(*) FROM notifications WHERE user_id = $1
+1.33,2,0.67,0.0,"SELECT id, booking_id, user_id, bathhouse_id, status,    extra_hours, extension_price, new_end_time, hold_id,    rejection_reason, created_at, expires_at, resolved_at   FROM extension_requests   WHERE"
+1.16,1,1.16,0.0,"SELECT id, user_id, bathhouse_id, start_time, end_time, guest_count, total_price, addon_total, base_price, long_session_discount, extra_guest_surcharge, last_minute_discount, service_fee_amount, modif"
+1.13,2,0.57,10.0,"SELECT id, user_id, bathhouse_id, booking_id, rating, cleanliness, accuracy, communication, value_for_money, text, status, rejection_reasons, owner_response, owner_response_at, moderation_score, moder"
+1.13,4,0.28,1.0,SELECT COUNT(*) FROM wallet_transactions WHERE wallet_id = $1
+1.07,1,1.07,1.0,SELECT COUNT(*) FROM bathhouses WHERE city_id = $1 AND bathhouses.status = $2
+1.04,2,0.52,1.0,"SELECT     COALESCE(AVG(CASE WHEN s.views > $5 THEN s.bookings::float / s.views ELSE $6 END), $7),     COALESCE(AVG(bh.occupancy_rate), $8),     COALESCE(AVG(bh.bayesian_rating), $9)    FROM bathhouse"
+0.84,1,0.84,0.0,"SELECT b.id, b.user_id, b.bathhouse_id, b.start_time, b.end_time, b.guest_count, b.total_price, b.addon_total, b.base_price, b.long_session_discount, b.extra_guest_surcharge, b.last_minute_discount, b"
+0.77,1,0.77,1.0,SELECT COUNT(*) FROM photo_orders WHERE owner_id = $1
+0.77,1,0.77,1.0,SELECT COUNT(*) FROM webhooks WHERE owner_id = $1
+0.65,4,0.16,2.0,"SELECT id, wallet_id, type, amount, balance_after, status, COALESCE(description, $4), COALESCE(reference_type, $5), reference_id, is_bonus, expires_at, created_at   FROM wallet_transactions WHERE wall"
+0.58,2,0.29,1.0,"SELECT COALESCE(AVG(rating), $2) FROM reviews WHERE bathhouse_id = $1"
+0.57,22,0.03,1.0,"SELECT id, bathhouse_id, owner_id, plan, status, start_date, end_date, auto_renew, price_kopecks, created_at, updated_at   FROM subscriptions   WHERE bathhouse_id = $1 AND status = $2   ORDER BY creat"
+0.53,4,0.13,0.0,"SELECT id, bathhouse_id, client_id, booking_id, last_message_at, created_at FROM conversations WHERE bathhouse_id = ANY($1) OR client_id = $2 ORDER BY last_message_at DESC NULLS LAST, created_at DESC "
+0.47,1,0.47,0.0,"SELECT user_id, threshold, updated_at FROM auto_payout_settings WHERE threshold > $1"
+0.40,1,0.40,0.0,"SELECT id, owner_id, bathhouse_id, provider, credentials_encrypted, sync_direction,  sync_interval_minutes, status, last_sync_at, last_sync_error, external_id, created_at, updated_at FROM pms_connecti"
+0.39,1,0.39,1.0,"SELECT   COALESCE(SUM(CASE WHEN status = $1 THEN $2 ELSE $3 END), $4),   COALESCE(SUM(CASE WHEN status = $5 THEN $6 ELSE $7 END), $8),   COALESCE(SUM(CASE WHEN status = $9 THEN $10 ELSE $11 END), $12)"
+0.37,2,0.19,0.0,"SELECT gc.id, gc.owner_id, gc.client_id, gc.bathhouse_id, gc.first_visit_at, gc.last_visit_at, gc.visit_count, gc.total_spent, gc.avg_check, gc.notes, gc.tags, gc.created_at, gc.updated_at FROM guest_"
+0.37,1,0.37,0.0,"SELECT id, booking_id, user_id, bathhouse_id, status,    old_start_time, old_end_time, old_guest_count, old_total_price,    proposed_start_time, proposed_end_time, proposed_guest_count, proposed_total"
+0.36,7,0.05,1.0,"SELECT id, user_id, balance, held_amount, currency, status, created_at, updated_at   FROM wallets WHERE id = $1"

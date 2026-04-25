@@ -847,6 +847,9 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, fronte
 	repAssignments := []demoRepresentative{
 		{ID: uuid.MustParse("41000000-0000-0000-0000-000000000001"), UserID: rep1ID, BathhouseID: bh7, OwnerID: owner2ID, Role: domain.RepRoleManager, CreatedAt: now.AddDate(0, -1, 0)},
 		{ID: uuid.MustParse("41000000-0000-0000-0000-000000000002"), UserID: rep1ID, BathhouseID: bh10, OwnerID: owner2ID, Role: domain.RepRoleObserver, CreatedAt: now.AddDate(0, -1, -5)},
+		// owner1 reps so /representatives page is not empty in demo (audit A2.6)
+		{ID: uuid.MustParse("41000000-0000-0000-0000-000000000003"), UserID: rep1ID, BathhouseID: bh1, OwnerID: owner1ID, Role: domain.RepRoleManager, CreatedAt: now.AddDate(0, -1, -2)},
+		{ID: uuid.MustParse("41000000-0000-0000-0000-000000000004"), UserID: rep1ID, BathhouseID: bh2, OwnerID: owner1ID, Role: domain.RepRoleObserver, CreatedAt: now.AddDate(0, -1, -7)},
 	}
 
 	subscriptions := []demoSubscription{
@@ -1227,8 +1230,8 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, fronte
 
 	shares := []demoShare{
 		{
-			ID: uuid.MustParse("53000000-0000-0000-0000-000000000001"), Token: "BANIWEEKENDMOSCOWSHARE0001", CreatedBy: owner1ID, BathhouseID: bh6,
-			StartTime: booking6Start, EndTime: booking6End, GuestCount: 5, BookingID: &booking6ID, CreatedAt: now.AddDate(0, 0, -1), ExpiresAt: now.AddDate(0, 0, 14),
+			ID: uuid.MustParse("53000000-0000-0000-0000-000000000001"), Token: "BANIWEEKENDMOSCOWSHARE0001", CreatedBy: owner1ID, BathhouseID: bh1,
+			StartTime: booking1Start, EndTime: booking1End, GuestCount: 2, BookingID: &booking1ID, CreatedAt: now.AddDate(0, 0, -1), ExpiresAt: now.AddDate(0, 0, 14),
 		},
 	}
 
