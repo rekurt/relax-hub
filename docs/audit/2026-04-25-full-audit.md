@@ -174,6 +174,87 @@
 - **Severity**: Medium — not data-breaking but breaks shareable deep links, support workflow, push notifications that link to a specific booking.
 - **Fix pointer**: add an owner-scoped `/bookings/:id` route reusing the same component (or rendering an inline drawer over `/bookings?focus=<uuid>`). BookingList already shows details inline; the route just needs to scroll/expand the matching row.
 
+#### A2.4 — `/dashboard` (owner home), `/promotion`, and `/pricing` render nothing despite endpoints succeeding (Critical, frontend)
+
+- **Repro**: log in as owner with a bathhouse selected (auto-selected from BathhouseSelector). Navigate to `/dashboard`, `/promotion`, or `/pricing`. Network: GETs return 200. DOM: `h1` for `/dashboard` says "Дашборд" but `.ant-statistic`, `.ant-card`, `canvas`, `.ant-list-item` all count **0**. `/promotion` and `/pricing` lack even an `h1`.
+- **Evidence**:
+  - `/dashboard`: `GET /my/bathhouses/{id}/analytics?period=30d` ×2 → 200, but UI: 0 statistics, 0 charts, 0 cards. Page is effectively blank below the layout chrome.
+  - `/promotion`: `GET /my/bathhouses/{id}/promotions?page=1&page_size=10` → 200, plus `/cities` ×2. UI: `h1=null`, 0 cards, 0 list items, no empty state, no error banner. Just whitespace.
+  - `/pricing`: `GET /my/bathhouses/{id}/pricing-rules` ×2, `/price-recommendation`, `/seasonal-tariffs` → all 200. UI: `h1=null`, 0 tabs, 0 rows, no empty state, no error banner.
+- **Root cause hypothesis**: three different pages share the same broken pattern — page renders only when data is present. When the bathhouse has no promotions / no pricing rules / no analytics-derived stats, the page renders nothing. Likely an early-`return null` before the title/header/empty state. Owner1 has 6 active bathhouses; the page just doesn't have data populated for those entities (see A2.6 seed gaps). The dashboard variant additionally suggests the analytics aggregator returns zero-shape data and components do `if (!data?.bookings?.length) return null` instead of rendering "Нет данных за выбранный период".
+- **Severity**: **Critical** for owner UX — the home page (the first thing a logged-in owner sees) is blank. A new owner is immediately convinced the platform is broken. Sales-demo killer.
+- **Fix pointer**:
+  - `frontend/src/pages/analytics/OwnerAnalytics.tsx` (used at `/dashboard`?) — wait, dashboard route maps somewhere else. Inspect `frontend/src/router.tsx` for `/dashboard` element and the matching component. Likely `frontend/src/pages/Dashboard.tsx` or similar. Add an `Empty` fallback when stats are zero, render the `h1` and KPI grid skeleton always.
+  - `frontend/src/pages/promotion/PromotionCampaign.tsx` — same pattern, ensure `<Title>` always renders, gate only the data section behind `isLoading`/`isEmpty`.
+  - `frontend/src/pages/pricing/PricingRules.tsx` — same pattern.
+- **Hot-mitigation**: add a single shared `<PageHeader title=…>` to every owner page top-level, regardless of data. Cheap win.
+
+#### A2.5 — Every owner page shares the wrong `<title>` "RelaxHUB — Бронирование бань" (Medium, UX)
+
+- **Repro**: navigate to any `/bathhouses`, `/bookings`, `/finance`, `/calendar`, `/crm/*`, `/settings/*`, `/photos`, `/widget` — browser tab title is identical "RelaxHUB — Бронирование бань" for all of them.
+- **Severity**: Medium — same shape as A1.5 but for owner role. Cross-cutting fix should land once for all roles.
+- **Fix pointer**: same as A1.5. Centralize `useDocumentTitle(pageTitle)` hook in each layout's outlet wrapper, keyed on route path.
+
+#### A2.6 — Seed-demo gaps render multiple owner UI surfaces empty when seed claims they should have data (High, seed completeness)
+
+- **Repro** (SQL): `psql ... -c "SELECT 'representatives' AS tbl, count(*) FROM representatives WHERE bathhouse_id IN (SELECT id FROM bathhouses WHERE owner_id=(SELECT id FROM users WHERE email='demo.owner1@relax-hub.ru')) UNION ALL SELECT 'bathhouse_photos', count(*) FROM bathhouse_photos WHERE … UNION ALL SELECT 'guest_cards', count(*) FROM guest_cards WHERE owner_id=… UNION ALL SELECT 'webhooks', count(*) FROM webhooks WHERE owner_id=…;"`
+- **Result**:
+  - `representatives` for owner1 = **0** (seed plan calls for ≥1 manager + 1 observer per the multi-role roster; PR #20 was supposed to ship this)
+  - `bathhouse_photos` (verified) for owner1 = **0** across all 6 active bathhouses (seed plan: ≥3 verified per active bathhouse)
+  - `guest_cards` for owner1 = **0** despite **129 completed bookings** for owner1's bathhouses (seed plan + CLAUDE.md: guest cards auto-created on booking completion)
+  - `webhooks` for owner1 = **0** (seed plan: 1 webhook configured)
+- **Impact**: `/representatives` shows "Нет представителей", `/photos` shows "Нет фотографий", `/crm/guests` shows "Гостей пока нет", `/crm/rfm` shows "Нет данных для RFM-анализа", `/settings/webhooks` shows "Нет вебхуков". All five pages are technically working — the empty states render correctly — but the demo / sales experience is hollow.
+- **Root cause hypothesis**: `cmd/server/seed_demo.go` either lacks the seed funcs `seedOwnerProfile` / `seedCRMAndOps` / `seedBathhouseExtras` from the federated-dragonfly plan, or those funcs run but skip these tables. The 129 completed bookings show they were inserted via SQL UPSERT that bypasses the service layer hook responsible for creating `guest_cards` (per CLAUDE.md: "guest cards (auto-created on booking completion ...)"). So even if the seed adds CRM-related users, no guest cards get materialized.
+- **Severity**: **High** — multiple owner cabinet surfaces look unimplemented. Blocks both audit completeness ("can't audit features the seed never populated") and the platform's demo story.
+- **Fix pointer**:
+  - `cmd/server/seed_demo.go` — add or repair `seedRepresentatives` (insert 1 manager + 1 observer for owner1's first 2 bathhouses), `seedBathhousePhotos` (3 verified photos per active bathhouse, deterministic UUID prefix), `seedWebhooks` (1 webhook on owner1), `seedGuestCardsFromCompletedBookings` (idempotent insert from existing completed bookings for owner1+owner2).
+  - Backend follow-up: trigger or service-layer hook that materializes `guest_cards` from existing `bookings WHERE status='completed'` is missing or only fires on transition. Add a one-shot migration `migrations/NNNN_backfill_guest_cards.up.sql` to materialize cards from current completed bookings.
+
+#### A2.7 — `/chat` triple-fetches `/my/conversations` (High, frontend dup-fetch worse than A2.1)
+
+- **Repro**: navigate to `/chat`. Capture network: `GET /api/v1/my/conversations?page=1&page_size=50` fires **three** times within ~150 ms (not the usual ×2 we see elsewhere).
+- **Root cause hypothesis**: ChatPage likely has both `<ConversationList>` and `<MessageArea>` mounting independently and each calling `useGetMyConversations` directly, plus the StrictMode double — yielding 3 calls. Adding a shared parent fetch + prop-drilling (or a TanStack key both consumers reuse) fixes it.
+- **Severity**: High in dev (3× backend load on a relatively heavy endpoint), Medium in prod (StrictMode goes away → 1 or 2 calls remain depending on whether both children fetch).
+- **Fix pointer**: hoist the conversations query to `frontend/src/pages/chat/ChatPage.tsx` and pass results as props to `<ConversationList>` and `<MessageArea>`. Or wrap both in a query key that resolves to a single network round-trip via `staleTime`.
+
+#### A2.8 — `/widget` doesn't render the embed code block on mount (Medium, frontend)
+
+- **Repro**: navigate to `/widget`. Network: `GET /my/bathhouses/{id}/widget-key` → 200 + `GET /my/bathhouses/{id}/widget-code?color=…&font_family=…` → 200, both ×2. DOM: 4 form fields (color picker, font, toggles), but **0 `<pre>` or `<code>` blocks** that would show the iframe embed snippet.
+- **Severity**: Medium — owners can't actually copy-paste the widget into their site without the rendered code block.
+- **Fix pointer**: `frontend/src/pages/widget/WidgetSettings.tsx` — verify the response is unmarshalled and rendered into a `<Typography.Paragraph code>` or `<pre>`. Could also be a CSS class issue where the block is hidden until form is submitted; should be visible by default.
+
+#### A2.9 — `/finance/reports` lacks any summary numbers — only download buttons (Low, UX)
+
+- **Repro**: navigate to `/finance/reports`. UI: 3 download buttons ("Скачать", "Скачать акт", "Скачать XML") and nothing else — no statistics, no preview of what each report contains, no date range selector visible. Just buttons.
+- **Severity**: Low — the buttons work (network calls succeed), but UX is unfriendly: owner doesn't know what each download will give them. Same shape as A1.6 (admin "no empty state") only inverted — there's no explanation of what's available.
+- **Fix pointer**: `frontend/src/pages/finance/FinancialReports.tsx` — add a summary section above the buttons (e.g. "Текущий месяц: 145 броней, 320 000 ₽, к выплате 285 000 ₽") and a date-range picker.
+
+#### A2.10 — `/reviews` (owner) uses public `/bathhouses/{id}/reviews` endpoint instead of an owner-scoped endpoint (Low → Medium, frontend wrong endpoint)
+
+- **Repro**: as owner, open `/reviews`. Network: `GET /api/v1/bathhouses/{id}/reviews?page=1&page_size=10` (the **public** endpoint).
+- **Expected**: an owner-scoped variant that includes pending-moderation reviews, "answered/unanswered" filtering, and is auth-gated to owner-only data.
+- **Actual**: hits public reviews endpoint, returning the same set any visitor would see. Owner can't see reviews still in moderation queue or filter unanswered ones.
+- **Root cause**: `frontend/src/pages/reviews/ReviewList.tsx` reuses `useGetBathhousesIdReviews` instead of an owner-specific hook.
+- **Severity**: starts Low (works for the common case where most reviews are public-approved), can be Medium when many moderation cases pile up. Mirrors A1.7 / A1.8 for admin.
+- **Fix pointer**: backend probably has `/api/v1/my/bathhouses/{id}/reviews` already (worth grepping `internal/handler/review_handler.go`); if not, add it. Frontend swaps the hook.
+
+### Owner coverage summary (this session)
+
+≈30 owner pages walked across 5 batches:
+
+| Batch | Pages | Status |
+|---|---|---|
+| B1 Bathhouses | BathhouseList, BathhouseForm wizard (A2.2 phantom drafts), ListingImport, AuditLog (skipped, not directly reachable) | ⚠️ A2.2 Critical |
+| B2 Bookings + Calendar | BookingList (10/241 rows, owner-side correct), `/bookings/:id` (A2.3 silent redirect), CalendarPage (no widget rendered) | ⚠️ A2.3 |
+| B3 Comms + Reviews + Photos | ChatPage (A2.7 triple-fetch), NotificationList, ReviewList (A2.10 public endpoint), PhotoManager (empty per A2.6), PhotoOrderPage | ⚠️ A2.7 + A2.10 |
+| B4 Money + Promo + Analytics | FinanceDashboard, PayoutPage, FinancialReports (A2.9), OwnerAnalytics, PromotionCampaign (A2.4 blank), PromoList, PricingRules (A2.4 blank), SubscriptionPage | ⚠️ A2.4 (Critical) + A2.9 |
+| B5 CRM + Settings + Reps + Widget | /crm/{guests,segments,rfm,broadcasts,scenarios,templates}, RepresentativeList (A2.6 empty), Widget (A2.8 no code block), Settings/{webhooks,pms,kyc,offer} | ⚠️ A2.6 + A2.8 |
+| Dashboard | `/dashboard` (A2.4 blank) | ⚠️ A2.4 (Critical) |
+
+**Critical / High count**: 3 Critical (A2.2 phantom drafts, A2.4 blank dashboard/promotion/pricing) / 4 High (A2.1 quad-fetch, A2.6 seed gaps, A2.7 triple-fetch, A2.10 public endpoint). **Medium**: 3 (A2.3 missing detail route, A2.5 wrong title, A2.8 widget no code block). **Low**: 1 (A2.9 reports lacks summary).
+
+**No 5xx, no auth-bypass, no data-loss bugs found** in owner role this session. All `/api/v1/my/*` endpoints respond 200.
+
 ### Representative role
 
 (Session 3)
