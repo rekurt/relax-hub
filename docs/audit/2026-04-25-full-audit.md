@@ -60,6 +60,32 @@
 - **Fix pointer**: inspect `internal/service/analytics_service.go` for the dashboard aggregator — likely needs a default fallback to a wider window or a "lifetime" period that the dashboard surface should expose.
 - **Severity**: Medium today (cosmetic on demo), but **upgrade to High** if the same query is used for finance / reconciliation reports — operators relying on 7d-zero values would mis-count revenue.
 
+#### A1.4 — Every admin page double-fetches its primary list on mount (High, frontend)
+
+- **Repro**: load any admin list page (`/admin/bathhouses`, `/admin/reviews`, `/admin/photos`, `/admin/complaints`, etc.). The primary GET fires **twice** with identical query strings within milliseconds.
+- **Evidence**:
+  - `/admin/bathhouses?page=1&page_size=20` ×2
+  - `/admin/reviews?page=1&page_size=20` ×2 + `/admin/reviews/pending-count` ×2
+  - `/admin/photos/pending?page=1&page_size=12` ×2
+  - `/admin/complaints?page=1&page_size=20` ×2
+  - `/auth/me` ×2 on every navigation, `/my/notifications/unread-count` ×2 on every page
+- **Root cause hypothesis**: React.StrictMode in dev double-mounts effects (canonical behavior); the components haven't been written to be re-entrant — each `useEffect(() => fetch(), [])` fires twice. Production won't double-fetch, BUT the cost is real on dev iteration speed AND it indicates the components don't dedupe via TanStack Query keys properly. The duplicates appear regardless of TanStack Query staleTime, suggesting bypassed cache or unstable query keys.
+- **Severity**: High in dev (slows audit loop, doubles backend load when many devs are active), Medium in prod (StrictMode is dev-only).
+- **Fix pointer (D — query consolidation)**: audit query keys in `frontend/src/api/generated/admin/admin.ts` and surrounding hooks; ensure `queryKey: ['admin-reviews', page, pageSize]` (stable) is used consistently with `staleTime: 30000`+. Also `/auth/me` is called twice — once from `App.tsx` `loadProfile()` and likely once from TanStack `useGetAuthMe`.
+
+#### A1.5 — All admin pages share the wrong `<title>` "RelaxHUB — Бронирование бань" (Medium, UX)
+
+- **Repro**: navigate to any `/admin/*` page (Dashboard, Bathhouses, Reviews, Photos, Complaints all observed). Browser-tab title stays "RelaxHUB — Бронирование бань".
+- **Expected**: per-page title like "Модерация отзывов", "Модерация бань", etc.
+- **Root cause**: `useDocumentTitle` (or equivalent) is missing in admin pages. Some upstream layout sets the title once and never updates.
+- **Fix pointer**: add `<title>` per route via Helmet or a `useEffect(() => { document.title = `${PLATFORM_NAME} — ${pageTitle}`; }, [])` in each admin page; OR centralize in `AdminLayout.tsx` keyed off the URL path.
+
+#### A1.6 — `/admin/photos` and `/admin/complaints` show empty content with no empty-state UI (Low)
+
+- **Repro**: navigate to either; table area is blank, no "Нет фото на проверку" or "Нет жалоб" message, no skeleton.
+- **Severity**: Low (cosmetic), but worth fixing in C1 (UI tokens / empty states pass).
+- **Fix pointer**: use Antd `Empty` component or a project `EmptyState` (already exists per CLAUDE.md component list).
+
 (more findings appended as the audit continues — the rest of the admin surface still to be walked in upcoming sessions)
 
 ### Owner role
