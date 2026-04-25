@@ -1,0 +1,6 @@
+Phase 1.2 deviation note (2026-04-25):
+- `postgis/postgis:17-3.5-alpine` does not publish an arm64 manifest, so on Apple
+  Silicon hosts `docker compose up` for the postgres service fails. Created
+  `docker-compose.override.yml` to swap that image for `postgis/postgis:17-3.5`
+  (debian-bookworm-based variant, has arm64). The Go server is unaffected — the
+  schema and extensions are identical.
