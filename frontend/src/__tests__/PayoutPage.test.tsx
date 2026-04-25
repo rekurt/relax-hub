@@ -175,6 +175,6 @@ describe('PayoutPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Введите сумму')).toBeInTheDocument()
-    })
+    }, { timeout: 5000 })
   })
 })

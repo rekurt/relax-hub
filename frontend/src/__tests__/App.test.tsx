@@ -56,6 +56,17 @@ vi.mock('@/api/generated/chat/chat', () => ({
   }),
 }))
 
+vi.mock('@/api/generated/bookings/bookings', () => ({
+  useGetBookings: vi.fn().mockReturnValue({
+    data: { data: [], meta: { page: 1, page_size: 10, total_count: 0, total_pages: 0 } },
+    isLoading: false,
+  }),
+  usePatchBookingsIdCancel: vi.fn().mockReturnValue({
+    mutate: vi.fn(),
+    isPending: false,
+  }),
+}))
+
 function renderWithProviders(ui: React.ReactElement, { route = '/' } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -79,8 +90,13 @@ describe('App', () => {
     })
   })
 
-  it('redirects to login when not authenticated', () => {
+  it('renders public home on root route', () => {
     renderWithProviders(<App />, { route: '/' })
+    expect(screen.getByText('Быстрое бронирование')).toBeInTheDocument()
+  })
+
+  it('redirects to login when opening protected route unauthenticated', () => {
+    renderWithProviders(<App />, { route: '/dashboard' })
     expect(screen.getByText('Вход в личный кабинет')).toBeInTheDocument()
   })
 
@@ -101,7 +117,7 @@ describe('App', () => {
       user: { id: '1', role: 'owner', email: 'test@test.com' },
       token: 'jwt-token',
     })
-    const { container } = renderWithProviders(<App />, { route: '/' })
+    const { container } = renderWithProviders(<App />, { route: '/dashboard' })
     const mainContent = container.querySelector('.ant-layout-content')
     expect(mainContent).toBeTruthy()
     expect(mainContent!.textContent).toContain('Дашборд')
@@ -114,26 +130,26 @@ describe('App', () => {
       user: { id: '2', role: 'representative', email: 'rep@test.com' },
       token: 'jwt-token',
     })
-    const { container } = renderWithProviders(<App />, { route: '/' })
+    const { container } = renderWithProviders(<App />, { route: '/dashboard' })
     const mainContent = container.querySelector('.ant-layout-content')
     expect(mainContent!.textContent).toContain('Дашборд')
   })
 
-  it('redirects client role from / to /client', () => {
+  it('redirects client role from protected owner route to catalog', () => {
     useAuthStore.setState({
       isAuthenticated: true,
       isLoading: false,
       user: { id: '3', role: 'client', email: 'client@test.com' },
       token: 'jwt-token',
     })
-    const { container } = renderWithProviders(<App />, { route: '/' })
+    const { container } = renderWithProviders(<App />, { route: '/dashboard' })
     const mainContent = container.querySelector('.ant-layout-content')
-    expect(mainContent!.textContent).toContain('Добро пожаловать в Bani!')
+    expect(mainContent!.textContent).toContain('Поиск бань')
   })
 
   it('shows spinner while loading auth', () => {
     useAuthStore.setState({ isLoading: true, token: 'jwt-token' })
-    const { container } = renderWithProviders(<App />, { route: '/' })
+    const { container } = renderWithProviders(<App />, { route: '/dashboard' })
     expect(container.querySelector('.ant-spin')).toBeTruthy()
   })
 })

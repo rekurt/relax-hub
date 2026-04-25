@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Axios from 'axios'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -108,7 +108,7 @@ export default function PublicCheckout() {
     { date: selectedDate },
     { query: { enabled: !!bathhouseId && !!selectedDate } },
   )
-  const slots = slotsData?.data ?? []
+  const slots = useMemo(() => slotsData?.data ?? [], [slotsData?.data])
   const minDurationHours = Math.max(1, bathhouse?.min_duration ?? 1)
   const resolvedSlotRange = resolveSlotRangeSelection(slots, selectedSlotRange)
   const selectedRangeHours = resolvedSlotRange ? getRangeHours(resolvedSlotRange.from, resolvedSlotRange.to) : 0
@@ -140,24 +140,6 @@ export default function PublicCheckout() {
     setCheckoutError(null)
     setSlotConflictError(null)
   }
-
-  useEffect(() => {
-    if (slotsLoading) return
-
-    const nextRange = resolveSlotRangeSelection(slots, selectedSlotRange)
-    if (selectedSlotRange && !nextRange) {
-      setSelectedSlotRange(null)
-      return
-    }
-
-    if (
-      selectedSlotRange
-      && nextRange
-      && (selectedSlotRange.from !== nextRange.from || selectedSlotRange.to !== nextRange.to)
-    ) {
-      setSelectedSlotRange(nextRange)
-    }
-  }, [selectedSlotRange, slots, slotsLoading])
 
   const createBooking = async () => {
     if (!selectedSlot || !bathhouseId) return

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from 'antd'
@@ -99,22 +99,21 @@ describe('BathhouseSearch - New Filters', () => {
     } as unknown as ReturnType<typeof useGetBathhouses>)
   })
 
-  it('renders date and time filters in expanded filters panel', () => {
+  it('renders date filter and time filters', () => {
     renderWithProviders(<BathhouseSearch />)
+
+    expect(screen.getByPlaceholderText('Дата')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Фильтры'))
 
-    expect(screen.getByText('Дата')).toBeInTheDocument()
     expect(screen.getByText('Время с')).toBeInTheDocument()
     expect(screen.getByText('Время до')).toBeInTheDocument()
   })
 
-  it('renders booking type filter', () => {
+  it('renders city filter', () => {
     renderWithProviders(<BathhouseSearch />)
 
-    fireEvent.click(screen.getByText('Фильтры'))
-
-    expect(screen.getByText('Тип бронирования')).toBeInTheDocument()
+    expect(screen.getByText('Город')).toBeInTheDocument()
   })
 
   it('renders min rating filter', () => {
@@ -128,12 +127,10 @@ describe('BathhouseSearch - New Filters', () => {
     expect(labels.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('renders status filter', () => {
+  it('renders open-now quick filter', () => {
     renderWithProviders(<BathhouseSearch />)
 
-    fireEvent.click(screen.getByText('Фильтры'))
-
-    expect(screen.getByText('Статус')).toBeInTheDocument()
+    expect(screen.getByText('Открыто сейчас')).toBeInTheDocument()
   })
 
   it('shows last-minute badge on cards with active discounts', () => {
@@ -173,7 +170,7 @@ describe('BathhouseSearch - New Filters', () => {
 
     fireEvent.click(screen.getByText('Фильтры'))
 
-    expect(screen.getByText('Гости')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Гости')).toBeInTheDocument()
   })
 
   it('passes availability params to API query', () => {
@@ -184,5 +181,20 @@ describe('BathhouseSearch - New Filters', () => {
     const calls = vi.mocked(useGetBathhouses).mock.calls
     const lastCall = calls[calls.length - 1]
     expect(lastCall?.[0]).toHaveProperty('sort_by')
+  })
+
+  it('switches shortcut filters without restoring previous shortcut', async () => {
+    renderWithProviders(<BathhouseSearch />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Для двоих/ }))
+    await waitFor(() => {
+      expect(screen.getByText('2 гостя')).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /Для компании/ }))
+    await waitFor(() => {
+      expect(screen.getByText('6 гостей')).toBeInTheDocument()
+    })
+    expect(screen.queryByText('2 гостя')).not.toBeInTheDocument()
   })
 })

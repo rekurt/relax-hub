@@ -29,7 +29,7 @@ export default function NotificationList() {
     page_size: pageSize,
   })
 
-  const notifications = data?.data ?? []
+  const notifications = useMemo(() => data?.data ?? [], [data?.data])
   const meta = data?.meta
 
   const unreadCount = useMemo(

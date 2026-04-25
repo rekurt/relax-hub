@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from 'antd'
 import ruRU from 'antd/locale/ru_RU'
-import { describe, it, expect, vi } from 'vitest'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
 
 vi.mock('@/api/generated/share/share', () => ({
   useGetApiV1ShareBookingToken: vi.fn(),
@@ -39,6 +39,10 @@ function renderWithProviders(ui: React.ReactElement) {
 }
 
 describe('ShareRedirect', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it('shows loading spinner while resolving', () => {
     vi.mocked(useGetApiV1ShareBookingToken).mockReturnValue({
       data: undefined,
@@ -88,7 +92,7 @@ describe('ShareRedirect', () => {
 
     renderWithProviders(<ShareRedirect />)
     expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining('/client/booking/new?bathhouse=bath-1'),
+      '/checkout?bathhouse=bath-1&from=2026-04-01T10%3A00%3A00Z&date=2026-04-01&guests=4',
       { replace: true },
     )
   })

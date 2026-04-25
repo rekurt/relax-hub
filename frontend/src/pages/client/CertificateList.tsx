@@ -38,7 +38,7 @@ export default function CertificateList() {
     { query: { enabled: checkCode.trim().length >= 4 } },
   )
 
-  const certificates = certificatesData?.data ?? []
+  const certificates = useMemo(() => certificatesData?.data ?? [], [certificatesData?.data])
   const meta = certificatesData?.meta
 
   const stats = useMemo(() => {

@@ -105,7 +105,7 @@ export default function SupportTickets() {
 
   const createMutation = usePostMyTickets()
 
-  const allTickets: InternalHandlerTicketResponse[] = data?.data ?? []
+  const allTickets: InternalHandlerTicketResponse[] = useMemo(() => data?.data ?? [], [data?.data])
   const tickets = statusFilter
     ? allTickets.filter((ticket) => ticket.status === statusFilter)
     : allTickets
