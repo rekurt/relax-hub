@@ -54,6 +54,8 @@ var seedDemoCmd = &cobra.Command{
 		log.Printf("Client demo account: demo.client1@relax-hub.ru / +79990000031\n")
 		log.Printf("Owner demo account: demo.owner1@relax-hub.ru / +79990000021\n")
 		log.Printf("Admin demo account: demo.admin@relax-hub.ru / +79990000011\n")
+		log.Printf("Admin TOTP secret (BASE32, all admins): %s — paste into authenticator app to get 6-digit codes\n", demoAdminTOTPSecret)
+		log.Printf("    Tip: in dev (BANI_ENVIRONMENT=dev|test) admin /admin/* skips 2FA via middleware bypass; in staging/prod the 2FA verify step is required.\n")
 		return nil
 	},
 }
@@ -85,7 +87,20 @@ type demoUser struct {
 	Bio                 string
 	ReferralCode        string
 	OnboardingCompleted bool
+	// TwoFAMethod / TOTPSecret are populated for demo admins so the
+	// `RequireAdmin2FA` middleware lets demo accounts into the /admin/* UI
+	// without an interactive 2FA-enable step. Empty zero-values fall back to
+	// "none" + "" which preserves the historical behaviour for non-admin demos.
+	TwoFAMethod domain.TwoFAMethod
+	TOTPSecret  string
 }
+
+// demoAdminTOTPSecret is a fixed BASE32 test secret used for ALL seeded demo
+// admin accounts so the audit / sales-demo flow can use the admin UI without
+// running through interactive 2FA setup. Pasting this string into any TOTP
+// authenticator app yields valid 6-digit codes. It is hardcoded so it cannot
+// be confused for a production credential.
+const demoAdminTOTPSecret = "JBSWY3DPEHPK3PXP"
 
 type demoWallet struct {
 	ID         uuid.UUID
@@ -428,6 +443,51 @@ type demoSavedCard struct {
 	UpdatedAt     time.Time
 }
 
+type demoKYCApplication struct {
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	Status          domain.KYCStatus
+	EntityType      domain.KYCEntityType
+	FullName        string
+	INN             string
+	OGRNIP          string
+	CompanyName     string
+	DocumentURLs    []string
+	RejectionReason string
+	SubmittedAt     time.Time
+	ReviewedAt      *time.Time
+	ReviewedBy      *uuid.UUID
+	ExpiresAt       *time.Time
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+type demoOfferAcceptance struct {
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	OfferVersion string
+	AcceptedAt   time.Time
+	IPAddress    string
+	UserAgent    string
+	CreatedAt    time.Time
+}
+
+type demoOwnerPaymentDetails struct {
+	ID                   uuid.UUID
+	UserID               uuid.UUID
+	EntityType           domain.KYCEntityType
+	BankCardNumber       string
+	CardHolderName       string
+	BankAccount          string
+	BIK                  string
+	INN                  string
+	CorrespondentAccount string
+	BankName             string
+	IsVerified           bool
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+}
+
 type demoShare struct {
 	ID          uuid.UUID
 	Token       string
@@ -501,60 +561,70 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, fronte
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSuperAdmin, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=48",
 			Bio: "Курирует публичную витрину, модерацию и демонстрационный контур.", ReferralCode: "ADMINM11", OnboardingCompleted: true,
+			TwoFAMethod: domain.TwoFATOTP, TOTPSecret: demoAdminTOTPSecret,
 		},
 		{
 			ID: supportID, Email: "demo.support@relax-hub.ru", Name: "Егор Поддержка", Phone: "+79990000012",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL2, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=14",
 			Bio: "Ведет клиентские обращения, возвраты и споры в demo-мире.", ReferralCode: "SUPPORT12", OnboardingCompleted: true,
+			TwoFAMethod: domain.TwoFATOTP, TOTPSecret: demoAdminTOTPSecret,
 		},
 		{
 			ID: modID, Email: "demo.admin.mod@relax-hub.ru", Name: "Вера Модератор", Phone: "+79990000013",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleModerator, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=47",
 			Bio: "Модерирует заявки на публикацию объектов, фото и отзывы.", ReferralCode: "MOD00013", OnboardingCompleted: true,
+			TwoFAMethod: domain.TwoFATOTP, TOTPSecret: demoAdminTOTPSecret,
 		},
 		{
 			ID: support1ID, Email: "demo.admin.sup1@relax-hub.ru", Name: "Паша Первая линия", Phone: "+79990000014",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL1, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=52",
 			Bio: "Первая линия поддержки — FAQ, быстрые ответы, маршрутизация L2.", ReferralCode: "SUP1L014", OnboardingCompleted: true,
+			TwoFAMethod: domain.TwoFATOTP, TOTPSecret: demoAdminTOTPSecret,
 		},
 		{
 			ID: support3ID, Email: "demo.admin.sup3@relax-hub.ru", Name: "Арсений Третья линия", Phone: "+79990000015",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL3, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=11",
 			Bio: "Ведёт эскалированные споры, координирует с финансовой командой.", ReferralCode: "SUP3L015", OnboardingCompleted: true,
+			TwoFAMethod: domain.TwoFATOTP, TOTPSecret: demoAdminTOTPSecret,
 		},
 		{
 			ID: financeID, Email: "demo.admin.fin@relax-hub.ru", Name: "Ольга Финансы", Phone: "+79990000016",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleFinance, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=45",
 			Bio: "Сверка платежей, подтверждение выплат, реконсиляция банковских выписок.", ReferralCode: "FIN00016", OnboardingCompleted: true,
+			TwoFAMethod: domain.TwoFATOTP, TOTPSecret: demoAdminTOTPSecret,
 		},
 		{
 			ID: modID, Email: "demo.admin.mod@relax-hub.ru", Name: "Вера Модератор", Phone: "+79990000013",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleModerator, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=47",
 			Bio: "Модерирует заявки на публикацию объектов, фото и отзывы.", ReferralCode: "MOD00013", OnboardingCompleted: true,
+			TwoFAMethod: domain.TwoFATOTP, TOTPSecret: demoAdminTOTPSecret,
 		},
 		{
 			ID: support1ID, Email: "demo.admin.sup1@relax-hub.ru", Name: "Паша Первая линия", Phone: "+79990000014",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL1, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=52",
 			Bio: "Первая линия поддержки — FAQ, быстрые ответы, маршрутизация L2.", ReferralCode: "SUP1L014", OnboardingCompleted: true,
+			TwoFAMethod: domain.TwoFATOTP, TOTPSecret: demoAdminTOTPSecret,
 		},
 		{
 			ID: support3ID, Email: "demo.admin.sup3@relax-hub.ru", Name: "Арсений Третья линия", Phone: "+79990000015",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL3, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=11",
 			Bio: "Ведёт эскалированные споры, координирует с финансовой командой.", ReferralCode: "SUP3L015", OnboardingCompleted: true,
+			TwoFAMethod: domain.TwoFATOTP, TOTPSecret: demoAdminTOTPSecret,
 		},
 		{
 			ID: financeID, Email: "demo.admin.fin@relax-hub.ru", Name: "Ольга Финансы", Phone: "+79990000016",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleFinance, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=45",
 			Bio: "Сверка платежей, подтверждение выплат, реконсиляция банковских выписок.", ReferralCode: "FIN00016", OnboardingCompleted: true,
+			TwoFAMethod: domain.TwoFATOTP, TOTPSecret: demoAdminTOTPSecret,
 		},
 		{
 			ID: owner1ID, Email: "demo.owner1@relax-hub.ru", Name: "Сергей Хозяев", Phone: "+79990000021",
@@ -1114,6 +1184,47 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, fronte
 		},
 	}
 
+	ownerKYCApplications := []demoKYCApplication{
+		{
+			ID: uuid.MustParse("56000000-0000-0000-0000-000000000001"), UserID: owner1ID, Status: domain.KYCStatusApproved,
+			EntityType: domain.KYCEntityIndividual, FullName: "Сергей Хозяев", INN: "770000000001",
+			DocumentURLs: []string{"https://cdn.relax-hub.local/demo/kyc/owner1-passport.pdf"},
+			SubmittedAt:  now.AddDate(0, -2, 0), ReviewedAt: ptrTime(now.AddDate(0, -2, 1)), ReviewedBy: &adminID,
+			ExpiresAt: ptrTime(now.AddDate(1, 0, 0)), CreatedAt: now.AddDate(0, -2, 0), UpdatedAt: now.AddDate(0, -2, 1),
+		},
+		{
+			ID: uuid.MustParse("56000000-0000-0000-0000-000000000002"), UserID: owner2ID, Status: domain.KYCStatusApproved,
+			EntityType: domain.KYCEntityIndividual, FullName: "Ирина Банщикова", INN: "770000000002",
+			DocumentURLs: []string{"https://cdn.relax-hub.local/demo/kyc/owner2-passport.pdf"},
+			SubmittedAt:  now.AddDate(0, -2, -3), ReviewedAt: ptrTime(now.AddDate(0, -2, -2)), ReviewedBy: &adminID,
+			ExpiresAt: ptrTime(now.AddDate(1, 0, 0)), CreatedAt: now.AddDate(0, -2, -3), UpdatedAt: now.AddDate(0, -2, -2),
+		},
+	}
+
+	ownerOfferAcceptances := []demoOfferAcceptance{
+		{
+			ID: uuid.MustParse("56100000-0000-0000-0000-000000000001"), UserID: owner1ID, OfferVersion: "1.0",
+			AcceptedAt: now.AddDate(0, -2, 2), IPAddress: "127.0.0.1", UserAgent: "seed-demo", CreatedAt: now.AddDate(0, -2, 2),
+		},
+		{
+			ID: uuid.MustParse("56100000-0000-0000-0000-000000000002"), UserID: owner2ID, OfferVersion: "1.0",
+			AcceptedAt: now.AddDate(0, -2, 1), IPAddress: "127.0.0.1", UserAgent: "seed-demo", CreatedAt: now.AddDate(0, -2, 1),
+		},
+	}
+
+	ownerPaymentDetails := []demoOwnerPaymentDetails{
+		{
+			ID: uuid.MustParse("56200000-0000-0000-0000-000000000001"), UserID: owner1ID, EntityType: domain.KYCEntityIndividual,
+			BankCardNumber: "4111111111111111", CardHolderName: "SERGEY KHOZYAEV", IsVerified: true,
+			CreatedAt: now.AddDate(0, -2, 2), UpdatedAt: now.AddDate(0, -2, 2),
+		},
+		{
+			ID: uuid.MustParse("56200000-0000-0000-0000-000000000002"), UserID: owner2ID, EntityType: domain.KYCEntityIndividual,
+			BankCardNumber: "5555555555554444", CardHolderName: "IRINA BANSHCHIKOVA", IsVerified: true,
+			CreatedAt: now.AddDate(0, -2, 1), UpdatedAt: now.AddDate(0, -2, 1),
+		},
+	}
+
 	shares := []demoShare{
 		{
 			ID: uuid.MustParse("53000000-0000-0000-0000-000000000001"), Token: "BANIWEEKENDMOSCOWSHARE0001", CreatedBy: owner1ID, BathhouseID: bh6,
@@ -1306,6 +1417,21 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, fronte
 			return err
 		}
 	}
+	for _, kyc := range ownerKYCApplications {
+		if err := upsertKYCApplication(ctx, tx, kyc); err != nil {
+			return err
+		}
+	}
+	for _, acceptance := range ownerOfferAcceptances {
+		if err := upsertOfferAcceptance(ctx, tx, acceptance); err != nil {
+			return err
+		}
+	}
+	for _, details := range ownerPaymentDetails {
+		if err := upsertOwnerPaymentDetails(ctx, tx, details); err != nil {
+			return err
+		}
+	}
 	for _, card := range savedCards {
 		if err := upsertSavedCard(ctx, tx, card); err != nil {
 			return err
@@ -1346,6 +1472,10 @@ func upsertCity(ctx context.Context, tx pgx.Tx, city demoCity) error {
 }
 
 func upsertUser(ctx context.Context, tx pgx.Tx, user demoUser, passwordHash string, now time.Time) error {
+	twoFAMethod := user.TwoFAMethod
+	if twoFAMethod == "" {
+		twoFAMethod = domain.TwoFANone
+	}
 	_, err := tx.Exec(ctx, `
 		INSERT INTO users (
 			id, email, password_hash, name, phone, phone_verified, role, admin_sub_role, is_active,
@@ -1354,8 +1484,8 @@ func upsertUser(ctx context.Context, tx pgx.Tx, user demoUser, passwordHash stri
 		)
 		VALUES (
 			$1, $2, $3, $4, $5, true, $6, $7, true,
-			$8, $9, $10, $11, $12, '', $13,
-			$14, $15, $16
+			$8, $9, $10, $11, $12, $13, $14,
+			$15, $16, $17
 		)
 		ON CONFLICT (id) DO UPDATE SET
 			email = EXCLUDED.email,
@@ -1371,12 +1501,13 @@ func upsertUser(ctx context.Context, tx pgx.Tx, user demoUser, passwordHash stri
 			city_id = EXCLUDED.city_id,
 			region = EXCLUDED.region,
 			referral_code = EXCLUDED.referral_code,
+			totp_secret = EXCLUDED.totp_secret,
 			two_fa_method = EXCLUDED.two_fa_method,
 			onboarding_completed = EXCLUDED.onboarding_completed,
 			updated_at = EXCLUDED.updated_at
 	`,
 		user.ID, user.Email, passwordHash, user.Name, user.Phone, string(user.Role), string(user.AdminSubRole),
-		user.AvatarURL, user.Bio, user.CityID, string(user.Region), user.ReferralCode, string(domain.TwoFANone),
+		user.AvatarURL, user.Bio, user.CityID, string(user.Region), user.ReferralCode, user.TOTPSecret, string(twoFAMethod),
 		user.OnboardingCompleted, now.AddDate(0, -2, 0), now,
 	)
 	if err != nil {
@@ -2008,6 +2139,80 @@ func upsertDisputeEvidence(ctx context.Context, tx pgx.Tx, evidence demoDisputeE
 	`, evidence.ID, evidence.DisputeID, evidence.UserID, string(evidence.Type), evidence.URL, evidence.Description, evidence.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("upsert dispute evidence %s: %w", evidence.ID, err)
+	}
+	return nil
+}
+
+func upsertKYCApplication(ctx context.Context, tx pgx.Tx, kyc demoKYCApplication) error {
+	_, err := tx.Exec(ctx, `
+		INSERT INTO kyc_applications (
+			id, user_id, status, entity_type, full_name, inn, ogrnip, company_name,
+			document_urls, rejection_reason, submitted_at, reviewed_at, reviewed_by,
+			expires_at, created_at, updated_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+		ON CONFLICT (id) DO UPDATE SET
+			user_id = EXCLUDED.user_id,
+			status = EXCLUDED.status,
+			entity_type = EXCLUDED.entity_type,
+			full_name = EXCLUDED.full_name,
+			inn = EXCLUDED.inn,
+			ogrnip = EXCLUDED.ogrnip,
+			company_name = EXCLUDED.company_name,
+			document_urls = EXCLUDED.document_urls,
+			rejection_reason = EXCLUDED.rejection_reason,
+			submitted_at = EXCLUDED.submitted_at,
+			reviewed_at = EXCLUDED.reviewed_at,
+			reviewed_by = EXCLUDED.reviewed_by,
+			expires_at = EXCLUDED.expires_at,
+			updated_at = EXCLUDED.updated_at
+	`, kyc.ID, kyc.UserID, kyc.Status, kyc.EntityType, kyc.FullName, kyc.INN, kyc.OGRNIP, kyc.CompanyName,
+		kyc.DocumentURLs, kyc.RejectionReason, kyc.SubmittedAt, kyc.ReviewedAt, kyc.ReviewedBy, kyc.ExpiresAt, kyc.CreatedAt, kyc.UpdatedAt)
+	if err != nil {
+		return fmt.Errorf("upsert kyc application %s: %w", kyc.ID, err)
+	}
+	return nil
+}
+
+func upsertOfferAcceptance(ctx context.Context, tx pgx.Tx, acceptance demoOfferAcceptance) error {
+	_, err := tx.Exec(ctx, `
+		INSERT INTO offer_acceptances (id, user_id, offer_version, accepted_at, ip_address, user_agent, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (id) DO UPDATE SET
+			user_id = EXCLUDED.user_id,
+			offer_version = EXCLUDED.offer_version,
+			accepted_at = EXCLUDED.accepted_at,
+			ip_address = EXCLUDED.ip_address,
+			user_agent = EXCLUDED.user_agent
+	`, acceptance.ID, acceptance.UserID, acceptance.OfferVersion, acceptance.AcceptedAt, acceptance.IPAddress, acceptance.UserAgent, acceptance.CreatedAt)
+	if err != nil {
+		return fmt.Errorf("upsert offer acceptance %s: %w", acceptance.ID, err)
+	}
+	return nil
+}
+
+func upsertOwnerPaymentDetails(ctx context.Context, tx pgx.Tx, details demoOwnerPaymentDetails) error {
+	_, err := tx.Exec(ctx, `
+		INSERT INTO owner_payment_details (
+			id, user_id, entity_type, bank_card_number, card_holder_name, bank_account,
+			bik, inn, correspondent_account, bank_name, is_verified, created_at, updated_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		ON CONFLICT (user_id) DO UPDATE SET
+			entity_type = EXCLUDED.entity_type,
+			bank_card_number = EXCLUDED.bank_card_number,
+			card_holder_name = EXCLUDED.card_holder_name,
+			bank_account = EXCLUDED.bank_account,
+			bik = EXCLUDED.bik,
+			inn = EXCLUDED.inn,
+			correspondent_account = EXCLUDED.correspondent_account,
+			bank_name = EXCLUDED.bank_name,
+			is_verified = EXCLUDED.is_verified,
+			updated_at = EXCLUDED.updated_at
+	`, details.ID, details.UserID, details.EntityType, details.BankCardNumber, details.CardHolderName, details.BankAccount,
+		details.BIK, details.INN, details.CorrespondentAccount, details.BankName, details.IsVerified, details.CreatedAt, details.UpdatedAt)
+	if err != nil {
+		return fmt.Errorf("upsert owner payment details %s: %w", details.ID, err)
 	}
 	return nil
 }
