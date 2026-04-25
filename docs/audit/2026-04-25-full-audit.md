@@ -28,7 +28,7 @@
 
 ### Admin role
 
-#### A1.1 — Admin 2FA mandatory but seed-demo never enables it (Critical)
+#### A1.1 — Admin 2FA mandatory but seed-demo never enables it (Critical) ✅ FIXED in PR #21
 
 - **Repro**: log in as `demo.admin@relax-hub.ru / DemoPass123!`, navigate to `/admin`. Every `/api/v1/admin/*` endpoint returns `403 forbidden — two-factor authentication required for admin access`. The dashboard, moderation, analytics, finance, support, settings — entire admin surface is unreachable.
 - **Expected**: dashboard loads with metrics; all admin functions accessible.
@@ -118,6 +118,27 @@
 **Critical / High count**: 2 Critical (A1.1 + workaround applied) / 4 High (A1.2 autofill, A1.4 dup-fetch, A1.7 subscriptions, A1.8 certificates). **Medium**: 2 (A1.3 dashboard zeros, A1.5 wrong title). **Low**: 1 (A1.6 empty states).
 
 **No 5xx, no auth-bypass, no data-loss bugs found** in admin role this session. All `/admin/*` endpoints respond 200 once the 2FA workaround is applied.
+
+### Session 1 wrap
+
+**Shipped**: PR #21 `fix(seed-demo): admin demo accounts ship with TOTP 2FA pre-configured (A1.1)` merged to master.
+
+**Outstanding admin findings** carry forward to next fix-pack:
+- A1.2 (High) autofill submit
+- A1.3 (Medium→High) dashboard 7d-window zeros
+- A1.4 (High) duplicate fetches
+- A1.5 (Medium) wrong document title
+- A1.6 (Low) missing empty states
+- A1.7 (High) subscriptions wrong endpoint (needs new /admin endpoint + orval regen)
+- A1.8 (High) certificates wrong endpoint (needs new /admin endpoint + orval regen)
+
+**Next session entry-point**: Phase 2 owner role audit. Use the same harness:
+1. `docker compose up -d postgres redis minio` (env still on dev ports 5435/6381/9102)
+2. Re-run server with env from this MD's "Local environment" block.
+3. Login as `demo.owner1@relax-hub.ru / DemoPass123!`, walk owner menu top-to-bottom (BathhouseList → BathhouseForm wizard → BookingList → ChatPage → ReviewList → CRM → FinanceDashboard → Promotion → Pricing → Settings).
+4. Append to `### Owner role` section here, snapshot pg_stat_statements to `docs/audit/2026-04-25-owner-role-pgss-snapshot.csv`, fix-pack PR `fix/audit-owner-pack`.
+
+**Sub-projects still to do** (per spec §11): A2 owner / A3 rep / A4 client / D query consolidation / B menu redesign / C UI redesign / E prod data gap fill.
 
 ### Owner role
 
