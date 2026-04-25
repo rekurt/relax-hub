@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  Alert,
   App,
   Button,
   Card,
@@ -224,6 +225,14 @@ export default function SubscriptionManagement() {
           Обновить
         </Button>
       </div>
+
+      <Alert
+        type="warning"
+        showIcon
+        message="Раздел в разработке"
+        description="Сейчас страница показывает только подписки, привязанные к текущему админу (через /api/v1/my/subscriptions). Платформенный admin-эндпоинт со списком всех подписок ещё не реализован — найдено в аудите A1.7."
+        style={{ marginBottom: 16 }}
+      />
 
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col xs={8} sm={8}>

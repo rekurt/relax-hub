@@ -73,20 +73,20 @@
 - **Severity**: High in dev (slows audit loop, doubles backend load when many devs are active), Medium in prod (StrictMode is dev-only).
 - **Fix pointer (D — query consolidation)**: audit query keys in `frontend/src/api/generated/admin/admin.ts` and surrounding hooks; ensure `queryKey: ['admin-reviews', page, pageSize]` (stable) is used consistently with `staleTime: 30000`+. Also `/auth/me` is called twice — once from `App.tsx` `loadProfile()` and likely once from TanStack `useGetAuthMe`.
 
-#### A1.5 — All admin pages share the wrong `<title>` "RelaxHUB — Бронирование бань" (Medium, UX)
+#### A1.5 — All admin pages share the wrong `<title>` "RelaxHUB — Бронирование бань" (Medium, UX) ✅ FIXED on master (carry-over pack, 2026-04-26)
 
 - **Repro**: navigate to any `/admin/*` page (Dashboard, Bathhouses, Reviews, Photos, Complaints all observed). Browser-tab title stays "RelaxHUB — Бронирование бань".
 - **Expected**: per-page title like "Модерация отзывов", "Модерация бань", etc.
 - **Root cause**: `useDocumentTitle` (or equivalent) is missing in admin pages. Some upstream layout sets the title once and never updates.
 - **Fix pointer**: add `<title>` per route via Helmet or a `useEffect(() => { document.title = `${PLATFORM_NAME} — ${pageTitle}`; }, [])` in each admin page; OR centralize in `AdminLayout.tsx` keyed off the URL path.
 
-#### A1.6 — `/admin/photos` and `/admin/complaints` show empty content with no empty-state UI (Low)
+#### A1.6 — `/admin/photos` and `/admin/complaints` show empty content with no empty-state UI (Low) ❌ FALSE ALARM — both pages already render `<Empty description="..."/>` correctly (PhotoVerification.tsx:101, ComplaintManagement.tsx:286). Initial detection missed it because `<Empty>` only renders when `data.length === 0` and my JS query likely fired during isLoading. No fix needed.
 
 - **Repro**: navigate to either; table area is blank, no "Нет фото на проверку" or "Нет жалоб" message, no skeleton.
 - **Severity**: Low (cosmetic), but worth fixing in C1 (UI tokens / empty states pass).
 - **Fix pointer**: use Antd `Empty` component or a project `EmptyState` (already exists per CLAUDE.md component list).
 
-#### A1.7 — `/admin/subscriptions` queries owner's `/my/subscriptions` instead of admin endpoint (High, frontend wrong endpoint)
+#### A1.7 — `/admin/subscriptions` queries owner's `/my/subscriptions` instead of admin endpoint (High, frontend wrong endpoint) ⚠️ MITIGATED on master (carry-over pack, 2026-04-26) — placeholder `<Alert type="warning">` banner now renders above the page so admins know this is a stopgap until backend ships `/api/v1/admin/subscriptions`. Endpoint swap deferred until backend lands.
 
 - **Repro**: log in as admin, open `/admin/subscriptions`. Network tab shows `GET /api/v1/my/subscriptions?page=1&page_size=20` instead of an admin-listing endpoint.
 - **Expected**: an admin endpoint listing **all** subscriptions across all owners.
@@ -95,7 +95,7 @@
 - **Fix pointer**: needs an `/api/v1/admin/subscriptions` (list-all) endpoint AND the corresponding orval-generated client. Until that is shipped, the admin page should display "Раздел в разработке" rather than appear functional.
 - **Severity**: High — operationally important admin surface returns wrong data, can confuse the operator.
 
-#### A1.8 — `/admin/certificates` likewise hits `/my/certificates` (High, frontend wrong endpoint)
+#### A1.8 — `/admin/certificates` likewise hits `/my/certificates` (High, frontend wrong endpoint) ⚠️ MITIGATED on master (carry-over pack, 2026-04-26) — same `<Alert type="warning">` placeholder banner as A1.7. Code-balance lookup form below banner remains functional. Endpoint swap deferred until backend ships `/api/v1/admin/certificates`.
 
 - **Repro**: log in as admin, open `/admin/certificates`. Network shows `GET /api/v1/my/certificates?page=1&page_size=20`.
 - Same shape as A1.7 — admin page reuses owner/client hook.
@@ -164,6 +164,31 @@
 6. Triage Critical/High → fix-pack PR `fix/audit-rep-pack`.
 7. Update Session 3 wrap note pointing to client role for Session 4.
 
+### Session 3 wrap (carry-over fix-pack on master, 2026-04-26)
+
+**Shipped directly to master** (per user policy "делай все в ветке master"):
+- `frontend/src/lib/useDocumentTitle.ts` — new shared hook, applied in AdminLayout, AppLayout, ClientLayout with per-route title tables. Closes A1.5 + A2.5.
+- `frontend/src/pages/admin/SubscriptionManagement.tsx` + `CertificateManagement.tsx` — `<Alert type="warning">` placeholder banners discloses wrong-endpoint situation. Mitigates A1.7 + A1.8 until backend ships admin-scoped endpoints.
+- `cmd/server/seed_demo.go` — extension seeds 18 verified `bathhouse_photos` (3 per active owner1 bathhouse via `demoBathhouseImages` per-theme) and 1 `webhooks` row for owner1. Extends A2.6 partial fix (now: representatives + photos + webhooks; only `guest_cards` backfill remains).
+
+**Reclassified as false alarm**:
+- A1.6 — both PhotoVerification.tsx:101 and ComplaintManagement.tsx:286 already render `<Empty description="..."/>`. Initial detection caught isLoading state, not empty state.
+
+**Deferred** (explicit triage):
+- A2.10 — page is functional: public reviews endpoint + `usePostReviewsIdResponse` for replies + client-side "no_response/with_response" filter all work. Pending-moderation reviews are admin-only by design.
+
+**Cross-cutting deferred to D-phase / future C1 UI tokens pass**:
+- A1.4 + A2.1 quad-fetch (TanStack key consolidation across many hooks)
+- A2.7 chat triple-fetch (similar shape — needs hoist)
+- A1.2 autofill submit (frontend autofill helper logic — needs careful regression check)
+- A1.3 dashboard 7d-window zeros (backend analytics aggregator)
+- A2.3 owner missing `/bookings/:id` route (medium UX, separate frontend pass)
+- A2.6 remaining: `guest_cards` backfill from existing 129 completed bookings (needs service-layer hook investigation or one-shot migration)
+- A2.8 `/widget` no embed code block (needs WidgetSettings.tsx investigation)
+- A2.9 `/finance/reports` lacks summary numbers (UX-only)
+
+**Next session entry-point**: Phase 3 representative role audit. Login as `demo.rep1@relax-hub.ru / DemoPass123!`. After PR #22 merged + this carry-over pack shipped, rep1 has 4 bathhouse assignments (bh7+bh10 for owner2, bh1+bh2 for owner1).
+
 ### Owner role
 
 **Auditor**: claude-opus-4-7 (Session 2, 2026-04-25)
@@ -216,13 +241,13 @@
   - `frontend/src/pages/pricing/PricingRules.tsx` — same pattern.
 - **Hot-mitigation**: add a single shared `<PageHeader title=…>` to every owner page top-level, regardless of data. Cheap win.
 
-#### A2.5 — Every owner page shares the wrong `<title>` "RelaxHUB — Бронирование бань" (Medium, UX)
+#### A2.5 — Every owner page shares the wrong `<title>` "RelaxHUB — Бронирование бань" (Medium, UX) ✅ FIXED on master (carry-over pack, 2026-04-26) — shared `useDocumentTitle` hook in `frontend/src/lib/useDocumentTitle.ts` applied to AdminLayout, AppLayout, ClientLayout with per-route title tables.
 
 - **Repro**: navigate to any `/bathhouses`, `/bookings`, `/finance`, `/calendar`, `/crm/*`, `/settings/*`, `/photos`, `/widget` — browser tab title is identical "RelaxHUB — Бронирование бань" for all of them.
 - **Severity**: Medium — same shape as A1.5 but for owner role. Cross-cutting fix should land once for all roles.
 - **Fix pointer**: same as A1.5. Centralize `useDocumentTitle(pageTitle)` hook in each layout's outlet wrapper, keyed on route path.
 
-#### A2.6 — Seed-demo gaps render multiple owner UI surfaces empty when seed claims they should have data (High, seed completeness) ⚠️ PARTIAL FIX in fix/audit-owner-pack (representatives only)
+#### A2.6 — Seed-demo gaps render multiple owner UI surfaces empty when seed claims they should have data (High, seed completeness) ⚠️ EXTENDED PARTIAL FIX on master (representatives + bathhouse_photos verified + 1 webhook, carry-over pack 2026-04-26) — only `guest_cards` backfill remains (requires service-layer hook investigation OR a one-shot migration that materializes guest_cards from existing `bookings WHERE status='completed'`)
 
 - **Repro** (SQL): `psql ... -c "SELECT 'representatives' AS tbl, count(*) FROM representatives WHERE bathhouse_id IN (SELECT id FROM bathhouses WHERE owner_id=(SELECT id FROM users WHERE email='demo.owner1@relax-hub.ru')) UNION ALL SELECT 'bathhouse_photos', count(*) FROM bathhouse_photos WHERE … UNION ALL SELECT 'guest_cards', count(*) FROM guest_cards WHERE owner_id=… UNION ALL SELECT 'webhooks', count(*) FROM webhooks WHERE owner_id=…;"`
 - **Result**:

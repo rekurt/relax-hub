@@ -188,6 +188,29 @@ type demoRepresentative struct {
 	CreatedAt   time.Time
 }
 
+type demoBathhousePhoto struct {
+	ID           uuid.UUID
+	BathhouseID  uuid.UUID
+	URL          string
+	ThumbnailURL string
+	Position     int
+	Status       string
+	VerifiedByID *uuid.UUID
+	VerifiedAt   *time.Time
+	UploadedAt   time.Time
+}
+
+type demoWebhook struct {
+	ID        uuid.UUID
+	OwnerID   uuid.UUID
+	URL       string
+	Secret    string
+	Events    []string
+	IsActive  bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type demoSubscription struct {
 	ID           uuid.UUID
 	BathhouseID  uuid.UUID
@@ -852,6 +875,59 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, fronte
 		{ID: uuid.MustParse("41000000-0000-0000-0000-000000000004"), UserID: rep1ID, BathhouseID: bh2, OwnerID: owner1ID, Role: domain.RepRoleObserver, CreatedAt: now.AddDate(0, -1, -7)},
 	}
 
+	// audit A2.6: 3 verified bathhouse_photos per owner1 active bathhouse (bh1..bh6)
+	// so /photos page (PhotoManager) shows real verified entries instead of "Нет фотографий"
+	bathhousePhotos := func() []demoBathhousePhoto {
+		out := make([]demoBathhousePhoto, 0, 18)
+		verifiedAt := now.AddDate(0, -1, -3)
+		uploadedAt := now.AddDate(0, -1, -10)
+		themedURLs := map[uuid.UUID][]string{
+			bh1: demoBathhouseImages(frontendURL, "banya-couple"),
+			bh2: demoBathhouseImages(frontendURL, "banya-pool"),
+			bh3: demoBathhouseImages(frontendURL, "banya-company"),
+			bh4: demoBathhouseImages(frontendURL, "banya-hottub"),
+			bh5: demoBathhouseImages(frontendURL, "banya-premium-pool"),
+			bh6: demoBathhouseImages(frontendURL, "banya-weekend"),
+		}
+		bbhOrder := []uuid.UUID{bh1, bh2, bh3, bh4, bh5, bh6}
+		for bbhIdx, bbhID := range bbhOrder {
+			imgs := themedURLs[bbhID]
+			if len(imgs) == 0 {
+				continue
+			}
+			for pos := 0; pos < 3 && pos < len(imgs); pos++ {
+				photoID := uuid.MustParse(fmt.Sprintf("54000000-0000-0000-0000-%012d", bbhIdx*3+pos+1))
+				url := imgs[pos]
+				out = append(out, demoBathhousePhoto{
+					ID:           photoID,
+					BathhouseID:  bbhID,
+					URL:          url,
+					ThumbnailURL: url,
+					Position:     pos,
+					Status:       "verified",
+					VerifiedByID: &adminID,
+					VerifiedAt:   &verifiedAt,
+					UploadedAt:   uploadedAt,
+				})
+			}
+		}
+		return out
+	}()
+
+	// audit A2.6: 1 webhook for owner1 so /settings/webhooks shows a real entry
+	webhooks := []demoWebhook{
+		{
+			ID:        uuid.MustParse("58000000-0000-0000-0000-000000000001"),
+			OwnerID:   owner1ID,
+			URL:       "https://example.com/relax-hub/webhook",
+			Secret:    "demo_webhook_secret_owner1",
+			Events:    []string{"booking.created", "booking.confirmed", "booking.cancelled", "booking.completed", "payment.received"},
+			IsActive:  true,
+			CreatedAt: now.AddDate(0, -1, -8),
+			UpdatedAt: now.AddDate(0, 0, -2),
+		},
+	}
+
 	subscriptions := []demoSubscription{
 		newSubscription("42000000-0000-0000-0000-000000000001", bh1, owner1ID, domain.PlanPremium, now.AddDate(0, -1, 0), now.AddDate(0, 1, 0), true, 500000),
 		newSubscription("42000000-0000-0000-0000-000000000002", bh2, owner1ID, domain.PlanPremium, now.AddDate(0, -1, -5), now.AddDate(0, 1, -5), true, 500000),
@@ -1345,6 +1421,16 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, fronte
 			return err
 		}
 	}
+	for _, photo := range bathhousePhotos {
+		if err := upsertBathhousePhoto(ctx, tx, photo); err != nil {
+			return err
+		}
+	}
+	for _, hook := range webhooks {
+		if err := upsertWebhook(ctx, tx, hook); err != nil {
+			return err
+		}
+	}
 	for _, subscription := range subscriptions {
 		if err := upsertSubscription(ctx, tx, subscription); err != nil {
 			return err
@@ -1711,6 +1797,48 @@ func upsertRepresentative(ctx context.Context, tx pgx.Tx, representative demoRep
 	`, representative.ID, representative.UserID, representative.BathhouseID, representative.OwnerID, string(representative.Role), representative.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("upsert representative %s: %w", representative.ID, err)
+	}
+	return nil
+}
+
+func upsertBathhousePhoto(ctx context.Context, tx pgx.Tx, photo demoBathhousePhoto) error {
+	_, err := tx.Exec(ctx, `
+		INSERT INTO bathhouse_photos (id, bathhouse_id, url, thumbnail_url, position, status, verified_by_id, verified_at, uploaded_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		ON CONFLICT (id) DO UPDATE SET
+			bathhouse_id = EXCLUDED.bathhouse_id,
+			url = EXCLUDED.url,
+			thumbnail_url = EXCLUDED.thumbnail_url,
+			position = EXCLUDED.position,
+			status = EXCLUDED.status,
+			verified_by_id = EXCLUDED.verified_by_id,
+			verified_at = EXCLUDED.verified_at,
+			uploaded_at = EXCLUDED.uploaded_at
+	`, photo.ID, photo.BathhouseID, photo.URL, photo.ThumbnailURL, photo.Position, photo.Status, photo.VerifiedByID, photo.VerifiedAt, photo.UploadedAt)
+	if err != nil {
+		return fmt.Errorf("upsert bathhouse_photo %s: %w", photo.ID, err)
+	}
+	return nil
+}
+
+func upsertWebhook(ctx context.Context, tx pgx.Tx, hook demoWebhook) error {
+	eventsJSON, err := json.Marshal(hook.Events)
+	if err != nil {
+		return fmt.Errorf("marshal webhook events for %s: %w", hook.ID, err)
+	}
+	_, err = tx.Exec(ctx, `
+		INSERT INTO webhooks (id, owner_id, url, secret, events, is_active, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		ON CONFLICT (id) DO UPDATE SET
+			owner_id = EXCLUDED.owner_id,
+			url = EXCLUDED.url,
+			secret = EXCLUDED.secret,
+			events = EXCLUDED.events,
+			is_active = EXCLUDED.is_active,
+			updated_at = EXCLUDED.updated_at
+	`, hook.ID, hook.OwnerID, hook.URL, hook.Secret, eventsJSON, hook.IsActive, hook.CreatedAt, hook.UpdatedAt)
+	if err != nil {
+		return fmt.Errorf("upsert webhook %s: %w", hook.ID, err)
 	}
 	return nil
 }
