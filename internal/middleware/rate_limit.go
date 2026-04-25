@@ -86,10 +86,14 @@ func (rl *RateLimiter) Check(key string, ratePerSecond float64) RateLimitInfo {
 	now := time.Now()
 	limiter, exists := rl.limiters[key]
 
-	// Bucket capacity must be at least 1 so that a token can be consumed.
-	// For sub-1 rates (e.g. 5 req/min = 0.0833 req/s), the bucket holds 1 token
-	// and refills at ratePerSecond, naturally spacing requests at the correct interval.
-	capacity := math.Max(ratePerSecond, 1.0)
+	// Bucket capacity controls burst tolerance — how many requests can be
+	// made back-to-back before the bucket empties and the caller has to wait
+	// for refill. We size it to roughly one minute's worth of budget so a
+	// "50 req/min" limit really means "burst up to 50, then refill at the
+	// rate" — matching what operators intuitively expect from per-minute
+	// limits. Floor at 5 so very-low-rate endpoints still tolerate small
+	// natural bursts (page reloads, double-clicks).
+	capacity := math.Max(ratePerSecond*60.0, 5.0)
 
 	if !exists {
 		limiter = &clientLimiter{
