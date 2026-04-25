@@ -1,0 +1,23 @@
+# Local development override (Apple Silicon).
+#
+# postgis/postgis publishes only linux/amd64 manifests for both alpine and
+# bookworm 17-3.5 tags. On Apple Silicon we run the amd64 image under Rosetta
+# emulation. This is the standard escape hatch in Docker Desktop ≥4.16
+# (Settings → General → "Use Rosetta for x86/amd64 emulation").
+#
+# This file is auto-loaded by `docker compose` alongside docker-compose.yml.
+services:
+  postgres:
+    platform: linux/amd64
+    image: postgis/postgis:17-3.5
+    # Default 5432 collides with brew postgresql@16 (PID listening on 5432);
+    # Postgres.app already grabs 5433 too, so we use 5435.
+    ports: !override ["5435:5432"]
+  redis:
+    # Default 6379 collides with brew redis-server.
+    ports: !override ["6381:6379"]
+  minio:
+    # 9000/9001 already taken on this host.
+    ports: !override
+      - "9102:9000"
+      - "9103:9001"

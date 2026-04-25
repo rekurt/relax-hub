@@ -1,0 +1,235 @@
+total_ms,calls,mean_ms,rows,query_preview
+18064.20,84,215.05,0,CREATE EXTENSION IF NOT EXISTS postgis
+6993.12,42,166.50,0,DROP SCHEMA IF EXISTS public CASCADE
+2674.65,3877,0.69,3877,"UPDATE sessions SET last_active_at = $2, expires_at = $3 WHERE id = $1"
+1491.44,42,35.51,0,"CREATE TABLE client_reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID NOT NULL REFERENCES users(id),
+    client_id UUID NOT NULL REFERENCES users(id),
+    booking_id UUID "
+1456.22,42,34.67,0,"CREATE TABLE IF NOT EXISTS support_tickets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    booking_id UUID REFERENCES bookings(id),
+    categor"
+1410.85,42,33.59,0,"CREATE TABLE IF NOT EXISTS gift_certificates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code VARCHAR(14) NOT NULL UNIQUE,
+    purchaser_id UUID REFERENCES users(id),
+    purchaser_email "
+1340.57,42,31.92,0,"CREATE TABLE IF NOT EXISTS complaints (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    reporter_id UUID NOT NULL REFERENCES users(id),
+    target_type VARCHAR(20) NOT NULL CHECK (target_type I"
+1325.15,42,31.55,0,"CREATE TABLE custom_segments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    bathhouse_id UUID REFERENCES bathhouses(id) ON "
+1314.94,42,31.31,0,"CREATE TABLE promo_codes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code VARCHAR(50) NOT NULL UNIQUE,
+    type VARCHAR(30) NOT NULL,
+    value BIGINT NOT NULL,
+    bathhouse_id UUID REFE"
+1306.85,42,31.12,0,"CREATE TABLE IF NOT EXISTS auto_scenarios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL,
+    ena"
+1297.45,42,30.89,0,"CREATE TABLE external_calendars (
+    id UUID PRIMARY KEY,
+    bathhouse_id UUID NOT NULL REFERENCES bathhouses(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    source VARCHAR(50) NOT NULL,
+    last_"
+1284.56,42,30.58,0,"CREATE TABLE seasonal_tariffs (
+    id UUID PRIMARY KEY,
+    bathhouse_id UUID NOT NULL REFERENCES bathhouses(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    date_from DATE NOT NULL,
+    da"
+1271.43,42,30.27,0,"CREATE TABLE pms_connections (
+    id UUID PRIMARY KEY,
+    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    bathhouse_id UUID NOT NULL REFERENCES bathhouses(id) ON DELETE CASCADE,
+ "
+1263.94,42,30.09,0,"CREATE TABLE IF NOT EXISTS slot_blocks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bathhouse_id UUID NOT NULL REFERENCES bathhouses(id) ON DELETE CASCADE,
+    start_time TIMESTAMPTZ NOT N"
+1261.33,42,30.03,0,"CREATE TABLE owner_payment_details (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    entity_type VARCHAR(30) NOT NULL,
+    bank"
+1257.01,42,29.93,0,"CREATE TABLE disputes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_id UUID NOT NULL REFERENCES bookings(id),
+    initiator_id UUID NOT NULL REFERENCES users(id),
+    respondent_id "
+1256.54,42,29.92,0,"CREATE TABLE IF NOT EXISTS certificate_orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    purchaser_id UUID REFERENCES users(id),
+    purchaser_email TEXT NOT NULL,
+    recipient_email TE"
+1250.43,42,29.77,0,CREATE EXTENSION IF NOT EXISTS pg_trgm
+1250.15,42,29.77,0,"CREATE TABLE photo_orders (
+    id UUID PRIMARY KEY,
+    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    bathhouse_id UUID NOT NULL REFERENCES bathhouses(id) ON DELETE CASCADE,
+    "
+1250.14,42,29.77,0,"CREATE TABLE IF NOT EXISTS fraud_flags (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    rule VARCHAR(50) NOT NULL,
+    severity VARCHAR(20) NOT "
+1246.60,42,29.68,0,"CREATE TABLE IF NOT EXISTS guest_cards (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID NOT NULL REFERENCES users(id),
+    client_id UUID NOT NULL REFERENCES users(id),
+    bathh"
+1245.75,42,29.66,0,"CREATE TABLE IF NOT EXISTS extension_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REF"
+1243.59,42,29.61,0,"CREATE TABLE admin_notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    role VARCHAR(30) NOT NULL,
+    severity VARCHAR(20) NOT NULL DEFAULT 'info',
+    type VARCHAR(50) NOT NULL,
+  "
+1233.99,42,29.38,0,"CREATE TABLE loyalty_accounts (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    level VARCHAR(30) NOT NULL DEFAULT 'bronze',
+    points BIGINT NOT NULL DEFAULT 0 CHECK (points"
+1233.63,42,29.37,0,"CREATE TABLE device_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT NOT NULL UNIQUE,
+    platform VARCHAR(2"
+1232.10,42,29.34,0,"CREATE TABLE booking_modification_requests (
+    id UUID PRIMARY KEY,
+    booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE C"
+1229.03,42,29.26,0,"CREATE TABLE IF NOT EXISTS listing_drafts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT"
+1227.32,42,29.22,0,"CREATE TABLE IF NOT EXISTS bathhouse_photos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bathhouse_id UUID NOT NULL REFERENCES bathhouses(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    "
+1224.91,42,29.16,0,"CREATE TABLE IF NOT EXISTS sessions (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    device_info TEXT NOT NULL DEFAULT '',
+    browser TEXT NOT NULL DEF"
+1221.30,42,29.08,0,"CREATE TABLE bathhouse_views (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bathhouse_id UUID NOT NULL REFERENCES bathhouses(id) ON DELETE CASCADE,
+    viewer_id UUID REFERENCES users(id) ON"
+1220.68,42,29.06,0,"CREATE TABLE saved_cards (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider_token VARCHAR(500) NOT NULL,
+    last4 VARCHAR(4) NOT NULL,
+    brand"
+1216.18,42,28.96,0,"CREATE TABLE IF NOT EXISTS media (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_type VARCHAR(20) NOT NULL,
+    owner_id UUID NOT NULL,
+    user_id UUID NOT NULL REFERENCES users(id) ON"
+1215.23,42,28.93,0,"CREATE TABLE social_accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider VARCHAR(20) NOT NULL,
+    provider_id V"
+1214.75,42,28.92,0,"CREATE TABLE IF NOT EXISTS booking_shares (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    token VARCHAR(32) NOT NULL UNIQUE,
+    created_by UUID NOT NULL REFERENCES users(id),
+    bathhouse_i"
+1213.41,42,28.89,0,"CREATE TABLE saved_searches (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL DEFAULT '',
+    filter"
+1212.71,42,28.87,0,"CREATE TABLE IF NOT EXISTS broadcasts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID NOT NULL REFERENCES users(id),
+    segment VARCHAR(50) NOT NULL,
+    title VARCHAR(255) NOT"
+1212.62,42,28.87,0,"CREATE TABLE offer_acceptances (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    offer_version VARCHAR(50) NOT NULL,
+    accept"
+1210.67,42,28.83,0,"CREATE TABLE antifraud_stoplist (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    phone VARCHAR(20),
+    email VARCHAR(255),
+    inn VARCHAR(12),
+    bank_card_number VARCHAR(16),
+    reason TE"
+1210.43,42,28.82,0,"CREATE TABLE payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_id UUID NOT NULL REFERENCES bookings(id),
+    user_id UUID NOT NULL REFERENCES users(id),
+    amount BIGINT NOT N"
+1199.62,42,28.56,0,"CREATE TABLE IF NOT EXISTS feature_flags (
+    key         VARCHAR(100) PRIMARY KEY,
+    enabled     BOOLEAN NOT NULL DEFAULT FALSE,
+    description VARCHAR(500) NOT NULL DEFAULT '',
+    region      V"
+1196.17,42,28.48,0,"CREATE TABLE payouts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    amount BIGINT NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',"
+1193.36,42,28.41,0,"CREATE TABLE webhooks (
+    id UUID PRIMARY KEY,
+    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    secret TEXT NOT NULL,
+    events JSONB NOT NULL DEFAULT '"
+1187.83,42,28.28,0,"CREATE TABLE service_fee_configs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    region VARCHAR(10) NOT NULL DEFAULT '*',
+    category VARCHAR(100),
+    fee_percent NUMERIC(5,2) NOT NULL DEFA"
+1186.56,42,28.25,0,"CREATE TABLE notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(30) NOT NULL,
+    title VARCHAR(500) "
+1186.22,42,28.24,0,"CREATE TABLE conversations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bathhouse_id UUID NOT NULL REFERENCES bathhouses(id),
+    client_id UUID NOT NULL REFERENCES users(id),
+    booking_"
+1185.66,42,28.23,0,"CREATE TABLE pricing_rules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bathhouse_id UUID NOT NULL REFERENCES bathhouses(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    type VAR"
+1184.41,42,28.20,0,"CREATE TABLE wallets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    balance BIGINT NOT NULL DEFAULT 0,
+    held_amount BIGINT NOT NULL DEFAULT"
+1183.05,42,28.17,0,"CREATE TABLE escrows (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_id UUID NOT NULL REFERENCES bookings(id) UNIQUE,
+    amount BIGINT NOT NULL,
+    service_fee BIGINT NOT NULL DEFAU"
+1179.64,42,28.09,0,"CREATE TABLE addons (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bathhouse_id UUID NOT NULL REFERENCES bathhouses(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEX"
+1173.56,42,27.94,0,"CREATE TABLE IF NOT EXISTS audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id UUID NOT NULL,
+    user_id UUID NOT NULL REFERENCES users"
