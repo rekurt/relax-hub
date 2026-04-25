@@ -86,7 +86,38 @@
 - **Severity**: Low (cosmetic), but worth fixing in C1 (UI tokens / empty states pass).
 - **Fix pointer**: use Antd `Empty` component or a project `EmptyState` (already exists per CLAUDE.md component list).
 
-(more findings appended as the audit continues — the rest of the admin surface still to be walked in upcoming sessions)
+#### A1.7 — `/admin/subscriptions` queries owner's `/my/subscriptions` instead of admin endpoint (High, frontend wrong endpoint)
+
+- **Repro**: log in as admin, open `/admin/subscriptions`. Network tab shows `GET /api/v1/my/subscriptions?page=1&page_size=20` instead of an admin-listing endpoint.
+- **Expected**: an admin endpoint listing **all** subscriptions across all owners.
+- **Actual**: hits the owner-self endpoint, returns admin's own (empty) subscription list.
+- **Root cause**: `frontend/src/pages/admin/SubscriptionManagement.tsx` reuses an owner hook (`useGetMySubscriptions` from `frontend/src/api/generated/subscriptions/subscriptions.ts`) instead of an admin variant.
+- **Fix pointer**: needs an `/api/v1/admin/subscriptions` (list-all) endpoint AND the corresponding orval-generated client. Until that is shipped, the admin page should display "Раздел в разработке" rather than appear functional.
+- **Severity**: High — operationally important admin surface returns wrong data, can confuse the operator.
+
+#### A1.8 — `/admin/certificates` likewise hits `/my/certificates` (High, frontend wrong endpoint)
+
+- **Repro**: log in as admin, open `/admin/certificates`. Network shows `GET /api/v1/my/certificates?page=1&page_size=20`.
+- Same shape as A1.7 — admin page reuses owner/client hook.
+- **Fix pointer**: same as A1.7 — add admin endpoint, generate client, switch UI.
+
+### Admin coverage summary (this session)
+
+37 admin pages covered:
+
+| Batch | Pages | Status |
+|---|---|---|
+| 1 Moderation | AdminDashboard, BathhouseModeration, ReviewModeration, PhotoVerification, ComplaintManagement | ✅ all 200, dup fetch + missing empty states |
+| 2 Users+Content | UserManagement, RoleManagement, CityManagement, AmenityManagement, ObjectTypeManagement, HolidayManagement | ✅ all 200, AmenityManagement is the only page with proper TanStack key (no dup) |
+| 3 Finance | AdminFinanceDashboard, BankReconciliation, WalletManagement (search-only), BookingManagement (no auto-list bug) | ⚠️ BookingManagement should auto-load with default filter |
+| 4 Support | TicketManagement (3 tickets), DisputeManagement (2), TicketDetail/DisputeDetail (not deeply visited) | ✅ |
+| 5 Analytics | ConversionFunnels (empty body), CohortAnalysis, SupplyDemandMetrics, GeoHeatmap, AntiFraudDashboard | ✅ |
+| 6 Configuration | PlatformSettings (13), FeatureFlags (13), ServiceFeeConfig (1), SubscriptionManagement (A1.7), LoyaltyManagement (4 static tiers) | ⚠️ A1.7 |
+| 7 Misc | AdminProfile, AdminAuditLog (empty), AdminNotifications (uses /my, not admin), AdminNotificationCenter, ForceMajeure, FAQManagement (18), GlobalPromoCodes (form-only), CertificateManagement (A1.8) | ⚠️ A1.8 |
+
+**Critical / High count**: 2 Critical (A1.1 + workaround applied) / 4 High (A1.2 autofill, A1.4 dup-fetch, A1.7 subscriptions, A1.8 certificates). **Medium**: 2 (A1.3 dashboard zeros, A1.5 wrong title). **Low**: 1 (A1.6 empty states).
+
+**No 5xx, no auth-bypass, no data-loss bugs found** in admin role this session. All `/admin/*` endpoints respond 200 once the 2FA workaround is applied.
 
 ### Owner role
 
