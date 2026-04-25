@@ -1,8 +1,8 @@
 # RelaxHUB — Full Audit, Fix-pack, Redesign & Prod Data Gap
 
-**Date:** 2026-04-25  
-**Status:** Approved (Section 1) — autonomous execution authorized  
-**Owner:** Operator (delegating)  
+**Date:** 2026-04-25
+**Status:** Approved (Section 1) — autonomous execution authorized
+**Owner:** Operator (delegating)
 **Branch base:** `master`
 
 ## 0. Context

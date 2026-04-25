@@ -21,4 +21,3 @@ services:
     ports: !override
       - "9102:9000"
       - "9103:9001"
-
