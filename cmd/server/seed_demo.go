@@ -51,9 +51,9 @@ var seedDemoCmd = &cobra.Command{
 
 		log.Printf("Demo world seeded successfully.\n")
 		log.Printf("Demo password for all seeded accounts: %s\n", seedDemoPassword)
-		log.Printf("Client demo account: demo.client1@bani.local / +79990000031\n")
-		log.Printf("Owner demo account: demo.owner1@bani.local / +79990000021\n")
-		log.Printf("Admin demo account: demo.admin@bani.local / +79990000011\n")
+		log.Printf("Client demo account: demo.client1@relax-hub.ru / +79990000031\n")
+		log.Printf("Owner demo account: demo.owner1@relax-hub.ru / +79990000021\n")
+		log.Printf("Admin demo account: demo.admin@relax-hub.ru / +79990000011\n")
 		return nil
 	},
 }
@@ -497,103 +497,103 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, fronte
 
 	users := []demoUser{
 		{
-			ID: adminID, Email: "demo.admin@bani.local", Name: "Марина Админ", Phone: "+79990000011",
+			ID: adminID, Email: "demo.admin@relax-hub.ru", Name: "Марина Админ", Phone: "+79990000011",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSuperAdmin, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=48",
 			Bio: "Курирует публичную витрину, модерацию и демонстрационный контур.", ReferralCode: "ADMINM11", OnboardingCompleted: true,
 		},
 		{
-			ID: supportID, Email: "demo.support@bani.local", Name: "Егор Поддержка", Phone: "+79990000012",
+			ID: supportID, Email: "demo.support@relax-hub.ru", Name: "Егор Поддержка", Phone: "+79990000012",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL2, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=14",
 			Bio: "Ведет клиентские обращения, возвраты и споры в demo-мире.", ReferralCode: "SUPPORT12", OnboardingCompleted: true,
 		},
 		{
-			ID: modID, Email: "demo.admin.mod@bani.local", Name: "Вера Модератор", Phone: "+79990000013",
+			ID: modID, Email: "demo.admin.mod@relax-hub.ru", Name: "Вера Модератор", Phone: "+79990000013",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleModerator, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=47",
 			Bio: "Модерирует заявки на публикацию объектов, фото и отзывы.", ReferralCode: "MOD00013", OnboardingCompleted: true,
 		},
 		{
-			ID: support1ID, Email: "demo.admin.sup1@bani.local", Name: "Паша Первая линия", Phone: "+79990000014",
+			ID: support1ID, Email: "demo.admin.sup1@relax-hub.ru", Name: "Паша Первая линия", Phone: "+79990000014",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL1, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=52",
 			Bio: "Первая линия поддержки — FAQ, быстрые ответы, маршрутизация L2.", ReferralCode: "SUP1L014", OnboardingCompleted: true,
 		},
 		{
-			ID: support3ID, Email: "demo.admin.sup3@bani.local", Name: "Арсений Третья линия", Phone: "+79990000015",
+			ID: support3ID, Email: "demo.admin.sup3@relax-hub.ru", Name: "Арсений Третья линия", Phone: "+79990000015",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL3, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=11",
 			Bio: "Ведёт эскалированные споры, координирует с финансовой командой.", ReferralCode: "SUP3L015", OnboardingCompleted: true,
 		},
 		{
-			ID: financeID, Email: "demo.admin.fin@bani.local", Name: "Ольга Финансы", Phone: "+79990000016",
+			ID: financeID, Email: "demo.admin.fin@relax-hub.ru", Name: "Ольга Финансы", Phone: "+79990000016",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleFinance, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=45",
 			Bio: "Сверка платежей, подтверждение выплат, реконсиляция банковских выписок.", ReferralCode: "FIN00016", OnboardingCompleted: true,
 		},
 		{
-			ID: modID, Email: "demo.admin.mod@bani.local", Name: "Вера Модератор", Phone: "+79990000013",
+			ID: modID, Email: "demo.admin.mod@relax-hub.ru", Name: "Вера Модератор", Phone: "+79990000013",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleModerator, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=47",
 			Bio: "Модерирует заявки на публикацию объектов, фото и отзывы.", ReferralCode: "MOD00013", OnboardingCompleted: true,
 		},
 		{
-			ID: support1ID, Email: "demo.admin.sup1@bani.local", Name: "Паша Первая линия", Phone: "+79990000014",
+			ID: support1ID, Email: "demo.admin.sup1@relax-hub.ru", Name: "Паша Первая линия", Phone: "+79990000014",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL1, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=52",
 			Bio: "Первая линия поддержки — FAQ, быстрые ответы, маршрутизация L2.", ReferralCode: "SUP1L014", OnboardingCompleted: true,
 		},
 		{
-			ID: support3ID, Email: "demo.admin.sup3@bani.local", Name: "Арсений Третья линия", Phone: "+79990000015",
+			ID: support3ID, Email: "demo.admin.sup3@relax-hub.ru", Name: "Арсений Третья линия", Phone: "+79990000015",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleSupportL3, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=11",
 			Bio: "Ведёт эскалированные споры, координирует с финансовой командой.", ReferralCode: "SUP3L015", OnboardingCompleted: true,
 		},
 		{
-			ID: financeID, Email: "demo.admin.fin@bani.local", Name: "Ольга Финансы", Phone: "+79990000016",
+			ID: financeID, Email: "demo.admin.fin@relax-hub.ru", Name: "Ольга Финансы", Phone: "+79990000016",
 			Role: domain.RoleAdmin, AdminSubRole: domain.AdminSubRoleFinance, CityID: ptrInt64(cityIDs["moskva"]),
 			Region: domain.RegionRU, AvatarURL: "https://i.pravatar.cc/240?img=45",
 			Bio: "Сверка платежей, подтверждение выплат, реконсиляция банковских выписок.", ReferralCode: "FIN00016", OnboardingCompleted: true,
 		},
 		{
-			ID: owner1ID, Email: "demo.owner1@bani.local", Name: "Сергей Хозяев", Phone: "+79990000021",
+			ID: owner1ID, Email: "demo.owner1@relax-hub.ru", Name: "Сергей Хозяев", Phone: "+79990000021",
 			Role: domain.RoleOwner, CityID: ptrInt64(cityIDs["moskva"]), Region: domain.RegionRU,
 			AvatarURL: "https://i.pravatar.cc/240?img=12",
 			Bio:       "Управляет премиальными объектами BANI PRO в Москве и пригороде.", ReferralCode: "OWNER021", OnboardingCompleted: true,
 		},
 		{
-			ID: owner2ID, Email: "demo.owner2@bani.local", Name: "Анна Управляющая", Phone: "+79990000022",
+			ID: owner2ID, Email: "demo.owner2@relax-hub.ru", Name: "Анна Управляющая", Phone: "+79990000022",
 			Role: domain.RoleOwner, CityID: ptrInt64(cityIDs["krasnogorsk"]), Region: domain.RegionRU,
 			AvatarURL: "https://i.pravatar.cc/240?img=32",
 			Bio:       "Ведет семейные и загородные объекты, тестирует request-mode и частные сценарии.", ReferralCode: "OWNER022", OnboardingCompleted: true,
 		},
 		{
-			ID: rep1ID, Email: "demo.rep1@bani.local", Name: "Илья Представитель", Phone: "+79990000023",
+			ID: rep1ID, Email: "demo.rep1@relax-hub.ru", Name: "Илья Представитель", Phone: "+79990000023",
 			Role: domain.RoleRepresentative, CityID: ptrInt64(cityIDs["krasnogorsk"]), Region: domain.RegionRU,
 			AvatarURL: "https://i.pravatar.cc/240?img=15",
 			Bio:       "Помогает владельцу вести календарь, заявки и коммуникацию по объектам.", ReferralCode: "REP00023", OnboardingCompleted: true,
 		},
 		{
-			ID: client1ID, Email: "demo.client1@bani.local", Name: "Алина Воронцова", Phone: "+79990000031",
+			ID: client1ID, Email: "demo.client1@relax-hub.ru", Name: "Алина Воронцова", Phone: "+79990000031",
 			Role: domain.RoleClient, CityID: ptrInt64(cityIDs["moskva"]), Region: domain.RegionRU,
 			AvatarURL: "https://i.pravatar.cc/240?img=23",
 			Bio:       "Любит камерные SPA-форматы на двоих, часто платит из кошелька и оставляет отзывы.", ReferralCode: "ALINA031", OnboardingCompleted: true,
 		},
 		{
-			ID: client2ID, Email: "demo.client2@bani.local", Name: "Максим Серов", Phone: "+79990000032",
+			ID: client2ID, Email: "demo.client2@relax-hub.ru", Name: "Максим Серов", Phone: "+79990000032",
 			Role: domain.RoleClient, CityID: ptrInt64(cityIDs["odintsovo"]), Region: domain.RegionRU,
 			AvatarURL: "https://i.pravatar.cc/240?img=54",
 			Bio:       "Бронирует большие дома для компаний и корпоративных выездов.", ReferralCode: "MAXIM032", OnboardingCompleted: true,
 		},
 		{
-			ID: client3ID, Email: "demo.client3@bani.local", Name: "Екатерина Левина", Phone: "+79990000033",
+			ID: client3ID, Email: "demo.client3@relax-hub.ru", Name: "Екатерина Левина", Phone: "+79990000033",
 			Role: domain.RoleClient, CityID: ptrInt64(cityIDs["krasnogorsk"]), Region: domain.RegionRU,
 			AvatarURL: "https://i.pravatar.cc/240?img=36",
 			Bio:       "Ищет семейные выезды на выходные, внимательно смотрит правила отмены и сертификаты.", ReferralCode: "KATYA033", OnboardingCompleted: true,
 		},
 		{
-			ID: client4ID, Email: "demo.client4@bani.local", Name: "Новый клиент", Phone: "+79990000034",
+			ID: client4ID, Email: "demo.client4@relax-hub.ru", Name: "Новый клиент", Phone: "+79990000034",
 			Role: domain.RoleClient, CityID: ptrInt64(cityIDs["moskva"]), Region: domain.RegionRU,
 			AvatarURL: "https://i.pravatar.cc/240?img=41",
 			Bio:       "Свежий пользователь для onboarding, публичного checkout и нового клиентского UX.", ReferralCode: "FRESH034", OnboardingCompleted: false,
@@ -1003,13 +1003,13 @@ func seedDemoWorld(ctx context.Context, pool *pgxpool.Pool, passwordHash, fronte
 	certificate2ID := uuid.MustParse("48000000-0000-0000-0000-000000000002")
 	certificates := []demoCertificate{
 		{
-			ID: certificate1ID, Code: "BANI-GIFT-001", PurchaserID: &client1ID, PurchaserEmail: "demo.client1@bani.local",
+			ID: certificate1ID, Code: "BANI-GIFT-001", PurchaserID: &client1ID, PurchaserEmail: "demo.client1@relax-hub.ru",
 			RecipientEmail: "friend@example.com", RecipientName: "Ольга", Amount: rub(15000), Balance: rub(15000),
 			Message: "Для спокойного выезда вдвоем без лишней суеты.", Status: "active", ValidUntil: certificateValidUntil, CreatedAt: now.AddDate(0, 0, -3),
 		},
 		{
-			ID: certificate2ID, Code: "BANI-GIFT-002", PurchaserID: &client3ID, PurchaserEmail: "demo.client3@bani.local",
-			RecipientEmail: "demo.client3@bani.local", RecipientName: "Екатерина", Amount: rub(10000), Balance: 0,
+			ID: certificate2ID, Code: "BANI-GIFT-002", PurchaserID: &client3ID, PurchaserEmail: "demo.client3@relax-hub.ru",
+			RecipientEmail: "demo.client3@relax-hub.ru", RecipientName: "Екатерина", Amount: rub(10000), Balance: 0,
 			Message: "Подарок на семейный уикенд.", Status: "used", ValidUntil: certificateValidUntil, RedeemedByID: &client3ID, CreatedAt: now.AddDate(0, 0, -20),
 		},
 	}
@@ -2293,7 +2293,7 @@ func buildSyntheticReviewUsers(cityIDs map[string]int64) []demoUser {
 		cityID := cityOrder[index%len(cityOrder)]
 		users = append(users, demoUser{
 			ID:                  userID,
-			Email:               fmt.Sprintf("demo.reviewer%02d@bani.local", index+1),
+			Email:               fmt.Sprintf("demo.reviewer%02d@relax-hub.ru", index+1),
 			Name:                name,
 			Phone:               fmt.Sprintf("+799900001%02d", index+1),
 			Role:                domain.RoleClient,
