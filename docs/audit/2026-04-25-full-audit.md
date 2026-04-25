@@ -142,7 +142,37 @@
 
 ### Owner role
 
-(Session 2)
+**Auditor**: claude-opus-4-7 (Session 2, 2026-04-25)
+**Login**: `demo.owner1@relax-hub.ru / DemoPass123!`
+**Harness**: same docker-compose stack as Session 1, Chrome MCP tab `1919497189`, pgss reset before pass.
+
+#### A2.1 — Every owner list page double-fetches its primary list on mount, plus `/my/bathhouses` is fetched 4× (High, frontend)
+
+- **Repro**: load any owner list page (`/bathhouses`, `/bookings`, `/reviews`, `/calendar`, etc.). The primary GET fires twice with identical query strings. On top of that, `/my/bathhouses` is requested as both the no-arg form (`?status=active` only) and the paginated form (`?page=1&page_size=…`) — each in turn doubled — for a total of **4** identical-or-near-identical requests within ~200 ms.
+- **Evidence** (samples):
+  - `/my/bathhouses?status=active` ×2 + `/my/bathhouses?page=1&page_size=20&status=active` ×2 (BathhouseList)
+  - `/my/bookings?page=1&page_size=20` ×2 (BookingList)
+  - `/my/bathhouses/{id}/calendar-token` ×2 + `/my/bathhouses/{id}/external-calendars` ×2 (CalendarPage)
+  - `/auth/me` ×2 on every navigation, `/my/notifications/unread-count` ×2 on every page (same as A1.4)
+- **Root cause hypothesis**: identical to A1.4 — React StrictMode double-mounts effects in dev. Owner pages additionally use **two different shapes** of the same query (BathhouseSelector hook fires no-arg, page hook fires paginated) → 4× total. Both consumers should share a stable TanStack key.
+- **Severity**: High in dev, Medium in prod (StrictMode is dev-only, but the no-arg+paginated split fires in prod too — owner role pages double-load `/my/bathhouses` on every nav).
+- **Fix pointer (D — query consolidation)**: in `frontend/src/components/BathhouseSelector.tsx` and the page-level `useGetMyBathhouses` hooks, normalize on a single paginated query key (e.g. `['my-bathhouses', { page: 1, pageSize: 20, status: 'active' }]`) with `staleTime: 30000`+. Cross-cutting fix benefits both A1.4 (admin) and A2.1 (owner).
+
+#### A2.2 — `/bathhouses/new` mount creates phantom `listing_drafts` rows (Critical, data integrity)
+
+- **Repro**: log in as owner, navigate to `/bathhouses/new`. Without typing anything, observe network: `POST /api/v1/my/listing-drafts` fires immediately on mount and returns **201 twice** within milliseconds.
+- **Evidence**: SQL after 2 visits: `SELECT count(*) FROM listing_drafts WHERE owner_id = '<owner1>' AND created_at > now() - interval '5 minutes'` → **4 rows** (2 per visit). Total drafts in dev DB jumped from 8 to 12 after this experiment alone.
+- **Root cause hypothesis**: BathhouseForm wizard creates the draft in a top-level `useEffect(() => createDraft(), [])` with no idempotency on the client (no `useRef` guard, no `enabled: !draftId` gate) — React StrictMode fires the effect twice → 2 rows. **Plus** the backend `POST /my/listing-drafts` is not idempotent: every call inserts a new row. In production (no StrictMode) this still litters the table on every page reload, and on dev every visit costs 2 rows.
+- **Severity**: **Critical** for data integrity — a user clicking the "Создать" link more than once accumulates phantom drafts that show up in their drafts list, in admin dashboards counting drafts, and in pgss as duplicate inserts. The seed-demo gives owner1 6 active + 1 pending + 1 rejected; phantom drafts can quickly outnumber real drafts.
+- **Fix pointer**: two layers — (a) in `frontend/src/pages/bathhouses/BathhouseForm.tsx`, gate the create-draft mutation behind a `useRef`-based "already-fired" sentinel, OR pull `draftId` from URL/route params and only call create when it's missing; (b) on the backend (`internal/handler/listing_draft_handler.go` + service), make `POST /my/listing-drafts` idempotent — if the same owner has a draft in `step=1` with no field data set, return the existing row instead of inserting. Layer (a) ships in fix-pack; layer (b) is a follow-up if (a) doesn't close the prod-mode regression.
+
+#### A2.3 — Owner has no `/bookings/:id` detail route; deep links silently redirect to `/` (Medium, navigation)
+
+- **Repro**: as owner, copy any booking id from `/bookings`, paste `/bookings/<uuid>` into the address bar. Page silently redirects to `/` (dashboard).
+- **Expected**: either a dedicated owner BookingDetail page, OR an explicit "Редирект → список" with a back-button to the row. Currently a deep link from email/Telegram lands the owner on the dashboard with no breadcrumb.
+- **Root cause**: `frontend/src/router.tsx` lines ~160-205 register `/bookings` for owner but not `/bookings/:id`; only the client role has `/client/bookings/:id`. The client variant route catches nothing for owner, so the SPA fallback redirects.
+- **Severity**: Medium — not data-breaking but breaks shareable deep links, support workflow, push notifications that link to a specific booking.
+- **Fix pointer**: add an owner-scoped `/bookings/:id` route reusing the same component (or rendering an inline drawer over `/bookings?focus=<uuid>`). BookingList already shows details inline; the route just needs to scroll/expand the matching row.
 
 ### Representative role
 
