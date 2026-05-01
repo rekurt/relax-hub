@@ -3592,7 +3592,6 @@ body.bani-app .bani-certificates-sidebar {
 }
 
 body.bani-app .bani-certificate-summary,
-body.bani-app .bani-certificate-preview,
 body.bani-app .bani-certificates-status,
 body.bani-app .bani-certificates-card,
 body.bani-app .bani-certificates-balance-panel {
@@ -3606,11 +3605,16 @@ body.bani-app .bani-certificates-balance-panel {
 body.bani-app .bani-certificate-summary {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
+}
+
+body.bani-app .bani-certificate-summary__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 body.bani-app .bani-certificate-summary__eyebrow,
-body.bani-app .bani-certificate-preview__eyebrow,
 body.bani-app .bani-certificates-card__eyebrow,
 body.bani-app .bani-certificates-balance-panel__eyebrow {
   color: var(--bani-text-soft);
@@ -3620,69 +3624,20 @@ body.bani-app .bani-certificates-balance-panel__eyebrow {
   text-transform: uppercase;
 }
 
-body.bani-app .bani-certificate-summary__amount {
-  font-size: clamp(34px, 4vw, 48px);
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.05em;
+body.bani-app .bani-certificate-summary__title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
 }
 
 body.bani-app .bani-certificate-summary__caption {
-  color: var(--bani-text-soft);
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-body.bani-app .bani-certificate-summary__list,
-body.bani-app .bani-certificate-summary__trust {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-body.bani-app .bani-certificate-summary__row,
-body.bani-app .bani-certificate-summary__trust-item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-body.bani-app .bani-certificate-summary__row {
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-  color: var(--bani-text-soft);
-}
-
-body.bani-app .bani-certificate-summary__row strong {
-  color: var(--bani-text);
-  text-align: right;
-}
-
-body.bani-app .bani-certificate-summary__trust-item {
+  margin: 0;
   color: var(--bani-text-soft);
   font-size: 13px;
   line-height: 1.6;
 }
 
-body.bani-app .bani-certificate-summary__trust-item svg {
-  color: var(--bani-primary);
-  margin-top: 2px;
-}
-
-body.bani-app .bani-certificate-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-body.bani-app .bani-certificate-preview__title {
-  margin: 6px 0 0;
-  font-size: 20px;
-  line-height: 1.2;
-}
-
-body.bani-app .bani-certificate-preview__card {
+body.bani-app .bani-certificate-summary__card {
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -3696,21 +3651,20 @@ body.bani-app .bani-certificate-preview__card {
   box-shadow: 0 26px 54px rgba(15, 23, 42, 0.20);
 }
 
-body.bani-app .bani-certificate-preview__card-top,
-body.bani-app .bani-certificate-preview__meta {
+body.bani-app .bani-certificate-summary__card-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
 
-body.bani-app .bani-certificate-preview__brand {
+body.bani-app .bani-certificate-summary__brand {
   font-size: 32px;
   font-weight: 900;
   letter-spacing: -0.08em;
 }
 
-body.bani-app .bani-certificate-preview__chip {
+body.bani-app .bani-certificate-summary__chip {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -3724,19 +3678,19 @@ body.bani-app .bani-certificate-preview__chip {
   text-transform: uppercase;
 }
 
-body.bani-app .bani-certificate-preview__amount {
+body.bani-app .bani-certificate-summary__amount {
   font-size: clamp(36px, 4vw, 52px);
   line-height: 0.96;
   font-weight: 800;
   letter-spacing: -0.06em;
 }
 
-body.bani-app .bani-certificate-preview__recipient {
+body.bani-app .bani-certificate-summary__recipient {
   font-size: 18px;
   font-weight: 700;
 }
 
-body.bani-app .bani-certificate-preview__message {
+body.bani-app .bani-certificate-summary__message {
   display: flex;
   gap: 10px;
   padding: 16px 18px;
@@ -3747,18 +3701,22 @@ body.bani-app .bani-certificate-preview__message {
   line-height: 1.65;
 }
 
-body.bani-app .bani-certificate-preview__meta {
+body.bani-app .bani-certificate-summary__meta {
   margin-top: auto;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
-body.bani-app .bani-certificate-preview__meta-item {
+body.bani-app .bani-certificate-summary__meta-item {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-body.bani-app .bani-certificate-preview__meta-label {
+body.bani-app .bani-certificate-summary__meta-label {
   color: rgba(255, 255, 255, 0.62);
   font-size: 11px;
   font-weight: 700;
@@ -3766,12 +3724,36 @@ body.bani-app .bani-certificate-preview__meta-label {
   text-transform: uppercase;
 }
 
-body.bani-app .bani-certificate-preview__meta-value {
+body.bani-app .bani-certificate-summary__meta-value {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
+}
+
+body.bani-app .bani-certificate-summary__trust {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+body.bani-app .bani-certificate-summary__trust-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--bani-text-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+body.bani-app .bani-certificate-summary__trust-item svg {
+  color: var(--bani-primary);
+  margin-top: 3px;
+  flex-shrink: 0;
 }
 
 body.bani-app .bani-certificates-detail-grid {
@@ -3995,8 +3977,7 @@ body.bani-app .bani-certificates-list-loading {
 
   body.bani-app .bani-certificates-payment-selector__footer,
   body.bani-app .bani-certificates-status__actions,
-  body.bani-app .bani-certificate-preview__card-top,
-  body.bani-app .bani-certificate-preview__meta,
+  body.bani-app .bani-certificate-summary__card-top,
   body.bani-app .bani-certificates-balance-panel__head,
   body.bani-app .bani-certificates-card__header {
     flex-direction: column;
