@@ -295,6 +295,38 @@ describe('BathhouseDetail', () => {
     expect(screen.getByText('Спасибо за отзыв!')).toBeInTheDocument()
   })
 
+  it('shows only three latest reviews until all reviews are opened', () => {
+    vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
+      data: { data: mockBathhouse, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesBySlugSlug>)
+
+    vi.mocked(useGetBathhousesIdReviews).mockReturnValue({
+      data: {
+        data: [
+          { id: 'rev-4', rating: 5, text: 'Самый свежий отзыв', created_at: '2026-04-10T12:00:00Z', media: [] },
+          { id: 'rev-3', rating: 5, text: 'Второй свежий отзыв', created_at: '2026-04-09T12:00:00Z', media: [] },
+          { id: 'rev-2', rating: 4, text: 'Третий свежий отзыв', created_at: '2026-04-08T12:00:00Z', media: [] },
+          { id: 'rev-1', rating: 4, text: 'Старый отзыв', created_at: '2026-04-07T12:00:00Z', media: [] },
+        ],
+        success: true,
+        meta: { page: 1, page_size: 20, total_count: 4, total_pages: 1 },
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetBathhousesIdReviews>)
+
+    renderWithProviders(<BathhouseDetail />)
+
+    expect(screen.getByText('Самый свежий отзыв')).toBeInTheDocument()
+    expect(screen.getByText('Второй свежий отзыв')).toBeInTheDocument()
+    expect(screen.getByText('Третий свежий отзыв')).toBeInTheDocument()
+    expect(screen.queryByText('Старый отзыв')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Показать все отзывы' }))
+
+    expect(screen.getByText('Старый отзыв')).toBeInTheDocument()
+  })
+
   it('renders working hours', () => {
     vi.mocked(useGetBathhousesBySlugSlug).mockReturnValue({
       data: { data: mockBathhouse, success: true },

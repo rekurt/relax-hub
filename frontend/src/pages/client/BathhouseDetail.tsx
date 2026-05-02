@@ -61,6 +61,7 @@ import { resolveAssetUrl } from '@/lib/asset-url'
 import { formatSlotTimeLabel, getRangeHours, resolveSlotRangeSelection, type SlotRangeSelection } from '@/lib/slot-selection'
 
 const { Title, Text, Paragraph } = Typography
+const REVIEW_PREVIEW_LIMIT = 3
 
 const AMENITY_LIST = [
   { key: 'has_sauna', label: 'Сауна' },
@@ -78,7 +79,7 @@ export default function BathhouseDetail() {
   const { message } = App.useApp()
   const currentUser = useAuthStore((s) => s.user)
   const [selectedDate, setSelectedDate] = useState<string>(dayjs().format('YYYY-MM-DD'))
-  const [reviewPage, setReviewPage] = useState(1)
+  const [reviewView, setReviewView] = useState({ bathhouseId: '', page: 1, expanded: false })
   const [selectedSlotRange, setSelectedSlotRange] = useState<SlotRangeSelection | null>(null)
 
   const { data: bathhouseData, isLoading, isError: bathhouseIsError, refetch: refetchBathhouse } = useGetBathhousesBySlugSlug(slug ?? '', {
@@ -86,6 +87,12 @@ export default function BathhouseDetail() {
   })
   const bathhouse = bathhouseData?.data
   const id = bathhouse?.id
+  const reviewBathhouseId = id ?? ''
+  const activeReviewView = reviewView.bathhouseId === reviewBathhouseId
+    ? reviewView
+    : { bathhouseId: reviewBathhouseId, page: 1, expanded: false }
+  const reviewPage = activeReviewView.page
+  const reviewsExpanded = activeReviewView.expanded
 
   const { data: photosData } = useGetBathhousesIdPhotos(id ?? '', {
     query: { enabled: !!id },
@@ -104,7 +111,8 @@ export default function BathhouseDetail() {
   )
   const slots = slotsData?.data ?? []
 
-  const { data: reviewsData } = useGetBathhousesIdReviews(id ?? '', { page: reviewPage, page_size: 20 }, {
+  const reviewPageSize = reviewsExpanded ? 20 : REVIEW_PREVIEW_LIMIT
+  const { data: reviewsData } = useGetBathhousesIdReviews(id ?? '', { page: reviewPage, page_size: reviewPageSize }, {
     query: { enabled: !!id },
   })
   const reviews = reviewsData?.data ?? []
@@ -189,6 +197,8 @@ export default function BathhouseDetail() {
     : null
   const selectedRangeNeedsHours = resolvedSlotRange ? Math.max(0, minDurationHours - selectedRangeHours) : 0
   const displayedReviewCount = reviewMeta?.total_count ?? bathhouse?.review_count ?? reviews.length
+  const visibleReviews = reviewsExpanded ? reviews : reviews.slice(0, REVIEW_PREVIEW_LIMIT)
+  const hasHiddenReviews = !reviewsExpanded && displayedReviewCount > visibleReviews.length
 
   if (isLoading) {
     return (
@@ -645,7 +655,7 @@ export default function BathhouseDetail() {
         <Empty description="Нет отзывов" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       ) : (
         <>
-          {reviews.map((review) => (
+          {visibleReviews.map((review) => (
             <ReviewCard
               key={review.id}
               review={review}
@@ -655,12 +665,22 @@ export default function BathhouseDetail() {
               onDeleted={() => queryClient.invalidateQueries({ queryKey: [`/bathhouses/${id}/reviews`] })}
             />
           ))}
-          {reviewMeta && reviewMeta.total_pages && reviewMeta.total_pages > 1 && (
+          {hasHiddenReviews && (
+            <Button
+              type="default"
+              onClick={() => {
+                setReviewView({ bathhouseId: reviewBathhouseId, page: 1, expanded: true })
+              }}
+            >
+              Показать все отзывы
+            </Button>
+          )}
+          {reviewsExpanded && reviewMeta && reviewMeta.total_pages && reviewMeta.total_pages > 1 && (
             <Pagination
               current={reviewPage}
-              pageSize={20}
+              pageSize={reviewPageSize}
               total={reviewMeta.total_count}
-              onChange={setReviewPage}
+              onChange={(page) => setReviewView({ bathhouseId: reviewBathhouseId, page, expanded: true })}
               style={{ marginTop: 16 }}
             />
           )}
