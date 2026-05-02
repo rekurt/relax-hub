@@ -17,8 +17,7 @@ import {
 import type { InternalHandlerCertificateOrderResponse } from '@/api/generated/model/internalHandlerCertificateOrderResponse'
 import type { InternalHandlerCreateCertificateOrderRequest } from '@/api/generated/model/internalHandlerCreateCertificateOrderRequest'
 import type { InternalHandlerCertificateOrderPaymentRequest } from '@/api/generated/model/internalHandlerCertificateOrderPaymentRequest'
-import CertificateGiftPreview from '@/components/certificates/CertificateGiftPreview'
-import CertificateOrderSummary from '@/components/certificates/CertificateOrderSummary'
+import CertificateGiftSummary from '@/components/certificates/CertificateGiftSummary'
 import CertificatePaymentMethodSelector from '@/components/certificates/CertificatePaymentMethodSelector'
 import type { CertificatePaymentMethod } from '@/lib/certificate-payment'
 import { formatDateTime, formatPrice } from '@/lib/format'
@@ -29,52 +28,55 @@ const PRESET_AMOUNTS = [100000, 200000, 300000, 500000]
 const HERO_META = [
   {
     label: 'Срок действия',
-    value: '365 дней с сохранением остатка',
+    value: '365 дней — остаток не сгорает',
   },
   {
     label: 'Доставка',
-    value: 'На email сразу после подтверждения оплаты',
+    value: 'На email сразу после оплаты',
   },
   {
     label: 'Использование',
-    value: 'На любые бронирования внутри сервиса',
+    value: 'Любые бани в BANI, целиком или частями',
   },
   {
     label: 'Поддержка',
-    value: 'Поможем с оплатой и активацией без лишних шагов',
+    value: 'На связи 24/7 — поможем с оплатой и активацией',
   },
 ]
 
 const HOW_IT_WORKS = [
   {
     title: 'Соберите подарок за минуту',
-    description: 'Укажите сумму, контакт покупателя и, если нужно, данные получателя. Отдельного режима не требуется.',
+    description: 'Выберите сумму, оставьте свой email — и при желании добавьте имя и сообщение получателю. Одна форма для покупки себе и в подарок.',
   },
   {
     title: 'Оплатите удобным способом',
-    description: 'Карта, СБП, Apple Pay и Google Pay ведут в единый order flow без ложного выпуска сертификата до оплаты.',
+    description: 'Карта, СБП, Apple Pay или Google Pay. Сертификат не выпускается до фактического подтверждения оплаты — никаких сюрпризов.',
   },
   {
-    title: 'Получите код после подтверждения',
-    description: 'Когда платёж завершён, мы выпускаем сертификат, отправляем письмо и показываем success-state в этой же странице.',
+    title: 'Получите код на email',
+    description: 'Как только платёж проходит, мы создаём сертификат и отправляем письмо. Статус заказа всегда виден на этой же странице.',
   },
 ]
 
 const FAQ_ITEMS = [
   {
     key: 'validity',
-    label: 'Когда появляется код сертификата?',
-    children: 'Код создаётся только после подтверждённой оплаты. До этого в системе существует только заказ со статусом оплаты.',
+    label: 'Когда придёт код сертификата?',
+    children:
+      'Сразу после успешной оплаты. До этого момента сертификата ещё не существует — только заказ, который ждёт подтверждения платежа.',
   },
   {
     key: 'balance',
-    label: 'Что будет с остатком после частичного использования?',
-    children: 'Неиспользованный баланс сохраняется до окончания срока действия и может быть списан на следующих бронированиях.',
+    label: 'Что будет с остатком, если потратить часть?',
+    children:
+      'Остаток сохраняется на балансе сертификата до конца срока действия и автоматически применяется к следующим бронированиям.',
   },
   {
     key: 'delivery',
-    label: 'Можно ли отправить подарок другому человеку?',
-    children: 'Да. Если заполнить поля получателя, письмо с сертификатом уйдёт на указанный email, а имя попадёт в превью подарка.',
+    label: 'Можно ли подарить сертификат другому человеку?',
+    children:
+      'Да. Заполните email и имя получателя — письмо с сертификатом и вашим сообщением уйдёт ему напрямую, а имя появится в превью подарка.',
   },
 ]
 
@@ -191,7 +193,7 @@ function OrderStatePanel({
         </div>
         <div className="bani-certificates-status__copy">
           <h2>Платёж обрабатывается</h2>
-          <p>Подтверждаем оплату и выпуск сертификата. Как только статус сменится на `paid`, здесь появится код и success-state.</p>
+          <p>Ждём подтверждение от банка и выпускаем сертификат. Как только оплата подтвердится, на этой странице появятся код и кнопка перехода в кабинет.</p>
         </div>
       </section>
     )
@@ -245,13 +247,13 @@ export default function CertificatePurchase() {
   const paymentHint = useMemo(() => {
     switch (paymentMethod) {
       case 'sbp':
-        return 'Откроем страницу оплаты СБП и после подтверждения вернём вас в этот order flow.'
+        return 'Откроем страницу оплаты СБП — после подтверждения вернёмся к статусу заказа.'
       case 'apple_pay':
-        return 'Apple Pay создаёт заказ и сразу передаёт токен оплаты без дополнительной формы.'
+        return 'Apple Pay подтвердит оплату в один тап без дополнительной формы.'
       case 'google_pay':
-        return 'Google Pay работает через токенизированную оплату и затем возвращает вас в статус заказа.'
+        return 'Google Pay примет оплату токеном и вернёт вас на страницу заказа.'
       default:
-        return 'Классический redirect checkout с защищённой платёжной страницей.'
+        return 'Безопасная оплата картой через защищённую страницу банка.'
     }
   }, [paymentMethod])
 
@@ -310,24 +312,24 @@ export default function CertificatePurchase() {
       </div>
 
       <section className="bani-hero-panel bani-hero-panel--dark bani-certificates-hero">
-        <div className="bani-hero-panel__eyebrow">Gift checkout</div>
+        <div className="bani-hero-panel__eyebrow">Подарок BANI</div>
         <h1 className="bani-hero-panel__title">Подарочный сертификат BANI</h1>
         <div className="bani-hero-panel__description">
-          Оплатите подарок один раз, а использовать его можно позже и частями. Сертификат работает как премиальный запас времени на отдых, а не как одноразовый промокод.
+          Оплачиваете один раз — а отдыхают, когда захочется. Сертификат работает как личный баланс на бронирования: его можно потратить целиком или по частям в любой бане сети, без привязки к конкретной дате и без скрытых условий.
         </div>
 
         <div className="bani-certificates-hero__trust">
           <div className="bani-certificates-hero__trust-item">
             <SafetyCertificateOutlined />
-            <span>Код выпускается только после статуса `paid`.</span>
+            <span>Сертификат активируется только после успешной оплаты — никаких авансов и предварительных списаний.</span>
           </div>
           <div className="bani-certificates-hero__trust-item">
             <MailOutlined />
-            <span>Подтверждение и инструкция приходят на email без ручной переписки с поддержкой.</span>
+            <span>Письмо с кодом и инструкцией приходит автоматически — без переписки с поддержкой и ожидания подтверждения вручную.</span>
           </div>
           <div className="bani-certificates-hero__trust-item">
             <GiftOutlined />
-            <span>Сценарий “себе” и “в подарок” живёт в одной форме и переключается заполнением полей.</span>
+            <span>Себе или в подарок — оформляется одинаково: достаточно указать email получателя, чтобы превратить заказ в подарок.</span>
           </div>
         </div>
 
@@ -354,13 +356,13 @@ export default function CertificatePurchase() {
               <div className="bani-section-card__surface bani-certificates-workspace__surface">
                 <div className="bani-toolbar">
                   <div>
-                    <div className="bani-certificates-section-eyebrow">Checkout</div>
+                    <div className="bani-certificates-section-eyebrow">Оформление</div>
                     <h2 className="bani-section-card__title">Соберите сертификат под конкретный подарок</h2>
                     <div className="bani-section-card__description">
-                      Сначала собираем заказ, затем создаём оплату выбранным методом. Платёж и выпуск сертификата больше не смешаны в один ложный шаг.
+                      Заполните форму, выберите способ оплаты — превью справа сразу покажет, как подарок придёт получателю на email после оплаты.
                     </div>
                   </div>
-                  <Tag color="cyan">Premium service flow</Tag>
+                  <Tag color="cyan">Безопасная оплата</Tag>
                 </div>
 
                 <Form
@@ -510,17 +512,13 @@ export default function CertificatePurchase() {
           </section>
 
           <aside className="bani-stack bani-certificates-sidebar">
-            <CertificateOrderSummary
+            <CertificateGiftSummary
               amount={amountKopecks}
               purchaserEmail={purchaserEmail}
               recipientEmail={recipientEmail}
-              paymentMethod={paymentMethod}
-            />
-            <CertificateGiftPreview
-              amount={amountKopecks}
               recipientName={recipientName}
-              recipientEmail={recipientEmail}
               message={messageValue}
+              paymentMethod={paymentMethod}
             />
           </aside>
         </div>
