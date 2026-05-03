@@ -339,7 +339,7 @@ export default function PublicCheckout() {
             />
 
             <div className="rh-info-grid">
-              <div className="rh-info-card">
+              <label className="rh-info-card">
                 <span className="rh-info-card__label">Дата посещения</span>
                 <DatePicker
                   value={dayjs(selectedDate)}
@@ -351,8 +351,8 @@ export default function PublicCheckout() {
                   }}
                   style={{ width: '100%' }}
                 />
-              </div>
-              <div className="rh-info-card">
+              </label>
+              <label className="rh-info-card">
                 <span className="rh-info-card__label">Количество гостей</span>
                 <InputNumber
                   min={1}
@@ -361,7 +361,7 @@ export default function PublicCheckout() {
                   onChange={(value) => setGuestCount(value ?? 1)}
                   style={{ width: '100%' }}
                 />
-              </div>
+              </label>
             </div>
 
             <div className="rh-section-card">

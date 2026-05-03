@@ -6482,3 +6482,302 @@ body.rh-app .rh-pms-page__header-copy .ant-typography {
     width: 100%;
   }
 }
+
+/* ============================================================
+ * Design-system primitive treatments
+ * (controls.tsx wrappers emit `.rh-*` + `.ant-*` markers; these
+ * rules deliver the visual contract that lives in design/web.css.)
+ * ============================================================ */
+
+/* --- DatePicker / TimePicker layout --- */
+body.rh-app .ant-picker,
+body.rh-app .rh-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  height: 50px;
+  width: 100%;
+}
+
+body.rh-app .ant-picker .ant-picker-input,
+body.rh-app .rh-picker .ant-picker-input {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+body.rh-app .ant-picker .ant-picker-input > input,
+body.rh-app .rh-picker .ant-picker-input > input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: 500 15px/1.4 var(--rh-font-sans);
+  color: var(--rh-control-text);
+}
+
+body.rh-app .ant-picker input[type='date']::-webkit-calendar-picker-indicator,
+body.rh-app .ant-picker input[type='datetime-local']::-webkit-calendar-picker-indicator,
+body.rh-app .rh-picker input[type='date']::-webkit-calendar-picker-indicator,
+body.rh-app .rh-picker input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  opacity: 0.55;
+  cursor: pointer;
+  filter: hue-rotate(140deg) saturate(0.6);
+}
+body.rh-app .ant-picker input[type='date']::-webkit-calendar-picker-indicator:hover,
+body.rh-app .rh-picker input[type='date']::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Strip native number spinner chrome inside our pill inputs */
+body.rh-app .ant-input-number input[type='number']::-webkit-outer-spin-button,
+body.rh-app .ant-input-number input[type='number']::-webkit-inner-spin-button,
+body.rh-app .rh-input-number input[type='number']::-webkit-outer-spin-button,
+body.rh-app .rh-input-number input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+body.rh-app .ant-input-number input[type='number'],
+body.rh-app .rh-input-number input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* Textarea polish */
+body.rh-app textarea.ant-input,
+body.rh-app textarea.rh-input {
+  min-height: 96px;
+  line-height: 1.5;
+  padding-block: 12px;
+  resize: vertical;
+}
+
+/* --- Steps / wizard --- */
+body.rh-app .rh-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 14px;
+  margin: 0 0 12px;
+  border-bottom: 1px solid var(--rh-border-subtle);
+}
+
+body.rh-app .rh-steps .ant-steps-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 8px;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  transition: background-color 0.15s ease;
+}
+
+body.rh-app .rh-steps .ant-steps-item:hover {
+  background: var(--rh-primary-soft);
+}
+
+body.rh-app .rh-steps .ant-steps-item:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--rh-primary-glow);
+}
+
+body.rh-app .rh-steps .ant-steps-item:not(:last-child)::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 28px;
+  height: 1.5px;
+  margin-left: 6px;
+  background: var(--rh-border-control);
+  border-radius: 1px;
+}
+
+body.rh-app .rh-steps .ant-steps-item-finish:not(:last-child)::after {
+  background: linear-gradient(135deg, var(--rh-primary), var(--rh-primary-strong));
+}
+
+body.rh-app .rh-steps .ant-steps-item-icon {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font: 700 13px/1 var(--rh-font-sans);
+  color: var(--rh-text-soft);
+  background: var(--rh-bg-elevated);
+  border: 1.5px solid var(--rh-border-control);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+body.rh-app .rh-steps .ant-steps-item-content {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+body.rh-app .rh-steps .ant-steps-item-title {
+  font: 600 13px/1.1 var(--rh-font-sans);
+  color: var(--rh-text-soft);
+}
+
+body.rh-app .rh-steps .ant-steps-item-description {
+  font-size: 12px;
+  color: var(--rh-text-muted);
+}
+
+body.rh-app .rh-steps .ant-steps-item-active .ant-steps-item-icon {
+  background: var(--rh-primary-soft);
+  border-color: var(--rh-primary-strong);
+  border-width: 2px;
+  color: var(--rh-primary-strong);
+}
+
+body.rh-app .rh-steps .ant-steps-item-active .ant-steps-item-title {
+  color: var(--rh-text);
+  font-weight: 700;
+}
+
+body.rh-app .rh-steps .ant-steps-item-finish .ant-steps-item-icon {
+  background: linear-gradient(135deg, var(--rh-primary), var(--rh-primary-strong));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.20);
+}
+
+body.rh-app .rh-steps .ant-steps-item-finish .ant-steps-item-title {
+  color: var(--rh-text);
+}
+
+@media (max-width: 600px) {
+  body.rh-app .rh-steps {
+    gap: 4px;
+  }
+  body.rh-app .rh-steps .ant-steps-item {
+    padding: 6px 10px 6px 6px;
+  }
+  body.rh-app .rh-steps .ant-steps-item:not(:last-child)::after {
+    width: 12px;
+    margin-left: 2px;
+  }
+  body.rh-app .rh-steps .ant-steps-item-title {
+    font-size: 12px;
+  }
+}
+
+/* --- Checkbox --- */
+body.rh-app .rh-checkbox.ant-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  font: 500 14px/1.4 var(--rh-font-sans);
+  color: var(--rh-text);
+  margin: 0;
+}
+
+body.rh-app .rh-checkbox .ant-checkbox {
+  position: relative;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+body.rh-app .rh-checkbox .ant-checkbox-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+body.rh-app .rh-checkbox .ant-checkbox-inner {
+  position: relative;
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--rh-border-control);
+  background: #fff;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+body.rh-app .rh-checkbox:hover .ant-checkbox-inner {
+  border-color: var(--rh-primary-strong);
+}
+
+body.rh-app .rh-checkbox.ant-checkbox-wrapper-checked .ant-checkbox-inner {
+  background: linear-gradient(135deg, var(--rh-primary), var(--rh-primary-strong));
+  border-color: var(--rh-primary-strong);
+}
+
+body.rh-app .rh-checkbox.ant-checkbox-wrapper-checked .ant-checkbox-inner::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+body.rh-app .rh-checkbox .ant-checkbox-indeterminate .ant-checkbox-inner {
+  background: var(--rh-primary-soft);
+  border-color: var(--rh-primary-strong);
+}
+
+body.rh-app .rh-checkbox .ant-checkbox-indeterminate .ant-checkbox-inner::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  width: 10px;
+  height: 2px;
+  background: var(--rh-primary-strong);
+  border-radius: 1px;
+}
+
+body.rh-app .rh-checkbox:has(.ant-checkbox-input:focus-visible) .ant-checkbox-inner {
+  box-shadow: 0 0 0 3px var(--rh-primary-glow);
+}
+
+/* --- Topnav width safety --- */
+body.rh-app .rh-topnav {
+  min-width: 0;
+}
+
+body.rh-app .rh-topnav__actions {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+body.rh-app .rh-topnav__actions > * {
+  flex: 0 0 auto;
+}
+
+body.rh-app .rh-topnav__profile-dropdown.ant-dropdown,
+body.rh-app .rh-topnav__profile-dropdown .ant-dropdown-menu {
+  max-width: min(320px, calc(100vw - 24px));
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
