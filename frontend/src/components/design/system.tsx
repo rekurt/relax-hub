@@ -857,7 +857,7 @@ function tagTone(color?: ColorTone) {
   return 'ghost'
 }
 
-export function Tag({ color, icon, closable, closeIcon, onClose, className, children, ...props }: TagProps) {
+function TagBase({ color, icon, closable, closeIcon, onClose, className, children, ...props }: TagProps) {
   const tone = tagTone(color)
   return (
     <span
@@ -888,6 +888,47 @@ export function Tag({ color, icon, closable, closeIcon, onClose, className, chil
     </span>
   )
 }
+
+interface CheckableTagProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'onChange'> {
+  checked?: boolean
+  onChange?: (checked: boolean) => void
+}
+
+function CheckableTag({ checked, onChange, className, children, onClick, onKeyDown, ...props }: CheckableTagProps) {
+  const toggle = () => onChange?.(!checked)
+  return (
+    <span
+      role="checkbox"
+      aria-checked={!!checked}
+      tabIndex={0}
+      className={cx(
+        'rh-tag',
+        'rh-tag--checkable',
+        checked && 'rh-tag--checked',
+        'ant-tag',
+        'ant-tag-checkable',
+        checked && 'ant-tag-checkable-checked',
+        className,
+      )}
+      onClick={(event) => {
+        toggle()
+        onClick?.(event)
+      }}
+      onKeyDown={(event) => {
+        if (event.key === ' ' || event.key === 'Enter') {
+          event.preventDefault()
+          toggle()
+        }
+        onKeyDown?.(event)
+      }}
+      {...props}
+    >
+      {children}
+    </span>
+  )
+}
+
+export const Tag = Object.assign(TagBase, { CheckableTag })
 
 interface TypographyBaseProps extends HTMLAttributes<HTMLElement> {
   type?: ToneType

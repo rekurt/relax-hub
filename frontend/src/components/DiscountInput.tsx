@@ -8,8 +8,8 @@ import {
   InputNumber,
   Collapse,
   App,
+  Tag,
 } from '@/components/design/system'
-import { Tag } from 'antd'
 import { TagOutlined, GiftOutlined, ThunderboltOutlined, TeamOutlined } from '@/components/design/icons'
 import { usePostPromoCodesValidate } from '@/api/generated/promo-codes/promo-codes'
 import { useGetCertificatesCodeBalance } from '@/api/generated/certificates/certificates'
