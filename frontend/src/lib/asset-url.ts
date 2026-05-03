@@ -22,7 +22,14 @@ function storagePublicBaseURL() {
 }
 
 function rewriteStorageUrl(value: string) {
-  const candidate = value.startsWith('//') ? `${window.location.protocol}${value}` : value
+  let candidate = value
+  if (value.startsWith('//')) {
+    // Protocol-relative — needs a protocol to parse via URL. In SSR/Node
+    // execution there is no window, so bail to the absolute-URL passthrough
+    // in resolveAssetUrl rather than throwing ReferenceError.
+    if (typeof window === 'undefined') return null
+    candidate = `${window.location.protocol}${value}`
+  }
 
   try {
     const url = new URL(candidate)
@@ -56,5 +63,6 @@ export function resolveAssetUrl(value?: string | null) {
   }
 
   const normalizedPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+  if (typeof window === 'undefined') return normalizedPath
   return new URL(normalizedPath, window.location.origin).toString()
 }

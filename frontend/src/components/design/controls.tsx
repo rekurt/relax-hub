@@ -1662,6 +1662,36 @@ interface ModalProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   [key: string]: any
 }
 
+// Stack of overlay Escape handlers — one document listener routes Escape to
+// only the topmost overlay. Per-instance listeners would all fire on a single
+// Escape and dismiss every stacked dialog at once, losing in-progress input.
+const overlayEscapeStack: Array<() => void> = []
+let overlayEscapeListenerAttached = false
+function handleOverlayEscape(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || overlayEscapeStack.length === 0) return
+  const top = overlayEscapeStack[overlayEscapeStack.length - 1]
+  top?.()
+}
+function pushOverlayEscapeHandler(handler: () => void): () => void {
+  if (typeof document === 'undefined') return () => {}
+  overlayEscapeStack.push(handler)
+  if (!overlayEscapeListenerAttached) {
+    document.addEventListener('keydown', handleOverlayEscape)
+    overlayEscapeListenerAttached = true
+  }
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    const idx = overlayEscapeStack.lastIndexOf(handler)
+    if (idx >= 0) overlayEscapeStack.splice(idx, 1)
+    if (overlayEscapeStack.length === 0 && overlayEscapeListenerAttached) {
+      document.removeEventListener('keydown', handleOverlayEscape)
+      overlayEscapeListenerAttached = false
+    }
+  }
+}
+
 // Body-scroll lock shared by Modal/Drawer. A ref-counted handle lets stacked
 // overlays coexist: the body stays scroll-locked until the *last* open
 // overlay releases its lock, so closing an inner modal can no longer
@@ -1716,14 +1746,10 @@ export function Modal({
     if (!isOpen) return
 
     const releaseScrollLock = acquireBodyScrollLock()
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onCancel?.()
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
+    const releaseEscape = pushOverlayEscapeHandler(() => onCancel?.())
     return () => {
       releaseScrollLock()
-      document.removeEventListener('keydown', handleKeyDown)
+      releaseEscape()
     }
   }, [isOpen, onCancel])
   if (!isOpen) return null
@@ -1783,14 +1809,10 @@ export function Drawer({ open, visible, title, placement = 'right', width = 420,
     if (!isOpen) return
 
     const releaseScrollLock = acquireBodyScrollLock()
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose?.()
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
+    const releaseEscape = pushOverlayEscapeHandler(() => onClose?.())
     return () => {
       releaseScrollLock()
-      document.removeEventListener('keydown', handleKeyDown)
+      releaseEscape()
     }
   }, [isOpen, onClose])
   if (!isOpen) return null

@@ -1,5 +1,5 @@
-import { render } from '@testing-library/react'
-import { describe, expect, it, beforeEach, afterEach } from 'vitest'
+import { fireEvent, render } from '@testing-library/react'
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 import { Modal } from '@/components/design/system'
 
 describe('Design Modal body scroll lock', () => {
@@ -41,5 +41,22 @@ describe('Design Modal body scroll lock', () => {
 
     rerender(<Stack outerOpen={false} innerOpen={false} />)
     expect(document.body.style.overflow).toBe('')
+  })
+
+  it('routes Escape only to the topmost modal when modals are stacked', () => {
+    const onCancelOuter = vi.fn()
+    const onCancelInner = vi.fn()
+
+    render(
+      <>
+        <Modal open onCancel={onCancelOuter}>outer</Modal>
+        <Modal open onCancel={onCancelInner}>inner</Modal>
+      </>,
+    )
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+
+    expect(onCancelInner).toHaveBeenCalledTimes(1)
+    expect(onCancelOuter).not.toHaveBeenCalled()
   })
 })
