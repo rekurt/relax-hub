@@ -165,6 +165,7 @@ export default function BookingCreate() {
     let diff = ((eParts[0] ?? 0) * 60 + (eParts[1] ?? 0)) - ((sParts[0] ?? 0) * 60 + (sParts[1] ?? 0))
     if (diff <= 0) diff += 24 * 60
     return Math.max(1, diff / 60)
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
   }, [startTime, endTime])
 
   const addonsTotal = useMemo(() => {
@@ -275,6 +276,7 @@ export default function BookingCreate() {
   useEffect(() => {
     if (!autoResolvedSlot) return
     if (selectedSlotRange?.from !== autoResolvedSlot.from || selectedSlotRange?.to !== autoResolvedSlot.to) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clear stale auto-resolved alert when user picks a different slot
       setAutoResolvedSlot(null)
     }
   }, [selectedSlotRange, autoResolvedSlot])

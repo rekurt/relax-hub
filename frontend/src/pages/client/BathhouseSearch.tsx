@@ -295,6 +295,7 @@ export default function BathhouseSearch() {
     }
     hasHydratedFromUrlRef.current = true
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing URL → component state
     applyCatalogState(nextState)
   }, [applyCatalogState, searchParamsString])
 
@@ -341,6 +342,7 @@ export default function BathhouseSearch() {
 
   useEffect(() => {
     if (!geoEnabled && sortValue === 'distance_asc') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset to default sort when geo gets disabled
       setSortValue(DEFAULT_SORT_VALUE)
     }
   }, [geoEnabled, sortValue])

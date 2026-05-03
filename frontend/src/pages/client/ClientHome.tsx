@@ -90,8 +90,8 @@ function DiscoveryBathhouseCard({ item }: { item: InternalHandlerRecommendationR
       name={item.name}
       address={item.address}
       price={item.price_per_hour != null ? `${formatPrice(item.price_per_hour)}/ч` : undefined}
-      rating={item.rating ?? 0}
-      reviewCount={item.review_count ?? 0}
+      rating={typeof item.rating === 'number' ? item.rating : undefined}
+      reviewCount={typeof item.review_count === 'number' ? item.review_count : undefined}
       verified={Boolean(item.is_photo_verified)}
       imageUrl={cover}
       imageAlt={item.name}

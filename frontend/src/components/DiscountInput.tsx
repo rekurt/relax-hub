@@ -27,6 +27,7 @@ export interface DiscountState {
   referralAmount: number
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const EMPTY_DISCOUNT_STATE: DiscountState = {
   promoCode: '',
   promoDiscount: 0,
@@ -307,6 +308,7 @@ export default function DiscountInput({
         ),
       },
     ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handlers and onChange are stable identities provided by parent; usePoints/useReferral are local toggles already captured via state above
   }, [
     codeInput, error, hasAppliedCode, recentPromos, value, availablePoints, availableReferralBalance,
     promoMutation.isPending, certFetching, looksLikeCertificate, trimmed, totalPrice,
