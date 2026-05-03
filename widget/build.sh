@@ -37,7 +37,7 @@ if (!source.includes(needle)) {
 fs.writeFileSync(outputPath, source.replace(needle, `const INLINE_STYLES = ${JSON.stringify(css)};`));
 NODE
 
-# Check if we have a minifier
+# Check if we have a minifier.
 if command -v minify &> /dev/null; then
     echo "Using minify..."
     minify "$BUILD_JS" > "$DIST_DIR/widget.min.js"
@@ -53,15 +53,6 @@ else
     terser "$BUILD_JS" -c -m -o "$DIST_DIR/widget.min.js"
 fi
 
-# Get file sizes
-JS_SIZE=$(wc -c < "$DIST_DIR/widget.min.js")
-CSS_SIZE=$(wc -c < "$DIST_DIR/widget.min.css")
-
-echo "Build complete!"
-echo "Output files:"
-echo "  JS:  $DIST_DIR/widget.min.js ($JS_SIZE bytes)"
-echo "  CSS: $DIST_DIR/widget.min.css ($CSS_SIZE bytes)"
-
 # Keep widget.combined.js as a backwards-compatible alias. The standalone
 # widget.min.js now embeds CSS itself for JS-only integrations.
 node - "$DIST_DIR" <<'NODE'
@@ -73,5 +64,13 @@ const js = fs.readFileSync(path.join(distDir, 'widget.min.js'), 'utf8');
 fs.writeFileSync(path.join(distDir, 'widget.combined.js'), js);
 NODE
 
+# Get file sizes
+JS_SIZE=$(wc -c < "$DIST_DIR/widget.min.js")
+CSS_SIZE=$(wc -c < "$DIST_DIR/widget.min.css")
 COMBINED_SIZE=$(wc -c < "$DIST_DIR/widget.combined.js")
-echo "  Combined: $DIST_DIR/widget.combined.js ($COMBINED_SIZE bytes)"
+
+echo "Build complete!"
+echo "Output files:"
+echo "  JS:       $DIST_DIR/widget.min.js ($JS_SIZE bytes, CSS embedded)"
+echo "  CSS:      $DIST_DIR/widget.min.css ($CSS_SIZE bytes, optional override)"
+echo "  Combined: $DIST_DIR/widget.combined.js ($COMBINED_SIZE bytes, alias of min.js)"
