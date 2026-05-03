@@ -16,7 +16,6 @@ import {
   Skeleton,
   Row,
   Col,
-  Modal,
   Alert,
   Tag,
   Result,
@@ -32,8 +31,6 @@ import {
   TrophyOutlined,
   CreditCardOutlined,
   ExclamationCircleOutlined,
-  SwapOutlined,
-  GlobalOutlined,
   BellOutlined,
   MailOutlined,
   MobileOutlined,
@@ -58,17 +55,11 @@ import {
 } from '@/api/generated/oauth/oauth'
 import { useGetCities } from '@/api/generated/cities/cities'
 import { useGetMyStats } from '@/api/generated/users/users'
-import { useGetMyRegion, usePutMyRegion } from '@/api/generated/region/region'
 import { PLATFORM_NAME } from '@/content/support'
 import { formatPrice } from '@/lib/format'
 import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
 import ProfileCompleteness from '@/components/ProfileCompleteness'
 import PageHeader from '@/components/PageHeader'
-
-const REGION_LABELS: Record<string, string> = {
-  RU: 'Россия',
-  BY: 'Беларусь',
-}
 
 const REGION_CURRENCIES: Record<string, string> = {
   RU: 'RUB',
@@ -187,8 +178,6 @@ export default function ClientProfile() {
   const [prefsForm] = Form.useForm()
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [deletionPending, setDeletionPending] = useState(false)
-  const [regionSwitchModalOpen, setRegionSwitchModalOpen] = useState(false)
-  const [regionError, setRegionError] = useState<string | null>(null)
 
   const heroSectionRef = useRef<HTMLDivElement>(null)
   const profileSectionRef = useRef<HTMLDivElement>(null)
@@ -207,8 +196,7 @@ export default function ClientProfile() {
   const { data: socialData, isLoading: socialLoading } = useGetAuthMeSocialAccounts()
   const socialAccounts = socialData?.data ?? []
 
-  const { data: regionData, isLoading: regionLoading } = useGetMyRegion()
-  const currentRegion = regionData?.data?.region ?? user?.region ?? 'RU'
+  const currentRegion = user?.region ?? 'RU'
   const currentCityName = cities.find((city) => city.id === user?.city_id)?.name
   const activeDeliveryChannels = DELIVERY_CHANNELS.filter((channel) => watchedPrefs?.[channel.name]).length
   const activeEventScenarios = EVENT_SETTINGS.filter((event) => watchedPrefs?.[event.name]).length
@@ -329,33 +317,7 @@ export default function ClientProfile() {
     },
   })
 
-  const switchRegion = usePutMyRegion({
-    mutation: {
-      onSuccess: () => {
-        message.success('Регион успешно изменён')
-        setRegionSwitchModalOpen(false)
-        setRegionError(null)
-        queryClient.invalidateQueries({ queryKey: ['/my/region'] })
-        loadProfile()
-      },
-      onError: (error: unknown) => {
-        const status = (error as { response?: { status?: number } })?.response?.status
-        const errorMessage = (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
-        if (status === 409) {
-          setRegionError(errorMessage ?? 'Невозможно сменить регион: проверьте баланс кошелька, активные бронирования, открытые споры и неактивированные сертификаты')
-        } else if (status === 400) {
-          setRegionError(errorMessage ?? 'Некорректный регион или вы уже в этом регионе')
-        } else {
-          setRegionError('Ошибка при смене региона')
-        }
-      },
-    },
-  })
-
-  const targetRegion = currentRegion === 'RU' ? 'BY' : 'RU'
-  const currentRegionLabel = REGION_LABELS[currentRegion] ?? currentRegion
   const currentCurrency = REGION_CURRENCIES[currentRegion] ?? currentRegion
-  const targetRegionLabel = REGION_LABELS[targetRegion] ?? targetRegion
 
   const scrollToSection = (sectionRef: { current: HTMLDivElement | null }) => {
     sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -407,11 +369,6 @@ export default function ClientProfile() {
       cancelText: 'Отмена',
       onOk: () => deleteAccount.mutate(),
     })
-  }
-
-  const handleRegionSwitch = () => {
-    setRegionError(null)
-    switchRegion.mutate({ data: { region: targetRegion } })
   }
 
   const handleProfileSubmit = (values: { name?: string; phone?: string; bio?: string; city_id?: number }) => {
@@ -798,74 +755,6 @@ export default function ClientProfile() {
               Удобно для быстрых оплат и повторных бронирований без повторного ввода данных карты.
             </Text>
           </Card>
-
-          <div>
-            <Card title={<Space><GlobalOutlined /> Регион</Space>}>
-              {regionLoading ? (
-                <Skeleton active paragraph={{ rows: 2 }} />
-              ) : (
-                <Space orientation="vertical" size={16} style={{ width: '100%' }}>
-                  <div>
-                    <Text type="secondary">Текущий регион: </Text>
-                    <Tag color="blue" style={{ fontSize: 14 }}>
-                      {currentRegionLabel} ({currentCurrency})
-                    </Tag>
-                  </div>
-
-                  <Alert
-                    type="info"
-                    showIcon
-                    title="Смена региона"
-                    description="При смене создаётся новый кошелёк в другой валюте, а старый архивируется. Смена недоступна при ненулевом балансе, активных бронированиях, спорах или неактивированных сертификатах."
-                  />
-
-                  <Button
-                    icon={<SwapOutlined />}
-                    onClick={() => {
-                      setRegionError(null)
-                      setRegionSwitchModalOpen(true)
-                    }}
-                  >
-                    Сменить на {targetRegionLabel}
-                  </Button>
-                </Space>
-              )}
-
-              <Modal
-                title="Подтверждение смены региона"
-                open={regionSwitchModalOpen}
-                onCancel={() => {
-                  setRegionSwitchModalOpen(false)
-                  setRegionError(null)
-                }}
-                onOk={handleRegionSwitch}
-                okText="Подтвердить"
-                cancelText="Отмена"
-                confirmLoading={switchRegion.isPending}
-              >
-                <Space orientation="vertical" size={12} style={{ width: '100%' }}>
-                  <Text>
-                    Вы хотите сменить регион с <strong>{currentRegionLabel}</strong> на <strong>{targetRegionLabel}</strong>?
-                  </Text>
-                  <Alert
-                    type="warning"
-                    showIcon
-                    title="Последствия смены региона"
-                    description={
-                      <ul style={{ paddingLeft: 20, margin: 0 }}>
-                        <li>Текущий кошелёк ({currentCurrency}) будет архивирован</li>
-                        <li>Создан новый кошелёк в {REGION_CURRENCIES[targetRegion] ?? targetRegion}</li>
-                        <li>Уровень лояльности будет сброшен</li>
-                      </ul>
-                    }
-                  />
-                  {regionError && (
-                    <Alert type="error" showIcon title={regionError} />
-                  )}
-                </Space>
-              </Modal>
-            </Card>
-          </div>
 
           <Card
             className="rh-profile-danger-card"

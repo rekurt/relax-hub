@@ -83,9 +83,6 @@ func mountAPIRoutes(
 	// FAQ (public)
 	r.Get("/faq", p.FAQHandler.PublicListFAQ)
 
-	// Isochrone (public)
-	r.Get("/isochrone", p.IsochroneHandler.GetIsochrone)
-
 	// Bathhouse comparison (public)
 	r.Post("/bathhouses/compare", p.ComparisonHandler.Compare)
 

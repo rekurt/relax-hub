@@ -55,6 +55,10 @@ import Preferences from '@/pages/client/Preferences'
 import ClientChat from '@/pages/client/ClientChat'
 import ClientNotifications from '@/pages/client/ClientNotifications'
 import NotificationPreferences from '@/pages/client/NotificationPreferences'
+import LoyaltyDashboard from '@/pages/client/LoyaltyDashboard'
+import ReferralProgram from '@/pages/client/ReferralProgram'
+import SavedSearches from '@/pages/client/SavedSearches'
+import ActivePromoCodes from '@/pages/client/ActivePromoCodes'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import UserManagement from '@/pages/admin/UserManagement'
 import BathhouseModeration from '@/pages/admin/BathhouseModeration'
@@ -228,11 +232,11 @@ export default function AppRouter() {
         <Route path="profile" element={<ClientProfile />} />
         <Route path="recommendations" element={<Navigate to="/catalog" replace />} />
         <Route path="preferences" element={<Preferences />} />
-        <Route path="loyalty" element={<Navigate to="/catalog" replace />} />
-        <Route path="referral" element={<Navigate to="/catalog" replace />} />
+        <Route path="loyalty" element={<LoyaltyDashboard />} />
+        <Route path="referral" element={<ReferralProgram />} />
+        <Route path="saved-searches" element={<SavedSearches />} />
+        <Route path="promos" element={<ActivePromoCodes />} />
         <Route path="comparison" element={<Navigate to="/catalog" replace />} />
-        <Route path="saved-searches" element={<Navigate to="/catalog" replace />} />
-        <Route path="promos" element={<Navigate to="/client/profile" replace />} />
       </Route>
 
       <Route

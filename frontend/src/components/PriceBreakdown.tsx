@@ -21,7 +21,10 @@ interface PriceBreakdownProps {
   serviceFee?: number
   promoDiscount?: number
   certificateDiscount?: number
+  pointsDiscount?: number
+  referralDiscount?: number
   walletPayment?: number
+  securityDeposit?: number
   areaAveragePrice?: number
 }
 
@@ -37,7 +40,10 @@ export default function PriceBreakdown({
   serviceFee,
   promoDiscount,
   certificateDiscount,
+  pointsDiscount,
+  referralDiscount,
   walletPayment,
+  securityDeposit,
   areaAveragePrice,
 }: PriceBreakdownProps) {
   const lines: PriceLineItem[] = []
@@ -89,6 +95,14 @@ export default function PriceBreakdown({
     lines.push({ label: 'Сертификат', amount: -certificateDiscount, type: 'discount' })
   }
 
+  if (pointsDiscount && pointsDiscount > 0) {
+    lines.push({ label: 'Баллы лояльности', amount: -pointsDiscount, type: 'discount' })
+  }
+
+  if (referralDiscount && referralDiscount > 0) {
+    lines.push({ label: 'Реферальный бонус', amount: -referralDiscount, type: 'discount' })
+  }
+
   if (serviceFee && serviceFee > 0) {
     lines.push({ label: 'Сервисный сбор', amount: serviceFee, type: 'addition' })
   }
@@ -131,6 +145,22 @@ export default function PriceBreakdown({
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
           <Text strong>К оплате картой</Text>
           <Text strong style={{ fontSize: 16 }}>{formatPrice(toPay)}</Text>
+        </div>
+      )}
+
+      {securityDeposit != null && securityDeposit > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginTop: 8,
+            padding: '8px 12px',
+            background: 'rgba(248, 244, 236, 0.5)',
+            borderRadius: 12,
+          }}
+        >
+          <Text type="secondary">🔒 Залог (вернётся после визита)</Text>
+          <Text type="secondary">{formatPrice(securityDeposit)}</Text>
         </div>
       )}
 
