@@ -1662,6 +1662,31 @@ interface ModalProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   [key: string]: any
 }
 
+// Body-scroll lock shared by Modal/Drawer. A ref-counted handle lets stacked
+// overlays coexist: the body stays scroll-locked until the *last* open
+// overlay releases its lock, so closing an inner modal can no longer
+// re-enable page scroll while an outer one is still open.
+let bodyScrollLockCount = 0
+let bodyScrollLockPreviousOverflow = ''
+function acquireBodyScrollLock(): () => void {
+  if (typeof document === 'undefined') return () => {}
+  if (bodyScrollLockCount === 0) {
+    bodyScrollLockPreviousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+  }
+  bodyScrollLockCount += 1
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    bodyScrollLockCount = Math.max(0, bodyScrollLockCount - 1)
+    if (bodyScrollLockCount === 0) {
+      document.body.style.overflow = bodyScrollLockPreviousOverflow
+      bodyScrollLockPreviousOverflow = ''
+    }
+  }
+}
+
 export function Modal({
   open,
   visible,
@@ -1690,15 +1715,14 @@ export function Modal({
   useEffect(() => {
     if (!isOpen) return
 
-    const previousOverflow = document.body.style.overflow
+    const releaseScrollLock = acquireBodyScrollLock()
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onCancel?.()
     }
 
-    document.body.style.overflow = 'hidden'
     document.addEventListener('keydown', handleKeyDown)
     return () => {
-      document.body.style.overflow = previousOverflow
+      releaseScrollLock()
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [isOpen, onCancel])
@@ -1758,15 +1782,14 @@ export function Drawer({ open, visible, title, placement = 'right', width = 420,
   useEffect(() => {
     if (!isOpen) return
 
-    const previousOverflow = document.body.style.overflow
+    const releaseScrollLock = acquireBodyScrollLock()
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose?.()
     }
 
-    document.body.style.overflow = 'hidden'
     document.addEventListener('keydown', handleKeyDown)
     return () => {
-      document.body.style.overflow = previousOverflow
+      releaseScrollLock()
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [isOpen, onClose])
