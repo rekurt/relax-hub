@@ -79,11 +79,14 @@ func (s *walletService) EnsureWallet(ctx context.Context, userID uuid.UUID) (*do
 	}
 
 	currency := domain.WalletCurrencyRUB
-	if user, uErr := s.userRepo.GetByID(ctx, userID); uErr == nil {
-		currency = domain.CurrencyForRegion(user.Region)
-	} else if !errors.Is(uErr, domain.ErrNotFound) {
+	user, uErr := s.userRepo.GetByID(ctx, userID)
+	if uErr != nil {
+		// Includes ErrNotFound: a missing user must surface as user-not-found
+		// rather than fall through to CreateWallet, which would hit a FK
+		// violation on wallets.user_id and bubble up as an opaque 5xx.
 		return nil, uErr
 	}
+	currency = domain.CurrencyForRegion(user.Region)
 
 	created, createErr := s.CreateWallet(ctx, userID, currency)
 	if createErr == nil {
