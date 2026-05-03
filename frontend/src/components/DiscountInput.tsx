@@ -4,6 +4,7 @@ import {
   Input,
   Button,
   Space,
+  Tag,
   Checkbox,
   InputNumber,
   Collapse,
@@ -236,16 +237,16 @@ export default function DiscountInput({
                 <Text type="secondary" style={{ fontSize: 12 }}>Недавно проверенные:</Text>
                 <Space wrap style={{ marginTop: 4 }}>
                   {recentPromos.map((p) => (
-                    <Tag.CheckableTag
+                    <Tag
                       key={p.code}
-                      checked={false}
-                      onChange={() => {
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => {
                         setCodeInput(p.code)
                         setError('')
                       }}
                     >
                       {p.code}
-                    </Tag.CheckableTag>
+                    </Tag>
                   ))}
                 </Space>
               </div>
