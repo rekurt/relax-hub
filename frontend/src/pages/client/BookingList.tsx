@@ -14,19 +14,13 @@ import EmptyState from '@/components/EmptyState'
 const { Title } = Typography
 const { RangePicker } = DatePicker
 
-type StatusGroup = '' | 'upcoming' | 'past' | 'cancelled'
-
-const STATUS_GROUPS: Record<Exclude<StatusGroup, ''>, string[]> = {
-  upcoming: ['pending', 'pending_owner', 'confirmed'],
-  past: ['completed'],
-  cancelled: ['cancelled', 'rejected', 'no_show'],
-}
-
-const STATUS_OPTIONS: Array<{ value: StatusGroup; label: string }> = [
-  { value: '', label: 'Все' },
-  { value: 'upcoming', label: 'Предстоящие' },
-  { value: 'past', label: 'Завершённые' },
-  { value: 'cancelled', label: 'Отменённые' },
+const STATUS_OPTIONS = [
+  { value: '', label: 'Все статусы' },
+  { value: 'pending', label: 'Ожидает' },
+  { value: 'confirmed', label: 'Подтверждено' },
+  { value: 'completed', label: 'Завершено' },
+  { value: 'cancelled', label: 'Отменено' },
+  { value: 'rejected', label: 'Отклонено' },
 ]
 
 export default function ClientBookingList() {
@@ -36,7 +30,7 @@ export default function ClientBookingList() {
 
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
-  const [statusFilter, setStatusFilter] = useState<StatusGroup>('')
+  const [statusFilter, setStatusFilter] = useState('')
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
 
   const hasActiveFilter = !!statusFilter || !!(dateRange?.[0] && dateRange?.[1])
@@ -60,7 +54,7 @@ export default function ClientBookingList() {
   const meta = data?.meta
 
   const filteredBookings = bookings.filter((b) => {
-    if (statusFilter && !STATUS_GROUPS[statusFilter].includes(b.status ?? '')) return false
+    if (statusFilter && b.status !== statusFilter) return false
     if (dateRange?.[0] && dateRange?.[1] && b.start_time) {
       const bookingDate = dayjs(b.start_time)
       if (bookingDate.isBefore(dateRange[0], 'day') || bookingDate.isAfter(dateRange[1], 'day')) {
@@ -170,9 +164,9 @@ export default function ClientBookingList() {
       <Title level={3} style={{ marginBottom: 16 }}>Мои бронирования</Title>
 
       <Space wrap style={{ marginBottom: 16 }}>
-        <Select<StatusGroup>
+        <Select
           value={statusFilter}
-          onChange={(v) => setStatusFilter(v ?? '')}
+          onChange={setStatusFilter}
           options={STATUS_OPTIONS}
           style={{ width: 160 }}
           placeholder="Статус"
