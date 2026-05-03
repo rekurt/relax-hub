@@ -75,6 +75,7 @@ interface BathhouseMapProps {
   showMiniCard?: boolean
   center?: { lat: number; lng: number }
   zoom?: number
+  isochronePolygon?: number[][] | null // [lat, lng] pairs for Yandex Maps
   style?: React.CSSProperties
 }
 
@@ -116,11 +117,13 @@ export default function BathhouseMap({
   showMiniCard = false,
   center,
   zoom,
+  isochronePolygon,
   style,
 }: BathhouseMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<YMap | null>(null)
   const clustererRef = useRef<YClusterer | null>(null)
+  const polygonRef = useRef<YGeoObject | null>(null)
   const [loading, setLoading] = useState(true)
   const [showSearchArea, setShowSearchArea] = useState(false)
   const [mapType, setMapType] = useState<'scheme' | 'satellite'>('scheme')
@@ -287,6 +290,33 @@ export default function BathhouseMap({
 
     clustererRef.current.add(placemarks)
   }, [bathhouses, highlightedId, onMarkerClick, onMarkerHover, showMiniCard])
+
+  // Update isochrone polygon overlay
+  useEffect(() => {
+    if (!mapRef.current || !window.ymaps) return
+
+    // Remove previous polygon
+    if (polygonRef.current) {
+      mapRef.current.geoObjects.remove(polygonRef.current)
+      polygonRef.current = null
+    }
+
+    // Add new polygon if present
+    if (isochronePolygon && isochronePolygon.length > 2) {
+      const polygon = new window.ymaps.Polygon(
+        [isochronePolygon],
+        { hintContent: 'Зона доступности' },
+        {
+          fillColor: '#0f766e22',
+          strokeColor: '#0f766e',
+          strokeWidth: 2,
+          strokeStyle: 'shortdash',
+        },
+      )
+      polygonRef.current = polygon
+      mapRef.current.geoObjects.add(polygon)
+    }
+  }, [isochronePolygon])
 
   return (
     <div style={{ position: 'relative', ...style }}>

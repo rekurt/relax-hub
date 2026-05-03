@@ -395,11 +395,16 @@ export default function ClientBookingDetail() {
                 if (!id) return
                 const walletAmount = routeState?.walletApplied && routeState.walletApplied > 0 ? routeState.walletApplied : 0
                 const cardAmount = Math.max(0, (booking.total_price ?? 0) - walletAmount)
-                const isCombo = walletAmount > 0 && cardAmount > 0
+                let method: string = routeState?.paymentMethod ?? 'card'
+                if (walletAmount > 0 && cardAmount === 0) {
+                  method = 'wallet'
+                } else if (walletAmount > 0 && cardAmount > 0) {
+                  method = 'combo'
+                }
                 payMutation.mutate({
                   id,
                   data: {
-                    payment_method: isCombo ? 'combo' : (routeState?.paymentMethod ?? 'card'),
+                    payment_method: method,
                     ...(walletAmount > 0
                       ? { wallet_amount: walletAmount, card_amount: cardAmount }
                       : {}),

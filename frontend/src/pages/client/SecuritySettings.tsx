@@ -5,18 +5,24 @@ import {
   Button,
   Tag,
   App,
+  Input,
   Alert,
   Popconfirm,
   Empty,
   Spin,
+  Form,
+  QRCode,
 } from '@/components/design/system'
 import {
   LaptopOutlined,
   MobileOutlined,
   DeleteOutlined,
+  KeyOutlined,
   MailOutlined,
   ExclamationCircleOutlined,
   LockOutlined,
+  SafetyCertificateOutlined,
+  ClockCircleOutlined,
   MessageOutlined,
 } from '@/components/design/icons'
 import dayjs from 'dayjs'
@@ -29,6 +35,9 @@ import {
   getGetMySessionsQueryKey,
 } from '@/api/generated/sessions/sessions'
 import {
+  usePostAuth2faTotpEnable,
+  usePostAuth2faTotpVerify,
+  useDeleteAuth2faTotp,
   usePostAuth2faSmsEnable,
 } from '@/api/generated/2fa/2fa'
 import { usePostAuthForgotPassword } from '@/api/generated/auth/auth'
@@ -103,6 +112,48 @@ export default function SecuritySettings() {
     },
   })
 
+  const [totpStep, setTotpStep] = useState<'idle' | 'qr' | 'verify' | 'done'>(
+    (user as Record<string, unknown>)?.totp_enabled ? 'done' : 'idle',
+  )
+  const [qrUrl, setQrUrl] = useState('')
+  const [totpSecret, setTotpSecret] = useState('')
+  const [verifyCode, setVerifyCode] = useState('')
+  const [disableCode, setDisableCode] = useState('')
+
+  const enableTotp = usePostAuth2faTotpEnable({
+    mutation: {
+      onSuccess: (res) => {
+        const data = res?.data as { qr_url?: string; secret?: string } | undefined
+        setQrUrl(data?.qr_url ?? '')
+        setTotpSecret(data?.secret ?? '')
+        setTotpStep('qr')
+      },
+      onError: () => message.error('Не удалось сгенерировать QR-код'),
+    },
+  })
+
+  const verifyTotp = usePostAuth2faTotpVerify({
+    mutation: {
+      onSuccess: () => {
+        message.success('TOTP 2FA успешно активирована')
+        setTotpStep('done')
+        setVerifyCode('')
+      },
+      onError: () => message.error('Неверный код подтверждения'),
+    },
+  })
+
+  const disableTotp = useDeleteAuth2faTotp({
+    mutation: {
+      onSuccess: () => {
+        message.success('TOTP 2FA отключена')
+        setTotpStep('idle')
+        setDisableCode('')
+      },
+      onError: () => message.error('Неверный код'),
+    },
+  })
+
   const [smsEnabled, setSmsEnabled] = useState(
     !!(user as Record<string, unknown>)?.sms_2fa_enabled,
   )
@@ -129,17 +180,19 @@ export default function SecuritySettings() {
     },
   })
 
+  const totpEnabled = totpStep === 'done'
   const hasRecoveryEmail = Boolean(user?.email)
   const securityScore = useMemo(() => {
     const rawScore =
-      52
-      + (smsEnabled ? 30 : 0)
+      42
+      + (totpEnabled ? 32 : 0)
+      + (smsEnabled ? 14 : 0)
       + (hasRecoveryEmail ? 12 : 0)
       + (otherSessionsCount === 0 ? 6 : 0)
       - Math.max(0, otherSessionsCount - 1) * 4
 
     return Math.max(22, Math.min(100, rawScore))
-  }, [hasRecoveryEmail, otherSessionsCount, smsEnabled])
+  }, [hasRecoveryEmail, otherSessionsCount, smsEnabled, totpEnabled])
 
   const securityStatus = securityScore >= 90
     ? 'Контур усилен'
@@ -154,6 +207,15 @@ export default function SecuritySettings() {
       : 'Сейчас аккаунт защищён только частично. Лучше усилить вход и резервное восстановление.'
 
   const protectionItems: ProtectionItem[] = [
+    {
+      key: 'totp',
+      title: 'TOTP',
+      status: totpEnabled ? 'Активен' : 'Не включён',
+      description: totpEnabled
+        ? 'Основной защитный фактор уже настроен через приложение-аутентификатор.'
+        : 'Самый надёжный способ усилить вход без зависимости от SMS.',
+      tone: totpEnabled ? 'success' : 'warning',
+    },
     {
       key: 'sms',
       title: 'SMS 2FA',
@@ -186,11 +248,20 @@ export default function SecuritySettings() {
   ]
 
   const recommendations = [
+    !totpEnabled
+      ? {
+          key: 'rec-totp',
+          title: 'Подключить приложение-аутентификатор',
+          description: 'Это главный шаг, который сильнее всего поднимает защиту аккаунта.',
+          action: 'Настроить TOTP',
+          target: 'security-2fa',
+        }
+      : null,
     !smsEnabled && user?.phone
       ? {
           key: 'rec-sms',
-          title: 'Добавить SMS-подтверждение',
-          description: 'Двухфакторная аутентификация по SMS защищает аккаунт от взлома.',
+          title: 'Добавить резерв через SMS',
+          description: 'Удобно как запасной канал подтверждения, если нет доступа к TOTP.',
           action: 'Включить SMS 2FA',
           target: 'security-2fa',
         }
@@ -238,7 +309,7 @@ export default function SecuritySettings() {
             </div>
             <div className="rh-security-hero__pill">
               <span className="rh-security-hero__pill-label">Основной вход</span>
-              <strong>{smsEnabled ? 'SMS 2FA' : 'Пароль'}</strong>
+              <strong>{totpEnabled ? 'TOTP' : smsEnabled ? 'SMS 2FA' : 'Пароль'}</strong>
             </div>
             <div className="rh-security-hero__pill">
               <span className="rh-security-hero__pill-label">Восстановление</span>
@@ -378,6 +449,130 @@ export default function SecuritySettings() {
 
           <Card id="security-2fa" className="rh-security-card" title="Двухфакторная аутентификация">
             <div className="rh-security-method-grid">
+              <section className={totpEnabled ? 'rh-security-method-card rh-security-method-card--accent' : 'rh-security-method-card'}>
+                <div className="rh-security-method-card__header">
+                  <div>
+                    <div className="rh-security-method-card__eyebrow">Основной фактор</div>
+                    <Title level={4} className="rh-security-method-card__title">
+                      TOTP
+                    </Title>
+                  </div>
+                  <Tag color={totpEnabled ? 'green' : 'gold'}>
+                    {totpEnabled ? 'Активно' : 'Не настроено'}
+                  </Tag>
+                </div>
+
+                <Paragraph className="rh-security-method-card__description">
+                  Приложение-аутентификатор даёт самый стабильный и защищённый второй фактор без зависимости от SMS.
+                </Paragraph>
+
+                {totpStep === 'idle' && (
+                  <div className="rh-security-method-card__body">
+                    <div className="rh-security-checklist">
+                      <div className="rh-security-checklist__item">
+                        <SafetyCertificateOutlined />
+                        <span>Работает даже без мобильной сети.</span>
+                      </div>
+                      <div className="rh-security-checklist__item">
+                        <ClockCircleOutlined />
+                        <span>Коды обновляются автоматически каждые 30 секунд.</span>
+                      </div>
+                    </div>
+                    <Button
+                      type="primary"
+                      icon={<KeyOutlined />}
+                      onClick={() => enableTotp.mutate()}
+                      loading={enableTotp.isPending}
+                    >
+                      Настроить TOTP
+                    </Button>
+                  </div>
+                )}
+
+                {totpStep === 'qr' && (
+                  <div className="rh-security-qr-layout">
+                    <div className="rh-security-qr-copy">
+                      <Alert
+                        type="info"
+                        showIcon
+                        title="Отсканируйте QR-код"
+                        description="Откройте приложение-аутентификатор и добавьте новый аккаунт по коду справа."
+                      />
+                      <div className="rh-security-secret">
+                        <span className="rh-security-secret__label">Секретный ключ</span>
+                        <Text copyable code>
+                          {totpSecret}
+                        </Text>
+                      </div>
+                      <Form
+                        layout="inline"
+                        className="rh-inline-form"
+                        onFinish={() => verifyTotp.mutate({ data: { code: verifyCode } })}
+                      >
+                        <Form.Item>
+                          <Input
+                            placeholder="Введите 6-значный код"
+                            value={verifyCode}
+                            onChange={(event) => setVerifyCode(event.target.value)}
+                            maxLength={6}
+                            style={{ width: 220 }}
+                          />
+                        </Form.Item>
+                        <Form.Item>
+                          <Button
+                            type="primary"
+                            htmlType="submit"
+                            loading={verifyTotp.isPending}
+                            disabled={verifyCode.length !== 6}
+                          >
+                            Подтвердить
+                          </Button>
+                        </Form.Item>
+                      </Form>
+                    </div>
+
+                    <div className="rh-security-qr-frame">
+                      {qrUrl && <QRCode value={qrUrl} size={176} />}
+                    </div>
+                  </div>
+                )}
+
+                {totpStep === 'done' && (
+                  <div className="rh-security-method-card__body">
+                    <Alert
+                      type="success"
+                      showIcon
+                      title="TOTP уже активирован"
+                      description="При следующем входе потребуется одноразовый код из приложения."
+                    />
+                    <div className="rh-inline-form">
+                      <Input
+                        placeholder="6-значный код"
+                        value={disableCode}
+                        onChange={(event) => setDisableCode(event.target.value)}
+                        maxLength={6}
+                        style={{ width: 220 }}
+                      />
+                      <Popconfirm
+                        title="Отключить TOTP 2FA?"
+                        description="Вы потеряете дополнительную защиту аккаунта."
+                        onConfirm={() => disableTotp.mutate({ data: { code: disableCode } })}
+                        okText="Отключить"
+                        cancelText="Отмена"
+                      >
+                        <Button
+                          danger
+                          loading={disableTotp.isPending}
+                          disabled={disableCode.length !== 6}
+                        >
+                          Отключить TOTP
+                        </Button>
+                      </Popconfirm>
+                    </div>
+                  </div>
+                )}
+              </section>
+
               <section className={smsEnabled ? 'rh-security-method-card rh-security-method-card--accent' : 'rh-security-method-card'}>
                 <div className="rh-security-method-card__header">
                   <div>
@@ -411,7 +606,7 @@ export default function SecuritySettings() {
                       </div>
                       <div className="rh-security-checklist__item">
                         <ExclamationCircleOutlined />
-                        <span>Дополнительная защита для входа.</span>
+                        <span>Используйте как резерв, а не вместо TOTP.</span>
                       </div>
                     </div>
                     <Button

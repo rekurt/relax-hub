@@ -8,6 +8,7 @@ import {
   Row,
   Col,
   Pagination,
+  Spin,
   Card,
   Space,
   Button,
@@ -29,6 +30,8 @@ import {
   UnorderedListOutlined,
   EnvironmentFilled,
   SplitCellsOutlined,
+  CarOutlined,
+  ClockCircleOutlined,
 } from '@/components/design/icons'
 import { isAxiosError } from 'axios'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -40,6 +43,7 @@ import BathhouseCard from '@/components/BathhouseCard'
 import BathhouseMap from '@/components/BathhouseMap'
 import SearchSuggestions from '@/components/SearchSuggestions'
 import { formatPrice } from '@/lib/format'
+import { axiosInstance } from '@/api/axios-instance'
 import PublicState from '@/components/PublicState'
 import { useAuthStore } from '@/stores/auth'
 import { PUBLIC_SHORTCUT_CARDS } from '@/navigation/menu'
@@ -47,6 +51,8 @@ import { PUBLIC_SHORTCUT_CARDS } from '@/navigation/menu'
 const { Title, Text } = Typography
 
 type ViewMode = 'list' | 'map' | 'split'
+type GeoMode = 'radius' | 'travel_time'
+type TravelMode = 'car' | 'transit'
 type SortOption = {
   value: string
   label: string
@@ -71,8 +77,25 @@ const VIEW_MODE_OPTIONS = [
   { value: 'map', icon: <EnvironmentFilled />, label: 'Карта' },
 ]
 
+const TRAVEL_TIME_OPTIONS = [
+  { value: 15, label: '15 мин' },
+  { value: 30, label: '30 мин' },
+  { value: 45, label: '45 мин' },
+  { value: 60, label: '60 мин' },
+]
+
+const TRAVEL_MODE_OPTIONS = [
+  { value: 'car', label: 'На машине', icon: <CarOutlined /> },
+  { value: 'transit', label: 'Пешком/транспорт', icon: <ClockCircleOutlined /> },
+]
+
 const PRICE_FILTER_MAX = 2_500_000
 const MAX_COMPARE = 3
+
+interface IsochroneData {
+  coordinates: number[][]
+  wkt: string
+}
 
 interface CatalogUrlState {
   page: number
@@ -87,6 +110,9 @@ interface CatalogUrlState {
   minRating?: number
   geoEnabled: boolean
   geoCoords: { lat: number; lng: number } | null
+  geoMode: GeoMode
+  travelMode: TravelMode
+  travelMinutes: number
 }
 
 function parseSortOption(value: string): { sort_by: string; sort_order: string } {
@@ -128,6 +154,9 @@ function buildCatalogSearchParams({
   openNow,
   geoEnabled,
   geoCoords,
+  geoMode,
+  travelMode,
+  travelMinutes,
   minRating,
 }: {
   search: string
@@ -141,6 +170,9 @@ function buildCatalogSearchParams({
   openNow: boolean
   geoEnabled: boolean
   geoCoords: { lat: number; lng: number } | null
+  geoMode: GeoMode
+  travelMode: TravelMode
+  travelMinutes: number
   minRating?: number
 }) {
   const params = new URLSearchParams()
@@ -166,7 +198,13 @@ function buildCatalogSearchParams({
   if (geoEnabled && geoCoords) {
     params.set('lat', String(geoCoords.lat))
     params.set('lng', String(geoCoords.lng))
-    params.set('radius_km', String(filters.radius_km ?? 10))
+    params.set('geo_mode', geoMode)
+    if (geoMode === 'radius') {
+      params.set('radius_km', String(filters.radius_km ?? 10))
+    } else {
+      params.set('travel_mode', travelMode)
+      params.set('travel_minutes', String(travelMinutes))
+    }
   }
 
   if (sortValue !== DEFAULT_SORT_VALUE) params.set('sort', sortValue)
@@ -205,6 +243,9 @@ function parseCatalogUrlState(searchParamsString: string): CatalogUrlState {
     minRating: parseNumberParam(nextSearchParams.get('min_rating')),
     geoEnabled: hasGeoCoords,
     geoCoords: hasGeoCoords ? { lat: nextLat ?? 0, lng: nextLng ?? 0 } : null,
+    geoMode: nextSearchParams.get('geo_mode') === 'travel_time' ? 'travel_time' : 'radius',
+    travelMode: nextSearchParams.get('travel_mode') === 'transit' ? 'transit' : 'car',
+    travelMinutes: parseNumberParam(nextSearchParams.get('travel_minutes')) ?? 15,
     filters: {
       city_slug: nextSearchParams.get('city_slug') ?? undefined,
       guest_count: parseNumberParam(nextSearchParams.get('guest_count')),
@@ -256,6 +297,13 @@ export default function BathhouseSearch() {
     }
   }, [search])
 
+  const [geoMode, setGeoMode] = useState<GeoMode>(initialCatalogState.geoMode)
+  const [travelMode, setTravelMode] = useState<TravelMode>(initialCatalogState.travelMode)
+  const [travelMinutes, setTravelMinutes] = useState<number>(initialCatalogState.travelMinutes)
+  const [isochroneData, setIsochroneData] = useState<IsochroneData | null>(null)
+  const [isochroneLoading, setIsochroneLoading] = useState(false)
+  const [geoError, setGeoError] = useState<string | null>(null)
+
   const applyCatalogState = useCallback((nextState: CatalogUrlState) => {
     setSearch(nextState.search)
     setDebouncedSearch(nextState.search)
@@ -269,6 +317,9 @@ export default function BathhouseSearch() {
     setMinRating(nextState.minRating)
     setGeoEnabled(nextState.geoEnabled)
     setGeoCoords(nextState.geoCoords)
+    setGeoMode(nextState.geoMode)
+    setTravelMode(nextState.travelMode)
+    setTravelMinutes(nextState.travelMinutes)
     setFilters(nextState.filters)
   }, [])
 
@@ -295,7 +346,6 @@ export default function BathhouseSearch() {
     }
     hasHydratedFromUrlRef.current = true
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing URL → component state
     applyCatalogState(nextState)
   }, [applyCatalogState, searchParamsString])
 
@@ -317,6 +367,9 @@ export default function BathhouseSearch() {
       openNow,
       geoEnabled,
       geoCoords,
+      geoMode,
+      travelMode,
+      travelMinutes,
       minRating,
     })
     const nextSearchParamsString = nextParams.toString()
@@ -330,6 +383,7 @@ export default function BathhouseSearch() {
     filters,
     geoCoords,
     geoEnabled,
+    geoMode,
     minRating,
     openNow,
     page,
@@ -337,12 +391,13 @@ export default function BathhouseSearch() {
     searchParamsString,
     setSearchParams,
     sortValue,
+    travelMinutes,
+    travelMode,
     viewMode,
   ])
 
   useEffect(() => {
     if (!geoEnabled && sortValue === 'distance_asc') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset to default sort when geo gets disabled
       setSortValue(DEFAULT_SORT_VALUE)
     }
   }, [geoEnabled, sortValue])
@@ -367,8 +422,11 @@ export default function BathhouseSearch() {
     available_time_from: availableTimeFrom ? availableTimeFrom.format('HH:mm') : undefined,
     available_time_to: availableTimeTo ? availableTimeTo.format('HH:mm') : undefined,
     ...apiFilters,
-    ...(geoEnabled && geoCoords
+    ...(geoEnabled && geoCoords && geoMode === 'radius'
       ? { lat: geoCoords.lat, lng: geoCoords.lng, radius_km: radius_km ?? 10 }
+      : {}),
+    ...(geoEnabled && geoCoords && geoMode === 'travel_time' && isochroneData
+      ? { lat: geoCoords.lat, lng: geoCoords.lng, isochrone_wkt: isochroneData.wkt }
       : {}),
   }
 
@@ -382,6 +440,36 @@ export default function BathhouseSearch() {
   const bathhouses = data?.data ?? []
   const meta = data?.meta
 
+  const fetchIsochrone = useCallback(async (lat: number, lng: number, mode: TravelMode, minutes: number) => {
+    setIsochroneLoading(true)
+    try {
+      const resp = await axiosInstance.get('/isochrone', {
+        params: { lat, lon: lng, mode, minutes },
+      })
+      const result = resp.data?.data ?? resp.data
+      if (result?.coordinates && result?.wkt) {
+        setIsochroneData({ coordinates: result.coordinates, wkt: result.wkt })
+        setGeoError(null)
+      }
+    } catch {
+      message.error('Не удалось построить зону доступности')
+      setIsochroneData(null)
+      setGeoError('Не удалось построить зону доступности. Показываем общую выдачу без зоны поездки.')
+    } finally {
+      setIsochroneLoading(false)
+    }
+  }, [message])
+
+  useEffect(() => {
+    if (!geoEnabled || !geoCoords || geoMode !== 'travel_time') {
+      setIsochroneData(null)
+      setGeoError(null)
+      return
+    }
+
+    void fetchIsochrone(geoCoords.lat, geoCoords.lng, travelMode, travelMinutes)
+  }, [fetchIsochrone, geoCoords, geoEnabled, geoMode, travelMinutes, travelMode])
+
   const handleGeoSearch = () => {
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(
@@ -392,6 +480,21 @@ export default function BathhouseSearch() {
       },
       () => {/* geolocation denied - ignore */},
     )
+  }
+
+  const handleGeoModeChange = (mode: GeoMode) => {
+    setGeoMode(mode)
+    setPage(1)
+  }
+
+  const handleTravelModeChange = (mode: TravelMode) => {
+    setTravelMode(mode)
+    setPage(1)
+  }
+
+  const handleTravelMinutesChange = (minutes: number) => {
+    setTravelMinutes(minutes)
+    setPage(1)
   }
 
   const updateFilter = (key: keyof GetBathhousesParams, value: unknown) => {
@@ -437,6 +540,7 @@ export default function BathhouseSearch() {
       lng: (bounds.east + bounds.west) / 2,
     })
     setGeoEnabled(true)
+    setGeoMode('radius')
     setFilters((prev) => ({ ...prev, radius_km: nextRadius }))
     setPage(1)
   }
@@ -445,6 +549,10 @@ export default function BathhouseSearch() {
     const found = bathhouses.find((bathhouse) => bathhouse.id === id)
     navigate(`/bathhouses/${found?.slug ?? id}`)
   }
+
+  const isochronePolygon: number[][] | null = isochroneData?.coordinates
+    ? isochroneData.coordinates.map((coord: number[]) => [coord[1] ?? 0, coord[0] ?? 0] as [number, number])
+    : null
 
   const activeFilters = useMemo(() => {
     const items: Array<{ key: string; label: string; onRemove: () => void }> = []
@@ -574,12 +682,19 @@ export default function BathhouseSearch() {
     }
 
     if (geoEnabled && geoCoords) {
+      const geoLabel = geoMode === 'travel_time'
+        ? `${travelMinutes} мин ${travelMode === 'car' ? 'на машине' : 'пешком/транспортом'}`
+        : `Рядом: ${radius_km ?? 10} км`
+
       items.push({
         key: 'geo',
-        label: `Рядом: ${radius_km ?? 10} км`,
+        label: geoLabel,
         onRemove: () => {
           setGeoEnabled(false)
           setGeoCoords(null)
+          setGeoMode('radius')
+          setIsochroneData(null)
+          setGeoError(null)
           setPage(1)
         },
       })
@@ -605,10 +720,13 @@ export default function BathhouseSearch() {
     filters,
     geoCoords,
     geoEnabled,
+    geoMode,
     minRating,
     openNow,
     radius_km,
     search,
+    travelMinutes,
+    travelMode,
   ])
 
   const resetDiscoveryFilters = useCallback(() => {
@@ -625,6 +743,11 @@ export default function BathhouseSearch() {
     setMinRating(undefined)
     setGeoEnabled(false)
     setGeoCoords(null)
+    setGeoMode('radius')
+    setTravelMode('car')
+    setTravelMinutes(15)
+    setIsochroneData(null)
+    setGeoError(null)
     setPage(1)
   }, [])
 
@@ -667,6 +790,16 @@ export default function BathhouseSearch() {
 
   const listContent = (
     <>
+      {geoError && (
+        <div style={{ marginBottom: 16 }}>
+          <PublicState
+            kind="degraded"
+            compact
+            title="Зона доступности временно недоступна"
+            description={geoError}
+          />
+        </div>
+      )}
       {isLoading ? (
         <PublicState
           kind="loading"
@@ -695,7 +828,7 @@ export default function BathhouseSearch() {
           onAction={resetDiscoveryFilters}
         />
       ) : (
-        <>
+        <Spin spinning={isochroneLoading}>
           <>
             <Row gutter={[16, 16]}>
               {bathhouses.map((bathhouse) => (
@@ -734,7 +867,7 @@ export default function BathhouseSearch() {
               </div>
             )}
           </>
-        </>
+        </Spin>
       )}
     </>
   )
@@ -961,6 +1094,21 @@ export default function BathhouseSearch() {
                         </Col>
                         {geoEnabled && (
                           <Col xs={24} sm={12}>
+                            <Typography.Text type="secondary">Способ поиска</Typography.Text>
+                            <Segmented
+                              block
+                              options={[
+                                { value: 'radius', label: 'По радиусу' },
+                                { value: 'travel_time', label: 'По времени пути' },
+                              ]}
+                              value={geoMode}
+                              onChange={(value) => handleGeoModeChange(value as GeoMode)}
+                              style={{ marginTop: 4 }}
+                            />
+                          </Col>
+                        )}
+                        {geoEnabled && geoMode === 'radius' && (
+                          <Col xs={24} sm={12}>
                             <Typography.Text type="secondary">Радиус (км)</Typography.Text>
                             <InputNumber
                               min={1}
@@ -970,6 +1118,28 @@ export default function BathhouseSearch() {
                               style={{ width: '100%' }}
                             />
                           </Col>
+                        )}
+                        {geoEnabled && geoMode === 'travel_time' && (
+                          <>
+                            <Col xs={12} sm={6}>
+                              <Typography.Text type="secondary">Способ</Typography.Text>
+                              <Select
+                                style={{ width: '100%' }}
+                                value={travelMode}
+                                onChange={handleTravelModeChange}
+                                options={TRAVEL_MODE_OPTIONS}
+                              />
+                            </Col>
+                            <Col xs={12} sm={6}>
+                              <Typography.Text type="secondary">Время в пути</Typography.Text>
+                              <Select
+                                style={{ width: '100%' }}
+                                value={travelMinutes}
+                                onChange={handleTravelMinutesChange}
+                                options={TRAVEL_TIME_OPTIONS}
+                              />
+                            </Col>
+                          </>
                         )}
                         <Col xs={12} sm={6}>
                           <Typography.Text type="secondary">Время с</Typography.Text>
@@ -1120,6 +1290,7 @@ export default function BathhouseSearch() {
             onMarkerHover={setHighlightedId}
             showMiniCard
             center={geoCoords ?? undefined}
+            isochronePolygon={isochronePolygon}
             style={{ height: 600, borderRadius: 24, overflow: 'hidden' }}
           />
         </div>
@@ -1140,7 +1311,8 @@ export default function BathhouseSearch() {
                 onMarkerHover={setHighlightedId}
                 showMiniCard
                 center={geoCoords ?? undefined}
-                    style={{ height: 700, borderRadius: 24, overflow: 'hidden' }}
+                isochronePolygon={isochronePolygon}
+                style={{ height: 700, borderRadius: 24, overflow: 'hidden' }}
               />
             </div>
           </Col>
