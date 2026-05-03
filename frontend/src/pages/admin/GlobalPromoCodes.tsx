@@ -5,7 +5,6 @@ import {
   Card,
   DatePicker,
   Descriptions,
-  Empty,
   Form,
   Input,
   InputNumber,
@@ -93,7 +92,7 @@ export default function GlobalPromoCodes() {
   }
 
   return (
-    <div>
+    <div className="rh-stack rh-admin-reference-page">
       <PageHeader
         eyebrow="Маркетинг"
         title="Глобальные промокоды"
@@ -114,21 +113,21 @@ export default function GlobalPromoCodes() {
 
       {formVisible && (
         <Card
+          className="rh-admin-action-card"
           title="Новый промокод"
-          style={{ marginBottom: 24 }}
           extra={
             <Button type="text" onClick={() => setFormVisible(false)}>
               Отмена
             </Button>
           }
         >
-          <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form form={form} layout="vertical" onFinish={handleSubmit} className="rh-admin-modal-form">
             <Form.Item
               name="code"
               label="Код"
               rules={[{ required: true, message: 'Введите код промокода' }]}
             >
-              <Input placeholder="SUMMER2026" style={{ textTransform: 'uppercase' }} />
+              <Input className="rh-admin-uppercase-input" placeholder="SUMMER2026" />
             </Form.Item>
 
             <Form.Item
@@ -146,7 +145,7 @@ export default function GlobalPromoCodes() {
                 rules={[{ required: true, message: 'Введите значение скидки' }]}
               >
                 <InputNumber
-                  style={{ width: '100%' }}
+                  className="rh-admin-form-control"
                   min={1}
                   max={selectedType === 'percentage' ? 100 : undefined}
                   placeholder={selectedType === 'percentage' ? '10' : '500'}
@@ -155,11 +154,11 @@ export default function GlobalPromoCodes() {
             )}
 
             <Form.Item name="max_uses" label="Максимум использований">
-              <InputNumber style={{ width: '100%' }} min={1} placeholder="Без ограничений" />
+              <InputNumber className="rh-admin-form-control" min={1} placeholder="Без ограничений" />
             </Form.Item>
 
             <Form.Item name="min_amount" label="Минимальная сумма заказа (руб.)">
-              <InputNumber style={{ width: '100%' }} min={0} placeholder="0" />
+              <InputNumber className="rh-admin-form-control" min={0} placeholder="0" />
             </Form.Item>
 
             <Space>
@@ -185,9 +184,16 @@ export default function GlobalPromoCodes() {
       )}
 
       {createdPromos.length === 0 && !formVisible ? (
-        <Empty description="Нет созданных промокодов в этой сессии" />
+        <Card className="rh-admin-reference-card" title="Созданные промокоды">
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет созданных промокодов в этой сессии</div>
+            <p className="rh-admin-empty-state__text">
+              Созданные промокоды будут появляться здесь сразу после успешного сохранения.
+            </p>
+          </div>
+        </Card>
       ) : (
-        <Space orientation="vertical" size={16} style={{ width: '100%' }}>
+        <Space className="rh-admin-full-width" orientation="vertical" size={16}>
           {createdPromos.map((promo) => (
             <Card key={promo.id} size="small">
               <Descriptions column={{ xs: 1, sm: 2, md: 3 }} size="small">

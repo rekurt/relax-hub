@@ -136,7 +136,7 @@ export default function WalletManagement() {
         description="Поиск кошелька по UUID, ручные корректировки баланса и блокировка операций с обязательной причиной для аудита."
       />
 
-      <Card className="rh-admin-wallet-search" bodyStyle={{ padding: 0 }}>
+      <Card className="rh-admin-wallet-search">
         <div className="rh-admin-wallet-search__icon" aria-hidden>
           <WalletOutlined />
         </div>
@@ -158,7 +158,7 @@ export default function WalletManagement() {
       </Card>
 
       {!wallet && !loading && (
-        <Card className="rh-admin-wallet-empty" bodyStyle={{ padding: 0 }}>
+        <Card className="rh-admin-wallet-empty">
           <div className="rh-admin-wallet-empty__icon" aria-hidden>
             <WalletOutlined />
           </div>
@@ -170,7 +170,7 @@ export default function WalletManagement() {
       )}
 
       {wallet && (
-        <Card className="rh-admin-wallet-detail" bodyStyle={{ padding: 0 }}>
+        <Card className="rh-admin-wallet-detail">
           <div className="rh-admin-wallet-detail__head">
             <div>
               <div className="rh-admin-wallet-detail__eyebrow">Карточка кошелька</div>
@@ -251,7 +251,7 @@ export default function WalletManagement() {
                     { type: 'number', min: 0.01, message: 'Сумма должна быть положительной' },
                   ]}
                 >
-                  <InputNumber style={{ width: '100%' }} min={0.01} step={1} precision={2} />
+                  <InputNumber className="rh-admin-form-control" min={0.01} step={1} precision={2} />
                 </Form.Item>
                 <span className="rh-input-addon">₽</span>
               </Space.Compact>

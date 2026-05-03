@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   App,
   Button,
-  Empty,
+  Card,
   Form,
   Input,
   InputNumber,
@@ -13,7 +13,6 @@ import {
   Switch,
   Table,
   Tag,
-  Typography,
 } from '@/components/design/system'
 import {
   PlusOutlined,
@@ -33,8 +32,7 @@ import type {
   GetAdminFaqParams,
 } from '@/api/generated/model'
 import { useQueryClient } from '@tanstack/react-query'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
 
 const CATEGORY_OPTIONS = [
   { value: 'booking', label: 'Бронирование' },
@@ -218,7 +216,7 @@ export default function FAQManagement() {
       render: (val: string[] | undefined) =>
         val?.length
           ? val.map((kw) => (
-              <Tag key={kw} style={{ marginBottom: 2 }}>
+              <Tag key={kw} className="rh-admin-keyword-tag">
                 {kw}
               </Tag>
             ))
@@ -267,35 +265,44 @@ export default function FAQManagement() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Управление FAQ
-        </Title>
-        <Space>
-          <Select
-            placeholder="Фильтр по категории"
-            allowClear
-            style={{ width: 200 }}
-            options={CATEGORY_OPTIONS}
-            value={filterCategory}
-            onChange={(val) => {
-              setFilterCategory(val)
-              setPage(1)
-            }}
-          />
-          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
-            Добавить FAQ
-          </Button>
-        </Space>
-      </div>
+    <div className="rh-admin-faq-page">
+      <PageHeader
+        eyebrow="Справочный центр"
+        title="Управление FAQ"
+        description="Редактура категорий, ответов и ключевых слов для публичной базы знаний."
+        extra={(
+          <Space className="rh-admin-toolbar__actions" wrap>
+            <Select
+              placeholder="Фильтр по категории"
+              allowClear
+              className="rh-admin-faq-filter"
+              options={CATEGORY_OPTIONS}
+              value={filterCategory}
+              onChange={(val) => {
+                setFilterCategory(val)
+                setPage(1)
+              }}
+            />
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+              Добавить FAQ
+            </Button>
+          </Space>
+        )}
+      />
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}>
+        <Card className="rh-admin-state-card">
           <Spin size="large" />
-        </div>
+        </Card>
       ) : faqList.length === 0 ? (
-        <Empty description="Нет записей FAQ" />
+        <Card>
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет записей FAQ</div>
+            <p className="rh-admin-empty-state__text">
+              Создайте первую запись, чтобы наполнить справочный центр.
+            </p>
+          </div>
+        </Card>
       ) : (
         <Table
           dataSource={faqList}
@@ -327,7 +334,7 @@ export default function FAQManagement() {
         confirmLoading={createMutation.isPending || updateMutation.isPending}
         width={640}
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        <Form form={form} layout="vertical" className="rh-admin-modal-form">
           <Form.Item
             name="category"
             label="Категория"
@@ -368,7 +375,7 @@ export default function FAQManagement() {
             />
           </Form.Item>
           <Form.Item name="sort_order" label="Порядок сортировки">
-            <InputNumber style={{ width: '100%' }} min={0} />
+            <InputNumber className="rh-admin-form-control" min={0} />
           </Form.Item>
           {editingItem && (
             <Form.Item name="active" label="Активен" valuePropName="checked">

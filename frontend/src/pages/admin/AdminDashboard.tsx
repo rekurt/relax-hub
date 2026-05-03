@@ -354,7 +354,7 @@ export default function AdminDashboard() {
 
       {supportMetrics && (
         <section className="rh-admin-panel" data-testid="support-metrics-widget">
-          <div className="rh-admin-toolbar" style={{ marginBottom: 18 }}>
+          <div className="rh-admin-toolbar rh-admin-toolbar--spaced">
             <div className="rh-admin-toolbar__copy">
               <h2 className="rh-admin-toolbar__title"><CustomerServiceOutlined /> Поддержка <MetricHelp title="Показывает качество и скорость обработки обращений поддержки." /></h2>
               <div className="rh-admin-toolbar__hint">Операционные показатели поддержки рядом с бизнес-метриками помогают вовремя заметить просадку качества сервиса.</div>

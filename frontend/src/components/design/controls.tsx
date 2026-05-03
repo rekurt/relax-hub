@@ -796,23 +796,71 @@ function SelectRoot({
   children,
   ...props
 }: SelectProps) {
+  const rootRef = useRef<HTMLSpanElement>(null)
+  const [open, setOpen] = useState(false)
+  const [internalValue, setInternalValue] = useState(defaultValue ?? (mode ? [] : ''))
   const resolvedOptions = options ?? optionsFromChildren(children)
   const optionByDomValue = new Map(resolvedOptions.map((option) => [String(option.value), option]))
-  const selectedValue = value ?? defaultValue ?? (mode ? [] : '')
+  const selectedValue = value !== undefined ? value : internalValue
   const selectedOptions = mode && Array.isArray(selectedValue)
     ? selectedValue.map((item) => resolvedOptions.find((option) => option.value === item)).filter(Boolean) as SelectOption[]
     : []
   const selectedOption = !mode ? optionByDomValue.get(String(selectedValue ?? '')) : undefined
+  const hasSelection = mode ? selectedOptions.length > 0 : selectedValue !== '' && selectedValue != null
   const displayLabel = mode
     ? selectedOptions.map((option) => textFromNode(option.label ?? option.value)).join(', ')
-    : textFromNode(selectedOption?.label ?? placeholder ?? '')
+    : textFromNode(selectedOption?.label ?? (hasSelection ? selectedValue : placeholder) ?? '')
   const hasEmptyOption = resolvedOptions.some((option) => String(option.value) === '')
+  const dropdownOptions = allowClear && !mode && !hasEmptyOption
+    ? [{ value: '', label: placeholder ?? 'Очистить' }, ...resolvedOptions]
+    : resolvedOptions
+  const popupRootClassName = typeof _classNames?.popup?.root === 'string' ? _classNames.popup.root : undefined
+  const dropdownId = id ? `${id}-dropdown` : undefined
+
+  useEffect(() => {
+    if (!open) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open])
+
+  const commitValue = (nextValue: any, option: SelectOption) => {
+    if (mode) {
+      const current = Array.isArray(selectedValue) ? selectedValue : []
+      const exists = current.some((item) => String(item) === String(nextValue))
+      const next = exists
+        ? current.filter((item) => String(item) !== String(nextValue))
+        : [...current, nextValue]
+      if (value === undefined) setInternalValue(next)
+      onChange?.(next, next.map((item) => resolvedOptions.find((candidate) => candidate.value === item) ?? { value: item }))
+      return
+    }
+
+    if (value === undefined) setInternalValue(nextValue)
+    onChange?.(nextValue, option)
+    setOpen(false)
+  }
+
   return (
     <span
+      ref={rootRef}
       className={cx(
         'rh-select',
         'ant-select',
-        'relative inline-flex min-h-[50px] w-full items-center rounded-rh-md border border-[rgba(15,23,42,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(251,247,240,0.96))] px-3.5 shadow-rh-control transition hover:border-[rgba(15,118,110,0.28)] focus-within:border-[rgba(15,118,110,0.52)] focus-within:shadow-rh-control-focus',
+        'relative inline-flex w-full min-w-0 items-stretch',
         disabled && 'ant-select-disabled cursor-not-allowed opacity-60',
         mode ? 'ant-select-multiple' : 'ant-select-single',
         className,
@@ -820,31 +868,65 @@ function SelectRoot({
       style={style}
       {...props}
     >
-      <span className={cx('rh-select__value min-w-0 flex-1 truncate font-sans text-[15px] font-medium', selectedValue === '' && 'ant-select-selection-placeholder text-[rgba(95,104,119,0.72)]', selectedValue !== '' && 'ant-select-selection-item text-rh-text')}>
-        {displayLabel}
-      </span>
-      <select
+      <button
+        type="button"
         id={id}
-        className="rh-select__control ant-select-selector absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        className="rh-select__trigger ant-select-selector"
         disabled={disabled}
-        multiple={Boolean(mode)}
-        value={mode ? (Array.isArray(selectedValue) ? selectedValue.map(String) : []) : String(selectedValue ?? '')}
-        onChange={(event) => {
-          if (mode) {
-            const selected = Array.from(event.currentTarget.selectedOptions).map((option) => optionByDomValue.get(option.value)?.value ?? option.value)
-            onChange?.(selected, selected.map((item) => resolvedOptions.find((option) => option.value === item) ?? { value: item }))
-            return
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-controls={dropdownId}
+        onClick={() => {
+          if (!disabled) setOpen((current) => !current)
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            if (!disabled) setOpen(true)
           }
-          const option = optionByDomValue.get(event.currentTarget.value)
-          onChange?.(option?.value ?? event.currentTarget.value, option)
         }}
       >
-        {placeholder && !mode && selectedValue === '' && !hasEmptyOption && <option value="" aria-label={textFromNode(placeholder)} />}
-        {allowClear && !mode && !hasEmptyOption && <option value="" aria-label="Очистить" />}
-        {resolvedOptions.map((option) => (
-          <option key={String(option.value)} value={String(option.value)} disabled={option.disabled} aria-label={textFromNode(option.label ?? option.value)} />
-        ))}
-      </select>
+        <span className={cx('rh-select__value min-w-0 flex-1 truncate font-sans text-[15px] font-medium', !hasSelection && 'ant-select-selection-placeholder text-[rgba(95,104,119,0.72)]', hasSelection && 'ant-select-selection-item text-rh-text')}>
+          {displayLabel}
+        </span>
+      </button>
+      {open && !disabled && (
+        <span
+          id={dropdownId}
+          className={cx('rh-select__dropdown ant-select-dropdown', _dropdownClassName, _popupClassName, popupRootClassName)}
+          role="listbox"
+          aria-multiselectable={Boolean(mode)}
+        >
+          {dropdownOptions.map((option) => {
+            const selected = mode && Array.isArray(selectedValue)
+              ? selectedValue.some((item) => String(item) === String(option.value))
+              : String(selectedValue ?? '') === String(option.value)
+            return (
+              <button
+                key={String(option.value)}
+                type="button"
+                className={cx(
+                  'rh-select__option ant-select-item ant-select-item-option',
+                  selected && 'rh-select__option--selected ant-select-item-option-selected',
+                  option.disabled && 'ant-select-item-option-disabled',
+                )}
+                role="option"
+                aria-selected={selected}
+                disabled={option.disabled}
+                onClick={() => commitValue(option.value, option)}
+              >
+                <span className="ant-select-item-option-state" aria-hidden="true">
+                  {selected ? '✓' : ''}
+                </span>
+                <span className="ant-select-item-option-content">
+                  {option.label ?? option.value}
+                </span>
+              </button>
+            )
+          })}
+        </span>
+      )}
       <span className="ant-select-arrow" aria-hidden="true">{suffixIcon ?? '⌄'}</span>
     </span>
   )
@@ -1659,7 +1741,20 @@ interface PopconfirmProps extends Omit<PopoverProps, 'content'> {
   children?: ReactNode
 }
 
-export function Popconfirm({ title, description, okText, cancelText, okButtonProps, cancelButtonProps, onConfirm, onCancel, children, className, ...props }: PopconfirmProps) {
+const popconfirmRootStyle: CSSProperties = {
+  position: 'relative',
+  display: 'inline-flex',
+}
+
+const popconfirmOverlayStyle: CSSProperties = {
+  position: 'absolute',
+  right: 0,
+  bottom: 'calc(100% + 10px)',
+  zIndex: 1050,
+  minWidth: 220,
+}
+
+export function Popconfirm({ title, description, okText, cancelText, okButtonProps, cancelButtonProps, onConfirm, onCancel, children, className, style, ...props }: PopconfirmProps) {
   const [open, setOpen] = useState(false)
   const childArray = Children.toArray(children)
   const trigger = childArray.length === 1 && isValidElement(childArray[0])
@@ -1672,10 +1767,10 @@ export function Popconfirm({ title, description, okText, cancelText, okButtonPro
     })
     : children
   return (
-    <span className={cx('rh-popconfirm ant-popover ant-popconfirm', className)} {...props}>
+    <span className={cx('rh-popconfirm ant-popover ant-popconfirm', className)} style={{ ...popconfirmRootStyle, ...style }} {...props}>
       {trigger}
       {open && (
-        <span className="ant-popover-inner">
+        <span className="ant-popover-inner" role="tooltip" style={popconfirmOverlayStyle}>
           <span className="ant-popover-inner-content">{title}{description && <small>{description}</small>}</span>
           <span className="ant-popconfirm-buttons">
             <button type="button" className="ant-btn" onClick={(event) => { setOpen(false); onCancel?.(event) }} {...cancelButtonProps}>{cancelText ?? 'Нет'}</button>

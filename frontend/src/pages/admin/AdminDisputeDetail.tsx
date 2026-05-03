@@ -6,7 +6,6 @@ import {
   Card,
   Descriptions,
   Divider,
-  Empty,
   Form,
   Image,
   Input,
@@ -43,7 +42,7 @@ import type { InternalHandlerDisputeEvidenceResponse } from '@/api/generated/mod
 import { formatDateTime, formatPrice } from '@/lib/format'
 import { resolveAssetUrl } from '@/lib/asset-url'
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Paragraph } = Typography
 
 const statusLabel: Record<string, string> = {
   open: 'Открыт',
@@ -182,14 +181,23 @@ export default function AdminDisputeDetail() {
 
   if (disputeLoading || evidenceLoading) {
     return (
-      <div style={{ textAlign: 'center', padding: 48 }}>
+      <Card className="rh-admin-state-card">
         <Spin size="large" />
-      </div>
+      </Card>
     )
   }
 
   if (!dispute) {
-    return <Empty description="Спор не найден" />
+    return (
+      <Card>
+        <div className="rh-admin-empty-state">
+          <div className="rh-admin-empty-state__title">Спор не найден</div>
+          <p className="rh-admin-empty-state__text">
+            Проверьте идентификатор спора или вернитесь к списку обращений.
+          </p>
+        </div>
+      </Card>
+    )
   }
 
   const canAssign = dispute.status !== 'closed' && dispute.status !== 'resolved'
@@ -206,52 +214,57 @@ export default function AdminDisputeDetail() {
     dispute.evidence_deadline && dayjs(dispute.evidence_deadline).isBefore(dayjs())
 
   return (
-    <div>
-      <Space style={{ marginBottom: 16 }}>
+    <div className="rh-admin-detail-page">
+      <div className="rh-admin-detail-back">
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/admin/disputes')}
         >
           Назад
         </Button>
-      </Space>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Спор: {reasonLabel[dispute.reason!] ?? dispute.reason}
-        </Title>
-        <Space wrap>
-          {canAssign && (
-            <Button
-              icon={<UserSwitchOutlined />}
-              onClick={() => setAssignModalOpen(true)}
-            >
-              Назначить медиатора
-            </Button>
-          )}
-          {canResolve && (
-            <Button
-              type="primary"
-              icon={<CheckOutlined />}
-              onClick={() => setResolveModalOpen(true)}
-            >
-              Решить спор
-            </Button>
-          )}
-          {canClose && (
-            <Button
-              danger
-              icon={<CloseOutlined />}
-              onClick={handleClose}
-              loading={closeMutation.isPending}
-            >
-              Закрыть
-            </Button>
-          )}
-        </Space>
       </div>
 
-      <Card style={{ marginBottom: 16 }}>
+      <Card className="rh-admin-detail-hero">
+        <div className="rh-admin-toolbar">
+          <div className="rh-admin-toolbar__copy">
+            <span className="rh-admin-toolbar__hint">Медиация и компенсации</span>
+            <h1 className="rh-admin-toolbar__title">
+              Спор: {reasonLabel[dispute.reason!] ?? dispute.reason}
+            </h1>
+          </div>
+          <Space className="rh-admin-toolbar__actions" wrap>
+            {canAssign && (
+              <Button
+                icon={<UserSwitchOutlined />}
+                onClick={() => setAssignModalOpen(true)}
+              >
+                Назначить медиатора
+              </Button>
+            )}
+            {canResolve && (
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                onClick={() => setResolveModalOpen(true)}
+              >
+                Решить спор
+              </Button>
+            )}
+            {canClose && (
+              <Button
+                danger
+                icon={<CloseOutlined />}
+                onClick={handleClose}
+                loading={closeMutation.isPending}
+              >
+                Закрыть
+              </Button>
+            )}
+          </Space>
+        </div>
+      </Card>
+
+      <Card className="rh-admin-detail-card">
         <Descriptions column={{ xs: 1, sm: 2, md: 3 }} size="small">
           <Descriptions.Item label="Статус">
             <Tag color={statusColor[dispute.status!] ?? 'default'}>
@@ -304,7 +317,7 @@ export default function AdminDisputeDetail() {
             <Descriptions.Item label="Срок доказательств">
               {formatDateTime(dispute.evidence_deadline)}
               {evidenceDeadlinePassed && (
-                <Tag color="red" style={{ marginLeft: 8 }}>Истёк</Tag>
+                <Tag color="red" className="rh-admin-inline-tag">Истёк</Tag>
               )}
             </Descriptions.Item>
           )}
@@ -339,9 +352,9 @@ export default function AdminDisputeDetail() {
 
         {dispute.description && (
           <>
-            <Divider style={{ margin: '12px 0' }} />
+            <Divider className="rh-admin-detail-divider" />
             <Text strong>Описание от инициатора:</Text>
-            <Paragraph style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>
+            <Paragraph className="rh-admin-detail-note">
               {dispute.description}
             </Paragraph>
           </>
@@ -349,9 +362,9 @@ export default function AdminDisputeDetail() {
 
         {dispute.mediator_notes && (
           <>
-            <Divider style={{ margin: '12px 0' }} />
+            <Divider className="rh-admin-detail-divider" />
             <Text strong>Заметки медиатора:</Text>
-            <Paragraph style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>
+            <Paragraph className="rh-admin-detail-note">
               {dispute.mediator_notes}
             </Paragraph>
           </>
@@ -359,9 +372,14 @@ export default function AdminDisputeDetail() {
       </Card>
 
       {/* Evidence section */}
-      <Card title="Доказательства" style={{ marginBottom: 16 }}>
+      <Card title="Доказательства" className="rh-admin-detail-card rh-admin-evidence-card">
         {evidence.length === 0 ? (
-          <Empty description="Нет доказательств" />
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет доказательств</div>
+            <p className="rh-admin-empty-state__text">
+              Пользователи пока не приложили материалы по этому спору.
+            </p>
+          </div>
         ) : (
           <List
             dataSource={evidence}
@@ -371,20 +389,20 @@ export default function AdminDisputeDetail() {
                   title={
                     <Space>
                       <Tag>{evidenceTypeLabel[item.type!] ?? item.type}</Tag>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
+                      <Text type="secondary" className="rh-admin-evidence-meta">
                         от {item.user_id?.slice(0, 8)}...
                       </Text>
                       {item.created_at && (
-                        <Text type="secondary" style={{ fontSize: 12 }}>
+                        <Text type="secondary" className="rh-admin-evidence-meta">
                           {formatDateTime(item.created_at)}
                         </Text>
                       )}
                     </Space>
                   }
                   description={
-                    <div>
+                    <div className="rh-admin-evidence-body">
                       {item.description && (
-                        <Paragraph style={{ marginBottom: 8 }}>
+                        <Paragraph className="rh-admin-evidence-description">
                           {item.description}
                         </Paragraph>
                       )}
@@ -393,7 +411,7 @@ export default function AdminDisputeDetail() {
                           src={resolveAssetUrl(item.url)}
                           alt="Доказательство"
                           width={200}
-                          style={{ borderRadius: 12 }}
+                          className="rh-admin-evidence-image"
                         />
                       ) : item.url ? (
                         <a href={resolveAssetUrl(item.url)} target="_blank" rel="noopener noreferrer">
@@ -422,9 +440,7 @@ export default function AdminDisputeDetail() {
         cancelText="Отмена"
         confirmLoading={assignMutation.isPending}
       >
-        <div style={{ marginBottom: 8 }}>
-          <Text>ID администратора-медиатора:</Text>
-        </div>
+        <Text className="rh-admin-modal-label">ID администратора-медиатора:</Text>
         <Input
           placeholder="UUID администратора"
           value={assignInput}
@@ -469,7 +485,7 @@ export default function AdminDisputeDetail() {
                 <InputNumber
                   min={0}
                   precision={2}
-                  style={{ width: '100%' }}
+                  className="rh-admin-form-control"
                   placeholder="0.00"
                 />
               </Form.Item>
@@ -484,7 +500,7 @@ export default function AdminDisputeDetail() {
                 <InputNumber
                   min={0}
                   precision={2}
-                  style={{ width: '100%' }}
+                  className="rh-admin-form-control"
                   placeholder="0.00"
                 />
               </Form.Item>

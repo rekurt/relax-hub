@@ -100,7 +100,7 @@ describe('ConversionFunnels', () => {
     const oversizedBar = screen.getByTestId('funnel-bar-1')
     expect(screen.getByText('400.0%')).toBeInTheDocument()
     expect(oversizedBar).toHaveAttribute('aria-valuenow', '100')
-    expect(oversizedBar.style.getPropertyValue('--rh-funnel-bar-width')).toBe('100%')
+    expect(oversizedBar).toHaveAttribute('value', '100')
   })
 
   it('shows growth between funnel stages instead of a negative drop-off', () => {

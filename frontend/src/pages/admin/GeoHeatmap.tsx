@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Card, Empty, Segmented, Spin, Typography, Alert, Slider, Row, Col, Statistic, Radio } from '@/components/design/system'
-import { HeatMapOutlined, EnvironmentOutlined, ShopOutlined, SearchOutlined } from '@/components/design/icons'
+import { Card, Segmented, Spin, Alert, Slider, Row, Col, Statistic, Radio } from '@/components/design/system'
+import { EnvironmentOutlined, ShopOutlined, SearchOutlined } from '@/components/design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { axiosInstance } from '@/api/axios-instance'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
 
 const YMAPS_API_KEY = import.meta.env.VITE_YMAPS_API_KEY || ''
 const YMAPS_SRC = `https://api-maps.yandex.ru/2.1/?apikey=${YMAPS_API_KEY}&lang=ru_RU`
@@ -43,6 +42,8 @@ const CELL_SIZE_MARKS: Record<number, string> = {
   0.05: '~5км',
   0.1: '~10км',
 }
+
+const LEGEND_STEPS = ['Мало', '', '', '', 'Много']
 
 interface HeatmapCell {
   latitude: number
@@ -198,73 +199,78 @@ export default function GeoHeatmap() {
   }, [mapReady, drawRectangles])
 
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={3}>
-        <HeatMapOutlined /> Тепловая карта спроса и предложения
-      </Title>
-
-      <Row gutter={16} style={{ marginBottom: 16 }} align="middle">
-        <Col>
+    <div className="rh-admin-heatmap-page">
+      <PageHeader
+        eyebrow="Геоаналитика"
+        title="Тепловая карта спроса и предложения"
+        description="Сопоставление поискового спроса, объектов и бронирований по географическим ячейкам."
+        extra={(
           <Segmented
+            className="rh-admin-heatmap-periods"
             options={PERIOD_OPTIONS}
             value={period}
             onChange={(val) => setPeriod(val as string)}
           />
-        </Col>
-        <Col flex="auto">
-          <span style={{ marginRight: 8 }}>Размер ячейки:</span>
-          <Slider
-            style={{ display: 'inline-block', width: 200 }}
-            min={0.005}
-            max={0.1}
-            step={0.005}
-            marks={CELL_SIZE_MARKS}
-            value={cellSize}
-            onChange={(val) => setCellSize(val)}
-            tooltip={{ formatter: (val) => `${val} deg` }}
-          />
-        </Col>
-        <Col>
-          <Radio.Group
-            value={layer}
-            onChange={(e) => setLayer(e.target.value)}
-            optionType="button"
-            buttonStyle="solid"
-          >
-            <Radio.Button value="demand">Спрос</Radio.Button>
-            <Radio.Button value="supply">Предложение</Radio.Button>
-          </Radio.Group>
-        </Col>
-      </Row>
+        )}
+      />
 
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={8}>
-          <Card size="small">
+      <Card className="rh-admin-filter-card rh-admin-heatmap-controls">
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} md={14}>
+            <div className="rh-admin-heatmap-slider">
+              <span className="rh-admin-heatmap-slider__label">Размер ячейки</span>
+              <Slider
+                className="rh-admin-heatmap-slider__control"
+                min={0.005}
+                max={0.1}
+                step={0.005}
+                marks={CELL_SIZE_MARKS}
+                value={cellSize}
+                onChange={(val) => setCellSize(val)}
+                tooltip={{ formatter: (val) => `${val} deg` }}
+              />
+            </div>
+          </Col>
+          <Col xs={24} md={10}>
+            <Radio.Group
+              className="rh-admin-heatmap-layer"
+              value={layer}
+              onChange={(e) => setLayer(e.target.value)}
+              optionType="button"
+              buttonStyle="solid"
+            >
+              <Radio.Button value="demand">Спрос</Radio.Button>
+              <Radio.Button value="supply">Предложение</Radio.Button>
+            </Radio.Group>
+          </Col>
+        </Row>
+      </Card>
+
+      <Row gutter={[16, 16]} className="rh-admin-heatmap-stats">
+        <Col xs={24} sm={8}>
+          <Card size="small" className="rh-admin-heatmap-stat rh-admin-heatmap-stat--supply">
             <Statistic
               title="Объекты"
               value={totalListings}
               prefix={<ShopOutlined />}
-              valueStyle={{ color: '#0f766e' }}
             />
           </Card>
         </Col>
-        <Col span={8}>
-          <Card size="small">
+        <Col xs={24} sm={8}>
+          <Card size="small" className="rh-admin-heatmap-stat rh-admin-heatmap-stat--demand">
             <Statistic
               title="Поисковые запросы"
               value={totalSearches}
               prefix={<SearchOutlined />}
-              valueStyle={{ color: '#d97706' }}
             />
           </Card>
         </Col>
-        <Col span={8}>
-          <Card size="small">
+        <Col xs={24} sm={8}>
+          <Card size="small" className="rh-admin-heatmap-stat rh-admin-heatmap-stat--booking">
             <Statistic
               title="Бронирования"
               value={totalBookings}
               prefix={<EnvironmentOutlined />}
-              valueStyle={{ color: '#15803d' }}
             />
           </Card>
         </Col>
@@ -275,49 +281,44 @@ export default function GeoHeatmap() {
           type="error"
           title="Ошибка загрузки данных"
           description="Не удалось загрузить данные тепловой карты"
-          style={{ marginBottom: 16 }}
+          className="rh-admin-alert"
         />
       )}
 
-      <Card data-testid="heatmap-card">
+      <Card data-testid="heatmap-card" className="rh-admin-heatmap-card">
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: 60 }}>
+          <div className="rh-admin-state-card">
             <Spin size="large" />
           </div>
         ) : cells.length === 0 ? (
-          <Empty
-            description="Нет данных для отображения за выбранный период. Попробуйте увеличить период или изменить размер ячейки."
-            style={{ padding: '48px 0' }}
-          />
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет данных</div>
+            <p className="rh-admin-empty-state__text">
+              Нет данных для отображения за выбранный период. Попробуйте увеличить период или изменить размер ячейки.
+            </p>
+          </div>
         ) : null}
         <div
           ref={containerRef}
           data-testid="heatmap-map"
-          style={{ width: '100%', height: 500, minHeight: 400 }}
+          className="rh-admin-heatmap-map"
         />
         {cells.length > 0 && (
-          <div style={{ padding: '12px 0 0', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 12, color: 'var(--rh-text-muted)' }}>
+          <div className="rh-admin-heatmap-legend">
+            <span className="rh-admin-heatmap-legend__label">
               {layer === 'demand' ? 'Спрос (запросы):' : 'Предложение (объекты):'}
             </span>
-            <div style={{ display: 'flex', gap: 2 }}>
-              {['Мало', '', '', '', 'Много'].map((label, i) => (
-                <div key={i} style={{ textAlign: 'center' }}>
+            <div className="rh-admin-heatmap-legend__scale">
+              {LEGEND_STEPS.map((label, i) => (
+                <div key={`${layer}-${i}`} className="rh-admin-heatmap-legend__item">
                   <div
-                    style={{
-                      width: 40,
-                      height: 12,
-                      borderRadius: 2,
-                      background: layer === 'demand'
-                        ? getDemandColor((i + 1) * 20, 100)
-                        : getSupplyColor((i + 1) * 20, 100),
-                    }}
+                    className={`rh-admin-heatmap-legend__swatch rh-admin-heatmap-legend__swatch--${layer}-${i}`}
                   />
-                  {label && <div style={{ fontSize: 10, color: 'var(--rh-text-muted)' }}>{label}</div>}
+                  {label && <div className="rh-admin-heatmap-legend__caption">{label}</div>}
                 </div>
               ))}
             </div>
-            <span style={{ fontSize: 12, color: 'var(--rh-text-muted)', marginLeft: 'auto' }}>
+            <span className="rh-admin-heatmap-legend__total">
               {cells.length} ячеек
             </span>
           </div>

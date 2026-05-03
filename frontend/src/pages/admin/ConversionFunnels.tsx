@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useState } from 'react'
 import { Card, Col, Row, Segmented, Spin, Statistic, Typography } from '@/components/design/system'
 import {
   FunnelPlotOutlined,
@@ -15,15 +15,6 @@ const PERIOD_OPTIONS = [
   { label: 'Неделя', value: '7d' },
   { label: 'Месяц', value: '30d' },
   { label: '3 месяца', value: '90d' },
-]
-
-const STEP_COLORS = [
-  '#0f766e',
-  '#0f766e',
-  '#15803d',
-  '#d97706',
-  '#b42318',
-  '#0a5f59',
 ]
 
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -144,7 +135,6 @@ export default function ConversionFunnels() {
               {steps.map((step: GithubComRekurtRelaxHubInternalDomainFunnelStep, index: number) => {
                 const percentage = step.percentage ?? 0
                 const barWidth = clampFunnelBarWidth(percentage)
-                const color = STEP_COLORS[index % STEP_COLORS.length]
                 const currentCount = step.count ?? 0
                 const nextStep = steps[index + 1]
                 const change = nextStep
@@ -162,22 +152,17 @@ export default function ConversionFunnels() {
                         className="rh-funnel__track"
                         aria-label={`${stepName}: ${percentage.toFixed(1)}%`}
                       >
-                        <div
-                          className="rh-funnel__bar"
+                        <meter
+                          className={cx('rh-funnel__bar', `rh-funnel__bar--tone-${index % 6}`)}
                           data-testid={`funnel-bar-${index}`}
-                          role="meter"
-                          aria-valuemin={0}
-                          aria-valuemax={100}
+                          min={0}
+                          max={100}
+                          value={barWidth}
                           aria-valuenow={barWidth}
-                          style={{
-                            '--rh-funnel-bar-width': `${barWidth}%`,
-                            '--rh-funnel-bar-color': color,
-                          } as CSSProperties}
-                        >
-                          <span className="rh-funnel__count">
-                            {currentCount.toLocaleString('ru-RU')}
-                          </span>
-                        </div>
+                        />
+                        <span className="rh-funnel__count">
+                          {currentCount.toLocaleString('ru-RU')}
+                        </span>
                       </div>
                       <div className="rh-funnel__percentage">
                         {percentage.toFixed(1)}%

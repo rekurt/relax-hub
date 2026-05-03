@@ -3,7 +3,6 @@ import {
   Button,
   Card,
   Col,
-  Empty,
   Form,
   InputNumber,
   Modal,
@@ -20,8 +19,9 @@ import {
   useGetMyLoyaltyLevels,
 } from '@/api/generated/loyalty/loyalty'
 import type { InternalHandlerLoyaltyLevelResponse } from '@/api/generated/model'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const LEVEL_COLORS: Record<string, string> = {
   bronze: '#cd7f32',
@@ -73,7 +73,7 @@ export default function LoyaltyManagement() {
         <Tag
           color={LEVEL_COLORS[level] ?? 'default'}
           icon={<TrophyOutlined />}
-          style={{ fontSize: 14 }}
+          className="rh-admin-loyalty-tag"
         >
           {LEVEL_NAMES[level] ?? level}
         </Tag>
@@ -120,24 +120,26 @@ export default function LoyaltyManagement() {
   const sortedLevels = [...levels].sort((a, b) => (a.min_visits ?? 0) - (b.min_visits ?? 0))
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Управление программой лояльности
-      </Title>
+    <div className="rh-admin-loyalty-page">
+      <PageHeader
+        eyebrow="Клиентский опыт"
+        title="Управление программой лояльности"
+        description="Уровни, кэшбэк и множители баллов для повторных визитов."
+      />
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      <Row gutter={[16, 16]} className="rh-admin-loyalty-grid">
         {sortedLevels.map((level) => (
           <Col xs={12} sm={6} key={level.level}>
             <Card
               size="small"
-              style={{ borderTop: `3px solid ${LEVEL_COLORS[level.level ?? ''] ?? '#c9c1b5'}` }}
+              className={`rh-admin-loyalty-tier rh-admin-loyalty-tier--${level.level ?? 'default'}`}
             >
               <Text type="secondary">{LEVEL_NAMES[level.level ?? ''] ?? level.level}</Text>
-              <div style={{ fontSize: 20, fontWeight: 600 }}>от {level.min_visits ?? 0} визитов</div>
-              <div style={{ marginTop: 4 }}>
+              <div className="rh-admin-loyalty-tier__visits">от {level.min_visits ?? 0} визитов</div>
+              <div className="rh-admin-loyalty-tier__meta">
                 <Text type="secondary">Кэшбэк: {level.discount_percent ?? 0}%</Text>
               </div>
-              <div>
+              <div className="rh-admin-loyalty-tier__meta">
                 <Text type="secondary">Множитель: ×{level.point_multiplier ?? 1}</Text>
               </div>
             </Card>
@@ -145,14 +147,24 @@ export default function LoyaltyManagement() {
         ))}
       </Row>
 
-      <Title level={4} style={{ marginBottom: 12 }}>
-        Настройка уровней
-      </Title>
+      <div className="rh-admin-toolbar rh-admin-toolbar--spaced">
+        <div className="rh-admin-toolbar__copy">
+          <h2 className="rh-admin-toolbar__title">Настройка уровней</h2>
+          <span className="rh-admin-toolbar__hint">Текущие правила начислений доступны для просмотра.</span>
+        </div>
+      </div>
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}><Spin size="large" /></div>
+        <Card className="rh-admin-state-card"><Spin size="large" /></Card>
       ) : levels.length === 0 ? (
-        <Empty description="Нет уровней лояльности" />
+        <Card>
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет уровней лояльности</div>
+            <p className="rh-admin-empty-state__text">
+              Уровни появятся здесь после настройки правил программы.
+            </p>
+          </div>
+        </Card>
       ) : (
         <Table
           dataSource={sortedLevels}
@@ -170,14 +182,14 @@ export default function LoyaltyManagement() {
         onCancel={() => setEditModalOpen(false)}
         footer={<Button onClick={() => setEditModalOpen(false)}>Закрыть</Button>}
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        <Form form={form} layout="vertical" className="rh-admin-modal-form">
           <Form.Item name="min_visits" label="Минимальное количество визитов">
-            <InputNumber style={{ width: '100%' }} disabled />
+            <InputNumber className="rh-admin-form-control" disabled />
           </Form.Item>
           <Form.Item label="Процент кэшбэка">
             <Space.Compact className="rh-compact-control">
               <Form.Item name="discount_percent" noStyle>
-                <InputNumber style={{ width: '100%' }} disabled />
+                <InputNumber className="rh-admin-form-control" disabled />
               </Form.Item>
               <span className="rh-input-addon">%</span>
             </Space.Compact>
@@ -185,7 +197,7 @@ export default function LoyaltyManagement() {
           <Form.Item label="Множитель баллов">
             <Space.Compact className="rh-compact-control">
               <Form.Item name="point_multiplier" noStyle>
-                <InputNumber style={{ width: '100%' }} disabled />
+                <InputNumber className="rh-admin-form-control" disabled />
               </Form.Item>
               <span className="rh-input-addon">×</span>
             </Space.Compact>

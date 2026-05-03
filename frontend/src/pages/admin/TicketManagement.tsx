@@ -80,6 +80,10 @@ function formatDuration(seconds: number): string {
   return mins > 0 ? `${hours} ч ${mins} мин` : `${hours} ч`
 }
 
+function metricStatClass(tone: 'success' | 'warning' | 'danger') {
+  return `rh-admin-metric-stat rh-admin-metric-stat--${tone}`
+}
+
 const SLA_THRESHOLDS: Record<string, number> = {
   L1: 24,
   L2: 48,
@@ -374,11 +378,11 @@ export default function TicketManagement() {
           <Row gutter={[24, 16]}>
             <Col xs={12} sm={8} md={4}>
               <Statistic
+                className={metricStatClass(metrics.fcr_percent >= 70 ? 'success' : 'warning')}
                 title="FCR"
                 value={metrics.fcr_percent}
                 precision={1}
                 suffix="%"
-                valueStyle={{ color: metrics.fcr_percent >= 70 ? '#15803d' : '#d97706' }}
               />
             </Col>
             <Col xs={12} sm={8} md={4}>
@@ -389,20 +393,24 @@ export default function TicketManagement() {
             </Col>
             <Col xs={12} sm={8} md={4}>
               <Statistic
+                className={
+                  metricStatClass(
+                    metrics.avg_csat >= 4 ? 'success' : metrics.avg_csat >= 3 ? 'warning' : 'danger',
+                  )
+                }
                 title="CSAT"
                 value={metrics.avg_csat}
                 precision={1}
                 suffix="/ 5"
-                valueStyle={{ color: metrics.avg_csat >= 4 ? '#15803d' : metrics.avg_csat >= 3 ? '#d97706' : '#b42318' }}
               />
             </Col>
             <Col xs={12} sm={8} md={4}>
               <Statistic
+                className={metricStatClass(metrics.sla_compliance_percent >= 90 ? 'success' : 'warning')}
                 title="SLA (24ч)"
                 value={metrics.sla_compliance_percent}
                 precision={1}
                 suffix="%"
-                valueStyle={{ color: metrics.sla_compliance_percent >= 90 ? '#15803d' : '#d97706' }}
               />
             </Col>
             <Col xs={12} sm={8} md={4}>
