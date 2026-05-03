@@ -16,14 +16,14 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   CrownOutlined,
   RocketOutlined,
   StarOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import {
   useGetMyBathhousesIdSubscription,
@@ -49,7 +49,7 @@ const PLANS = [
     key: 'free',
     title: 'Бесплатный',
     icon: <StarOutlined style={{ fontSize: 24 }} />,
-    color: '#d9d9d9',
+    color: '#c9c1b5',
     features: ['Базовый листинг', 'До 5 фото', 'Стандартный поиск'],
     price: 0,
   },
@@ -57,7 +57,7 @@ const PLANS = [
     key: 'premium',
     title: 'Премиум',
     icon: <CrownOutlined style={{ fontSize: 24 }} />,
-    color: '#faad14',
+    color: '#d97706',
     features: ['Приоритет в поиске (+10)', 'До 20 фото', 'Аналитика', 'Виджет бронирования'],
     price: 99900,
   },
@@ -65,7 +65,7 @@ const PLANS = [
     key: 'promoted',
     title: 'Продвижение',
     icon: <RocketOutlined style={{ fontSize: 24 }} />,
-    color: '#1890ff',
+    color: '#0f766e',
     features: ['Всё из Премиум', 'Первые позиции', 'Промо-кампании', 'Персональный менеджер'],
     price: 299900,
   },
@@ -258,7 +258,7 @@ export default function SubscriptionPage() {
     return (
       <div>
         <Title level={3}>Подписки</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
           Выберите баню для управления подписками
         </div>
       </div>

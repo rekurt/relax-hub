@@ -12,12 +12,12 @@ import {
   Select,
   Switch,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CodeOutlined,
   CopyOutlined,
   ReloadOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import {
   useGetMyBathhousesIdWidgetCode,
   useGetMyBathhousesIdWidgetKey,
@@ -29,10 +29,9 @@ import { useQueryClient } from '@tanstack/react-query'
 const { Title, Text } = Typography
 
 const FONT_OPTIONS = [
-  { value: 'Inter', label: 'Inter' },
-  { value: 'Roboto', label: 'Roboto' },
-  { value: 'Open Sans', label: 'Open Sans' },
-  { value: 'Montserrat', label: 'Montserrat' },
+  { value: 'Manrope', label: 'Manrope' },
+  { value: 'Avenir Next', label: 'Avenir Next' },
+  { value: 'Segoe UI', label: 'Segoe UI' },
   { value: 'system-ui', label: 'Системный' },
 ]
 
@@ -41,8 +40,8 @@ export default function WidgetSettings() {
   const queryClient = useQueryClient()
   const { message } = App.useApp()
 
-  const [color, setColor] = useState('#1890ff')
-  const [fontFamily, setFontFamily] = useState('Inter')
+  const [color, setColor] = useState('#0f766e')
+  const [fontFamily, setFontFamily] = useState('Manrope')
   const [showPrice, setShowPrice] = useState(true)
   const [showRating, setShowRating] = useState(true)
 
@@ -106,7 +105,7 @@ export default function WidgetSettings() {
     return (
       <div>
         <Title level={3}>Виджет бронирования</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-soft)' }}>
           Выберите баню для настройки виджета
         </div>
       </div>
@@ -193,9 +192,9 @@ export default function WidgetSettings() {
           >
             <div
               style={{
-                background: '#f5f5f5',
+                background: 'rgba(248, 244, 236, 0.78)',
                 padding: 16,
-                borderRadius: 8,
+                borderRadius: 20,
                 fontFamily: 'monospace',
                 fontSize: 13,
                 whiteSpace: 'pre-wrap',
@@ -218,8 +217,8 @@ export default function WidgetSettings() {
           <Card title="Предпросмотр" style={{ marginTop: 24 }}>
             <div
               style={{
-                border: '2px dashed #d9d9d9',
-                borderRadius: 8,
+                border: '2px dashed var(--rh-border-control)',
+                borderRadius: 20,
                 padding: 32,
                 textAlign: 'center',
                 minHeight: 200,
@@ -229,14 +228,15 @@ export default function WidgetSettings() {
                 justifyContent: 'center',
               }}
             >
-              <CodeOutlined style={{ fontSize: 48, color: '#d9d9d9', marginBottom: 16 }} />
+              <CodeOutlined style={{ fontSize: 48, color: 'var(--rh-text-muted)', marginBottom: 16 }} />
               <div
                 style={{
                   padding: '12px 24px',
                   background: color,
                   color: '#fff',
-                  borderRadius: 8,
+                  borderRadius: 999,
                   fontFamily,
+                  fontWeight: 800,
                   fontSize: 16,
                   marginBottom: 8,
                 }}

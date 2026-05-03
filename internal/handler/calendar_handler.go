@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -108,8 +109,8 @@ func (h *CalendarHandler) ExportICal(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Set("Content-Disposition", "attachment; filename=calendar.ics")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(ical))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	http.ServeContent(w, r, "calendar.ics", time.Time{}, strings.NewReader(ical))
 }
 
 // ExportICalByToken exports bathhouse bookings as an iCalendar (.ics) file using a shareable token.
@@ -129,8 +130,8 @@ func (h *CalendarHandler) ExportICalByToken(w http.ResponseWriter, r *http.Reque
 
 	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Set("Content-Disposition", "attachment; filename=calendar.ics")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(ical))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	http.ServeContent(w, r, "calendar.ics", time.Time{}, strings.NewReader(ical))
 }
 
 // GetCalendarToken godoc

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Button, Typography, Row, Col, Pagination, Spin, Empty, Card, Rate, Select, Divider } from 'antd'
-import { EnvironmentOutlined } from '@ant-design/icons'
+import { Button, Typography, Row, Col, Pagination, Spin, Empty, Card, Rate, Select, Divider } from '@/components/design/system'
+import { EnvironmentOutlined } from '@/components/design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useGetRecommendations, useGetPopular } from '@/api/generated/recommendations/recommendations'
 import { useGetCities } from '@/api/generated/cities/cities'

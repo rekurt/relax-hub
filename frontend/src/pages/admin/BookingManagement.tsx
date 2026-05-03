@@ -13,12 +13,12 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
-import { SearchOutlined, CloseCircleOutlined, SwapOutlined } from '@ant-design/icons'
+} from '@/components/design/system'
+import { SearchOutlined, CloseCircleOutlined, SwapOutlined } from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
 import dayjs from 'dayjs'
-import type { ColumnsType } from 'antd/es/table'
+import type { ColumnsType } from '@/components/design/types'
 
 const { Title } = Typography
 const { RangePicker } = DatePicker

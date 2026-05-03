@@ -12,16 +12,17 @@ import {
   Popconfirm,
   Row,
   Select,
+  Space,
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   TeamOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { axiosInstance } from '@/api/axios-instance'
@@ -218,25 +219,45 @@ function SegmentForm({
         <Title level={5}>Фильтры по суммам (руб)</Title>
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="avg_check_min" label="Средний чек от">
-              <InputNumber min={0} style={{ width: '100%' }} addonAfter="₽" />
+            <Form.Item label="Средний чек от">
+              <Space.Compact className="rh-compact-control">
+                <Form.Item name="avg_check_min" noStyle>
+                  <InputNumber min={0} style={{ width: '100%' }} />
+                </Form.Item>
+                <span className="rh-input-addon">₽</span>
+              </Space.Compact>
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="avg_check_max" label="Средний чек до">
-              <InputNumber min={0} style={{ width: '100%' }} addonAfter="₽" />
+            <Form.Item label="Средний чек до">
+              <Space.Compact className="rh-compact-control">
+                <Form.Item name="avg_check_max" noStyle>
+                  <InputNumber min={0} style={{ width: '100%' }} />
+                </Form.Item>
+                <span className="rh-input-addon">₽</span>
+              </Space.Compact>
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="total_spent_min" label="Общая сумма от">
-              <InputNumber min={0} style={{ width: '100%' }} addonAfter="₽" />
+            <Form.Item label="Общая сумма от">
+              <Space.Compact className="rh-compact-control">
+                <Form.Item name="total_spent_min" noStyle>
+                  <InputNumber min={0} style={{ width: '100%' }} />
+                </Form.Item>
+                <span className="rh-input-addon">₽</span>
+              </Space.Compact>
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="total_spent_max" label="Общая сумма до">
-              <InputNumber min={0} style={{ width: '100%' }} addonAfter="₽" />
+            <Form.Item label="Общая сумма до">
+              <Space.Compact className="rh-compact-control">
+                <Form.Item name="total_spent_max" noStyle>
+                  <InputNumber min={0} style={{ width: '100%' }} />
+                </Form.Item>
+                <span className="rh-input-addon">₽</span>
+              </Space.Compact>
             </Form.Item>
           </Col>
         </Row>
@@ -409,7 +430,7 @@ export default function SegmentBuilder() {
                 hoverable
                 style={{
                   marginBottom: 8,
-                  borderColor: selectedSegment?.id === item.id ? '#1677ff' : undefined,
+                  borderColor: selectedSegment?.id === item.id ? '#0f766e' : undefined,
                   borderWidth: selectedSegment?.id === item.id ? 2 : 1,
                 }}
                 onClick={() => { setSelectedSegment(item); setPage(1) }}
@@ -417,7 +438,7 @@ export default function SegmentBuilder() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <TeamOutlined style={{ color: '#1677ff', fontSize: 18 }} />
+                      <TeamOutlined style={{ color: '#0f766e', fontSize: 18 }} />
                       <Text strong>{item.name}</Text>
                     </div>
                     <Text type="secondary" style={{ fontSize: 12 }}>
@@ -473,7 +494,7 @@ export default function SegmentBuilder() {
             </Card>
           ) : (
             <Card>
-              <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
                 Выберите сегмент или создайте новый
               </div>
             </Card>

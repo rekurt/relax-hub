@@ -10,6 +10,7 @@ bani-bot
 *.so
 *.dylib
 /.playwright-cli
+.playwright-mcp/
 # Go test binary
 *.test
 
@@ -52,4 +53,3 @@ node_modules/
 
 # local deploy secrets (kubeconfig, passwords)
 .deploy-local/
-

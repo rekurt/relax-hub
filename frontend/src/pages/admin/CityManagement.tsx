@@ -10,13 +10,13 @@ import {
   Space,
   Spin,
   Table,
-} from 'antd'
+} from '@/components/design/system'
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-} from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetCities,

@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import { Spin } from 'antd'
+import { Spin } from '@/components/design/system'
 import { useAuthStore } from '@/stores/auth'
 import { getRoleHomePath } from '@/stores/auth'
 
@@ -14,7 +14,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div className="rh-fullscreen-state">
         <Spin size="large" />
       </div>
     )

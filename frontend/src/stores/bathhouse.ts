@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-const SELECTED_BATHHOUSE_KEY = 'bani_selected_bathhouse'
+const SELECTED_BATHHOUSE_KEY = 'rh_selected_bathhouse'
 
 export interface BathhouseState {
   selectedBathhouseId: string | null

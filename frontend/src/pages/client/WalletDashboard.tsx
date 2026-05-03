@@ -17,15 +17,15 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   DownloadOutlined,
   LockOutlined,
   PlusOutlined,
   WalletOutlined,
   WarningOutlined,
-} from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import dayjs from 'dayjs'
 import { useGetMyWallet, useGetMyWalletTransactions, useGetMyWalletHolds, usePostMyWalletTopup } from '@/api/generated/wallet/wallet'
 import type { InternalHandlerWalletTransactionResponse, InternalHandlerWalletHoldResponse } from '@/api/generated/model'
@@ -179,7 +179,7 @@ export default function WalletDashboard() {
       render: (amount: number, record) => {
         const isPositive = !['spend', 'bonus_expiry', 'hold_capture', 'payout', 'admin_debit'].includes(record.type ?? '')
         return (
-          <span style={{ color: isPositive ? '#52c41a' : '#ff4d4f', fontWeight: 500 }}>
+          <span style={{ color: isPositive ? '#15803d' : '#b42318', fontWeight: 500 }}>
             {isPositive ? '+' : ''}{formatPrice(amount ?? 0)}
           </span>
         )
@@ -257,7 +257,7 @@ export default function WalletDashboard() {
               title="Доступно"
               value={wallet?.available ? wallet.available / 100 : 0}
               suffix="₽"
-              styles={{ content: { color: '#52c41a' } }}
+              styles={{ content: { color: '#15803d' } }}
             />
           </Card>
         </Col>
@@ -268,7 +268,7 @@ export default function WalletDashboard() {
               value={wallet?.held_amount ? wallet.held_amount / 100 : 0}
               suffix="₽"
               prefix={<LockOutlined />}
-              styles={{ content: { color: '#faad14' } }}
+              styles={{ content: { color: '#d97706' } }}
             />
           </Card>
         </Col>

@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -72,13 +74,51 @@ func (h *OAuthHandler) OAuthRedirect(w http.ResponseWriter, r *http.Request) {
 	provider := domain.OAuthProvider(chi.URLParam(r, "provider"))
 	referralCode := r.URL.Query().Get("referral_code")
 
-	url, err := h.oauthService.GetOAuthURL(provider, referralCode)
+	redirectURL, err := h.oauthService.GetOAuthURL(provider, referralCode)
 	if err != nil {
 		handleServiceError(w, err)
 		return
 	}
 
-	http.Redirect(w, r, url, http.StatusFound)
+	parsedURL, err := validateOAuthRedirectURL(provider, redirectURL)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	w.Header().Set("Location", parsedURL.String())
+	w.WriteHeader(http.StatusFound)
+}
+
+func validateOAuthRedirectURL(provider domain.OAuthProvider, rawURL string) (*url.URL, error) {
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, domain.ErrInvalidInput
+	}
+	if parsedURL.Scheme != "https" {
+		return nil, domain.ErrInvalidInput
+	}
+
+	host := strings.ToLower(parsedURL.Hostname())
+	allowedHosts := map[domain.OAuthProvider]map[string]struct{}{
+		domain.OAuthProviderVK: {
+			"oauth.vk.com": {},
+			"id.vk.com":    {},
+		},
+		domain.OAuthProviderYandex: {
+			"oauth.yandex.ru":  {},
+			"oauth.yandex.com": {},
+		},
+		domain.OAuthProviderGoogle: {
+			"accounts.google.com": {},
+		},
+	}
+	if hosts, ok := allowedHosts[provider]; ok {
+		if _, allowed := hosts[host]; allowed {
+			return parsedURL, nil
+		}
+	}
+	return nil, domain.ErrInvalidInput
 }
 
 // ListConfiguredProviders godoc

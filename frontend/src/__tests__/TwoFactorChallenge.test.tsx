@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { ConfigProvider, App as AntApp } from 'antd'
-import ruRU from 'antd/locale/ru_RU'
+import { ConfigProvider, App as AntApp } from '@/components/design/system'
+import { ruRU } from '@/components/design/system'
 import TwoFactorChallenge from '@/components/TwoFactorChallenge'
 
 const mockPostAuth2faVerify = vi.fn()

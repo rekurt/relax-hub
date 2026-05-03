@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { AppleOutlined, CreditCardOutlined, QrcodeOutlined } from '@ant-design/icons'
-import { Button } from 'antd'
+import { AppleOutlined, CreditCardOutlined, QrcodeOutlined } from '@/components/design/icons'
+import { Button } from '@/components/design/system'
 import ApplePayButton from '@/components/ApplePayButton'
 import GooglePayButton from '@/components/GooglePayButton'
 import type { CertificatePaymentMethod } from '@/lib/certificate-payment'
@@ -59,34 +59,34 @@ export default function CertificatePaymentMethodSelector({
   const walletDisabled = disabled || amount < 10000
 
   return (
-    <div className="bani-certificates-payment-selector">
-      <div className="bani-certificates-payment-selector__grid">
+    <div className="rh-certificates-payment-selector">
+      <div className="rh-certificates-payment-selector__grid">
         {PAYMENT_METHODS.map((method) => (
           <button
             key={method.value}
             type="button"
-            className={`bani-certificates-payment-selector__option${method.value === value ? ' bani-certificates-payment-selector__option--active' : ''}`}
+            className={`rh-certificates-payment-selector__option${method.value === value ? ' rh-certificates-payment-selector__option--active' : ''}`}
             onClick={() => onChange(method.value)}
             disabled={disabled}
           >
-            <span className="bani-certificates-payment-selector__option-header">
-              <span className="bani-certificates-payment-selector__option-label">
+            <span className="rh-certificates-payment-selector__option-header">
+              <span className="rh-certificates-payment-selector__option-label">
                 {method.icon}
                 {method.label}
               </span>
             </span>
-            <span className="bani-certificates-payment-selector__option-description">{method.description}</span>
+            <span className="rh-certificates-payment-selector__option-description">{method.description}</span>
           </button>
         ))}
       </div>
 
-      <div className="bani-certificates-payment-selector__footer">
-        <div className="bani-certificates-payment-selector__note">
+      <div className="rh-certificates-payment-selector__footer">
+        <div className="rh-certificates-payment-selector__note">
           {selectedMethod.description}
         </div>
 
         {(value === 'apple_pay' || value === 'google_pay') ? (
-          <div className="bani-certificates-payment-selector__wallet">
+          <div className="rh-certificates-payment-selector__wallet">
             {value === 'apple_pay' ? (
               <ApplePayButton
                 amount={amount}
@@ -107,7 +107,7 @@ export default function CertificatePaymentMethodSelector({
           <Button
             type="primary"
             size="large"
-            className="bani-certificates-payment-selector__cta"
+            className="rh-certificates-payment-selector__cta"
             loading={loading}
             disabled={disabled}
             onClick={onSubmit}

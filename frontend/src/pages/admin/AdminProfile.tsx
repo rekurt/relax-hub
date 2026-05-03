@@ -10,12 +10,12 @@ import {
   Popconfirm,
   App,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   UserOutlined,
   UploadOutlined,
   DeleteOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useAuthStore } from '@/stores/auth'
 import {
   usePutAuthMe,
@@ -86,32 +86,32 @@ export default function AdminProfile() {
   }
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Админка"
         title="Профиль администратора"
         description="Базовые данные администратора и аватар для служебных сценариев."
       />
 
-      <div className="bani-stat-grid">
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Администратор</span>
-          <span className="bani-stat-tile__value">{user?.name ?? 'Без имени'}</span>
-          <span className="bani-stat-tile__hint">{user?.email ?? 'Email не указан'}</span>
+      <div className="rh-stat-grid">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Администратор</span>
+          <span className="rh-stat-tile__value">{user?.name ?? 'Без имени'}</span>
+          <span className="rh-stat-tile__hint">{user?.email ?? 'Email не указан'}</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Телефон</span>
-          <span className="bani-stat-tile__value">{user?.phone ?? 'Не указан'}</span>
-          <span className="bani-stat-tile__hint">Используется для служебных контактов и восстановления доступа.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Телефон</span>
+          <span className="rh-stat-tile__value">{user?.phone ?? 'Не указан'}</span>
+          <span className="rh-stat-tile__hint">Используется для служебных контактов и восстановления доступа.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Статус фото</span>
-          <span className="bani-stat-tile__value">{user?.avatar_url ? 'Загружен' : 'Не загружен'}</span>
-          <span className="bani-stat-tile__hint">Отображается в служебных сценариях и внутренних списках.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Статус фото</span>
+          <span className="rh-stat-tile__value">{user?.avatar_url ? 'Загружен' : 'Не загружен'}</span>
+          <span className="rh-stat-tile__hint">Отображается в служебных сценариях и внутренних списках.</span>
         </div>
       </div>
 
-      <div className="bani-grid bani-grid--content-aside">
+      <div className="rh-grid rh-grid--content-aside">
         <Card title="Основная информация">
           <Form
             form={profileForm}

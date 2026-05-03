@@ -16,13 +16,13 @@ import {
   Tag,
   Tooltip,
   Typography,
-} from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import {
   ClockCircleOutlined,
   ArrowUpOutlined,
   WarningOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
@@ -230,7 +230,7 @@ export default function TicketManagement() {
           </a>
           {record.status === 'escalated' && (
             <Tooltip title={`Эскалирован на ${record.level ?? 'L2'}`}>
-              <ArrowUpOutlined style={{ color: '#fa8c16' }} data-testid="escalation-icon" />
+              <ArrowUpOutlined style={{ color: '#d97706' }} data-testid="escalation-icon" />
             </Tooltip>
           )}
         </Space>
@@ -298,7 +298,7 @@ export default function TicketManagement() {
               <Progress
                 percent={percent}
                 size="small"
-                strokeColor={sla.isWarning ? '#fa8c16' : '#52c41a'}
+                strokeColor={sla.isWarning ? '#d97706' : '#15803d'}
                 format={() => (
                   <span style={{ fontSize: 11 }}>
                     <ClockCircleOutlined /> {label}
@@ -343,7 +343,7 @@ export default function TicketManagement() {
             <Statistic
               title="Открытые"
               value={stats.open ?? 0}
-              valueStyle={{ color: '#1677ff' }}
+              valueStyle={{ color: '#0f766e' }}
               prefix={<Badge status="processing" />}
             />
           </Card>
@@ -351,21 +351,21 @@ export default function TicketManagement() {
             <Statistic
               title="В работе"
               value={stats.in_progress ?? 0}
-              valueStyle={{ color: '#1677ff' }}
+              valueStyle={{ color: '#0f766e' }}
             />
           </Card>
           <Card size="small">
             <Statistic
               title="Эскалированные"
               value={stats.escalated ?? 0}
-              valueStyle={{ color: '#fa8c16' }}
+              valueStyle={{ color: '#d97706' }}
             />
           </Card>
           <Card size="small">
             <Statistic
               title="Решённые"
               value={stats.resolved ?? 0}
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: '#15803d' }}
             />
           </Card>
           <Card size="small">
@@ -383,7 +383,7 @@ export default function TicketManagement() {
                 value={metrics.fcr_percent}
                 precision={1}
                 suffix="%"
-                valueStyle={{ color: metrics.fcr_percent >= 70 ? '#52c41a' : '#fa8c16' }}
+                valueStyle={{ color: metrics.fcr_percent >= 70 ? '#15803d' : '#d97706' }}
               />
             </Col>
             <Col xs={12} sm={8} md={4}>
@@ -398,7 +398,7 @@ export default function TicketManagement() {
                 value={metrics.avg_csat}
                 precision={1}
                 suffix="/ 5"
-                valueStyle={{ color: metrics.avg_csat >= 4 ? '#52c41a' : metrics.avg_csat >= 3 ? '#fa8c16' : '#f5222d' }}
+                valueStyle={{ color: metrics.avg_csat >= 4 ? '#15803d' : metrics.avg_csat >= 3 ? '#d97706' : '#b42318' }}
               />
             </Col>
             <Col xs={12} sm={8} md={4}>
@@ -407,7 +407,7 @@ export default function TicketManagement() {
                 value={metrics.sla_compliance_percent}
                 precision={1}
                 suffix="%"
-                valueStyle={{ color: metrics.sla_compliance_percent >= 90 ? '#52c41a' : '#fa8c16' }}
+                valueStyle={{ color: metrics.sla_compliance_percent >= 90 ? '#15803d' : '#d97706' }}
               />
             </Col>
             <Col xs={12} sm={8} md={4}>

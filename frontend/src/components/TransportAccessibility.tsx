@@ -1,9 +1,9 @@
-import { Typography, Tag } from 'antd'
+import { Typography, Tag } from '@/components/design/system'
 import {
   EnvironmentOutlined,
   CarOutlined,
   NodeIndexOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 
 const { Text } = Typography
 
@@ -16,9 +16,9 @@ export interface TransportItem {
 }
 
 const TRANSPORT_LABELS: Record<string, { label: string; color: string }> = {
-  metro: { label: 'Метро', color: '#1677ff' },
-  bus_stop: { label: 'Остановка', color: '#52c41a' },
-  parking: { label: 'Парковка', color: '#faad14' },
+  metro: { label: 'Метро', color: '#0f766e' },
+  bus_stop: { label: 'Остановка', color: '#15803d' },
+  parking: { label: 'Парковка', color: '#d97706' },
 }
 
 function formatDistance(meters: number): string {
@@ -40,7 +40,7 @@ export default function TransportAccessibility({ items }: TransportAccessibility
       <Text strong>Транспорт рядом:</Text>
       <div style={{ marginTop: 8 }}>
         {items.map((item, idx) => {
-          const meta = TRANSPORT_LABELS[item.type] ?? { label: item.type, color: '#999' }
+          const meta = TRANSPORT_LABELS[item.type] ?? { label: item.type, color: 'var(--rh-text-muted)' }
           return (
             <div key={`${item.type}-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               {item.type === 'metro' ? (

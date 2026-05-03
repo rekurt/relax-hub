@@ -16,9 +16,9 @@ import {
   Space,
   Spin,
   Steps,
-} from 'antd'
+} from '@/components/design/system'
 import dayjs from 'dayjs'
-import { CalendarOutlined, CheckCircleOutlined, ClockCircleOutlined, LockOutlined, UserOutlined } from '@ant-design/icons'
+import { CalendarOutlined, CheckCircleOutlined, ClockCircleOutlined, LockOutlined, UserOutlined } from '@/components/design/icons'
 import { useGetBathhousesId, useGetBathhousesIdAvailableSlots } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPriceCalculator } from '@/api/generated/pricing/pricing'
 import { axiosInstance } from '@/api/axios-instance'
@@ -295,40 +295,40 @@ export default function PublicCheckout() {
   }
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Публичное бронирование"
         title={bathhouse.name}
         description="Вы выбираете слот, подтверждаете телефон и сразу попадаете в свою бронь без отдельной регистрации и лишних ответвлений."
       />
 
-      <section className="bani-hero-panel">
-        <div className="bani-hero-panel__eyebrow">Оформление</div>
-        <h2 className="bani-hero-panel__title">Остался один короткий шаг до брони</h2>
-        <div className="bani-hero-panel__description">
+      <section className="rh-hero-panel">
+        <div className="rh-hero-panel__eyebrow">Оформление</div>
+        <h2 className="rh-hero-panel__title">Остался один короткий шаг до брони</h2>
+        <div className="rh-hero-panel__description">
           На этом экране остаются только реальные действия: слот, контакты, SMS и создание брони. Ограничения и правила видны рядом со сводкой.
         </div>
-        <div className="bani-hero-panel__meta">
-          <div className="bani-hero-panel__meta-item">
-            <span className="bani-hero-panel__meta-label">Подтверждение</span>
-            <div className="bani-hero-panel__meta-value">{bookingModeLabel}</div>
+        <div className="rh-hero-panel__meta">
+          <div className="rh-hero-panel__meta-item">
+            <span className="rh-hero-panel__meta-label">Подтверждение</span>
+            <div className="rh-hero-panel__meta-value">{bookingModeLabel}</div>
           </div>
-          <div className="bani-hero-panel__meta-item">
-            <span className="bani-hero-panel__meta-label">Минимум</span>
-            <div className="bani-hero-panel__meta-value">
+          <div className="rh-hero-panel__meta-item">
+            <span className="rh-hero-panel__meta-label">Минимум</span>
+            <div className="rh-hero-panel__meta-value">
               {(bathhouse as Record<string, unknown>).min_duration ? `${(bathhouse as Record<string, unknown>).min_duration} ч` : 'Без ограничения'}
             </div>
           </div>
-          <div className="bani-hero-panel__meta-item">
-            <span className="bani-hero-panel__meta-label">Оплата</span>
-            <div className="bani-hero-panel__meta-value">После создания брони в кабинете клиента</div>
+          <div className="rh-hero-panel__meta-item">
+            <span className="rh-hero-panel__meta-label">Оплата</span>
+            <div className="rh-hero-panel__meta-value">После создания брони в кабинете клиента</div>
           </div>
         </div>
       </section>
 
-      <div className="bani-grid bani-grid--content-aside">
+      <div className="rh-grid rh-grid--content-aside">
         <Card>
-          <div className="bani-section-card">
+          <div className="rh-section-card">
             <Steps
               current={currentStep}
               items={[
@@ -338,9 +338,9 @@ export default function PublicCheckout() {
               ]}
             />
 
-            <div className="bani-info-grid">
-              <div className="bani-info-card">
-                <span className="bani-info-card__label">Дата посещения</span>
+            <div className="rh-info-grid">
+              <div className="rh-info-card">
+                <span className="rh-info-card__label">Дата посещения</span>
                 <DatePicker
                   value={dayjs(selectedDate)}
                   onChange={(value) => {
@@ -352,8 +352,8 @@ export default function PublicCheckout() {
                   style={{ width: '100%' }}
                 />
               </div>
-              <div className="bani-info-card">
-                <span className="bani-info-card__label">Количество гостей</span>
+              <div className="rh-info-card">
+                <span className="rh-info-card__label">Количество гостей</span>
                 <InputNumber
                   min={1}
                   max={bathhouse.max_guests ?? 20}
@@ -364,9 +364,9 @@ export default function PublicCheckout() {
               </div>
             </div>
 
-            <div className="bani-section-card">
-              <h2 className="bani-section-card__title">Доступные слоты</h2>
-              <div className="bani-section-card__description">
+            <div className="rh-section-card">
+              <h2 className="rh-section-card__title">Доступные слоты</h2>
+              <div className="rh-section-card__description">
                 Сначала показываем только доступные интервалы. После выбора слот закрепляется в правой сводке вместе с ценой.
               </div>
               <Spin spinning={slotsLoading && !slotsIsError}>
@@ -413,9 +413,9 @@ export default function PublicCheckout() {
               </Spin>
             </div>
 
-            <div className="bani-section-card">
-              <h2 className="bani-section-card__title">Контактные данные</h2>
-              <div className="bani-section-card__description">
+            <div className="rh-section-card">
+              <h2 className="rh-section-card__title">Контактные данные</h2>
+              <div className="rh-section-card__description">
                 Поля оставлены только для того, что реально нужно для создания брони и входа в кабинет.
               </div>
               <Row gutter={[16, 16]}>
@@ -476,7 +476,7 @@ export default function PublicCheckout() {
             )}
 
             {!currentUser && (
-              <div className="bani-section-card">
+              <div className="rh-section-card">
                 <Alert
                   type="info"
                   showIcon
@@ -520,34 +520,34 @@ export default function PublicCheckout() {
           </div>
         </Card>
 
-        <div className="bani-stack">
+        <div className="rh-stack">
           <Card>
-            <div className="bani-section-card">
-              <h2 className="bani-section-card__title">Сводка бронирования</h2>
-              <div className="bani-kv">
-                <div className="bani-kv__row">
-                  <span className="bani-kv__label">Баня</span>
-                  <span className="bani-kv__value">{bathhouse.name}</span>
+            <div className="rh-section-card">
+              <h2 className="rh-section-card__title">Сводка бронирования</h2>
+              <div className="rh-kv">
+                <div className="rh-kv__row">
+                  <span className="rh-kv__label">Баня</span>
+                  <span className="rh-kv__value">{bathhouse.name}</span>
                 </div>
-                <div className="bani-kv__row">
-                  <span className="bani-kv__label">Адрес</span>
-                  <span className="bani-kv__value">{bathhouse.address || '—'}</span>
+                <div className="rh-kv__row">
+                  <span className="rh-kv__label">Адрес</span>
+                  <span className="rh-kv__value">{bathhouse.address || '—'}</span>
                 </div>
-                <div className="bani-kv__row">
-                  <span className="bani-kv__label">Дата и время</span>
-                  <span className="bani-kv__value">
+                <div className="rh-kv__row">
+                  <span className="rh-kv__label">Дата и время</span>
+                  <span className="rh-kv__value">
                     {resolvedSlotRange
                       ? `${dayjs(resolvedSlotRange.from).format('D MMMM')} · ${dayjs(resolvedSlotRange.from).format('HH:mm')} - ${dayjs(resolvedSlotRange.to).format('HH:mm')} · ${selectedRangeHours} ч${selectedSlot ? '' : ` · нужно ещё ${selectedRangeNeedsHours} ч`}`
                       : 'Выберите слот'}
                   </span>
                 </div>
-                <div className="bani-kv__row">
-                  <span className="bani-kv__label">Гостей</span>
-                  <span className="bani-kv__value">{guestCount}</span>
+                <div className="rh-kv__row">
+                  <span className="rh-kv__label">Гостей</span>
+                  <span className="rh-kv__value">{guestCount}</span>
                 </div>
-                <div className="bani-kv__row">
-                  <span className="bani-kv__label">Цена</span>
-                  <span className="bani-kv__value">
+                <div className="rh-kv__row">
+                  <span className="rh-kv__label">Цена</span>
+                  <span className="rh-kv__value">
                     {price?.final_price ? formatPrice(price.final_price) : 'Будет рассчитана после выбора слота'}
                   </span>
                 </div>
@@ -556,35 +556,35 @@ export default function PublicCheckout() {
           </Card>
 
           <Card>
-            <div className="bani-section-card">
-              <h2 className="bani-section-card__title">Что важно до подтверждения</h2>
-              <div className="bani-feature-list">
-                <div className="bani-feature-item">
-                  <div className="bani-feature-item__icon"><ClockCircleOutlined /></div>
-                  <div className="bani-feature-item__copy">
-                    <div className="bani-feature-item__title">{minimumDurationLabel}</div>
-                    <div className="bani-feature-item__description">Минимальная длительность фиксирована заранее и не меняется после отправки SMS.</div>
+            <div className="rh-section-card">
+              <h2 className="rh-section-card__title">Что важно до подтверждения</h2>
+              <div className="rh-feature-list">
+                <div className="rh-feature-item">
+                  <div className="rh-feature-item__icon"><ClockCircleOutlined /></div>
+                  <div className="rh-feature-item__copy">
+                    <div className="rh-feature-item__title">{minimumDurationLabel}</div>
+                    <div className="rh-feature-item__description">Минимальная длительность фиксирована заранее и не меняется после отправки SMS.</div>
                   </div>
                 </div>
-                <div className="bani-feature-item">
-                  <div className="bani-feature-item__icon"><CheckCircleOutlined /></div>
-                  <div className="bani-feature-item__copy">
-                    <div className="bani-feature-item__title">{cancellationPolicyLabel} отмена</div>
-                    <div className="bani-feature-item__description">Правила отмены видны до создания брони, а не после handoff в кабинет.</div>
+                <div className="rh-feature-item">
+                  <div className="rh-feature-item__icon"><CheckCircleOutlined /></div>
+                  <div className="rh-feature-item__copy">
+                    <div className="rh-feature-item__title">{cancellationPolicyLabel} отмена</div>
+                    <div className="rh-feature-item__description">Правила отмены видны до создания брони, а не после handoff в кабинет.</div>
                   </div>
                 </div>
-                <div className="bani-feature-item">
-                  <div className="bani-feature-item__icon"><LockOutlined /></div>
-                  <div className="bani-feature-item__copy">
-                    <div className="bani-feature-item__title">{bookingModeLabel}</div>
-                    <div className="bani-feature-item__description">Сценарий один для гостя и клиента, отличается только шаг с OTP.</div>
+                <div className="rh-feature-item">
+                  <div className="rh-feature-item__icon"><LockOutlined /></div>
+                  <div className="rh-feature-item__copy">
+                    <div className="rh-feature-item__title">{bookingModeLabel}</div>
+                    <div className="rh-feature-item__description">Сценарий один для гостя и клиента, отличается только шаг с OTP.</div>
                   </div>
                 </div>
-                <div className="bani-feature-item">
-                  <div className="bani-feature-item__icon"><CalendarOutlined /></div>
-                  <div className="bani-feature-item__copy">
-                    <div className="bani-feature-item__title">{depositSummary}</div>
-                    <div className="bani-feature-item__description">Если по объекту нужен залог, вы видите это до перехода к созданной брони.</div>
+                <div className="rh-feature-item">
+                  <div className="rh-feature-item__icon"><CalendarOutlined /></div>
+                  <div className="rh-feature-item__copy">
+                    <div className="rh-feature-item__title">{depositSummary}</div>
+                    <div className="rh-feature-item__description">Если по объекту нужен залог, вы видите это до перехода к созданной брони.</div>
                   </div>
                 </div>
               </div>

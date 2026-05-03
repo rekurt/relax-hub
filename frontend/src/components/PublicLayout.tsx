@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
-import { Select } from 'antd'
+import { Select } from '@/components/design/system'
+import { DownOutlined, EnvironmentOutlined } from '@/components/design/icons'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useGetCities } from '@/api/generated/cities/cities'
 import BrandLockup from '@/components/BrandLockup'
@@ -29,6 +30,7 @@ export default function PublicLayout() {
     () => cities.find((city) => city.slug === 'moscow' || city.slug === 'moskva' || city.name === 'Москва') ?? cities[0],
     [cities],
   )
+  const selectedCityValue = selectedCitySlug
 
   useEffect(() => {
     const titles: Array<[string, string]> = [
@@ -45,27 +47,33 @@ export default function PublicLayout() {
   }, [location.pathname])
 
   const cityAccessory = cities.length > 0 ? (
-    <Select
-      value={selectedCitySlug}
-      allowClear
-      placeholder={preferredCity?.name ?? 'Город'}
-      style={{ minWidth: 140, maxWidth: 176 }}
-      size="middle"
-      options={cities.map((city) => ({
-        label: city.name ?? 'Город',
-        value: city.slug ?? '',
-      }))}
-      onChange={(slug) => {
-        const nextParams = new URLSearchParams(location.search)
-        if (slug) {
-          nextParams.set('city_slug', slug)
-        } else {
-          nextParams.delete('city_slug')
-        }
-        const nextSearch = nextParams.toString()
-        navigate(nextSearch ? `/catalog?${nextSearch}` : '/catalog')
-      }}
-    />
+    <div className="rh-topnav__city-picker" aria-label="Выбор города">
+      <EnvironmentOutlined className="rh-topnav__city-icon" aria-hidden />
+      <Select
+        value={selectedCityValue}
+        className="rh-topnav__city-select"
+        classNames={{ popup: { root: 'rh-topnav__city-dropdown' } }}
+        placeholder={preferredCity?.name ?? 'Город'}
+        suffixIcon={<DownOutlined />}
+        variant="borderless"
+        size="middle"
+        allowClear
+        options={cities.map((city) => ({
+          label: city.name ?? 'Город',
+          value: city.slug ?? '',
+        }))}
+        onChange={(slug) => {
+          const nextParams = new URLSearchParams(location.search)
+          if (slug) {
+            nextParams.set('city_slug', slug)
+          } else {
+            nextParams.delete('city_slug')
+          }
+          const nextSearch = nextParams.toString()
+          navigate(nextSearch ? `/catalog?${nextSearch}` : '/catalog')
+        }}
+      />
+    </div>
   ) : null
 
   return (
@@ -74,7 +82,7 @@ export default function PublicLayout() {
         <BrandLockup
           size="header"
           subtitle="Публичный каталог и бронирование"
-          className="bani-topnav__brand-lockup"
+          className="rh-topnav__brand-lockup"
         />
       )}
       brandSubtitle={null}
@@ -86,6 +94,7 @@ export default function PublicLayout() {
       profileMenuItems={isClientUser ? CLIENT_PROFILE_MENU_ITEMS : undefined}
       profilePath={user ? getProfilePath(user.role) : undefined}
       headerAccessory={cityAccessory}
+      headerAccessoryVariant="city"
       footer={<ShellFooter showClientSection={isClientUser} />}
     />
   )

@@ -1,5 +1,5 @@
-import { Button } from 'antd'
-import { AppleOutlined } from '@ant-design/icons'
+import { Button } from '@/components/design/system'
+import { AppleOutlined } from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 
 interface ApplePayButtonProps {
@@ -83,7 +83,7 @@ export default function ApplePayButton({ amount, onToken, disabled, loading }: A
         background: '#000',
         color: '#fff',
         borderColor: '#000',
-        borderRadius: 8,
+        borderRadius: 20,
       }}
     >
       Apple Pay

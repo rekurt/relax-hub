@@ -14,13 +14,13 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CheckOutlined,
   CloseOutlined,
   EyeOutlined,
-} from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminComplaints,
@@ -220,7 +220,7 @@ export default function ComplaintManagement() {
                 type="link"
                 size="small"
                 icon={<CheckOutlined />}
-                style={{ color: '#52c41a' }}
+                style={{ color: '#15803d' }}
                 onClick={() => openResolveModal(record.id!)}
               >
                 Решить

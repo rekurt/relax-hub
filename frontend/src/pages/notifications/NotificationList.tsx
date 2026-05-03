@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { App, Button, Card, Empty, List, Pagination, Typography } from 'antd'
-import { CheckOutlined, BellOutlined } from '@ant-design/icons'
+import { App, Button, Card, Empty, List, Pagination, Typography } from '@/components/design/system'
+import { CheckOutlined, BellOutlined } from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -58,7 +58,7 @@ export default function NotificationList() {
   })
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Лента"
         title="Уведомления"
@@ -74,27 +74,27 @@ export default function NotificationList() {
         )}
       />
 
-      <section className="bani-hero-panel">
-        <div className="bani-hero-panel__eyebrow">Сводка</div>
-        <h2 className="bani-hero-panel__title">Лента сделана как очередь внимания, а не как сырой список</h2>
-        <div className="bani-hero-panel__description">
+      <section className="rh-hero-panel">
+        <div className="rh-hero-panel__eyebrow">Сводка</div>
+        <h2 className="rh-hero-panel__title">Лента сделана как очередь внимания, а не как сырой список</h2>
+        <div className="rh-hero-panel__description">
           Пользователь сразу понимает, сколько сообщений требуют реакции прямо сейчас и сколько уже обработано. Это удобнее, чем длинная плоская лента без приоритетов.
         </div>
-        <div className="bani-stat-grid">
-          <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Непрочитанные</span>
-            <div className="bani-stat-tile__value">{unreadCount}</div>
-            <span className="bani-stat-tile__hint">Сообщения, которые требуют просмотра</span>
+        <div className="rh-stat-grid">
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Непрочитанные</span>
+            <div className="rh-stat-tile__value">{unreadCount}</div>
+            <span className="rh-stat-tile__hint">Сообщения, которые требуют просмотра</span>
           </div>
-          <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Всего на странице</span>
-            <div className="bani-stat-tile__value">{notifications.length}</div>
-            <span className="bani-stat-tile__hint">Текущий блок ленты с пагинацией</span>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Всего на странице</span>
+            <div className="rh-stat-tile__value">{notifications.length}</div>
+            <span className="rh-stat-tile__hint">Текущий блок ленты с пагинацией</span>
           </div>
-          <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Всего в истории</span>
-            <div className="bani-stat-tile__value">{meta?.total_count ?? 0}</div>
-            <span className="bani-stat-tile__hint">Полный объём уведомлений аккаунта</span>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Всего в истории</span>
+            <div className="rh-stat-tile__value">{meta?.total_count ?? 0}</div>
+            <span className="rh-stat-tile__hint">Полный объём уведомлений аккаунта</span>
           </div>
         </div>
       </section>
@@ -106,7 +106,7 @@ export default function NotificationList() {
           locale={{
             emptyText: (
               <Empty
-                image={<BellOutlined style={{ fontSize: 48, color: '#d9d9d9' }} />}
+                image={<BellOutlined style={{ fontSize: 48, color: '#c9c1b5' }} />}
                 description="Нет уведомлений"
               />
             ),
@@ -114,7 +114,7 @@ export default function NotificationList() {
           renderItem={(item) => (
             <List.Item style={{ padding: 0, border: 0, marginBottom: 12 }}>
               <div
-                className={`bani-feed-item${item.is_read ? '' : ' bani-feed-item--unread'}`}
+                className={`rh-feed-item${item.is_read ? '' : ' rh-feed-item--unread'}`}
                 style={{ width: '100%', cursor: item.is_read ? 'default' : 'pointer' }}
                 onClick={() => {
                   if (!item.is_read && item.id) {
@@ -122,20 +122,20 @@ export default function NotificationList() {
                   }
                 }}
               >
-                <div className="bani-feed-item__main">
-                  <div className="bani-feed-item__badge" />
-                  <div className="bani-feed-item__copy">
+                <div className="rh-feed-item__main">
+                  <div className="rh-feed-item__badge" />
+                  <div className="rh-feed-item__copy">
                     <Text strong={!item.is_read}>
                       {item.title ?? NOTIFICATION_TYPE_LABELS[item.type ?? ''] ?? 'Уведомление'}
                     </Text>
                     <Text type="secondary">{item.body}</Text>
-                    <span className="bani-feed-item__meta">
+                    <span className="rh-feed-item__meta">
                       {item.created_at ? dayjs(item.created_at).fromNow() : ''}
                     </span>
                   </div>
                 </div>
                 {!item.is_read && (
-                  <div className="bani-feed-item__actions">
+                  <div className="rh-feed-item__actions">
                     <Button
                       type="link"
                       size="small"

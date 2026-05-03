@@ -1,8 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
-import { App as AntApp, ConfigProvider } from 'antd'
-import ruRU from 'antd/locale/ru_RU'
+import { App as AntApp, ConfigProvider } from '@/components/design/system'
+import { ruRU } from '@/components/design/system'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import WidgetSettings from '@/pages/widget/WidgetSettings'
 
@@ -55,10 +55,10 @@ function setupDefaultMocks() {
 }
 
 const mockWidgetCode = {
-  code: '<div id="bani-widget" data-key="abc123"></div><script src="https://bani.ru/widget.js"></script>',
+  code: '<div id="rh-widget" data-key="abc123"></div><script src="https://relaxhub.ru/widget.js"></script>',
   api_key: 'abc123',
-  script_url: 'https://bani.ru/widget.js',
-  style_url: 'https://bani.ru/widget.css',
+  script_url: 'https://relaxhub.ru/widget.js',
+  style_url: 'https://relaxhub.ru/widget.css',
 }
 
 const mockWidgetKey = {

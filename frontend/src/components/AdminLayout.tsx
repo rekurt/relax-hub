@@ -52,7 +52,7 @@ export default function AdminLayout() {
         <BrandLockup
           size="header"
           subtitle="Модерация, финансы и контроль платформы"
-          className="bani-topnav__brand-lockup"
+          className="rh-topnav__brand-lockup"
         />
       )}
       brandSubtitle={null}

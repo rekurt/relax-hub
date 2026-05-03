@@ -9,14 +9,14 @@ import {
   Select,
   Switch,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   GiftOutlined,
   HeartOutlined,
   StarOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import {
   useGetMyCrmAutoScenarios,
   usePutMyCrmAutoScenariosType,
@@ -27,11 +27,11 @@ import { useQueryClient } from '@tanstack/react-query'
 const { Title, Text, Paragraph } = Typography
 
 const SCENARIO_ICONS: Record<string, React.ReactNode> = {
-  thank_after_visit: <HeartOutlined style={{ color: '#eb2f96' }} />,
-  request_review: <StarOutlined style={{ color: '#faad14' }} />,
-  remind_revisit_30d: <ClockCircleOutlined style={{ color: '#1677ff' }} />,
-  reactivate_lost_90d: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
-  birthday_greeting: <GiftOutlined style={{ color: '#722ed1' }} />,
+  thank_after_visit: <HeartOutlined style={{ color: '#d97706' }} />,
+  request_review: <StarOutlined style={{ color: '#d97706' }} />,
+  remind_revisit_30d: <ClockCircleOutlined style={{ color: '#0f766e' }} />,
+  reactivate_lost_90d: <CheckCircleOutlined style={{ color: '#15803d' }} />,
+  birthday_greeting: <GiftOutlined style={{ color: '#0a5f59' }} />,
 }
 
 const CHANNEL_OPTIONS = [
@@ -102,7 +102,7 @@ export default function AutoScenarios() {
             <Col xs={24} key={scenario.type}>
               <Card
                 style={{
-                  borderLeft: `4px solid ${scenario.enabled ? '#52c41a' : '#d9d9d9'}`,
+                  borderLeft: `4px solid ${scenario.enabled ? '#15803d' : '#c9c1b5'}`,
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>

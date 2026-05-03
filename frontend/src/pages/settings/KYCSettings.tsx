@@ -13,14 +13,14 @@ import {
   App,
   Descriptions,
   Upload,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
   UploadOutlined,
   SendOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetMyKyc,
@@ -101,7 +101,7 @@ export default function KYCSettings() {
 
   if (isLoading) {
     return (
-      <div className="bani-stack">
+      <div className="rh-stack">
         <PageHeader
           eyebrow="Комплаенс"
           title="Верификация KYC"
@@ -115,30 +115,30 @@ export default function KYCSettings() {
   const statusInfo = hasKyc ? STATUS_MAP[kyc.status ?? ''] : null
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Комплаенс"
         title="Верификация KYC"
         description="Проверка данных владельца и юридической сущности для работы на платформе."
       />
 
-      <div className="bani-stat-grid">
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Статус</span>
-          <span className="bani-stat-tile__value">{statusInfo?.label ?? 'Не начато'}</span>
-          <span className="bani-stat-tile__hint">Текущая стадия проверки профиля и документов.</span>
+      <div className="rh-stat-grid">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Статус</span>
+          <span className="rh-stat-tile__value">{statusInfo?.label ?? 'Не начато'}</span>
+          <span className="rh-stat-tile__hint">Текущая стадия проверки профиля и документов.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Тип лица</span>
-          <span className="bani-stat-tile__value">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Тип лица</span>
+          <span className="rh-stat-tile__value">
             {hasKyc ? (ENTITY_TYPE_LABELS[kyc.entity_type ?? ''] ?? kyc.entity_type ?? '—') : 'Не выбран'}
           </span>
-          <span className="bani-stat-tile__hint">Влияет на набор документов и реквизитов заявки.</span>
+          <span className="rh-stat-tile__hint">Влияет на набор документов и реквизитов заявки.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Документы</span>
-          <span className="bani-stat-tile__value">{documentUrls.length || kyc?.document_urls?.length || 0}</span>
-          <span className="bani-stat-tile__hint">Загруженные файлы для проверки и повторной подачи.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Документы</span>
+          <span className="rh-stat-tile__value">{documentUrls.length || kyc?.document_urls?.length || 0}</span>
+          <span className="rh-stat-tile__hint">Загруженные файлы для проверки и повторной подачи.</span>
         </div>
       </div>
 

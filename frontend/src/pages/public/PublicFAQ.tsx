@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Card, Collapse, Row, Col, Typography, Alert, Spin } from 'antd'
+import { Button, Card, Collapse, Row, Col, Typography, Alert, Spin } from '@/components/design/system'
 import {
   AppstoreOutlined,
   CreditCardOutlined,
@@ -8,7 +8,7 @@ import {
   PhoneOutlined,
   QuestionCircleOutlined,
   SafetyOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import PageHeader from '@/components/PageHeader'
 import {
@@ -62,29 +62,33 @@ export default function PublicFAQ() {
   }, [items])
 
   if (isLoading) {
-    return <Spin size="large" style={{ display: 'block', margin: '96px auto' }} />
+    return (
+      <div className="rh-fullscreen-state">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Поддержка"
         title="Чем можем помочь прямо сейчас"
         description={`Это не декоративная справка, а рабочий раздел помощи по реальным сценариям ${PLATFORM_NAME}: выбор слотов, оформление брони, оплата, отмена, кошелёк, отзывы и поддержка.`}
       />
 
-      <section className="bani-hero-panel">
-        <div className="bani-hero-panel__eyebrow">Центр помощи</div>
-        <h2 className="bani-hero-panel__title">Понятные ответы до брони, во время оплаты и после визита.</h2>
-        <div className="bani-hero-panel__description">
+      <section className="rh-hero-panel">
+        <div className="rh-hero-panel__eyebrow">Центр помощи</div>
+        <h2 className="rh-hero-panel__title">Понятные ответы до брони, во время оплаты и после визита.</h2>
+        <div className="rh-hero-panel__description">
           Когда пользователь не понимает, как выбрать слот, оплатить, отменить или оставить отзыв, он не должен искать ответ по всему продукту. Экран собирает самые частые сценарии в одном месте и сразу показывает, куда идти дальше.
         </div>
-        <div className="bani-hero-panel__meta">
+        <div className="rh-hero-panel__meta">
           {grouped.map(({ category, items: categoryItems, meta }) => {
             return (
-              <div key={category} className="bani-hero-panel__meta-item">
-                <span className="bani-hero-panel__meta-label">{meta.label}</span>
-                <div className="bani-hero-panel__meta-value">{categoryItems.length} ответов</div>
+              <div key={category} className="rh-hero-panel__meta-item">
+                <span className="rh-hero-panel__meta-label">{meta.label}</span>
+                <div className="rh-hero-panel__meta-value">{categoryItems.length} ответов</div>
               </div>
             )
           })}
@@ -103,11 +107,11 @@ export default function PublicFAQ() {
       <Row gutter={[16, 16]}>
         {HELP_SCENARIO_CARDS.map((card) => (
           <Col key={card.key} xs={24} md={12}>
-            <Card style={{ borderRadius: 24, height: '100%' }}>
-              <div className="bani-section-card">
-                <div className="bani-shell-footer__eyebrow" style={{ color: 'var(--bani-text-soft)' }}>{card.eyebrow}</div>
-                <h2 className="bani-section-card__title">{card.title}</h2>
-                <div className="bani-section-card__description">{card.description}</div>
+            <Card className="rh-equal-card">
+              <div className="rh-section-card">
+                <div className="rh-shell-footer__eyebrow" style={{ color: 'var(--rh-text-soft)' }}>{card.eyebrow}</div>
+                <h2 className="rh-section-card__title">{card.title}</h2>
+                <div className="rh-section-card__description">{card.description}</div>
               </div>
             </Card>
           </Col>
@@ -126,7 +130,7 @@ export default function PublicFAQ() {
                   </span>
                 )}
                 extra={<Text type="secondary">{categoryItems.length} ответов</Text>}
-                style={{ borderRadius: 24, height: '100%' }}
+                className="rh-equal-card"
               >
                 <Collapse
                   ghost
@@ -134,7 +138,7 @@ export default function PublicFAQ() {
                     key: item.id,
                     label: item.question,
                     children: (
-                      <div className="bani-inline-note">
+                      <div className="rh-inline-note">
                         <Text type="secondary">{item.answer}</Text>
                       </div>
                     ),
@@ -146,39 +150,39 @@ export default function PublicFAQ() {
         })}
       </Row>
 
-      <div className="bani-grid bani-grid--content-aside">
+      <div className="rh-grid rh-grid--content-aside">
         <Card>
-          <div className="bani-section-card">
-            <h2 className="bani-section-card__title">Как проходит бронирование</h2>
-            <div className="bani-kv">
+          <div className="rh-section-card">
+            <h2 className="rh-section-card__title">Как проходит бронирование</h2>
+            <div className="rh-kv">
               {HELP_BOOKING_JOURNEY.map((step) => (
-                <div key={step.key} className="bani-kv__row">
-                  <div className="bani-kv__label">{step.label}</div>
-                  <div className="bani-kv__value">{step.value}</div>
+                <div key={step.key} className="rh-kv__row">
+                  <div className="rh-kv__label">{step.label}</div>
+                  <div className="rh-kv__value">{step.value}</div>
                 </div>
               ))}
             </div>
           </div>
         </Card>
 
-        <section className="bani-hero-panel bani-hero-panel--dark">
-          <div className="bani-hero-panel__eyebrow">Живой контакт</div>
-          <h2 className="bani-hero-panel__title">Если нужен не FAQ, а действие поддержки.</h2>
-          <div className="bani-hero-panel__description">
+        <section className="rh-hero-panel rh-hero-panel--dark">
+          <div className="rh-hero-panel__eyebrow">Живой контакт</div>
+          <h2 className="rh-hero-panel__title">Если нужен не FAQ, а действие поддержки.</h2>
+          <div className="rh-hero-panel__description">
             Когда вопрос касается оплаты, переноса визита или конфликта после посещения, лучше сразу перейти в канал, где проблему можно довести до решения.
           </div>
-          <div className="bani-kv">
-            <div className="bani-kv__row">
-              <div className="bani-kv__label"><MessageOutlined /> Email</div>
-              <div className="bani-kv__value">{PLATFORM_CONTACTS.supportEmail}</div>
+          <div className="rh-kv">
+            <div className="rh-kv__row">
+              <div className="rh-kv__label"><MessageOutlined /> Email</div>
+              <div className="rh-kv__value">{PLATFORM_CONTACTS.supportEmail}</div>
             </div>
-            <div className="bani-kv__row">
-              <div className="bani-kv__label"><PhoneOutlined /> Телефон</div>
-              <div className="bani-kv__value">{PLATFORM_CONTACTS.supportPhone}</div>
+            <div className="rh-kv__row">
+              <div className="rh-kv__label"><PhoneOutlined /> Телефон</div>
+              <div className="rh-kv__value">{PLATFORM_CONTACTS.supportPhone}</div>
             </div>
-            <div className="bani-kv__row">
-              <div className="bani-kv__label"><SafetyOutlined /> Часы связи</div>
-              <div className="bani-kv__value">{PLATFORM_CONTACTS.supportHours}</div>
+            <div className="rh-kv__row">
+              <div className="rh-kv__label"><SafetyOutlined /> Часы связи</div>
+              <div className="rh-kv__value">{PLATFORM_CONTACTS.supportHours}</div>
             </div>
           </div>
           <Button type="primary" size="large" href="/contacts">
@@ -188,15 +192,15 @@ export default function PublicFAQ() {
       </div>
 
       <Card>
-        <div className="bani-section-card">
-          <h2 className="bani-section-card__title">Когда лучше сразу идти в поддержку</h2>
-          <div className="bani-feature-list">
+        <div className="rh-section-card">
+          <h2 className="rh-section-card__title">Когда лучше сразу идти в поддержку</h2>
+          <div className="rh-feature-list">
             {HELP_ESCALATION_CASES.map((item) => (
-              <div key={item.key} className="bani-feature-item">
-                <div className="bani-feature-item__icon"><QuestionCircleOutlined /></div>
-                <div className="bani-feature-item__copy">
-                  <div className="bani-feature-item__title">{item.title}</div>
-                  <div className="bani-feature-item__description">{item.description}</div>
+              <div key={item.key} className="rh-feature-item">
+                <div className="rh-feature-item__icon"><QuestionCircleOutlined /></div>
+                <div className="rh-feature-item__copy">
+                  <div className="rh-feature-item__title">{item.title}</div>
+                  <div className="rh-feature-item__description">{item.description}</div>
                 </div>
               </div>
             ))}

@@ -61,7 +61,7 @@ export default function ClientLayout() {
           <BrandLockup
             size="header"
             subtitle="Каталог, бронирование и личные поездки"
-            className="bani-topnav__brand-lockup"
+            className="rh-topnav__brand-lockup"
           />
         )}
         brandSubtitle={null}

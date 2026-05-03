@@ -41,11 +41,11 @@ describe('useDeviceToken', () => {
     expect(mockMutateAsync).toHaveBeenCalledWith({
       data: { token: 'fcm-token-abc', platform: 'web' },
     })
-    expect(localStorage.getItem('bani_device_token_id')).toBe('device-token-123')
+    expect(localStorage.getItem('rh_device_token_id')).toBe('device-token-123')
   })
 
   it('unregisterToken calls delete API and clears storage', async () => {
-    localStorage.setItem('bani_device_token_id', 'device-token-456')
+    localStorage.setItem('rh_device_token_id', 'device-token-456')
     mockDeleteMutateAsync.mockResolvedValue({})
 
     const { result } = renderHook(() => useDeviceToken(), { wrapper })
@@ -55,7 +55,7 @@ describe('useDeviceToken', () => {
     })
 
     expect(mockDeleteMutateAsync).toHaveBeenCalledWith({ id: 'device-token-456' })
-    expect(localStorage.getItem('bani_device_token_id')).toBeNull()
+    expect(localStorage.getItem('rh_device_token_id')).toBeNull()
   })
 
   it('unregisterToken does nothing if no token in storage', async () => {
@@ -77,11 +77,11 @@ describe('useDeviceToken', () => {
       await result.current.registerToken('fcm-token-xyz')
     })
 
-    expect(localStorage.getItem('bani_device_token_id')).toBeNull()
+    expect(localStorage.getItem('rh_device_token_id')).toBeNull()
   })
 
   it('unregisterToken clears storage even on API failure', async () => {
-    localStorage.setItem('bani_device_token_id', 'device-token-789')
+    localStorage.setItem('rh_device_token_id', 'device-token-789')
     mockDeleteMutateAsync.mockRejectedValue(new Error('Network error'))
 
     const { result } = renderHook(() => useDeviceToken(), { wrapper })
@@ -90,6 +90,6 @@ describe('useDeviceToken', () => {
       await result.current.unregisterToken()
     })
 
-    expect(localStorage.getItem('bani_device_token_id')).toBeNull()
+    expect(localStorage.getItem('rh_device_token_id')).toBeNull()
   })
 })

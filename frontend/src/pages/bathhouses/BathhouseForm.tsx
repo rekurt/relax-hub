@@ -18,7 +18,7 @@ import {
   Tag,
   TimePicker,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
@@ -27,7 +27,7 @@ import {
   EyeOutlined,
   PlayCircleOutlined,
   SaveOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
@@ -91,19 +91,19 @@ const CANCELLATION_POLICIES = [
     value: 'flexible',
     label: 'Гибкая',
     description: '100% возврат за 24ч+, 50% менее 24ч до начала',
-    color: '#52c41a',
+    color: '#15803d',
   },
   {
     value: 'moderate',
     label: 'Умеренная',
     description: '100% за 72ч+, 50% за 24-72ч, 0% менее 24ч',
-    color: '#faad14',
+    color: '#d97706',
   },
   {
     value: 'strict',
     label: 'Строгая',
     description: '100% за 7д+, 50% за 3-7д, 0% менее 3д',
-    color: '#ff4d4f',
+    color: '#b42318',
   },
 ]
 
@@ -267,11 +267,11 @@ function CompletenessChecklist({ id }: { id: string }) {
             renderItem={(item: GithubComRekurtRelaxHubInternalServiceCompletenessItem) => (
               <List.Item style={{ padding: '4px 0', border: 'none' }}>
                 {item.complete ? (
-                  <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 8 }} />
+                  <CheckCircleOutlined style={{ color: '#15803d', marginRight: 8 }} />
                 ) : (
-                  <CloseCircleOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
+                  <CloseCircleOutlined style={{ color: '#b42318', marginRight: 8 }} />
                 )}
-                <span style={{ color: item.complete ? '#8c8c8c' : undefined }}>
+                <span style={{ color: item.complete ? 'var(--rh-text-disabled)' : undefined }}>
                   {item.label}
                 </span>
               </List.Item>
@@ -291,11 +291,11 @@ function CompletenessChecklist({ id }: { id: string }) {
             renderItem={(item: GithubComRekurtRelaxHubInternalServiceCompletenessItem) => (
               <List.Item style={{ padding: '4px 0', border: 'none' }}>
                 {item.complete ? (
-                  <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 8 }} />
+                  <CheckCircleOutlined style={{ color: '#15803d', marginRight: 8 }} />
                 ) : (
-                  <CloseCircleOutlined style={{ color: '#d9d9d9', marginRight: 8 }} />
+                  <CloseCircleOutlined style={{ color: '#c9c1b5', marginRight: 8 }} />
                 )}
-                <span style={{ color: item.complete ? '#8c8c8c' : undefined }}>
+                <span style={{ color: item.complete ? 'var(--rh-text-disabled)' : undefined }}>
                   {item.label}
                 </span>
               </List.Item>
@@ -312,7 +312,7 @@ function WelcomeStep({ videoUrl, onNext }: { videoUrl: string; onNext: () => voi
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }}>
       <Card style={{ marginBottom: 24, textAlign: 'center' }}>
-        <PlayCircleOutlined style={{ fontSize: 48, color: '#1677ff', marginBottom: 16 }} />
+        <PlayCircleOutlined style={{ fontSize: 48, color: '#0f766e', marginBottom: 16 }} />
         <Title level={4}>Как создать объявление</Title>
         <Paragraph type="secondary">
           Посмотрите короткое видео о том, как заполнить информацию о вашем объекте,
@@ -330,7 +330,7 @@ function WelcomeStep({ videoUrl, onNext }: { videoUrl: string; onNext: () => voi
                 width: '100%',
                 height: '100%',
                 border: 'none',
-                borderRadius: 8,
+                borderRadius: 20,
               }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -488,7 +488,7 @@ function PricingStep({ cityId }: { cityId: number | undefined }) {
   return (
     <Card title="Ценообразование" style={{ marginBottom: 24 }}>
       {avgPriceRub && (
-        <div style={{ marginBottom: 16, padding: '12px 16px', background: '#f0f5ff', borderRadius: 8 }}>
+        <div style={{ marginBottom: 16, padding: '12px 16px', background: 'rgba(15, 118, 110, 0.08)', borderRadius: 20 }}>
           <Text type="secondary">
             Средняя цена в вашем городе: <Text strong>{avgPriceRub} ₽/час</Text>
           </Text>
@@ -622,7 +622,7 @@ function PreviewStep({ form }: { form: ReturnType<typeof Form.useForm<BathhouseF
         style={{ marginBottom: 24 }}
         cover={
           images.length > 0 ? (
-            <div style={{ height: 200, overflow: 'hidden', background: '#f5f5f5' }}>
+            <div style={{ height: 200, overflow: 'hidden', background: 'rgba(248, 244, 236, 0.78)' }}>
               <img
                 src={images[0]}
                 alt="Обложка"
@@ -633,7 +633,7 @@ function PreviewStep({ form }: { form: ReturnType<typeof Form.useForm<BathhouseF
               />
             </div>
           ) : (
-            <div style={{ height: 200, background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ height: 200, background: 'rgba(248, 244, 236, 0.78)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Text type="secondary">Нет фотографий</Text>
             </div>
           )

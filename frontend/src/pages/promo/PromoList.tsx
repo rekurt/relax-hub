@@ -14,8 +14,8 @@ import {
   Table,
   Tag,
   Tooltip,
-} from 'antd'
-import { CopyOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+} from '@/components/design/system'
+import { CopyOutlined, DeleteOutlined, PlusOutlined } from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -227,14 +227,14 @@ export default function PromoList() {
 
   if (!selectedBathhouseId) {
     return (
-      <div className="bani-stack">
+      <div className="rh-stack">
         <PageHeader
           eyebrow="Маркетинг"
           title="Промокоды"
           description="Скидки должны управляться в контексте конкретной бани, иначе пользователь не понимает, где код реально применится."
         />
         <Card>
-          <div className="bani-feed-empty">
+          <div className="rh-feed-empty">
             Выберите баню для управления промокодами
           </div>
         </Card>
@@ -243,7 +243,7 @@ export default function PromoList() {
   }
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Маркетинг"
         title="Промокоды"
@@ -255,41 +255,41 @@ export default function PromoList() {
         )}
       />
 
-      <section className="bani-hero-panel">
-        <div className="bani-hero-panel__eyebrow">Сводка</div>
-        <h2 className="bani-hero-panel__title">Какие промо реально работают прямо сейчас</h2>
-        <div className="bani-hero-panel__description">
+      <section className="rh-hero-panel">
+        <div className="rh-hero-panel__eyebrow">Сводка</div>
+        <h2 className="rh-hero-panel__title">Какие промо реально работают прямо сейчас</h2>
+        <div className="rh-hero-panel__description">
           Вместо сухой таблицы владелец сначала видит активные, исчерпанные и бессрочные коды. Это ускоряет решение: продлевать, выключать или запускать новую кампанию.
         </div>
-        <div className="bani-stat-grid">
-          <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Активны</span>
-            <div className="bani-stat-tile__value">{stats.active}</div>
-            <span className="bani-stat-tile__hint">Доступны клиенту без ручных проверок</span>
+        <div className="rh-stat-grid">
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Активны</span>
+            <div className="rh-stat-tile__value">{stats.active}</div>
+            <span className="rh-stat-tile__hint">Доступны клиенту без ручных проверок</span>
           </div>
-          <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Исчерпаны</span>
-            <div className="bani-stat-tile__value">{stats.maxed}</div>
-            <span className="bani-stat-tile__hint">Нуждаются в продлении или замене</span>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Исчерпаны</span>
+            <div className="rh-stat-tile__value">{stats.maxed}</div>
+            <span className="rh-stat-tile__hint">Нуждаются в продлении или замене</span>
           </div>
-          <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Бессрочные</span>
-            <div className="bani-stat-tile__value">{stats.openEnded}</div>
-            <span className="bani-stat-tile__hint">Следите, чтобы они не жили вечно без причины</span>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Бессрочные</span>
+            <div className="rh-stat-tile__value">{stats.openEnded}</div>
+            <span className="rh-stat-tile__hint">Следите, чтобы они не жили вечно без причины</span>
           </div>
         </div>
       </section>
 
       <Card>
-        <div className="bani-table-shell">
-          <div className="bani-toolbar">
+        <div className="rh-table-shell">
+          <div className="rh-toolbar">
             <div>
-              <h2 className="bani-section-card__title">Все промокоды</h2>
-              <div className="bani-section-card__description">
+              <h2 className="rh-section-card__title">Все промокоды</h2>
+              <div className="rh-section-card__description">
                 Код, тип скидки, лимиты использования и сроки показываются в одной строке, чтобы не приходилось открывать детали для базовых действий.
               </div>
             </div>
-            <div className="bani-inline-note">Всего кодов: {totalCount}</div>
+            <div className="rh-inline-note">Всего кодов: {totalCount}</div>
           </div>
 
           <Table
@@ -391,16 +391,16 @@ export default function PromoList() {
       </Modal>
 
       <Card>
-        <div className="bani-toolbar">
+        <div className="rh-toolbar">
           <div>
-            <h2 className="bani-section-card__title">Деактивировать промокод?</h2>
-            <div className="bani-section-card__description">
+            <h2 className="rh-section-card__title">Деактивировать промокод?</h2>
+            <div className="rh-section-card__description">
               {deleteTarget
                 ? `Код ${deleteTarget.code} станет недоступен для использования`
                 : 'Выберите код в таблице, если хотите отключить его без удаления истории'}
             </div>
           </div>
-          <div className="bani-toolbar__group">
+          <div className="rh-toolbar__group">
             <Button
               danger
               disabled={!deleteTarget}

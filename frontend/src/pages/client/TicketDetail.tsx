@@ -13,12 +13,12 @@ import {
   Spin,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   SendOutlined,
   SmileOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetMyTicketsId,
@@ -246,9 +246,9 @@ export default function TicketDetail() {
                     style={{
                       maxWidth: '70%',
                       padding: '10px 14px',
-                      borderRadius: 8,
-                      background: isAdmin ? '#f0f0f0' : '#e6f4ff',
-                      border: isAdmin ? '1px solid #d9d9d9' : '1px solid #91caff',
+                      borderRadius: 20,
+                      background: isAdmin ? 'rgba(15, 23, 42, 0.08)' : 'rgba(15, 118, 110, 0.08)',
+                      border: isAdmin ? '1px solid #c9c1b5' : '1px solid rgba(15, 118, 110, 0.28)',
                     }}
                   >
                     <div style={{ marginBottom: 4 }}>

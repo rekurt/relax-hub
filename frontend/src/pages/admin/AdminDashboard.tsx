@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Button, Segmented, Spin, Table, Tag } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { Button, Segmented, Spin, Table, Tag } from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import {
   AlertOutlined,
   CalendarOutlined,
@@ -14,7 +14,7 @@ import {
   StarOutlined,
   TeamOutlined,
   UserOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useGetAdminAnalytics, useGetAdminAnalyticsTop } from '@/api/generated/admin-analytics/admin-analytics'
 import type { GithubComRekurtRelaxHubInternalServiceTopBathhouseInfo } from '@/api/generated/model'
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
   ]
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         size="compact"
         eyebrow="Администрирование"
@@ -234,96 +234,96 @@ export default function AdminDashboard() {
       />
 
       <Spin spinning={analyticsLoading}>
-        <div className="bani-admin-metric-grid">
+        <div className="rh-admin-metric-grid">
           {metricTiles.map((tile) => (
-            <div className="bani-admin-metric" key={tile.label}>
-              <div className="bani-admin-metric__head">
-                <span className="bani-admin-metric__label">{tile.label}</span>
-                <span className="bani-admin-metric__icon">{tile.icon}</span>
+            <div className="rh-admin-metric" key={tile.label}>
+              <div className="rh-admin-metric__head">
+                <span className="rh-admin-metric__label">{tile.label}</span>
+                <span className="rh-admin-metric__icon">{tile.icon}</span>
               </div>
-              <div className="bani-admin-metric__value">{tile.value}</div>
-              <div className="bani-admin-metric__hint">{tile.hint}</div>
+              <div className="rh-admin-metric__value">{tile.value}</div>
+              <div className="rh-admin-metric__hint">{tile.hint}</div>
             </div>
           ))}
         </div>
       </Spin>
 
-      <div className="bani-admin-grid bani-admin-grid--split">
-        <section className="bani-admin-panel">
-          <div className="bani-admin-toolbar">
-            <div className="bani-admin-toolbar__copy">
-              <h2 className="bani-admin-toolbar__title">Очередь модерации</h2>
-              <div className="bani-admin-toolbar__hint">Сначала объекты, обращения и финансовые события с влиянием на сервис.</div>
+      <div className="rh-admin-grid rh-admin-grid--split">
+        <section className="rh-admin-panel">
+          <div className="rh-admin-toolbar">
+            <div className="rh-admin-toolbar__copy">
+              <h2 className="rh-admin-toolbar__title">Очередь модерации</h2>
+              <div className="rh-admin-toolbar__hint">Сначала объекты, обращения и финансовые события с влиянием на сервис.</div>
             </div>
             <Button size="small">Открыть всё</Button>
           </div>
 
-          <div className="bani-admin-queue">
+          <div className="rh-admin-queue">
             {queueRows.map((row) => (
-              <div className="bani-admin-queue__row" key={`${row.type}-${row.title}`}>
+              <div className="rh-admin-queue__row" key={`${row.type}-${row.title}`}>
                 <Tag>{row.type}</Tag>
-                <div className="bani-admin-queue__title">{row.title}</div>
-                <div className="bani-admin-queue__meta">{row.time}</div>
+                <div className="rh-admin-queue__title">{row.title}</div>
+                <div className="rh-admin-queue__meta">{row.time}</div>
                 <Button size="small">{row.action}</Button>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="bani-admin-panel">
-          <div className="bani-admin-toolbar">
-            <div className="bani-admin-toolbar__copy">
-              <h2 className="bani-admin-toolbar__title">Риски</h2>
-              <div className="bani-admin-toolbar__hint">Сигналы, которые нужно видеть рядом с цифрами платформы.</div>
+        <section className="rh-admin-panel">
+          <div className="rh-admin-toolbar">
+            <div className="rh-admin-toolbar__copy">
+              <h2 className="rh-admin-toolbar__title">Риски</h2>
+              <div className="rh-admin-toolbar__hint">Сигналы, которые нужно видеть рядом с цифрами платформы.</div>
             </div>
           </div>
 
-          <div className="bani-admin-risk-list">
-            <div className="bani-admin-risk-note bani-admin-risk-note--warning">
-              <ExclamationCircleOutlined className="bani-admin-risk-note__icon" />
-              <span className="bani-admin-risk-note__text">SLA поддержки: {slaCompliance.toFixed(1)} %. Ниже 90 % требует ручной проверки нагрузки.</span>
+          <div className="rh-admin-risk-list">
+            <div className="rh-admin-risk-note rh-admin-risk-note--warning">
+              <ExclamationCircleOutlined className="rh-admin-risk-note__icon" />
+              <span className="rh-admin-risk-note__text">SLA поддержки: {slaCompliance.toFixed(1)} %. Ниже 90 % требует ручной проверки нагрузки.</span>
             </div>
-            <div className="bani-admin-risk-note">
-              <CheckCircleOutlined className="bani-admin-risk-note__icon" />
-              <span className="bani-admin-risk-note__text">DAU: {dashboard?.dau ?? 0}. Сравните активность с WAU и MAU перед промо-решениями.</span>
+            <div className="rh-admin-risk-note">
+              <CheckCircleOutlined className="rh-admin-risk-note__icon" />
+              <span className="rh-admin-risk-note__text">DAU: {dashboard?.dau ?? 0}. Сравните активность с WAU и MAU перед промо-решениями.</span>
             </div>
-            <div className="bani-admin-risk-note bani-admin-risk-note--error">
-              <AlertOutlined className="bani-admin-risk-note__icon" />
-              <span className="bani-admin-risk-note__text">Очередь поддержки: {moderationQueueSize}. При росте выше 20 нужно усилить первую линию.</span>
+            <div className="rh-admin-risk-note rh-admin-risk-note--error">
+              <AlertOutlined className="rh-admin-risk-note__icon" />
+              <span className="rh-admin-risk-note__text">Очередь поддержки: {moderationQueueSize}. При росте выше 20 нужно усилить первую линию.</span>
             </div>
           </div>
         </section>
       </div>
 
       {supportMetrics && (
-        <section className="bani-admin-panel" data-testid="support-metrics-widget">
-          <div className="bani-admin-toolbar" style={{ marginBottom: 18 }}>
-            <div className="bani-admin-toolbar__copy">
-              <h2 className="bani-admin-toolbar__title"><CustomerServiceOutlined /> Поддержка</h2>
-              <div className="bani-admin-toolbar__hint">Операционные показатели поддержки рядом с бизнес-метриками помогают вовремя заметить просадку качества сервиса.</div>
+        <section className="rh-admin-panel" data-testid="support-metrics-widget">
+          <div className="rh-admin-toolbar" style={{ marginBottom: 18 }}>
+            <div className="rh-admin-toolbar__copy">
+              <h2 className="rh-admin-toolbar__title"><CustomerServiceOutlined /> Поддержка</h2>
+              <div className="rh-admin-toolbar__hint">Операционные показатели поддержки рядом с бизнес-метриками помогают вовремя заметить просадку качества сервиса.</div>
             </div>
           </div>
-          <div className="bani-admin-metric-grid">
+          <div className="rh-admin-metric-grid">
             {supportMetricTiles.map((tile) => (
-              <div className="bani-admin-metric" key={tile.label}>
-                <div className="bani-admin-metric__head">
-                  <span className="bani-admin-metric__label">{tile.label}</span>
-                  <span className="bani-admin-metric__icon">{tile.icon}</span>
+              <div className="rh-admin-metric" key={tile.label}>
+                <div className="rh-admin-metric__head">
+                  <span className="rh-admin-metric__label">{tile.label}</span>
+                  <span className="rh-admin-metric__icon">{tile.icon}</span>
                 </div>
-                <div className="bani-admin-metric__value">{tile.value}</div>
-                <div className="bani-admin-metric__hint">{tile.hint}</div>
+                <div className="rh-admin-metric__value">{tile.value}</div>
+                <div className="rh-admin-metric__hint">{tile.hint}</div>
               </div>
             ))}
           </div>
         </section>
       )}
 
-      <section className="bani-admin-table-card">
-        <div className="bani-table-shell">
-          <div className="bani-admin-toolbar">
-            <div className="bani-admin-toolbar__copy">
-              <h2 className="bani-admin-toolbar__title">Топ бань</h2>
-              <div className="bani-admin-toolbar__hint">Сортировка по ключевому показателю позволяет быстро увидеть лидеров роста.</div>
+      <section className="rh-admin-table-card">
+        <div className="rh-table-shell">
+          <div className="rh-admin-toolbar">
+            <div className="rh-admin-toolbar__copy">
+              <h2 className="rh-admin-toolbar__title">Топ бань</h2>
+              <div className="rh-admin-toolbar__hint">Сортировка по ключевому показателю позволяет быстро увидеть лидеров роста.</div>
             </div>
             <Segmented
               options={METRIC_OPTIONS}

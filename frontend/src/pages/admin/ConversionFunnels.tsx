@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Card, Col, Row, Segmented, Spin, Statistic, Typography } from 'antd'
+import { Card, Col, Row, Segmented, Spin, Statistic, Typography } from '@/components/design/system'
 import {
   FunnelPlotOutlined,
   ArrowDownOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useGetAdminAnalyticsFunnel } from '@/api/generated/admin-analytics/admin-analytics'
 import type { GithubComRekurtRelaxHubInternalDomainFunnelStep } from '@/api/generated/model'
 
@@ -17,12 +17,12 @@ const PERIOD_OPTIONS = [
 ]
 
 const STEP_COLORS = [
-  '#1677ff',
-  '#13c2c2',
-  '#52c41a',
-  '#faad14',
-  '#f5222d',
-  '#722ed1',
+  '#0f766e',
+  '#0f766e',
+  '#15803d',
+  '#d97706',
+  '#b42318',
+  '#0a5f59',
 ]
 
 export default function ConversionFunnels() {
@@ -107,8 +107,8 @@ export default function ConversionFunnels() {
                         alignItems: 'center',
                         gap: 16,
                         padding: '12px 16px',
-                        borderRadius: 8,
-                        background: '#fafafa',
+                        borderRadius: 20,
+                        background: 'rgba(255, 253, 248, 0.72)',
                       }}
                     >
                       <div style={{ minWidth: 160, fontWeight: 500 }}>
@@ -120,7 +120,7 @@ export default function ConversionFunnels() {
                             height: 32,
                             width: `${Math.max(percentage, 2)}%`,
                             background: color,
-                            borderRadius: 4,
+                            borderRadius: 12,
                             display: 'flex',
                             alignItems: 'center',
                             paddingLeft: 8,
@@ -146,7 +146,7 @@ export default function ConversionFunnels() {
                           alignItems: 'center',
                           gap: 8,
                           padding: '4px 0 4px 40px',
-                          color: '#999',
+                          color: 'var(--rh-text-muted)',
                           fontSize: 12,
                         }}
                       >

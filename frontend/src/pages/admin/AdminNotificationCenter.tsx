@@ -10,14 +10,14 @@ import {
   App,
   Card,
   Statistic,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CheckOutlined,
   ExclamationCircleOutlined,
   WarningOutlined,
   InfoCircleOutlined,
   CloseCircleOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { axiosInstance } from '@/api/axios-instance'
 import dayjs from 'dayjs'
@@ -152,7 +152,7 @@ export default function AdminNotificationCenter() {
         <div>
           <span style={{ fontWeight: record.is_read ? 400 : 600 }}>{title}</span>
           <br />
-          <span style={{ color: '#8c8c8c', fontSize: 12 }}>{record.body}</span>
+          <span style={{ color: 'var(--rh-text-disabled)', fontSize: 12 }}>{record.body}</span>
         </div>
       ),
     },

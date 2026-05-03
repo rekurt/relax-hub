@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Input, Button, Space, Typography, App } from 'antd'
-import { SafetyOutlined, MessageOutlined } from '@ant-design/icons'
+import { Input, Button, Space, Typography, App } from '@/components/design/system'
+import { SafetyOutlined, MessageOutlined } from '@/components/design/icons'
 import { postAuth2faVerify } from '@/api/generated/2fa/2fa'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'
@@ -46,7 +46,7 @@ export default function TwoFactorChallenge({ partialToken, onSuccess, onCancel }
   return (
     <Space orientation="vertical" size="large" style={{ width: '100%' }}>
       <div style={{ textAlign: 'center' }}>
-        <SafetyOutlined style={{ fontSize: 48, color: '#1677ff', marginBottom: 16 }} />
+        <SafetyOutlined style={{ fontSize: 48, color: '#0f766e', marginBottom: 16 }} />
         <Typography.Title level={4}>Двухфакторная аутентификация</Typography.Title>
         <Text type="secondary">
           {method === 'totp'
@@ -62,7 +62,7 @@ export default function TwoFactorChallenge({ partialToken, onSuccess, onCancel }
         value={code}
         onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
         onPressEnter={handleVerify}
-        style={{ textAlign: 'center', fontSize: 24, letterSpacing: 8 }}
+        style={{ textAlign: 'center', fontSize: 24 }}
         autoFocus
       />
 

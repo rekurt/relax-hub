@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Modal, Button, Steps, Typography, Space, Alert } from 'antd'
+import { Modal, Button, Steps, Typography, Space, Alert } from '@/components/design/system'
 import {
   SearchOutlined,
   CalendarOutlined,
@@ -7,7 +7,7 @@ import {
   StarOutlined,
   EnvironmentOutlined,
   GiftOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
 
@@ -28,7 +28,7 @@ function getSteps(region?: string) {
 
   return [
     {
-      icon: <GiftOutlined style={{ fontSize: 48, color: '#52c41a' }} />,
+      icon: <GiftOutlined style={{ fontSize: 48, color: '#15803d' }} />,
       title: 'Добро пожаловать!',
       description:
         `Вам начислен приветственный бонус ${formatPrice(bonusAmount)}! Бонус действует 30 дней и может быть использован для оплаты первого бронирования.`,
@@ -36,31 +36,31 @@ function getSteps(region?: string) {
       currencySymbol,
     },
     {
-      icon: <SearchOutlined style={{ fontSize: 48, color: '#1677ff' }} />,
+      icon: <SearchOutlined style={{ fontSize: 48, color: '#0f766e' }} />,
       title: 'Поиск бань',
       description:
         'Используйте поиск, чтобы найти идеальную баню. Фильтруйте по городу, цене, удобствам и расположению на карте.',
     },
     {
-      icon: <CalendarOutlined style={{ fontSize: 48, color: '#fa8c16' }} />,
+      icon: <CalendarOutlined style={{ fontSize: 48, color: '#d97706' }} />,
       title: 'Бронирование',
       description:
         'Выберите дату и время, укажите количество гостей и дополнительные услуги. Оплатите онлайн картой, через СБП или из кошелька.',
     },
     {
-      icon: <WalletOutlined style={{ fontSize: 48, color: '#faad14' }} />,
+      icon: <WalletOutlined style={{ fontSize: 48, color: '#d97706' }} />,
       title: 'Кошелёк и бонусы',
       description:
         'Пополняйте кошелёк для быстрой оплаты. Получайте кешбэк за бронирования, бонусы за приглашение друзей и повышайте уровень лояльности.',
     },
     {
-      icon: <EnvironmentOutlined style={{ fontSize: 48, color: '#13c2c2' }} />,
+      icon: <EnvironmentOutlined style={{ fontSize: 48, color: '#0f766e' }} />,
       title: 'Рекомендации рядом',
       description:
         'Разрешите определение местоположения, и мы покажем лучшие бани поблизости. Персональные рекомендации учитывают ваши предпочтения и историю посещений.',
     },
     {
-      icon: <StarOutlined style={{ fontSize: 48, color: '#eb2f96' }} />,
+      icon: <StarOutlined style={{ fontSize: 48, color: '#d97706' }} />,
       title: 'Отзывы и рейтинг',
       description:
         'Оставляйте отзывы после посещения. Оценивайте чистоту, точность описания, общение и цену. Ваши отзывы помогут другим.',

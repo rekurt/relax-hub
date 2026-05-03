@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Typography, Table, Card, Button, Tag, Space, Popconfirm, Empty, Spin } from 'antd'
-import { CreditCardOutlined, DeleteOutlined, CheckCircleOutlined, StarOutlined } from '@ant-design/icons'
-import { App } from 'antd'
+import { Typography, Table, Card, Button, Tag, Space, Popconfirm, Empty, Spin } from '@/components/design/system'
+import { CreditCardOutlined, DeleteOutlined, CheckCircleOutlined, StarOutlined } from '@/components/design/icons'
+import { App } from '@/components/design/system'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetMySavedCards,
@@ -9,7 +9,7 @@ import {
   usePostMySavedCardsIdDefault,
   getGetMySavedCardsQueryKey,
 } from '@/api/generated/saved-cards/saved-cards'
-import type { ColumnsType } from 'antd/es/table'
+import type { ColumnsType } from '@/components/design/types'
 import type { InternalHandlerSavedCardResponse } from '@/api/generated/model'
 import PageHeader from '@/components/PageHeader'
 
@@ -65,9 +65,9 @@ export default function SavedCards() {
       key: 'card',
       render: (_, record) => (
         <Space>
-          <CreditCardOutlined style={{ color: BRAND_COLORS[record.brand?.toLowerCase() ?? ''] ?? '#666', fontSize: 20 }} />
+          <CreditCardOutlined style={{ color: BRAND_COLORS[record.brand?.toLowerCase() ?? ''] ?? 'var(--rh-text-soft)', fontSize: 20 }} />
           <span>
-            <strong style={{ color: BRAND_COLORS[record.brand?.toLowerCase() ?? ''] ?? '#666' }}>
+            <strong style={{ color: BRAND_COLORS[record.brand?.toLowerCase() ?? ''] ?? 'var(--rh-text-soft)' }}>
               {record.brand ?? 'Карта'}
             </strong>
             {' •••• '}
@@ -138,32 +138,32 @@ export default function SavedCards() {
   }
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Личный кабинет"
         title="Сохранённые карты"
         description="Проверяйте карту по умолчанию и быстро управляйте способами оплаты без лишних действий."
       />
 
-      <div className="bani-stat-grid">
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Сохранённых карт</span>
-          <span className="bani-stat-tile__value">{totalCards}</span>
-          <span className="bani-stat-tile__hint">/ 10</span>
+      <div className="rh-stat-grid">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Сохранённых карт</span>
+          <span className="rh-stat-tile__value">{totalCards}</span>
+          <span className="rh-stat-tile__hint">/ 10</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Карта по умолчанию</span>
-          <span className="bani-stat-tile__value" style={{ fontSize: defaultCard ? 28 : 20 }}>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Карта по умолчанию</span>
+          <span className="rh-stat-tile__value" style={{ fontSize: defaultCard ? 28 : 20 }}>
             {defaultCard ? `${defaultCard.brand ?? ''} •••• ${defaultCard.last4 ?? ''}` : 'Не выбрана'}
           </span>
-          <span className="bani-stat-tile__hint">
+          <span className="rh-stat-tile__hint">
             Используется первой при оплате, если не выбрана другая карта.
           </span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Безопасность</span>
-          <span className="bani-stat-tile__value">Токенизация</span>
-          <span className="bani-stat-tile__hint">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Безопасность</span>
+          <span className="rh-stat-tile__value">Токенизация</span>
+          <span className="rh-stat-tile__hint">
             В интерфейсе отображаются только бренд и последние четыре цифры.
           </span>
         </div>

@@ -15,8 +15,8 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminReviews,
@@ -253,7 +253,7 @@ export default function ReviewModeration() {
             <a
               key="reject"
               onClick={() => openRejectModal('single', record.id)}
-              style={{ color: '#ff4d4f' }}
+              style={{ color: '#b42318' }}
             >
               Отклонить
             </a>,
@@ -402,7 +402,7 @@ export default function ReviewModeration() {
                         src={url}
                         width={120}
                         height={120}
-                        style={{ objectFit: 'cover', borderRadius: 8 }}
+                        style={{ objectFit: 'cover', borderRadius: 20 }}
                         fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI2MCIgeT0iNjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjOTk5IiBmb250LXNpemU9IjEyIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4="
                       />
                     ))}

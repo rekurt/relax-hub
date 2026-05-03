@@ -19,13 +19,13 @@ import {
   Tag,
   Tooltip,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   PauseCircleOutlined,
   PlayCircleOutlined,
   PlusOutlined,
   RocketOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { useQueryClient } from '@tanstack/react-query'
@@ -367,40 +367,53 @@ export default function PromotionCampaign() {
           initialValues={{ daily_bid: 50, budget: 1000, duration_days: 30 }}
         >
           <Form.Item
-            name="daily_bid"
             label="Ставка в день (₽)"
-            rules={[{ required: true, message: 'Укажите ставку' }]}
             extra="Минимум 50 ₽/день. Чем выше ставка, тем выше позиция в поиске."
           >
-            <InputNumber min={50} style={{ width: '100%' }} addonAfter="₽/день" />
+            <Space.Compact className="rh-compact-control">
+              <Form.Item name="daily_bid" noStyle rules={[{ required: true, message: 'Укажите ставку' }]}>
+                <InputNumber min={50} style={{ width: '100%' }} />
+              </Form.Item>
+              <span className="rh-input-addon">₽/день</span>
+            </Space.Compact>
           </Form.Item>
 
           <Form.Item
-            name="budget"
             label="Общий бюджет (₽)"
-            rules={[
-              { required: true, message: 'Укажите бюджет' },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  const dailyBid = getFieldValue('daily_bid')
-                  if (value && dailyBid && value < dailyBid) {
-                    return Promise.reject(new Error('Бюджет должен быть не менее дневной ставки'))
-                  }
-                  return Promise.resolve()
-                },
-              }),
-            ]}
             extra="Кампания приостанавливается при исчерпании бюджета."
           >
-            <InputNumber min={50} style={{ width: '100%' }} addonAfter="₽" />
+            <Space.Compact className="rh-compact-control">
+              <Form.Item
+                name="budget"
+                noStyle
+                rules={[
+                  { required: true, message: 'Укажите бюджет' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      const dailyBid = getFieldValue('daily_bid')
+                      if (value && dailyBid && value < dailyBid) {
+                        return Promise.reject(new Error('Бюджет должен быть не менее дневной ставки'))
+                      }
+                      return Promise.resolve()
+                    },
+                  }),
+                ]}
+              >
+                <InputNumber min={50} style={{ width: '100%' }} />
+              </Form.Item>
+              <span className="rh-input-addon">₽</span>
+            </Space.Compact>
           </Form.Item>
 
           <Form.Item
-            name="duration_days"
             label="Длительность (дней)"
-            rules={[{ required: true, message: 'Укажите длительность' }]}
           >
-            <InputNumber min={1} max={365} style={{ width: '100%' }} addonAfter="дн." />
+            <Space.Compact className="rh-compact-control">
+              <Form.Item name="duration_days" noStyle rules={[{ required: true, message: 'Укажите длительность' }]}>
+                <InputNumber min={1} max={365} style={{ width: '100%' }} />
+              </Form.Item>
+              <span className="rh-input-addon">дн.</span>
+            </Space.Compact>
           </Form.Item>
 
           <Form.Item name="target_city_id" label="Целевой город (опционально)">

@@ -20,7 +20,7 @@ import {
   Tag,
   Tooltip,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CalendarOutlined,
   CopyOutlined,
@@ -32,11 +32,11 @@ import {
   ReloadOutlined,
   RightOutlined,
   SyncOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { App } from 'antd'
+import { App } from '@/components/design/system'
 import { useQueryClient, useQueries } from '@tanstack/react-query'
 import {
   useGetMyBathhousesIdCalendarToken,
@@ -81,27 +81,27 @@ const VIEW_OPTIONS = [
 
 /** Status-based color coding per BRD: green=confirmed, yellow=pending, red=cancelled, gray=blocked */
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  confirmed: { bg: '#52c41a', text: '#fff', label: 'Подтверждено' },
-  pending: { bg: '#faad14', text: '#fff', label: 'Ожидает' },
-  pending_owner: { bg: '#faad14', text: '#fff', label: 'Ожидает владельца' },
-  cancelled: { bg: '#ff4d4f', text: '#fff', label: 'Отменено' },
-  rejected: { bg: '#ff4d4f', text: '#fff', label: 'Отклонено' },
-  completed: { bg: '#52c41a', text: '#fff', label: 'Завершено' },
-  no_show: { bg: '#d9d9d9', text: '#333', label: 'Неявка' },
-  force_majeure_cancelled: { bg: '#d9d9d9', text: '#333', label: 'Форс-мажор' },
+  confirmed: { bg: '#15803d', text: '#fff', label: 'Подтверждено' },
+  pending: { bg: '#d97706', text: '#fff', label: 'Ожидает' },
+  pending_owner: { bg: '#d97706', text: '#fff', label: 'Ожидает владельца' },
+  cancelled: { bg: '#b42318', text: '#fff', label: 'Отменено' },
+  rejected: { bg: '#b42318', text: '#fff', label: 'Отклонено' },
+  completed: { bg: '#15803d', text: '#fff', label: 'Завершено' },
+  no_show: { bg: '#c9c1b5', text: 'var(--rh-text)', label: 'Неявка' },
+  force_majeure_cancelled: { bg: '#c9c1b5', text: 'var(--rh-text)', label: 'Форс-мажор' },
 }
 
 const LEGEND_ITEMS = [
-  { color: '#52c41a', label: 'Подтверждено' },
-  { color: '#faad14', label: 'Ожидает' },
-  { color: '#ff4d4f', label: 'Отменено' },
-  { color: '#d9d9d9', label: 'Заблокировано' },
+  { color: '#15803d', label: 'Подтверждено' },
+  { color: '#d97706', label: 'Ожидает' },
+  { color: '#b42318', label: 'Отменено' },
+  { color: '#c9c1b5', label: 'Заблокировано' },
 ]
 
 /** Color palette for multi-bathhouse consolidated view */
 const BATHHOUSE_COLORS = [
-  '#1677ff', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16',
-  '#52c41a', '#2f54eb', '#faad14', '#a0d911', '#f5222d',
+  '#0f766e', '#0a5f59', '#0f766e', '#d97706', '#d97706',
+  '#15803d', '#0f766e', '#d97706', '#15803d', '#b42318',
 ]
 
 function getBathhouseColor(index: number): string {
@@ -109,7 +109,7 @@ function getBathhouseColor(index: number): string {
 }
 
 function getStatusColor(status: string) {
-  return STATUS_COLORS[status] ?? { bg: '#1677ff', text: '#fff', label: status }
+  return STATUS_COLORS[status] ?? { bg: '#0f766e', text: '#fff', label: status }
 }
 
 interface BookingBlock {
@@ -249,7 +249,7 @@ function BookingBlockEl({ block }: { block: BookingBlock }) {
           height: block.height,
           backgroundColor: bgColor,
           opacity: 0.85,
-          borderRadius: 4,
+          borderRadius: 12,
           padding: '2px 4px',
           overflow: 'hidden',
           cursor: 'pointer',
@@ -272,11 +272,11 @@ function BookingBlockEl({ block }: { block: BookingBlock }) {
 /** Time column shared by day and week views */
 function TimeColumn() {
   return (
-    <div style={{ width: 60, flexShrink: 0, borderRight: '1px solid #f0f0f0' }}>
+    <div style={{ width: 60, flexShrink: 0, borderRight: '1px solid rgba(15, 23, 42, 0.08)' }}>
       <div
         style={{
           height: 40,
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: '1px solid rgba(15, 23, 42, 0.08)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -291,7 +291,7 @@ function TimeColumn() {
           key={hour}
           style={{
             height: 60,
-            borderBottom: '1px solid #f5f5f5',
+            borderBottom: '1px solid rgba(248, 244, 236, 0.78)',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'center',
@@ -328,7 +328,7 @@ function DayColumn({
     <div
       style={{
         flex: 1,
-        borderRight: isLast ? undefined : '1px solid #f0f0f0',
+        borderRight: isLast ? undefined : '1px solid rgba(15, 23, 42, 0.08)',
         minWidth: 100,
       }}
     >
@@ -336,12 +336,12 @@ function DayColumn({
         <div
           style={{
             height: 40,
-            borderBottom: '1px solid #f0f0f0',
+            borderBottom: '1px solid rgba(15, 23, 42, 0.08)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: isToday ? '#e6f4ff' : undefined,
+            backgroundColor: isToday ? 'rgba(15, 118, 110, 0.08)' : undefined,
           }}
         >
           <Text type="secondary" style={{ fontSize: 11, lineHeight: 1 }}>
@@ -351,7 +351,7 @@ function DayColumn({
             strong={isToday}
             style={{
               fontSize: 14,
-              color: isToday ? '#1677ff' : undefined,
+              color: isToday ? '#0f766e' : undefined,
               lineHeight: 1.2,
             }}
           >
@@ -366,8 +366,8 @@ function DayColumn({
             key={hour}
             style={{
               height: 60,
-              borderBottom: '1px solid #f5f5f5',
-              backgroundColor: isToday ? '#fafcff' : undefined,
+              borderBottom: '1px solid rgba(248, 244, 236, 0.78)',
+              backgroundColor: isToday ? 'rgba(15, 118, 110, 0.04)' : undefined,
             }}
           />
         ))}
@@ -462,7 +462,7 @@ function MonthView({
   return (
     <div>
       {/* Day of week headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid #f0f0f0' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid rgba(15, 23, 42, 0.08)' }}>
         {DAYS_SHORT.map((d) => (
           <div
             key={d}
@@ -471,7 +471,7 @@ function MonthView({
               padding: '8px 0',
               fontWeight: 500,
               fontSize: 13,
-              color: '#666',
+              color: 'var(--rh-text-soft)',
             }}
           >
             {d}
@@ -494,23 +494,23 @@ function MonthView({
                 style={{
                   minHeight: 90,
                   padding: 6,
-                  border: '1px solid #f0f0f0',
+                  border: '1px solid rgba(15, 23, 42, 0.08)',
                   borderTop: 'none',
-                  borderLeft: ci === 0 ? '1px solid #f0f0f0' : 'none',
+                  borderLeft: ci === 0 ? '1px solid rgba(15, 23, 42, 0.08)' : 'none',
                   backgroundColor: isToday
-                    ? '#e6f4ff'
+                    ? 'rgba(15, 118, 110, 0.08)'
                     : cell.isCurrentMonth
                       ? '#fff'
-                      : '#fafafa',
+                      : 'rgba(255, 253, 248, 0.72)',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  if (!isToday) e.currentTarget.style.backgroundColor = '#f5f5ff'
+                  if (!isToday) e.currentTarget.style.backgroundColor = 'rgba(15, 118, 110, 0.06)'
                 }}
                 onMouseLeave={(e) => {
                   if (!isToday)
-                    e.currentTarget.style.backgroundColor = cell.isCurrentMonth ? '#fff' : '#fafafa'
+                    e.currentTarget.style.backgroundColor = cell.isCurrentMonth ? '#fff' : 'rgba(255, 253, 248, 0.72)'
                 }}
               >
                 <div
@@ -519,9 +519,9 @@ function MonthView({
                     fontWeight: isToday ? 700 : 400,
                     color: cell.isCurrentMonth
                       ? isToday
-                        ? '#1677ff'
-                        : '#333'
-                      : '#bbb',
+                        ? '#0f766e'
+                        : 'var(--rh-text)'
+                      : 'var(--rh-text-disabled)',
                     marginBottom: 4,
                   }}
                 >
@@ -533,7 +533,7 @@ function MonthView({
                     {(cell.counts['confirmed'] ?? 0) > 0 && (
                       <Badge
                         count={cell.counts['confirmed']}
-                        color="#52c41a"
+                        color="#15803d"
                         size="small"
                         title="Подтверждено"
                       />
@@ -541,7 +541,7 @@ function MonthView({
                     {(cell.counts['completed'] ?? 0) > 0 && (
                       <Badge
                         count={cell.counts['completed']}
-                        color="#52c41a"
+                        color="#15803d"
                         size="small"
                         title="Завершено"
                       />
@@ -549,7 +549,7 @@ function MonthView({
                     {((cell.counts['pending'] ?? 0) + (cell.counts['pending_owner'] ?? 0)) > 0 && (
                       <Badge
                         count={(cell.counts['pending'] ?? 0) + (cell.counts['pending_owner'] ?? 0)}
-                        color="#faad14"
+                        color="#d97706"
                         size="small"
                         title="Ожидает"
                       />
@@ -557,7 +557,7 @@ function MonthView({
                     {((cell.counts['cancelled'] ?? 0) + (cell.counts['rejected'] ?? 0)) > 0 && (
                       <Badge
                         count={(cell.counts['cancelled'] ?? 0) + (cell.counts['rejected'] ?? 0)}
-                        color="#ff4d4f"
+                        color="#b42318"
                         size="small"
                         title="Отменено"
                       />
@@ -959,16 +959,18 @@ export default function CalendarPage() {
             </Text>
             {calendarToken?.url ? (
               <Space orientation="vertical" style={{ width: '100%' }}>
-                <Input
-                  readOnly
-                  value={`${window.location.origin}${calendarToken.url}`}
-                  addonAfter={
-                    <CopyOutlined
-                      onClick={handleCopyIcalUrl}
-                      style={{ cursor: 'pointer' }}
-                    />
-                  }
-                />
+                <Space.Compact className="rh-compact-control">
+                  <Input
+                    readOnly
+                    value={`${window.location.origin}${calendarToken.url}`}
+                  />
+                  <Button
+                    aria-label="Скопировать ссылку iCal"
+                    className="rh-input-addon-button"
+                    icon={<CopyOutlined />}
+                    onClick={handleCopyIcalUrl}
+                  />
+                </Space.Compact>
               </Space>
             ) : (
               <Text type="secondary">Загрузка...</Text>

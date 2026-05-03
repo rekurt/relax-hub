@@ -10,7 +10,7 @@ import {
   Space,
   Descriptions,
   List,
-} from 'antd'
+} from '@/components/design/system'
 import {
   TagOutlined,
   CopyOutlined,
@@ -19,8 +19,8 @@ import {
   GiftOutlined,
   PercentageOutlined,
   ClockCircleOutlined,
-} from '@ant-design/icons'
-import { App } from 'antd'
+} from '@/components/design/icons'
+import { App } from '@/components/design/system'
 import { usePostPromoCodesValidate } from '@/api/generated/promo-codes/promo-codes'
 import type { InternalHandlerValidatePromoResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
@@ -65,7 +65,7 @@ export default function ActivePromoCodes() {
   const [code, setCode] = useState('')
   const [validatedPromos, setValidatedPromos] = useState<ValidatedPromo[]>(() => {
     try {
-      const stored = localStorage.getItem('bani_validated_promos')
+      const stored = localStorage.getItem('rh_validated_promos')
       return stored ? JSON.parse(stored) : []
     } catch {
       return []
@@ -84,7 +84,7 @@ export default function ActivePromoCodes() {
           setValidatedPromos((prev) => {
             const filtered = prev.filter((p) => p.code !== data.code)
             const updated = [newPromo, ...filtered].slice(0, 20)
-            localStorage.setItem('bani_validated_promos', JSON.stringify(updated))
+            localStorage.setItem('rh_validated_promos', JSON.stringify(updated))
             return updated
           })
           message.success('Промокод действителен!')
@@ -113,7 +113,7 @@ export default function ActivePromoCodes() {
   const handleRemovePromo = (promoCode: string) => {
     setValidatedPromos((prev) => {
       const updated = prev.filter((p) => p.code !== promoCode)
-      localStorage.setItem('bani_validated_promos', JSON.stringify(updated))
+      localStorage.setItem('rh_validated_promos', JSON.stringify(updated))
       return updated
     })
   }
@@ -163,7 +163,7 @@ export default function ActivePromoCodes() {
       <Card title="Проверенные промокоды">
         {validatedPromos.length === 0 ? (
           <Empty
-            image={<GiftOutlined style={{ fontSize: 48, color: '#999' }} />}
+            image={<GiftOutlined style={{ fontSize: 48, color: 'var(--rh-text-muted)' }} />}
             description="Нет проверенных промокодов"
           />
         ) : (
@@ -198,17 +198,17 @@ export default function ActivePromoCodes() {
                       style={{
                         width: 48,
                         height: 48,
-                        borderRadius: 8,
-                        background: '#f5f5f5',
+                        borderRadius: 20,
+                        background: 'rgba(248, 244, 236, 0.78)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
                       {promo.type === 'percentage' ? (
-                        <PercentageOutlined style={{ fontSize: 24, color: '#1677ff' }} />
+                        <PercentageOutlined style={{ fontSize: 24, color: '#0f766e' }} />
                       ) : (
-                        <GiftOutlined style={{ fontSize: 24, color: '#52c41a' }} />
+                        <GiftOutlined style={{ fontSize: 24, color: '#15803d' }} />
                       )}
                     </div>
                   }

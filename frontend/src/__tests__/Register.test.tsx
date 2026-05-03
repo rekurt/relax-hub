@@ -1,8 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ConfigProvider, App as AntApp } from 'antd'
-import ruRU from 'antd/locale/ru_RU'
+import { ConfigProvider, App as AntApp } from '@/components/design/system'
+import { ruRU } from '@/components/design/system'
 import Register from '@/pages/Register'
 
 vi.mock('@/api/generated/auth/auth', () => ({

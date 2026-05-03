@@ -126,7 +126,9 @@ func (s *bookingModificationService) RequestModification(ctx context.Context, us
 	}
 
 	// Notify the bathhouse owner
-	go s.notifyOwner(context.Background(), bh.OwnerID, booking, req)
+	runDetached(ctx, 10*time.Second, func(notificationCtx context.Context) {
+		s.notifyOwner(notificationCtx, bh.OwnerID, booking, req)
+	})
 
 	s.logger.Info("booking modification requested",
 		"request_id", req.ID,
@@ -174,7 +176,9 @@ func (s *bookingModificationService) ApproveModification(ctx context.Context, ow
 	}
 
 	// Notify client
-	go s.notifyClient(context.Background(), req.UserID, req, domain.NotifBookingModificationApproved, "")
+	runDetached(ctx, 10*time.Second, func(notificationCtx context.Context) {
+		s.notifyClient(notificationCtx, req.UserID, req, domain.NotifBookingModificationApproved, "")
+	})
 
 	s.logger.Info("booking modification approved",
 		"request_id", requestID,
@@ -203,7 +207,9 @@ func (s *bookingModificationService) RejectModification(ctx context.Context, own
 		return err
 	}
 
-	go s.notifyClient(context.Background(), req.UserID, req, domain.NotifBookingModificationRejected, reason)
+	runDetached(ctx, 10*time.Second, func(notificationCtx context.Context) {
+		s.notifyClient(notificationCtx, req.UserID, req, domain.NotifBookingModificationRejected, reason)
+	})
 
 	s.logger.Info("booking modification rejected",
 		"request_id", requestID,
@@ -253,7 +259,10 @@ func (s *bookingModificationService) ExpireTimedOutRequests(ctx context.Context)
 			continue
 		}
 
-		go s.notifyClient(context.Background(), req.UserID, &req, domain.NotifBookingModificationExpired, "")
+		expiredReq := req
+		runDetached(ctx, 10*time.Second, func(notificationCtx context.Context) {
+			s.notifyClient(notificationCtx, expiredReq.UserID, &expiredReq, domain.NotifBookingModificationExpired, "")
+		})
 
 		count++
 	}

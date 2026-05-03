@@ -1,4 +1,4 @@
-import type { FormInstance } from 'antd'
+import type { FormInstance } from '@/components/design/types'
 
 /**
  * Reads current DOM input values for the given Antd Form field names and

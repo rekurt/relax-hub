@@ -1,5 +1,5 @@
-import { ClockCircleOutlined } from '@ant-design/icons'
-import { Alert, Button, Typography } from 'antd'
+import { ClockCircleOutlined } from '@/components/design/icons'
+import { Alert, Button, Typography } from '@/components/design/system'
 import { useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import {
@@ -58,7 +58,7 @@ export default function ContiguousSlotSelector<T extends SlotSelectionItem>({
         </div>
       ) : null}
 
-      <div className="bani-slot-grid" style={{ marginTop: 12 }}>
+      <div className="rh-slot-grid" style={{ marginTop: 12 }}>
         {sortedSlots.map((slot) => {
           const isDisabled = !slot.available
           const isSelected = !isDisabled && (

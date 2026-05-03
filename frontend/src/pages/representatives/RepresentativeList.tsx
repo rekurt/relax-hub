@@ -11,11 +11,11 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   DeleteOutlined,
   UserAddOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import {
   useGetBathhousesIdRepresentatives,
@@ -151,7 +151,7 @@ export default function RepresentativeList() {
     return (
       <div>
         <Title level={3}>Представители</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
           Выберите баню для управления представителями
         </div>
       </div>

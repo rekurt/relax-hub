@@ -9,11 +9,11 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   PlusOutlined,
   SendOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
 import {

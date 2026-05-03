@@ -2,7 +2,7 @@ import { useCallback, useRef, useEffect } from 'react'
 import { usePostDeviceTokens, useDeleteDeviceTokensId } from '@/api/generated/device-tokens/device-tokens'
 import { useAuthStore } from '@/stores/auth'
 
-const DEVICE_TOKEN_KEY = 'bani_device_token_id'
+const DEVICE_TOKEN_KEY = 'rh_device_token_id'
 
 function getPlatform(): string {
   const ua = navigator.userAgent.toLowerCase()

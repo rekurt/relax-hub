@@ -8,8 +8,8 @@ import {
   SearchOutlined,
   StopOutlined,
   WalletOutlined,
-} from '@ant-design/icons'
-import { App, Button, Empty, Input, Pagination, Spin, Tag } from 'antd'
+} from '@/components/design/icons'
+import { App, Button, Empty, Input, Pagination, Spin, Tag } from '@/components/design/system'
 import { Link } from 'react-router-dom'
 import {
   useGetCertificatesCodeBalance,
@@ -79,14 +79,14 @@ export default function CertificateList() {
 
   if (isLoading) {
     return (
-      <div className="bani-certificates-list-loading">
+      <div className="rh-certificates-list-loading">
         <Spin size="large" />
       </div>
     )
   }
 
   return (
-    <div className="bani-stack bani-certificates-list-page">
+    <div className="rh-stack rh-certificates-list-page">
       <PageHeader
         eyebrow="Личный кабинет"
         title="Мои сертификаты"
@@ -98,46 +98,46 @@ export default function CertificateList() {
         )}
       />
 
-      <section className="bani-hero-panel bani-certificates-list-hero">
-        <div className="bani-hero-panel__eyebrow">Overview</div>
-        <h2 className="bani-hero-panel__title">Сертификаты собраны как нормальный рабочий кабинет, а не как разрозненный список кодов</h2>
-        <div className="bani-hero-panel__description">
+      <section className="rh-hero-panel rh-certificates-list-hero">
+        <div className="rh-hero-panel__eyebrow">Overview</div>
+        <h2 className="rh-hero-panel__title">Сертификаты собраны как нормальный рабочий кабинет, а не как разрозненный список кодов</h2>
+        <div className="rh-hero-panel__description">
           Можно быстро увидеть живой баланс, проверить новый код, активировать подарок и вернуться к покупке без визуального разрыва со страницей checkout.
         </div>
 
-        <div className="bani-stat-grid">
-          <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Активный баланс</span>
-            <div className="bani-stat-tile__value">{formatPrice(stats.activeBalance)}</div>
-            <span className="bani-stat-tile__hint"><WalletOutlined /> Сумма, доступная для следующих бронирований</span>
+        <div className="rh-stat-grid">
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Активный баланс</span>
+            <div className="rh-stat-tile__value">{formatPrice(stats.activeBalance)}</div>
+            <span className="rh-stat-tile__hint"><WalletOutlined /> Сумма, доступная для следующих бронирований</span>
           </div>
-          <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Активных сертификатов</span>
-            <div className="bani-stat-tile__value">{stats.activeCount}</div>
-            <span className="bani-stat-tile__hint">Коды с ненулевым остатком и актуальным сроком действия</span>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Активных сертификатов</span>
+            <div className="rh-stat-tile__value">{stats.activeCount}</div>
+            <span className="rh-stat-tile__hint">Коды с ненулевым остатком и актуальным сроком действия</span>
           </div>
-          <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Всего сертификатов</span>
-            <div className="bani-stat-tile__value">{stats.total}</div>
-            <span className="bani-stat-tile__hint">Полная история всех выпущенных и привязанных сертификатов</span>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Всего сертификатов</span>
+            <div className="rh-stat-tile__value">{stats.total}</div>
+            <span className="rh-stat-tile__hint">Полная история всех выпущенных и привязанных сертификатов</span>
           </div>
         </div>
       </section>
 
-      <div className="bani-grid bani-grid--content-aside bani-certificates-list-grid">
-        <section className="bani-section-card">
-          <div className="bani-section-card__surface bani-certificates-activation">
-            <div className="bani-toolbar">
+      <div className="rh-grid rh-grid--content-aside rh-certificates-list-grid">
+        <section className="rh-section-card">
+          <div className="rh-section-card__surface rh-certificates-activation">
+            <div className="rh-toolbar">
               <div>
-                <div className="bani-certificates-section-eyebrow">Activation</div>
-                <h2 className="bani-section-card__title">Активация сертификата</h2>
-                <div className="bani-section-card__description">
+                <div className="rh-certificates-section-eyebrow">Activation</div>
+                <h2 className="rh-section-card__title">Активация сертификата</h2>
+                <div className="rh-section-card__description">
                   Один и тот же блок отвечает и за ручную активацию кода, и за быструю проверку остатка перед бронированием.
                 </div>
               </div>
             </div>
 
-            <div className="bani-certificates-activation__controls">
+            <div className="rh-certificates-activation__controls">
               <Input
                 placeholder="BANI-XXXX-XXXX"
                 value={redeemCode}
@@ -165,14 +165,14 @@ export default function CertificateList() {
             </div>
 
             {checkCode && (
-              <div className="bani-certificates-balance-panel">
+              <div className="rh-certificates-balance-panel">
                 {balanceLoading ? (
                   <Spin size="small" />
                 ) : balanceData?.data ? (
                   <>
-                    <div className="bani-certificates-balance-panel__head">
+                    <div className="rh-certificates-balance-panel__head">
                       <div>
-                        <div className="bani-certificates-balance-panel__eyebrow">Balance check</div>
+                        <div className="rh-certificates-balance-panel__eyebrow">Balance check</div>
                         <strong>{balanceData.data.code}</strong>
                       </div>
                       {(() => {
@@ -185,18 +185,18 @@ export default function CertificateList() {
                       })()}
                     </div>
 
-                    <div className="bani-info-grid">
-                      <div className="bani-info-card">
-                        <span className="bani-info-card__label">Номинал</span>
-                        <div className="bani-info-card__value">{formatPrice(balanceData.data.amount ?? 0)}</div>
+                    <div className="rh-info-grid">
+                      <div className="rh-info-card">
+                        <span className="rh-info-card__label">Номинал</span>
+                        <div className="rh-info-card__value">{formatPrice(balanceData.data.amount ?? 0)}</div>
                       </div>
-                      <div className="bani-info-card">
-                        <span className="bani-info-card__label">Остаток</span>
-                        <div className="bani-info-card__value">{formatPrice(balanceData.data.balance ?? 0)}</div>
+                      <div className="rh-info-card">
+                        <span className="rh-info-card__label">Остаток</span>
+                        <div className="rh-info-card__value">{formatPrice(balanceData.data.balance ?? 0)}</div>
                       </div>
-                      <div className="bani-info-card">
-                        <span className="bani-info-card__label">Действителен до</span>
-                        <div className="bani-info-card__value">
+                      <div className="rh-info-card">
+                        <span className="rh-info-card__label">Действителен до</span>
+                        <div className="rh-info-card__value">
                           {balanceData.data.valid_until ? formatDateTime(balanceData.data.valid_until, 'DD.MM.YYYY') : '—'}
                         </div>
                       </div>
@@ -208,30 +208,30 @@ export default function CertificateList() {
           </div>
         </section>
 
-        <section className="bani-section-card">
-          <div className="bani-section-card__surface">
-            <div className="bani-certificates-section-eyebrow">Usage</div>
-            <h2 className="bani-section-card__title">Как использовать сертификат</h2>
-            <div className="bani-feature-list">
-              <div className="bani-feature-item">
-                <div className="bani-feature-item__icon"><GiftOutlined /></div>
-                <div className="bani-feature-item__copy">
-                  <div className="bani-feature-item__title">Укажите код в checkout бронирования</div>
-                  <div className="bani-feature-item__description">Система автоматически применит доступный остаток к итоговой стоимости брони.</div>
+        <section className="rh-section-card">
+          <div className="rh-section-card__surface">
+            <div className="rh-certificates-section-eyebrow">Usage</div>
+            <h2 className="rh-section-card__title">Как использовать сертификат</h2>
+            <div className="rh-feature-list">
+              <div className="rh-feature-item">
+                <div className="rh-feature-item__icon"><GiftOutlined /></div>
+                <div className="rh-feature-item__copy">
+                  <div className="rh-feature-item__title">Укажите код в checkout бронирования</div>
+                  <div className="rh-feature-item__description">Система автоматически применит доступный остаток к итоговой стоимости брони.</div>
                 </div>
               </div>
-              <div className="bani-feature-item">
-                <div className="bani-feature-item__icon"><MailOutlined /></div>
-                <div className="bani-feature-item__copy">
-                  <div className="bani-feature-item__title">Проверяйте баланс до оплаты</div>
-                  <div className="bani-feature-item__description">Если сертификат частично использован, здесь всегда видно, сколько ещё доступно.</div>
+              <div className="rh-feature-item">
+                <div className="rh-feature-item__icon"><MailOutlined /></div>
+                <div className="rh-feature-item__copy">
+                  <div className="rh-feature-item__title">Проверяйте баланс до оплаты</div>
+                  <div className="rh-feature-item__description">Если сертификат частично использован, здесь всегда видно, сколько ещё доступно.</div>
                 </div>
               </div>
-              <div className="bani-feature-item">
-                <div className="bani-feature-item__icon"><WalletOutlined /></div>
-                <div className="bani-feature-item__copy">
-                  <div className="bani-feature-item__title">Остаток не теряется</div>
-                  <div className="bani-feature-item__description">Неиспользованная сумма сохраняется на сертификате до окончания срока действия.</div>
+              <div className="rh-feature-item">
+                <div className="rh-feature-item__icon"><WalletOutlined /></div>
+                <div className="rh-feature-item__copy">
+                  <div className="rh-feature-item__title">Остаток не теряется</div>
+                  <div className="rh-feature-item__description">Неиспользованная сумма сохраняется на сертификате до окончания срока действия.</div>
                 </div>
               </div>
             </div>
@@ -239,12 +239,12 @@ export default function CertificateList() {
         </section>
       </div>
 
-      <section className="bani-section-card">
-        <div className="bani-toolbar">
+      <section className="rh-section-card">
+        <div className="rh-toolbar">
           <div>
-            <div className="bani-certificates-section-eyebrow">Collection</div>
-            <h2 className="bani-section-card__title">Все сертификаты</h2>
-            <div className="bani-section-card__description">
+            <div className="rh-certificates-section-eyebrow">Collection</div>
+            <h2 className="rh-section-card__title">Все сертификаты</h2>
+            <div className="rh-section-card__description">
               Карточки показывают статус, остаток, сроки и контакты, чтобы не приходилось разбираться по одному коду за раз.
             </div>
           </div>
@@ -254,7 +254,7 @@ export default function CertificateList() {
         </div>
 
         {certificates.length === 0 ? (
-          <div className="bani-certificates-empty">
+          <div className="rh-certificates-empty">
             <Empty description="У вас пока нет сертификатов">
               <Link to="/certificates">
                 <Button type="primary" size="large" icon={<GiftOutlined />}>Перейти к покупке</Button>
@@ -263,7 +263,7 @@ export default function CertificateList() {
           </div>
         ) : (
           <>
-            <div className="bani-certificates-collection">
+            <div className="rh-certificates-collection">
               {certificates.map((certificate) => {
                 const status = STATUS_MAP[certificate.status ?? ''] ?? {
                   color: 'default',
@@ -272,16 +272,16 @@ export default function CertificateList() {
                 }
 
                 return (
-                  <article key={certificate.id} className="bani-certificates-card">
-                    <div className="bani-certificates-card__header">
+                  <article key={certificate.id} className="rh-certificates-card">
+                    <div className="rh-certificates-card__header">
                       <div>
-                        <div className="bani-certificates-card__eyebrow">Certificate</div>
-                        <h3 className="bani-certificates-card__code">{certificate.code}</h3>
+                        <div className="rh-certificates-card__eyebrow">Certificate</div>
+                        <h3 className="rh-certificates-card__code">{certificate.code}</h3>
                       </div>
                       <Tag color={status.color} icon={status.icon}>{status.label}</Tag>
                     </div>
 
-                    <div className="bani-certificates-card__stats">
+                    <div className="rh-certificates-card__stats">
                       <div>
                         <span>Номинал</span>
                         <strong>{formatPrice(certificate.amount ?? 0)}</strong>
@@ -296,18 +296,18 @@ export default function CertificateList() {
                       </div>
                     </div>
 
-                    <div className="bani-certificates-card__meta">
-                      <div className="bani-kv__row">
-                        <span className="bani-kv__label">Создан</span>
-                        <span className="bani-kv__value">{certificate.created_at ? formatDateTime(certificate.created_at, 'DD.MM.YYYY') : '—'}</span>
+                    <div className="rh-certificates-card__meta">
+                      <div className="rh-kv__row">
+                        <span className="rh-kv__label">Создан</span>
+                        <span className="rh-kv__value">{certificate.created_at ? formatDateTime(certificate.created_at, 'DD.MM.YYYY') : '—'}</span>
                       </div>
-                      <div className="bani-kv__row">
-                        <span className="bani-kv__label">Покупатель</span>
-                        <span className="bani-kv__value">{certificate.purchaser_email ?? '—'}</span>
+                      <div className="rh-kv__row">
+                        <span className="rh-kv__label">Покупатель</span>
+                        <span className="rh-kv__value">{certificate.purchaser_email ?? '—'}</span>
                       </div>
-                      <div className="bani-kv__row">
-                        <span className="bani-kv__label">Получатель</span>
-                        <span className="bani-kv__value">{certificate.recipient_name || certificate.recipient_email || 'Себе'}</span>
+                      <div className="rh-kv__row">
+                        <span className="rh-kv__label">Получатель</span>
+                        <span className="rh-kv__value">{certificate.recipient_name || certificate.recipient_email || 'Себе'}</span>
                       </div>
                     </div>
                   </article>
@@ -316,7 +316,7 @@ export default function CertificateList() {
             </div>
 
             {(meta?.total_pages ?? 1) > 1 && (
-              <div className="bani-certificates-pagination">
+              <div className="rh-certificates-pagination">
                 <Pagination
                   current={page}
                   pageSize={meta?.page_size ?? 10}

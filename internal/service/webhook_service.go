@@ -221,7 +221,9 @@ func (s *webhookService) DeliverEvent(ctx context.Context, ownerID uuid.UUID, ev
 			continue
 		}
 
-		go s.attemptDelivery(wh, delivery)
+		runDetached(ctx, 30*time.Second, func(deliveryCtx context.Context) {
+			s.attemptDelivery(deliveryCtx, wh, delivery)
+		})
 	}
 
 	return nil
@@ -258,7 +260,9 @@ func (s *webhookService) TestWebhook(ctx context.Context, userID uuid.UUID, role
 		return fmt.Errorf("create test delivery: %w", err)
 	}
 
-	go s.attemptDelivery(*webhook, delivery)
+	runDetached(ctx, 30*time.Second, func(deliveryCtx context.Context) {
+		s.attemptDelivery(deliveryCtx, *webhook, delivery)
+	})
 	return nil
 }
 
@@ -282,24 +286,24 @@ func (s *webhookService) RetryFailedDeliveries(ctx context.Context) (int, error)
 			continue
 		}
 
-		go s.attemptDelivery(*webhook, &d)
+		delivery := d
+		runDetached(ctx, 30*time.Second, func(deliveryCtx context.Context) {
+			s.attemptDelivery(deliveryCtx, *webhook, &delivery)
+		})
 		retried++
 	}
 
 	return retried, nil
 }
 
-func (s *webhookService) attemptDelivery(webhook domain.Webhook, delivery *domain.WebhookDelivery) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
+func (s *webhookService) attemptDelivery(ctx context.Context, webhook domain.Webhook, delivery *domain.WebhookDelivery) {
 	delivery.AttemptCount++
 
 	signature := computeHMAC(webhook.Secret, delivery.Payload)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhook.URL, bytes.NewReader(delivery.Payload))
 	if err != nil {
-		s.markDeliveryFailed(delivery, 0, fmt.Sprintf("create request: %s", err.Error()))
+		s.markDeliveryFailed(ctx, delivery, 0, fmt.Sprintf("create request: %s", err.Error()))
 		return
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -309,7 +313,7 @@ func (s *webhookService) attemptDelivery(webhook domain.Webhook, delivery *domai
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		s.markDeliveryFailed(delivery, 0, fmt.Sprintf("request failed: %s", err.Error()))
+		s.markDeliveryFailed(ctx, delivery, 0, fmt.Sprintf("request failed: %s", err.Error()))
 		return
 	}
 	defer resp.Body.Close()
@@ -320,14 +324,14 @@ func (s *webhookService) attemptDelivery(webhook domain.Webhook, delivery *domai
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		delivery.Status = domain.WebhookDeliverySuccess
 		delivery.NextRetryAt = nil
-		_ = s.deliveryRepo.Update(context.Background(), delivery)
+		_ = s.deliveryRepo.Update(ctx, delivery)
 		return
 	}
 
-	s.markDeliveryFailed(delivery, resp.StatusCode, fmt.Sprintf("HTTP %d", resp.StatusCode))
+	s.markDeliveryFailed(ctx, delivery, resp.StatusCode, fmt.Sprintf("HTTP %d", resp.StatusCode))
 }
 
-func (s *webhookService) markDeliveryFailed(delivery *domain.WebhookDelivery, httpStatus int, errMsg string) {
+func (s *webhookService) markDeliveryFailed(ctx context.Context, delivery *domain.WebhookDelivery, httpStatus int, errMsg string) {
 	delivery.HTTPStatus = httpStatus
 	delivery.ErrorMessage = errMsg
 
@@ -341,7 +345,7 @@ func (s *webhookService) markDeliveryFailed(delivery *domain.WebhookDelivery, ht
 		delivery.NextRetryAt = &retryAt
 	}
 
-	if err := s.deliveryRepo.Update(context.Background(), delivery); err != nil {
+	if err := s.deliveryRepo.Update(ctx, delivery); err != nil {
 		s.logger.Error("update delivery after failure", "delivery_id", delivery.ID, "error", err)
 	}
 }

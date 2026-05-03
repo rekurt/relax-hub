@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
-import { App, Button, Card, Descriptions, Empty, Input, Modal, Space, Spin, Tag, Typography } from 'antd'
-import { CheckOutlined, CloseOutlined, ClockCircleOutlined } from '@ant-design/icons'
+import { App, Button, Card, Descriptions, Empty, Input, Modal, Space, Spin, Tag, Typography } from '@/components/design/system'
+import { CheckOutlined, CloseOutlined, ClockCircleOutlined } from '@/components/design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice, formatDateTime } from '@/lib/format'
@@ -170,7 +170,7 @@ export default function ExtensionRequests({ bookingId, open, onClose }: Extensio
         )}
 
         {pendingRequests.length > 0 && (
-          <div style={{ marginTop: 16, padding: 8, background: '#fff1f0', borderRadius: 4 }}>
+          <div style={{ marginTop: 16, padding: 8, background: 'rgba(180, 35, 24, 0.08)', borderRadius: 12 }}>
             <Text type="danger">
               {pendingRequests.length} запрос(ов) ожидают вашего решения. Без ответа запрос автоматически отклоняется через 30 минут.
             </Text>

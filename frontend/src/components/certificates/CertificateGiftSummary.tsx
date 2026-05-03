@@ -5,7 +5,7 @@ import {
   GiftOutlined,
   MailOutlined,
   MessageOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { formatPrice } from '@/lib/format'
 import { CERTIFICATE_PAYMENT_LABELS, type CertificatePaymentMethod } from '@/lib/certificate-payment'
 import { PLATFORM_NAME } from '@/content/support'
@@ -35,47 +35,47 @@ export default function CertificateGiftSummary({
   const deliveryEmail = recipientEmail?.trim() || purchaserEmail?.trim() || 'email после оплаты'
 
   return (
-    <section className="bani-certificate-summary">
-      <header className="bani-certificate-summary__heading">
-        <div className="bani-certificate-summary__eyebrow">Превью и сводка</div>
-        <h3 className="bani-certificate-summary__title">Так будет выглядеть подарок</h3>
-        <p className="bani-certificate-summary__caption">
+    <section className="rh-certificate-summary">
+      <header className="rh-certificate-summary__heading">
+        <div className="rh-certificate-summary__eyebrow">Превью и сводка</div>
+        <h3 className="rh-certificate-summary__title">Так будет выглядеть подарок</h3>
+        <p className="rh-certificate-summary__caption">
           Превью обновляется вместе с формой. После оплаты этот же макет уйдёт получателю на email.
         </p>
       </header>
 
-      <div className="bani-certificate-summary__card">
-        <div className="bani-certificate-summary__card-top">
-          <div className="bani-certificate-summary__brand">{PLATFORM_NAME}</div>
-          <div className="bani-certificate-summary__chip">
+      <div className="rh-certificate-summary__card">
+        <div className="rh-certificate-summary__card-top">
+          <div className="rh-certificate-summary__brand">{PLATFORM_NAME}</div>
+          <div className="rh-certificate-summary__chip">
             <GiftOutlined />
             Подарочный сертификат
           </div>
         </div>
 
-        <div className="bani-certificate-summary__amount">{formatPrice(safeAmount)}</div>
-        <div className="bani-certificate-summary__recipient">Для {recipient}</div>
+        <div className="rh-certificate-summary__amount">{formatPrice(safeAmount)}</div>
+        <div className="rh-certificate-summary__recipient">Для {recipient}</div>
 
-        <div className="bani-certificate-summary__message">
+        <div className="rh-certificate-summary__message">
           <MessageOutlined />
           <span>{note}</span>
         </div>
 
-        <div className="bani-certificate-summary__meta">
-          <div className="bani-certificate-summary__meta-item">
-            <span className="bani-certificate-summary__meta-label">Доставка</span>
-            <span className="bani-certificate-summary__meta-value">
+        <div className="rh-certificate-summary__meta">
+          <div className="rh-certificate-summary__meta-item">
+            <span className="rh-certificate-summary__meta-label">Доставка</span>
+            <span className="rh-certificate-summary__meta-value">
               <MailOutlined />
               {deliveryEmail}
             </span>
           </div>
-          <div className="bani-certificate-summary__meta-item">
-            <span className="bani-certificate-summary__meta-label">Срок</span>
-            <span className="bani-certificate-summary__meta-value">365 дней</span>
+          <div className="rh-certificate-summary__meta-item">
+            <span className="rh-certificate-summary__meta-label">Срок</span>
+            <span className="rh-certificate-summary__meta-value">365 дней</span>
           </div>
-          <div className="bani-certificate-summary__meta-item">
-            <span className="bani-certificate-summary__meta-label">Оплата</span>
-            <span className="bani-certificate-summary__meta-value">
+          <div className="rh-certificate-summary__meta-item">
+            <span className="rh-certificate-summary__meta-label">Оплата</span>
+            <span className="rh-certificate-summary__meta-value">
               <CreditCardOutlined />
               {CERTIFICATE_PAYMENT_LABELS[paymentMethod]}
             </span>
@@ -83,16 +83,16 @@ export default function CertificateGiftSummary({
         </div>
       </div>
 
-      <ul className="bani-certificate-summary__trust">
-        <li className="bani-certificate-summary__trust-item">
+      <ul className="rh-certificate-summary__trust">
+        <li className="rh-certificate-summary__trust-item">
           <CheckCircleOutlined />
           <span>Остаток не сгорает: используйте сертификат сразу или частями.</span>
         </li>
-        <li className="bani-certificate-summary__trust-item">
+        <li className="rh-certificate-summary__trust-item">
           <MailOutlined />
           <span>Письмо с кодом отправим автоматически после успешной оплаты.</span>
         </li>
-        <li className="bani-certificate-summary__trust-item">
+        <li className="rh-certificate-summary__trust-item">
           <ClockCircleOutlined />
           <span>Если платёж в обработке — заказ сохранится и будет доступен по ссылке.</span>
         </li>

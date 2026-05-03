@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Typography } from 'antd'
+import { Typography } from '@/components/design/system'
 import BrandLockup from '@/components/BrandLockup'
 import { PLATFORM_NAME } from '@/content/support'
 
@@ -33,54 +33,54 @@ export default function AuthShell({
   }, [title])
 
   return (
-    <div className="bani-auth-layout">
-      <div className="bani-auth-shell">
-        <aside className="bani-auth-aside">
-          <Link to="/" className="bani-auth-brand">
+    <div className="rh-auth-layout">
+      <div className="rh-auth-shell">
+        <aside className="rh-auth-aside">
+          <Link to="/" className="rh-auth-brand">
             <BrandLockup
               tone="inverse"
               size="auth"
               layout="stacked"
               subtitle="Маркетплейс бань и бронирований"
-              className="bani-auth-brand__lockup"
+              className="rh-auth-brand__lockup"
             />
           </Link>
 
-          <div className="bani-auth-aside__copy">
-            <Text className="bani-auth-badge">Быстрый вход</Text>
-            <Title level={2} className="bani-auth-aside__title">
+          <div className="rh-auth-aside__copy">
+            <Text className="rh-tag rh-tag--gold rh-auth-badge">Быстрый вход</Text>
+            <Title level={2} className="rh-auth-aside__title">
               {asideTitle}
             </Title>
-            <Text className="bani-auth-aside__description">
+            <Text className="rh-auth-aside__description">
               {asideDescription}
             </Text>
           </div>
 
-          <div className="bani-auth-highlights">
+          <div className="rh-auth-highlights">
             {highlights.map((highlight, index) => (
-              <div key={index} className="bani-auth-highlight">
+              <div key={index} className="rh-card rh-card--flat rh-auth-highlight">
                 {highlight}
               </div>
             ))}
           </div>
         </aside>
 
-        <section className="bani-auth-panel">
-          <div className="bani-auth-panel__intro">
-            {eyebrow && <Text className="bani-auth-panel__eyebrow">{eyebrow}</Text>}
-            <Title level={3} className="bani-auth-panel__title">
+        <section className="rh-card rh-auth-panel">
+          <div className="rh-auth-panel__intro">
+            {eyebrow && <Text className="rh-auth-panel__eyebrow">{eyebrow}</Text>}
+            <Title level={3} className="rh-auth-panel__title">
               {title}
             </Title>
             {description && (
-              <Text type="secondary" className="bani-auth-panel__description">
+              <Text type="secondary" className="rh-auth-panel__description">
                 {description}
               </Text>
             )}
           </div>
 
-          <div className="bani-auth-panel__content">{children}</div>
+          <div className="rh-auth-panel__content">{children}</div>
 
-          {footer && <div className="bani-auth-panel__footer">{footer}</div>}
+          {footer && <div className="rh-auth-panel__footer">{footer}</div>}
         </section>
       </div>
     </div>

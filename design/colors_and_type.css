@@ -1,0 +1,244 @@
+/* RelaxHUB Design System — tokens.
+ * All values extracted from banya/frontend/src/{theme.ts, styles/app.css}.
+ * Use these vars in any new mock or production surface. */
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  color-scheme: light;
+
+  /* ===== BRAND COLORS ===== */
+  --rh-primary:          #0f766e;   /* tea-pine teal — CTA, links, active */
+  --rh-primary-strong:   #0a5f59;   /* gradient end, hover */
+  --rh-primary-soft:     rgba(15, 118, 110, 0.08);
+  --rh-primary-glow:     rgba(15, 118, 110, 0.20);
+
+  --rh-accent:           #d97706;   /* amber — promo, last-minute, hero accent */
+  --rh-accent-soft:      rgba(217, 119, 6, 0.10);
+
+  /* ===== SEMANTIC ===== */
+  --rh-success:          #15803d;
+  --rh-warning:          #b45309;
+  --rh-error:            #b42318;
+  --rh-info:             #0f766e;
+
+  --rh-success-soft:     rgba(21, 128, 61, 0.08);
+  --rh-error-soft:       rgba(180, 35, 24, 0.08);
+
+  /* ===== TEXT ===== */
+  --rh-text:             #16212b;   /* fg / primary */
+  --rh-text-soft:        #5f6877;   /* fg / secondary */
+  --rh-text-muted:       rgba(22, 33, 43, 0.48);
+  --rh-text-disabled:    rgba(22, 33, 43, 0.42);
+  --rh-text-on-dark:     #f7f4eb;
+  --rh-text-on-dark-soft: rgba(247, 244, 235, 0.66);
+
+  /* ===== SURFACE ===== */
+  --rh-bg-base:          #f8f4ec;   /* warm sand */
+  --rh-bg-elevated:      #fffefb;   /* almost white */
+  --rh-bg-container:     #fffdf8;
+  --rh-surface:          rgba(255, 253, 248, 0.82);
+  --rh-surface-strong:   rgba(255, 255, 255, 0.96);
+  --rh-surface-glow:     rgba(255, 255, 255, 0.70);
+
+  /* Glass card gradient */
+  --rh-card-bg: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,252,246,0.84));
+  --rh-card-bg-tint: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,245,238,0.96));
+
+  /* Page background — fixed, multi-radial + dot grid is applied in body */
+  --rh-page-bg-stack:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 30%),
+    radial-gradient(circle at top right, rgba(217, 119, 6, 0.10), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.07), transparent 28%),
+    linear-gradient(180deg, #f8f2e8 0%, #f4f6ef 30%, #fffdf8 68%, #fff9f1 100%);
+
+  --rh-dot-pattern:
+    radial-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 0);
+
+  /* Auth aside / footer dark gradients */
+  --rh-grad-auth: linear-gradient(135deg, #10313a 0%, #38606a 44%, #9a5c30 100%);
+  --rh-grad-footer:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.32), transparent 28%),
+    linear-gradient(180deg, rgba(17, 27, 33, 0.98), rgba(12, 18, 24, 0.98));
+
+  /* ===== BORDERS ===== */
+  --rh-border-subtle:    rgba(15, 23, 42, 0.06);
+  --rh-border:           rgba(15, 23, 42, 0.08);
+  --rh-border-strong:    rgba(15, 23, 42, 0.12);
+  --rh-border-control:   rgba(15, 23, 42, 0.14);
+  --rh-border-hover:     rgba(15, 118, 110, 0.28);
+  --rh-border-focus:     rgba(15, 118, 110, 0.52);
+  --rh-border-on-dark:   rgba(255, 255, 255, 0.10);
+
+  /* ===== RADII ===== */
+  --rh-radius-sm:        12px;
+  --rh-radius-md:        16px;   /* control radius */
+  --rh-radius-lg:        20px;   /* small card / inline note */
+  --rh-radius-xl:        24px;
+  --rh-radius-2xl:       28px;   /* default card / modal */
+  --rh-radius-3xl:       32px;   /* hero, footer */
+  --rh-radius-pill:      999px;  /* button, tag, badge */
+
+  /* ===== ELEVATION ===== */
+  --rh-shadow-soft:      0 16px 40px rgba(15, 23, 42, 0.06);
+  --rh-shadow:           0 24px 64px rgba(15, 23, 42, 0.10);
+  --rh-shadow-strong:    0 30px 80px rgba(15, 23, 42, 0.22);
+
+  --rh-shadow-control:        inset 0 1px 0 rgba(255,255,255,0.88), 0 10px 24px rgba(15,23,42,0.04);
+  --rh-shadow-control-hover:  inset 0 1px 0 rgba(255,255,255,0.92), 0 14px 28px rgba(15,23,42,0.06);
+  --rh-shadow-control-focus:  0 0 0 4px rgba(15,118,110,0.10), 0 18px 32px rgba(15,23,42,0.08);
+
+  --rh-shadow-primary:        0 14px 28px rgba(15, 118, 110, 0.20);
+  --rh-shadow-primary-hover:  0 18px 30px rgba(15, 118, 110, 0.24);
+
+  /* ===== SPACING (4px base) ===== */
+  --rh-space-1: 4px;
+  --rh-space-2: 8px;
+  --rh-space-3: 12px;
+  --rh-space-4: 16px;
+  --rh-space-5: 20px;
+  --rh-space-6: 24px;
+  --rh-space-7: 28px;
+  --rh-space-8: 32px;
+  --rh-space-10: 40px;
+  --rh-space-12: 48px;
+
+  /* ===== TYPE ===== */
+  --rh-font-sans: 'Manrope', 'Avenir Next', 'Segoe UI', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Sizes */
+  --rh-text-xs:   12px;
+  --rh-text-sm:   13px;
+  --rh-text-md:   14px;   /* base body */
+  --rh-text-lg:   16px;
+  --rh-text-xl:   18px;
+  --rh-text-2xl:  20px;
+  --rh-text-3xl:  24px;
+  --rh-text-4xl:  30px;
+
+  /* Line-heights */
+  --rh-lh-tight:  1.06;
+  --rh-lh-snug:   1.25;
+  --rh-lh-base:   1.55;
+  --rh-lh-relaxed: 1.65;
+
+  /* Tracking */
+  --rh-track-tight: -0.05em;
+  --rh-track-snug:  -0.03em;
+  --rh-track-eyebrow: 0.10em;
+  --rh-track-eyebrow-wide: 0.14em;
+}
+
+/* ===== SEMANTIC TYPE STYLES =====
+ * Use these classes directly: <h1 class="rh-h1">…</h1>
+ */
+
+.rh-display, .rh-hero {
+  font-family: var(--rh-font-sans);
+  font-size: clamp(34px, 4vw, 52px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: var(--rh-track-tight);
+  color: var(--rh-text);
+  margin: 0;
+}
+
+.rh-h1 {
+  font-family: var(--rh-font-sans);
+  font-size: clamp(28px, 3vw, 38px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: var(--rh-track-snug);
+  color: var(--rh-text);
+  margin: 0;
+}
+
+.rh-h2 {
+  font-family: var(--rh-font-sans);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  color: var(--rh-text);
+  margin: 0;
+}
+
+.rh-h3 {
+  font-family: var(--rh-font-sans);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--rh-text);
+  margin: 0;
+}
+
+.rh-h4 {
+  font-family: var(--rh-font-sans);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--rh-text);
+  margin: 0;
+}
+
+.rh-body {
+  font-family: var(--rh-font-sans);
+  font-size: var(--rh-text-md);
+  font-weight: 500;
+  line-height: var(--rh-lh-base);
+  color: var(--rh-text);
+}
+
+.rh-body-lg {
+  font-family: var(--rh-font-sans);
+  font-size: var(--rh-text-lg);
+  font-weight: 500;
+  line-height: var(--rh-lh-relaxed);
+  color: var(--rh-text);
+}
+
+.rh-meta, .rh-caption {
+  font-family: var(--rh-font-sans);
+  font-size: var(--rh-text-sm);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--rh-text-soft);
+}
+
+.rh-eyebrow {
+  font-family: var(--rh-font-sans);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rh-primary);
+}
+
+.rh-eyebrow-muted {
+  font-family: var(--rh-font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rh-text-soft);
+}
+
+.rh-price {
+  font-family: var(--rh-font-sans);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--rh-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.rh-stat-value {
+  font-family: var(--rh-font-sans);
+  font-size: clamp(24px, 2.6vw, 34px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: var(--rh-text);
+}

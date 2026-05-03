@@ -13,8 +13,8 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminForceMajeure,

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Spin, Table, Tag, Button, App, Space } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { Spin, Table, Tag, Button, App, Space } from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import {
   WalletOutlined,
   SafetyOutlined,
@@ -8,7 +8,7 @@ import {
   SyncOutlined,
   WarningOutlined,
   CameraOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import {
   useGetApiV1AdminReconciliationSummary,
   useGetApiV1AdminReconciliationReports,
@@ -161,7 +161,7 @@ export default function AdminFinanceDashboard() {
       key: 'discrepancy',
       render: (v: number) => {
         const val = v ?? 0
-        return <span style={{ color: val !== 0 ? '#ff4d4f' : undefined }}>{formatPrice(val)}</span>
+        return <span style={{ color: val !== 0 ? '#b42318' : undefined }}>{formatPrice(val)}</span>
       },
     },
     {
@@ -173,7 +173,7 @@ export default function AdminFinanceDashboard() {
   ]
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         size="compact"
         eyebrow="Финансы"
@@ -200,55 +200,55 @@ export default function AdminFinanceDashboard() {
       />
 
       <Spin spinning={summaryLoading}>
-        <div className="bani-admin-metric-grid">
+        <div className="rh-admin-metric-grid">
           {summaryMetricTiles.map((tile) => (
-            <div className="bani-admin-metric" key={tile.label}>
-              <div className="bani-admin-metric__head">
-                <span className="bani-admin-metric__label">{tile.label}</span>
-                <span className="bani-admin-metric__icon">{tile.icon}</span>
+            <div className="rh-admin-metric" key={tile.label}>
+              <div className="rh-admin-metric__head">
+                <span className="rh-admin-metric__label">{tile.label}</span>
+                <span className="rh-admin-metric__icon">{tile.icon}</span>
               </div>
-              <div className="bani-admin-metric__value">{tile.value}</div>
-              <div className="bani-admin-metric__hint">{tile.hint}</div>
+              <div className="rh-admin-metric__value">{tile.value}</div>
+              <div className="rh-admin-metric__hint">{tile.hint}</div>
             </div>
           ))}
         </div>
       </Spin>
 
       {summary?.last_report && (
-        <section className="bani-admin-panel">
-          <div className="bani-admin-toolbar" style={{ marginBottom: 16 }}>
-            <div className="bani-admin-toolbar__copy">
-              <h2 className="bani-admin-toolbar__title">Последняя сверка</h2>
-              <div className="bani-admin-toolbar__hint">Короткая сводка по последнему отчёту перед просмотром таблицы.</div>
+        <section className="rh-admin-panel">
+          <div className="rh-admin-toolbar" style={{ marginBottom: 16 }}>
+            <div className="rh-admin-toolbar__copy">
+              <h2 className="rh-admin-toolbar__title">Последняя сверка</h2>
+              <div className="rh-admin-toolbar__hint">Короткая сводка по последнему отчёту перед просмотром таблицы.</div>
             </div>
           </div>
-          <div className="bani-info-grid">
-            <div className="bani-info-card">
-              <span className="bani-info-card__label">Статус</span>
-              <div className="bani-info-card__value">{reconciliationStatusTag(summary.last_report.status)}</div>
+          <div className="rh-info-grid">
+            <div className="rh-info-card">
+              <span className="rh-info-card__label">Статус</span>
+              <div className="rh-info-card__value">{reconciliationStatusTag(summary.last_report.status)}</div>
             </div>
-            <div className="bani-info-card">
-              <span className="bani-info-card__label">Платежи</span>
-              <div className="bani-info-card__value">{summary.last_report.internal_payments_count ?? 0} / {summary.last_report.provider_payments_count ?? 0}</div>
-              <div className="bani-info-card__hint">внутр. / провайдер</div>
+            <div className="rh-info-card">
+              <span className="rh-info-card__label">Платежи</span>
+              <div className="rh-info-card__value">{summary.last_report.internal_payments_count ?? 0} / {summary.last_report.provider_payments_count ?? 0}</div>
+              <div className="rh-info-card__hint">внутр. / провайдер</div>
             </div>
-            <div className="bani-info-card">
-              <span className="bani-info-card__label">Расхождение</span>
-              <div className="bani-info-card__value">{formatPrice(summary.last_report.payment_discrepancy ?? 0)}</div>
+            <div className="rh-info-card">
+              <span className="rh-info-card__label">Расхождение</span>
+              <div className="rh-info-card__value">{formatPrice(summary.last_report.payment_discrepancy ?? 0)}</div>
             </div>
-            <div className="bani-info-card">
-              <span className="bani-info-card__label">Дата</span>
-              <div className="bani-info-card__value">{summary.last_report.created_at ? formatDateTime(summary.last_report.created_at) : '—'}</div>
+            <div className="rh-info-card">
+              <span className="rh-info-card__label">Дата</span>
+              <div className="rh-info-card__value">{summary.last_report.created_at ? formatDateTime(summary.last_report.created_at) : '—'}</div>
             </div>
           </div>
         </section>
       )}
 
-      <section className="bani-admin-table-card">
-        <div className="bani-admin-toolbar">
-          <div className="bani-admin-toolbar__copy">
-            <h2 className="bani-admin-toolbar__title">Отчёты сверки</h2>
-            <div className="bani-admin-toolbar__hint">Строки расхождений и статусы по операциям провайдера.</div>
+      <section className="rh-admin-table-card">
+        <div className="rh-admin-toolbar">
+          <div className="rh-admin-toolbar__copy">
+            <h2 className="rh-admin-toolbar__title">Отчёты сверки</h2>
+            <div className="rh-admin-toolbar__hint">Строки расхождений и статусы по операциям провайдера.</div>
           </div>
         </div>
         <Table
@@ -266,11 +266,11 @@ export default function AdminFinanceDashboard() {
         />
       </section>
 
-      <section className="bani-admin-table-card">
-        <div className="bani-admin-toolbar">
-          <div className="bani-admin-toolbar__copy">
-            <h2 className="bani-admin-toolbar__title">Снимки флоата</h2>
-            <div className="bani-admin-toolbar__hint">Ожидаемые и фактические остатки платформы по дням.</div>
+      <section className="rh-admin-table-card">
+        <div className="rh-admin-toolbar">
+          <div className="rh-admin-toolbar__copy">
+            <h2 className="rh-admin-toolbar__title">Снимки флоата</h2>
+            <div className="rh-admin-toolbar__hint">Ожидаемые и фактические остатки платформы по дням.</div>
           </div>
         </div>
         <Table

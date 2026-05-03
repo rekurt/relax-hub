@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ConfigProvider } from 'antd'
-import ruRU from 'antd/locale/ru_RU'
+import { ConfigProvider } from '@/components/design/system'
+import { ruRU } from '@/components/design/system'
 import Dashboard from '@/pages/Dashboard'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { useGetMyBathhousesIdAnalytics } from '@/api/generated/analytics/analytics'
@@ -82,13 +82,13 @@ describe('Dashboard', () => {
     const positiveChanges = screen.getAllByText(/\+.*% к пред\. периоду/)
     expect(positiveChanges.length).toBeGreaterThan(0)
     positiveChanges.forEach((el) => {
-      expect(el).toHaveStyle({ color: '#52c41a' })
+      expect(el).toHaveStyle({ color: '#15803d' })
     })
 
     const negativeChanges = screen.getAllByText(/-.*% к пред\. периоду/)
     expect(negativeChanges.length).toBeGreaterThan(0)
     negativeChanges.forEach((el) => {
-      expect(el).toHaveStyle({ color: '#ff4d4f' })
+      expect(el).toHaveStyle({ color: '#b42318' })
     })
   })
 

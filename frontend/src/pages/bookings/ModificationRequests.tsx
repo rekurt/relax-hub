@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
-import { App, Button, Card, Descriptions, Empty, Input, Modal, Space, Spin, Tag, Typography } from 'antd'
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
+import { App, Button, Card, Descriptions, Empty, Input, Modal, Space, Spin, Tag, Typography } from '@/components/design/system'
+import { CheckOutlined, CloseOutlined } from '@/components/design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice, formatDateTime } from '@/lib/format'
@@ -177,7 +177,7 @@ export default function ModificationRequests({ bookingId, open, onClose }: Modif
         )}
 
         {pendingRequests.length > 0 && (
-          <div style={{ marginTop: 16, padding: 8, background: '#fffbe6', borderRadius: 4 }}>
+          <div style={{ marginTop: 16, padding: 8, background: 'rgba(217, 119, 6, 0.10)', borderRadius: 12 }}>
             <Text type="warning">
               {pendingRequests.length} запрос(ов) ожидают вашего решения. Без ответа запрос автоматически отклоняется через 24 часа.
             </Text>

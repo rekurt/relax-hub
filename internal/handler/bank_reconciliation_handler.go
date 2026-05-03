@@ -1,7 +1,10 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -61,24 +64,62 @@ func (h *BankReconciliationHandler) UploadBankStatement(w http.ResponseWriter, r
 	adminID := middleware.GetUserID(r.Context())
 
 	const maxSize = 10 << 20 // 10 MB
-	r.Body = http.MaxBytesReader(w, r.Body, maxSize)
+	r.Body = http.MaxBytesReader(w, r.Body, maxSize+1024)
 
-	if err := r.ParseMultipartForm(maxSize); err != nil {
-		writeError(w, http.StatusBadRequest, "file_too_large", "Файл слишком большой (максимум 10 МБ)")
+	reader, err := r.MultipartReader()
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_file", "Не удалось прочитать multipart-форму")
 		return
 	}
 
-	file, header, err := r.FormFile("file")
-	if err != nil {
+	var fileName string
+	var format string
+	var fileData bytes.Buffer
+
+	for {
+		part, err := reader.NextPart()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid_file", "Не удалось прочитать файл")
+			return
+		}
+
+		switch part.FormName() {
+		case "file":
+			fileName = filepath.Base(part.FileName())
+			if fileName == "." || fileName == string(filepath.Separator) || strings.TrimSpace(fileName) == "" {
+				writeError(w, http.StatusBadRequest, "invalid_file", "Не удалось прочитать файл")
+				return
+			}
+			written, err := io.Copy(&fileData, io.LimitReader(part, maxSize+1))
+			if err != nil {
+				writeError(w, http.StatusBadRequest, "invalid_file", "Не удалось прочитать файл")
+				return
+			}
+			if written > maxSize {
+				writeError(w, http.StatusBadRequest, "file_too_large", "Файл слишком большой (максимум 10 МБ)")
+				return
+			}
+		case "format":
+			rawFormat, err := io.ReadAll(io.LimitReader(part, 64))
+			if err != nil {
+				writeError(w, http.StatusBadRequest, "invalid_format", "Не удалось прочитать формат файла")
+				return
+			}
+			format = strings.TrimSpace(string(rawFormat))
+		}
+	}
+
+	if fileName == "" || fileData.Len() == 0 {
 		writeError(w, http.StatusBadRequest, "invalid_file", "Не удалось прочитать файл")
 		return
 	}
-	defer file.Close()
 
 	// Detect format from extension or form field
-	format := r.FormValue("format")
 	if format == "" {
-		ext := strings.ToLower(filepath.Ext(header.Filename))
+		ext := strings.ToLower(filepath.Ext(fileName))
 		switch ext {
 		case ".csv":
 			format = "csv"
@@ -90,7 +131,7 @@ func (h *BankReconciliationHandler) UploadBankStatement(w http.ResponseWriter, r
 		}
 	}
 
-	upload, err := h.bankReconciliationService.UploadStatement(r.Context(), adminID, header.Filename, format, file)
+	upload, err := h.bankReconciliationService.UploadStatement(r.Context(), adminID, fileName, format, bytes.NewReader(fileData.Bytes()))
 	if err != nil {
 		handleServiceError(w, err)
 		return

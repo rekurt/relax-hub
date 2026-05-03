@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { App as AntApp, ConfigProvider } from 'antd'
-import ruRU from 'antd/locale/ru_RU'
+import { App as AntApp, ConfigProvider } from '@/components/design/system'
+import { ruRU } from '@/components/design/system'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import AdminProfile from '@/pages/admin/AdminProfile'
 
@@ -25,7 +25,7 @@ import {
 
 const mockUser = {
   id: 'admin-1',
-  email: 'admin@bani.ru',
+  email: 'admin@relaxhub.ru',
   name: 'Иван Админов',
   phone: '+7 999 000-00-00',
   role: 'admin',
@@ -87,14 +87,14 @@ describe('AdminProfile', () => {
   it('renders profile form with user data', () => {
     renderWithProviders(<AdminProfile />)
     expect(screen.getByText('Основная информация')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('admin@bani.ru')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('admin@relaxhub.ru')).toBeInTheDocument()
     expect(screen.getByDisplayValue('Иван Админов')).toBeInTheDocument()
     expect(screen.getByDisplayValue('+7 999 000-00-00')).toBeInTheDocument()
   })
 
   it('renders email as disabled field', () => {
     renderWithProviders(<AdminProfile />)
-    const emailInput = screen.getByDisplayValue('admin@bani.ru')
+    const emailInput = screen.getByDisplayValue('admin@relaxhub.ru')
     expect(emailInput).toBeDisabled()
   })
 

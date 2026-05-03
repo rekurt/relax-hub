@@ -12,13 +12,13 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ReloadOutlined,
   SearchOutlined,
   StopOutlined,
-} from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetMyCertificates,
@@ -206,7 +206,7 @@ export default function CertificateManagement() {
         <Col xs={8}>
           <Card size="small">
             <Text type="secondary">Активных</Text>
-            <div style={{ fontSize: 24, fontWeight: 600, color: '#52c41a' }}>{activeCount}</div>
+            <div style={{ fontSize: 24, fontWeight: 600, color: '#15803d' }}>{activeCount}</div>
           </Card>
         </Col>
         <Col xs={8}>

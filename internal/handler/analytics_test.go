@@ -537,7 +537,7 @@ func TestGetWalletMetrics_Forbidden(t *testing.T) {
 
 func TestIPHashExtraction(t *testing.T) {
 	tests := []struct {
-		name      string
+		name       string
 		remoteAddr string
 		xForwarded string
 	}{
@@ -569,9 +569,9 @@ func TestIPHashExtraction(t *testing.T) {
 			if hash == "" {
 				t.Errorf("expected non-empty hash")
 			}
-			// Hash should be hex string (32 chars for MD5)
-			if len(hash) != 32 {
-				t.Errorf("expected 32-char hash, got %d", len(hash))
+			// Hash should be a SHA-256 hex string.
+			if len(hash) != 64 {
+				t.Errorf("expected 64-char hash, got %d", len(hash))
 			}
 		})
 	}

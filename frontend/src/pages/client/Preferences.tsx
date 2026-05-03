@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Typography, Form, Switch, InputNumber, Select, Button, Card, Space, App, Spin, Row, Col } from 'antd'
+import { Typography, Form, Switch, InputNumber, Select, Button, Card, Space, App, Spin, Row, Col } from '@/components/design/system'
 import { useGetMyPreferences, usePutMyPreferences } from '@/api/generated/recommendations/recommendations'
 import { useGetCities } from '@/api/generated/cities/cities'
 import { useQueryClient } from '@tanstack/react-query'

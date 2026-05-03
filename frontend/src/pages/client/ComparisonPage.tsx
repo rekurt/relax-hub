@@ -9,8 +9,8 @@ import {
   Tag,
   Space,
   App,
-} from 'antd'
-import { DeleteOutlined } from '@ant-design/icons'
+} from '@/components/design/system'
+import { DeleteOutlined } from '@/components/design/icons'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { usePostApiV1BathhousesCompare } from '@/api/generated/bathhouses/bathhouses'
 import type { InternalHandlerComparisonItem, InternalHandlerCompareResponse } from '@/api/generated/model'
@@ -44,15 +44,15 @@ function buildRows(items: InternalHandlerComparisonItem[]): ComparisonRow[] {
             src={item.images[0]}
             alt={item.name}
             height={120}
-            style={{ objectFit: 'cover', borderRadius: 8 }}
+            style={{ objectFit: 'cover', borderRadius: 20 }}
             preview={false}
           />
         ) : (
           <div
             style={{
               height: 120,
-              background: '#f5f5f5',
-              borderRadius: 8,
+              background: 'rgba(248, 244, 236, 0.78)',
+              borderRadius: 20,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

@@ -20,7 +20,7 @@ import {
   Tag,
   DatePicker,
   TimePicker,
-} from 'antd'
+} from '@/components/design/system'
 import {
   SearchOutlined,
   EnvironmentOutlined,
@@ -32,7 +32,7 @@ import {
   SplitCellsOutlined,
   CarOutlined,
   ClockCircleOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { isAxiosError } from 'axios'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import dayjs from 'dayjs'
@@ -215,7 +215,7 @@ function buildCatalogSearchParams({
 }
 
 function getFilterButtonClass(isActive: boolean) {
-  return isActive ? 'bani-catalog__quick-filter bani-catalog__quick-filter--active' : 'bani-catalog__quick-filter'
+  return isActive ? 'rh-catalog__quick-filter rh-catalog__quick-filter--active' : 'rh-catalog__quick-filter'
 }
 
 function parseCatalogUrlState(searchParamsString: string): CatalogUrlState {
@@ -842,7 +842,7 @@ export default function BathhouseSearch() {
                   onMouseLeave={() => setHighlightedId(null)}
                 >
                   <div
-                    className={highlightedId === bathhouse.id ? 'bani-catalog__card-shell bani-catalog__card-shell--highlighted' : 'bani-catalog__card-shell'}
+                    className={highlightedId === bathhouse.id ? 'rh-catalog__card-shell rh-catalog__card-shell--highlighted' : 'rh-catalog__card-shell'}
                     data-testid={`card-wrapper-${bathhouse.id}`}
                   >
                     <BathhouseCard
@@ -873,12 +873,12 @@ export default function BathhouseSearch() {
   )
 
   return (
-    <div className="bani-catalog">
-      <section className="bani-catalog__hero">
-        <div className="bani-catalog__hero-copy">
-          <Text className="bani-catalog__eyebrow">Публичный каталог</Text>
-          <Title level={2} className="bani-catalog__title">Поиск бань</Title>
-          <Typography.Text className="bani-catalog__description">
+    <div className="rh-catalog">
+      <section className="rh-catalog__hero">
+        <div className="rh-catalog__hero-copy">
+          <Text className="rh-catalog__eyebrow">Публичный каталог</Text>
+          <Title level={2} className="rh-catalog__title">Поиск бань</Title>
+          <Typography.Text className="rh-catalog__description">
             Каталог остаётся list-first: сначала понятная выдача, затем карта и сплит для уточнения. Основные фильтры вынесены наверх, активные параметры всегда видны в URL и на экране.
           </Typography.Text>
         </div>
@@ -889,22 +889,22 @@ export default function BathhouseSearch() {
         />
       </section>
 
-      <section className="bani-catalog__shortcut-row" aria-label="Сценарии подбора">
+      <section className="rh-catalog__shortcut-row" aria-label="Сценарии подбора">
         {PUBLIC_SHORTCUT_CARDS.map((card) => (
           <button
             key={card.key}
             type="button"
-            className={activeShortcutKey === card.key ? 'bani-catalog__shortcut bani-catalog__shortcut--active' : 'bani-catalog__shortcut'}
+            className={activeShortcutKey === card.key ? 'rh-catalog__shortcut rh-catalog__shortcut--active' : 'rh-catalog__shortcut'}
             onClick={() => handleShortcutSelect(card.params)}
           >
-            <span className="bani-catalog__shortcut-title">{card.title}</span>
-            <span className="bani-catalog__shortcut-description">{card.description}</span>
+            <span className="rh-catalog__shortcut-title">{card.title}</span>
+            <span className="rh-catalog__shortcut-description">{card.description}</span>
           </button>
         ))}
       </section>
 
       <Space orientation="vertical" size="middle" style={{ width: '100%', marginBottom: 24 }}>
-        <Card variant="borderless" className="bani-catalog__filter-card">
+        <Card variant="borderless" className="rh-catalog__filter-card">
           <Row gutter={[16, 16]} align="middle">
             <Col xs={24} lg={10}>
               <div ref={searchWrapperRef} style={{ position: 'relative' }}>
@@ -979,8 +979,8 @@ export default function BathhouseSearch() {
             </Col>
           </Row>
 
-          <div className="bani-catalog__quick-filters">
-            <Text className="bani-catalog__quick-filters-label">Быстрые фильтры</Text>
+          <div className="rh-catalog__quick-filters">
+            <Text className="rh-catalog__quick-filters-label">Быстрые фильтры</Text>
             <Space wrap size={[8, 8]}>
               <Button
                 size="small"
@@ -1044,7 +1044,7 @@ export default function BathhouseSearch() {
             </div>
           )}
 
-          <div className="bani-catalog__utility-row">
+          <div className="rh-catalog__utility-row">
             <Button
               icon={<EnvironmentOutlined />}
               onClick={handleGeoSearch}
@@ -1054,7 +1054,7 @@ export default function BathhouseSearch() {
             </Button>
             <Collapse
               ghost
-              className="bani-catalog__advanced-collapse"
+              className="rh-catalog__advanced-collapse"
               items={[
                 {
                   key: 'filters',
@@ -1066,7 +1066,7 @@ export default function BathhouseSearch() {
                   ),
                   children: (
                     <Card size="small">
-                      <Typography.Text type="secondary" className="bani-catalog__advanced-note">
+                      <Typography.Text type="secondary" className="rh-catalog__advanced-note">
                         Все параметры ниже применяются ко всей выдаче и сразу влияют на счётчик результатов.
                       </Typography.Text>
                       <Row gutter={[16, 16]}>
@@ -1215,12 +1215,12 @@ export default function BathhouseSearch() {
       </Space>
 
       {activeFilters.length > 0 && (
-        <section className="bani-catalog__active-filters" data-testid="active-filter-summary">
-          <div className="bani-catalog__active-filters-copy">
-            <Text className="bani-catalog__eyebrow">Активные фильтры</Text>
+        <section className="rh-catalog__active-filters" data-testid="active-filter-summary">
+          <div className="rh-catalog__active-filters-copy">
+            <Text className="rh-catalog__eyebrow">Активные фильтры</Text>
             <Typography.Text>Эти параметры уже применены ко всей выдаче и учтены в счётчике результатов.</Typography.Text>
           </div>
-          <div className="bani-catalog__active-filter-tags">
+          <div className="rh-catalog__active-filter-tags">
             {activeFilters.map((item) => (
               <Tag
                 key={item.key}
@@ -1241,11 +1241,11 @@ export default function BathhouseSearch() {
       )}
 
       {compareIds.length > 0 && (
-        <div className="bani-catalog__compare-bar">
+        <div className="rh-catalog__compare-bar">
           <Space>
             <SwapOutlined />
             <span>
-              Выбрано для сравнения: <Badge count={compareIds.length} style={{ backgroundColor: '#1f6b76' }} />
+              Выбрано для сравнения: <Badge count={compareIds.length} style={{ backgroundColor: '#0f766e' }} />
             </span>
           </Space>
           <Space>
@@ -1265,8 +1265,8 @@ export default function BathhouseSearch() {
       )}
 
       {meta?.total_count != null && (
-        <div className="bani-catalog__result-toolbar">
-          <div className="bani-catalog__result-summary">
+        <div className="rh-catalog__result-toolbar">
+          <div className="rh-catalog__result-summary">
             <Tag color="blue" style={{ fontSize: 14, padding: '2px 10px' }} data-testid="result-counter">
               {isLoading ? '...' : `Найдено: ${pluralizeBathhouse(meta.total_count)}`}
             </Tag>
@@ -1281,7 +1281,7 @@ export default function BathhouseSearch() {
       {viewMode === 'list' && listContent}
 
       {viewMode === 'map' && (
-        <div className="bani-catalog__map">
+        <div className="rh-catalog__map">
           <BathhouseMap
             bathhouses={bathhouses}
             highlightedId={highlightedId}
@@ -1299,10 +1299,10 @@ export default function BathhouseSearch() {
       {viewMode === 'split' && (
         <Row gutter={16}>
           <Col xs={24} md={12}>
-            <div className="bani-catalog__split-list">{listContent}</div>
+            <div className="rh-catalog__split-list">{listContent}</div>
           </Col>
           <Col xs={24} md={12}>
-            <div className="bani-catalog__map">
+            <div className="rh-catalog__map">
               <BathhouseMap
                 bathhouses={bathhouses}
                 highlightedId={highlightedId}

@@ -14,10 +14,10 @@ import {
   App,
   Card,
   Descriptions,
-} from 'antd'
-import type { ColumnsType } from 'antd/es/table'
-import { UploadOutlined, LinkOutlined } from '@ant-design/icons'
-import type { UploadFile } from 'antd/es/upload'
+} from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
+import { UploadOutlined, LinkOutlined } from '@/components/design/icons'
+import type { UploadFile } from '@/components/design/types'
 import {
   useGetApiV1AdminFinanceReconciliation,
   usePostApiV1AdminFinanceBankStatement,
@@ -159,7 +159,7 @@ export default function BankReconciliation() {
             Связать
           </Button>
         ) : record.matched_tx_id ? (
-          <span style={{ fontSize: 12, color: '#888' }}>
+          <span style={{ fontSize: 12, color: 'var(--rh-text-soft)' }}>
             {record.matched_tx_type}: {record.matched_tx_id?.slice(0, 8)}...
           </span>
         ) : null

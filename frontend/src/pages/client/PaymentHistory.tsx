@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { App, Button, DatePicker, Dropdown, Select, Space, Table, Tag, Typography } from 'antd'
-import { DownloadOutlined } from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+import { App, Button, DatePicker, Dropdown, Select, Space, Table, Tag, Typography } from '@/components/design/system'
+import { DownloadOutlined } from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import dayjs from 'dayjs'
 import { useGetMyPayments } from '@/api/generated/payments/payments'
 import type { InternalHandlerPaymentResponse } from '@/api/generated/model'
@@ -106,7 +106,7 @@ export default function PaymentHistory() {
           <span>
             {formatPrice(record.refund_amount)}
             {record.refunded_at && (
-              <div style={{ color: '#888', fontSize: 12 }}>
+              <div style={{ color: 'var(--rh-text-soft)', fontSize: 12 }}>
                 {formatDateTime(record.refunded_at, 'DD.MM.YYYY')}
               </div>
             )}

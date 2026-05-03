@@ -18,13 +18,13 @@ import {
   Spin,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   CheckOutlined,
   CloseOutlined,
   UserSwitchOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -392,7 +392,7 @@ export default function AdminDisputeDetail() {
                           src={item.url}
                           alt="Доказательство"
                           width={200}
-                          style={{ borderRadius: 4 }}
+                          style={{ borderRadius: 12 }}
                         />
                       ) : item.url ? (
                         <a href={item.url} target="_blank" rel="noopener noreferrer">
@@ -457,29 +457,38 @@ export default function AdminDisputeDetail() {
             />
           </Form.Item>
           <Form.Item
-            name="refund_amount"
             label="Сумма возврата (в рублях)"
-            rules={[{ required: true, message: 'Укажите сумму возврата' }]}
           >
-            <InputNumber
-              min={0}
-              precision={2}
-              style={{ width: '100%' }}
-              placeholder="0.00"
-              addonAfter="₽"
-            />
+            <Space.Compact className="rh-compact-control">
+              <Form.Item
+                name="refund_amount"
+                noStyle
+                rules={[{ required: true, message: 'Укажите сумму возврата' }]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={2}
+                  style={{ width: '100%' }}
+                  placeholder="0.00"
+                />
+              </Form.Item>
+              <span className="rh-input-addon">₽</span>
+            </Space.Compact>
           </Form.Item>
           <Form.Item
-            name="compensation_amount"
             label="Компенсация на кошелёк (в рублях)"
           >
-            <InputNumber
-              min={0}
-              precision={2}
-              style={{ width: '100%' }}
-              placeholder="0.00"
-              addonAfter="₽"
-            />
+            <Space.Compact className="rh-compact-control">
+              <Form.Item name="compensation_amount" noStyle>
+                <InputNumber
+                  min={0}
+                  precision={2}
+                  style={{ width: '100%' }}
+                  placeholder="0.00"
+                />
+              </Form.Item>
+              <span className="rh-input-addon">₽</span>
+            </Space.Compact>
           </Form.Item>
           <Form.Item name="mediator_notes" label="Заметки медиатора">
             <Input.TextArea

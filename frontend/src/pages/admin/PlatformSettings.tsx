@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { App, Button, Form, Input, InputNumber, Modal, Spin, Switch, Table, Tag, Typography, Card } from 'antd'
-import { EditOutlined } from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+import { App, Button, Form, Input, InputNumber, Modal, Spin, Switch, Table, Tag, Typography, Card } from '@/components/design/system'
+import { EditOutlined } from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminSettings,
@@ -172,28 +172,28 @@ export default function PlatformSettings() {
   ]
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Системные параметры"
         title="Настройки платформы"
         description="Служебные параметры и их значения в более читаемом рабочем виде."
       />
 
-      <div className="bani-stat-grid">
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Всего параметров</span>
-          <span className="bani-stat-tile__value">{settings.length}</span>
-          <span className="bani-stat-tile__hint">Все редактируемые настройки текущей платформы.</span>
+      <div className="rh-stat-grid">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Всего параметров</span>
+          <span className="rh-stat-tile__value">{settings.length}</span>
+          <span className="rh-stat-tile__hint">Все редактируемые настройки текущей платформы.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Логические флаги</span>
-          <span className="bani-stat-tile__value">{boolSettingsCount}</span>
-          <span className="bani-stat-tile__hint">Переключатели режимов и feature-toggle параметров.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Логические флаги</span>
+          <span className="rh-stat-tile__value">{boolSettingsCount}</span>
+          <span className="rh-stat-tile__hint">Переключатели режимов и feature-toggle параметров.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">JSON параметры</span>
-          <span className="bani-stat-tile__value">{jsonSettingsCount}</span>
-          <span className="bani-stat-tile__hint">Структурированные служебные конфиги и схемы.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">JSON параметры</span>
+          <span className="rh-stat-tile__value">{jsonSettingsCount}</span>
+          <span className="rh-stat-tile__hint">Структурированные служебные конфиги и схемы.</span>
         </div>
       </div>
 

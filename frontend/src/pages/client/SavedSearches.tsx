@@ -8,8 +8,8 @@ import {
   Space,
   Popconfirm,
   App,
-} from 'antd'
-import { DeleteOutlined, BellOutlined, BellFilled } from '@ant-design/icons'
+} from '@/components/design/system'
+import { DeleteOutlined, BellOutlined, BellFilled } from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetMySavedSearches,
@@ -70,7 +70,7 @@ export default function SavedSearches() {
       dataIndex: 'filters',
       key: 'filters',
       render: (filters: unknown) => (
-        <span style={{ fontSize: 13, color: '#666' }}>{renderFilters(filters)}</span>
+        <span style={{ fontSize: 13, color: 'var(--rh-text-soft)' }}>{renderFilters(filters)}</span>
       ),
     },
     {

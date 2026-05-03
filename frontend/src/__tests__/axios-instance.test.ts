@@ -20,7 +20,7 @@ describe('axiosInstance', () => {
   })
 
   it('attaches Authorization header when token exists', () => {
-    localStorage.setItem('bani_token', 'test-jwt-token')
+    localStorage.setItem('rh_token', 'test-jwt-token')
 
     type InterceptorHandler = {
       fulfilled: (config: { headers: Record<string, string> }) => { headers: Record<string, string> }
@@ -32,11 +32,11 @@ describe('axiosInstance', () => {
 
     expect(config.headers.Authorization).toBe('Bearer test-jwt-token')
 
-    localStorage.removeItem('bani_token')
+    localStorage.removeItem('rh_token')
   })
 
   it('does not attach Authorization header when no token', () => {
-    localStorage.removeItem('bani_token')
+    localStorage.removeItem('rh_token')
 
     type InterceptorHandler = {
       fulfilled: (config: { headers: Record<string, string> }) => { headers: Record<string, string> }

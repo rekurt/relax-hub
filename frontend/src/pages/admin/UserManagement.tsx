@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { App, Button, Checkbox, Input, Space, Table, Tag } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { App, Button, Checkbox, Input, Space, Table, Tag } from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminUsers,
@@ -189,7 +189,7 @@ export default function UserManagement() {
         return record.is_active === false ? (
           <a onClick={() => handleUnblock(record)}>Разблокировать</a>
         ) : (
-          <a onClick={() => handleBlock(record)} style={{ color: '#ff4d4f' }}>
+          <a onClick={() => handleBlock(record)} style={{ color: '#b42318' }}>
             Заблокировать
           </a>
         )

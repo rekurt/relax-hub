@@ -1,4 +1,4 @@
-import { Typography, Divider } from 'antd'
+import { Typography, Divider } from '@/components/design/system'
 import { formatPrice } from '@/lib/format'
 
 const { Text } = Typography
@@ -110,7 +110,7 @@ export default function PriceBreakdown({
             display: 'flex',
             justifyContent: 'space-between',
             marginBottom: 4,
-            color: line.type === 'discount' ? '#52c41a' : undefined,
+            color: line.type === 'discount' ? '#15803d' : undefined,
           }}
         >
           <Text type={line.type === 'discount' ? 'success' : undefined}>{line.label}</Text>

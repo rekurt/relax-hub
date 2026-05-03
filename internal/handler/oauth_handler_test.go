@@ -77,7 +77,7 @@ var _ service.OAuthService = (*mockOAuthService)(nil)
 func TestOAuthHandler_OAuthRedirect(t *testing.T) {
 	oauthSvc := &mockOAuthService{
 		getOAuthURLFn: func(provider domain.OAuthProvider, referralCode string) (string, error) {
-			return "https://oauth.example.com/authorize?state=abc", nil
+			return "https://oauth.vk.com/authorize?state=abc", nil
 		},
 	}
 
@@ -96,8 +96,30 @@ func TestOAuthHandler_OAuthRedirect(t *testing.T) {
 	}
 
 	location := rec.Result().Header.Get("Location")
-	if location != "https://oauth.example.com/authorize?state=abc" {
+	if location != "https://oauth.vk.com/authorize?state=abc" {
 		t.Errorf("expected redirect to oauth URL, got %q", location)
+	}
+}
+
+func TestOAuthHandler_OAuthRedirect_BlocksUnexpectedHost(t *testing.T) {
+	oauthSvc := &mockOAuthService{
+		getOAuthURLFn: func(provider domain.OAuthProvider, referralCode string) (string, error) {
+			return "https://evil.example.com/authorize?state=abc", nil
+		},
+	}
+
+	h := handler.NewOAuthHandler(oauthSvc)
+
+	router := chi.NewRouter()
+	router.Get("/auth/oauth/{provider}", h.OAuthRedirect)
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/oauth/vk", nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("expected status 400, got %d", rec.Code)
 	}
 }
 

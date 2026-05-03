@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/rekurt/relax-hub/internal/domain"
@@ -57,7 +59,7 @@ func (h *PrerenderHandler) BathhouseDetail(w http.ResponseWriter, r *http.Reques
 
 	cacheKey := seo.CacheKeyForDetail(slug)
 	if cached, ok := h.renderer.GetCachedPage(r.Context(), cacheKey); ok {
-		h.writeHTML(w, cached)
+		h.writeHTML(w, r, cached)
 		return
 	}
 
@@ -129,7 +131,7 @@ func (h *PrerenderHandler) BathhouseDetail(w http.ResponseWriter, r *http.Reques
 	htmlContent := h.renderer.RenderPage(pageData)
 
 	h.renderer.CachePage(r.Context(), cacheKey, htmlContent)
-	h.writeHTML(w, htmlContent)
+	h.writeHTML(w, r, htmlContent)
 }
 
 // CityListing serves pre-rendered HTML for a city listing page.
@@ -151,7 +153,7 @@ func (h *PrerenderHandler) CityListing(w http.ResponseWriter, r *http.Request) {
 
 	cacheKey := seo.CacheKeyForCity(citySlug)
 	if cached, ok := h.renderer.GetCachedPage(r.Context(), cacheKey); ok {
-		h.writeHTML(w, cached)
+		h.writeHTML(w, r, cached)
 		return
 	}
 
@@ -178,7 +180,7 @@ func (h *PrerenderHandler) CityListing(w http.ResponseWriter, r *http.Request) {
 	htmlContent := h.renderer.RenderPage(pageData)
 
 	h.renderer.CachePage(r.Context(), cacheKey, htmlContent)
-	h.writeHTML(w, htmlContent)
+	h.writeHTML(w, r, htmlContent)
 }
 
 // MainListing serves pre-rendered HTML for the main catalog page.
@@ -192,7 +194,7 @@ func (h *PrerenderHandler) CityListing(w http.ResponseWriter, r *http.Request) {
 func (h *PrerenderHandler) MainListing(w http.ResponseWriter, r *http.Request) {
 	cacheKey := seo.CacheKeyForListing()
 	if cached, ok := h.renderer.GetCachedPage(r.Context(), cacheKey); ok {
-		h.writeHTML(w, cached)
+		h.writeHTML(w, r, cached)
 		return
 	}
 
@@ -212,7 +214,7 @@ func (h *PrerenderHandler) MainListing(w http.ResponseWriter, r *http.Request) {
 	htmlContent := h.renderer.RenderPage(pageData)
 
 	h.renderer.CachePage(r.Context(), cacheKey, htmlContent)
-	h.writeHTML(w, htmlContent)
+	h.writeHTML(w, r, htmlContent)
 }
 
 // BathhouseReviews serves pre-rendered HTML for a bathhouse reviews page.
@@ -234,7 +236,7 @@ func (h *PrerenderHandler) BathhouseReviews(w http.ResponseWriter, r *http.Reque
 
 	cacheKey := seo.CacheKeyForReviews(slug)
 	if cached, ok := h.renderer.GetCachedPage(r.Context(), cacheKey); ok {
-		h.writeHTML(w, cached)
+		h.writeHTML(w, r, cached)
 		return
 	}
 
@@ -268,7 +270,7 @@ func (h *PrerenderHandler) BathhouseReviews(w http.ResponseWriter, r *http.Reque
 	htmlContent := h.renderer.RenderPage(pageData)
 
 	h.renderer.CachePage(r.Context(), cacheKey, htmlContent)
-	h.writeHTML(w, htmlContent)
+	h.writeHTML(w, r, htmlContent)
 }
 
 // InvalidateBathhouseCache invalidates pre-rendered cache for a bathhouse.
@@ -289,9 +291,9 @@ func (h *PrerenderHandler) InvalidateBathhouseCache(w http.ResponseWriter, r *ht
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *PrerenderHandler) writeHTML(w http.ResponseWriter, content string) {
+func (h *PrerenderHandler) writeHTML(w http.ResponseWriter, r *http.Request, content string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("X-Robots-Tag", "noarchive")
-	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write([]byte(content))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	http.ServeContent(w, r, "", time.Time{}, strings.NewReader(content))
 }

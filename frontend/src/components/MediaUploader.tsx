@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { Upload, App, Image, Space, Tag } from 'antd'
-import { PlusOutlined, DeleteOutlined, VideoCameraOutlined } from '@ant-design/icons'
-import type { UploadFile } from 'antd'
+import { Upload, App, Image, Space, Tag } from '@/components/design/system'
+import { PlusOutlined, DeleteOutlined, VideoCameraOutlined } from '@/components/design/icons'
+import type { UploadFile } from '@/components/design/types'
 
 const MAX_PHOTOS = 10
 const MAX_VIDEOS = 1
@@ -104,10 +104,12 @@ export default function MediaUploader({ files, onChange, disabled }: MediaUpload
               position: 'relative',
               width: 104,
               height: 104,
-              border: '1px solid #d9d9d9',
-              borderRadius: 8,
+              border: '1px solid var(--rh-border)',
+              borderRadius: 20,
               overflow: 'hidden',
               cursor: 'pointer',
+              background: 'var(--rh-card-bg-tint)',
+              boxShadow: 'var(--rh-shadow-soft)',
             }}
           >
             {f.type === 'image' ? (
@@ -126,11 +128,11 @@ export default function MediaUploader({ files, onChange, disabled }: MediaUpload
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: '#f0f0f0',
+                  background: 'rgba(248, 244, 236, 0.78)',
                 }}
               >
-                <VideoCameraOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-                <Tag color="blue" style={{ marginTop: 4 }}>Видео</Tag>
+                <VideoCameraOutlined style={{ fontSize: 24, color: 'var(--rh-primary)' }} />
+                <Tag color="green" style={{ marginTop: 4 }}>Видео</Tag>
               </div>
             )}
             {!disabled && (
@@ -143,7 +145,8 @@ export default function MediaUploader({ files, onChange, disabled }: MediaUpload
                   width: 24,
                   height: 24,
                   borderRadius: '50%',
-                  background: 'rgba(0,0,0,0.5)',
+                  background: 'rgba(22, 33, 43, 0.72)',
+                  boxShadow: '0 8px 16px rgba(15, 23, 42, 0.18)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -166,14 +169,16 @@ export default function MediaUploader({ files, onChange, disabled }: MediaUpload
               style={{
                 width: 104,
                 height: 104,
-                border: '1px dashed #d9d9d9',
-                borderRadius: 8,
+                border: '1px dashed var(--rh-border-control)',
+                borderRadius: 20,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                color: '#999',
+                color: 'var(--rh-text-soft)',
+                background:
+                  'radial-gradient(circle at top left, rgba(15, 118, 110, 0.08), transparent 34%), rgba(255, 253, 248, 0.72)',
               }}
             >
               <PlusOutlined style={{ fontSize: 20 }} />
@@ -183,7 +188,7 @@ export default function MediaUploader({ files, onChange, disabled }: MediaUpload
         )}
       </Space>
 
-      <div style={{ marginTop: 4, fontSize: 12, color: '#999' }}>
+      <div style={{ marginTop: 8, fontSize: 12, color: 'var(--rh-text-soft)' }}>
         Фото: {photoCount}/{MAX_PHOTOS} | Видео: {videoCount}/{MAX_VIDEOS} | Макс. {MAX_FILE_SIZE_MB} МБ
       </div>
 

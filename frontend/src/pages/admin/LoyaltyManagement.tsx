@@ -8,13 +8,14 @@ import {
   InputNumber,
   Modal,
   Row,
+  Space,
   Spin,
   Table,
   Tag,
   Typography,
-} from 'antd'
-import { EyeOutlined, TrophyOutlined } from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/system'
+import { EyeOutlined, TrophyOutlined } from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import {
   useGetMyLoyaltyLevels,
 } from '@/api/generated/loyalty/loyalty'
@@ -129,7 +130,7 @@ export default function LoyaltyManagement() {
           <Col xs={12} sm={6} key={level.level}>
             <Card
               size="small"
-              style={{ borderTop: `3px solid ${LEVEL_COLORS[level.level ?? ''] ?? '#d9d9d9'}` }}
+              style={{ borderTop: `3px solid ${LEVEL_COLORS[level.level ?? ''] ?? '#c9c1b5'}` }}
             >
               <Text type="secondary">{LEVEL_NAMES[level.level ?? ''] ?? level.level}</Text>
               <div style={{ fontSize: 20, fontWeight: 600 }}>от {level.min_visits ?? 0} визитов</div>
@@ -173,11 +174,21 @@ export default function LoyaltyManagement() {
           <Form.Item name="min_visits" label="Минимальное количество визитов">
             <InputNumber style={{ width: '100%' }} disabled />
           </Form.Item>
-          <Form.Item name="discount_percent" label="Процент кэшбэка">
-            <InputNumber style={{ width: '100%' }} disabled addonAfter="%" />
+          <Form.Item label="Процент кэшбэка">
+            <Space.Compact className="rh-compact-control">
+              <Form.Item name="discount_percent" noStyle>
+                <InputNumber style={{ width: '100%' }} disabled />
+              </Form.Item>
+              <span className="rh-input-addon">%</span>
+            </Space.Compact>
           </Form.Item>
-          <Form.Item name="point_multiplier" label="Множитель баллов">
-            <InputNumber style={{ width: '100%' }} disabled addonAfter="×" />
+          <Form.Item label="Множитель баллов">
+            <Space.Compact className="rh-compact-control">
+              <Form.Item name="point_multiplier" noStyle>
+                <InputNumber style={{ width: '100%' }} disabled />
+              </Form.Item>
+              <span className="rh-input-addon">×</span>
+            </Space.Compact>
           </Form.Item>
         </Form>
       </Modal>

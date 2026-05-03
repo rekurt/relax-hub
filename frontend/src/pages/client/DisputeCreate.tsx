@@ -8,8 +8,8 @@ import {
   Select,
   Space,
   Typography,
-} from 'antd'
-import { ArrowLeftOutlined } from '@ant-design/icons'
+} from '@/components/design/system'
+import { ArrowLeftOutlined } from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   usePostBookingsIdDispute,

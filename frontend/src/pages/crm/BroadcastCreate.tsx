@@ -10,13 +10,13 @@ import {
   Tag,
   Tooltip,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   SendOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useRef } from 'react'
-import type { TextAreaRef } from 'antd/es/input/TextArea'
+import type { TextAreaRef } from '@/components/design/types'
 import { useNavigate } from 'react-router-dom'
 import {
   useGetMyCrmSegments,

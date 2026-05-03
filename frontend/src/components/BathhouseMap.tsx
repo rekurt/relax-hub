@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
-import { Button, Spin } from 'antd'
-import { AimOutlined } from '@ant-design/icons'
+import { Button, Spin } from '@/components/design/system'
+import { AimOutlined } from '@/components/design/icons'
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
 import { resolveAssetUrl } from '@/lib/asset-url'
@@ -179,7 +179,7 @@ export default function BathhouseMap({
         mapRef.current = map
 
         const clusterer = new window.ymaps.Clusterer({
-          preset: 'islands#invertedVioletClusterIcons',
+          preset: 'islands#invertedDarkGreenClusterIcons',
           groupByCoordinates: false,
           clusterDisableClickZoom: false,
         })
@@ -226,18 +226,18 @@ export default function BathhouseMap({
         const safeSlug = encodeURIComponent(slug)
 
         const balloonBody = showMiniCard
-          ? `<div style="min-width:200px;max-width:260px;">
-              ${coverImage ? `<img src="${escapeHtml(coverImage)}" alt="" style="width:100%;height:120px;object-fit:cover;border-radius:6px;margin-bottom:8px;" />` : ''}
-              <div style="font-weight:600;font-size:14px;margin-bottom:4px;">${safeName}</div>
-              <div style="color:#666;font-size:12px;margin-bottom:4px;">${safeAddress}</div>
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                <span style="color:#faad14;">★ ${ratingStr}</span>
-                <span style="color:#999;font-size:12px;">(${reviewCountStr})</span>
+          ? `<div style="min-width:208px;max-width:268px;font-family:Manrope,Segoe UI,sans-serif;color:#16212b;">
+              ${coverImage ? `<img src="${escapeHtml(coverImage)}" alt="" style="width:100%;height:124px;object-fit:cover;border-radius:18px;margin-bottom:10px;" />` : ''}
+              <div style="font-weight:800;font-size:15px;line-height:1.25;margin-bottom:5px;">${safeName}</div>
+              <div style="color:#5f6877;font-size:12px;line-height:1.45;margin-bottom:8px;">${safeAddress}</div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                <span style="color:#d97706;font-weight:700;">★ ${ratingStr}</span>
+                <span style="color:rgba(22,33,43,0.48);font-size:12px;">(${reviewCountStr})</span>
                 <strong>${priceLabel}/ч</strong>
               </div>
-              <a href="/bathhouses/${safeSlug}" style="display:inline-block;background:#722ed1;color:#fff;padding:4px 12px;border-radius:4px;text-decoration:none;font-size:13px;">Подробнее</a>
+              <a href="/bathhouses/${safeSlug}" style="display:inline-block;background:#0f766e;color:#fff;padding:8px 14px;border-radius:999px;text-decoration:none;font-size:13px;font-weight:800;box-shadow:0 12px 24px rgba(15,118,110,0.18);">Подробнее</a>
             </div>`
-          : `<div>${safeAddress}<br/><strong>${priceLabel}/ч</strong></div>`
+          : `<div style="font-family:Manrope,Segoe UI,sans-serif;color:#16212b;line-height:1.5;">${safeAddress}<br/><strong>${priceLabel}/ч</strong></div>`
 
         const placemark = new window.ymaps!.Placemark(
           [b.latitude!, b.longitude!],
@@ -249,21 +249,21 @@ export default function BathhouseMap({
           {
             preset: isHighlighted
               ? 'islands#redDotIcon'
-              : 'islands#violetDotIcon',
+              : 'islands#darkGreenDotIcon',
             iconLayout: 'default#imageWithContent',
             iconImageHref: '',
             iconImageSize: [0, 0],
             iconContentLayout: window.ymaps!.templateLayoutFactory.createClass(
               `<div style="
-                background: ${isHighlighted ? '#ff4d4f' : '#fff'};
-                color: ${isHighlighted ? '#fff' : '#333'};
-                border: 2px solid ${isHighlighted ? '#ff4d4f' : '#722ed1'};
-                border-radius: 16px;
-                padding: 4px 10px;
+                background: ${isHighlighted ? '#b42318' : '#fffdf8'};
+                color: ${isHighlighted ? '#fff' : '#16212b'};
+                border: 2px solid ${isHighlighted ? '#b42318' : '#0f766e'};
+                border-radius: 999px;
+                padding: 6px 12px;
                 font-size: 12px;
-                font-weight: 600;
+                font-weight: 800;
                 white-space: nowrap;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+                box-shadow: 0 14px 28px rgba(15,23,42,0.14);
                 transform: translate(-50%, -100%);
                 cursor: pointer;
               ">${priceLabel}/ч</div>`,
@@ -307,8 +307,8 @@ export default function BathhouseMap({
         [isochronePolygon],
         { hintContent: 'Зона доступности' },
         {
-          fillColor: '#722ed120',
-          strokeColor: '#722ed1',
+          fillColor: '#0f766e22',
+          strokeColor: '#0f766e',
           strokeWidth: 2,
           strokeStyle: 'shortdash',
         },
@@ -338,7 +338,7 @@ export default function BathhouseMap({
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 10,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            boxShadow: '0 14px 28px rgba(15,118,110,0.20)',
           }}
           onClick={handleSearchArea}
         >
@@ -355,9 +355,11 @@ export default function BathhouseMap({
             top: 12,
             right: 12,
             zIndex: 10,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-            background: '#fff',
-            fontWeight: 500,
+            borderRadius: 999,
+            borderColor: 'rgba(15, 23, 42, 0.10)',
+            boxShadow: '0 12px 24px rgba(15,23,42,0.12)',
+            background: 'rgba(255, 253, 248, 0.92)',
+            fontWeight: 700,
           }}
           onClick={handleToggleMapType}
         >

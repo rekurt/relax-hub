@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { App, Button, DatePicker, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
-import { EyeOutlined, SearchOutlined, StopOutlined } from '@ant-design/icons'
+import { App, Button, DatePicker, Popconfirm, Select, Space, Table, Tag, Typography } from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
+import { EyeOutlined, SearchOutlined, StopOutlined } from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useGetBookings, usePatchBookingsIdCancel } from '@/api/generated/bookings/bookings'
 import type { InternalHandlerBookingResponse } from '@/api/generated/model'
@@ -81,7 +81,7 @@ export default function ClientBookingList() {
       render: (_, record) => (
         <div>
           <div>{record.start_time ? formatDateTime(record.start_time, 'DD.MM.YYYY') : '—'}</div>
-          <div style={{ color: '#888', fontSize: 12 }}>
+          <div style={{ color: 'var(--rh-text-soft)', fontSize: 12 }}>
             {record.start_time ? formatDateTime(record.start_time, 'HH:mm') : ''}
             {record.end_time ? ` – ${formatDateTime(record.end_time, 'HH:mm')}` : ''}
           </div>

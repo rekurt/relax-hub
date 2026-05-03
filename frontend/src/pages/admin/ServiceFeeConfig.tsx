@@ -8,12 +8,13 @@ import {
   InputNumber,
   Modal,
   Select,
+  Space,
   Spin,
   Table,
   Tag,
-} from 'antd'
-import { PlusOutlined, EditOutlined } from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/system'
+import { PlusOutlined, EditOutlined } from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminServiceFee,
@@ -185,17 +186,19 @@ export default function ServiceFeeConfig() {
             <Input placeholder="Оставьте пустым для всех категорий" />
           </Form.Item>
           <Form.Item
-            name="fee_percent"
             label="Процент комиссии"
-            rules={[{ required: true, message: 'Укажите процент' }]}
           >
-            <InputNumber
-              style={{ width: '100%' }}
-              min={0}
-              max={25}
-              step={0.5}
-              addonAfter="%"
-            />
+            <Space.Compact className="rh-compact-control">
+              <Form.Item name="fee_percent" noStyle rules={[{ required: true, message: 'Укажите процент' }]}>
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={0}
+                  max={25}
+                  step={0.5}
+                />
+              </Form.Item>
+              <span className="rh-input-addon">%</span>
+            </Space.Compact>
           </Form.Item>
         </Form>
       </Modal>

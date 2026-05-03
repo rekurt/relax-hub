@@ -1,4 +1,4 @@
-import { Descriptions, Modal, Spin, Tag } from 'antd'
+import { Descriptions, Modal, Spin, Tag } from '@/components/design/system'
 import { useGetBookingsIdPayment } from '@/api/generated/payments/payments'
 import type { InternalHandlerBookingResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
@@ -120,7 +120,7 @@ export default function BookingDetails({ booking, onClose }: BookingDetailsProps
               </Descriptions.Item>
             </Descriptions>
           ) : (
-            <div style={{ color: '#999' }}>Платёж не найден</div>
+            <div style={{ color: 'var(--rh-text-muted)' }}>Платёж не найден</div>
           )}
         </>
       )}

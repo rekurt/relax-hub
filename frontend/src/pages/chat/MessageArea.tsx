@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Input, Button, Empty, Spin, Typography, Space, Alert } from 'antd'
-import { SendOutlined, WarningOutlined } from '@ant-design/icons'
+import { Input, Button, Empty, Spin, Typography, Space, Alert } from '@/components/design/system'
+import { SendOutlined, WarningOutlined } from '@/components/design/icons'
 import {
   useGetConversationsIdMessages,
   usePostConversationsIdMessages,
@@ -37,10 +37,14 @@ function MessageBubble({
       <div
         style={{
           maxWidth: '70%',
-          padding: '8px 12px',
-          borderRadius: 12,
-          background: isOwn ? '#1677ff' : '#f0f0f0',
+          padding: '10px 14px',
+          borderRadius: isOwn ? '18px 18px 6px 18px' : '18px 18px 18px 6px',
+          border: isOwn ? 'none' : '1px solid var(--rh-border)',
+          background: isOwn
+            ? 'linear-gradient(135deg, var(--rh-primary), var(--rh-primary-strong))'
+            : 'rgba(248, 244, 236, 0.82)',
           color: isOwn ? '#fff' : 'inherit',
+          boxShadow: isOwn ? '0 12px 24px rgba(15, 118, 110, 0.16)' : undefined,
         }}
       >
         <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{message.text}</div>
@@ -213,8 +217,8 @@ export default function MessageArea({ conversationId }: MessageAreaProps) {
       <div
         style={{
           padding: '12px 16px',
-          borderTop: '1px solid #f0f0f0',
-          background: '#fafafa',
+          borderTop: '1px solid var(--rh-border)',
+          background: 'rgba(248, 244, 236, 0.56)',
         }}
       >
         <Space.Compact style={{ width: '100%' }}>

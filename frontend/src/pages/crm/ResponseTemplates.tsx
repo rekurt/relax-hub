@@ -13,12 +13,12 @@ import {
   Space,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import {
   useGetMyCrmTemplates,
   usePostMyCrmTemplates,

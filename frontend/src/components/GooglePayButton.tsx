@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { Button } from 'antd'
-import { GoogleOutlined } from '@ant-design/icons'
+import { Button } from '@/components/design/system'
+import { GoogleOutlined } from '@/components/design/icons'
 
 interface GooglePayButtonProps {
   amount: number // kopecks
@@ -140,7 +140,7 @@ export default function GooglePayButton({ amount, onToken, disabled, loading }: 
         background: '#fff',
         color: '#3c4043',
         borderColor: '#dadce0',
-        borderRadius: 8,
+        borderRadius: 20,
       }}
     >
       Google Pay

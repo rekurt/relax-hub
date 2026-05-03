@@ -1,8 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
-import { App as AntApp, ConfigProvider } from 'antd'
-import ruRU from 'antd/locale/ru_RU'
+import { App as AntApp, ConfigProvider } from '@/components/design/system'
+import { ruRU } from '@/components/design/system'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import ReferralProgram from '@/pages/client/ReferralProgram'
 
@@ -35,7 +35,7 @@ function renderWithProviders(ui: React.ReactElement) {
 
 const mockReferral = {
   referral_code: 'ABC123',
-  referral_link: 'https://bani.app/ref/ABC123',
+  referral_link: 'https://relaxhub.app/ref/ABC123',
 }
 
 const mockStats = {
@@ -142,7 +142,7 @@ describe('ReferralProgram', () => {
     fireEvent.click(screen.getByText('Скопировать ссылку'))
 
     await waitFor(() => {
-      expect(writeText).toHaveBeenCalledWith('https://bani.app/ref/ABC123')
+      expect(writeText).toHaveBeenCalledWith('https://relaxhub.app/ref/ABC123')
     })
   })
 

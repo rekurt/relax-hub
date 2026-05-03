@@ -12,14 +12,14 @@ import {
   Space,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   WalletOutlined,
   PlusOutlined,
   MinusOutlined,
   LockOutlined,
   UnlockOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
 
@@ -215,14 +215,21 @@ export default function WalletManagement() {
         <Form form={form} layout="vertical">
           {needsAmount && (
             <Form.Item
-              name="amount"
               label="Сумма (в рублях)"
-              rules={[
-                { required: true, message: 'Введите сумму' },
-                { type: 'number', min: 0.01, message: 'Сумма должна быть положительной' },
-              ]}
             >
-              <InputNumber style={{ width: '100%' }} min={0.01} step={1} precision={2} addonAfter="₽" />
+              <Space.Compact className="rh-compact-control">
+                <Form.Item
+                  name="amount"
+                  noStyle
+                  rules={[
+                    { required: true, message: 'Введите сумму' },
+                    { type: 'number', min: 0.01, message: 'Сумма должна быть положительной' },
+                  ]}
+                >
+                  <InputNumber style={{ width: '100%' }} min={0.01} step={1} precision={2} />
+                </Form.Item>
+                <span className="rh-input-addon">₽</span>
+              </Space.Compact>
             </Form.Item>
           )}
           <Form.Item

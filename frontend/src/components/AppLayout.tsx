@@ -52,7 +52,7 @@ export default function AppLayout() {
         <BrandLockup
           size="header"
           subtitle="Управление объектами и продажами"
-          className="bani-topnav__brand-lockup"
+          className="rh-topnav__brand-lockup"
         />
       )}
       brandSubtitle={null}

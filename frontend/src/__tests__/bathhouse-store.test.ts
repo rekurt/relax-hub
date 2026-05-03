@@ -1,6 +1,6 @@
 import { useBathhouseStore } from '@/stores/bathhouse'
 
-const SELECTED_BATHHOUSE_KEY = 'bani_selected_bathhouse'
+const SELECTED_BATHHOUSE_KEY = 'rh_selected_bathhouse'
 
 describe('bathhouse store', () => {
   beforeEach(() => {

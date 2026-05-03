@@ -15,13 +15,13 @@ import {
   Tag,
   Tooltip,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   DeleteOutlined,
   DragOutlined,
   PlusOutlined,
   ReloadOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import {
   useGetMyBathhousesIdPhotos,
   usePostMyBathhousesIdPhotos,
@@ -172,7 +172,7 @@ export default function PhotoManager() {
     return (
       <div>
         <Title level={3}>Фотографии</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
           Выберите баню для управления фотографиями
         </div>
       </div>
@@ -228,7 +228,7 @@ export default function PhotoManager() {
               style={{
                 cursor: 'grab',
                 opacity: dragIndex === index ? 0.4 : 1,
-                border: dragOverIndex === index && dragIndex !== index ? '2px dashed #1677ff' : undefined,
+                border: dragOverIndex === index && dragIndex !== index ? '2px dashed #0f766e' : undefined,
                 transition: 'opacity 0.2s, border 0.2s',
               }}
               cover={
@@ -263,7 +263,7 @@ export default function PhotoManager() {
                   okText="Удалить"
                   cancelText="Отмена"
                 >
-                  <DeleteOutlined style={{ color: '#ff4d4f' }} />
+                  <DeleteOutlined style={{ color: '#b42318' }} />
                 </Popconfirm>,
               ]}
             >

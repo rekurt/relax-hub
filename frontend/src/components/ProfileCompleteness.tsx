@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Button, Card, Progress, List, Typography, Tag } from 'antd'
-import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { Button, Card, Progress, List, Typography, Tag } from '@/components/design/system'
+import { CheckCircleOutlined, CloseCircleOutlined } from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 
 const { Text } = Typography
@@ -51,7 +51,7 @@ export default function ProfileCompleteness({ onNavigate }: ProfileCompletenessP
   if (!data) return null
   if (data.percentage === 100) return null
 
-  const strokeColor = data.percentage >= 80 ? '#52c41a' : data.percentage >= 50 ? '#faad14' : '#ff4d4f'
+  const strokeColor = data.percentage >= 80 ? '#15803d' : data.percentage >= 50 ? '#d97706' : '#b42318'
 
   return (
     <Card
@@ -75,9 +75,9 @@ export default function ProfileCompleteness({ onNavigate }: ProfileCompletenessP
             <List.Item.Meta
               avatar={
                 item.complete ? (
-                  <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                  <CheckCircleOutlined style={{ color: '#15803d' }} />
                 ) : (
-                  <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+                  <CloseCircleOutlined style={{ color: '#b42318' }} />
                 )
               }
               title={<Text>{item.label}</Text>}

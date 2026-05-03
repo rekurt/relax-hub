@@ -17,7 +17,7 @@ import {
   DatePicker,
   InputNumber,
   Form,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   StopOutlined,
@@ -25,7 +25,7 @@ import {
   StarOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { usePatchBookingsIdCancel } from '@/api/generated/bookings/bookings'
@@ -41,7 +41,7 @@ import ShareButton from '@/components/ShareButton'
 import { useDeviceToken } from '@/lib/useDeviceToken'
 
 const { Title, Text } = Typography
-const PUSH_PROMPTED_KEY = 'bani_push_prompted'
+const PUSH_PROMPTED_KEY = 'rh_push_prompted'
 
 export default function ClientBookingDetail() {
   const { id } = useParams<{ id: string }>()
@@ -168,7 +168,11 @@ export default function ClientBookingDetail() {
   }
 
   if (isLoading) {
-    return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
+    return (
+      <div className="rh-fullscreen-state">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   if (!booking) {
@@ -329,7 +333,7 @@ export default function ClientBookingDetail() {
             </Descriptions.Item>
           </Descriptions>
         ) : (
-          <div style={{ color: '#999' }}>Платёж не найден</div>
+          <div style={{ color: 'var(--rh-text-muted)' }}>Платёж не найден</div>
         )}
       </Card>
 

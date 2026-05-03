@@ -1,11 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Typography, Card, Switch, Table, Tag, Button, Space, App, Spin, Divider } from 'antd'
+import { Typography, Card, Switch, Table, Tag, Button, Space, App, Spin, Divider } from '@/components/design/system'
 import {
   BellOutlined,
   MailOutlined,
   MobileOutlined,
   MessageOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import {
   useGetMyNotificationPreferences,
   usePutMyNotificationPreferences,
@@ -125,13 +125,13 @@ function ChannelToggleCard({
   onChange?: (checked: boolean) => void
 }) {
   return (
-    <div className="bani-toggle-card">
-      <div className="bani-toggle-card__copy">
+    <div className="rh-toggle-card">
+      <div className="rh-toggle-card__copy">
         <Space size={8}>
           {icon}
-          <Text className="bani-toggle-card__title">{title}</Text>
+          <Text className="rh-toggle-card__title">{title}</Text>
         </Space>
-        <Text className="bani-toggle-card__description">{description}</Text>
+        <Text className="rh-toggle-card__description">{description}</Text>
       </div>
       <Switch checked={checked} disabled={disabled} onChange={onChange} />
     </div>
@@ -199,7 +199,11 @@ export default function NotificationPreferences() {
   }
 
   if (globalLoading || eventsLoading) {
-    return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />
+    return (
+      <div className="rh-fullscreen-state">
+        <Spin size="large" />
+      </div>
+    )
   }
 
   const eventPrefMap = new Map(localEventPrefs.map((p) => [p.event_type, p]))
@@ -207,28 +211,28 @@ export default function NotificationPreferences() {
   const mandatoryEvents = localEventPrefs.filter((event) => event.is_mandatory).length
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Личные настройки"
         title="Настройки уведомлений"
         description="Управляйте каналами доставки и типами событий без лишнего шума."
       />
 
-      <div className="bani-stat-grid">
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Активных каналов</span>
-          <span className="bani-stat-tile__value">{activeChannels}</span>
-          <span className="bani-stat-tile__hint">Push, email, SMS и Telegram с текущим состоянием на аккаунте.</span>
+      <div className="rh-stat-grid">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Активных каналов</span>
+          <span className="rh-stat-tile__value">{activeChannels}</span>
+          <span className="rh-stat-tile__hint">Push, email, SMS и Telegram с текущим состоянием на аккаунте.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Событий под настройку</span>
-          <span className="bani-stat-tile__value">{localEventPrefs.length}</span>
-          <span className="bani-stat-tile__hint">Можно гибко включать каналы для каждого типа события.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Событий под настройку</span>
+          <span className="rh-stat-tile__value">{localEventPrefs.length}</span>
+          <span className="rh-stat-tile__hint">Можно гибко включать каналы для каждого типа события.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Обязательных событий</span>
-          <span className="bani-stat-tile__value">{mandatoryEvents}</span>
-          <span className="bani-stat-tile__hint">Системные уведомления, которые нельзя полностью отключить.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Обязательных событий</span>
+          <span className="rh-stat-tile__value">{mandatoryEvents}</span>
+          <span className="rh-stat-tile__hint">Системные уведомления, которые нельзя полностью отключить.</span>
         </div>
       </div>
 
@@ -236,7 +240,7 @@ export default function NotificationPreferences() {
         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
           Включите или выключите каналы доставки уведомлений
         </Text>
-        <div className="bani-toggle-grid">
+        <div className="rh-toggle-grid">
           <ChannelToggleCard
             icon={<BellOutlined />}
             title="Push-уведомления"

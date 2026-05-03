@@ -11,14 +11,14 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
-import { CameraOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+} from '@/components/design/system'
+import { CameraOutlined, PlusOutlined, ReloadOutlined } from '@/components/design/icons'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { axiosInstance } from '@/api/axios-instance'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { formatPrice } from '@/lib/format'
 import dayjs from 'dayjs'
-import type { ColumnsType } from 'antd/es/table'
+import type { ColumnsType } from '@/components/design/types'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -267,7 +267,7 @@ export default function PhotoOrderPage() {
             width: '100%',
             minHeight: 100,
             padding: 8,
-            border: '1px solid #d9d9d9',
+            border: '1px solid #c9c1b5',
             borderRadius: 6,
             fontFamily: 'inherit',
             fontSize: 14,

@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { Typography, Spin } from 'antd'
+import { Typography, Spin } from '@/components/design/system'
 import {
   SearchOutlined,
   EnvironmentOutlined,
   FireOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useGetSearchSuggestions } from '@/api/generated/search/search'
 
 const { Text } = Typography
@@ -90,9 +90,12 @@ export default function SearchSuggestions({
         top: '100%',
         left: 0,
         right: 0,
-        background: '#fff',
-        borderRadius: '0 0 8px 8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+        background: 'var(--rh-surface-strong)',
+        border: '1px solid var(--rh-border)',
+        borderTop: 0,
+        borderRadius: '0 0 20px 20px',
+        boxShadow: 'var(--rh-shadow)',
+        backdropFilter: 'blur(18px)',
         zIndex: 100,
         maxHeight: 360,
         overflow: 'auto',
@@ -109,8 +112,8 @@ export default function SearchSuggestions({
       ) : (
         sortedGroups.map((type) => (
           <div key={type}>
-            <div style={{ padding: '8px 16px 4px', background: '#fafafa' }}>
-              <Text type="secondary" style={{ fontSize: 12, textTransform: 'uppercase' }}>
+            <div style={{ padding: '10px 16px 6px', background: 'rgba(248, 244, 236, 0.76)' }}>
+              <Text type="secondary" style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase' }}>
                 {TYPE_LABELS[type] ?? type}
               </Text>
             </div>
@@ -126,6 +129,7 @@ export default function SearchSuggestions({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
+                  minHeight: 42,
                 }}
                 onMouseDown={(e) => {
                   e.preventDefault()
@@ -135,7 +139,7 @@ export default function SearchSuggestions({
                   if (e.key === 'Enter') onSelect(text)
                 }}
               >
-                <span style={{ color: '#999' }}>{TYPE_ICONS[type] ?? <SearchOutlined />}</span>
+                <span style={{ color: 'var(--rh-text-muted)' }}>{TYPE_ICONS[type] ?? <SearchOutlined />}</span>
                 <span>{text}</span>
               </div>
             ))}

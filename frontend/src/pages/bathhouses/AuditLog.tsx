@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { DatePicker, Table, Tag, Typography, Card, Space } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
-import { HistoryOutlined } from '@ant-design/icons'
+import { DatePicker, Table, Tag, Typography, Card, Space } from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
+import { HistoryOutlined } from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useParams } from 'react-router-dom'
 import { useGetMyBathhousesIdHistory } from '@/api/generated/bathhouses/bathhouses'
@@ -61,11 +61,11 @@ function renderChangedFields(fields: unknown): React.ReactNode {
             return (
               <div key={key} style={{ marginBottom: 4, fontSize: 13 }}>
                 <strong>{label}:</strong>{' '}
-                <span style={{ color: '#cf1322', textDecoration: 'line-through' }}>
+                <span style={{ color: '#b42318', textDecoration: 'line-through' }}>
                   {formatValue(typedChange.old)}
                 </span>
                 {' → '}
-                <span style={{ color: '#389e0d' }}>{formatValue(typedChange.new)}</span>
+                <span style={{ color: '#15803d' }}>{formatValue(typedChange.new)}</span>
               </div>
             )
           }

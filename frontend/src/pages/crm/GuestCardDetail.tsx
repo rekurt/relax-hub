@@ -12,11 +12,11 @@ import {
   Statistic,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   SaveOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useParams, useNavigate } from 'react-router-dom'
 import {

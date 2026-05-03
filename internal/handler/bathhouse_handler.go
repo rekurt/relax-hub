@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -91,7 +91,7 @@ func getIPHash(r *http.Request) string {
 	}
 
 	// Hash the IP
-	hash := md5.Sum([]byte(ip))
+	hash := sha256.Sum256([]byte(ip))
 	return fmt.Sprintf("%x", hash)
 }
 

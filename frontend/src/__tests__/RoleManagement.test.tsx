@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
-import { App as AntApp, ConfigProvider } from 'antd'
-import ruRU from 'antd/locale/ru_RU'
+import { App as AntApp, ConfigProvider } from '@/components/design/system'
+import { ruRU } from '@/components/design/system'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import RoleManagement from '@/pages/admin/RoleManagement'
 
@@ -33,7 +33,7 @@ function renderWithProviders(ui: React.ReactElement) {
 const mockAdmins = [
   {
     id: 'admin-1',
-    email: 'admin@bani.ru',
+    email: 'admin@relaxhub.ru',
     name: 'Алексей Админов',
     admin_sub_role: 'super_admin',
     two_fa_method: 'totp',
@@ -41,7 +41,7 @@ const mockAdmins = [
   },
   {
     id: 'admin-2',
-    email: 'mod@bani.ru',
+    email: 'mod@relaxhub.ru',
     name: 'Мария Модератор',
     admin_sub_role: 'moderator',
     two_fa_method: 'none',
@@ -49,7 +49,7 @@ const mockAdmins = [
   },
   {
     id: 'admin-3',
-    email: 'support@bani.ru',
+    email: 'support@relaxhub.ru',
     name: 'Иван Поддержкин',
     admin_sub_role: 'support_l1',
     two_fa_method: 'sms',
@@ -109,9 +109,9 @@ describe('RoleManagement', () => {
       expect(screen.getByText('Алексей Админов')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('admin@bani.ru')).toBeInTheDocument()
+    expect(screen.getByText('admin@relaxhub.ru')).toBeInTheDocument()
     expect(screen.getByText('Мария Модератор')).toBeInTheDocument()
-    expect(screen.getByText('mod@bani.ru')).toBeInTheDocument()
+    expect(screen.getByText('mod@relaxhub.ru')).toBeInTheDocument()
     expect(screen.getByText('Иван Поддержкин')).toBeInTheDocument()
   })
 
