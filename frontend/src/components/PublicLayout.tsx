@@ -57,6 +57,7 @@ export default function PublicLayout() {
         suffixIcon={<DownOutlined />}
         variant="borderless"
         size="middle"
+        allowClear
         options={cities.map((city) => ({
           label: city.name ?? 'Город',
           value: city.slug ?? '',
