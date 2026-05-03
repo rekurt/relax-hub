@@ -42,6 +42,7 @@ import PriceBreakdown from '@/components/PriceBreakdown'
 import DiscountInput, { EMPTY_DISCOUNT_STATE, type DiscountState } from '@/components/DiscountInput'
 import { formatPrice } from '@/lib/format'
 import { formatSlotTimeLabel, getRangeHours, resolveSlotRangeSelection, type SlotRangeSelection } from '@/lib/slot-selection'
+import { useDeviceToken } from '@/lib/useDeviceToken'
 
 const { Title, Text } = Typography
 
@@ -54,22 +55,18 @@ interface AddonSelection {
 
 const PUSH_PROMPT_KEY = 'rh_push_prompted'
 
-function maybeRequestPushPermission() {
-  if (typeof window === 'undefined') return
-  if (localStorage.getItem(PUSH_PROMPT_KEY)) return
-  if (typeof Notification === 'undefined' || Notification.permission !== 'default') {
-    localStorage.setItem(PUSH_PROMPT_KEY, '1')
-    return
-  }
-  Notification.requestPermission().finally(() => {
-    localStorage.setItem(PUSH_PROMPT_KEY, '1')
-  })
-}
-
 export default function BookingCreate() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { message } = App.useApp()
+  const { requestPushPermission } = useDeviceToken()
+
+  const maybeRequestPushPermission = () => {
+    if (typeof window === 'undefined') return
+    if (localStorage.getItem(PUSH_PROMPT_KEY)) return
+    localStorage.setItem(PUSH_PROMPT_KEY, '1')
+    void requestPushPermission()
+  }
 
   const bathhouseId = searchParams.get('bathhouse') ?? ''
   const initialDate = searchParams.get('date') ?? dayjs().format('YYYY-MM-DD')
@@ -202,10 +199,20 @@ export default function BookingCreate() {
     }).filter((item) => item.price > 0)
   }, [selectedAddons, addons, durationHours, guestCount])
 
-  // Auto-apply wallet: if user has any balance, apply min(wallet, total) and charge remainder via selected method
-  const walletApplied = walletBalance > 0 ? Math.min(walletBalance, totalPrice) : 0
-  const cardOnlyPath = paymentMethod !== 'wallet' && walletApplied < totalPrice
-  const walletWillCoverFullPrice = walletApplied >= totalPrice
+  // Net amount the user actually has to pay after server-side discounts.
+  // Wallet deduction must be capped by this — not by gross totalPrice — otherwise
+  // we'd send wallet_amount > booking.total_price after the server applies discounts.
+  const netPayable = Math.max(
+    0,
+    totalPrice
+      - promoDiscountAmount
+      - (discounts.certificateAmount || 0)
+      - (discounts.pointsAmount || 0)
+      - (discounts.referralAmount || 0),
+  )
+  const walletApplied = walletBalance > 0 ? Math.min(walletBalance, netPayable) : 0
+  const cardOnlyPath = paymentMethod !== 'wallet' && walletApplied < netPayable
+  const walletWillCoverFullPrice = walletApplied >= netPayable && netPayable > 0
 
   const createBookingMutation = usePostBookings({
     mutation: {
@@ -542,7 +549,7 @@ export default function BookingCreate() {
                 message={
                   <span>
                     <WalletOutlined /> С кошелька будет списано <b>{formatPrice(walletApplied)}</b>,
-                    остаток <b>{formatPrice(totalPrice - walletApplied)}</b> — выбранным методом ниже.
+                    остаток <b>{formatPrice(netPayable - walletApplied)}</b> — выбранным методом ниже.
                   </span>
                 }
               />
