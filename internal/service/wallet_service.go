@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -22,6 +23,11 @@ type WalletBalanceSummary struct {
 
 type WalletService interface {
 	CreateWallet(ctx context.Context, userID uuid.UUID, currency domain.WalletCurrency) (*domain.Wallet, error)
+	// EnsureWallet returns the user's wallet, creating one with the
+	// region-appropriate currency if missing. Safe under concurrent first
+	// requests: a UNIQUE(user_id) conflict from a racing creator is treated
+	// as recoverable by re-fetching.
+	EnsureWallet(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error)
 	GetWallet(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error)
 	TopUp(ctx context.Context, userID uuid.UUID, amount int64) (*domain.WalletTransaction, error)
 	Spend(ctx context.Context, walletID uuid.UUID, amount int64, refType string, refID *uuid.UUID, description string) (*domain.WalletTransaction, error)
@@ -47,17 +53,50 @@ type WalletService interface {
 
 type walletService struct {
 	walletRepo repository.WalletRepository
+	userRepo   repository.UserRepository
 	logger     *logger.Logger
 }
 
 func NewWalletService(
 	walletRepo repository.WalletRepository,
+	userRepo repository.UserRepository,
 	log *logger.Logger,
 ) WalletService {
 	return &walletService{
 		walletRepo: walletRepo,
+		userRepo:   userRepo,
 		logger:     log,
 	}
+}
+
+func (s *walletService) EnsureWallet(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error) {
+	wallet, err := s.walletRepo.GetByUserID(ctx, userID)
+	if err == nil {
+		return wallet, nil
+	}
+	if !errors.Is(err, domain.ErrWalletNotFound) {
+		return nil, err
+	}
+
+	currency := domain.WalletCurrencyRUB
+	if user, uErr := s.userRepo.GetByID(ctx, userID); uErr == nil {
+		currency = domain.CurrencyForRegion(user.Region)
+	} else if !errors.Is(uErr, domain.ErrNotFound) {
+		return nil, uErr
+	}
+
+	created, createErr := s.CreateWallet(ctx, userID, currency)
+	if createErr == nil {
+		return created, nil
+	}
+
+	// A racing first-time request may have inserted the wallet between our
+	// GetByUserID and Create — re-fetch and prefer the existing row over
+	// surfacing a UNIQUE(user_id) conflict to the caller.
+	if wallet, refetchErr := s.walletRepo.GetByUserID(ctx, userID); refetchErr == nil {
+		return wallet, nil
+	}
+	return nil, createErr
 }
 
 func (s *walletService) CreateWallet(ctx context.Context, userID uuid.UUID, currency domain.WalletCurrency) (*domain.Wallet, error) {

@@ -20,6 +20,7 @@ import (
 
 type mockWalletService struct {
 	createWalletFn     func(ctx context.Context, userID uuid.UUID, currency domain.WalletCurrency) (*domain.Wallet, error)
+	ensureWalletFn     func(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error)
 	getWalletFn        func(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error)
 	topUpFn            func(ctx context.Context, userID uuid.UUID, amount int64) (*domain.WalletTransaction, error)
 	spendFn            func(ctx context.Context, walletID uuid.UUID, amount int64, refType string, refID *uuid.UUID, description string) (*domain.WalletTransaction, error)
@@ -51,6 +52,16 @@ func (m *mockWalletService) GetWallet(ctx context.Context, userID uuid.UUID) (*d
 		return m.getWalletFn(ctx, userID)
 	}
 	return nil, domain.ErrWalletNotFound
+}
+
+func (m *mockWalletService) EnsureWallet(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error) {
+	if m.ensureWalletFn != nil {
+		return m.ensureWalletFn(ctx, userID)
+	}
+	if m.createWalletFn != nil {
+		return m.createWalletFn(ctx, userID, domain.WalletCurrencyRUB)
+	}
+	return nil, nil
 }
 
 func (m *mockWalletService) TopUp(ctx context.Context, userID uuid.UUID, amount int64) (*domain.WalletTransaction, error) {

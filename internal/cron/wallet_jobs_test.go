@@ -27,7 +27,7 @@ func newTestWalletCronScheduler(notifSvc *mockNotificationService, walletSvc ser
 func TestHandleBonusExpiration_NoWallets(t *testing.T) {
 	walletRepo := mock.NewWalletRepo().(*mock.WalletRepo)
 	notifSvc := &mockNotificationService{}
-	walletSvc := service.NewWalletService(walletRepo, logger.New(logger.LevelInfo))
+	walletSvc := service.NewWalletService(walletRepo, mock.NewUserRepo(), logger.New(logger.LevelInfo))
 
 	cs := newTestWalletCronScheduler(notifSvc, walletSvc, walletRepo)
 	require.NoError(t, cs.bonusExpiration(context.Background()))
@@ -38,7 +38,7 @@ func TestHandleBonusExpiration_NoWallets(t *testing.T) {
 func TestHandleBonusExpiration_ExpiresOldBonuses(t *testing.T) {
 	walletRepo := mock.NewWalletRepo().(*mock.WalletRepo)
 	notifSvc := &mockNotificationService{}
-	walletSvc := service.NewWalletService(walletRepo, logger.New(logger.LevelInfo))
+	walletSvc := service.NewWalletService(walletRepo, mock.NewUserRepo(), logger.New(logger.LevelInfo))
 
 	userID := uuid.New()
 	walletID := uuid.New()
@@ -84,7 +84,7 @@ func TestHandleBonusExpiration_ExpiresOldBonuses(t *testing.T) {
 func TestHandleBonusExpiration_SkipsActiveBonuses(t *testing.T) {
 	walletRepo := mock.NewWalletRepo().(*mock.WalletRepo)
 	notifSvc := &mockNotificationService{}
-	walletSvc := service.NewWalletService(walletRepo, logger.New(logger.LevelInfo))
+	walletSvc := service.NewWalletService(walletRepo, mock.NewUserRepo(), logger.New(logger.LevelInfo))
 
 	userID := uuid.New()
 	walletID := uuid.New()
@@ -128,7 +128,7 @@ func TestHandleBonusExpiration_SkipsActiveBonuses(t *testing.T) {
 func TestHandleBonusExpiryNotify_NotifiesAt14And3Days(t *testing.T) {
 	walletRepo := mock.NewWalletRepo().(*mock.WalletRepo)
 	notifSvc := &mockNotificationService{}
-	walletSvc := service.NewWalletService(walletRepo, logger.New(logger.LevelInfo))
+	walletSvc := service.NewWalletService(walletRepo, mock.NewUserRepo(), logger.New(logger.LevelInfo))
 
 	userID := uuid.New()
 	walletID := uuid.New()
@@ -175,7 +175,7 @@ func TestHandleBonusExpiryNotify_NotifiesAt14And3Days(t *testing.T) {
 func TestHandleBonusExpiryNotify_NoNotificationForDistantBonuses(t *testing.T) {
 	walletRepo := mock.NewWalletRepo().(*mock.WalletRepo)
 	notifSvc := &mockNotificationService{}
-	walletSvc := service.NewWalletService(walletRepo, logger.New(logger.LevelInfo))
+	walletSvc := service.NewWalletService(walletRepo, mock.NewUserRepo(), logger.New(logger.LevelInfo))
 
 	userID := uuid.New()
 	walletID := uuid.New()
@@ -220,7 +220,7 @@ func TestHandleBonusExpiryNotify_Deduplication(t *testing.T) {
 
 	walletRepo := mock.NewWalletRepo().(*mock.WalletRepo)
 	notifSvc := &mockNotificationService{}
-	walletSvc := service.NewWalletService(walletRepo, logger.New(logger.LevelInfo))
+	walletSvc := service.NewWalletService(walletRepo, mock.NewUserRepo(), logger.New(logger.LevelInfo))
 
 	userID := uuid.New()
 	walletID := uuid.New()

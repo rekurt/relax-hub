@@ -27,7 +27,7 @@ func newPayoutTestEnv() *payoutTestEnv {
 	userRepo := mock.NewUserRepo()
 	payoutProvider := payment.NewMockPayoutProvider()
 	log := logger.New(logger.LevelWarn)
-	walletSvc := service.NewWalletService(walletRepo, log)
+	walletSvc := service.NewWalletService(walletRepo, userRepo, log)
 	payoutSvc := service.NewPayoutService(payoutRepo, walletRepo, userRepo, payoutProvider, log)
 	return &payoutTestEnv{payoutSvc: payoutSvc, walletSvc: walletSvc, userRepo: userRepo, payoutProvider: payoutProvider}
 }

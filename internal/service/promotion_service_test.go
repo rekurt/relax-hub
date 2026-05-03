@@ -72,6 +72,9 @@ func (m *promoTestWalletSvc) Spend(_ context.Context, _ uuid.UUID, _ int64, _ st
 func (m *promoTestWalletSvc) CreateWallet(_ context.Context, _ uuid.UUID, _ domain.WalletCurrency) (*domain.Wallet, error) {
 	return nil, nil
 }
+func (m *promoTestWalletSvc) EnsureWallet(_ context.Context, _ uuid.UUID) (*domain.Wallet, error) {
+	return nil, nil
+}
 func (m *promoTestWalletSvc) TopUp(_ context.Context, _ uuid.UUID, _ int64) (*domain.WalletTransaction, error) {
 	return nil, nil
 }
