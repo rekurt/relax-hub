@@ -117,7 +117,7 @@ describe('BathhouseCard', () => {
       <BathhouseCard bathhouse={{ ...mockBathhouse, images: undefined, gallery_preview: undefined }} />,
     )
 
-    expect(screen.getByText('Нет фото')).toBeInTheDocument()
+    expect(screen.getByText('Фото объекта')).toBeInTheDocument()
   })
 
   it('normalizes relative cover image urls', () => {
@@ -136,7 +136,7 @@ describe('BathhouseCard', () => {
       <BathhouseCard bathhouse={{ ...mockBathhouse, last_minute_active: true, last_minute_discount_percent: 20 }} />,
     )
 
-    expect(screen.getByText('Last minute -20%')).toBeInTheDocument()
+    expect(screen.getByText('Срочная скидка -20%')).toBeInTheDocument()
   })
 
   it('does not show last minute badge when last_minute_active is false', () => {
@@ -144,7 +144,7 @@ describe('BathhouseCard', () => {
       <BathhouseCard bathhouse={{ ...mockBathhouse, last_minute_active: false }} />,
     )
 
-    expect(screen.queryByText(/Last minute/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Срочная скидка/)).not.toBeInTheDocument()
   })
 
   it('does not show last minute badge when last_minute_active is undefined', () => {
@@ -152,6 +152,6 @@ describe('BathhouseCard', () => {
       <BathhouseCard bathhouse={mockBathhouse} />,
     )
 
-    expect(screen.queryByText(/Last minute/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Срочная скидка/)).not.toBeInTheDocument()
   })
 })

@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons'
 import { formatPrice } from '@/lib/format'
 import { CERTIFICATE_PAYMENT_LABELS, type CertificatePaymentMethod } from '@/lib/certificate-payment'
+import { PLATFORM_NAME } from '@/content/support'
 
 interface CertificateGiftSummaryProps {
   amount: number
@@ -27,7 +28,7 @@ export default function CertificateGiftSummary({
   paymentMethod,
 }: CertificateGiftSummaryProps) {
   const safeAmount = amount > 0 ? amount : 300000
-  const recipient = recipientName?.trim() || 'Гость BANI'
+  const recipient = recipientName?.trim() || `Гость ${PLATFORM_NAME}`
   const note =
     message?.trim() ||
     'Подарок на отдых, который можно использовать на бронирование в удобный момент.'
@@ -45,10 +46,10 @@ export default function CertificateGiftSummary({
 
       <div className="bani-certificate-summary__card">
         <div className="bani-certificate-summary__card-top">
-          <div className="bani-certificate-summary__brand">BANI</div>
+          <div className="bani-certificate-summary__brand">{PLATFORM_NAME}</div>
           <div className="bani-certificate-summary__chip">
             <GiftOutlined />
-            Gift Certificate
+            Подарочный сертификат
           </div>
         </div>
 

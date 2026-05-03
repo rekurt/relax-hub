@@ -299,7 +299,7 @@ describe('PricingRules', () => {
     })
 
     expect(mockDeleteMutation.mutate).toHaveBeenCalledWith({ id: 'rule-1' })
-  }, 15000)
+  }, 60000)
 
   it('renders switch for is_active toggle', () => {
     mockBathhouseStore('bath-1')

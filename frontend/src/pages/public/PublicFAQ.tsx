@@ -70,11 +70,11 @@ export default function PublicFAQ() {
       <PageHeader
         eyebrow="Поддержка"
         title="Чем можем помочь прямо сейчас"
-        description={`Это не декоративный FAQ, а рабочий help-раздел по реальным сценариям ${PLATFORM_NAME}: выбор слотов, checkout, оплата, отмена, кошелёк, отзывы и поддержка.`}
+        description={`Это не декоративная справка, а рабочий раздел помощи по реальным сценариям ${PLATFORM_NAME}: выбор слотов, оформление брони, оплата, отмена, кошелёк, отзывы и поддержка.`}
       />
 
       <section className="bani-hero-panel">
-        <div className="bani-hero-panel__eyebrow">Help Center</div>
+        <div className="bani-hero-panel__eyebrow">Центр помощи</div>
         <h2 className="bani-hero-panel__title">Понятные ответы до брони, во время оплаты и после визита.</h2>
         <div className="bani-hero-panel__description">
           Когда пользователь не понимает, как выбрать слот, оплатить, отменить или оставить отзыв, он не должен искать ответ по всему продукту. Экран собирает самые частые сценарии в одном месте и сразу показывает, куда идти дальше.

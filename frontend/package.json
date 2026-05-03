@@ -11,6 +11,7 @@
     "generate:api": "orval && find src/api/generated -name '*.ts' -exec sed -i.bak -E 's|`/api/v1/|`/|g' {} \\; && find src/api/generated -name '*.bak' -delete"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.2.2",
     "@tanstack/react-query": "^5.90.21",
     "antd": "^6.3.2",
     "axios": "^1.13.6",

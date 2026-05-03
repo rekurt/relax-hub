@@ -102,10 +102,12 @@ export default function BathhouseCard({
   return (
     <Card
       hoverable
+      className="bani-listing-card"
       onClick={() => navigate(`/bathhouses/${bathhouse.slug ?? bathhouse.id}`)}
       cover={
         coverImage ? (
           <Image
+            className="bani-listing-card__image"
             alt={bathhouse.name}
             src={coverImage}
             height={200}
@@ -113,63 +115,55 @@ export default function BathhouseCard({
             preview={false}
           />
         ) : (
-          <div
-            style={{
-              height: 200,
-              background: '#f5f5f5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text type="secondary">Нет фото</Text>
+          <div className="bani-listing-card__image-placeholder">
+            <Text type="secondary">Фото объекта</Text>
           </div>
         )
       }
       actions={cardActions.length > 0 ? cardActions : undefined}
     >
-      <Space orientation="vertical" size={4} style={{ width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Title level={5} style={{ margin: 0 }}>
+      <Space orientation="vertical" size={8} className="bani-listing-card__body">
+        <div className="bani-listing-card__head">
+          <Title level={5} className="bani-listing-card__title">
             {bathhouse.name}
             {bathhouse.is_photo_verified && (
-              <CheckCircleOutlined style={{ color: '#52c41a', marginLeft: 6, fontSize: 14 }} />
+              <CheckCircleOutlined className="bani-listing-card__verified" />
             )}
           </Title>
-          <Text strong style={{ whiteSpace: 'nowrap' }}>
+          <Text strong className="bani-listing-card__price">
             {bathhouse.price_per_hour ? formatPrice(bathhouse.price_per_hour) + '/ч' : ''}
           </Text>
         </div>
 
         {bathhouse.last_minute_active && (
-          <Tag color="red" icon={<ThunderboltOutlined />}>
-            Last minute {bathhouse.last_minute_discount_percent ? `-${bathhouse.last_minute_discount_percent}%` : ''}
+          <Tag className="bani-listing-card__deal-tag" icon={<ThunderboltOutlined />}>
+            Срочная скидка {bathhouse.last_minute_discount_percent ? `-${bathhouse.last_minute_discount_percent}%` : ''}
           </Tag>
         )}
 
         {bathhouse.address && (
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            <EnvironmentOutlined style={{ marginRight: 4 }} />
+          <Text type="secondary" className="bani-listing-card__address">
+            <EnvironmentOutlined />
             {bathhouse.address}
           </Text>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Rate disabled allowHalf value={bathhouse.rating ?? 0} style={{ fontSize: 14 }} />
-          <Text type="secondary" style={{ fontSize: 13 }}>
+        <div className="bani-listing-card__rating">
+          <Rate disabled allowHalf value={bathhouse.rating ?? 0} className="bani-listing-card__stars" />
+          <Text type="secondary" className="bani-listing-card__rating-text">
             {bathhouse.rating?.toFixed(1)} ({bathhouse.review_count ?? 0})
           </Text>
         </div>
 
         {amenities.length > 0 && (
-          <div style={{ marginTop: 4 }}>
+          <div className="bani-listing-card__tags">
             {amenities.slice(0, 4).map((label) => (
-              <Tag key={label} style={{ marginBottom: 4 }}>
+              <Tag key={label} className="bani-listing-card__tag">
                 {label}
               </Tag>
             ))}
             {amenities.length > 4 && (
-              <Tag>+{amenities.length - 4}</Tag>
+              <Tag className="bani-listing-card__tag">+{amenities.length - 4}</Tag>
             )}
           </div>
         )}

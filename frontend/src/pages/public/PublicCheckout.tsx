@@ -303,7 +303,7 @@ export default function PublicCheckout() {
       />
 
       <section className="bani-hero-panel">
-        <div className="bani-hero-panel__eyebrow">Checkout</div>
+        <div className="bani-hero-panel__eyebrow">Оформление</div>
         <h2 className="bani-hero-panel__title">Остался один короткий шаг до брони</h2>
         <div className="bani-hero-panel__description">
           На этом экране остаются только реальные действия: слот, контакты, SMS и создание брони. Ограничения и правила видны рядом со сводкой.

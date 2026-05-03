@@ -136,7 +136,7 @@ describe('BathhouseSearch - New Filters', () => {
   it('shows last-minute badge on cards with active discounts', () => {
     renderWithProviders(<BathhouseSearch />)
 
-    expect(screen.getByText(/Last minute/)).toBeInTheDocument()
+    expect(screen.getByText(/Срочная скидка/)).toBeInTheDocument()
     expect(screen.getByText(/-20%/)).toBeInTheDocument()
   })
 

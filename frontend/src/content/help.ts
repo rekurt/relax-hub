@@ -110,7 +110,7 @@ export const HELP_SCENARIO_CARDS: HelpScenarioCard[] = [
   },
   {
     key: 'checkout',
-    eyebrow: 'Checkout',
+    eyebrow: 'Оформление',
     title: 'Понять оплату до подтверждения',
     description: 'Показываем итоговую стоимость, длительность, депозит и доступные способы оплаты до создания брони, чтобы не было сюрпризов на последнем шаге.',
   },

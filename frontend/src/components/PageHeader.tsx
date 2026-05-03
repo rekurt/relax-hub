@@ -5,11 +5,12 @@ interface PageHeaderProps {
   title: ReactNode
   description?: ReactNode
   extra?: ReactNode
+  size?: 'default' | 'compact'
 }
 
-export default function PageHeader({ eyebrow, title, description, extra }: PageHeaderProps) {
+export default function PageHeader({ eyebrow, title, description, extra, size = 'default' }: PageHeaderProps) {
   return (
-    <header className="bani-page-header">
+    <header className={`bani-page-header bani-page-header--${size}`}>
       <div className="bani-page-header__copy">
         {eyebrow && (
           <div className="bani-page-header__eyebrow">

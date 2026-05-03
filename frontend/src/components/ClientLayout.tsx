@@ -66,6 +66,7 @@ export default function ClientLayout() {
         )}
         brandSubtitle={null}
         brandAriaLabel={PLATFORM_NAME}
+        surface="client"
         homeTo="/"
         primaryItems={CLIENT_PRIMARY_NAV_ITEMS}
         drawerSections={CLIENT_DRAWER_SECTIONS}

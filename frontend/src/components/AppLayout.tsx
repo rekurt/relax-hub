@@ -57,6 +57,7 @@ export default function AppLayout() {
       )}
       brandSubtitle={null}
       brandAriaLabel={PLATFORM_NAME}
+      surface="owner"
       homeTo="/dashboard"
       primaryItems={OWNER_PRIMARY_NAV_ITEMS}
       overflowItems={OWNER_OVERFLOW_NAV_ITEMS}

@@ -22,6 +22,7 @@ import CertificatePaymentMethodSelector from '@/components/certificates/Certific
 import type { CertificatePaymentMethod } from '@/lib/certificate-payment'
 import { formatDateTime, formatPrice } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
+import { PLATFORM_NAME } from '@/content/support'
 
 const PRESET_AMOUNTS = [100000, 200000, 300000, 500000]
 
@@ -36,7 +37,7 @@ const HERO_META = [
   },
   {
     label: 'Использование',
-    value: 'Любые бани в BANI, целиком или частями',
+    value: `Любые бани в ${PLATFORM_NAME}, целиком или частями`,
   },
   {
     label: 'Поддержка',
@@ -203,10 +204,10 @@ function OrderStatePanel({
     <section className="bani-certificates-status bani-certificates-status--warning">
       <div className="bani-certificates-status__copy">
         <h2>Оплата не завершена</h2>
-        <p>Заказ сохранился. Можно вернуться к checkout и повторить платёж другим способом.</p>
+        <p>Заказ сохранился. Можно вернуться к оформлению и повторить платёж другим способом.</p>
       </div>
       <Link to="/certificates">
-        <Button type="primary" size="large">Вернуться к checkout</Button>
+        <Button type="primary" size="large">Вернуться к оформлению</Button>
       </Link>
     </section>
   )
@@ -312,8 +313,8 @@ export default function CertificatePurchase() {
       </div>
 
       <section className="bani-hero-panel bani-hero-panel--dark bani-certificates-hero">
-        <div className="bani-hero-panel__eyebrow">Подарок BANI</div>
-        <h1 className="bani-hero-panel__title">Подарочный сертификат BANI</h1>
+        <div className="bani-hero-panel__eyebrow">Подарок RelaxHUB</div>
+        <h1 className="bani-hero-panel__title">Подарочный сертификат RelaxHUB</h1>
         <div className="bani-hero-panel__description">
           Оплачиваете один раз — а отдыхают, когда захочется. Сертификат работает как личный баланс на бронирования: его можно потратить целиком или по частям в любой бане сети, без привязки к конкретной дате и без скрытых условий.
         </div>
@@ -451,7 +452,7 @@ export default function CertificatePurchase() {
                   <div className="bani-certificates-payment-block">
                     <div className="bani-certificates-payment-block__header">
                       <div>
-                        <div className="bani-certificates-section-eyebrow">Payment</div>
+                        <div className="bani-certificates-section-eyebrow">Оплата</div>
                         <h3>Способ оплаты</h3>
                       </div>
                       <span>{paymentHint}</span>
@@ -478,7 +479,7 @@ export default function CertificatePurchase() {
             <div className="bani-grid bani-grid--two bani-certificates-detail-grid">
               <section className="bani-section-card">
                 <div className="bani-section-card__surface">
-                  <div className="bani-certificates-section-eyebrow">How it works</div>
+                  <div className="bani-certificates-section-eyebrow">Как работает</div>
                   <h3 className="bani-section-card__title">Процесс покупки без серых зон</h3>
                   <div className="bani-feature-list">
                     {HOW_IT_WORKS.map((item, index) => (
@@ -496,7 +497,7 @@ export default function CertificatePurchase() {
 
               <section className="bani-section-card">
                 <div className="bani-section-card__surface">
-                  <div className="bani-certificates-section-eyebrow">FAQ</div>
+                  <div className="bani-certificates-section-eyebrow">Вопросы</div>
                   <h3 className="bani-section-card__title">Важные детали перед оплатой</h3>
                   <Collapse
                     ghost

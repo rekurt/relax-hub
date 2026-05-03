@@ -15,6 +15,7 @@ interface TopNavigationLayoutProps {
   brandTitle: React.ReactNode
   brandSubtitle: React.ReactNode
   brandAriaLabel?: string
+  surface?: 'public' | 'client' | 'owner' | 'admin'
   homeTo: string
   primaryItems: NavigationItem[]
   overflowItems?: NavigationItem[]
@@ -89,6 +90,7 @@ export default function TopNavigationLayout({
   brandTitle,
   brandSubtitle,
   brandAriaLabel,
+  surface = 'public',
   homeTo,
   primaryItems,
   overflowItems = [],
@@ -148,7 +150,7 @@ export default function TopNavigationLayout({
 
   return (
     <Layout
-      className="bani-shell"
+      className={`bani-shell bani-shell--${surface}`}
       style={{
         minHeight: '100vh',
         background: 'transparent',

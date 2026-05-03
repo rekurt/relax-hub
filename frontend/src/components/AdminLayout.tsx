@@ -57,6 +57,7 @@ export default function AdminLayout() {
       )}
       brandSubtitle={null}
       brandAriaLabel={PLATFORM_NAME}
+      surface="admin"
       homeTo="/admin"
       primaryItems={ADMIN_PRIMARY_NAV_ITEMS}
       overflowItems={ADMIN_OVERFLOW_NAV_ITEMS}

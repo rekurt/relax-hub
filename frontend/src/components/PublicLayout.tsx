@@ -79,6 +79,7 @@ export default function PublicLayout() {
       )}
       brandSubtitle={null}
       brandAriaLabel={PLATFORM_NAME}
+      surface={isClientUser ? 'client' : 'public'}
       homeTo="/"
       primaryItems={isClientUser ? CLIENT_PRIMARY_NAV_ITEMS : PUBLIC_PRIMARY_NAV_ITEMS}
       drawerSections={isClientUser ? CLIENT_DRAWER_SECTIONS : PUBLIC_DRAWER_SECTIONS}

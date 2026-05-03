@@ -43,11 +43,11 @@ export default function PublicTerms() {
       <PageHeader
         eyebrow="Юридическая рамка"
         title={`Условия использования ${PLATFORM_NAME}`}
-        description="Эта версия Terms of Use описывает роль платформы, порядок бронирования, правила пользовательского контента и базовые ограничения ответственности."
+        description="Эта версия условий описывает роль платформы, порядок бронирования, правила пользовательского контента и базовые ограничения ответственности."
       />
 
       <section className="bani-hero-panel bani-hero-panel--dark">
-        <div className="bani-hero-panel__eyebrow">Legal</div>
+        <div className="bani-hero-panel__eyebrow">Условия</div>
         <h2 className="bani-hero-panel__title">Понятные правила использования сервиса до первой оплаты.</h2>
         <div className="bani-hero-panel__description">
           Мы не прячем важные условия в мелкий шрифт. Документ фиксирует базовые договорённости между пользователем, платформой и объектом, где проходит бронирование.

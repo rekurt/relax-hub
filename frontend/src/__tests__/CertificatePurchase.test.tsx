@@ -92,12 +92,12 @@ describe('CertificatePurchase', () => {
     setupMocks()
     renderWithProviders(<CertificatePurchase />)
 
-    expect(screen.getByText('Подарочный сертификат BANI')).toBeInTheDocument()
-    expect(screen.getByText(/Оплатите подарок один раз/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Подарочный сертификат/ })).toBeInTheDocument()
+    expect(screen.getByText(/Оплачиваете один раз/i)).toBeInTheDocument()
     expect(screen.getByText('Срок действия')).toBeInTheDocument()
-    expect(screen.getByText('Доставка')).toBeInTheDocument()
+    expect(screen.getAllByText('Доставка').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Способ оплаты')).toBeInTheDocument()
-    expect(screen.getByText('Превью сертификата')).toBeInTheDocument()
+    expect(screen.getByText('Так будет выглядеть подарок')).toBeInTheDocument()
   })
 
   it('updates amount summary when preset is selected', () => {
@@ -232,6 +232,6 @@ describe('CertificatePurchase', () => {
     await waitFor(() => {
       expect(screen.getByText('Платёж обрабатывается')).toBeInTheDocument()
     })
-    expect(screen.getByText(/Подтверждаем оплату и выпуск сертификата/i)).toBeInTheDocument()
+    expect(screen.getByText(/Ждём подтверждение от банка и выпускаем сертификат/i)).toBeInTheDocument()
   })
 })

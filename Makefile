@@ -52,7 +52,7 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 swagger:
-	$(SWAG) init -g cmd/server/docs.go -o docs --parseDependency --parseInternal
+	$(SWAG) init -q -g cmd/server/docs.go -o docs --parseDependency --parseInternal
 
 swagger-fmt:
 	$(SWAG) fmt -g cmd/server/docs.go

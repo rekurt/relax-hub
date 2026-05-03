@@ -53,7 +53,7 @@ export default function ShellFooter({ showClientSection = false }: ShellFooterPr
         <section className="bani-shell-footer__column">
           <div className="bani-shell-footer__section-title">Поддержка и условия</div>
           <div className="bani-shell-footer__links">
-            <Link to="/terms" className="bani-shell-footer__link">Terms of Use</Link>
+            <Link to="/terms" className="bani-shell-footer__link">Условия использования</Link>
             <a href={`mailto:${PLATFORM_CONTACTS.supportEmail}`} className="bani-shell-footer__link">
               {PLATFORM_CONTACTS.supportEmail}
             </a>

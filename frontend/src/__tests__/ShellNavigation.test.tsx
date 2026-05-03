@@ -58,7 +58,7 @@ function renderPublicShell(route = '/catalog') {
             <Route path="faq" element={<div>Помощь</div>} />
             <Route path="contacts" element={<div>Контакты</div>} />
             <Route path="certificates" element={<div>Сертификаты</div>} />
-            <Route path="terms" element={<div>Terms of Use</div>} />
+            <Route path="terms" element={<div>Условия использования</div>} />
           </Route>
         </Routes>
       </MemoryRouter>
@@ -117,7 +117,7 @@ describe('Shell navigation', () => {
     expect(screen.getByRole('button', { name: 'Контакты' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Разделы' })).not.toBeInTheDocument()
 
-    expect(screen.getByText('Terms of Use')).toBeInTheDocument()
+    expect(screen.getByText('Условия использования')).toBeInTheDocument()
     expect(screen.getByText(/© relaxhub/i)).toBeInTheDocument()
     expect(screen.getByText('support@relaxhub.ru')).toBeInTheDocument()
     expect(screen.getByText('+7 (495) 555-21-21')).toBeInTheDocument()

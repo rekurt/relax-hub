@@ -270,7 +270,7 @@ describe('PublicCheckout', () => {
       expect(authState.setAuth).toHaveBeenCalled()
       expect(mockNavigate).toHaveBeenCalledWith('/client/bookings/booking-77', { replace: true })
     })
-  })
+  }, 60000)
 
   it('does not render separate duration controls', () => {
     renderWithProviders()

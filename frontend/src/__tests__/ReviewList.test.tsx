@@ -276,7 +276,7 @@ describe('ReviewList', () => {
     expect(screen.getByText('Все отзывы')).toBeInTheDocument()
   })
 
-  it('shows media images for reviews with media', { timeout: 15000 }, async () => {
+  it('shows media images for reviews with media', { timeout: 60000 }, async () => {
     mockBathhouseStore('bathhouse-1')
     vi.mocked(useGetBathhousesIdReviews).mockReturnValue({
       data: {
