@@ -23,6 +23,7 @@ import dayjs from 'dayjs'
 import type { InternalHandlerReviewResponse, InternalHandlerMediaResponse } from '@/api/generated/model'
 import { usePostReviewsIdReport } from '@/api/generated/complaints/complaints'
 import { useDeleteReviewsId } from '@/api/generated/reviews/reviews'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 const { Paragraph, Text } = Typography
 const { TextArea } = Input
@@ -105,12 +106,12 @@ export default function ReviewCard({
             m.type === 'image' ? (
               <Image
                 key={m.id}
-                src={m.thumbnail_url ?? m.url}
+                src={resolveAssetUrl(m.thumbnail_url ?? m.url)}
                 alt="Фото отзыва"
                 width={80}
                 height={80}
                 style={{ borderRadius: 12, objectFit: 'cover' }}
-                preview={{ src: m.url }}
+                preview={{ src: resolveAssetUrl(m.url) }}
               />
             ) : (
               <Tag key={m.id} color="blue" icon={<span>&#9654;</span>}>
@@ -188,7 +189,7 @@ export default function ReviewCard({
                   {review.images.map((url, idx) => (
                     <Image
                       key={idx}
-                      src={url}
+                      src={resolveAssetUrl(url)}
                       width={80}
                       height={80}
                       style={{ objectFit: 'cover', borderRadius: 12 }}

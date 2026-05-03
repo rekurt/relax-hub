@@ -32,6 +32,7 @@ import type { InternalHandlerPhotoResponse } from '@/api/generated/model'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 const { Title, Text } = Typography
 
@@ -234,10 +235,10 @@ export default function PhotoManager() {
               cover={
                 <div style={{ position: 'relative' }}>
                   <Image
-                    src={photo.thumbnail_url || photo.url}
+                    src={resolveAssetUrl(photo.thumbnail_url || photo.url)}
                     alt={`Фото ${index + 1}`}
                     style={{ height: 160, objectFit: 'cover', width: '100%' }}
-                    preview={{ src: photo.url }}
+                    preview={{ src: resolveAssetUrl(photo.url) }}
                     fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjYmZiZmJmIiBmb250LXNpemU9IjE0Ij7QpNC+0YLQvjwvdGV4dD48L3N2Zz4="
                   />
                   <Badge

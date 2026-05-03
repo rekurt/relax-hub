@@ -36,6 +36,8 @@ logger:
 storage:
   # MinIO / S3-compatible storage (env: BANI_STORAGE_*)
   endpoint: "localhost:9102"
+  # Browser-accessible base URL for uploaded files. Leave empty to reuse endpoint.
+  public_base_url: "http://localhost:9102"
   bucket: "bani-avatars"
   access_key: ""
   secret_key: ""

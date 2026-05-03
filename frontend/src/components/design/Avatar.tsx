@@ -13,6 +13,10 @@ const PALETTES = {
   sand: ['#e7d8b9', '#cdb585'],
 } as const
 
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(' ')
+}
+
 export default function DesignAvatar({ name = 'RelaxHUB', size = 36, tone = 'teal', className }: DesignAvatarProps) {
   const initials = name
     .split(/\s+/)
@@ -25,7 +29,7 @@ export default function DesignAvatar({ name = 'RelaxHUB', size = 36, tone = 'tea
 
   return (
     <span
-      className={`rh-avatar ${className ?? ''}`.trim()}
+      className={cx('rh-avatar inline-flex shrink-0 items-center justify-center rounded-rh-pill font-sans font-bold tracking-[0.02em] text-[#fffdf8]', className)}
       style={{
         width: size,
         height: size,

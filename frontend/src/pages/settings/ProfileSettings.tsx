@@ -39,6 +39,7 @@ import {
 import { useGetCities } from '@/api/generated/cities/cities'
 import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
 import PageHeader from '@/components/PageHeader'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 const { Text } = Typography
 
@@ -297,7 +298,7 @@ export default function ProfileSettings() {
             <Space size={16} align="center">
               <Avatar
                 size={88}
-                src={user?.avatar_url}
+                src={resolveAssetUrl(user?.avatar_url)}
                 icon={!user?.avatar_url && <UserOutlined />}
               />
               <Space orientation="vertical">
@@ -355,7 +356,7 @@ export default function ProfileSettings() {
                       <List.Item.Meta
                         avatar={
                           <Avatar
-                            src={account.avatar_url}
+                            src={resolveAssetUrl(account.avatar_url)}
                             style={{
                               backgroundColor: PROVIDER_COLORS[account.provider ?? ''] ?? 'var(--rh-text-muted)',
                             }}

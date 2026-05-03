@@ -34,6 +34,7 @@ import {
   usePostAuth2faSmsEnable,
 } from '@/api/generated/2fa/2fa'
 import PageHeader from '@/components/PageHeader'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 const { Text } = Typography
 
@@ -219,7 +220,7 @@ export default function AdminProfile() {
           <Space size={16} align="center">
             <Avatar
               size={88}
-              src={user?.avatar_url}
+              src={resolveAssetUrl(user?.avatar_url)}
               icon={!user?.avatar_url && <UserOutlined />}
             />
             <Space orientation="vertical">

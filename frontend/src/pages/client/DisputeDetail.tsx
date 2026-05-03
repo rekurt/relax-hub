@@ -36,6 +36,7 @@ import {
 } from '@/api/generated/disputes/disputes'
 import type { InternalHandlerDisputeEvidenceResponse } from '@/api/generated/model'
 import { formatDateTime, formatPrice } from '@/lib/format'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 const { Title, Text, Paragraph } = Typography
 
@@ -362,13 +363,13 @@ export default function DisputeDetail() {
                       )}
                       {item.url && isImageUrl(item.url) ? (
                         <Image
-                          src={item.url}
+                          src={resolveAssetUrl(item.url)}
                           alt="Доказательство"
                           width={200}
                           style={{ borderRadius: 12 }}
                         />
                       ) : item.url ? (
-                        <a href={item.url} target="_blank" rel="noopener noreferrer">
+                        <a href={resolveAssetUrl(item.url)} target="_blank" rel="noopener noreferrer">
                           Открыть файл
                         </a>
                       ) : null}

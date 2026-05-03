@@ -488,7 +488,7 @@ export default function BathhouseDetail() {
                   <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
                     <Avatar
                       size={48}
-                      src={bathhouse.owner_profile.avatar_url}
+                      src={resolveAssetUrl(bathhouse.owner_profile.avatar_url)}
                       icon={!bathhouse.owner_profile.avatar_url && <UserOutlined />}
                     />
                     <div>

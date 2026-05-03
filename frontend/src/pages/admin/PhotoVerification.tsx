@@ -26,6 +26,7 @@ import {
 import type { InternalHandlerPhotoResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
 import PageHeader from '@/components/PageHeader'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 const { Text } = Typography
 
@@ -118,7 +119,7 @@ export default function PhotoVerification() {
                 <article className="rh-admin-photo-card" key={photo.id}>
                   <div className="rh-admin-photo-card__media">
                     <Image
-                      src={photo.url}
+                      src={resolveAssetUrl(photo.url)}
                       alt="Фото бани"
                       height="100%"
                       width="100%"

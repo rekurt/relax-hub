@@ -15,12 +15,9 @@ mkdir -p "$DIST_DIR"
 if command -v minify &> /dev/null; then
     echo "Using minify..."
     minify "$SRC_DIR/widget.js" > "$DIST_DIR/widget.min.js"
-    minify "$SRC_DIR/styles.css" > "$DIST_DIR/widget.min.css"
 elif command -v terser &> /dev/null; then
     echo "Using terser..."
     terser "$SRC_DIR/widget.js" -c -m -o "$DIST_DIR/widget.min.js"
-    # For CSS, we'll use a simple approach
-    cat "$SRC_DIR/styles.css" | tr -s ' ' | sed 's/\/\*.*\*\///g' | sed 's/[[:space:]]*{[[:space:]]*/\{/g' | sed 's/[[:space:]]*}[[:space:]]*/\}/g' | sed 's/[[:space:]]*:[[:space:]]*/:/g' | sed 's/[[:space:]]*;[[:space:]]*/;/g' | sed 's/[[:space:]]*,[[:space:]]*/,/g' > "$DIST_DIR/widget.min.css"
 elif command -v uglifyjs &> /dev/null; then
     echo "Using uglifyjs..."
     uglifyjs "$SRC_DIR/widget.js" -c -m -o "$DIST_DIR/widget.min.js"
@@ -30,15 +27,13 @@ else
     terser "$SRC_DIR/widget.js" -c -m -o "$DIST_DIR/widget.min.js"
 fi
 
-# Always regenerate CSS so dist cannot keep a stale previous theme.
-sed 's/\/\*[^*]*\*\///g' "$SRC_DIR/styles.css" | \
-sed 's/[[:space:]]\+/ /g' | \
-sed 's/[[:space:]]*{[[:space:]]*/\{/g' | \
-sed 's/[[:space:]]*}[[:space:]]*/\}/g' | \
-sed 's/[[:space:]]*:[[:space:]]*/:/g' | \
-sed 's/[[:space:]]*;[[:space:]]*/;/g' | \
-sed 's/[[:space:]]*,[[:space:]]*/,/g' | \
-tr -d '\n' > "$DIST_DIR/widget.min.css"
+# Always regenerate CSS through Tailwind so dist cannot keep a stale previous theme.
+TAILWIND_BIN="${TAILWIND_BIN:-$SCRIPT_DIR/../frontend/node_modules/.bin/tailwindcss}"
+if [ -x "$TAILWIND_BIN" ]; then
+    (cd "$SCRIPT_DIR/../frontend" && ./node_modules/.bin/tailwindcss -i "../widget/src/styles.css" -o "../widget/dist/widget.min.css" --minify)
+else
+    (cd "$SCRIPT_DIR/../frontend" && npx tailwindcss -i "../widget/src/styles.css" -o "../widget/dist/widget.min.css" --minify)
+fi
 
 # Get file sizes
 JS_SIZE=$(wc -c < "$DIST_DIR/widget.min.js")

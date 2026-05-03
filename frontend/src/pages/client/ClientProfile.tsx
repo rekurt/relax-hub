@@ -64,6 +64,7 @@ import { formatPrice } from '@/lib/format'
 import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
 import ProfileCompleteness from '@/components/ProfileCompleteness'
 import PageHeader from '@/components/PageHeader'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 const REGION_LABELS: Record<string, string> = {
   RU: 'Россия',
@@ -485,7 +486,7 @@ export default function ClientProfile() {
                 <div className="rh-profile-hero__identity">
                   <Avatar
                     size={96}
-                    src={user?.avatar_url}
+                    src={resolveAssetUrl(user?.avatar_url)}
                     icon={!user?.avatar_url && <UserOutlined />}
                   />
                   <div className="rh-profile-hero__copy">
@@ -710,7 +711,7 @@ export default function ClientProfile() {
                         <List.Item.Meta
                           avatar={
                             <Avatar
-                              src={account.avatar_url}
+                              src={resolveAssetUrl(account.avatar_url)}
                               style={{
                                 backgroundColor: PROVIDER_COLORS[account.provider ?? ''] ?? 'var(--rh-text-muted)',
                               }}

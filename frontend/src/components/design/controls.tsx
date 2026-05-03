@@ -568,7 +568,12 @@ function InputInner({
   const input = (
     <input
       ref={ref}
-      className={cx('rh-input', 'ant-input', className)}
+      className={cx(
+        'rh-input',
+        'ant-input',
+        'min-h-[50px] w-full rounded-rh-md border border-[rgba(15,23,42,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(251,247,240,0.96))] px-3.5 py-3 font-sans text-[15px] font-medium text-rh-text shadow-rh-control outline-none transition placeholder:text-[rgba(95,104,119,0.72)] hover:border-[rgba(15,118,110,0.28)] focus:border-[rgba(15,118,110,0.52)] focus:shadow-rh-control-focus disabled:cursor-not-allowed disabled:bg-[rgba(244,239,231,0.82)] disabled:text-[rgba(22,33,43,0.42)]',
+        className,
+      )}
       value={value}
       onChange={onChange}
       onKeyDown={(event) => {
@@ -593,7 +598,7 @@ function InputInner({
   ) : null
 
   const wrapped = prefix || suffix || clear ? (
-    <span className="rh-input-affix ant-input-affix-wrapper">
+    <span className="rh-input-affix ant-input-affix-wrapper flex min-h-[50px] w-full items-center gap-2 rounded-rh-md border border-[rgba(15,23,42,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(251,247,240,0.96))] px-3.5 py-0 shadow-rh-control transition focus-within:border-[rgba(15,118,110,0.52)] focus-within:shadow-rh-control-focus">
       {prefix && <span className="ant-input-prefix">{prefix}</span>}
       {input}
       {clear}
@@ -603,7 +608,7 @@ function InputInner({
 
   if (addonBefore || addonAfter) {
     return (
-      <span className="rh-compact-control ant-space-compact">
+      <span className="rh-compact-control ant-space-compact inline-flex w-full items-stretch">
         {addonBefore && <span className="rh-input-addon">{addonBefore}</span>}
         {wrapped}
         {addonAfter && <span className="rh-input-addon">{addonAfter}</span>}
@@ -632,7 +637,12 @@ const TextArea = forwardRef<TextAreaRef, TextAreaProps>(function TextArea({ clas
   return (
     <textarea
       ref={textAreaRef}
-      className={cx('rh-input', 'ant-input', className)}
+      className={cx(
+        'rh-input',
+        'ant-input',
+        'min-h-[96px] w-full rounded-rh-md border border-[rgba(15,23,42,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(251,247,240,0.96))] px-3.5 py-3 font-sans text-[15px] font-medium text-rh-text shadow-rh-control outline-none transition placeholder:text-[rgba(95,104,119,0.72)] hover:border-[rgba(15,118,110,0.28)] focus:border-[rgba(15,118,110,0.52)] focus:shadow-rh-control-focus disabled:cursor-not-allowed disabled:bg-[rgba(244,239,231,0.82)] disabled:text-[rgba(22,33,43,0.42)]',
+        className,
+      )}
       onKeyDown={(event) => {
         if (event.key === 'Enter') onPressEnter?.(event)
         onKeyDown?.(event)
@@ -798,13 +808,24 @@ function SelectRoot({
     : textFromNode(selectedOption?.label ?? placeholder ?? '')
   const hasEmptyOption = resolvedOptions.some((option) => String(option.value) === '')
   return (
-    <span className={cx('rh-select', 'ant-select', disabled && 'ant-select-disabled', mode ? 'ant-select-multiple' : 'ant-select-single', className)} style={style} {...props}>
-      <span className={cx('rh-select__value', selectedValue === '' && 'ant-select-selection-placeholder', selectedValue !== '' && 'ant-select-selection-item')}>
+    <span
+      className={cx(
+        'rh-select',
+        'ant-select',
+        'relative inline-flex min-h-[50px] w-full items-center rounded-rh-md border border-[rgba(15,23,42,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(251,247,240,0.96))] px-3.5 shadow-rh-control transition hover:border-[rgba(15,118,110,0.28)] focus-within:border-[rgba(15,118,110,0.52)] focus-within:shadow-rh-control-focus',
+        disabled && 'ant-select-disabled cursor-not-allowed opacity-60',
+        mode ? 'ant-select-multiple' : 'ant-select-single',
+        className,
+      )}
+      style={style}
+      {...props}
+    >
+      <span className={cx('rh-select__value min-w-0 flex-1 truncate font-sans text-[15px] font-medium', selectedValue === '' && 'ant-select-selection-placeholder text-[rgba(95,104,119,0.72)]', selectedValue !== '' && 'ant-select-selection-item text-rh-text')}>
         {displayLabel}
       </span>
       <select
         id={id}
-        className="rh-select__control ant-select-selector"
+        className="rh-select__control ant-select-selector absolute inset-0 h-full w-full cursor-pointer opacity-0"
         disabled={disabled}
         multiple={Boolean(mode)}
         value={mode ? (Array.isArray(selectedValue) ? selectedValue.map(String) : []) : String(selectedValue ?? '')}

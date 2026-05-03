@@ -68,6 +68,10 @@ function buildGroupedMenuItems(items: NavigationItem[], navigate: (to: string) =
   }, [])
 }
 
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(' ')
+}
+
 function NavButton({
   item,
   active,
@@ -80,7 +84,10 @@ function NavButton({
   return (
     <button
       type="button"
-      className={`rh-nav__link rh-topnav__nav-button${active ? ' rh-nav__link--active rh-topnav__nav-button--active' : ''}`}
+      className={cx(
+        'rh-nav__link rh-topnav__nav-button rounded-rh-pill px-3.5 py-2 text-sm font-semibold text-rh-text transition hover:bg-[rgba(15,118,110,0.08)] hover:text-rh-primary-strong',
+        active && 'rh-nav__link--active rh-topnav__nav-button--active bg-[rgba(15,118,110,0.10)] text-rh-primary-strong',
+      )}
       onClick={() => onClick(item.to)}
     >
       {item.label}
@@ -153,23 +160,23 @@ export default function TopNavigationLayout({
 
   return (
     <Layout
-      className={`rh-shell rh-shell--${surface}`}
+      className={`rh-shell rh-shell--${surface} min-h-screen bg-transparent font-sans text-rh-text`}
       style={{
         minHeight: '100vh',
         background: 'transparent',
       }}
     >
       <Header
-        className="rh-nav rh-topnav"
+        className="rh-nav rh-topnav sticky top-0 z-40 border-b border-[rgba(15,23,42,0.08)] bg-[rgba(255,252,247,0.80)] px-4 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur-[20px] sm:px-6"
         style={{
           height: 'auto',
         }}
       >
-        <div className="rh-topnav__inner" style={{ maxWidth: contentWidth }}>
+        <div className="rh-topnav__inner mx-auto flex w-full min-w-0 items-center gap-4" style={{ maxWidth: contentWidth }}>
           <button
             type="button"
             onClick={() => navigate(homeTo)}
-            className="rh-topnav__brand"
+            className="rh-topnav__brand flex min-w-0 shrink-0 items-center text-left"
             aria-label={brandAriaLabel}
           >
             <span className="rh-topnav__brand-title">
@@ -206,7 +213,7 @@ export default function TopNavigationLayout({
                   </button>
                 </Dropdown>
               ) : (
-                <div className="rh-nav__links rh-topnav__nav-links">
+              <div className="rh-nav__links rh-topnav__nav-links flex min-w-0 flex-1 items-center gap-2">
                   {primaryItems.map((item) => (
                     <NavButton
                       key={item.key}
@@ -219,7 +226,10 @@ export default function TopNavigationLayout({
                     <Dropdown menu={{ items: overflowMenuItems }} trigger={['click']} placement="bottomRight">
                       <button
                         type="button"
-                        className={`rh-nav__link rh-topnav__nav-button${overflowActive ? ' rh-nav__link--active rh-topnav__nav-button--active' : ''}`}
+                        className={cx(
+                          'rh-nav__link rh-topnav__nav-button inline-flex items-center gap-1.5 rounded-rh-pill px-3.5 py-2 text-sm font-semibold text-rh-text transition hover:bg-[rgba(15,118,110,0.08)] hover:text-rh-primary-strong',
+                          overflowActive && 'rh-nav__link--active rh-topnav__nav-button--active bg-[rgba(15,118,110,0.10)] text-rh-primary-strong',
+                        )}
                       >
                         <DesignIcon name="more" size={16} />
                         Разделы
@@ -231,7 +241,7 @@ export default function TopNavigationLayout({
             </div>
           )}
 
-          <div className="rh-nav__actions rh-topnav__actions">
+          <div className="rh-nav__actions rh-topnav__actions ml-auto flex min-w-0 items-center gap-2">
             {!isMobile && headerAccessory && (
               <div className={`rh-topnav__accessory rh-topnav__accessory--${headerAccessoryVariant}`}>
                 {headerAccessory}
@@ -247,7 +257,7 @@ export default function TopNavigationLayout({
                   placement="bottomRight"
                   classNames={{ root: 'rh-topnav__profile-dropdown' }}
                 >
-                  <button type="button" className="rh-nav__user rh-topnav__profile-button">
+                  <button type="button" className="rh-nav__user rh-topnav__profile-button inline-flex min-w-0 items-center gap-2 rounded-rh-pill border border-[rgba(15,23,42,0.10)] bg-white/70 px-2.5 py-1.5 text-sm font-semibold text-rh-text transition hover:bg-white/95">
                     <DesignAvatar name={user.name ?? user.email ?? 'Профиль'} size={32} />
                     {!isMobile && (
                       <span className="rh-topnav__profile-label">
@@ -272,7 +282,7 @@ export default function TopNavigationLayout({
             {isMobile && (
               <button
                 type="button"
-                className="rh-nav__icon-button rh-topnav__menu-button"
+                className="rh-nav__icon-button rh-topnav__menu-button inline-flex h-10 w-10 items-center justify-center rounded-rh-pill border border-[rgba(15,23,42,0.10)] bg-white/75 text-rh-text shadow-rh-soft"
                 aria-label="Открыть меню"
                 onClick={() => setDrawerOpen(true)}
               >
@@ -283,16 +293,16 @@ export default function TopNavigationLayout({
         </div>
       </Header>
 
-      <Content className="rh-topnav__content" style={{ padding: isMobile ? '20px 16px 36px' : '28px 24px 52px', flex: '1 0 auto' }}>
-        <div className="rh-topnav__content-inner" style={{ maxWidth: contentWidth }}>
+      <Content className="rh-topnav__content flex-1 px-4 py-5 sm:px-6 sm:py-7 lg:pb-[52px]" style={{ flex: '1 0 auto' }}>
+        <div className="rh-topnav__content-inner mx-auto w-full min-w-0" style={{ maxWidth: contentWidth }}>
           {topBanner}
           <Outlet />
         </div>
       </Content>
 
       {footer && (
-        <Footer className="rh-topnav__footer">
-          <div className="rh-topnav__footer-inner" style={{ maxWidth: contentWidth }}>
+        <Footer className="rh-topnav__footer px-4 pb-6 sm:px-6">
+          <div className="rh-topnav__footer-inner mx-auto w-full" style={{ maxWidth: contentWidth }}>
             {footer}
           </div>
         </Footer>
@@ -328,7 +338,10 @@ export default function TopNavigationLayout({
                   <button
                     key={item.key}
                     type="button"
-                    className={`rh-nav__link rh-topnav__drawer-button${isActive(item) ? ' rh-nav__link--active rh-topnav__drawer-button--active' : ''}`}
+                    className={cx(
+                      'rh-nav__link rh-topnav__drawer-button w-full rounded-rh-lg px-4 py-3 text-left text-sm font-semibold text-rh-text transition hover:bg-[rgba(15,118,110,0.08)]',
+                      isActive(item) && 'rh-nav__link--active rh-topnav__drawer-button--active bg-[rgba(15,118,110,0.10)] text-rh-primary-strong',
+                    )}
                     onClick={() => {
                       navigate(item.to)
                       setDrawerOpen(false)

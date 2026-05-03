@@ -1,5 +1,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
 
+@theme {
+  --font-sans: 'Manrope', 'Avenir Next', 'Segoe UI', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --color-rh-primary: #0f766e;
+  --color-rh-primary-strong: #0a5f59;
+  --color-rh-accent: #d97706;
+  --color-rh-success: #15803d;
+  --color-rh-warning: #b45309;
+  --color-rh-error: #b42318;
+  --color-rh-info: #0f766e;
+  --color-rh-text: #16212b;
+  --color-rh-text-soft: #5f6877;
+  --color-rh-bg-base: #f8f4ec;
+  --color-rh-bg-container: #fffdf8;
+  --color-rh-bg-elevated: #fffefb;
+
+  --radius-rh-sm: 12px;
+  --radius-rh-md: 16px;
+  --radius-rh-lg: 20px;
+  --radius-rh-xl: 24px;
+  --radius-rh-2xl: 28px;
+  --radius-rh-3xl: 32px;
+  --radius-rh-pill: 999px;
+
+  --shadow-rh-soft: 0 16px 40px rgba(15, 23, 42, 0.06);
+  --shadow-rh: 0 24px 64px rgba(15, 23, 42, 0.10);
+  --shadow-rh-strong: 0 30px 80px rgba(15, 23, 42, 0.22);
+  --shadow-rh-control: inset 0 1px 0 rgba(255, 255, 255, 0.88), 0 10px 24px rgba(15, 23, 42, 0.04);
+  --shadow-rh-control-focus: 0 0 0 4px rgba(15, 118, 110, 0.10), 0 18px 32px rgba(15, 23, 42, 0.08);
+  --shadow-rh-primary: 0 14px 28px rgba(15, 118, 110, 0.20);
+
+  --spacing-rh-1: 4px;
+  --spacing-rh-2: 8px;
+  --spacing-rh-3: 12px;
+  --spacing-rh-4: 16px;
+  --spacing-rh-5: 20px;
+  --spacing-rh-6: 24px;
+  --spacing-rh-7: 28px;
+  --spacing-rh-8: 32px;
+  --spacing-rh-10: 40px;
+  --spacing-rh-12: 48px;
+}
+
+@layer base {
 :root {
   color-scheme: light;
   --rh-primary: #0f766e;
@@ -128,7 +173,9 @@ body.rh-app {
 body.rh-app {
   overflow-x: hidden;
 }
+}
 
+@layer components {
 /* ===== RelaxHUB Design Kit Runtime Components ===== */
 .rh-page {
   width: 100%;
@@ -6780,4 +6827,5 @@ body.rh-app .rh-topnav__profile-dropdown .ant-dropdown-menu {
   max-height: min(70vh, 560px);
   overflow-y: auto;
   overscroll-behavior: contain;
+}
 }

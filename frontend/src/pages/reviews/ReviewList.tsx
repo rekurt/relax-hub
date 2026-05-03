@@ -29,6 +29,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import ReportModal from '@/components/ReportModal'
 import type { ReportTargetType } from '@/components/ReportModal'
 import EmptyState from '@/components/EmptyState'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 const { Title, Paragraph, Text } = Typography
 const { TextArea } = Input
@@ -267,11 +268,11 @@ export default function ReviewList() {
                             m.type === 'image' ? (
                               <Image
                                 key={m.id}
-                                src={m.thumbnail_url ?? m.url}
+                                src={resolveAssetUrl(m.thumbnail_url ?? m.url)}
                                 width={80}
                                 height={80}
                                 style={{ objectFit: 'cover', borderRadius: 12 }}
-                                preview={{ src: m.url }}
+                                preview={{ src: resolveAssetUrl(m.url) }}
                               />
                             ) : (
                               <Tag key={m.id} color="blue">
@@ -291,7 +292,7 @@ export default function ReviewList() {
                           {review.images.map((url, idx) => (
                             <Image
                               key={idx}
-                              src={url}
+                              src={resolveAssetUrl(url)}
                               width={80}
                               height={80}
                               style={{ objectFit: 'cover', borderRadius: 12 }}

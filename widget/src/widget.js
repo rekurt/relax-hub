@@ -105,92 +105,9 @@
     }
 
     setupStyles() {
-      if (!document.getElementById('bani-widget-styles')) {
-        const style = document.createElement('style');
-        style.id = 'bani-widget-styles';
-        style.textContent = this.getStyles();
-        document.head.appendChild(style);
-      }
-    }
-
-    getStyles() {
-      return `
-        .bani-widget {
-          --bani-widget-primary: ${this.primaryColor};
-          --bani-widget-primary-strong: ${this.adjustColor(this.primaryColor, -18)};
-          --bani-widget-primary-soft: rgba(15, 118, 110, 0.08);
-          --bani-widget-accent: #d97706;
-          --bani-widget-error: #b42318;
-          --bani-widget-text: #16212b;
-          --bani-widget-text-soft: #5f6877;
-          --bani-widget-border: rgba(15, 23, 42, 0.08);
-          --bani-widget-border-strong: rgba(15, 23, 42, 0.12);
-          font-family: ${this.fontFamily};
-          color: var(--bani-widget-text);
-          background:
-            radial-gradient(circle at top left, rgba(15, 118, 110, 0.10), transparent 34%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 244, 236, 0.84));
-          border: 1px solid var(--bani-widget-border);
-          border-radius: 28px;
-          padding: 24px;
-          max-width: 500px;
-          box-shadow: 0 24px 64px rgba(15, 23, 42, 0.10);
-          backdrop-filter: blur(18px);
-        }
-        .bani-widget * { box-sizing: border-box; }
-        .bani-widget h2 { margin: 0 0 20px 0; color: var(--bani-widget-text); font-size: 24px; line-height: 1.15; font-weight: 800; letter-spacing: 0; text-align: center; }
-        .bani-widget h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 800; letter-spacing: 0; color: var(--bani-widget-text); }
-        .bani-widget-loading { text-align: center; padding: 40px 20px; color: var(--bani-widget-text-soft); font-weight: 600; }
-        .bani-widget-error { background: rgba(180, 35, 24, 0.08); color: var(--bani-widget-error); padding: 14px 16px; border: 1px solid rgba(180, 35, 24, 0.16); border-radius: 18px; margin-bottom: 16px; font-weight: 700; }
-        .bani-widget-calendar { margin-bottom: 20px; }
-        .bani-widget-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 20px; }
-        .bani-widget-calendar-header { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
-        .bani-widget-calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--bani-widget-text-soft); font-weight: 800; letter-spacing: 0; }
-        .bani-widget-calendar-date { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 1px solid var(--bani-widget-border-strong); border-radius: 16px; cursor: pointer; transition: all 0.2s ease; background: rgba(255, 253, 248, 0.86); color: var(--bani-widget-text); font-weight: 800; font-size: 14px; padding: 0; font-family: inherit; }
-        .bani-widget-calendar-date:hover { border-color: var(--bani-widget-primary); background: rgba(255, 255, 255, 0.96); transform: translateY(-1px); box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08); }
-        .bani-widget-calendar-date.disabled { background: rgba(244, 239, 231, 0.82); color: rgba(22, 33, 43, 0.42); cursor: not-allowed; border-color: var(--bani-widget-border); box-shadow: none; transform: none; }
-        .bani-widget-calendar-date.selected { background: linear-gradient(135deg, var(--bani-widget-primary), var(--bani-widget-primary-strong)); color: white; border-color: var(--bani-widget-primary); box-shadow: 0 14px 28px rgba(15, 118, 110, 0.20); }
-        .bani-widget-slots { display: grid; gap: 10px; margin-bottom: 20px; }
-        .bani-widget-slot { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border: 1px solid var(--bani-widget-border-strong); border-radius: 18px; cursor: pointer; transition: all 0.2s ease; background: rgba(255, 253, 248, 0.86); color: var(--bani-widget-text); font-family: inherit; font-size: 14px; text-align: left; }
-        .bani-widget-slot:hover { border-color: var(--bani-widget-primary); background: rgba(255, 255, 255, 0.96); transform: translateY(-1px); box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08); }
-        .bani-widget-slot.disabled { background: rgba(244, 239, 231, 0.82); color: rgba(22, 33, 43, 0.42); cursor: not-allowed; border-color: var(--bani-widget-border); transform: none; box-shadow: none; }
-        .bani-widget-slot.selected { background: linear-gradient(135deg, var(--bani-widget-primary), var(--bani-widget-primary-strong)); color: white; border-color: var(--bani-widget-primary); box-shadow: 0 14px 28px rgba(15, 118, 110, 0.20); }
-        .bani-widget-slot-time { font-weight: 800; }
-        .bani-widget-slot-price { text-align: right; font-weight: 800; }
-        .bani-widget-form-group { margin-bottom: 16px; }
-        .bani-widget-label { display: block; margin-bottom: 8px; font-weight: 700; color: var(--bani-widget-text); font-size: 13px; }
-        .bani-widget-input { width: 100%; min-height: 50px; padding: 12px 14px; border: 1px solid rgba(15, 23, 42, 0.14); border-radius: 16px; font-size: 15px; font-family: inherit; color: var(--bani-widget-text); background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(251, 247, 240, 0.96)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88), 0 10px 24px rgba(15, 23, 42, 0.04); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
-        .bani-widget-input:focus { outline: none; border-color: rgba(15, 118, 110, 0.52); box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.10), 0 18px 32px rgba(15, 23, 42, 0.08); }
-        .bani-widget-input::placeholder { color: rgba(95, 104, 119, 0.72); }
-        .bani-widget-button { width: 100%; min-height: 44px; padding: 12px 16px; background: linear-gradient(135deg, var(--bani-widget-primary), var(--bani-widget-primary-strong)); color: white; border: none; border-radius: 999px; font-size: 15px; font-weight: 800; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease; font-family: inherit; box-shadow: 0 14px 28px rgba(15, 118, 110, 0.20); }
-        .bani-widget-button:hover { transform: translateY(-1px); box-shadow: 0 18px 30px rgba(15, 118, 110, 0.24); }
-        .bani-widget-button:disabled { color: rgba(22, 33, 43, 0.42); background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(245, 241, 234, 0.96)); cursor: not-allowed; box-shadow: none; transform: none; }
-        .bani-widget-button-secondary { background: rgba(255, 255, 255, 0.82); color: var(--bani-widget-text); border: 1px solid var(--bani-widget-border-strong); box-shadow: none; margin-bottom: 8px; }
-        .bani-widget-button-secondary:hover { background: rgba(255, 255, 255, 0.96); box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08); }
-        .bani-widget-confirmation { text-align: center; padding: 12px 0 0; }
-        .bani-widget-confirmation-icon { width: 64px; height: 64px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px; border-radius: 22px; background: rgba(15, 118, 110, 0.10); color: var(--bani-widget-primary); font-size: 38px; font-weight: 900; }
-        .bani-widget-confirmation-message { font-size: 18px; margin-bottom: 20px; color: var(--bani-widget-text); font-weight: 800; }
-        .bani-widget-confirmation-details { background: rgba(255, 253, 248, 0.82); padding: 18px; border: 1px solid var(--bani-widget-border); border-radius: 22px; margin-bottom: 20px; text-align: left; }
-        .bani-widget-confirmation-detail { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--bani-widget-border); font-size: 14px; }
-        .bani-widget-confirmation-detail:last-child { border-bottom: none; }
-        .bani-widget-bathhouse-info { background: rgba(255, 253, 248, 0.82); padding: 18px; border-radius: 22px; margin-bottom: 20px; border: 1px solid var(--bani-widget-border); box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06); }
-        .bani-widget-bathhouse-name { font-weight: 800; font-size: 18px; line-height: 1.2; margin-bottom: 8px; color: var(--bani-widget-text); }
-        .bani-widget-bathhouse-address, .bani-widget-muted { color: var(--bani-widget-text-soft); font-size: 14px; line-height: 1.5; }
-        .bani-widget-bathhouse-address { margin-bottom: 10px; }
-        .bani-widget-bathhouse-price { color: var(--bani-widget-primary); font-weight: 800; font-size: 16px; }
-        .bani-widget-selection-summary { background: rgba(255, 253, 248, 0.82); padding: 14px 16px; border-radius: 20px; margin-bottom: 16px; border: 1px solid var(--bani-widget-border); }
-        .bani-widget-selection-summary strong { color: var(--bani-widget-text); }
-        .bani-widget-empty { text-align: center; padding: 40px 20px; color: var(--bani-widget-text-soft); font-weight: 700; }
-        .bani-widget-nav { display: flex; gap: 8px; margin-bottom: 16px; }
-        .bani-widget-nav button { flex: 1; }
-        @media (max-width: 600px) {
-          .bani-widget { max-width: 100%; padding: 16px; border-radius: 24px; }
-          .bani-widget h2 { font-size: 22px; }
-          .bani-widget-calendar-grid, .bani-widget-calendar-header { gap: 4px; }
-          .bani-widget-calendar-date { border-radius: 14px; font-size: 13px; }
-          .bani-widget-nav { flex-direction: column; }
-        }
-      `;
+      this.element.style.setProperty('--bani-widget-primary', this.primaryColor);
+      this.element.style.setProperty('--bani-widget-primary-strong', this.adjustColor(this.primaryColor, -18));
+      this.element.style.setProperty('--bani-widget-font-family', this.fontFamily);
     }
 
     adjustColor(color, percent) {

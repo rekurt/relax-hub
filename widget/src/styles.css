@@ -1,3 +1,22 @@
+@theme {
+  --font-sans: Manrope, "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --color-rh-primary: #0f766e;
+  --color-rh-primary-strong: #0a5f59;
+  --color-rh-accent: #d97706;
+  --color-rh-error: #b42318;
+  --color-rh-text: #16212b;
+  --color-rh-text-soft: #5f6877;
+  --radius-rh-md: 16px;
+  --radius-rh-lg: 20px;
+  --radius-rh-xl: 24px;
+  --radius-rh-2xl: 28px;
+  --radius-rh-pill: 999px;
+  --shadow-rh: 0 24px 64px rgba(15, 23, 42, 0.10);
+  --shadow-rh-soft: 0 16px 40px rgba(15, 23, 42, 0.06);
+  --shadow-rh-primary: 0 14px 28px rgba(15, 118, 110, 0.20);
+}
+
+@layer components {
 /* RelaxHUB embeddable widget base styles. */
 
 .bani-widget {
@@ -10,7 +29,7 @@
   --bani-widget-text-soft: #5f6877;
   --bani-widget-border: rgba(15, 23, 42, 0.08);
   --bani-widget-border-strong: rgba(15, 23, 42, 0.12);
-  font-family: Manrope, "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--bani-widget-font-family, Manrope, "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif);
   color: var(--bani-widget-text);
   background:
     radial-gradient(circle at top left, rgba(15, 118, 110, 0.10), transparent 34%),
@@ -401,4 +420,5 @@
   .bani-widget-nav {
     flex-direction: column;
   }
+}
 }
