@@ -166,6 +166,7 @@ export default function TopNavigationLayout({
     title: group.section ?? '',
     items: group.items,
   }))
+  const isClientFacingSurface = surface === 'client' || surface === 'public'
 
   return (
     <Layout
@@ -314,8 +315,21 @@ export default function TopNavigationLayout({
         </div>
       </Header>
 
-      <Content className="rh-topnav__content flex-1 px-4 py-5 sm:px-6 sm:py-7 lg:pb-[52px]" style={{ flex: '1 0 auto' }}>
-        <div className="rh-topnav__content-inner mx-auto w-full min-w-0" style={{ maxWidth: contentWidth }}>
+      <Content
+        className={cx(
+          'rh-topnav__content flex-1 px-4 py-5 sm:px-6 sm:py-7 lg:pb-[52px]',
+          `rh-topnav__content--${surface}`,
+        )}
+        style={{ flex: '1 0 auto' }}
+      >
+        <div
+          className={cx(
+            'rh-topnav__content-inner mx-auto w-full min-w-0',
+            isClientFacingSurface && 'rh-client-surface',
+            surface === 'admin' && 'rh-admin-surface',
+          )}
+          style={{ maxWidth: contentWidth }}
+        >
           {topBanner}
           <Outlet />
         </div>

@@ -33,25 +33,25 @@ export default function ShellFooter({ showClientSection = false }: ShellFooterPr
             subtitle="Премиальный маркетплейс бронирования"
             className="rh-shell-footer__lockup"
           />
-          <h2 className="rh-shell-footer__title mt-5 max-w-[420px] text-2xl font-extrabold leading-tight tracking-[-0.03em]">Сервис бронирования с премиальной подачей и понятной навигацией.</h2>
+          <h2 className="rh-shell-footer__title mt-5 max-w-[420px] text-2xl font-extrabold leading-tight tracking-normal">Сервис бронирования с премиальной подачей и понятной навигацией.</h2>
           <p className="rh-footer__description rh-shell-footer__description mt-3 max-w-[460px] text-sm leading-relaxed text-[rgba(247,244,235,0.66)]">{PLATFORM_BRAND_STATEMENT}</p>
-          <div className="rh-shell-footer__support-hours mt-4 inline-flex rounded-rh-pill border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-[rgba(247,244,235,0.78)]">{PLATFORM_CONTACTS.supportHours}</div>
+          <div className="rh-shell-footer__support-hours mt-4 inline-flex rounded-rh-pill border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-normal text-[rgba(247,244,235,0.78)]">{PLATFORM_CONTACTS.supportHours}</div>
         </section>
 
         <section className="rh-shell-footer__column">
-          <div className="rh-footer__section-title rh-shell-footer__section-title mb-3 text-xs font-extrabold uppercase tracking-[0.14em] text-[rgba(247,244,235,0.54)]">Навигация</div>
+          <div className="rh-footer__section-title rh-shell-footer__section-title mb-3 text-xs font-extrabold uppercase tracking-normal text-[rgba(247,244,235,0.54)]">Навигация</div>
           <FooterLinks items={PUBLIC_FOOTER_NAV_ITEMS} />
         </section>
 
         {showClientSection && (
           <section className="rh-shell-footer__column">
-            <div className="rh-footer__section-title rh-shell-footer__section-title mb-3 text-xs font-extrabold uppercase tracking-[0.14em] text-[rgba(247,244,235,0.54)]">Кабинет клиента</div>
+            <div className="rh-footer__section-title rh-shell-footer__section-title mb-3 text-xs font-extrabold uppercase tracking-normal text-[rgba(247,244,235,0.54)]">Кабинет клиента</div>
             <FooterLinks items={CLIENT_FOOTER_ACCOUNT_ITEMS} />
           </section>
         )}
 
         <section className="rh-shell-footer__column">
-          <div className="rh-footer__section-title rh-shell-footer__section-title mb-3 text-xs font-extrabold uppercase tracking-[0.14em] text-[rgba(247,244,235,0.54)]">Поддержка и условия</div>
+          <div className="rh-footer__section-title rh-shell-footer__section-title mb-3 text-xs font-extrabold uppercase tracking-normal text-[rgba(247,244,235,0.54)]">Поддержка и условия</div>
           <div className="rh-footer__links rh-shell-footer__links grid gap-2">
             <Link to="/terms" className="rh-footer__link rh-shell-footer__link text-sm font-medium leading-relaxed text-[rgba(247,244,235,0.72)] transition hover:text-[#f7f4eb]">Условия использования</Link>
             <a href={`mailto:${PLATFORM_CONTACTS.supportEmail}`} className="rh-footer__link rh-shell-footer__link text-sm font-medium leading-relaxed text-[rgba(247,244,235,0.72)] transition hover:text-[#f7f4eb]">

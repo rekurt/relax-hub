@@ -29,7 +29,7 @@ export default function PhotoPlaceholder({
 }: PhotoPlaceholderProps) {
   return (
     <div
-      className={cx('rh-photo relative flex min-h-[160px] items-center justify-center overflow-hidden rounded-rh-lg text-[11px] font-bold uppercase tracking-[0.18em] text-white/60', variantClasses[variant], className)}
+      className={cx('rh-photo relative flex min-h-[160px] items-center justify-center overflow-hidden rounded-rh-lg text-[11px] font-bold uppercase tracking-normal text-white/60', variantClasses[variant], className)}
       style={style}
     >
       <svg className="rh-photo__pattern absolute inset-0 h-full w-full opacity-15" viewBox="0 0 320 220" aria-hidden="true">

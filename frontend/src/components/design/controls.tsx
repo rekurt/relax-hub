@@ -662,11 +662,11 @@ interface SearchProps extends InputProps {
   onSearch?: (value: string) => void
 }
 
-function Search({ enterButton, loading, onSearch, onKeyDown, ...props }: SearchProps) {
+function Search({ enterButton, loading, onSearch, onKeyDown, className, style, ...props }: SearchProps) {
   const [value, setValue] = useState(String(props.value ?? props.defaultValue ?? ''))
   const searchValue = props.value !== undefined ? String(props.value) : value
   return (
-    <span className="rh-input-search ant-input-search">
+    <span className={cx('rh-input-search ant-input-search', className)} style={style}>
       <BaseInput
         {...props}
         value={searchValue}
@@ -1374,8 +1374,14 @@ export function Table<T extends object>({
                         {visibleColumns.map((column, columnIndex) => {
                           const value = cellValue(record, column.dataIndex)
                           return (
-                            <td key={String(column.key ?? column.dataIndex ?? columnIndex)} className={column.className} style={{ textAlign: column.align }}>
-                              {column.render ? column.render(value, record, index) : value as ReactNode}
+                            <td
+                              key={String(column.key ?? column.dataIndex ?? columnIndex)}
+                              className={cx(column.className, column.ellipsis && 'ant-table-cell-ellipsis')}
+                              style={{ width: column.width, textAlign: column.align }}
+                            >
+                              <div className="rh-table__cell-inner">
+                                {column.render ? column.render(value, record, index) : value as ReactNode}
+                              </div>
                             </td>
                           )
                         })}

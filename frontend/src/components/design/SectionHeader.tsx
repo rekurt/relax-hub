@@ -16,8 +16,8 @@ export default function SectionHeader({ eyebrow, title, subtitle, extra, classNa
   return (
     <header className={cx('rh-section-head flex items-end justify-between gap-6', className)}>
       <div className="rh-section-head__copy min-w-0 max-w-[720px]">
-        {eyebrow && <span className="rh-eyebrow font-sans text-xs font-extrabold uppercase tracking-[0.12em] text-rh-primary">{eyebrow}</span>}
-        <h1 className="rh-section-head__title m-0 mt-2 font-sans text-[clamp(28px,3vw,38px)] font-extrabold leading-[1.08] tracking-[-0.03em] text-rh-text">{title}</h1>
+        {eyebrow && <span className="rh-eyebrow font-sans text-xs font-extrabold uppercase tracking-normal text-rh-primary">{eyebrow}</span>}
+        <h1 className="rh-section-head__title m-0 mt-2 font-sans text-[clamp(28px,3vw,38px)] font-extrabold leading-[1.08] tracking-normal text-rh-text">{title}</h1>
         {subtitle && <p className="rh-section-head__subtitle m-0 mt-2 text-sm font-medium leading-[1.65] text-rh-text-soft">{subtitle}</p>}
       </div>
       {extra && <div className="rh-section-head__extra flex shrink-0 items-center gap-2">{extra}</div>}

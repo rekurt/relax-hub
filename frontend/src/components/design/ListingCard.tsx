@@ -73,7 +73,7 @@ export default function DesignListingCard({
       </div>
       <div className="rh-listing-card__body grid gap-3 p-4">
         <div className="rh-listing-card__head flex items-start justify-between gap-3">
-          <h3 className="rh-listing-card__title m-0 flex min-w-0 items-center gap-1.5 font-sans text-[18px] font-extrabold leading-tight tracking-[-0.03em] text-rh-text">
+          <h3 className="rh-listing-card__title m-0 flex min-w-0 items-center gap-1.5 font-sans text-[18px] font-extrabold leading-tight tracking-normal text-rh-text">
             {name}
             {verified && <DesignIcon name="checkc" size={14} className="rh-listing-card__verified shrink-0 text-rh-primary" />}
           </h3>
