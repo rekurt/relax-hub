@@ -953,15 +953,22 @@ body.rh-app .ant-input-password-icon {
 }
 
 body.rh-app .ant-input-number {
+  display: inline-flex;
+  align-items: center;
   width: 100%;
+  min-width: 0;
   padding-inline: 14px;
 }
 
 body.rh-app .ant-input-number .ant-input-number-input-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
   height: 100%;
 }
 
 body.rh-app .ant-input-number .ant-input-number-input {
+  width: 100%;
+  min-width: 0;
   height: 48px;
   padding: 0;
 }
@@ -1013,6 +1020,10 @@ body.rh-app .rh-input-addon-button.ant-btn {
 body.rh-app .ant-select-single .ant-select-selector,
 body.rh-app .ant-picker,
 body.rh-app .ant-picker-range {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
   padding-inline: 14px !important;
 }
 
@@ -1033,9 +1044,16 @@ body.rh-app .ant-select-single .ant-select-selection-placeholder {
 }
 
 body.rh-app .ant-picker .ant-picker-input {
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 48px;
   display: flex;
   align-items: center;
+}
+
+body.rh-app .ant-picker .ant-picker-input > input {
+  width: 100%;
+  min-width: 0;
 }
 
 body.rh-app .ant-input:hover,
@@ -2060,6 +2078,10 @@ body.rh-app .rh-grid--content-aside {
   align-items: start;
 }
 
+body.rh-app .rh-calendar-grid-card .rh-card__body {
+  overflow-x: auto;
+}
+
 body.rh-app .rh-stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -2092,6 +2114,8 @@ body.rh-app .rh-stat-tile__value {
   line-height: 1.05;
   letter-spacing: 0;
   color: var(--rh-text);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.rh-app .rh-stat-tile__hint {
@@ -4636,7 +4660,95 @@ body.rh-app .rh-security-recommendation .ant-btn {
   }
 }
 
+@media (max-width: 900px) {
+  body.rh-app .rh-grid--two,
+  body.rh-app .rh-grid--content-aside,
+  body.rh-app .rh-profile-layout,
+  body.rh-app .rh-profile-toggle-grid,
+  body.rh-app .rh-notification-prefs__hero,
+  body.rh-app .rh-notification-prefs__grid,
+  body.rh-app .rh-home__hero,
+  body.rh-app .rh-home__proof-grid,
+  body.rh-app .rh-home__shortcut-grid,
+  body.rh-app .rh-home__steps,
+  body.rh-app .rh-catalog__shortcut-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.rh-app .rh-home__hero,
+  body.rh-app .rh-certificates-layout {
+    min-width: 0;
+  }
+
+  body.rh-app .rh-home__hero-copy,
+  body.rh-app .rh-home__hero-side,
+  body.rh-app .rh-certificates-workspace,
+  body.rh-app .rh-certificates-workspace__surface,
+  body.rh-app .rh-certificates-form,
+  body.rh-app .rh-profile-layout__main,
+  body.rh-app .rh-profile-layout__aside,
+  body.rh-app .rh-notification-toggle,
+  body.rh-app .rh-notification-toggle__copy {
+    min-width: 0;
+  }
+
+  body.rh-app .rh-profile-layout__aside {
+    position: static;
+  }
+
+  body.rh-app .rh-profile-hero__identity,
+  body.rh-app .rh-notification-prefs__footer,
+  body.rh-app .rh-catalog__utility-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.rh-app .rh-catalog__advanced-collapse {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.rh-app .rh-catalog__utility-row > .ant-btn {
+    width: 100%;
+  }
+
+  body.rh-app .rh-notification-prefs__footer .rh-profile-form-actions,
+  body.rh-app .rh-notification-prefs__footer .rh-profile-form-actions .ant-btn {
+    width: 100%;
+  }
+
+  body.rh-app .rh-notification-prefs__title,
+  body.rh-app .rh-notification-toggle__title,
+  body.rh-app .rh-notification-toggle__description {
+    overflow-wrap: anywhere;
+  }
+}
+
 @media (max-width: 767px) {
+  body.rh-app .rh-topnav__inner {
+    gap: 8px;
+  }
+
+  body.rh-app .rh-topnav__actions {
+    flex: 0 0 auto;
+    gap: 6px;
+  }
+
+  body.rh-app .rh-topnav__actions .ant-btn:not(.rh-topnav__login-button),
+  body.rh-app .rh-topnav__menu-button {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0;
+  }
+
+  body.rh-app .rh-topnav__profile-button.rh-nav__user {
+    width: 38px;
+    height: 38px;
+    padding: 2px;
+    justify-content: center;
+  }
+
   body.rh-app .ant-card .ant-card-head,
   body.rh-app .ant-card .ant-card-body {
     padding-left: 18px;
@@ -5521,9 +5633,8 @@ body.rh-app .rh-certificates-list-loading {
 }
 
 /* ===== Design Kit Completion Layer =====
- * This section intentionally normalizes the remaining AntD primitives used by
- * admin/owner/client pages so legacy screens inherit the RelaxHUB kit without
- * page-by-page rewrites.
+ * This section normalizes the design-system primitives used by admin, owner,
+ * and client pages so every screen inherits the RelaxHUB kit consistently.
  */
 
 body.rh-app,
@@ -5571,6 +5682,16 @@ body.rh-app .ant-upload-wrapper .ant-upload-drag {
   min-width: 0;
 }
 
+body.rh-app .rh-row.ant-row {
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+body.rh-app .rh-col.ant-col {
+  min-width: 0;
+}
+
 body.rh-app .ant-statistic {
   padding: 14px 16px;
   border: 1px solid rgba(15, 23, 42, 0.07);
@@ -5607,6 +5728,20 @@ body.rh-app .ant-table-container,
 body.rh-app .ant-table-content,
 body.rh-app .ant-table-body {
   background: transparent !important;
+}
+
+body.rh-app .ant-table,
+body.rh-app .ant-table-container {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+body.rh-app .ant-table-content {
+  overflow-x: auto !important;
+}
+
+body.rh-app .ant-table-content > table {
+  min-width: max-content;
 }
 
 body.rh-app .ant-table-thead > tr > th {
@@ -6290,6 +6425,30 @@ body.rh-app .rh-space--wrap {
   flex-wrap: wrap;
 }
 
+body.rh-app .rh-pms-page {
+  width: min(100%, 1200px);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+body.rh-app .rh-pms-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 16px;
+}
+
+body.rh-app .rh-pms-page__header-copy {
+  min-width: 0;
+}
+
+body.rh-app .rh-pms-page__header-copy .ant-typography {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 767px) {
   body.rh-app .ant-card .ant-card-head,
   body.rh-app .ant-card .ant-card-body,
@@ -6309,4 +6468,316 @@ body.rh-app .rh-space--wrap {
   body.rh-app .ant-btn {
     white-space: normal;
   }
+
+  body.rh-app .rh-pms-page {
+    padding: 16px 0;
+  }
+
+  body.rh-app .rh-pms-page__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.rh-app .rh-pms-page__header .ant-btn {
+    width: 100%;
+  }
+}
+
+/* ============================================================
+ * Design-system primitive treatments
+ * (controls.tsx wrappers emit `.rh-*` + `.ant-*` markers; these
+ * rules deliver the visual contract that lives in design/web.css.)
+ * ============================================================ */
+
+/* --- DatePicker / TimePicker layout --- */
+body.rh-app .ant-picker,
+body.rh-app .rh-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  height: 50px;
+  width: 100%;
+}
+
+body.rh-app .ant-picker .ant-picker-input,
+body.rh-app .rh-picker .ant-picker-input {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+body.rh-app .ant-picker .ant-picker-input > input,
+body.rh-app .rh-picker .ant-picker-input > input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: 500 15px/1.4 var(--rh-font-sans);
+  color: var(--rh-control-text);
+}
+
+body.rh-app .ant-picker input[type='date']::-webkit-calendar-picker-indicator,
+body.rh-app .ant-picker input[type='datetime-local']::-webkit-calendar-picker-indicator,
+body.rh-app .rh-picker input[type='date']::-webkit-calendar-picker-indicator,
+body.rh-app .rh-picker input[type='datetime-local']::-webkit-calendar-picker-indicator {
+  opacity: 0.55;
+  cursor: pointer;
+  filter: hue-rotate(140deg) saturate(0.6);
+}
+body.rh-app .ant-picker input[type='date']::-webkit-calendar-picker-indicator:hover,
+body.rh-app .rh-picker input[type='date']::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Strip native number spinner chrome inside our pill inputs */
+body.rh-app .ant-input-number input[type='number']::-webkit-outer-spin-button,
+body.rh-app .ant-input-number input[type='number']::-webkit-inner-spin-button,
+body.rh-app .rh-input-number input[type='number']::-webkit-outer-spin-button,
+body.rh-app .rh-input-number input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+body.rh-app .ant-input-number input[type='number'],
+body.rh-app .rh-input-number input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* Textarea polish */
+body.rh-app textarea.ant-input,
+body.rh-app textarea.rh-input {
+  min-height: 96px;
+  line-height: 1.5;
+  padding-block: 12px;
+  resize: vertical;
+}
+
+/* --- Steps / wizard --- */
+body.rh-app .rh-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 14px;
+  margin: 0 0 12px;
+  border-bottom: 1px solid var(--rh-border-subtle);
+}
+
+body.rh-app .rh-steps .ant-steps-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 8px;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  transition: background-color 0.15s ease;
+}
+
+body.rh-app .rh-steps .ant-steps-item:hover {
+  background: var(--rh-primary-soft);
+}
+
+body.rh-app .rh-steps .ant-steps-item:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--rh-primary-glow);
+}
+
+body.rh-app .rh-steps .ant-steps-item:not(:last-child)::after {
+  content: '';
+  flex: 0 0 auto;
+  width: 28px;
+  height: 1.5px;
+  margin-left: 6px;
+  background: var(--rh-border-control);
+  border-radius: 1px;
+}
+
+body.rh-app .rh-steps .ant-steps-item-finish:not(:last-child)::after {
+  background: linear-gradient(135deg, var(--rh-primary), var(--rh-primary-strong));
+}
+
+body.rh-app .rh-steps .ant-steps-item-icon {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font: 700 13px/1 var(--rh-font-sans);
+  color: var(--rh-text-soft);
+  background: var(--rh-bg-elevated);
+  border: 1.5px solid var(--rh-border-control);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+body.rh-app .rh-steps .ant-steps-item-content {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+body.rh-app .rh-steps .ant-steps-item-title {
+  font: 600 13px/1.1 var(--rh-font-sans);
+  color: var(--rh-text-soft);
+}
+
+body.rh-app .rh-steps .ant-steps-item-description {
+  font-size: 12px;
+  color: var(--rh-text-muted);
+}
+
+body.rh-app .rh-steps .ant-steps-item-active .ant-steps-item-icon {
+  background: var(--rh-primary-soft);
+  border-color: var(--rh-primary-strong);
+  border-width: 2px;
+  color: var(--rh-primary-strong);
+}
+
+body.rh-app .rh-steps .ant-steps-item-active .ant-steps-item-title {
+  color: var(--rh-text);
+  font-weight: 700;
+}
+
+body.rh-app .rh-steps .ant-steps-item-finish .ant-steps-item-icon {
+  background: linear-gradient(135deg, var(--rh-primary), var(--rh-primary-strong));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.20);
+}
+
+body.rh-app .rh-steps .ant-steps-item-finish .ant-steps-item-title {
+  color: var(--rh-text);
+}
+
+@media (max-width: 600px) {
+  body.rh-app .rh-steps {
+    gap: 4px;
+  }
+  body.rh-app .rh-steps .ant-steps-item {
+    padding: 6px 10px 6px 6px;
+  }
+  body.rh-app .rh-steps .ant-steps-item:not(:last-child)::after {
+    width: 12px;
+    margin-left: 2px;
+  }
+  body.rh-app .rh-steps .ant-steps-item-title {
+    font-size: 12px;
+  }
+}
+
+/* --- Checkbox --- */
+body.rh-app .rh-checkbox.ant-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  font: 500 14px/1.4 var(--rh-font-sans);
+  color: var(--rh-text);
+  margin: 0;
+}
+
+body.rh-app .rh-checkbox .ant-checkbox {
+  position: relative;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+body.rh-app .rh-checkbox .ant-checkbox-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+body.rh-app .rh-checkbox .ant-checkbox-inner {
+  position: relative;
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--rh-border-control);
+  background: #fff;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+body.rh-app .rh-checkbox:hover .ant-checkbox-inner {
+  border-color: var(--rh-primary-strong);
+}
+
+body.rh-app .rh-checkbox.ant-checkbox-wrapper-checked .ant-checkbox-inner {
+  background: linear-gradient(135deg, var(--rh-primary), var(--rh-primary-strong));
+  border-color: var(--rh-primary-strong);
+}
+
+body.rh-app .rh-checkbox.ant-checkbox-wrapper-checked .ant-checkbox-inner::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+body.rh-app .rh-checkbox .ant-checkbox-indeterminate .ant-checkbox-inner {
+  background: var(--rh-primary-soft);
+  border-color: var(--rh-primary-strong);
+}
+
+body.rh-app .rh-checkbox .ant-checkbox-indeterminate .ant-checkbox-inner::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  width: 10px;
+  height: 2px;
+  background: var(--rh-primary-strong);
+  border-radius: 1px;
+}
+
+body.rh-app .rh-checkbox:has(.ant-checkbox-input:focus-visible) .ant-checkbox-inner {
+  box-shadow: 0 0 0 3px var(--rh-primary-glow);
+}
+
+/* --- Topnav width safety --- */
+body.rh-app .rh-topnav {
+  min-width: 0;
+}
+
+body.rh-app .rh-topnav__actions {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+body.rh-app .rh-topnav__actions > * {
+  flex: 0 0 auto;
+}
+
+body.rh-app .rh-topnav__profile-dropdown.ant-dropdown,
+body.rh-app .rh-topnav__profile-dropdown .ant-dropdown-menu {
+  max-width: min(320px, calc(100vw - 24px));
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }

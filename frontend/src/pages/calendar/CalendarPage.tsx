@@ -911,6 +911,7 @@ export default function CalendarPage() {
       {/* Calendar Grid */}
       <Card
         size="small"
+        className="rh-calendar-grid-card"
         style={{ marginBottom: 16, overflow: 'auto' }}
         styles={{ body: { padding: 0 } }}
       >

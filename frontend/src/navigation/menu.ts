@@ -166,6 +166,10 @@ export const CLIENT_PROFILE_MENU_ITEMS: NavigationItem[] = [
   prefixItem('client-wallet', 'Кошелёк', '/client/wallet', ['/client/wallet'], 'Финансы'),
   prefixItem('client-payments', 'Платежи', '/client/payments', ['/client/payments'], 'Финансы'),
   prefixItem('client-cards', 'Карты', '/client/cards', ['/client/cards'], 'Финансы'),
+  prefixItem('client-loyalty', 'Лояльность', '/client/loyalty', ['/client/loyalty'], 'Бонусы'),
+  prefixItem('client-referral', 'Пригласи друга', '/client/referral', ['/client/referral'], 'Бонусы'),
+  prefixItem('client-promos', 'Промокоды', '/client/promos', ['/client/promos'], 'Бонусы'),
+  prefixItem('client-saved-searches', 'Сохранённые поиски', '/client/saved-searches', ['/client/saved-searches'], 'Поиск'),
 ]
 
 export const CLIENT_MOBILE_SERVICE_ITEMS: NavigationItem[] = [

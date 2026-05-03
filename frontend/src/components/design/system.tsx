@@ -102,6 +102,13 @@ function toGap(size: unknown): string {
   return '8px'
 }
 
+const RowGutterContext = createContext({ x: 0, y: 0 })
+
+function normalizeRowGutter(gutter: number | [number, number] | undefined) {
+  if (Array.isArray(gutter)) return { x: gutter[0], y: gutter[1] }
+  return { x: gutter ?? 0, y: gutter ?? 0 }
+}
+
 interface ConfigProviderProps {
   children?: ReactNode
   locale?: unknown
@@ -857,7 +864,7 @@ function tagTone(color?: ColorTone) {
   return 'ghost'
 }
 
-export function Tag({ color, icon, closable, closeIcon, onClose, className, children, ...props }: TagProps) {
+function TagBase({ color, icon, closable, closeIcon, onClose, className, children, ...props }: TagProps) {
   const tone = tagTone(color)
   return (
     <span
@@ -888,6 +895,47 @@ export function Tag({ color, icon, closable, closeIcon, onClose, className, chil
     </span>
   )
 }
+
+interface CheckableTagProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'onChange'> {
+  checked?: boolean
+  onChange?: (checked: boolean) => void
+}
+
+function CheckableTag({ checked, onChange, className, children, onClick, onKeyDown, ...props }: CheckableTagProps) {
+  const toggle = () => onChange?.(!checked)
+  return (
+    <span
+      role="checkbox"
+      aria-checked={!!checked}
+      tabIndex={0}
+      className={cx(
+        'rh-tag',
+        'rh-tag--checkable',
+        checked && 'rh-tag--checked',
+        'ant-tag',
+        'ant-tag-checkable',
+        checked && 'ant-tag-checkable-checked',
+        className,
+      )}
+      onClick={(event) => {
+        toggle()
+        onClick?.(event)
+      }}
+      onKeyDown={(event) => {
+        if (event.key === ' ' || event.key === 'Enter') {
+          event.preventDefault()
+          toggle()
+        }
+        onKeyDown?.(event)
+      }}
+      {...props}
+    >
+      {children}
+    </span>
+  )
+}
+
+export const Tag = Object.assign(TagBase, { CheckableTag })
 
 interface TypographyBaseProps extends HTMLAttributes<HTMLElement> {
   type?: ToneType
@@ -997,11 +1045,23 @@ interface RowProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Row({ gutter = 0, align, justify, className, style, children, ...props }: RowProps) {
-  const gap = Array.isArray(gutter) ? `${gutter[1]}px ${gutter[0]}px` : `${gutter}px`
+  const normalizedGutter = normalizeRowGutter(gutter)
   return (
-    <div className={cx('rh-row', 'ant-row', className)} style={{ gap, alignItems: align, justifyContent: justify, ...style }} {...props}>
-      {children}
-    </div>
+    <RowGutterContext.Provider value={normalizedGutter}>
+      <div
+        className={cx('rh-row', 'ant-row', className)}
+        style={{
+          columnGap: normalizedGutter.x,
+          rowGap: normalizedGutter.y,
+          alignItems: align,
+          justifyContent: justify,
+          ...style,
+        }}
+        {...props}
+      >
+        {children}
+      </div>
+    </RowGutterContext.Provider>
   )
 }
 
@@ -1012,12 +1072,27 @@ interface ColProps extends HTMLAttributes<HTMLDivElement> {
   md?: number
   lg?: number
   xl?: number
+  xxl?: number
   flex?: string | number
 }
 
-export function Col({ span, xs, sm, md, lg, xl, flex, className, style, children, ...props }: ColProps) {
-  const basis = span ?? xs ?? sm ?? md ?? lg ?? xl ?? 24
-  const width = `calc(${Math.min(24, basis) / 24 * 100}% - 0.01px)`
+export function Col({ span, xs, sm, md, lg, xl, xxl, flex, className, style, children, ...props }: ColProps) {
+  const screens = useMediaScreens()
+  const gutter = useContext(RowGutterContext)
+  let basis = span ?? xs
+  if (screens.sm && sm != null) basis = sm
+  if (screens.md && md != null) basis = md
+  if (screens.lg && lg != null) basis = lg
+  if (screens.xl && xl != null) basis = xl
+  if (screens.xxl && xxl != null) basis = xxl
+  const gridStyle: CSSProperties = {}
+  if (basis != null) {
+    const ratio = Math.min(24, basis) / 24
+    const gutterOffset = gutter.x * (1 - ratio)
+    const width = `calc(${ratio * 100}% - ${gutterOffset}px)`
+    gridStyle.flex = `0 0 ${width}`
+    gridStyle.maxWidth = width
+  }
   return (
     <div
       className={cx(
@@ -1029,9 +1104,10 @@ export function Col({ span, xs, sm, md, lg, xl, flex, className, style, children
         md != null && `ant-col-md-${md}`,
         lg != null && `ant-col-lg-${lg}`,
         xl != null && `ant-col-xl-${xl}`,
+        xxl != null && `ant-col-xxl-${xxl}`,
         className,
       )}
-      style={{ flex: flex ?? `1 1 ${width}`, maxWidth: flex ? undefined : width, ...style }}
+      style={{ ...(flex != null ? { flex } : gridStyle), ...style }}
       {...props}
     >
       {children}

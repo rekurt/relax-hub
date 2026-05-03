@@ -268,7 +268,7 @@ export default function BookingCreate() {
           navigate(`/client/bookings/${booking.id}`, {
             state: {
               paymentMethod,
-              ...(paymentMethod === 'combo' && comboWalletAmount > 0 ? { comboWalletAmount } : {}),
+              ...(paymentMethod === 'combo' && comboWalletAmount > 0 ? { walletApplied: comboWalletAmount } : {}),
             },
           })
         }

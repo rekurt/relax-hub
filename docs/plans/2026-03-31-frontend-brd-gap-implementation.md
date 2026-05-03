@@ -7,7 +7,7 @@ Comprehensive gap analysis and implementation plan to bring the React frontend i
 ## Context
 
 - Files involved: `frontend/src/pages/`, `frontend/src/components/`, `frontend/src/lib/`, `frontend/src/router.tsx`
-- Related patterns: Ant Design 6, TanStack React Query (orval-generated), zustand stores, role-based routing
+- Related patterns: RelaxHUB Design System (`@/components/design`), TanStack React Query (orval-generated), zustand stores, role-based routing
 - Dependencies: Generated API client (orval), Yandex Maps API, WebSocket, dayjs
 
 ## Gap Summary
@@ -75,7 +75,7 @@ Comprehensive gap analysis and implementation plan to bring the React frontend i
 
 - **Testing approach**: Regular (code first, then tests)
 - Complete each task fully before moving to the next
-- Follow existing patterns: Ant Design 6, orval-generated hooks, zustand stores
+- Follow existing patterns: RelaxHUB Design System (`@/components/design`), orval-generated hooks, zustand stores
 - **CRITICAL: every task MUST include new/updated tests**
 - **CRITICAL: all tests must pass before starting next task**
 

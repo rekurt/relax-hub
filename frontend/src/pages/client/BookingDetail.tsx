@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   Typography,
@@ -25,6 +25,7 @@ import {
   StarOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
+  ReloadOutlined,
 } from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -34,21 +35,22 @@ import { useGetBookingsIdPayment, usePostBookingsIdPay } from '@/api/generated/p
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { BOOKING_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from '@/lib/constants'
 import { axiosInstance } from '@/api/axios-instance'
+import { useDeviceToken } from '@/lib/useDeviceToken'
 import { usePostApiV1BookingsShare } from '@/api/generated/share/share'
+
+const PUSH_PROMPTED_KEY = 'rh_push_prompted'
 import ApplePayButton from '@/components/ApplePayButton'
 import GooglePayButton from '@/components/GooglePayButton'
 import ShareButton from '@/components/ShareButton'
-import { useDeviceToken } from '@/lib/useDeviceToken'
 
 const { Title, Text } = Typography
-const PUSH_PROMPTED_KEY = 'rh_push_prompted'
 
 export default function ClientBookingDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
   const { message } = App.useApp()
-  const routeState = location.state as { paymentMethod?: string; comboWalletAmount?: number } | null
+  const routeState = location.state as { paymentMethod?: string; walletApplied?: number } | null
   const queryClient = useQueryClient()
   const [modifyModalOpen, setModifyModalOpen] = useState(false)
   const [modifyLoading, setModifyLoading] = useState(false)
@@ -105,11 +107,13 @@ export default function ClientBookingDetail() {
 
   const { requestPushPermission } = useDeviceToken()
 
-  // FR-142: Request push permission after first booking completion
+  // Request push permission once after the first booking actually completes.
+  // Triggering on creation would burn the one-shot prompt for cancelled or
+  // never-completed (request-mode) bookings.
   useEffect(() => {
     if (booking?.status === 'completed' && !localStorage.getItem(PUSH_PROMPTED_KEY)) {
       localStorage.setItem(PUSH_PROMPTED_KEY, '1')
-      requestPushPermission()
+      void requestPushPermission()
     }
   }, [booking?.status, requestPushPermission])
 
@@ -189,6 +193,7 @@ export default function ClientBookingDetail() {
   const canPay = booking.status === 'confirmed' && (!payment || payment.status === 'pending' || !payment.status)
   const canReview = booking.status === 'completed'
   const canDispute = booking.status === 'completed' || booking.status === 'no_show'
+  const canRebook = booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'rejected'
   const canModify =
     (booking.status === 'pending' || booking.status === 'confirmed' || booking.status === 'pending_owner') &&
     (booking.modification_count ?? 0) < 3 &&
@@ -386,26 +391,46 @@ export default function ClientBookingDetail() {
             Открыть спор
           </Button>
         )}
+        {canRebook && booking.bathhouse_id && (
+          <Button
+            size="large"
+            icon={<ReloadOutlined />}
+            onClick={() => navigate(`/client/booking/new?bathhouse=${booking.bathhouse_id}&rebook=${booking.id}`)}
+          >
+            Забронировать снова
+          </Button>
+        )}
         {canPay && (
           <>
             <Button
               type="primary"
               size="large"
               icon={<DollarOutlined />}
-              onClick={() => id && payMutation.mutate({
-                id,
-                data: {
-                  payment_method: routeState?.paymentMethod ?? 'card',
-                  ...(routeState?.paymentMethod === 'combo' && routeState?.comboWalletAmount
-                    ? { wallet_amount: routeState.comboWalletAmount, card_amount: (booking.total_price ?? 0) - routeState.comboWalletAmount }
-                    : {}),
-                },
-              })}
+              onClick={() => {
+                if (!id) return
+                const walletAmount = routeState?.walletApplied && routeState.walletApplied > 0 ? routeState.walletApplied : 0
+                const cardAmount = Math.max(0, (booking.total_price ?? 0) - walletAmount)
+                let method: string = routeState?.paymentMethod ?? 'card'
+                if (walletAmount > 0 && cardAmount === 0) {
+                  method = 'wallet'
+                } else if (walletAmount > 0 && cardAmount > 0) {
+                  method = 'combo'
+                }
+                payMutation.mutate({
+                  id,
+                  data: {
+                    payment_method: method,
+                    ...(walletAmount > 0
+                      ? { wallet_amount: walletAmount, card_amount: cardAmount }
+                      : {}),
+                  },
+                })
+              }}
               loading={payMutation.isPending}
             >
               {routeState?.paymentMethod === 'sbp' ? 'Оплатить через СБП'
                 : routeState?.paymentMethod === 'wallet' ? 'Оплатить с кошелька'
-                : routeState?.paymentMethod === 'combo' ? 'Оплатить (кошелёк + карта)'
+                : routeState?.walletApplied && routeState.walletApplied > 0 ? 'Оплатить (кошелёк + карта)'
                 : 'Оплатить картой'}
             </Button>
             <ApplePayButton

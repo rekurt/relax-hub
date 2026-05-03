@@ -41,7 +41,7 @@
 - TypeScript 5.6.2 - Static type checking (strict mode enforced in CI)
 
 **UI & State Management:**
-- Ant Design 6.3.2 - Component library (Russian locale included)
+- RelaxHUB Design System (`frontend/src/components/design`) - repo-owned component library adapted from `./design`, with Russian locale and native React controls
 - Zustand 5.0.11 - Client state (auth token, selected bathhouse, persisted to localStorage)
 - TanStack React Query 5.90.21 - Server state management, automatic caching and synchronization
 
@@ -84,7 +84,7 @@
 **Frontend - Data/API:**
 - axios 1.13.6 - HTTP client for API calls (configured with JWT interceptor)
 - orval 7.13.2 - OpenAPI client code generator (auto-generates `src/api/generated/`)
-- dayjs 1.11.20 - Date/time formatting (matches Ant Design locale system)
+- dayjs 1.11.20 - Date/time formatting used by design-system controls and business flows
 
 **Testing Backend:**
 - stretchr/testify v1.11.1 - Assertion library for Go tests

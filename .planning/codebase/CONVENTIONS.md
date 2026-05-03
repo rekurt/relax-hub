@@ -82,7 +82,7 @@
 - 429: `ErrOTPRateLimited`, `ErrOTPMaxAttempts`, `ErrResetRateLimited`, `ErrBroadcastRateLimit`
 
 **Frontend (React):**
-- Errors caught in try-catch blocks, displayed via Ant Design Message/notification components
+- Errors caught in try-catch blocks, displayed via RelaxHUB design-system message/notification components
 - API client (axios instance in `src/api/axios-instance.ts`) handles 401 responses by calling `logout()`
 - Type-safe error types via generated OpenAPI schema
 

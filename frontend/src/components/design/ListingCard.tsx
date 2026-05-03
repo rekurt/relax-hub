@@ -77,7 +77,9 @@ export default function DesignListingCard({
             <span>{address}</span>
           </div>
         )}
-        <RatingBadge value={rating} count={reviewCount} />
+        {typeof rating === 'number' && (
+          <RatingBadge value={rating} count={reviewCount} />
+        )}
         {tags.length > 0 && (
           <div className="rh-listing-card__tags">
             {tags.map((tag, index) => (
