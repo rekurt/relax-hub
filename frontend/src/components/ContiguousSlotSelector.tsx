@@ -53,12 +53,12 @@ export default function ContiguousSlotSelector<T extends SlotSelectionItem>({
       ) : null}
 
       {description ? (
-        <div style={{ marginTop: 8 }}>
+        <div className="rh-section-offset-sm">
           <Text type="secondary">{description}</Text>
         </div>
       ) : null}
 
-      <div className="rh-slot-grid" style={{ marginTop: 12 }}>
+      <div className="rh-slot-grid rh-slot-grid--offset">
         {sortedSlots.map((slot) => {
           const isDisabled = !slot.available
           const isSelected = !isDisabled && (
@@ -106,7 +106,7 @@ export default function ContiguousSlotSelector<T extends SlotSelectionItem>({
 
       {activePendingStartTime ? (
         <Alert
-          style={{ marginTop: 12 }}
+          className="rh-section-offset"
           type="info"
           showIcon={false}
           title={`Старт: ${pendingStartLabel}. Выберите конечный слот${minDurationHours > 1 ? ` для интервала от ${minDurationHours} ч` : ''}.`}

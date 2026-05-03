@@ -1,4 +1,4 @@
-import { App, Badge, Button, Empty, Popconfirm, Rate, Space, Table, Tag, Tooltip, Typography } from '@/components/design/system'
+import { App, Badge, Button, Popconfirm, Rate, Space, Table, Tag, Tooltip } from '@/components/design/system'
 import type { ColumnsType } from '@/components/design/types'
 import { CopyOutlined, DeleteOutlined, EditOutlined, ImportOutlined, PlusOutlined } from '@/components/design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -11,8 +11,7 @@ import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { useAuthStore } from '@/stores/auth'
 import { formatPrice } from '@/lib/format'
 import { useQueryClient } from '@tanstack/react-query'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
 
 const STATUS_MAP: Record<string, { color: string; text: string }> = {
   active: { color: 'green', text: 'Активна' },
@@ -88,7 +87,7 @@ export default function BathhouseList() {
       key: 'rating',
       render: (rating: number) => (
         <Space>
-          <Rate disabled value={rating ?? 0} allowHalf style={{ fontSize: 14 }} />
+          <Rate disabled value={rating ?? 0} allowHalf className="rh-rate-compact" />
           <span>{rating?.toFixed(1) ?? '—'}</span>
         </Space>
       ),
@@ -157,38 +156,31 @@ export default function BathhouseList() {
   ]
 
   return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 24,
-          flexWrap: 'wrap',
-          gap: 12,
-        }}
-      >
-        <Title level={3} style={{ margin: 0 }}>
-          Мои бани
-        </Title>
-        {isOwner && (
-          <Space>
-            <Button
-              icon={<ImportOutlined />}
-              onClick={() => navigate('/bathhouses/import')}
-            >
-              Импорт
-            </Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/bathhouses/new')}
-            >
-              Добавить баню
-            </Button>
-          </Space>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Объекты"
+        title="Мои бани"
+        description="Рабочий список объектов с быстрым переходом к редактированию, импорту и дублированию карточек."
+        extra={(
+          isOwner ? (
+            <Space>
+              <Button
+                icon={<ImportOutlined />}
+                onClick={() => navigate('/bathhouses/import')}
+              >
+                Импорт
+              </Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => navigate('/bathhouses/new')}
+              >
+                Добавить баню
+              </Button>
+            </Space>
+          ) : null
         )}
-      </div>
+      />
       <Table
         columns={columns}
         dataSource={bathhouses}
@@ -197,15 +189,19 @@ export default function BathhouseList() {
         pagination={false}
         locale={{
           emptyText: (
-            <Empty
-              description="У вас пока нет объектов. Добавьте первую баню, чтобы начать принимать бронирования."
-            >
+            <div className="rh-admin-empty-state">
+              <div className="rh-admin-empty-state__title">
+                У вас пока нет объектов. Добавьте первую баню, чтобы начать принимать бронирования.
+              </div>
+              <p className="rh-admin-empty-state__text">
+                После модерации объект появится в каталоге и сможет принимать бронирования.
+              </p>
               {isOwner && (
                 <Button type="primary" onClick={() => navigate('/bathhouses/new')}>
                   Добавить баню
                 </Button>
               )}
-            </Empty>
+            </div>
           ),
         }}
       />

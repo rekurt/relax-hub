@@ -11,7 +11,7 @@ import {
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
 
-const { Title, Paragraph } = Typography
+const { Paragraph } = Typography
 
 interface OnboardingTourProps {
   open: boolean
@@ -28,7 +28,7 @@ function getSteps(region?: string) {
 
   return [
     {
-      icon: <GiftOutlined style={{ fontSize: 48, color: '#15803d' }} />,
+      icon: <GiftOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--success" />,
       title: 'Добро пожаловать!',
       description:
         `Вам начислен приветственный бонус ${formatPrice(bonusAmount)}! Бонус действует 30 дней и может быть использован для оплаты первого бронирования.`,
@@ -36,31 +36,31 @@ function getSteps(region?: string) {
       currencySymbol,
     },
     {
-      icon: <SearchOutlined style={{ fontSize: 48, color: '#0f766e' }} />,
+      icon: <SearchOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--accent" />,
       title: 'Поиск бань',
       description:
         'Используйте поиск, чтобы найти идеальную баню. Фильтруйте по городу, цене, удобствам и расположению на карте.',
     },
     {
-      icon: <CalendarOutlined style={{ fontSize: 48, color: '#d97706' }} />,
+      icon: <CalendarOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--warning" />,
       title: 'Бронирование',
       description:
         'Выберите дату и время, укажите количество гостей и дополнительные услуги. Оплатите онлайн картой, через СБП или из кошелька.',
     },
     {
-      icon: <WalletOutlined style={{ fontSize: 48, color: '#d97706' }} />,
+      icon: <WalletOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--warning" />,
       title: 'Кошелёк и бонусы',
       description:
         'Пополняйте кошелёк для быстрой оплаты. Получайте кешбэк за бронирования, бонусы за приглашение друзей и повышайте уровень лояльности.',
     },
     {
-      icon: <EnvironmentOutlined style={{ fontSize: 48, color: '#0f766e' }} />,
+      icon: <EnvironmentOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--accent" />,
       title: 'Рекомендации рядом',
       description:
         'Разрешите определение местоположения, и мы покажем лучшие бани поблизости. Персональные рекомендации учитывают ваши предпочтения и историю посещений.',
     },
     {
-      icon: <StarOutlined style={{ fontSize: 48, color: '#d97706' }} />,
+      icon: <StarOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--warning" />,
       title: 'Отзывы и рейтинг',
       description:
         'Оставляйте отзывы после посещения. Оценивайте чистоту, точность описания, общение и цену. Ваши отзывы помогут другим.',
@@ -98,9 +98,9 @@ export default function OnboardingTour({ open, onComplete, region }: OnboardingT
           <div className="rh-onboarding__icon" aria-hidden="true">
             {step.icon}
           </div>
-          <Title level={4} className="rh-onboarding__title">
+          <h2 className="rh-onboarding__title">
             {step.title}
-          </Title>
+          </h2>
           <Paragraph type="secondary" className="rh-onboarding__description">
             {step.description}
           </Paragraph>

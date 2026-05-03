@@ -3,9 +3,9 @@ import { Button, Divider, Space } from '@/components/design/system'
 import { axiosInstance } from '@/api/axios-instance'
 
 const OAUTH_PROVIDERS = [
-  { key: 'vk', label: 'VK', color: '#0077FF' },
-  { key: 'yandex', label: 'Яндекс', color: '#FC3F1D' },
-  { key: 'google', label: 'Google', color: '#4285F4' },
+  { key: 'vk', label: 'VK' },
+  { key: 'yandex', label: 'Яндекс' },
+  { key: 'google', label: 'Google' },
 ] as const
 
 interface OAuthButtonsProps {
@@ -55,21 +55,18 @@ export default function OAuthButtons({ referralCode }: OAuthButtonsProps) {
   }
 
   return (
-    <div>
-      <Divider plain style={{ margin: '8px 0 16px' }}>
+    <div className="rh-oauth">
+      <Divider plain className="rh-oauth__divider">
         или войдите через
       </Divider>
-      <Space orientation="vertical" style={{ width: '100%' }} size="small">
+      <Space orientation="vertical" className="rh-full-width" size="small">
         {visibleProviders.map((provider) => (
           <Button
             key={provider.key}
             block
             size="large"
             onClick={() => handleOAuth(provider.key)}
-            style={{
-              borderColor: provider.color,
-              color: provider.color,
-            }}
+            className={`rh-oauth__button rh-oauth__button--${provider.key}`}
           >
             Войти через {provider.label}
           </Button>

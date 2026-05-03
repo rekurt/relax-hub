@@ -37,7 +37,7 @@ import {
   useDeleteAuthLinkProvider,
 } from '@/api/generated/oauth/oauth'
 import { useGetCities } from '@/api/generated/cities/cities'
-import { PROVIDER_LABELS, PROVIDER_COLORS } from '@/lib/constants'
+import { PROVIDER_LABELS } from '@/lib/constants'
 import PageHeader from '@/components/PageHeader'
 import { resolveAssetUrl } from '@/lib/asset-url'
 
@@ -231,7 +231,7 @@ export default function ProfileSettings() {
               form={profileForm}
               layout="vertical"
               onFinish={handleProfileSubmit}
-              style={{ maxWidth: 560 }}
+              className="rh-profile-form"
             >
               <Form.Item label="Имя" name="name">
                 <Input placeholder="Ваше имя" />
@@ -269,14 +269,14 @@ export default function ProfileSettings() {
                 layout="vertical"
                 onFinish={handlePrefsSubmit}
               >
-                <div className="rh-toggle-grid" style={{ marginBottom: 20 }}>
+                <div className="rh-toggle-grid rh-toggle-grid--spaced">
                   {NOTIFICATION_CARDS.map((item) => (
                     <div key={item.name} className="rh-toggle-card">
                       <div className="rh-toggle-card__copy">
                         <Text className="rh-toggle-card__title">{item.title}</Text>
                         <Text className="rh-toggle-card__description">{item.description}</Text>
                       </div>
-                      <Form.Item name={item.name} valuePropName="checked" style={{ marginBottom: 0 }}>
+                      <Form.Item name={item.name} valuePropName="checked" className="rh-form-item-reset">
                         <Switch />
                       </Form.Item>
                     </div>
@@ -357,9 +357,7 @@ export default function ProfileSettings() {
                         avatar={
                           <Avatar
                             src={resolveAssetUrl(account.avatar_url)}
-                            style={{
-                              backgroundColor: PROVIDER_COLORS[account.provider ?? ''] ?? 'var(--rh-text-muted)',
-                            }}
+                            className={`rh-provider-avatar rh-provider-avatar--${account.provider ?? 'default'}`}
                           >
                             {(account.provider ?? '')[0]?.toUpperCase()}
                           </Avatar>
@@ -378,10 +376,7 @@ export default function ProfileSettings() {
                       <Button
                         key={provider}
                         onClick={() => handleLinkProvider(provider)}
-                        style={{
-                          borderColor: PROVIDER_COLORS[provider],
-                          color: PROVIDER_COLORS[provider],
-                        }}
+                        className={`rh-provider-button rh-provider-button--${provider}`}
                       >
                         Привязать {PROVIDER_LABELS[provider]}
                       </Button>

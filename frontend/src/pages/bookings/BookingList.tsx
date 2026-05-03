@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { App, Button, DatePicker, Popconfirm, Select, Space, Table, Tag, Typography } from '@/components/design/system'
+import { App, Button, DatePicker, Popconfirm, Select, Space, Table, Tag } from '@/components/design/system'
 import type { ColumnsType } from '@/components/design/types'
 import {
   CheckCircleOutlined,
@@ -33,8 +33,8 @@ import BookingDetails from './BookingDetails'
 import ModificationRequests from './ModificationRequests'
 import ExtensionRequests from './ExtensionRequests'
 import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
 const { RangePicker } = DatePicker
 
 const STATUS_OPTIONS = [
@@ -343,7 +343,7 @@ export default function BookingList() {
       render: (_, record) => (
         <div>
           <div>{record.start_time ? formatDateTime(record.start_time, 'DD.MM.YYYY') : '—'}</div>
-          <div style={{ color: 'var(--rh-text-soft)', fontSize: 12 }}>
+          <div className="rh-table-meta-text">
             {record.start_time ? formatDateTime(record.start_time, 'HH:mm') : ''}
             {record.end_time ? ` – ${formatDateTime(record.end_time, 'HH:mm')}` : ''}
           </div>
@@ -414,25 +414,33 @@ export default function BookingList() {
 
   if (!selectedBathhouseId) {
     return (
-      <div>
-        <Title level={3}>Бронирования</Title>
+      <div className="rh-stack">
+        <PageHeader
+          eyebrow="Операции"
+          title="Бронирования"
+          description="Выберите объект, чтобы управлять заявками и визитами."
+          size="compact"
+        />
         <EmptyState description="Выберите баню для просмотра бронирований" />
       </div>
     )
   }
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Бронирования
-      </Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Операции"
+        title="Бронирования"
+        description="Подтверждайте заявки, отмечайте визиты и контролируйте оплату."
+        size="compact"
+      />
 
-      <Space wrap style={{ marginBottom: 16 }}>
+      <Space wrap className="rh-page-toolbar">
         <Select
           value={statusFilter}
           onChange={setStatusFilter}
           options={STATUS_OPTIONS}
-          style={{ width: 160 }}
+          className="rh-client-filter-control"
           placeholder="Статус"
         />
         <RangePicker

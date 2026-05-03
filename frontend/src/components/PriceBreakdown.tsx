@@ -116,16 +116,11 @@ export default function PriceBreakdown({
   const toPay = walletPayment ? Math.max(0, total - walletPayment) : total
 
   return (
-    <div data-testid="price-breakdown">
+    <div className="rh-price-breakdown" data-testid="price-breakdown">
       {lines.map((line, idx) => (
         <div
           key={idx}
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginBottom: 4,
-            color: line.type === 'discount' ? '#15803d' : undefined,
-          }}
+          className={line.type === 'discount' ? 'rh-price-breakdown__row rh-price-breakdown__row--discount' : 'rh-price-breakdown__row'}
         >
           <Text type={line.type === 'discount' ? 'success' : undefined}>{line.label}</Text>
           <Text type={line.type === 'discount' ? 'success' : undefined} strong={line.type === 'total'}>
@@ -134,38 +129,29 @@ export default function PriceBreakdown({
         </div>
       ))}
 
-      <Divider style={{ margin: '8px 0' }} />
+      <Divider className="rh-price-breakdown__divider" />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div className="rh-price-breakdown__row rh-price-breakdown__row--total">
         <Text strong>Итого</Text>
-        <Text strong style={{ fontSize: 16 }}>{formatPrice(Math.max(0, total))}</Text>
+        <Text strong className="rh-price-breakdown__total">{formatPrice(Math.max(0, total))}</Text>
       </div>
 
       {walletPayment && walletPayment > 0 && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+        <div className="rh-price-breakdown__row rh-price-breakdown__row--pay">
           <Text strong>К оплате картой</Text>
-          <Text strong style={{ fontSize: 16 }}>{formatPrice(toPay)}</Text>
+          <Text strong className="rh-price-breakdown__total">{formatPrice(toPay)}</Text>
         </div>
       )}
 
       {securityDeposit != null && securityDeposit > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginTop: 8,
-            padding: '8px 12px',
-            background: 'rgba(248, 244, 236, 0.5)',
-            borderRadius: 12,
-          }}
-        >
+        <div className="rh-price-breakdown__deposit">
           <Text type="secondary">🔒 Залог (вернётся после визита)</Text>
           <Text type="secondary">{formatPrice(securityDeposit)}</Text>
         </div>
       )}
 
       {showAreaAverage && (
-        <div style={{ marginTop: 8 }}>
+        <div className="rh-section-offset-sm">
           <Text type="secondary">
             Средняя цена в районе: {formatPrice(areaAveragePrice!)}/ч
             {basePrice > areaAveragePrice!

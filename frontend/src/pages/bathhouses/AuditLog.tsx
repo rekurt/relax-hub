@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DatePicker, Table, Tag, Typography, Card, Space } from '@/components/design/system'
+import { DatePicker, Table, Tag, Card, Space } from '@/components/design/system'
 import type { ColumnsType } from '@/components/design/types'
 import { HistoryOutlined } from '@/components/design/icons'
 import dayjs from 'dayjs'
@@ -7,9 +7,8 @@ import { useParams } from 'react-router-dom'
 import { useGetMyBathhousesIdHistory } from '@/api/generated/bathhouses/bathhouses'
 import type { InternalHandlerAuditLogResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
-import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
 const { RangePicker } = DatePicker
 
 const ACTION_CONFIG: Record<string, { color: string; text: string }> = {
@@ -51,7 +50,7 @@ function renderChangedFields(fields: unknown): React.ReactNode {
     if (entries.length === 0) return '—'
 
     return (
-      <div style={{ maxWidth: 400 }}>
+      <div className="rh-audit-diff">
         {entries.map(([key, value]) => {
           const label = FIELD_LABELS[key] || key
           const change = value as { old?: unknown; new?: unknown } | unknown
@@ -59,19 +58,19 @@ function renderChangedFields(fields: unknown): React.ReactNode {
           if (typeof change === 'object' && change !== null && 'old' in (change as Record<string, unknown>)) {
             const typedChange = change as { old?: unknown; new?: unknown }
             return (
-              <div key={key} style={{ marginBottom: 4, fontSize: 13 }}>
+              <div key={key} className="rh-audit-diff__row">
                 <strong>{label}:</strong>{' '}
-                <span style={{ color: '#b42318', textDecoration: 'line-through' }}>
+                <span className="rh-audit-diff__old">
                   {formatValue(typedChange.old)}
                 </span>
                 {' → '}
-                <span style={{ color: '#15803d' }}>{formatValue(typedChange.new)}</span>
+                <span className="rh-audit-diff__new">{formatValue(typedChange.new)}</span>
               </div>
             )
           }
 
           return (
-            <div key={key} style={{ marginBottom: 4, fontSize: 13 }}>
+            <div key={key} className="rh-audit-diff__row">
               <strong>{label}:</strong> {formatValue(change)}
             </div>
           )
@@ -159,15 +158,16 @@ export default function AuditLog() {
   ]
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        <HistoryOutlined style={{ marginRight: 8 }} />
-        История изменений
-      </Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Объекты"
+        title="История изменений"
+        description="Все правки объекта собраны в журнал с фильтром по дате и понятной визуализацией diff."
+      />
 
-      <Card style={{ marginBottom: 16 }}>
+      <Card className="rh-admin-detail-card">
         <Space wrap>
-          <span>Фильтр по дате:</span>
+          <span className="rh-inline-title"><HistoryOutlined /> Фильтр по дате:</span>
           <RangePicker
             value={dateRange}
             onChange={(dates) => setDateRange(dates)}
@@ -182,7 +182,16 @@ export default function AuditLog() {
         dataSource={filteredEntries}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: <EmptyState description="История изменений пуста" /> }}
+        locale={{
+          emptyText: (
+            <div className="rh-admin-empty-state">
+              <div className="rh-admin-empty-state__title">История изменений пуста</div>
+              <p className="rh-admin-empty-state__text">
+                Журнал появится после первой правки объекта.
+              </p>
+            </div>
+          ),
+        }}
         pagination={{
           current: page,
           pageSize: pageSize,

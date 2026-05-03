@@ -143,8 +143,8 @@ export default function KYCSettings() {
       </div>
 
       {hasKyc && (
-        <Card title="Текущий статус">
-          <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
+        <Card title="Текущий статус" className="rh-admin-detail-card">
+          <Space orientation="vertical" size="middle" className="rh-full-width">
             <Space>
               <Text strong>Статус:</Text>
               {statusInfo ? (
@@ -229,7 +229,7 @@ export default function KYCSettings() {
             form={form}
             layout="vertical"
             onFinish={handleSubmit}
-            style={{ maxWidth: 640 }}
+            className="rh-kyc-form"
           >
             <Form.Item
               name="entity_type"
@@ -286,7 +286,7 @@ export default function KYCSettings() {
               >
                 <Button icon={<UploadOutlined />}>Загрузить документ</Button>
               </Upload>
-              <Text type="secondary" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
+              <Text type="secondary" className="rh-field-help-text">
                 Паспорт, свидетельство о регистрации и другие подтверждающие документы
               </Text>
             </Form.Item>

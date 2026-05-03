@@ -14,7 +14,7 @@ export function Admin2FABanner() {
   if (method === 'totp' || method === 'sms') return null
 
   return (
-    <div className="rh-admin-2fa-banner" style={{ padding: '12px 16px 0' }}>
+    <div className="rh-admin-2fa-banner">
       <Alert
         type="warning"
         showIcon
@@ -23,8 +23,7 @@ export function Admin2FABanner() {
         action={
           <Link
             to={ADMIN_2FA_DEEP_LINK}
-            className="ant-btn ant-btn-primary ant-btn-sm"
-            style={{ display: 'inline-flex', alignItems: 'center' }}
+            className="ant-btn ant-btn-primary ant-btn-sm rh-inline-flex-action"
           >
             Включить 2FA
           </Link>

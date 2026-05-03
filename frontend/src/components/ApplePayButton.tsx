@@ -79,12 +79,7 @@ export default function ApplePayButton({ amount, onToken, disabled, loading }: A
       disabled={disabled}
       loading={loading}
       size="large"
-      style={{
-        background: '#000',
-        color: '#fff',
-        borderColor: '#000',
-        borderRadius: 20,
-      }}
+      className="rh-wallet-pay-button rh-wallet-pay-button--apple"
     >
       Apple Pay
     </Button>

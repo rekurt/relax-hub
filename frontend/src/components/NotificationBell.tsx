@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Badge, Popover, List, Button, Typography, Space, Empty } from '@/components/design/system'
+import { Badge, Popover, List, Button, Typography, Space } from '@/components/design/system'
 import { BellOutlined, CheckOutlined } from '@/components/design/icons'
 import { App } from '@/components/design/system'
 import dayjs from 'dayjs'
@@ -15,6 +15,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { NOTIFICATION_TYPE_LABELS } from '@/lib/constants'
 import { useAuthStore } from '@/stores/auth'
+import EmptyState from '@/components/EmptyState'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
@@ -72,16 +73,9 @@ export default function NotificationBell() {
   }
 
   const content = (
-    <div style={{ width: 388 }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 12,
-        }}
-      >
-        <Text strong style={{ fontSize: 15 }}>Уведомления</Text>
+    <div className="rh-notification-popover">
+      <div className="rh-notification-popover__head">
+        <Text strong className="rh-notification-popover__title">Уведомления</Text>
         {unreadCount > 0 && (
           <Button
             type="link"
@@ -98,17 +92,10 @@ export default function NotificationBell() {
       <List
         loading={isLoading}
         dataSource={notifications}
-        locale={{ emptyText: <Empty description="Нет уведомлений" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+        locale={{ emptyText: <EmptyState description="Нет уведомлений" /> }}
         renderItem={(item) => (
           <List.Item
-            style={{
-              cursor: 'pointer',
-              background: item.is_read ? undefined : 'rgba(15, 118, 110, 0.05)',
-              padding: '10px 12px',
-              borderRadius: 14,
-              border: '1px solid rgba(15, 23, 42, 0.06)',
-              marginBottom: 8,
-            }}
+            className={item.is_read ? 'rh-notification-popover__item' : 'rh-notification-popover__item rh-notification-popover__item--unread'}
             onClick={() => handleItemClick(item.id!, item.is_read ?? false)}
           >
             <List.Item.Meta
@@ -117,18 +104,18 @@ export default function NotificationBell() {
                   {!item.is_read && (
                     <Badge status="processing" />
                   )}
-                  <Text style={{ fontSize: 13, fontWeight: item.is_read ? 500 : 700 }}>
+                  <Text className={item.is_read ? 'rh-notification-popover__item-title' : 'rh-notification-popover__item-title rh-notification-popover__item-title--unread'}>
                     {item.title ?? NOTIFICATION_TYPE_LABELS[item.type ?? ''] ?? 'Уведомление'}
                   </Text>
                 </Space>
               }
               description={
                 <div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
+                  <Text type="secondary" className="rh-notification-popover__body">
                     {item.body}
                   </Text>
                   <br />
-                  <Text type="secondary" style={{ fontSize: 11 }}>
+                  <Text type="secondary" className="rh-notification-popover__time">
                     {item.created_at ? dayjs(item.created_at).fromNow() : ''}
                   </Text>
                 </div>
@@ -141,7 +128,7 @@ export default function NotificationBell() {
       <Button
         type="link"
         block
-        style={{ marginTop: 8 }}
+        className="rh-section-offset-sm"
         onClick={() => {
           setOpen(false)
           navigate(getNotificationsPath(userRole))
@@ -162,7 +149,7 @@ export default function NotificationBell() {
       arrow={false}
     >
       <Badge count={unreadCount} size="small" offset={[-2, 2]}>
-        <Button type="text" icon={<BellOutlined style={{ fontSize: 18 }} />} />
+        <Button type="text" icon={<BellOutlined className="rh-notification-bell-icon" />} />
       </Badge>
     </Popover>
   )

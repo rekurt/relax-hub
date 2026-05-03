@@ -33,7 +33,7 @@ export default function BookingDetails({ booking, onClose }: BookingDetailsProps
     >
       {booking && (
         <>
-          <Descriptions column={1} bordered size="small" style={{ marginBottom: 16 }}>
+          <Descriptions column={1} bordered size="small" className="rh-booking-descriptions">
             <Descriptions.Item label="ID">
               {booking.id?.slice(0, 8)}...
             </Descriptions.Item>
@@ -93,7 +93,7 @@ export default function BookingDetails({ booking, onClose }: BookingDetailsProps
             </Descriptions.Item>
           </Descriptions>
 
-          <h4>Платёж</h4>
+          <h4 className="rh-modal-section-title">Платёж</h4>
           {paymentLoading ? (
             <Spin size="small" />
           ) : payment ? (
@@ -120,7 +120,7 @@ export default function BookingDetails({ booking, onClose }: BookingDetailsProps
               </Descriptions.Item>
             </Descriptions>
           ) : (
-            <div style={{ color: 'var(--rh-text-muted)' }}>Платёж не найден</div>
+            <div className="rh-muted-state">Платёж не найден</div>
           )}
         </>
       )}

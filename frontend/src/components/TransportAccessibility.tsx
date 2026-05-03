@@ -36,21 +36,21 @@ export default function TransportAccessibility({ items }: TransportAccessibility
   if (items.length === 0) return null
 
   return (
-    <div style={{ marginTop: 16 }}>
+    <div className="rh-transport">
       <Text strong>Транспорт рядом:</Text>
-      <div style={{ marginTop: 8 }}>
+      <div className="rh-transport__list">
         {items.map((item, idx) => {
           const meta = TRANSPORT_LABELS[item.type] ?? { label: item.type, color: 'var(--rh-text-muted)' }
           return (
-            <div key={`${item.type}-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <div key={`${item.type}-${idx}`} className="rh-transport__item">
               {item.type === 'metro' ? (
-                <NodeIndexOutlined style={{ color: meta.color }} />
+                <NodeIndexOutlined className="rh-transport__icon rh-transport__icon--metro" />
               ) : item.type === 'parking' ? (
-                <CarOutlined style={{ color: meta.color }} />
+                <CarOutlined className="rh-transport__icon rh-transport__icon--parking" />
               ) : (
-                <EnvironmentOutlined style={{ color: meta.color }} />
+                <EnvironmentOutlined className="rh-transport__icon rh-transport__icon--bus" />
               )}
-              <Tag color={meta.color} style={{ margin: 0 }}>{meta.label}</Tag>
+              <Tag color={meta.color} className="rh-compact-tag">{meta.label}</Tag>
               <Text>{item.name}</Text>
               <Text type="secondary">— {formatDistance(item.distance_meters)}</Text>
             </div>

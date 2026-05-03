@@ -23,8 +23,9 @@ import {
   usePostMyCrmBroadcasts,
 } from '@/api/generated/crm/crm'
 import { useQueryClient } from '@tanstack/react-query'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const CHANNEL_OPTIONS = [
   { label: 'Push-уведомление', value: 'push' },
@@ -100,21 +101,26 @@ export default function BroadcastCreate() {
   }
 
   return (
-    <div>
-      <Space style={{ marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/crm/broadcasts')}>
+    <div className="rh-stack">
+      <div className="rh-admin-detail-back">
+        <Button type="link" icon={<ArrowLeftOutlined />} onClick={() => navigate('/crm/broadcasts')}>
           Назад
         </Button>
-        <Title level={3} style={{ margin: 0 }}>Новая рассылка</Title>
-      </Space>
+      </div>
+      <PageHeader
+        eyebrow="CRM"
+        title="Новая рассылка"
+        description="Создайте черновик сообщения, выберите сегмент и каналы отправки."
+        size="compact"
+      />
 
-      <Card>
+      <Card className="rh-admin-detail-card">
         <Form
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={{ channels: ['push'] }}
-          style={{ maxWidth: 600 }}
+          className="rh-crm-form"
         >
           <Form.Item
             name="segment"
@@ -152,8 +158,8 @@ export default function BroadcastCreate() {
             />
           </Form.Item>
 
-          <div style={{ marginBottom: 24 }}>
-            <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+          <div className="rh-token-panel">
+            <Text type="secondary" className="rh-token-panel__label">
               Токены персонализации (нажмите для вставки в текст):
             </Text>
             <Space wrap>
@@ -161,7 +167,7 @@ export default function BroadcastCreate() {
                 <Tooltip key={token} title={description}>
                   <Tag
                     color="blue"
-                    style={{ cursor: 'pointer' }}
+                    className="rh-clickable-token"
                     onClick={() => insertToken(token)}
                   >
                     {label}

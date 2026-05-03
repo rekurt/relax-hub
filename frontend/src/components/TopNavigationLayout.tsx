@@ -80,6 +80,12 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
 
+function getContentWidthClass(contentWidth: number) {
+  if (contentWidth <= 1200) return 'rh-topnav--width-narrow'
+  if (contentWidth <= 1320) return 'rh-topnav--width-medium'
+  return 'rh-topnav--width-wide'
+}
+
 function NavButton({
   item,
   active,
@@ -167,22 +173,16 @@ export default function TopNavigationLayout({
     items: group.items,
   }))
   const isClientFacingSurface = surface === 'client' || surface === 'public'
+  const contentWidthClass = getContentWidthClass(contentWidth)
 
   return (
     <Layout
-      className={`rh-shell rh-shell--${surface} min-h-screen bg-transparent font-sans text-rh-text`}
-      style={{
-        minHeight: '100vh',
-        background: 'transparent',
-      }}
+      className={`rh-shell rh-shell--${surface} ${contentWidthClass} min-h-screen bg-transparent font-sans text-rh-text`}
     >
       <Header
         className="rh-nav rh-topnav sticky top-0 z-40 border-b border-[rgba(15,23,42,0.08)] bg-[rgba(255,252,247,0.80)] px-4 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur-[20px] sm:px-6"
-        style={{
-          height: 'auto',
-        }}
       >
-        <div className="rh-topnav__inner mx-auto flex w-full min-w-0 items-center gap-4" style={{ maxWidth: contentWidth }}>
+        <div className="rh-topnav__inner mx-auto flex w-full min-w-0 items-center gap-4">
           <button
             type="button"
             onClick={() => navigate(homeTo)}
@@ -320,7 +320,6 @@ export default function TopNavigationLayout({
           'rh-topnav__content flex-1 px-4 py-5 sm:px-6 sm:py-7 lg:pb-[52px]',
           `rh-topnav__content--${surface}`,
         )}
-        style={{ flex: '1 0 auto' }}
       >
         <div
           className={cx(
@@ -328,7 +327,6 @@ export default function TopNavigationLayout({
             isClientFacingSurface && 'rh-client-surface',
             surface === 'admin' && 'rh-admin-surface',
           )}
-          style={{ maxWidth: contentWidth }}
         >
           {topBanner}
           <Outlet />
@@ -337,7 +335,7 @@ export default function TopNavigationLayout({
 
       {footer && (
         <Footer className="rh-topnav__footer px-4 pb-6 sm:px-6">
-          <div className="rh-topnav__footer-inner mx-auto w-full" style={{ maxWidth: contentWidth }}>
+          <div className="rh-topnav__footer-inner mx-auto w-full">
             {footer}
           </div>
         </Footer>
@@ -349,7 +347,7 @@ export default function TopNavigationLayout({
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       >
-        <Space orientation="vertical" style={{ width: '100%' }} size={12}>
+        <Space orientation="vertical" className="rh-full-width" size={12}>
           {headerAccessory && (
             <div className={`rh-topnav__drawer-accessory rh-topnav__drawer-accessory--${headerAccessoryVariant}`}>
               {headerAccessory}
@@ -368,7 +366,7 @@ export default function TopNavigationLayout({
                   {section.title}
                 </Text>
               )}
-              <Space orientation="vertical" style={{ width: '100%' }} size={8}>
+              <Space orientation="vertical" className="rh-full-width" size={8}>
                 {section.items.map((item) => (
                   <button
                     key={item.key}

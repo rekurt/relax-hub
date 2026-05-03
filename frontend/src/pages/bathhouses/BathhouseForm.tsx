@@ -50,8 +50,9 @@ import type {
 } from '@/api/generated/model'
 import { formatDayOfWeek } from '@/lib/format'
 import { axiosInstance } from '@/api/axios-instance'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Paragraph, Text } = Typography
+const { Paragraph, Text } = Typography
 const { TextArea } = Input
 
 const AMENITY_FIELDS = [
@@ -91,21 +92,24 @@ const CANCELLATION_POLICIES = [
     value: 'flexible',
     label: 'Гибкая',
     description: '100% возврат за 24ч+, 50% менее 24ч до начала',
-    color: '#15803d',
+    tagColor: 'success',
+    tone: 'success',
   },
   {
     value: 'moderate',
     label: 'Умеренная',
     description: '100% за 72ч+, 50% за 24-72ч, 0% менее 24ч',
-    color: '#d97706',
+    tagColor: 'warning',
+    tone: 'warning',
   },
   {
     value: 'strict',
     label: 'Строгая',
     description: '100% за 7д+, 50% за 3-7д, 0% менее 3д',
-    color: '#b42318',
+    tagColor: 'error',
+    tone: 'danger',
   },
-]
+] as const
 
 const WIZARD_STEPS = [
   { title: 'Начало', icon: '👋' },
@@ -238,16 +242,16 @@ function CompletenessChecklist({ id }: { id: string }) {
     <Card
       title="Полнота объявления"
       size="small"
-      style={{ position: 'sticky', top: 16 }}
+      className="rh-completeness-card"
     >
-      <div style={{ textAlign: 'center', marginBottom: 16 }}>
+      <div className="rh-completeness-summary">
         <Progress
           type="circle"
           percent={score}
           size={80}
           status={result.ready ? 'success' : 'normal'}
         />
-        <div style={{ marginTop: 8 }}>
+        <div className="rh-completeness-badge">
           {result.ready ? (
             <Tag color="success">Готово к модерации</Tag>
           ) : (
@@ -258,20 +262,20 @@ function CompletenessChecklist({ id }: { id: string }) {
 
       {requiredItems.length > 0 && (
         <>
-          <Text strong style={{ display: 'block', marginBottom: 8 }}>
+          <Text strong className="rh-completeness-section-title">
             Обязательные ({result.done_required}/{result.total_required})
           </Text>
           <List
             size="small"
             dataSource={requiredItems}
             renderItem={(item: GithubComRekurtRelaxHubInternalServiceCompletenessItem) => (
-              <List.Item style={{ padding: '4px 0', border: 'none' }}>
+              <List.Item className="rh-completeness-list-item">
                 {item.complete ? (
-                  <CheckCircleOutlined style={{ color: '#15803d', marginRight: 8 }} />
+                  <CheckCircleOutlined className="rh-completeness-icon rh-completeness-icon--done" />
                 ) : (
-                  <CloseCircleOutlined style={{ color: '#b42318', marginRight: 8 }} />
+                  <CloseCircleOutlined className="rh-completeness-icon rh-completeness-icon--required" />
                 )}
-                <span style={{ color: item.complete ? 'var(--rh-text-disabled)' : undefined }}>
+                <span className={item.complete ? 'rh-completeness-label rh-completeness-label--done' : 'rh-completeness-label'}>
                   {item.label}
                 </span>
               </List.Item>
@@ -282,20 +286,20 @@ function CompletenessChecklist({ id }: { id: string }) {
 
       {optionalItems.length > 0 && (
         <>
-          <Text strong style={{ display: 'block', marginBottom: 8, marginTop: 12 }}>
+          <Text strong className="rh-completeness-section-title rh-completeness-section-title--optional">
             Дополнительные ({result.done_optional}/{result.total_optional})
           </Text>
           <List
             size="small"
             dataSource={optionalItems}
             renderItem={(item: GithubComRekurtRelaxHubInternalServiceCompletenessItem) => (
-              <List.Item style={{ padding: '4px 0', border: 'none' }}>
+              <List.Item className="rh-completeness-list-item">
                 {item.complete ? (
-                  <CheckCircleOutlined style={{ color: '#15803d', marginRight: 8 }} />
+                  <CheckCircleOutlined className="rh-completeness-icon rh-completeness-icon--done" />
                 ) : (
-                  <CloseCircleOutlined style={{ color: '#c9c1b5', marginRight: 8 }} />
+                  <CloseCircleOutlined className="rh-completeness-icon rh-completeness-icon--optional" />
                 )}
-                <span style={{ color: item.complete ? 'var(--rh-text-disabled)' : undefined }}>
+                <span className={item.complete ? 'rh-completeness-label rh-completeness-label--done' : 'rh-completeness-label'}>
                   {item.label}
                 </span>
               </List.Item>
@@ -310,38 +314,30 @@ function CompletenessChecklist({ id }: { id: string }) {
 function WelcomeStep({ videoUrl, onNext }: { videoUrl: string; onNext: () => void }) {
   const embedUrl = getEmbedUrl(videoUrl)
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
-      <Card style={{ marginBottom: 24, textAlign: 'center' }}>
-        <PlayCircleOutlined style={{ fontSize: 48, color: '#0f766e', marginBottom: 16 }} />
-        <Title level={4}>Как создать объявление</Title>
+    <div className="rh-owner-narrow-page rh-owner-welcome">
+      <Card className="rh-admin-detail-card rh-owner-welcome-card">
+        <PlayCircleOutlined className="rh-owner-welcome-icon" />
+        <h2 className="rh-section-heading">Как создать объявление</h2>
         <Paragraph type="secondary">
           Посмотрите короткое видео о том, как заполнить информацию о вашем объекте,
           чтобы он привлекал больше гостей.
         </Paragraph>
         {embedUrl && (
-          <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, marginBottom: 24 }}>
+          <div className="rh-owner-video">
             <iframe
               src={embedUrl}
               title="Как создать объявление"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 'none',
-                borderRadius: 20,
-              }}
+              className="rh-owner-video__frame"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
           </div>
         )}
-        <Paragraph style={{ textAlign: 'left', marginTop: 24 }}>
+        <Paragraph className="rh-owner-welcome-copy">
           Процесс создания объявления включает 7 шагов:
         </Paragraph>
         <List
-          style={{ textAlign: 'left', marginBottom: 24 }}
+          className="rh-owner-welcome-list"
           size="small"
           dataSource={[
             'Информация об объекте — название, адрес, описание, удобства',
@@ -352,7 +348,7 @@ function WelcomeStep({ videoUrl, onNext }: { videoUrl: string; onNext: () => voi
             'Предпросмотр — как ваше объявление увидят гости',
           ]}
           renderItem={(item, index) => (
-            <List.Item style={{ padding: '4px 0', border: 'none' }}>
+            <List.Item className="rh-owner-welcome-list__item">
               <Text type="secondary">{index + 1}.</Text>{' '}
               <Text>{item}</Text>
             </List.Item>
@@ -373,7 +369,7 @@ function WelcomeStep({ videoUrl, onNext }: { videoUrl: string; onNext: () => voi
 function ObjectInfoStep({ cities }: { cities: { id?: number; name?: string }[] }) {
   return (
     <>
-      <Card title="Основная информация" style={{ marginBottom: 24 }}>
+      <Card title="Основная информация" className="rh-admin-detail-card">
         <Form.Item
           name="name"
           label="Название"
@@ -413,18 +409,18 @@ function ObjectInfoStep({ cities }: { cities: { id?: number; name?: string }[] }
         <Row gutter={16}>
           <Col xs={24} sm={12}>
             <Form.Item name="latitude" label="Широта">
-              <InputNumber style={{ width: '100%' }} step={0.0001} placeholder="55.7558" />
+              <InputNumber className="rh-full-width" step={0.0001} placeholder="55.7558" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={12}>
             <Form.Item name="longitude" label="Долгота">
-              <InputNumber style={{ width: '100%' }} step={0.0001} placeholder="37.6173" />
+              <InputNumber className="rh-full-width" step={0.0001} placeholder="37.6173" />
             </Form.Item>
           </Col>
         </Row>
       </Card>
 
-      <Card title="Параметры" style={{ marginBottom: 24 }}>
+      <Card title="Параметры" className="rh-admin-detail-card">
         <Row gutter={16}>
           <Col xs={24} sm={8}>
             <Form.Item
@@ -432,7 +428,7 @@ function ObjectInfoStep({ cities }: { cities: { id?: number; name?: string }[] }
               label="Мин. длительность (ч)"
               rules={[{ required: true, message: 'Укажите длительность' }]}
             >
-              <InputNumber min={1} max={24} style={{ width: '100%' }} />
+              <InputNumber min={1} max={24} className="rh-full-width" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={8}>
@@ -441,13 +437,13 @@ function ObjectInfoStep({ cities }: { cities: { id?: number; name?: string }[] }
               label="Макс. гостей"
               rules={[{ required: true, message: 'Укажите кол-во' }]}
             >
-              <InputNumber min={1} max={100} style={{ width: '100%' }} />
+              <InputNumber min={1} max={100} className="rh-full-width" />
             </Form.Item>
           </Col>
         </Row>
       </Card>
 
-      <Card title="Удобства" style={{ marginBottom: 24 }}>
+      <Card title="Удобства" className="rh-admin-detail-card">
         <Form.Item name="amenities">
           <Checkbox.Group>
             <Row gutter={[16, 8]}>
@@ -466,8 +462,8 @@ function ObjectInfoStep({ cities }: { cities: { id?: number; name?: string }[] }
 
 function PhotosStep() {
   return (
-    <Card title="Фотографии" style={{ marginBottom: 24 }}>
-      <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+    <Card title="Фотографии" className="rh-admin-detail-card">
+      <Paragraph type="secondary" className="rh-form-section-note">
         Добавьте URL фотографий вашего объекта. Качественные фото привлекают больше гостей.
         Первое фото станет обложкой объявления.
       </Paragraph>
@@ -486,9 +482,9 @@ function PricingStep({ cityId }: { cityId: number | undefined }) {
   const avgPriceRub = avgPrice ? (avgPrice / 100).toLocaleString('ru-RU') : null
 
   return (
-    <Card title="Ценообразование" style={{ marginBottom: 24 }}>
+    <Card title="Ценообразование" className="rh-admin-detail-card">
       {avgPriceRub && (
-        <div style={{ marginBottom: 16, padding: '12px 16px', background: 'rgba(15, 118, 110, 0.08)', borderRadius: 20 }}>
+        <div className="rh-pricing-benchmark">
           <Text type="secondary">
             Средняя цена в вашем городе: <Text strong>{avgPriceRub} ₽/час</Text>
           </Text>
@@ -499,14 +495,14 @@ function PricingStep({ cityId }: { cityId: number | undefined }) {
         label="Цена за час (руб.)"
         rules={[{ required: true, message: 'Укажите цену' }]}
       >
-        <InputNumber min={0} style={{ width: '100%', maxWidth: 300 }} placeholder="1500" />
+        <InputNumber min={0} className="rh-form-control-medium" placeholder="1500" />
       </Form.Item>
       <Form.Item
         name="security_deposit_percent"
         label="Залог (% от базовой цены)"
         help="0 — залог не требуется. Макс. 50%. Удерживается при бронировании и возвращается через 48ч после визита."
       >
-        <InputNumber min={0} max={50} style={{ width: '100%', maxWidth: 300 }} placeholder="0" />
+        <InputNumber min={0} max={50} className="rh-form-control-medium" placeholder="0" />
       </Form.Item>
     </Card>
   )
@@ -523,9 +519,9 @@ function ScheduleStep({ form }: { form: ReturnType<typeof Form.useForm<Bathhouse
   }
 
   return (
-    <Card title="Расписание" style={{ marginBottom: 24 }}>
-      <div style={{ marginBottom: 16 }}>
-        <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>Шаблоны:</Text>
+    <Card title="Расписание" className="rh-admin-detail-card">
+      <div className="rh-schedule-presets">
+        <Text type="secondary" className="rh-schedule-presets__label">Шаблоны:</Text>
         <Space wrap>
           {SCHEDULE_PRESETS.map((preset) => (
             <Button key={preset.label} size="small" onClick={() => applyPreset(preset)}>
@@ -535,7 +531,7 @@ function ScheduleStep({ form }: { form: ReturnType<typeof Form.useForm<Bathhouse
         </Space>
       </div>
       {Array.from({ length: 7 }, (_, day) => (
-        <Row gutter={16} key={day} align="middle" style={{ marginBottom: 8 }}>
+        <Row gutter={16} key={day} align="middle" className="rh-schedule-day-row">
           <Col xs={6} sm={4}>
             <Form.Item
               name={['working_hours', day, 'enabled']}
@@ -547,12 +543,12 @@ function ScheduleStep({ form }: { form: ReturnType<typeof Form.useForm<Bathhouse
           </Col>
           <Col xs={9} sm={4}>
             <Form.Item name={['working_hours', day, 'open_time']} noStyle>
-              <TimePicker format="HH:mm" minuteStep={30} style={{ width: '100%' }} />
+              <TimePicker format="HH:mm" minuteStep={30} className="rh-full-width" />
             </Form.Item>
           </Col>
           <Col xs={9} sm={4}>
             <Form.Item name={['working_hours', day, 'close_time']} noStyle>
-              <TimePicker format="HH:mm" minuteStep={30} style={{ width: '100%' }} />
+              <TimePicker format="HH:mm" minuteStep={30} className="rh-full-width" />
             </Form.Item>
           </Col>
         </Row>
@@ -563,8 +559,8 @@ function ScheduleStep({ form }: { form: ReturnType<typeof Form.useForm<Bathhouse
 
 function CancellationPolicyStep() {
   return (
-    <Card title="Политика отмены" style={{ marginBottom: 24 }}>
-      <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+    <Card title="Политика отмены" className="rh-admin-detail-card">
+      <Paragraph type="secondary" className="rh-form-section-note">
         Выберите политику отмены бронирований. Более гибкая политика привлекает больше гостей.
       </Paragraph>
       <Form.Item name="cancellation_policy">
@@ -574,24 +570,24 @@ function CancellationPolicyStep() {
               {/* Render will be handled by parent Select; this shows visual comparison */}
             </Form.Item>
           ))}
-          <Select style={{ width: '100%' }}>
+          <Select className="rh-full-width">
             {CANCELLATION_POLICIES.map((p) => (
               <Select.Option key={p.value} value={p.value}>
                 <div>
-                  <Tag color={p.color}>{p.label}</Tag>
-                  <Text type="secondary" style={{ fontSize: 12 }}>{p.description}</Text>
+                  <Tag color={p.tagColor}>{p.label}</Tag>
+                  <Text type="secondary" className="rh-option-description">{p.description}</Text>
                 </div>
               </Select.Option>
             ))}
           </Select>
         </div>
       </Form.Item>
-      <div style={{ marginTop: 16 }}>
+      <div className="rh-policy-list">
         {CANCELLATION_POLICIES.map((policy) => (
           <Card
             key={policy.value}
             size="small"
-            style={{ marginBottom: 8, borderLeft: `3px solid ${policy.color}` }}
+            className={`rh-policy-card rh-policy-card--${policy.tone}`}
           >
             <Text strong>{policy.label}</Text>
             <br />
@@ -617,60 +613,60 @@ function PreviewStep({ form }: { form: ReturnType<typeof Form.useForm<BathhouseF
   const policyInfo = CANCELLATION_POLICIES.find((p) => p.value === values.cancellation_policy)
 
   return (
-    <div>
+    <div className="rh-stack">
       <Card
-        style={{ marginBottom: 24 }}
+        className="rh-admin-detail-card rh-preview-card"
         cover={
           images.length > 0 ? (
-            <div style={{ height: 200, overflow: 'hidden', background: 'rgba(248, 244, 236, 0.78)' }}>
+            <div className="rh-preview-cover">
               <img
                 src={images[0]}
                 alt="Обложка"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                className="rh-preview-cover__image"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none'
                 }}
               />
             </div>
           ) : (
-            <div style={{ height: 200, background: 'rgba(248, 244, 236, 0.78)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="rh-preview-cover rh-preview-cover--empty">
               <Text type="secondary">Нет фотографий</Text>
             </div>
           )
         }
       >
-        <Title level={4}>{values.name || 'Без названия'}</Title>
+        <h2 className="rh-preview-title">{values.name || 'Без названия'}</h2>
         {values.address && <Text type="secondary">{values.address}</Text>}
         {values.price_per_hour > 0 && (
-          <div style={{ marginTop: 8 }}>
-            <Text strong style={{ fontSize: 18 }}>
+          <div className="rh-preview-price">
+            <Text strong>
               {values.price_per_hour.toLocaleString('ru-RU')} ₽/час
             </Text>
           </div>
         )}
         {values.description && (
-          <Paragraph style={{ marginTop: 12 }}>{values.description}</Paragraph>
+          <Paragraph className="rh-preview-description">{values.description}</Paragraph>
         )}
         {amenities.length > 0 && (
-          <div style={{ marginTop: 12 }}>
+          <div className="rh-preview-tags">
             {amenities.map((a) => (
-              <Tag key={a} style={{ marginBottom: 4 }}>{a}</Tag>
+              <Tag key={a} className="rh-detail-tag">{a}</Tag>
             ))}
           </div>
         )}
         {values.max_guests > 0 && (
-          <div style={{ marginTop: 8 }}>
+          <div className="rh-preview-meta">
             <Text type="secondary">До {values.max_guests} гостей</Text>
           </div>
         )}
         {policyInfo && (
-          <div style={{ marginTop: 8 }}>
-            <Tag color={policyInfo.color}>Отмена: {policyInfo.label}</Tag>
+          <div className="rh-preview-meta">
+            <Tag color={policyInfo.tagColor}>Отмена: {policyInfo.label}</Tag>
           </div>
         )}
       </Card>
-      <Card size="small" style={{ marginBottom: 24 }}>
-        <EyeOutlined style={{ marginRight: 8 }} />
+      <Card size="small" className="rh-admin-detail-card rh-preview-note-card">
+        <EyeOutlined className="rh-inline-icon" />
         <Text type="secondary">
           Так ваше объявление будет выглядеть для гостей. Проверьте, что всё заполнено корректно, и нажмите «Создать».
         </Text>
@@ -862,7 +858,7 @@ export default function BathhouseForm() {
 
   if (isEdit && bathhouseLoading) {
     return (
-      <div style={{ textAlign: 'center', padding: 48 }}>
+      <div className="rh-loading-block">
         <Spin size="large" />
       </div>
     )
@@ -896,22 +892,27 @@ export default function BathhouseForm() {
   const progressPercent = Math.round((currentStep / (WIZARD_STEPS.length - 1)) * 100)
 
   const formContent = (
-    <div style={{ maxWidth: 800 }}>
-      <Title level={3}>{isEdit ? 'Редактирование бани' : 'Создание объекта'}</Title>
+    <div className="rh-stack rh-owner-form-page">
+      <PageHeader
+        eyebrow="Объекты"
+        title={isEdit ? 'Редактирование бани' : 'Создание объекта'}
+        description={isEdit ? 'Обновите карточку объекта и проверьте готовность к модерации.' : 'Заполните карточку объекта пошагово и сохраните черновик перед публикацией.'}
+        size="compact"
+      />
 
       <Steps
         current={currentStep}
         size="small"
-        style={{ marginBottom: 24 }}
+        className="rh-steps rh-owner-wizard-steps"
         items={WIZARD_STEPS.map((step) => ({
           title: step.title,
         }))}
       />
 
       {!isEdit && currentStep > 0 && (
-        <div style={{ marginBottom: 16 }}>
+        <div className="rh-draft-progress">
           <Progress percent={progressPercent} size="small" showInfo={false} />
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" className="rh-draft-progress__text">
             Шаг {currentStep} из {WIZARD_STEPS.length - 1}
             {draftSaving && ' — Сохранение...'}
             {draftId && !draftSaving && ' — Черновик сохранён'}
@@ -935,7 +936,7 @@ export default function BathhouseForm() {
         {stepContent()}
 
         {showNavigation && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>
+          <div className="rh-form-navigation">
             <Button
               icon={<ArrowLeftOutlined />}
               onClick={goBack}
@@ -980,7 +981,7 @@ export default function BathhouseForm() {
 
   if (isEdit && id) {
     return (
-      <Row gutter={24}>
+      <Row gutter={[24, 24]} className="rh-owner-edit-layout">
         <Col xs={24} lg={16}>{formContent}</Col>
         <Col xs={24} lg={8}>
           <CompletenessChecklist id={id} />

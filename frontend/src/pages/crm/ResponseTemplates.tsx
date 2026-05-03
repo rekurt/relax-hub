@@ -3,7 +3,6 @@ import {
   App,
   Button,
   Card,
-  Empty,
   Form,
   Input,
   InputNumber,
@@ -27,8 +26,10 @@ import {
 } from '@/api/generated/crm/crm'
 import type { InternalHandlerTemplateResponse } from '@/api/generated/model'
 import { useQueryClient } from '@tanstack/react-query'
+import PageHeader from '@/components/PageHeader'
+import EmptyState from '@/components/EmptyState'
 
-const { Title, Paragraph } = Typography
+const { Paragraph } = Typography
 
 interface TemplateFormValues {
   title: string
@@ -123,15 +124,20 @@ export default function ResponseTemplates() {
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>Шаблоны ответов</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate}>
-          Создать шаблон
-        </Button>
-      </div>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="CRM"
+        title="Шаблоны ответов"
+        description="Готовые ответы для отзывов и сообщений. Максимум 50 шаблонов."
+        size="compact"
+        extra={(
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate}>
+            Создать шаблон
+          </Button>
+        )}
+      />
 
-      <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+      <Paragraph type="secondary" className="rh-section-card__description">
         Шаблоны для быстрых ответов на отзывы и сообщения. Макс. 50 шаблонов.
       </Paragraph>
 
@@ -140,7 +146,7 @@ export default function ResponseTemplates() {
         dataSource={templates}
         locale={{
           emptyText: (
-            <Empty description="Нет шаблонов быстрых ответов. Создайте шаблоны для ускорения общения с клиентами." />
+            <EmptyState description="Нет шаблонов быстрых ответов. Создайте шаблоны для ускорения общения с клиентами." />
           ),
         }}
         grid={{ gutter: 16, xs: 1, sm: 1, md: 2, lg: 2 }}
@@ -148,6 +154,7 @@ export default function ResponseTemplates() {
           <List.Item>
             <Card
               size="small"
+              className="rh-admin-detail-card"
               title={
                 <Space>
                   {item.title}
@@ -178,7 +185,7 @@ export default function ResponseTemplates() {
               <Paragraph
                 type="secondary"
                 ellipsis={{ rows: 3 }}
-                style={{ marginBottom: 0 }}
+                className="rh-paragraph-reset"
               >
                 {item.body}
               </Paragraph>
@@ -225,7 +232,7 @@ export default function ResponseTemplates() {
             label="Порядок сортировки"
             extra="Меньшее значение = выше в списке"
           >
-            <InputNumber min={0} max={999} style={{ width: '100%' }} />
+            <InputNumber min={0} max={999} className="rh-full-width" />
           </Form.Item>
 
           <Form.Item>

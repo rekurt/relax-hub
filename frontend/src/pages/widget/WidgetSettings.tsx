@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
   App,
   Button,
@@ -25,8 +25,9 @@ import {
 } from '@/api/generated/widgets/widgets'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { useQueryClient } from '@tanstack/react-query'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const FONT_OPTIONS = [
   { value: 'Manrope', label: 'Manrope' },
@@ -79,6 +80,16 @@ export default function WidgetSettings() {
 
   const widgetCode = widgetCodeData?.data
   const apiKey = widgetKeyData?.data?.api_key ?? ''
+  const applyPreviewButtonStyles = useCallback((node: HTMLDivElement | null) => {
+    if (!node) return
+    node.style.background = color
+    node.style.fontFamily = fontFamily
+  }, [color, fontFamily])
+
+  const applyPreviewFont = useCallback((node: HTMLElement | null) => {
+    if (!node) return
+    node.style.fontFamily = fontFamily
+  }, [fontFamily])
 
   const handleCopyCode = () => {
     if (!widgetCode?.code) return
@@ -103,23 +114,35 @@ export default function WidgetSettings() {
 
   if (!selectedBathhouseId) {
     return (
-      <div>
-        <Title level={3}>Виджет бронирования</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-soft)' }}>
-          Выберите баню для настройки виджета
-        </div>
+      <div className="rh-stack">
+        <PageHeader
+          eyebrow="Интеграции"
+          title="Виджет бронирования"
+          description="Выберите объект, чтобы настроить внешний вид и получить код вставки."
+          size="compact"
+        />
+        <Card className="rh-admin-detail-card">
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Выберите баню для настройки виджета</div>
+          </div>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div>
-      <Title level={3}>Виджет бронирования</Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Интеграции"
+        title="Виджет бронирования"
+        description="Настройте виджет, API-ключ, код вставки и быстрый предпросмотр перед публикацией."
+        size="compact"
+      />
 
       <Row gutter={[24, 24]}>
         {/* Settings */}
         <Col xs={24} md={10}>
-          <Card title="Настройки виджета" loading={codeLoading}>
+          <Card title="Настройки виджета" loading={codeLoading} className="rh-admin-detail-card">
             <Form layout="vertical">
               <Form.Item label="Акцентный цвет">
                 <ColorPicker
@@ -148,8 +171,8 @@ export default function WidgetSettings() {
           </Card>
 
           {/* API Key */}
-          <Card title="API-ключ" style={{ marginTop: 24 }} loading={keyLoading}>
-            <div style={{ marginBottom: 12 }}>
+          <Card title="API-ключ" className="rh-admin-detail-card rh-section-offset" loading={keyLoading}>
+            <div className="rh-card-intro-text">
               <Text type="secondary">
                 API-ключ используется для авторизации виджета. Не передавайте его третьим лицам.
               </Text>
@@ -159,7 +182,7 @@ export default function WidgetSettings() {
               readOnly
               enterButton={<CopyOutlined />}
               onSearch={handleCopyKey}
-              style={{ marginBottom: 12, fontFamily: 'monospace' }}
+              className="rh-widget-key-control"
             />
             <Popconfirm
               title="Перегенерировать API-ключ?"
@@ -189,24 +212,13 @@ export default function WidgetSettings() {
               </Button>
             }
             loading={codeLoading}
+            className="rh-admin-detail-card"
           >
-            <div
-              style={{
-                background: 'rgba(248, 244, 236, 0.78)',
-                padding: 16,
-                borderRadius: 20,
-                fontFamily: 'monospace',
-                fontSize: 13,
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
-                maxHeight: 300,
-                overflow: 'auto',
-              }}
-            >
+            <div className="rh-widget-code-block">
               {widgetCode?.code || 'Код не сгенерирован'}
             </div>
 
-            <div style={{ marginTop: 16 }}>
+            <div className="rh-section-offset">
               <Text type="secondary">
                 Вставьте этот код на ваш сайт в то место, где вы хотите показать форму бронирования.
               </Text>
@@ -214,42 +226,22 @@ export default function WidgetSettings() {
           </Card>
 
           {/* Preview */}
-          <Card title="Предпросмотр" style={{ marginTop: 24 }}>
-            <div
-              style={{
-                border: '2px dashed var(--rh-border-control)',
-                borderRadius: 20,
-                padding: 32,
-                textAlign: 'center',
-                minHeight: 200,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <CodeOutlined style={{ fontSize: 48, color: 'var(--rh-text-muted)', marginBottom: 16 }} />
+          <Card title="Предпросмотр" className="rh-admin-detail-card rh-section-offset">
+            <div className="rh-widget-preview">
+              <CodeOutlined className="rh-widget-preview__icon" />
               <div
-                style={{
-                  padding: '12px 24px',
-                  background: color,
-                  color: '#fff',
-                  borderRadius: 999,
-                  fontFamily,
-                  fontWeight: 800,
-                  fontSize: 16,
-                  marginBottom: 8,
-                }}
+                ref={applyPreviewButtonStyles}
+                className="rh-widget-preview__button"
               >
                 Забронировать
               </div>
-              <Text type="secondary" style={{ fontFamily }}>
+              <span ref={applyPreviewFont} className="rh-widget-preview__meta">
                 {showPrice && 'Цена от 2 000 ₽/ч'}
                 {showPrice && showRating && ' · '}
                 {showRating && '★ 4.8'}
-              </Text>
+              </span>
               {!showPrice && !showRating && (
-                <Text type="secondary" style={{ fontFamily }}>Виджет бронирования</Text>
+                <span ref={applyPreviewFont} className="rh-widget-preview__meta">Виджет бронирования</span>
               )}
             </div>
           </Card>

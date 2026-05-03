@@ -4,7 +4,7 @@ import { Typography } from '@/components/design/system'
 import BrandLockup from '@/components/BrandLockup'
 import { PLATFORM_NAME } from '@/content/support'
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
 interface AuthShellProps {
   eyebrow?: ReactNode
@@ -48,9 +48,9 @@ export default function AuthShell({
 
           <div className="rh-auth-aside__copy max-w-[460px]">
             <Text className="rh-tag rh-tag--gold rh-auth-badge">Быстрый вход</Text>
-            <Title level={2} className="rh-auth-aside__title">
+            <h1 className="rh-auth-aside__title">
               {asideTitle}
-            </Title>
+            </h1>
             <Text className="rh-auth-aside__description">
               {asideDescription}
             </Text>
@@ -68,9 +68,9 @@ export default function AuthShell({
         <section className="rh-card rh-auth-panel rounded-none border-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,252,246,0.90))] p-6 shadow-none sm:p-10 lg:rounded-l-none">
           <div className="rh-auth-panel__intro mb-6">
             {eyebrow && <Text className="rh-auth-panel__eyebrow">{eyebrow}</Text>}
-            <Title level={3} className="rh-auth-panel__title">
+            <h2 className="rh-auth-panel__title">
               {title}
-            </Title>
+            </h2>
             {description && (
               <Text type="secondary" className="rh-auth-panel__description">
                 {description}

@@ -100,60 +100,27 @@ export default function MediaUploader({ files, onChange, disabled }: MediaUpload
         {files.map((f) => (
           <div
             key={f.uid}
-            style={{
-              position: 'relative',
-              width: 104,
-              height: 104,
-              border: '1px solid var(--rh-border)',
-              borderRadius: 20,
-              overflow: 'hidden',
-              cursor: 'pointer',
-              background: 'var(--rh-card-bg-tint)',
-              boxShadow: 'var(--rh-shadow-soft)',
-            }}
+            className="rh-media-uploader__tile"
           >
             {f.type === 'image' ? (
               <img
                 src={f.previewUrl}
                 alt="Превью"
                 onClick={() => handlePreview(f.previewUrl)}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                className="rh-media-uploader__image"
               />
             ) : (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'rgba(248, 244, 236, 0.78)',
-                }}
-              >
-                <VideoCameraOutlined style={{ fontSize: 24, color: 'var(--rh-primary)' }} />
-                <Tag color="green" style={{ marginTop: 4 }}>Видео</Tag>
+              <div className="rh-media-uploader__video">
+                <VideoCameraOutlined className="rh-media-uploader__video-icon" />
+                <Tag color="green" className="rh-section-offset-sm">Видео</Tag>
               </div>
             )}
             {!disabled && (
               <div
                 onClick={(e) => { e.stopPropagation(); handleRemove(f.uid) }}
-                style={{
-                  position: 'absolute',
-                  top: 4,
-                  right: 4,
-                  width: 24,
-                  height: 24,
-                  borderRadius: '50%',
-                  background: 'rgba(22, 33, 43, 0.72)',
-                  boxShadow: '0 8px 16px rgba(15, 23, 42, 0.18)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                }}
+                className="rh-media-uploader__remove"
               >
-                <DeleteOutlined style={{ color: '#fff', fontSize: 12 }} />
+                <DeleteOutlined className="rh-media-uploader__remove-icon" />
               </div>
             )}
           </div>
@@ -165,35 +132,20 @@ export default function MediaUploader({ files, onChange, disabled }: MediaUpload
             accept={ALLOWED_TYPES.join(',')}
             multiple
           >
-            <div
-              style={{
-                width: 104,
-                height: 104,
-                border: '1px dashed var(--rh-border-control)',
-                borderRadius: 20,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'var(--rh-text-soft)',
-                background:
-                  'radial-gradient(circle at top left, rgba(15, 118, 110, 0.08), transparent 34%), rgba(255, 253, 248, 0.72)',
-              }}
-            >
-              <PlusOutlined style={{ fontSize: 20 }} />
-              <span style={{ fontSize: 12, marginTop: 4 }}>Загрузить</span>
+            <div className="rh-media-uploader__add">
+              <PlusOutlined className="rh-media-uploader__add-icon" />
+              <span className="rh-media-uploader__add-label">Загрузить</span>
             </div>
           </Upload>
         )}
       </Space>
 
-      <div style={{ marginTop: 8, fontSize: 12, color: 'var(--rh-text-soft)' }}>
+      <div className="rh-media-uploader__hint">
         Фото: {photoCount}/{MAX_PHOTOS} | Видео: {videoCount}/{MAX_VIDEOS} | Макс. {MAX_FILE_SIZE_MB} МБ
       </div>
 
       <Image
-        style={{ display: 'none' }}
+        className="rh-hidden-preview-image"
         preview={{
           visible: previewOpen,
           src: previewImage,

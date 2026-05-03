@@ -13,7 +13,6 @@ import {
   Tag,
   Popconfirm,
   App,
-  Empty,
   Collapse,
 } from '@/components/design/system'
 import {
@@ -28,6 +27,7 @@ import {
 import { axiosInstance } from '@/api/axios-instance'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import PageHeader from '@/components/PageHeader'
+import EmptyState from '@/components/EmptyState'
 
 const { Text } = Typography
 
@@ -181,7 +181,7 @@ export default function WebhookSettings() {
       dataIndex: 'url',
       key: 'url',
       ellipsis: true,
-      render: (url: string) => <Text copyable style={{ maxWidth: 300 }}>{url}</Text>,
+      render: (url: string) => <Text copyable className="rh-webhook-url">{url}</Text>,
     },
     {
       title: 'События',
@@ -277,13 +277,13 @@ export default function WebhookSettings() {
         </div>
       </div>
 
-      <Card title="Подключённые вебхуки">
+      <Card title="Подключённые вебхуки" className="rh-admin-detail-card">
         <Table
           dataSource={webhooks}
           columns={columns}
           rowKey="id"
           loading={isLoading}
-          locale={{ emptyText: <Empty description="Нет вебхуков. Добавьте первый вебхук для получения событий в вашу CRM." /> }}
+          locale={{ emptyText: <EmptyState description="Нет вебхуков. Добавьте первый вебхук для получения событий в вашу CRM." /> }}
           pagination={meta ? {
             current: meta.page,
             pageSize: meta.page_size,

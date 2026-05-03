@@ -44,10 +44,10 @@ export default function TwoFactorChallenge({ partialToken, onSuccess, onCancel }
   }
 
   return (
-    <Space orientation="vertical" size="large" style={{ width: '100%' }}>
-      <div style={{ textAlign: 'center' }}>
-        <SafetyOutlined style={{ fontSize: 48, color: '#0f766e', marginBottom: 16 }} />
-        <Typography.Title level={4}>Двухфакторная аутентификация</Typography.Title>
+    <Space orientation="vertical" size="large" className="rh-full-width">
+      <div className="rh-2fa-challenge__head">
+        <SafetyOutlined className="rh-2fa-challenge__icon" />
+        <h2 className="rh-2fa-challenge__title">Двухфакторная аутентификация</h2>
         <Text type="secondary">
           {method === 'totp'
             ? 'Введите код из приложения-аутентификатора'
@@ -62,7 +62,7 @@ export default function TwoFactorChallenge({ partialToken, onSuccess, onCancel }
         value={code}
         onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
         onPressEnter={handleVerify}
-        style={{ textAlign: 'center', fontSize: 24 }}
+        className="rh-2fa-challenge__code-input"
         autoFocus
       />
 
@@ -77,7 +77,7 @@ export default function TwoFactorChallenge({ partialToken, onSuccess, onCancel }
         Подтвердить
       </Button>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div className="rh-2fa-challenge__actions">
         <Button
           type="link"
           icon={<MessageOutlined />}

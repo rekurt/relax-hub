@@ -184,12 +184,12 @@ export default function DiscountInput({
         key: 'discount',
         label: hasAppliedCode ? '✓ Скидка применена' : 'Применить скидку',
         children: (
-          <Space orientation="vertical" style={{ width: '100%' }} size={12}>
+          <Space orientation="vertical" className="rh-full-width" size={12}>
             <div>
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Text type="secondary" className="rh-table-meta-text">
                 Промокод или код подарочного сертификата (BANI-XXXX-XXXX)
               </Text>
-              <Space.Compact style={{ width: '100%', marginTop: 4 }}>
+              <Space.Compact className="rh-discount-input__compact">
                 <Input
                   value={codeInput}
                   onChange={(e) => {
@@ -216,16 +216,16 @@ export default function DiscountInput({
                   </Button>
                 )}
               </Space.Compact>
-              {error && <Text type="danger" style={{ fontSize: 12 }}>{error}</Text>}
+              {error && <Text type="danger" className="rh-table-meta-text">{error}</Text>}
               {value.promoDiscount > 0 && (
-                <Text type="success" style={{ fontSize: 12 }}>
+                <Text type="success" className="rh-table-meta-text">
                   Скидка по промокоду: {value.promoDiscountType === 'percentage'
                     ? `${value.promoDiscount}%`
                     : formatPrice(value.promoDiscount)}
                 </Text>
               )}
               {value.certificateAmount > 0 && (
-                <Text type="success" style={{ fontSize: 12 }}>
+                <Text type="success" className="rh-table-meta-text">
                   Сертификат: {formatPrice(value.certificateAmount)}
                 </Text>
               )}
@@ -233,12 +233,12 @@ export default function DiscountInput({
 
             {recentPromos.length > 0 && !hasAppliedCode && (
               <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>Недавно проверенные:</Text>
-                <Space wrap style={{ marginTop: 4 }}>
+                <Text type="secondary" className="rh-table-meta-text">Недавно проверенные:</Text>
+                <Space wrap className="rh-discount-input__recent">
                   {recentPromos.map((p) => (
                     <Tag
                       key={p.code}
-                      style={{ cursor: 'pointer' }}
+                      className="rh-clickable-tag"
                       onClick={() => {
                         setCodeInput(p.code)
                         setError('')
@@ -252,7 +252,7 @@ export default function DiscountInput({
             )}
 
             {availablePoints > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div className="rh-discount-input__option">
                 <Checkbox
                   checked={usePoints}
                   onChange={(e) =>
@@ -271,14 +271,14 @@ export default function DiscountInput({
                     value={value.pointsAmount}
                     onChange={(v) => onChange({ ...value, pointsAmount: v ?? 0 })}
                     size="small"
-                    style={{ width: 120 }}
+                    className="rh-compact-number-input"
                   />
                 )}
               </div>
             )}
 
             {availableReferralBalance > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div className="rh-discount-input__option">
                 <Checkbox
                   checked={useReferral}
                   onChange={(e) =>
@@ -299,7 +299,7 @@ export default function DiscountInput({
                     value={value.referralAmount}
                     onChange={(v) => onChange({ ...value, referralAmount: v ?? 0 })}
                     size="small"
-                    style={{ width: 120 }}
+                    className="rh-compact-number-input"
                   />
                 )}
               </div>
