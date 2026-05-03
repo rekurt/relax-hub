@@ -19,6 +19,7 @@ interface TopNavigationLayoutProps {
   homeTo: string
   primaryItems: NavigationItem[]
   overflowItems?: NavigationItem[]
+  overflowLabel?: string
   navigationMode?: 'pills' | 'dropdown'
   profilePath?: string
   profileMenuItems?: NavigationItem[]
@@ -34,15 +35,22 @@ interface TopNavigationLayoutProps {
 type DropdownItem = NonNullable<MenuProps['items']>[number]
 
 function groupNavigationItems(items: NavigationItem[]) {
-  return items.reduce<Array<{ section?: string; items: NavigationItem[] }>>((acc, item) => {
-    const lastGroup = acc[acc.length - 1]
-    if (lastGroup && lastGroup.section === item.section) {
-      lastGroup.items.push(item)
-      return acc
+  const groups: Array<{ section?: string; items: NavigationItem[] }> = []
+  const groupBySection = new Map<string, { section?: string; items: NavigationItem[] }>()
+
+  for (const item of items) {
+    const key = item.section ?? ''
+    let group = groupBySection.get(key)
+    if (!group) {
+      group = { section: item.section, items: [] }
+      groupBySection.set(key, group)
+      groups.push(group)
     }
-    acc.push({ section: item.section, items: [item] })
-    return acc
-  }, [])
+
+    group.items.push(item)
+  }
+
+  return groups
 }
 
 function buildGroupedMenuItems(items: NavigationItem[], navigate: (to: string) => void): NonNullable<MenuProps['items']> {
@@ -103,6 +111,7 @@ export default function TopNavigationLayout({
   homeTo,
   primaryItems,
   overflowItems = [],
+  overflowLabel = 'Разделы',
   navigationMode = 'pills',
   profilePath,
   profileMenuItems = [],
@@ -200,10 +209,12 @@ export default function TopNavigationLayout({
                   }}
                   trigger={['click']}
                   placement="bottomRight"
+                  classNames={{ root: 'rh-topnav__workspace-dropdown' }}
                 >
                   <button
                     type="button"
                     className="rh-nav__user rh-topnav__workspace-button rh-topnav__profile-button"
+                    aria-haspopup="menu"
                     aria-label={`Раздел: ${activeNavigationItem?.label ?? 'Разделы'}`}
                   >
                     <DesignIcon name="grid" size={16} />
@@ -213,7 +224,7 @@ export default function TopNavigationLayout({
                   </button>
                 </Dropdown>
               ) : (
-              <div className="rh-nav__links rh-topnav__nav-links flex min-w-0 flex-1 items-center gap-2">
+                <div className="rh-nav__links rh-topnav__nav-links flex min-w-0 flex-1 items-center gap-2">
                   {primaryItems.map((item) => (
                     <NavButton
                       key={item.key}
@@ -223,16 +234,26 @@ export default function TopNavigationLayout({
                     />
                   ))}
                   {overflowItems.length > 0 && (
-                    <Dropdown menu={{ items: overflowMenuItems }} trigger={['click']} placement="bottomRight">
+                    <Dropdown
+                      menu={{
+                        items: overflowMenuItems,
+                        selectable: true,
+                        selectedKeys: overflowItems.filter(isActive).map((item) => item.key),
+                      }}
+                      trigger={['click']}
+                      placement="bottomRight"
+                      classNames={{ root: 'rh-topnav__workspace-dropdown' }}
+                    >
                       <button
                         type="button"
                         className={cx(
                           'rh-nav__link rh-topnav__nav-button inline-flex items-center gap-1.5 rounded-rh-pill px-3.5 py-2 text-sm font-semibold text-rh-text transition hover:bg-[rgba(15,118,110,0.08)] hover:text-rh-primary-strong',
                           overflowActive && 'rh-nav__link--active rh-topnav__nav-button--active bg-[rgba(15,118,110,0.10)] text-rh-primary-strong',
                         )}
+                        aria-haspopup="menu"
                       >
                         <DesignIcon name="more" size={16} />
-                        Разделы
+                        {overflowLabel}
                       </button>
                     </Dropdown>
                   )}

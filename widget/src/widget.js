@@ -59,6 +59,9 @@
     }
   };
 
+  const INLINE_STYLES_PLACEHOLDER = '__BANI_WIDGET_INLINE_CSS__';
+  const INLINE_STYLES = INLINE_STYLES_PLACEHOLDER;
+
   function sanitizeColor(value) {
     return /^#[0-9a-fA-F]{3,8}$/.test(value) ? value : null;
   }
@@ -69,6 +72,17 @@
 
   function escapeHTMLAttr(str) {
     return str.replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function injectWidgetStyles(cssText) {
+    if (!cssText || cssText === INLINE_STYLES_PLACEHOLDER || document.getElementById('bani-widget-styles')) {
+      return;
+    }
+
+    const style = document.createElement('style');
+    style.id = 'bani-widget-styles';
+    style.textContent = cssText;
+    document.head.appendChild(style);
   }
 
   class BaniWidget {
@@ -105,6 +119,7 @@
     }
 
     setupStyles() {
+      injectWidgetStyles(INLINE_STYLES);
       this.element.style.setProperty('--bani-widget-primary', this.primaryColor);
       this.element.style.setProperty('--bani-widget-primary-strong', this.adjustColor(this.primaryColor, -18));
       this.element.style.setProperty('--bani-widget-font-family', this.fontFamily);

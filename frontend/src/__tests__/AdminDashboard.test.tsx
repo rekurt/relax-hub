@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from '@/components/design/system'
@@ -31,6 +31,10 @@ function renderWithProviders(ui: React.ReactElement) {
           <MemoryRouter initialEntries={['/admin']}>
             <Routes>
               <Route path="/admin" element={ui} />
+              <Route path="/admin/bathhouses" element={<div>Bathhouse moderation route</div>} />
+              <Route path="/admin/tickets" element={<div>Ticket management route</div>} />
+              <Route path="/admin/finance" element={<div>Finance route</div>} />
+              <Route path="/admin/analytics/funnels" element={<div>Funnels route</div>} />
             </Routes>
           </MemoryRouter>
         </AntApp>
@@ -225,5 +229,22 @@ describe('AdminDashboard', () => {
     expect(screen.getByText('AHT')).toBeInTheDocument()
     expect(screen.getByText('SLA (24ч)')).toBeInTheDocument()
     expect(screen.getByText('В очереди')).toBeInTheDocument()
+  })
+
+  it('opens operational sections from moderation queue actions', () => {
+    vi.mocked(useGetAdminAnalytics).mockReturnValue({
+      data: { data: mockDashboard, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetAdminAnalytics>)
+    vi.mocked(useGetAdminAnalyticsTop).mockReturnValue({
+      data: { data: { bathhouses: [], metric: 'bookings', limit: 10 }, success: true },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useGetAdminAnalyticsTop>)
+
+    renderWithProviders(<AdminDashboard />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Открыть' }))
+
+    expect(screen.getByText('Bathhouse moderation route')).toBeInTheDocument()
   })
 })

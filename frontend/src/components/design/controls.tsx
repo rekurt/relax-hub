@@ -1498,26 +1498,43 @@ export function Drawer({ open, visible, title, placement = 'right', width = 420,
   )
 }
 
-function renderMenuItems(items: MenuItem[] = [], menuOnClick?: MenuProps['onClick']) {
-  return items.map((item) => {
-    if (item.type === 'divider') return <li key={String(item.key ?? Math.random())} className="ant-dropdown-menu-item-divider" role="separator" />
+function renderMenuItems(
+  items: MenuItem[] = [],
+  menuOnClick?: MenuProps['onClick'],
+  onItemClick?: () => void,
+  selectedKeys: Key[] = [],
+) {
+  return items.map((item, index) => {
+    if (item.type === 'divider') return <li key={String(item.key ?? `divider-${index}`)} className="ant-dropdown-menu-item-divider" role="separator" />
     if (item.type === 'group') {
       return (
-        <li key={String(item.key ?? textFromNode(item.label))} className="ant-dropdown-menu-item-group">
+        <li key={String(item.key ?? `group-${textFromNode(item.label)}-${index}`)} className="ant-dropdown-menu-item-group">
           <div className="ant-dropdown-menu-item-group-title">{item.label}</div>
-          <ul role="group">{renderMenuItems(item.children, menuOnClick)}</ul>
+          <ul role="group">{renderMenuItems(item.children, menuOnClick, onItemClick, selectedKeys)}</ul>
         </li>
       )
     }
+    const selected = item.key !== undefined && selectedKeys.some((key) => String(key) === String(item.key))
     return (
-      <li key={String(item.key)} className={cx('ant-dropdown-menu-item', item.danger && 'ant-dropdown-menu-item-danger', item.disabled && 'ant-dropdown-menu-item-disabled')} role="none">
+      <li
+        key={String(item.key)}
+        className={cx(
+          'ant-dropdown-menu-item',
+          selected && 'ant-dropdown-menu-item-selected',
+          item.danger && 'ant-dropdown-menu-item-danger',
+          item.disabled && 'ant-dropdown-menu-item-disabled',
+        )}
+        role="none"
+      >
         <button
           type="button"
           role="menuitem"
+          aria-current={selected ? 'page' : undefined}
           disabled={item.disabled}
           onClick={(event) => {
             item.onClick?.()
             menuOnClick?.({ key: String(item.key), item, domEvent: event })
+            onItemClick?.()
           }}
         >
           {item.icon}
@@ -1538,22 +1555,34 @@ interface DropdownProps extends HTMLAttributes<HTMLDivElement> {
   [key: string]: any
 }
 
-export function Dropdown({ menu, dropdownRender, className, classNames: _classNames, trigger: _trigger, placement: _placement, children, ...props }: DropdownProps) {
+export function Dropdown({ menu, dropdownRender, className, classNames, trigger: _trigger, placement = 'bottomLeft', children, ...props }: DropdownProps) {
   const [open, setOpen] = useState(false)
-  const menuNode = <ul className="ant-dropdown-menu" role="menu">{renderMenuItems(menu?.items, menu?.onClick)}</ul>
+  const close = () => setOpen(false)
+  const menuNode = <ul className="ant-dropdown-menu" role="menu">{renderMenuItems(menu?.items, menu?.onClick, close, menu?.selectedKeys)}</ul>
   const childArray = Children.toArray(children)
   const trigger = childArray.length === 1 && isValidElement(childArray[0])
     ? cloneElement(childArray[0] as ReactElement<Record<string, any>>, {
+      'aria-expanded': open,
       onClick: (event: ReactMouseEvent<HTMLElement>) => {
         setOpen((value) => !value)
         ;(childArray[0] as ReactElement<Record<string, any>>).props.onClick?.(event)
       },
     })
     : children
+  const rootClassName = typeof classNames?.root === 'string' ? classNames.root : undefined
+  const popupRootClassName = typeof classNames?.popup?.root === 'string' ? classNames.popup.root : undefined
+
   return (
     <span className={cx('rh-dropdown ant-dropdown', className)} {...props}>
       {trigger}
-      {open && <div className="rh-dropdown__overlay ant-dropdown">{dropdownRender ? dropdownRender(menuNode) : menuNode}</div>}
+      {open && (
+        <div
+          className={cx('rh-dropdown__overlay ant-dropdown', `rh-dropdown__overlay--${placement}`, rootClassName, popupRootClassName)}
+          data-placement={placement}
+        >
+          {dropdownRender ? dropdownRender(menuNode) : menuNode}
+        </div>
+      )}
     </span>
   )
 }

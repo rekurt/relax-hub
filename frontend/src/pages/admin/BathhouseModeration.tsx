@@ -98,6 +98,8 @@ export default function BathhouseModeration() {
         )
       })
     : bathhouses
+  const pendingBathhouses = filteredBathhouses.filter((b) => b.status === 'pending')
+  const pendingIds = pendingBathhouses.map((b) => b.id!).filter(Boolean)
 
   const handleApprove = (item: InternalHandlerBathhouseResponse) => {
     modal.confirm({
@@ -178,10 +180,11 @@ export default function BathhouseModeration() {
     {
       title: (
         <Checkbox
-          checked={selectedIds.length > 0 && selectedIds.length === filteredBathhouses.length}
-          indeterminate={selectedIds.length > 0 && selectedIds.length < filteredBathhouses.length}
+          checked={pendingIds.length > 0 && selectedIds.length === pendingIds.length}
+          indeterminate={selectedIds.length > 0 && selectedIds.length < pendingIds.length}
+          disabled={pendingIds.length === 0}
           onChange={(e) =>
-            setSelectedIds(e.target.checked ? filteredBathhouses.map((b) => b.id!).filter(Boolean) : [])
+            setSelectedIds(e.target.checked ? pendingIds : [])
           }
         />
       ),
@@ -190,6 +193,7 @@ export default function BathhouseModeration() {
       render: (_, record) => (
         <Checkbox
           checked={selectedIds.includes(record.id!)}
+          disabled={record.status !== 'pending'}
           onChange={(e) =>
             setSelectedIds((prev) =>
               e.target.checked ? [...prev, record.id!] : prev.filter((id) => id !== record.id!),
@@ -242,26 +246,36 @@ export default function BathhouseModeration() {
       title: 'Действия',
       key: 'actions',
       render: (_, record) => {
-        const actions: React.ReactNode[] = []
-        if (record.status !== 'active') {
-          actions.push(
-            <a key="approve" onClick={() => handleApprove(record)}>
+        if (record.status === 'pending') {
+          return (
+            <Space className="rh-admin-row-actions" wrap>
+              <Button type="text" size="small" onClick={() => setDetailItem(record)}>
+                Детали
+              </Button>
+              <Button type="primary" size="small" onClick={() => handleApprove(record)}>
               Одобрить
-            </a>,
+              </Button>
+              <Button danger size="small" onClick={() => handleReject(record)}>
+                Отклонить
+              </Button>
+            </Space>
           )
         }
-        if (record.status !== 'rejected') {
-          actions.push(
-            <a
-              key="reject"
-              onClick={() => handleReject(record)}
-              style={{ color: '#b42318' }}
-            >
-              Отклонить
-            </a>,
-          )
-        }
-        return <Space>{actions}</Space>
+
+        const statusHint = record.status === 'active'
+          ? 'Объект уже опубликован'
+          : record.status === 'rejected'
+            ? 'Заявка уже отклонена'
+            : 'Недоступно для текущего статуса'
+
+        return (
+          <Space className="rh-admin-row-actions" wrap>
+            <Button type="text" size="small" onClick={() => setDetailItem(record)}>
+              Детали
+            </Button>
+            <Tag color="default">{statusHint}</Tag>
+          </Space>
+        )
       },
     },
   ]

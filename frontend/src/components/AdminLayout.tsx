@@ -64,7 +64,8 @@ export default function AdminLayout() {
         homeTo="/admin"
         primaryItems={ADMIN_PRIMARY_NAV_ITEMS}
         overflowItems={ADMIN_OVERFLOW_NAV_ITEMS}
-        navigationMode="dropdown"
+        overflowLabel="Ещё"
+        navigationMode="pills"
         profilePath="/admin/profile"
         topBanner={<Admin2FABanner />}
       />

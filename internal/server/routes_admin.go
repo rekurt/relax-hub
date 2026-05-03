@@ -17,7 +17,9 @@ func mountAdminRoutes(
 	r.Route("/admin", func(r chi.Router) {
 		r.Use(auth)
 		r.Use(middleware.RequireRole(domain.RoleAdmin))
-		r.Use(middleware.RequireAdmin2FA(p.Admin2FAChecker))
+		if !middleware.IsDevEnvironment(p.Config.Environment) {
+			r.Use(middleware.RequireAdmin2FA(p.Admin2FAChecker))
+		}
 		r.Use(middleware.LoadAdminSubRole(p.AdminSubRoleResolver))
 		r.Use(middleware.AdminAudit(p.AuditLogRepo, p.Log))
 

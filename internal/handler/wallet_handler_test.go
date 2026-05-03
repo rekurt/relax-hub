@@ -13,8 +13,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/rekurt/relax-hub/config"
 	"github.com/rekurt/relax-hub/internal/domain"
-	"github.com/rekurt/relax-hub/internal/payment"
 	"github.com/rekurt/relax-hub/internal/middleware"
+	"github.com/rekurt/relax-hub/internal/payment"
 	"github.com/rekurt/relax-hub/internal/service"
 )
 
@@ -264,12 +264,36 @@ func TestWalletHandler_GetWallet(t *testing.T) {
 	}
 }
 
-func TestWalletHandler_GetWallet_NotFound(t *testing.T) {
+func TestWalletHandler_GetWallet_CreatesMissingWallet(t *testing.T) {
 	userID := uuid.New()
+	calls := 0
+	created := false
 
 	walletSvc := &mockWalletService{
 		getBalanceFn: func(ctx context.Context, uid uuid.UUID) (*service.WalletBalanceSummary, error) {
-			return nil, domain.ErrWalletNotFound
+			calls++
+			if calls == 1 {
+				return nil, domain.ErrWalletNotFound
+			}
+			if uid != userID {
+				return nil, domain.ErrWalletNotFound
+			}
+			return &service.WalletBalanceSummary{
+				Balance:    0,
+				HeldAmount: 0,
+				Available:  0,
+				Currency:   domain.WalletCurrencyRUB,
+			}, nil
+		},
+		createWalletFn: func(ctx context.Context, uid uuid.UUID, currency domain.WalletCurrency) (*domain.Wallet, error) {
+			if uid != userID {
+				t.Fatalf("expected userID %s, got %s", userID, uid)
+			}
+			if currency != domain.WalletCurrencyRUB {
+				t.Fatalf("expected RUB wallet, got %s", currency)
+			}
+			created = true
+			return &domain.Wallet{ID: uuid.New(), UserID: uid, Currency: currency}, nil
 		},
 	}
 
@@ -285,8 +309,14 @@ func TestWalletHandler_GetWallet_NotFound(t *testing.T) {
 	rec := httptest.NewRecorder()
 	r.ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusNotFound {
-		t.Errorf("expected status 404, got %d", rec.Code)
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !created {
+		t.Fatal("expected missing wallet to be created")
+	}
+	if calls != 2 {
+		t.Fatalf("expected balance to be loaded twice, got %d", calls)
 	}
 }
 

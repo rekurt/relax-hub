@@ -5,6 +5,7 @@ import { ruRU } from '@/components/design/system'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import PublicLayout from '@/components/PublicLayout'
 import ClientLayout from '@/components/ClientLayout'
+import AdminLayout from '@/components/AdminLayout'
 import { useAuthStore } from '@/stores/auth'
 
 vi.mock('@/api/generated/cities/cities', () => ({
@@ -84,6 +85,20 @@ function renderClientShell(route = '/client/bookings') {
             <Route path="chat" element={<div>Чат</div>} />
             <Route path="tickets" element={<div>Поддержка</div>} />
             <Route path="disputes" element={<div>Споры</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </ConfigProvider>,
+  )
+}
+
+function renderAdminShell(route = '/admin') {
+  return render(
+    <ConfigProvider locale={ruRU}>
+      <MemoryRouter initialEntries={[route]}>
+        <Routes>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<div>Админка</div>} />
           </Route>
         </Routes>
       </MemoryRouter>
@@ -179,5 +194,32 @@ describe('Shell navigation', () => {
     expect(within(drawer).getByText('Чат')).toBeInTheDocument()
     expect(within(drawer).getByText('Поддержка')).toBeInTheDocument()
     expect(within(drawer).getByText('Споры')).toBeInTheDocument()
+  })
+
+  it('opens admin navigation dropdown without duplicate section keys', async () => {
+    mockDesktopViewport()
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    useAuthStore.setState({
+      user: { id: 'admin-1', role: 'admin', name: 'Администратор', email: 'admin@example.com', two_fa_method: 'totp', onboarding_completed: true },
+      token: 'jwt-token',
+      isAuthenticated: true,
+      isLoading: false,
+    })
+
+    renderAdminShell()
+
+    expect(screen.getByRole('button', { name: 'Обзор' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Модерация' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Пользователи' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ещё' }))
+
+    const menu = await screen.findByRole('menu')
+
+    expect(within(menu).getAllByText('Справочники')).toHaveLength(1)
+    expect(within(menu).getAllByText('Контроль')).toHaveLength(1)
+    expect(consoleError.mock.calls.flat().join(' ')).not.toContain('Encountered two children with the same key')
+
+    consoleError.mockRestore()
   })
 })
