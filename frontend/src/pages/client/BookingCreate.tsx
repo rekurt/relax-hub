@@ -13,7 +13,6 @@ import {
   Divider,
   Switch,
   App,
-  Empty,
   Steps,
   Slider,
   Radio,
@@ -50,7 +49,7 @@ import PriceBreakdown from '@/components/PriceBreakdown'
 import { formatPrice } from '@/lib/format'
 import { formatSlotTimeLabel, getRangeHours, resolveSlotRangeSelection, type SlotRangeSelection } from '@/lib/slot-selection'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 type PaymentMethod = 'wallet' | 'card' | 'sbp' | 'apple_pay' | 'google_pay' | 'combo'
 
@@ -389,7 +388,14 @@ export default function BookingCreate() {
   }
 
   if (!bathhouse) {
-    return <Empty description="Баня не найдена" />
+    return (
+      <div className="rh-admin-empty-state">
+        <div className="rh-admin-empty-state__title">Баня не найдена</div>
+        <p className="rh-admin-empty-state__text">
+          Вернитесь в каталог и выберите доступный объект для бронирования.
+        </p>
+      </div>
+    )
   }
 
   // Slot conflict screen
@@ -398,7 +404,7 @@ export default function BookingCreate() {
       (s) => s.available && (s.startTime !== selectedSlot?.from || s.endTime !== selectedSlot?.to),
     )
     return (
-      <div style={{ maxWidth: 800, margin: '0 auto' }}>
+      <div className="rh-booking-page">
         <Result
           status="warning"
           title="Слот только что занят"
@@ -417,7 +423,7 @@ export default function BookingCreate() {
           ]}
         />
         {alternativeSlots.length > 0 && (
-          <Card title="Ближайшие доступные слоты" style={{ marginTop: 16 }}>
+          <Card title="Ближайшие доступные слоты" className="rh-admin-detail-card rh-alert-spaced">
             <Space wrap>
               {alternativeSlots.slice(0, 5).map((slot) => {
                 const fromTime = slot.startTime?.slice(11, 16) ?? ''
@@ -456,24 +462,24 @@ export default function BookingCreate() {
   const areaAvgPrice = (bathhouse as Record<string, unknown>)?.area_average_price as number | undefined
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+    <div className="rh-stack rh-booking-page">
       <Button
         type="text"
         icon={<ArrowLeftOutlined />}
         onClick={() => navigate(`/client/bathhouse/${bathhouse?.slug ?? bathhouseId}`)}
-        style={{ marginBottom: 16 }}
+        className="rh-admin-detail-back"
       >
         Назад к бане
       </Button>
 
-      <Title level={3}>Бронирование: {bathhouse.name}</Title>
+      <h1 className="rh-page-title">Бронирование: {bathhouse.name}</h1>
 
       {rebookId && rebookData?.data && (
         <Alert
           type="info"
           showIcon
           icon={<ReloadOutlined />}
-          style={{ marginBottom: 16 }}
+          className="rh-booking-alert"
           title="Повторное бронирование"
           description="Параметры предыдущего бронирования предзаполнены. Выберите удобную дату и время."
           data-testid="rebook-alert"
@@ -484,7 +490,7 @@ export default function BookingCreate() {
         <Alert
           type="warning"
           showIcon
-          style={{ marginBottom: 16 }}
+          className="rh-booking-alert"
           title="Бронирование по заявке"
           description="Это заведение работает по заявкам. После оформления заявки владелец подтвердит бронирование в течение установленного времени. Средства будут заблокированы до подтверждения."
         />
@@ -493,7 +499,7 @@ export default function BookingCreate() {
       <Steps
         current={currentStep}
         items={stepItems}
-        style={{ marginBottom: 24 }}
+        className="rh-booking-steps"
         onChange={(step) => {
           // Allow clicking previous steps, only allow forward if valid
           if (step < currentStep) {
@@ -506,8 +512,8 @@ export default function BookingCreate() {
 
       {/* Step 1: Date/Time/Guests */}
       {currentStep === 0 && (
-        <Card title="Дата и время" style={{ marginBottom: 16 }}>
-          <Space orientation="vertical" style={{ width: '100%' }} size={16}>
+        <Card title="Дата и время" className="rh-admin-detail-card">
+          <Space orientation="vertical" className="rh-full-width" size={16}>
             <div>
               <Text strong>Дата:</Text>
               <DatePicker
@@ -519,7 +525,7 @@ export default function BookingCreate() {
                   }
                 }}
                 disabledDate={(d) => d.isBefore(dayjs(), 'day')}
-                style={{ width: '100%', marginTop: 8 }}
+                className="rh-booking-field-control"
               />
             </div>
 
@@ -527,9 +533,14 @@ export default function BookingCreate() {
               <Text strong>Доступные слоты:</Text>
               <Spin spinning={slotsLoading}>
                 {slots.length === 0 ? (
-                  <Empty description="Нет доступных слотов" image={Empty.PRESENTED_IMAGE_SIMPLE} style={{ margin: '16px 0' }} />
+                  <div className="rh-admin-empty-state">
+                    <div className="rh-admin-empty-state__title">Нет доступных слотов</div>
+                    <p className="rh-admin-empty-state__text">
+                      Выберите другую дату или вернитесь к объекту позже.
+                    </p>
+                  </div>
                 ) : (
-                  <Space orientation="vertical" style={{ width: '100%', marginTop: 8 }} size="middle">
+                  <Space orientation="vertical" className="rh-booking-slot-stack" size="middle">
                     <ContiguousSlotSelector
                       slots={slots}
                       value={selectedSlotRange}
@@ -560,7 +571,7 @@ export default function BookingCreate() {
                 max={bathhouse.max_guests ?? 20}
                 value={guestCount}
                 onChange={(v) => setGuestCount(v ?? 1)}
-                style={{ width: '100%', marginTop: 8 }}
+                className="rh-booking-field-control"
               />
             </div>
 
@@ -571,7 +582,7 @@ export default function BookingCreate() {
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Пожелания к бронированию"
                 rows={2}
-                style={{ marginTop: 8 }}
+                className="rh-booking-field-control"
               />
             </div>
           </Space>
@@ -580,11 +591,16 @@ export default function BookingCreate() {
 
       {/* Step 2: Add-ons */}
       {currentStep === 1 && (
-        <Card title="Дополнительные услуги" style={{ marginBottom: 16 }}>
+        <Card title="Дополнительные услуги" className="rh-admin-detail-card">
           {addons.length === 0 ? (
-            <Empty description="Нет доступных дополнительных услуг" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            <div className="rh-admin-empty-state">
+              <div className="rh-admin-empty-state__title">Нет доступных дополнительных услуг</div>
+              <p className="rh-admin-empty-state__text">
+                Можно перейти дальше и оформить бронирование без дополнений.
+              </p>
+            </div>
           ) : (
-            <Space orientation="vertical" style={{ width: '100%' }} size={12}>
+            <Space orientation="vertical" className="rh-full-width" size={12}>
               {addons.map((addon) => {
                 const selected = selectedAddons.find((s) => s.addon_id === addon.id)
                 const unitLabel = addon.unit === 'per_hour' ? '/час' : addon.unit === 'per_person' ? '/чел.' : '/шт.'
@@ -592,21 +608,18 @@ export default function BookingCreate() {
                   <Card
                     key={addon.id}
                     size="small"
-                    style={{
-                      border: selected ? '2px solid #0f766e' : '1px solid #c9c1b5',
-                      cursor: 'pointer',
-                    }}
+                    className={selected ? 'rh-booking-addon-card rh-booking-addon-card--selected' : 'rh-booking-addon-card'}
                     onClick={() => addon.id && toggleAddon(addon.id)}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="rh-booking-addon-card__row">
                       <div>
-                        <Checkbox checked={!!selected} style={{ marginRight: 8 }} />
+                        <Checkbox checked={!!selected} className="rh-booking-inline-control" />
                         <Text strong>{addon.name}</Text>
                         {addon.description && (
-                          <Text type="secondary" style={{ marginLeft: 8 }}>{addon.description}</Text>
+                          <Text type="secondary" className="rh-booking-inline-note">{addon.description}</Text>
                         )}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div className="rh-booking-addon-card__controls">
                         <Tag color="blue">{formatPrice(addon.price ?? 0)}{unitLabel}</Tag>
                         {selected && (
                           <InputNumber
@@ -616,7 +629,7 @@ export default function BookingCreate() {
                             onChange={(v) => addon.id && updateAddonQuantity(addon.id, v ?? 1)}
                             onClick={(e) => e.stopPropagation()}
                             size="small"
-                            style={{ width: 70 }}
+                            className="rh-booking-addon-qty"
                           />
                         )}
                       </div>
@@ -625,7 +638,7 @@ export default function BookingCreate() {
                 )
               })}
               {selectedAddons.length > 0 && (
-                <div style={{ textAlign: 'right', marginTop: 8 }}>
+                <div className="rh-booking-addon-total">
                   <Text strong>Итого за доп. услуги: {formatPrice(addonsTotal)}</Text>
                 </div>
               )}
@@ -636,12 +649,12 @@ export default function BookingCreate() {
 
       {/* Step 3: Promo/Certificate/Wallet discounts */}
       {currentStep === 2 && (
-        <Card title="Скидки и бонусы" style={{ marginBottom: 16 }}>
-          <Space orientation="vertical" style={{ width: '100%' }} size={16}>
+        <Card title="Скидки и бонусы" className="rh-admin-detail-card">
+          <Space orientation="vertical" className="rh-full-width" size={16}>
             {/* Promo code */}
             <div>
               <Text strong><TagOutlined /> Промокод:</Text>
-              <Space.Compact style={{ width: '100%', marginTop: 8 }}>
+              <Space.Compact className="rh-booking-compact">
                 <Input
                   value={promoCode}
                   onChange={(e) => {
@@ -660,9 +673,9 @@ export default function BookingCreate() {
                   Применить
                 </Button>
               </Space.Compact>
-              {promoError && <Text type="danger" style={{ fontSize: 12 }}>{promoError}</Text>}
+              {promoError && <Text type="danger" className="rh-booking-hint">{promoError}</Text>}
               {promoValidated && (
-                <Text type="success" style={{ fontSize: 12 }}>
+                <Text type="success" className="rh-booking-hint">
                   Скидка: {promoValidated.type === 'percentage' ? `${promoValidated.discount}%` : formatPrice(promoValidated.discount)}
                 </Text>
               )}
@@ -671,7 +684,7 @@ export default function BookingCreate() {
             {/* Gift certificate */}
             <div>
               <Text strong><GiftOutlined /> Подарочный сертификат:</Text>
-              <Space.Compact style={{ width: '100%', marginTop: 8 }}>
+              <Space.Compact className="rh-booking-compact">
                 <Input
                   value={certificateCode}
                   onChange={(e) => {
@@ -688,12 +701,12 @@ export default function BookingCreate() {
                 </Button>
               </Space.Compact>
               {checkCertificate && certificateBalance != null && (
-                <div style={{ marginTop: 4 }}>
-                  <Text type="success" style={{ fontSize: 12 }}>
+                <div className="rh-booking-certificate-result">
+                  <Text type="success" className="rh-booking-hint">
                     Баланс сертификата: {formatPrice(certificateBalance)}
                   </Text>
                   {certificateApplied > 0 && (
-                    <Text type="success" style={{ fontSize: 12, marginLeft: 8 }}>
+                    <Text type="success" className="rh-booking-inline-note">
                       (будет списано: {formatPrice(certificateApplied)})
                     </Text>
                   )}
@@ -702,7 +715,7 @@ export default function BookingCreate() {
             </div>
 
             {/* Loyalty points */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="rh-booking-toggle-row">
               <Switch checked={usePoints} onChange={setUsePoints} />
               <Text>Использовать баллы лояльности</Text>
               {usePoints && (
@@ -711,13 +724,13 @@ export default function BookingCreate() {
                   value={pointsAmount}
                   onChange={(v) => setPointsAmount(v ?? 0)}
                   placeholder="Кол-во баллов"
-                  style={{ width: 150 }}
+                  className="rh-price-input"
                 />
               )}
             </div>
 
             {/* Referral balance */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="rh-booking-toggle-row">
               <Switch checked={useReferral} onChange={setUseReferral} />
               <Text>Использовать реферальный бонус</Text>
               {useReferral && (
@@ -726,7 +739,7 @@ export default function BookingCreate() {
                   value={referralAmount}
                   onChange={(v) => setReferralAmount(v ?? 0)}
                   placeholder="Сумма"
-                  style={{ width: 150 }}
+                  className="rh-price-input"
                 />
               )}
             </div>
@@ -738,7 +751,7 @@ export default function BookingCreate() {
       {currentStep === 3 && (
         <>
           {/* Price Breakdown */}
-          <Card title="Итого" style={{ marginBottom: 16 }}>
+          <Card title="Итого" className="rh-admin-detail-card">
             {priceLoading ? (
               <Spin />
             ) : priceInfo ? (
@@ -762,9 +775,9 @@ export default function BookingCreate() {
             )}
 
             {depositPercent != null && depositPercent > 0 && priceInfo && (
-              <div style={{ marginTop: 8 }}>
+              <div className="rh-booking-deposit-note">
                 <Text type="warning">
-                  <LockOutlined style={{ marginRight: 4 }} />
+                  <LockOutlined className="rh-booking-inline-control" />
                   Залог (возвратный): ~{formatPrice(Math.round((priceInfo.base_price ?? 0) * depositPercent / 100))}
                 </Text>
               </div>
@@ -772,7 +785,7 @@ export default function BookingCreate() {
           </Card>
 
           {/* Payment method */}
-          <Card title="Способ оплаты" style={{ marginBottom: 16 }}>
+          <Card title="Способ оплаты" className="rh-admin-detail-card">
             <Radio.Group
               value={paymentMethod}
               onChange={(e) => {
@@ -784,54 +797,54 @@ export default function BookingCreate() {
                   setSelectedSavedCardId(null)
                 }
               }}
-              style={{ width: '100%' }}
+              className="rh-full-width"
             >
-              <Space orientation="vertical" style={{ width: '100%' }} size={8}>
+              <Space orientation="vertical" className="rh-full-width" size={8}>
                 {walletBalance > 0 && walletBalance >= totalPrice && (
                   <Radio.Button
                     value="wallet"
-                    style={paymentMethodStyle(paymentMethod === 'wallet')}
+                    className={paymentMethodClass(paymentMethod === 'wallet')}
                   >
-                    <WalletOutlined style={{ marginRight: 8 }} />
+                    <WalletOutlined className="rh-booking-method-icon" />
                     Кошелёк ({formatPrice(walletBalance)})
                   </Radio.Button>
                 )}
                 <Radio.Button
                   value="card"
-                  style={paymentMethodStyle(paymentMethod === 'card')}
+                  className={paymentMethodClass(paymentMethod === 'card')}
                 >
-                  <CreditCardOutlined style={{ marginRight: 8 }} />
+                  <CreditCardOutlined className="rh-booking-method-icon" />
                   Банковская карта
                 </Radio.Button>
                 <Radio.Button
                   value="sbp"
-                  style={paymentMethodStyle(paymentMethod === 'sbp')}
+                  className={paymentMethodClass(paymentMethod === 'sbp')}
                 >
-                  <BankOutlined style={{ marginRight: 8 }} />
+                  <BankOutlined className="rh-booking-method-icon" />
                   СБП
                 </Radio.Button>
                 <Radio.Button
                   value="apple_pay"
-                  style={paymentMethodStyle(paymentMethod === 'apple_pay')}
+                  className={paymentMethodClass(paymentMethod === 'apple_pay')}
                 >
-                  <AppleOutlined style={{ marginRight: 8 }} />
+                  <AppleOutlined className="rh-booking-method-icon" />
                   Apple Pay
                 </Radio.Button>
                 <Radio.Button
                   value="google_pay"
-                  style={paymentMethodStyle(paymentMethod === 'google_pay')}
+                  className={paymentMethodClass(paymentMethod === 'google_pay')}
                 >
-                  <GoogleOutlined style={{ marginRight: 8 }} />
+                  <GoogleOutlined className="rh-booking-method-icon" />
                   Google Pay
                 </Radio.Button>
                 {walletBalance > 0 && walletBalance < totalPrice && (
                   <Radio.Button
                     value="combo"
-                    style={paymentMethodStyle(paymentMethod === 'combo')}
+                    className={paymentMethodClass(paymentMethod === 'combo')}
                   >
-                    <WalletOutlined style={{ marginRight: 4 }} />
+                    <WalletOutlined className="rh-booking-method-icon rh-booking-method-icon--compact" />
                     +
-                    <CreditCardOutlined style={{ marginLeft: 4, marginRight: 8 }} />
+                    <CreditCardOutlined className="rh-booking-method-icon" />
                     Кошелёк + Карта
                   </Radio.Button>
                 )}
@@ -840,28 +853,28 @@ export default function BookingCreate() {
 
             {/* Saved cards selection */}
             {paymentMethod === 'card' && savedCards.length > 0 && (
-              <div style={{ marginTop: 16 }} data-testid="saved-cards-section">
-                <Text strong style={{ display: 'block', marginBottom: 8 }}>Сохранённые карты:</Text>
+              <div className="rh-booking-saved-cards" data-testid="saved-cards-section">
+                <Text strong className="rh-catalog__field-label">Сохранённые карты:</Text>
                 <Radio.Group
                   value={selectedSavedCardId}
                   onChange={(e) => setSelectedSavedCardId(e.target.value)}
-                  style={{ width: '100%' }}
+                  className="rh-full-width"
                 >
-                  <Space orientation="vertical" style={{ width: '100%' }} size={8}>
+                  <Space orientation="vertical" className="rh-full-width" size={8}>
                     {savedCards.map((card) => (
-                      <Radio key={card.id} value={card.id} style={{ display: 'block' }}>
-                        <CreditCardOutlined style={{ marginRight: 8 }} />
+                      <Radio key={card.id} value={card.id} className="rh-booking-card-radio">
+                        <CreditCardOutlined className="rh-booking-method-icon" />
                         {card.brand ?? 'Карта'} •••• {card.last4}
                         {card.expiry_month != null && card.expiry_year != null && (
-                          <Text type="secondary" style={{ marginLeft: 8 }}>
+                          <Text type="secondary" className="rh-booking-inline-note">
                             {String(card.expiry_month).padStart(2, '0')}/{String(card.expiry_year).slice(-2)}
                           </Text>
                         )}
-                        {card.is_default && <Tag color="blue" style={{ marginLeft: 8 }}>Основная</Tag>}
+                        {card.is_default && <Tag color="blue" className="rh-booking-inline-note">Основная</Tag>}
                       </Radio>
                     ))}
-                    <Radio value={null} style={{ display: 'block' }}>
-                      <CreditCardOutlined style={{ marginRight: 8 }} />
+                    <Radio value={null} className="rh-booking-card-radio">
+                      <CreditCardOutlined className="rh-booking-method-icon" />
                       Новая карта
                     </Radio>
                   </Space>
@@ -871,7 +884,7 @@ export default function BookingCreate() {
 
             {/* Combo payment slider */}
             {paymentMethod === 'combo' && maxWalletForCombo > 0 && (
-              <div style={{ marginTop: 16 }}>
+              <div className="rh-booking-combo">
                 <Text>Сумма из кошелька:</Text>
                 <Slider
                   min={0}
@@ -881,7 +894,7 @@ export default function BookingCreate() {
                   onChange={setComboWalletAmount}
                   tooltip={{ formatter: (v) => v != null ? formatPrice(v) : '' }}
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div className="rh-booking-combo__summary">
                   <Text type="success">
                     <WalletOutlined /> {formatPrice(comboWalletAmount)} из кошелька
                   </Text>
@@ -897,7 +910,7 @@ export default function BookingCreate() {
           <Alert
             type="info"
             showIcon
-            style={{ marginBottom: 16 }}
+            className="rh-booking-alert"
             title="Политика отмены"
             description={(() => {
               const policy = (bathhouse as Record<string, unknown>)?.cancellation_policy as string
@@ -918,7 +931,7 @@ export default function BookingCreate() {
               type="warning"
               showIcon
               icon={<LockOutlined />}
-              style={{ marginBottom: 16 }}
+              className="rh-booking-alert"
               title="Средства будут заблокированы"
               description="Средства будут заблокированы на вашей карте до подтверждения владельцем. Если заявка будет отклонена или истечёт время ожидания, средства разблокируются автоматически."
               data-testid="hold-indicator"
@@ -930,7 +943,7 @@ export default function BookingCreate() {
       <Divider />
 
       {/* Navigation buttons */}
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+      <div className="rh-booking-nav">
         <div>
           {currentStep > 0 && (
             <Button size="large" onClick={handlePrev}>
@@ -971,15 +984,6 @@ export default function BookingCreate() {
   )
 }
 
-function paymentMethodStyle(isSelected: boolean): React.CSSProperties {
-  return {
-    display: 'block',
-    width: '100%',
-    height: 'auto',
-    padding: '12px 16px',
-    textAlign: 'left' as const,
-    borderRadius: 20,
-    border: isSelected ? '2px solid #0f766e' : '1px solid #c9c1b5',
-    background: isSelected ? 'rgba(15, 118, 110, 0.08)' : '#fff',
-  }
+function paymentMethodClass(isSelected: boolean): string {
+  return isSelected ? 'rh-booking-payment-method rh-booking-payment-method--selected' : 'rh-booking-payment-method'
 }

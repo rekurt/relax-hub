@@ -9036,6 +9036,21 @@ body.rh-app .rh-client-narrow-page {
   margin: 0 auto;
 }
 
+body.rh-app .rh-booking-page {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+body.rh-app .rh-page-title {
+  margin: 0;
+  color: var(--rh-text);
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
 body.rh-app .rh-full-width {
   width: 100%;
 }
@@ -9105,6 +9120,113 @@ body.rh-app .rh-wallet-bonus-row {
 body.rh-app .rh-wallet-filter-control {
   width: 200px;
   max-width: 100%;
+}
+
+body.rh-app .rh-booking-alert {
+  margin-bottom: 16px;
+}
+
+body.rh-app .rh-booking-steps {
+  margin-bottom: 24px;
+}
+
+body.rh-app .rh-booking-field-control {
+  width: 100%;
+  margin-top: 8px;
+}
+
+body.rh-app .rh-booking-slot-stack,
+body.rh-app .rh-booking-compact {
+  width: 100%;
+  margin-top: 8px;
+}
+
+body.rh-app .rh-booking-addon-card.rh-card {
+  cursor: pointer;
+  border-color: #c9c1b5;
+}
+
+body.rh-app .rh-booking-addon-card--selected.rh-card {
+  border-color: var(--rh-primary);
+  border-width: 2px;
+}
+
+body.rh-app .rh-booking-addon-card__row,
+body.rh-app .rh-booking-addon-card__controls,
+body.rh-app .rh-booking-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.rh-app .rh-booking-addon-card__row {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+body.rh-app .rh-booking-inline-control,
+body.rh-app .rh-booking-method-icon {
+  margin-right: 8px;
+}
+
+body.rh-app .rh-booking-method-icon--compact {
+  margin-right: 4px;
+}
+
+body.rh-app .rh-booking-inline-note {
+  margin-left: 8px;
+}
+
+body.rh-app .rh-booking-addon-qty {
+  width: 70px;
+}
+
+body.rh-app .rh-booking-addon-total {
+  margin-top: 8px;
+  text-align: right;
+}
+
+body.rh-app .rh-booking-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+body.rh-app .rh-booking-certificate-result {
+  margin-top: 4px;
+}
+
+body.rh-app .rh-booking-deposit-note,
+body.rh-app .rh-booking-saved-cards,
+body.rh-app .rh-booking-combo {
+  margin-top: 16px;
+}
+
+body.rh-app .rh-booking-payment-method.ant-radio-button-wrapper {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 12px 16px;
+  border: 1px solid #c9c1b5;
+  border-radius: 20px;
+  background: #fff;
+  text-align: left;
+}
+
+body.rh-app .rh-booking-payment-method--selected.ant-radio-button-wrapper {
+  border: 2px solid var(--rh-primary);
+  background: rgba(15, 118, 110, 0.08);
+}
+
+body.rh-app .rh-booking-card-radio {
+  display: block;
+}
+
+body.rh-app .rh-booking-combo__summary,
+body.rh-app .rh-booking-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 body.rh-app .rh-loyalty-amount {
