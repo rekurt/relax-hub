@@ -106,7 +106,8 @@ func validateOAuthRedirectURL(provider domain.OAuthProvider, rawURL string) (*ur
 			"id.vk.com":    {},
 		},
 		domain.OAuthProviderYandex: {
-			"oauth.yandex.ru": {},
+			"oauth.yandex.ru":  {},
+			"oauth.yandex.com": {},
 		},
 		domain.OAuthProviderGoogle: {
 			"accounts.google.com": {},
