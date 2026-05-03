@@ -99,15 +99,20 @@
     }
 
     init() {
-      this.setupStyles();
       this.render();
       this.fetchBathhouse();
     }
 
-    setupStyles() {
-      this.element.style.setProperty('--bani-widget-primary', this.primaryColor);
-      this.element.style.setProperty('--bani-widget-primary-strong', this.adjustColor(this.primaryColor, -18));
-      this.element.style.setProperty('--bani-widget-font-family', this.fontFamily);
+    // The compiled stylesheet redefines --bani-widget-primary on .bani-widget
+    // itself, so per-widget theming must be set on the inner element (created
+    // by render) rather than the host container — otherwise data-color is
+    // silently overridden by the default palette.
+    applyTheme() {
+      const inner = this.element.querySelector('.bani-widget');
+      if (!inner) return;
+      inner.style.setProperty('--bani-widget-primary', this.primaryColor);
+      inner.style.setProperty('--bani-widget-primary-strong', this.adjustColor(this.primaryColor, -18));
+      inner.style.setProperty('--bani-widget-font-family', this.fontFamily);
     }
 
     adjustColor(color, percent) {
@@ -225,6 +230,7 @@
     render() {
       const content = this.renderCurrentView();
       this.element.innerHTML = content;
+      this.applyTheme();
       this.attachEventListeners();
     }
 
