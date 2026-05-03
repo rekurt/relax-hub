@@ -1302,6 +1302,7 @@ export function Table<T extends object>({
   const pageSize = hasPagination ? pagination.pageSize ?? 10 : dataSource.length || 10
   const pagedData = !hasPagination ? dataSource : dataSource.slice((page - 1) * pageSize, page * pageSize)
   const isLoading = typeof loading === 'object' ? loading.spinning : loading
+  const tableStyle = scroll?.x ? { minWidth: typeof scroll.x === 'number' ? `${scroll.x}px` : scroll.x } : undefined
 
   const toggleSelected = (key: Key, record: T, checked: boolean) => {
     const nextKeys = checked ? [...selectedKeys, key] : selectedKeys.filter((item) => item !== key)
@@ -1315,7 +1316,7 @@ export function Table<T extends object>({
       <div className="ant-table">
         <div className="ant-table-container">
           <div className="ant-table-content" style={scroll?.x ? { overflowX: 'auto' } : undefined}>
-            <table>
+            <table style={tableStyle}>
               <thead className="ant-table-thead">
                 <tr>
                   {rowSelection && <th className="ant-table-selection-column" />}

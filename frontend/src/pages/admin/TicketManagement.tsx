@@ -3,7 +3,6 @@ import {
   Badge,
   Card,
   Col,
-  Empty,
   Pagination,
   Progress,
   Row,
@@ -33,6 +32,7 @@ import {
 import type { InternalHandlerTicketResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
 import { axiosInstance } from '@/api/axios-instance'
+import PageHeader from '@/components/PageHeader'
 
 interface OperationMetrics {
   fcr_percent: number
@@ -105,7 +105,7 @@ function getSlaInfo(ticket: InternalHandlerTicketResponse) {
   }
 }
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const STATUS_OPTIONS = [
   { label: 'Все', value: '' },
@@ -230,7 +230,7 @@ export default function TicketManagement() {
           </a>
           {record.status === 'escalated' && (
             <Tooltip title={`Эскалирован на ${record.level ?? 'L2'}`}>
-              <ArrowUpOutlined style={{ color: '#d97706' }} data-testid="escalation-icon" />
+              <ArrowUpOutlined className="rh-admin-icon-warning" data-testid="escalation-icon" />
             </Tooltip>
           )}
         </Space>
@@ -300,7 +300,7 @@ export default function TicketManagement() {
                 size="small"
                 strokeColor={sla.isWarning ? '#d97706' : '#15803d'}
                 format={() => (
-                  <span style={{ fontSize: 11 }}>
+                  <span className="rh-admin-sla-label">
                     <ClockCircleOutlined /> {label}
                   </span>
                 )}
@@ -332,50 +332,45 @@ export default function TicketManagement() {
   ]
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Управление обращениями
-      </Title>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Поддержка"
+        title="Управление обращениями"
+        description="SLA, статусы и операционные метрики поддержки в едином рабочем интерфейсе."
+      />
 
       {stats && (
-        <Space wrap style={{ marginBottom: 16 }}>
-          <Card size="small">
-            <Statistic
-              title="Открытые"
-              value={stats.open ?? 0}
-              valueStyle={{ color: '#0f766e' }}
-              prefix={<Badge status="processing" />}
-            />
-          </Card>
-          <Card size="small">
-            <Statistic
-              title="В работе"
-              value={stats.in_progress ?? 0}
-              valueStyle={{ color: '#0f766e' }}
-            />
-          </Card>
-          <Card size="small">
-            <Statistic
-              title="Эскалированные"
-              value={stats.escalated ?? 0}
-              valueStyle={{ color: '#d97706' }}
-            />
-          </Card>
-          <Card size="small">
-            <Statistic
-              title="Решённые"
-              value={stats.resolved ?? 0}
-              valueStyle={{ color: '#15803d' }}
-            />
-          </Card>
-          <Card size="small">
-            <Statistic title="Закрытые" value={stats.closed ?? 0} />
-          </Card>
-        </Space>
+        <div className="rh-stat-grid">
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Открытые</span>
+            <span className="rh-stat-tile__value"><Badge status="processing" /> {stats.open ?? 0}</span>
+            <span className="rh-stat-tile__hint">Новые обращения без финального решения.</span>
+          </div>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">В работе</span>
+            <span className="rh-stat-tile__value">{stats.in_progress ?? 0}</span>
+            <span className="rh-stat-tile__hint">Назначены агентам поддержки.</span>
+          </div>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Эскалированные</span>
+            <span className="rh-stat-tile__value">{stats.escalated ?? 0}</span>
+            <span className="rh-stat-tile__hint">Требуют повышенного уровня обработки.</span>
+          </div>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Решённые</span>
+            <span className="rh-stat-tile__value">{stats.resolved ?? 0}</span>
+            <span className="rh-stat-tile__hint">Закрыты решением агента.</span>
+          </div>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Закрытые</span>
+            <span className="rh-stat-tile__value">{stats.closed ?? 0}</span>
+            <span className="rh-stat-tile__hint">Финально архивированы.</span>
+          </div>
+        </div>
       )}
 
       {metrics && (
-        <Card size="small" title="Операционные метрики" style={{ marginBottom: 16 }}>
+        <Card className="rh-admin-action-card" size="small" title="Операционные метрики">
           <Row gutter={[24, 16]}>
             <Col xs={12} sm={8} md={4}>
               <Statistic
@@ -422,9 +417,9 @@ export default function TicketManagement() {
 
       {agentThroughput && agentThroughput.length > 0 && (
         <Card
+          className="rh-admin-action-card"
           size="small"
           title="Производительность агентов"
-          style={{ marginBottom: 16 }}
           extra={
             <a onClick={() => setShowAgentStats(!showAgentStats)}>
               {showAgentStats ? 'Скрыть' : 'Показать'}
@@ -461,103 +456,112 @@ export default function TicketManagement() {
         </Card>
       )}
 
-      <Space orientation="vertical" size={16} style={{ width: '100%', marginBottom: 16 }}>
-        <Segmented
-          options={STATUS_OPTIONS}
-          value={statusFilter}
-          onChange={(val) => {
-            setStatusFilter(val as string)
-            setPage(1)
-          }}
-        />
-        <Space wrap>
-          <Select
-            placeholder="Приоритет"
-            options={PRIORITY_OPTIONS}
-            value={priorityFilter}
+      <Card className="rh-admin-filter-card" title="Фильтры">
+        <Space className="rh-admin-filter-column" orientation="vertical" size={16}>
+          <Segmented
+            options={STATUS_OPTIONS}
+            value={statusFilter}
             onChange={(val) => {
-              setPriorityFilter(val)
-              setPage(1)
-            }}
-            style={{ width: 160 }}
-            allowClear
-            onClear={() => {
-              setPriorityFilter('')
+              setStatusFilter(val as string)
               setPage(1)
             }}
           />
-          <Select
-            placeholder="Уровень"
-            options={LEVEL_OPTIONS}
-            value={levelFilter}
-            onChange={(val) => {
-              setLevelFilter(val)
-              setPage(1)
-            }}
-            style={{ width: 140 }}
-            allowClear
-            onClear={() => {
-              setLevelFilter('')
-              setPage(1)
-            }}
-          />
-          <Select
-            placeholder="Категория"
-            options={CATEGORY_OPTIONS}
-            value={categoryFilter}
-            onChange={(val) => {
-              setCategoryFilter(val)
-              setPage(1)
-            }}
-            style={{ width: 160 }}
-            allowClear
-            onClear={() => {
-              setCategoryFilter('')
-              setPage(1)
-            }}
-          />
+          <Space wrap>
+            <Select
+              className="rh-admin-filter-select"
+              placeholder="Приоритет"
+              options={PRIORITY_OPTIONS}
+              value={priorityFilter}
+              onChange={(val) => {
+                setPriorityFilter(val)
+                setPage(1)
+              }}
+              allowClear
+              onClear={() => {
+                setPriorityFilter('')
+                setPage(1)
+              }}
+            />
+            <Select
+              className="rh-admin-filter-select"
+              placeholder="Уровень"
+              options={LEVEL_OPTIONS}
+              value={levelFilter}
+              onChange={(val) => {
+                setLevelFilter(val)
+                setPage(1)
+              }}
+              allowClear
+              onClear={() => {
+                setLevelFilter('')
+                setPage(1)
+              }}
+            />
+            <Select
+              className="rh-admin-filter-select"
+              placeholder="Категория"
+              options={CATEGORY_OPTIONS}
+              value={categoryFilter}
+              onChange={(val) => {
+                setCategoryFilter(val)
+                setPage(1)
+              }}
+              allowClear
+              onClear={() => {
+                setCategoryFilter('')
+                setPage(1)
+              }}
+            />
+          </Space>
         </Space>
-      </Space>
+      </Card>
 
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}>
-          <Spin size="large" />
-        </div>
-      ) : ticketsWithSla.length === 0 ? (
-        <Empty description="Нет обращений" />
-      ) : (
-        <>
-          <Table
-            dataSource={ticketsWithSla}
-            columns={columns}
-            rowKey="id"
-            pagination={false}
-            size="middle"
-            locale={{ emptyText: 'Нет обращений' }}
-            onRow={(record) => ({
-              onClick: () => navigate(`/admin/tickets/${record.id}`),
-              style: { cursor: 'pointer' },
-            })}
-          />
-          {meta && meta.total_pages! > 1 && (
-            <div style={{ marginTop: 16, textAlign: 'right' }}>
-              <Pagination
-                current={page}
-                pageSize={pageSize}
-                total={meta.total_count}
-                showSizeChanger
-                pageSizeOptions={['10', '20', '50']}
-                showTotal={(total) => `Всего: ${total}`}
-                onChange={(p, ps) => {
-                  setPage(p)
-                  setPageSize(ps)
-                }}
-              />
-            </div>
-          )}
-        </>
-      )}
+      <Card className="rh-admin-reference-card" title="Список обращений">
+        {isLoading ? (
+          <div className="rh-admin-state-card">
+            <Spin size="large" />
+            <span>Загружаем обращения</span>
+          </div>
+        ) : ticketsWithSla.length === 0 ? (
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет обращений</div>
+            <p className="rh-admin-empty-state__text">
+              Новые тикеты поддержки появятся здесь после обращения пользователя.
+            </p>
+          </div>
+        ) : (
+          <>
+            <Table
+              dataSource={ticketsWithSla}
+              columns={columns}
+              rowKey="id"
+              pagination={false}
+              size="middle"
+              locale={{ emptyText: 'Нет обращений' }}
+              onRow={(record) => ({
+                onClick: () => navigate(`/admin/tickets/${record.id}`),
+                className: 'rh-clickable-row',
+              })}
+            />
+            {meta && meta.total_pages! > 1 && (
+              <div className="rh-admin-pagination">
+                <Pagination
+                  current={page}
+                  pageSize={pageSize}
+                  total={meta.total_count}
+                  showSizeChanger
+                  pageSizeOptions={['10', '20', '50']}
+                  showTotal={(total) => `Всего: ${total}`}
+                  onChange={(p, ps) => {
+                    setPage(p)
+                    setPageSize(ps)
+                  }}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </Card>
     </div>
   )
 }
-

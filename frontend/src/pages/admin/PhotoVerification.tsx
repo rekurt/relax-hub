@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   App,
   Button,
-  Empty,
   Image,
   Input,
   Modal,
@@ -96,16 +95,24 @@ export default function PhotoVerification() {
       />
 
       {isLoading ? (
-        <section className="rh-admin-panel" style={{ textAlign: 'center', padding: 48 }}>
-          <Spin size="large" />
+        <section className="rh-admin-panel">
+          <div className="rh-admin-state-card">
+            <Spin size="large" />
+            <span>Загружаем фото на проверке</span>
+          </div>
         </section>
       ) : photos.length === 0 ? (
         <section className="rh-admin-panel">
-          <Empty description="Нет фото на рассмотрении" />
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет фото на рассмотрении</div>
+            <p className="rh-admin-empty-state__text">
+              Очередь пуста. Новые загрузки владельцев появятся здесь для подтверждения или отклонения.
+            </p>
+          </div>
         </section>
       ) : (
         <section className="rh-admin-panel">
-          <div className="rh-admin-toolbar" style={{ marginBottom: 18 }}>
+          <div className="rh-admin-toolbar rh-admin-toolbar--spaced">
             <div className="rh-admin-toolbar__copy">
               <h2 className="rh-admin-toolbar__title">Фото на проверке</h2>
               <div className="rh-admin-toolbar__hint">Ожидают проверки: {meta?.total_count ?? photos.length}</div>
@@ -119,11 +126,11 @@ export default function PhotoVerification() {
                 <article className="rh-admin-photo-card" key={photo.id}>
                   <div className="rh-admin-photo-card__media">
                     <Image
+                      className="rh-admin-photo-card__image"
                       src={resolveAssetUrl(photo.url)}
                       alt="Фото бани"
                       height="100%"
                       width="100%"
-                      style={{ objectFit: 'cover', display: 'block' }}
                       fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSIxMDAiIHk9IjEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTQiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
                     />
                   </div>
@@ -173,7 +180,7 @@ export default function PhotoVerification() {
           </Image.PreviewGroup>
 
           {meta && meta.total_pages! > 1 && (
-            <div style={{ marginTop: 24, textAlign: 'center' }}>
+            <div className="rh-admin-pagination rh-admin-pagination--center">
               <Pagination
                 current={page}
                 pageSize={pageSize}
@@ -201,7 +208,7 @@ export default function PhotoVerification() {
         cancelText="Отмена"
         confirmLoading={rejectMutation.isPending}
       >
-        <div style={{ marginBottom: 8 }}>
+        <div className="rh-admin-modal-description">
           <Text>Укажите причину отклонения (необязательно):</Text>
         </div>
         <Input.TextArea

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import {
-  Typography,
   Upload,
   Button,
   Table,
@@ -26,8 +25,8 @@ import {
 import type { InternalHandlerBankStatementEntryResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import dayjs from 'dayjs'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
 const { RangePicker } = DatePicker
 
 function statusTag(status?: string) {
@@ -159,7 +158,7 @@ export default function BankReconciliation() {
             Связать
           </Button>
         ) : record.matched_tx_id ? (
-          <span style={{ fontSize: 12, color: 'var(--rh-text-soft)' }}>
+          <span className="rh-admin-muted-token">
             {record.matched_tx_type}: {record.matched_tx_id?.slice(0, 8)}...
           </span>
         ) : null
@@ -168,26 +167,30 @@ export default function BankReconciliation() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>Банковская сверка</Title>
-        <Upload
-          accept=".csv,.xml"
-          showUploadList={false}
-          beforeUpload={(file) => handleUpload({ originFileObj: file } as UploadFile)}
-        >
-          <Button icon={<UploadOutlined />} loading={uploadMutation.isPending}>
-            Загрузить выписку
-          </Button>
-        </Upload>
-      </div>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Финансы"
+        title="Банковская сверка"
+        description="Загрузка выписок, фильтрация и ручное сопоставление операций."
+        extra={
+          <Upload
+            accept=".csv,.xml"
+            showUploadList={false}
+            beforeUpload={(file) => handleUpload({ originFileObj: file } as UploadFile)}
+          >
+            <Button icon={<UploadOutlined />} loading={uploadMutation.isPending}>
+              Загрузить выписку
+            </Button>
+          </Upload>
+        }
+      />
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space wrap>
+      <Card className="rh-admin-filter-card" title="Фильтры">
+        <Space className="rh-admin-filter-row" wrap>
           <Select
+            className="rh-admin-filter-select"
             placeholder="Статус"
             allowClear
-            style={{ width: 180 }}
             value={statusFilter}
             onChange={(v) => { setStatusFilter(v); setPage(1) }}
             options={[
@@ -198,25 +201,28 @@ export default function BankReconciliation() {
             ]}
           />
           <RangePicker
+            className="rh-admin-form-control"
             value={dateRange}
             onChange={(dates) => { setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null); setPage(1) }}
           />
         </Space>
       </Card>
 
-      <Table
-        columns={columns}
-        dataSource={entries}
-        rowKey="id"
-        loading={isLoading}
-        pagination={{
-          current: page,
-          pageSize: 20,
-          total: meta?.total_count,
-          onChange: setPage,
-        }}
-        locale={{ emptyText: 'Нет записей' }}
-      />
+      <Card className="rh-admin-reference-card" title="Записи выписки">
+        <Table
+          columns={columns}
+          dataSource={entries}
+          rowKey="id"
+          loading={isLoading}
+          pagination={{
+            current: page,
+            pageSize: 20,
+            total: meta?.total_count,
+            onChange: setPage,
+          }}
+          locale={{ emptyText: 'Нет записей' }}
+        />
+      </Card>
 
       <Modal
         title="Ручное сопоставление"
@@ -228,7 +234,7 @@ export default function BankReconciliation() {
         cancelText="Отмена"
       >
         {matchingEntry && (
-          <Descriptions column={1} style={{ marginBottom: 16 }} size="small">
+          <Descriptions className="rh-admin-modal-descriptions" column={1} size="small">
             <Descriptions.Item label="Дата">{matchingEntry.date ? formatDateTime(matchingEntry.date, 'DD.MM.YYYY') : '—'}</Descriptions.Item>
             <Descriptions.Item label="Сумма">{formatPrice(matchingEntry.amount ?? 0)}</Descriptions.Item>
             <Descriptions.Item label="Номер">{matchingEntry.reference_num ?? '—'}</Descriptions.Item>

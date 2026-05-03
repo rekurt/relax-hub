@@ -83,6 +83,7 @@ export default function ConversionFunnels() {
       <PageHeader
         title="Воронка конверсии"
         description="Контроль переходов между ключевыми этапами клиентского пути."
+        size="compact"
         extra={(
           <Segmented
             className="rh-funnel-page__periods"

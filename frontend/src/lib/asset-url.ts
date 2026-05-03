@@ -1,23 +1,32 @@
 const DEFAULT_STORAGE_PUBLIC_BASE_URL = 'http://localhost:9102'
-const INTERNAL_STORAGE_HOSTS = new Set([
+const STORAGE_HOSTS = new Set([
   'minio:9000',
   'banya-minio:9000',
   'relax-hub-minio:9000',
+  'localhost:9000',
+  '127.0.0.1:9000',
+  '[::1]:9000',
+  'localhost:9102',
+  '127.0.0.1:9102',
+  '[::1]:9102',
 ])
 
 function storagePublicBaseURL() {
+  const appOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+
   return (
     import.meta.env.VITE_STORAGE_PUBLIC_BASE_URL
+    || appOrigin
     || DEFAULT_STORAGE_PUBLIC_BASE_URL
   ).replace(/\/+$/, '')
 }
 
-function rewriteInternalStorageUrl(value: string) {
+function rewriteStorageUrl(value: string) {
   const candidate = value.startsWith('//') ? `${window.location.protocol}${value}` : value
 
   try {
     const url = new URL(candidate)
-    if (!INTERNAL_STORAGE_HOSTS.has(url.host.toLowerCase())) {
+    if (!STORAGE_HOSTS.has(url.host.toLowerCase())) {
       return null
     }
 
@@ -33,7 +42,7 @@ export function resolveAssetUrl(value?: string | null) {
   const trimmed = value.trim()
   if (!trimmed) return ''
 
-  const rewrittenStorageUrl = rewriteInternalStorageUrl(trimmed)
+  const rewrittenStorageUrl = rewriteStorageUrl(trimmed)
   if (rewrittenStorageUrl) return rewrittenStorageUrl
 
   if (

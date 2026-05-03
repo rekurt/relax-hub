@@ -4,14 +4,12 @@ import {
   Button,
   Card,
   Descriptions,
-  Empty,
   Form,
   Input,
   InputNumber,
   Modal,
   Space,
   Tag,
-  Typography,
 } from '@/components/design/system'
 import {
   WalletOutlined,
@@ -19,11 +17,11 @@ import {
   MinusOutlined,
   LockOutlined,
   UnlockOutlined,
+  SearchOutlined,
 } from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
-
-const { Title, Text } = Typography
+import PageHeader from '@/components/PageHeader'
 
 interface WalletData {
   id: string
@@ -121,57 +119,84 @@ export default function WalletManagement() {
     unfreeze: 'Разморозка кошелька',
   }
 
-  return (
-    <div style={{ padding: 24 }}>
-      <Title level={3}>
-        <WalletOutlined /> Управление кошельками
-      </Title>
+  const walletStats = wallet
+    ? [
+        { label: 'Баланс', value: formatPrice(wallet.balance), tone: 'default' },
+        { label: 'Заморожено', value: formatPrice(wallet.held_amount), tone: 'warning' },
+        { label: 'Доступно', value: formatPrice(wallet.balance - wallet.held_amount), tone: 'success' },
+      ]
+    : []
 
-      <Card style={{ marginBottom: 24 }}>
-        <Space.Compact style={{ width: '100%', maxWidth: 600 }}>
+  return (
+    <div className="rh-admin-wallet-page">
+      <PageHeader
+        size="compact"
+        eyebrow="Финансовый контроль"
+        title="Управление кошельками"
+        description="Поиск кошелька по UUID, ручные корректировки баланса и блокировка операций с обязательной причиной для аудита."
+      />
+
+      <Card className="rh-admin-wallet-search" bodyStyle={{ padding: 0 }}>
+        <div className="rh-admin-wallet-search__icon" aria-hidden>
+          <WalletOutlined />
+        </div>
+        <div className="rh-admin-wallet-search__copy">
+          <div className="rh-admin-wallet-search__title">Найти кошелёк</div>
+          <div className="rh-admin-wallet-search__hint">Введите точный ID кошелька, чтобы открыть баланс и доступные операции.</div>
+        </div>
+        <Space.Compact className="rh-admin-wallet-search__control">
           <Input
             placeholder="ID кошелька (UUID)"
             value={walletId}
             onChange={(e) => setWalletId(e.target.value)}
             onPressEnter={fetchWallet}
           />
-          <Button type="primary" onClick={fetchWallet} loading={loading}>
+          <Button type="primary" icon={<SearchOutlined />} onClick={fetchWallet} loading={loading}>
             Найти
           </Button>
         </Space.Compact>
       </Card>
 
       {!wallet && !loading && (
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="Введите ID кошелька для поиска. Вы сможете зачислить, списать средства или заморозить кошелёк."
-          style={{ padding: '48px 0' }}
-        />
+        <Card className="rh-admin-wallet-empty" bodyStyle={{ padding: 0 }}>
+          <div className="rh-admin-wallet-empty__icon" aria-hidden>
+            <WalletOutlined />
+          </div>
+          <div className="rh-admin-wallet-empty__title">Кошелёк не выбран</div>
+          <p className="rh-admin-wallet-empty__text">
+            Введите ID кошелька для поиска. Вы сможете зачислить, списать средства или заморозить кошелёк.
+          </p>
+        </Card>
       )}
 
       {wallet && (
-        <Card
-          title="Информация о кошельке"
-          extra={
+        <Card className="rh-admin-wallet-detail" bodyStyle={{ padding: 0 }}>
+          <div className="rh-admin-wallet-detail__head">
+            <div>
+              <div className="rh-admin-wallet-detail__eyebrow">Карточка кошелька</div>
+              <h2 className="rh-admin-wallet-detail__title">Информация о кошельке</h2>
+            </div>
             <Tag color={STATUS_TAGS[wallet.status]?.color ?? 'default'}>
               {STATUS_TAGS[wallet.status]?.text ?? wallet.status}
             </Tag>
-          }
-        >
-          <Descriptions column={2} bordered size="small">
+          </div>
+
+          <div className="rh-admin-wallet-stats">
+            {walletStats.map((stat) => (
+              <div className={`rh-admin-wallet-stat rh-admin-wallet-stat--${stat.tone}`} key={stat.label}>
+                <span className="rh-admin-wallet-stat__label">{stat.label}</span>
+                <strong className="rh-admin-wallet-stat__value">{stat.value}</strong>
+              </div>
+            ))}
+          </div>
+
+          <Descriptions className="rh-admin-wallet-descriptions" column={2} bordered size="small">
             <Descriptions.Item label="ID кошелька">{wallet.id}</Descriptions.Item>
             <Descriptions.Item label="ID пользователя">{wallet.user_id}</Descriptions.Item>
-            <Descriptions.Item label="Баланс">
-              <Text strong>{formatPrice(wallet.balance)}</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="Заморожено">{formatPrice(wallet.held_amount)}</Descriptions.Item>
-            <Descriptions.Item label="Доступно">
-              <Text type="success">{formatPrice(wallet.balance - wallet.held_amount)}</Text>
-            </Descriptions.Item>
             <Descriptions.Item label="Валюта">{wallet.currency}</Descriptions.Item>
           </Descriptions>
 
-          <Space style={{ marginTop: 16 }} wrap>
+          <Space className="rh-admin-wallet-actions" wrap>
             <Button
               type="primary"
               icon={<PlusOutlined />}

@@ -5,7 +5,6 @@ import {
   Button,
   Card,
   Col,
-  Empty,
   Input,
   Row,
   Spin,
@@ -27,8 +26,9 @@ import {
 } from '@/api/generated/certificates/certificates'
 import type { InternalHandlerCertificateResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 const { Search } = Input
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
@@ -95,7 +95,7 @@ export default function CertificateManagement() {
       key: 'code',
       width: 160,
       render: (code: string) => (
-        <Text copyable style={{ fontFamily: 'monospace' }}>
+        <Text copyable className="rh-mono">
           {code}
         </Text>
       ),
@@ -184,62 +184,61 @@ export default function CertificateManagement() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Управление сертификатами
-        </Title>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Монетизация"
+        title="Управление сертификатами"
+        description="Сертификаты, балансы и поиск по коду в едином финансовом интерфейсе."
+        extra={
         <Button icon={<ReloadOutlined />} onClick={invalidate}>
           Обновить
         </Button>
-      </div>
+        }
+      />
 
       <Alert
         type="warning"
         showIcon
         title="Раздел в разработке"
         description="Сейчас страница показывает только сертификаты, привязанные к текущему админу (через /api/v1/my/certificates). Платформенный admin-эндпоинт со списком всех сертификатов ещё не реализован — найдено в аудите A1.8. Для конкретного кода используйте поиск ниже."
-        style={{ marginBottom: 16 }}
+        className="rh-admin-inline-alert"
       />
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-        <Col xs={8}>
-          <Card size="small">
-            <Text type="secondary">Активных</Text>
-            <div style={{ fontSize: 24, fontWeight: 600, color: '#15803d' }}>{activeCount}</div>
-          </Card>
-        </Col>
-        <Col xs={8}>
-          <Card size="small">
-            <Text type="secondary">Остаток на активных</Text>
-            <div style={{ fontSize: 24, fontWeight: 600 }}>{formatPrice(totalBalance)}</div>
-          </Card>
-        </Col>
-        <Col xs={8}>
-          <Card size="small">
-            <Text type="secondary">Общий номинал</Text>
-            <div style={{ fontSize: 24, fontWeight: 600 }}>{formatPrice(totalAmount)}</div>
-          </Card>
-        </Col>
-      </Row>
+      <div className="rh-stat-grid">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Активных</span>
+          <span className="rh-stat-tile__value">{activeCount}</span>
+          <span className="rh-stat-tile__hint">Доступны для оплаты или частичного списания.</span>
+        </div>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Остаток на активных</span>
+          <span className="rh-stat-tile__value">{formatPrice(totalBalance)}</span>
+          <span className="rh-stat-tile__hint">Баланс активных и частично использованных сертификатов.</span>
+        </div>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Общий номинал</span>
+          <span className="rh-stat-tile__value">{formatPrice(totalAmount)}</span>
+          <span className="rh-stat-tile__hint">Суммарный исходный номинал в списке.</span>
+        </div>
+      </div>
 
-      <Card size="small" style={{ marginBottom: 16 }} title="Поиск по коду сертификата">
-        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      <Card className="rh-admin-filter-card" title="Поиск по коду сертификата">
+        <div className="rh-admin-lookup-layout">
           <Search
+            className="rh-admin-filter-input"
             placeholder="BANI-XXXX-XXXX"
             enterButton={<><SearchOutlined /> Найти</>}
-            style={{ maxWidth: 360 }}
             onSearch={handleSearch}
             loading={lookupLoading}
             allowClear
             onClear={() => setLookupCode('')}
           />
           {lookupData?.data && (
-            <Card size="small" style={{ flex: 1 }}>
+            <Card size="small" className="rh-admin-lookup-result">
               <Row gutter={16}>
                 <Col span={6}>
                   <Text type="secondary">Код:</Text>
-                  <div><Text strong style={{ fontFamily: 'monospace' }}>{lookupData.data.code}</Text></div>
+                  <div><Text strong className="rh-mono">{lookupData.data.code}</Text></div>
                 </Col>
                 <Col span={6}>
                   <Text type="secondary">Номинал:</Text>
@@ -263,43 +262,53 @@ export default function CertificateManagement() {
         </div>
       </Card>
 
-      <div style={{ marginBottom: 16 }}>
+      <Card className="rh-admin-filter-card" title="Фильтр таблицы">
         <Search
+          className="rh-admin-filter-input"
           placeholder="Поиск по коду в таблице"
           allowClear
-          style={{ width: 280 }}
           onSearch={setSearchCode}
           onChange={(e) => !e.target.value && setSearchCode('')}
         />
-      </div>
+      </Card>
 
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}><Spin size="large" /></div>
-      ) : certificates.length === 0 ? (
-        <Empty description="Нет сертификатов" />
-      ) : (
-        <Table
-          dataSource={
-            searchCode
-              ? certificates.filter((c) =>
-                  c.code?.toLowerCase().includes(searchCode.toLowerCase()),
-                )
-              : certificates
-          }
-          columns={columns}
-          rowKey="id"
-          size="middle"
-          scroll={{ x: 1000 }}
-          pagination={{
-            current: page,
-            pageSize: 20,
-            total: totalCount,
-            onChange: setPage,
-            showTotal: (total) => `Всего: ${total}`,
-          }}
-          locale={{ emptyText: 'Нет сертификатов' }}
-        />
-      )}
+      <Card className="rh-admin-reference-card" title="Список сертификатов">
+        {isLoading ? (
+          <div className="rh-admin-state-card">
+            <Spin size="large" />
+            <span>Загружаем сертификаты</span>
+          </div>
+        ) : certificates.length === 0 ? (
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет сертификатов</div>
+            <p className="rh-admin-empty-state__text">
+              После покупки или выдачи сертификаты появятся в этом списке.
+            </p>
+          </div>
+        ) : (
+          <Table
+            dataSource={
+              searchCode
+                ? certificates.filter((c) =>
+                    c.code?.toLowerCase().includes(searchCode.toLowerCase()),
+                  )
+                : certificates
+            }
+            columns={columns}
+            rowKey="id"
+            size="middle"
+            scroll={{ x: 1000 }}
+            pagination={{
+              current: page,
+              pageSize: 20,
+              total: totalCount,
+              onChange: setPage,
+              showTotal: (total) => `Всего: ${total}`,
+            }}
+            locale={{ emptyText: 'Нет сертификатов' }}
+          />
+        )}
+      </Card>
     </div>
   )
 }

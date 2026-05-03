@@ -13,6 +13,8 @@ export default defineConfig(({ mode }) => {
   const backendPort = env.BANI_SERVER_PORT || '8080'
   const backendUrl = env.BANI_BACKEND_URL || `http://localhost:${backendPort}`
   const backendWsUrl = backendUrl.replace(/^http/, 'ws')
+  const storagePort = env.BANI_DOCKER_MINIO_API_PORT || '9102'
+  const storageUrl = env.VITE_STORAGE_PROXY_TARGET || env.BANI_STORAGE_PUBLIC_BASE_URL || `http://localhost:${storagePort}`
 
   return {
     plugins: [tailwindcss(), react()],
@@ -41,6 +43,10 @@ export default defineConfig(({ mode }) => {
         '/ws': {
           target: backendWsUrl,
           ws: true,
+        },
+        '/bani': {
+          target: storageUrl,
+          changeOrigin: true,
         },
       },
     },

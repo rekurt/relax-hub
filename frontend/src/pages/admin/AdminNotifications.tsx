@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Typography, List, Button, Badge, Space, Empty, Card, App, Form, Switch, Skeleton } from '@/components/design/system'
-import { CheckOutlined, BellOutlined } from '@/components/design/icons'
+import { Typography, List, Button, Badge, Space, Card, App, Form, Switch, Skeleton } from '@/components/design/system'
+import { CheckOutlined } from '@/components/design/icons'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/ru'
@@ -126,7 +126,7 @@ export default function AdminNotifications() {
   }
 
   return (
-    <div className="rh-stack">
+    <div className="rh-stack rh-admin-reference-page">
       <PageHeader
         eyebrow="Служебные события"
         title="Уведомления"
@@ -170,12 +170,7 @@ export default function AdminNotifications() {
             loading={isLoading}
             dataSource={notifications}
             locale={{
-              emptyText: (
-                <Empty
-                  image={<BellOutlined style={{ fontSize: 48, color: '#c9c1b5' }} />}
-                  description="Нет уведомлений"
-                />
-              ),
+              emptyText: 'Нет уведомлений',
             }}
             pagination={{
               current: page,
@@ -241,11 +236,11 @@ export default function AdminNotifications() {
             <Skeleton active />
           ) : (
             <Form form={prefsForm} layout="vertical" onFinish={handlePrefsSubmit}>
-              <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+              <Text type="secondary" className="rh-admin-modal-description">
                 Каналы доставки
               </Text>
 
-              <div className="rh-toggle-grid" style={{ marginBottom: 20 }}>
+              <div className="rh-toggle-grid rh-admin-toggle-grid">
                 {PREFERENCE_CARDS.map((item) => (
                   <div key={item.name} className="rh-toggle-card">
                     <div className="rh-toggle-card__copy">
@@ -254,14 +249,14 @@ export default function AdminNotifications() {
                         {item.description}
                       </Text>
                     </div>
-                    <Form.Item name={item.name} valuePropName="checked" style={{ marginBottom: 0 }}>
+                    <Form.Item name={item.name} valuePropName="checked" className="rh-admin-toggle-form-item">
                       <Switch />
                     </Form.Item>
                   </div>
                 ))}
               </div>
 
-              <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+              <Text type="secondary" className="rh-admin-modal-description">
                 События
               </Text>
 

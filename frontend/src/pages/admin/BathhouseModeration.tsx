@@ -117,7 +117,7 @@ export default function BathhouseModeration() {
       hint: 'Можно одобрить или отклонить прямо из таблицы',
     },
     {
-      label: 'Активные',
+      label: 'Опубликованы',
       value: activeCount,
       hint: 'Уже видны клиентам в каталоге',
     },
@@ -234,6 +234,7 @@ export default function BathhouseModeration() {
       dataIndex: 'name',
       key: 'name',
       ellipsis: true,
+      width: 220,
       render: (name: string, record) => (
         <button type="button" className="rh-admin-object-link" onClick={() => setDetailItem(record)}>
           <span className="rh-admin-object-link__name">{name || '—'}</span>
@@ -246,27 +247,31 @@ export default function BathhouseModeration() {
       dataIndex: 'address',
       key: 'address',
       ellipsis: true,
-      responsive: ['md'] as const,
+      responsive: ['xxl'] as const,
+      width: 290,
       render: (address: string) => address || '—',
     },
     {
       title: 'Цена/час',
       dataIndex: 'price_per_hour',
       key: 'price_per_hour',
-      responsive: ['lg'] as const,
+      responsive: ['xxl'] as const,
+      width: 130,
       render: (price: number) => (price ? formatPrice(price) : '—'),
     },
     {
       title: 'Рейтинг',
       dataIndex: 'rating',
       key: 'rating',
-      responsive: ['lg'] as const,
+      responsive: ['xxl'] as const,
+      width: 110,
       render: (rating: number) => (rating ? rating.toFixed(1) : '—'),
     },
     {
       title: 'Статус',
       key: 'status',
       dataIndex: 'status',
+      width: 150,
       render: (status: string) => {
         const config = STATUS_LABELS[status] ?? { color: 'default', text: status }
         return <Tag color={config.color}>{config.text}</Tag>
@@ -275,6 +280,7 @@ export default function BathhouseModeration() {
     {
       title: 'Действия',
       key: 'actions',
+      width: 270,
       render: (_, record) => {
         if (record.status === 'pending') {
           return (
@@ -302,7 +308,9 @@ export default function BathhouseModeration() {
           ? 'Объект уже опубликован'
           : record.status === 'rejected'
             ? 'Заявка уже отклонена'
-            : 'Недоступно для текущего статуса'
+            : record.status === 'blocked'
+              ? 'Объект заблокирован'
+              : 'Действия недоступны'
 
         return (
           <Space className="rh-admin-row-actions" wrap>
@@ -364,7 +372,7 @@ export default function BathhouseModeration() {
               <Tooltip title="Ищет по названию и адресу среди загруженных строк. Нажмите Enter или кнопку «Найти».">
                 <Search
                   className="rh-admin-search"
-                  placeholder="Название или адрес"
+                  placeholder="Поиск по названию или адресу"
                   allowClear
                   enterButton={<><SearchOutlined /> Найти</>}
                   onSearch={setSearch}
@@ -406,7 +414,7 @@ export default function BathhouseModeration() {
             rowKey="id"
             loading={isLoading}
             locale={{ emptyText: 'Нет бань' }}
-            scroll={{ x: 1040 }}
+            scroll={{ x: 760 }}
             pagination={{
               current: page,
               pageSize: pageSize,
