@@ -349,7 +349,7 @@ export default function PublicCheckout() {
                     setSelectedSlotRange(null)
                     setSlotConflictError(null)
                   }}
-                  style={{ width: '100%' }}
+                  className="rh-full-width"
                 />
               </label>
               <label className="rh-info-card">
@@ -359,7 +359,7 @@ export default function PublicCheckout() {
                   max={bathhouse.max_guests ?? 20}
                   value={guestCount}
                   onChange={(value) => setGuestCount(value ?? 1)}
-                  style={{ width: '100%' }}
+                  className="rh-full-width"
                 />
               </label>
             </div>
@@ -387,7 +387,7 @@ export default function PublicCheckout() {
                     description="Попробуйте другую дату или вернитесь в каталог, чтобы посмотреть похожие варианты."
                   />
                 ) : (
-                  <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+                  <Space orientation="vertical" className="rh-full-width" size="middle">
                     <ContiguousSlotSelector
                       slots={slots}
                       value={selectedSlotRange}
@@ -496,7 +496,7 @@ export default function PublicCheckout() {
                     Получить SMS-код
                   </Button>
                 ) : (
-                  <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+                  <Space orientation="vertical" className="rh-full-width" size="middle">
                     <Input
                       size="large"
                       placeholder="Код из SMS"
