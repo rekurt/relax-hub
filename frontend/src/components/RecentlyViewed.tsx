@@ -71,7 +71,7 @@ export default function RecentlyViewed() {
               name={item.name}
               imageUrl={item.cover_photo ? resolveAssetUrl(item.cover_photo as string) : undefined}
               imageAlt={item.name}
-              rating={item.rating != null ? (item.rating as number) : null}
+              rating={typeof item.rating === 'number' ? item.rating : undefined}
               price={item.base_price != null ? `от ${formatPrice(item.base_price as number)}` : undefined}
             />
           </div>
