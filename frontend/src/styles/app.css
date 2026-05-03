@@ -4679,9 +4679,19 @@ body.rh-app .rh-security-recommendation .ant-btn {
   }
 
   body.rh-app .rh-profile-hero__identity,
-  body.rh-app .rh-notification-prefs__footer {
+  body.rh-app .rh-notification-prefs__footer,
+  body.rh-app .rh-catalog__utility-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  body.rh-app .rh-catalog__advanced-collapse {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.rh-app .rh-catalog__utility-row > .ant-btn {
+    width: 100%;
   }
 
   body.rh-app .rh-notification-prefs__footer .rh-profile-form-actions,
