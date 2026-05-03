@@ -7,7 +7,7 @@ import {
   MailOutlined,
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
-import { App, Button, Collapse, Form, Input, InputNumber, Spin, Tag } from 'antd'
+import { App, Button, Collapse, Form, Input, InputNumber, Space, Spin, Tag } from 'antd'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   useGetCertificatesOrdersId,
@@ -375,22 +375,28 @@ export default function CertificatePurchase() {
                   className="bani-certificates-form"
                 >
                   <Form.Item
-                    name="amount"
                     label="Сумма (в рублях)"
-                    rules={[
-                      { required: true, message: 'Укажите сумму' },
-                      { type: 'number', min: 100, message: 'Минимальная сумма — 100 ₽' },
-                      { type: 'number', max: 100000, message: 'Максимальная сумма — 100 000 ₽' },
-                    ]}
                   >
-                    <InputNumber
-                      style={{ width: '100%' }}
-                      min={100}
-                      max={100000}
-                      placeholder="Введите сумму"
-                      controls={false}
-                      addonAfter="₽"
-                    />
+                    <Space.Compact className="bani-compact-control">
+                      <Form.Item
+                        name="amount"
+                        noStyle
+                        rules={[
+                          { required: true, message: 'Укажите сумму' },
+                          { type: 'number', min: 100, message: 'Минимальная сумма — 100 ₽' },
+                          { type: 'number', max: 100000, message: 'Максимальная сумма — 100 000 ₽' },
+                        ]}
+                      >
+                        <InputNumber
+                          style={{ width: '100%' }}
+                          min={100}
+                          max={100000}
+                          placeholder="Введите сумму"
+                          controls={false}
+                        />
+                      </Form.Item>
+                      <span className="bani-input-addon">₽</span>
+                    </Space.Compact>
                   </Form.Item>
 
                   <div className="bani-certificates-amount-pills">

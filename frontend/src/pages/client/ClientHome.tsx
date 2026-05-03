@@ -552,7 +552,7 @@ export default function ClientHome() {
         </div>
         <div className="bani-home__proof-grid">
           {DISCOVERY_PROOF_POINTS.map((item) => (
-            <Card key={item.key} bordered={false} className="bani-home__proof-card">
+            <Card key={item.key} variant="borderless" className="bani-home__proof-card">
               <Text className="bani-home__proof-eyebrow">{item.eyebrow}</Text>
               <Title level={4} className="bani-home__proof-title">
                 {item.title}

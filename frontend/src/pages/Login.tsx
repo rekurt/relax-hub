@@ -136,7 +136,7 @@ export default function Login() {
           'Если код не приходит, вернитесь назад и повторите вход удобным способом.',
         ]}
       >
-        <Card bordered={false} className="bani-auth-surface">
+        <Card variant="borderless" className="bani-auth-surface">
           <TwoFactorChallenge
             partialToken={twoFAState.partialToken}
             onSuccess={handle2FASuccess}
@@ -166,7 +166,7 @@ export default function Login() {
         </>
       )}
     >
-      <Card bordered={false} className="bani-auth-surface">
+      <Card variant="borderless" className="bani-auth-surface">
         <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <Segmented
             className="bani-auth-segmented"

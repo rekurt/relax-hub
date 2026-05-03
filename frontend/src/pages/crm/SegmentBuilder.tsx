@@ -12,6 +12,7 @@ import {
   Popconfirm,
   Row,
   Select,
+  Space,
   Table,
   Tag,
   Typography,
@@ -218,25 +219,45 @@ function SegmentForm({
         <Title level={5}>Фильтры по суммам (руб)</Title>
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="avg_check_min" label="Средний чек от">
-              <InputNumber min={0} style={{ width: '100%' }} addonAfter="₽" />
+            <Form.Item label="Средний чек от">
+              <Space.Compact className="bani-compact-control">
+                <Form.Item name="avg_check_min" noStyle>
+                  <InputNumber min={0} style={{ width: '100%' }} />
+                </Form.Item>
+                <span className="bani-input-addon">₽</span>
+              </Space.Compact>
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="avg_check_max" label="Средний чек до">
-              <InputNumber min={0} style={{ width: '100%' }} addonAfter="₽" />
+            <Form.Item label="Средний чек до">
+              <Space.Compact className="bani-compact-control">
+                <Form.Item name="avg_check_max" noStyle>
+                  <InputNumber min={0} style={{ width: '100%' }} />
+                </Form.Item>
+                <span className="bani-input-addon">₽</span>
+              </Space.Compact>
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item name="total_spent_min" label="Общая сумма от">
-              <InputNumber min={0} style={{ width: '100%' }} addonAfter="₽" />
+            <Form.Item label="Общая сумма от">
+              <Space.Compact className="bani-compact-control">
+                <Form.Item name="total_spent_min" noStyle>
+                  <InputNumber min={0} style={{ width: '100%' }} />
+                </Form.Item>
+                <span className="bani-input-addon">₽</span>
+              </Space.Compact>
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item name="total_spent_max" label="Общая сумма до">
-              <InputNumber min={0} style={{ width: '100%' }} addonAfter="₽" />
+            <Form.Item label="Общая сумма до">
+              <Space.Compact className="bani-compact-control">
+                <Form.Item name="total_spent_max" noStyle>
+                  <InputNumber min={0} style={{ width: '100%' }} />
+                </Form.Item>
+                <span className="bani-input-addon">₽</span>
+              </Space.Compact>
             </Form.Item>
           </Col>
         </Row>

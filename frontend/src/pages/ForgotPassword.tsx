@@ -56,7 +56,7 @@ export default function ForgotPassword() {
           'Если письма нет, проверьте папку со спамом и повторите запрос.',
         ]}
       >
-        <Card bordered={false} className="bani-auth-surface">
+        <Card variant="borderless" className="bani-auth-surface">
           <Result
             status="success"
             title="Письмо отправлено"
@@ -86,7 +86,7 @@ export default function ForgotPassword() {
       ]}
       footer={<Link to="/login">Вернуться к входу</Link>}
     >
-      <Card bordered={false} className="bani-auth-surface">
+      <Card variant="borderless" className="bani-auth-surface">
         <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <Form
             form={form}

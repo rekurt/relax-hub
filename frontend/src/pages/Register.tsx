@@ -162,7 +162,7 @@ export default function Register() {
         </>
       )}
     >
-      <Card bordered={false} className="bani-auth-surface">
+      <Card variant="borderless" className="bani-auth-surface">
         <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <Segmented
             className="bani-auth-segmented"

@@ -30,19 +30,15 @@ else
     terser "$SRC_DIR/widget.js" -c -m -o "$DIST_DIR/widget.min.js"
 fi
 
-# Simple CSS minification as fallback
-if [ ! -f "$DIST_DIR/widget.min.css" ]; then
-    # Remove comments, unnecessary spaces
-    sed 's/\/\*[^*]*\*\///g' "$SRC_DIR/styles.css" | \
-    sed 's/[[:space:]]\+/ /g' | \
-    sed 's/[[:space:]]*{[[:space:]]*/\{/g' | \
-    sed 's/[[:space:]]*}[[:space:]]*/\}/g' | \
-    sed 's/[[:space:]]*:[[:space:]]*/:/g' | \
-    sed 's/[[:space:]]*;[[:space:]]*/;/g' | \
-    sed 's/[[:space:]]*,[[:space:]]*/,/g' | \
-    tr -d '\n' | \
-    sed 's/[[:space:]]//g' > "$DIST_DIR/widget.min.css"
-fi
+# Always regenerate CSS so dist cannot keep a stale previous theme.
+sed 's/\/\*[^*]*\*\///g' "$SRC_DIR/styles.css" | \
+sed 's/[[:space:]]\+/ /g' | \
+sed 's/[[:space:]]*{[[:space:]]*/\{/g' | \
+sed 's/[[:space:]]*}[[:space:]]*/\}/g' | \
+sed 's/[[:space:]]*:[[:space:]]*/:/g' | \
+sed 's/[[:space:]]*;[[:space:]]*/;/g' | \
+sed 's/[[:space:]]*,[[:space:]]*/,/g' | \
+tr -d '\n' > "$DIST_DIR/widget.min.css"
 
 # Get file sizes
 JS_SIZE=$(wc -c < "$DIST_DIR/widget.min.js")

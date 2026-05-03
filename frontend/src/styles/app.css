@@ -118,6 +118,12 @@ body,
   min-height: 100%;
 }
 
+html,
+body,
+#root {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   font-family: var(--rh-font-sans);
@@ -324,6 +330,50 @@ body.bani-app .ant-input-number .ant-input-number-input-wrap {
 body.bani-app .ant-input-number .ant-input-number-input {
   height: 48px;
   padding: 0;
+}
+
+body.bani-app .bani-compact-control.ant-space-compact {
+  display: flex;
+  width: 100%;
+}
+
+body.bani-app .bani-compact-control .ant-input,
+body.bani-app .bani-compact-control .ant-input-affix-wrapper,
+body.bani-app .bani-compact-control .ant-input-number {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+body.bani-app .bani-input-addon {
+  flex: 0 0 auto;
+  min-width: 50px;
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid var(--bani-control-border);
+  border-left: 0;
+  border-radius: 0 16px 16px 0;
+  background: rgba(248, 244, 236, 0.92);
+  color: var(--bani-text-soft);
+  box-shadow: var(--bani-control-shadow);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+body.bani-app .bani-input-addon-button.ant-btn {
+  flex: 0 0 auto;
+  min-width: 50px;
+  min-height: 50px;
+  border-left: 0 !important;
+  border-radius: 0 16px 16px 0 !important;
+  color: var(--bani-primary);
 }
 
 body.bani-app .ant-select-single .ant-select-selector,
@@ -1312,8 +1362,10 @@ body.bani-app .bani-shell-footer__links {
 }
 
 body.bani-app .bani-shell-footer__link {
+  min-width: 0;
   color: rgba(247, 244, 235, 0.88);
   text-decoration: none;
+  overflow-wrap: anywhere;
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
@@ -2708,6 +2760,7 @@ body.bani-app .bani-hero-panel__title {
   line-height: 1.04;
   letter-spacing: 0;
   color: inherit;
+  overflow-wrap: anywhere;
 }
 
 body.bani-app .bani-hero-panel__description {
@@ -4765,6 +4818,22 @@ body.bani-app .bani-certificates-list-loading {
 }
 
 @media (max-width: 767px) {
+  body.bani-app .bani-hero-panel,
+  body.bani-app .bani-auth-shell,
+  body.bani-app .bani-shell-footer,
+  body.bani-app .ant-card {
+    min-width: 0;
+  }
+
+  body.bani-app .bani-page-header__title,
+  body.bani-app .bani-home__hero-title,
+  body.bani-app .bani-auth-aside__title,
+  body.bani-app .bani-security-hero__title,
+  body.bani-app .bani-certificate-summary__amount,
+  body.bani-app .bani-certificates-status__copy h2 {
+    overflow-wrap: anywhere;
+  }
+
   body.bani-app .bani-certificates-page,
   body.bani-app .bani-certificates-list-page {
     gap: 22px;

@@ -959,16 +959,18 @@ export default function CalendarPage() {
             </Text>
             {calendarToken?.url ? (
               <Space orientation="vertical" style={{ width: '100%' }}>
-                <Input
-                  readOnly
-                  value={`${window.location.origin}${calendarToken.url}`}
-                  addonAfter={
-                    <CopyOutlined
-                      onClick={handleCopyIcalUrl}
-                      style={{ cursor: 'pointer' }}
-                    />
-                  }
-                />
+                <Space.Compact className="bani-compact-control">
+                  <Input
+                    readOnly
+                    value={`${window.location.origin}${calendarToken.url}`}
+                  />
+                  <Button
+                    aria-label="Скопировать ссылку iCal"
+                    className="bani-input-addon-button"
+                    icon={<CopyOutlined />}
+                    onClick={handleCopyIcalUrl}
+                  />
+                </Space.Compact>
               </Space>
             ) : (
               <Text type="secondary">Загрузка...</Text>

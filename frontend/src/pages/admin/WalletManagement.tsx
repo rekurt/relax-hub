@@ -215,14 +215,21 @@ export default function WalletManagement() {
         <Form form={form} layout="vertical">
           {needsAmount && (
             <Form.Item
-              name="amount"
               label="Сумма (в рублях)"
-              rules={[
-                { required: true, message: 'Введите сумму' },
-                { type: 'number', min: 0.01, message: 'Сумма должна быть положительной' },
-              ]}
             >
-              <InputNumber style={{ width: '100%' }} min={0.01} step={1} precision={2} addonAfter="₽" />
+              <Space.Compact className="bani-compact-control">
+                <Form.Item
+                  name="amount"
+                  noStyle
+                  rules={[
+                    { required: true, message: 'Введите сумму' },
+                    { type: 'number', min: 0.01, message: 'Сумма должна быть положительной' },
+                  ]}
+                >
+                  <InputNumber style={{ width: '100%' }} min={0.01} step={1} precision={2} />
+                </Form.Item>
+                <span className="bani-input-addon">₽</span>
+              </Space.Compact>
             </Form.Item>
           )}
           <Form.Item

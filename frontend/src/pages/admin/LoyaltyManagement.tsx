@@ -8,6 +8,7 @@ import {
   InputNumber,
   Modal,
   Row,
+  Space,
   Spin,
   Table,
   Tag,
@@ -173,11 +174,21 @@ export default function LoyaltyManagement() {
           <Form.Item name="min_visits" label="Минимальное количество визитов">
             <InputNumber style={{ width: '100%' }} disabled />
           </Form.Item>
-          <Form.Item name="discount_percent" label="Процент кэшбэка">
-            <InputNumber style={{ width: '100%' }} disabled addonAfter="%" />
+          <Form.Item label="Процент кэшбэка">
+            <Space.Compact className="bani-compact-control">
+              <Form.Item name="discount_percent" noStyle>
+                <InputNumber style={{ width: '100%' }} disabled />
+              </Form.Item>
+              <span className="bani-input-addon">%</span>
+            </Space.Compact>
           </Form.Item>
-          <Form.Item name="point_multiplier" label="Множитель баллов">
-            <InputNumber style={{ width: '100%' }} disabled addonAfter="×" />
+          <Form.Item label="Множитель баллов">
+            <Space.Compact className="bani-compact-control">
+              <Form.Item name="point_multiplier" noStyle>
+                <InputNumber style={{ width: '100%' }} disabled />
+              </Form.Item>
+              <span className="bani-input-addon">×</span>
+            </Space.Compact>
           </Form.Item>
         </Form>
       </Modal>

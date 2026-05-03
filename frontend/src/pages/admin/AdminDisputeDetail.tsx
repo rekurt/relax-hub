@@ -457,29 +457,38 @@ export default function AdminDisputeDetail() {
             />
           </Form.Item>
           <Form.Item
-            name="refund_amount"
             label="Сумма возврата (в рублях)"
-            rules={[{ required: true, message: 'Укажите сумму возврата' }]}
           >
-            <InputNumber
-              min={0}
-              precision={2}
-              style={{ width: '100%' }}
-              placeholder="0.00"
-              addonAfter="₽"
-            />
+            <Space.Compact className="bani-compact-control">
+              <Form.Item
+                name="refund_amount"
+                noStyle
+                rules={[{ required: true, message: 'Укажите сумму возврата' }]}
+              >
+                <InputNumber
+                  min={0}
+                  precision={2}
+                  style={{ width: '100%' }}
+                  placeholder="0.00"
+                />
+              </Form.Item>
+              <span className="bani-input-addon">₽</span>
+            </Space.Compact>
           </Form.Item>
           <Form.Item
-            name="compensation_amount"
             label="Компенсация на кошелёк (в рублях)"
           >
-            <InputNumber
-              min={0}
-              precision={2}
-              style={{ width: '100%' }}
-              placeholder="0.00"
-              addonAfter="₽"
-            />
+            <Space.Compact className="bani-compact-control">
+              <Form.Item name="compensation_amount" noStyle>
+                <InputNumber
+                  min={0}
+                  precision={2}
+                  style={{ width: '100%' }}
+                  placeholder="0.00"
+                />
+              </Form.Item>
+              <span className="bani-input-addon">₽</span>
+            </Space.Compact>
           </Form.Item>
           <Form.Item name="mediator_notes" label="Заметки медиатора">
             <Input.TextArea
