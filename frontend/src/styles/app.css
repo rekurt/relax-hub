@@ -4636,6 +4636,31 @@ body.rh-app .rh-security-recommendation .ant-btn {
   }
 }
 
+@media (max-width: 900px) {
+  body.rh-app .rh-grid--two,
+  body.rh-app .rh-grid--content-aside,
+  body.rh-app .rh-home__hero,
+  body.rh-app .rh-home__proof-grid,
+  body.rh-app .rh-home__shortcut-grid,
+  body.rh-app .rh-home__steps,
+  body.rh-app .rh-catalog__shortcut-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.rh-app .rh-home__hero,
+  body.rh-app .rh-certificates-layout {
+    min-width: 0;
+  }
+
+  body.rh-app .rh-home__hero-copy,
+  body.rh-app .rh-home__hero-side,
+  body.rh-app .rh-certificates-workspace,
+  body.rh-app .rh-certificates-workspace__surface,
+  body.rh-app .rh-certificates-form {
+    min-width: 0;
+  }
+}
+
 @media (max-width: 767px) {
   body.rh-app .ant-card .ant-card-head,
   body.rh-app .ant-card .ant-card-body {
