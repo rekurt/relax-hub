@@ -12,19 +12,20 @@ SRC_DIR="$SCRIPT_DIR/src"
 mkdir -p "$DIST_DIR"
 
 # Check if we have a minifier
+JS_MIN_TMP="$DIST_DIR/widget.min.js.tmp"
 if command -v minify &> /dev/null; then
     echo "Using minify..."
-    minify "$SRC_DIR/widget.js" > "$DIST_DIR/widget.min.js"
+    minify "$SRC_DIR/widget.js" > "$JS_MIN_TMP"
 elif command -v terser &> /dev/null; then
     echo "Using terser..."
-    terser "$SRC_DIR/widget.js" -c -m -o "$DIST_DIR/widget.min.js"
+    terser "$SRC_DIR/widget.js" -c -m -o "$JS_MIN_TMP"
 elif command -v uglifyjs &> /dev/null; then
     echo "Using uglifyjs..."
-    uglifyjs "$SRC_DIR/widget.js" -c -m -o "$DIST_DIR/widget.min.js"
+    uglifyjs "$SRC_DIR/widget.js" -c -m -o "$JS_MIN_TMP"
 else
     echo "No JS minifier found. Installing terser globally..."
     npm install -g terser
-    terser "$SRC_DIR/widget.js" -c -m -o "$DIST_DIR/widget.min.js"
+    terser "$SRC_DIR/widget.js" -c -m -o "$JS_MIN_TMP"
 fi
 
 # Always regenerate CSS through Tailwind so dist cannot keep a stale previous theme.
@@ -35,26 +36,18 @@ else
     (cd "$SCRIPT_DIR/../frontend" && npx tailwindcss -i "../widget/src/styles.css" -o "../widget/dist/widget.min.css" --minify)
 fi
 
-# Get file sizes
-JS_SIZE=$(wc -c < "$DIST_DIR/widget.min.js")
-CSS_SIZE=$(wc -c < "$DIST_DIR/widget.min.css")
-
-echo "Build complete!"
-echo "Output files:"
-echo "  JS:  $DIST_DIR/widget.min.js ($JS_SIZE bytes)"
-echo "  CSS: $DIST_DIR/widget.min.css ($CSS_SIZE bytes)"
-
-# Create a combined file with CSS embedded. Use Node so regexes, backslashes,
-# quotes, and ampersands from the minified JS/CSS cannot corrupt the bundle.
+# Wrap widget.min.js so it is self-contained: it injects the compiled CSS at
+# runtime (same prelude widget.combined.js uses). Existing JS-only embeds
+# (single <script> tag, no separate widget.min.css) keep working.
 node - "$DIST_DIR" <<'NODE'
 const fs = require('fs');
 const path = require('path');
 
 const distDir = process.argv[2];
-const js = fs.readFileSync(path.join(distDir, 'widget.min.js'), 'utf8');
+const js = fs.readFileSync(path.join(distDir, 'widget.min.js.tmp'), 'utf8');
 const css = fs.readFileSync(path.join(distDir, 'widget.min.css'), 'utf8');
 
-const combined = `(function() {
+const wrapped = `(function() {
   if (!document.getElementById('bani-widget-styles')) {
     const style = document.createElement('style');
     style.id = 'bani-widget-styles';
@@ -66,8 +59,20 @@ const combined = `(function() {
 })();
 `;
 
-fs.writeFileSync(path.join(distDir, 'widget.combined.js'), combined);
+fs.writeFileSync(path.join(distDir, 'widget.min.js'), wrapped);
+// widget.combined.js stays as a backward-compatible alias for any consumer
+// that already references it; it is now byte-identical to widget.min.js.
+fs.writeFileSync(path.join(distDir, 'widget.combined.js'), wrapped);
+fs.unlinkSync(path.join(distDir, 'widget.min.js.tmp'));
 NODE
 
+# Get file sizes
+JS_SIZE=$(wc -c < "$DIST_DIR/widget.min.js")
+CSS_SIZE=$(wc -c < "$DIST_DIR/widget.min.css")
 COMBINED_SIZE=$(wc -c < "$DIST_DIR/widget.combined.js")
-echo "  Combined: $DIST_DIR/widget.combined.js ($COMBINED_SIZE bytes)"
+
+echo "Build complete!"
+echo "Output files:"
+echo "  JS:       $DIST_DIR/widget.min.js ($JS_SIZE bytes, CSS embedded)"
+echo "  CSS:      $DIST_DIR/widget.min.css ($CSS_SIZE bytes, optional override)"
+echo "  Combined: $DIST_DIR/widget.combined.js ($COMBINED_SIZE bytes, alias of min.js)"
