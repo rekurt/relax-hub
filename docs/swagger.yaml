@@ -2328,7 +2328,6 @@ definitions:
         description: '[lng, lat] pairs'
         items:
           items:
-            format: float64
             type: number
           type: array
         type: array
@@ -10947,7 +10946,8 @@ paths:
             allOf:
             - $ref: '#/definitions/internal_handler.APIResponse'
             - properties:
-                data: {}
+                data:
+                  type: object
               type: object
         "400":
           description: Bad Request

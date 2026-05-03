@@ -11429,7 +11429,9 @@
                                 {
                                     "type": "object",
                                     "properties": {
-                                        "data": {}
+                                        "data": {
+                                            "type": "object"
+                                        }
                                     }
                                 }
                             ]
@@ -41698,8 +41700,7 @@
                     "items": {
                         "type": "array",
                         "items": {
-                            "type": "number",
-                            "format": "float64"
+                            "type": "number"
                         }
                     }
                 },
