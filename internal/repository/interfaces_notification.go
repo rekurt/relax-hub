@@ -28,7 +28,6 @@ type NotificationRepository interface {
 	MarkPushFallbackSent(ctx context.Context, id uuid.UUID) error
 }
 
-
 type ConversationRepository interface {
 	Create(ctx context.Context, conv *domain.Conversation) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Conversation, error)
@@ -39,7 +38,6 @@ type ConversationRepository interface {
 	UpdateLastMessageAt(ctx context.Context, id uuid.UUID, t time.Time) error
 }
 
-
 type MessageRepository interface {
 	Create(ctx context.Context, msg *domain.Message) error
 	ListByConversation(ctx context.Context, conversationID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Message], error)
@@ -48,14 +46,12 @@ type MessageRepository interface {
 	CountUnreadByUser(ctx context.Context, userID uuid.UUID, bathhouseIDs []uuid.UUID) (int64, error)
 }
 
-
 type TelegramLinkRepository interface {
 	Create(ctx context.Context, link *domain.TelegramLink) error
 	GetByTelegramID(ctx context.Context, telegramID int64) (*domain.TelegramLink, error)
 	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.TelegramLink, error)
 	Delete(ctx context.Context, userID uuid.UUID) error
 }
-
 
 // WebhookRepository manages owner outgoing webhooks.
 type WebhookRepository interface {
@@ -68,7 +64,6 @@ type WebhookRepository interface {
 	ListActiveByEvent(ctx context.Context, bathhouseOwnerID uuid.UUID, event domain.WebhookEventType) ([]domain.Webhook, error)
 }
 
-
 // WebhookDeliveryRepository manages webhook delivery attempts.
 type WebhookDeliveryRepository interface {
 	Create(ctx context.Context, delivery *domain.WebhookDelivery) error
@@ -76,4 +71,3 @@ type WebhookDeliveryRepository interface {
 	ListByWebhook(ctx context.Context, webhookID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.WebhookDelivery], error)
 	ListPendingRetries(ctx context.Context, before time.Time) ([]domain.WebhookDelivery, error)
 }
-

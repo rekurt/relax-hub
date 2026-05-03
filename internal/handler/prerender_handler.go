@@ -44,7 +44,7 @@ func NewPrerenderHandler(
 //	@Description	Returns pre-rendered HTML with meta tags and Schema.org JSON-LD for search engine bots
 //	@Tags			seo
 //	@Produce		html
-//	@Param			slug	path	string	true	"Bathhouse slug"
+//	@Param			slug	path		string	true	"Bathhouse slug"
 //	@Success		200		{string}	string	"HTML page"
 //	@Failure		404		{string}	string	"Not found"
 //	@Router			/prerender/bathhouses/{slug} [get]
@@ -138,9 +138,9 @@ func (h *PrerenderHandler) BathhouseDetail(w http.ResponseWriter, r *http.Reques
 //	@Description	Returns pre-rendered HTML for city bathhouse catalog
 //	@Tags			seo
 //	@Produce		html
-//	@Param			citySlug	path	string	true	"City slug"
-//	@Success		200		{string}	string	"HTML page"
-//	@Failure		404		{string}	string	"Not found"
+//	@Param			citySlug	path		string	true	"City slug"
+//	@Success		200			{string}	string	"HTML page"
+//	@Failure		404			{string}	string	"Not found"
 //	@Router			/prerender/cities/{citySlug} [get]
 func (h *PrerenderHandler) CityListing(w http.ResponseWriter, r *http.Request) {
 	citySlug := chi.URLParam(r, "citySlug")
@@ -187,7 +187,7 @@ func (h *PrerenderHandler) CityListing(w http.ResponseWriter, r *http.Request) {
 //	@Description	Returns pre-rendered HTML for main bathhouse catalog
 //	@Tags			seo
 //	@Produce		html
-//	@Success		200		{string}	string	"HTML page"
+//	@Success		200	{string}	string	"HTML page"
 //	@Router			/prerender/catalog [get]
 func (h *PrerenderHandler) MainListing(w http.ResponseWriter, r *http.Request) {
 	cacheKey := seo.CacheKeyForListing()
@@ -221,7 +221,7 @@ func (h *PrerenderHandler) MainListing(w http.ResponseWriter, r *http.Request) {
 //	@Description	Returns pre-rendered HTML with reviews content for search engine bots
 //	@Tags			seo
 //	@Produce		html
-//	@Param			slug	path	string	true	"Bathhouse slug"
+//	@Param			slug	path		string	true	"Bathhouse slug"
 //	@Success		200		{string}	string	"HTML page"
 //	@Failure		404		{string}	string	"Not found"
 //	@Router			/prerender/bathhouses/{slug}/reviews [get]

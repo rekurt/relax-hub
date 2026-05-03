@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/rekurt/relax-hub/internal/domain"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/rekurt/relax-hub/internal/repository"
-	"github.com/redis/go-redis/v9"
 )
 
 const (

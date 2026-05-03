@@ -17,9 +17,9 @@ const (
 	FraudRuleRapidBookings    FraudRuleName = "RULE_RAPID_BOOKINGS"
 	FraudRuleSelfBooking      FraudRuleName = "RULE_SELF_BOOKING"
 	FraudRuleStructuring      FraudRuleName = "RULE_STRUCTURING"
-	FraudRuleFakeReviews        FraudRuleName = "RULE_FAKE_REVIEWS"
-	FraudRuleListingDuplicate   FraudRuleName = "RULE_LISTING_DUPLICATE"
-	FraudRuleListingStoplist    FraudRuleName = "RULE_LISTING_STOPLIST"
+	FraudRuleFakeReviews      FraudRuleName = "RULE_FAKE_REVIEWS"
+	FraudRuleListingDuplicate FraudRuleName = "RULE_LISTING_DUPLICATE"
+	FraudRuleListingStoplist  FraudRuleName = "RULE_LISTING_STOPLIST"
 )
 
 func (r FraudRuleName) IsValid() bool {

@@ -119,14 +119,14 @@ type atolClient struct {
 }
 
 type atolItem struct {
-	Name            string      `json:"name"`
-	Price           float64     `json:"price"`
-	Quantity        float64     `json:"quantity"`
-	Sum             float64     `json:"sum"`
-	PaymentMethod   string      `json:"payment_method"`
-	PaymentObject   string      `json:"payment_object"`
-	Vat             atolVAT     `json:"vat"`
-	MeasurementUnit string      `json:"measurement_unit"`
+	Name            string  `json:"name"`
+	Price           float64 `json:"price"`
+	Quantity        float64 `json:"quantity"`
+	Sum             float64 `json:"sum"`
+	PaymentMethod   string  `json:"payment_method"`
+	PaymentObject   string  `json:"payment_object"`
+	Vat             atolVAT `json:"vat"`
+	MeasurementUnit string  `json:"measurement_unit"`
 }
 
 type atolVAT struct {

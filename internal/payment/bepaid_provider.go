@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	bepaidBaseURL       = "https://checkout.bepaid.by/ctp/api"
-	bepaidCheckoutURL   = "https://checkout.bepaid.by/ctp/api/checkouts"
+	bepaidBaseURL        = "https://checkout.bepaid.by/ctp/api"
+	bepaidCheckoutURL    = "https://checkout.bepaid.by/ctp/api/checkouts"
 	bepaidDefaultTimeout = 30 * time.Second
 )
 
@@ -41,11 +41,11 @@ type bepaidCheckoutRequest struct {
 }
 
 type bepaidCheckout struct {
-	Test            bool                   `json:"test,omitempty"`
-	TransactionType string                 `json:"transaction_type"`
-	Order           bepaidOrder            `json:"order"`
-	Settings        bepaidSettings         `json:"settings"`
-	PaymentMethod   *bepaidPaymentMethod   `json:"payment_method,omitempty"`
+	Test            bool                 `json:"test,omitempty"`
+	TransactionType string               `json:"transaction_type"`
+	Order           bepaidOrder          `json:"order"`
+	Settings        bepaidSettings       `json:"settings"`
+	PaymentMethod   *bepaidPaymentMethod `json:"payment_method,omitempty"`
 }
 
 type bepaidOrder struct {
@@ -57,13 +57,13 @@ type bepaidOrder struct {
 }
 
 type bepaidSettings struct {
-	ReturnURL   string `json:"return_url"`
-	SuccessURL  string `json:"success_url,omitempty"`
-	DeclineURL  string `json:"decline_url,omitempty"`
-	FailURL     string `json:"fail_url,omitempty"`
-	CancelURL   string `json:"cancel_url,omitempty"`
-	NotifyURL   string `json:"notification_url,omitempty"`
-	AutoReturn  int    `json:"auto_return,omitempty"`
+	ReturnURL  string `json:"return_url"`
+	SuccessURL string `json:"success_url,omitempty"`
+	DeclineURL string `json:"decline_url,omitempty"`
+	FailURL    string `json:"fail_url,omitempty"`
+	CancelURL  string `json:"cancel_url,omitempty"`
+	NotifyURL  string `json:"notification_url,omitempty"`
+	AutoReturn int    `json:"auto_return,omitempty"`
 }
 
 type bepaidPaymentMethod struct {

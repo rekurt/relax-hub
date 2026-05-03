@@ -53,14 +53,14 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo           repository.UserRepository
-	referralSvc        ReferralService
-	otpSvc             OTPService
-	walletSvc          WalletService
-	sessionSvc         SessionService
-	logger             *logger.Logger
-	jwtSecret          []byte
-	tokenTTL           time.Duration
+	userRepo             repository.UserRepository
+	referralSvc          ReferralService
+	otpSvc               OTPService
+	walletSvc            WalletService
+	sessionSvc           SessionService
+	logger               *logger.Logger
+	jwtSecret            []byte
+	tokenTTL             time.Duration
 	welcomeBonusAmount   int64
 	welcomeBonusAmountBY int64
 	welcomeBonusExpiry   int
@@ -68,14 +68,14 @@ type authService struct {
 
 func NewAuthService(userRepo repository.UserRepository, referralSvc ReferralService, otpSvc OTPService, walletSvc WalletService, sessionSvc SessionService, cfg *config.Config, log *logger.Logger) AuthService {
 	return &authService{
-		userRepo:           userRepo,
-		referralSvc:        referralSvc,
-		otpSvc:             otpSvc,
-		walletSvc:          walletSvc,
-		sessionSvc:         sessionSvc,
-		logger:             log,
-		jwtSecret:          []byte(cfg.JWT.Secret),
-		tokenTTL:           cfg.JWT.TokenTTL,
+		userRepo:             userRepo,
+		referralSvc:          referralSvc,
+		otpSvc:               otpSvc,
+		walletSvc:            walletSvc,
+		sessionSvc:           sessionSvc,
+		logger:               log,
+		jwtSecret:            []byte(cfg.JWT.Secret),
+		tokenTTL:             cfg.JWT.TokenTTL,
 		welcomeBonusAmount:   cfg.WelcomeBonus.Amount,
 		welcomeBonusAmountBY: cfg.WelcomeBonus.AmountBY,
 		welcomeBonusExpiry:   cfg.WelcomeBonus.ExpiryDays,

@@ -40,7 +40,6 @@ type SuggestionFilter struct {
 	Limit int
 }
 
-
 type CityRepository interface {
 	Create(ctx context.Context, city *domain.City) error
 	GetAll(ctx context.Context) ([]domain.City, error)
@@ -50,7 +49,6 @@ type CityRepository interface {
 	Delete(ctx context.Context, id int64) error
 }
 
-
 type AmenityRepository interface {
 	Create(ctx context.Context, amenity *domain.Amenity) error
 	Update(ctx context.Context, amenity *domain.Amenity) error
@@ -59,7 +57,6 @@ type AmenityRepository interface {
 	ListAll(ctx context.Context) ([]domain.Amenity, error)
 }
 
-
 type ObjectTypeRepository interface {
 	Create(ctx context.Context, objType *domain.ObjectType) error
 	Update(ctx context.Context, objType *domain.ObjectType) error
@@ -67,7 +64,6 @@ type ObjectTypeRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.ObjectType, error)
 	ListAll(ctx context.Context) ([]domain.ObjectType, error)
 }
-
 
 type BathhousePhotoRepository interface {
 	Create(ctx context.Context, photo *domain.BathhousePhoto) error
@@ -79,7 +75,6 @@ type BathhousePhotoRepository interface {
 	Reorder(ctx context.Context, bathhouseID uuid.UUID, photoIDs []uuid.UUID) error
 	ListPending(ctx context.Context, page, pageSize int) (*domain.PaginatedResult[domain.BathhousePhoto], error)
 }
-
 
 type HolidayRepository interface {
 	Create(ctx context.Context, holiday *domain.Holiday) error
@@ -93,7 +88,6 @@ type HolidayRepository interface {
 	SetBathhouseMultiplier(ctx context.Context, bathhouseID uuid.UUID, multiplier float64) error
 }
 
-
 type SlotBlockRepository interface {
 	Create(ctx context.Context, block *domain.SlotBlock) error
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -105,14 +99,12 @@ type SlotBlockRepository interface {
 	HasOverlapping(ctx context.Context, bathhouseID uuid.UUID, startTime, endTime time.Time) (bool, error)
 }
 
-
 type AuditLogRepository interface {
 	Create(ctx context.Context, log *domain.AuditLog) error
 	ListByEntity(ctx context.Context, entityType string, entityID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.AuditLog], error)
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.AuditLog], error)
 	List(ctx context.Context, filter domain.AuditLogFilter) (*domain.PaginatedResult[domain.AuditLog], error)
 }
-
 
 type ExternalCalendarRepository interface {
 	Create(ctx context.Context, cal *domain.ExternalCalendar) error
@@ -122,4 +114,3 @@ type ExternalCalendarRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	UpdateSyncStatus(ctx context.Context, id uuid.UUID, syncedAt time.Time, lastError string) error
 }
-

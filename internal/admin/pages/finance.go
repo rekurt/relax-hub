@@ -95,27 +95,27 @@ type FinanceReconciliation struct {
 
 // RevenueBreakdown holds platform revenue split by source.
 type RevenueBreakdown struct {
-	ServiceFeesTotal     int64
-	ServiceFeesCount     int
-	SubscriptionsTotal   int64
-	SubscriptionsCount   int
-	PromotionsTotal      int64
-	PromotionsCount      int
-	GrandTotal           int64
-	PeriodLabel          string // e.g. "Текущий месяц"
+	ServiceFeesTotal   int64
+	ServiceFeesCount   int
+	SubscriptionsTotal int64
+	SubscriptionsCount int
+	PromotionsTotal    int64
+	PromotionsCount    int
+	GrandTotal         int64
+	PeriodLabel        string // e.g. "Текущий месяц"
 }
 
 // WalletMetrics holds aggregate wallet statistics.
 type WalletMetrics struct {
-	TotalBalance         int64
-	ActiveWalletsCount   int
-	WalletPaymentsTotal  int64
-	AllPaymentsTotal     int64
-	WalletPaymentShare   float64 // percent 0-100
-	ExpiredBonusesTotal  int64
-	ExpiredBonusesCount  int
-	PendingBonusesTotal  int64
-	PendingBonusesCount  int
+	TotalBalance        int64
+	ActiveWalletsCount  int
+	WalletPaymentsTotal int64
+	AllPaymentsTotal    int64
+	WalletPaymentShare  float64 // percent 0-100
+	ExpiredBonusesTotal int64
+	ExpiredBonusesCount int
+	PendingBonusesTotal int64
+	PendingBonusesCount int
 }
 
 // PnLData holds P&L and unit economics for the finance dashboard.

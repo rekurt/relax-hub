@@ -38,8 +38,8 @@ type Config struct {
 }
 
 type GeoConfig struct {
-	IsochroneAPIURL   string `mapstructure:"isochrone_api_url"`   // OpenRouteService base URL
-	IsochroneAPIKey   string `mapstructure:"isochrone_api_key"`   // ORS API key
+	IsochroneAPIURL    string `mapstructure:"isochrone_api_url"`     // OpenRouteService base URL
+	IsochroneAPIKey    string `mapstructure:"isochrone_api_key"`     // ORS API key
 	YandexSearchAPIKey string `mapstructure:"yandex_search_api_key"` // Yandex Maps Search API key for transport/POI lookups
 }
 
@@ -130,9 +130,9 @@ type PaymentConfig struct {
 }
 
 type YooKassaConfig struct {
-	ShopID         string `mapstructure:"shop_id"`
-	SecretKey      string `mapstructure:"secret_key"`
-	PayoutAgentID  string `mapstructure:"payout_agent_id"`  // agent_id for YooKassa Payouts API (SBP payouts)
+	ShopID          string `mapstructure:"shop_id"`
+	SecretKey       string `mapstructure:"secret_key"`
+	PayoutAgentID   string `mapstructure:"payout_agent_id"`   // agent_id for YooKassa Payouts API (SBP payouts)
 	PayoutSecretKey string `mapstructure:"payout_secret_key"` // secret key for Payouts API
 }
 
@@ -241,7 +241,7 @@ func Load(cfgFile string) (*Config, error) {
 	v.SetDefault("email.from", "")
 	v.SetDefault("sms.provider", "smsru")
 	v.SetDefault("sms.api_key", "")
-	v.SetDefault("welcome_bonus.amount", 50000) // 500 RUB in kopecks
+	v.SetDefault("welcome_bonus.amount", 50000)   // 500 RUB in kopecks
 	v.SetDefault("welcome_bonus.amount_by", 1500) // 15 BYN in kopecks
 	v.SetDefault("welcome_bonus.expiry_days", 30)
 	v.SetDefault("escrow.claim_hours", 48)

@@ -151,5 +151,3 @@ func (r *LoyaltyRepo) CreateTransaction(_ context.Context, tx *domain.LoyaltyTra
 	r.transactions = append(r.transactions, *tx)
 	return nil
 }
-
-

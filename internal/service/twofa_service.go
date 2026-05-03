@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pquerna/otp/totp"
 	"github.com/rekurt/relax-hub/internal/domain"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/rekurt/relax-hub/internal/repository"
-	"github.com/pquerna/otp/totp"
 )
 
 type TwoFAService interface {

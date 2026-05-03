@@ -27,7 +27,6 @@ type ReviewRepository interface {
 	ListUnrevealedPastDeadline(ctx context.Context, now time.Time) ([]domain.Review, error)
 }
 
-
 type MediaRepository interface {
 	Create(ctx context.Context, media *domain.Media) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Media, error)
@@ -39,7 +38,6 @@ type MediaRepository interface {
 	CountByOwner(ctx context.Context, ownerType domain.MediaOwnerType, ownerID uuid.UUID, mediaType *domain.MediaType) (int64, error)
 }
 
-
 type ComplaintRepository interface {
 	Create(ctx context.Context, complaint *domain.Complaint) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Complaint, error)
@@ -49,7 +47,6 @@ type ComplaintRepository interface {
 	CheckExists(ctx context.Context, reporterID uuid.UUID, targetType domain.ComplaintTargetType, targetID uuid.UUID) (bool, error)
 }
 
-
 type FavoriteRepository interface {
 	Add(ctx context.Context, favorite *domain.Favorite) error
 	Remove(ctx context.Context, userID, bathhouseID uuid.UUID) error
@@ -57,7 +54,6 @@ type FavoriteRepository interface {
 	IsFavorite(ctx context.Context, userID, bathhouseID uuid.UUID) (bool, error)
 	CountByUser(ctx context.Context, userID uuid.UUID) (int64, error)
 }
-
 
 type RecommendationRepository interface {
 	// User preferences
@@ -82,7 +78,6 @@ type RecommendationRepository interface {
 	GetSimilarBathhouses(ctx context.Context, bathhouseID uuid.UUID, limit int) ([]uuid.UUID, error)
 }
 
-
 type ClientReviewRepository interface {
 	Create(ctx context.Context, review *domain.ClientReview) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.ClientReview, error)
@@ -92,4 +87,3 @@ type ClientReviewRepository interface {
 	ListUnrevealedPastDeadline(ctx context.Context, now time.Time) ([]domain.ClientReview, error)
 	RevealByID(ctx context.Context, id uuid.UUID) error
 }
-

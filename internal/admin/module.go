@@ -10,13 +10,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/redis/go-redis/v9"
 	appconfig "github.com/rekurt/relax-hub/config"
 	"github.com/rekurt/relax-hub/internal/admin/pages"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/rekurt/relax-hub/internal/middleware"
-	"github.com/rekurt/relax-hub/internal/repository/postgres"
 	"github.com/rekurt/relax-hub/internal/notification"
-	"github.com/redis/go-redis/v9"
+	"github.com/rekurt/relax-hub/internal/repository/postgres"
 	"go.uber.org/fx"
 )
 

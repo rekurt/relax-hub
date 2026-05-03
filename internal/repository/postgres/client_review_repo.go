@@ -178,4 +178,3 @@ func (r *clientReviewRepo) RevealByID(ctx context.Context, id uuid.UUID) error {
 	_, err := r.pool.Exec(ctx, `UPDATE client_reviews SET is_revealed = true, updated_at = now() WHERE id = $1`, id)
 	return err
 }
-

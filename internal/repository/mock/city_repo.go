@@ -86,5 +86,3 @@ func (r *CityRepo) Delete(_ context.Context, id int64) error {
 	delete(r.cities, id)
 	return nil
 }
-
-

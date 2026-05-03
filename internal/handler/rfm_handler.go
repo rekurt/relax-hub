@@ -21,15 +21,15 @@ func NewRFMHandler(rfmService service.RFMService) *RFMHandler {
 }
 
 type rfmGuestResponse struct {
-	ID           string       `json:"id"`
-	ClientID     string       `json:"client_id"`
-	BathhouseID  string       `json:"bathhouse_id"`
-	LastVisitAt  string       `json:"last_visit_at"`
-	VisitCount   int          `json:"visit_count"`
-	TotalSpent   int64        `json:"total_spent"`
-	AvgCheck     int64        `json:"avg_check"`
-	Tags         []string     `json:"tags"`
-	RFM          rfmScoreResp `json:"rfm"`
+	ID          string       `json:"id"`
+	ClientID    string       `json:"client_id"`
+	BathhouseID string       `json:"bathhouse_id"`
+	LastVisitAt string       `json:"last_visit_at"`
+	VisitCount  int          `json:"visit_count"`
+	TotalSpent  int64        `json:"total_spent"`
+	AvgCheck    int64        `json:"avg_check"`
+	Tags        []string     `json:"tags"`
+	RFM         rfmScoreResp `json:"rfm"`
 }
 
 type rfmScoreResp struct {
@@ -107,14 +107,14 @@ func (h *RFMHandler) GetRFMAnalysis(w http.ResponseWriter, r *http.Request) {
 }
 
 type customSegmentResponse struct {
-	ID          string                       `json:"id"`
-	OwnerID     string                       `json:"owner_id"`
-	BathhouseID *string                      `json:"bathhouse_id,omitempty"`
-	Name        string                       `json:"name"`
+	ID          string                        `json:"id"`
+	OwnerID     string                        `json:"owner_id"`
+	BathhouseID *string                       `json:"bathhouse_id,omitempty"`
+	Name        string                        `json:"name"`
 	Conditions  domain.CustomSegmentCondition `json:"conditions"`
-	GuestCount  int64                        `json:"guest_count"`
-	CreatedAt   string                       `json:"created_at"`
-	UpdatedAt   string                       `json:"updated_at"`
+	GuestCount  int64                         `json:"guest_count"`
+	CreatedAt   string                        `json:"created_at"`
+	UpdatedAt   string                        `json:"updated_at"`
 }
 
 func toCustomSegmentResponse(s *domain.CustomSegment) customSegmentResponse {
@@ -135,8 +135,8 @@ func toCustomSegmentResponse(s *domain.CustomSegment) customSegmentResponse {
 }
 
 type createCustomSegmentRequest struct {
-	Name        string                       `json:"name"`
-	BathhouseID *string                      `json:"bathhouse_id,omitempty"`
+	Name        string                        `json:"name"`
+	BathhouseID *string                       `json:"bathhouse_id,omitempty"`
 	Conditions  domain.CustomSegmentCondition `json:"conditions"`
 }
 

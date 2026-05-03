@@ -520,5 +520,3 @@ func (r *BookingRepo) ListHeldDepositsReadyForRelease(_ context.Context, checked
 	}
 	return result, nil
 }
-
-

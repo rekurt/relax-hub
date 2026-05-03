@@ -20,8 +20,8 @@ type StoplistEntry struct {
 
 // StoplistFilter is used for listing stoplist entries.
 type StoplistFilter struct {
-	Phone string
-	Email string
-	Page  int
+	Phone    string
+	Email    string
+	Page     int
 	PageSize int
 }

@@ -449,7 +449,6 @@ func (b *Bot) handleCallbackQuery(ctx context.Context, cq *tgbotapi.CallbackQuer
 
 // --- Commands ---
 
-
 func (b *Bot) getUserID(ctx context.Context, chatID int64) (uuid.UUID, bool) {
 	link, err := b.telegramLinkService.GetByTelegramID(ctx, chatID)
 	if err != nil {

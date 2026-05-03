@@ -8,20 +8,20 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/rekurt/relax-hub/internal/domain"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/rekurt/relax-hub/internal/notification"
 	"github.com/rekurt/relax-hub/internal/repository"
-	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 )
 
 const (
-	resetTokenTTL    = 30 * time.Minute
+	resetTokenTTL = 30 * time.Minute
 	// Per-email reset cap. Was 3/15min; relaxed 5x in 2026-04 because
 	// operators were tripping it during normal password resets.
-	resetRateLimit  = 15
-	resetRateWindow = 15 * time.Minute
+	resetRateLimit   = 15
+	resetRateWindow  = 15 * time.Minute
 	resetTokenBytes  = 32
 	resetRedisPrefix = "password_reset:"
 	resetRatePrefix  = "password_reset_rate:"

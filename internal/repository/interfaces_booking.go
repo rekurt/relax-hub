@@ -41,7 +41,6 @@ type BookingRepository interface {
 	ListAll(ctx context.Context, filter domain.AdminBookingFilter) (*domain.PaginatedResult[domain.Booking], error)
 }
 
-
 type BookingModificationRequestRepository interface {
 	Create(ctx context.Context, req *domain.BookingModificationRequest) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.BookingModificationRequest, error)
@@ -51,7 +50,6 @@ type BookingModificationRequestRepository interface {
 	ListByBookingID(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingModificationRequest, error)
 }
 
-
 type ExtensionRequestRepository interface {
 	Create(ctx context.Context, req *domain.BookingExtensionRequest) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.BookingExtensionRequest, error)
@@ -60,7 +58,6 @@ type ExtensionRequestRepository interface {
 	ListExpired(ctx context.Context) ([]domain.BookingExtensionRequest, error)
 	ListByBookingID(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingExtensionRequest, error)
 }
-
 
 type AddOnRepository interface {
 	Create(ctx context.Context, addon *domain.AddOn) error
@@ -74,7 +71,6 @@ type AddOnRepository interface {
 	ListByBooking(ctx context.Context, bookingID uuid.UUID) ([]domain.BookingAddOn, error)
 }
 
-
 type SavedSearchRepository interface {
 	Create(ctx context.Context, search *domain.SavedSearch) error
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.SavedSearch], error)
@@ -82,7 +78,6 @@ type SavedSearchRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.SavedSearch, error)
 	ListWithNotifications(ctx context.Context) ([]domain.SavedSearch, error)
 }
-
 
 type EscrowRepository interface {
 	Create(ctx context.Context, escrow *domain.Escrow) error
@@ -92,11 +87,9 @@ type EscrowRepository interface {
 	ListMatured(ctx context.Context) ([]domain.Escrow, error) // status=held AND claim_period_ends_at < now
 }
 
-
 // BookingShareRepository manages shareable booking links.
 type BookingShareRepository interface {
 	Create(ctx context.Context, share *domain.BookingShare) error
 	GetByToken(ctx context.Context, token string) (*domain.BookingShare, error)
 	DeleteExpired(ctx context.Context) (int64, error)
 }
-

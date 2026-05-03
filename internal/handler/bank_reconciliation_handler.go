@@ -48,14 +48,15 @@ type bankStatementUploadResponse struct {
 }
 
 // UploadBankStatement handles bank statement file upload and auto-matching.
-// @Summary Upload bank statement
-// @Tags admin,finance
-// @Security BearerAuth
-// @Accept multipart/form-data
-// @Param file formData file true "Bank statement file (CSV or 1C format)"
-// @Success 200 {object} APIResponse{data=bankStatementUploadResponse}
-// @Failure 400 {object} APIResponse
-// @Router /api/v1/admin/finance/bank-statement [post]
+//
+//	@Summary	Upload bank statement
+//	@Tags		admin,finance
+//	@Security	BearerAuth
+//	@Accept		multipart/form-data
+//	@Param		file	formData	file	true	"Bank statement file (CSV or 1C format)"
+//	@Success	200		{object}	APIResponse{data=bankStatementUploadResponse}
+//	@Failure	400		{object}	APIResponse
+//	@Router		/api/v1/admin/finance/bank-statement [post]
 func (h *BankReconciliationHandler) UploadBankStatement(w http.ResponseWriter, r *http.Request) {
 	adminID := middleware.GetUserID(r.Context())
 
@@ -99,16 +100,17 @@ func (h *BankReconciliationHandler) UploadBankStatement(w http.ResponseWriter, r
 }
 
 // ListUnmatched returns unmatched bank statement entries for manual reconciliation.
-// @Summary List unmatched bank entries
-// @Tags admin,finance
-// @Security BearerAuth
-// @Param status query string false "Filter by status (pending, matched, manual, ignored)"
-// @Param date_from query string false "Start date (YYYY-MM-DD)"
-// @Param date_to query string false "End date (YYYY-MM-DD)"
-// @Param page query int false "Page number"
-// @Param page_size query int false "Page size"
-// @Success 200 {object} APIResponse{data=[]bankStatementEntryResponse}
-// @Router /api/v1/admin/finance/reconciliation [get]
+//
+//	@Summary	List unmatched bank entries
+//	@Tags		admin,finance
+//	@Security	BearerAuth
+//	@Param		status		query		string	false	"Filter by status (pending, matched, manual, ignored)"
+//	@Param		date_from	query		string	false	"Start date (YYYY-MM-DD)"
+//	@Param		date_to		query		string	false	"End date (YYYY-MM-DD)"
+//	@Param		page		query		int		false	"Page number"
+//	@Param		page_size	query		int		false	"Page size"
+//	@Success	200			{object}	APIResponse{data=[]bankStatementEntryResponse}
+//	@Router		/api/v1/admin/finance/reconciliation [get]
 func (h *BankReconciliationHandler) ListUnmatched(w http.ResponseWriter, r *http.Request) {
 	filter := domain.BankStatementFilter{
 		Page:     getPage(r.URL.Query().Get("page")),
@@ -166,15 +168,16 @@ type manualMatchRequest struct {
 }
 
 // ManualMatch manually matches a bank entry to an internal transaction.
-// @Summary Manual match bank entry
-// @Tags admin,finance
-// @Security BearerAuth
-// @Param id path string true "Bank entry ID"
-// @Param body body manualMatchRequest true "Match details"
-// @Success 200 {object} APIResponse{data=simpleMessageResponse}
-// @Failure 400 {object} APIResponse
-// @Failure 404 {object} APIResponse
-// @Router /api/v1/admin/finance/reconciliation/{id}/match [put]
+//
+//	@Summary	Manual match bank entry
+//	@Tags		admin,finance
+//	@Security	BearerAuth
+//	@Param		id		path		string				true	"Bank entry ID"
+//	@Param		body	body		manualMatchRequest	true	"Match details"
+//	@Success	200		{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure	400		{object}	APIResponse
+//	@Failure	404		{object}	APIResponse
+//	@Router		/api/v1/admin/finance/reconciliation/{id}/match [put]
 func (h *BankReconciliationHandler) ManualMatch(w http.ResponseWriter, r *http.Request) {
 	entryIDStr := chi.URLParam(r, "id")
 	entryID, err := uuid.Parse(entryIDStr)

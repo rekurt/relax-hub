@@ -23,17 +23,17 @@ type setAdminSubRoleRequest struct {
 }
 
 type adminRoleResponse struct {
-	ID           uuid.UUID            `json:"id"`
-	Email        string               `json:"email"`
-	Name         string               `json:"name"`
-	AdminSubRole domain.AdminSubRole  `json:"admin_sub_role"`
-	TwoFAMethod  domain.TwoFAMethod   `json:"two_fa_method"`
-	IsActive     bool                 `json:"is_active"`
+	ID           uuid.UUID           `json:"id"`
+	Email        string              `json:"email"`
+	Name         string              `json:"name"`
+	AdminSubRole domain.AdminSubRole `json:"admin_sub_role"`
+	TwoFAMethod  domain.TwoFAMethod  `json:"two_fa_method"`
+	IsActive     bool                `json:"is_active"`
 }
 
 type permissionsMatrixResponse struct {
-	Roles       []domain.AdminSubRole                          `json:"roles"`
-	Permissions []domain.AdminPermission                       `json:"permissions"`
+	Roles       []domain.AdminSubRole                            `json:"roles"`
+	Permissions []domain.AdminPermission                         `json:"permissions"`
 	Matrix      map[domain.AdminSubRole][]domain.AdminPermission `json:"matrix"`
 }
 

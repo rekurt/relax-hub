@@ -342,4 +342,3 @@ func (b *Bot) doCancelWizard(chatID int64) {
 	b.clearWizard(chatID)
 	b.sendPlainMessage(chatID, "Бронирование отменено.")
 }
-

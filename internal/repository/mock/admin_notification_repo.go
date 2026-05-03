@@ -147,4 +147,3 @@ func (r *AdminNotificationRepo) CreatedCount() int {
 	defer r.mu.RUnlock()
 	return len(r.notifs)
 }
-

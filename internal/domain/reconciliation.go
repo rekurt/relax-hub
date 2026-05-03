@@ -24,21 +24,21 @@ func (s FloatSnapshotStatus) IsValid() bool {
 
 // FloatSnapshot - ежедневный снимок баланса платформы
 type FloatSnapshot struct {
-	ID                  uuid.UUID
-	ClientWalletsTotal  int64               // сумма балансов клиентских кошельков (копейки)
-	OwnerWalletsTotal   int64               // сумма балансов кошельков владельцев (копейки)
-	EscrowHeldTotal     int64               // сумма эскроу в статусе held (копейки)
-	WalletHoldsTotal    int64               // сумма активных холдов кошельков (копейки)
-	ExpectedTotal       int64               // ожидаемый итог (сумма всех 4 компонент)
-	ActualTotal         int64               // фактический итог от провайдера (если доступен)
-	Discrepancy         int64               // разница: actual - expected (0 = ok)
-	Status              FloatSnapshotStatus // ok / discrepancy
-	ClientWalletsCount  int                 // количество клиентских кошельков
-	OwnerWalletsCount   int                 // количество кошельков владельцев
-	EscrowCount         int                 // количество эскроу записей
-	Notes               string              // дополнительные заметки
-	SnapshotDate        time.Time           // дата снимка
-	CreatedAt           time.Time
+	ID                 uuid.UUID
+	ClientWalletsTotal int64               // сумма балансов клиентских кошельков (копейки)
+	OwnerWalletsTotal  int64               // сумма балансов кошельков владельцев (копейки)
+	EscrowHeldTotal    int64               // сумма эскроу в статусе held (копейки)
+	WalletHoldsTotal   int64               // сумма активных холдов кошельков (копейки)
+	ExpectedTotal      int64               // ожидаемый итог (сумма всех 4 компонент)
+	ActualTotal        int64               // фактический итог от провайдера (если доступен)
+	Discrepancy        int64               // разница: actual - expected (0 = ok)
+	Status             FloatSnapshotStatus // ok / discrepancy
+	ClientWalletsCount int                 // количество клиентских кошельков
+	OwnerWalletsCount  int                 // количество кошельков владельцев
+	EscrowCount        int                 // количество эскроу записей
+	Notes              string              // дополнительные заметки
+	SnapshotDate       time.Time           // дата снимка
+	CreatedAt          time.Time
 }
 
 func (f *FloatSnapshot) Validate() error {

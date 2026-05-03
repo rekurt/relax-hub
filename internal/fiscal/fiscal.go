@@ -20,11 +20,11 @@ const (
 type TaxSystem string
 
 const (
-	TaxSystemOSN       TaxSystem = "osn"        // Общая система налогообложения
-	TaxSystemUSN       TaxSystem = "usn_income"  // Упрощённая (доходы)
-	TaxSystemPatent    TaxSystem = "patent"      // Патент
-	TaxSystemNPD       TaxSystem = "npd"         // Налог на профессиональный доход (самозанятые)
-	TaxSystemDefault   TaxSystem = "osn"         // По умолчанию
+	TaxSystemOSN     TaxSystem = "osn"        // Общая система налогообложения
+	TaxSystemUSN     TaxSystem = "usn_income" // Упрощённая (доходы)
+	TaxSystemPatent  TaxSystem = "patent"     // Патент
+	TaxSystemNPD     TaxSystem = "npd"        // Налог на профессиональный доход (самозанятые)
+	TaxSystemDefault TaxSystem = "osn"        // По умолчанию
 )
 
 // ReceiptRequest contains data needed to create a fiscal receipt.

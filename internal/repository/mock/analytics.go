@@ -16,12 +16,12 @@ type AnalyticsRepo struct {
 	snapshots map[string]*domain.AnalyticsSnapshot // key: bathhouse_id:date
 
 	// Advanced analytics mock data
-	FunnelSteps    []domain.FunnelStep
-	CohortRows     []domain.CohortRow
-	GeoDemand      []domain.GeoSupplyDemand
-	WalletMetrics  *domain.WalletMetrics
-	OwnerPerfData  map[uuid.UUID]*domain.OwnerPerformance
-	HeatmapCells   []domain.HeatmapCell
+	FunnelSteps   []domain.FunnelStep
+	CohortRows    []domain.CohortRow
+	GeoDemand     []domain.GeoSupplyDemand
+	WalletMetrics *domain.WalletMetrics
+	OwnerPerfData map[uuid.UUID]*domain.OwnerPerformance
+	HeatmapCells  []domain.HeatmapCell
 }
 
 func NewAnalyticsRepo() *AnalyticsRepo {

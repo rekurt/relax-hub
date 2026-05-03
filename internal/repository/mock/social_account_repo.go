@@ -73,5 +73,3 @@ func (r *SocialAccountRepo) Delete(_ context.Context, userID uuid.UUID, provider
 	}
 	return domain.ErrSocialAccountNotFound
 }
-
-

@@ -507,4 +507,3 @@ func (r *bathhouseRepo) ListRequestModeBathhouses(ctx context.Context) ([]domain
 	}
 	return result, nil
 }
-

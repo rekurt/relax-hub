@@ -42,7 +42,6 @@ type AnalyticsRepository interface {
 	CountDistinctActiveUsers(ctx context.Context, from, to time.Time) (int64, error)
 }
 
-
 type DisputeRepository interface {
 	Create(ctx context.Context, dispute *domain.Dispute) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Dispute, error)
@@ -58,7 +57,6 @@ type DisputeRepository interface {
 	CountOpenByUser(ctx context.Context, userID uuid.UUID) (int64, error)
 }
 
-
 type FraudFlagRepository interface {
 	Create(ctx context.Context, flag *domain.FraudFlag) error
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.FraudFlag], error)
@@ -67,20 +65,17 @@ type FraudFlagRepository interface {
 	CountByUserAndRule(ctx context.Context, userID uuid.UUID, rule domain.FraudRuleName, since time.Time) (int64, error)
 }
 
-
 type PlatformSettingsRepository interface {
 	Get(ctx context.Context, key string) (*domain.PlatformSetting, error)
 	GetAll(ctx context.Context) ([]domain.PlatformSetting, error)
 	Set(ctx context.Context, key, value string, updatedBy *uuid.UUID) error
 }
 
-
 type FeatureFlagRepository interface {
 	Get(ctx context.Context, key string) (*domain.FeatureFlag, error)
 	GetAll(ctx context.Context) ([]domain.FeatureFlag, error)
 	Set(ctx context.Context, key string, enabled bool, region *string, updatedBy *uuid.UUID) error
 }
-
 
 type TicketRepository interface {
 	Create(ctx context.Context, ticket *domain.Ticket) error
@@ -100,12 +95,10 @@ type TicketRepository interface {
 	GetOperationMetrics(ctx context.Context, filter domain.TicketMetricsFilter) (*domain.TicketOperationMetrics, error)
 }
 
-
 type ForceMajeureRepository interface {
 	Create(ctx context.Context, event *domain.ForceMajeureEvent) error
 	List(ctx context.Context) ([]domain.ForceMajeureEvent, error)
 }
-
 
 // AdminNotificationRepository manages admin notifications.
 type AdminNotificationRepository interface {
@@ -119,7 +112,6 @@ type AdminNotificationRepository interface {
 	DeleteOlderThan(ctx context.Context, before time.Time) (int64, error)
 }
 
-
 type RepresentativeRepository interface {
 	Create(ctx context.Context, rep *domain.Representative) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Representative, error)
@@ -129,7 +121,6 @@ type RepresentativeRepository interface {
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.Representative, error)
 	ListBathhouseIDsByUser(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 }
-
 
 // FAQRepository manages FAQ entries.
 type FAQRepository interface {
@@ -141,7 +132,6 @@ type FAQRepository interface {
 	SearchByKeywords(ctx context.Context, query string, limit int) ([]domain.FAQMatch, error)
 	ListActiveByCategory(ctx context.Context, category domain.FAQCategory) ([]domain.FAQ, error)
 }
-
 
 // PMSConnectionRepository manages PMS integration connections.
 type PMSConnectionRepository interface {
@@ -155,13 +145,11 @@ type PMSConnectionRepository interface {
 	UpdateSyncStatus(ctx context.Context, id uuid.UUID, lastSyncAt time.Time, lastSyncError string, status domain.PMSConnectionStatus) error
 }
 
-
 // PMSSyncLogRepository manages PMS sync log entries.
 type PMSSyncLogRepository interface {
 	Create(ctx context.Context, log *domain.PMSSyncLog) error
 	ListByConnection(ctx context.Context, connectionID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.PMSSyncLog], error)
 }
-
 
 // PhotoOrderRepository manages professional photography orders.
 type PhotoOrderRepository interface {
@@ -170,7 +158,6 @@ type PhotoOrderRepository interface {
 	Update(ctx context.Context, order *domain.PhotoOrder) error
 	List(ctx context.Context, filter domain.PhotoOrderFilter) (*domain.PaginatedResult[domain.PhotoOrder], error)
 }
-
 
 // StoplistRepository manages the antifraud stoplist.
 type StoplistRepository interface {
@@ -189,4 +176,3 @@ type ListingDraftRepository interface {
 	UpdateStatus(ctx context.Context, id uuid.UUID, status domain.ListingDraftStatus) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
-

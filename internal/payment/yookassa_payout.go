@@ -31,11 +31,11 @@ func NewYooKassaPayoutProvider(agentID, secretKey string) *YooKassaPayoutProvide
 }
 
 type yooPayoutRequest struct {
-	Amount          yooAmount       `json:"amount"`
-	PayoutToken     string          `json:"payout_token,omitempty"`
-	PayoutMethod    *yooPayoutDest  `json:"payout_destination_data,omitempty"`
-	Description     string          `json:"description,omitempty"`
-	Metadata        json.RawMessage `json:"metadata,omitempty"`
+	Amount       yooAmount       `json:"amount"`
+	PayoutToken  string          `json:"payout_token,omitempty"`
+	PayoutMethod *yooPayoutDest  `json:"payout_destination_data,omitempty"`
+	Description  string          `json:"description,omitempty"`
+	Metadata     json.RawMessage `json:"metadata,omitempty"`
 }
 
 type yooAmount struct {

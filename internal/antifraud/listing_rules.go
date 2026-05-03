@@ -39,7 +39,7 @@ func listingDuplicateRule() Rule {
 					Action:    domain.FraudActionFlag,
 					Details: map[string]interface{}{
 						"duplicate_owner_count": input.DuplicateOwnerCount,
-						"reason":               "owner shares identifiers with other owner accounts",
+						"reason":                "owner shares identifiers with other owner accounts",
 					},
 				}
 			}

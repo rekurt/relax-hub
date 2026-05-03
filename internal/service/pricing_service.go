@@ -27,14 +27,14 @@ type PriceCalculationInput struct {
 }
 
 type PriceBreakdown struct {
-	BasePrice               int64   // price after dynamic rules (before discount/surcharge)
-	LongSessionDiscount     int64   // discount amount (positive value)
-	ExtraGuestSurcharge     int64   // surcharge amount
-	IsHolidayPrice          bool    // whether holiday pricing was applied
-	HolidayName             string  // holiday name if applicable
-	HolidayMultiplier       float64 // holiday multiplier used (0 if not holiday)
-	IsSeasonalPrice         bool    // whether seasonal tariff was applied
-	SeasonalTariffName      string  // seasonal tariff name if applicable
+	BasePrice                int64   // price after dynamic rules (before discount/surcharge)
+	LongSessionDiscount      int64   // discount amount (positive value)
+	ExtraGuestSurcharge      int64   // surcharge amount
+	IsHolidayPrice           bool    // whether holiday pricing was applied
+	HolidayName              string  // holiday name if applicable
+	HolidayMultiplier        float64 // holiday multiplier used (0 if not holiday)
+	IsSeasonalPrice          bool    // whether seasonal tariff was applied
+	SeasonalTariffName       string  // seasonal tariff name if applicable
 	SeasonalTariffMultiplier float64 // seasonal tariff multiplier used (0 if not seasonal)
 }
 

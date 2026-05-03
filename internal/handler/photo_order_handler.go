@@ -63,17 +63,17 @@ func toPhotoOrderResponse(o *domain.PhotoOrder) photoOrderResponse {
 
 // Create godoc
 //
-//	@Summary		Request professional photography
-//	@Tags			photo-orders
-//	@Accept			json
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Param			id		path		string						true	"Bathhouse ID"
-//	@Param			body	body		createPhotoOrderRequest		true	"Request body"
-//	@Success		201		{object}	APIResponse{data=photoOrderResponse}
-//	@Failure		400		{object}	APIResponse{error=APIError}
-//	@Failure		401		{object}	APIResponse{error=APIError}
-//	@Router			/my/bathhouses/{id}/photo-order [post]
+//	@Summary	Request professional photography
+//	@Tags		photo-orders
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		id		path		string					true	"Bathhouse ID"
+//	@Param		body	body		createPhotoOrderRequest	true	"Request body"
+//	@Success	201		{object}	APIResponse{data=photoOrderResponse}
+//	@Failure	400		{object}	APIResponse{error=APIError}
+//	@Failure	401		{object}	APIResponse{error=APIError}
+//	@Router		/my/bathhouses/{id}/photo-order [post]
 func (h *PhotoOrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	bathhouseID, err := uuid.Parse(chi.URLParam(r, "id"))
@@ -108,14 +108,14 @@ func (h *PhotoOrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // ListByOwner godoc
 //
-//	@Summary		List my photo orders
-//	@Tags			photo-orders
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Param			page		query	int	false	"Page number"	default(1)
-//	@Param			page_size	query	int	false	"Page size"		default(10)
-//	@Success		200		{object}	APIResponse{data=[]photoOrderResponse}
-//	@Router			/my/photo-orders [get]
+//	@Summary	List my photo orders
+//	@Tags		photo-orders
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		page		query		int	false	"Page number"	default(1)
+//	@Param		page_size	query		int	false	"Page size"		default(10)
+//	@Success	200			{object}	APIResponse{data=[]photoOrderResponse}
+//	@Router		/my/photo-orders [get]
 func (h *PhotoOrderHandler) ListByOwner(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	page := getPage(r.URL.Query().Get("page"))
@@ -142,14 +142,14 @@ func (h *PhotoOrderHandler) ListByOwner(w http.ResponseWriter, r *http.Request) 
 
 // GetByID godoc
 //
-//	@Summary		Get photo order by ID
-//	@Tags			photo-orders
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Param			id	path		string	true	"Order ID"
-//	@Success		200	{object}	APIResponse{data=photoOrderResponse}
-//	@Failure		404	{object}	APIResponse{error=APIError}
-//	@Router			/my/photo-orders/{id} [get]
+//	@Summary	Get photo order by ID
+//	@Tags		photo-orders
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		id	path		string	true	"Order ID"
+//	@Success	200	{object}	APIResponse{data=photoOrderResponse}
+//	@Failure	404	{object}	APIResponse{error=APIError}
+//	@Router		/my/photo-orders/{id} [get]
 func (h *PhotoOrderHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	role := middleware.GetUserRole(r.Context())
@@ -170,14 +170,14 @@ func (h *PhotoOrderHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 // OwnerCancel godoc
 //
-//	@Summary		Cancel photo order (owner)
-//	@Tags			photo-orders
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Param			id	path		string	true	"Order ID"
-//	@Success		200	{object}	APIResponse{data=simpleMessageResponse}
-//	@Failure		400	{object}	APIResponse{error=APIError}
-//	@Router			/my/photo-orders/{id}/cancel [post]
+//	@Summary	Cancel photo order (owner)
+//	@Tags		photo-orders
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		id	path		string	true	"Order ID"
+//	@Success	200	{object}	APIResponse{data=simpleMessageResponse}
+//	@Failure	400	{object}	APIResponse{error=APIError}
+//	@Router		/my/photo-orders/{id}/cancel [post]
 func (h *PhotoOrderHandler) OwnerCancel(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
@@ -196,16 +196,16 @@ func (h *PhotoOrderHandler) OwnerCancel(w http.ResponseWriter, r *http.Request) 
 
 // AdminList godoc
 //
-//	@Summary		List all photo orders (admin)
-//	@Tags			admin-photo-orders
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Param			status		query	string	false	"Filter by status"
-//	@Param			region		query	string	false	"Filter by region"
-//	@Param			page		query	int		false	"Page number"	default(1)
-//	@Param			page_size	query	int		false	"Page size"		default(20)
-//	@Success		200			{object}	APIResponse{data=[]photoOrderResponse}
-//	@Router			/admin/photo-orders [get]
+//	@Summary	List all photo orders (admin)
+//	@Tags		admin-photo-orders
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		status		query		string	false	"Filter by status"
+//	@Param		region		query		string	false	"Filter by region"
+//	@Param		page		query		int		false	"Page number"	default(1)
+//	@Param		page_size	query		int		false	"Page size"		default(20)
+//	@Success	200			{object}	APIResponse{data=[]photoOrderResponse}
+//	@Router		/admin/photo-orders [get]
 func (h *PhotoOrderHandler) AdminList(w http.ResponseWriter, r *http.Request) {
 	page := getPage(r.URL.Query().Get("page"))
 	pageSize := getPageSize(r.URL.Query().Get("page_size"), 20)
@@ -256,17 +256,17 @@ type adminUpdatePhotoOrderRequest struct {
 
 // AdminUpdate godoc
 //
-//	@Summary		Update photo order (admin)
-//	@Tags			admin-photo-orders
-//	@Accept			json
-//	@Produce		json
-//	@Security		BearerAuth
-//	@Param			id		path		string								true	"Order ID"
-//	@Param			body	body		adminUpdatePhotoOrderRequest		true	"Update body"
-//	@Success		200		{object}	APIResponse{data=photoOrderResponse}
-//	@Failure		400		{object}	APIResponse{error=APIError}
-//	@Failure		404		{object}	APIResponse{error=APIError}
-//	@Router			/admin/photo-orders/{id} [put]
+//	@Summary	Update photo order (admin)
+//	@Tags		admin-photo-orders
+//	@Accept		json
+//	@Produce	json
+//	@Security	BearerAuth
+//	@Param		id		path		string							true	"Order ID"
+//	@Param		body	body		adminUpdatePhotoOrderRequest	true	"Update body"
+//	@Success	200		{object}	APIResponse{data=photoOrderResponse}
+//	@Failure	400		{object}	APIResponse{error=APIError}
+//	@Failure	404		{object}	APIResponse{error=APIError}
+//	@Router		/admin/photo-orders/{id} [put]
 func (h *PhotoOrderHandler) AdminUpdate(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
@@ -299,4 +299,3 @@ func (h *PhotoOrderHandler) AdminUpdate(w http.ResponseWriter, r *http.Request) 
 
 	writeJSON(w, http.StatusOK, toPhotoOrderResponse(order))
 }
-

@@ -183,5 +183,3 @@ func (r *RecommendationRepo) GetSimilarBathhouses(_ context.Context, bathhouseID
 	// In real implementation would require bathhouse repo access
 	return []uuid.UUID{}, nil
 }
-
-

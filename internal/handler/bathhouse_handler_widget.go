@@ -234,12 +234,12 @@ func isValidFontFamily(fontFamily string) bool {
 	return true
 }
 
-// @Summary		Get bathhouse SEO meta tags
-// @Description	Get SEO meta tags (title, description, og:image, canonical) for a bathhouse.
-// @Tags			bathhouses
-// @Produce		json
-// @Param			id	path		string	true	"Bathhouse ID (UUID)"
-// @Success		200	{object}	APIResponse{data=seo.MetaTags}
-// @Failure		400	{object}	APIResponse{error=APIError}
-// @Failure		404	{object}	APIResponse{error=APIError}
-// @Router			/bathhouses/{id}/meta [get]
+//	@Summary		Get bathhouse SEO meta tags
+//	@Description	Get SEO meta tags (title, description, og:image, canonical) for a bathhouse.
+//	@Tags			bathhouses
+//	@Produce		json
+//	@Param			id	path		string	true	"Bathhouse ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=seo.MetaTags}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/bathhouses/{id}/meta [get]

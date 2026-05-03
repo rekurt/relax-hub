@@ -90,10 +90,10 @@ type recordRecentlyViewedRequest struct {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			body	body		recordRecentlyViewedRequest	true	"Bathhouse ID"
+//	@Param			body	body	recordRecentlyViewedRequest	true	"Bathhouse ID"
 //	@Success		204
-//	@Failure		400		{object}	APIResponse{error=APIError}
-//	@Failure		401		{object}	APIResponse{error=APIError}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
 //	@Router			/my/recently-viewed [post]
 func (h *SavedSearchHandler) RecordRecentlyViewed(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())

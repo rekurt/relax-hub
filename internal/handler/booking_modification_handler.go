@@ -75,8 +75,8 @@ type requestModificationRequest struct {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			id		path		string							true	"Booking ID (UUID)"
-//	@Param			body	body		requestModificationRequest		true	"Proposed changes"
+//	@Param			id		path		string						true	"Booking ID (UUID)"
+//	@Param			body	body		requestModificationRequest	true	"Proposed changes"
 //	@Success		201		{object}	APIResponse{data=modificationRequestResponse}
 //	@Failure		400		{object}	APIResponse{error=APIError}
 //	@Failure		409		{object}	APIResponse{error=APIError}

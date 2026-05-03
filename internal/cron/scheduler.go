@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/redis/go-redis/v9"
+	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/robfig/cron/v3"
 )
 

@@ -15,8 +15,8 @@ const (
 	BookingCancelled    BookingStatus = "cancelled"
 	BookingRejected     BookingStatus = "rejected"
 	BookingCompleted    BookingStatus = "completed"
-	BookingNoShow          BookingStatus = "no_show"
-	BookingForceMajeure    BookingStatus = "force_majeure_cancelled"
+	BookingNoShow       BookingStatus = "no_show"
+	BookingForceMajeure BookingStatus = "force_majeure_cancelled"
 )
 
 func (s BookingStatus) IsValid() bool {

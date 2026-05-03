@@ -18,16 +18,17 @@ func NewListingImportHandler(importSvc service.ListingImportService) *ListingImp
 }
 
 // Import godoc
-// @Summary      Import listings from CSV or XLSX
-// @Description  Upload a CSV or XLSX file to create multiple bathhouse listings as pending drafts
-// @Tags         listings
-// @Accept       multipart/form-data
-// @Produce      json
-// @Param        file formData file true "CSV or XLSX file"
-// @Success      200 {object} APIResponse{data=service.ImportReport}
-// @Failure      400 {object} APIResponse
-// @Security     BearerAuth
-// @Router       /my/listings/import [post]
+//
+//	@Summary		Import listings from CSV or XLSX
+//	@Description	Upload a CSV or XLSX file to create multiple bathhouse listings as pending drafts
+//	@Tags			listings
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			file	formData	file	true	"CSV or XLSX file"
+//	@Success		200		{object}	APIResponse{data=service.ImportReport}
+//	@Failure		400		{object}	APIResponse
+//	@Security		BearerAuth
+//	@Router			/my/listings/import [post]
 func (h *ListingImportHandler) Import(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
@@ -64,14 +65,15 @@ func (h *ListingImportHandler) Import(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetImportTemplate godoc
-// @Summary      Get import template (CSV or XLSX)
-// @Description  Download a CSV or XLSX template with header and example row for listing import
-// @Tags         listings
-// @Produce      application/octet-stream
-// @Param        format query string false "Template format: csv (default) or xlsx" Enums(csv, xlsx)
-// @Success      200 {file} file
-// @Security     BearerAuth
-// @Router       /my/listings/import/template [get]
+//
+//	@Summary		Get import template (CSV or XLSX)
+//	@Description	Download a CSV or XLSX template with header and example row for listing import
+//	@Tags			listings
+//	@Produce		application/octet-stream
+//	@Param			format	query	string	false	"Template format: csv (default) or xlsx"	Enums(csv, xlsx)
+//	@Success		200		{file}	file
+//	@Security		BearerAuth
+//	@Router			/my/listings/import/template [get]
 func (h *ListingImportHandler) GetImportTemplate(w http.ResponseWriter, r *http.Request) {
 	format := r.URL.Query().Get("format")
 	if format == "" {

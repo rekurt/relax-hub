@@ -69,7 +69,6 @@ func (b *Bot) doViewBathhouse(ctx context.Context, chatID int64, sid string) {
 	b.sendMessageWithKeyboard(chatID, formatBathhouseDetail(bh), kb)
 }
 
-
 func (b *Bot) doCancelBooking(ctx context.Context, chatID int64, sid string) {
 	bkID, ok := b.resolveID(sid)
 	if !ok {

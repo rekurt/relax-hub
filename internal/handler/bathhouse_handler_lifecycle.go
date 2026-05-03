@@ -195,4 +195,3 @@ func (h *BathhouseHandler) Archive(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "bathhouse archived"})
 }
-

@@ -467,4 +467,3 @@ func (s *bathhouseService) ListByOwner(ctx context.Context, ownerID uuid.UUID, p
 func (s *bathhouseService) IncrementViewCount(ctx context.Context, id uuid.UUID) error {
 	return s.bhRepo.IncrementViewCount(ctx, id)
 }
-

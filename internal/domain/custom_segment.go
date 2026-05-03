@@ -21,22 +21,22 @@ type CustomSegment struct {
 // CustomSegmentCondition defines the filter rules for a custom segment.
 // All non-nil fields are ANDed together.
 type CustomSegmentCondition struct {
-	VisitCountMin      *int     `json:"visit_count_min,omitempty"`
-	VisitCountMax      *int     `json:"visit_count_max,omitempty"`
-	AvgCheckMin        *int64   `json:"avg_check_min,omitempty"`  // kopecks
-	AvgCheckMax        *int64   `json:"avg_check_max,omitempty"`  // kopecks
-	TotalSpentMin      *int64   `json:"total_spent_min,omitempty"` // kopecks
-	TotalSpentMax      *int64   `json:"total_spent_max,omitempty"` // kopecks
-	LastVisitDaysMin   *int     `json:"last_visit_days_min,omitempty"`
-	LastVisitDaysMax   *int     `json:"last_visit_days_max,omitempty"`
-	TagsInclude        []string `json:"tags_include,omitempty"`
-	TagsExclude        []string `json:"tags_exclude,omitempty"`
-	RFMRecencyMin      *int     `json:"rfm_recency_min,omitempty"`
-	RFMRecencyMax      *int     `json:"rfm_recency_max,omitempty"`
-	RFMFrequencyMin    *int     `json:"rfm_frequency_min,omitempty"`
-	RFMFrequencyMax    *int     `json:"rfm_frequency_max,omitempty"`
-	RFMMonetaryMin     *int     `json:"rfm_monetary_min,omitempty"`
-	RFMMonetaryMax     *int     `json:"rfm_monetary_max,omitempty"`
+	VisitCountMin    *int     `json:"visit_count_min,omitempty"`
+	VisitCountMax    *int     `json:"visit_count_max,omitempty"`
+	AvgCheckMin      *int64   `json:"avg_check_min,omitempty"`   // kopecks
+	AvgCheckMax      *int64   `json:"avg_check_max,omitempty"`   // kopecks
+	TotalSpentMin    *int64   `json:"total_spent_min,omitempty"` // kopecks
+	TotalSpentMax    *int64   `json:"total_spent_max,omitempty"` // kopecks
+	LastVisitDaysMin *int     `json:"last_visit_days_min,omitempty"`
+	LastVisitDaysMax *int     `json:"last_visit_days_max,omitempty"`
+	TagsInclude      []string `json:"tags_include,omitempty"`
+	TagsExclude      []string `json:"tags_exclude,omitempty"`
+	RFMRecencyMin    *int     `json:"rfm_recency_min,omitempty"`
+	RFMRecencyMax    *int     `json:"rfm_recency_max,omitempty"`
+	RFMFrequencyMin  *int     `json:"rfm_frequency_min,omitempty"`
+	RFMFrequencyMax  *int     `json:"rfm_frequency_max,omitempty"`
+	RFMMonetaryMin   *int     `json:"rfm_monetary_min,omitempty"`
+	RFMMonetaryMax   *int     `json:"rfm_monetary_max,omitempty"`
 }
 
 func (s *CustomSegment) Validate() error {

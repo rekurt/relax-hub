@@ -380,5 +380,3 @@ func isBathhouseOpenNow(bh *domain.Bathhouse) bool {
 	}
 	return false
 }
-
-

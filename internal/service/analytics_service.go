@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/rekurt/relax-hub/internal/domain"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/rekurt/relax-hub/internal/repository"
-	"github.com/redis/go-redis/v9"
 )
 
 const (
@@ -53,11 +53,11 @@ type AdminDashboard struct {
 	TotalRevenue    int64                  `json:"total_revenue"`
 	TotalViews      int64                  `json:"total_views"`
 	AvgRating       float64                `json:"avg_rating"`
-	DAU             int64                  `json:"dau"`              // daily active users (from bookings)
-	WAU             int64                  `json:"wau"`              // weekly active users
-	MAU             int64                  `json:"mau"`              // monthly active users
-	ADR             int64                  `json:"adr"`              // average daily rate (avg booking value in kopecks)
-	ChurnRate       float64                `json:"churn_rate"`       // % of users with no bookings in last 90 days
+	DAU             int64                  `json:"dau"`        // daily active users (from bookings)
+	WAU             int64                  `json:"wau"`        // weekly active users
+	MAU             int64                  `json:"mau"`        // monthly active users
+	ADR             int64                  `json:"adr"`        // average daily rate (avg booking value in kopecks)
+	ChurnRate       float64                `json:"churn_rate"` // % of users with no bookings in last 90 days
 	TopBathhouses   []TopBathhouseInfo     `json:"top_bathhouses"`
 }
 
@@ -75,15 +75,15 @@ type BusinessMetrics struct {
 // PnLMetrics represents P&L and unit-economics for admin analytics (FR-150)
 type PnLMetrics struct {
 	Period             domain.AnalyticsPeriod `json:"period"`
-	GMV                int64                  `json:"gmv"`                  // gross merchandise value (kopecks) — total booking value
-	ServiceFeesTotal   int64                  `json:"service_fees_total"`   // platform service fees (kopecks)
-	SubscriptionsTotal int64                  `json:"subscriptions_total"`  // subscription revenue (kopecks)
-	PromotionsTotal    int64                  `json:"promotions_total"`     // promotion revenue (kopecks)
-	PlatformRevenue    int64                  `json:"platform_revenue"`     // total platform revenue (kopecks)
-	TakeRate           float64                `json:"take_rate"`            // platform_revenue / GMV * 100
-	TotalBookings      int64                  `json:"total_bookings"`       // booking count in period
-	RevenuePerBooking  int64                  `json:"revenue_per_booking"`  // platform revenue per booking (kopecks)
-	GMVPerBooking      int64                  `json:"gmv_per_booking"`      // average booking value (kopecks)
+	GMV                int64                  `json:"gmv"`                 // gross merchandise value (kopecks) — total booking value
+	ServiceFeesTotal   int64                  `json:"service_fees_total"`  // platform service fees (kopecks)
+	SubscriptionsTotal int64                  `json:"subscriptions_total"` // subscription revenue (kopecks)
+	PromotionsTotal    int64                  `json:"promotions_total"`    // promotion revenue (kopecks)
+	PlatformRevenue    int64                  `json:"platform_revenue"`    // total platform revenue (kopecks)
+	TakeRate           float64                `json:"take_rate"`           // platform_revenue / GMV * 100
+	TotalBookings      int64                  `json:"total_bookings"`      // booking count in period
+	RevenuePerBooking  int64                  `json:"revenue_per_booking"` // platform revenue per booking (kopecks)
+	GMVPerBooking      int64                  `json:"gmv_per_booking"`     // average booking value (kopecks)
 }
 
 // TopBathhouseInfo contains info about a top-ranked bathhouse
@@ -311,4 +311,3 @@ func (s *analyticsService) GetDailyStats(ctx context.Context, userID uuid.UUID, 
 
 	return dailyStats, nil
 }
-

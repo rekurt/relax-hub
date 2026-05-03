@@ -20,12 +20,12 @@ type AdminRoleService interface {
 
 // AdminUserInfo is a lightweight admin user summary.
 type AdminUserInfo struct {
-	ID           uuid.UUID            `json:"id"`
-	Email        string               `json:"email"`
-	Name         string               `json:"name"`
-	AdminSubRole domain.AdminSubRole  `json:"admin_sub_role"`
-	TwoFAMethod  domain.TwoFAMethod   `json:"two_fa_method"`
-	IsActive     bool                 `json:"is_active"`
+	ID           uuid.UUID           `json:"id"`
+	Email        string              `json:"email"`
+	Name         string              `json:"name"`
+	AdminSubRole domain.AdminSubRole `json:"admin_sub_role"`
+	TwoFAMethod  domain.TwoFAMethod  `json:"two_fa_method"`
+	IsActive     bool                `json:"is_active"`
 }
 
 type adminRoleService struct {

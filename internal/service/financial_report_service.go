@@ -197,13 +197,13 @@ func (s *financialReportService) GenerateOwnerAct(ctx context.Context, ownerID u
 
 // XML1CDocument represents a 1C-compatible XML document for financial data exchange.
 type XML1CDocument struct {
-	XMLName    xml.Name       `xml:"Документ"`
-	Version    string         `xml:"Версия,attr"`
-	DateFrom   string         `xml:"ПериодС"`
-	DateTo     string         `xml:"ПериодПо"`
-	Owner      string         `xml:"Владелец"`
+	XMLName    xml.Name         `xml:"Документ"`
+	Version    string           `xml:"Версия,attr"`
+	DateFrom   string           `xml:"ПериодС"`
+	DateTo     string           `xml:"ПериодПо"`
+	Owner      string           `xml:"Владелец"`
 	Operations []XML1COperation `xml:"Операции>Операция"`
-	Summary    XML1CSummary   `xml:"Итого"`
+	Summary    XML1CSummary     `xml:"Итого"`
 }
 
 // XML1COperation represents a single financial operation in 1C XML format.

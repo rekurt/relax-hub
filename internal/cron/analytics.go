@@ -4,55 +4,55 @@ import (
 	"context"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/rekurt/relax-hub/config"
 	"github.com/rekurt/relax-hub/internal/antifraud"
 	"github.com/rekurt/relax-hub/internal/calendar"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/rekurt/relax-hub/internal/repository"
 	"github.com/rekurt/relax-hub/internal/service"
-	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
 	"go.uber.org/fx"
 )
 
 // CronScheduler manages all scheduled tasks
 type CronScheduler struct {
-	c                  *cron.Cron
-	cfg                *config.Config
-	logger             *logger.Logger
-	jobs               []RegisteredJob
-	analyticsService   service.AnalyticsService
-	analyticsRepo      repository.AnalyticsRepository
-	subscriptionRepo   repository.SubscriptionRepository
-	promoRepo          repository.PromoCodeRepository
-	notifSvc           service.NotificationService
-	calendarSync       *calendar.CalendarSyncService
-	walletSvc          service.WalletService
-	walletRepo         repository.WalletRepository
-	accountDeletionSvc service.AccountDeletionService
-	sessionSvc         service.SessionService
-	savedSearchSvc     service.SavedSearchService
-	bookingSvc         service.BookingService
-	escrowSvc          service.EscrowService
-	depositSvc         service.SecurityDepositService
-	reviewSvc          service.ReviewService
-	clientReviewSvc    service.ClientReviewService
-	autoScenarioSvc    service.AutoScenarioService
-	ticketSvc          service.TicketService
-	kycSvc             service.KYCService
-	fraudEngine        antifraud.FraudEngine
-	bookingRepo        repository.BookingRepository
-	redisClient        *redis.Client
-	reconciliationSvc      service.ReconciliationService
-	adminNotificationSvc   service.AdminNotificationService
-	adminNotificationRepo  repository.AdminNotificationRepository
-	pmsSvc                 service.PMSService
-	promotionSvc           service.PromotionService
-	modReqSvc              service.BookingModificationService
-	extReqSvc              service.BookingExtensionService
-	payoutSvc              service.PayoutService
-	payoutRepo             repository.PayoutRepository
-	paymentDetailsRepo     repository.PaymentDetailsRepository
+	c                     *cron.Cron
+	cfg                   *config.Config
+	logger                *logger.Logger
+	jobs                  []RegisteredJob
+	analyticsService      service.AnalyticsService
+	analyticsRepo         repository.AnalyticsRepository
+	subscriptionRepo      repository.SubscriptionRepository
+	promoRepo             repository.PromoCodeRepository
+	notifSvc              service.NotificationService
+	calendarSync          *calendar.CalendarSyncService
+	walletSvc             service.WalletService
+	walletRepo            repository.WalletRepository
+	accountDeletionSvc    service.AccountDeletionService
+	sessionSvc            service.SessionService
+	savedSearchSvc        service.SavedSearchService
+	bookingSvc            service.BookingService
+	escrowSvc             service.EscrowService
+	depositSvc            service.SecurityDepositService
+	reviewSvc             service.ReviewService
+	clientReviewSvc       service.ClientReviewService
+	autoScenarioSvc       service.AutoScenarioService
+	ticketSvc             service.TicketService
+	kycSvc                service.KYCService
+	fraudEngine           antifraud.FraudEngine
+	bookingRepo           repository.BookingRepository
+	redisClient           *redis.Client
+	reconciliationSvc     service.ReconciliationService
+	adminNotificationSvc  service.AdminNotificationService
+	adminNotificationRepo repository.AdminNotificationRepository
+	pmsSvc                service.PMSService
+	promotionSvc          service.PromotionService
+	modReqSvc             service.BookingModificationService
+	extReqSvc             service.BookingExtensionService
+	payoutSvc             service.PayoutService
+	payoutRepo            repository.PayoutRepository
+	paymentDetailsRepo    repository.PaymentDetailsRepository
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -98,41 +98,41 @@ func NewCronScheduler(
 	}
 
 	return &CronScheduler{
-		c:                  newCronWithTimezone(timezone, l),
-		cfg:                cfg,
-		logger:             l,
-		analyticsService:   svc,
-		analyticsRepo:      repo,
-		subscriptionRepo:   subscriptionRepo,
-		promoRepo:          promoRepo,
-		notifSvc:           notifSvc,
-		calendarSync:       calendarSync,
-		walletSvc:          walletSvc,
-		walletRepo:         walletRepo,
-		accountDeletionSvc: accountDeletionSvc,
-		sessionSvc:         sessionSvc,
-		savedSearchSvc:     savedSearchSvc,
-		bookingSvc:         bookingSvc,
-		escrowSvc:          escrowSvc,
-		depositSvc:         depositSvc,
-		reviewSvc:          reviewSvc,
-		clientReviewSvc:    clientReviewSvc,
-		autoScenarioSvc:    autoScenarioSvc,
-		ticketSvc:          ticketSvc,
-		kycSvc:             kycSvc,
-		fraudEngine:        fraudEngine,
-		bookingRepo:        bookingRepo,
-		redisClient:        redisClient,
-		reconciliationSvc:      reconciliationSvc,
-		adminNotificationSvc:   adminNotificationSvc,
-		adminNotificationRepo:  adminNotificationRepo,
-		pmsSvc:                 pmsSvc,
-		promotionSvc:           promotionSvc,
-		modReqSvc:              modReqSvc,
-		extReqSvc:              extReqSvc,
-		payoutSvc:              payoutSvc,
-		payoutRepo:             payoutRepo,
-		paymentDetailsRepo:     paymentDetailsRepo,
+		c:                     newCronWithTimezone(timezone, l),
+		cfg:                   cfg,
+		logger:                l,
+		analyticsService:      svc,
+		analyticsRepo:         repo,
+		subscriptionRepo:      subscriptionRepo,
+		promoRepo:             promoRepo,
+		notifSvc:              notifSvc,
+		calendarSync:          calendarSync,
+		walletSvc:             walletSvc,
+		walletRepo:            walletRepo,
+		accountDeletionSvc:    accountDeletionSvc,
+		sessionSvc:            sessionSvc,
+		savedSearchSvc:        savedSearchSvc,
+		bookingSvc:            bookingSvc,
+		escrowSvc:             escrowSvc,
+		depositSvc:            depositSvc,
+		reviewSvc:             reviewSvc,
+		clientReviewSvc:       clientReviewSvc,
+		autoScenarioSvc:       autoScenarioSvc,
+		ticketSvc:             ticketSvc,
+		kycSvc:                kycSvc,
+		fraudEngine:           fraudEngine,
+		bookingRepo:           bookingRepo,
+		redisClient:           redisClient,
+		reconciliationSvc:     reconciliationSvc,
+		adminNotificationSvc:  adminNotificationSvc,
+		adminNotificationRepo: adminNotificationRepo,
+		pmsSvc:                pmsSvc,
+		promotionSvc:          promotionSvc,
+		modReqSvc:             modReqSvc,
+		extReqSvc:             extReqSvc,
+		payoutSvc:             payoutSvc,
+		payoutRepo:            payoutRepo,
+		paymentDetailsRepo:    paymentDetailsRepo,
 	}
 }
 

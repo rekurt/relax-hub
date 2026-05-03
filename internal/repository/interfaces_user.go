@@ -25,14 +25,12 @@ type UserRepository interface {
 	CountByCreatedAtRange(ctx context.Context, from, to time.Time) (int64, error)
 }
 
-
 type SocialAccountRepository interface {
 	Create(ctx context.Context, account *domain.SocialAccount) error
 	GetByProviderAndID(ctx context.Context, provider domain.OAuthProvider, providerID string) (*domain.SocialAccount, error)
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.SocialAccount, error)
 	Delete(ctx context.Context, userID uuid.UUID, provider domain.OAuthProvider) error
 }
-
 
 type SessionRepository interface {
 	Create(ctx context.Context, session *domain.Session) error
@@ -45,7 +43,6 @@ type SessionRepository interface {
 	DeleteExpired(ctx context.Context) (int64, error)
 }
 
-
 type KYCRepository interface {
 	Create(ctx context.Context, kyc *domain.KYCApplication) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.KYCApplication, error)
@@ -57,7 +54,6 @@ type KYCRepository interface {
 	ListExpiredApproved(ctx context.Context, before time.Time) ([]domain.KYCApplication, error)
 }
 
-
 type OfferRepository interface {
 	Create(ctx context.Context, acceptance *domain.OfferAcceptance) error
 	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.OfferAcceptance, error)
@@ -65,12 +61,10 @@ type OfferRepository interface {
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.OfferAcceptance, error)
 }
 
-
 type PaymentDetailsRepository interface {
 	Upsert(ctx context.Context, details *domain.PaymentDetails) error
 	GetByUserID(ctx context.Context, userID uuid.UUID) (*domain.PaymentDetails, error)
 }
-
 
 type DeviceTokenRepository interface {
 	Create(ctx context.Context, token *domain.DeviceToken) error
@@ -78,4 +72,3 @@ type DeviceTokenRepository interface {
 	DeleteByToken(ctx context.Context, token string) error
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.DeviceToken, error)
 }
-

@@ -91,5 +91,3 @@ func (r *PricingRuleRepo) GetActiveRules(_ context.Context, bathhouseID uuid.UUI
 	}
 	return result, nil
 }
-
-

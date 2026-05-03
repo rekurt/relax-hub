@@ -104,5 +104,3 @@ func (r *RepresentativeRepo) ListBathhouseIDsByUser(_ context.Context, userID uu
 	}
 	return ids, nil
 }
-
-

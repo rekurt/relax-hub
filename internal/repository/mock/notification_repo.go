@@ -260,5 +260,3 @@ func (r *NotificationRepo) MarkPushFallbackSent(_ context.Context, id uuid.UUID)
 	l.FallbackSent = true
 	return nil
 }
-
-

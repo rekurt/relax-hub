@@ -45,15 +45,16 @@ type resolveShareResponse struct {
 }
 
 // CreateShareLink godoc
-// @Summary Create a shareable booking link
-// @Tags share
-// @Accept json
-// @Produce json
-// @Param request body shareBookingRequest true "Booking parameters to share"
-// @Success 200 {object} APIResponse{data=shareBookingResponse}
-// @Failure 400 {object} APIResponse
-// @Security BearerAuth
-// @Router /api/v1/bookings/share [post]
+//
+//	@Summary	Create a shareable booking link
+//	@Tags		share
+//	@Accept		json
+//	@Produce	json
+//	@Param		request	body		shareBookingRequest	true	"Booking parameters to share"
+//	@Success	200		{object}	APIResponse{data=shareBookingResponse}
+//	@Failure	400		{object}	APIResponse
+//	@Security	BearerAuth
+//	@Router		/api/v1/bookings/share [post]
 func (h *ShareHandler) CreateShareLink(w http.ResponseWriter, r *http.Request) {
 	var req shareBookingRequest
 	if err := readJSON(w, r, &req); err != nil {
@@ -127,13 +128,14 @@ func (h *ShareHandler) CreateShareLink(w http.ResponseWriter, r *http.Request) {
 }
 
 // ResolveShareLink godoc
-// @Summary Resolve a shareable booking link
-// @Tags share
-// @Produce json
-// @Param token path string true "Share token"
-// @Success 200 {object} APIResponse{data=resolveShareResponse}
-// @Failure 404 {object} APIResponse
-// @Router /api/v1/share/booking/{token} [get]
+//
+//	@Summary	Resolve a shareable booking link
+//	@Tags		share
+//	@Produce	json
+//	@Param		token	path		string	true	"Share token"
+//	@Success	200		{object}	APIResponse{data=resolveShareResponse}
+//	@Failure	404		{object}	APIResponse
+//	@Router		/api/v1/share/booking/{token} [get]
 func (h *ShareHandler) ResolveShareLink(w http.ResponseWriter, r *http.Request) {
 	token := chi.URLParam(r, "token")
 	if token == "" {

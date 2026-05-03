@@ -10,11 +10,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/rekurt/relax-hub/internal/domain"
 	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/rekurt/relax-hub/internal/seo"
 	"github.com/rekurt/relax-hub/internal/service"
-	"github.com/redis/go-redis/v9"
 )
 
 const (

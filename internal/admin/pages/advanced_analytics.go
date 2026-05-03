@@ -51,7 +51,7 @@ var advancedAnalyticsFuncMap = template.FuncMap{
 	"formatPct": func(f float64) string {
 		return strconv.FormatFloat(f, 'f', 1, 64) + "%"
 	},
-	"funnelStepRu":   FunnelStepRu,
+	"funnelStepRu":    FunnelStepRu,
 	"cohortCellClass": CohortCellClass,
 	"divFloat": func(a, b int64) float64 {
 		if b == 0 {
@@ -68,12 +68,12 @@ var advancedAnalyticsTmpl = ParsePageTemplate(advancedAnalyticsFuncMap, "templat
 
 // AdvancedAnalyticsData is the data model for the advanced analytics page.
 type AdvancedAnalyticsData struct {
-	Funnel        *domain.ConversionFunnel  `json:"funnel"`
-	Cohorts       *domain.CohortAnalysis    `json:"cohorts"`
+	Funnel        *domain.ConversionFunnel   `json:"funnel"`
+	Cohorts       *domain.CohortAnalysis     `json:"cohorts"`
 	GeoDemand     *domain.GeoDemandSupplyMap `json:"geo_demand"`
-	WalletMetrics *domain.WalletMetrics     `json:"wallet_metrics"`
-	Period        string                    `json:"period"`
-	GeneratedAt   time.Time                 `json:"generated_at"`
+	WalletMetrics *domain.WalletMetrics      `json:"wallet_metrics"`
+	Period        string                     `json:"period"`
+	GeneratedAt   time.Time                  `json:"generated_at"`
 	PagesPrefix   string
 	AdminPrefix   string
 	PageTitle     string

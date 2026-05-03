@@ -92,7 +92,7 @@ const (
 	PayoutDailyLimitRUB   int64 = 50_000_000  // 500,000 RUB в копейках
 	PayoutMonthlyLimitRUB int64 = 300_000_000 // 3,000,000 RUB в копейках
 
-	PayoutMinAmountBYN    int64 = 1_500       // 15 BYN в копейках
-	PayoutDailyLimitBYN   int64 = 1_500_000   // 15,000 BYN в копейках
-	PayoutMonthlyLimitBYN int64 = 10_000_000  // 100,000 BYN в копейках
+	PayoutMinAmountBYN    int64 = 1_500      // 15 BYN в копейках
+	PayoutDailyLimitBYN   int64 = 1_500_000  // 15,000 BYN в копейках
+	PayoutMonthlyLimitBYN int64 = 10_000_000 // 100,000 BYN в копейках
 )

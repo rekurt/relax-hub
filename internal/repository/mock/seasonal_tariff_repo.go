@@ -91,5 +91,3 @@ func (r *SeasonalTariffRepo) GetActiveTariffs(_ context.Context, bathhouseID uui
 	}
 	return result, nil
 }
-
-

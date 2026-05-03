@@ -96,55 +96,55 @@ func getIPHash(r *http.Request) string {
 }
 
 type bathhouseResponse struct {
-	ID                         string             `json:"id"`
-	OwnerID                    string             `json:"owner_id"`
-	Name                       string             `json:"name"`
-	Slug                       string             `json:"slug"`
-	Description                string             `json:"description"`
-	Address                    string             `json:"address"`
-	CityID                     int64              `json:"city_id"`
-	Latitude                   float64            `json:"latitude"`
-	Longitude                  float64            `json:"longitude"`
-	PricePerHour               int64              `json:"price_per_hour"`
-	MinDuration                int                `json:"min_duration"`
-	MaxGuests                  int                `json:"max_guests"`
-	HasPool                    bool               `json:"has_pool"`
-	HasSauna                   bool               `json:"has_sauna"`
-	HasSteamRoom               bool               `json:"has_steam_room"`
-	HasHotTub                  bool               `json:"has_hot_tub"`
-	HasBBQ                     bool               `json:"has_bbq"`
-	HasKaraoke                 bool               `json:"has_karaoke"`
-	LongSessionThresholdHours  int                `json:"long_session_threshold_hours"`
-	LongSessionDiscountPercent int                `json:"long_session_discount_percent"`
-	BaseCapacity               int                `json:"base_capacity"`
-	ExtraGuestSurcharge        int64              `json:"extra_guest_surcharge"`
-	LastMinuteEnabled          bool               `json:"last_minute_enabled"`
-	LastMinuteDiscountPercent  int                `json:"last_minute_discount_percent,omitempty"`
-	LastMinuteHoursThreshold   int                `json:"last_minute_hours_threshold,omitempty"`
-	BufferMinutes              int                `json:"buffer_minutes"`
-	LeadTimeHours              int                `json:"lead_time_hours"`
-	MaxAdvanceDays             int                `json:"max_advance_days"`
-	BookingMode                string             `json:"booking_mode"`
-	RequestTimeout             int                `json:"request_timeout"`
-	CancellationPolicy         string             `json:"cancellation_policy"`
-	SecurityDepositPercent     int                `json:"security_deposit_percent"`
-	ResponseRate               float64            `json:"response_rate"`
-	AvgResponseTimeMinutes     int                `json:"avg_response_time_minutes"`
-	Rating                     float64            `json:"rating"`
-	BayesianRating             float64            `json:"bayesian_rating"`
-	AvgCleanliness             float64            `json:"avg_cleanliness,omitempty"`
-	AvgAccuracy                float64            `json:"avg_accuracy,omitempty"`
-	AvgCommunication           float64            `json:"avg_communication,omitempty"`
-	AvgValueForMoney           float64            `json:"avg_value_for_money,omitempty"`
-	ReviewCount                int                `json:"review_count"`
-	Images                     []string           `json:"images"`
-	WorkingHours               []workingHoursResp `json:"working_hours"`
-	Status                     string             `json:"status"`
-	IsFavorite                 bool               `json:"is_favorite"`
-	IsPromoted                 bool               `json:"is_promoted"`
-	IsPhotoVerified            bool               `json:"is_photo_verified"`
-	LastMinuteActive           bool               `json:"last_minute_active"`
-	Badges                     []string           `json:"badges"`
+	ID                         string                `json:"id"`
+	OwnerID                    string                `json:"owner_id"`
+	Name                       string                `json:"name"`
+	Slug                       string                `json:"slug"`
+	Description                string                `json:"description"`
+	Address                    string                `json:"address"`
+	CityID                     int64                 `json:"city_id"`
+	Latitude                   float64               `json:"latitude"`
+	Longitude                  float64               `json:"longitude"`
+	PricePerHour               int64                 `json:"price_per_hour"`
+	MinDuration                int                   `json:"min_duration"`
+	MaxGuests                  int                   `json:"max_guests"`
+	HasPool                    bool                  `json:"has_pool"`
+	HasSauna                   bool                  `json:"has_sauna"`
+	HasSteamRoom               bool                  `json:"has_steam_room"`
+	HasHotTub                  bool                  `json:"has_hot_tub"`
+	HasBBQ                     bool                  `json:"has_bbq"`
+	HasKaraoke                 bool                  `json:"has_karaoke"`
+	LongSessionThresholdHours  int                   `json:"long_session_threshold_hours"`
+	LongSessionDiscountPercent int                   `json:"long_session_discount_percent"`
+	BaseCapacity               int                   `json:"base_capacity"`
+	ExtraGuestSurcharge        int64                 `json:"extra_guest_surcharge"`
+	LastMinuteEnabled          bool                  `json:"last_minute_enabled"`
+	LastMinuteDiscountPercent  int                   `json:"last_minute_discount_percent,omitempty"`
+	LastMinuteHoursThreshold   int                   `json:"last_minute_hours_threshold,omitempty"`
+	BufferMinutes              int                   `json:"buffer_minutes"`
+	LeadTimeHours              int                   `json:"lead_time_hours"`
+	MaxAdvanceDays             int                   `json:"max_advance_days"`
+	BookingMode                string                `json:"booking_mode"`
+	RequestTimeout             int                   `json:"request_timeout"`
+	CancellationPolicy         string                `json:"cancellation_policy"`
+	SecurityDepositPercent     int                   `json:"security_deposit_percent"`
+	ResponseRate               float64               `json:"response_rate"`
+	AvgResponseTimeMinutes     int                   `json:"avg_response_time_minutes"`
+	Rating                     float64               `json:"rating"`
+	BayesianRating             float64               `json:"bayesian_rating"`
+	AvgCleanliness             float64               `json:"avg_cleanliness,omitempty"`
+	AvgAccuracy                float64               `json:"avg_accuracy,omitempty"`
+	AvgCommunication           float64               `json:"avg_communication,omitempty"`
+	AvgValueForMoney           float64               `json:"avg_value_for_money,omitempty"`
+	ReviewCount                int                   `json:"review_count"`
+	Images                     []string              `json:"images"`
+	WorkingHours               []workingHoursResp    `json:"working_hours"`
+	Status                     string                `json:"status"`
+	IsFavorite                 bool                  `json:"is_favorite"`
+	IsPromoted                 bool                  `json:"is_promoted"`
+	IsPhotoVerified            bool                  `json:"is_photo_verified"`
+	LastMinuteActive           bool                  `json:"last_minute_active"`
+	Badges                     []string              `json:"badges"`
 	AreaAvgPricePerHour        int64                 `json:"area_avg_price_per_hour,omitempty"`
 	GalleryPreview             []mediaResponse       `json:"gallery_preview,omitempty"`
 	OwnerProfile               *ownerProfileResponse `json:"owner_profile,omitempty"`
@@ -154,12 +154,12 @@ type bathhouseResponse struct {
 }
 
 type ownerProfileResponse struct {
-	ID             string    `json:"id"`
-	Name           string    `json:"name"`
-	AvatarURL      string    `json:"avatar_url,omitempty"`
-	Rating         float64   `json:"rating"`
-	ObjectCount    int       `json:"object_count"`
-	MemberSince    time.Time `json:"member_since"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	AvatarURL   string    `json:"avatar_url,omitempty"`
+	Rating      float64   `json:"rating"`
+	ObjectCount int       `json:"object_count"`
+	MemberSince time.Time `json:"member_since"`
 }
 
 type workingHoursResp struct {
@@ -975,4 +975,3 @@ func (h *BathhouseHandler) MyBathhouses(w http.ResponseWriter, r *http.Request) 
 		TotalPages: totalPages,
 	})
 }
-

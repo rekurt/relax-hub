@@ -151,8 +151,8 @@ type HeatmapCell struct {
 
 // HeatmapData holds the full heatmap response.
 type HeatmapData struct {
-	Period    AnalyticsPeriod `json:"period"`
-	CellSize  float64        `json:"cell_size"`  // grid cell size in degrees
+	Period   AnalyticsPeriod `json:"period"`
+	CellSize float64         `json:"cell_size"` // grid cell size in degrees
 	Cells    []HeatmapCell   `json:"cells"`
 }
 
@@ -168,13 +168,13 @@ type WalletMetrics struct {
 
 // OwnerPerformance holds per-owner analytics (with optional anonymized competitor benchmarking).
 type OwnerPerformance struct {
-	BathhouseID    uuid.UUID `json:"bathhouse_id"`
-	BathhouseName  string    `json:"bathhouse_name"`
-	ConversionRate float64   `json:"conversion_rate"` // views -> bookings
-	OccupancyRate  float64   `json:"occupancy_rate"`  // booked hours / available hours
-	AvgRating      float64   `json:"avg_rating"`
-	Revenue        int64     `json:"revenue"`      // kopecks
-	AvgCityConversionRate float64 `json:"avg_city_conversion_rate"` // anonymous benchmark
-	AvgCityOccupancyRate  float64 `json:"avg_city_occupancy_rate"`
-	AvgCityRating         float64 `json:"avg_city_rating"`
+	BathhouseID           uuid.UUID `json:"bathhouse_id"`
+	BathhouseName         string    `json:"bathhouse_name"`
+	ConversionRate        float64   `json:"conversion_rate"` // views -> bookings
+	OccupancyRate         float64   `json:"occupancy_rate"`  // booked hours / available hours
+	AvgRating             float64   `json:"avg_rating"`
+	Revenue               int64     `json:"revenue"`                  // kopecks
+	AvgCityConversionRate float64   `json:"avg_city_conversion_rate"` // anonymous benchmark
+	AvgCityOccupancyRate  float64   `json:"avg_city_occupancy_rate"`
+	AvgCityRating         float64   `json:"avg_city_rating"`
 }

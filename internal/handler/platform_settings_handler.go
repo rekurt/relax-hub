@@ -18,12 +18,12 @@ func NewPlatformSettingsHandler(svc service.PlatformSettingsService) *PlatformSe
 }
 
 type platformSettingResponse struct {
-	Key         string     `json:"key"`
-	Value       string     `json:"value"`
-	Description string     `json:"description"`
-	Type        string     `json:"type"`
-	UpdatedAt   time.Time  `json:"updated_at"`
-	UpdatedBy   *string    `json:"updated_by,omitempty"`
+	Key         string    `json:"key"`
+	Value       string    `json:"value"`
+	Description string    `json:"description"`
+	Type        string    `json:"type"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	UpdatedBy   *string   `json:"updated_by,omitempty"`
 }
 
 type updateSettingRequest struct {

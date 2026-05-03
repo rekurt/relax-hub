@@ -227,5 +227,3 @@ func (r *UserRepo) CountByCreatedAtRange(_ context.Context, from, to time.Time) 
 	}
 	return count, nil
 }
-
-

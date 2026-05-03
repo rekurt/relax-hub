@@ -16,7 +16,7 @@ import (
 // ParsedBankEntry represents a parsed bank statement row before persisting.
 type ParsedBankEntry struct {
 	Date         time.Time
-	Amount       int64  // kopecks, positive = incoming, negative = outgoing
+	Amount       int64 // kopecks, positive = incoming, negative = outgoing
 	Description  string
 	Counterparty string
 	ReferenceNum string
@@ -250,9 +250,9 @@ func parseBankDate(s string) (time.Time, error) {
 // Handles: "1500.50", "1500,50", "-1500.50", "1 500,50"
 func parseBankAmount(s string) (int64, error) {
 	s = strings.TrimSpace(s)
-	s = strings.ReplaceAll(s, " ", "")  // remove thousand separators
+	s = strings.ReplaceAll(s, " ", "")      // remove thousand separators
 	s = strings.ReplaceAll(s, "\u00a0", "") // remove non-breaking spaces
-	s = strings.ReplaceAll(s, ",", ".") // normalize decimal separator
+	s = strings.ReplaceAll(s, ",", ".")     // normalize decimal separator
 
 	f, err := strconv.ParseFloat(s, 64)
 	if err != nil {

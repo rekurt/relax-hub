@@ -280,7 +280,7 @@ type restoplaceAvailabilityResponse struct {
 }
 
 type restoplaceAvailabilityDay struct {
-	Date  string                    `json:"date"`
+	Date  string                       `json:"date"`
 	Slots []restoplaceAvailabilitySlot `json:"slots"`
 }
 

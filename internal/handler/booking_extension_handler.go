@@ -63,8 +63,8 @@ type requestExtensionRequest struct {
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			id		path		string						true	"Booking ID (UUID)"
-//	@Param			body	body		requestExtensionRequest		true	"Extension details"
+//	@Param			id		path		string					true	"Booking ID (UUID)"
+//	@Param			body	body		requestExtensionRequest	true	"Extension details"
 //	@Success		201		{object}	APIResponse{data=extensionRequestResponse}
 //	@Failure		400		{object}	APIResponse{error=APIError}
 //	@Failure		401		{object}	APIResponse{error=APIError}
@@ -183,8 +183,8 @@ func (h *BookingExtensionHandler) ApproveExtension(w http.ResponseWriter, r *htt
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			id		path		string						true	"Extension Request ID (UUID)"
-//	@Param			body	body		rejectExtensionRequest		true	"Rejection details"
+//	@Param			id		path		string					true	"Extension Request ID (UUID)"
+//	@Param			body	body		rejectExtensionRequest	true	"Rejection details"
 //	@Success		200		{object}	APIResponse
 //	@Failure		400		{object}	APIResponse{error=APIError}
 //	@Failure		403		{object}	APIResponse{error=APIError}

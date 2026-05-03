@@ -142,5 +142,3 @@ func (r *PromotionRepo) ListAllActive(_ context.Context) ([]domain.Promotion, er
 	}
 	return items, nil
 }
-
-

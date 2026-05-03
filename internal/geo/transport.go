@@ -11,8 +11,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/redis/go-redis/v9"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 // TransportType represents a type of nearby transport infrastructure.
@@ -50,10 +50,10 @@ type TransportService struct {
 }
 
 const (
-	transportCachePrefix = "transport:"
-	transportCacheTTL    = 7 * 24 * time.Hour // 7 days
-	transportSearchRadius = 1500              // meters
-	maxTransportResults   = 5                 // max results per transport type
+	transportCachePrefix  = "transport:"
+	transportCacheTTL     = 7 * 24 * time.Hour // 7 days
+	transportSearchRadius = 1500               // meters
+	maxTransportResults   = 5                  // max results per transport type
 )
 
 // NewTransportService creates a new TransportService.
@@ -158,9 +158,9 @@ type yandexSearchResponse struct {
 
 type yandexFeature struct {
 	Properties struct {
-		Name             string `json:"name"`
-		Description      string `json:"description"`
-		CompanyMetaData  *struct {
+		Name            string `json:"name"`
+		Description     string `json:"description"`
+		CompanyMetaData *struct {
 			Name string `json:"name"`
 		} `json:"CompanyMetaData,omitempty"`
 	} `json:"properties"`

@@ -46,7 +46,6 @@ func (s *bookingService) GetByID(ctx context.Context, userID uuid.UUID, role dom
 	}
 }
 
-
 func (s *bookingService) Cancel(ctx context.Context, userID uuid.UUID, role domain.UserRole, bookingID uuid.UUID, refundTo string) error {
 	booking, err := s.bookingRepo.GetByID(ctx, bookingID)
 	if err != nil {
@@ -285,7 +284,6 @@ func (s *bookingService) Complete(ctx context.Context, userID uuid.UUID, role do
 		ReferralBonusUsed: booking.ReferralBonusUsed,
 	}, nil
 }
-
 
 func (s *bookingService) ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Booking], error) {
 	return s.bookingRepo.ListByUser(ctx, userID, page, pageSize)
@@ -661,4 +659,3 @@ const (
 	noShowGracePeriod   = 30 * time.Minute
 	noShowDisputeWindow = 2 * time.Hour
 )
-

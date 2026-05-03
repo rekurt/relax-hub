@@ -242,4 +242,3 @@ func (h *AdminHandler) ListBathhouses(w http.ResponseWriter, r *http.Request) {
 		TotalPages: result.TotalPages,
 	})
 }
-

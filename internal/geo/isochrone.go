@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rekurt/relax-hub/internal/logger"
 	"github.com/redis/go-redis/v9"
+	"github.com/rekurt/relax-hub/internal/logger"
 )
 
 // TravelMode represents the mode of transportation for isochrone calculation.

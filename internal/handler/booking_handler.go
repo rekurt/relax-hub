@@ -327,4 +327,3 @@ func (h *BookingHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	h.enrichWithPaymentStatus(r.Context(), &resp)
 	writeJSON(w, http.StatusOK, resp)
 }
-

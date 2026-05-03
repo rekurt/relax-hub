@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rekurt/relax-hub/internal/domain"
 	"github.com/redis/go-redis/v9"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 // bonusExpiration expires bonus transactions that have passed their expiry date.

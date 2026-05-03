@@ -20,7 +20,6 @@ type PaymentRepository interface {
 	ListByUser(ctx context.Context, userID uuid.UUID, page, pageSize int) (*domain.PaginatedResult[domain.Payment], error)
 }
 
-
 type WalletRepository interface {
 	Create(ctx context.Context, wallet *domain.Wallet) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Wallet, error)
@@ -43,7 +42,6 @@ type WalletRepository interface {
 	GetExpiredHolds(ctx context.Context, before time.Time) ([]domain.WalletHold, error)
 }
 
-
 type PayoutRepository interface {
 	Create(ctx context.Context, payout *domain.Payout) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Payout, error)
@@ -58,7 +56,6 @@ type PayoutRepository interface {
 	ListActiveAutoPayoutSettings(ctx context.Context) ([]domain.AutoPayoutSettings, error)
 }
 
-
 type SavedCardRepository interface {
 	Create(ctx context.Context, card *domain.SavedCard) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.SavedCard, error)
@@ -68,7 +65,6 @@ type SavedCardRepository interface {
 	CountByUser(ctx context.Context, userID uuid.UUID) (int64, error)
 }
 
-
 type ServiceFeeRepository interface {
 	GetByRegionAndCategory(ctx context.Context, region string, category *string) (*domain.ServiceFeeConfig, error)
 	GetByRegion(ctx context.Context, region string) (*domain.ServiceFeeConfig, error)
@@ -76,7 +72,6 @@ type ServiceFeeRepository interface {
 	List(ctx context.Context) ([]domain.ServiceFeeConfig, error)
 	Upsert(ctx context.Context, config *domain.ServiceFeeConfig) error
 }
-
 
 type ReconciliationRepository interface {
 	CreateFloatSnapshot(ctx context.Context, snapshot *domain.FloatSnapshot) error
@@ -95,7 +90,6 @@ type ReconciliationRepository interface {
 	SumRefundsForPeriod(ctx context.Context, from, to time.Time) (sum int64, count int, err error)
 }
 
-
 // BankReconciliationRepository manages bank statement entries and uploads.
 type BankReconciliationRepository interface {
 	CreateUpload(ctx context.Context, upload *domain.BankStatementUpload) error
@@ -109,4 +103,3 @@ type BankReconciliationRepository interface {
 	// FindPaymentsByAmountAndDate finds payments matching amount and date range for auto-matching.
 	FindPaymentsByAmountAndDate(ctx context.Context, amount int64, dateFrom, dateTo time.Time) ([]domain.Payment, error)
 }
-

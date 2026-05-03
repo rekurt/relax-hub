@@ -7,10 +7,11 @@ import (
 	"image"
 	"image/jpeg"
 	_ "image/png"
-	_ "golang.org/x/image/webp"
 	"io"
 	"net/url"
 	"strings"
+
+	_ "golang.org/x/image/webp"
 
 	blurhash "github.com/buckket/go-blurhash"
 	"github.com/chai2010/webp"

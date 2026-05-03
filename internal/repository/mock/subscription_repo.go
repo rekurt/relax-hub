@@ -114,5 +114,3 @@ func (r *SubscriptionRepo) GetExpiring(_ context.Context, before time.Time) ([]d
 	}
 	return result, nil
 }
-
-

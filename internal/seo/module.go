@@ -1,8 +1,8 @@
 package seo
 
 import (
-	"github.com/rekurt/relax-hub/config"
 	"github.com/redis/go-redis/v9"
+	"github.com/rekurt/relax-hub/config"
 	"go.uber.org/fx"
 )
 

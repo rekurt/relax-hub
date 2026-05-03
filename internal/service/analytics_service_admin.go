@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rekurt/relax-hub/internal/domain"
 	"github.com/redis/go-redis/v9"
+	"github.com/rekurt/relax-hub/internal/domain"
 )
 
 // GetAdminDashboard returns dashboard data for admin

@@ -47,9 +47,9 @@ const (
 )
 
 const (
-	MaxWebhooksPerOwner    = 20
-	MaxWebhookRetries      = 3
-	WebhookRetryBaseDelay  = 2 // seconds
+	MaxWebhooksPerOwner   = 20
+	MaxWebhookRetries     = 3
+	WebhookRetryBaseDelay = 2 // seconds
 )
 
 type Webhook struct {

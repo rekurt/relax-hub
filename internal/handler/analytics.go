@@ -445,8 +445,8 @@ func (h *AnalyticsHandler) GetPnL(w http.ResponseWriter, r *http.Request) {
 //	@Tags			admin-analytics
 //	@Produce		json
 //	@Security		BearerAuth
-//	@Param			period		query		string	false	"Period: 1d, 7d, 30d, 90d"		default(30d)
-//	@Param			cell_size	query		number	false	"Grid cell size in degrees"		default(0.01)
+//	@Param			period		query		string	false	"Period: 1d, 7d, 30d, 90d"	default(30d)
+//	@Param			cell_size	query		number	false	"Grid cell size in degrees"	default(0.01)
 //	@Success		200			{object}	APIResponse{data=domain.HeatmapData}
 //	@Failure		400			{object}	APIResponse{error=APIError}
 //	@Failure		401			{object}	APIResponse{error=APIError}

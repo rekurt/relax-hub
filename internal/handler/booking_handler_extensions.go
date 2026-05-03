@@ -270,4 +270,3 @@ func (h *BookingHandler) DisputeNoShow(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "dispute_created"})
 }
-

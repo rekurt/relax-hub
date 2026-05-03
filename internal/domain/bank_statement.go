@@ -10,10 +10,10 @@ import (
 type BankStatementEntryStatus string
 
 const (
-	BankEntryPending  BankStatementEntryStatus = "pending"  // ожидает сопоставления
-	BankEntryMatched  BankStatementEntryStatus = "matched"  // автоматически сопоставлена
-	BankEntryManual   BankStatementEntryStatus = "manual"   // сопоставлена вручную
-	BankEntryIgnored  BankStatementEntryStatus = "ignored"  // пропущена (не относится к платформе)
+	BankEntryPending BankStatementEntryStatus = "pending" // ожидает сопоставления
+	BankEntryMatched BankStatementEntryStatus = "matched" // автоматически сопоставлена
+	BankEntryManual  BankStatementEntryStatus = "manual"  // сопоставлена вручную
+	BankEntryIgnored BankStatementEntryStatus = "ignored" // пропущена (не относится к платформе)
 )
 
 func (s BankStatementEntryStatus) IsValid() bool {

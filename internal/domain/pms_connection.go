@@ -9,7 +9,7 @@ import (
 type PMSProvider string
 
 const (
-	PMSProviderYclients  PMSProvider = "yclients"
+	PMSProviderYclients   PMSProvider = "yclients"
 	PMSProviderRestoplace PMSProvider = "restoplace"
 )
 
@@ -48,19 +48,19 @@ const (
 )
 
 type PMSConnection struct {
-	ID                  uuid.UUID
-	OwnerID             uuid.UUID
-	BathhouseID         uuid.UUID
-	Provider            PMSProvider
+	ID                   uuid.UUID
+	OwnerID              uuid.UUID
+	BathhouseID          uuid.UUID
+	Provider             PMSProvider
 	CredentialsEncrypted string
-	SyncDirection       PMSSyncDirection
-	SyncIntervalMinutes int
-	Status              PMSConnectionStatus
-	LastSyncAt          *time.Time
-	LastSyncError       string
-	ExternalID          string // Bathhouse ID in the external PMS
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
+	SyncDirection        PMSSyncDirection
+	SyncIntervalMinutes  int
+	Status               PMSConnectionStatus
+	LastSyncAt           *time.Time
+	LastSyncError        string
+	ExternalID           string // Bathhouse ID in the external PMS
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
 }
 
 func (c *PMSConnection) Validate() error {

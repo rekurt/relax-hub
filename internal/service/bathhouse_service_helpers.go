@@ -95,10 +95,10 @@ func workingHoursEqual(a, b []domain.WorkingHours) bool {
 }
 
 const (
-	badgeVerified  = "verified"
-	badgeTop       = "top"
-	badgePremium   = "premium"
-	badgeNew       = "new"
+	badgeVerified   = "verified"
+	badgeTop        = "top"
+	badgePremium    = "premium"
+	badgeNew        = "new"
 	badgeLastMinute = "last_minute"
 
 	badgeTopMinRating  = 4.5

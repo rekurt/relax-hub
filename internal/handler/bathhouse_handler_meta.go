@@ -63,18 +63,18 @@ func (h *BathhouseHandler) buildMeta(ctx context.Context, bh *domain.Bathhouse) 
 	return &meta
 }
 
-// @Summary		Check listing completeness
-// @Description	Check how complete a bathhouse listing is before submitting for moderation.
-// @Tags			bathhouses
-// @Produce		json
-// @Security		BearerAuth
-// @Param			id	path		string	true	"Bathhouse ID (UUID)"
-// @Success		200	{object}	APIResponse{data=service.CompletenessResult}
-// @Failure		400	{object}	APIResponse{error=APIError}
-// @Failure		401	{object}	APIResponse{error=APIError}
-// @Failure		403	{object}	APIResponse{error=APIError}
-// @Failure		404	{object}	APIResponse{error=APIError}
-// @Router			/my/bathhouses/{id}/completeness [get]
+//	@Summary		Check listing completeness
+//	@Description	Check how complete a bathhouse listing is before submitting for moderation.
+//	@Tags			bathhouses
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			id	path		string	true	"Bathhouse ID (UUID)"
+//	@Success		200	{object}	APIResponse{data=service.CompletenessResult}
+//	@Failure		400	{object}	APIResponse{error=APIError}
+//	@Failure		401	{object}	APIResponse{error=APIError}
+//	@Failure		403	{object}	APIResponse{error=APIError}
+//	@Failure		404	{object}	APIResponse{error=APIError}
+//	@Router			/my/bathhouses/{id}/completeness [get]
 
 func (h *BathhouseHandler) recordBathhouseView(r *http.Request, bathhouseID uuid.UUID, userID uuid.UUID) {
 	ctx := r.Context()

@@ -41,5 +41,3 @@ func (r *ForceMajeureRepo) List(_ context.Context) ([]domain.ForceMajeureEvent, 
 	}
 	return result, nil
 }
-
-

@@ -304,4 +304,3 @@ func (h *BookingHandler) CheckOut(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "checked_out"})
 }
-

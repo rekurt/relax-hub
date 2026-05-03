@@ -256,13 +256,13 @@ type yclientsRecordsResponse struct {
 }
 
 type yclientsRecord struct {
-	ID         int              `json:"id"`
-	Date       string           `json:"date"`
-	Datetime   string           `json:"datetime"`
-	Length     int              `json:"length"`
-	Comment    string           `json:"comment"`
-	Attendance int              `json:"attendance"`
-	Client     yclientsClient   `json:"client"`
+	ID         int            `json:"id"`
+	Date       string         `json:"date"`
+	Datetime   string         `json:"datetime"`
+	Length     int            `json:"length"`
+	Comment    string         `json:"comment"`
+	Attendance int            `json:"attendance"`
+	Client     yclientsClient `json:"client"`
 }
 
 type yclientsClient struct {
@@ -275,8 +275,8 @@ type yclientsScheduleResponse struct {
 }
 
 type yclientsScheduleDay struct {
-	Date  string               `json:"date"`
-	Slots []yclientsSlot       `json:"slots"`
+	Date  string         `json:"date"`
+	Slots []yclientsSlot `json:"slots"`
 }
 
 type yclientsSlot struct {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/google/uuid"
 )
 
 func (b *Bot) commandStart(ctx context.Context, chatID int64) {
@@ -148,4 +148,3 @@ func (b *Bot) commandFavorites(ctx context.Context, chatID int64, page int) {
 }
 
 // --- Callback actions ---
-

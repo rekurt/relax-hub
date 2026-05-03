@@ -407,4 +407,3 @@ func (h *AuthHandler) GetMyStats(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, stats)
 }
-

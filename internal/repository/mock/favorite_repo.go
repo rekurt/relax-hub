@@ -85,5 +85,3 @@ func (r *FavoriteRepo) CountByUser(_ context.Context, userID uuid.UUID) (int64, 
 	}
 	return count, nil
 }
-
-

@@ -280,4 +280,3 @@ func (s *bookingService) ListUpcomingWithBathhouse(ctx context.Context, from, to
 	}
 	return result, nil
 }
-

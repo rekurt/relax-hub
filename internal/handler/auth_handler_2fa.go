@@ -186,4 +186,3 @@ func (h *AuthHandler) Verify2FALogin(w http.ResponseWriter, r *http.Request) {
 		Token: token,
 	})
 }
-

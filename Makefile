@@ -3,7 +3,7 @@
 APP_NAME := bani-server
 BUILD_DIR := ./bin
 VERSION ?= dev
-SWAG ?= go run github.com/swaggo/swag/cmd/swag
+SWAG ?= go run github.com/swaggo/swag/cmd/swag@v1.16.6
 
 build:
 	go build -ldflags "-X main.Version=$(VERSION) -X main.Commit=$$(git rev-parse --short HEAD) -X main.BuildTime=$$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o $(BUILD_DIR)/$(APP_NAME) ./cmd/server

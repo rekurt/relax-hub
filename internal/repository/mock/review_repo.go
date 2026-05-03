@@ -269,5 +269,3 @@ func (r *ReviewRepo) ListUnrevealedPastDeadline(_ context.Context, now time.Time
 	}
 	return result, nil
 }
-
-
