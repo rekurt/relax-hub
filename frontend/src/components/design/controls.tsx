@@ -804,6 +804,7 @@ function SelectRoot({
   const [open, setOpen] = useState(false)
   const [internalValue, setInternalValue] = useState(defaultValue ?? (mode ? [] : ''))
   const [dropdownStyle, setDropdownStyle] = useState<CSSProperties | undefined>(undefined)
+  const [activeIndex, setActiveIndex] = useState(-1)
   const resolvedOptions = options ?? optionsFromChildren(children)
   const optionByDomValue = new Map(resolvedOptions.map((option) => [String(option.value), option]))
   const selectedValue = value !== undefined ? value : internalValue
@@ -867,6 +868,34 @@ function SelectRoot({
   }, [dropdownOptions.length, open])
 
   useEffect(() => {
+    if (!open) {
+      setActiveIndex(-1)
+      return
+    }
+    if (mode) {
+      const firstEnabled = dropdownOptions.findIndex((option) => !option.disabled)
+      setActiveIndex(firstEnabled)
+      return
+    }
+    const selectedIdx = dropdownOptions.findIndex((option) => String(option.value) === String(selectedValue ?? ''))
+    const selectedOpt = selectedIdx >= 0 ? dropdownOptions[selectedIdx] : undefined
+    if (selectedOpt && !selectedOpt.disabled) {
+      setActiveIndex(selectedIdx)
+    } else {
+      setActiveIndex(dropdownOptions.findIndex((option) => !option.disabled))
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open || activeIndex < 0 || !dropdownRef.current) return
+    const optionEls = dropdownRef.current.querySelectorAll('[role="option"]')
+    const target = optionEls[activeIndex] as HTMLElement | undefined
+    if (target && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ block: 'nearest' })
+    }
+  }, [activeIndex, open])
+
+  useEffect(() => {
     if (!open) return
 
     const handlePointerDown = (event: PointerEvent) => {
@@ -927,13 +956,77 @@ function SelectRoot({
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-controls={dropdownId}
+        aria-activedescendant={open && activeIndex >= 0 && dropdownId
+          ? `${dropdownId}-opt-${activeIndex}`
+          : undefined}
         onClick={() => {
           if (!disabled) setOpen((current) => !current)
         }}
         onKeyDown={(event) => {
-          if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            if (!disabled) setOpen(true)
+          if (disabled) return
+          const moveActive = (delta: number) => {
+            if (dropdownOptions.length === 0) return
+            const enabled: number[] = []
+            for (let i = 0; i < dropdownOptions.length; i++) {
+              const opt = dropdownOptions[i]
+              if (opt && !opt.disabled) enabled.push(i)
+            }
+            if (enabled.length === 0) return
+            const cur = enabled.indexOf(activeIndex)
+            const baseline = cur >= 0 ? cur : (delta > 0 ? -1 : 0)
+            const nextPos = (baseline + delta + enabled.length) % enabled.length
+            const target = enabled[nextPos]
+            if (target !== undefined) setActiveIndex(target)
+          }
+          switch (event.key) {
+            case 'ArrowDown':
+              event.preventDefault()
+              if (!open) setOpen(true)
+              else moveActive(1)
+              return
+            case 'ArrowUp':
+              event.preventDefault()
+              if (!open) setOpen(true)
+              else moveActive(-1)
+              return
+            case 'Home':
+              if (!open) return
+              event.preventDefault()
+              {
+                const idx = dropdownOptions.findIndex((option) => !option.disabled)
+                if (idx >= 0) setActiveIndex(idx)
+              }
+              return
+            case 'End':
+              if (!open) return
+              event.preventDefault()
+              for (let i = dropdownOptions.length - 1; i >= 0; i--) {
+                const opt = dropdownOptions[i]
+                if (opt && !opt.disabled) {
+                  setActiveIndex(i)
+                  break
+                }
+              }
+              return
+            case 'Enter':
+            case ' ': {
+              event.preventDefault()
+              if (!open) {
+                setOpen(true)
+                return
+              }
+              const option = dropdownOptions[activeIndex]
+              if (option && !option.disabled) commitValue(option.value, option)
+              return
+            }
+            case 'Escape':
+              if (open) {
+                event.preventDefault()
+                setOpen(false)
+              }
+              return
+            default:
+              return
           }
         }}
       >
@@ -950,22 +1043,26 @@ function SelectRoot({
           aria-multiselectable={Boolean(mode)}
           style={dropdownStyle}
         >
-          {dropdownOptions.map((option) => {
+          {dropdownOptions.map((option, idx) => {
             const selected = mode && Array.isArray(selectedValue)
               ? selectedValue.some((item) => String(item) === String(option.value))
               : String(selectedValue ?? '') === String(option.value)
+            const active = idx === activeIndex
             return (
               <button
                 key={String(option.value)}
+                id={dropdownId ? `${dropdownId}-opt-${idx}` : undefined}
                 type="button"
                 className={cx(
                   'rh-select__option ant-select-item ant-select-item-option',
                   selected && 'rh-select__option--selected ant-select-item-option-selected',
+                  active && 'ant-select-item-option-active',
                   option.disabled && 'ant-select-item-option-disabled',
                 )}
                 role="option"
                 aria-selected={selected}
                 disabled={option.disabled}
+                onMouseEnter={() => { if (!option.disabled) setActiveIndex(idx) }}
                 onClick={() => commitValue(option.value, option)}
               >
                 <span className="ant-select-item-option-state" aria-hidden="true">

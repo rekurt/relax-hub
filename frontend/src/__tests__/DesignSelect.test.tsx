@@ -31,4 +31,33 @@ describe('Design Select', () => {
     expect(onChange).toHaveBeenCalledWith('moscow', expect.objectContaining({ value: 'moscow' }))
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   })
+
+  it('supports keyboard navigation: ArrowDown opens, ArrowDown moves, Enter commits', () => {
+    const onChange = vi.fn()
+
+    render(
+      <Select
+        value="all"
+        options={[
+          { value: 'all', label: 'Все регионы' },
+          { value: 'moscow', label: 'Москва' },
+          { value: 'spb', label: 'Санкт-Петербург' },
+        ]}
+        onChange={onChange}
+      />,
+    )
+
+    const trigger = document.querySelector('.ant-select-selector') as HTMLElement
+    expect(trigger).toBeTruthy()
+    trigger.focus()
+
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' })
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+
+    fireEvent.keyDown(trigger, { key: 'ArrowDown' })
+    fireEvent.keyDown(trigger, { key: 'Enter' })
+
+    expect(onChange).toHaveBeenCalledWith('moscow', expect.objectContaining({ value: 'moscow' }))
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
 })
