@@ -25,27 +25,6 @@ import { PUBLIC_SHORTCUT_CARDS } from '@/navigation/menu'
 
 const { Title, Text } = Typography
 
-const DISCOVERY_PROOF_POINTS = [
-  {
-    key: 'slots',
-    eyebrow: 'Маршрут',
-    title: 'Каталог с понятным входом в бронь',
-    description: 'Поиск, сценарии отдыха и переход к слоту собраны в один public-first контур без кабинетообразной навигации.',
-  },
-  {
-    key: 'filters',
-    eyebrow: 'Фильтры',
-    title: 'Сценарии вместо перегруза',
-    description: 'Город, гости, дата и ключевые удобства вынесены на первый план, а вторичные настройки не мешают выбору.',
-  },
-  {
-    key: 'trust',
-    eyebrow: 'Доверие',
-    title: 'Реальные объекты, рейтинги и ценовые ориентиры',
-    description: 'Решение строится на живой выдаче, а не на рекламных обещаниях или vanity-метриках.',
-  },
-]
-
 const DISCOVERY_STEPS = [
   'Выберите сценарий отдыха или сразу откройте каталог.',
   'Уточните город, гостей и дату без длинной формы.',
@@ -472,14 +451,9 @@ export default function ClientHome() {
               const val = (e.target as HTMLInputElement).value
               navigate(`/catalog${val ? `?q=${encodeURIComponent(val)}` : ''}`)
             }}
-            onClick={() => navigate('/catalog')}
-            readOnly
             className="rh-home__search"
           />
           <Space wrap className="rh-home__hero-actions">
-            <Button size="large" type="primary" onClick={() => navigate('/catalog')}>
-              Подобрать баню
-            </Button>
             <Button size="large" className="rh-home__hero-secondary" onClick={() => navigate('/certificates')}>
               Подарочный сертификат
             </Button>
@@ -520,29 +494,6 @@ export default function ClientHome() {
               </button>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="rh-home__proof">
-        <div className="rh-home__section-copy">
-          <Text className="rh-home__section-eyebrow">Как устроен выбор</Text>
-          <Title level={3} className="rh-home__section-title">
-            Discovery без дешёвого маркетингового шума
-          </Title>
-          <Text className="rh-home__section-description">
-            Новый клиент должен сразу понимать, что здесь можно выбрать, по каким параметрам сравнивать варианты и как быстро дойти до бронирования.
-          </Text>
-        </div>
-        <div className="rh-home__proof-grid">
-          {DISCOVERY_PROOF_POINTS.map((item) => (
-            <Card key={item.key} variant="borderless" className="rh-home__proof-card">
-              <Text className="rh-home__proof-eyebrow">{item.eyebrow}</Text>
-              <Title level={4} className="rh-home__proof-title">
-                {item.title}
-              </Title>
-              <Text className="rh-home__proof-description">{item.description}</Text>
-            </Card>
-          ))}
         </div>
       </section>
 

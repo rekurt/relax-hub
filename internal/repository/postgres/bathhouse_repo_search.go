@@ -148,14 +148,6 @@ func (r *bathhouseRepo) List(ctx context.Context, filter domain.BathhouseFilter)
 		))
 	}
 
-	// Isochrone polygon filter using PostGIS ST_Within
-	if filter.IsochroneWKT != nil && *filter.IsochroneWKT != "" {
-		conditions = append(conditions, fmt.Sprintf(
-			"ST_Within(location::geometry, ST_GeomFromText(%s, 4326))",
-			addArg(*filter.IsochroneWKT),
-		))
-	}
-
 	whereClause := ""
 	if len(conditions) > 0 {
 		whereClause = "WHERE " + strings.Join(conditions, " AND ")

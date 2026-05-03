@@ -19697,74 +19697,6 @@
                 }
             }
         },
-        "/isochrone": {
-            "get": {
-                "description": "Returns a polygon representing the area reachable within the specified travel time from a point",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "geo"
-                ],
-                "summary": "Get isochrone polygon",
-                "parameters": [
-                    {
-                        "type": "number",
-                        "description": "Latitude of the origin point",
-                        "name": "lat",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "number",
-                        "description": "Longitude of the origin point",
-                        "name": "lon",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Travel mode: car or transit",
-                        "name": "mode",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Travel time in minutes (1-60)",
-                        "name": "minutes",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/internal_handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/internal_handler.isochroneResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handler.APIResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/media/{id}": {
             "delete": {
                 "security": [
@@ -41679,38 +41611,6 @@
                     "type": "string"
                 },
                 "user_email": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_handler.isochroneResponse": {
-            "type": "object",
-            "properties": {
-                "center_lat": {
-                    "type": "number"
-                },
-                "center_lng": {
-                    "type": "number"
-                },
-                "coordinates": {
-                    "description": "[lng, lat] pairs",
-                    "type": "array",
-                    "items": {
-                        "type": "array",
-                        "items": {
-                            "type": "number",
-                            "format": "float64"
-                        }
-                    }
-                },
-                "minutes": {
-                    "type": "integer"
-                },
-                "mode": {
-                    "type": "string"
-                },
-                "wkt": {
-                    "description": "WKT polygon for use with search filter",
                     "type": "string"
                 }
             }
