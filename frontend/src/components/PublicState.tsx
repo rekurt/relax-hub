@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Alert, Result, Space, Spin, Typography } from 'antd'
+import { Alert, Result, Space, Spin, Typography } from '@/components/design/system'
 import EmptyState from '@/components/EmptyState'
 import { DesignButton, DesignCard } from '@/components/design'
 
@@ -54,7 +54,7 @@ export default function PublicState({
 
   if (kind === 'loading') {
     return (
-      <DesignCard className="bani-public-state-card">
+      <DesignCard className="rh-public-state-card">
         <Space orientation="vertical" size={16} style={{ width: '100%' }}>
           <Spin size="large" />
           <Text strong>{resolvedTitle}</Text>

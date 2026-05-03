@@ -15,12 +15,12 @@ import {
   List,
   App,
   Skeleton,
-} from 'antd'
+} from '@/components/design/system'
 import {
   UserOutlined,
   UploadOutlined,
   DeleteOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -198,33 +198,33 @@ export default function ProfileSettings() {
   const currentCity = cities.find((city) => city.id === user?.city_id)?.name
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Профиль"
         title="Настройки профиля"
         description="Контактные данные, уведомления и привязанные аккаунты в одном месте."
       />
 
-      <div className="bani-stat-grid">
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Профиль</span>
-          <span className="bani-stat-tile__value">{user?.name ?? 'Без имени'}</span>
-          <span className="bani-stat-tile__hint">{user?.email ?? 'Email не указан'}</span>
+      <div className="rh-stat-grid">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Профиль</span>
+          <span className="rh-stat-tile__value">{user?.name ?? 'Без имени'}</span>
+          <span className="rh-stat-tile__hint">{user?.email ?? 'Email не указан'}</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Город</span>
-          <span className="bani-stat-tile__value">{currentCity ?? 'Не выбран'}</span>
-          <span className="bani-stat-tile__hint">Используется в локальных сценариях и подстановках.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Город</span>
+          <span className="rh-stat-tile__value">{currentCity ?? 'Не выбран'}</span>
+          <span className="rh-stat-tile__hint">Используется в локальных сценариях и подстановках.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Социальные связи</span>
-          <span className="bani-stat-tile__value">{socialAccounts.length}</span>
-          <span className="bani-stat-tile__hint">Дополнительные способы входа и восстановления доступа.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Социальные связи</span>
+          <span className="rh-stat-tile__value">{socialAccounts.length}</span>
+          <span className="rh-stat-tile__hint">Дополнительные способы входа и восстановления доступа.</span>
         </div>
       </div>
 
-      <div className="bani-grid bani-grid--content-aside">
-        <div className="bani-stack">
+      <div className="rh-grid rh-grid--content-aside">
+        <div className="rh-stack">
           <Card title="Основная информация">
             <Form
               form={profileForm}
@@ -268,12 +268,12 @@ export default function ProfileSettings() {
                 layout="vertical"
                 onFinish={handlePrefsSubmit}
               >
-                <div className="bani-toggle-grid" style={{ marginBottom: 20 }}>
+                <div className="rh-toggle-grid" style={{ marginBottom: 20 }}>
                   {NOTIFICATION_CARDS.map((item) => (
-                    <div key={item.name} className="bani-toggle-card">
-                      <div className="bani-toggle-card__copy">
-                        <Text className="bani-toggle-card__title">{item.title}</Text>
-                        <Text className="bani-toggle-card__description">{item.description}</Text>
+                    <div key={item.name} className="rh-toggle-card">
+                      <div className="rh-toggle-card__copy">
+                        <Text className="rh-toggle-card__title">{item.title}</Text>
+                        <Text className="rh-toggle-card__description">{item.description}</Text>
                       </div>
                       <Form.Item name={item.name} valuePropName="checked" style={{ marginBottom: 0 }}>
                         <Switch />
@@ -292,7 +292,7 @@ export default function ProfileSettings() {
           </Card>
         </div>
 
-        <div className="bani-stack">
+        <div className="rh-stack">
           <Card title="Аватар">
             <Space size={16} align="center">
               <Avatar

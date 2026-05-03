@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Button, Divider, Space } from 'antd'
+import { Button, Divider, Space } from '@/components/design/system'
 import { axiosInstance } from '@/api/axios-instance'
 
 const OAUTH_PROVIDERS = [

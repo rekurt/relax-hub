@@ -12,14 +12,14 @@ import {
   Space,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   WalletOutlined,
   PlusOutlined,
   MinusOutlined,
   LockOutlined,
   UnlockOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
 
@@ -217,7 +217,7 @@ export default function WalletManagement() {
             <Form.Item
               label="Сумма (в рублях)"
             >
-              <Space.Compact className="bani-compact-control">
+              <Space.Compact className="rh-compact-control">
                 <Form.Item
                   name="amount"
                   noStyle
@@ -228,7 +228,7 @@ export default function WalletManagement() {
                 >
                   <InputNumber style={{ width: '100%' }} min={0.01} step={1} precision={2} />
                 </Form.Item>
-                <span className="bani-input-addon">₽</span>
+                <span className="rh-input-addon">₽</span>
               </Space.Compact>
             </Form.Item>
           )}

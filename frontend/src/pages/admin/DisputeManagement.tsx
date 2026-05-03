@@ -7,8 +7,8 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import { useNavigate } from 'react-router-dom'
 import {
   useGetAdminDisputes,

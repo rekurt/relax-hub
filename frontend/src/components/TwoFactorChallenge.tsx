@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Input, Button, Space, Typography, App } from 'antd'
-import { SafetyOutlined, MessageOutlined } from '@ant-design/icons'
+import { Input, Button, Space, Typography, App } from '@/components/design/system'
+import { SafetyOutlined, MessageOutlined } from '@/components/design/icons'
 import { postAuth2faVerify } from '@/api/generated/2fa/2fa'
 import type { AxiosError } from 'axios'
 import type { InternalHandlerAPIResponse } from '@/api/generated/model'

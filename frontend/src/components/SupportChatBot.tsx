@@ -8,14 +8,14 @@ import {
   Collapse,
   Tag,
   Divider,
-} from 'antd'
+} from '@/components/design/system'
 import {
   QuestionCircleOutlined,
   SendOutlined,
   CustomerServiceOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 
 const { Text, Paragraph } = Typography

@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
-import { App, Button, Card, Descriptions, Empty, Input, Modal, Space, Spin, Tag, Typography } from 'antd'
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons'
+import { App, Button, Card, Descriptions, Empty, Input, Modal, Space, Spin, Tag, Typography } from '@/components/design/system'
+import { CheckOutlined, CloseOutlined } from '@/components/design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice, formatDateTime } from '@/lib/format'

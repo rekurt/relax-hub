@@ -1,4 +1,4 @@
-import { Typography, Divider } from 'antd'
+import { Typography, Divider } from '@/components/design/system'
 import { formatPrice } from '@/lib/format'
 
 const { Text } = Typography

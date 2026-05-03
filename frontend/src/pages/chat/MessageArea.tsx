@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Input, Button, Empty, Spin, Typography, Space, Alert } from 'antd'
-import { SendOutlined, WarningOutlined } from '@ant-design/icons'
+import { Input, Button, Empty, Spin, Typography, Space, Alert } from '@/components/design/system'
+import { SendOutlined, WarningOutlined } from '@/components/design/icons'
 import {
   useGetConversationsIdMessages,
   usePostConversationsIdMessages,

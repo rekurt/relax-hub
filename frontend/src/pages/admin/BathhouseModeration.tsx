@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { App, Button, Checkbox, Descriptions, Drawer, Input, Segmented, Space, Table, Tag } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { App, Button, Checkbox, Descriptions, Drawer, Input, Segmented, Space, Table, Tag } from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminBathhouses,
@@ -267,7 +267,7 @@ export default function BathhouseModeration() {
   ]
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         size="compact"
         eyebrow="Модерация"
@@ -275,29 +275,29 @@ export default function BathhouseModeration() {
         description="Проверка объектов, публичных обещаний и статусов в плотном рабочем интерфейсе."
       />
 
-      <div className="bani-admin-grid bani-admin-grid--filters">
-        <aside className="bani-admin-filter-rail">
-          <span className="bani-admin-filter-rail__title">Фильтры</span>
+      <div className="rh-admin-grid rh-admin-grid--filters">
+        <aside className="rh-admin-filter-rail">
+          <span className="rh-admin-filter-rail__title">Фильтры</span>
           {filterRailItems.map((item) => (
             <button
-              className={`bani-admin-filter-rail__item${statusFilter === item.value ? ' bani-admin-filter-rail__item--active' : ''}`}
+              className={`rh-admin-filter-rail__item${statusFilter === item.value ? ' rh-admin-filter-rail__item--active' : ''}`}
               key={item.value || 'all'}
               type="button"
               onClick={() => updateStatusFilter(item.value)}
             >
               <span>{item.railLabel}</span>
-              <span className="bani-admin-filter-rail__count">{item.count}</span>
+              <span className="rh-admin-filter-rail__count">{item.count}</span>
             </button>
           ))}
         </aside>
 
-        <section className="bani-admin-table-card">
-          <div className="bani-admin-toolbar">
-            <div className="bani-admin-toolbar__copy">
-              <h2 className="bani-admin-toolbar__title">Реестр объектов</h2>
-              <div className="bani-admin-toolbar__hint">Фильтры, поиск и решение модератора находятся рядом с таблицей.</div>
+        <section className="rh-admin-table-card">
+          <div className="rh-admin-toolbar">
+            <div className="rh-admin-toolbar__copy">
+              <h2 className="rh-admin-toolbar__title">Реестр объектов</h2>
+              <div className="rh-admin-toolbar__hint">Фильтры, поиск и решение модератора находятся рядом с таблицей.</div>
             </div>
-            <div className="bani-admin-toolbar__actions">
+            <div className="rh-admin-toolbar__actions">
               <Search
                 placeholder="Поиск по названию или адресу"
                 allowClear

@@ -14,9 +14,9 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
-import { PlusOutlined, RobotOutlined } from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/system'
+import { PlusOutlined, RobotOutlined } from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -196,13 +196,13 @@ export default function SupportTickets() {
   ]
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Поддержка"
         title="Мои обращения"
         description="Экран показывает состояние текущих кейсов без лишнего кликанья: сверху быстрый обзор, ниже фильтр по статусу и рабочая таблица."
         extra={(
-          <div className="bani-toolbar__group">
+          <div className="rh-toolbar__group">
             <Button icon={<RobotOutlined />} onClick={() => setFaqBotOpen(true)}>
               Быстрая помощь
             </Button>
@@ -213,37 +213,37 @@ export default function SupportTickets() {
         )}
       />
 
-      <section className="bani-hero-panel">
-        <div className="bani-hero-panel__eyebrow">Состояние поддержки</div>
-        <h2 className="bani-hero-panel__title">Пользователь видит статус вопроса за один взгляд</h2>
-        <div className="bani-hero-panel__description">
+      <section className="rh-hero-panel">
+        <div className="rh-hero-panel__eyebrow">Состояние поддержки</div>
+        <h2 className="rh-hero-panel__title">Пользователь видит статус вопроса за один взгляд</h2>
+        <div className="rh-hero-panel__description">
           Вместо пустого списка с таблицей сначала показываем текущую картину по обращениям. Это снижает тревогу: пользователь понимает, что уже открыто, что в работе и что закрыто.
         </div>
-          <div className="bani-stat-grid">
-            <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Открыто сейчас</span>
-            <div className="bani-stat-tile__value">{stats.open}</div>
-            <span className="bani-stat-tile__hint">Требуют реакции поддержки</span>
+          <div className="rh-stat-grid">
+            <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Открыто сейчас</span>
+            <div className="rh-stat-tile__value">{stats.open}</div>
+            <span className="rh-stat-tile__hint">Требуют реакции поддержки</span>
           </div>
-          <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Активные кейсы</span>
-            <div className="bani-stat-tile__value">{stats.inProgress}</div>
-            <span className="bani-stat-tile__hint">По ним уже идёт коммуникация или разбор</span>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Активные кейсы</span>
+            <div className="rh-stat-tile__value">{stats.inProgress}</div>
+            <span className="rh-stat-tile__hint">По ним уже идёт коммуникация или разбор</span>
           </div>
-          <div className="bani-stat-tile">
-            <span className="bani-stat-tile__eyebrow">Решено</span>
-            <div className="bani-stat-tile__value">{stats.resolved}</div>
-            <span className="bani-stat-tile__hint">История кейсов, к которой можно вернуться</span>
+          <div className="rh-stat-tile">
+            <span className="rh-stat-tile__eyebrow">Решено</span>
+            <div className="rh-stat-tile__value">{stats.resolved}</div>
+            <span className="rh-stat-tile__hint">История кейсов, к которой можно вернуться</span>
           </div>
         </div>
       </section>
 
       <Card>
-        <div className="bani-table-shell">
-          <div className="bani-toolbar">
+        <div className="rh-table-shell">
+          <div className="rh-toolbar">
             <div>
-              <h2 className="bani-section-card__title">Лента обращений</h2>
-              <div className="bani-section-card__description">
+              <h2 className="rh-section-card__title">Лента обращений</h2>
+              <div className="rh-section-card__description">
                 Фильтр по статусу вынесен наверх и не мешает чтению таблицы. Клик по строке открывает конкретный диалог с поддержкой.
               </div>
             </div>
@@ -259,11 +259,11 @@ export default function SupportTickets() {
           />
 
           {isLoading ? (
-            <div className="bani-feed-empty">
+            <div className="rh-feed-empty">
               <Spin size="large" />
             </div>
           ) : tickets.length === 0 ? (
-            <div className="bani-feed-empty">
+            <div className="rh-feed-empty">
               <Empty description="Нет обращений">
                 <Button type="primary" onClick={() => setCreateModalOpen(true)}>
                   Создать обращение

@@ -12,7 +12,7 @@ import {
   Spin,
   Form,
   QRCode,
-} from 'antd'
+} from '@/components/design/system'
 import {
   LaptopOutlined,
   MobileOutlined,
@@ -24,7 +24,7 @@ import {
   SafetyCertificateOutlined,
   ClockCircleOutlined,
   MessageOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/ru'
@@ -74,11 +74,11 @@ function getSessionIcon(device?: string) {
 function getProtectionToneClass(tone: ProtectionItem['tone']) {
   switch (tone) {
     case 'success':
-      return 'bani-security-rail-item--success'
+      return 'rh-security-rail-item--success'
     case 'warning':
-      return 'bani-security-rail-item--warning'
+      return 'rh-security-rail-item--warning'
     default:
-      return 'bani-security-rail-item--neutral'
+      return 'rh-security-rail-item--neutral'
   }
 }
 
@@ -292,62 +292,62 @@ export default function SecuritySettings() {
   }
 
   return (
-    <div className="bani-stack bani-security-page">
-      <section className="bani-security-hero">
-        <div className="bani-security-hero__copy">
-          <div className="bani-security-hero__eyebrow">Контур безопасности</div>
-          <Title level={1} className="bani-security-hero__title">Безопасность</Title>
-          <Paragraph className="bani-security-hero__description">
+    <div className="rh-stack rh-security-page">
+      <section className="rh-security-hero">
+        <div className="rh-security-hero__copy">
+          <div className="rh-security-hero__eyebrow">Контур безопасности</div>
+          <Title level={1} className="rh-security-hero__title">Безопасность</Title>
+          <Paragraph className="rh-security-hero__description">
             Закрытый контур для входа, устройств и восстановления доступа. Здесь сразу видно,
             насколько хорошо собрана защита аккаунта и что ещё стоит усилить.
           </Paragraph>
 
-          <div className="bani-security-hero__pill-row">
-            <div className="bani-security-hero__pill">
-              <span className="bani-security-hero__pill-label">Активных устройств</span>
+          <div className="rh-security-hero__pill-row">
+            <div className="rh-security-hero__pill">
+              <span className="rh-security-hero__pill-label">Активных устройств</span>
               <strong>{sessionsLoading ? '...' : sessions.length}</strong>
             </div>
-            <div className="bani-security-hero__pill">
-              <span className="bani-security-hero__pill-label">Основной вход</span>
+            <div className="rh-security-hero__pill">
+              <span className="rh-security-hero__pill-label">Основной вход</span>
               <strong>{totpEnabled ? 'TOTP' : smsEnabled ? 'SMS 2FA' : 'Пароль'}</strong>
             </div>
-            <div className="bani-security-hero__pill">
-              <span className="bani-security-hero__pill-label">Восстановление</span>
+            <div className="rh-security-hero__pill">
+              <span className="rh-security-hero__pill-label">Восстановление</span>
               <strong>{hasRecoveryEmail ? 'Готово' : 'Нужно добавить'}</strong>
             </div>
           </div>
 
-          <div className="bani-security-hero__actions">
+          <div className="rh-security-hero__actions">
             <Button type="primary" onClick={() => scrollToSection('security-2fa')}>
               Усилить вход
             </Button>
-            <Button className="bani-security-hero__secondary" onClick={() => scrollToSection('security-sessions')}>
+            <Button className="rh-security-hero__secondary" onClick={() => scrollToSection('security-sessions')}>
               Проверить сессии
             </Button>
           </div>
         </div>
 
-        <div className="bani-security-hero__panel">
-          <span className="bani-security-hero__panel-eyebrow">Индекс защиты</span>
-          <div className="bani-security-hero__score-row">
-            <div className="bani-security-hero__score">{securityScore}</div>
-            <div className="bani-security-hero__score-copy">
-              <div className="bani-security-hero__score-label">{securityStatus}</div>
-              <Text className="bani-security-hero__score-description">
+        <div className="rh-security-hero__panel">
+          <span className="rh-security-hero__panel-eyebrow">Индекс защиты</span>
+          <div className="rh-security-hero__score-row">
+            <div className="rh-security-hero__score">{securityScore}</div>
+            <div className="rh-security-hero__score-copy">
+              <div className="rh-security-hero__score-label">{securityStatus}</div>
+              <Text className="rh-security-hero__score-description">
                 {securitySummary}
               </Text>
             </div>
           </div>
-          <div className="bani-security-hero__facts">
-            <div className="bani-security-hero__fact">
+          <div className="rh-security-hero__facts">
+            <div className="rh-security-hero__fact">
               <span>Текущее устройство</span>
               <strong>{currentSession?.device_info ?? 'Не определено'}</strong>
             </div>
-            <div className="bani-security-hero__fact">
+            <div className="rh-security-hero__fact">
               <span>Последняя активность</span>
               <strong>{currentSession?.last_active_at ? dayjs(currentSession.last_active_at).fromNow() : '—'}</strong>
             </div>
-            <div className="bani-security-hero__fact">
+            <div className="rh-security-hero__fact">
               <span>Восстановление по email</span>
               <strong>{user?.email ?? 'Не настроено'}</strong>
             </div>
@@ -355,11 +355,11 @@ export default function SecuritySettings() {
         </div>
       </section>
 
-      <div className="bani-security-layout">
-        <div className="bani-security-main">
+      <div className="rh-security-layout">
+        <div className="rh-security-main">
           <Card
             id="security-sessions"
-            className="bani-security-card"
+            className="rh-security-card"
             title="Активные сессии"
             extra={
               sessions.length > 1 ? (
@@ -377,8 +377,8 @@ export default function SecuritySettings() {
               ) : null
             }
           >
-            <div className="bani-card-toolbar bani-security-card__toolbar">
-              <div className="bani-card-toolbar__copy">
+            <div className="rh-card-toolbar rh-security-card__toolbar">
+              <div className="rh-card-toolbar__copy">
                 <Text strong>Устройства и входы</Text>
                 <Text type="secondary">
                   Текущая сессия отмечена отдельно. Любую лишнюю сессию можно завершить сразу.
@@ -391,22 +391,22 @@ export default function SecuritySettings() {
             ) : sessions.length === 0 ? (
               <Empty description="Нет активных сессий" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             ) : (
-              <div className="bani-security-session-list">
+              <div className="rh-security-session-list">
                 {sessions.map((session) => (
                   <div
                     key={session.id}
-                    className={session.is_current ? 'bani-security-session bani-security-session--current' : 'bani-security-session'}
+                    className={session.is_current ? 'rh-security-session rh-security-session--current' : 'rh-security-session'}
                   >
-                    <div className="bani-security-session__icon">
+                    <div className="rh-security-session__icon">
                       {getSessionIcon(session.device_info)}
                     </div>
 
-                    <div className="bani-security-session__copy">
-                      <div className="bani-security-session__head">
+                    <div className="rh-security-session__copy">
+                      <div className="rh-security-session__head">
                         <Text strong>{session.device_info ?? 'Неизвестное устройство'}</Text>
                         {session.is_current && <Tag color="green">Текущая</Tag>}
                       </div>
-                      <div className="bani-security-session__meta">
+                      <div className="rh-security-session__meta">
                         <span>{session.browser ?? 'Браузер не определён'}</span>
                         {session.ip && <span>{session.ip}</span>}
                         <span>{session.last_active_at ? dayjs(session.last_active_at).fromNow() : '—'}</span>
@@ -418,9 +418,9 @@ export default function SecuritySettings() {
                       )}
                     </div>
 
-                    <div className="bani-security-session__actions">
+                    <div className="rh-security-session__actions">
                       {session.is_current ? (
-                        <div className="bani-security-session__status">
+                        <div className="rh-security-session__status">
                           Сейчас на этом устройстве
                         </div>
                       ) : (
@@ -447,13 +447,13 @@ export default function SecuritySettings() {
             )}
           </Card>
 
-          <Card id="security-2fa" className="bani-security-card" title="Двухфакторная аутентификация">
-            <div className="bani-security-method-grid">
-              <section className={totpEnabled ? 'bani-security-method-card bani-security-method-card--accent' : 'bani-security-method-card'}>
-                <div className="bani-security-method-card__header">
+          <Card id="security-2fa" className="rh-security-card" title="Двухфакторная аутентификация">
+            <div className="rh-security-method-grid">
+              <section className={totpEnabled ? 'rh-security-method-card rh-security-method-card--accent' : 'rh-security-method-card'}>
+                <div className="rh-security-method-card__header">
                   <div>
-                    <div className="bani-security-method-card__eyebrow">Основной фактор</div>
-                    <Title level={4} className="bani-security-method-card__title">
+                    <div className="rh-security-method-card__eyebrow">Основной фактор</div>
+                    <Title level={4} className="rh-security-method-card__title">
                       TOTP
                     </Title>
                   </div>
@@ -462,18 +462,18 @@ export default function SecuritySettings() {
                   </Tag>
                 </div>
 
-                <Paragraph className="bani-security-method-card__description">
+                <Paragraph className="rh-security-method-card__description">
                   Приложение-аутентификатор даёт самый стабильный и защищённый второй фактор без зависимости от SMS.
                 </Paragraph>
 
                 {totpStep === 'idle' && (
-                  <div className="bani-security-method-card__body">
-                    <div className="bani-security-checklist">
-                      <div className="bani-security-checklist__item">
+                  <div className="rh-security-method-card__body">
+                    <div className="rh-security-checklist">
+                      <div className="rh-security-checklist__item">
                         <SafetyCertificateOutlined />
                         <span>Работает даже без мобильной сети.</span>
                       </div>
-                      <div className="bani-security-checklist__item">
+                      <div className="rh-security-checklist__item">
                         <ClockCircleOutlined />
                         <span>Коды обновляются автоматически каждые 30 секунд.</span>
                       </div>
@@ -490,23 +490,23 @@ export default function SecuritySettings() {
                 )}
 
                 {totpStep === 'qr' && (
-                  <div className="bani-security-qr-layout">
-                    <div className="bani-security-qr-copy">
+                  <div className="rh-security-qr-layout">
+                    <div className="rh-security-qr-copy">
                       <Alert
                         type="info"
                         showIcon
                         title="Отсканируйте QR-код"
                         description="Откройте приложение-аутентификатор и добавьте новый аккаунт по коду справа."
                       />
-                      <div className="bani-security-secret">
-                        <span className="bani-security-secret__label">Секретный ключ</span>
+                      <div className="rh-security-secret">
+                        <span className="rh-security-secret__label">Секретный ключ</span>
                         <Text copyable code>
                           {totpSecret}
                         </Text>
                       </div>
                       <Form
                         layout="inline"
-                        className="bani-inline-form"
+                        className="rh-inline-form"
                         onFinish={() => verifyTotp.mutate({ data: { code: verifyCode } })}
                       >
                         <Form.Item>
@@ -531,21 +531,21 @@ export default function SecuritySettings() {
                       </Form>
                     </div>
 
-                    <div className="bani-security-qr-frame">
+                    <div className="rh-security-qr-frame">
                       {qrUrl && <QRCode value={qrUrl} size={176} />}
                     </div>
                   </div>
                 )}
 
                 {totpStep === 'done' && (
-                  <div className="bani-security-method-card__body">
+                  <div className="rh-security-method-card__body">
                     <Alert
                       type="success"
                       showIcon
                       title="TOTP уже активирован"
                       description="При следующем входе потребуется одноразовый код из приложения."
                     />
-                    <div className="bani-inline-form">
+                    <div className="rh-inline-form">
                       <Input
                         placeholder="6-значный код"
                         value={disableCode}
@@ -573,11 +573,11 @@ export default function SecuritySettings() {
                 )}
               </section>
 
-              <section className={smsEnabled ? 'bani-security-method-card bani-security-method-card--accent' : 'bani-security-method-card'}>
-                <div className="bani-security-method-card__header">
+              <section className={smsEnabled ? 'rh-security-method-card rh-security-method-card--accent' : 'rh-security-method-card'}>
+                <div className="rh-security-method-card__header">
                   <div>
-                    <div className="bani-security-method-card__eyebrow">Резервный фактор</div>
-                    <Title level={4} className="bani-security-method-card__title">
+                    <div className="rh-security-method-card__eyebrow">Резервный фактор</div>
+                    <Title level={4} className="rh-security-method-card__title">
                       SMS 2FA
                     </Title>
                   </div>
@@ -586,7 +586,7 @@ export default function SecuritySettings() {
                   </Tag>
                 </div>
 
-                <Paragraph className="bani-security-method-card__description">
+                <Paragraph className="rh-security-method-card__description">
                   Запасной канал для одноразовых кодов. Полезен, если нужно быстро подтвердить вход без приложения.
                 </Paragraph>
 
@@ -598,13 +598,13 @@ export default function SecuritySettings() {
                     description="Коды подтверждения будут приходить на подтверждённый номер телефона."
                   />
                 ) : user?.phone ? (
-                  <div className="bani-security-method-card__body">
-                    <div className="bani-security-checklist">
-                      <div className="bani-security-checklist__item">
+                  <div className="rh-security-method-card__body">
+                    <div className="rh-security-checklist">
+                      <div className="rh-security-checklist__item">
                         <MessageOutlined />
                         <span>Коды будут отправляться на номер {user.phone}.</span>
                       </div>
-                      <div className="bani-security-checklist__item">
+                      <div className="rh-security-checklist__item">
                         <ExclamationCircleOutlined />
                         <span>Используйте как резерв, а не вместо TOTP.</span>
                       </div>
@@ -629,20 +629,20 @@ export default function SecuritySettings() {
             </div>
           </Card>
 
-          <Card id="security-password" className="bani-security-card" title="Пароль">
-            <div className="bani-security-recovery">
-              <div className="bani-security-recovery__copy">
+          <Card id="security-password" className="rh-security-card" title="Пароль">
+            <div className="rh-security-recovery">
+              <div className="rh-security-recovery__copy">
                 <Text strong>Восстановление доступа</Text>
-                <Paragraph className="bani-security-recovery__description">
+                <Paragraph className="rh-security-recovery__description">
                   Для смены пароля отправим ссылку на основной email. Это отдельный безопасный путь восстановления без ручной поддержки.
                 </Paragraph>
-                <div className="bani-security-recovery__email">
+                <div className="rh-security-recovery__email">
                   <MailOutlined />
                   <span>{user?.email ?? 'Добавьте email в профиль для восстановления доступа.'}</span>
                 </div>
               </div>
 
-              <div className="bani-security-recovery__action">
+              <div className="rh-security-recovery__action">
                 {resetSent ? (
                   <Alert
                     type="success"
@@ -670,17 +670,17 @@ export default function SecuritySettings() {
           </Card>
         </div>
 
-        <aside className="bani-security-rail">
-          <Card className="bani-security-card" title="Способы защиты">
-            <div className="bani-security-rail-list">
+        <aside className="rh-security-rail">
+          <Card className="rh-security-card" title="Способы защиты">
+            <div className="rh-security-rail-list">
               {protectionItems.map((item) => (
                 <div
                   key={item.key}
-                  className={`bani-security-rail-item ${getProtectionToneClass(item.tone)}`}
+                  className={`rh-security-rail-item ${getProtectionToneClass(item.tone)}`}
                 >
-                  <div className="bani-security-rail-item__head">
+                  <div className="rh-security-rail-item__head">
                     <Text strong>{item.title}</Text>
-                    <span className="bani-security-rail-item__status">{item.status}</span>
+                    <span className="rh-security-rail-item__status">{item.status}</span>
                   </div>
                   <Text type="secondary">{item.description}</Text>
                 </div>
@@ -688,11 +688,11 @@ export default function SecuritySettings() {
             </div>
           </Card>
 
-          <Card className="bani-security-card" title="Что усилить сейчас">
+          <Card className="rh-security-card" title="Что усилить сейчас">
             {recommendations.length > 0 ? (
-              <div className="bani-security-recommendations">
+              <div className="rh-security-recommendations">
                 {recommendations.map((item) => (
-                  <div key={item.key} className="bani-security-recommendation">
+                  <div key={item.key} className="rh-security-recommendation">
                     <div>
                       <Text strong>{item.title}</Text>
                       <Paragraph>{item.description}</Paragraph>

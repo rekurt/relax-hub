@@ -9,14 +9,14 @@ import {
   Select,
   Switch,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   GiftOutlined,
   HeartOutlined,
   StarOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import {
   useGetMyCrmAutoScenarios,
   usePutMyCrmAutoScenariosType,

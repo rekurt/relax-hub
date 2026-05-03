@@ -20,7 +20,7 @@ import {
   Checkbox,
   Tag,
   Result,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   ClockCircleOutlined,
@@ -35,7 +35,7 @@ import {
   CheckCircleOutlined,
   LockOutlined,
   ReloadOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useGetBathhousesId, useGetBathhousesIdAvailableSlots } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPriceCalculator } from '@/api/generated/pricing/pricing'
@@ -382,7 +382,7 @@ export default function BookingCreate() {
 
   if (bathhouseLoading) {
     return (
-      <div className="bani-fullscreen-state">
+      <div className="rh-fullscreen-state">
         <Spin size="large" />
       </div>
     )

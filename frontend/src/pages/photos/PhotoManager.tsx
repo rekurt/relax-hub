@@ -15,13 +15,13 @@ import {
   Tag,
   Tooltip,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   DeleteOutlined,
   DragOutlined,
   PlusOutlined,
   ReloadOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import {
   useGetMyBathhousesIdPhotos,
   usePostMyBathhousesIdPhotos,

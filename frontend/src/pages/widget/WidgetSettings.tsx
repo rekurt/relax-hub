@@ -12,12 +12,12 @@ import {
   Select,
   Switch,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CodeOutlined,
   CopyOutlined,
   ReloadOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import {
   useGetMyBathhousesIdWidgetCode,
   useGetMyBathhousesIdWidgetKey,

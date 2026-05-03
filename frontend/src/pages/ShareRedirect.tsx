@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
-import { Spin, Result, Button } from 'antd'
+import { Spin, Result, Button } from '@/components/design/system'
 import { useGetApiV1ShareBookingToken } from '@/api/generated/share/share'
 
 export default function ShareRedirect() {
@@ -33,7 +33,7 @@ export default function ShareRedirect() {
 
   if (isLoading) {
     return (
-      <div className="bani-fullscreen-state bani-fullscreen-state--stack">
+      <div className="rh-fullscreen-state rh-fullscreen-state--stack">
         <Spin size="large" />
       </div>
     )
@@ -41,7 +41,7 @@ export default function ShareRedirect() {
 
   if (isError || !token) {
     return (
-      <div className="bani-fullscreen-state">
+      <div className="rh-fullscreen-state">
         <Result
           status="warning"
           title="Ссылка недействительна"
@@ -57,7 +57,7 @@ export default function ShareRedirect() {
   }
 
   return (
-    <div className="bani-fullscreen-state bani-fullscreen-state--stack">
+    <div className="rh-fullscreen-state rh-fullscreen-state--stack">
       <Spin size="large" />
     </div>
   )

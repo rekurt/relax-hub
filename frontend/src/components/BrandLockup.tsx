@@ -21,10 +21,10 @@ export default function BrandLockup({
   className,
 }: BrandLockupProps) {
   const classes = [
-    'bani-brand-lockup',
-    `bani-brand-lockup--${tone}`,
-    `bani-brand-lockup--${size}`,
-    `bani-brand-lockup--${layout}`,
+    'rh-brand-lockup',
+    `rh-brand-lockup--${tone}`,
+    `rh-brand-lockup--${size}`,
+    `rh-brand-lockup--${layout}`,
     className,
   ].filter(Boolean).join(' ')
 

@@ -9,14 +9,14 @@ import {
   Statistic,
   App,
   Space,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CopyOutlined,
   ShareAltOutlined,
   UsergroupAddOutlined,
   CheckCircleOutlined,
   WalletOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useGetMyReferral } from '@/api/generated/referral/referral'
 import { useGetMyReferralStats } from '@/api/generated/referral/referral'
 import { useGetMyReferralBalance } from '@/api/generated/referral/referral'

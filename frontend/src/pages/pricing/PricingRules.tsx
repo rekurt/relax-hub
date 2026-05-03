@@ -19,7 +19,7 @@ import {
   Tag,
   TimePicker,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowUpOutlined,
   ArrowDownOutlined,
@@ -29,7 +29,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import {
   useGetMyBathhousesIdPricingRules,

@@ -1,5 +1,5 @@
-import { Avatar, Typography, Input, Empty, Spin } from 'antd'
-import { UserOutlined, SearchOutlined } from '@ant-design/icons'
+import { Avatar, Typography, Input, Empty, Spin } from '@/components/design/system'
+import { UserOutlined, SearchOutlined } from '@/components/design/icons'
 import { useState, useMemo } from 'react'
 import { useGetMyConversations } from '@/api/generated/chat/chat'
 import { useAuthStore } from '@/stores/auth'

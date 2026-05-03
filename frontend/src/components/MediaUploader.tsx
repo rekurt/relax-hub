@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { Upload, App, Image, Space, Tag } from 'antd'
-import { PlusOutlined, DeleteOutlined, VideoCameraOutlined } from '@ant-design/icons'
-import type { UploadFile } from 'antd'
+import { Upload, App, Image, Space, Tag } from '@/components/design/system'
+import { PlusOutlined, DeleteOutlined, VideoCameraOutlined } from '@/components/design/icons'
+import type { UploadFile } from '@/components/design/types'
 
 const MAX_PHOTOS = 10
 const MAX_VIDEOS = 1

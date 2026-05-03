@@ -16,8 +16,8 @@ import {
   Statistic,
   Tag,
   Typography,
-} from 'antd'
-import { MessageOutlined, StarFilled, UserOutlined, WarningOutlined } from '@ant-design/icons'
+} from '@/components/design/system'
+import { MessageOutlined, StarFilled, UserOutlined, WarningOutlined } from '@/components/design/icons'
 import dayjs from 'dayjs'
 import {
   useGetBathhousesIdReviews,

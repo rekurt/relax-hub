@@ -9,14 +9,14 @@ import {
   Table,
   Typography,
   Upload,
-} from 'antd'
-import type { UploadProps } from 'antd'
+} from '@/components/design/system'
+import type { UploadProps } from '@/components/design/types'
 import {
   DownloadOutlined,
   FileExcelOutlined,
   InboxOutlined,
   LeftOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useNavigate } from 'react-router-dom'
 import { usePostMyListingsImport } from '@/api/generated/listings/listings'
 import type {

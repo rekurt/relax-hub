@@ -1,8 +1,8 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { App as AntApp, ConfigProvider } from 'antd'
-import ruRU from 'antd/locale/ru_RU'
+import { App as AntApp, ConfigProvider } from '@/components/design/system'
+import { ruRU } from '@/components/design/system'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import ActivePromoCodes from '@/pages/client/ActivePromoCodes'
 
@@ -44,7 +44,7 @@ function setupMocks(overrides?: { isPending?: boolean; isError?: boolean }) {
 describe('ActivePromoCodes', () => {
   beforeEach(() => {
     mockValidateMutate.mockReset()
-    localStorage.removeItem('bani_validated_promos')
+    localStorage.removeItem('rh_validated_promos')
   })
 
   it('renders page title and input', () => {
@@ -118,7 +118,7 @@ describe('ActivePromoCodes', () => {
         validatedAt: '2026-03-27T10:00:00Z',
       },
     ]
-    localStorage.setItem('bani_validated_promos', JSON.stringify(storedPromos))
+    localStorage.setItem('rh_validated_promos', JSON.stringify(storedPromos))
 
     setupMocks()
     renderWithProviders(<ActivePromoCodes />)
@@ -129,7 +129,7 @@ describe('ActivePromoCodes', () => {
 
   it('shows discount display for percentage type', () => {
     localStorage.setItem(
-      'bani_validated_promos',
+      'rh_validated_promos',
       JSON.stringify([
         { code: 'PCT20', type: 'percentage', value: 20, validatedAt: '2026-03-28T12:00:00Z' },
       ]),
@@ -151,7 +151,7 @@ describe('ActivePromoCodes', () => {
 
   it('shows copy and remove buttons for validated promos', () => {
     localStorage.setItem(
-      'bani_validated_promos',
+      'rh_validated_promos',
       JSON.stringify([
         { code: 'TEST1', type: 'percentage', value: 5, validatedAt: '2026-03-28T12:00:00Z' },
       ]),
@@ -166,7 +166,7 @@ describe('ActivePromoCodes', () => {
 
   it('removes promo from list on remove click', async () => {
     localStorage.setItem(
-      'bani_validated_promos',
+      'rh_validated_promos',
       JSON.stringify([
         { code: 'REMOVE_ME', type: 'percentage', value: 5, validatedAt: '2026-03-28T12:00:00Z' },
       ]),

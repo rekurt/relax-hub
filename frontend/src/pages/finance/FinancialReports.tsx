@@ -10,12 +10,12 @@ import {
   Select,
   Space,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   DownloadOutlined,
   FileExcelOutlined,
   FilePdfOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useGetMyBathhouses } from '@/api/generated/bathhouses/bathhouses'
 import { AUTH_TOKEN_KEY } from '@/lib/constants'

@@ -15,7 +15,7 @@ import {
   App,
   Empty,
   Collapse,
-} from 'antd'
+} from '@/components/design/system'
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -24,7 +24,7 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ClockCircleOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import PageHeader from '@/components/PageHeader'
@@ -247,7 +247,7 @@ export default function WebhookSettings() {
   ]
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Интеграции"
         title="Вебхуки"
@@ -259,21 +259,21 @@ export default function WebhookSettings() {
         )}
       />
 
-      <div className="bani-stat-grid">
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Всего вебхуков</span>
-          <span className="bani-stat-tile__value">{meta?.total_count ?? webhooks.length}</span>
-          <span className="bani-stat-tile__hint">Все подключённые конечные точки интеграции.</span>
+      <div className="rh-stat-grid">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Всего вебхуков</span>
+          <span className="rh-stat-tile__value">{meta?.total_count ?? webhooks.length}</span>
+          <span className="rh-stat-tile__hint">Все подключённые конечные точки интеграции.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Активные</span>
-          <span className="bani-stat-tile__value">{activeWebhooks}</span>
-          <span className="bani-stat-tile__hint">Именно они получают боевые события платформы.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Активные</span>
+          <span className="rh-stat-tile__value">{activeWebhooks}</span>
+          <span className="rh-stat-tile__hint">Именно они получают боевые события платформы.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Последняя история</span>
-          <span className="bani-stat-tile__value">{deliveries.length}</span>
-          <span className="bani-stat-tile__hint">Записи в раскрытом журнале доставок выбранного вебхука.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Последняя история</span>
+          <span className="rh-stat-tile__value">{deliveries.length}</span>
+          <span className="rh-stat-tile__hint">Записи в раскрытом журнале доставок выбранного вебхука.</span>
         </div>
       </div>
 

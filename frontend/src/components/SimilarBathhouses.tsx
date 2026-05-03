@@ -1,4 +1,4 @@
-import { Typography, Row, Col } from 'antd'
+import { Typography, Row, Col } from '@/components/design/system'
 import BathhouseCard from '@/components/BathhouseCard'
 
 const { Title } = Typography

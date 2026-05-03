@@ -11,11 +11,11 @@ import {
   Spin,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CheckOutlined,
   CloseOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminPhotosPending,
@@ -86,7 +86,7 @@ export default function PhotoVerification() {
   }
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         size="compact"
         eyebrow="Модерация"
@@ -95,28 +95,28 @@ export default function PhotoVerification() {
       />
 
       {isLoading ? (
-        <section className="bani-admin-panel" style={{ textAlign: 'center', padding: 48 }}>
+        <section className="rh-admin-panel" style={{ textAlign: 'center', padding: 48 }}>
           <Spin size="large" />
         </section>
       ) : photos.length === 0 ? (
-        <section className="bani-admin-panel">
+        <section className="rh-admin-panel">
           <Empty description="Нет фото на рассмотрении" />
         </section>
       ) : (
-        <section className="bani-admin-panel">
-          <div className="bani-admin-toolbar" style={{ marginBottom: 18 }}>
-            <div className="bani-admin-toolbar__copy">
-              <h2 className="bani-admin-toolbar__title">Фото на проверке</h2>
-              <div className="bani-admin-toolbar__hint">Ожидают проверки: {meta?.total_count ?? photos.length}</div>
+        <section className="rh-admin-panel">
+          <div className="rh-admin-toolbar" style={{ marginBottom: 18 }}>
+            <div className="rh-admin-toolbar__copy">
+              <h2 className="rh-admin-toolbar__title">Фото на проверке</h2>
+              <div className="rh-admin-toolbar__hint">Ожидают проверки: {meta?.total_count ?? photos.length}</div>
             </div>
             <Tag color="orange">В очереди</Tag>
           </div>
 
           <Image.PreviewGroup>
-            <div className="bani-admin-photo-grid">
+            <div className="rh-admin-photo-grid">
               {photos.map((photo) => (
-                <article className="bani-admin-photo-card" key={photo.id}>
-                  <div className="bani-admin-photo-card__media">
+                <article className="rh-admin-photo-card" key={photo.id}>
+                  <div className="rh-admin-photo-card__media">
                     <Image
                       src={photo.url}
                       alt="Фото бани"
@@ -126,8 +126,8 @@ export default function PhotoVerification() {
                       fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSIxMDAiIHk9IjEwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iIGZpbGw9IiM5OTkiIGZvbnQtc2l6ZT0iMTQiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=="
                     />
                   </div>
-                  <div className="bani-admin-photo-card__body">
-                    <div className="bani-admin-photo-card__title">
+                  <div className="rh-admin-photo-card__body">
+                    <div className="rh-admin-photo-card__title">
                       <Space>
                         <Tag color="orange">Ожидает</Tag>
                         {photo.position !== undefined && (
@@ -135,15 +135,15 @@ export default function PhotoVerification() {
                         )}
                       </Space>
                     </div>
-                    <div className="bani-admin-photo-card__meta">
+                    <div className="rh-admin-photo-card__meta">
                       Баня: {photo.bathhouse_id?.slice(0, 8)}...
                     </div>
                     {photo.uploaded_at && (
-                      <div className="bani-admin-photo-card__meta">
+                      <div className="rh-admin-photo-card__meta">
                         {formatDateTime(photo.uploaded_at)}
                       </div>
                     )}
-                    <div className="bani-admin-photo-card__actions">
+                    <div className="rh-admin-photo-card__actions">
                       <Button
                         type="primary"
                         icon={<CheckOutlined />}

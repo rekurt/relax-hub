@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { Typography, Spin } from 'antd'
+import { Typography, Spin } from '@/components/design/system'
 import {
   SearchOutlined,
   EnvironmentOutlined,
   FireOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useGetSearchSuggestions } from '@/api/generated/search/search'
 
 const { Text } = Typography

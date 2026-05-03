@@ -12,9 +12,9 @@ import {
   Spin,
   Table,
   Tag,
-} from 'antd'
-import { PlusOutlined, EditOutlined } from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/system'
+import { PlusOutlined, EditOutlined } from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminServiceFee,
@@ -188,7 +188,7 @@ export default function ServiceFeeConfig() {
           <Form.Item
             label="Процент комиссии"
           >
-            <Space.Compact className="bani-compact-control">
+            <Space.Compact className="rh-compact-control">
               <Form.Item name="fee_percent" noStyle rules={[{ required: true, message: 'Укажите процент' }]}>
                 <InputNumber
                   style={{ width: '100%' }}
@@ -197,7 +197,7 @@ export default function ServiceFeeConfig() {
                   step={0.5}
                 />
               </Form.Item>
-              <span className="bani-input-addon">%</span>
+              <span className="rh-input-addon">%</span>
             </Space.Compact>
           </Form.Item>
         </Form>

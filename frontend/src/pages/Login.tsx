@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Form, Input, Button, Card, Typography, Space, App, Segmented } from 'antd'
-import { MailOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons'
+import { Form, Input, Button, Card, Typography, Space, App, Segmented } from '@/components/design/system'
+import { MailOutlined, LockOutlined, PhoneOutlined } from '@/components/design/icons'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { postAuthLogin, postAuthLoginPhone, postAuthVerifyPhone } from '@/api/generated/auth/auth'
 import { useAuthStore } from '@/stores/auth'
@@ -136,7 +136,7 @@ export default function Login() {
           'Если код не приходит, вернитесь назад и повторите вход удобным способом.',
         ]}
       >
-        <Card variant="borderless" className="bani-auth-surface">
+        <Card variant="borderless" className="rh-auth-surface">
           <TwoFactorChallenge
             partialToken={twoFAState.partialToken}
             onSuccess={handle2FASuccess}
@@ -166,10 +166,10 @@ export default function Login() {
         </>
       )}
     >
-      <Card variant="borderless" className="bani-auth-surface">
+      <Card variant="borderless" className="rh-auth-surface">
         <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <Segmented
-            className="bani-auth-segmented"
+            className="rh-auth-segmented"
             options={AUTH_METHOD_OPTIONS}
             value={authMethod}
             onChange={(v) => setAuthMethod(v as AuthMethod)}
@@ -179,7 +179,7 @@ export default function Login() {
           {authMethod === 'email' ? (
             <Form
               form={emailForm}
-              className="bani-auth-form"
+              className="rh-auth-form"
               layout="vertical"
               onFinish={onEmailFinish}
               autoComplete="on"
@@ -216,8 +216,8 @@ export default function Login() {
                 />
               </Form.Item>
 
-              <Form.Item className="bani-auth-form__actions">
-                <div className="bani-auth-form__link-row">
+              <Form.Item className="rh-auth-form__actions">
+                <div className="rh-auth-form__link-row">
                   <Link to="/forgot-password">Забыли пароль?</Link>
                 </div>
                 <Button

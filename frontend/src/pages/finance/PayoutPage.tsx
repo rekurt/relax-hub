@@ -10,13 +10,13 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   BankOutlined,
   SendOutlined,
   ThunderboltOutlined,
-} from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import {
   useGetMyWallet,
   useGetMyWalletPayouts,
@@ -170,7 +170,7 @@ export default function PayoutPage() {
   ]
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         size="compact"
         eyebrow="Финансы"
@@ -178,24 +178,24 @@ export default function PayoutPage() {
         description="Запросы на вывод, лимиты и история выплат владельца в одном рабочем экране."
       />
 
-      <div className="bani-admin-metric-grid">
+      <div className="rh-admin-metric-grid">
         {payoutMetricTiles.map((tile) => (
-          <div className="bani-admin-metric" key={tile.label} aria-busy={tile.loading}>
-            <div className="bani-admin-metric__head">
-              <span className="bani-admin-metric__label">{tile.label}</span>
-              <span className="bani-admin-metric__icon">{tile.icon}</span>
+          <div className="rh-admin-metric" key={tile.label} aria-busy={tile.loading}>
+            <div className="rh-admin-metric__head">
+              <span className="rh-admin-metric__label">{tile.label}</span>
+              <span className="rh-admin-metric__icon">{tile.icon}</span>
             </div>
-            <div className="bani-admin-metric__value">{tile.value}</div>
-            <div className="bani-admin-metric__hint">{tile.hint}</div>
+            <div className="rh-admin-metric__value">{tile.value}</div>
+            <div className="rh-admin-metric__hint">{tile.hint}</div>
           </div>
         ))}
       </div>
 
-      <section className="bani-admin-panel">
-        <div className="bani-admin-toolbar" style={{ marginBottom: 18 }}>
-          <div className="bani-admin-toolbar__copy">
-            <h2 className="bani-admin-toolbar__title">Запросить выплату</h2>
-            <div className="bani-admin-toolbar__hint">Сумма не может превышать доступный баланс: {formatPrice(wallet?.available ?? 0)}.</div>
+      <section className="rh-admin-panel">
+        <div className="rh-admin-toolbar" style={{ marginBottom: 18 }}>
+          <div className="rh-admin-toolbar__copy">
+            <h2 className="rh-admin-toolbar__title">Запросить выплату</h2>
+            <div className="rh-admin-toolbar__hint">Сумма не может превышать доступный баланс: {formatPrice(wallet?.available ?? 0)}.</div>
           </div>
         </div>
         <Form
@@ -240,11 +240,11 @@ export default function PayoutPage() {
         </Form>
       </section>
 
-      <section className="bani-admin-panel">
-        <div className="bani-admin-toolbar" style={{ marginBottom: 14 }}>
-          <div className="bani-admin-toolbar__copy">
-            <h2 className="bani-admin-toolbar__title">Автовыплата</h2>
-            <div className="bani-admin-toolbar__hint">Автоматический вывод при достижении заданного порога.</div>
+      <section className="rh-admin-panel">
+        <div className="rh-admin-toolbar" style={{ marginBottom: 14 }}>
+          <div className="rh-admin-toolbar__copy">
+            <h2 className="rh-admin-toolbar__title">Автовыплата</h2>
+            <div className="rh-admin-toolbar__hint">Автоматический вывод при достижении заданного порога.</div>
           </div>
         </div>
         <Space>
@@ -257,11 +257,11 @@ export default function PayoutPage() {
         </Space>
       </section>
 
-      <section className="bani-admin-table-card">
-        <div className="bani-admin-toolbar">
-          <div className="bani-admin-toolbar__copy">
-            <h2 className="bani-admin-toolbar__title">История выплат</h2>
-            <div className="bani-admin-toolbar__hint">Статусы, метод и причина ошибки по всем заявкам.</div>
+      <section className="rh-admin-table-card">
+        <div className="rh-admin-toolbar">
+          <div className="rh-admin-toolbar__copy">
+            <h2 className="rh-admin-toolbar__title">История выплат</h2>
+            <div className="rh-admin-toolbar__hint">Статусы, метод и причина ошибки по всем заявкам.</div>
           </div>
         </div>
         <Table

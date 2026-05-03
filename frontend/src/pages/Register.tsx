@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Form, Input, Button, Card, Typography, Space, App, Segmented, Checkbox } from 'antd'
-import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined } from '@ant-design/icons'
+import { Form, Input, Button, Card, Typography, Space, App, Segmented, Checkbox } from '@/components/design/system'
+import { MailOutlined, LockOutlined, UserOutlined, PhoneOutlined } from '@/components/design/icons'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { postAuthRegister, postAuthRegisterPhone, postAuthVerifyPhone } from '@/api/generated/auth/auth'
 import { useAuthStore } from '@/stores/auth'
@@ -162,10 +162,10 @@ export default function Register() {
         </>
       )}
     >
-      <Card variant="borderless" className="bani-auth-surface">
+      <Card variant="borderless" className="rh-auth-surface">
         <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <Segmented
-            className="bani-auth-segmented"
+            className="rh-auth-segmented"
             options={ROLE_OPTIONS}
             value={role}
             onChange={(v) => setRole(v as string)}
@@ -173,7 +173,7 @@ export default function Register() {
           />
 
           <Segmented
-            className="bani-auth-segmented"
+            className="rh-auth-segmented"
             options={AUTH_METHOD_OPTIONS}
             value={authMethod}
             onChange={(v) => setAuthMethod(v as AuthMethod)}
@@ -183,7 +183,7 @@ export default function Register() {
           {authMethod === 'email' ? (
             <Form
               form={emailForm}
-              className="bani-auth-form"
+              className="rh-auth-form"
               layout="vertical"
               onFinish={onEmailFinish}
               autoComplete="on"
@@ -290,7 +290,7 @@ export default function Register() {
                 <Checkbox>Мне исполнилось 18 лет</Checkbox>
               </Form.Item>
 
-              <Form.Item className="bani-auth-form__actions">
+              <Form.Item className="rh-auth-form__actions">
                 <Button
                   type="primary"
                   htmlType="submit"
@@ -304,7 +304,7 @@ export default function Register() {
               </Form.Item>
             </Form>
           ) : (
-            <Form form={phoneForm} className="bani-auth-form" layout="vertical" autoComplete="off">
+            <Form form={phoneForm} className="rh-auth-form" layout="vertical" autoComplete="off">
               <Form.Item
                 label="Имя"
                 name="name"

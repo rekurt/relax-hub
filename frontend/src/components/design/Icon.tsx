@@ -41,6 +41,47 @@ export type DesignIconName =
   | 'qr'
   | 'trend'
   | 'download'
+  | 'info'
+  | 'calculator'
+  | 'camera'
+  | 'x-circle'
+  | 'code'
+  | 'copy'
+  | 'crown'
+  | 'wallet'
+  | 'alert'
+  | 'eye'
+  | 'file'
+  | 'flag'
+  | 'inbox'
+  | 'key'
+  | 'laptop'
+  | 'link'
+  | 'lock'
+  | 'mail'
+  | 'pause'
+  | 'percent'
+  | 'play'
+  | 'help'
+  | 'reload'
+  | 'robot'
+  | 'save'
+  | 'send'
+  | 'share'
+  | 'shop'
+  | 'cart'
+  | 'smile'
+  | 'sort'
+  | 'split'
+  | 'stop'
+  | 'swap'
+  | 'tag'
+  | 'team'
+  | 'trophy'
+  | 'unlock'
+  | 'user-plus'
+  | 'user-minus'
+  | 'video'
 
 const ICON_PATHS: Record<DesignIconName, ReactNode> = {
   search: <><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></>,
@@ -83,21 +124,63 @@ const ICON_PATHS: Record<DesignIconName, ReactNode> = {
   qr: <><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><path d="M14 14h2v2h-2zM18 14h3M14 18h3M18 18v3" /></>,
   trend: <><path d="m3 17 6-6 4 4 8-8" /><path d="M14 7h7v7" /></>,
   download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" /></>,
+  info: <><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></>,
+  calculator: <><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" /></>,
+  camera: <><path d="M4 7h3l2-3h6l2 3h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" /><circle cx="12" cy="13" r="4" /></>,
+  'x-circle': <><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" /></>,
+  code: <><path d="m16 18 6-6-6-6M8 6l-6 6 6 6" /></>,
+  copy: <><rect x="8" y="8" width="13" height="13" rx="2" /><path d="M4 16c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2h9c1.1 0 2 .9 2 2" /></>,
+  crown: <><path d="M3 8l5 4 4-7 4 7 5-4-2 11H5z" /><path d="M5 19h14" /></>,
+  wallet: <><path d="M3 7a3 3 0 0 1 3-3h13v16H6a3 3 0 0 1-3-3z" /><path d="M3 8h18M16 13h2" /></>,
+  alert: <><path d="m12 3 10 18H2z" /><path d="M12 9v5M12 17h.01" /></>,
+  eye: <><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></>,
+  file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></>,
+  flag: <><path d="M4 22V4s2-1 5-1 5 2 8 1 3-1 3-1v12s-2 1-5 1-5-2-8-1-3 1-3 1" /></>,
+  inbox: <><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="m5 4-3 8v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3-8z" /></>,
+  key: <><circle cx="7.5" cy="15.5" r="5.5" /><path d="m12 11 8-8M17 3l4 4M15 5l4 4" /></>,
+  laptop: <><rect x="4" y="5" width="16" height="11" rx="2" /><path d="M2 20h20" /></>,
+  link: <><path d="M10 13a5 5 0 0 0 7.1 0l2-2a5 5 0 1 0-7.1-7.1l-1.1 1.1" /><path d="M14 11a5 5 0 0 0-7.1 0l-2 2A5 5 0 0 0 12 20.1l1.1-1.1" /></>,
+  lock: <><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></>,
+  mail: <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>,
+  pause: <><circle cx="12" cy="12" r="10" /><path d="M10 8v8M14 8v8" /></>,
+  percent: <><path d="m19 5-14 14" /><circle cx="7" cy="7" r="2" /><circle cx="17" cy="17" r="2" /></>,
+  play: <><circle cx="12" cy="12" r="10" /><path d="m10 8 6 4-6 4z" /></>,
+  help: <><circle cx="12" cy="12" r="10" /><path d="M9.5 9a2.8 2.8 0 0 1 5 1.8c0 2-2.5 2.2-2.5 4.2M12 18h.01" /></>,
+  reload: <><path d="M21 12a9 9 0 1 1-2.64-6.36" /><path d="M21 3v6h-6" /></>,
+  robot: <><rect x="5" y="8" width="14" height="11" rx="2" /><path d="M12 8V4M9 14h.01M15 14h.01M8 19v2M16 19v2" /></>,
+  save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><path d="M17 21v-8H7v8M7 3v5h8" /></>,
+  send: <><path d="m22 2-7 20-4-9-9-4z" /><path d="M22 2 11 13" /></>,
+  share: <><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" /></>,
+  shop: <><path d="M4 10h16l-1-6H5z" /><path d="M6 10v10h12V10M9 20v-6h6v6" /></>,
+  cart: <><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6H19a2 2 0 0 0 2-1.6L23 6H6" /></>,
+  smile: <><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" /></>,
+  sort: <><path d="M11 5h10M11 12h7M11 19h4M4 7l3-3 3 3M7 4v16" /></>,
+  split: <><rect x="3" y="4" width="7" height="16" rx="1" /><rect x="14" y="4" width="7" height="16" rx="1" /></>,
+  stop: <><circle cx="12" cy="12" r="10" /><path d="M9 9h6v6H9z" /></>,
+  swap: <><path d="M7 7h14l-4-4M17 17H3l4 4" /></>,
+  tag: <><path d="M20 12 12 20 4 12V4h8z" /><path d="M8 8h.01" /></>,
+  team: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></>,
+  trophy: <><path d="M8 21h8M12 17v4" /><path d="M7 4h10v5a5 5 0 0 1-10 0z" /><path d="M5 6H3v1a4 4 0 0 0 4 4M19 6h2v1a4 4 0 0 1-4 4" /></>,
+  unlock: <><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 7.8-1.2" /></>,
+  'user-plus': <><circle cx="9" cy="8" r="4" /><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6" /></>,
+  'user-minus': <><circle cx="9" cy="8" r="4" /><path d="M2 21a7 7 0 0 1 14 0M16 11h6" /></>,
+  video: <><rect x="3" y="6" width="13" height="12" rx="2" /><path d="m16 10 5-3v10l-5-3z" /></>,
 }
 
 interface DesignIconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
   name: DesignIconName
   size?: number
   style?: CSSProperties
+  filled?: boolean
 }
 
-export default function DesignIcon({ name, size = 18, className = '', style, ...props }: DesignIconProps) {
+export default function DesignIcon({ name, size = 18, className = '', style, filled = false, ...props }: DesignIconProps) {
   return (
     <svg
       viewBox="0 0 24 24"
       width={size}
       height={size}
-      fill="none"
+      fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
       strokeWidth="1.75"
       strokeLinecap="round"

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { Alert, Card, Segmented, Skeleton, Space, Typography } from 'antd'
+import { Alert, Card, Segmented, Skeleton, Space, Typography } from '@/components/design/system'
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
@@ -9,7 +9,7 @@ import {
   FunnelPlotOutlined,
   ShoppingOutlined,
   StarOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useGetMyBathhousesIdAnalytics } from '@/api/generated/analytics/analytics'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { formatPrice } from '@/lib/format'
@@ -58,14 +58,14 @@ function KpiCard({ title, value, change, icon, loading, suffix, hint }: KpiCardP
       : null
 
   return (
-    <div className="bani-stat-tile">
-      <span className="bani-stat-tile__eyebrow">
+    <div className="rh-stat-tile">
+      <span className="rh-stat-tile__eyebrow">
         <Space size={8}>
           {icon}
           <span>{title}</span>
         </Space>
       </span>
-      <div className="bani-stat-tile__value">
+      <div className="rh-stat-tile__value">
         {value}{suffix ?? ''}
       </div>
       {change !== undefined ? (
@@ -74,7 +74,7 @@ function KpiCard({ title, value, change, icon, loading, suffix, hint }: KpiCardP
           {change.toFixed(1)}% к пред. периоду
         </Text>
       ) : (
-        <span className="bani-stat-tile__hint">{hint}</span>
+        <span className="rh-stat-tile__hint">{hint}</span>
       )}
     </div>
   )
@@ -94,7 +94,7 @@ export default function Dashboard() {
 
   if (!selectedBathhouseId) {
     return (
-      <div className="bani-stack">
+      <div className="rh-stack">
         <PageHeader
           eyebrow="Аналитика"
           title="Дашборд"
@@ -117,7 +117,7 @@ export default function Dashboard() {
         : 'Не удалось загрузить аналитику'
 
     return (
-      <div className="bani-stack">
+      <div className="rh-stack">
         <PageHeader
           eyebrow="Аналитика"
           title="Дашборд"
@@ -134,7 +134,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Аналитика"
         title="Дашборд"
@@ -148,13 +148,13 @@ export default function Dashboard() {
         )}
       />
 
-      <section className="bani-hero-panel">
-        <div className="bani-hero-panel__eyebrow">Состояние объекта</div>
-        <h2 className="bani-hero-panel__title">Главные метрики вынесены в первый экран</h2>
-        <div className="bani-hero-panel__description">
+      <section className="rh-hero-panel">
+        <div className="rh-hero-panel__eyebrow">Состояние объекта</div>
+        <h2 className="rh-hero-panel__title">Главные метрики вынесены в первый экран</h2>
+        <div className="rh-hero-panel__description">
           Владелец должен видеть не набор разрозненных карточек, а цельную картину: что происходит с трафиком, бронями, чеком и качеством сервиса за выбранный период.
         </div>
-        <div className="bani-stat-grid">
+        <div className="rh-stat-grid">
           <KpiCard
             title="Бронирования"
             value={(dashboard?.bookings ?? 0).toLocaleString('en-US')}

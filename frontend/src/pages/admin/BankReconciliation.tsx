@@ -14,10 +14,10 @@ import {
   App,
   Card,
   Descriptions,
-} from 'antd'
-import type { ColumnsType } from 'antd/es/table'
-import { UploadOutlined, LinkOutlined } from '@ant-design/icons'
-import type { UploadFile } from 'antd/es/upload'
+} from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
+import { UploadOutlined, LinkOutlined } from '@/components/design/icons'
+import type { UploadFile } from '@/components/design/types'
 import {
   useGetApiV1AdminFinanceReconciliation,
   usePostApiV1AdminFinanceBankStatement,

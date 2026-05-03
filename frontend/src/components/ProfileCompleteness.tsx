@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Button, Card, Progress, List, Typography, Tag } from 'antd'
-import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { Button, Card, Progress, List, Typography, Tag } from '@/components/design/system'
+import { CheckCircleOutlined, CloseCircleOutlined } from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 
 const { Text } = Typography

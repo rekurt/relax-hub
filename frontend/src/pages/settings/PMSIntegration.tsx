@@ -16,7 +16,7 @@ import {
   Collapse,
   InputNumber,
   Descriptions,
-} from 'antd'
+} from '@/components/design/system'
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -26,7 +26,7 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ExclamationCircleOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 

@@ -1,4 +1,4 @@
-import { Descriptions, Modal, Spin, Tag } from 'antd'
+import { Descriptions, Modal, Spin, Tag } from '@/components/design/system'
 import { useGetBookingsIdPayment } from '@/api/generated/payments/payments'
 import type { InternalHandlerBookingResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'

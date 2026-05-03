@@ -12,13 +12,13 @@ import {
   Select,
   App,
   Avatar,
-} from 'antd'
+} from '@/components/design/system'
 import {
   UserOutlined,
   FlagOutlined,
   EditOutlined,
   DeleteOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import type { InternalHandlerReviewResponse, InternalHandlerMediaResponse } from '@/api/generated/model'
 import { usePostReviewsIdReport } from '@/api/generated/complaints/complaints'

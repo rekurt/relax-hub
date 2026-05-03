@@ -20,7 +20,7 @@ import {
   Tag,
   Tooltip,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CalendarOutlined,
   CopyOutlined,
@@ -32,11 +32,11 @@ import {
   ReloadOutlined,
   RightOutlined,
   SyncOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { App } from 'antd'
+import { App } from '@/components/design/system'
 import { useQueryClient, useQueries } from '@tanstack/react-query'
 import {
   useGetMyBathhousesIdCalendarToken,
@@ -959,14 +959,14 @@ export default function CalendarPage() {
             </Text>
             {calendarToken?.url ? (
               <Space orientation="vertical" style={{ width: '100%' }}>
-                <Space.Compact className="bani-compact-control">
+                <Space.Compact className="rh-compact-control">
                   <Input
                     readOnly
                     value={`${window.location.origin}${calendarToken.url}`}
                   />
                   <Button
                     aria-label="Скопировать ссылку iCal"
-                    className="bani-input-addon-button"
+                    className="rh-input-addon-button"
                     icon={<CopyOutlined />}
                     onClick={handleCopyIcalUrl}
                   />

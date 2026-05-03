@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Typography, Table, Tag, Space, Input, Select, DatePicker, Card, Segmented } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { Typography, Table, Tag, Space, Input, Select, DatePicker, Card, Segmented } from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import { useGetAdminAuditLog, useGetAdminAuditLogActions } from '@/api/generated/admin-audit/admin-audit'
 import type { InternalHandlerAuditLogResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'

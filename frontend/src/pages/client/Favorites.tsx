@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Typography, Row, Col, Pagination, Spin } from 'antd'
+import { Typography, Row, Col, Pagination, Spin } from '@/components/design/system'
 import { useQueries } from '@tanstack/react-query'
 import { useGetMyFavorites } from '@/api/generated/favorites/favorites'
 import { getGetBathhousesIdQueryOptions } from '@/api/generated/bathhouses/bathhouses'

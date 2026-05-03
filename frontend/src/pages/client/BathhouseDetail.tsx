@@ -18,7 +18,7 @@ import {
   Pagination,
   Avatar,
   Alert,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   EnvironmentOutlined,
@@ -29,10 +29,10 @@ import {
   ThunderboltOutlined,
   UserOutlined,
   WalletOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { App } from 'antd'
+import { App } from '@/components/design/system'
 import { useGetBathhousesBySlugSlug, useGetBathhousesIdAvailableSlots, useGetBathhousesIdSchema } from '@/api/generated/bathhouses/bathhouses'
 import { useGetBathhousesIdPhotos } from '@/api/generated/photos/photos'
 import { useGetBathhousesIdReviews } from '@/api/generated/reviews/reviews'
@@ -266,7 +266,7 @@ export default function BathhouseDetail() {
   }
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <Button
         type="text"
         icon={<ArrowLeftOutlined />}
@@ -275,32 +275,32 @@ export default function BathhouseDetail() {
         К поиску
       </Button>
 
-      <section className="bani-hero-panel bani-hero-panel--dark bani-detail-hero">
-        <div className="bani-detail-hero__header">
-          <div className="bani-stack">
-            <div className="bani-hero-panel__eyebrow">Публичное бронирование</div>
-            <h1 className="bani-hero-panel__title">
+      <section className="rh-hero-panel rh-hero-panel--dark rh-detail-hero">
+        <div className="rh-detail-hero__header">
+          <div className="rh-stack">
+            <div className="rh-hero-panel__eyebrow">Публичное бронирование</div>
+            <h1 className="rh-hero-panel__title">
               {bathhouse.name}
               {bathhouse.is_photo_verified && <CheckCircleOutlined style={{ marginLeft: 10, fontSize: 22 }} />}
             </h1>
-            <div className="bani-detail-hero__lead">
+            <div className="rh-detail-hero__lead">
               {bathhouse.address && (
-                <span className="bani-detail-hero__lead-item">
+                <span className="rh-detail-hero__lead-item">
                   <EnvironmentOutlined />
                   {bathhouse.address}
                 </span>
               )}
-              <span className="bani-detail-hero__lead-item">
+              <span className="rh-detail-hero__lead-item">
                 <Rate disabled allowHalf value={bathhouse.rating ?? 0} />
                 <span>{bathhouse.rating?.toFixed(1)} · {displayedReviewCount} отзывов</span>
               </span>
             </div>
-            <div className="bani-hero-panel__description">
+            <div className="rh-hero-panel__description">
               {bathhouse.description || 'Свободные слоты, правила и стоимость собраны прямо на этой странице.'}
             </div>
           </div>
 
-          <div className="bani-detail-hero__actions">
+          <div className="rh-detail-hero__actions">
             <Button type="primary" size="large" onClick={() => scrollToSection('bathhouse-slots')}>
               Выбрать слот
             </Button>
@@ -310,24 +310,24 @@ export default function BathhouseDetail() {
           </div>
         </div>
 
-        <div className="bani-hero-panel__meta">
-          <div className="bani-hero-panel__meta-item">
-            <span className="bani-hero-panel__meta-label">Цена от</span>
-            <div className="bani-hero-panel__meta-value">
+        <div className="rh-hero-panel__meta">
+          <div className="rh-hero-panel__meta-item">
+            <span className="rh-hero-panel__meta-label">Цена от</span>
+            <div className="rh-hero-panel__meta-value">
               {bathhouse.price_per_hour ? formatPrice(bathhouse.price_per_hour) : 'По запросу'}
             </div>
           </div>
-          <div className="bani-hero-panel__meta-item">
-            <span className="bani-hero-panel__meta-label">Минимум</span>
-            <div className="bani-hero-panel__meta-value">{minimumDurationLabel}</div>
+          <div className="rh-hero-panel__meta-item">
+            <span className="rh-hero-panel__meta-label">Минимум</span>
+            <div className="rh-hero-panel__meta-value">{minimumDurationLabel}</div>
           </div>
-          <div className="bani-hero-panel__meta-item">
-            <span className="bani-hero-panel__meta-label">Подтверждение</span>
-            <div className="bani-hero-panel__meta-value">{bookingModeTrustCopy}</div>
+          <div className="rh-hero-panel__meta-item">
+            <span className="rh-hero-panel__meta-label">Подтверждение</span>
+            <div className="rh-hero-panel__meta-value">{bookingModeTrustCopy}</div>
           </div>
-          <div className="bani-hero-panel__meta-item">
-            <span className="bani-hero-panel__meta-label">Отмена</span>
-            <div className="bani-hero-panel__meta-value">{getCancellationPolicyLabel(cancellationPolicy)} отмена</div>
+          <div className="rh-hero-panel__meta-item">
+            <span className="rh-hero-panel__meta-label">Отмена</span>
+            <div className="rh-hero-panel__meta-value">{getCancellationPolicyLabel(cancellationPolicy)} отмена</div>
           </div>
         </div>
       </section>
@@ -359,7 +359,7 @@ export default function BathhouseDetail() {
             )}
 
             <div style={{ marginTop: 16 }}>
-              <div className="bani-toolbar">
+              <div className="rh-toolbar">
                 <div>
                   <Title level={3} style={{ margin: 0 }}>Описание и условия</Title>
                   <Text type="secondary">Сначала то, что влияет на бронирование, затем вторичные детали объекта.</Text>
@@ -517,9 +517,9 @@ export default function BathhouseDetail() {
         </Col>
 
         <Col xs={24} lg={8}>
-          <div className="bani-detail-rail">
+          <div className="rh-detail-rail">
             <Card id="bathhouse-slots" title="Свободные слоты">
-              <div className="bani-section-card">
+              <div className="rh-section-card">
                 <Text type="secondary">
                   Сначала дата и время, потом checkout. Никаких скрытых условий перед переходом к брони.
                 </Text>
@@ -585,33 +585,33 @@ export default function BathhouseDetail() {
             </Card>
 
             <Card title="Что важно до бронирования" size="small">
-              <div className="bani-feature-list">
-                <div className="bani-feature-item">
-                  <div className="bani-feature-item__icon"><ClockCircleOutlined /></div>
-                  <div className="bani-feature-item__copy">
-                    <div className="bani-feature-item__title">Минимум {bathhouse.min_duration ?? 1} ч</div>
-                    <div className="bani-feature-item__description">Минимальная длительность совпадает с реальными правилами объекта.</div>
+              <div className="rh-feature-list">
+                <div className="rh-feature-item">
+                  <div className="rh-feature-item__icon"><ClockCircleOutlined /></div>
+                  <div className="rh-feature-item__copy">
+                    <div className="rh-feature-item__title">Минимум {bathhouse.min_duration ?? 1} ч</div>
+                    <div className="rh-feature-item__description">Минимальная длительность совпадает с реальными правилами объекта.</div>
                   </div>
                 </div>
-                <div className="bani-feature-item">
-                  <div className="bani-feature-item__icon"><ThunderboltOutlined /></div>
-                  <div className="bani-feature-item__copy">
-                    <div className="bani-feature-item__title">{bookingModeTrustCopy}</div>
-                    <div className="bani-feature-item__description">Модель подтверждения известна заранее, до ввода контактов.</div>
+                <div className="rh-feature-item">
+                  <div className="rh-feature-item__icon"><ThunderboltOutlined /></div>
+                  <div className="rh-feature-item__copy">
+                    <div className="rh-feature-item__title">{bookingModeTrustCopy}</div>
+                    <div className="rh-feature-item__description">Модель подтверждения известна заранее, до ввода контактов.</div>
                   </div>
                 </div>
-                <div className="bani-feature-item">
-                  <div className="bani-feature-item__icon"><CheckCircleOutlined /></div>
-                  <div className="bani-feature-item__copy">
-                    <div className="bani-feature-item__title">{getCancellationPolicyLabel(cancellationPolicy)} отмена</div>
-                    <div className="bani-feature-item__description">{cancellationDetails.description}</div>
+                <div className="rh-feature-item">
+                  <div className="rh-feature-item__icon"><CheckCircleOutlined /></div>
+                  <div className="rh-feature-item__copy">
+                    <div className="rh-feature-item__title">{getCancellationPolicyLabel(cancellationPolicy)} отмена</div>
+                    <div className="rh-feature-item__description">{cancellationDetails.description}</div>
                   </div>
                 </div>
-                <div className="bani-feature-item">
-                  <div className="bani-feature-item__icon"><WalletOutlined /></div>
-                  <div className="bani-feature-item__copy">
-                    <div className="bani-feature-item__title">{getDepositSummary(depositPercent)}</div>
-                    <div className="bani-feature-item__description">Размер залога, если он нужен, виден ещё до checkout.</div>
+                <div className="rh-feature-item">
+                  <div className="rh-feature-item__icon"><WalletOutlined /></div>
+                  <div className="rh-feature-item__copy">
+                    <div className="rh-feature-item__title">{getDepositSummary(depositPercent)}</div>
+                    <div className="rh-feature-item__description">Размер залога, если он нужен, виден ещё до checkout.</div>
                   </div>
                 </div>
               </div>

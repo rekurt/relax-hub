@@ -1,5 +1,5 @@
-import { Card, Typography, Space, Rate } from 'antd'
-import { ClockCircleOutlined } from '@ant-design/icons'
+import { Card, Typography, Space, Rate } from '@/components/design/system'
+import { ClockCircleOutlined } from '@/components/design/icons'
 import { formatPrice } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
 import { useGetMyRecentlyViewed } from '@/api/generated/saved-searches/saved-searches'

@@ -13,9 +13,9 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
-import { EyeOutlined, TrophyOutlined } from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/system'
+import { EyeOutlined, TrophyOutlined } from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import {
   useGetMyLoyaltyLevels,
 } from '@/api/generated/loyalty/loyalty'
@@ -175,19 +175,19 @@ export default function LoyaltyManagement() {
             <InputNumber style={{ width: '100%' }} disabled />
           </Form.Item>
           <Form.Item label="Процент кэшбэка">
-            <Space.Compact className="bani-compact-control">
+            <Space.Compact className="rh-compact-control">
               <Form.Item name="discount_percent" noStyle>
                 <InputNumber style={{ width: '100%' }} disabled />
               </Form.Item>
-              <span className="bani-input-addon">%</span>
+              <span className="rh-input-addon">%</span>
             </Space.Compact>
           </Form.Item>
           <Form.Item label="Множитель баллов">
-            <Space.Compact className="bani-compact-control">
+            <Space.Compact className="rh-compact-control">
               <Form.Item name="point_multiplier" noStyle>
                 <InputNumber style={{ width: '100%' }} disabled />
               </Form.Item>
-              <span className="bani-input-addon">×</span>
+              <span className="rh-input-addon">×</span>
             </Space.Compact>
           </Form.Item>
         </Form>

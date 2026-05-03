@@ -18,7 +18,7 @@ import {
   Tag,
   TimePicker,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
@@ -27,7 +27,7 @@ import {
   EyeOutlined,
   PlayCircleOutlined,
   SaveOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'

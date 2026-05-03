@@ -17,15 +17,15 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   DownloadOutlined,
   LockOutlined,
   PlusOutlined,
   WalletOutlined,
   WarningOutlined,
-} from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import dayjs from 'dayjs'
 import { useGetMyWallet, useGetMyWalletTransactions, useGetMyWalletHolds, usePostMyWalletTopup } from '@/api/generated/wallet/wallet'
 import type { InternalHandlerWalletTransactionResponse, InternalHandlerWalletHoldResponse } from '@/api/generated/model'

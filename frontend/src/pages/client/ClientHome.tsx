@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { Typography, Input, Row, Col, Card, Rate, Select, Space, Tag, Carousel, Button } from 'antd'
+import { Typography, Input, Row, Col, Card, Rate, Select, Space, Tag, Carousel, Button } from '@/components/design/system'
 import { useNavigate } from 'react-router-dom'
 import {
   SearchOutlined,
@@ -9,7 +9,7 @@ import {
   GiftOutlined,
   TagOutlined,
   RocketOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { useGetRecommendations, useGetPopular } from '@/api/generated/recommendations/recommendations'
 import { useGetCities } from '@/api/generated/cities/cities'
@@ -93,48 +93,48 @@ function DiscoveryBathhouseCard({ item }: { item: InternalHandlerRecommendationR
   return (
     <Card
       hoverable
-      className="bani-home__listing-card"
+      className="rh-home__listing-card"
       onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}
     >
-      <Title level={5} className="bani-home__listing-card-title">{item.name}</Title>
+      <Title level={5} className="rh-home__listing-card-title">{item.name}</Title>
       {item.address && (
-        <Text type="secondary" className="bani-home__listing-card-address">
+        <Text type="secondary" className="rh-home__listing-card-address">
           <EnvironmentOutlined style={{ marginRight: 4 }} />
           {item.address}
         </Text>
       )}
-      <div className="bani-home__listing-card-rating">
+      <div className="rh-home__listing-card-rating">
         <Rate disabled allowHalf value={item.rating ?? 0} style={{ fontSize: 14 }} />
-        <Text type="secondary" className="bani-home__listing-card-rating-text">
+        <Text type="secondary" className="rh-home__listing-card-rating-text">
           {item.rating?.toFixed(1)} ({item.review_count ?? 0})
         </Text>
       </div>
       {statusTags.length > 0 && (
-        <div className="bani-home__listing-card-tags">
+        <div className="rh-home__listing-card-tags">
           {statusTags.map((label) => (
-            <Tag key={label} className="bani-home__listing-card-tag">
+            <Tag key={label} className="rh-home__listing-card-tag">
               {label}
             </Tag>
           ))}
         </div>
       )}
       {amenities.length > 0 && (
-        <div className="bani-home__listing-card-amenities">
-          <Text className="bani-home__listing-card-amenities-label">Удобства</Text>
-          <div className="bani-home__listing-card-tags bani-home__listing-card-tags--amenities">
+        <div className="rh-home__listing-card-amenities">
+          <Text className="rh-home__listing-card-amenities-label">Удобства</Text>
+          <div className="rh-home__listing-card-tags rh-home__listing-card-tags--amenities">
             {amenities.slice(0, 4).map((label) => (
-              <Tag key={label} className="bani-home__listing-card-tag bani-home__listing-card-tag--amenity">
+              <Tag key={label} className="rh-home__listing-card-tag rh-home__listing-card-tag--amenity">
                 {label}
               </Tag>
             ))}
             {amenities.length > 4 && (
-              <Tag className="bani-home__listing-card-tag bani-home__listing-card-tag--amenity">+{amenities.length - 4}</Tag>
+              <Tag className="rh-home__listing-card-tag rh-home__listing-card-tag--amenity">+{amenities.length - 4}</Tag>
             )}
           </div>
         </div>
       )}
       {item.price_per_hour != null && (
-        <Text strong className="bani-home__listing-card-price">{formatPrice(item.price_per_hour)}/ч</Text>
+        <Text strong className="rh-home__listing-card-price">{formatPrice(item.price_per_hour)}/ч</Text>
       )}
     </Card>
   )
@@ -464,7 +464,7 @@ export default function ClientHome() {
   }, [])
 
   return (
-    <div className="bani-home">
+    <div className="rh-home">
       {showTour && (
         <OnboardingTour
           open={showTour}
@@ -472,13 +472,13 @@ export default function ClientHome() {
           region={user?.region}
         />
       )}
-      <section className="bani-home__hero">
-        <div className="bani-home__hero-copy">
+      <section className="rh-home__hero">
+        <div className="rh-home__hero-copy">
           <Tag color="gold">Быстрое бронирование</Tag>
-          <Title level={1} className="bani-home__hero-title">
+          <Title level={1} className="rh-home__hero-title">
             Бани для вечера вдвоем, компании и выходных за городом
           </Title>
-          <Text className="bani-home__hero-description">
+          <Text className="rh-home__hero-description">
             Public-маршрут начинается с выбора сценария: находите подходящий формат отдыха, уточняете параметры и переходите к слоту без длинной регистрации и без лишних экранов.
           </Text>
           <Input
@@ -491,82 +491,82 @@ export default function ClientHome() {
             }}
             onClick={() => navigate('/catalog')}
             readOnly
-            className="bani-home__search"
+            className="rh-home__search"
           />
-          <Space wrap className="bani-home__hero-actions">
+          <Space wrap className="rh-home__hero-actions">
             <Button size="large" type="primary" onClick={() => navigate('/catalog')}>
               Подобрать баню
             </Button>
-            <Button size="large" className="bani-home__hero-secondary" onClick={() => navigate('/certificates')}>
+            <Button size="large" className="rh-home__hero-secondary" onClick={() => navigate('/certificates')}>
               Подарочный сертификат
             </Button>
           </Space>
-          <div className="bani-home__steps">
+          <div className="rh-home__steps">
             {DISCOVERY_STEPS.map((step, index) => (
-              <div key={step} className="bani-home__step">
-                <span className="bani-home__step-index">{index + 1}</span>
-                <Text className="bani-home__step-text">{step}</Text>
+              <div key={step} className="rh-home__step">
+                <span className="rh-home__step-index">{index + 1}</span>
+                <Text className="rh-home__step-text">{step}</Text>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bani-home__hero-side">
-          <div className="bani-home__section-copy">
-            <Text className="bani-home__section-eyebrow">Сценарии</Text>
-            <Title level={3} className="bani-home__section-title">
+        <div className="rh-home__hero-side">
+          <div className="rh-home__section-copy">
+            <Text className="rh-home__section-eyebrow">Сценарии</Text>
+            <Title level={3} className="rh-home__section-title">
               Начните с готовой подборки
             </Title>
-            <Text className="bani-home__section-description">
+            <Text className="rh-home__section-description">
               Сценарии привязаны к реальным фильтрам каталога, поэтому переход сразу открывает рабочую выдачу, а не декоративный экран.
             </Text>
           </div>
-          <div className="bani-home__shortcut-grid">
+          <div className="rh-home__shortcut-grid">
             {PUBLIC_SHORTCUT_CARDS.map((card) => (
               <button
                 key={card.key}
                 type="button"
-                className="bani-home__shortcut-card"
+                className="rh-home__shortcut-card"
                 onClick={() => navigate(card.to)}
               >
                 <Tag color="cyan">{card.eyebrow}</Tag>
-                <Title level={4} className="bani-home__shortcut-title">
+                <Title level={4} className="rh-home__shortcut-title">
                   {card.title}
                 </Title>
-                <Text className="bani-home__shortcut-description">{card.description}</Text>
+                <Text className="rh-home__shortcut-description">{card.description}</Text>
               </button>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bani-home__proof">
-        <div className="bani-home__section-copy">
-          <Text className="bani-home__section-eyebrow">Как устроен выбор</Text>
-          <Title level={3} className="bani-home__section-title">
+      <section className="rh-home__proof">
+        <div className="rh-home__section-copy">
+          <Text className="rh-home__section-eyebrow">Как устроен выбор</Text>
+          <Title level={3} className="rh-home__section-title">
             Discovery без дешёвого маркетингового шума
           </Title>
-          <Text className="bani-home__section-description">
+          <Text className="rh-home__section-description">
             Новый клиент должен сразу понимать, что здесь можно выбрать, по каким параметрам сравнивать варианты и как быстро дойти до бронирования.
           </Text>
         </div>
-        <div className="bani-home__proof-grid">
+        <div className="rh-home__proof-grid">
           {DISCOVERY_PROOF_POINTS.map((item) => (
-            <Card key={item.key} variant="borderless" className="bani-home__proof-card">
-              <Text className="bani-home__proof-eyebrow">{item.eyebrow}</Text>
-              <Title level={4} className="bani-home__proof-title">
+            <Card key={item.key} variant="borderless" className="rh-home__proof-card">
+              <Text className="rh-home__proof-eyebrow">{item.eyebrow}</Text>
+              <Title level={4} className="rh-home__proof-title">
                 {item.title}
               </Title>
-              <Text className="bani-home__proof-description">{item.description}</Text>
+              <Text className="rh-home__proof-description">{item.description}</Text>
             </Card>
           ))}
         </div>
       </section>
 
-      <section className="bani-home__inventory">
-        <div className="bani-home__section-copy bani-home__section-copy--compact">
-          <Text className="bani-home__section-eyebrow">Подборка</Text>
-          <Title level={3} className="bani-home__section-title">
+      <section className="rh-home__inventory">
+        <div className="rh-home__section-copy rh-home__section-copy--compact">
+          <Text className="rh-home__section-eyebrow">Подборка</Text>
+          <Title level={3} className="rh-home__section-title">
             С чего обычно начинают выбор
           </Title>
         </div>
@@ -575,7 +575,7 @@ export default function ClientHome() {
 
       <PersonalRecommendations />
 
-      <section className="bani-home__secondary">
+      <section className="rh-home__secondary">
         <PromoBanner />
         <RecentlyViewed />
       </section>

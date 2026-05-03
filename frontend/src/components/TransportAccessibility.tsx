@@ -1,9 +1,9 @@
-import { Typography, Tag } from 'antd'
+import { Typography, Tag } from '@/components/design/system'
 import {
   EnvironmentOutlined,
   CarOutlined,
   NodeIndexOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 
 const { Text } = Typography
 

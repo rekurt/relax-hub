@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { App, Input, Modal, Radio, Space } from 'antd'
+import { App, Input, Modal, Radio, Space } from '@/components/design/system'
 import {
   usePostReviewsIdReport,
   usePostBathhousesIdReport,

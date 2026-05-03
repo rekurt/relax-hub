@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Typography, Grid } from 'antd'
+import { Typography, Grid } from '@/components/design/system'
 import type { InternalHandlerConversationResponse } from '@/api/generated/model'
 import { useWebSocketNotifications } from '@/lib/useWebSocketNotifications'
 import ConversationList from './ConversationList'

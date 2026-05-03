@@ -13,9 +13,9 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
-import { ReloadOutlined, StopOutlined, PlayCircleOutlined } from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/system'
+import { ReloadOutlined, StopOutlined, PlayCircleOutlined } from '@/components/design/icons'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetMySubscriptions,

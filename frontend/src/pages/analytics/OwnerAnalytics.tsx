@@ -5,7 +5,7 @@ import {
   Skeleton,
   Table,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowUpOutlined,
   ArrowDownOutlined,
@@ -16,7 +16,7 @@ import {
   CalculatorOutlined,
   FunnelPlotOutlined,
   UserOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import {
   useGetMyBathhousesIdAnalytics,
@@ -75,7 +75,7 @@ export default function OwnerAnalytics() {
 
   if (!selectedBathhouseId) {
     return (
-      <div className="bani-stack">
+      <div className="rh-stack">
         <PageHeader
           size="compact"
           eyebrow="Владелец"
@@ -189,7 +189,7 @@ export default function OwnerAnalytics() {
   ]
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         size="compact"
         eyebrow="Владелец"
@@ -204,45 +204,45 @@ export default function OwnerAnalytics() {
         )}
       />
 
-      <div className="bani-stat-grid">
+      <div className="rh-stat-grid">
         {kpiTiles.map((tile) => (
-          <div className="bani-stat-tile" key={tile.label}>
+          <div className="rh-stat-tile" key={tile.label}>
             {dashLoading ? (
               <Skeleton active paragraph={{ rows: 1 }} />
             ) : (
               <>
-                <span className="bani-stat-tile__eyebrow">{tile.icon} {tile.label}</span>
-                <div className="bani-stat-tile__value">{tile.value}</div>
-                <div className="bani-stat-tile__hint">{tile.hint}</div>
+                <span className="rh-stat-tile__eyebrow">{tile.icon} {tile.label}</span>
+                <div className="rh-stat-tile__value">{tile.value}</div>
+                <div className="rh-stat-tile__hint">{tile.hint}</div>
               </>
             )}
           </div>
         ))}
       </div>
 
-      <section className="bani-admin-panel" aria-busy={perfLoading}>
-        <div className="bani-admin-toolbar" style={{ marginBottom: 18 }}>
-          <div className="bani-admin-toolbar__copy">
-            <h2 className="bani-admin-toolbar__title">Сравнение с конкурентами</h2>
-            <div className="bani-admin-toolbar__hint">Сравните загрузку, конверсию и рейтинг с городским средним.</div>
+      <section className="rh-admin-panel" aria-busy={perfLoading}>
+        <div className="rh-admin-toolbar" style={{ marginBottom: 18 }}>
+          <div className="rh-admin-toolbar__copy">
+            <h2 className="rh-admin-toolbar__title">Сравнение с конкурентами</h2>
+            <div className="rh-admin-toolbar__hint">Сравните загрузку, конверсию и рейтинг с городским средним.</div>
           </div>
         </div>
         {performance ? (
-          <div className="bani-info-grid">
-            <div className="bani-info-card">
-              <span className="bani-info-card__label"><UserOutlined /> Ваша загрузка</span>
-              <div className="bani-info-card__value">{`${((performance.occupancy_rate ?? 0) * 100).toFixed(1)}%`}</div>
-              <div className="bani-info-card__hint">Среднее в городе: {((performance.avg_city_occupancy_rate ?? 0) * 100).toFixed(1)}%</div>
+          <div className="rh-info-grid">
+            <div className="rh-info-card">
+              <span className="rh-info-card__label"><UserOutlined /> Ваша загрузка</span>
+              <div className="rh-info-card__value">{`${((performance.occupancy_rate ?? 0) * 100).toFixed(1)}%`}</div>
+              <div className="rh-info-card__hint">Среднее в городе: {((performance.avg_city_occupancy_rate ?? 0) * 100).toFixed(1)}%</div>
             </div>
-            <div className="bani-info-card">
-              <span className="bani-info-card__label">Ваша конверсия</span>
-              <div className="bani-info-card__value">{`${((performance.conversion_rate ?? 0) * 100).toFixed(1)}%`}</div>
-              <div className="bani-info-card__hint">Среднее в городе: {((performance.avg_city_conversion_rate ?? 0) * 100).toFixed(1)}%</div>
+            <div className="rh-info-card">
+              <span className="rh-info-card__label">Ваша конверсия</span>
+              <div className="rh-info-card__value">{`${((performance.conversion_rate ?? 0) * 100).toFixed(1)}%`}</div>
+              <div className="rh-info-card__hint">Среднее в городе: {((performance.avg_city_conversion_rate ?? 0) * 100).toFixed(1)}%</div>
             </div>
-            <div className="bani-info-card">
-              <span className="bani-info-card__label">Ваш рейтинг</span>
-              <div className="bani-info-card__value">{performance.avg_rating?.toFixed(1) ?? '—'} / 5</div>
-              <div className="bani-info-card__hint">Среднее в городе: {performance.avg_city_rating?.toFixed(1) ?? '—'}</div>
+            <div className="rh-info-card">
+              <span className="rh-info-card__label">Ваш рейтинг</span>
+              <div className="rh-info-card__value">{performance.avg_rating?.toFixed(1) ?? '—'} / 5</div>
+              <div className="rh-info-card__hint">Среднее в городе: {performance.avg_city_rating?.toFixed(1) ?? '—'}</div>
             </div>
           </div>
         ) : (
@@ -250,11 +250,11 @@ export default function OwnerAnalytics() {
         )}
       </section>
 
-      <section className="bani-admin-table-card">
-        <div className="bani-admin-toolbar">
-          <div className="bani-admin-toolbar__copy">
-            <h2 className="bani-admin-toolbar__title">Динамика по дням</h2>
-            <div className="bani-admin-toolbar__hint">Ежедневные бронирования, выручка, просмотры и рейтинг.</div>
+      <section className="rh-admin-table-card">
+        <div className="rh-admin-toolbar">
+          <div className="rh-admin-toolbar__copy">
+            <h2 className="rh-admin-toolbar__title">Динамика по дням</h2>
+            <div className="rh-admin-toolbar__hint">Ежедневные бронирования, выручка, просмотры и рейтинг.</div>
           </div>
         </div>
         <Table

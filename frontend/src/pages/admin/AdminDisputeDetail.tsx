@@ -18,13 +18,13 @@ import {
   Spin,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   CheckOutlined,
   CloseOutlined,
   UserSwitchOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -459,7 +459,7 @@ export default function AdminDisputeDetail() {
           <Form.Item
             label="Сумма возврата (в рублях)"
           >
-            <Space.Compact className="bani-compact-control">
+            <Space.Compact className="rh-compact-control">
               <Form.Item
                 name="refund_amount"
                 noStyle
@@ -472,13 +472,13 @@ export default function AdminDisputeDetail() {
                   placeholder="0.00"
                 />
               </Form.Item>
-              <span className="bani-input-addon">₽</span>
+              <span className="rh-input-addon">₽</span>
             </Space.Compact>
           </Form.Item>
           <Form.Item
             label="Компенсация на кошелёк (в рублях)"
           >
-            <Space.Compact className="bani-compact-control">
+            <Space.Compact className="rh-compact-control">
               <Form.Item name="compensation_amount" noStyle>
                 <InputNumber
                   min={0}
@@ -487,7 +487,7 @@ export default function AdminDisputeDetail() {
                   placeholder="0.00"
                 />
               </Form.Item>
-              <span className="bani-input-addon">₽</span>
+              <span className="rh-input-addon">₽</span>
             </Space.Compact>
           </Form.Item>
           <Form.Item name="mediator_notes" label="Заметки медиатора">

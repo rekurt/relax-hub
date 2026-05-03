@@ -12,7 +12,7 @@ interface PageHeaderProps {
 export default function PageHeader({ eyebrow, title, description, extra, size = 'default' }: PageHeaderProps) {
   return (
     <SectionHeader
-      className={`bani-page-header bani-page-header--${size}`}
+      className={`rh-page-header rh-page-header--${size}`}
       eyebrow={eyebrow}
       title={title}
       subtitle={description}

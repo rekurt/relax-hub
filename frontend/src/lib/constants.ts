@@ -1,4 +1,4 @@
-export const AUTH_TOKEN_KEY = 'bani_token'
+export const AUTH_TOKEN_KEY = 'rh_token'
 
 export const BOOKING_STATUS_CONFIG: Record<string, { color: string; text: string; hexColor: string }> = {
   pending: { color: 'orange', text: 'Ожидает', hexColor: '#d97706' },

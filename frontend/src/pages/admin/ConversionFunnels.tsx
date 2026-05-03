@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Card, Col, Row, Segmented, Spin, Statistic, Typography } from 'antd'
+import { Card, Col, Row, Segmented, Spin, Statistic, Typography } from '@/components/design/system'
 import {
   FunnelPlotOutlined,
   ArrowDownOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useGetAdminAnalyticsFunnel } from '@/api/generated/admin-analytics/admin-analytics'
 import type { GithubComRekurtRelaxHubInternalDomainFunnelStep } from '@/api/generated/model'
 

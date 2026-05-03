@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Empty } from 'antd'
+import { Empty } from '@/components/design/system'
 import { useNavigate } from 'react-router-dom'
 import { DesignButton } from '@/components/design'
 
@@ -32,7 +32,7 @@ export default function EmptyState({
 
   return (
     <Empty
-      className="bani-empty-state"
+      className="rh-empty-state"
       image={image ?? Empty.PRESENTED_IMAGE_SIMPLE}
       description={description}
     >

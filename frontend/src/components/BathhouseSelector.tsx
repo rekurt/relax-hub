@@ -1,4 +1,4 @@
-import { Select, Space, Typography } from 'antd'
+import { Select, Space, Typography } from '@/components/design/system'
 import { useGetMyBathhouses } from '@/api/generated/bathhouses/bathhouses'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { useEffect, useMemo } from 'react'

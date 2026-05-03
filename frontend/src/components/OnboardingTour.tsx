@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Modal, Button, Steps, Typography, Space, Alert } from 'antd'
+import { Modal, Button, Steps, Typography, Space, Alert } from '@/components/design/system'
 import {
   SearchOutlined,
   CalendarOutlined,
@@ -7,7 +7,7 @@ import {
   StarOutlined,
   EnvironmentOutlined,
   GiftOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
 

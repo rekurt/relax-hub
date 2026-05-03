@@ -9,11 +9,11 @@ import {
   App,
   Descriptions,
   Result,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CheckCircleOutlined,
   FileTextOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetMyOfferStatus,

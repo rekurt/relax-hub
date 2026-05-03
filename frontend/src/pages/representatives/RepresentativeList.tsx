@@ -11,11 +11,11 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   DeleteOutlined,
   UserAddOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import {
   useGetBathhousesIdRepresentatives,

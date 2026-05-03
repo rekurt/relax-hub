@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react'
-import { App, Checkbox } from 'antd'
+import { App, Checkbox } from '@/components/design/system'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
@@ -105,7 +105,7 @@ export default function BathhouseCard({
 
   return (
     <DesignListingCard
-      className="bani-listing-card"
+      className="rh-listing-card"
       onClick={() => navigate(`/bathhouses/${bathhouse.slug ?? bathhouse.id}`)}
       name={bathhouse.name}
       address={bathhouse.address}

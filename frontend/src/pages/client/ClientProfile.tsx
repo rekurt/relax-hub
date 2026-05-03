@@ -21,7 +21,7 @@ import {
   Tag,
   Result,
   Divider,
-} from 'antd'
+} from '@/components/design/system'
 import {
   UserOutlined,
   UploadOutlined,
@@ -37,7 +37,7 @@ import {
   BellOutlined,
   MailOutlined,
   MobileOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth'
@@ -144,14 +144,14 @@ interface ToggleRowProps {
 
 function ToggleRow({ name, label, description, eyebrow, icon }: ToggleRowProps) {
   return (
-    <div className="bani-notification-toggle">
-      <div className="bani-notification-toggle__copy">
-        <div className="bani-notification-toggle__meta">
-          {icon ? <span className="bani-notification-toggle__icon">{icon}</span> : null}
-          {eyebrow ? <span className="bani-notification-toggle__eyebrow">{eyebrow}</span> : null}
+    <div className="rh-notification-toggle">
+      <div className="rh-notification-toggle__copy">
+        <div className="rh-notification-toggle__meta">
+          {icon ? <span className="rh-notification-toggle__icon">{icon}</span> : null}
+          {eyebrow ? <span className="rh-notification-toggle__eyebrow">{eyebrow}</span> : null}
         </div>
-        <Text strong className="bani-notification-toggle__title">{label}</Text>
-        <Text type="secondary" className="bani-notification-toggle__description">{description}</Text>
+        <Text strong className="rh-notification-toggle__title">{label}</Text>
+        <Text type="secondary" className="rh-notification-toggle__description">{description}</Text>
       </div>
       <Form.Item name={name} valuePropName="checked" noStyle>
         <Switch />
@@ -168,12 +168,12 @@ interface MetricTileProps {
 
 function MetricTile({ icon, label, value }: MetricTileProps) {
   return (
-    <div className="bani-profile-metric">
-      <div className="bani-profile-metric__label">
+    <div className="rh-profile-metric">
+      <div className="rh-profile-metric__label">
         {icon}
         <span>{label}</span>
       </div>
-      <div className="bani-profile-metric__value">{value}</div>
+      <div className="rh-profile-metric__value">{value}</div>
     </div>
   )
 }
@@ -449,11 +449,11 @@ export default function ClientProfile() {
         )}
       />
 
-      <div className="bani-profile-layout">
-        <div className="bani-profile-layout__main">
+      <div className="rh-profile-layout">
+        <div className="rh-profile-layout__main">
           <div ref={heroSectionRef}>
             <Card
-              className="bani-profile-avatar-card"
+              className="rh-profile-avatar-card"
               title="Аватар"
               extra={
                 <Space wrap>
@@ -481,14 +481,14 @@ export default function ClientProfile() {
                 </Space>
               }
             >
-              <div className="bani-profile-hero">
-                <div className="bani-profile-hero__identity">
+              <div className="rh-profile-hero">
+                <div className="rh-profile-hero__identity">
                   <Avatar
                     size={96}
                     src={user?.avatar_url}
                     icon={!user?.avatar_url && <UserOutlined />}
                   />
-                  <div className="bani-profile-hero__copy">
+                  <div className="rh-profile-hero__copy">
                     <Space wrap size={8}>
                       <Tag color="geekblue">Клиент</Tag>
                       <Tag color="blue">Регион {currentCurrency}</Tag>
@@ -515,7 +515,7 @@ export default function ClientProfile() {
                   </div>
                 </div>
 
-                <div className="bani-profile-hero__side">
+                <div className="rh-profile-hero__side">
                   <Text type="secondary">
                     Данные ниже можно менять без лишних переходов. Кликай по заполненности профиля, чтобы сразу перейти к нужному разделу.
                   </Text>
@@ -526,7 +526,7 @@ export default function ClientProfile() {
 
           <ProfileCompleteness onNavigate={handleCompletenessNavigate} />
 
-          <div className="bani-profile-stack">
+          <div className="rh-profile-stack">
             <div ref={profileSectionRef}>
               <Card title="Основная информация">
                 <Form
@@ -569,7 +569,7 @@ export default function ClientProfile() {
                     </Col>
                   </Row>
 
-                  <div className="bani-profile-form-actions">
+                  <div className="rh-profile-form-actions">
                     <Button type="primary" htmlType="submit" loading={updateProfile.isPending}>
                       Сохранить
                     </Button>
@@ -588,46 +588,46 @@ export default function ClientProfile() {
                     layout="vertical"
                     onFinish={handlePrefsSubmit}
                   >
-                    <div className="bani-notification-prefs">
-                      <section className="bani-notification-prefs__hero">
-                        <div className="bani-notification-prefs__hero-copy">
-                          <div className="bani-notification-prefs__eyebrow">Контур уведомлений</div>
-                          <Title level={3} className="bani-notification-prefs__title">
+                    <div className="rh-notification-prefs">
+                      <section className="rh-notification-prefs__hero">
+                        <div className="rh-notification-prefs__hero-copy">
+                          <div className="rh-notification-prefs__eyebrow">Контур уведомлений</div>
+                          <Title level={3} className="rh-notification-prefs__title">
                             Только нужные сигналы
                           </Title>
-                          <Paragraph className="bani-notification-prefs__description">
+                          <Paragraph className="rh-notification-prefs__description">
                             Выберите, через какие каналы {PLATFORM_NAME} может связываться с вами, и оставьте
                             включёнными только те сценарии, которые действительно требуют внимания.
                           </Paragraph>
                         </div>
 
-                        <div className="bani-notification-prefs__stats">
-                          <div className="bani-notification-prefs__stat">
+                        <div className="rh-notification-prefs__stats">
+                          <div className="rh-notification-prefs__stat">
                             <span>Активных каналов</span>
                             <strong>{activeDeliveryChannels}/3</strong>
                           </div>
-                          <div className="bani-notification-prefs__stat">
+                          <div className="rh-notification-prefs__stat">
                             <span>Активных сценариев</span>
                             <strong>{activeEventScenarios}/4</strong>
                           </div>
-                          <div className="bani-notification-prefs__stat">
+                          <div className="rh-notification-prefs__stat">
                             <span>Промо-поток</span>
                             <strong>{promoSignal}</strong>
                           </div>
                         </div>
                       </section>
 
-                      <div className="bani-notification-prefs__section">
-                        <div className="bani-notification-prefs__section-header">
-                          <div className="bani-notification-prefs__section-eyebrow">Каналы связи</div>
-                          <Text strong className="bani-notification-prefs__section-title">Куда отправлять общие уведомления</Text>
-                          <Text type="secondary" className="bani-notification-prefs__section-description">
+                      <div className="rh-notification-prefs__section">
+                        <div className="rh-notification-prefs__section-header">
+                          <div className="rh-notification-prefs__section-eyebrow">Каналы связи</div>
+                          <Text strong className="rh-notification-prefs__section-title">Куда отправлять общие уведомления</Text>
+                          <Text type="secondary" className="rh-notification-prefs__section-description">
                             Сначала настройте базовые каналы. После этого ниже можно выбрать,
                             какие типы событий будут в них попадать.
                           </Text>
                         </div>
 
-                        <div className="bani-notification-prefs__grid">
+                        <div className="rh-notification-prefs__grid">
                           {DELIVERY_CHANNELS.map((channel) => (
                             <ToggleRow
                               key={channel.name}
@@ -641,17 +641,17 @@ export default function ClientProfile() {
                         </div>
                       </div>
 
-                      <div className="bani-notification-prefs__section">
-                        <div className="bani-notification-prefs__section-header">
-                          <div className="bani-notification-prefs__section-eyebrow">Сценарии</div>
-                          <Text strong className="bani-notification-prefs__section-title">Какие события должны доходить до вас</Text>
-                          <Text type="secondary" className="bani-notification-prefs__section-description">
+                      <div className="rh-notification-prefs__section">
+                        <div className="rh-notification-prefs__section-header">
+                          <div className="rh-notification-prefs__section-eyebrow">Сценарии</div>
+                          <Text strong className="rh-notification-prefs__section-title">Какие события должны доходить до вас</Text>
+                          <Text type="secondary" className="rh-notification-prefs__section-description">
                             Операционные и сервисные события держите включёнными, а маркетинговые
                             сигналы можно приглушить без потери важной информации.
                           </Text>
                         </div>
 
-                        <div className="bani-notification-prefs__grid bani-notification-prefs__grid--events">
+                        <div className="rh-notification-prefs__grid rh-notification-prefs__grid--events">
                           {EVENT_SETTINGS.map((event) => (
                             <ToggleRow
                               key={event.name}
@@ -665,11 +665,11 @@ export default function ClientProfile() {
                         </div>
                       </div>
 
-                      <div className="bani-notification-prefs__footer">
+                      <div className="rh-notification-prefs__footer">
                         <Text type="secondary">
                           Изменения применяются только к вашему профилю и не затрагивают системные уведомления.
                         </Text>
-                        <div className="bani-profile-form-actions">
+                        <div className="rh-profile-form-actions">
                           <Button type="primary" htmlType="submit" loading={updatePrefs.isPending}>
                             Сохранить настройки
                           </Button>
@@ -752,7 +752,7 @@ export default function ClientProfile() {
           </div>
         </div>
 
-        <div className="bani-profile-layout__aside">
+        <div className="rh-profile-layout__aside">
           <Card title="Статистика" loading={statsLoading}>
             <Row gutter={[12, 12]}>
               <Col xs={12}>
@@ -868,7 +868,7 @@ export default function ClientProfile() {
           </div>
 
           <Card
-            className="bani-profile-danger-card"
+            className="rh-profile-danger-card"
             title={
               <Space>
                 <ExclamationCircleOutlined style={{ color: '#b42318' }} />

@@ -1,4 +1,4 @@
-import type { ThemeConfig } from 'antd'
+import type { ThemeConfig } from '@/components/design/types'
 
 const colors = {
   primary: '#0f766e',

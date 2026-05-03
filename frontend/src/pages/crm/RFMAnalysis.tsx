@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Card, Col, Empty, Row, Table, Tag, Tooltip, Typography, Spin } from 'antd'
+import { Card, Col, Empty, Row, Table, Tag, Tooltip, Typography, Spin } from '@/components/design/system'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { axiosInstance } from '@/api/axios-instance'

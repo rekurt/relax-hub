@@ -10,14 +10,14 @@ import {
   App,
   Card,
   Statistic,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CheckOutlined,
   ExclamationCircleOutlined,
   WarningOutlined,
   InfoCircleOutlined,
   CloseCircleOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { axiosInstance } from '@/api/axios-instance'
 import dayjs from 'dayjs'

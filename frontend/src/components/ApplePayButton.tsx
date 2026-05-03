@@ -1,5 +1,5 @@
-import { Button } from 'antd'
-import { AppleOutlined } from '@ant-design/icons'
+import { Button } from '@/components/design/system'
+import { AppleOutlined } from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 
 interface ApplePayButtonProps {

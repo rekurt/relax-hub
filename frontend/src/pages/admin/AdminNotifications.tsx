@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Typography, List, Button, Badge, Space, Empty, Card, App, Form, Switch, Skeleton } from 'antd'
-import { CheckOutlined, BellOutlined } from '@ant-design/icons'
+import { Typography, List, Button, Badge, Space, Empty, Card, App, Form, Switch, Skeleton } from '@/components/design/system'
+import { CheckOutlined, BellOutlined } from '@/components/design/icons'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/ru'
@@ -126,34 +126,34 @@ export default function AdminNotifications() {
   }
 
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Служебные события"
         title="Уведомления"
         description="Рабочая лента уведомлений и базовые настройки каналов доставки."
       />
 
-      <div className="bani-stat-grid">
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Всего в ленте</span>
-          <span className="bani-stat-tile__value">{meta?.total_count ?? notifications.length}</span>
-          <span className="bani-stat-tile__hint">Текущий объём уведомлений на выбранной странице.</span>
+      <div className="rh-stat-grid">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Всего в ленте</span>
+          <span className="rh-stat-tile__value">{meta?.total_count ?? notifications.length}</span>
+          <span className="rh-stat-tile__hint">Текущий объём уведомлений на выбранной странице.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Непрочитанных</span>
-          <span className="bani-stat-tile__value">{unreadCount}</span>
-          <span className="bani-stat-tile__hint">Их стоит разбирать в первую очередь.</span>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Непрочитанных</span>
+          <span className="rh-stat-tile__value">{unreadCount}</span>
+          <span className="rh-stat-tile__hint">Их стоит разбирать в первую очередь.</span>
         </div>
-        <div className="bani-stat-tile">
-          <span className="bani-stat-tile__eyebrow">Активные каналы</span>
-          <span className="bani-stat-tile__value">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Активные каналы</span>
+          <span className="rh-stat-tile__value">
             {[prefs?.in_app, prefs?.email, prefs?.push].filter(Boolean).length}
           </span>
-          <span className="bani-stat-tile__hint">Активные каналы для служебных событий.</span>
+          <span className="rh-stat-tile__hint">Активные каналы для служебных событий.</span>
         </div>
       </div>
 
-      <div className="bani-grid bani-grid--content-aside">
+      <div className="rh-grid rh-grid--content-aside">
         <Card
           title="Список уведомлений"
           extra={
@@ -190,7 +190,7 @@ export default function AdminNotifications() {
             }}
             renderItem={(item) => (
               <List.Item
-                className={`bani-feed-item ${item.is_read ? '' : 'bani-feed-item--unread'}`.trim()}
+                className={`rh-feed-item ${item.is_read ? '' : 'rh-feed-item--unread'}`.trim()}
                 onClick={() => {
                   if (!item.is_read && item.id) {
                     markOneRead.mutate({ id: item.id })
@@ -216,14 +216,14 @@ export default function AdminNotifications() {
                     : undefined
                 }
               >
-                <div className="bani-feed-item__main">
-                  <span className="bani-feed-item__badge" />
-                  <div className="bani-feed-item__copy">
+                <div className="rh-feed-item__main">
+                  <span className="rh-feed-item__badge" />
+                  <div className="rh-feed-item__copy">
                     <Text strong={!item.is_read}>
                       {item.title ?? NOTIFICATION_TYPE_LABELS[item.type ?? ''] ?? 'Уведомление'}
                     </Text>
                     <Text type="secondary">{item.body}</Text>
-                    <Text className="bani-feed-item__meta">
+                    <Text className="rh-feed-item__meta">
                       {item.created_at ? dayjs(item.created_at).fromNow() : ''}
                     </Text>
                   </div>
@@ -245,12 +245,12 @@ export default function AdminNotifications() {
                 Каналы доставки
               </Text>
 
-              <div className="bani-toggle-grid" style={{ marginBottom: 20 }}>
+              <div className="rh-toggle-grid" style={{ marginBottom: 20 }}>
                 {PREFERENCE_CARDS.map((item) => (
-                  <div key={item.name} className="bani-toggle-card">
-                    <div className="bani-toggle-card__copy">
-                      <Text className="bani-toggle-card__title">{item.title}</Text>
-                      <Text className="bani-toggle-card__description">
+                  <div key={item.name} className="rh-toggle-card">
+                    <div className="rh-toggle-card__copy">
+                      <Text className="rh-toggle-card__title">{item.title}</Text>
+                      <Text className="rh-toggle-card__description">
                         {item.description}
                       </Text>
                     </div>

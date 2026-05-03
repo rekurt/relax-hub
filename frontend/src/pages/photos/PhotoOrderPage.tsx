@@ -11,14 +11,14 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
-import { CameraOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+} from '@/components/design/system'
+import { CameraOutlined, PlusOutlined, ReloadOutlined } from '@/components/design/icons'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { axiosInstance } from '@/api/axios-instance'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { formatPrice } from '@/lib/format'
 import dayjs from 'dayjs'
-import type { ColumnsType } from 'antd/es/table'
+import type { ColumnsType } from '@/components/design/types'
 
 const { Title, Text, Paragraph } = Typography
 

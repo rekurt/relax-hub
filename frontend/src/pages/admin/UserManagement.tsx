@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { App, Button, Checkbox, Input, Space, Table, Tag } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { App, Button, Checkbox, Input, Space, Table, Tag } from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminUsers,

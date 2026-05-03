@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Card, Segmented, Spin, Table, Typography } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { Card, Segmented, Spin, Table, Typography } from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import { useGetAdminAnalyticsCohorts } from '@/api/generated/admin-analytics/admin-analytics'
 import type { GithubComRekurtRelaxHubInternalDomainCohortRow } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'

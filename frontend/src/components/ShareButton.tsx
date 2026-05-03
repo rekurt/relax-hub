@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Button, App } from 'antd'
-import { ShareAltOutlined, CopyOutlined, CheckOutlined } from '@ant-design/icons'
+import { Button, App } from '@/components/design/system'
+import { ShareAltOutlined, CopyOutlined, CheckOutlined } from '@/components/design/icons'
 import { copyToClipboard } from '@/lib/clipboard'
 
 interface ShareButtonProps {

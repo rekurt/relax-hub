@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
-import { Spin, Result, Typography } from 'antd'
+import { Spin, Result, Typography } from '@/components/design/system'
 import { getAuthOauthProviderCallback } from '@/api/generated/oauth/oauth'
 import { useAuthStore } from '@/stores/auth'
 import { getRoleHomePath } from '@/stores/auth'
@@ -66,7 +66,7 @@ export default function OAuthCallback() {
 
   if (error) {
     return (
-      <div className="bani-fullscreen-state">
+      <div className="rh-fullscreen-state">
         <Result
           status="error"
           title="Ошибка авторизации"
@@ -80,7 +80,7 @@ export default function OAuthCallback() {
   }
 
   return (
-    <div className="bani-fullscreen-state bani-fullscreen-state--stack">
+    <div className="rh-fullscreen-state rh-fullscreen-state--stack">
       <Spin size="large" />
       <Text type="secondary">Авторизация через {providerName}...</Text>
     </div>

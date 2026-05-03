@@ -1,4 +1,4 @@
-import { Card, Col, Row, Typography } from 'antd'
+import { Card, Col, Row, Typography } from '@/components/design/system'
 import PageHeader from '@/components/PageHeader'
 import { PLATFORM_CONTACTS, PLATFORM_NAME, TERMS_LAST_UPDATED } from '@/content/support'
 
@@ -39,31 +39,31 @@ const TERMS_SECTIONS = [
 
 export default function PublicTerms() {
   return (
-    <div className="bani-stack">
+    <div className="rh-stack">
       <PageHeader
         eyebrow="Юридическая рамка"
         title={`Условия использования ${PLATFORM_NAME}`}
         description="Эта версия условий описывает роль платформы, порядок бронирования, правила пользовательского контента и базовые ограничения ответственности."
       />
 
-      <section className="bani-hero-panel bani-hero-panel--dark">
-        <div className="bani-hero-panel__eyebrow">Условия</div>
-        <h2 className="bani-hero-panel__title">Понятные правила использования сервиса до первой оплаты.</h2>
-        <div className="bani-hero-panel__description">
+      <section className="rh-hero-panel rh-hero-panel--dark">
+        <div className="rh-hero-panel__eyebrow">Условия</div>
+        <h2 className="rh-hero-panel__title">Понятные правила использования сервиса до первой оплаты.</h2>
+        <div className="rh-hero-panel__description">
           Мы не прячем важные условия в мелкий шрифт. Документ фиксирует базовые договорённости между пользователем, платформой и объектом, где проходит бронирование.
         </div>
-        <div className="bani-hero-panel__meta">
-          <div className="bani-hero-panel__meta-item">
-            <span className="bani-hero-panel__meta-label">Версия</span>
-            <div className="bani-hero-panel__meta-value">{TERMS_LAST_UPDATED}</div>
+        <div className="rh-hero-panel__meta">
+          <div className="rh-hero-panel__meta-item">
+            <span className="rh-hero-panel__meta-label">Версия</span>
+            <div className="rh-hero-panel__meta-value">{TERMS_LAST_UPDATED}</div>
           </div>
-          <div className="bani-hero-panel__meta-item">
-            <span className="bani-hero-panel__meta-label">Поддержка</span>
-            <div className="bani-hero-panel__meta-value">{PLATFORM_CONTACTS.supportEmail}</div>
+          <div className="rh-hero-panel__meta-item">
+            <span className="rh-hero-panel__meta-label">Поддержка</span>
+            <div className="rh-hero-panel__meta-value">{PLATFORM_CONTACTS.supportEmail}</div>
           </div>
-          <div className="bani-hero-panel__meta-item">
-            <span className="bani-hero-panel__meta-label">Часы связи</span>
-            <div className="bani-hero-panel__meta-value">{PLATFORM_CONTACTS.supportHours}</div>
+          <div className="rh-hero-panel__meta-item">
+            <span className="rh-hero-panel__meta-label">Часы связи</span>
+            <div className="rh-hero-panel__meta-value">{PLATFORM_CONTACTS.supportHours}</div>
           </div>
         </div>
       </section>
@@ -71,10 +71,10 @@ export default function PublicTerms() {
       <Row gutter={[16, 16]}>
         {TERMS_SECTIONS.map((section) => (
           <Col key={section.key} xs={24} md={12}>
-            <Card className="bani-equal-card">
-              <div className="bani-section-card">
-                <h2 className="bani-section-card__title">{section.title}</h2>
-                <div className="bani-section-card__description">{section.description}</div>
+            <Card className="rh-equal-card">
+              <div className="rh-section-card">
+                <h2 className="rh-section-card__title">{section.title}</h2>
+                <div className="rh-section-card__description">{section.description}</div>
               </div>
             </Card>
           </Col>
@@ -82,9 +82,9 @@ export default function PublicTerms() {
       </Row>
 
       <Card>
-        <div className="bani-section-card">
-          <h2 className="bani-section-card__title">Поддержка и применимое общение</h2>
-          <div className="bani-section-card__description">
+        <div className="rh-section-card">
+          <h2 className="rh-section-card__title">Поддержка и применимое общение</h2>
+          <div className="rh-section-card__description">
             Если у пользователя возникает спор по брони, оплате или контенту, первичный канал связи проходит через поддержку {PLATFORM_NAME}. Для срочных кейсов используйте {PLATFORM_CONTACTS.supportEmail}, {PLATFORM_CONTACTS.supportPhone} или {PLATFORM_CONTACTS.supportMessenger}.
           </div>
           <Text type="secondary">Документ действует с даты публикации и может обновляться при изменении продукта или регуляторных требований.</Text>

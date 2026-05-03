@@ -9,8 +9,8 @@ import {
   Tag,
   Space,
   App,
-} from 'antd'
-import { DeleteOutlined } from '@ant-design/icons'
+} from '@/components/design/system'
+import { DeleteOutlined } from '@/components/design/icons'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { usePostApiV1BathhousesCompare } from '@/api/generated/bathhouses/bathhouses'
 import type { InternalHandlerComparisonItem, InternalHandlerCompareResponse } from '@/api/generated/model'

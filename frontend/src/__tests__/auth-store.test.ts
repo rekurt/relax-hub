@@ -44,7 +44,7 @@ describe('useAuthStore', () => {
     expect(state.isAuthenticated).toBe(true)
     expect(state.token).toBe('jwt-token')
     expect(state.user).toEqual(user)
-    expect(mockLocalStorage.setItem).toHaveBeenCalledWith('bani_token', 'jwt-token')
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith('rh_token', 'jwt-token')
   })
 
   it('logout clears state and localStorage', () => {
@@ -56,7 +56,7 @@ describe('useAuthStore', () => {
     expect(state.isAuthenticated).toBe(false)
     expect(state.token).toBeNull()
     expect(state.user).toBeNull()
-    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('bani_token')
+    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('rh_token')
   })
 
   it('loadProfile fetches user when token exists', async () => {

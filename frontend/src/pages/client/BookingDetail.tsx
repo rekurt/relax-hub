@@ -17,7 +17,7 @@ import {
   DatePicker,
   InputNumber,
   Form,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   StopOutlined,
@@ -25,7 +25,7 @@ import {
   StarOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { usePatchBookingsIdCancel } from '@/api/generated/bookings/bookings'
@@ -41,7 +41,7 @@ import ShareButton from '@/components/ShareButton'
 import { useDeviceToken } from '@/lib/useDeviceToken'
 
 const { Title, Text } = Typography
-const PUSH_PROMPTED_KEY = 'bani_push_prompted'
+const PUSH_PROMPTED_KEY = 'rh_push_prompted'
 
 export default function ClientBookingDetail() {
   const { id } = useParams<{ id: string }>()
@@ -169,7 +169,7 @@ export default function ClientBookingDetail() {
 
   if (isLoading) {
     return (
-      <div className="bani-fullscreen-state">
+      <div className="rh-fullscreen-state">
         <Spin size="large" />
       </div>
     )

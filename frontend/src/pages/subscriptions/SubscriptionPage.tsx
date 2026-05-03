@@ -16,14 +16,14 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   CrownOutlined,
   RocketOutlined,
   StarOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import {
   useGetMyBathhousesIdSubscription,

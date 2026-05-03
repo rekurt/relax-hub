@@ -17,12 +17,12 @@ import {
   Spin,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   PlusOutlined,
   WarningOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import {

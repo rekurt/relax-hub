@@ -13,8 +13,8 @@ import {
   Space,
   Tag,
   Typography,
-} from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+} from '@/components/design/system'
+import { PlusOutlined } from '@/components/design/icons'
 import { usePostAdminPromoCodes } from '@/api/generated/promo-codes/promo-codes'
 import type { InternalHandlerPromoResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'

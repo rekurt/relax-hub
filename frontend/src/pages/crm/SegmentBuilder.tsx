@@ -16,13 +16,13 @@ import {
   Table,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   TeamOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { axiosInstance } from '@/api/axios-instance'
@@ -220,21 +220,21 @@ function SegmentForm({
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item label="Средний чек от">
-              <Space.Compact className="bani-compact-control">
+              <Space.Compact className="rh-compact-control">
                 <Form.Item name="avg_check_min" noStyle>
                   <InputNumber min={0} style={{ width: '100%' }} />
                 </Form.Item>
-                <span className="bani-input-addon">₽</span>
+                <span className="rh-input-addon">₽</span>
               </Space.Compact>
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item label="Средний чек до">
-              <Space.Compact className="bani-compact-control">
+              <Space.Compact className="rh-compact-control">
                 <Form.Item name="avg_check_max" noStyle>
                   <InputNumber min={0} style={{ width: '100%' }} />
                 </Form.Item>
-                <span className="bani-input-addon">₽</span>
+                <span className="rh-input-addon">₽</span>
               </Space.Compact>
             </Form.Item>
           </Col>
@@ -242,21 +242,21 @@ function SegmentForm({
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item label="Общая сумма от">
-              <Space.Compact className="bani-compact-control">
+              <Space.Compact className="rh-compact-control">
                 <Form.Item name="total_spent_min" noStyle>
                   <InputNumber min={0} style={{ width: '100%' }} />
                 </Form.Item>
-                <span className="bani-input-addon">₽</span>
+                <span className="rh-input-addon">₽</span>
               </Space.Compact>
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item label="Общая сумма до">
-              <Space.Compact className="bani-compact-control">
+              <Space.Compact className="rh-compact-control">
                 <Form.Item name="total_spent_max" noStyle>
                   <InputNumber min={0} style={{ width: '100%' }} />
                 </Form.Item>
-                <span className="bani-input-addon">₽</span>
+                <span className="rh-input-addon">₽</span>
               </Space.Compact>
             </Form.Item>
           </Col>

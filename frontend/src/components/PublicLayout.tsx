@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
-import { Select } from 'antd'
-import { DownOutlined, EnvironmentOutlined } from '@ant-design/icons'
+import { Select } from '@/components/design/system'
+import { DownOutlined, EnvironmentOutlined } from '@/components/design/icons'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useGetCities } from '@/api/generated/cities/cities'
 import BrandLockup from '@/components/BrandLockup'
@@ -47,12 +47,12 @@ export default function PublicLayout() {
   }, [location.pathname])
 
   const cityAccessory = cities.length > 0 ? (
-    <div className="bani-topnav__city-picker" aria-label="Выбор города">
-      <EnvironmentOutlined className="bani-topnav__city-icon" aria-hidden />
+    <div className="rh-topnav__city-picker" aria-label="Выбор города">
+      <EnvironmentOutlined className="rh-topnav__city-icon" aria-hidden />
       <Select
         value={selectedCityValue}
-        className="bani-topnav__city-select"
-        classNames={{ popup: { root: 'bani-topnav__city-dropdown' } }}
+        className="rh-topnav__city-select"
+        classNames={{ popup: { root: 'rh-topnav__city-dropdown' } }}
         placeholder={preferredCity?.name ?? 'Город'}
         suffixIcon={<DownOutlined />}
         variant="borderless"
@@ -81,7 +81,7 @@ export default function PublicLayout() {
         <BrandLockup
           size="header"
           subtitle="Публичный каталог и бронирование"
-          className="bani-topnav__brand-lockup"
+          className="rh-topnav__brand-lockup"
         />
       )}
       brandSubtitle={null}

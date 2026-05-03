@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
-import { Button, Spin } from 'antd'
-import { AimOutlined } from '@ant-design/icons'
+import { Button, Spin } from '@/components/design/system'
+import { AimOutlined } from '@/components/design/icons'
 import type { InternalHandlerBathhouseResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
 import { resolveAssetUrl } from '@/lib/asset-url'

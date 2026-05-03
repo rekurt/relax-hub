@@ -15,12 +15,12 @@ import {
   Row,
   Col,
   Card,
-} from 'antd'
+} from '@/components/design/system'
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ExclamationCircleOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminAntifraudFlags,

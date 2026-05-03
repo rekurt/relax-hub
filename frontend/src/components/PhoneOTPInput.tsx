@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Input, Button, App, Typography } from 'antd'
-import { PhoneOutlined } from '@ant-design/icons'
+import { Input, Button, App, Typography } from '@/components/design/system'
+import { PhoneOutlined } from '@/components/design/icons'
 
 const OTP_COOLDOWN_SECONDS = 60
 const OTP_LENGTH = 6
@@ -56,10 +56,10 @@ export default function PhoneOTPInput({ onVerified, onSendOTP, loading, phoneLab
   }, [phone, code, onVerified, message])
 
   return (
-    <div className="bani-auth-phone">
-      <div className="bani-auth-phone__block">
-        <div className="bani-auth-field">
-          <Text className="bani-auth-field__label">{phoneLabel}</Text>
+    <div className="rh-auth-phone">
+      <div className="rh-auth-phone__block">
+        <div className="rh-auth-field">
+          <Text className="rh-auth-field__label">{phoneLabel}</Text>
           <Input
             prefix={<PhoneOutlined />}
             placeholder={phoneLabel}
@@ -71,12 +71,12 @@ export default function PhoneOTPInput({ onVerified, onSendOTP, loading, phoneLab
             disabled={otpSent && cooldown > 0}
           />
         </div>
-        <div className="bani-auth-phone__meta">
-          <Text type="secondary" className="bani-auth-phone__hint">
+        <div className="rh-auth-phone__meta">
+          <Text type="secondary" className="rh-auth-phone__hint">
             Отправим одноразовый код по SMS. Номер можно вводить в привычном формате, включая `+7`.
           </Text>
           {otpSent && cooldown > 0 ? (
-            <Text className="bani-auth-phone__status">Повтор через {cooldown}с</Text>
+            <Text className="rh-auth-phone__status">Повтор через {cooldown}с</Text>
           ) : null}
         </div>
         <Button
@@ -92,9 +92,9 @@ export default function PhoneOTPInput({ onVerified, onSendOTP, loading, phoneLab
       </div>
 
       {otpSent && (
-        <div className="bani-auth-phone__block bani-auth-phone__block--confirm">
-          <div className="bani-auth-field">
-            <Text className="bani-auth-field__label">Код из SMS</Text>
+        <div className="rh-auth-phone__block rh-auth-phone__block--confirm">
+          <div className="rh-auth-field">
+            <Text className="rh-auth-field__label">Код из SMS</Text>
             <Input
               placeholder="Введите код из SMS"
               size="large"
@@ -106,7 +106,7 @@ export default function PhoneOTPInput({ onVerified, onSendOTP, loading, phoneLab
               onPressEnter={handleVerify}
             />
           </div>
-          <Text type="secondary" className="bani-auth-phone__hint">
+          <Text type="secondary" className="rh-auth-phone__hint">
             Код состоит из {OTP_LENGTH} цифр. После подтверждения вы сразу попадёте в нужный кабинет.
           </Text>
           <Button

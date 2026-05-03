@@ -1,5 +1,5 @@
-import { App, Select, Space, Spin, Switch, Table, Tag, Typography } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { App, Select, Space, Spin, Switch, Table, Tag, Typography } from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminFeatureFlags,

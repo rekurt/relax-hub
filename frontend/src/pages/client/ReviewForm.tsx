@@ -11,8 +11,8 @@ import {
   Spin,
   Empty,
   Alert,
-} from 'antd'
-import { ArrowLeftOutlined, SendOutlined } from '@ant-design/icons'
+} from '@/components/design/system'
+import { ArrowLeftOutlined, SendOutlined } from '@/components/design/icons'
 import { useGetBathhousesId } from '@/api/generated/bathhouses/bathhouses'
 import { usePostBathhousesIdReviews, usePutReviewsId } from '@/api/generated/reviews/reviews'
 import { usePostReviewsIdMedia, useDeleteMediaId } from '@/api/generated/review-media/review-media'
@@ -106,7 +106,7 @@ export default function ReviewForm() {
 
   if (bathhouseLoading) {
     return (
-      <div className="bani-fullscreen-state">
+      <div className="rh-fullscreen-state">
         <Spin size="large" />
       </div>
     )

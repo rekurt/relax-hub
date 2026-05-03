@@ -11,20 +11,20 @@ import {
   Spin,
   Empty,
   Pagination,
-} from 'antd'
+} from '@/components/design/system'
 import {
   TrophyOutlined,
   StarOutlined,
   GiftOutlined,
   RiseOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useGetMyLoyalty } from '@/api/generated/loyalty/loyalty'
 import { useGetMyLoyaltyLevels } from '@/api/generated/loyalty/loyalty'
 import { useGetMyLoyaltyTransactions } from '@/api/generated/loyalty/loyalty'
 import type { InternalHandlerLoyaltyLevelResponse, InternalHandlerLoyaltyTransactionResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
-import type { ColumnsType } from 'antd/es/table'
+import type { ColumnsType } from '@/components/design/types'
 
 const { Title, Text } = Typography
 

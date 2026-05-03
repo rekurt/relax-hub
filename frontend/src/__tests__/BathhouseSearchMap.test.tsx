@@ -1,8 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
-import { App as AntApp, ConfigProvider } from 'antd'
-import ruRU from 'antd/locale/ru_RU'
+import { App as AntApp, ConfigProvider } from '@/components/design/system'
+import { ruRU } from '@/components/design/system'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import BathhouseSearch from '@/pages/client/BathhouseSearch'
 
@@ -310,7 +310,7 @@ describe('BathhouseSearch - Map & Compare features', () => {
     fireEvent.mouseEnter(marker)
 
     const cardWrapper = screen.getByTestId('card-wrapper-1')
-    expect(cardWrapper.className).toContain('bani-catalog__card-shell--highlighted')
+    expect(cardWrapper.className).toContain('rh-catalog__card-shell--highlighted')
   })
 
   it('removes highlight when map marker hover ends', () => {
@@ -323,7 +323,7 @@ describe('BathhouseSearch - Map & Compare features', () => {
     fireEvent.mouseLeave(marker)
 
     const cardWrapper = screen.getByTestId('card-wrapper-1')
-    expect(cardWrapper.className).not.toContain('bani-catalog__card-shell--highlighted')
+    expect(cardWrapper.className).not.toContain('rh-catalog__card-shell--highlighted')
   })
 
   it('highlights map marker when list card is hovered', () => {

@@ -13,14 +13,14 @@ import {
   Spin,
   Tag,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   ArrowLeftOutlined,
   ArrowUpOutlined,
   CheckOutlined,
   SendOutlined,
   UserSwitchOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetAdminTicketsId,

@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Form, Input, Button, Card, Space, App, Result } from 'antd'
-import { MailOutlined } from '@ant-design/icons'
+import { Form, Input, Button, Card, Space, App, Result } from '@/components/design/system'
+import { MailOutlined } from '@/components/design/icons'
 import { Link } from 'react-router-dom'
 import { postAuthForgotPassword } from '@/api/generated/auth/auth'
 import AuthShell from '@/components/AuthShell'
@@ -56,7 +56,7 @@ export default function ForgotPassword() {
           'Если письма нет, проверьте папку со спамом и повторите запрос.',
         ]}
       >
-        <Card variant="borderless" className="bani-auth-surface">
+        <Card variant="borderless" className="rh-auth-surface">
           <Result
             status="success"
             title="Письмо отправлено"
@@ -86,11 +86,11 @@ export default function ForgotPassword() {
       ]}
       footer={<Link to="/login">Вернуться к входу</Link>}
     >
-      <Card variant="borderless" className="bani-auth-surface">
+      <Card variant="borderless" className="rh-auth-surface">
         <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <Form
             form={form}
-            className="bani-auth-form"
+            className="rh-auth-form"
             layout="vertical"
             onFinish={onFinish}
             autoComplete="on"
@@ -113,7 +113,7 @@ export default function ForgotPassword() {
               />
             </Form.Item>
 
-            <Form.Item className="bani-auth-form__actions">
+            <Form.Item className="rh-auth-form__actions">
               <Button
                 type="primary"
                 htmlType="submit"

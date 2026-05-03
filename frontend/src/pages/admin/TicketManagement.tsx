@@ -16,13 +16,13 @@ import {
   Tag,
   Tooltip,
   Typography,
-} from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+} from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import {
   ClockCircleOutlined,
   ArrowUpOutlined,
   WarningOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'

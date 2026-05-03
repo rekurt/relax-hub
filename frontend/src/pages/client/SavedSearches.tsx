@@ -8,8 +8,8 @@ import {
   Space,
   Popconfirm,
   App,
-} from 'antd'
-import { DeleteOutlined, BellOutlined, BellFilled } from '@ant-design/icons'
+} from '@/components/design/system'
+import { DeleteOutlined, BellOutlined, BellFilled } from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useGetMySavedSearches,

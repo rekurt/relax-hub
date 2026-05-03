@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Card, Empty, Segmented, Spin, Typography, Alert, Slider, Row, Col, Statistic, Radio } from 'antd'
-import { HeatMapOutlined, EnvironmentOutlined, ShopOutlined, SearchOutlined } from '@ant-design/icons'
+import { Card, Empty, Segmented, Spin, Typography, Alert, Slider, Row, Col, Statistic, Radio } from '@/components/design/system'
+import { HeatMapOutlined, EnvironmentOutlined, ShopOutlined, SearchOutlined } from '@/components/design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { axiosInstance } from '@/api/axios-instance'
 

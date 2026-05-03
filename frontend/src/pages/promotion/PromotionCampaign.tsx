@@ -19,13 +19,13 @@ import {
   Tag,
   Tooltip,
   Typography,
-} from 'antd'
+} from '@/components/design/system'
 import {
   PauseCircleOutlined,
   PlayCircleOutlined,
   PlusOutlined,
   RocketOutlined,
-} from '@ant-design/icons'
+} from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { useQueryClient } from '@tanstack/react-query'
@@ -370,11 +370,11 @@ export default function PromotionCampaign() {
             label="Ставка в день (₽)"
             extra="Минимум 50 ₽/день. Чем выше ставка, тем выше позиция в поиске."
           >
-            <Space.Compact className="bani-compact-control">
+            <Space.Compact className="rh-compact-control">
               <Form.Item name="daily_bid" noStyle rules={[{ required: true, message: 'Укажите ставку' }]}>
                 <InputNumber min={50} style={{ width: '100%' }} />
               </Form.Item>
-              <span className="bani-input-addon">₽/день</span>
+              <span className="rh-input-addon">₽/день</span>
             </Space.Compact>
           </Form.Item>
 
@@ -382,7 +382,7 @@ export default function PromotionCampaign() {
             label="Общий бюджет (₽)"
             extra="Кампания приостанавливается при исчерпании бюджета."
           >
-            <Space.Compact className="bani-compact-control">
+            <Space.Compact className="rh-compact-control">
               <Form.Item
                 name="budget"
                 noStyle
@@ -401,18 +401,18 @@ export default function PromotionCampaign() {
               >
                 <InputNumber min={50} style={{ width: '100%' }} />
               </Form.Item>
-              <span className="bani-input-addon">₽</span>
+              <span className="rh-input-addon">₽</span>
             </Space.Compact>
           </Form.Item>
 
           <Form.Item
             label="Длительность (дней)"
           >
-            <Space.Compact className="bani-compact-control">
+            <Space.Compact className="rh-compact-control">
               <Form.Item name="duration_days" noStyle rules={[{ required: true, message: 'Укажите длительность' }]}>
                 <InputNumber min={1} max={365} style={{ width: '100%' }} />
               </Form.Item>
-              <span className="bani-input-addon">дн.</span>
+              <span className="rh-input-addon">дн.</span>
             </Space.Compact>
           </Form.Item>
 

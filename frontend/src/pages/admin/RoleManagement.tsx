@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { App, Empty, Select, Table, Tag, Typography, Card, Descriptions, Spin, Badge } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
+import { App, Empty, Select, Table, Tag, Typography, Card, Descriptions, Spin, Badge } from '@/components/design/system'
+import type { ColumnsType } from '@/components/design/types'
 import { axiosInstance } from '@/api/axios-instance'
 
 const { Title } = Typography

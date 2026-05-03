@@ -6,8 +6,8 @@ import {
   GiftOutlined,
   MailOutlined,
   SafetyCertificateOutlined,
-} from '@ant-design/icons'
-import { App, Button, Collapse, Form, Input, InputNumber, Space, Spin, Tag } from 'antd'
+} from '@/components/design/icons'
+import { App, Button, Collapse, Form, Input, InputNumber, Space, Spin, Tag } from '@/components/design/system'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   useGetCertificatesOrdersId,
@@ -120,9 +120,9 @@ function OrderStatePanel({
 }) {
   if (loading) {
     return (
-      <section className="bani-certificates-status bani-certificates-status--processing">
+      <section className="rh-certificates-status rh-certificates-status--processing">
         <Spin size="large" />
-        <div className="bani-certificates-status__copy">
+        <div className="rh-certificates-status__copy">
           <h2>Проверяем статус заказа</h2>
           <p>Забираем актуальное состояние оплаты и готовность сертификата.</p>
         </div>
@@ -132,8 +132,8 @@ function OrderStatePanel({
 
   if (!order) {
     return (
-      <section className="bani-certificates-status bani-certificates-status--warning">
-        <div className="bani-certificates-status__copy">
+      <section className="rh-certificates-status rh-certificates-status--warning">
+        <div className="rh-certificates-status__copy">
           <h2>Заказ не найден</h2>
           <p>Проверьте ссылку из письма или начните новый заказ, если оплата ещё не создавалась.</p>
         </div>
@@ -146,32 +146,32 @@ function OrderStatePanel({
 
   if (order.status === 'paid') {
     return (
-      <section className="bani-certificates-status bani-certificates-status--success">
-        <div className="bani-certificates-status__badge">
+      <section className="rh-certificates-status rh-certificates-status--success">
+        <div className="rh-certificates-status__badge">
           <CheckCircleOutlined />
           Оплата подтверждена
         </div>
-        <div className="bani-certificates-status__copy">
+        <div className="rh-certificates-status__copy">
           <h2>Сертификат оплачен</h2>
           <p>Мы отправили подтверждение на email и выпустили код для дальнейших бронирований.</p>
         </div>
 
-        <div className="bani-certificates-status__details">
-          <div className="bani-certificates-status__detail-card">
-            <span className="bani-certificates-status__detail-label">Код сертификата</span>
+        <div className="rh-certificates-status__details">
+          <div className="rh-certificates-status__detail-card">
+            <span className="rh-certificates-status__detail-label">Код сертификата</span>
             <strong>{order.certificate?.code ?? '—'}</strong>
           </div>
-          <div className="bani-certificates-status__detail-card">
-            <span className="bani-certificates-status__detail-label">Номинал</span>
+          <div className="rh-certificates-status__detail-card">
+            <span className="rh-certificates-status__detail-label">Номинал</span>
             <strong>{formatPrice(order.certificate?.amount ?? order.amount ?? 0)}</strong>
           </div>
-          <div className="bani-certificates-status__detail-card">
-            <span className="bani-certificates-status__detail-label">Действителен до</span>
+          <div className="rh-certificates-status__detail-card">
+            <span className="rh-certificates-status__detail-label">Действителен до</span>
             <strong>{order.certificate?.valid_until ? formatDateTime(order.certificate.valid_until, 'DD.MM.YYYY') : '—'}</strong>
           </div>
         </div>
 
-        <div className="bani-certificates-status__actions">
+        <div className="rh-certificates-status__actions">
           {isAuthenticated && (
             <Link to="/client/certificates">
               <Button size="large">Открыть кабинет</Button>
@@ -187,12 +187,12 @@ function OrderStatePanel({
 
   if (order.status === 'pending_payment') {
     return (
-      <section className="bani-certificates-status bani-certificates-status--processing">
-        <div className="bani-certificates-status__badge">
+      <section className="rh-certificates-status rh-certificates-status--processing">
+        <div className="rh-certificates-status__badge">
           <ClockCircleOutlined />
           Статус заказа обновляется автоматически
         </div>
-        <div className="bani-certificates-status__copy">
+        <div className="rh-certificates-status__copy">
           <h2>Платёж обрабатывается</h2>
           <p>Ждём подтверждение от банка и выпускаем сертификат. Как только оплата подтвердится, на этой странице появятся код и кнопка перехода в кабинет.</p>
         </div>
@@ -201,8 +201,8 @@ function OrderStatePanel({
   }
 
   return (
-    <section className="bani-certificates-status bani-certificates-status--warning">
-      <div className="bani-certificates-status__copy">
+    <section className="rh-certificates-status rh-certificates-status--warning">
+      <div className="rh-certificates-status__copy">
         <h2>Оплата не завершена</h2>
         <p>Заказ сохранился. Можно вернуться к оформлению и повторить платёж другим способом.</p>
       </div>
@@ -303,42 +303,42 @@ export default function CertificatePurchase() {
   }
 
   return (
-    <div className="bani-stack bani-certificates-page">
-      <div className="bani-certificates-page__back">
+    <div className="rh-stack rh-certificates-page">
+      <div className="rh-certificates-page__back">
         <Link to={isAuthenticated ? '/client/certificates' : '/'}>
-          <Button icon={<ArrowLeftOutlined />} className="bani-certificates-page__back-button">
+          <Button icon={<ArrowLeftOutlined />} className="rh-certificates-page__back-button">
             {isAuthenticated ? 'К сертификатам' : 'На главную'}
           </Button>
         </Link>
       </div>
 
-      <section className="bani-hero-panel bani-hero-panel--dark bani-certificates-hero">
-        <div className="bani-hero-panel__eyebrow">Подарок RelaxHUB</div>
-        <h1 className="bani-hero-panel__title">Подарочный сертификат RelaxHUB</h1>
-        <div className="bani-hero-panel__description">
+      <section className="rh-hero-panel rh-hero-panel--dark rh-certificates-hero">
+        <div className="rh-hero-panel__eyebrow">Подарок RelaxHUB</div>
+        <h1 className="rh-hero-panel__title">Подарочный сертификат RelaxHUB</h1>
+        <div className="rh-hero-panel__description">
           Оплачиваете один раз — а отдыхают, когда захочется. Сертификат работает как личный баланс на бронирования: его можно потратить целиком или по частям в любой бане сети, без привязки к конкретной дате и без скрытых условий.
         </div>
 
-        <div className="bani-certificates-hero__trust">
-          <div className="bani-certificates-hero__trust-item">
+        <div className="rh-certificates-hero__trust">
+          <div className="rh-certificates-hero__trust-item">
             <SafetyCertificateOutlined />
             <span>Сертификат активируется только после успешной оплаты — никаких авансов и предварительных списаний.</span>
           </div>
-          <div className="bani-certificates-hero__trust-item">
+          <div className="rh-certificates-hero__trust-item">
             <MailOutlined />
             <span>Письмо с кодом и инструкцией приходит автоматически — без переписки с поддержкой и ожидания подтверждения вручную.</span>
           </div>
-          <div className="bani-certificates-hero__trust-item">
+          <div className="rh-certificates-hero__trust-item">
             <GiftOutlined />
             <span>Себе или в подарок — оформляется одинаково: достаточно указать email получателя, чтобы превратить заказ в подарок.</span>
           </div>
         </div>
 
-        <div className="bani-hero-panel__meta">
+        <div className="rh-hero-panel__meta">
           {HERO_META.map((item) => (
-            <div key={item.label} className="bani-hero-panel__meta-item">
-              <span className="bani-hero-panel__meta-label">{item.label}</span>
-              <div className="bani-hero-panel__meta-value">{item.value}</div>
+            <div key={item.label} className="rh-hero-panel__meta-item">
+              <span className="rh-hero-panel__meta-label">{item.label}</span>
+              <div className="rh-hero-panel__meta-value">{item.value}</div>
             </div>
           ))}
         </div>
@@ -351,15 +351,15 @@ export default function CertificatePurchase() {
           isAuthenticated={isAuthenticated}
         />
       ) : (
-        <div className="bani-grid bani-grid--content-aside bani-certificates-layout">
-          <section className="bani-stack">
-            <section className="bani-section-card bani-certificates-workspace">
-              <div className="bani-section-card__surface bani-certificates-workspace__surface">
-                <div className="bani-toolbar">
+        <div className="rh-grid rh-grid--content-aside rh-certificates-layout">
+          <section className="rh-stack">
+            <section className="rh-section-card rh-certificates-workspace">
+              <div className="rh-section-card__surface rh-certificates-workspace__surface">
+                <div className="rh-toolbar">
                   <div>
-                    <div className="bani-certificates-section-eyebrow">Оформление</div>
-                    <h2 className="bani-section-card__title">Соберите сертификат под конкретный подарок</h2>
-                    <div className="bani-section-card__description">
+                    <div className="rh-certificates-section-eyebrow">Оформление</div>
+                    <h2 className="rh-section-card__title">Соберите сертификат под конкретный подарок</h2>
+                    <div className="rh-section-card__description">
                       Заполните форму, выберите способ оплаты — превью справа сразу покажет, как подарок придёт получателю на email после оплаты.
                     </div>
                   </div>
@@ -372,12 +372,12 @@ export default function CertificatePurchase() {
                   initialValues={{
                     amount: 3000,
                   }}
-                  className="bani-certificates-form"
+                  className="rh-certificates-form"
                 >
                   <Form.Item
                     label="Сумма (в рублях)"
                   >
-                    <Space.Compact className="bani-compact-control">
+                    <Space.Compact className="rh-compact-control">
                       <Form.Item
                         name="amount"
                         noStyle
@@ -395,18 +395,18 @@ export default function CertificatePurchase() {
                           controls={false}
                         />
                       </Form.Item>
-                      <span className="bani-input-addon">₽</span>
+                      <span className="rh-input-addon">₽</span>
                     </Space.Compact>
                   </Form.Item>
 
-                  <div className="bani-certificates-amount-pills">
+                  <div className="rh-certificates-amount-pills">
                     {PRESET_AMOUNTS.map((preset) => {
                       const active = amountKopecks === preset
                       return (
                         <button
                           key={preset}
                           type="button"
-                          className={`bani-certificates-amount-pill${active ? ' bani-certificates-amount-pill--active' : ''}`}
+                          className={`rh-certificates-amount-pill${active ? ' rh-certificates-amount-pill--active' : ''}`}
                           onClick={() => handlePresetAmount(preset)}
                         >
                           {formatPrice(preset)}
@@ -415,7 +415,7 @@ export default function CertificatePurchase() {
                     })}
                   </div>
 
-                  <div className="bani-grid bani-grid--two bani-certificates-form__grid">
+                  <div className="rh-grid rh-grid--two rh-certificates-form__grid">
                     <Form.Item
                       name="purchaser_email"
                       label="Ваш email"
@@ -436,12 +436,12 @@ export default function CertificatePurchase() {
                     </Form.Item>
                   </div>
 
-                  <div className="bani-grid bani-grid--two bani-certificates-form__grid">
+                  <div className="rh-grid rh-grid--two rh-certificates-form__grid">
                     <Form.Item name="recipient_name" label="Имя получателя">
                       <Input placeholder="Имя получателя" />
                     </Form.Item>
 
-                    <div className="bani-certificates-inline-note">
+                    <div className="rh-certificates-inline-note">
                       Если поля получателя пустые, сертификат остаётся на вашем email и работает как личный баланс для будущих бронирований.
                     </div>
                   </div>
@@ -455,10 +455,10 @@ export default function CertificatePurchase() {
                     />
                   </Form.Item>
 
-                  <div className="bani-certificates-payment-block">
-                    <div className="bani-certificates-payment-block__header">
+                  <div className="rh-certificates-payment-block">
+                    <div className="rh-certificates-payment-block__header">
                       <div>
-                        <div className="bani-certificates-section-eyebrow">Оплата</div>
+                        <div className="rh-certificates-section-eyebrow">Оплата</div>
                         <h3>Способ оплаты</h3>
                       </div>
                       <span>{paymentHint}</span>
@@ -482,18 +482,18 @@ export default function CertificatePurchase() {
               </div>
             </section>
 
-            <div className="bani-grid bani-grid--two bani-certificates-detail-grid">
-              <section className="bani-section-card">
-                <div className="bani-section-card__surface">
-                  <div className="bani-certificates-section-eyebrow">Как работает</div>
-                  <h3 className="bani-section-card__title">Процесс покупки без серых зон</h3>
-                  <div className="bani-feature-list">
+            <div className="rh-grid rh-grid--two rh-certificates-detail-grid">
+              <section className="rh-section-card">
+                <div className="rh-section-card__surface">
+                  <div className="rh-certificates-section-eyebrow">Как работает</div>
+                  <h3 className="rh-section-card__title">Процесс покупки без серых зон</h3>
+                  <div className="rh-feature-list">
                     {HOW_IT_WORKS.map((item, index) => (
-                      <div key={item.title} className="bani-feature-item">
-                        <div className="bani-feature-item__icon">{index + 1}</div>
-                        <div className="bani-feature-item__copy">
-                          <div className="bani-feature-item__title">{item.title}</div>
-                          <div className="bani-feature-item__description">{item.description}</div>
+                      <div key={item.title} className="rh-feature-item">
+                        <div className="rh-feature-item__icon">{index + 1}</div>
+                        <div className="rh-feature-item__copy">
+                          <div className="rh-feature-item__title">{item.title}</div>
+                          <div className="rh-feature-item__description">{item.description}</div>
                         </div>
                       </div>
                     ))}
@@ -501,10 +501,10 @@ export default function CertificatePurchase() {
                 </div>
               </section>
 
-              <section className="bani-section-card">
-                <div className="bani-section-card__surface">
-                  <div className="bani-certificates-section-eyebrow">Вопросы</div>
-                  <h3 className="bani-section-card__title">Важные детали перед оплатой</h3>
+              <section className="rh-section-card">
+                <div className="rh-section-card__surface">
+                  <div className="rh-certificates-section-eyebrow">Вопросы</div>
+                  <h3 className="rh-section-card__title">Важные детали перед оплатой</h3>
                   <Collapse
                     ghost
                     items={FAQ_ITEMS.map((item) => ({
@@ -518,7 +518,7 @@ export default function CertificatePurchase() {
             </div>
           </section>
 
-          <aside className="bani-stack bani-certificates-sidebar">
+          <aside className="rh-stack rh-certificates-sidebar">
             <CertificateGiftSummary
               amount={amountKopecks}
               purchaserEmail={purchaserEmail}

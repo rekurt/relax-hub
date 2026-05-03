@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ConfigProvider } from 'antd'
-import ruRU from 'antd/locale/ru_RU'
+import { ConfigProvider } from '@/components/design/system'
+import { ruRU } from '@/components/design/system'
 import OwnerAnalytics from '@/pages/analytics/OwnerAnalytics'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import {
