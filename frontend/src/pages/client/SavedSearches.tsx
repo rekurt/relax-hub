@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import {
-  Typography,
   Table,
   Button,
-  Empty,
+  Card,
   Tag,
-  Space,
   Popconfirm,
   App,
 } from '@/components/design/system'
@@ -17,8 +15,7 @@ import {
 } from '@/api/generated/saved-searches/saved-searches'
 import type { InternalHandlerSavedSearchResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
 
 export default function SavedSearches() {
   const [page, setPage] = useState(1)
@@ -70,7 +67,7 @@ export default function SavedSearches() {
       dataIndex: 'filters',
       key: 'filters',
       render: (filters: unknown) => (
-        <span style={{ fontSize: 13, color: 'var(--rh-text-soft)' }}>{renderFilters(filters)}</span>
+        <span className="rh-saved-searches-filter-text">{renderFilters(filters)}</span>
       ),
     },
     {
@@ -119,21 +116,22 @@ export default function SavedSearches() {
   ]
 
   return (
-    <div>
-      <Space
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          marginBottom: 24,
-        }}
-      >
-        <Title level={3} style={{ margin: 0 }}>
-          Сохранённые поиски
-        </Title>
-      </Space>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Каталог"
+        title="Сохранённые поиски"
+        description="Список фильтров, по которым можно быстро вернуться к подходящим баням."
+      />
 
       {searches.length === 0 && !isLoading ? (
-        <Empty description="У вас нет сохранённых поисков" />
+        <Card>
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">У вас нет сохранённых поисков</div>
+            <p className="rh-admin-empty-state__text">
+              Сохранённые фильтры появятся здесь после поиска по каталогу.
+            </p>
+          </div>
+        </Card>
       ) : (
         <Table
           dataSource={searches}

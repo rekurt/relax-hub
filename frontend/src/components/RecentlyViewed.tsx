@@ -1,4 +1,3 @@
-import { Typography } from '@/components/design/system'
 import { ClockCircleOutlined } from '@/components/design/icons'
 import { formatPrice } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
@@ -7,8 +6,6 @@ import PublicState from '@/components/PublicState'
 import { resolveAssetUrl } from '@/lib/asset-url'
 import { useAuthStore } from '@/stores/auth'
 import { DesignListingCard } from '@/components/design'
-
-const { Title } = Typography
 
 export default function RecentlyViewed() {
   const navigate = useNavigate()
@@ -26,7 +23,7 @@ export default function RecentlyViewed() {
 
   if (isError) {
     return (
-      <div style={{ marginBottom: 24 }}>
+      <div className="rh-recently-viewed">
         <PublicState
           kind="degraded"
           compact
@@ -42,29 +39,16 @@ export default function RecentlyViewed() {
   if (items.length === 0) return null
 
   return (
-    <div style={{ marginBottom: 24 }}>
-      <Title level={4} style={{ marginBottom: 12 }}>
-        <ClockCircleOutlined style={{ marginRight: 8 }} />
+    <div className="rh-recently-viewed">
+      <h2 className="rh-component-section-title">
+        <ClockCircleOutlined className="rh-component-section-title__icon" />
         Недавно просмотренные
-      </Title>
-      <div
-        style={{
-          display: 'flex',
-          gap: 16,
-          overflowX: 'auto',
-          paddingBottom: 8,
-          scrollSnapType: 'x mandatory',
-        }}
-      >
+      </h2>
+      <div className="rh-horizontal-card-scroll">
         {items.map((item) => (
           <div
             key={item.id}
-            style={{
-              minWidth: 240,
-              maxWidth: 280,
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-            }}
+            className="rh-horizontal-card-scroll__item"
           >
             <DesignListingCard
               onClick={() => navigate(`/bathhouses/${item.slug ?? item.id}`)}

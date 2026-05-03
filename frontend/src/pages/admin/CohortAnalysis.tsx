@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { Card, Segmented, Spin, Table, Typography } from '@/components/design/system'
+import { Card, Segmented, Spin, Table } from '@/components/design/system'
 import type { ColumnsType } from '@/components/design/types'
 import { useGetAdminAnalyticsCohorts } from '@/api/generated/admin-analytics/admin-analytics'
 import type { GithubComRekurtRelaxHubInternalDomainCohortRow } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
 
 const MONTHS_OPTIONS = [
   { label: '3 мес', value: 3 },
@@ -14,12 +13,11 @@ const MONTHS_OPTIONS = [
   { label: '24 мес', value: 24 },
 ]
 
-function retentionColor(value: number): string {
-  if (value >= 80) return 'rgba(21, 128, 61, 0.08)'
-  if (value >= 60) return '#fcffe6'
-  if (value >= 40) return '#fff7e6'
-  if (value >= 20) return 'rgba(180, 35, 24, 0.08)'
-  return 'rgba(180, 35, 24, 0.08)'
+function retentionTone(value: number): string {
+  if (value >= 80) return 'high'
+  if (value >= 60) return 'good'
+  if (value >= 40) return 'medium'
+  return 'low'
 }
 
 export default function CohortAnalysis() {
@@ -67,15 +65,7 @@ export default function CohortAnalysis() {
         if (i >= weeks.length) return '—'
         const val = weeks[i] ?? 0
         return (
-          <div
-            style={{
-              background: retentionColor(val),
-              padding: '2px 6px',
-              borderRadius: 12,
-              textAlign: 'center',
-              fontWeight: val >= 50 ? 600 : 400,
-            }}
-          >
+          <div className={`rh-cohort-retention rh-cohort-retention--${retentionTone(val)}`}>
             {val.toFixed(0)}%
           </div>
         )
@@ -84,18 +74,22 @@ export default function CohortAnalysis() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>Когортный анализ</Title>
-        <Segmented
-          options={MONTHS_OPTIONS}
-          value={months}
-          onChange={(v) => setMonths(v as number)}
-        />
-      </div>
+    <div className="rh-stack rh-admin-reference-page rh-cohort-page">
+      <PageHeader
+        eyebrow="Аналитика"
+        title="Когортный анализ"
+        description="Матрица удержания клиентов по неделям с аккуратной шкалой интенсивности."
+        extra={
+          <Segmented
+            options={MONTHS_OPTIONS}
+            value={months}
+            onChange={(v) => setMonths(v as number)}
+          />
+        }
+      />
 
       <Spin spinning={isLoading}>
-        <Card>
+        <Card className="rh-admin-reference-card" title="Матрица удержания">
           <Table
             columns={columns}
             dataSource={cohorts}

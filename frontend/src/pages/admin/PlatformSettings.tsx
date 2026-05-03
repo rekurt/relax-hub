@@ -69,18 +69,18 @@ export default function PlatformSettings() {
       case 'int':
         return (
           <InputNumber
+            className="rh-admin-form-control"
             value={formValue ? Number(formValue) : undefined}
             onChange={(value) => setFormValue(String(value ?? ''))}
-            style={{ width: '100%' }}
             precision={0}
           />
         )
       case 'float':
         return (
           <InputNumber
+            className="rh-admin-form-control"
             value={formValue ? Number(formValue) : undefined}
             onChange={(value) => setFormValue(String(value ?? ''))}
-            style={{ width: '100%' }}
             step={0.01}
           />
         )
@@ -172,7 +172,7 @@ export default function PlatformSettings() {
   ]
 
   return (
-    <div className="rh-stack">
+    <div className="rh-stack rh-admin-reference-page">
       <PageHeader
         eyebrow="Системные параметры"
         title="Настройки платформы"
@@ -197,10 +197,11 @@ export default function PlatformSettings() {
         </div>
       </div>
 
-      <Card title="Текущие настройки">
+      <Card className="rh-admin-reference-card" title="Текущие настройки">
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: 48 }}>
+          <div className="rh-admin-state-card">
             <Spin size="large" />
+            <span>Загружаем настройки платформы</span>
           </div>
         ) : (
           <Table
@@ -224,11 +225,11 @@ export default function PlatformSettings() {
         confirmLoading={updateMutation.isPending}
       >
         {editingDescription && (
-          <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          <Text type="secondary" className="rh-admin-modal-description">
             {editingDescription}
           </Text>
         )}
-        <Form layout="vertical" style={{ marginTop: 8 }}>
+        <Form layout="vertical" className="rh-admin-modal-form">
           <Form.Item label="Значение">
             {renderValueInput()}
           </Form.Item>

@@ -30,7 +30,7 @@ export default function BathhouseSelector() {
         value={selectedBathhouseId}
         onChange={setSelectedBathhouseId}
         loading={isLoading}
-        style={{ minWidth: 156, maxWidth: 220 }}
+        className="rh-bathhouse-selector__select"
         popupMatchSelectWidth={false}
         placeholder="Выберите баню"
         options={bathhouses.map((b) => ({

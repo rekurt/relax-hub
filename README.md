@@ -126,6 +126,7 @@ make run
 | `BANI_BACKEND_URL` | URL API для frontend dev proxy | `http://localhost:28080` |
 | `BANI_DATABASE_DSN` | PostgreSQL DSN | `postgres://postgres:postgres@localhost:5435/bani?sslmode=disable` |
 | `BANI_REDIS_ADDR` | Redis адрес | `localhost:6381` |
+| `BANI_STORAGE_PUBLIC_BASE_URL` | Публичный URL MinIO/S3 для браузера; отличается от internal endpoint внутри Docker | `http://localhost:9102` |
 | `BANI_JWT_SECRET` | Секрет для JWT | `change-me-in-production` |
 | `BANI_JWT_TOKEN_TTL` | Время жизни токена | `24h` |
 | `BANI_PAYMENT_YOOKASSA_SHOP_ID` | Shop ID в ЮKassa | `` |

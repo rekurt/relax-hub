@@ -27,8 +27,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 interface SegmentConditions {
   visit_count_min?: number
@@ -202,27 +203,27 @@ function SegmentForm({
           <Input placeholder="Например: VIP клиенты за последние 30 дней" />
         </Form.Item>
 
-        <Title level={5}>Фильтры по визитам</Title>
+        <h3 className="rh-modal-section-title">Фильтры по визитам</h3>
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item name="visit_count_min" label="Визиты от">
-              <InputNumber min={0} style={{ width: '100%' }} />
+              <InputNumber min={0} className="rh-full-width" />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item name="visit_count_max" label="Визиты до">
-              <InputNumber min={0} style={{ width: '100%' }} />
+              <InputNumber min={0} className="rh-full-width" />
             </Form.Item>
           </Col>
         </Row>
 
-        <Title level={5}>Фильтры по суммам (руб)</Title>
+        <h3 className="rh-modal-section-title">Фильтры по суммам (руб)</h3>
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item label="Средний чек от">
               <Space.Compact className="rh-compact-control">
                 <Form.Item name="avg_check_min" noStyle>
-                  <InputNumber min={0} style={{ width: '100%' }} />
+                  <InputNumber min={0} className="rh-full-width" />
                 </Form.Item>
                 <span className="rh-input-addon">₽</span>
               </Space.Compact>
@@ -232,7 +233,7 @@ function SegmentForm({
             <Form.Item label="Средний чек до">
               <Space.Compact className="rh-compact-control">
                 <Form.Item name="avg_check_max" noStyle>
-                  <InputNumber min={0} style={{ width: '100%' }} />
+                  <InputNumber min={0} className="rh-full-width" />
                 </Form.Item>
                 <span className="rh-input-addon">₽</span>
               </Space.Compact>
@@ -244,7 +245,7 @@ function SegmentForm({
             <Form.Item label="Общая сумма от">
               <Space.Compact className="rh-compact-control">
                 <Form.Item name="total_spent_min" noStyle>
-                  <InputNumber min={0} style={{ width: '100%' }} />
+                  <InputNumber min={0} className="rh-full-width" />
                 </Form.Item>
                 <span className="rh-input-addon">₽</span>
               </Space.Compact>
@@ -254,7 +255,7 @@ function SegmentForm({
             <Form.Item label="Общая сумма до">
               <Space.Compact className="rh-compact-control">
                 <Form.Item name="total_spent_max" noStyle>
-                  <InputNumber min={0} style={{ width: '100%' }} />
+                  <InputNumber min={0} className="rh-full-width" />
                 </Form.Item>
                 <span className="rh-input-addon">₽</span>
               </Space.Compact>
@@ -262,21 +263,21 @@ function SegmentForm({
           </Col>
         </Row>
 
-        <Title level={5}>Давность визита (дней)</Title>
+        <h3 className="rh-modal-section-title">Давность визита (дней)</h3>
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item name="last_visit_days_min" label="Минимум дней назад">
-              <InputNumber min={0} style={{ width: '100%' }} />
+              <InputNumber min={0} className="rh-full-width" />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item name="last_visit_days_max" label="Максимум дней назад">
-              <InputNumber min={0} style={{ width: '100%' }} />
+              <InputNumber min={0} className="rh-full-width" />
             </Form.Item>
           </Col>
         </Row>
 
-        <Title level={5}>Теги</Title>
+        <h3 className="rh-modal-section-title">Теги</h3>
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item name="tags_include" label="Включить теги">
@@ -290,7 +291,7 @@ function SegmentForm({
           </Col>
         </Row>
 
-        <Title level={5}>RFM-скоры (1-5)</Title>
+        <h3 className="rh-modal-section-title">RFM-скоры (1-5)</h3>
         <Row gutter={16}>
           <Col span={8}>
             <Form.Item name="rfm_recency_min" label="R от">
@@ -358,7 +359,7 @@ export default function SegmentBuilder() {
       title: 'ID клиента',
       dataIndex: 'client_id',
       key: 'client_id',
-      render: (id: string) => <Tag style={{ fontFamily: 'monospace' }}>{id?.slice(0, 8)}...</Tag>,
+      render: (id: string) => <Tag className="rh-code-tag">{id?.slice(0, 8)}...</Tag>,
     },
     {
       title: 'Визиты',
@@ -410,13 +411,18 @@ export default function SegmentBuilder() {
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>Конструктор сегментов</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditSegment(undefined); setFormOpen(true) }}>
-          Новый сегмент
-        </Button>
-      </div>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="CRM"
+        title="Конструктор сегментов"
+        description="Создавайте пользовательские сегменты по визитам, суммам, давности и RFM."
+        size="compact"
+        extra={(
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditSegment(undefined); setFormOpen(true) }}>
+            Новый сегмент
+          </Button>
+        )}
+      />
 
       <Row gutter={[16, 16]}>
         <Col xs={24} md={10}>
@@ -428,25 +434,21 @@ export default function SegmentBuilder() {
               <Card
                 size="small"
                 hoverable
-                style={{
-                  marginBottom: 8,
-                  borderColor: selectedSegment?.id === item.id ? '#0f766e' : undefined,
-                  borderWidth: selectedSegment?.id === item.id ? 2 : 1,
-                }}
+                className={selectedSegment?.id === item.id ? 'rh-segment-card rh-segment-card--selected' : 'rh-segment-card'}
                 onClick={() => { setSelectedSegment(item); setPage(1) }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <TeamOutlined style={{ color: '#0f766e', fontSize: 18 }} />
+                <div className="rh-segment-card__row rh-segment-card__row--top">
+                  <div className="rh-segment-card__content">
+                    <div className="rh-segment-card__main">
+                      <TeamOutlined className="rh-segment-card__icon" />
                       <Text strong>{item.name}</Text>
                     </div>
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" className="rh-segment-card__description">
                       {formatConditionsSummary(item.conditions)}
                     </Text>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Tag color="blue" style={{ fontSize: 14, padding: '2px 10px' }}>
+                  <div className="rh-toolbar__group">
+                    <Tag color="blue" className="rh-segment-count-tag rh-segment-count-tag--small">
                       {item.guest_count}
                     </Tag>
                     <Button
@@ -494,7 +496,7 @@ export default function SegmentBuilder() {
             </Card>
           ) : (
             <Card>
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
+              <div className="rh-muted-empty">
                 Выберите сегмент или создайте новый
               </div>
             </Card>

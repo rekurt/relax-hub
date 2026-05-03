@@ -31,9 +31,9 @@ import { useGetMyWallet, useGetMyWalletTransactions, useGetMyWalletHolds, usePos
 import type { InternalHandlerWalletTransactionResponse, InternalHandlerWalletHoldResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { AUTH_TOKEN_KEY } from '@/lib/constants'
-import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 const { RangePicker } = DatePicker
 
 const TX_TYPE_OPTIONS = [
@@ -179,7 +179,7 @@ export default function WalletDashboard() {
       render: (amount: number, record) => {
         const isPositive = !['spend', 'bonus_expiry', 'hold_capture', 'payout', 'admin_debit'].includes(record.type ?? '')
         return (
-          <span style={{ color: isPositive ? '#15803d' : '#b42318', fontWeight: 500 }}>
+          <span className={isPositive ? 'rh-wallet-amount rh-wallet-amount--positive' : 'rh-wallet-amount rh-wallet-amount--negative'}>
             {isPositive ? '+' : ''}{formatPrice(amount ?? 0)}
           </span>
         )
@@ -237,12 +237,16 @@ export default function WalletDashboard() {
   )
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>Кошелёк</Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Личный кабинет"
+        title="Кошелёк"
+        description="Контролируйте баланс, замороженные суммы, бонусы и историю операций."
+      />
 
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} md={8}>
-          <Card loading={walletLoading}>
+          <Card loading={walletLoading} className="rh-admin-detail-card">
             <Statistic
               title="Баланс"
               value={wallet?.balance ? wallet.balance / 100 : 0}
@@ -252,23 +256,23 @@ export default function WalletDashboard() {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={8}>
-          <Card loading={walletLoading}>
+          <Card loading={walletLoading} className="rh-admin-detail-card">
             <Statistic
+              className="rh-admin-metric-stat rh-admin-metric-stat--success"
               title="Доступно"
               value={wallet?.available ? wallet.available / 100 : 0}
               suffix="₽"
-              styles={{ content: { color: '#15803d' } }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} md={8}>
-          <Card loading={walletLoading}>
+          <Card loading={walletLoading} className="rh-admin-detail-card">
             <Statistic
+              className="rh-admin-metric-stat rh-admin-metric-stat--warning"
               title="Заморожено"
               value={wallet?.held_amount ? wallet.held_amount / 100 : 0}
               suffix="₽"
               prefix={<LockOutlined />}
-              styles={{ content: { color: '#d97706' } }}
             />
           </Card>
         </Col>
@@ -280,14 +284,14 @@ export default function WalletDashboard() {
           showIcon
           icon={<WarningOutlined />}
           title={`Бонусы на сумму ${formatPrice(wallet.expiring_soon)} скоро сгорят${wallet.earliest_expiry ? ` (до ${formatDateTime(wallet.earliest_expiry, 'DD.MM.YYYY')})` : ''}`}
-          style={{ marginTop: 16 }}
+          className="rh-alert-spaced"
         />
       )}
 
       {expiringBonuses.length > 0 && (
-        <Card title="Бонусы, истекающие в ближайшие 30 дней" size="small" style={{ marginTop: 16 }}>
+        <Card title="Бонусы, истекающие в ближайшие 30 дней" size="small" className="rh-admin-detail-card">
           {expiringBonuses.map((bonus) => (
-            <div key={bonus.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+            <div key={bonus.id} className="rh-wallet-bonus-row">
               <Text>{bonus.description ?? 'Бонус'}</Text>
               <Space>
                 <Text strong>{formatPrice(bonus.amount ?? 0)}</Text>
@@ -299,7 +303,7 @@ export default function WalletDashboard() {
       )}
 
       {holds.length > 0 && (
-        <Card title="Замороженные средства" size="small" style={{ marginTop: 16 }}>
+        <Card title="Замороженные средства" size="small" className="rh-admin-detail-card">
           <Table
             columns={holdColumns}
             dataSource={holds}
@@ -310,7 +314,7 @@ export default function WalletDashboard() {
         </Card>
       )}
 
-      <Card title="Пополнить кошелёк" style={{ marginTop: 16 }}>
+      <Card title="Пополнить кошелёк" className="rh-admin-detail-card">
         <Form
           form={form}
           layout="inline"
@@ -328,7 +332,7 @@ export default function WalletDashboard() {
               placeholder="Сумма, ₽"
               min={MIN_TOPUP}
               max={MAX_TOPUP}
-              style={{ width: 200 }}
+              className="rh-wallet-filter-control"
             />
           </Form.Item>
           <Form.Item>
@@ -344,14 +348,14 @@ export default function WalletDashboard() {
         </Form>
       </Card>
 
-      <Title level={4} style={{ marginTop: 24, marginBottom: 12 }}>История операций</Title>
+      <h2 className="rh-section-card__title">История операций</h2>
 
-      <Space wrap style={{ marginBottom: 16 }}>
+      <Space wrap className="rh-client-filter-bar">
         <Select
           value={typeFilter}
           onChange={(val) => { setTypeFilter(val); setPage(1) }}
           options={TX_TYPE_OPTIONS}
-          style={{ width: 200 }}
+          className="rh-wallet-filter-control"
           placeholder="Тип операции"
         />
         <RangePicker
@@ -379,7 +383,16 @@ export default function WalletDashboard() {
         dataSource={transactions}
         rowKey="id"
         loading={txLoading}
-        locale={{ emptyText: <EmptyState description="Нет операций по кошельку" /> }}
+        locale={{
+          emptyText: (
+            <div className="rh-admin-empty-state">
+              <div className="rh-admin-empty-state__title">Нет операций по кошельку</div>
+              <p className="rh-admin-empty-state__text">
+                Пополнения, списания и возвраты появятся здесь после первой операции.
+              </p>
+            </div>
+          ),
+        }}
         pagination={dateRange?.[0] && dateRange?.[1] ? false : {
           current: page,
           pageSize: pageSize,

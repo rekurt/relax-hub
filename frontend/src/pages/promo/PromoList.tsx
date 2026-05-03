@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   DatePicker,
-  Empty,
   Form,
   Input,
   InputNumber,
@@ -27,6 +26,7 @@ import type { InternalHandlerPromoResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
 import PageHeader from '@/components/PageHeader'
 import { useBathhouseStore } from '@/stores/bathhouse'
+import EmptyState from '@/components/EmptyState'
 
 const PROMO_TYPES = [
   { value: 'percentage', label: 'Процент' },
@@ -150,7 +150,7 @@ export default function PromoList() {
       key: 'code',
       render: (code: string) => (
         <Space>
-          <Tag style={{ fontFamily: 'monospace', fontSize: 14 }}>{code}</Tag>
+          <Tag className="rh-code-tag">{code}</Tag>
           <Tooltip title="Копировать">
             <Button
               type="text"
@@ -280,7 +280,7 @@ export default function PromoList() {
         </div>
       </section>
 
-      <Card>
+      <Card className="rh-admin-detail-card">
         <div className="rh-table-shell">
           <div className="rh-toolbar">
             <div>
@@ -299,7 +299,7 @@ export default function PromoList() {
             loading={isLoading}
             locale={{
               emptyText: (
-                <Empty description="Нет промокодов. Создайте промокод для привлечения клиентов." />
+                <EmptyState description="Нет промокодов. Создайте промокод для привлечения клиентов." />
               ),
             }}
             pagination={
@@ -332,7 +332,7 @@ export default function PromoList() {
             normalize={(value: string) => (typeof value === 'string' ? value.toUpperCase() : value)}
             extra="Латинские буквы и цифры, например: SUMMER20"
           >
-            <Input placeholder="SUMMER20" style={{ fontFamily: 'monospace' }} />
+            <Input placeholder="SUMMER20" className="rh-monospace-control" />
           </Form.Item>
 
           <Form.Item
@@ -361,20 +361,20 @@ export default function PromoList() {
               min={selectedType === 'percentage' ? 1 : 0.01}
               max={selectedType === 'percentage' ? 100 : undefined}
               step={selectedType === 'percentage' ? 1 : selectedType === 'free_hour' ? 1 : 100}
-              style={{ width: '100%' }}
+              className="rh-full-width"
             />
           </Form.Item>
 
           <Form.Item name="max_uses" label="Максимум использований" extra="Оставьте пустым для неограниченного">
-            <InputNumber min={1} style={{ width: '100%' }} placeholder="Без ограничений" />
+            <InputNumber min={1} className="rh-full-width" placeholder="Без ограничений" />
           </Form.Item>
 
           <Form.Item name="min_amount" label="Минимальная сумма заказа (₽)" extra="Оставьте пустым без ограничения">
-            <InputNumber min={0} step={100} style={{ width: '100%' }} placeholder="Без ограничений" />
+            <InputNumber min={0} step={100} className="rh-full-width" placeholder="Без ограничений" />
           </Form.Item>
 
           <Form.Item name="validity" label="Период действия" extra="Оставьте пустым для бессрочного">
-            <DatePicker.RangePicker style={{ width: '100%' }} format="DD.MM.YYYY" />
+            <DatePicker.RangePicker className="rh-full-width" format="DD.MM.YYYY" />
           </Form.Item>
 
           <Form.Item>

@@ -79,7 +79,7 @@ exports[`EmptyState > snapshot: empty state with action 1`] = `
     class="rh-empty__footer ant-empty-footer"
   >
     <button
-      class="rh-btn rh-btn--primary"
+      class="rh-btn inline-flex min-h-11 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-rh-pill border border-transparent px-[22px] font-sans text-sm font-semibold leading-none tracking-normal transition duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[rgba(15,118,110,0.16)] disabled:pointer-events-none disabled:opacity-55 rh-btn--primary bg-[linear-gradient(135deg,#0f766e,#0a5f59)] text-white shadow-rh-primary hover:-translate-y-px hover:shadow-[0_18px_30px_rgba(15,118,110,0.24)]"
       type="button"
     >
       Найти баню

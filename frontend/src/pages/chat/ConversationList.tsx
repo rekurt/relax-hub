@@ -1,4 +1,4 @@
-import { Avatar, Typography, Input, Empty, Spin } from '@/components/design/system'
+import { Avatar, Typography, Input, Spin } from '@/components/design/system'
 import { UserOutlined, SearchOutlined } from '@/components/design/icons'
 import { useState, useMemo } from 'react'
 import { useGetMyConversations } from '@/api/generated/chat/chat'
@@ -7,6 +7,7 @@ import type { InternalHandlerConversationResponse } from '@/api/generated/model'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/ru'
+import EmptyState from '@/components/EmptyState'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
@@ -38,15 +39,15 @@ export default function ConversationList({ selectedId, onSelect }: ConversationL
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
+      <div className="rh-chat-loading">
         <Spin />
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--rh-border)' }}>
+    <div className="rh-chat-conversation-list">
+      <div className="rh-chat-search">
         <Input
           placeholder="Поиск бесед..."
           prefix={<SearchOutlined />}
@@ -56,32 +57,26 @@ export default function ConversationList({ selectedId, onSelect }: ConversationL
         />
       </div>
 
-      <div style={{ flex: 1, overflow: 'auto' }}>
+      <div className="rh-chat-conversation-scroll">
         {conversations.length === 0 ? (
-          <Empty description="Нет бесед" style={{ marginTop: 40 }} />
+          <div className="rh-chat-empty">
+            <EmptyState description="Нет бесед" />
+          </div>
         ) : (
           conversations.map((conv) => (
             <div
               key={conv.id}
               onClick={() => onSelect(conv)}
-              style={{
-                padding: '12px 16px',
-                cursor: 'pointer',
-                background: selectedId === conv.id ? 'var(--rh-primary-soft)' : 'transparent',
-                borderBottom: '1px solid var(--rh-border)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-              }}
+              className={selectedId === conv.id ? 'rh-chat-conversation rh-chat-conversation--selected' : 'rh-chat-conversation'}
             >
               <Avatar icon={<UserOutlined />} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <Text ellipsis style={{ maxWidth: 180, display: 'block' }}>
+              <div className="rh-chat-conversation__content">
+                <Text ellipsis className="rh-chat-conversation__title">
                   {userRole === 'client'
                     ? `Баня ${conv.bathhouse_id?.slice(0, 8)}`
                     : `Клиент ${conv.client_id?.slice(0, 8)}`}
                 </Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className="rh-chat-conversation__time">
                   {conv.last_message_at
                     ? dayjs(conv.last_message_at).fromNow()
                     : dayjs(conv.created_at).fromNow()}

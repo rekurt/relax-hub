@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { Typography, Row, Col, Pagination, Spin } from '@/components/design/system'
+import { Button, Card, Row, Col, Pagination, Spin } from '@/components/design/system'
+import { Link } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import { useGetMyFavorites } from '@/api/generated/favorites/favorites'
 import { getGetBathhousesIdQueryOptions } from '@/api/generated/bathhouses/bathhouses'
 import BathhouseCard from '@/components/BathhouseCard'
-import EmptyState from '@/components/EmptyState'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
 
 const PAGE_SIZE = 12
 
@@ -36,8 +35,12 @@ export default function Favorites() {
   const isLoadingBathhouses = bathhouseQueries.some((q) => q.isLoading)
 
   return (
-    <div>
-      <Title level={3}>Избранное</Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Личный кабинет"
+        title="Избранное"
+        description="Сохранённые бани, к которым можно быстро вернуться перед бронированием."
+      />
 
       <Spin spinning={isLoading || isLoadingBathhouses}>
         {bathhouses.length > 0 ? (
@@ -51,7 +54,7 @@ export default function Favorites() {
             </Row>
 
             {meta && meta.total_pages && meta.total_pages > 1 && (
-              <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <div className="rh-client-pagination-center">
                 <Pagination
                   current={page}
                   total={meta.total_count}
@@ -64,11 +67,17 @@ export default function Favorites() {
           </>
         ) : (
           !isLoading && (
-            <EmptyState
-              description="Ваш список избранного пуст. Начните исследовать!"
-              actionText="Найти баню"
-              actionLink="/catalog"
-            />
+            <Card>
+              <div className="rh-admin-empty-state">
+                <div className="rh-admin-empty-state__title">Ваш список избранного пуст. Начните исследовать!</div>
+                <p className="rh-admin-empty-state__text">
+                  Добавляйте бани в избранное из каталога, чтобы сравнить их позже.
+                </p>
+                <Link to="/catalog">
+                  <Button type="primary">Найти баню</Button>
+                </Link>
+              </div>
+            </Card>
           )
         )}
       </Spin>

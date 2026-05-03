@@ -22,8 +22,9 @@ import {
 } from '@/api/generated/crm/crm'
 import type { InternalHandlerSegmentResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const SEGMENT_ICONS: Record<string, React.ReactNode> = {
   new: <UserAddOutlined />,
@@ -64,7 +65,7 @@ export default function SegmentList() {
       dataIndex: 'client_id',
       key: 'client_id',
       render: (id: string) => (
-        <Tag style={{ fontFamily: 'monospace' }}>{id?.slice(0, 8)}...</Tag>
+        <Tag className="rh-code-tag">{id?.slice(0, 8)}...</Tag>
       ),
     },
     {
@@ -98,10 +99,15 @@ export default function SegmentList() {
   ]
 
   return (
-    <div>
-      <Title level={3}>Сегменты гостей</Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="CRM"
+        title="Сегменты гостей"
+        description="Готовые сегменты и гости, попадающие в выбранную группу."
+        size="compact"
+      />
 
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      <Row gutter={[16, 16]} className="rh-section-spaced">
         <Col xs={24} md={10}>
           <List
             loading={segmentsLoading}
@@ -111,25 +117,21 @@ export default function SegmentList() {
               <Card
                 size="small"
                 hoverable
-                style={{
-                  marginBottom: 8,
-                  borderColor: selectedSegment === item.slug ? SEGMENT_COLORS[item.slug ?? ''] : undefined,
-                  borderWidth: selectedSegment === item.slug ? 2 : 1,
-                }}
+                className={selectedSegment === item.slug ? 'rh-segment-card rh-segment-card--selected' : 'rh-segment-card'}
                 onClick={() => { setSelectedSegment(item.slug); setPage(1) }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ color: SEGMENT_COLORS[item.slug ?? ''], fontSize: 20 }}>
+                <div className="rh-segment-card__row">
+                  <div className="rh-segment-card__main">
+                    <span className={`rh-segment-card__icon rh-segment-card__icon--${item.slug ?? 'default'}`}>
                       {SEGMENT_ICONS[item.slug ?? ''] ?? <TeamOutlined />}
                     </span>
                     <div>
                       <Text strong>{item.name}</Text>
                       <br />
-                      <Text type="secondary" style={{ fontSize: 12 }}>{item.description}</Text>
+                      <Text type="secondary" className="rh-segment-card__description">{item.description}</Text>
                     </div>
                   </div>
-                  <Tag color={SEGMENT_COLORS[item.slug ?? '']} style={{ fontSize: 16, padding: '2px 12px' }}>
+                  <Tag color={SEGMENT_COLORS[item.slug ?? '']} className="rh-segment-count-tag">
                     {item.count ?? 0}
                   </Tag>
                 </div>
@@ -161,7 +163,7 @@ export default function SegmentList() {
             />
           ) : (
             <Card>
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
+              <div className="rh-muted-empty">
                 Выберите сегмент для просмотра гостей
               </div>
             </Card>

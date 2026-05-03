@@ -19,6 +19,7 @@ interface TopNavigationLayoutProps {
   homeTo: string
   primaryItems: NavigationItem[]
   overflowItems?: NavigationItem[]
+  overflowLabel?: string
   navigationMode?: 'pills' | 'dropdown'
   profilePath?: string
   profileMenuItems?: NavigationItem[]
@@ -34,15 +35,22 @@ interface TopNavigationLayoutProps {
 type DropdownItem = NonNullable<MenuProps['items']>[number]
 
 function groupNavigationItems(items: NavigationItem[]) {
-  return items.reduce<Array<{ section?: string; items: NavigationItem[] }>>((acc, item) => {
-    const lastGroup = acc[acc.length - 1]
-    if (lastGroup && lastGroup.section === item.section) {
-      lastGroup.items.push(item)
-      return acc
+  const groups: Array<{ section?: string; items: NavigationItem[] }> = []
+  const groupBySection = new Map<string, { section?: string; items: NavigationItem[] }>()
+
+  for (const item of items) {
+    const key = item.section ?? ''
+    let group = groupBySection.get(key)
+    if (!group) {
+      group = { section: item.section, items: [] }
+      groupBySection.set(key, group)
+      groups.push(group)
     }
-    acc.push({ section: item.section, items: [item] })
-    return acc
-  }, [])
+
+    group.items.push(item)
+  }
+
+  return groups
 }
 
 function buildGroupedMenuItems(items: NavigationItem[], navigate: (to: string) => void): NonNullable<MenuProps['items']> {
@@ -68,6 +76,16 @@ function buildGroupedMenuItems(items: NavigationItem[], navigate: (to: string) =
   }, [])
 }
 
+function cx(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(' ')
+}
+
+function getContentWidthClass(contentWidth: number) {
+  if (contentWidth <= 1200) return 'rh-topnav--width-narrow'
+  if (contentWidth <= 1320) return 'rh-topnav--width-medium'
+  return 'rh-topnav--width-wide'
+}
+
 function NavButton({
   item,
   active,
@@ -80,7 +98,10 @@ function NavButton({
   return (
     <button
       type="button"
-      className={`rh-nav__link rh-topnav__nav-button${active ? ' rh-nav__link--active rh-topnav__nav-button--active' : ''}`}
+      className={cx(
+        'rh-nav__link rh-topnav__nav-button rounded-rh-pill px-3.5 py-2 text-sm font-semibold text-rh-text transition hover:bg-[rgba(15,118,110,0.08)] hover:text-rh-primary-strong',
+        active && 'rh-nav__link--active rh-topnav__nav-button--active bg-[rgba(15,118,110,0.10)] text-rh-primary-strong',
+      )}
       onClick={() => onClick(item.to)}
     >
       {item.label}
@@ -96,6 +117,7 @@ export default function TopNavigationLayout({
   homeTo,
   primaryItems,
   overflowItems = [],
+  overflowLabel = 'Разделы',
   navigationMode = 'pills',
   profilePath,
   profileMenuItems = [],
@@ -150,26 +172,21 @@ export default function TopNavigationLayout({
     title: group.section ?? '',
     items: group.items,
   }))
+  const isClientFacingSurface = surface === 'client' || surface === 'public'
+  const contentWidthClass = getContentWidthClass(contentWidth)
 
   return (
     <Layout
-      className={`rh-shell rh-shell--${surface}`}
-      style={{
-        minHeight: '100vh',
-        background: 'transparent',
-      }}
+      className={`rh-shell rh-shell--${surface} ${contentWidthClass} min-h-screen bg-transparent font-sans text-rh-text`}
     >
       <Header
-        className="rh-nav rh-topnav"
-        style={{
-          height: 'auto',
-        }}
+        className="rh-nav rh-topnav sticky top-0 z-40 border-b border-[rgba(15,23,42,0.08)] bg-[rgba(255,252,247,0.80)] px-4 py-3 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur-[20px] sm:px-6"
       >
-        <div className="rh-topnav__inner" style={{ maxWidth: contentWidth }}>
+        <div className="rh-topnav__inner mx-auto flex w-full min-w-0 items-center gap-4">
           <button
             type="button"
             onClick={() => navigate(homeTo)}
-            className="rh-topnav__brand"
+            className="rh-topnav__brand flex min-w-0 shrink-0 items-center text-left"
             aria-label={brandAriaLabel}
           >
             <span className="rh-topnav__brand-title">
@@ -193,10 +210,12 @@ export default function TopNavigationLayout({
                   }}
                   trigger={['click']}
                   placement="bottomRight"
+                  classNames={{ root: 'rh-topnav__workspace-dropdown' }}
                 >
                   <button
                     type="button"
                     className="rh-nav__user rh-topnav__workspace-button rh-topnav__profile-button"
+                    aria-haspopup="menu"
                     aria-label={`Раздел: ${activeNavigationItem?.label ?? 'Разделы'}`}
                   >
                     <DesignIcon name="grid" size={16} />
@@ -206,7 +225,7 @@ export default function TopNavigationLayout({
                   </button>
                 </Dropdown>
               ) : (
-                <div className="rh-nav__links rh-topnav__nav-links">
+                <div className="rh-nav__links rh-topnav__nav-links flex min-w-0 flex-1 items-center gap-2">
                   {primaryItems.map((item) => (
                     <NavButton
                       key={item.key}
@@ -216,13 +235,26 @@ export default function TopNavigationLayout({
                     />
                   ))}
                   {overflowItems.length > 0 && (
-                    <Dropdown menu={{ items: overflowMenuItems }} trigger={['click']} placement="bottomRight">
+                    <Dropdown
+                      menu={{
+                        items: overflowMenuItems,
+                        selectable: true,
+                        selectedKeys: overflowItems.filter(isActive).map((item) => item.key),
+                      }}
+                      trigger={['click']}
+                      placement="bottomRight"
+                      classNames={{ root: 'rh-topnav__workspace-dropdown' }}
+                    >
                       <button
                         type="button"
-                        className={`rh-nav__link rh-topnav__nav-button${overflowActive ? ' rh-nav__link--active rh-topnav__nav-button--active' : ''}`}
+                        className={cx(
+                          'rh-nav__link rh-topnav__nav-button inline-flex items-center gap-1.5 rounded-rh-pill px-3.5 py-2 text-sm font-semibold text-rh-text transition hover:bg-[rgba(15,118,110,0.08)] hover:text-rh-primary-strong',
+                          overflowActive && 'rh-nav__link--active rh-topnav__nav-button--active bg-[rgba(15,118,110,0.10)] text-rh-primary-strong',
+                        )}
+                        aria-haspopup="menu"
                       >
                         <DesignIcon name="more" size={16} />
-                        Разделы
+                        {overflowLabel}
                       </button>
                     </Dropdown>
                   )}
@@ -231,7 +263,7 @@ export default function TopNavigationLayout({
             </div>
           )}
 
-          <div className="rh-nav__actions rh-topnav__actions">
+          <div className="rh-nav__actions rh-topnav__actions ml-auto flex min-w-0 items-center gap-2">
             {!isMobile && headerAccessory && (
               <div className={`rh-topnav__accessory rh-topnav__accessory--${headerAccessoryVariant}`}>
                 {headerAccessory}
@@ -247,7 +279,7 @@ export default function TopNavigationLayout({
                   placement="bottomRight"
                   classNames={{ root: 'rh-topnav__profile-dropdown' }}
                 >
-                  <button type="button" className="rh-nav__user rh-topnav__profile-button">
+                  <button type="button" className="rh-nav__user rh-topnav__profile-button inline-flex min-w-0 items-center gap-2 rounded-rh-pill border border-[rgba(15,23,42,0.10)] bg-white/70 px-2.5 py-1.5 text-sm font-semibold text-rh-text transition hover:bg-white/95">
                     <DesignAvatar name={user.name ?? user.email ?? 'Профиль'} size={32} />
                     {!isMobile && (
                       <span className="rh-topnav__profile-label">
@@ -272,7 +304,7 @@ export default function TopNavigationLayout({
             {isMobile && (
               <button
                 type="button"
-                className="rh-nav__icon-button rh-topnav__menu-button"
+                className="rh-nav__icon-button rh-topnav__menu-button inline-flex h-10 w-10 items-center justify-center rounded-rh-pill border border-[rgba(15,23,42,0.10)] bg-white/75 text-rh-text shadow-rh-soft"
                 aria-label="Открыть меню"
                 onClick={() => setDrawerOpen(true)}
               >
@@ -283,16 +315,27 @@ export default function TopNavigationLayout({
         </div>
       </Header>
 
-      <Content className="rh-topnav__content" style={{ padding: isMobile ? '20px 16px 36px' : '28px 24px 52px', flex: '1 0 auto' }}>
-        <div className="rh-topnav__content-inner" style={{ maxWidth: contentWidth }}>
+      <Content
+        className={cx(
+          'rh-topnav__content flex-1 px-4 py-5 sm:px-6 sm:py-7 lg:pb-[52px]',
+          `rh-topnav__content--${surface}`,
+        )}
+      >
+        <div
+          className={cx(
+            'rh-topnav__content-inner mx-auto w-full min-w-0',
+            isClientFacingSurface && 'rh-client-surface',
+            surface === 'admin' && 'rh-admin-surface',
+          )}
+        >
           {topBanner}
           <Outlet />
         </div>
       </Content>
 
       {footer && (
-        <Footer className="rh-topnav__footer">
-          <div className="rh-topnav__footer-inner" style={{ maxWidth: contentWidth }}>
+        <Footer className="rh-topnav__footer px-4 pb-6 sm:px-6">
+          <div className="rh-topnav__footer-inner mx-auto w-full">
             {footer}
           </div>
         </Footer>
@@ -304,7 +347,7 @@ export default function TopNavigationLayout({
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       >
-        <Space orientation="vertical" style={{ width: '100%' }} size={12}>
+        <Space orientation="vertical" className="rh-full-width" size={12}>
           {headerAccessory && (
             <div className={`rh-topnav__drawer-accessory rh-topnav__drawer-accessory--${headerAccessoryVariant}`}>
               {headerAccessory}
@@ -323,12 +366,15 @@ export default function TopNavigationLayout({
                   {section.title}
                 </Text>
               )}
-              <Space orientation="vertical" style={{ width: '100%' }} size={8}>
+              <Space orientation="vertical" className="rh-full-width" size={8}>
                 {section.items.map((item) => (
                   <button
                     key={item.key}
                     type="button"
-                    className={`rh-nav__link rh-topnav__drawer-button${isActive(item) ? ' rh-nav__link--active rh-topnav__drawer-button--active' : ''}`}
+                    className={cx(
+                      'rh-nav__link rh-topnav__drawer-button w-full rounded-rh-lg px-4 py-3 text-left text-sm font-semibold text-rh-text transition hover:bg-[rgba(15,118,110,0.08)]',
+                      isActive(item) && 'rh-nav__link--active rh-topnav__drawer-button--active bg-[rgba(15,118,110,0.10)] text-rh-primary-strong',
+                    )}
                     onClick={() => {
                       navigate(item.to)
                       setDrawerOpen(false)

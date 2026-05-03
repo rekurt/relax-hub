@@ -2,7 +2,6 @@ import {
   App,
   Card,
   Col,
-  Empty,
   Input,
   InputNumber,
   Row,
@@ -23,15 +22,17 @@ import {
 } from '@/api/generated/crm/crm'
 import type { InternalHandlerAutoScenarioResponse } from '@/api/generated/model'
 import { useQueryClient } from '@tanstack/react-query'
+import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text, Paragraph } = Typography
+const { Text } = Typography
 
 const SCENARIO_ICONS: Record<string, React.ReactNode> = {
-  thank_after_visit: <HeartOutlined style={{ color: '#d97706' }} />,
-  request_review: <StarOutlined style={{ color: '#d97706' }} />,
-  remind_revisit_30d: <ClockCircleOutlined style={{ color: '#0f766e' }} />,
-  reactivate_lost_90d: <CheckCircleOutlined style={{ color: '#15803d' }} />,
-  birthday_greeting: <GiftOutlined style={{ color: '#0a5f59' }} />,
+  thank_after_visit: <HeartOutlined className="rh-scenario-icon--warning" />,
+  request_review: <StarOutlined className="rh-scenario-icon--warning" />,
+  remind_revisit_30d: <ClockCircleOutlined className="rh-scenario-icon--primary" />,
+  reactivate_lost_90d: <CheckCircleOutlined className="rh-scenario-icon--success" />,
+  birthday_greeting: <GiftOutlined className="rh-scenario-icon--teal" />,
 }
 
 const CHANNEL_OPTIONS = [
@@ -79,11 +80,13 @@ export default function AutoScenarios() {
   }
 
   return (
-    <div>
-      <Title level={3}>Автоматические сценарии</Title>
-      <Paragraph type="secondary" style={{ marginBottom: 24 }}>
-        Настройте автоматическую отправку сообщений гостям. Сценарии выполняются автоматически при выполнении условий.
-      </Paragraph>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="CRM"
+        title="Автоматические сценарии"
+        description="Настройте автоматическую отправку сообщений гостям. Сценарии выполняются при выполнении условий."
+        size="compact"
+      />
 
       <Row gutter={[16, 16]}>
         {isLoading ? (
@@ -92,26 +95,23 @@ export default function AutoScenarios() {
           </Col>
         ) : scenarios.length === 0 ? (
           <Col span={24}>
-            <Empty
+            <EmptyState
               description="Нет настроенных сценариев. Автоматические сценарии появятся после подключения CRM"
-              style={{ padding: 48 }}
             />
           </Col>
         ) : (
           scenarios.map((scenario) => (
             <Col xs={24} key={scenario.type}>
               <Card
-                style={{
-                  borderLeft: `4px solid ${scenario.enabled ? '#15803d' : '#c9c1b5'}`,
-                }}
+                className={scenario.enabled ? 'rh-scenario-card rh-scenario-card--enabled' : 'rh-scenario-card'}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                    <span style={{ fontSize: 24 }}>
+                <div className="rh-scenario-card__header">
+                  <div className="rh-scenario-card__title-row">
+                    <span className="rh-scenario-card__icon">
                       {SCENARIO_ICONS[scenario.type ?? ''] ?? <ClockCircleOutlined />}
                     </span>
                     <div>
-                      <Text strong style={{ fontSize: 16 }}>{scenario.name}</Text>
+                      <Text strong className="rh-scenario-card__title">{scenario.name}</Text>
                       <br />
                       <Text type="secondary">{scenario.description}</Text>
                     </div>
@@ -123,21 +123,21 @@ export default function AutoScenarios() {
                 </div>
 
                 {scenario.enabled && (
-                  <Row gutter={16} style={{ marginTop: 16 }}>
+                  <Row gutter={16} className="rh-section-offset">
                     <Col xs={24} sm={8}>
-                      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+                      <Text type="secondary" className="rh-field-label">
                         Канал
                       </Text>
                       <Select
                         value={scenario.channel}
                         onChange={(v) => handleUpdate(scenario, 'channel', v)}
                         options={CHANNEL_OPTIONS}
-                        style={{ width: '100%' }}
+                        className="rh-full-width"
                         size="small"
                       />
                     </Col>
                     <Col xs={24} sm={8}>
-                      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+                      <Text type="secondary" className="rh-field-label">
                         Задержка (часов)
                       </Text>
                       <InputNumber
@@ -145,12 +145,12 @@ export default function AutoScenarios() {
                         onChange={(v) => v !== null && handleUpdate(scenario, 'delay_hours', v)}
                         min={0}
                         max={8760}
-                        style={{ width: '100%' }}
+                        className="rh-full-width"
                         size="small"
                       />
                     </Col>
-                    <Col xs={24} sm={24} style={{ marginTop: 8 }}>
-                      <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 4 }}>
+                    <Col xs={24} sm={24} className="rh-section-offset-sm">
+                      <Text type="secondary" className="rh-field-label">
                         Кастомный текст
                       </Text>
                       <Input.TextArea

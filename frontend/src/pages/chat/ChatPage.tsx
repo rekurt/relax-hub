@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Typography, Grid } from '@/components/design/system'
+import { Grid } from '@/components/design/system'
 import type { InternalHandlerConversationResponse } from '@/api/generated/model'
 import { useWebSocketNotifications } from '@/lib/useWebSocketNotifications'
 import ConversationList from './ConversationList'
 import MessageArea from './MessageArea'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
 const { useBreakpoint } = Grid
 
 export default function ChatPage() {
@@ -26,40 +26,26 @@ export default function ChatPage() {
     setSelectedConversation(null)
   }
 
-  const chatHeight = 'calc(100vh - 180px)'
-
   if (isMobile) {
     return (
-      <div>
-        <Title level={4} style={{ marginBottom: 16 }}>
-          Чат
-        </Title>
-        <div
-          style={{
-            background: 'var(--rh-card-bg)',
-            borderRadius: 28,
-            border: '1px solid var(--rh-border)',
-            boxShadow: 'var(--rh-shadow-soft)',
-            backdropFilter: 'blur(18px)',
-            height: chatHeight,
-            overflow: 'hidden',
-          }}
-        >
+      <div className="rh-stack rh-chat-page">
+        <PageHeader
+          eyebrow="Коммуникации"
+          title="Чат"
+          description="Переписка с гостями по активным обращениям и бронированиям."
+          size="compact"
+        />
+        <div className="rh-chat-shell">
           {selectedConversation ? (
-            <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <div
-                style={{
-                  padding: '8px 16px',
-                  borderBottom: '1px solid var(--rh-border)',
-                  cursor: 'pointer',
-                  color: 'var(--rh-primary)',
-                  fontWeight: 700,
-                }}
+            <div className="rh-chat-mobile-view">
+              <button
+                type="button"
+                className="rh-chat-back"
                 onClick={handleBack}
               >
                 ← Назад к беседам
-              </div>
-              <div style={{ flex: 1, overflow: 'hidden' }}>
+              </button>
+              <div className="rh-chat-main">
                 <MessageArea conversationId={selectedConversation.id ?? null} />
               </div>
             </div>
@@ -72,32 +58,18 @@ export default function ChatPage() {
   }
 
   return (
-    <div>
-      <Title level={4} style={{ marginBottom: 16 }}>
-        Чат
-      </Title>
-      <div
-        style={{
-          display: 'flex',
-          background: 'var(--rh-card-bg)',
-          borderRadius: 28,
-          border: '1px solid var(--rh-border)',
-          boxShadow: 'var(--rh-shadow-soft)',
-          backdropFilter: 'blur(18px)',
-          height: chatHeight,
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            width: 320,
-            borderRight: '1px solid var(--rh-border)',
-            overflow: 'hidden',
-          }}
-        >
+    <div className="rh-stack rh-chat-page">
+      <PageHeader
+        eyebrow="Коммуникации"
+        title="Чат"
+        description="Переписка с гостями по активным обращениям и бронированиям."
+        size="compact"
+      />
+      <div className="rh-chat-shell rh-chat-shell--desktop">
+        <div className="rh-chat-sidebar">
           <ConversationList selectedId={selectedConversation?.id ?? null} onSelect={handleSelect} />
         </div>
-        <div style={{ flex: 1, overflow: 'hidden' }}>
+        <div className="rh-chat-main">
           <MessageArea conversationId={selectedConversation?.id ?? null} />
         </div>
       </div>

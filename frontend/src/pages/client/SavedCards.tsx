@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Typography, Table, Card, Button, Tag, Space, Popconfirm, Empty, Spin } from '@/components/design/system'
+import { Typography, Table, Card, Button, Tag, Space, Popconfirm, Spin } from '@/components/design/system'
 import { CreditCardOutlined, DeleteOutlined, CheckCircleOutlined, StarOutlined } from '@/components/design/icons'
 import { App } from '@/components/design/system'
 import { useQueryClient } from '@tanstack/react-query'
@@ -20,6 +20,11 @@ const BRAND_COLORS: Record<string, string> = {
   mastercard: '#eb001b',
   mir: '#4db45e',
   belkart: '#e31e24',
+}
+
+function getBrandTone(brand?: string) {
+  const normalizedBrand = brand?.toLowerCase() ?? ''
+  return BRAND_COLORS[normalizedBrand] ? normalizedBrand : 'default'
 }
 
 function formatExpiry(month?: number, year?: number): string {
@@ -63,18 +68,21 @@ export default function SavedCards() {
     {
       title: 'Карта',
       key: 'card',
-      render: (_, record) => (
-        <Space>
-          <CreditCardOutlined style={{ color: BRAND_COLORS[record.brand?.toLowerCase() ?? ''] ?? 'var(--rh-text-soft)', fontSize: 20 }} />
-          <span>
-            <strong style={{ color: BRAND_COLORS[record.brand?.toLowerCase() ?? ''] ?? 'var(--rh-text-soft)' }}>
-              {record.brand ?? 'Карта'}
-            </strong>
-            {' •••• '}
-            {record.last4 ?? '****'}
-          </span>
-        </Space>
-      ),
+      render: (_, record) => {
+        const brandTone = getBrandTone(record.brand)
+        return (
+          <Space className={`rh-saved-card-brand rh-saved-card-brand--${brandTone}`}>
+            <CreditCardOutlined className="rh-saved-card-brand__icon" />
+            <span>
+              <strong className="rh-saved-card-brand__name">
+                {record.brand ?? 'Карта'}
+              </strong>
+              {' •••• '}
+              {record.last4 ?? '****'}
+            </span>
+          </Space>
+        )
+      },
     },
     {
       title: 'Срок',
@@ -131,9 +139,9 @@ export default function SavedCards() {
 
   if (isLoading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
+      <Card className="rh-admin-state-card">
         <Spin size="large" />
-      </div>
+      </Card>
     )
   }
 
@@ -153,7 +161,7 @@ export default function SavedCards() {
         </div>
         <div className="rh-stat-tile">
           <span className="rh-stat-tile__eyebrow">Карта по умолчанию</span>
-          <span className="rh-stat-tile__value" style={{ fontSize: defaultCard ? 28 : 20 }}>
+          <span className={defaultCard ? 'rh-stat-tile__value' : 'rh-stat-tile__value rh-saved-card-empty-value'}>
             {defaultCard ? `${defaultCard.brand ?? ''} •••• ${defaultCard.last4 ?? ''}` : 'Не выбрана'}
           </span>
           <span className="rh-stat-tile__hint">
@@ -178,7 +186,12 @@ export default function SavedCards() {
         )}
       >
         {cards.length === 0 ? (
-          <Empty description="У вас нет сохранённых карт" />
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">У вас нет сохранённых карт</div>
+            <p className="rh-admin-empty-state__text">
+              Сохранённые способы оплаты появятся после успешной оплаты картой.
+            </p>
+          </div>
         ) : (
           <Table
             columns={columns}

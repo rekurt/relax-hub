@@ -6,7 +6,6 @@ import {
   Button,
   Alert,
   Tag,
-  Empty,
   Space,
   Descriptions,
   List,
@@ -24,8 +23,9 @@ import { App } from '@/components/design/system'
 import { usePostPromoCodesValidate } from '@/api/generated/promo-codes/promo-codes'
 import type { InternalHandlerValidatePromoResponse } from '@/api/generated/model'
 import { formatPrice } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Paragraph } = Typography
 
 interface ValidatedPromo extends InternalHandlerValidatePromoResponse {
   validatedAt: string
@@ -119,16 +119,18 @@ export default function ActivePromoCodes() {
   }
 
   return (
-    <div>
-      <Title level={2}>
-        <TagOutlined /> Промокоды
-      </Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Выгода"
+        title="Промокоды"
+        description="Проверяйте промокоды заранее и храните последние успешные проверки."
+      />
 
-      <Card title="Проверить промокод" style={{ marginBottom: 24 }}>
-        <Paragraph type="secondary">
+      <Card title="Проверить промокод" className="rh-admin-detail-card">
+        <Paragraph type="secondary" className="rh-card-intro-text">
           Введите промокод, полученный от бани или по акции, чтобы узнать размер скидки.
         </Paragraph>
-        <Space.Compact style={{ width: '100%', maxWidth: 500 }}>
+        <Space.Compact className="rh-promo-check-control">
           <Input
             placeholder="Введите промокод"
             value={code}
@@ -155,17 +157,20 @@ export default function ActivePromoCodes() {
             description="Проверьте правильность ввода или срок действия промокода."
             type="error"
             showIcon
-            style={{ marginTop: 16 }}
+            className="rh-alert-spaced"
           />
         )}
       </Card>
 
-      <Card title="Проверенные промокоды">
+      <Card title="Проверенные промокоды" className="rh-admin-detail-card">
         {validatedPromos.length === 0 ? (
-          <Empty
-            image={<GiftOutlined style={{ fontSize: 48, color: 'var(--rh-text-muted)' }} />}
-            description="Нет проверенных промокодов"
-          />
+          <div className="rh-admin-empty-state">
+            <GiftOutlined className="rh-empty-state-icon" />
+            <div className="rh-admin-empty-state__title">Нет проверенных промокодов</div>
+            <p className="rh-admin-empty-state__text">
+              Введите код выше, чтобы сохранить его в истории проверок.
+            </p>
+          </div>
         ) : (
           <List
             dataSource={validatedPromos}
@@ -194,21 +199,11 @@ export default function ActivePromoCodes() {
               >
                 <List.Item.Meta
                   avatar={
-                    <div
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 20,
-                        background: 'rgba(248, 244, 236, 0.78)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
+                    <div className="rh-promo-avatar">
                       {promo.type === 'percentage' ? (
-                        <PercentageOutlined style={{ fontSize: 24, color: '#0f766e' }} />
+                        <PercentageOutlined className="rh-promo-avatar__icon rh-promo-avatar__icon--primary" />
                       ) : (
-                        <GiftOutlined style={{ fontSize: 24, color: '#15803d' }} />
+                        <GiftOutlined className="rh-promo-avatar__icon rh-promo-avatar__icon--success" />
                       )}
                     </div>
                   }
@@ -236,7 +231,7 @@ export default function ActivePromoCodes() {
                         </Descriptions.Item>
                       )}
                       <Descriptions.Item label="Проверен">
-                        <ClockCircleOutlined style={{ marginRight: 4 }} />
+                        <ClockCircleOutlined className="rh-inline-icon" />
                         {new Date(promo.validatedAt).toLocaleDateString('ru-RU')}
                       </Descriptions.Item>
                     </Descriptions>

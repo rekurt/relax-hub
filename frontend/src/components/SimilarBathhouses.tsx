@@ -1,7 +1,5 @@
-import { Typography, Row, Col } from '@/components/design/system'
+import { Row, Col } from '@/components/design/system'
 import BathhouseCard from '@/components/BathhouseCard'
-
-const { Title } = Typography
 
 interface SimilarBathhouse {
   id?: string
@@ -30,7 +28,7 @@ export default function SimilarBathhouses({ items, maxCount = 6 }: SimilarBathho
 
   return (
     <div>
-      <Title level={4}>Похожие бани</Title>
+      <h2 className="rh-component-section-title">Похожие бани</h2>
       <Row gutter={[16, 16]}>
         {items.slice(0, maxCount).map((s) => (
           <Col key={s.id} xs={24} sm={12} md={8}>

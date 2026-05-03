@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Modal, Button, Steps, Typography, Space, Alert } from '@/components/design/system'
+import { Modal, Button, Typography } from '@/components/design/system'
 import {
   SearchOutlined,
   CalendarOutlined,
@@ -11,7 +11,7 @@ import {
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
 
-const { Title, Paragraph, Text } = Typography
+const { Paragraph } = Typography
 
 interface OnboardingTourProps {
   open: boolean
@@ -28,7 +28,7 @@ function getSteps(region?: string) {
 
   return [
     {
-      icon: <GiftOutlined style={{ fontSize: 48, color: '#15803d' }} />,
+      icon: <GiftOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--success" />,
       title: 'Добро пожаловать!',
       description:
         `Вам начислен приветственный бонус ${formatPrice(bonusAmount)}! Бонус действует 30 дней и может быть использован для оплаты первого бронирования.`,
@@ -36,31 +36,31 @@ function getSteps(region?: string) {
       currencySymbol,
     },
     {
-      icon: <SearchOutlined style={{ fontSize: 48, color: '#0f766e' }} />,
+      icon: <SearchOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--accent" />,
       title: 'Поиск бань',
       description:
         'Используйте поиск, чтобы найти идеальную баню. Фильтруйте по городу, цене, удобствам и расположению на карте.',
     },
     {
-      icon: <CalendarOutlined style={{ fontSize: 48, color: '#d97706' }} />,
+      icon: <CalendarOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--warning" />,
       title: 'Бронирование',
       description:
         'Выберите дату и время, укажите количество гостей и дополнительные услуги. Оплатите онлайн картой, через СБП или из кошелька.',
     },
     {
-      icon: <WalletOutlined style={{ fontSize: 48, color: '#d97706' }} />,
+      icon: <WalletOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--warning" />,
       title: 'Кошелёк и бонусы',
       description:
         'Пополняйте кошелёк для быстрой оплаты. Получайте кешбэк за бронирования, бонусы за приглашение друзей и повышайте уровень лояльности.',
     },
     {
-      icon: <EnvironmentOutlined style={{ fontSize: 48, color: '#0f766e' }} />,
+      icon: <EnvironmentOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--accent" />,
       title: 'Рекомендации рядом',
       description:
         'Разрешите определение местоположения, и мы покажем лучшие бани поблизости. Персональные рекомендации учитывают ваши предпочтения и историю посещений.',
     },
     {
-      icon: <StarOutlined style={{ fontSize: 48, color: '#d97706' }} />,
+      icon: <StarOutlined className="rh-onboarding__step-icon rh-onboarding__step-icon--warning" />,
       title: 'Отзывы и рейтинг',
       description:
         'Оставляйте отзывы после посещения. Оценивайте чистоту, точность описания, общение и цену. Ваши отзывы помогут другим.',
@@ -89,58 +89,66 @@ export default function OnboardingTour({ open, onComplete, region }: OnboardingT
       open={open}
       closable={false}
       footer={null}
-      width={520}
+      width="min(560px, calc(100vw - 32px))"
       centered
+      className="rh-onboarding-modal"
     >
-      <div style={{ textAlign: 'center', padding: '24px 0 8px' }}>
-        {step.icon}
-        <Title level={4} style={{ marginTop: 16 }}>
-          {step.title}
-        </Title>
-        <Paragraph type="secondary" style={{ fontSize: 15, minHeight: 66 }}>
-          {step.description}
-        </Paragraph>
+      <div className="rh-onboarding">
+        <div className="rh-onboarding__hero">
+          <div className="rh-onboarding__icon" aria-hidden="true">
+            {step.icon}
+          </div>
+          <h2 className="rh-onboarding__title">
+            {step.title}
+          </h2>
+          <Paragraph type="secondary" className="rh-onboarding__description">
+            {step.description}
+          </Paragraph>
+        </div>
         {current === 0 && (
-          <Alert
-            type="success"
-            showIcon
-            icon={<GiftOutlined />}
-            title={
-              <Text strong>
-                Приветственный бонус: {formatPrice(region === 'BY' ? WELCOME_BONUS_BY : WELCOME_BONUS_RU)}
-              </Text>
-            }
-            style={{ marginTop: 8, textAlign: 'left' }}
-          />
+          <div className="rh-onboarding__bonus" role="status">
+            <GiftOutlined />
+            <span>
+              Приветственный бонус: <strong>{formatPrice(region === 'BY' ? WELCOME_BONUS_BY : WELCOME_BONUS_RU)}</strong>
+            </span>
+          </div>
         )}
+
+        <div className="rh-onboarding__progress" role="tablist" aria-label="Шаги приветствия">
+          {steps.map((item, index) => (
+            <button
+              key={item.title}
+              type="button"
+              className={`rh-onboarding__step${index === current ? ' rh-onboarding__step--active' : ''}${index < current ? ' rh-onboarding__step--done' : ''}`}
+              aria-current={index === current ? 'step' : undefined}
+              aria-label={`Шаг ${index + 1}: ${item.title}`}
+              onClick={() => setCurrent(index)}
+            >
+              <span>{index + 1}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="rh-onboarding__footer">
+          <Button onClick={handleComplete} type="link" className="rh-onboarding__skip">
+            Пропустить
+          </Button>
+          <div className="rh-onboarding__actions">
+            {current > 0 && (
+              <Button onClick={() => setCurrent(current - 1)}>Назад</Button>
+            )}
+            {isLast ? (
+              <Button type="primary" onClick={handleComplete}>
+                Начать
+              </Button>
+            ) : (
+              <Button type="primary" onClick={() => setCurrent(current + 1)}>
+                Далее
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
-
-      <Steps
-        current={current}
-        size="small"
-        items={steps.map((_, i) => ({ title: '', key: i }))}
-        style={{ marginBottom: 24 }}
-      />
-
-      <Space style={{ width: '100%', justifyContent: 'space-between' }}>
-        <Button onClick={handleComplete} type="link">
-          Пропустить
-        </Button>
-        <Space>
-          {current > 0 && (
-            <Button onClick={() => setCurrent(current - 1)}>Назад</Button>
-          )}
-          {isLast ? (
-            <Button type="primary" onClick={handleComplete}>
-              Начать
-            </Button>
-          ) : (
-            <Button type="primary" onClick={() => setCurrent(current + 1)}>
-              Далее
-            </Button>
-          )}
-        </Space>
-      </Space>
     </Modal>
   )
 }

@@ -3,6 +3,7 @@ import {
   App,
   Badge,
   Button,
+  Card,
   Checkbox,
   Descriptions,
   Drawer,
@@ -30,8 +31,9 @@ import {
 } from '@/api/generated/admin-reviews/admin-reviews'
 import type { InternalHandlerAdminReviewResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 const { Search } = Input
 
 const STATUS_LABELS: Record<string, { color: string; text: string }> = {
@@ -196,7 +198,7 @@ export default function ReviewModeration() {
       dataIndex: 'rating',
       key: 'rating',
       width: 160,
-      render: (rating: number) => <Rate disabled value={rating} style={{ fontSize: 14 }} />,
+      render: (rating: number) => <Rate className="rh-admin-rating-small" disabled value={rating} />,
     },
     {
       title: 'Текст',
@@ -243,20 +245,22 @@ export default function ReviewModeration() {
         const actions: React.ReactNode[] = []
         if (record.status !== 'approved') {
           actions.push(
-            <a key="approve" onClick={() => handleApprove(record)}>
+            <Button key="approve" type="link" size="small" onClick={() => handleApprove(record)}>
               Одобрить
-            </a>,
+            </Button>,
           )
         }
         if (record.status !== 'rejected') {
           actions.push(
-            <a
+            <Button
               key="reject"
+              type="link"
+              size="small"
+              danger
               onClick={() => openRejectModal('single', record.id)}
-              style={{ color: '#b42318' }}
             >
               Отклонить
-            </a>,
+            </Button>,
           )
         }
         return <Space>{actions}</Space>
@@ -276,12 +280,14 @@ export default function ReviewModeration() {
   )
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Модерация отзывов
-      </Title>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Модерация"
+        title="Модерация отзывов"
+        description="Очередь отзывов, batch-действия и карточка деталей с медиа без старой разрозненной верстки."
+      />
 
-      <div style={{ marginBottom: 16 }}>
+      <Card className="rh-admin-filter-card" title="Фильтры">
         <Segmented
           options={statusOptions}
           value={statusFilter}
@@ -291,52 +297,54 @@ export default function ReviewModeration() {
             setSelectedIds([])
           }}
         />
-      </div>
+      </Card>
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-        <Search
-          placeholder="Поиск по тексту или ID"
-          allowClear
-          onSearch={setSearch}
-          onChange={(e) => !e.target.value && setSearch('')}
-          style={{ maxWidth: 400 }}
+      <Card className="rh-admin-reference-card" title="Список отзывов">
+        <div className="rh-admin-table-tools">
+          <Search
+            className="rh-admin-search-control"
+            placeholder="Поиск по тексту или ID"
+            allowClear
+            onSearch={setSearch}
+            onChange={(e) => !e.target.value && setSearch('')}
+          />
+          {selectedIds.length > 0 && (
+            <Space className="rh-admin-selection-bar" wrap>
+              <Text type="secondary">Выбрано: {selectedIds.length}</Text>
+              <Button type="primary" size="small" onClick={handleBatchApprove}>
+                Одобрить выбранные
+              </Button>
+              <Button
+                danger
+                size="small"
+                onClick={() => openRejectModal('batch')}
+              >
+                Отклонить выбранные
+              </Button>
+            </Space>
+          )}
+        </div>
+
+        <Table
+          columns={columns}
+          dataSource={filteredReviews}
+          rowKey="id"
+          loading={isLoading}
+          locale={{ emptyText: 'Нет отзывов' }}
+          pagination={{
+            current: page,
+            pageSize: pageSize,
+            total: meta?.total_count ?? 0,
+            showSizeChanger: true,
+            showTotal: (total) => `Всего: ${total}`,
+            onChange: (p, ps) => {
+              setPage(p)
+              setPageSize(ps)
+              setSelectedIds([])
+            },
+          }}
         />
-        {selectedIds.length > 0 && (
-          <Space>
-            <Text type="secondary">Выбрано: {selectedIds.length}</Text>
-            <Button type="primary" size="small" onClick={handleBatchApprove}>
-              Одобрить выбранные
-            </Button>
-            <Button
-              danger
-              size="small"
-              onClick={() => openRejectModal('batch')}
-            >
-              Отклонить выбранные
-            </Button>
-          </Space>
-        )}
-      </div>
-
-      <Table
-        columns={columns}
-        dataSource={filteredReviews}
-        rowKey="id"
-        loading={isLoading}
-        locale={{ emptyText: 'Нет отзывов' }}
-        pagination={{
-          current: page,
-          pageSize: pageSize,
-          total: meta?.total_count ?? 0,
-          showSizeChanger: true,
-          showTotal: (total) => `Всего: ${total}`,
-          onChange: (p, ps) => {
-            setPage(p)
-            setPageSize(ps)
-            setSelectedIds([])
-          },
-        }}
-      />
+      </Card>
 
       <Drawer
         title="Детали отзыва"
@@ -392,17 +400,17 @@ export default function ReviewModeration() {
             </Descriptions>
 
             {detailItem.images && detailItem.images.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <Title level={5}>Медиа ({detailItem.images.length})</Title>
+              <div className="rh-admin-media-block">
+                <h3 className="rh-admin-subsection-title">Медиа ({detailItem.images.length})</h3>
                 <Image.PreviewGroup>
                   <Space wrap>
                     {detailItem.images.map((url, idx) => (
                       <Image
+                        className="rh-admin-review-media"
                         key={idx}
                         src={url}
                         width={120}
                         height={120}
-                        style={{ objectFit: 'cover', borderRadius: 20 }}
                         fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI2MCIgeT0iNjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjOTk5IiBmb250LXNpemU9IjEyIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4="
                       />
                     ))}
@@ -424,7 +432,7 @@ export default function ReviewModeration() {
         cancelText="Отмена"
         confirmLoading={rejectMutation.isPending || batchRejectMutation.isPending}
       >
-        <div style={{ marginBottom: 8 }}>
+        <div className="rh-admin-modal-description">
           <Text>
             {rejectTarget === 'batch'
               ? `Отклонить ${selectedIds.length} отзывов?`

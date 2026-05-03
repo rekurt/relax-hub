@@ -1,9 +1,10 @@
 import { useState, useCallback, useMemo } from 'react'
-import { App, Button, Card, Descriptions, Empty, Input, Modal, Space, Spin, Tag, Typography } from '@/components/design/system'
+import { App, Button, Card, Descriptions, Input, Modal, Space, Spin, Tag, Typography } from '@/components/design/system'
 import { CheckOutlined, CloseOutlined, ClockCircleOutlined } from '@/components/design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice, formatDateTime } from '@/lib/format'
+import EmptyState from '@/components/EmptyState'
 
 const { Text } = Typography
 const { TextArea } = Input
@@ -105,16 +106,16 @@ export default function ExtensionRequests({ bookingId, open, onClose }: Extensio
         {isLoading ? (
           <Spin />
         ) : requests.length === 0 ? (
-          <Empty description="Нет запросов на продление" />
+          <EmptyState description="Нет запросов на продление" />
         ) : (
-          <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+          <Space orientation="vertical" className="rh-full-width" size="middle">
             {requests.map((req) => {
               const statusConfig = STATUS_MAP[req.status] ?? { color: 'default', text: req.status }
               const isPending = req.status === 'pending'
 
               return (
-                <Card key={req.id} size="small">
-                  <Space orientation="vertical" style={{ width: '100%' }}>
+                <Card key={req.id} size="small" className="rh-admin-detail-card">
+                  <Space orientation="vertical" className="rh-full-width">
                     <Space>
                       <Tag color={statusConfig.color}>{statusConfig.text}</Tag>
                       <Text type="secondary">
@@ -170,7 +171,7 @@ export default function ExtensionRequests({ bookingId, open, onClose }: Extensio
         )}
 
         {pendingRequests.length > 0 && (
-          <div style={{ marginTop: 16, padding: 8, background: 'rgba(180, 35, 24, 0.08)', borderRadius: 12 }}>
+          <div className="rh-request-warning rh-request-warning--danger">
             <Text type="danger">
               {pendingRequests.length} запрос(ов) ожидают вашего решения. Без ответа запрос автоматически отклоняется через 30 минут.
             </Text>

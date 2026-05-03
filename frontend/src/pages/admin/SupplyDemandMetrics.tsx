@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, Col, Row, Segmented, Spin, Statistic, Table, Typography } from '@/components/design/system'
+import { Card, Col, Row, Segmented, Spin, Statistic, Table } from '@/components/design/system'
 import type { ColumnsType } from '@/components/design/types'
 import {
   ShopOutlined,
@@ -16,8 +16,7 @@ import {
   useGetAdminAnalyticsPnl,
 } from '@/api/generated/admin-analytics/admin-analytics'
 import type { GithubComRekurtRelaxHubInternalDomainGeoSupplyDemand } from '@/api/generated/model'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
 
 const PERIOD_OPTIONS = [
   { label: 'День', value: '1d' },
@@ -88,18 +87,22 @@ export default function SupplyDemandMetrics() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>Метрики предложения и спроса</Title>
-        <Segmented
-          options={PERIOD_OPTIONS}
-          value={period}
-          onChange={(v) => setPeriod(v as string)}
-        />
-      </div>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Аналитика"
+        title="Метрики предложения и спроса"
+        description="Сводка по спросу, бронированиям, кошелькам и P&L за выбранный период."
+        extra={
+          <Segmented
+            options={PERIOD_OPTIONS}
+            value={period}
+            onChange={(v) => setPeriod(v as string)}
+          />
+        }
+      />
 
       <Spin spinning={isLoading}>
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Row className="rh-admin-metric-row" gutter={[16, 16]}>
           <Col xs={24} sm={12} lg={6}>
             <Card>
               <Statistic
@@ -139,7 +142,7 @@ export default function SupplyDemandMetrics() {
           </Col>
         </Row>
 
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Row className="rh-admin-metric-row" gutter={[16, 16]}>
           <Col xs={24} sm={12} lg={6}>
             <Card>
               <Statistic
@@ -147,7 +150,7 @@ export default function SupplyDemandMetrics() {
                 value={biz?.dau ?? 0}
                 prefix={<UserOutlined />}
               />
-              <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 12, color: 'var(--rh-text-soft)' }}>
+              <div className="rh-admin-metric-note">
                 <span>MAU: {biz?.mau ?? 0}</span>
               </div>
             </Card>
@@ -185,7 +188,7 @@ export default function SupplyDemandMetrics() {
           </Col>
         </Row>
 
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Row className="rh-admin-metric-row" gutter={[16, 16]}>
           <Col xs={24} sm={12} lg={6}>
             <Card>
               <Statistic
@@ -228,7 +231,7 @@ export default function SupplyDemandMetrics() {
           </Col>
         </Row>
 
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Row className="rh-admin-metric-row" gutter={[16, 16]}>
           <Col xs={24} sm={12} lg={6}>
             <Card>
               <Statistic
@@ -270,7 +273,7 @@ export default function SupplyDemandMetrics() {
           </Col>
         </Row>
 
-        <Card title="Спрос и предложение по городам">
+        <Card className="rh-admin-reference-card" title="Спрос и предложение по городам">
           <Table
             columns={cityColumns}
             dataSource={cities}

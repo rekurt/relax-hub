@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"strings"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -16,11 +17,12 @@ import (
 
 // S3Storage implements FileStorage using S3-compatible object storage (MinIO, AWS S3).
 type S3Storage struct {
-	client *minio.Client
-	bucket string
-	region string
-	useSSL bool
-	logger *logger.Logger
+	client        *minio.Client
+	bucket        string
+	region        string
+	useSSL        bool
+	publicBaseURL string
+	logger        *logger.Logger
 }
 
 func NewS3Storage(cfg *config.Config, log *logger.Logger) (*S3Storage, error) {
@@ -34,11 +36,12 @@ func NewS3Storage(cfg *config.Config, log *logger.Logger) (*S3Storage, error) {
 	}
 
 	s := &S3Storage{
-		client: client,
-		bucket: cfg.Storage.Bucket,
-		region: cfg.Storage.Region,
-		useSSL: cfg.Storage.UseSSL,
-		logger: log,
+		client:        client,
+		bucket:        cfg.Storage.Bucket,
+		region:        cfg.Storage.Region,
+		useSSL:        cfg.Storage.UseSSL,
+		publicBaseURL: strings.TrimRight(cfg.Storage.PublicBaseURL, "/"),
+		logger:        log,
 	}
 
 	if err := s.ensureBucket(context.Background()); err != nil {
@@ -64,8 +67,7 @@ func (s *S3Storage) Upload(ctx context.Context, filename string, data io.Reader,
 		return "", fmt.Errorf("upload to s3: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s", s.endpointURL(), s.bucket, filename)
-	return url, nil
+	return s.objectURL(filename), nil
 }
 
 func (s *S3Storage) Delete(ctx context.Context, filename string) error {
@@ -85,6 +87,15 @@ func (s *S3Storage) endpointURL() string {
 		scheme = "https"
 	}
 	return fmt.Sprintf("%s://%s", scheme, s.client.EndpointURL().Host)
+}
+
+func (s *S3Storage) objectURL(filename string) string {
+	baseURL := s.publicBaseURL
+	if baseURL == "" {
+		baseURL = s.endpointURL()
+	}
+
+	return fmt.Sprintf("%s/%s/%s", strings.TrimRight(baseURL, "/"), s.bucket, strings.TrimLeft(filename, "/"))
 }
 
 func (s *S3Storage) ensureBucket(ctx context.Context) error {

@@ -7,7 +7,6 @@ import {
   Card,
   Descriptions,
   Divider,
-  Empty,
   Form,
   Image,
   Input,
@@ -36,8 +35,9 @@ import {
 } from '@/api/generated/disputes/disputes'
 import type { InternalHandlerDisputeEvidenceResponse } from '@/api/generated/model'
 import { formatDateTime, formatPrice } from '@/lib/format'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Paragraph } = Typography
 
 const statusLabel: Record<string, string> = {
   open: 'Открыт',
@@ -156,14 +156,23 @@ export default function DisputeDetail() {
 
   if (disputeLoading || evidenceLoading) {
     return (
-      <div style={{ textAlign: 'center', padding: 48 }}>
+      <Card className="rh-admin-state-card">
         <Spin size="large" />
-      </div>
+      </Card>
     )
   }
 
   if (!dispute) {
-    return <Empty description="Спор не найден" />
+    return (
+      <Card>
+        <div className="rh-admin-empty-state">
+          <div className="rh-admin-empty-state__title">Спор не найден</div>
+          <p className="rh-admin-empty-state__text">
+            Проверьте ссылку или вернитесь к списку споров.
+          </p>
+        </div>
+      </Card>
+    )
   }
 
   const isEvidenceOpen =
@@ -187,21 +196,28 @@ export default function DisputeDetail() {
   const isImageUrl = (url: string) => /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(url)
 
   return (
-    <div>
-      <Space style={{ marginBottom: 16 }}>
+    <div className="rh-admin-detail-page">
+      <div className="rh-admin-detail-back">
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/client/disputes')}
         >
           Назад
         </Button>
-      </Space>
+      </div>
 
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Спор: {reasonLabel[dispute.reason!] ?? dispute.reason}
-      </Title>
+      <Card className="rh-admin-detail-hero">
+        <div className="rh-admin-toolbar">
+          <div className="rh-admin-toolbar__copy">
+            <span className="rh-admin-toolbar__hint">Клиентский спор</span>
+            <h1 className="rh-admin-toolbar__title">
+              Спор: {reasonLabel[dispute.reason!] ?? dispute.reason}
+            </h1>
+          </div>
+        </div>
+      </Card>
 
-      <Card style={{ marginBottom: 16 }}>
+      <Card className="rh-admin-detail-card">
         <Descriptions column={{ xs: 1, sm: 2 }} size="small">
           <Descriptions.Item label="Статус">
             <Tag color={statusColor[dispute.status!] ?? 'default'}>
@@ -227,7 +243,7 @@ export default function DisputeDetail() {
             <Descriptions.Item label="Срок подачи доказательств">
               {formatDateTime(dispute.evidence_deadline)}
               {isEvidenceOpen && (
-                <Text type="warning" style={{ marginLeft: 8 }}>
+                <Text type="warning" className="rh-admin-inline-note">
                   (осталось {evidenceTimeLeft}ч)
                 </Text>
               )}
@@ -259,7 +275,7 @@ export default function DisputeDetail() {
             <Descriptions.Item label="Срок апелляции">
               {formatDateTime(dispute.appeal_deadline)}
               {canAppeal && (
-                <Text type="warning" style={{ marginLeft: 8 }}>
+                <Text type="warning" className="rh-admin-inline-note">
                   (осталось {appealTimeLeft}ч)
                 </Text>
               )}
@@ -269,9 +285,9 @@ export default function DisputeDetail() {
 
         {dispute.description && (
           <>
-            <Divider style={{ margin: '12px 0' }} />
+            <Divider className="rh-admin-detail-divider" />
             <Text strong>Описание:</Text>
-            <Paragraph style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>
+            <Paragraph className="rh-admin-detail-note">
               {dispute.description}
             </Paragraph>
           </>
@@ -279,9 +295,9 @@ export default function DisputeDetail() {
 
         {dispute.mediator_notes && (
           <>
-            <Divider style={{ margin: '12px 0' }} />
+            <Divider className="rh-admin-detail-divider" />
             <Text strong>Комментарий медиатора:</Text>
-            <Paragraph style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>
+            <Paragraph className="rh-admin-detail-note">
               {dispute.mediator_notes}
             </Paragraph>
           </>
@@ -293,7 +309,7 @@ export default function DisputeDetail() {
         <Alert
           type="info"
           showIcon
-          style={{ marginBottom: 16 }}
+          className="rh-admin-alert"
           title="Вы можете подать апелляцию"
           description={`Срок подачи апелляции истекает ${formatDateTime(dispute.appeal_deadline!)}. После этого решение станет окончательным.`}
           action={
@@ -312,7 +328,7 @@ export default function DisputeDetail() {
       {/* Evidence section */}
       <Card
         title="Доказательства"
-        style={{ marginBottom: 16 }}
+        className="rh-admin-detail-card rh-admin-evidence-card"
         extra={
           isEvidenceOpen && (
             <Button
@@ -330,13 +346,18 @@ export default function DisputeDetail() {
           <Alert
             type="warning"
             showIcon
-            style={{ marginBottom: 16 }}
+            className="rh-admin-alert"
             title={`Окно подачи доказательств закрывается через ${evidenceTimeLeft}ч (${formatDateTime(dispute.evidence_deadline!)})`}
           />
         )}
 
         {evidence.length === 0 ? (
-          <Empty description="Нет доказательств" />
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет доказательств</div>
+            <p className="rh-admin-empty-state__text">
+              Добавьте фото, чек или сообщение, чтобы ускорить рассмотрение.
+            </p>
+          </div>
         ) : (
           <List
             dataSource={evidence}
@@ -347,28 +368,28 @@ export default function DisputeDetail() {
                     <Space>
                       <Tag>{evidenceTypeLabel[item.type!] ?? item.type}</Tag>
                       {item.created_at && (
-                        <Text type="secondary" style={{ fontSize: 12 }}>
+                        <Text type="secondary" className="rh-admin-evidence-meta">
                           {formatDateTime(item.created_at)}
                         </Text>
                       )}
                     </Space>
                   }
                   description={
-                    <div>
+                    <div className="rh-admin-evidence-body">
                       {item.description && (
-                        <Paragraph style={{ marginBottom: 8 }}>
+                        <Paragraph className="rh-admin-evidence-description">
                           {item.description}
                         </Paragraph>
                       )}
                       {item.url && isImageUrl(item.url) ? (
                         <Image
-                          src={item.url}
+                          src={resolveAssetUrl(item.url)}
                           alt="Доказательство"
                           width={200}
-                          style={{ borderRadius: 12 }}
+                          className="rh-admin-evidence-image"
                         />
                       ) : item.url ? (
-                        <a href={item.url} target="_blank" rel="noopener noreferrer">
+                        <a href={resolveAssetUrl(item.url)} target="_blank" rel="noopener noreferrer">
                           Открыть файл
                         </a>
                       ) : null}
@@ -382,9 +403,9 @@ export default function DisputeDetail() {
 
         {/* Evidence submission form */}
         {evidenceFormVisible && (
-          <>
-            <Divider />
-            <Form form={form} layout="vertical" onFinish={handleSubmitEvidence}>
+            <>
+              <Divider />
+              <Form form={form} layout="vertical" onFinish={handleSubmitEvidence} className="rh-admin-modal-form">
               <Form.Item
                 name="type"
                 label="Тип доказательства"

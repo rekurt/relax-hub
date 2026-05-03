@@ -9,7 +9,7 @@ import {
   StopOutlined,
   WalletOutlined,
 } from '@/components/design/icons'
-import { App, Button, Empty, Input, Pagination, Spin, Tag } from '@/components/design/system'
+import { App, Button, Input, Pagination, Spin, Tag } from '@/components/design/system'
 import { Link } from 'react-router-dom'
 import {
   useGetCertificatesCodeBalance,
@@ -255,11 +255,15 @@ export default function CertificateList() {
 
         {certificates.length === 0 ? (
           <div className="rh-certificates-empty">
-            <Empty description="У вас пока нет сертификатов">
+            <div className="rh-admin-empty-state">
+              <div className="rh-admin-empty-state__title">У вас пока нет сертификатов</div>
+              <p className="rh-admin-empty-state__text">
+                Купите первый сертификат или активируйте подарочный код.
+              </p>
               <Link to="/certificates">
                 <Button type="primary" size="large" icon={<GiftOutlined />}>Перейти к покупке</Button>
               </Link>
-            </Empty>
+            </div>
           </div>
         ) : (
           <>

@@ -57,39 +57,39 @@ export default function ProfileCompleteness({ onNavigate }: ProfileCompletenessP
     <Card
       title="Что ещё заполнить"
       size="small"
-      style={{ marginBottom: 0 }}
+      className="rh-profile-completeness"
     >
       <Progress
         percent={data.percentage}
         strokeColor={strokeColor}
-        style={{ marginBottom: 16 }}
+        className="rh-profile-completeness__progress"
       />
       <List
         size="small"
         dataSource={data.items.filter((i) => !i.complete)}
         renderItem={(item) => (
           <List.Item
-            style={{ cursor: onNavigate ? 'pointer' : 'default', padding: '6px 0' }}
+            className={onNavigate ? 'rh-profile-completeness__item rh-profile-completeness__item--clickable' : 'rh-profile-completeness__item'}
             onClick={() => onNavigate?.(item.field)}
           >
             <List.Item.Meta
               avatar={
                 item.complete ? (
-                  <CheckCircleOutlined style={{ color: '#15803d' }} />
+                  <CheckCircleOutlined className="rh-status-icon rh-status-icon--success" />
                 ) : (
-                  <CloseCircleOutlined style={{ color: '#b42318' }} />
+                  <CloseCircleOutlined className="rh-status-icon rh-status-icon--danger" />
                 )
               }
               title={<Text>{item.label}</Text>}
               description={
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className="rh-table-meta-text">
                   {FIELD_ACTIONS[item.field]}
                 </Text>
               }
             />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="rh-profile-completeness__actions">
               {!item.complete && (
-                <Tag color="orange" style={{ fontSize: 11, marginInlineEnd: 0 }}>
+                <Tag color="orange" className="rh-compact-tag">
                   Не заполнено
                 </Tag>
               )}
@@ -97,7 +97,7 @@ export default function ProfileCompleteness({ onNavigate }: ProfileCompletenessP
                 <Button
                   type="link"
                   size="small"
-                  style={{ paddingInline: 0 }}
+                  className="rh-link-action"
                   onClick={(event) => {
                     event.stopPropagation()
                     onNavigate(item.field)

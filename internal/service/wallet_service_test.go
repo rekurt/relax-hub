@@ -19,8 +19,9 @@ type walletTestEnv struct {
 
 func newWalletTestEnv() *walletTestEnv {
 	walletRepo := mock.NewWalletRepo()
+	userRepo := mock.NewUserRepo()
 	log := logger.New(logger.LevelWarn)
-	svc := service.NewWalletService(walletRepo, log)
+	svc := service.NewWalletService(walletRepo, userRepo, log)
 	return &walletTestEnv{svc: svc}
 }
 

@@ -23,6 +23,7 @@ import dayjs from 'dayjs'
 import type { InternalHandlerReviewResponse, InternalHandlerMediaResponse } from '@/api/generated/model'
 import { usePostReviewsIdReport } from '@/api/generated/complaints/complaints'
 import { useDeleteReviewsId } from '@/api/generated/reviews/reviews'
+import { resolveAssetUrl } from '@/lib/asset-url'
 
 const { Paragraph, Text } = Typography
 const { TextArea } = Input
@@ -98,19 +99,19 @@ export default function ReviewCard({
   }
 
   const renderMedia = (media: InternalHandlerMediaResponse[]) => (
-    <div style={{ marginTop: 8 }}>
+    <div className="rh-review-media-row">
       <Image.PreviewGroup>
         <Space wrap size={8}>
           {media.map((m) =>
             m.type === 'image' ? (
               <Image
                 key={m.id}
-                src={m.thumbnail_url ?? m.url}
+                src={resolveAssetUrl(m.thumbnail_url ?? m.url)}
                 alt="Фото отзыва"
                 width={80}
                 height={80}
-                style={{ borderRadius: 12, objectFit: 'cover' }}
-                preview={{ src: m.url }}
+                className="rh-review-media-image"
+                preview={{ src: resolveAssetUrl(m.url) }}
               />
             ) : (
               <Tag key={m.id} color="blue" icon={<span>&#9654;</span>}>
@@ -124,14 +125,14 @@ export default function ReviewCard({
   )
 
   return (
-    <Card size="small" style={{ marginBottom: 12 }}>
-      <div style={{ display: 'flex', gap: 12 }}>
+    <Card size="small" className="rh-review-card">
+      <div className="rh-review-card__layout">
         <Avatar icon={<UserOutlined />} />
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="rh-review-card__content">
+          <div className="rh-review-card__head">
             <Space>
-              <Rate disabled value={review.rating ?? 0} style={{ fontSize: 14 }} />
-              <Text type="secondary" style={{ fontSize: 12 }}>
+              <Rate disabled value={review.rating ?? 0} className="rh-rate-compact" />
+              <Text type="secondary" className="rh-table-meta-text">
                 {review.created_at ? dayjs(review.created_at).format('DD.MM.YYYY') : ''}
               </Text>
               {review.status && review.status !== 'approved' && (
@@ -174,7 +175,7 @@ export default function ReviewCard({
             )}
           </div>
 
-          <Paragraph style={{ marginTop: 8, marginBottom: 4 }}>
+          <Paragraph className="rh-review-card__text">
             {review.text || <Text type="secondary">Без текста</Text>}
           </Paragraph>
 
@@ -182,16 +183,16 @@ export default function ReviewCard({
 
           {/* Legacy images field */}
           {review.images && review.images.length > 0 && !review.media?.length && (
-            <div style={{ marginTop: 8 }}>
+            <div className="rh-review-media-row">
               <Image.PreviewGroup>
                 <Space wrap>
                   {review.images.map((url, idx) => (
                     <Image
                       key={idx}
-                      src={url}
+                      src={resolveAssetUrl(url)}
                       width={80}
                       height={80}
-                      style={{ objectFit: 'cover', borderRadius: 12 }}
+                      className="rh-review-media-image"
                     />
                   ))}
                 </Space>
@@ -200,11 +201,11 @@ export default function ReviewCard({
           )}
 
           {review.owner_response && (
-            <Card size="small" style={{ marginTop: 8, background: 'rgba(21, 128, 61, 0.08)' }}>
+            <Card size="small" className="rh-owner-response-card">
               <Text strong>Ответ владельца:</Text>
-              <Paragraph style={{ margin: '4px 0 0' }}>{review.owner_response}</Paragraph>
+              <Paragraph className="rh-owner-response-text">{review.owner_response}</Paragraph>
               {review.owner_response_at && (
-                <Text type="secondary" style={{ fontSize: 11 }}>
+                <Text type="secondary" className="rh-table-meta-text">
                   {dayjs(review.owner_response_at).format('DD.MM.YYYY HH:mm')}
                 </Text>
               )}
@@ -223,7 +224,7 @@ export default function ReviewCard({
         confirmLoading={reportMutation.isPending}
         okButtonProps={{ disabled: !reportReason }}
       >
-        <Space orientation="vertical" style={{ width: '100%' }} size={12}>
+        <Space orientation="vertical" className="rh-full-width" size={12}>
           <div>
             <Text strong>Причина:</Text>
             <Select
@@ -231,7 +232,7 @@ export default function ReviewCard({
               onChange={setReportReason}
               options={REPORT_REASONS}
               placeholder="Выберите причину"
-              style={{ width: '100%', marginTop: 4 }}
+              className="rh-modal-control-offset"
             />
           </div>
           <div>
@@ -243,7 +244,7 @@ export default function ReviewCard({
               rows={3}
               maxLength={500}
               showCount
-              style={{ marginTop: 4 }}
+              className="rh-modal-control-offset"
             />
           </div>
         </Space>

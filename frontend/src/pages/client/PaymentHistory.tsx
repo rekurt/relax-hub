@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { App, Button, DatePicker, Dropdown, Select, Space, Table, Tag, Typography } from '@/components/design/system'
+import { App, Button, DatePicker, Dropdown, Select, Space, Table, Tag } from '@/components/design/system'
 import { DownloadOutlined } from '@/components/design/icons'
 import type { ColumnsType } from '@/components/design/types'
 import dayjs from 'dayjs'
@@ -8,9 +8,8 @@ import { useGetMyPayments } from '@/api/generated/payments/payments'
 import type { InternalHandlerPaymentResponse } from '@/api/generated/model'
 import { formatPrice, formatDateTime } from '@/lib/format'
 import { PAYMENT_STATUS_CONFIG, AUTH_TOKEN_KEY } from '@/lib/constants'
-import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
 const { RangePicker } = DatePicker
 
 const STATUS_OPTIONS = [
@@ -106,7 +105,7 @@ export default function PaymentHistory() {
           <span>
             {formatPrice(record.refund_amount)}
             {record.refunded_at && (
-              <div style={{ color: 'var(--rh-text-soft)', fontSize: 12 }}>
+              <div className="rh-table-subtext">
                 {formatDateTime(record.refunded_at, 'DD.MM.YYYY')}
               </div>
             )}
@@ -130,15 +129,19 @@ export default function PaymentHistory() {
   ]
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>История платежей</Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Финансы"
+        title="История платежей"
+        description="Платежи, возвраты и экспорт операций по кошельку."
+      />
 
-      <Space wrap style={{ marginBottom: 16 }}>
+      <Space wrap className="rh-client-filter-bar">
         <Select
           value={statusFilter}
           onChange={setStatusFilter}
           options={STATUS_OPTIONS}
-          style={{ width: 160 }}
+          className="rh-client-filter-control"
           placeholder="Статус"
         />
         <RangePicker
@@ -146,6 +149,7 @@ export default function PaymentHistory() {
           onChange={(dates) => setDateRange(dates)}
           format="DD.MM.YYYY"
           placeholder={['С', 'По']}
+          className="rh-admin-form-control"
         />
         <Dropdown
           menu={{
@@ -166,7 +170,16 @@ export default function PaymentHistory() {
         dataSource={filteredPayments}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: <EmptyState description="Ваш кошелёк пуст. Пополните, чтобы оплачивать быстрее" actionText="Найти баню" actionLink="/catalog" /> }}
+        locale={{
+          emptyText: (
+            <div className="rh-admin-empty-state">
+              <div className="rh-admin-empty-state__title">Ваш кошелёк пуст. Пополните, чтобы оплачивать быстрее</div>
+              <p className="rh-admin-empty-state__text">
+                Операции появятся здесь после первой оплаты или пополнения.
+              </p>
+            </div>
+          ),
+        }}
         pagination={{
           current: page,
           pageSize: pageSize,

@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   DatePicker,
-  Empty,
   Form,
   Input,
   Modal,
@@ -12,15 +11,14 @@ import {
   Space,
   Table,
   Tag,
-  Typography,
 } from '@/components/design/system'
 import { SearchOutlined, CloseCircleOutlined, SwapOutlined } from '@/components/design/icons'
 import { axiosInstance } from '@/api/axios-instance'
 import { formatPrice } from '@/lib/format'
 import dayjs from 'dayjs'
 import type { ColumnsType } from '@/components/design/types'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
 const { RangePicker } = DatePicker
 
 interface BookingData {
@@ -222,34 +220,39 @@ export default function BookingManagement() {
   ]
 
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={3}>Управление бронированиями</Title>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Операции"
+        title="Управление бронированиями"
+        description="Поиск, статусы и ручные операции по бронированиям в одном плотном рабочем интерфейсе."
+      />
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space wrap>
+      <Card className="rh-admin-filter-card" title="Фильтры">
+        <Space className="rh-admin-filter-row" wrap>
           <Input
+            className="rh-admin-filter-input"
             placeholder="User ID"
             value={filterUserId}
             onChange={(e) => setFilterUserId(e.target.value)}
-            style={{ width: 280 }}
             allowClear
           />
           <Input
+            className="rh-admin-filter-input"
             placeholder="Bathhouse ID"
             value={filterBathhouseId}
             onChange={(e) => setFilterBathhouseId(e.target.value)}
-            style={{ width: 280 }}
             allowClear
           />
           <Select
+            className="rh-admin-filter-select"
             placeholder="Статус"
             value={filterStatus}
             onChange={setFilterStatus}
             options={STATUS_OPTIONS}
-            style={{ width: 200 }}
             allowClear
           />
           <RangePicker
+            className="rh-admin-form-control"
             value={filterDates}
             onChange={(dates) => setFilterDates(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)}
           />
@@ -263,19 +266,21 @@ export default function BookingManagement() {
         </Space>
       </Card>
 
-      <Table
-        columns={columns}
-        dataSource={bookings}
-        rowKey="id"
-        loading={loading}
-        locale={{ emptyText: <Empty description="Нет бронирований. Используйте фильтры и нажмите «Поиск» для загрузки данных" /> }}
-        pagination={{
-          ...pagination,
-          showSizeChanger: true,
-          showTotal: (total) => `Всего: ${total}`,
-          onChange: (page, pageSize) => fetchBookings(page, pageSize),
-        }}
-      />
+      <Card className="rh-admin-reference-card" title="Список бронирований">
+        <Table
+          columns={columns}
+          dataSource={bookings}
+          rowKey="id"
+          loading={loading}
+          locale={{ emptyText: 'Нет бронирований. Используйте фильтры и нажмите «Поиск» для загрузки данных' }}
+          pagination={{
+            ...pagination,
+            showSizeChanger: true,
+            showTotal: (total) => `Всего: ${total}`,
+            onChange: (page, pageSize) => fetchBookings(page, pageSize),
+          }}
+        />
+      </Card>
 
       <Modal
         title={actionModal?.type === 'cancel' ? 'Отмена бронирования' : 'Изменение статуса'}
@@ -288,7 +293,7 @@ export default function BookingManagement() {
         okText="Подтвердить"
         cancelText="Отмена"
       >
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" className="rh-admin-modal-form">
           {actionModal?.type === 'change-status' && (
             <Form.Item
               name="status"

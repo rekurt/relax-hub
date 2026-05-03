@@ -5,7 +5,6 @@ import {
   Col,
   Button,
   Spin,
-  Empty,
   Statistic,
   App,
   Space,
@@ -23,8 +22,9 @@ import { useGetMyReferralBalance } from '@/api/generated/referral/referral'
 import { formatPrice } from '@/lib/format'
 import { copyToClipboard } from '@/lib/clipboard'
 import { PLATFORM_NAME } from '@/content/support'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Paragraph } = Typography
 
 export default function ReferralProgram() {
   const { message } = App.useApp()
@@ -76,27 +76,23 @@ export default function ReferralProgram() {
   const isLoading = loadingReferral || loadingStats || loadingBalance
 
   return (
-    <div>
-      <Title level={3}>Реферальная программа</Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Личный кабинет"
+        title="Реферальная программа"
+        description="Приглашайте друзей, отслеживайте завершённые бронирования и используйте бонусный баланс."
+      />
 
       <Spin spinning={isLoading}>
         {referralCode ? (
           <>
             {/* Referral code card */}
-            <Card style={{ marginBottom: 24 }}>
-              <Title level={5}>Ваш реферальный код</Title>
-              <div
-                style={{
-                  background: 'rgba(248, 244, 236, 0.78)',
-                  borderRadius: 20,
-                  padding: '16px 24px',
-                  textAlign: 'center',
-                  marginBottom: 16,
-                }}
-              >
+            <Card className="rh-admin-detail-card rh-referral-card">
+              <h2 className="rh-section-card__title">Ваш реферальный код</h2>
+              <div className="rh-referral-code-box">
                 <Text
                   strong
-                  style={{ fontSize: 28 }}
+                  className="rh-referral-code"
                   copyable={{ tooltips: false }}
                 >
                   {referralCode}
@@ -117,16 +113,16 @@ export default function ReferralProgram() {
                 )}
               </Space>
 
-              <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
+              <Paragraph type="secondary" className="rh-card-footer-text">
                 Приглашайте друзей по вашему реферальному коду. После их первого
                 завершённого бронирования вы оба получите бонус 500 ₽.
               </Paragraph>
             </Card>
 
             {/* Stats */}
-            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Row gutter={[16, 16]} className="rh-referral-stats">
               <Col xs={24} sm={8}>
-                <Card>
+                <Card className="rh-admin-detail-card">
                   <Statistic
                     title="Приглашено"
                     value={stats?.total_invited ?? 0}
@@ -136,7 +132,7 @@ export default function ReferralProgram() {
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
-                <Card>
+                <Card className="rh-admin-detail-card">
                   <Statistic
                     title="Завершённых бронирований"
                     value={stats?.total_completed ?? 0}
@@ -145,7 +141,7 @@ export default function ReferralProgram() {
                 </Card>
               </Col>
               <Col xs={24} sm={8}>
-                <Card>
+                <Card className="rh-admin-detail-card">
                   <Statistic
                     title="Всего заработано"
                     value={stats?.total_earned ?? 0}
@@ -157,14 +153,14 @@ export default function ReferralProgram() {
             </Row>
 
             {/* Balance */}
-            <Card title="Реферальный баланс">
+            <Card title="Реферальный баланс" className="rh-admin-detail-card">
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={12}>
                   <Statistic
+                    className="rh-admin-metric-stat rh-admin-metric-stat--success"
                     title="Текущий баланс"
                     value={balance?.balance ?? 0}
                     formatter={(val) => formatPrice(Number(val))}
-                    valueStyle={{ color: '#15803d' }}
                   />
                 </Col>
                 <Col xs={24} sm={12}>
@@ -175,17 +171,21 @@ export default function ReferralProgram() {
                   />
                 </Col>
               </Row>
-              <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
+              <Paragraph type="secondary" className="rh-card-footer-text">
                 Реферальный баланс можно использовать при оплате бронирований.
               </Paragraph>
             </Card>
           </>
         ) : (
           !isLoading && (
-            <Empty
-              description="Реферальная программа станет доступна после завершения первого бронирования. Приглашайте друзей и получайте бонусы!"
-              style={{ padding: '48px 0' }}
-            />
+            <div className="rh-admin-empty-state">
+              <div className="rh-admin-empty-state__title">
+                Реферальная программа станет доступна после завершения первого бронирования. Приглашайте друзей и получайте бонусы!
+              </div>
+              <p className="rh-admin-empty-state__text">
+                После первого завершённого визита здесь появятся код, ссылка и статистика приглашений.
+              </p>
+            </div>
           )
         )}
       </Spin>

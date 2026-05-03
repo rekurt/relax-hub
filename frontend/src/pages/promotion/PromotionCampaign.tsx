@@ -5,7 +5,6 @@ import {
   Card,
   Col,
   Descriptions,
-  Empty,
   Form,
   InputNumber,
   Modal,
@@ -24,7 +23,6 @@ import {
   PauseCircleOutlined,
   PlayCircleOutlined,
   PlusOutlined,
-  RocketOutlined,
 } from '@/components/design/icons'
 import dayjs from 'dayjs'
 import { useBathhouseStore } from '@/stores/bathhouse'
@@ -33,8 +31,10 @@ import { formatPrice } from '@/lib/format'
 import { axiosInstance } from '@/api/axios-instance'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useGetCities } from '@/api/generated/cities/cities'
+import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const STATUS_LABELS: Record<string, string> = {
   active: 'Активна',
@@ -159,9 +159,17 @@ export default function PromotionCampaign() {
 
   if (!selectedBathhouseId) {
     return (
-      <Card>
-        <Empty description="Выберите объект для управления продвижением" />
-      </Card>
+      <div className="rh-stack">
+        <PageHeader
+          eyebrow="Маркетинг"
+          title="Рекламные кампании"
+          description="Выберите объект, чтобы управлять продвижением."
+          size="compact"
+        />
+        <Card className="rh-admin-detail-card">
+          <EmptyState description="Выберите объект для управления продвижением" />
+        </Card>
+      </div>
     )
   }
 
@@ -264,23 +272,26 @@ export default function PromotionCampaign() {
   ]
 
   return (
-    <Space orientation="vertical" size="large" style={{ width: '100%' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Title level={3} style={{ margin: 0 }}>
-          <RocketOutlined /> Рекламные кампании
-        </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setCreateModalOpen(true)}
-          disabled={!!activePromotion}
-        >
-          Создать кампанию
-        </Button>
-      </div>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Маркетинг"
+        title="Рекламные кампании"
+        description="Запускайте продвижение объекта, отслеживайте бюджет, CTR и цену клика."
+        size="compact"
+        extra={(
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setCreateModalOpen(true)}
+            disabled={!!activePromotion}
+          >
+            Создать кампанию
+          </Button>
+        )}
+      />
 
       {activePromotion && (
-        <Card title="Активная кампания" size="small">
+        <Card title="Активная кампания" size="small" className="rh-admin-detail-card">
           <Row gutter={[16, 16]}>
             <Col xs={12} sm={6}>
               <Statistic
@@ -303,7 +314,7 @@ export default function PromotionCampaign() {
               <Statistic title="Клики" value={activePromotion.click_count} />
             </Col>
           </Row>
-          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+          <Row gutter={[16, 16]} className="rh-section-offset">
             <Col xs={12} sm={6}>
               <Statistic title="CTR" value={activePromotion.ctr.toFixed(2)} suffix="%" />
             </Col>
@@ -372,7 +383,7 @@ export default function PromotionCampaign() {
           >
             <Space.Compact className="rh-compact-control">
               <Form.Item name="daily_bid" noStyle rules={[{ required: true, message: 'Укажите ставку' }]}>
-                <InputNumber min={50} style={{ width: '100%' }} />
+                <InputNumber min={50} className="rh-full-width" />
               </Form.Item>
               <span className="rh-input-addon">₽/день</span>
             </Space.Compact>
@@ -399,7 +410,7 @@ export default function PromotionCampaign() {
                   }),
                 ]}
               >
-                <InputNumber min={50} style={{ width: '100%' }} />
+                <InputNumber min={50} className="rh-full-width" />
               </Form.Item>
               <span className="rh-input-addon">₽</span>
             </Space.Compact>
@@ -410,7 +421,7 @@ export default function PromotionCampaign() {
           >
             <Space.Compact className="rh-compact-control">
               <Form.Item name="duration_days" noStyle rules={[{ required: true, message: 'Укажите длительность' }]}>
-                <InputNumber min={1} max={365} style={{ width: '100%' }} />
+                <InputNumber min={1} max={365} className="rh-full-width" />
               </Form.Item>
               <span className="rh-input-addon">дн.</span>
             </Space.Compact>
@@ -427,6 +438,6 @@ export default function PromotionCampaign() {
           </Form.Item>
         </Form>
       </Modal>
-    </Space>
+    </div>
   )
 }

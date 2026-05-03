@@ -1,10 +1,8 @@
 import { useState, useCallback, useRef } from 'react'
 import {
   App,
-  Badge,
   Button,
   Card,
-  Empty,
   Form,
   Image,
   Input,
@@ -32,8 +30,11 @@ import type { InternalHandlerPhotoResponse } from '@/api/generated/model'
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
+import { resolveAssetUrl } from '@/lib/asset-url'
+import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   pending: { label: 'На модерации', color: 'processing' },
@@ -170,54 +171,60 @@ export default function PhotoManager() {
 
   if (!selectedBathhouseId) {
     return (
-      <div>
-        <Title level={3}>Фотографии</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
-          Выберите баню для управления фотографиями
-        </div>
+      <div className="rh-page-stack">
+        <PageHeader
+          title="Фотографии"
+          description="Галерея объекта, порядок показа и статусы модерации."
+          size="compact"
+        />
+        <Card className="rh-admin-detail-card">
+          <EmptyState description="Выберите баню для управления фотографиями" />
+        </Card>
       </div>
     )
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>Фотографии</Title>
-        <Space>
+    <div className="rh-page-stack">
+      <PageHeader
+        title="Фотографии"
+        description="Управляйте изображениями, статусами модерации и порядком показа в карточке объекта."
+        size="compact"
+        extra={
+          <Space wrap>
           <Button icon={<ReloadOutlined />} onClick={invalidatePhotos}>
             Обновить
           </Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setUploadModalOpen(true) }}>
             Добавить фото
           </Button>
-        </Space>
-      </div>
+          </Space>
+        }
+      />
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 60 }}>
+        <div className="rh-loading-block rh-loading-block--large">
           <Spin size="large" />
         </div>
       ) : photos.length === 0 ? (
-        <Empty
+        <Card className="rh-admin-detail-card">
+          <EmptyState
           description="Нет фотографий"
-          style={{ padding: 60 }}
-        >
-          <Button type="primary" onClick={() => { form.resetFields(); setUploadModalOpen(true) }}>
-            Загрузить первое фото
-          </Button>
-        </Empty>
+          actionText="Загрузить первое фото"
+          onAction={() => { form.resetFields(); setUploadModalOpen(true) }}
+        />
+        </Card>
       ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-            gap: 16,
-          }}
-        >
+        <div className="rh-photo-grid">
           {photos.map((photo, index) => (
             <Card
               key={photo.id}
               size="small"
+              className={[
+                'rh-photo-card',
+                dragIndex === index ? 'rh-photo-card--dragging' : '',
+                dragOverIndex === index && dragIndex !== index ? 'rh-photo-card--drop-target' : '',
+              ].filter(Boolean).join(' ')}
               draggable
               onDragStart={() => handleDragStart(index)}
               onDragEnter={() => handleDragEnter(index)}
@@ -225,30 +232,16 @@ export default function PhotoManager() {
               onDragOver={handleDragOver}
               onDrop={() => handleDrop(index)}
               onDragEnd={handleDragEnd}
-              style={{
-                cursor: 'grab',
-                opacity: dragIndex === index ? 0.4 : 1,
-                border: dragOverIndex === index && dragIndex !== index ? '2px dashed #0f766e' : undefined,
-                transition: 'opacity 0.2s, border 0.2s',
-              }}
               cover={
-                <div style={{ position: 'relative' }}>
+                <div className="rh-photo-image-frame">
                   <Image
-                    src={photo.thumbnail_url || photo.url}
+                    src={resolveAssetUrl(photo.thumbnail_url || photo.url)}
                     alt={`Фото ${index + 1}`}
-                    style={{ height: 160, objectFit: 'cover', width: '100%' }}
-                    preview={{ src: photo.url }}
+                    className="rh-photo-image"
+                    preview={{ src: resolveAssetUrl(photo.url) }}
                     fallback="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YwZjBmMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjYmZiZmJmIiBmb250LXNpemU9IjE0Ij7QpNC+0YLQvjwvdGV4dD48L3N2Zz4="
                   />
-                  <Badge
-                    count={index + 1}
-                    style={{
-                      position: 'absolute',
-                      top: 8,
-                      left: 8,
-                      backgroundColor: 'rgba(0,0,0,0.5)',
-                    }}
-                  />
+                  <span className="rh-photo-order-badge">{index + 1}</span>
                 </div>
               }
               actions={[
@@ -263,18 +256,18 @@ export default function PhotoManager() {
                   okText="Удалить"
                   cancelText="Отмена"
                 >
-                  <DeleteOutlined style={{ color: '#b42318' }} />
+                  <DeleteOutlined className="rh-danger-icon" />
                 </Popconfirm>,
               ]}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="rh-photo-card-footer">
                 {getStatusBadge(photo.status)}
-                <Text type="secondary" style={{ fontSize: 12 }}>
+                <Text type="secondary" className="rh-table-meta-text">
                   {photo.uploaded_at ? dayjs(photo.uploaded_at).format('DD.MM.YYYY') : ''}
                 </Text>
               </div>
               {photo.status === 'rejected' && photo.rejection_reason && (
-                <Text type="danger" style={{ fontSize: 12, display: 'block', marginTop: 4 }}>
+                <Text type="danger" className="rh-photo-rejection-text">
                   Причина: {photo.rejection_reason}
                 </Text>
               )}

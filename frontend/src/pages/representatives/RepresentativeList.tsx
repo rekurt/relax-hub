@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   App,
   Button,
-  Empty,
   Form,
   Input,
   Modal,
@@ -10,7 +9,6 @@ import {
   Select,
   Table,
   Tag,
-  Typography,
 } from '@/components/design/system'
 import {
   DeleteOutlined,
@@ -26,8 +24,8 @@ import type { InternalHandlerRepresentativeResponse } from '@/api/generated/mode
 import { useBathhouseStore } from '@/stores/bathhouse'
 import { useAuthStore } from '@/stores/auth'
 import { useQueryClient } from '@tanstack/react-query'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
+import EmptyState from '@/components/EmptyState'
 
 interface InviteFormValues {
   user_email: string
@@ -104,7 +102,7 @@ export default function RepresentativeList() {
       key: 'user_id',
       ellipsis: true,
       render: (userId: string) => (
-        <Tag style={{ fontFamily: 'monospace' }}>{userId?.slice(0, 8)}...</Tag>
+        <Tag className="rh-code-tag">{userId?.slice(0, 8)}...</Tag>
       ),
     },
     {
@@ -149,9 +147,14 @@ export default function RepresentativeList() {
 
   if (!selectedBathhouseId) {
     return (
-      <div>
-        <Title level={3}>Представители</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
+      <div className="rh-stack">
+        <PageHeader
+          eyebrow="Команда"
+          title="Представители"
+          description="Выберите объект, чтобы управлять доступом сотрудников."
+          size="compact"
+        />
+        <div className="rh-muted-empty">
           Выберите баню для управления представителями
         </div>
       </div>
@@ -159,10 +162,13 @@ export default function RepresentativeList() {
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>Представители</Title>
-        {isOwner && (
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Команда"
+        title="Представители"
+        description="Приглашайте менеджеров и наблюдателей для управления объектом."
+        size="compact"
+        extra={isOwner ? (
           <Button
             type="primary"
             icon={<UserAddOutlined />}
@@ -173,8 +179,8 @@ export default function RepresentativeList() {
           >
             Пригласить
           </Button>
-        )}
-      </div>
+        ) : null}
+      />
 
       <Table
         dataSource={representatives}
@@ -183,7 +189,7 @@ export default function RepresentativeList() {
         loading={isLoading}
         locale={{
           emptyText: (
-            <Empty description="Нет представителей. Пригласите сотрудника для управления бронированиями и общением с клиентами." />
+            <EmptyState description="Нет представителей. Пригласите сотрудника для управления бронированиями и общением с клиентами." />
           ),
         }}
         pagination={false}
@@ -231,7 +237,7 @@ export default function RepresentativeList() {
               type="primary"
               htmlType="submit"
               loading={inviteMutation.isPending}
-              style={{ marginRight: 8 }}
+              className="rh-inline-action"
             >
               Пригласить
             </Button>

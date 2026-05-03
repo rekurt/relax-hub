@@ -2,9 +2,9 @@ import { useState } from 'react'
 import {
   App,
   Button,
+  Card,
   Descriptions,
   Drawer,
-  Empty,
   Input,
   Modal,
   Pagination,
@@ -30,8 +30,9 @@ import {
 } from '@/api/generated/admin-complaints/admin-complaints'
 import type { InternalHandlerComplaintResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const STATUS_OPTIONS = [
   { label: 'Все', value: '' },
@@ -220,7 +221,7 @@ export default function ComplaintManagement() {
                 type="link"
                 size="small"
                 icon={<CheckOutlined />}
-                style={{ color: '#15803d' }}
+                className="rh-admin-action-success"
                 onClick={() => openResolveModal(record.id!)}
               >
                 Решить
@@ -242,76 +243,88 @@ export default function ComplaintManagement() {
   ]
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Управление жалобами
-      </Title>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Модерация"
+        title="Управление жалобами"
+        description="Очередь жалоб, фильтры по типам и решения модераторов в одном аккуратном списке."
+      />
 
-      <Space orientation="vertical" size={16} style={{ width: '100%', marginBottom: 16 }}>
-        <Space wrap>
-          <Segmented
-            options={STATUS_OPTIONS}
-            value={statusFilter}
-            onChange={(val) => {
-              setStatusFilter(val as string)
-              setPage(1)
-            }}
-          />
+      <Card className="rh-admin-filter-card" title="Фильтры">
+        <Space className="rh-admin-filter-column" orientation="vertical" size={16}>
+          <Space wrap>
+            <Segmented
+              options={STATUS_OPTIONS}
+              value={statusFilter}
+              onChange={(val) => {
+                setStatusFilter(val as string)
+                setPage(1)
+              }}
+            />
+          </Space>
+          <Space wrap>
+            <Segmented
+              options={TARGET_TYPE_OPTIONS}
+              value={targetTypeFilter}
+              onChange={(val) => {
+                setTargetTypeFilter(val as string)
+                setPage(1)
+              }}
+            />
+            <Segmented
+              options={REASON_OPTIONS}
+              value={reasonFilter}
+              onChange={(val) => {
+                setReasonFilter(val as string)
+                setPage(1)
+              }}
+            />
+          </Space>
         </Space>
-        <Space wrap>
-          <Segmented
-            options={TARGET_TYPE_OPTIONS}
-            value={targetTypeFilter}
-            onChange={(val) => {
-              setTargetTypeFilter(val as string)
-              setPage(1)
-            }}
-          />
-          <Segmented
-            options={REASON_OPTIONS}
-            value={reasonFilter}
-            onChange={(val) => {
-              setReasonFilter(val as string)
-              setPage(1)
-            }}
-          />
-        </Space>
-      </Space>
+      </Card>
 
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}>
-          <Spin size="large" />
-        </div>
-      ) : complaints.length === 0 ? (
-        <Empty description="Нет жалоб" />
-      ) : (
-        <>
-          <Table
-            dataSource={complaints}
-            columns={columns}
-            rowKey="id"
-            pagination={false}
-            size="middle"
-            locale={{ emptyText: 'Нет жалоб' }}
-          />
-          {meta && meta.total_pages! > 1 && (
-            <div style={{ marginTop: 16, textAlign: 'right' }}>
-              <Pagination
-                current={page}
-                pageSize={pageSize}
-                total={meta.total_count}
-                showSizeChanger
-                pageSizeOptions={['10', '20', '50']}
-                showTotal={(total) => `Всего: ${total}`}
-                onChange={(p, ps) => {
-                  setPage(p)
-                  setPageSize(ps)
-                }}
-              />
-            </div>
-          )}
-        </>
-      )}
+      <Card className="rh-admin-reference-card" title="Список жалоб">
+        {isLoading ? (
+          <div className="rh-admin-state-card">
+            <Spin size="large" />
+            <span>Загружаем жалобы</span>
+          </div>
+        ) : complaints.length === 0 ? (
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет жалоб</div>
+            <p className="rh-admin-empty-state__text">
+              Новые жалобы пользователей появятся здесь после отправки формы модерации.
+            </p>
+          </div>
+        ) : (
+          <>
+            <Table
+              dataSource={complaints}
+              columns={columns}
+              rowKey="id"
+              pagination={false}
+              size="middle"
+              locale={{ emptyText: 'Нет жалоб' }}
+            />
+            {meta && meta.total_pages! > 1 && (
+              <div className="rh-admin-pagination">
+                <Pagination
+                  current={page}
+                  pageSize={pageSize}
+                  total={meta.total_count}
+                  showSizeChanger
+                  pageSizeOptions={['10', '20', '50']}
+                  showTotal={(total) => `Всего: ${total}`}
+                  onChange={(p, ps) => {
+                    setPage(p)
+                    setPageSize(ps)
+                  }}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </Card>
 
       <Drawer
         title="Детали жалобы"
@@ -399,7 +412,7 @@ export default function ComplaintManagement() {
         cancelText="Отмена"
         confirmLoading={resolveMutation.isPending}
       >
-        <div style={{ marginBottom: 8 }}>
+        <div className="rh-admin-modal-description">
           <Text>Укажите примечание к решению (необязательно):</Text>
         </div>
         <Input.TextArea

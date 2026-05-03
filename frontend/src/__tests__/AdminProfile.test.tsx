@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { App as AntApp, ConfigProvider } from '@/components/design/system'
@@ -111,5 +111,16 @@ describe('AdminProfile', () => {
 
     renderWithProviders(<AdminProfile />)
     expect(screen.queryByText('Удалить')).not.toBeInTheDocument()
+  })
+
+  it('opens avatar delete confirmation as an overlay', () => {
+    renderWithProviders(<AdminProfile />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Удалить/i }))
+
+    const confirmation = screen.getByText('Удалить аватар?')
+    const overlay = confirmation.closest('.ant-popover-inner')
+
+    expect(overlay).toHaveStyle({ position: 'absolute' })
   })
 })

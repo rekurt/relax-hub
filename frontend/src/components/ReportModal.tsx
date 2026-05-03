@@ -82,9 +82,9 @@ export default function ReportModal({ open, targetType, targetId, onClose }: Rep
       okButtonProps={{ disabled: !reason, loading: isPending }}
       destroyOnClose
     >
-      <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+      <Space orientation="vertical" className="rh-full-width" size="middle">
         <div>
-          <div style={{ marginBottom: 8, fontWeight: 500 }}>Причина жалобы</div>
+          <div className="rh-modal-field-label">Причина жалобы</div>
           <Radio.Group value={reason} onChange={(e) => setReason(e.target.value)}>
             <Space orientation="vertical">
               {REASON_OPTIONS.map((opt) => (
@@ -96,7 +96,7 @@ export default function ReportModal({ open, targetType, targetId, onClose }: Rep
           </Radio.Group>
         </div>
         <div>
-          <div style={{ marginBottom: 8, fontWeight: 500 }}>Описание (необязательно)</div>
+          <div className="rh-modal-field-label">Описание (необязательно)</div>
           <TextArea
             value={description}
             onChange={(e) => setDescription(e.target.value)}

@@ -20,8 +20,9 @@ import {
   usePostMyOfferAccept,
   getGetMyOfferStatusQueryKey,
 } from '@/api/generated/offer/offer'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 export default function OfferAcceptance() {
   const { message } = App.useApp()
@@ -42,8 +43,13 @@ export default function OfferAcceptance() {
 
   if (isLoading) {
     return (
-      <div>
-        <Title level={4} style={{ marginBottom: 24 }}>Оферта платформы</Title>
+      <div className="rh-stack">
+        <PageHeader
+          eyebrow="Документы"
+          title="Оферта платформы"
+          description="Статус принятия и условия работы на платформе."
+          size="compact"
+        />
         <Skeleton active />
       </div>
     )
@@ -52,12 +58,17 @@ export default function OfferAcceptance() {
   const isAccepted = status?.accepted === true
 
   return (
-    <div>
-      <Title level={4} style={{ marginBottom: 24 }}>Оферта платформы</Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Документы"
+        title="Оферта платформы"
+        description="Статус принятия и условия работы на платформе."
+        size="compact"
+      />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <Card title="Статус принятия">
-          <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
+      <div className="rh-stack">
+        <Card title="Статус принятия" className="rh-admin-detail-card">
+          <Space orientation="vertical" size="middle" className="rh-full-width">
             <Space>
               <Text strong>Статус:</Text>
               {isAccepted ? (
@@ -108,18 +119,8 @@ export default function OfferAcceptance() {
                 </Space>
               }
             >
-              <div
-                style={{
-                  maxHeight: 400,
-                  overflow: 'auto',
-                  padding: 16,
-                  background: 'rgba(255, 253, 248, 0.72)',
-                  borderRadius: 20,
-                  marginBottom: 24,
-                  lineHeight: 1.8,
-                }}
-              >
-                <Title level={5}>Договор оферты</Title>
+              <div className="rh-offer-text">
+                <h3 className="rh-offer-text__title">Договор оферты</h3>
                 <Text>
                   Настоящий договор определяет условия использования платформы для
                   размещения объектов и предоставления услуг бронирования. Принимая

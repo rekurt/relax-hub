@@ -129,6 +129,26 @@ func TestLoad_EnvOverride(t *testing.T) {
 	}
 }
 
+func TestLoad_StoragePublicBaseURLEnvOverride(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfgPath := filepath.Join(tmpDir, "config.yaml")
+	if err := os.WriteFile(cfgPath, []byte(""), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("BANI_JWT_SECRET", "a-secure-secret-for-testing")
+	t.Setenv("BANI_STORAGE_PUBLIC_BASE_URL", "http://localhost:9102")
+
+	cfg, err := Load(cfgPath)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Storage.PublicBaseURL != "http://localhost:9102" {
+		t.Errorf("expected storage.public_base_url = http://localhost:9102, got %s", cfg.Storage.PublicBaseURL)
+	}
+}
+
 func TestLoad_InvalidYAML(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfgPath := filepath.Join(tmpDir, "config.yaml")

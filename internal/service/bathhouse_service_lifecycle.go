@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,7 +17,7 @@ func (s *bathhouseService) Approve(ctx context.Context, id uuid.UUID) error {
 	}
 
 	if bh.Status != domain.BathhouseStatusPending {
-		return domain.ErrInvalidInput
+		return fmt.Errorf("only pending bathhouses can be approved: %w", domain.ErrInvalidInput)
 	}
 
 	return s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusActive)
@@ -29,7 +30,7 @@ func (s *bathhouseService) Reject(ctx context.Context, id uuid.UUID) error {
 	}
 
 	if bh.Status != domain.BathhouseStatusPending {
-		return domain.ErrInvalidInput
+		return fmt.Errorf("only pending bathhouses can be rejected: %w", domain.ErrInvalidInput)
 	}
 
 	return s.bhRepo.UpdateStatus(ctx, id, domain.BathhouseStatusRejected)

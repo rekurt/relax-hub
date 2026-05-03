@@ -42,8 +42,10 @@ import { useBathhouseStore } from '@/stores/bathhouse'
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query'
 import { formatDayOfWeek } from '@/lib/format'
 import { axiosInstance } from '@/api/axios-instance'
+import EmptyState from '@/components/EmptyState'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
+const { Text } = Typography
 
 const RULE_TYPES = [
   { value: 'weekday', label: 'Будние дни' },
@@ -287,7 +289,12 @@ export default function PricingRules() {
         const isDiscount = val < 1
         const percent = Math.round(Math.abs(val - 1) * 100)
         return (
-          <span style={{ color: isDiscount ? '#15803d' : val > 1 ? '#b42318' : undefined }}>
+          <span className={[
+            'rh-multiplier-value',
+            isDiscount ? 'rh-multiplier-value--discount' : '',
+            val > 1 ? 'rh-multiplier-value--increase' : '',
+          ].filter(Boolean).join(' ')}
+          >
             x{val} {percent > 0 && `(${isDiscount ? '-' : '+'}${percent}%)`}
           </span>
         )
@@ -511,7 +518,12 @@ export default function PricingRules() {
         const isDiscount = val < 1
         const percent = Math.round(Math.abs(val - 1) * 100)
         return (
-          <span style={{ color: isDiscount ? '#15803d' : val > 1 ? '#b42318' : undefined }}>
+          <span className={[
+            'rh-multiplier-value',
+            isDiscount ? 'rh-multiplier-value--discount' : '',
+            val > 1 ? 'rh-multiplier-value--increase' : '',
+          ].filter(Boolean).join(' ')}
+          >
             x{val} {percent > 0 && `(${isDiscount ? '-' : '+'}${percent}%)`}
           </span>
         )
@@ -558,28 +570,36 @@ export default function PricingRules() {
 
   if (!selectedBathhouseId) {
     return (
-      <div>
-        <Title level={3}>Правила ценообразования</Title>
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--rh-text-muted)' }}>
-          Выберите баню для управления ценами
-        </div>
+      <div className="rh-page-stack">
+        <PageHeader
+          title="Правила ценообразования"
+          description="Настройка базовых множителей, сезонных тарифов и рекомендаций по цене."
+          size="compact"
+        />
+        <Card className="rh-admin-detail-card">
+          <EmptyState description="Выберите баню для управления ценами" />
+        </Card>
       </div>
     )
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>Правила ценообразования</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate}>
-          Добавить правило
-        </Button>
-      </div>
+    <div className="rh-page-stack">
+      <PageHeader
+        title="Правила ценообразования"
+        description="Соберите правила с приоритетами и сезонными исключениями для выбранного объекта."
+        size="compact"
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate}>
+            Добавить правило
+          </Button>
+        }
+      />
 
       {recommendationData && !recommendationDismissed && (
         <Card
           size="small"
-          style={{ marginBottom: 16 }}
+          className="rh-admin-detail-card rh-price-recommendation-card"
           title={<><BulbOutlined /> Рекомендация по цене</>}
           extra={
             <Space>
@@ -602,12 +622,15 @@ export default function PricingRules() {
             </Space>
           }
         >
-          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="rh-price-recommendation-grid">
             <Statistic title="Текущая цена/час" value={formatPrice(recommendationData.current_price)} />
             <Statistic
               title="Рекомендуемая цена/час"
               value={formatPrice(recommendationData.recommended_price)}
-              styles={{ content: { color: recommendationData.coefficient > 1 ? '#15803d' : recommendationData.coefficient < 1 ? '#b42318' : undefined } }}
+              className={[
+                recommendationData.coefficient > 1 ? 'rh-statistic--positive' : '',
+                recommendationData.coefficient < 1 ? 'rh-statistic--negative' : '',
+              ].filter(Boolean).join(' ')}
               prefix={recommendationData.coefficient > 1 ? <ArrowUpOutlined /> : recommendationData.coefficient < 1 ? <ArrowDownOutlined /> : undefined}
             />
             <Statistic title="Коэффициент" value={`x${recommendationData.coefficient}`} />
@@ -616,7 +639,7 @@ export default function PricingRules() {
             <Statistic title="Спрос" value={demandTrendLabel[recommendationData.demand_trend] ?? recommendationData.demand_trend} />
           </div>
           <Alert
-            style={{ marginTop: 12 }}
+            className="rh-section-offset"
             type="info"
             showIcon
             title={recommendationData.recommendation_basis}
@@ -629,33 +652,33 @@ export default function PricingRules() {
         columns={columns}
         rowKey="id"
         loading={isLoading}
-        locale={{ emptyText: 'Нет правил ценообразования' }}
+        locale={{ emptyText: <EmptyState description="Нет правил ценообразования" /> }}
         pagination={false}
       />
 
       <Divider />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>Сезонные тарифы</Title>
+      <div className="rh-section-toolbar">
+        <h2 className="rh-inline-title">Сезонные тарифы</h2>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreateTariff}>
           Добавить тариф
         </Button>
       </div>
 
-      <Card size="small" styles={{ body: { padding: 0 } }}>
+      <Card size="small" className="rh-pricing-table-card">
         <Table
           dataSource={tariffs}
           columns={tariffColumns}
           rowKey="id"
           loading={tariffsLoading}
-          locale={{ emptyText: 'Нет сезонных тарифов' }}
+          locale={{ emptyText: <EmptyState description="Нет сезонных тарифов" /> }}
           pagination={false}
           size="small"
         />
       </Card>
-      <Typography.Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
+      <Text type="secondary" className="rh-card-help-text">
         Сезонные тарифы умножают базовую цену на период дат. При пересечении нескольких тарифов применяется наибольший множитель.
-      </Typography.Text>
+      </Text>
 
       {/* Pricing Rule Modal */}
       <Modal
@@ -685,7 +708,7 @@ export default function PricingRules() {
             rules={[{ required: true, message: 'Укажите множитель' }]}
             extra="1.0 = без изменений, 1.5 = +50%, 0.8 = -20%"
           >
-            <InputNumber min={0.01} max={999.99} step={0.1} style={{ width: '100%' }} />
+            <InputNumber min={0.01} max={999.99} step={0.1} className="rh-full-width" />
           </Form.Item>
 
           <Form.Item
@@ -693,7 +716,7 @@ export default function PricingRules() {
             label="Приоритет"
             extra="Правила с более высоким приоритетом применяются первыми"
           >
-            <InputNumber min={0} style={{ width: '100%' }} />
+            <InputNumber min={0} className="rh-full-width" />
           </Form.Item>
 
           {(selectedType === 'weekday') && (
@@ -728,7 +751,7 @@ export default function PricingRules() {
           )}
 
           {(selectedType === 'time_range') && (
-            <Space>
+            <Space className="rh-time-range-fields" wrap>
               <Form.Item
                 name="time_from"
                 label="Время от"
@@ -752,7 +775,7 @@ export default function PricingRules() {
               label="Диапазон дат"
               rules={[{ required: true, message: 'Укажите даты' }]}
             >
-              <DatePicker.RangePicker style={{ width: '100%' }} format="DD.MM.YYYY" />
+              <DatePicker.RangePicker className="rh-full-width" format="DD.MM.YYYY" />
             </Form.Item>
           )}
 
@@ -800,7 +823,7 @@ export default function PricingRules() {
             label="Период действия"
             rules={[{ required: true, message: 'Укажите период' }]}
           >
-            <DatePicker.RangePicker style={{ width: '100%' }} format="DD.MM.YYYY" />
+            <DatePicker.RangePicker className="rh-full-width" format="DD.MM.YYYY" />
           </Form.Item>
 
           <Form.Item
@@ -809,7 +832,7 @@ export default function PricingRules() {
             rules={[{ required: true, message: 'Укажите множитель' }]}
             extra="1.0 = без изменений, 1.3 = +30%, 0.8 = -20%. Макс: 10.0"
           >
-            <InputNumber min={0.01} max={10.0} step={0.1} style={{ width: '100%' }} />
+            <InputNumber min={0.01} max={10.0} step={0.1} className="rh-full-width" />
           </Form.Item>
 
           <Form.Item name="is_active" label="Активно" valuePropName="checked">

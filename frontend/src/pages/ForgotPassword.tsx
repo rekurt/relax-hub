@@ -87,7 +87,7 @@ export default function ForgotPassword() {
       footer={<Link to="/login">Вернуться к входу</Link>}
     >
       <Card variant="borderless" className="rh-auth-surface">
-        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" className="rh-full-width">
           <Form
             form={form}
             className="rh-auth-form"

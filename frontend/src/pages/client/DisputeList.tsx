@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   Card,
-  Empty,
   Pagination,
   Segmented,
   Spin,
@@ -16,8 +15,9 @@ import {
 } from '@/api/generated/disputes/disputes'
 import type { InternalHandlerDisputeResponse } from '@/api/generated/model'
 import { formatDateTime, formatPrice } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const STATUS_OPTIONS = [
   { label: 'Все', value: '' },
@@ -130,10 +130,12 @@ export default function DisputeList() {
   ]
 
   return (
-    <div>
-      <Title level={3} style={{ marginBottom: 16 }}>
-        Мои споры
-      </Title>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="Поддержка"
+        title="Мои споры"
+        description="Отслеживайте открытые споры, решения и возвраты."
+      />
 
       <Segmented
         options={STATUS_OPTIONS}
@@ -142,16 +144,21 @@ export default function DisputeList() {
           setStatusFilter(val as string)
           setPage(1)
         }}
-        style={{ marginBottom: 16 }}
+        className="rh-client-segmented-filter"
       />
 
       {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}>
+        <Card className="rh-admin-state-card">
           <Spin size="large" />
-        </div>
+        </Card>
       ) : disputes.length === 0 ? (
         <Card>
-          <Empty description="Нет споров" />
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет споров</div>
+            <p className="rh-admin-empty-state__text">
+              Спор можно создать из деталей завершённого или проблемного бронирования.
+            </p>
+          </div>
         </Card>
       ) : (
         <>
@@ -163,16 +170,18 @@ export default function DisputeList() {
             size="middle"
             locale={{
               emptyText: (
-                <Empty description="У вас нет открытых споров. Споры можно создать из деталей бронирования." />
+                <div className="rh-admin-empty-state">
+                  <div className="rh-admin-empty-state__title">Нет споров с выбранным статусом</div>
+                </div>
               ),
             }}
             onRow={(record) => ({
               onClick: () => navigate(`/client/disputes/${record.id}`),
-              style: { cursor: 'pointer' },
+              className: 'rh-clickable-row',
             })}
           />
           {meta && meta.total_pages! > 1 && (
-            <div style={{ marginTop: 16, textAlign: 'right' }}>
+            <div className="rh-admin-pagination">
               <Pagination
                 current={page}
                 pageSize={pageSize}

@@ -24,8 +24,9 @@ import type {
   GithubComRekurtRelaxHubInternalServiceImportReport,
 } from '@/api/generated/model'
 import { axiosInstance } from '@/api/axios-instance'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 const { Dragger } = Upload
 
 export default function ListingImport() {
@@ -103,24 +104,25 @@ export default function ListingImport() {
   ]
 
   return (
-    <div style={{ maxWidth: 800 }}>
+    <div className="rh-stack rh-owner-narrow-page">
       <Button
         type="link"
         icon={<LeftOutlined />}
         onClick={() => navigate('/bathhouses')}
-        style={{ marginBottom: 16, paddingLeft: 0 }}
+        className="rh-admin-detail-back"
       >
         Назад к списку
       </Button>
 
-      <Title level={3}>Импорт объектов</Title>
-      <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
-        Загрузите файл CSV или XLSX с данными объектов. Все объекты будут созданы как черновики
-        и отправлены на модерацию.
-      </Text>
+      <PageHeader
+        eyebrow="Объекты"
+        title="Импорт объектов"
+        description="Загрузите файл CSV или XLSX с данными объектов. Все объекты будут созданы как черновики и отправлены на модерацию."
+        size="compact"
+      />
 
-      <Card title="Шаблон" style={{ marginBottom: 24 }}>
-        <Text style={{ display: 'block', marginBottom: 12 }}>
+      <Card title="Шаблон" className="rh-admin-detail-card">
+        <Text className="rh-card-intro-text">
           Скачайте шаблон с заголовками и примером заполнения:
         </Text>
         <Space>
@@ -139,11 +141,11 @@ export default function ListingImport() {
         </Space>
       </Card>
 
-      <Card title="Загрузка файла" style={{ marginBottom: 24 }}>
+      <Card title="Загрузка файла" className="rh-admin-detail-card">
         <Dragger {...uploadProps} disabled={importMutation.isPending}>
           <p className="rh-upload-drag__icon">
             {importMutation.isPending ? (
-              <FileExcelOutlined style={{ color: '#0f766e' }} />
+              <FileExcelOutlined className="rh-import-processing-icon" />
             ) : (
               <InboxOutlined />
             )}
@@ -159,24 +161,24 @@ export default function ListingImport() {
 
       {report && (
         <>
-          <Card title="Результаты импорта" style={{ marginBottom: 24 }}>
+          <Card title="Результаты импорта" className="rh-admin-detail-card">
             <Space size="large" wrap>
               <Statistic title="Всего строк" value={report.total_rows ?? 0} />
               <Statistic
+                className="rh-admin-metric-stat rh-admin-metric-stat--success"
                 title="Успешно создано"
                 value={report.success_count ?? 0}
-                valueStyle={{ color: '#15803d' }}
               />
               <Statistic
+                className={report.error_count ? 'rh-admin-metric-stat rh-admin-metric-stat--danger' : 'rh-admin-metric-stat'}
                 title="Ошибки"
                 value={report.error_count ?? 0}
-                valueStyle={{ color: report.error_count ? '#b42318' : undefined }}
               />
             </Space>
           </Card>
 
           {report.error_count && report.errors && report.errors.length > 0 ? (
-            <Card title="Детализация ошибок" style={{ marginBottom: 24 }}>
+            <Card title="Детализация ошибок" className="rh-admin-detail-card">
               <Table<GithubComRekurtRelaxHubInternalServiceImportError>
                 columns={errorColumns}
                 dataSource={report.errors}

@@ -72,6 +72,13 @@ func (m *mockDisputeWalletService) GetWallet(_ context.Context, userID uuid.UUID
 	return w, nil
 }
 
+func (m *mockDisputeWalletService) EnsureWallet(ctx context.Context, userID uuid.UUID) (*domain.Wallet, error) {
+	if w, err := m.GetWallet(ctx, userID); err == nil {
+		return w, nil
+	}
+	return m.CreateWallet(ctx, userID, domain.WalletCurrencyRUB)
+}
+
 func (m *mockDisputeWalletService) TopUp(_ context.Context, _ uuid.UUID, _ int64) (*domain.WalletTransaction, error) {
 	return &domain.WalletTransaction{ID: uuid.New()}, nil
 }

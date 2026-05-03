@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
-import { App, Empty, Select, Table, Tag, Typography, Card, Descriptions, Spin, Badge } from '@/components/design/system'
+import { App, Select, Table, Tag, Card, Descriptions, Spin, Badge } from '@/components/design/system'
 import type { ColumnsType } from '@/components/design/types'
 import { axiosInstance } from '@/api/axios-instance'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
 
 interface AdminUser {
   id: string
@@ -116,10 +115,10 @@ export default function RoleManagement() {
       key: 'admin_sub_role',
       render: (role: string, record) => (
         <Select
+          className="rh-admin-role-select"
           value={role}
           onChange={(value) => handleRoleChange(record.id, value)}
           loading={saving === record.id}
-          style={{ width: 180 }}
           options={Object.entries(SUB_ROLE_LABELS).map(([value, { text }]) => ({
             value,
             label: text,
@@ -153,46 +152,63 @@ export default function RoleManagement() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: 48 }}>
-        <Spin size="large" />
+      <div className="rh-stack rh-admin-reference-page">
+        <PageHeader
+          eyebrow="Администрирование"
+          title="Управление ролями администраторов"
+          description="Роли, 2FA и матрица разрешений админов в едином рабочем виде."
+        />
+        <Card className="rh-admin-reference-card" title="Администраторы">
+          <div className="rh-admin-state-card">
+            <Spin size="large" />
+            <span>Загружаем роли администраторов</span>
+          </div>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div>
-      <Title level={2}>Управление ролями администраторов</Title>
-
-      <Table
-        columns={columns}
-        dataSource={admins}
-        rowKey="id"
-        pagination={false}
-        locale={{ emptyText: <Empty description="Нет администраторов" /> }}
-        style={{ marginBottom: 32 }}
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Администрирование"
+        title="Управление ролями администраторов"
+        description="Роли, 2FA и матрица разрешений админов в едином рабочем виде."
       />
 
+      <Card className="rh-admin-reference-card" title="Администраторы">
+        <Table
+          columns={columns}
+          dataSource={admins}
+          rowKey="id"
+          pagination={false}
+          locale={{ emptyText: 'Нет администраторов' }}
+        />
+      </Card>
+
       {matrix && (
-        <Card title="Матрица разрешений" style={{ marginTop: 24 }}>
-          <Descriptions bordered column={1} size="small">
-            {matrix.permissions.map((perm) => (
-              <Descriptions.Item
-                key={perm}
-                label={PERMISSION_LABELS[perm] ?? perm}
-              >
-                {matrix.roles
-                  .filter((role) => matrix.matrix[role]?.includes(perm))
-                  .map((role) => {
-                    const label = SUB_ROLE_LABELS[role]
-                    return (
-                      <Tag key={role} color={label?.color ?? 'default'}>
-                        {label?.text ?? role}
-                      </Tag>
-                    )
-                  })}
-              </Descriptions.Item>
-            ))}
-          </Descriptions>
+        <Card className="rh-admin-reference-card rh-admin-matrix-card" title="Матрица разрешений">
+          <div className="rh-admin-descriptions-wrap">
+            <Descriptions bordered column={1} size="small">
+              {matrix.permissions.map((perm) => (
+                <Descriptions.Item
+                  key={perm}
+                  label={PERMISSION_LABELS[perm] ?? perm}
+                >
+                  {matrix.roles
+                    .filter((role) => matrix.matrix[role]?.includes(perm))
+                    .map((role) => {
+                      const label = SUB_ROLE_LABELS[role]
+                      return (
+                        <Tag key={role} color={label?.color ?? 'default'}>
+                          {label?.text ?? role}
+                        </Tag>
+                      )
+                    })}
+                </Descriptions.Item>
+              ))}
+            </Descriptions>
+          </div>
         </Card>
       )}
     </div>

@@ -17,6 +17,11 @@ func mountAdminRoutes(
 	r.Route("/admin", func(r chi.Router) {
 		r.Use(auth)
 		r.Use(middleware.RequireRole(domain.RoleAdmin))
+		// Always enforce 2FA on /admin — gating this on IsDevEnvironment was
+		// fail-open (default Environment is "dev"), so any deployment that
+		// hadn't explicitly set BANI_ENVIRONMENT=production accepted single
+		// factor admin sessions. Demo/local admins should use the seeded
+		// TOTP secret from cmd/server/seed_demo.go instead.
 		r.Use(middleware.RequireAdmin2FA(p.Admin2FAChecker))
 		r.Use(middleware.LoadAdminSubRole(p.AdminSubRoleResolver))
 		r.Use(middleware.AdminAudit(p.AuditLogRepo, p.Log))

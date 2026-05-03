@@ -163,7 +163,7 @@ export default function Register() {
       )}
     >
       <Card variant="borderless" className="rh-auth-surface">
-        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" className="rh-full-width">
           <Segmented
             className="rh-auth-segmented"
             options={ROLE_OPTIONS}

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { App, Button, Card, Empty, List, Pagination, Typography } from '@/components/design/system'
+import { App, Button, Card, List, Pagination, Typography } from '@/components/design/system'
 import { CheckOutlined, BellOutlined } from '@/components/design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
@@ -12,6 +12,7 @@ import {
 } from '@/api/generated/notifications/notifications'
 import PageHeader from '@/components/PageHeader'
 import { NOTIFICATION_TYPE_LABELS } from '@/lib/constants'
+import EmptyState from '@/components/EmptyState'
 
 dayjs.extend(relativeTime)
 dayjs.locale('ru')
@@ -99,23 +100,22 @@ export default function NotificationList() {
         </div>
       </section>
 
-      <Card>
+      <Card className="rh-admin-detail-card">
         <List
           loading={isLoading}
           dataSource={notifications}
           locale={{
             emptyText: (
-              <Empty
-                image={<BellOutlined style={{ fontSize: 48, color: '#c9c1b5' }} />}
+              <EmptyState
+                image={<BellOutlined className="rh-empty-state-icon" />}
                 description="Нет уведомлений"
               />
             ),
           }}
           renderItem={(item) => (
-            <List.Item style={{ padding: 0, border: 0, marginBottom: 12 }}>
+            <List.Item className="rh-notification-list-item">
               <div
-                className={`rh-feed-item${item.is_read ? '' : ' rh-feed-item--unread'}`}
-                style={{ width: '100%', cursor: item.is_read ? 'default' : 'pointer' }}
+                className={`rh-feed-item${item.is_read ? '' : ' rh-feed-item--unread rh-feed-item--interactive'}`}
                 onClick={() => {
                   if (!item.is_read && item.id) {
                     markOneRead.mutate({ id: item.id })
@@ -153,7 +153,7 @@ export default function NotificationList() {
           )}
         />
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+        <div className="rh-pagination-bar">
           <Pagination
             current={page}
             pageSize={pageSize}

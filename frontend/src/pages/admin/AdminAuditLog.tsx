@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Typography, Table, Tag, Space, Input, Select, DatePicker, Card, Segmented } from '@/components/design/system'
+import { Table, Tag, Space, Input, Select, DatePicker, Card, Segmented } from '@/components/design/system'
 import type { ColumnsType } from '@/components/design/types'
 import { useGetAdminAuditLog, useGetAdminAuditLogActions } from '@/api/generated/admin-audit/admin-audit'
 import type { InternalHandlerAuditLogResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
 import dayjs from 'dayjs'
+import PageHeader from '@/components/PageHeader'
 
-const { Title } = Typography
 const { RangePicker } = DatePicker
 
 function actionTag(action?: string) {
@@ -132,9 +132,12 @@ export default function AdminAuditLog() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>Журнал аудита</Title>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Контроль"
+        title="Журнал аудита"
+        description="История действий администраторов и изменений сущностей с фильтрами по периоду и типам."
+        extra={
         <Segmented
           options={[
             { label: 'Действия админов', value: 'actions' },
@@ -143,64 +146,68 @@ export default function AdminAuditLog() {
           value={tab}
           onChange={(v) => { setTab(v as TabKey); resetFilters() }}
         />
-      </div>
+        }
+      />
 
-      <Card style={{ marginBottom: 16 }}>
-        <Space wrap>
+      <Card className="rh-admin-filter-card" title="Фильтры">
+        <Space className="rh-admin-filter-row" wrap>
           {tab === 'entities' && (
             <>
               <Select
+                className="rh-admin-filter-select"
                 placeholder="Тип сущности"
                 allowClear
-                style={{ width: 180 }}
                 value={entityType}
                 onChange={(v) => { setEntityType(v); setPage(1) }}
                 options={ENTITY_TYPES}
               />
               <Input
+                className="rh-admin-filter-input"
                 placeholder="ID сущности"
                 allowClear
-                style={{ width: 240 }}
                 value={entityId}
                 onChange={(e) => { setEntityId(e.target.value); setPage(1) }}
               />
             </>
           )}
           <Input
+            className="rh-admin-filter-input"
             placeholder={tab === 'actions' ? 'ID администратора' : 'ID пользователя'}
             allowClear
-            style={{ width: 240 }}
             value={userId}
             onChange={(e) => { setUserId(e.target.value); setPage(1) }}
           />
           <Select
+            className="rh-admin-filter-select"
             placeholder="Действие"
             allowClear
-            style={{ width: 160 }}
             value={action}
             onChange={(v) => { setAction(v); setPage(1) }}
             options={ACTION_TYPES}
           />
           <RangePicker
+            className="rh-admin-form-control"
             value={dateRange}
             onChange={(dates) => { setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null); setPage(1) }}
           />
         </Space>
       </Card>
 
-      <Table
-        columns={columns}
-        dataSource={entries}
-        rowKey="id"
-        loading={activeQuery.isLoading}
-        pagination={{
-          current: page,
-          pageSize: 20,
-          total: meta?.total_count,
-          onChange: setPage,
-        }}
-        locale={{ emptyText: 'Нет записей' }}
-      />
+      <Card className="rh-admin-reference-card" title="Записи аудита">
+        <Table
+          columns={columns}
+          dataSource={entries}
+          rowKey="id"
+          loading={activeQuery.isLoading}
+          pagination={{
+            current: page,
+            pageSize: 20,
+            total: meta?.total_count,
+            onChange: setPage,
+          }}
+          locale={{ emptyText: 'Нет записей' }}
+        />
+      </Card>
     </div>
   )
 }

@@ -2,8 +2,8 @@ import { useState } from 'react'
 import {
   App,
   Button,
+  Card,
   DatePicker,
-  Empty,
   Form,
   Input,
   Modal,
@@ -13,7 +13,6 @@ import {
   Switch,
   Table,
   Tag,
-  Typography,
 } from '@/components/design/system'
 import {
   PlusOutlined,
@@ -24,8 +23,7 @@ import type { ColumnsType } from '@/components/design/types'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { axiosInstance } from '@/api/axios-instance'
 import dayjs from 'dayjs'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
 
 interface Holiday {
   id: string
@@ -206,16 +204,17 @@ export default function HolidayManagement() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>
-          Праздничные дни
-        </Title>
-        <Space>
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Календарь"
+        title="Праздничные дни"
+        description="Региональные праздничные дни и ежегодные исключения для расписаний платформы."
+        extra={
+          <Space wrap>
           <Select
+            className="rh-admin-filter-select"
             allowClear
             placeholder="Регион"
-            style={{ width: 150 }}
             value={regionFilter}
             onChange={setRegionFilter}
             options={[
@@ -226,25 +225,37 @@ export default function HolidayManagement() {
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
             Добавить праздник
           </Button>
-        </Space>
-      </div>
+          </Space>
+        }
+      />
 
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}>
-          <Spin size="large" />
-        </div>
-      ) : holidays.length === 0 ? (
-        <Empty description="Нет праздников" />
-      ) : (
-        <Table
-          dataSource={holidays}
-          columns={columns}
-          rowKey="id"
-          pagination={false}
-          size="middle"
-          locale={{ emptyText: 'Нет праздников' }}
-        />
-      )}
+      <Card className="rh-admin-reference-card" title="Календарь праздников">
+        {isLoading ? (
+          <div className="rh-admin-state-card">
+            <Spin size="large" />
+            <span>Загружаем праздники</span>
+          </div>
+        ) : holidays.length === 0 ? (
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет праздников</div>
+            <p className="rh-admin-empty-state__text">
+              Добавьте праздничный день, чтобы учитывать региональные исключения в календарях.
+            </p>
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+              Добавить праздник
+            </Button>
+          </div>
+        ) : (
+          <Table
+            dataSource={holidays}
+            columns={columns}
+            rowKey="id"
+            pagination={false}
+            size="middle"
+            locale={{ emptyText: 'Нет праздников' }}
+          />
+        )}
+      </Card>
 
       <Modal
         title={editingItem ? 'Редактировать праздник' : 'Добавить праздник'}
@@ -255,7 +266,7 @@ export default function HolidayManagement() {
         cancelText="Отмена"
         confirmLoading={createMutation.isPending || updateMutation.isPending}
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        <Form form={form} layout="vertical" className="rh-admin-modal-form">
           <Form.Item
             name="name"
             label="Название"
@@ -268,7 +279,7 @@ export default function HolidayManagement() {
             label="Дата"
             rules={[{ required: true, message: 'Выберите дату' }]}
           >
-            <DatePicker style={{ width: '100%' }} format="DD.MM.YYYY" />
+            <DatePicker className="rh-admin-form-control" format="DD.MM.YYYY" />
           </Form.Item>
           <Form.Item
             name="region"

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   App,
   Button,
-  Empty,
+  Card,
   Form,
   Input,
   InputNumber,
@@ -135,7 +135,7 @@ export default function ServiceFeeConfig() {
   ]
 
   return (
-    <div>
+    <div className="rh-stack rh-admin-reference-page">
       <PageHeader
         eyebrow="Финансовая политика"
         title="Комиссия платформы"
@@ -147,20 +147,33 @@ export default function ServiceFeeConfig() {
         }
       />
 
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: 48 }}><Spin size="large" /></div>
-      ) : configs.length === 0 ? (
-        <Empty description="Нет настроек комиссии" />
-      ) : (
-        <Table
-          dataSource={configs}
-          columns={columns}
-          rowKey="id"
-          pagination={false}
-          size="middle"
-          locale={{ emptyText: 'Нет настроек комиссии' }}
-        />
-      )}
+      <Card className="rh-admin-reference-card" title="Правила комиссий">
+        {isLoading ? (
+          <div className="rh-admin-state-card">
+            <Spin size="large" />
+            <span>Загружаем правила комиссий</span>
+          </div>
+        ) : configs.length === 0 ? (
+          <div className="rh-admin-empty-state">
+            <div className="rh-admin-empty-state__title">Нет настроек комиссии</div>
+            <p className="rh-admin-empty-state__text">
+              Добавьте глобальное правило или региональное переопределение, чтобы управлять комиссией из единого справочника.
+            </p>
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
+              Добавить
+            </Button>
+          </div>
+        ) : (
+          <Table
+            dataSource={configs}
+            columns={columns}
+            rowKey="id"
+            pagination={false}
+            size="middle"
+            locale={{ emptyText: 'Нет настроек комиссии' }}
+          />
+        )}
+      </Card>
 
       <Modal
         title={editingConfig ? 'Редактировать комиссию' : 'Добавить комиссию'}
@@ -171,7 +184,7 @@ export default function ServiceFeeConfig() {
         cancelText="Отмена"
         confirmLoading={upsertMutation.isPending}
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        <Form form={form} layout="vertical" className="rh-admin-modal-form">
           <Form.Item
             name="region"
             label="Регион"
@@ -191,7 +204,7 @@ export default function ServiceFeeConfig() {
             <Space.Compact className="rh-compact-control">
               <Form.Item name="fee_percent" noStyle rules={[{ required: true, message: 'Укажите процент' }]}>
                 <InputNumber
-                  style={{ width: '100%' }}
+                  className="rh-admin-form-control"
                   min={0}
                   max={25}
                   step={0.5}

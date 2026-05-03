@@ -11,7 +11,6 @@ import {
   Statistic,
   Table,
   Tag,
-  Typography,
 } from '@/components/design/system'
 import {
   DownloadOutlined,
@@ -28,8 +27,7 @@ import { formatPrice } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
 import { customInstance } from '@/api/axios-instance'
 import EmptyState from '@/components/EmptyState'
-
-const { Title } = Typography
+import PageHeader from '@/components/PageHeader'
 
 const SORT_OPTIONS = [
   { value: 'last_visit', label: 'Последний визит' },
@@ -89,7 +87,7 @@ export default function GuestCardList() {
       dataIndex: 'client_id',
       key: 'client_id',
       render: (id: string) => (
-        <Tag icon={<UserOutlined />} style={{ fontFamily: 'monospace' }}>
+        <Tag icon={<UserOutlined />} className="rh-code-tag">
           {id?.slice(0, 8)}...
         </Tag>
       ),
@@ -141,16 +139,21 @@ export default function GuestCardList() {
   ]
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>Гостевые карточки</Title>
-        <Button icon={<DownloadOutlined />} onClick={handleExportCSV}>
-          Экспорт CSV
-        </Button>
-      </div>
+    <div className="rh-stack">
+      <PageHeader
+        eyebrow="CRM"
+        title="Гостевые карточки"
+        description="Поиск гостей, сегментация и экспорт CRM-базы."
+        size="compact"
+        extra={(
+          <Button icon={<DownloadOutlined />} onClick={handleExportCSV}>
+            Экспорт CSV
+          </Button>
+        )}
+      />
 
       {stats && (
-        <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Row gutter={16} className="rh-section-spaced">
           <Col xs={12} sm={6}>
             <Card size="small">
               <Statistic title="Всего гостей" value={stats.total_guests ?? 0} />
@@ -174,27 +177,27 @@ export default function GuestCardList() {
         </Row>
       )}
 
-      <Space style={{ marginBottom: 16 }} wrap>
+      <Space className="rh-page-toolbar" wrap>
         <Input
           placeholder="Поиск по имени, email, телефону"
           prefix={<SearchOutlined />}
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-          style={{ width: 280 }}
+          className="rh-crm-search-control"
           allowClear
         />
         <Input
           placeholder="Фильтр по тегу"
           value={tag}
           onChange={(e) => { setTag(e.target.value || undefined); setPage(1) }}
-          style={{ width: 160 }}
+          className="rh-crm-tag-control"
           allowClear
         />
         <Select
           value={sortBy}
           onChange={(v) => { setSortBy(v); setPage(1) }}
           options={SORT_OPTIONS}
-          style={{ width: 180 }}
+          className="rh-crm-status-filter"
         />
       </Space>
 
@@ -206,7 +209,7 @@ export default function GuestCardList() {
         locale={{ emptyText: <EmptyState description="Гостей пока нет. Они появятся после первого завершённого бронирования" /> }}
         onRow={(record: InternalHandlerGuestCardResponse) => ({
           onClick: () => record.id && navigate(`/crm/guests/${record.id}`),
-          style: { cursor: 'pointer' },
+          className: 'rh-clickable-row',
         })}
         pagination={
           totalCount > pageSize

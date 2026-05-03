@@ -10,10 +10,13 @@ import {
   isValidElement,
   useContext,
   useEffect,
+  useId,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react'
+import { createPortal } from 'react-dom'
 import type {
   ButtonHTMLAttributes,
   ChangeEvent,
@@ -568,7 +571,12 @@ function InputInner({
   const input = (
     <input
       ref={ref}
-      className={cx('rh-input', 'ant-input', className)}
+      className={cx(
+        'rh-input',
+        'ant-input',
+        'min-h-[50px] w-full rounded-rh-md border border-[rgba(15,23,42,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(251,247,240,0.96))] px-3.5 py-3 font-sans text-[15px] font-medium text-rh-text shadow-rh-control outline-none transition placeholder:text-[rgba(95,104,119,0.72)] hover:border-[rgba(15,118,110,0.28)] focus:border-[rgba(15,118,110,0.52)] focus:shadow-rh-control-focus disabled:cursor-not-allowed disabled:bg-[rgba(244,239,231,0.82)] disabled:text-[rgba(22,33,43,0.42)]',
+        className,
+      )}
       value={value}
       onChange={onChange}
       onKeyDown={(event) => {
@@ -593,7 +601,7 @@ function InputInner({
   ) : null
 
   const wrapped = prefix || suffix || clear ? (
-    <span className="rh-input-affix ant-input-affix-wrapper">
+    <span className="rh-input-affix ant-input-affix-wrapper flex min-h-[50px] w-full items-center gap-2 rounded-rh-md border border-[rgba(15,23,42,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(251,247,240,0.96))] px-3.5 py-0 shadow-rh-control transition focus-within:border-[rgba(15,118,110,0.52)] focus-within:shadow-rh-control-focus">
       {prefix && <span className="ant-input-prefix">{prefix}</span>}
       {input}
       {clear}
@@ -603,7 +611,7 @@ function InputInner({
 
   if (addonBefore || addonAfter) {
     return (
-      <span className="rh-compact-control ant-space-compact">
+      <span className="rh-compact-control ant-space-compact inline-flex w-full items-stretch">
         {addonBefore && <span className="rh-input-addon">{addonBefore}</span>}
         {wrapped}
         {addonAfter && <span className="rh-input-addon">{addonAfter}</span>}
@@ -632,7 +640,12 @@ const TextArea = forwardRef<TextAreaRef, TextAreaProps>(function TextArea({ clas
   return (
     <textarea
       ref={textAreaRef}
-      className={cx('rh-input', 'ant-input', className)}
+      className={cx(
+        'rh-input',
+        'ant-input',
+        'min-h-[96px] w-full rounded-rh-md border border-[rgba(15,23,42,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(251,247,240,0.96))] px-3.5 py-3 font-sans text-[15px] font-medium text-rh-text shadow-rh-control outline-none transition placeholder:text-[rgba(95,104,119,0.72)] hover:border-[rgba(15,118,110,0.28)] focus:border-[rgba(15,118,110,0.52)] focus:shadow-rh-control-focus disabled:cursor-not-allowed disabled:bg-[rgba(244,239,231,0.82)] disabled:text-[rgba(22,33,43,0.42)]',
+        className,
+      )}
       onKeyDown={(event) => {
         if (event.key === 'Enter') onPressEnter?.(event)
         onKeyDown?.(event)
@@ -652,11 +665,11 @@ interface SearchProps extends InputProps {
   onSearch?: (value: string) => void
 }
 
-function Search({ enterButton, loading, onSearch, onKeyDown, ...props }: SearchProps) {
+function Search({ enterButton, loading, onSearch, onKeyDown, className, style, ...props }: SearchProps) {
   const [value, setValue] = useState(String(props.value ?? props.defaultValue ?? ''))
   const searchValue = props.value !== undefined ? String(props.value) : value
   return (
-    <span className="rh-input-search ant-input-search">
+    <span className={cx('rh-input-search ant-input-search', className)} style={style}>
       <BaseInput
         {...props}
         value={searchValue}
@@ -786,44 +799,284 @@ function SelectRoot({
   children,
   ...props
 }: SelectProps) {
+  const rootRef = useRef<HTMLSpanElement>(null)
+  const dropdownRef = useRef<HTMLSpanElement>(null)
+  const [open, setOpen] = useState(false)
+  const [internalValue, setInternalValue] = useState(defaultValue ?? (mode ? [] : ''))
+  const [dropdownStyle, setDropdownStyle] = useState<CSSProperties | undefined>(undefined)
+  const [activeIndex, setActiveIndex] = useState(-1)
   const resolvedOptions = options ?? optionsFromChildren(children)
   const optionByDomValue = new Map(resolvedOptions.map((option) => [String(option.value), option]))
-  const selectedValue = value ?? defaultValue ?? (mode ? [] : '')
+  const selectedValue = value !== undefined ? value : internalValue
   const selectedOptions = mode && Array.isArray(selectedValue)
     ? selectedValue.map((item) => resolvedOptions.find((option) => option.value === item)).filter(Boolean) as SelectOption[]
     : []
   const selectedOption = !mode ? optionByDomValue.get(String(selectedValue ?? '')) : undefined
+  const hasSelection = mode ? selectedOptions.length > 0 : selectedValue !== '' && selectedValue != null
   const displayLabel = mode
     ? selectedOptions.map((option) => textFromNode(option.label ?? option.value)).join(', ')
-    : textFromNode(selectedOption?.label ?? placeholder ?? '')
+    : textFromNode(selectedOption?.label ?? (hasSelection ? selectedValue : placeholder) ?? '')
   const hasEmptyOption = resolvedOptions.some((option) => String(option.value) === '')
+  const dropdownOptions = allowClear && !mode && !hasEmptyOption
+    ? [{ value: '', label: placeholder ?? 'Очистить' }, ...resolvedOptions]
+    : resolvedOptions
+  const popupRootClassName = typeof _classNames?.popup?.root === 'string' ? _classNames.popup.root : undefined
+  const dropdownId = id ? `${id}-dropdown` : undefined
+
+  useLayoutEffect(() => {
+    if (!open || typeof window === 'undefined') return
+
+    const updatePosition = () => {
+      const trigger = rootRef.current
+      if (!trigger) return
+
+      const rect = trigger.getBoundingClientRect()
+      const viewportPadding = 12
+      const gap = 8
+      const width = Math.min(Math.max(rect.width, 220), Math.max(220, window.innerWidth - viewportPadding * 2))
+      const left = Math.min(
+        Math.max(rect.left, viewportPadding),
+        Math.max(viewportPadding, window.innerWidth - width - viewportPadding),
+      )
+      const estimatedHeight = Math.min(dropdownOptions.length * 46 + 16, 320)
+      const availableBelow = window.innerHeight - rect.bottom - gap - viewportPadding
+      const availableAbove = rect.top - gap - viewportPadding
+      const placeAbove = availableBelow < estimatedHeight && availableAbove > availableBelow
+      const availableHeight = Math.max(96, placeAbove ? availableAbove : availableBelow)
+      const maxHeight = Math.min(320, availableHeight)
+      const popupHeight = Math.min(estimatedHeight, maxHeight)
+      const top = placeAbove
+        ? Math.max(viewportPadding, rect.top - gap - popupHeight)
+        : rect.bottom + gap
+
+      setDropdownStyle({
+        position: 'fixed',
+        top,
+        left,
+        width,
+        maxHeight,
+      })
+    }
+
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
+  }, [dropdownOptions.length, open])
+
+  useEffect(() => {
+    if (!open) {
+      setActiveIndex(-1)
+      return
+    }
+    if (mode) {
+      const firstEnabled = dropdownOptions.findIndex((option) => !option.disabled)
+      setActiveIndex(firstEnabled)
+      return
+    }
+    const selectedIdx = dropdownOptions.findIndex((option) => String(option.value) === String(selectedValue ?? ''))
+    const selectedOpt = selectedIdx >= 0 ? dropdownOptions[selectedIdx] : undefined
+    if (selectedOpt && !selectedOpt.disabled) {
+      setActiveIndex(selectedIdx)
+    } else {
+      setActiveIndex(dropdownOptions.findIndex((option) => !option.disabled))
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open || activeIndex < 0 || !dropdownRef.current) return
+    const optionEls = dropdownRef.current.querySelectorAll('[role="option"]')
+    const target = optionEls[activeIndex] as HTMLElement | undefined
+    if (target && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ block: 'nearest' })
+    }
+  }, [activeIndex, open])
+
+  useEffect(() => {
+    if (!open) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node
+      if (!rootRef.current?.contains(target) && !dropdownRef.current?.contains(target)) {
+        setOpen(false)
+      }
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open])
+
+  const commitValue = (nextValue: any, option: SelectOption) => {
+    if (mode) {
+      const current = Array.isArray(selectedValue) ? selectedValue : []
+      const exists = current.some((item) => String(item) === String(nextValue))
+      const next = exists
+        ? current.filter((item) => String(item) !== String(nextValue))
+        : [...current, nextValue]
+      if (value === undefined) setInternalValue(next)
+      onChange?.(next, next.map((item) => resolvedOptions.find((candidate) => candidate.value === item) ?? { value: item }))
+      return
+    }
+
+    if (value === undefined) setInternalValue(nextValue)
+    onChange?.(nextValue, option)
+    setOpen(false)
+  }
+
   return (
-    <span className={cx('rh-select', 'ant-select', disabled && 'ant-select-disabled', mode ? 'ant-select-multiple' : 'ant-select-single', className)} style={style} {...props}>
-      <span className={cx('rh-select__value', selectedValue === '' && 'ant-select-selection-placeholder', selectedValue !== '' && 'ant-select-selection-item')}>
-        {displayLabel}
-      </span>
-      <select
+    <span
+      ref={rootRef}
+      className={cx(
+        'rh-select',
+        'ant-select',
+        'relative inline-flex w-full min-w-0 items-stretch',
+        disabled && 'ant-select-disabled cursor-not-allowed opacity-60',
+        mode ? 'ant-select-multiple' : 'ant-select-single',
+        className,
+      )}
+      style={style}
+      {...props}
+    >
+      <button
+        type="button"
         id={id}
-        className="rh-select__control ant-select-selector"
+        className="rh-select__trigger ant-select-selector"
         disabled={disabled}
-        multiple={Boolean(mode)}
-        value={mode ? (Array.isArray(selectedValue) ? selectedValue.map(String) : []) : String(selectedValue ?? '')}
-        onChange={(event) => {
-          if (mode) {
-            const selected = Array.from(event.currentTarget.selectedOptions).map((option) => optionByDomValue.get(option.value)?.value ?? option.value)
-            onChange?.(selected, selected.map((item) => resolvedOptions.find((option) => option.value === item) ?? { value: item }))
-            return
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-controls={dropdownId}
+        aria-activedescendant={open && activeIndex >= 0 && dropdownId
+          ? `${dropdownId}-opt-${activeIndex}`
+          : undefined}
+        onClick={() => {
+          if (!disabled) setOpen((current) => !current)
+        }}
+        onKeyDown={(event) => {
+          if (disabled) return
+          const moveActive = (delta: number) => {
+            if (dropdownOptions.length === 0) return
+            const enabled: number[] = []
+            for (let i = 0; i < dropdownOptions.length; i++) {
+              const opt = dropdownOptions[i]
+              if (opt && !opt.disabled) enabled.push(i)
+            }
+            if (enabled.length === 0) return
+            const cur = enabled.indexOf(activeIndex)
+            const baseline = cur >= 0 ? cur : (delta > 0 ? -1 : 0)
+            const nextPos = (baseline + delta + enabled.length) % enabled.length
+            const target = enabled[nextPos]
+            if (target !== undefined) setActiveIndex(target)
           }
-          const option = optionByDomValue.get(event.currentTarget.value)
-          onChange?.(option?.value ?? event.currentTarget.value, option)
+          switch (event.key) {
+            case 'ArrowDown':
+              event.preventDefault()
+              if (!open) setOpen(true)
+              else moveActive(1)
+              return
+            case 'ArrowUp':
+              event.preventDefault()
+              if (!open) setOpen(true)
+              else moveActive(-1)
+              return
+            case 'Home':
+              if (!open) return
+              event.preventDefault()
+              {
+                const idx = dropdownOptions.findIndex((option) => !option.disabled)
+                if (idx >= 0) setActiveIndex(idx)
+              }
+              return
+            case 'End':
+              if (!open) return
+              event.preventDefault()
+              for (let i = dropdownOptions.length - 1; i >= 0; i--) {
+                const opt = dropdownOptions[i]
+                if (opt && !opt.disabled) {
+                  setActiveIndex(i)
+                  break
+                }
+              }
+              return
+            case 'Enter':
+            case ' ': {
+              event.preventDefault()
+              if (!open) {
+                setOpen(true)
+                return
+              }
+              const option = dropdownOptions[activeIndex]
+              if (option && !option.disabled) commitValue(option.value, option)
+              return
+            }
+            case 'Escape':
+              if (open) {
+                event.preventDefault()
+                setOpen(false)
+              }
+              return
+            default:
+              return
+          }
         }}
       >
-        {placeholder && !mode && selectedValue === '' && !hasEmptyOption && <option value="" aria-label={textFromNode(placeholder)} />}
-        {allowClear && !mode && !hasEmptyOption && <option value="" aria-label="Очистить" />}
-        {resolvedOptions.map((option) => (
-          <option key={String(option.value)} value={String(option.value)} disabled={option.disabled} aria-label={textFromNode(option.label ?? option.value)} />
-        ))}
-      </select>
+        <span className={cx('rh-select__value min-w-0 flex-1 truncate font-sans text-[15px] font-medium', !hasSelection && 'ant-select-selection-placeholder text-[rgba(95,104,119,0.72)]', hasSelection && 'ant-select-selection-item text-rh-text')}>
+          {displayLabel}
+        </span>
+      </button>
+      {open && !disabled && typeof document !== 'undefined' && createPortal(
+        <span
+          ref={dropdownRef}
+          id={dropdownId}
+          className={cx('rh-select__dropdown ant-select-dropdown', _dropdownClassName, _popupClassName, popupRootClassName)}
+          role="listbox"
+          aria-multiselectable={Boolean(mode)}
+          style={dropdownStyle}
+        >
+          {dropdownOptions.map((option, idx) => {
+            const selected = mode && Array.isArray(selectedValue)
+              ? selectedValue.some((item) => String(item) === String(option.value))
+              : String(selectedValue ?? '') === String(option.value)
+            const active = idx === activeIndex
+            return (
+              <button
+                key={String(option.value)}
+                id={dropdownId ? `${dropdownId}-opt-${idx}` : undefined}
+                type="button"
+                className={cx(
+                  'rh-select__option ant-select-item ant-select-item-option',
+                  selected && 'rh-select__option--selected ant-select-item-option-selected',
+                  active && 'ant-select-item-option-active',
+                  option.disabled && 'ant-select-item-option-disabled',
+                )}
+                role="option"
+                aria-selected={selected}
+                disabled={option.disabled}
+                onMouseEnter={() => { if (!option.disabled) setActiveIndex(idx) }}
+                onClick={() => commitValue(option.value, option)}
+              >
+                <span className="ant-select-item-option-state" aria-hidden="true">
+                  {selected ? '✓' : ''}
+                </span>
+                <span className="ant-select-item-option-content">
+                  {option.label ?? option.value}
+                </span>
+              </button>
+            )
+          })}
+        </span>,
+        document.body,
+      )}
       <span className="ant-select-arrow" aria-hidden="true">{suffixIcon ?? '⌄'}</span>
     </span>
   )
@@ -1281,6 +1534,7 @@ export function Table<T extends object>({
   const pageSize = hasPagination ? pagination.pageSize ?? 10 : dataSource.length || 10
   const pagedData = !hasPagination ? dataSource : dataSource.slice((page - 1) * pageSize, page * pageSize)
   const isLoading = typeof loading === 'object' ? loading.spinning : loading
+  const tableStyle = scroll?.x ? { minWidth: typeof scroll.x === 'number' ? `${scroll.x}px` : scroll.x } : undefined
 
   const toggleSelected = (key: Key, record: T, checked: boolean) => {
     const nextKeys = checked ? [...selectedKeys, key] : selectedKeys.filter((item) => item !== key)
@@ -1294,7 +1548,7 @@ export function Table<T extends object>({
       <div className="ant-table">
         <div className="ant-table-container">
           <div className="ant-table-content" style={scroll?.x ? { overflowX: 'auto' } : undefined}>
-            <table>
+            <table style={tableStyle}>
               <thead className="ant-table-thead">
                 <tr>
                   {rowSelection && <th className="ant-table-selection-column" />}
@@ -1353,8 +1607,14 @@ export function Table<T extends object>({
                         {visibleColumns.map((column, columnIndex) => {
                           const value = cellValue(record, column.dataIndex)
                           return (
-                            <td key={String(column.key ?? column.dataIndex ?? columnIndex)} className={column.className} style={{ textAlign: column.align }}>
-                              {column.render ? column.render(value, record, index) : value as ReactNode}
+                            <td
+                              key={String(column.key ?? column.dataIndex ?? columnIndex)}
+                              className={cx(column.className, column.ellipsis && 'ant-table-cell-ellipsis')}
+                              style={{ width: column.width, textAlign: column.align }}
+                            >
+                              <div className="rh-table__cell-inner">
+                                {column.render ? column.render(value, record, index) : value as ReactNode}
+                              </div>
                             </td>
                           )
                         })}
@@ -1402,6 +1662,61 @@ interface ModalProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   [key: string]: any
 }
 
+// Stack of overlay Escape handlers — one document listener routes Escape to
+// only the topmost overlay. Per-instance listeners would all fire on a single
+// Escape and dismiss every stacked dialog at once, losing in-progress input.
+const overlayEscapeStack: Array<() => void> = []
+let overlayEscapeListenerAttached = false
+function handleOverlayEscape(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || overlayEscapeStack.length === 0) return
+  const top = overlayEscapeStack[overlayEscapeStack.length - 1]
+  top?.()
+}
+function pushOverlayEscapeHandler(handler: () => void): () => void {
+  if (typeof document === 'undefined') return () => {}
+  overlayEscapeStack.push(handler)
+  if (!overlayEscapeListenerAttached) {
+    document.addEventListener('keydown', handleOverlayEscape)
+    overlayEscapeListenerAttached = true
+  }
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    const idx = overlayEscapeStack.lastIndexOf(handler)
+    if (idx >= 0) overlayEscapeStack.splice(idx, 1)
+    if (overlayEscapeStack.length === 0 && overlayEscapeListenerAttached) {
+      document.removeEventListener('keydown', handleOverlayEscape)
+      overlayEscapeListenerAttached = false
+    }
+  }
+}
+
+// Body-scroll lock shared by Modal/Drawer. A ref-counted handle lets stacked
+// overlays coexist: the body stays scroll-locked until the *last* open
+// overlay releases its lock, so closing an inner modal can no longer
+// re-enable page scroll while an outer one is still open.
+let bodyScrollLockCount = 0
+let bodyScrollLockPreviousOverflow = ''
+function acquireBodyScrollLock(): () => void {
+  if (typeof document === 'undefined') return () => {}
+  if (bodyScrollLockCount === 0) {
+    bodyScrollLockPreviousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+  }
+  bodyScrollLockCount += 1
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    bodyScrollLockCount = Math.max(0, bodyScrollLockCount - 1)
+    if (bodyScrollLockCount === 0) {
+      document.body.style.overflow = bodyScrollLockPreviousOverflow
+      bodyScrollLockPreviousOverflow = ''
+    }
+  }
+}
+
 export function Modal({
   open,
   visible,
@@ -1416,33 +1731,61 @@ export function Modal({
   onOk,
   onCancel,
   className,
+  style,
   children,
   destroyOnClose: _destroyOnClose,
   destroyOnHidden: _destroyOnHidden,
-  closable: _closable,
+  closable = true,
   centered: _centered,
   forceRender: _forceRender,
   ...props
 }: ModalProps) {
-  if (!(open ?? visible)) return null
+  const titleId = useId()
+  const isOpen = Boolean(open ?? visible)
+  useEffect(() => {
+    if (!isOpen) return
+
+    const releaseScrollLock = acquireBodyScrollLock()
+    const releaseEscape = pushOverlayEscapeHandler(() => onCancel?.())
+    return () => {
+      releaseScrollLock()
+      releaseEscape()
+    }
+  }, [isOpen, onCancel])
+  if (!isOpen) return null
+  const modalStyle = {
+    ...style,
+    ...(width !== undefined ? { width } : {}),
+  } as CSSProperties
   const defaultFooter = footer === undefined ? (
     <>
       <button type="button" className="rh-btn ant-btn ant-btn-default" onClick={onCancel} {...cancelButtonProps}>{cancelText ?? 'Отмена'}</button>
       <button type="button" className="rh-btn ant-btn ant-btn-primary" disabled={confirmLoading || okButtonProps?.loading || okButtonProps?.disabled} onClick={onOk} {...okButtonProps}>{okText ?? 'OK'}</button>
     </>
   ) : footer
-  return (
+  const modalNode = (
     <div className="rh-modal-root">
       <button type="button" className="rh-modal-mask" aria-label="Закрыть окно" onClick={onCancel} />
-      <div className={cx('rh-modal ant-modal', className)} role="dialog" aria-modal="true" style={{ width }} {...props}>
+      <div
+        className={cx('rh-modal ant-modal', className)}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        style={modalStyle}
+        {...props}
+      >
         <div className="ant-modal-content">
-          {title && <div className="ant-modal-header"><div className="ant-modal-title">{title}</div></div>}
+          {closable && (
+            <button type="button" className="rh-modal__close" aria-label="Закрыть" onClick={onCancel}>×</button>
+          )}
+          {title && <div className="ant-modal-header"><div id={titleId} className="ant-modal-title">{title}</div></div>}
           <div className="ant-modal-body">{children}</div>
           {defaultFooter && <div className="ant-modal-footer">{defaultFooter}</div>}
         </div>
       </div>
     </div>
   )
+  return typeof document === 'undefined' ? modalNode : createPortal(modalNode, document.body)
 }
 
 interface DrawerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
@@ -1459,14 +1802,26 @@ interface DrawerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   [key: string]: any
 }
 
-export function Drawer({ open, visible, title, placement = 'right', width = 420, extra, footer, onClose, size: _size, forceRender: _forceRender, className, children, ...props }: DrawerProps) {
-  if (!(open ?? visible)) return null
-  return (
+export function Drawer({ open, visible, title, placement = 'right', width = 420, extra, footer, onClose, size: _size, forceRender: _forceRender, className, style, children, ...props }: DrawerProps) {
+  const titleId = useId()
+  const isOpen = Boolean(open ?? visible)
+  useEffect(() => {
+    if (!isOpen) return
+
+    const releaseScrollLock = acquireBodyScrollLock()
+    const releaseEscape = pushOverlayEscapeHandler(() => onClose?.())
+    return () => {
+      releaseScrollLock()
+      releaseEscape()
+    }
+  }, [isOpen, onClose])
+  if (!isOpen) return null
+  const drawerNode = (
     <div className={cx('rh-drawer-root ant-drawer', `ant-drawer-${placement}`)}>
       <button type="button" className="rh-modal-mask" aria-label="Закрыть панель" onClick={onClose} />
-      <div className={cx('rh-drawer ant-drawer-content', className)} style={{ width }} role="dialog" aria-modal="true" {...props}>
+      <div className={cx('rh-drawer ant-drawer-content', className)} style={{ ...style, width }} role="dialog" aria-modal="true" aria-labelledby={title ? titleId : undefined} {...props}>
         <div className="ant-drawer-header">
-          <div className="ant-drawer-title">{title}</div>
+          <div id={title ? titleId : undefined} className="ant-drawer-title">{title}</div>
           {extra}
           <button type="button" className="rh-drawer__close" aria-label="Закрыть" onClick={onClose}>×</button>
         </div>
@@ -1475,28 +1830,46 @@ export function Drawer({ open, visible, title, placement = 'right', width = 420,
       </div>
     </div>
   )
+  return typeof document === 'undefined' ? drawerNode : createPortal(drawerNode, document.body)
 }
 
-function renderMenuItems(items: MenuItem[] = [], menuOnClick?: MenuProps['onClick']) {
-  return items.map((item) => {
-    if (item.type === 'divider') return <li key={String(item.key ?? Math.random())} className="ant-dropdown-menu-item-divider" role="separator" />
+function renderMenuItems(
+  items: MenuItem[] = [],
+  menuOnClick?: MenuProps['onClick'],
+  onItemClick?: () => void,
+  selectedKeys: Key[] = [],
+) {
+  return items.map((item, index) => {
+    if (item.type === 'divider') return <li key={String(item.key ?? `divider-${index}`)} className="ant-dropdown-menu-item-divider" role="separator" />
     if (item.type === 'group') {
       return (
-        <li key={String(item.key ?? textFromNode(item.label))} className="ant-dropdown-menu-item-group">
+        <li key={String(item.key ?? `group-${textFromNode(item.label)}-${index}`)} className="ant-dropdown-menu-item-group">
           <div className="ant-dropdown-menu-item-group-title">{item.label}</div>
-          <ul role="group">{renderMenuItems(item.children, menuOnClick)}</ul>
+          <ul role="group">{renderMenuItems(item.children, menuOnClick, onItemClick, selectedKeys)}</ul>
         </li>
       )
     }
+    const selected = item.key !== undefined && selectedKeys.some((key) => String(key) === String(item.key))
     return (
-      <li key={String(item.key)} className={cx('ant-dropdown-menu-item', item.danger && 'ant-dropdown-menu-item-danger', item.disabled && 'ant-dropdown-menu-item-disabled')} role="none">
+      <li
+        key={String(item.key)}
+        className={cx(
+          'ant-dropdown-menu-item',
+          selected && 'ant-dropdown-menu-item-selected',
+          item.danger && 'ant-dropdown-menu-item-danger',
+          item.disabled && 'ant-dropdown-menu-item-disabled',
+        )}
+        role="none"
+      >
         <button
           type="button"
           role="menuitem"
+          aria-current={selected ? 'page' : undefined}
           disabled={item.disabled}
           onClick={(event) => {
             item.onClick?.()
             menuOnClick?.({ key: String(item.key), item, domEvent: event })
+            onItemClick?.()
           }}
         >
           {item.icon}
@@ -1517,22 +1890,34 @@ interface DropdownProps extends HTMLAttributes<HTMLDivElement> {
   [key: string]: any
 }
 
-export function Dropdown({ menu, dropdownRender, className, classNames: _classNames, trigger: _trigger, placement: _placement, children, ...props }: DropdownProps) {
+export function Dropdown({ menu, dropdownRender, className, classNames, trigger: _trigger, placement = 'bottomLeft', children, ...props }: DropdownProps) {
   const [open, setOpen] = useState(false)
-  const menuNode = <ul className="ant-dropdown-menu" role="menu">{renderMenuItems(menu?.items, menu?.onClick)}</ul>
+  const close = () => setOpen(false)
+  const menuNode = <ul className="ant-dropdown-menu" role="menu">{renderMenuItems(menu?.items, menu?.onClick, close, menu?.selectedKeys)}</ul>
   const childArray = Children.toArray(children)
   const trigger = childArray.length === 1 && isValidElement(childArray[0])
     ? cloneElement(childArray[0] as ReactElement<Record<string, any>>, {
+      'aria-expanded': open,
       onClick: (event: ReactMouseEvent<HTMLElement>) => {
         setOpen((value) => !value)
         ;(childArray[0] as ReactElement<Record<string, any>>).props.onClick?.(event)
       },
     })
     : children
+  const rootClassName = typeof classNames?.root === 'string' ? classNames.root : undefined
+  const popupRootClassName = typeof classNames?.popup?.root === 'string' ? classNames.popup.root : undefined
+
   return (
     <span className={cx('rh-dropdown ant-dropdown', className)} {...props}>
       {trigger}
-      {open && <div className="rh-dropdown__overlay ant-dropdown">{dropdownRender ? dropdownRender(menuNode) : menuNode}</div>}
+      {open && (
+        <div
+          className={cx('rh-dropdown__overlay ant-dropdown', `rh-dropdown__overlay--${placement}`, rootClassName, popupRootClassName)}
+          data-placement={placement}
+        >
+          {dropdownRender ? dropdownRender(menuNode) : menuNode}
+        </div>
+      )}
     </span>
   )
 }
@@ -1602,7 +1987,20 @@ interface PopconfirmProps extends Omit<PopoverProps, 'content'> {
   children?: ReactNode
 }
 
-export function Popconfirm({ title, description, okText, cancelText, okButtonProps, cancelButtonProps, onConfirm, onCancel, children, className, ...props }: PopconfirmProps) {
+const popconfirmRootStyle: CSSProperties = {
+  position: 'relative',
+  display: 'inline-flex',
+}
+
+const popconfirmOverlayStyle: CSSProperties = {
+  position: 'absolute',
+  right: 0,
+  bottom: 'calc(100% + 10px)',
+  zIndex: 1050,
+  minWidth: 220,
+}
+
+export function Popconfirm({ title, description, okText, cancelText, okButtonProps, cancelButtonProps, onConfirm, onCancel, children, className, style, ...props }: PopconfirmProps) {
   const [open, setOpen] = useState(false)
   const childArray = Children.toArray(children)
   const trigger = childArray.length === 1 && isValidElement(childArray[0])
@@ -1615,10 +2013,10 @@ export function Popconfirm({ title, description, okText, cancelText, okButtonPro
     })
     : children
   return (
-    <span className={cx('rh-popconfirm ant-popover ant-popconfirm', className)} {...props}>
+    <span className={cx('rh-popconfirm ant-popover ant-popconfirm', className)} style={{ ...popconfirmRootStyle, ...style }} {...props}>
       {trigger}
       {open && (
-        <span className="ant-popover-inner">
+        <span className="ant-popover-inner" role="tooltip" style={popconfirmOverlayStyle}>
           <span className="ant-popover-inner-content">{title}{description && <small>{description}</small>}</span>
           <span className="ant-popconfirm-buttons">
             <button type="button" className="ant-btn" onClick={(event) => { setOpen(false); onCancel?.(event) }} {...cancelButtonProps}>{cancelText ?? 'Нет'}</button>

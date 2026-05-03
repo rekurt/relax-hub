@@ -9,11 +9,7 @@ import {
   Descriptions,
   Drawer,
   App,
-  Empty,
   Segmented,
-  Statistic,
-  Row,
-  Col,
   Card,
 } from '@/components/design/system'
 import {
@@ -28,8 +24,9 @@ import {
 } from '@/api/generated/admin-antifraud/admin-antifraud'
 import type { InternalHandlerFraudFlagResponse } from '@/api/generated/model'
 import { formatDateTime } from '@/lib/format'
+import PageHeader from '@/components/PageHeader'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Все' },
@@ -206,71 +203,74 @@ export default function AntiFraudDashboard() {
   ]
 
   return (
-    <div>
-      <Title level={3}>Антифрод</Title>
-
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={8}>
-          <Card size="small">
-            <Statistic
-              title="На рассмотрении"
-              value={pendingCount}
-              prefix={<ExclamationCircleOutlined />}
-              valueStyle={{ color: pendingCount > 0 ? '#d97706' : '#15803d' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card size="small">
-            <Statistic title="Всего флагов" value={meta?.total_count ?? 0} />
-          </Card>
-        </Col>
-      </Row>
-
-      <Space style={{ marginBottom: 16 }} wrap>
-        <Segmented
-          options={STATUS_OPTIONS}
-          value={statusFilter}
-          onChange={(v) => {
-            setStatusFilter(v as string)
-            setPage(1)
-          }}
-        />
-        <Select
-          placeholder="Фильтр по правилу"
-          allowClear
-          style={{ width: 250 }}
-          value={ruleFilter}
-          onChange={(v) => {
-            setRuleFilter(v)
-            setPage(1)
-          }}
-          options={Object.entries(RULE_LABELS).map(([value, label]) => ({
-            value,
-            label,
-          }))}
-        />
-      </Space>
-
-      <Table
-        dataSource={flags}
-        columns={columns}
-        loading={isLoading}
-        rowKey="id"
-        scroll={{ x: 'max-content' }}
-        locale={{ emptyText: <Empty description="Нет подозрительных операций. Система антифрода не обнаружила нарушений" /> }}
-        pagination={
-          meta && meta.total_pages && meta.total_pages > 1
-            ? {
-                current: page,
-                pageSize: 20,
-                total: meta.total_count,
-                onChange: setPage,
-                showSizeChanger: false,
-              }
-            : false
-        }
+    <div className="rh-stack rh-admin-reference-page">
+      <PageHeader
+        eyebrow="Риски"
+        title="Антифрод"
+        description="Подозрительные операции, правила и статусы обработки в едином риск-реестре."
       />
+
+      <div className="rh-stat-grid">
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">На рассмотрении</span>
+          <span className="rh-stat-tile__value"><ExclamationCircleOutlined /> {pendingCount}</span>
+          <span className="rh-stat-tile__hint">Флаги, которые ожидают решения модератора.</span>
+        </div>
+        <div className="rh-stat-tile">
+          <span className="rh-stat-tile__eyebrow">Всего флагов</span>
+          <span className="rh-stat-tile__value">{meta?.total_count ?? 0}</span>
+          <span className="rh-stat-tile__hint">Общий объём найденных антифрод-событий.</span>
+        </div>
+      </div>
+
+      <Card className="rh-admin-filter-card" title="Фильтры">
+        <Space className="rh-admin-filter-row" wrap>
+          <Segmented
+            options={STATUS_OPTIONS}
+            value={statusFilter}
+            onChange={(v) => {
+              setStatusFilter(v as string)
+              setPage(1)
+            }}
+          />
+          <Select
+            className="rh-admin-filter-select rh-admin-filter-select--wide"
+            placeholder="Фильтр по правилу"
+            allowClear
+            value={ruleFilter}
+            onChange={(v) => {
+              setRuleFilter(v)
+              setPage(1)
+            }}
+            options={Object.entries(RULE_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
+        </Space>
+      </Card>
+
+      <Card className="rh-admin-reference-card" title="Список флагов">
+        <Table
+          dataSource={flags}
+          columns={columns}
+          loading={isLoading}
+          rowKey="id"
+          scroll={{ x: 'max-content' }}
+          locale={{ emptyText: 'Нет подозрительных операций. Система антифрода не обнаружила нарушений' }}
+          pagination={
+            meta && meta.total_pages && meta.total_pages > 1
+              ? {
+                  current: page,
+                  pageSize: 20,
+                  total: meta.total_count,
+                  onChange: setPage,
+                  showSizeChanger: false,
+                }
+              : false
+          }
+        />
+      </Card>
 
       <Drawer
         title="Детали подозрительной операции"
@@ -321,26 +321,16 @@ export default function AntiFraudDashboard() {
             </Descriptions>
 
             {selectedFlag.details && (
-              <div style={{ marginTop: 16 }}>
+              <div className="rh-admin-media-block">
                 <Text strong>Детали:</Text>
-                <pre
-                  style={{
-                    background: 'rgba(248, 244, 236, 0.78)',
-                    padding: 12,
-                    borderRadius: 20,
-                    fontSize: 13,
-                    marginTop: 8,
-                    overflow: 'auto',
-                    maxHeight: 300,
-                  }}
-                >
+                <pre className="rh-admin-code-block">
                   {JSON.stringify(selectedFlag.details, null, 2)}
                 </pre>
               </div>
             )}
 
             {selectedFlag.status === 'pending' && (
-              <Space style={{ marginTop: 24 }}>
+              <Space className="rh-admin-drawer-actions">
                 <Button
                   type="primary"
                   icon={<CheckCircleOutlined />}

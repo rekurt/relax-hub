@@ -11,6 +11,8 @@ services:
     # Default 8080 is often occupied by other local APIs.
     # Keep the container on 8080, publish it on a free host port.
     ports: !override ["${BANI_DOCKER_APP_PORT:-28080}:8080"]
+    environment:
+      BANI_STORAGE_PUBLIC_BASE_URL: ${BANI_STORAGE_PUBLIC_BASE_URL:-http://localhost:9102}
   postgres:
     platform: linux/amd64
     image: postgis/postgis:17-3.5
