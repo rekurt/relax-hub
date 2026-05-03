@@ -3,6 +3,7 @@
 APP_NAME := bani-server
 BUILD_DIR := ./bin
 VERSION ?= dev
+SWAG ?= go run github.com/swaggo/swag/cmd/swag
 
 build:
 	go build -ldflags "-X main.Version=$(VERSION) -X main.Commit=$$(git rev-parse --short HEAD) -X main.BuildTime=$$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o $(BUILD_DIR)/$(APP_NAME) ./cmd/server
@@ -51,10 +52,10 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 swagger:
-	swag init -g cmd/server/docs.go -o docs --parseDependency --parseInternal
+	$(SWAG) init -g cmd/server/docs.go -o docs --parseDependency --parseInternal
 
 swagger-fmt:
-	swag fmt -g cmd/server/docs.go
+	$(SWAG) fmt -g cmd/server/docs.go
 
 frontend-dev:
 	cd frontend && npm run dev

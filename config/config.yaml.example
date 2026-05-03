@@ -14,13 +14,13 @@ server:
 environment: "dev"
 
 database:
-  dsn: "postgres://postgres:postgres@localhost:5432/bani?sslmode=disable"
+  dsn: "postgres://postgres:postgres@localhost:5435/bani?sslmode=disable"
   max_conns: 20
   min_conns: 2
   max_conn_lifetime: "1h"
 
 redis:
-  addr: "localhost:6379"
+  addr: "localhost:6381"
   password: ""
   db: 0
 
@@ -35,7 +35,7 @@ logger:
 
 storage:
   # MinIO / S3-compatible storage (env: BANI_STORAGE_*)
-  endpoint: "localhost:9000"
+  endpoint: "localhost:9102"
   bucket: "bani-avatars"
   access_key: ""
   secret_key: ""

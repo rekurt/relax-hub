@@ -81,6 +81,9 @@ frontend/            — React SPA (мультиролевое: клиент, в
 # Поднять PostgreSQL, Redis и приложение
 make docker-up
 
+# API в Docker доступен на http://localhost:28080
+# PostgreSQL/Redis/MinIO доступны на localhost:5435, localhost:6381, localhost:9102
+
 # Применить миграции
 make migrate-up
 
@@ -115,8 +118,14 @@ make run
 |------------|----------|--------------|
 | `BANI_SERVER_HOST` | Хост сервера | `0.0.0.0` |
 | `BANI_SERVER_PORT` | Порт сервера | `8080` |
-| `BANI_DATABASE_DSN` | PostgreSQL DSN | `postgres://postgres:postgres@localhost:5432/bani?sslmode=disable` |
-| `BANI_REDIS_ADDR` | Redis адрес | `localhost:6379` |
+| `BANI_DOCKER_APP_PORT` | Host-порт API при запуске через Docker Compose | `28080` |
+| `BANI_DOCKER_POSTGRES_PORT` | Host-порт PostgreSQL при запуске через Docker Compose | `5435` |
+| `BANI_DOCKER_REDIS_PORT` | Host-порт Redis при запуске через Docker Compose | `6381` |
+| `BANI_DOCKER_MINIO_API_PORT` | Host-порт MinIO API при запуске через Docker Compose | `9102` |
+| `BANI_DOCKER_MINIO_CONSOLE_PORT` | Host-порт MinIO Console при запуске через Docker Compose | `9103` |
+| `BANI_BACKEND_URL` | URL API для frontend dev proxy | `http://localhost:28080` |
+| `BANI_DATABASE_DSN` | PostgreSQL DSN | `postgres://postgres:postgres@localhost:5435/bani?sslmode=disable` |
+| `BANI_REDIS_ADDR` | Redis адрес | `localhost:6381` |
 | `BANI_JWT_SECRET` | Секрет для JWT | `change-me-in-production` |
 | `BANI_JWT_TOKEN_TTL` | Время жизни токена | `24h` |
 | `BANI_PAYMENT_YOOKASSA_SHOP_ID` | Shop ID в ЮKassa | `` |
