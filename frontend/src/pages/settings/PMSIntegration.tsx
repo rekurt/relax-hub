@@ -8,7 +8,6 @@ import {
   Form,
   Input,
   Select,
-  Space,
   Tag,
   Popconfirm,
   App,
@@ -310,16 +309,16 @@ export default function PMSIntegration() {
   ]
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
-      <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div>
+    <div className="rh-pms-page">
+      <div className="rh-pms-page__header">
+        <div className="rh-pms-page__header-copy">
           <Title level={3} style={{ margin: 0 }}>Интеграция с PMS</Title>
           <Text type="secondary">Подключите Yclients или Restoplace для синхронизации бронирований</Text>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
           Подключить PMS
         </Button>
-      </Space>
+      </div>
 
       <Card>
         <Table

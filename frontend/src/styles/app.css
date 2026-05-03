@@ -6398,6 +6398,30 @@ body.rh-app .rh-space--wrap {
   flex-wrap: wrap;
 }
 
+body.rh-app .rh-pms-page {
+  width: min(100%, 1200px);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+body.rh-app .rh-pms-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 16px;
+}
+
+body.rh-app .rh-pms-page__header-copy {
+  min-width: 0;
+}
+
+body.rh-app .rh-pms-page__header-copy .ant-typography {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 767px) {
   body.rh-app .ant-card .ant-card-head,
   body.rh-app .ant-card .ant-card-body,
@@ -6416,5 +6440,18 @@ body.rh-app .rh-space--wrap {
 
   body.rh-app .ant-btn {
     white-space: normal;
+  }
+
+  body.rh-app .rh-pms-page {
+    padding: 16px 0;
+  }
+
+  body.rh-app .rh-pms-page__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.rh-app .rh-pms-page__header .ant-btn {
+    width: 100%;
   }
 }
