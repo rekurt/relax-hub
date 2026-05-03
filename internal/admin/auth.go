@@ -100,6 +100,9 @@ func NewAuthProcessor(authService middleware.AuthService, pool *pgxpool.Pool, lo
 		// RequireAdminAuth middleware) can authenticate browser navigation requests.
 		// GoAdmin calls this processor on every request, so the cookie stays fresh.
 		if ctx.Response != nil {
+			// #nosec G124 -- Secure is intentionally conditional: forced on in production
+			// or whenever the request arrived over TLS, but allowed off on plain-HTTP
+			// local/staging setups where browsers would otherwise drop the cookie.
 			ctx.SetCookie(&http.Cookie{
 				Name:     "admin_token",
 				Value:    token,
