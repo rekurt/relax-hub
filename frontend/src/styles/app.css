@@ -953,15 +953,22 @@ body.rh-app .ant-input-password-icon {
 }
 
 body.rh-app .ant-input-number {
+  display: inline-flex;
+  align-items: center;
   width: 100%;
+  min-width: 0;
   padding-inline: 14px;
 }
 
 body.rh-app .ant-input-number .ant-input-number-input-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
   height: 100%;
 }
 
 body.rh-app .ant-input-number .ant-input-number-input {
+  width: 100%;
+  min-width: 0;
   height: 48px;
   padding: 0;
 }
@@ -1013,6 +1020,10 @@ body.rh-app .rh-input-addon-button.ant-btn {
 body.rh-app .ant-select-single .ant-select-selector,
 body.rh-app .ant-picker,
 body.rh-app .ant-picker-range {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
   padding-inline: 14px !important;
 }
 
@@ -1033,9 +1044,16 @@ body.rh-app .ant-select-single .ant-select-selection-placeholder {
 }
 
 body.rh-app .ant-picker .ant-picker-input {
+  flex: 1 1 auto;
+  min-width: 0;
   min-height: 48px;
   display: flex;
   align-items: center;
+}
+
+body.rh-app .ant-picker .ant-picker-input > input {
+  width: 100%;
+  min-width: 0;
 }
 
 body.rh-app .ant-input:hover,
@@ -5662,6 +5680,16 @@ body.rh-app .ant-descriptions,
 body.rh-app .ant-statistic,
 body.rh-app .ant-collapse,
 body.rh-app .ant-upload-wrapper .ant-upload-drag {
+  min-width: 0;
+}
+
+body.rh-app .rh-row.ant-row {
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+body.rh-app .rh-col.ant-col {
   min-width: 0;
 }
 

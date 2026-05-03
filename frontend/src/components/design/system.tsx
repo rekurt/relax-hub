@@ -102,6 +102,13 @@ function toGap(size: unknown): string {
   return '8px'
 }
 
+const RowGutterContext = createContext({ x: 0, y: 0 })
+
+function normalizeRowGutter(gutter: number | [number, number] | undefined) {
+  if (Array.isArray(gutter)) return { x: gutter[0], y: gutter[1] }
+  return { x: gutter ?? 0, y: gutter ?? 0 }
+}
+
 interface ConfigProviderProps {
   children?: ReactNode
   locale?: unknown
@@ -1038,11 +1045,23 @@ interface RowProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Row({ gutter = 0, align, justify, className, style, children, ...props }: RowProps) {
-  const gap = Array.isArray(gutter) ? `${gutter[1]}px ${gutter[0]}px` : `${gutter}px`
+  const normalizedGutter = normalizeRowGutter(gutter)
   return (
-    <div className={cx('rh-row', 'ant-row', className)} style={{ gap, alignItems: align, justifyContent: justify, ...style }} {...props}>
-      {children}
-    </div>
+    <RowGutterContext.Provider value={normalizedGutter}>
+      <div
+        className={cx('rh-row', 'ant-row', className)}
+        style={{
+          columnGap: normalizedGutter.x,
+          rowGap: normalizedGutter.y,
+          alignItems: align,
+          justifyContent: justify,
+          ...style,
+        }}
+        {...props}
+      >
+        {children}
+      </div>
+    </RowGutterContext.Provider>
   )
 }
 
@@ -1053,12 +1072,22 @@ interface ColProps extends HTMLAttributes<HTMLDivElement> {
   md?: number
   lg?: number
   xl?: number
+  xxl?: number
   flex?: string | number
 }
 
-export function Col({ span, xs, sm, md, lg, xl, flex, className, style, children, ...props }: ColProps) {
-  const basis = span ?? xs ?? sm ?? md ?? lg ?? xl ?? 24
-  const width = `calc(${Math.min(24, basis) / 24 * 100}% - 0.01px)`
+export function Col({ span, xs, sm, md, lg, xl, xxl, flex, className, style, children, ...props }: ColProps) {
+  const screens = useMediaScreens()
+  const gutter = useContext(RowGutterContext)
+  let basis = span ?? xs ?? 24
+  if (screens.sm && sm != null) basis = sm
+  if (screens.md && md != null) basis = md
+  if (screens.lg && lg != null) basis = lg
+  if (screens.xl && xl != null) basis = xl
+  if (screens.xxl && xxl != null) basis = xxl
+  const ratio = Math.min(24, basis) / 24
+  const gutterOffset = gutter.x * (1 - ratio)
+  const width = `calc(${ratio * 100}% - ${gutterOffset}px)`
   return (
     <div
       className={cx(
@@ -1070,9 +1099,10 @@ export function Col({ span, xs, sm, md, lg, xl, flex, className, style, children
         md != null && `ant-col-md-${md}`,
         lg != null && `ant-col-lg-${lg}`,
         xl != null && `ant-col-xl-${xl}`,
+        xxl != null && `ant-col-xxl-${xxl}`,
         className,
       )}
-      style={{ flex: flex ?? `1 1 ${width}`, maxWidth: flex ? undefined : width, ...style }}
+      style={{ flex: flex ?? `0 0 ${width}`, maxWidth: flex ? undefined : width, ...style }}
       {...props}
     >
       {children}
