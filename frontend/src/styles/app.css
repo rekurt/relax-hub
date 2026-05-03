@@ -2096,6 +2096,8 @@ body.rh-app .rh-stat-tile__value {
   line-height: 1.05;
   letter-spacing: 0;
   color: var(--rh-text);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 body.rh-app .rh-stat-tile__hint {
@@ -4643,6 +4645,10 @@ body.rh-app .rh-security-recommendation .ant-btn {
 @media (max-width: 900px) {
   body.rh-app .rh-grid--two,
   body.rh-app .rh-grid--content-aside,
+  body.rh-app .rh-profile-layout,
+  body.rh-app .rh-profile-toggle-grid,
+  body.rh-app .rh-notification-prefs__hero,
+  body.rh-app .rh-notification-prefs__grid,
   body.rh-app .rh-home__hero,
   body.rh-app .rh-home__proof-grid,
   body.rh-app .rh-home__shortcut-grid,
@@ -4660,8 +4666,33 @@ body.rh-app .rh-security-recommendation .ant-btn {
   body.rh-app .rh-home__hero-side,
   body.rh-app .rh-certificates-workspace,
   body.rh-app .rh-certificates-workspace__surface,
-  body.rh-app .rh-certificates-form {
+  body.rh-app .rh-certificates-form,
+  body.rh-app .rh-profile-layout__main,
+  body.rh-app .rh-profile-layout__aside,
+  body.rh-app .rh-notification-toggle,
+  body.rh-app .rh-notification-toggle__copy {
     min-width: 0;
+  }
+
+  body.rh-app .rh-profile-layout__aside {
+    position: static;
+  }
+
+  body.rh-app .rh-profile-hero__identity,
+  body.rh-app .rh-notification-prefs__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.rh-app .rh-notification-prefs__footer .rh-profile-form-actions,
+  body.rh-app .rh-notification-prefs__footer .rh-profile-form-actions .ant-btn {
+    width: 100%;
+  }
+
+  body.rh-app .rh-notification-prefs__title,
+  body.rh-app .rh-notification-toggle__title,
+  body.rh-app .rh-notification-toggle__description {
+    overflow-wrap: anywhere;
   }
 }
 
