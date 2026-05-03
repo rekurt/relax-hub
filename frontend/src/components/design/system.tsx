@@ -1,5 +1,16 @@
 /* eslint-disable react-refresh/only-export-components */
 import {
+  Children,
+  Fragment,
+  createContext,
+  isValidElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+import {
   Checkbox,
   ColorPicker,
   Collapse,
@@ -26,16 +37,7 @@ import {
   TimePicker,
   Tooltip,
   Upload,
-} from 'antd'
-import {
-  Children,
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+} from './controls'
 import type {
   AnchorHTMLAttributes,
   ButtonHTMLAttributes,
@@ -553,7 +555,11 @@ export const List = Object.assign(
             className="rh-list__items"
             style={grid ? { gridTemplateColumns: `repeat(${gridColumns ?? 1}, minmax(0, 1fr))`, gap: grid.gutter ?? 16 } : undefined}
           >
-            {items}
+            {items.map((item, index) => (
+              <Fragment key={isValidElement(item) ? item.key ?? index : index}>
+                {item}
+              </Fragment>
+            ))}
           </div>
         ) : (
           <div className="rh-list__empty">{locale?.emptyText ?? <Empty description="Нет данных" />}</div>

@@ -87,7 +87,8 @@ func RequireAdmin2FA(resolver Admin2FAChecker) func(http.Handler) http.Handler {
 			}
 
 			if !has2FA {
-				writeAuthError(w, http.StatusForbidden, "two-factor authentication required for admin access")
+				writeAuthErrorCode(w, http.StatusForbidden, "admin_2fa_required",
+					"two-factor authentication required for admin access")
 				return
 			}
 

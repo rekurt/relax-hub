@@ -28,6 +28,7 @@ interface TopNavigationLayoutProps {
   contentWidth?: number
   drawerSections?: NavigationSection[]
   footer?: React.ReactNode
+  topBanner?: React.ReactNode
 }
 
 type DropdownItem = NonNullable<MenuProps['items']>[number]
@@ -104,6 +105,7 @@ export default function TopNavigationLayout({
   contentWidth = 1480,
   drawerSections,
   footer,
+  topBanner,
 }: TopNavigationLayoutProps) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const navigate = useNavigate()
@@ -283,6 +285,7 @@ export default function TopNavigationLayout({
 
       <Content className="rh-topnav__content" style={{ padding: isMobile ? '20px 16px 36px' : '28px 24px 52px', flex: '1 0 auto' }}>
         <div className="rh-topnav__content-inner" style={{ maxWidth: contentWidth }}>
+          {topBanner}
           <Outlet />
         </div>
       </Content>

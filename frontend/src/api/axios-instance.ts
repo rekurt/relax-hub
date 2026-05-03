@@ -2,6 +2,8 @@ import Axios, { AxiosRequestConfig } from 'axios'
 import { AUTH_TOKEN_KEY } from '@/lib/constants'
 import { redirectToLogin, shouldRedirectToLogin } from '@/lib/public-route'
 import { useAuthStore } from '@/stores/auth'
+import { getApiErrorCode } from '@/lib/apiError'
+import { ADMIN_2FA_REQUIRED_CODE, notifyAdmin2FARequired } from '@/lib/admin2faNotice'
 
 export const axiosInstance = Axios.create({
   baseURL: '/api/v1',
@@ -55,6 +57,11 @@ axiosInstance.interceptors.response.use(
       if (shouldRedirectToLogin(window.location.pathname)) {
         redirectToLogin()
       }
+    } else if (
+      error.response?.status === 403 &&
+      getApiErrorCode(error) === ADMIN_2FA_REQUIRED_CODE
+    ) {
+      notifyAdmin2FARequired()
     }
     return Promise.reject(error)
   },

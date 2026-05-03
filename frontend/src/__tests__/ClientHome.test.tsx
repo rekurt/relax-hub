@@ -73,10 +73,13 @@ function mockAuthStore(userOverride?: Record<string, unknown> | null) {
     user: u,
     token: u ? 'tok' : null,
     setAuth: vi.fn(),
+    setUser: vi.fn(),
     logout: vi.fn(),
     isLoading: false,
     isAuthenticated: !!u,
     loadProfile: vi.fn(),
+    notice2faRequiredAt: 0,
+    bumpNotice2FARequired: vi.fn(),
   }
   const mockFn = vi.mocked(useAuthStore)
   mockFn.mockImplementation((selector) => {

@@ -1,5 +1,6 @@
 import BrandLockup from '@/components/BrandLockup'
 import TopNavigationLayout from '@/components/TopNavigationLayout'
+import { Admin2FABanner, Admin2FAToastBridge } from '@/components/Admin2FANotice'
 import { PLATFORM_NAME } from '@/content/support'
 import { ADMIN_OVERFLOW_NAV_ITEMS, ADMIN_PRIMARY_NAV_ITEMS } from '@/navigation/menu'
 import { useDocumentTitle, type DocumentTitleEntry } from '@/lib/useDocumentTitle'
@@ -47,22 +48,26 @@ const ADMIN_TITLES: readonly DocumentTitleEntry[] = [
 export default function AdminLayout() {
   useDocumentTitle(ADMIN_TITLES, `${PLATFORM_NAME} — Админ-панель`)
   return (
-    <TopNavigationLayout
-      brandTitle={(
-        <BrandLockup
-          size="header"
-          subtitle="Модерация, финансы и контроль платформы"
-          className="rh-topnav__brand-lockup"
-        />
-      )}
-      brandSubtitle={null}
-      brandAriaLabel={PLATFORM_NAME}
-      surface="admin"
-      homeTo="/admin"
-      primaryItems={ADMIN_PRIMARY_NAV_ITEMS}
-      overflowItems={ADMIN_OVERFLOW_NAV_ITEMS}
-      navigationMode="dropdown"
-      profilePath="/admin/profile"
-    />
+    <>
+      <Admin2FAToastBridge />
+      <TopNavigationLayout
+        brandTitle={(
+          <BrandLockup
+            size="header"
+            subtitle="Модерация, финансы и контроль платформы"
+            className="rh-topnav__brand-lockup"
+          />
+        )}
+        brandSubtitle={null}
+        brandAriaLabel={PLATFORM_NAME}
+        surface="admin"
+        homeTo="/admin"
+        primaryItems={ADMIN_PRIMARY_NAV_ITEMS}
+        overflowItems={ADMIN_OVERFLOW_NAV_ITEMS}
+        navigationMode="dropdown"
+        profilePath="/admin/profile"
+        topBanner={<Admin2FABanner />}
+      />
+    </>
   )
 }

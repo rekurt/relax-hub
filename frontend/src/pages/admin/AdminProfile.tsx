@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
+  Alert,
   Card,
   Form,
   Input,
@@ -9,12 +10,16 @@ import {
   Space,
   Popconfirm,
   App,
+  Tag,
   Typography,
+  QRCode,
 } from '@/components/design/system'
 import {
   UserOutlined,
   UploadOutlined,
   DeleteOutlined,
+  KeyOutlined,
+  MobileOutlined,
 } from '@/components/design/icons'
 import { useAuthStore } from '@/stores/auth'
 import {
@@ -22,15 +27,82 @@ import {
   usePostAuthMeAvatar,
   useDeleteAuthMeAvatar,
 } from '@/api/generated/auth/auth'
+import {
+  usePostAuth2faTotpEnable,
+  usePostAuth2faTotpVerify,
+  useDeleteAuth2faTotp,
+  usePostAuth2faSmsEnable,
+} from '@/api/generated/2fa/2fa'
 import PageHeader from '@/components/PageHeader'
 
 const { Text } = Typography
 
 export default function AdminProfile() {
-  const { user, loadProfile } = useAuthStore()
+  const { user, loadProfile, setUser } = useAuthStore()
   const { message } = App.useApp()
   const [profileForm] = Form.useForm()
   const [avatarUploading, setAvatarUploading] = useState(false)
+
+  const totpEnabled = user?.two_fa_method === 'totp'
+  const smsEnabled = user?.two_fa_method === 'sms'
+
+  const [qrUrl, setQrUrl] = useState('')
+  const [totpSecret, setTotpSecret] = useState('')
+  const [verifyCode, setVerifyCode] = useState('')
+  const [disableCode, setDisableCode] = useState('')
+
+  // Derived: 'done' when backend says TOTP is on; 'qr' when we have a fresh
+  // unscanned QR; otherwise 'idle'. No effect needed to sync.
+  const totpStep: 'idle' | 'qr' | 'done' = totpEnabled
+    ? 'done'
+    : qrUrl
+      ? 'qr'
+      : 'idle'
+
+  const enableTotp = usePostAuth2faTotpEnable({
+    mutation: {
+      onSuccess: (res) => {
+        const data = res?.data as { qr_url?: string; secret?: string } | undefined
+        setQrUrl(data?.qr_url ?? '')
+        setTotpSecret(data?.secret ?? '')
+      },
+      onError: () => message.error('Не удалось сгенерировать QR-код'),
+    },
+  })
+
+  const verifyTotp = usePostAuth2faTotpVerify({
+    mutation: {
+      onSuccess: () => {
+        message.success('TOTP 2FA успешно активирована')
+        setQrUrl('')
+        setTotpSecret('')
+        setVerifyCode('')
+        setUser({ two_fa_method: 'totp' })
+      },
+      onError: () => message.error('Неверный код подтверждения'),
+    },
+  })
+
+  const disableTotp = useDeleteAuth2faTotp({
+    mutation: {
+      onSuccess: () => {
+        message.success('TOTP 2FA отключена')
+        setDisableCode('')
+        setUser({ two_fa_method: 'none' })
+      },
+      onError: () => message.error('Неверный код'),
+    },
+  })
+
+  const enableSms2fa = usePostAuth2faSmsEnable({
+    mutation: {
+      onSuccess: () => {
+        message.success('SMS 2FA включена')
+        setUser({ two_fa_method: 'sms' })
+      },
+      onError: () => message.error('Не удалось включить SMS 2FA. Убедитесь, что телефон подтверждён.'),
+    },
+  })
 
   useEffect(() => {
     if (user) {
@@ -40,6 +112,13 @@ export default function AdminProfile() {
       })
     }
   }, [user, profileForm])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (window.location.hash !== '#two-factor') return
+    const target = document.getElementById('two-factor')
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
 
   const updateProfile = usePutAuthMe({
     mutation: {
@@ -172,6 +251,171 @@ export default function AdminProfile() {
           </Space>
         </Card>
       </div>
+
+      <Card
+        id="two-factor"
+        title={
+          <Space>
+            <span>Двухфакторная аутентификация</span>
+            <Tag color={totpEnabled ? 'green' : smsEnabled ? 'green' : 'gold'}>
+              {totpEnabled ? 'TOTP активна' : smsEnabled ? 'SMS активна' : 'Не настроена'}
+            </Tag>
+          </Space>
+        }
+      >
+        {!totpEnabled && !smsEnabled && (
+          <Alert
+            type="warning"
+            showIcon
+            title="Доступ к админ-эндпоинтам требует 2FA"
+            description="Все запросы к /api/v1/admin/* возвращают 403 admin_2fa_required, пока вы не включите второй фактор."
+            style={{ marginBottom: 16 }}
+          />
+        )}
+
+        <div style={{ display: 'grid', gap: 16 }}>
+          <section>
+            <Space align="center" style={{ marginBottom: 8 }}>
+              <Text strong>TOTP (Google Authenticator, Authy)</Text>
+              <Tag color={totpEnabled ? 'green' : 'default'}>
+                {totpEnabled ? 'Включена' : 'Отключена'}
+              </Tag>
+            </Space>
+
+            {totpStep === 'idle' && (
+              <Space orientation="vertical" style={{ width: '100%' }}>
+                <Text type="secondary">
+                  Сгенерируем QR-код, который вы отсканируете в приложении-аутентификаторе. Коды обновляются каждые 30 секунд.
+                </Text>
+                <Button
+                  type="primary"
+                  icon={<KeyOutlined />}
+                  onClick={() => enableTotp.mutate()}
+                  loading={enableTotp.isPending}
+                >
+                  Настроить TOTP
+                </Button>
+              </Space>
+            )}
+
+            {totpStep === 'qr' && (
+              <Space align="start" size={24} style={{ width: '100%' }}>
+                <Space orientation="vertical" style={{ flex: 1 }}>
+                  <Alert
+                    type="info"
+                    showIcon
+                    title="Отсканируйте QR"
+                    description="Откройте приложение-аутентификатор и добавьте новый аккаунт по коду справа."
+                  />
+                  <div>
+                    <Text type="secondary">Секретный ключ (если QR недоступен)</Text>
+                    <div>
+                      <Text copyable code>
+                        {totpSecret}
+                      </Text>
+                    </div>
+                  </div>
+                  <Form
+                    layout="inline"
+                    onFinish={() => verifyTotp.mutate({ data: { code: verifyCode } })}
+                  >
+                    <Form.Item>
+                      <Input
+                        placeholder="6-значный код"
+                        value={verifyCode}
+                        onChange={(event) => setVerifyCode(event.target.value)}
+                        maxLength={6}
+                        style={{ width: 220 }}
+                      />
+                    </Form.Item>
+                    <Form.Item>
+                      <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={verifyTotp.isPending}
+                        disabled={verifyCode.length !== 6}
+                      >
+                        Подтвердить
+                      </Button>
+                    </Form.Item>
+                  </Form>
+                </Space>
+                {qrUrl && <QRCode value={qrUrl} size={176} />}
+              </Space>
+            )}
+
+            {totpStep === 'done' && (
+              <Space orientation="vertical" style={{ width: '100%' }}>
+                <Alert
+                  type="success"
+                  showIcon
+                  title="TOTP активирован"
+                  description="При следующем входе понадобится одноразовый код из приложения."
+                />
+                <Space>
+                  <Input
+                    placeholder="6-значный код для отключения"
+                    value={disableCode}
+                    onChange={(event) => setDisableCode(event.target.value)}
+                    maxLength={6}
+                    style={{ width: 240 }}
+                  />
+                  <Popconfirm
+                    title="Отключить TOTP 2FA?"
+                    description="Вы потеряете доступ к админ-эндпоинтам, пока не включите 2FA снова."
+                    onConfirm={() => disableTotp.mutate({ data: { code: disableCode } })}
+                    okText="Отключить"
+                    cancelText="Отмена"
+                  >
+                    <Button
+                      danger
+                      loading={disableTotp.isPending}
+                      disabled={disableCode.length !== 6}
+                    >
+                      Отключить TOTP
+                    </Button>
+                  </Popconfirm>
+                </Space>
+              </Space>
+            )}
+          </section>
+
+          <section>
+            <Space align="center" style={{ marginBottom: 8 }}>
+              <Text strong>SMS 2FA (резерв)</Text>
+              <Tag color={smsEnabled ? 'green' : user?.phone ? 'gold' : 'default'}>
+                {smsEnabled ? 'Включена' : user?.phone ? 'Доступна' : 'Нужен телефон'}
+              </Tag>
+            </Space>
+            {smsEnabled ? (
+              <Alert
+                type="success"
+                showIcon
+                title="SMS 2FA включена"
+                description="Коды будут приходить на подтверждённый номер телефона."
+              />
+            ) : user?.phone ? (
+              <Space orientation="vertical">
+                <Text type="secondary">Коды подтверждения будут отправляться на {user.phone}.</Text>
+                <Button
+                  icon={<MobileOutlined />}
+                  onClick={() => enableSms2fa.mutate()}
+                  loading={enableSms2fa.isPending}
+                >
+                  Включить SMS 2FA
+                </Button>
+              </Space>
+            ) : (
+              <Alert
+                type="warning"
+                showIcon
+                title="Сначала добавьте номер телефона"
+                description="Подтверждённый телефон нужен, чтобы включить SMS-подтверждение."
+              />
+            )}
+          </section>
+        </div>
+      </Card>
     </div>
   )
 }

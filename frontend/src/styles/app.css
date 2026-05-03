@@ -82,6 +82,12 @@ body,
   min-height: 100%;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html,
 body,
 #root {
@@ -831,6 +837,43 @@ body.rh-app .ant-picker {
     transform 0.2s ease;
 }
 
+body.rh-app .rh-select {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+body.rh-app .rh-select__value {
+  width: 100%;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 40px 0 14px;
+  border-radius: 16px;
+  border: 1px solid var(--rh-control-border);
+  background: var(--rh-control-bg);
+  color: var(--rh-control-text);
+  box-shadow: var(--rh-control-shadow);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+body.rh-app .rh-select__control.ant-select-selector {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  min-height: 50px;
+  opacity: 0;
+  cursor: pointer;
+}
+
 body.rh-app .ant-input,
 body.rh-app .ant-input-number-input,
 body.rh-app .ant-picker .ant-picker-input > input,
@@ -894,6 +937,15 @@ body.rh-app .ant-picker-suffix,
 body.rh-app .ant-select-arrow {
   color: rgba(19, 33, 45, 0.48) !important;
   font-size: 16px;
+}
+
+body.rh-app .rh-select .ant-select-arrow {
+  position: absolute;
+  inset-inline-end: 14px;
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 body.rh-app .ant-input-password-icon {
@@ -969,6 +1021,11 @@ body.rh-app .ant-select-single .ant-select-selector {
   align-items: center;
 }
 
+body.rh-app .ant-select-single .rh-select__value {
+  display: flex;
+  align-items: center;
+}
+
 body.rh-app .ant-select-single .ant-select-selection-search,
 body.rh-app .ant-select-single .ant-select-selection-item,
 body.rh-app .ant-select-single .ant-select-selection-placeholder {
@@ -985,6 +1042,7 @@ body.rh-app .ant-input:hover,
 body.rh-app .ant-input-affix-wrapper:hover,
 body.rh-app .ant-input-number:hover,
 body.rh-app .ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+body.rh-app .ant-select:not(.ant-select-disabled):hover .rh-select__value,
 body.rh-app .ant-picker:hover {
   border-color: var(--rh-control-border-hover) !important;
   background: var(--rh-control-bg-strong) !important;
@@ -995,6 +1053,7 @@ body.rh-app .ant-input-affix-wrapper-focused,
 body.rh-app .ant-input-focused,
 body.rh-app .ant-input-number-focused,
 body.rh-app .ant-select-focused .ant-select-selector,
+body.rh-app .ant-select:focus-within .rh-select__value,
 body.rh-app .ant-picker-focused {
   border-color: var(--rh-control-border-focus) !important;
   background: var(--rh-control-bg-strong) !important;
@@ -1006,6 +1065,7 @@ body.rh-app .ant-input[disabled],
 body.rh-app .ant-input-affix-wrapper-disabled,
 body.rh-app .ant-input-number-disabled,
 body.rh-app .ant-select-disabled .ant-select-selector,
+body.rh-app .ant-select-disabled .rh-select__value,
 body.rh-app .ant-picker-disabled {
   border-color: rgba(15, 23, 42, 0.08) !important;
   background: var(--rh-control-bg-disabled) !important;
@@ -1023,6 +1083,7 @@ body.rh-app .ant-form-item-has-error .ant-input,
 body.rh-app .ant-form-item-has-error .ant-input-affix-wrapper,
 body.rh-app .ant-form-item-has-error .ant-input-number,
 body.rh-app .ant-form-item-has-error .ant-select-selector,
+body.rh-app .ant-form-item-has-error .rh-select__value,
 body.rh-app .ant-form-item-has-error .ant-picker {
   border-color: rgba(180, 35, 24, 0.38) !important;
   background: linear-gradient(180deg, rgba(255, 252, 251, 0.98), rgba(255, 243, 241, 0.96)) !important;
@@ -1598,6 +1659,16 @@ body.rh-app .rh-topnav__city-select .ant-select-selector {
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
+}
+
+body.rh-app .rh-topnav__city-select .rh-select__value {
+  min-height: 40px;
+  height: 40px;
+  padding: 0 20px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 body.rh-app .rh-topnav__city-select .ant-select-selection-search {
@@ -6203,6 +6274,20 @@ body.rh-app .ant-flex,
 body.rh-app .ant-row,
 body.rh-app .ant-col {
   min-width: 0;
+}
+
+body.rh-app .rh-space {
+  display: inline-flex;
+  min-width: 0;
+}
+
+body.rh-app .rh-space--vertical {
+  display: flex;
+  flex-direction: column;
+}
+
+body.rh-app .rh-space--wrap {
+  flex-wrap: wrap;
 }
 
 @media (max-width: 767px) {

@@ -161,8 +161,11 @@ describe('BathhouseSearch - Map & Compare features', () => {
         isLoading: false,
         isAuthenticated: true,
         setAuth: vi.fn(),
+        setUser: vi.fn(),
         logout: vi.fn(),
         loadProfile: vi.fn(),
+        notice2faRequiredAt: 0,
+        bumpNotice2FARequired: vi.fn(),
       }),
     )
 
