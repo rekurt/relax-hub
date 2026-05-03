@@ -2,12 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master, main]
   pull_request:
-    branches: [main]
+    branches: [master, main]
+  workflow_dispatch:
 
 jobs:
-  ci:
+  backend:
+    name: Backend
     runs-on: ubuntu-latest
 
     steps:
@@ -21,6 +23,16 @@ jobs:
 
       - name: Download dependencies
         run: go mod download
+
+      - name: Regenerate swagger & detect drift
+        run: |
+          set -euo pipefail
+          make swagger
+          if ! git diff --exit-code -- docs/; then
+            echo "::error::swagger spec drift detected. Run 'make swagger' locally and commit the result."
+            git --no-pager diff -- docs/ | head -200
+            exit 1
+          fi
 
       - name: Lint
         uses: golangci/golangci-lint-action@v6
@@ -44,10 +56,45 @@ jobs:
           echo "Total coverage: ${total}%"
           # Target: 80%. Current baseline ~50% due to postgres repos requiring real DB.
           threshold=45
-          if [ "$(echo "${total} < ${threshold}" | bc -l)" -eq 1 ]; then
+          if ! awk -v total="${total}" -v threshold="${threshold}" 'BEGIN { exit !(total + 0 >= threshold + 0) }'; then
             echo "Coverage ${total}% is below threshold ${threshold}%"
             exit 1
           fi
 
       - name: Build
         run: go build ./...
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Generate API client and detect drift
+        run: |
+          set -euo pipefail
+          make frontend-generate-api
+          if ! git diff --exit-code -- frontend/src/api/generated; then
+            echo "::error::frontend API client drift detected. Run 'make frontend-generate-api' locally and commit the result."
+            git --no-pager diff -- frontend/src/api/generated | head -200
+            exit 1
+          fi
+
+      - name: Build
+        run: make frontend-build
+
+      - name: Test
+        run: make frontend-test
