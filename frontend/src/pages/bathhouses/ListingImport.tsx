@@ -141,19 +141,19 @@ export default function ListingImport() {
 
       <Card title="Загрузка файла" style={{ marginBottom: 24 }}>
         <Dragger {...uploadProps} disabled={importMutation.isPending}>
-          <p className="ant-upload-drag-icon">
+          <p className="rh-upload-drag__icon">
             {importMutation.isPending ? (
               <FileExcelOutlined style={{ color: '#0f766e' }} />
             ) : (
               <InboxOutlined />
             )}
           </p>
-          <p className="ant-upload-text">
+          <p className="rh-upload-drag__text">
             {importMutation.isPending
               ? 'Обработка файла...'
               : 'Нажмите или перетащите файл для загрузки'}
           </p>
-          <p className="ant-upload-hint">Поддерживаются форматы CSV и XLSX</p>
+          <p className="rh-upload-drag__hint">Поддерживаются форматы CSV и XLSX</p>
         </Dragger>
       </Card>
 

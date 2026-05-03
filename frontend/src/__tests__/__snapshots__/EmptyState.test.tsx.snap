@@ -2,49 +2,37 @@
 
 exports[`EmptyState > snapshot: basic empty state 1`] = `
 <div
-  class="css-dev-only-do-not-override-1daqxe2 css-var-root ant-empty ant-empty-normal rh-empty-state"
+  class="rh-empty ant-empty ant-empty-normal rh-empty-state"
 >
   <div
-    class="ant-empty-image"
+    class="rh-empty__image ant-empty-image"
   >
     <svg
-      height="41"
-      viewBox="0 0 64 41"
-      width="64"
-      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      class="rh-empty__art"
+      height="96"
+      viewBox="0 0 120 96"
+      width="120"
     >
-      <title>
-        No data
-      </title>
-      <g
-        fill="none"
-        fill-rule="evenodd"
-        transform="translate(0 1)"
-      >
-        <ellipse
-          cx="32"
-          cy="33"
-          fill="#f5f5f5"
-          rx="32"
-          ry="7"
-        />
-        <g
-          fill-rule="nonzero"
-          stroke="#d9d9d9"
-        >
-          <path
-            d="M55 12.8 44.9 1.3Q44 0 42.9 0H21.1q-1.2 0-2 1.3L9 12.8V22h46z"
-          />
-          <path
-            d="M41.6 16c0-1.7 1-3 2.2-3H55v18.1c0 2.2-1.3 3.9-3 3.9H12c-1.7 0-3-1.7-3-3.9V13h11.2c1.2 0 2.2 1.3 2.2 3s1 2.9 2.2 2.9h14.8c1.2 0 2.2-1.4 2.2-3"
-            fill="#fafafa"
-          />
-        </g>
-      </g>
+      <rect
+        height="52"
+        rx="16"
+        width="84"
+        x="18"
+        y="24"
+      />
+      <path
+        d="M30 42h60M38 56h44"
+      />
+      <circle
+        cx="88"
+        cy="30"
+        r="10"
+      />
     </svg>
   </div>
   <div
-    class="ant-empty-description"
+    class="rh-empty__description ant-empty-description"
   >
     У вас пока нет бронирований
   </div>
@@ -53,54 +41,42 @@ exports[`EmptyState > snapshot: basic empty state 1`] = `
 
 exports[`EmptyState > snapshot: empty state with action 1`] = `
 <div
-  class="css-dev-only-do-not-override-1daqxe2 css-var-root ant-empty ant-empty-normal rh-empty-state"
+  class="rh-empty ant-empty ant-empty-normal rh-empty-state"
 >
   <div
-    class="ant-empty-image"
+    class="rh-empty__image ant-empty-image"
   >
     <svg
-      height="41"
-      viewBox="0 0 64 41"
-      width="64"
-      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      class="rh-empty__art"
+      height="96"
+      viewBox="0 0 120 96"
+      width="120"
     >
-      <title>
-        No data
-      </title>
-      <g
-        fill="none"
-        fill-rule="evenodd"
-        transform="translate(0 1)"
-      >
-        <ellipse
-          cx="32"
-          cy="33"
-          fill="#f5f5f5"
-          rx="32"
-          ry="7"
-        />
-        <g
-          fill-rule="nonzero"
-          stroke="#d9d9d9"
-        >
-          <path
-            d="M55 12.8 44.9 1.3Q44 0 42.9 0H21.1q-1.2 0-2 1.3L9 12.8V22h46z"
-          />
-          <path
-            d="M41.6 16c0-1.7 1-3 2.2-3H55v18.1c0 2.2-1.3 3.9-3 3.9H12c-1.7 0-3-1.7-3-3.9V13h11.2c1.2 0 2.2 1.3 2.2 3s1 2.9 2.2 2.9h14.8c1.2 0 2.2-1.4 2.2-3"
-            fill="#fafafa"
-          />
-        </g>
-      </g>
+      <rect
+        height="52"
+        rx="16"
+        width="84"
+        x="18"
+        y="24"
+      />
+      <path
+        d="M30 42h60M38 56h44"
+      />
+      <circle
+        cx="88"
+        cy="30"
+        r="10"
+      />
     </svg>
   </div>
   <div
-    class="ant-empty-description"
+    class="rh-empty__description ant-empty-description"
   >
     Ваш список избранного пуст
   </div>
   <div
-    class="ant-empty-footer"
+    class="rh-empty__footer ant-empty-footer"
   >
     <button
       class="rh-btn rh-btn--primary"
